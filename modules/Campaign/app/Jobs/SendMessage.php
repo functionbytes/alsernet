@@ -9,8 +9,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Modules\Campaign\Events\CampaignMessageSent;
+use Modules\Campaign\Library\CampaignRateTracker;
 use Modules\Campaign\Library\Tool;
 use Modules\Campaign\Models\Subscriber;
+use Modules\Campaign\Services\CircuitBreaker;
+use Modules\Campaign\Services\DomainThrottler;
+use Modules\Campaign\Services\SendRetryPolicy;
 use Modules\CampaignSendingServers\Library\Exception\OutOfCredits;
 use Modules\CampaignSendingServers\Library\Exception\RateLimitExceeded;
 use Modules\CampaignSendingServers\Models\SendingServer;
@@ -95,67 +101,120 @@ class SendMessage implements ShouldQueue
     {
         $logger = $this->campaign->logger();
         $email = $this->subscriber->getEmail();
+        $startTime = microtime(true);
+
+        $logContext = [
+            'campaign_uid' => $this->campaign->uid,
+            'subscriber_uid' => $this->subscriber->uid,
+            'server_uid' => $this->server->uid,
+            'email' => $email,
+        ];
 
         try {
-            // Prepare the email message to send
-            // In case of an invalid email, an exception will arise at: Swift_Mime_SimpleMessage->setTo(...)
             [$message, $msgId] = $this->campaign->prepareEmail($this->subscriber, $this->server, $fromCache = true);
+            $logContext['message_id'] = $msgId;
 
-            // Start sending
             $logger->info(sprintf('Sending to %s [Server "%s"]', $email, $this->server->name));
+            Log::info('Campaign email sending started', $logContext);
 
-            // Rate limit trackers: solo del servidor (no SaaS, sin plan/subscription).
+            // Circuit breaker: si el servidor está en fallback, saltar
+            $circuit = new CircuitBreaker;
+            if ($circuit->isOpen($this->server->id)) {
+                throw new RateLimitExceeded('Circuit breaker open for server '.$this->server->name, 300);
+            }
+
+            // Throttle por dominio destino
+            (new DomainThrottler)->throttle($email);
+
             $rateTrackers = [
                 $this->server->getRateLimitTracker(),
+                CampaignRateTracker::forCampaign($this->campaign),
             ];
             $creditTrackers = [];
 
-            Tool::executeWithLimits($rateTrackers, null, $creditTrackers, function () use ($message, $logger, $msgId, $email) {
-                // Actually send (or throw an exception)
+            Tool::executeWithLimits($rateTrackers, null, $creditTrackers, function () use ($message, $logger, $msgId, $email, $startTime, $logContext) {
                 if (config('custom.dryrun')) {
                     $sent = $this->server->dryrun($message);
                 } else {
                     $sent = $this->server->send($message);
                 }
 
-                // Log successful shot
-                $this->campaign->trackMessage($sent, $this->subscriber, $this->server, $msgId, $this->triggerId);
+                $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+                $logContext['duration_ms'] = $durationMs;
+                $logContext['runtime_message_id'] = $sent['runtime_message_id'] ?? null;
+
+                $trackingLog = $this->campaign->trackMessage($sent, $this->subscriber, $this->server, $msgId, $this->triggerId);
+                CampaignRateTracker::forCampaign($this->campaign)->increment();
+
+                // Emitir evento para métricas materializadas
+                CampaignMessageSent::dispatch($this->campaign, $trackingLog);
+
                 $logger->info(sprintf('Sent to %s [Server "%s"]', $email, $this->server->name));
+                Log::info('Campaign email sent successfully', $logContext);
             });
         } catch (RateLimitExceeded $ex) {
             if (! is_null($exceptionCallback)) {
                 return $exceptionCallback($ex);
             }
-            // Releease the job, have it tried again later on, after 1 minutes
-            $logger->warning(sprintf('Delay [%s] for 60 seconds: %s', $email, $ex->getMessage()));
 
-            // Release the job, have it try again after 60 seconds
-            // and (hopefully) the quota limits will be lifted then as time goes by
-            $this->release(60);
-        } catch (OutOfCredits|Throwable $ex) {
-            // Also catch the OutOfCredits error
+            // Retry inteligente: usar el tiempo de reset del rate limiter
+            $retryAfter = max(10, (int) $ex->getRetryAfter());
+            $logger->warning(sprintf('Delay [%s] for %d seconds: %s', $email, $retryAfter, $ex->getMessage()));
+            Log::warning('Campaign email rate limited', array_merge($logContext, ['retry_after_seconds' => $retryAfter]));
+
+            $this->release($retryAfter);
+        } catch (OutOfCredits $ex) {
             if (! is_null($exceptionCallback)) {
                 return $exceptionCallback($ex);
             }
 
-            $message = sprintf('Error sending to [%s]. Error: %s', $email, $ex->getMessage());
-            $logger->error($message);
-
-            // There are 2 options here
-            // Option 1: throw an exception and show it to users as the campaign status
-            //     throw new Exception($message);
-            // Option 2: just skip the error, log it and proceed with the next subscriber
+            $circuit->recordFailure($this->server->id);
+            $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+            $logContext['duration_ms'] = $durationMs;
+            $logger->error(sprintf('Out of credits [%s]: %s', $email, $ex->getMessage()));
+            Log::error('Campaign email out of credits', array_merge($logContext, ['error' => $ex->getMessage()]));
 
             if ($this->stopOnError) {
                 throw $ex;
-            } else {
-                if (! isset($msgId)) {
-                    // Just in case there is an exception before the execution of "list($message, $msgId) = $this->campaign->prepareEmail..."
-                    // then $msgID is not available
-                    $msgId = null;
-                }
+            }
 
-                $this->campaign->trackMessage(['status' => 'failed', 'error' => $ex->getMessage()], $this->subscriber, $this->server, $msgId, $this->triggerId);
+            $this->campaign->trackMessage(['status' => 'failed', 'error' => $ex->getMessage()], $this->subscriber, $this->server, $msgId ?? null, $this->triggerId);
+        } catch (Throwable $ex) {
+            if (! is_null($exceptionCallback)) {
+                return $exceptionCallback($ex);
+            }
+
+            $durationMs = (int) ((microtime(true) - $startTime) * 1000);
+            $logContext['duration_ms'] = $durationMs;
+
+            $retryPolicy = new SendRetryPolicy;
+            $shouldRetry = $retryPolicy->shouldRetry($ex);
+            $retryDelay = $retryPolicy->getDelay($ex);
+
+            if (! $shouldRetry) {
+                $circuit->recordFailure($this->server->id);
+            }
+
+            $message = sprintf('Error sending to [%s]. Error: %s', $email, $ex->getMessage());
+            $logger->error($message);
+            Log::error('Campaign email sending failed', array_merge($logContext, [
+                'error' => $ex->getMessage(),
+                'should_retry' => $shouldRetry,
+                'retry_delay' => $retryDelay,
+            ]));
+
+            if ($this->stopOnError) {
+                throw $ex;
+            }
+
+            if (! isset($msgId)) {
+                $msgId = null;
+            }
+
+            $this->campaign->trackMessage(['status' => 'failed', 'error' => $ex->getMessage()], $this->subscriber, $this->server, $msgId, $this->triggerId);
+
+            if ($shouldRetry && $retryDelay > 0) {
+                $this->release($retryDelay);
             }
         }
     }

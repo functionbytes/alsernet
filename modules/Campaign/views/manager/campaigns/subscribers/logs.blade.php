@@ -1,8 +1,10 @@
 @extends('layouts.managers')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Historial de ' . Str::upper($subscriber->firstname . ' ' . $subscriber->lastname)])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
         <div class="card card-body">

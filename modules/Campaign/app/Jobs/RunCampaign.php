@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Campaign\Library\Contracts\CampaignInterface;
 use Modules\Campaign\Library\Traits\Trackable;
 
@@ -47,12 +48,16 @@ class RunCampaign implements ShouldQueue
 
         try {
             $this->campaign->logger()->info('Launch campaign ---------------------->');
+            Log::info('Campaign execution started', ['campaign_uid' => $this->campaign->uid]);
             $this->campaign->run();
         } catch (\Throwable $e) {
             $errorMsg = 'Error scheduling campaign: '.$e->getMessage()."\n".$e->getTraceAsString();
             $this->campaign->setError($errorMsg);
+            Log::error('Campaign execution failed', [
+                'campaign_uid' => $this->campaign->uid,
+                'error' => $e->getMessage(),
+            ]);
 
-            // To set the job to failed
             throw $e;
         }
     }

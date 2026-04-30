@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Listas de correo')
 
@@ -6,7 +6,7 @@
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Listas de correo</h2>
-            <a href="{{ route('manager.campaigns.maillists.create') }}" class="btn btn-primary">Nueva lista</a>
+            <a href="{{ route('manager.maillists.create') }}" class="btn btn-primary">Nueva lista</a>
         </div>
 
         @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
@@ -20,14 +20,14 @@
             <tbody>
                 @forelse ($lists as $l)
                     <tr>
-                        <td><a href="{{ route('manager.campaigns.maillists.show', $l->uid) }}">{{ $l->name }}</a></td>
+                        <td><a href="{{ route('manager.maillists.show', $l->uid) }}">{{ $l->name }}</a></td>
                         <td><code class="small">{{ $l->from_email }}</code></td>
                         <td>{{ number_format($l->subscribers_count ?? 0) }}</td>
                         <td>{{ $l->created_at?->format('Y-m-d') }}</td>
-                        <td><a href="{{ route('manager.campaigns.maillists.subscribers.index', $l->uid) }}" class="btn btn-sm btn-outline-secondary">Suscriptores</a></td>
+                        <td><a href="{{ route('manager.maillists.subscribers.index', $l->uid) }}" class="btn btn-sm btn-outline-secondary">Suscriptores</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">Sin listas. <a href="{{ route('manager.campaigns.maillists.create') }}">Crear una</a>.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Sin listas. <a href="{{ route('manager.maillists.create') }}">Crear una</a>.</td></tr>
                 @endforelse
             </tbody>
         </table>

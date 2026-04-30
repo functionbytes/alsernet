@@ -33,11 +33,15 @@ class CampaignSubscriber extends Model
     protected $fillable = [
         'uid',
         'email',
+        'first_name',
+        'last_name',
         'attributes',
         'ip',
         'source',
         'subscribed_at',
         'unsubscribed_at',
+        'confirmed_at',
+        'confirmation_code',
     ];
 
     protected $casts = [
@@ -52,7 +56,33 @@ class CampaignSubscriber extends Model
             if (empty($sub->uid)) {
                 $sub->uid = (string) Str::uuid();
             }
+            if (! empty($sub->email)) {
+                $sub->email = self::normalizeEmail($sub->email);
+            }
         });
+
+        static::updating(function (self $sub): void {
+            if ($sub->isDirty('email') && ! empty($sub->email)) {
+                $sub->email = self::normalizeEmail($sub->email);
+            }
+        });
+    }
+
+    /**
+     * Normaliza un email: lowercase, trim, punycode para dominios con Unicode.
+     */
+    public static function normalizeEmail(string $email): string
+    {
+        $email = mb_strtolower(trim($email), 'UTF-8');
+        $parts = explode('@', $email, 2);
+        if (count($parts) === 2 && function_exists('idn_to_ascii')) {
+            $domain = idn_to_ascii($parts[1], IDNA_NONTRANSITIONAL_TO_ASCII, INTL_IDNA_VARIANT_UTS46);
+            if ($domain !== false) {
+                $email = $parts[0].'@'.$domain;
+            }
+        }
+
+        return $email;
     }
 
     public function getRouteKeyName(): string
@@ -110,5 +140,25 @@ class CampaignSubscriber extends Model
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    public function engagementScore()
+    {
+        return $this->hasOne(SubscriberEngagementScore::class, 'subscriber_id');
+    }
+
+    public function scopeEngagementCategory($query, string $category)
+    {
+        return $query->join('campaign_subscriber_engagement_scores as ces', 'ces.subscriber_id', '=', 'campaign_subscribers.id')
+            ->whereRaw(
+                match ($category) {
+                    'hot' => 'ces.score >= 70',
+                    'warm' => 'ces.score >= 40 AND ces.score < 70',
+                    'cold' => 'ces.score >= 10 AND ces.score < 40',
+                    'dormant' => 'ces.score >= -20 AND ces.score < 10',
+                    'at_risk' => 'ces.score < -20',
+                    default => '1=1',
+                }
+            );
     }
 }

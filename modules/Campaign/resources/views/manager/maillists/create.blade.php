@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Nueva lista')
 
@@ -10,7 +10,7 @@
             <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
         @endif
 
-        <form method="post" action="{{ route('manager.campaigns.maillists.store') }}">
+        <form method="post" action="{{ route('manager.maillists.store') }}">
             @csrf
             <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" name="name" value="{{ old('name') }}" class="form-control" required></div>
             <div class="mb-3"><label class="form-label">Descripción</label><textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea></div>
@@ -26,7 +26,7 @@
             <div class="form-check mb-2"><input type="checkbox" name="send_welcome_email" value="1" id="we" class="form-check-input"><label for="we" class="form-check-label">Enviar email de bienvenida</label></div>
 
             <button type="submit" class="btn btn-primary">Crear</button>
-            <a href="{{ route('manager.campaigns.maillists.index') }}" class="btn btn-link">Cancelar</a>
+            <a href="{{ route('manager.maillists.index') }}" class="btn btn-link">Cancelar</a>
         </form>
     </div>
 @endsection

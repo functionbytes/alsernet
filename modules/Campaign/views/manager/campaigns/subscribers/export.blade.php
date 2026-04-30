@@ -1,9 +1,10 @@
 @extends('layouts.managers')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Exportar suscripciones - '. $list->title])
+@endsection
 
+@section('content')
 
 
     <div class="row">

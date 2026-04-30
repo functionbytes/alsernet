@@ -1,8 +1,10 @@
 @extends('manager.layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Plantillas campañas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

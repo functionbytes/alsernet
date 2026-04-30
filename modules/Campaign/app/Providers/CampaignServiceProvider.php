@@ -3,13 +3,32 @@
 namespace Modules\Campaign\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Campaign\Console\Commands\AlertCheckCommand;
+use Modules\Campaign\Console\Commands\ArchiveOldCampaignsCommand;
+use Modules\Campaign\Console\Commands\CampaignCompareVariantsCommand;
+use Modules\Campaign\Console\Commands\CampaignStatusCommand;
+use Modules\Campaign\Console\Commands\CheckLinksCommand;
 use Modules\Campaign\Console\Commands\CleanupLogsCommand;
 use Modules\Campaign\Console\Commands\DemoCommand;
 use Modules\Campaign\Console\Commands\DispatchAutomationJobsCommand;
 use Modules\Campaign\Console\Commands\ExecuteScheduledCampaignsCommand;
+use Modules\Campaign\Console\Commands\GeneratePartitionDdlCommand;
 use Modules\Campaign\Console\Commands\InstallCommand;
+use Modules\Campaign\Console\Commands\ListHygieneCommand;
+use Modules\Campaign\Console\Commands\QueueAutoscalerCommand;
+use Modules\Campaign\Console\Commands\ReEngagementCommand;
+use Modules\Campaign\Console\Commands\RssToEmailCommand;
+use Modules\Campaign\Console\Commands\UpdateEngagementScoresCommand;
+use Modules\Campaign\Events\CampaignMessageClicked;
+use Modules\Campaign\Events\CampaignMessageOpened;
+use Modules\Campaign\Events\CampaignMessageSent;
+use Modules\Campaign\Listeners\UpdateCampaignMetrics;
+use Modules\Campaign\Listeners\UpdateTrackingLogOnBounce;
+use Modules\CampaignSendingServers\Events\BounceDetected;
+use Modules\CampaignSendingServers\Events\FeedbackLoopDetected;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -40,6 +59,7 @@ class CampaignServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerSchedules();
         $this->registerCommands();
+        $this->registerEventListeners();
     }
 
     protected function registerConfig(): void
@@ -143,6 +163,44 @@ class CampaignServiceProvider extends ServiceProvider
                 ->weekly()
                 ->sundays()
                 ->at('03:00');
+
+            // Alertas operacionales cada 5 minutos
+            $schedule->command('campaign:alert-check')
+                ->name('campaign:alert_check')
+                ->everyFiveMinutes()
+                ->withoutOverlapping(5);
+
+            // Engagement scores cada hora
+            $schedule->command('campaign:update-engagement-scores')
+                ->name('campaign:update_engagement')
+                ->hourly()
+                ->withoutOverlapping(30);
+
+            // Re-engagement check diario
+            $schedule->command('campaign:re-engagement-check')
+                ->name('campaign:reengagement')
+                ->dailyAt('02:00')
+                ->withoutOverlapping(30);
+
+            // Archivado semanal de campañas antiguas
+            $schedule->command('campaign:archive-old --days=365')
+                ->name('campaign:archive_old')
+                ->weekly()
+                ->sundays()
+                ->at('04:00')
+                ->withoutOverlapping(60);
+
+            // Queue autoscaler check cada minuto
+            $schedule->command('campaign:queue-check')
+                ->name('campaign:queue_check')
+                ->everyMinute()
+                ->withoutOverlapping(1);
+
+            // List hygiene mensual (primer domingo a las 05:00)
+            $schedule->command('campaign:list-hygiene --days=180')
+                ->name('campaign:list_hygiene')
+                ->monthlyOn(1, '05:00')
+                ->withoutOverlapping(60);
         });
     }
 
@@ -158,7 +216,31 @@ class CampaignServiceProvider extends ServiceProvider
             InstallCommand::class,
             CleanupLogsCommand::class,
             DemoCommand::class,
+            CampaignStatusCommand::class,
+            GeneratePartitionDdlCommand::class,
+            AlertCheckCommand::class,
+            UpdateEngagementScoresCommand::class,
+            ArchiveOldCampaignsCommand::class,
+            ReEngagementCommand::class,
+            CheckLinksCommand::class,
+            QueueAutoscalerCommand::class,
+            ListHygieneCommand::class,
+            CampaignCompareVariantsCommand::class,
+            RssToEmailCommand::class,
         ]);
+    }
+
+    protected function registerEventListeners(): void
+    {
+        Event::listen(BounceDetected::class, [UpdateTrackingLogOnBounce::class, 'handleBounce']);
+        Event::listen(FeedbackLoopDetected::class, [UpdateTrackingLogOnBounce::class, 'handleFeedback']);
+
+        // Métricas materializadas
+        Event::listen(CampaignMessageSent::class, [UpdateCampaignMetrics::class, 'handleSent']);
+        Event::listen(CampaignMessageOpened::class, [UpdateCampaignMetrics::class, 'handleOpened']);
+        Event::listen(CampaignMessageClicked::class, [UpdateCampaignMetrics::class, 'handleClicked']);
+        Event::listen(BounceDetected::class, [UpdateCampaignMetrics::class, 'handleBounce']);
+        Event::listen(FeedbackLoopDetected::class, [UpdateCampaignMetrics::class, 'handleFeedback']);
     }
 
     private function getPublishableViewPaths(): array

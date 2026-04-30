@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Editar plantilla')
 
@@ -6,12 +6,12 @@
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>{{ $template->name }}</h2>
-            <a href="{{ route('manager.campaigns.templates.copy', $template->uid) }}" class="btn btn-outline-secondary btn-sm">Duplicar</a>
+            <a href="{{ route('manager.templates.copy', $template->uid) }}" class="btn btn-outline-secondary btn-sm">Duplicar</a>
         </div>
 
         @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
-        <form method="post" action="{{ route('manager.campaigns.templates.update', $template->uid) }}">
+        <form method="post" action="{{ route('manager.templates.update', $template->uid) }}">
             @csrf @method('PUT')
 
             <div class="row mb-3">
@@ -60,7 +60,7 @@
 
             <div class="mt-3">
                 <button type="submit" class="btn btn-primary">Guardar plantilla</button>
-                <a href="{{ route('manager.campaigns.templates.index') }}" class="btn btn-link">Cancelar</a>
+                <a href="{{ route('manager.templates.index') }}" class="btn btn-link">Cancelar</a>
             </div>
         </form>
     </div>

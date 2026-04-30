@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Schema;
 use Modules\Campaign\Models\Campaign;
 use Modules\Campaign\Models\CampaignMaillist;
@@ -28,10 +29,13 @@ class HealthController extends Controller
         $checks = [
             'database' => $this->checkDatabase(),
             'tables' => $this->checkTables(),
+            'redis' => $this->checkRedis(),
+            'disk_space' => $this->checkDiskSpace(),
             'sending_servers' => $this->checkSendingServers(),
             'queue_backlog' => $this->checkQueueBacklog(),
             'campaigns_active' => $this->countActiveCampaigns(),
             'last_executed_scheduled' => $this->lastScheduledExecution(),
+            'cron_scheduled' => $this->checkCronScheduled(),
         ];
 
         $allOk = collect($checks)->every(fn ($c) => ($c['ok'] ?? true) !== false);
@@ -117,6 +121,48 @@ class HealthController extends Controller
         return [
             'last_delivery_at' => optional($last)->delivery_at?->toIso8601String(),
             'last_campaign_uid' => optional($last)->uid,
+        ];
+    }
+
+    protected function checkRedis(): array
+    {
+        try {
+            Redis::ping();
+
+            return ['ok' => true];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    protected function checkDiskSpace(): array
+    {
+        $free = disk_free_space(storage_path());
+        $total = disk_total_space(storage_path());
+        $percentFree = $total > 0 ? ($free / $total) * 100 : 0;
+
+        return [
+            'ok' => $percentFree > 10,
+            'free_gb' => round($free / 1024 / 1024 / 1024, 2),
+            'total_gb' => round($total / 1024 / 1024 / 1024, 2),
+            'percent_free' => round($percentFree, 2),
+        ];
+    }
+
+    protected function checkCronScheduled(): array
+    {
+        $lastRun = \DB::table('cache')
+            ->where('key', 'like', '%campaign:execute_scheduled%')
+            ->orWhere('key', 'like', '%campaign_execute_scheduled%')
+            ->first();
+
+        // Fallback: si hay campañas scheduled pero no se han ejecutado recientemente
+        $scheduledCount = Campaign::where('status', 'scheduled')->where('run_at', '<', now()->subMinutes(5))->count();
+
+        return [
+            'ok' => $scheduledCount === 0,
+            'stale_scheduled_campaigns' => $scheduledCount,
+            'hint' => $scheduledCount > 0 ? 'Verifica que el cron campaign:execute-scheduled esté corriendo cada minuto.' : null,
         ];
     }
 }

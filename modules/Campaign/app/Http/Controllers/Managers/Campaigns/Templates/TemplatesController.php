@@ -2,13 +2,18 @@
 
 namespace Modules\Campaign\Http\Controllers\Managers\Campaigns\Templates;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\View\View;
+use Modules\Campaign\Models\CampaignSubscriber;
 use Modules\Campaign\Models\Layout\Layout;
 use Modules\Campaign\Models\Template\Template;
 use Modules\Campaign\Models\Template\TemplateCategory;
+use Modules\Campaign\Services\LinkRotChecker;
+use Modules\Campaign\Services\SpamScoreChecker;
+use Modules\Campaign\Services\TemplateSanitizer;
 
 /**
  * Slim TemplatesController.
@@ -91,13 +96,63 @@ class TemplatesController extends Controller
 
     /**
      * Devuelve el HTML del template renderizado para el iframe de preview.
+     * Si se pasa ?subscriber_uid= usa los datos reales de ese suscriptor.
      */
-    public function preview(string $uid)
+    public function preview(Request $request, string $uid)
     {
         $template = Template::where('uid', $uid)->firstOrFail();
+        $html = $template->html ?: $template->content ?: '<p><em>Plantilla vacía.</em></p>';
 
-        return response($template->html ?: $template->content ?: '<p><em>Plantilla vacía.</em></p>')
+        if ($request->has('subscriber_uid')) {
+            $subscriber = CampaignSubscriber::where('uid', $request->query('subscriber_uid'))->first();
+            if ($subscriber) {
+                $html = $this->renderWithSubscriber($html, $subscriber);
+            }
+        }
+
+        return response($html)
             ->header('Content-Type', 'text/html; charset=utf-8');
+    }
+
+    /**
+     * Valida una plantilla y devuelve problemas detectados.
+     */
+    public function validateTemplate(Request $request, string $uid): JsonResponse
+    {
+        $template = Template::where('uid', $uid)->firstOrFail();
+        $html = $request->input('html', $template->html ?: $template->content ?: '');
+        $result = TemplateSanitizer::validate($html);
+
+        // Spam score heurístico
+        $spamChecker = new SpamScoreChecker;
+        $spamResult = $spamChecker->score($html, $template->subject);
+
+        // Link rot check
+        $linkChecker = new LinkRotChecker;
+        $brokenLinks = $linkChecker->check($html);
+
+        return response()->json([
+            'validation' => $result,
+            'spam_score' => $spamResult,
+            'links' => [
+                'total' => count($brokenLinks),
+                'broken' => collect($brokenLinks)->filter(fn ($r) => ! $r['ok'])->values()->all(),
+            ],
+        ]);
+    }
+
+    protected function renderWithSubscriber(string $html, CampaignSubscriber $subscriber): string
+    {
+        $replacements = [
+            '{{SUBSCRIBER_EMAIL}}' => $subscriber->email,
+            '{{SUBSCRIBER_UID}}' => $subscriber->uid,
+        ];
+
+        foreach ($subscriber->attributes ?? [] as $key => $value) {
+            $replacements['{{SUBSCRIBER_'.strtoupper($key).'}}'] = $value;
+        }
+
+        return str_replace(array_keys($replacements), array_values($replacements), $html);
     }
 
     /**
@@ -120,7 +175,7 @@ class TemplatesController extends Controller
     {
         $required = $update ? 'sometimes' : 'required';
 
-        return $request->validate([
+        $data = $request->validate([
             'name' => [$required, 'string', 'max:255'],
             'subject' => ['nullable', 'string', 'max:998'],
             'content' => ['nullable', 'string'],
@@ -132,5 +187,11 @@ class TemplatesController extends Controller
             'categories' => ['nullable', 'array'],
             'categories.*' => ['exists:campaign_template_categories,id'],
         ]);
+
+        if (! empty($data['content']) && ! $request->boolean('builder')) {
+            $data['content'] = TemplateSanitizer::purify($data['content']);
+        }
+
+        return $data;
     }
 }

@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Campos de '.$list->name)
 
@@ -9,7 +9,7 @@
             <h2 class="mb-0">Mapping de campos</h2>
             <p class="text-muted mb-0">Lista: <strong>{{ $list->name }}</strong> · Cada campo define una variable usable en el email builder.</p>
         </div>
-        <a href="{{ route('manager.campaigns.maillists.show', $list->uid) }}" class="btn btn-outline-secondary">← Volver a lista</a>
+        <a href="{{ route('manager.maillists.show', $list->uid) }}" class="btn btn-outline-secondary">← Volver a lista</a>
     </div>
 
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
@@ -30,7 +30,7 @@
     <div class="card mb-4">
         <div class="card-header"><strong>Añadir campo nuevo</strong></div>
         <div class="card-body">
-            <form method="post" action="{{ route('manager.campaigns.maillists.fields.store', $list->uid) }}" class="row g-2">
+            <form method="post" action="{{ route('manager.maillists.fields.store', $list->uid) }}" class="row g-2">
                 @csrf
                 <div class="col-md-3">
                     <label class="form-label small text-muted">Tag (UPPER_SNAKE)</label>
@@ -95,7 +95,7 @@
                         <td>{{ $f->order }}</td>
                         <td>
                             @unless ($isSystem)
-                                <form method="post" action="{{ route('manager.campaigns.maillists.fields.destroy', [$list->uid, $f->id]) }}" class="d-inline" onsubmit="return confirm('¿Eliminar campo {{ $f->tag }}?');">
+                                <form method="post" action="{{ route('manager.maillists.fields.destroy', [$list->uid, $f->id]) }}" class="d-inline" onsubmit="return confirm('¿Eliminar campo {{ $f->tag }}?');">
                                     @csrf @method('DELETE')
                                     <button class="btn btn-link btn-sm text-danger p-0">Eliminar</button>
                                 </form>

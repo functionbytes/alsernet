@@ -1,8 +1,10 @@
 @extends('layouts.managers')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Listas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

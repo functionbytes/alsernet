@@ -1,10 +1,29 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Builder · '.$template->name)
 
-@push('styles')
+@push('css')
 <style>
-    /* ── Reset & shell ────────────────────────────────────────────── */
+    /* ── Builder fullscreen takeover ──────────────────────────────────
+       El builder reemplaza el chrome del theme: oculta el sidebar/header
+       del panel, fija scroll del body y se monta como overlay full-bleed
+       para que ningún layout exterior interfiera.
+    */
+    [x-cloak] { display: none !important; }
+    body:has(.builder-shell) { overflow: hidden !important; }
+    body:has(.builder-shell) aside.side-mini-panel,
+    body:has(.builder-shell) .sidebarmenu,
+    body:has(.builder-shell) header.topbar,
+    body:has(.builder-shell) #global-loader,
+    body:has(.builder-shell) footer { display: none !important; }
+    body:has(.builder-shell) #main-wrapper,
+    body:has(.builder-shell) .page-wrapper,
+    body:has(.builder-shell) .body-wrapper,
+    body:has(.builder-shell) .container-fluid {
+        padding: 0 !important; margin: 0 !important; max-width: none !important;
+        width: 100% !important; height: 100vh !important;
+    }
+
     .builder-shell {
         --b-bg: #f7f8fa;
         --b-canvas-bg: #eef0f4;
@@ -18,14 +37,18 @@
         --b-warning: #f59e0b;
         --b-danger: #ef4444;
         position: fixed;
-        inset: 56px 0 0 0; /* deja header del sistema arriba */
+        inset: 0;
         background: var(--b-bg);
         display: grid;
         grid-template-rows: 56px 1fr;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: var(--b-text);
-        z-index: 100;
+        z-index: 9999;
     }
+    /* Salvaguarda contra SVG sin width/height heredados que se expanden a 300x150 */
+    .builder-shell svg:not([width]) { width: 1em; height: 1em; }
+    .builder-shell button { font-family: inherit; }
+    .builder-shell *, .builder-shell *::before, .builder-shell *::after { box-sizing: border-box; }
 
     /* ── Topbar ──────────────────────────────────────────────────── */
     .b-topbar {
@@ -207,6 +230,78 @@
 
     /* Esconder layout normal del manager mientras estamos en builder */
     .builder-active .l-side, .builder-active .l-topbar, .builder-active footer { display: none !important; }
+
+    /* ── Sortable ghost ─────────────────────────────────────────────── */
+    .b-sortable-ghost { opacity: .35; border: 2px dashed var(--b-primary) !important; background: var(--b-primary-light) !important; }
+
+    /* ── Tooltip de atajos de teclado ────────────────────────────────── */
+    [title] { position: relative; }
+    .b-shortcut-hint { font-size: 10px; opacity: .7; background: rgba(0,0,0,.6); color: white; padding: 2px 5px; border-radius: 3px; margin-left: 4px; font-family: ui-monospace, monospace; }
+
+    /* ── Spam modal ─────────────────────────────────────────────────── */
+    .b-spam-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .b-spam-ok { background: #d1fae5; color: #065f46; }
+    .b-spam-warn { background: #fef3c7; color: #92400e; }
+    .b-spam-bad { background: #fee2e2; color: #991b1b; }
+
+    /* ── Edición inline en canvas ────────────────────────────────────── */
+    .b-canvas-block.inline-editing {
+        border-color: var(--b-primary) !important;
+        box-shadow: 0 0 0 3px rgba(79,70,229,.12);
+    }
+    .b-inline-edit-target {
+        outline: none !important;
+        cursor: text !important;
+        min-height: 16px;
+    }
+    .b-inline-edit-target:empty::before {
+        content: 'Escribe aquí…';
+        color: #9ca3af;
+        font-style: italic;
+    }
+
+    /* ── Barra flotante de formato ───────────────────────────────────── */
+    #b-float-toolbar {
+        position: fixed;
+        display: none;
+        align-items: center;
+        gap: 2px;
+        background: #1f2937;
+        border-radius: 6px;
+        padding: 5px 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,.35);
+        z-index: 99998;
+        transform: translateX(-50%);
+        pointer-events: auto;
+        user-select: none;
+    }
+    #b-float-toolbar.show { display: flex; }
+    #b-float-toolbar::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1f2937;
+    }
+    #b-float-toolbar button {
+        background: transparent;
+        border: none;
+        color: rgba(255,255,255,.85);
+        padding: 4px 7px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
+        min-width: 26px;
+        text-align: center;
+        font-family: inherit;
+    }
+    #b-float-toolbar button:hover { background: rgba(255,255,255,.18); color: white; }
+    #b-float-toolbar button.active { background: rgba(255,255,255,.22); color: white; }
+    #b-float-toolbar .ft-sep { width: 1px; height: 16px; background: rgba(255,255,255,.2); margin: 0 3px; flex-shrink: 0; }
 </style>
 @endpush
 
@@ -217,7 +312,7 @@
          TOPBAR
          ═══════════════════════════════════════════════════════════ --}}
     <div class="b-topbar">
-        <a href="{{ route('manager.campaigns.templates.index') }}" class="b-back">
+        <a href="{{ route('manager.templates.index') }}" class="b-back">
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
             Plantillas
         </a>
@@ -252,6 +347,36 @@
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
                 Con datos
             </button>
+            {{-- Undo / Redo --}}
+            <button class="b-btn b-btn-icon" @click="undo()" :disabled="historyIndex <= 0" title="Deshacer (Ctrl+Z)">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 110 14H9a1 1 0 110-2h2a5 5 0 000-10H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/></svg>
+            </button>
+            <button class="b-btn b-btn-icon" @click="redo()" :disabled="historyIndex >= history.length - 1" title="Rehacer (Ctrl+Y)">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.293 3.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 9H9a5 5 0 000 10h2a1 1 0 110 2H9A7 7 0 119 7h5.586l-2.293-2.293a1 1 0 010-1.414z"/></svg>
+            </button>
+
+            <span style="width:1px;height:20px;background:var(--b-border);display:inline-block;margin:0 2px"></span>
+
+            {{-- Spam Check --}}
+            <button class="b-btn" @click="runSpamCheck()" title="Análisis spam score">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                Spam
+            </button>
+
+            {{-- Guardar como --}}
+            <button class="b-btn" @click="promptSaveAs()" title="Guardar como nueva plantilla">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"/></svg>
+                Guardar como
+            </button>
+
+            {{-- Export HTML --}}
+            <a :href="ROUTES.exportHtml" target="_blank" class="b-btn" title="Descargar HTML compilado">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/></svg>
+                Exportar
+            </a>
+
+            <span style="width:1px;height:20px;background:var(--b-border);display:inline-block;margin:0 2px"></span>
+
             <button class="b-btn b-btn-primary" @click="save()" :disabled="saving">
                 <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" x-show="!saving"><path d="M3 4a2 2 0 012-2h10a2 2 0 012 2v14l-5-2.5L7 18V4z"/></svg>
                 <span x-text="saving ? 'Guardando…' : 'Guardar'"></span>
@@ -392,22 +517,30 @@
                     <template x-for="(block, idx) in blocks" :key="idx">
                         <div>
                             <div class="b-drop-indicator" :class="{ active: dropIndex === idx }"></div>
-                            <div class="b-canvas-block" :class="{ selected: selectedIndex === idx }" @click.stop="selectBlock(idx)" :data-idx="idx">
+                            <div class="b-canvas-block"
+                                :class="{ selected: selectedIndex === idx, 'inline-editing': inlineEditingIdx === idx }"
+                                @click.stop="selectBlock(idx)"
+                                @dblclick.stop="['text','footer'].includes(block.type) ? activateInlineEdit(idx) : (block.type === 'html' ? openWysiwyg('html') : null)"
+                                :data-idx="idx">
                                 <div class="b-block-toolbar">
                                     <span class="b-block-toolbar-tag" x-text="block.type"></span>
-                                    <button @click.stop="moveBlock(idx, -1)" :disabled="idx === 0" title="Subir">↑</button>
-                                    <button @click.stop="moveBlock(idx, 1)" :disabled="idx === blocks.length - 1" title="Bajar">↓</button>
+                                    <button @click.stop="moveBlock(idx, -1)" :disabled="idx === 0" title="Subir (↑)">↑</button>
+                                    <button @click.stop="moveBlock(idx, 1)" :disabled="idx === blocks.length - 1" title="Bajar (↓)">↓</button>
                                     <button @click.stop="duplicateBlock(idx)" title="Duplicar">⧉</button>
-                                    <button @click.stop="removeBlock(idx)" title="Eliminar">×</button>
+                                    <button @click.stop="removeBlock(idx)" title="Eliminar (Supr)" style="color:#ffaaaa">×</button>
                                 </div>
-                                <div x-html="renderedBlocks[idx] ?? '<div style=\'padding:20px;color:#999;text-align:center\'>...</div>'"></div>
+                                <div class="b-block-render-hint" x-show="['text','footer','html'].includes(block.type) && selectedIndex === idx && inlineEditingIdx !== idx"
+                                    style="position:absolute;bottom:4px;right:8px;font-size:10px;color:rgba(79,70,229,.6);pointer-events:none;z-index:5">
+                                    <span x-text="['text','footer'].includes(block.type) ? '✏ Doble clic para editar' : '✏ Doble clic (editor HTML)'"></span>
+                                </div>
+                                <div x-html="renderedBlocks[idx] ?? '<div style=\'padding:20px;color:#999;text-align:center\'>Cargando…</div>'"></div>
                             </div>
                         </div>
                     </template>
 
                     <div class="b-canvas-empty" x-show="blocks.length === 0" :class="{ dragover: canvasDragging }">
                         Arrastra un bloque aquí desde el panel izquierdo<br>
-                        <small style="opacity:.7">o elige uno de los <a href="{{ route('manager.campaigns.templates.gallery') }}">presets</a></small>
+                        <small style="opacity:.7">o elige uno de los <a href="{{ route('manager.templates.gallery') }}">presets</a></small>
                     </div>
                 </div>
             </div>
@@ -635,6 +768,21 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js" defer></script>
 
+{{-- Barra flotante de edición inline --}}
+<div id="b-float-toolbar" role="toolbar" aria-label="Formato de texto">
+    <button data-cmd="bold" title="Negrita (Ctrl+B)"><b>B</b></button>
+    <button data-cmd="italic" title="Cursiva (Ctrl+I)"><i>I</i></button>
+    <button data-cmd="underline" title="Subrayado (Ctrl+U)"><u>U</u></button>
+    <button data-cmd="strikeThrough" title="Tachado" style="text-decoration:line-through">S</button>
+    <div class="ft-sep"></div>
+    <button data-cmd="createLink" title="Insertar enlace">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+    </button>
+    <button data-cmd="unlink" title="Quitar enlace">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/></svg>
+    </button>
+</div>
+
 {{-- Modal WYSIWYG --}}
 <div id="wysiwyg-modal" class="b-modal">
     <div class="b-modal-card">
@@ -678,14 +826,17 @@ function saveWysiwyg() {
 
 const TEMPLATE_UID = @json($template->uid);
 const ROUTES = {
-    save: @json(route('manager.campaigns.templates.builder.save', $template->uid)),
-    renderBlock: @json(route('manager.campaigns.templates.builder.render-block')),
-    blockBlank: (type) => `/panel/campaign/templates/builder/blocks/blank/${type}`,
-    preview: @json(route('manager.campaigns.templates.builder.preview', $template->uid)),
-    sendTest: @json(route('manager.campaigns.templates.builder.send-test', $template->uid)),
-    uploadImage: @json(route('manager.campaigns.templates.builder.upload-image')),
-    variables: @json(route('manager.campaigns.templates.builder.variables')),
-    previewReal: @json(route('manager.campaigns.templates.builder.preview-real', $template->uid)),
+    save: @json(route('manager.templates.builder.save', $template->uid)),
+    renderBlock: @json(route('manager.templates.builder.render-block')),
+    blockBlank: (type) => @json(url('/panel/campaign/manager/templates/builder/blocks/blank')) + '/' + encodeURIComponent(type),
+    preview: @json(route('manager.templates.builder.preview', $template->uid)),
+    sendTest: @json(route('manager.templates.builder.send-test', $template->uid)),
+    uploadImage: @json(route('manager.templates.builder.upload-image')),
+    variables: @json(route('manager.templates.builder.variables')),
+    previewReal: @json(route('manager.templates.builder.preview-real', $template->uid)),
+    saveAs: @json(route('manager.templates.builder.save-as', $template->uid)),
+    exportHtml: @json(route('manager.templates.builder.export', $template->uid)),
+    spamCheck: @json(route('manager.templates.builder.spam-check', $template->uid)),
 };
 const INITIAL_BLOCKS = @json($blocks);
 const INITIAL_GLOBALS = @json($globals);
@@ -717,6 +868,14 @@ function builder() {
         canvasDragging: false,
         dropIndex: null,
         paddingLock: false,
+        // Inline editing
+        inlineEditingIdx: null,
+        _inlineEditTarget: null,
+        _selectionHandler: null,
+        // Undo / redo
+        history: [],
+        historyIndex: -1,
+        MAX_HISTORY: 50,
         // Variables
         selectedListUid: '',
         variableGroups: [],
@@ -728,6 +887,7 @@ function builder() {
             document.body.classList.add('builder-active');
             this.renderAll();
             this.loadVariables();
+            this.pushHistory(); // snapshot inicial
 
             // Drag desde paleta al canvas
             document.querySelectorAll('.b-block-card').forEach(el => {
@@ -750,6 +910,7 @@ function builder() {
                 this.blocks.push(block);
                 await this.renderBlock(this.blocks.length - 1);
                 this.selectBlock(this.blocks.length - 1);
+                this.pushHistory();
             });
 
             Sortable.create(canvas, {
@@ -763,10 +924,75 @@ function builder() {
                     this.blocks.splice(evt.newIndex, 0, moved);
                     this.selectedIndex = evt.newIndex;
                     this.renderAll();
+                    this.pushHistory();
                 },
             });
 
-            document.addEventListener('click', () => { this.selectedIndex = null; });
+            document.addEventListener('click', (e) => {
+                if (this.inlineEditingIdx !== null) {
+                    const blockEl = document.querySelector(`[data-idx="${this.inlineEditingIdx}"]`);
+                    const toolbar = document.getElementById('b-float-toolbar');
+                    if (blockEl && !blockEl.contains(e.target) && toolbar && !toolbar.contains(e.target)) {
+                        this.deactivateInlineEdit();
+                    }
+                }
+                this.selectedIndex = null;
+            });
+
+            // Atajos de teclado globales del builder
+            document.addEventListener('keydown', (e) => {
+                // Mientras edición inline está activa: sólo capturamos Escape,
+                // Ctrl+S (guardar) y dejamos todo lo demás al browser (Ctrl+Z nativo, etc.)
+                if (this.inlineEditingIdx !== null) {
+                    if (e.key === 'Escape') { e.preventDefault(); this.deactivateInlineEdit(); }
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.deactivateInlineEdit(); this.save(); }
+                    return;
+                }
+
+                const inInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable;
+
+                // Ctrl+Z = Deshacer
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                    e.preventDefault(); this.undo(); return;
+                }
+                // Ctrl+Y / Ctrl+Shift+Z = Rehacer
+                if (((e.ctrlKey || e.metaKey) && e.key === 'y') || ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')) {
+                    e.preventDefault(); this.redo(); return;
+                }
+                // Ctrl+S = Guardar
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault(); this.save(); return;
+                }
+
+                if (inInput) return; // el resto sólo fuera de campos de texto
+
+                if (this.selectedIndex !== null) {
+                    // Supr / Backspace = eliminar bloque seleccionado
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        e.preventDefault(); this.removeBlock(this.selectedIndex); return;
+                    }
+                    // ↑ ↓ = mover bloque
+                    if (e.key === 'ArrowUp')   { e.preventDefault(); this.moveBlock(this.selectedIndex, -1); return; }
+                    if (e.key === 'ArrowDown') { e.preventDefault(); this.moveBlock(this.selectedIndex,  1); return; }
+                }
+                // Esc = deseleccionar
+                if (e.key === 'Escape') { this.selectedIndex = null; }
+            });
+
+            // Barra flotante de formato inline
+            document.getElementById('b-float-toolbar').addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Mantener foco en editor
+                const btn = e.target.closest('[data-cmd]');
+                if (!btn) return;
+                const cmd = btn.dataset.cmd;
+                if (cmd === 'createLink') {
+                    const url = prompt('URL del enlace:', 'https://');
+                    if (url) document.execCommand('createLink', false, url);
+                } else {
+                    document.execCommand(cmd, false, null);
+                }
+                setTimeout(() => this._updateFloatToolbar(), 10);
+            });
 
             // Auto-save
             this.autosaveTimer = setInterval(() => {
@@ -777,6 +1003,11 @@ function builder() {
             this.$watch('blocks', () => { this.dirty = true; this.detectUndefinedVars(); }, { deep: true });
             this.$watch('globals', () => { this.dirty = true; }, { deep: true });
             this.$watch('meta', () => { this.dirty = true; }, { deep: true });
+
+            // Teclado: pushHistory al hacer blur en campos del panel settings
+            document.querySelector('.b-panel.settings').addEventListener('change', () => {
+                this.pushHistory();
+            });
 
             window.addEventListener('beforeunload', (e) => { if (this.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
@@ -797,6 +1028,7 @@ function builder() {
             return await r.json();
         },
         async renderBlock(idx) {
+            if (idx === this.inlineEditingIdx) return; // No sobreescribir mientras se edita inline
             const block = this.blocks[idx]; if (!block) return;
             const r = await fetch(ROUTES.renderBlock, {
                 method: 'POST',
@@ -805,16 +1037,208 @@ function builder() {
             });
             this.renderedBlocks[idx] = await r.text();
         },
-        async renderAll() { for (let i = 0; i < this.blocks.length; i++) await this.renderBlock(i); },
-        selectBlock(idx) { this.selectedIndex = idx; this.settingsTab = 'content'; },
-        removeBlock(idx) { if (!confirm('¿Eliminar este bloque?')) return; this.blocks.splice(idx, 1); this.selectedIndex = null; this.renderAll(); },
-        duplicateBlock(idx) { const c = JSON.parse(JSON.stringify(this.blocks[idx])); this.blocks.splice(idx + 1, 0, c); this.renderAll(); },
+        async renderAll() {
+            if (this.inlineEditingIdx !== null) return; // No re-renderizar mientras se edita inline
+            for (let i = 0; i < this.blocks.length; i++) await this.renderBlock(i);
+        },
+        selectBlock(idx) {
+            if (this.inlineEditingIdx !== null && this.inlineEditingIdx !== idx) this.deactivateInlineEdit();
+            this.selectedIndex = idx;
+            this.settingsTab = 'content';
+        },
+        removeBlock(idx) {
+            if (!confirm('¿Eliminar este bloque?')) return;
+            if (this.inlineEditingIdx === idx) this.deactivateInlineEdit();
+            this.blocks.splice(idx, 1);
+            this.selectedIndex = null;
+            this.renderAll();
+            this.pushHistory(); // snapshot del estado POST-delete
+        },
+        duplicateBlock(idx) {
+            const c = JSON.parse(JSON.stringify(this.blocks[idx]));
+            this.blocks.splice(idx + 1, 0, c);
+            this.selectedIndex = idx + 1;
+            this.renderAll();
+            this.pushHistory();
+        },
         moveBlock(idx, dir) {
             const n = idx + dir; if (n < 0 || n >= this.blocks.length) return;
             const m = this.blocks.splice(idx, 1)[0]; this.blocks.splice(n, 0, m);
             this.selectedIndex = n; this.renderAll();
+            this.pushHistory();
         },
         hasSettings(key) { return this.blocks[this.selectedIndex]?.settings?.[key] !== undefined; },
+
+        // ── Undo / Redo ──────────────────────────────────────────────
+        pushHistory() {
+            // Truncar redo futuro
+            if (this.historyIndex < this.history.length - 1) {
+                this.history.splice(this.historyIndex + 1);
+            }
+            this.history.push(JSON.stringify(this.blocks));
+            if (this.history.length > this.MAX_HISTORY) this.history.shift();
+            else this.historyIndex++;
+        },
+        undo() {
+            if (this.historyIndex <= 0) return;
+            this.historyIndex--;
+            this.blocks = JSON.parse(this.history[this.historyIndex]);
+            this.selectedIndex = null;
+            this.renderAll();
+        },
+        redo() {
+            if (this.historyIndex >= this.history.length - 1) return;
+            this.historyIndex++;
+            this.blocks = JSON.parse(this.history[this.historyIndex]);
+            this.selectedIndex = null;
+            this.renderAll();
+        },
+
+        // ── Edición inline ───────────────────────────────────────────
+        activateInlineEdit(idx) {
+            if (this.inlineEditingIdx === idx) return; // Ya se está editando este bloque
+            if (this.inlineEditingIdx !== null) this.deactivateInlineEdit();
+
+            const blockEl = document.querySelector(`[data-idx="${idx}"]`);
+            if (!blockEl) return;
+
+            // Busca el primer <td> de contenido dentro del bloque renderizado
+            const td = blockEl.querySelector('td');
+            if (!td) {
+                // Fallback al modal si no hay <td>
+                this.openWysiwyg(this.blocks[idx]?.type === 'footer' ? 'text' : 'html');
+                return;
+            }
+
+            this.selectBlock(idx);
+            this.inlineEditingIdx = idx;
+            this._inlineEditTarget = td;
+
+            td.setAttribute('contenteditable', 'true');
+            td.setAttribute('spellcheck', 'true');
+            td.classList.add('b-inline-edit-target');
+
+            // Foco y cursor al final
+            td.focus();
+            try {
+                const range = document.createRange();
+                range.selectNodeContents(td);
+                range.collapse(false);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } catch (_) {}
+
+            // Escuchar cambios de selección para posicionar toolbar
+            this._selectionHandler = () => this._updateFloatToolbar();
+            document.addEventListener('selectionchange', this._selectionHandler);
+        },
+
+        deactivateInlineEdit() {
+            if (this.inlineEditingIdx === null) return;
+
+            const idx = this.inlineEditingIdx;
+            const td = this._inlineEditTarget;
+
+            // Limpiar estado ANTES de llamar renderBlock
+            this.inlineEditingIdx = null;
+            this._inlineEditTarget = null;
+
+            if (this._selectionHandler) {
+                document.removeEventListener('selectionchange', this._selectionHandler);
+                this._selectionHandler = null;
+            }
+
+            const toolbar = document.getElementById('b-float-toolbar');
+            if (toolbar) toolbar.classList.remove('show');
+
+            if (td) {
+                const block = this.blocks[idx];
+                if (block) {
+                    const fieldName = block.type === 'footer' ? 'text' : 'html';
+                    const newHtml = td.innerHTML;
+                    if (block.content[fieldName] !== newHtml) {
+                        block.content[fieldName] = newHtml;
+                        this.renderBlock(idx); // inlineEditingIdx ya es null → se ejecuta
+                        this.pushHistory();
+                    }
+                }
+                td.removeAttribute('contenteditable');
+                td.removeAttribute('spellcheck');
+                td.classList.remove('b-inline-edit-target');
+            }
+
+            const blockEl = document.querySelector(`[data-idx="${idx}"]`);
+            if (blockEl) blockEl.classList.remove('inline-editing');
+        },
+
+        _updateFloatToolbar() {
+            if (this.inlineEditingIdx === null) return;
+            const sel = window.getSelection();
+            const toolbar = document.getElementById('b-float-toolbar');
+            if (!toolbar) return;
+
+            if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+                toolbar.classList.remove('show'); return;
+            }
+
+            const range = sel.getRangeAt(0);
+            if (!this._inlineEditTarget?.contains(range.commonAncestorContainer)) {
+                toolbar.classList.remove('show'); return;
+            }
+
+            const rect = range.getBoundingClientRect();
+            if (!rect.width) { toolbar.classList.remove('show'); return; }
+
+            const tbH = toolbar.offsetHeight || 38;
+            toolbar.style.left = (rect.left + rect.width / 2) + 'px';
+            toolbar.style.top = Math.max(4, rect.top - tbH - 10) + 'px';
+            toolbar.classList.add('show');
+
+            // Actualizar estados activos
+            toolbar.querySelectorAll('[data-cmd]').forEach(btn => {
+                const cmd = btn.dataset.cmd;
+                if (['bold', 'italic', 'underline', 'strikeThrough'].includes(cmd)) {
+                    btn.classList.toggle('active', !!document.queryCommandState(cmd));
+                }
+            });
+        },
+
+        // ── Spam check ───────────────────────────────────────────────
+        async runSpamCheck() {
+            try {
+                const r = await fetch(ROUTES.spamCheck, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.getElementById('csrf-token').value },
+                    body: JSON.stringify({ blocks: this.blocks, global_settings: this.globals, subject: this.meta.subject }),
+                });
+                const d = await r.json();
+                const score = d.score ?? '?';
+                const issues = (d.issues ?? []).join('\n• ');
+                const msg = `Spam score: ${score}/10\n${d.level ?? ''}\n\n${issues ? '• '+issues : '¡Sin problemas detectados!'}`;
+                alert(msg);
+            } catch (e) { this.toast('Error en spam check: ' + e.message, 'error'); }
+        },
+
+        // ── Guardar como ─────────────────────────────────────────────
+        async promptSaveAs() {
+            const name = prompt('Nombre para la nueva plantilla:', this.meta.name + ' (copia)');
+            if (!name) return;
+            try {
+                const r = await fetch(ROUTES.saveAs, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.getElementById('csrf-token').value },
+                    body: JSON.stringify({ name, blocks: this.blocks, global_settings: this.globals }),
+                });
+                const d = await r.json();
+                if (d.ok) {
+                    this.toast('Plantilla guardada como "' + name + '"');
+                    if (d.redirect && confirm('¿Abrir la nueva plantilla?')) {
+                        window.location.href = d.redirect;
+                    }
+                } else { this.toast('Error al guardar como', 'error'); }
+            } catch (e) { this.toast('Error: ' + e.message, 'error'); }
+        },
 
         // Padding box: parsea "20px 30px 20px 30px" → array de 4 valores.
         // Soporta CSS shorthand de 1, 2, 3 y 4 valores.
@@ -928,9 +1352,13 @@ function builder() {
         },
 
         openWysiwyg(field) {
-            const idx = this.selectedIndex; if (idx === null) return;
-            openWysiwygModal(this.blocks[idx].content[field] || '', (html) => {
-                this.blocks[idx].content[field] = html; this.renderBlock(idx);
+            const idx = this.selectedIndex; if (idx === null || !field) return;
+            const block = this.blocks[idx];
+            if (!block) return;
+            openWysiwygModal(block.content[field] || '', (html) => {
+                this.blocks[idx].content[field] = html;
+                this.renderBlock(idx);
+                this.pushHistory();
             });
         },
 

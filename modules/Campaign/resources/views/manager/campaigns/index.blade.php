@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Campañas')
 
@@ -7,7 +7,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>Campañas</h2>
             @hasanypermission('campaigns.manage.all')
-                <a href="{{ route('manager.campaigns.create') }}" class="btn btn-primary">
+                <a href="{{ route('manager.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Nueva campaña
                 </a>
             @endhasanypermission
@@ -34,17 +34,17 @@
             <tbody>
                 @forelse ($campaigns as $c)
                     <tr>
-                        <td><a href="{{ route('manager.campaigns.show', $c->uid) }}">{{ $c->name }}</a></td>
+                        <td><a href="{{ route('manager.show', $c->uid) }}">{{ $c->name }}</a></td>
                         <td class="text-muted">{{ Str::limit($c->subject, 60) }}</td>
                         <td><span class="badge bg-secondary">{{ $statuses[$c->status] ?? $c->status }}</span></td>
                         <td>{{ $c->run_at?->format('Y-m-d H:i') ?: '—' }}</td>
                         <td>{{ $c->created_at?->format('Y-m-d') }}</td>
                         <td class="text-end">
-                            <a href="{{ route('manager.campaigns.edit', $c->uid) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                            <a href="{{ route('manager.edit', $c->uid) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted py-4">No hay campañas. <a href="{{ route('manager.campaigns.create') }}">Crear una</a>.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">No hay campañas. <a href="{{ route('manager.create') }}">Crear una</a>.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Log de envíos')
 
@@ -9,7 +9,7 @@
             <h2 class="mb-0">Log de envíos</h2>
             <p class="text-muted mb-0">{{ $campaign->name }}</p>
         </div>
-        <a href="{{ route('manager.campaigns.show', $campaign->uid) }}" class="btn btn-outline-secondary">← Volver</a>
+        <a href="{{ route('manager.show', $campaign->uid) }}" class="btn btn-outline-secondary">← Volver</a>
     </div>
 
     <form method="get" class="mb-3">

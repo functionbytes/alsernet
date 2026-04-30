@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Destinatarios · '.$campaign->name)
 
@@ -9,7 +9,7 @@
 
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.recipients', $campaign->uid) }}">
+    <form method="post" action="{{ route('manager.recipients', $campaign->uid) }}">
         @csrf
         <div id="lists-container">
             @php
@@ -48,7 +48,7 @@
 
         <hr>
         <button type="submit" class="btn btn-primary">Guardar destinatarios</button>
-        <a href="{{ route('manager.campaigns.show', $campaign->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.show', $campaign->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 

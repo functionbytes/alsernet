@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', $campaign->name)
 
@@ -51,21 +51,21 @@
 
         <h5>Acciones</h5>
         <div class="mb-3">
-            <a href="{{ route('manager.campaigns.recipients', $campaign->uid) }}" class="btn btn-outline-secondary">Destinatarios</a>
-            <a href="{{ route('manager.campaigns.edit', $campaign->uid) }}" class="btn btn-outline-secondary">Editar</a>
-            <a href="{{ route('manager.campaigns.tracking-logs', $campaign->uid) }}" class="btn btn-outline-secondary">Log de envíos</a>
+            <a href="{{ route('manager.recipients', $campaign->uid) }}" class="btn btn-outline-secondary">Destinatarios</a>
+            <a href="{{ route('manager.edit', $campaign->uid) }}" class="btn btn-outline-secondary">Editar</a>
+            <a href="{{ route('manager.tracking-logs', $campaign->uid) }}" class="btn btn-outline-secondary">Log de envíos</a>
 
             @if (in_array($campaign->status, ['new','scheduled','paused']))
-                <form method="post" action="{{ route('manager.campaigns.confirm', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-success">Lanzar</button></form>
+                <form method="post" action="{{ route('manager.confirm', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-success">Lanzar</button></form>
             @endif
             @if ($campaign->status === 'sending')
-                <form method="post" action="{{ route('manager.campaigns.pause', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-warning">Pausar</button></form>
+                <form method="post" action="{{ route('manager.pause', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-warning">Pausar</button></form>
             @endif
             @if ($campaign->status === 'paused')
-                <form method="post" action="{{ route('manager.campaigns.resume', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-success">Reanudar</button></form>
+                <form method="post" action="{{ route('manager.resume', $campaign->uid) }}" class="d-inline">@csrf<button class="btn btn-success">Reanudar</button></form>
             @endif
 
-            <form method="post" action="{{ route('manager.campaigns.destroy', $campaign->uid) }}" class="d-inline" onsubmit="return confirm('¿Eliminar campaña?');">
+            <form method="post" action="{{ route('manager.destroy', $campaign->uid) }}" class="d-inline" onsubmit="return confirm('¿Eliminar campaña?');">
                 @csrf @method('DELETE')<button class="btn btn-outline-danger">Eliminar</button>
             </form>
         </div>

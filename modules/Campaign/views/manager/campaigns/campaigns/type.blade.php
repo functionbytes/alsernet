@@ -1,9 +1,10 @@
 @extends('layouts.managers')
 
-@section('content')
-
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Tipo de Campaña'. $campaign->type])
+@endsection
+
+@section('content')
 
 
     <div class="row my-sm-5 my-4 select-types">

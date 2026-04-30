@@ -55,8 +55,11 @@ class DispatchCampaignWebhook implements ShouldQueue
         $webhook = CampaignWebhook::find($this->webhookId);
 
         if (! $webhook || ! $webhook->enabled) {
-            return; // webhook desactivado o eliminado
+            return;
         }
+
+        $timestamp = now()->getTimestamp();
+        $this->payload['timestamp'] = $timestamp;
 
         $body = json_encode($this->payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $headers = [
@@ -64,12 +67,12 @@ class DispatchCampaignWebhook implements ShouldQueue
             'User-Agent' => 'Campaign-Webhook/1.0',
             'X-Webhook-Event' => $this->payload['event'] ?? 'unknown',
             'X-Webhook-Delivery' => (string) Str::uuid(),
+            'X-Webhook-Timestamp' => (string) $timestamp,
         ];
 
-        // HMAC-SHA256 signature si el webhook tiene secret configurado.
-        // El receptor verifica con: hash_hmac('sha256', $rawBody, $secret).
         if (! empty($webhook->secret)) {
-            $signature = hash_hmac('sha256', $body, (string) $webhook->secret);
+            $signaturePayload = $timestamp.'.'.$body;
+            $signature = hash_hmac('sha256', $signaturePayload, (string) $webhook->secret);
             $headers['X-Webhook-Signature'] = "sha256={$signature}";
         }
 
@@ -90,7 +93,6 @@ class DispatchCampaignWebhook implements ShouldQueue
         };
 
         if (! $response->successful()) {
-            // Lanzando excepción se reencola con el siguiente backoff.
             throw new Exception(sprintf(
                 'Webhook %s respondió HTTP %d: %s',
                 $webhook->url,

@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Nueva campaña')
 
@@ -10,7 +10,7 @@
             <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
         @endif
 
-        <form method="post" action="{{ route('manager.campaigns.store') }}">
+        <form method="post" action="{{ route('manager.store') }}">
             @csrf
 
             <div class="mb-3">
@@ -68,7 +68,7 @@
             <div class="form-check mb-3"><input type="checkbox" name="sign_dkim" value="1" id="dkim" class="form-check-input"><label for="dkim" class="form-check-label">Firmar con DKIM (requiere SendingDomain verificado)</label></div>
 
             <button type="submit" class="btn btn-primary">Crear</button>
-            <a href="{{ route('manager.campaigns.index') }}" class="btn btn-link">Cancelar</a>
+            <a href="{{ route('manager.index') }}" class="btn btn-link">Cancelar</a>
         </form>
     </div>
 @endsection

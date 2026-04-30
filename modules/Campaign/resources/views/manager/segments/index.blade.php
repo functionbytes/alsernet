@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Segmentos')
 
@@ -6,7 +6,7 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h2>Segmentos</h2><p class="text-muted mb-0">Lista: {{ $list->name }}</p></div>
-        <a href="{{ route('manager.campaigns.maillists.segments.create', $list->uid) }}" class="btn btn-primary">Nuevo segmento</a>
+        <a href="{{ route('manager.maillists.segments.create', $list->uid) }}" class="btn btn-primary">Nuevo segmento</a>
     </div>
 
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
@@ -16,11 +16,11 @@
         <tbody>
             @forelse ($segments as $seg)
                 <tr>
-                    <td><a href="{{ route('manager.campaigns.maillists.segments.edit', [$list->uid, $seg->uid]) }}">{{ $seg->name }}</a></td>
+                    <td><a href="{{ route('manager.maillists.segments.edit', [$list->uid, $seg->uid]) }}">{{ $seg->name }}</a></td>
                     <td><code>{{ $seg->matching }}</code></td>
                     <td>{{ $seg->conditions_count }} condición(es)</td>
                     <td>
-                        <form method="post" action="{{ route('manager.campaigns.maillists.segments.destroy', [$list->uid, $seg->uid]) }}" class="d-inline" onsubmit="return confirm('¿Eliminar?');">
+                        <form method="post" action="{{ route('manager.maillists.segments.destroy', [$list->uid, $seg->uid]) }}" class="d-inline" onsubmit="return confirm('¿Eliminar?');">
                             @csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger">Eliminar</button>
                         </form>
                     </td>

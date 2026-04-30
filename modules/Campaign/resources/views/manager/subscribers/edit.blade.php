@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Editar suscriptor')
 
@@ -9,7 +9,7 @@
 
     @if ($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.maillists.subscribers.update', [$list->uid, $subscriber->uid]) }}">
+    <form method="post" action="{{ route('manager.maillists.subscribers.update', [$list->uid, $subscriber->uid]) }}">
         @csrf @method('PUT')
         <div class="mb-3"><label class="form-label">Email</label>
             <input type="email" name="email" value="{{ old('email', $subscriber->email) }}" class="form-control"></div>
@@ -27,7 +27,7 @@
             </select></div>
 
         <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{{ route('manager.campaigns.maillists.subscribers.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.maillists.subscribers.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 
     @if ($subscriber->attributes)

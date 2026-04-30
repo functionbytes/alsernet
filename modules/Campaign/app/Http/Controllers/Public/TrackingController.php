@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Modules\Campaign\Events\CampaignMessageClicked;
+use Modules\Campaign\Events\CampaignMessageOpened;
 use Modules\Campaign\Library\GeoIp;
 use Modules\Campaign\Library\WebhookDispatcher;
 use Modules\Campaign\Models\Campaign;
@@ -33,7 +35,7 @@ class TrackingController extends Controller
     {
         $log = CampaignTrackingLog::where('message_id', $messageId)->first();
         if ($log) {
-            CampaignOpenLog::create([
+            $openLog = CampaignOpenLog::create([
                 'tracking_log_id' => $log->id,
                 'ip' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 255),
@@ -47,6 +49,7 @@ class TrackingController extends Controller
                         'email' => $log->email,
                         'message_id' => $messageId,
                     ]);
+                    CampaignMessageOpened::dispatch($campaign, $openLog);
                 }
             }
         }
@@ -75,12 +78,14 @@ class TrackingController extends Controller
             : null;
 
         if ($log && $link) {
-            CampaignClickLog::create([
+            $clickLog = CampaignClickLog::create([
                 'tracking_log_id' => $log->id,
                 'campaign_link_id' => $link->id,
                 'ip' => $request->ip(),
                 'user_agent' => substr((string) $request->userAgent(), 0, 255),
                 'country' => GeoIp::country($request->ip()),
+                'click_x' => $request->input('x') ? (int) $request->input('x') : null,
+                'click_y' => $request->input('y') ? (int) $request->input('y') : null,
             ]);
 
             if ($log->campaign_id && $campaign = Campaign::find($log->campaign_id)) {
@@ -89,6 +94,7 @@ class TrackingController extends Controller
                     'message_id' => $messageId,
                     'url' => $link->url,
                 ]);
+                CampaignMessageClicked::dispatch($campaign, $clickLog);
             }
         }
 
@@ -120,6 +126,7 @@ class TrackingController extends Controller
                 'subscriber_id' => $sub->id,
                 'ip' => request()->ip(),
                 'reason' => 'one-click',
+                'reason_detail' => request()->input('reason_detail'),
             ]);
 
             if ($log && $log->campaign_id && $campaign = Campaign::find($log->campaign_id)) {

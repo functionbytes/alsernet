@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Campaign\Library\Contracts\CampaignInterface;
 use Modules\Campaign\Library\Traits\Trackable;
 
@@ -47,16 +48,15 @@ class LoadCampaign implements ShouldQueue
             return;
         }
 
-        // Update status
         $this->campaign->setSending();
 
-        // Iterating through a big list ans create job objects may cause memory leak
-        // So, LoadCampaign only loads a certain numbers subscribers each time, then just finish job to release the queue listener (remember to configure the queue correctly to release after a short time)
-        // When a campaign is done, it will automaticall launch a new LoadCampaign job if there are more subscribers to send
         $loadLimit = 100 + rand(1, 9);
         $this->campaign->logger()->info(sprintf('Loading contacts to shoot (up to %s)', $loadLimit));
+        Log::info('Campaign load batch started', [
+            'campaign_uid' => $this->campaign->uid,
+            'batch_limit' => $loadLimit,
+        ]);
 
-        // Iterate through contacts and launch sending process
         $this->campaign->loadDeliveryJobs(function (ShouldQueue $deliveryJob) {
             $this->batch()->add($deliveryJob);
         }, $loadLimit);

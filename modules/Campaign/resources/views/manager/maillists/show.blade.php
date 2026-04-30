@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', $list->name)
 
@@ -26,16 +26,16 @@
 
         <h5>Acciones</h5>
         <div class="mb-3">
-            <a href="{{ route('manager.campaigns.maillists.subscribers.index', $list->uid) }}" class="btn btn-outline-secondary">Suscriptores</a>
-            <a href="{{ route('manager.campaigns.maillists.segments.index', $list->uid) }}" class="btn btn-outline-secondary">Segmentos</a>
-            <a href="{{ route('manager.campaigns.maillists.fields', $list->uid) }}" class="btn btn-outline-secondary">🏷️ Campos / Variables</a>
-            <a href="{{ route('manager.campaigns.maillists.sending-servers', $list->uid) }}" class="btn btn-outline-secondary">Servidores</a>
-            <a href="{{ route('manager.campaigns.maillists.edit', $list->uid) }}" class="btn btn-outline-secondary">Editar</a>
+            <a href="{{ route('manager.maillists.subscribers.index', $list->uid) }}" class="btn btn-outline-secondary">Suscriptores</a>
+            <a href="{{ route('manager.maillists.segments.index', $list->uid) }}" class="btn btn-outline-secondary">Segmentos</a>
+            <a href="{{ route('manager.maillists.fields', $list->uid) }}" class="btn btn-outline-secondary">🏷️ Campos / Variables</a>
+            <a href="{{ route('manager.maillists.sending-servers', $list->uid) }}" class="btn btn-outline-secondary">Servidores</a>
+            <a href="{{ route('manager.maillists.edit', $list->uid) }}" class="btn btn-outline-secondary">Editar</a>
             <a href="{{ route('campaign.subscribe.form', $list->uid) }}" target="_blank" class="btn btn-outline-info">Vista pública del formulario ↗</a>
         </div>
 
         <h5>Importar suscriptores</h5>
-        <form method="post" action="{{ route('manager.campaigns.maillists.import-csv', $list->uid) }}" enctype="multipart/form-data" class="row g-2">
+        <form method="post" action="{{ route('manager.maillists.import-csv', $list->uid) }}" enctype="multipart/form-data" class="row g-2">
             @csrf
             <div class="col-md-9"><input type="file" name="file" class="form-control" accept=".csv,.txt" required></div>
             <div class="col-md-3"><button class="btn btn-primary w-100">Importar CSV</button></div>

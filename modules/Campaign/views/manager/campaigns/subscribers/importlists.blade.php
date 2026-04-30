@@ -4,9 +4,11 @@
     use Modules\Campaign\Library\Tool;
 @endphp
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar suscripciones - '. $list->title])
+@endsection
+
+@section('content')
 
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">

@@ -79,7 +79,7 @@ Route::group(
     [
         'middleware' => ['web', 'auth', 'verified'],
         'prefix' => 'manager',
-        'name' => 'manager.',
+        'as' => 'manager.',
     ],
     function (): void {
 
@@ -87,7 +87,7 @@ Route::group(
         // SUBSCRIBERS ROUTES - Individual subscriber management (25+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'subscribers', 'name' => 'subscribers.'], function (): void {
+        Route::group(['prefix' => 'subscribers', 'as' => 'subscribers.'], function (): void {
 
             // Individual subscriber CRUD operations
             Route::get('/', [SubscriberController::class, 'index'])->name('index');
@@ -139,7 +139,7 @@ Route::group(
         // TEMPLATES ROUTES - Email template management (30+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'templates', 'name' => 'templates.'], function (): void {
+        Route::group(['prefix' => 'templates', 'as' => 'templates.'], function (): void {
 
             // Template CRUD operations
             Route::get('/', [TemplatesController::class, 'index'])->name('index');
@@ -155,6 +155,7 @@ Route::group(
             Route::get('/preview/{uid}', [TemplatesController::class, 'preview'])->name('preview');
             Route::post('/copy/{uid}', [TemplatesController::class, 'copy'])->name('copy');
             Route::post('/export/{uid}', [TemplatesController::class, 'export'])->name('export');
+            Route::get('/validate/{uid}', [TemplatesController::class, 'validateTemplate'])->name('validate');
 
             // ── EMAIL BUILDER (drag-drop visual) ──────────────────────
             Route::get('/gallery', [BuilderController::class, 'gallery'])->name('gallery');
@@ -201,7 +202,7 @@ Route::group(
         // CAMPAIGNS ROUTES - Email campaign management (60+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'campaigns', 'name' => 'campaigns.'], function (): void {
+        Route::group(['prefix' => 'campaigns', 'as' => 'campaigns.'], function (): void {
 
             // Campaign CRUD operations
             Route::get('/', [CampaignsController::class, 'index'])->name('index');
@@ -336,7 +337,7 @@ Route::group(
         // SEGMENTS ROUTES - Audience segmentation (15+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'lists/{list_uid}/segments', 'name' => 'segments.'], function (): void {
+        Route::group(['prefix' => 'lists/{list_uid}/segments', 'as' => 'segments.'], function (): void {
 
             // Segment CRUD operations
             Route::get('/', [SegmentController::class, 'index'])->name('index');
@@ -363,7 +364,7 @@ Route::group(
         // MAILLISTS ROUTES - Subscriber list management (40+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'maillists', 'name' => 'maillists.'], function (): void {
+        Route::group(['prefix' => 'maillists', 'as' => 'maillists.'], function (): void {
 
             // Maillist CRUD operations
             Route::get('/', [MaillistController::class, 'index'])->name('index');
@@ -452,7 +453,7 @@ Route::group(
         // AUTOMATIONS ROUTES - Automated email workflows (35+ routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'automations', 'name' => 'automations.'], function (): void {
+        Route::group(['prefix' => 'automations', 'as' => 'automations.'], function (): void {
 
             // Automation CRUD and state management
             Route::get('/', [AutomationsController::class, 'index'])->name('index');
@@ -532,7 +533,7 @@ Route::group(
         // AUTO TRIGGER ROUTES - Automation trigger debugging (2 routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'triggers', 'name' => 'triggers.'], function (): void {
+        Route::group(['prefix' => 'triggers', 'as' => 'triggers.'], function (): void {
             Route::get('/{id}/show', [AutoTrigger::class, 'show'])->name('show');
             Route::get('/{id}/check', [AutoTrigger::class, 'check'])->name('check');
         });
@@ -541,7 +542,7 @@ Route::group(
         // LAYOUTS ROUTES - Email layout templates (9 routes)
         // ===================================================================
 
-        Route::group(['prefix' => 'layouts', 'name' => 'layouts.'], function (): void {
+        Route::group(['prefix' => 'layouts', 'as' => 'layouts.'], function (): void {
 
             // Layout CRUD operations
             Route::get('/', [LayoutController::class, 'index'])->name('index');

@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 @section('title', 'Nuevo segmento')
 @section('content')
 <div class="container py-4" style="max-width:880px" x-data="{ rows: [{ field: 'email', operator: 'contains', value: '' }] }">
@@ -7,7 +7,7 @@
 
     @if ($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.maillists.segments.store', $list->uid) }}">
+    <form method="post" action="{{ route('manager.maillists.segments.store', $list->uid) }}">
         @csrf
         <div class="mb-3"><label class="form-label">Nombre *</label>
             <input type="text" name="name" value="{{ old('name') }}" class="form-control" required></div>
@@ -53,7 +53,7 @@
 
         <hr>
         <button type="submit" class="btn btn-primary">Crear segmento</button>
-        <a href="{{ route('manager.campaigns.maillists.segments.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.maillists.segments.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.0/dist/cdn.min.js" defer></script>

@@ -1,11 +1,11 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 @section('title', 'Nueva automatización')
 @section('content')
 <div class="container py-4" style="max-width:680px">
     <h2>Nueva automatización</h2>
     @if ($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.automations.store') }}">
+    <form method="post" action="{{ route('manager.automations.store') }}">
         @csrf
         <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" name="name" value="{{ old('name') }}" class="form-control" required></div>
         <div class="mb-3"><label class="form-label">Descripción</label><textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea></div>
@@ -24,7 +24,7 @@
             </select></div>
 
         <button type="submit" class="btn btn-primary">Crear y editar workflow</button>
-        <a href="{{ route('manager.campaigns.automations.index') }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.automations.index') }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 @endsection

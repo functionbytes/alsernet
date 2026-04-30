@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Añadir suscriptor')
 
@@ -9,7 +9,7 @@
 
     @if ($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.maillists.subscribers.store', $list->uid) }}">
+    <form method="post" action="{{ route('manager.maillists.subscribers.store', $list->uid) }}">
         @csrf
         <div class="mb-3"><label class="form-label">Email *</label>
             <input type="email" name="email" value="{{ old('email') }}" class="form-control" required></div>
@@ -37,7 +37,7 @@
         @endif
 
         <button type="submit" class="btn btn-primary">Añadir</button>
-        <a href="{{ route('manager.campaigns.maillists.subscribers.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.maillists.subscribers.index', $list->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 @endsection

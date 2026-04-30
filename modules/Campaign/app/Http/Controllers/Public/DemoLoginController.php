@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Magic link de un solo uso para acceso rápido al builder demo sin
@@ -19,22 +20,25 @@ class DemoLoginController extends Controller
 {
     public function login(Request $request)
     {
-        // Verifica firma URL (Laravel comprueba expira y HMAC)
-        if (! $request->hasValidSignature()) {
-            abort(403, 'Magic link inválido o caducado. Regenera con `php artisan campaign:demo-login`.');
+        $token = (string) $request->query('token');
+        if (! $token) {
+            abort(400, 'Token requerido.');
         }
 
-        $userId = (int) $request->query('user');
-        $user = User::find($userId);
+        // Token persistido en cache por el comando demo (one-shot, 1h validez).
+        $payload = Cache::pull("campaign:demo-login:{$token}");
+        if (! $payload || ! isset($payload['user_id'])) {
+            abort(403, 'Token inválido o caducado. Regenera con `php artisan campaign:demo`.');
+        }
 
+        $user = User::find($payload['user_id']);
         if (! $user) {
             abort(404, 'Usuario no existe.');
         }
 
         Auth::login($user, remember: false);
 
-        // Redirige al builder de la plantilla pasada (o a /panel/campaign si no)
-        $redirect = $request->query('to', '/panel/campaign/manager/templates/gallery');
+        $redirect = $payload['redirect'] ?? '/panel/campaign/manager/templates/gallery';
 
         return redirect($redirect);
     }

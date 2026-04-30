@@ -27,6 +27,26 @@ class CampaignWebhook extends Model
     use HasFactory;
     use HasUid;
 
+    protected $fillable = [
+        'uid',
+        'campaign_id',
+        'name',
+        'event',
+        'url',
+        'method',
+        'headers',
+        'enabled',
+        'secret',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'headers' => 'array',
+            'enabled' => 'boolean',
+        ];
+    }
+
     public const TYPE_OPEN = 'open';
 
     public const TYPE_CLICK = 'click';

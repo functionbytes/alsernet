@@ -1,10 +1,10 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 @section('title', 'Layouts')
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Layouts de email</h2>
-        <a href="{{ route('manager.campaigns.layouts.create') }}" class="btn btn-primary">Nuevo</a>
+        <a href="{{ route('manager.layouts.create') }}" class="btn btn-primary">Nuevo</a>
     </div>
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
@@ -13,11 +13,11 @@
         <tbody>
             @forelse ($layouts as $l)
                 <tr>
-                    <td><a href="{{ route('manager.campaigns.layouts.edit', $l->uid) }}">{{ $l->name }}</a></td>
+                    <td><a href="{{ route('manager.layouts.edit', $l->uid) }}">{{ $l->name }}</a></td>
                     <td>{{ $l->default ? '✓' : '' }}</td>
                     <td>{{ $l->order }}</td>
                     <td>
-                        <form method="post" action="{{ route('manager.campaigns.layouts.destroy', $l->uid) }}" class="d-inline" onsubmit="return confirm('¿Eliminar?');">
+                        <form method="post" action="{{ route('manager.layouts.destroy', $l->uid) }}" class="d-inline" onsubmit="return confirm('¿Eliminar?');">
                             @csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger">Eliminar</button>
                         </form>
                     </td>

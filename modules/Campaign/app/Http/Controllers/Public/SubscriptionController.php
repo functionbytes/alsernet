@@ -14,6 +14,7 @@ use Modules\Campaign\Mail\SubscribeConfirmationMail;
 use Modules\Campaign\Mail\WelcomeMail;
 use Modules\Campaign\Models\CampaignMaillist;
 use Modules\Campaign\Models\CampaignSubscriber;
+use Modules\Campaign\Services\EmailVerifier;
 use Modules\CampaignSendingServers\Models\Blacklist;
 
 /**
@@ -47,6 +48,19 @@ class SubscriptionController extends Controller
             'first_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['nullable', 'string', 'max:255'],
         ]);
+
+        $data['email'] = CampaignSubscriber::normalizeEmail($data['email']);
+
+        // Verificación de email vía API externa si está habilitada
+        if (config('campaign.email_verification.enabled')) {
+            $result = app(EmailVerifier::class)->verify($data['email']);
+            if ($result['status'] === EmailVerifier::DISPOSABLE && config('campaign.email_verification.reject_disposable')) {
+                return back()->with('error', 'No se permiten emails temporales o desechables.');
+            }
+            if ($result['status'] === EmailVerifier::INVALID && config('campaign.email_verification.reject_invalid')) {
+                return back()->with('error', 'El email proporcionado no es válido.');
+            }
+        }
 
         // Si está blacklisted, ignorar silenciosamente para no informar atacantes.
         if (Blacklist::isBlacklisted($data['email'])) {

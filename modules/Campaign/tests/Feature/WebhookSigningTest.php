@@ -22,8 +22,8 @@ class WebhookSigningTest extends TestCase
     {
         Bus::fake();
 
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
-        CampaignWebhook::create([
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        CampaignWebhook::forceCreate([
             'campaign_id' => $campaign->id,
             'name' => 'wh',
             'event' => 'sent',
@@ -41,9 +41,9 @@ class WebhookSigningTest extends TestCase
     {
         Http::fake();
 
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
         $secret = 'super-secret-key';
-        $webhook = CampaignWebhook::create([
+        $webhook = CampaignWebhook::forceCreate([
             'campaign_id' => $campaign->id,
             'name' => 'wh',
             'event' => 'sent',
@@ -57,15 +57,16 @@ class WebhookSigningTest extends TestCase
             'event' => 'sent',
             'campaign_uid' => $campaign->uid,
             'campaign_id' => $campaign->id,
-            'timestamp' => now()->toIso8601String(),
+            'timestamp' => now()->getTimestamp(),
             'email' => 'x@example.com',
         ];
 
         (new DispatchCampaignWebhook($webhook->id, $payload))->handle();
 
         Http::assertSent(function ($req) use ($secret) {
+            $timestamp = $req->header('X-Webhook-Timestamp')[0];
             $body = $req->body();
-            $expectedSig = 'sha256='.hash_hmac('sha256', $body, $secret);
+            $expectedSig = 'sha256='.hash_hmac('sha256', $timestamp.'.'.$body, $secret);
 
             return $req->hasHeader('X-Webhook-Signature', $expectedSig)
                 && $req->hasHeader('X-Webhook-Event', 'sent');
@@ -76,14 +77,14 @@ class WebhookSigningTest extends TestCase
     {
         Http::fake();
 
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
-        $webhook = CampaignWebhook::create([
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        $webhook = CampaignWebhook::forceCreate([
             'campaign_id' => $campaign->id,
             'name' => 'wh',
             'event' => 'sent',
             'url' => 'https://example.com/webhook',
             'method' => 'POST',
-            'enabled' => false,  // desactivado
+            'enabled' => false,
         ]);
 
         (new DispatchCampaignWebhook($webhook->id, []))->handle();

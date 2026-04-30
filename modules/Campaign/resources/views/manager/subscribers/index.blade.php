@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', "Suscriptores · {$list->name}")
 
@@ -7,9 +7,9 @@
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h2 class="mb-0">Suscriptores</h2>
-                <p class="text-muted mb-0">Lista: <a href="{{ route('manager.campaigns.maillists.show', $list->uid) }}">{{ $list->name }}</a></p>
+                <p class="text-muted mb-0">Lista: <a href="{{ route('manager.maillists.show', $list->uid) }}">{{ $list->name }}</a></p>
             </div>
-            <a href="{{ route('manager.campaigns.maillists.subscribers.create', $list->uid) }}" class="btn btn-primary">Añadir suscriptor</a>
+            <a href="{{ route('manager.maillists.subscribers.create', $list->uid) }}" class="btn btn-primary">Añadir suscriptor</a>
         </div>
 
         @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
@@ -37,14 +37,14 @@
                         <td><span class="badge bg-secondary">{{ $sub->pivot->status }}</span></td>
                         <td>{{ optional($sub->pivot->subscribed_at)?->format('Y-m-d') ?: ($sub->pivot->subscribed_at ?? '—') }}</td>
                         <td>
-                            <a href="{{ route('manager.campaigns.maillists.subscribers.edit', [$list->uid, $sub->uid]) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
-                            <form method="post" action="{{ route('manager.campaigns.maillists.subscribers.destroy', [$list->uid, $sub->uid]) }}" class="d-inline" onsubmit="return confirm('¿Desasociar de la lista?');">
+                            <a href="{{ route('manager.maillists.subscribers.edit', [$list->uid, $sub->uid]) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                            <form method="post" action="{{ route('manager.maillists.subscribers.destroy', [$list->uid, $sub->uid]) }}" class="d-inline" onsubmit="return confirm('¿Desasociar de la lista?');">
                                 @csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger">Quitar</button>
                             </form>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">Sin suscriptores. <a href="{{ route('manager.campaigns.maillists.show', $list->uid) }}">Importa un CSV</a>.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted py-4">Sin suscriptores. <a href="{{ route('manager.maillists.show', $list->uid) }}">Importa un CSV</a>.</td></tr>
                 @endforelse
             </tbody>
         </table>

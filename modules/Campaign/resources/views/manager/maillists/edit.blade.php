@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Editar lista')
 
@@ -8,7 +8,7 @@
 
     @if ($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.maillists.update', $list->uid) }}">
+    <form method="post" action="{{ route('manager.maillists.update', $list->uid) }}">
         @csrf @method('PUT')
 
         <div class="mb-3"><label class="form-label">Nombre *</label>
@@ -42,7 +42,7 @@
         <div class="form-check mb-3"><input type="checkbox" name="unsubscribe_notification" value="1" id="un" class="form-check-input" @checked($list->unsubscribe_notification)><label for="un" class="form-check-label">Notificar al admin desuscripciones</label></div>
 
         <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{{ route('manager.campaigns.maillists.show', $list->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.maillists.show', $list->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 @endsection

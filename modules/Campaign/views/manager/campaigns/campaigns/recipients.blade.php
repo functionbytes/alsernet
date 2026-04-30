@@ -1,8 +1,10 @@
 @extends('layouts.managers')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Crear campaña'])
+@endsection
+
+@section('content')
 
     <div class="card">
         <ul class="nav nav-pills user-profile-tab" id="pills-tab" role="tablist">

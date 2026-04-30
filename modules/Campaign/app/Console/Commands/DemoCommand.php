@@ -4,6 +4,7 @@ namespace Modules\Campaign\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -122,25 +123,43 @@ class DemoCommand extends Command
         $blockCount = count($blocks);
         $this->line("✓ Plantilla creada con {$blockCount} bloques: {$template->name}");
 
-        // 5. Output con URLs Chrome-ready (route() resuelve el prefijo correcto)
+        // 5. Output con URLs Chrome-ready
+        // Si SESSION_DOMAIN no es subdominio de APP_URL, las cookies se descartan en el browser.
+        // Detectamos eso y construimos la URL contra el dominio donde la cookie SÍ va a persistir.
         $base = rtrim((string) config('app.url'), '/');
+        $sessionDomain = config('session.domain');
+        if ($sessionDomain) {
+            $cookieHost = ltrim($sessionDomain, '.');
+            $appHost = parse_url($base, PHP_URL_HOST) ?: '';
+            $cookieMatchesApp = $appHost === $cookieHost
+                || str_ends_with(".{$appHost}", ".{$cookieHost}");
+            if (! $cookieMatchesApp) {
+                $base = 'https://'.$cookieHost;
+                $this->warn("⚠️  APP_URL ({$appHost}) y SESSION_DOMAIN ({$sessionDomain}) no comparten dominio.");
+                $this->warn("    Usando {$base} para que la cookie de sesión persista.");
+            }
+        }
         $url = $base.'/panel/campaign/manager/templates/'.$template->uid.'/builder';
         $previewUrl = $base.'/panel/campaign/manager/templates/'.$template->uid.'/builder/preview';
         $listFieldsUrl = $base.'/panel/campaign/manager/maillists/'.$list->uid.'/fields';
         $galleryUrl = $base.'/panel/campaign/manager/templates/gallery';
 
-        // 6. Magic link de auto-login (1h validez, primer admin)
+        // 6. Magic link de auto-login (token persistido en cache, 1h validez)
         $admin = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['super-admin', 'super-settings']))
             ->orderBy('id')
             ->first();
         $magicUrl = null;
         if ($admin) {
-            $relativeBuilder = '/panel/campaign/manager/templates/'.$template->uid.'/builder';
-            $magicUrl = URL::temporarySignedRoute(
-                'campaign.demo-login',
+            $token = bin2hex(random_bytes(24));
+            Cache::put(
+                "campaign:demo-login:{$token}",
+                [
+                    'user_id' => $admin->id,
+                    'redirect' => '/panel/campaign/manager/templates/'.$template->uid.'/builder',
+                ],
                 now()->addHour(),
-                ['user' => $admin->id, 'to' => $relativeBuilder],
             );
+            $magicUrl = $base.'/campaign/demo-login?token='.$token;
         }
 
         $this->newLine();

@@ -16,13 +16,6 @@ use Tests\TestCase;
 
 /**
  * Smoke test del módulo Campaign.
- *
- * Verifica:
- *   - migrate:fresh corre limpio
- *   - Campaign + Maillist + Subscriber persisten
- *   - Estados new → scheduled → done de la máquina
- *   - trackMessage() inserta en campaign_tracking_logs
- *   - subscribersToSend() excluye blacklist y duplicados
  */
 class CampaignSmokeTest extends TestCase
 {
@@ -30,7 +23,7 @@ class CampaignSmokeTest extends TestCase
 
     public function test_creates_campaign_in_new_state(): void
     {
-        $campaign = Campaign::create([
+        $campaign = Campaign::forceCreate([
             'name' => 'Test Campaign',
             'subject' => 'Hola',
             'from_email' => 'sender@example.com',
@@ -45,7 +38,7 @@ class CampaignSmokeTest extends TestCase
 
     public function test_state_machine_transitions(): void
     {
-        $campaign = Campaign::create([
+        $campaign = Campaign::forceCreate([
             'name' => 'C',
             'subject' => 'S',
             'from_email' => 'a@a.com',
@@ -65,7 +58,7 @@ class CampaignSmokeTest extends TestCase
 
     public function test_track_message_persists_log(): void
     {
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
         $sub = CampaignSubscriber::create(['email' => 'to@example.com']);
         $server = SendingServer::create([
             'name' => 'S',
@@ -94,10 +87,9 @@ class CampaignSmokeTest extends TestCase
 
     public function test_subscribers_to_send_excludes_already_sent(): void
     {
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
         $list = CampaignMaillist::create(['name' => 'L']);
 
-        // Asociar lista a campaña
         \DB::table('campaign_lists_segments')->insert([
             'campaign_id' => $campaign->id,
             'mail_list_id' => $list->id,
@@ -119,8 +111,8 @@ class CampaignSmokeTest extends TestCase
             ]);
         }
 
-        // a ya recibió el envío
         CampaignTrackingLog::create([
+            'uid' => (string) Str::uuid(),
             'campaign_id' => $campaign->id,
             'subscriber_id' => $a->id,
             'sending_server_id' => null,
@@ -137,7 +129,7 @@ class CampaignSmokeTest extends TestCase
 
     public function test_job_monitor_tracks_subjects(): void
     {
-        $campaign = Campaign::create(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
+        $campaign = Campaign::forceCreate(['name' => 'C', 'subject' => 'S', 'from_email' => 'a@a.com', 'from_name' => 'a', 'reply_to' => 'a@a.com']);
 
         $monitor = JobMonitor::makeInstance($campaign, RunCampaign::class);
         $monitor->save();

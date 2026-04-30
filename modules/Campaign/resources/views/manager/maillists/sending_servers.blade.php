@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Servidores de la lista')
 
@@ -9,7 +9,7 @@
 
     @if (session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 
-    <form method="post" action="{{ route('manager.campaigns.maillists.sending-servers', $list->uid) }}">
+    <form method="post" action="{{ route('manager.maillists.sending-servers', $list->uid) }}">
         @csrf
 
         <table class="table">
@@ -32,7 +32,7 @@
         </table>
 
         <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{{ route('manager.campaigns.maillists.show', $list->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.maillists.show', $list->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 @endsection

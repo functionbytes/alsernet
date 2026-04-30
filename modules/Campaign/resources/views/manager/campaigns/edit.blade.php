@@ -1,4 +1,4 @@
-@extends('theme::layouts.manager')
+@extends('layouts.theme')
 
 @section('title', 'Editar campaña')
 
@@ -10,7 +10,7 @@
         <div class="alert alert-danger"><ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
     @endif
 
-    <form method="post" action="{{ route('manager.campaigns.update', $campaign->uid) }}">
+    <form method="post" action="{{ route('manager.update', $campaign->uid) }}">
         @csrf @method('PUT')
 
         <div class="mb-3"><label class="form-label">Nombre interno *</label>
@@ -59,7 +59,7 @@
         <div class="form-check mb-3"><input type="checkbox" name="sign_dkim" value="1" id="dkim" class="form-check-input" @checked($campaign->sign_dkim)><label for="dkim" class="form-check-label">Firmar con DKIM</label></div>
 
         <button type="submit" class="btn btn-primary">Guardar cambios</button>
-        <a href="{{ route('manager.campaigns.show', $campaign->uid) }}" class="btn btn-link">Cancelar</a>
+        <a href="{{ route('manager.show', $campaign->uid) }}" class="btn btn-link">Cancelar</a>
     </form>
 </div>
 @endsection
