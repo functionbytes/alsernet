@@ -2,9 +2,11 @@
 
 @section('title', 'Editar país')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar país'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

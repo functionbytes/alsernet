@@ -2,9 +2,11 @@
 
 @section('title', 'Importar ubicaciones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar ubicaciones'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
