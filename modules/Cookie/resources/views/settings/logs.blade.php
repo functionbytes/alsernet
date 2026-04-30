@@ -2,9 +2,11 @@
 
 @section('title', 'Registros de consentimiento')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Registros de consentimiento de cookies'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -219,7 +221,7 @@ $(document).ready(function () {
         $('#consent-trend-chart').dxChart({
             dataSource: consentTrend,
             series: [
-                { valueField: 'accept_all', name: 'Aceptar todo', color: '#90bb13' },
+                { valueField: 'accept_all', name: 'Aceptar todo', color: '#b10100' },
                 { valueField: 'reject_all', name: 'Rechazar',     color: '#FA896B' },
                 { valueField: 'custom',     name: 'Personalizado', color: '#FEC90F' },
             ],

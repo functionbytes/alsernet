@@ -24,7 +24,7 @@ class CookieSettingsControllerTest extends TestCase
             'more_info_url' => 'https://ejemplo.com/cookies',
             'bg_color' => '#ffffff',
             'text_color' => '#212529',
-            'btn_color' => '#90bb13',
+            'btn_color' => '#b10100',
             'max_width' => 1170,
             'position' => 'bottom',
             'google_analytics_enabled' => '1',
@@ -91,12 +91,12 @@ class CookieSettingsControllerTest extends TestCase
         $this->actingAs($user)->patch(route('settings.cookie.update'), $this->validPayload([
             'message' => 'Mensaje personalizado de cookies.',
             'bg_color' => '#123456',
-            'btn_color' => '#90bb13',
+            'btn_color' => '#b10100',
         ]));
 
         $this->assertSame('Mensaje personalizado de cookies.', Setting::get('cookie.message'));
         $this->assertSame('#123456', Setting::get('cookie.bg_color'));
-        $this->assertSame('#90bb13', Setting::get('cookie.btn_color'));
+        $this->assertSame('#b10100', Setting::get('cookie.btn_color'));
     }
 
     // ───── Checkboxes (estado no enviado = '0') ───────────────────────────────
@@ -164,7 +164,7 @@ class CookieSettingsControllerTest extends TestCase
         $user = $this->createUser(['cookie.settings.update']);
 
         $this->actingAs($user)
-            ->patchJson(route('settings.cookie.update'), $this->validPayload(['btn_color' => '90bb13']))
+            ->patchJson(route('settings.cookie.update'), $this->validPayload(['btn_color' => 'b10100']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['btn_color']);
     }
@@ -177,7 +177,7 @@ class CookieSettingsControllerTest extends TestCase
             ->patchJson(route('settings.cookie.update'), $this->validPayload([
                 'bg_color' => '#AABBCC',
                 'text_color' => '#000000',
-                'btn_color' => '#90bb13',
+                'btn_color' => '#b10100',
             ]))
             ->assertRedirect();
     }
