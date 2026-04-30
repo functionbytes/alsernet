@@ -2,9 +2,11 @@
 
 @section('title', 'Mantenimiento de caché')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Mantenimiento de caché'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

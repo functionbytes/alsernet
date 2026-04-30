@@ -12,9 +12,11 @@
 
 @section('title', "Importar {$title}")
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => "Importar {$title}"])
+@endsection
+
+@section('content')
 
     <div class="row justify-content-center">
         <div class="col-lg-8">

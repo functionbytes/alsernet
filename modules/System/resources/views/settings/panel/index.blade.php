@@ -8,8 +8,8 @@
     {{-- Header --}}
     <div class="d-flex align-items-center gap-3 mb-4">
         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:48px;height:48px;background:#90bb1322">
-            <i class="fas fa-cogs" style="color:#90bb13;font-size:1.3rem"></i>
+             style="width:48px;height:48px;background:#b1010022">
+            <i class="fas fa-cogs" style="color:#b10100;font-size:1.3rem"></i>
         </div>
         <div>
             <h4 class="mb-0 fw-semibold">Configuración del sistema</h4>
