@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Actividades'])
+@endsection
 
+@section('content')
 
     <div class="card overflow-hidden chat-application">
         <div class="d-flex align-items-center justify-content-between gap-3 m-3 d-lg-none">

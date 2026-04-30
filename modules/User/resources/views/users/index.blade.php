@@ -2,18 +2,18 @@
 
 @section('page_title', 'Usuarios')
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Gestión de usuarios',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'Configuración', 'url' => ''],
-            ['label' => 'Usuarios', 'active' => true]
-        ]
+    'title' => 'Gestión de usuarios',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Configuración', 'url' => ''],
+    ['label' => 'Usuarios', 'active' => true]
+    ]
     ])
+@endsection
 
+@section('content')
 
     @include('core::components.alerts')
 
