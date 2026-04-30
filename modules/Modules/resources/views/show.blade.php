@@ -2,9 +2,11 @@
 
 @section('title', 'Módulo: ' . $module['name'])
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalle del módulo'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
