@@ -2,9 +2,11 @@
 
 @section('title', 'Registro de cambios')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Registro de cambios'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

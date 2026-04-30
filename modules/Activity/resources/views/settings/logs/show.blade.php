@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle del registro')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalle del registro'])
+@endsection
+
+@section('content')
 
     @php
         $properties = $activity->properties?->toArray() ?? [];
