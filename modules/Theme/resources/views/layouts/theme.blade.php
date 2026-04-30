@@ -33,7 +33,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-id" content="{{ auth()->id() ?? '' }}">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#90bb13">
+    <meta name="theme-color" content="#b10100">
 
     @stack('meta')
 
@@ -66,7 +66,7 @@
     <link rel="stylesheet" href="{{ themeAsset('acelle/css/components.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('acelle/css/notifications.css') }}">
 
-    {{-- ─── Brand overrides (primary color #90bb13) ───────────────── --}}
+    {{-- ─── Brand overrides (primary color #b10100) ───────────────── --}}
     <link rel="stylesheet" href="{{ themeAsset('acelle/css/theme-overrides.css') }}">
 
     {{-- ─── Tooltipster (keep for legacy tooltips) ───────────────── --}}

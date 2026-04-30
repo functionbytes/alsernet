@@ -1838,7 +1838,7 @@ ul.small li:before {
     font-weight: 900;
     position: absolute;
     left: 0;
-    --fa-primary-color: #90bb13;
+    --fa-primary-color: #b10100;
     --fa-secondary-color: #c4db7d;
     --fa-secondary-opacity: 0.4;
     font-size: 20px;
@@ -1875,7 +1875,7 @@ ul.small li:last-child {
 [data-theme="dark"] .border-bottom { border-color: #2d3748 !important; }
 [data-theme="dark"] .nav-link { color: #9ca3af; }
 [data-theme="dark"] .nav-link:hover,
-[data-theme="dark"] .nav-link.active { color: #90bb13; }
+[data-theme="dark"] .nav-link.active { color: #b10100; }
 [data-theme="dark"] input,
 [data-theme="dark"] textarea { color-scheme: dark; }
 

@@ -125,8 +125,8 @@
                                                     $icon = $icon ?: 'fas fa-folder';
                                                 @endphp
                                                 <span class="rounded-circle d-inline-block flex-shrink-0"
-                                                      style="width:12px;height:12px;background-color:{{ $category->color ?? '#90bb13' }};"></span>
-                                                <i class="{{ $icon }}" style="color:{{ $category->color ?? '#90bb13' }};"></i>
+                                                      style="width:12px;height:12px;background-color:{{ $category->color ?? '#b10100' }};"></span>
+                                                <i class="{{ $icon }}" style="color:{{ $category->color ?? '#b10100' }};"></i>
                                                 <span class="fw-semibold">{{ $category->name }}</span>
                                             </div>
                                         </td>
