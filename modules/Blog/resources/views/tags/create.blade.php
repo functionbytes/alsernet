@@ -2,9 +2,11 @@
 
 @section('title', 'Nuevo tag')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nuevo tag'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="row g-4 align-items-start">

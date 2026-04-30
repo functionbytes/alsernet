@@ -17,7 +17,7 @@
 
                     {{-- Header --}}
                     <tr>
-                        <td style="background-color:#90bb13;padding:24px 32px;text-align:center;">
+                        <td style="background-color:#b10100;padding:24px 32px;text-align:center;">
                             <span style="color:#ffffff;font-size:22px;font-weight:bold;letter-spacing:0.5px;">
                                 {{ config('app.name') }}
                             </span>
@@ -63,7 +63,7 @@
                             {{-- CTA --}}
                             <table cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td style="border-radius:5px;background-color:#90bb13;">
+                                    <td style="border-radius:5px;background-color:#b10100;">
                                         <a href="{{ $post->url }}"
                                            style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:5px;">
                                             Leer más &rarr;
@@ -90,7 +90,7 @@
                             </p>
                             <p style="margin:0;font-size:12px;color:#aaaaaa;">
                                 <a href="{{ $unsubscribe_link ?? config('blog.unsubscribe_url', '#') }}"
-                                   style="color:#90bb13;text-decoration:underline;">
+                                   style="color:#b10100;text-decoration:underline;">
                                     Cancelar suscripción
                                 </a>
                             </p>

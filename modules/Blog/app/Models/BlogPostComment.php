@@ -77,6 +77,6 @@ class BlogPostComment extends Model
 
     public function getAvatarUrlAttribute(): string
     {
-        return 'https://ui-avatars.com/api/?name='.urlencode($this->author_name).'&size=70&background=90bb13&color=fff&rounded=true';
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->author_name).'&size=70&background=b10100&color=fff&rounded=true';
     }
 }

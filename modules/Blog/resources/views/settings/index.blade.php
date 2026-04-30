@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración del blog')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración del blog'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form method="POST" action="{{ route('settings.blog.update') }}">
