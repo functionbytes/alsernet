@@ -2,9 +2,11 @@
 
 @section('title', trans('captcha::captcha.settings.title'))
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => trans('captcha::captcha.settings.title')])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
