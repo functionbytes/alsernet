@@ -2,9 +2,11 @@
 
 @section('title', 'Tipos de peticiones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Tipos de peticiones'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

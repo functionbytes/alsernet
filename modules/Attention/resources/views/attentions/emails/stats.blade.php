@@ -2,9 +2,11 @@
 
 @section('title', 'Estadísticas de emails')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Estadísticas de emails'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -290,7 +292,7 @@ $(document).ready(function () {
             valueField: 'count',
             name: 'Emails',
             type: 'bar',
-            color: '#90bb13',
+            color: '#b10100',
         }],
         argumentAxis: {
             label: { font: { size: 11 } }

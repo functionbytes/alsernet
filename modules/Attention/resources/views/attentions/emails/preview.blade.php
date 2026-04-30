@@ -271,12 +271,12 @@
     }
 
     .variable-badge:hover {
-        border-color: #90bb13;
+        border-color: #b10100;
         background: #f6faf0;
     }
 
     .variable-badge i {
-        color: #90bb13;
+        color: #b10100;
         font-size: 12px;
         margin-top: 4px;
     }
@@ -338,8 +338,8 @@
 
     /* Button Group Active State */
     .btn-group .btn.active {
-        background-color: #90bb13 !important;
-        border-color: #90bb13 !important;
+        background-color: #b10100 !important;
+        border-color: #b10100 !important;
         color: white !important;
     }
 

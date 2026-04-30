@@ -107,13 +107,13 @@ class AttentionEmailTemplatesSeeder extends Seeder
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">peticiones recibido exitosamente</h1>
+    <h1 style="color: #b10100; font-size: 24px; margin-bottom: 10px;">peticiones recibido exitosamente</h1>
 
     <p>Estimado/a <strong>{CUSTOMER_NAME}</strong>,</p>
 
     <p>Hemos recibido su solicitud y se ha generado el siguiente numero de radicado para seguimiento:</p>
 
-    <div style="background: #f0f5e3; border-left: 4px solid #90bb13; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+    <div style="background: #f0f5e3; border-left: 4px solid #b10100; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 18px; font-weight: bold; color: #333;">Radicado: {ATTENTION_RADICADO}</p>
     </div>
 
@@ -139,7 +139,7 @@ class AttentionEmailTemplatesSeeder extends Seeder
     <p>Puede consultar el estado de su peticiones en cualquier momento utilizando el numero de radicado:</p>
 
     <div style="text-align: center; margin: 24px 0;">
-        <a href="{TRACKING_URL}" style="display: inline-block; background: #90bb13; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Consultar estado</a>
+        <a href="{TRACKING_URL}" style="display: inline-block; background: #b10100; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Consultar estado</a>
     </div>
 
     <p style="color: #777; font-size: 14px;">Tambien puede hacer seguimiento enviando el numero de radicado por WhatsApp o llamando a nuestras lineas de atencion.</p>
@@ -172,11 +172,11 @@ HTML;
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Nuevo peticiones asignado</h1>
+    <h1 style="color: #b10100; font-size: 24px; margin-bottom: 10px;">Nuevo peticiones asignado</h1>
 
     <p>Se le ha asignado un nuevo caso de atencion al ciudadano para su gestion.</p>
 
-    <div style="background: #f0f5e3; border-left: 4px solid #90bb13; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+    <div style="background: #f0f5e3; border-left: 4px solid #b10100; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0 0 4px 0; font-size: 18px; font-weight: bold; color: #333;">Radicado: {ATTENTION_RADICADO}</p>
         <p style="margin: 0; font-size: 14px; color: #555;">Tipo: {ATTENTION_TYPE}</p>
     </div>
@@ -237,7 +237,7 @@ HTML;
     {
         return <<<'HTML'
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-    <h1 style="color: #90bb13; font-size: 24px; margin-bottom: 10px;">Su peticiones esta en proceso</h1>
+    <h1 style="color: #b10100; font-size: 24px; margin-bottom: 10px;">Su peticiones esta en proceso</h1>
 
     <p>Estimado/a <strong>{CUSTOMER_NAME}</strong>,</p>
 
@@ -274,7 +274,7 @@ HTML;
     <p>Su solicitud ha sido asignada a nuestro equipo de <strong>{DEPARTMENT_NAME}</strong> y esta siendo revisada. Pronto recibira una respuesta.</p>
 
     <div style="text-align: center; margin: 24px 0;">
-        <a href="{TRACKING_URL}" style="display: inline-block; background: #90bb13; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Ver estado actual</a>
+        <a href="{TRACKING_URL}" style="display: inline-block; background: #b10100; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Ver estado actual</a>
     </div>
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
@@ -380,7 +380,7 @@ HTML;
     <p style="font-size: 14px; color: #555;">Si tiene alguna pregunta, puede consultar el estado de su solicitud en cualquier momento:</p>
 
     <div style="text-align: center; margin: 24px 0;">
-        <a href="{TRACKING_URL}" style="display: inline-block; background: #90bb13; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Consultar estado</a>
+        <a href="{TRACKING_URL}" style="display: inline-block; background: #b10100; color: #fff; padding: 12px 32px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px;">Consultar estado</a>
     </div>
 
     <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">

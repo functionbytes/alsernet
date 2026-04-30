@@ -2,9 +2,11 @@
 
 @section('title', 'Ver peticiones - ' . $attention->radicado)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalle del peticiones'])
+@endsection
+
+@section('content')
 
     <div class="row">
         <div class="col-lg-8">

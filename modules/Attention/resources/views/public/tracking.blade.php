@@ -12,7 +12,7 @@
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                             style="width: 70px; height: 70px; background: #90bb13; box-shadow: 0 4px 20px rgba(144, 187, 19, 0.3);">
+                             style="width: 70px; height: 70px; background: #b10100; box-shadow: 0 4px 20px rgba(144, 187, 19, 0.3);">
                             <i class="fas fa-magnifying-glass fa-2x text-white"></i>
                         </div>
                         <h4 class="fw-bold mb-2" style="color: #1a2030;">Consulte el estado de su peticiones</h4>
@@ -37,7 +37,7 @@
                 @if(isset($attention) && $attention)
                     {{-- Informacion del radicado --}}
                     <div class="card mb-4">
-                        <div class="card-header p-3" style="background: #90bb13;">
+                        <div class="card-header p-3" style="background: #b10100;">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="mb-1 text-white fw-bold">Radicado: {{ $attention->radicado }}</h5>
@@ -199,7 +199,7 @@
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
                                 <div class="d-inline-flex align-items-center justify-content-center rounded-circle"
-                                     style="width: 100px; height: 100px; background: #90bb13;">
+                                     style="width: 100px; height: 100px; background: #b10100;">
                                     <i class="fas fa-circle-exclamation text-warning" style="font-size: 3rem;"></i>
                                 </div>
                             </div>
@@ -247,7 +247,7 @@
             left: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
-            color: #90bb13;
+            color: #b10100;
             font-size: 1.125rem;
             z-index: 10;
         }
@@ -261,7 +261,7 @@
         }
 
         .search-input:focus {
-            border-color: #90bb13;
+            border-color: #b10100;
             box-shadow: 0 0 0 0.25rem rgba(144, 187, 19, 0.15);
             padding-left: 3rem;
         }

@@ -2,9 +2,11 @@
 
 @section('title', 'Reglas de asignación')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Reglas de asignación automática'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

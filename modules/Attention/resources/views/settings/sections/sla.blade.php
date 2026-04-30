@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración SLA')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Políticas de Nivel de Servicio (SLA)'])
+@endsection
 
+@section('content')
     <div class="widget-content">
         @include('core::components.alerts')
 

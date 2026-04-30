@@ -2,9 +2,11 @@
 
 @section('title', 'Dashboard')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Dashboard'])
+@endsection
+
+@section('content')
 
     <div class="widget-content">
 

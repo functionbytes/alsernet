@@ -2,9 +2,11 @@
 
 @section('title', 'Emails Enviados - ' . $attention->radicado)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Historial de Emails'])
+@endsection
+
+@section('content')
 
     <div class="row">
         <div class="col-lg-12">

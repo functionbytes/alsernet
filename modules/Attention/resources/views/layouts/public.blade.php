@@ -24,7 +24,7 @@
 
     <style>
         :root {
-            --bs-primary: #90bb13;
+            --bs-primary: #b10100;
             --bs-primary-rgb: 144, 187, 19;
             --bs-success: #13C672;
             --bs-danger: #FA896B;
@@ -36,14 +36,14 @@
         }
 
         body {
-            background: #90bb13;
+            background: #b10100;
             font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
         }
 
         .public-header {
             background: #fff;
-            border-bottom: 4px solid #90bb13;
+            border-bottom: 4px solid #b10100;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
             position: sticky;
             top: 0;
@@ -57,7 +57,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: #90bb13;
+            background: #b10100;
         }
 
         .public-header .container {
@@ -73,7 +73,7 @@
         }
 
         .public-header .brand-name i {
-            color: #90bb13;
+            color: #b10100;
         }
 
         .public-header .brand-subtitle {
@@ -84,27 +84,27 @@
         }
 
         .public-header .btn-outline-light {
-            color: #90bb13;
-            border-color: #90bb13;
+            color: #b10100;
+            border-color: #b10100;
             font-weight: 600;
             transition: all 0.3s ease;
         }
 
         .public-header .btn-outline-light:hover {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
             color: #fff;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(144, 187, 19, 0.3);
         }
 
         .public-footer {
-            background: #90bb13;
+            background: #b10100;
             color: rgba(255, 255, 255, 0.7);
             padding: 2rem 0;
             margin-top: 4rem;
             font-size: 0.875rem;
-            border-top: 3px solid #90bb13;
+            border-top: 3px solid #b10100;
         }
 
         .public-footer p:last-child {
@@ -112,8 +112,8 @@
         }
 
         .btn-primary {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
             font-weight: 600;
             transition: all 0.3s ease;
         }
@@ -126,37 +126,37 @@
         }
 
         .btn-outline-primary {
-            color: #90bb13;
-            border-color: #90bb13;
+            color: #b10100;
+            border-color: #b10100;
             font-weight: 600;
             transition: all 0.3s ease;
         }
 
         .btn-outline-primary:hover {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
             color: #fff;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(144, 187, 19, 0.3);
         }
 
         .form-control:focus, .form-select:focus {
-            border-color: #90bb13;
+            border-color: #b10100;
             box-shadow: 0 0 0 0.25rem rgba(144, 187, 19, 0.15);
         }
 
         .form-check-input:checked {
-            background-color: #90bb13;
-            border-color: #90bb13;
+            background-color: #b10100;
+            border-color: #b10100;
         }
 
         .form-check-input:focus {
-            border-color: #90bb13;
+            border-color: #b10100;
             box-shadow: 0 0 0 0.25rem rgba(144, 187, 19, 0.15);
         }
 
         a {
-            color: #90bb13;
+            color: #b10100;
             text-decoration: none;
             transition: color 0.2s ease;
         }
@@ -220,8 +220,8 @@
         }
 
         .step-item.active .step-circle {
-            background: #90bb13;
-            border-color: #90bb13;
+            background: #b10100;
+            border-color: #b10100;
             color: #fff;
         }
 
@@ -234,7 +234,7 @@
         }
 
         .step-item.active .step-label {
-            color: #90bb13;
+            color: #b10100;
         }
 
         /* Responsive adjustments */

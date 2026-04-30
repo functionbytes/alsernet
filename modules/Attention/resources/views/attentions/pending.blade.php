@@ -2,16 +2,18 @@
 
 @section('title', 'peticiones Pendientes')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'peticiones Pendientes',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'peticiones', 'url' => ''],
-            ['label' => 'Pendientes', 'active' => true],
-        ]
+    'title' => 'peticiones Pendientes',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'peticiones', 'url' => ''],
+    ['label' => 'Pendientes', 'active' => true],
+    ]
     ])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

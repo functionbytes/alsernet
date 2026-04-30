@@ -13,7 +13,7 @@
                     <div class="mb-4 position-relative">
                         <div class="success-gradient-bg"></div>
                         <div class="d-inline-flex align-items-center justify-content-center rounded-circle position-relative"
-                             style="width: 120px; height: 120px; background: #90bb13; box-shadow: 0 8px 24px rgba(19, 198, 114, 0.4);">
+                             style="width: 120px; height: 120px; background: #b10100; box-shadow: 0 8px 24px rgba(19, 198, 114, 0.4);">
                             <i class="fas fa-check-circle text-white" style="font-size: 4rem;"></i>
                         </div>
                         <div class="success-particles"></div>
@@ -32,7 +32,7 @@
                     <div class="radicado-box mb-4">
                         <p class="text-muted mb-2 small">Numero de radicado</p>
                         <div class="d-flex align-items-center justify-content-center gap-2">
-                            <h3 class="fw-bold mb-0" style="letter-spacing: 2px; color: #90bb13;" id="radicadoNumber">
+                            <h3 class="fw-bold mb-0" style="letter-spacing: 2px; color: #b10100;" id="radicadoNumber">
                                 {{ $attention->radicado }}
                             </h3>
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyRadicado()" id="copyBtn">
@@ -92,11 +92,11 @@
                     </div>
 
                     {{-- Alerta importante --}}
-                    <div class="alert alert-warning border-0 text-start mb-4" style="background: #90bb13;">
+                    <div class="alert alert-warning border-0 text-start mb-4" style="background: #b10100;">
                         <div class="d-flex align-items-start">
                             <i class="fas fa-exclamation-triangle me-3 mt-1" style="color: #FEC90F; font-size: 1.25rem;"></i>
                             <div>
-                                <strong>Importante:</strong> Guarde su numero de radicado <strong style="color: #90bb13;">{{ $attention->radicado }}</strong>.
+                                <strong>Importante:</strong> Guarde su numero de radicado <strong style="color: #b10100;">{{ $attention->radicado }}</strong>.
                                 Lo necesitara para consultar el estado de su solicitud.
                             </div>
                         </div>
@@ -167,8 +167,8 @@
 
         /* Radicado Box */
         .radicado-box {
-            background: #90bb13 0%, rgba(19, 198, 114, 0.05) 100%);
-            border: 2px solid #90bb13;
+            background: #b10100 0%, rgba(19, 198, 114, 0.05) 100%);
+            border: 2px solid #b10100;
             border-radius: 1rem;
             padding: 1.5rem;
         }
@@ -212,7 +212,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: #90bb13;
+            background: #b10100;
             display: flex;
             align-items: center;
             justify-content: center;

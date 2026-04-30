@@ -2,9 +2,11 @@
 
 @section('title', 'Radicar nuevo peticiones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Radicar nuevo peticiones'])
+@endsection
+
+@section('content')
 
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">

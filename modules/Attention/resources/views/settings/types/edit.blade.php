@@ -2,9 +2,11 @@
 
 @section('title', 'Editar tipo de peticiones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar tipo de peticiones'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración de Email')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Notificaciones por Email'])
+@endsection
 
+@section('content')
     <div class="widget-content">
         @include('core::components.alerts')
 

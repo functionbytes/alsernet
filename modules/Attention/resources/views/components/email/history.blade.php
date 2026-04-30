@@ -112,7 +112,7 @@
 
         .email-item:hover .email-arrow {
             transform: translateX(3px);
-            color: #90bb13;
+            color: #b10100;
         }
 
         .email-item:last-child {

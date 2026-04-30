@@ -2,9 +2,11 @@
 
 @section('title', 'peticiones Pendientes')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'peticiones Pendientes'])
+@endsection
+
+@section('content')
 
     <!-- Stats Cards -->
     <div class="row g-3 mb-4">

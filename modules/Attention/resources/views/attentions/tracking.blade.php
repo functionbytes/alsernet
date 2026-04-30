@@ -2,9 +2,11 @@
 
 @section('title', 'Seguimiento peticiones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Seguimiento de peticiones'])
+@endsection
+
+@section('content')
 
     <div class="row justify-content-center">
         <div class="col-lg-12">
@@ -518,7 +520,7 @@
 
     .info-badge:hover {
         border-color: var(--bs-primary);
-        background: #90bb13;
+        background: #b10100;
         box-shadow: 0 4px 8px color-mix(in srgb, var(--bs-primary) 10%, transparent);
     }
 

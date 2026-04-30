@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva regla de asignación')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Nueva regla de asignación'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

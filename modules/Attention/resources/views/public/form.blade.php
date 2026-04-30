@@ -409,8 +409,8 @@
         /* Section Headers with Left Accent */
         .section-header {
             padding-left: 1rem;
-            border-left: 4px solid #90bb13;
-            background: #90bb13 0%, transparent 100%);
+            border-left: 4px solid #b10100;
+            background: #b10100 0%, transparent 100%);
             padding: 1rem;
             border-radius: 0.5rem;
         }
@@ -422,7 +422,7 @@
         /* Section Divider */
         .section-divider {
             height: 1px;
-            background: #90bb13;
+            background: #b10100;
             margin: 2rem 0;
         }
 
@@ -469,21 +469,21 @@
         }
 
         .response-type-card:hover .response-type-content {
-            border-color: #90bb13;
+            border-color: #b10100;
             box-shadow: 0 4px 12px rgba(144, 187, 19, 0.15);
         }
 
         .response-type-card input[type="radio"]:checked ~ .response-type-content {
-            border-color: #90bb13;
+            border-color: #b10100;
             background: rgba(144, 187, 19, 0.05);
         }
 
         .response-type-card input[type="radio"]:checked ~ .response-type-content i {
-            color: #90bb13;
+            color: #b10100;
         }
 
         .response-type-card input[type="radio"]:checked ~ .response-type-content span {
-            color: #90bb13;
+            color: #b10100;
         }
 
         /* File Upload Area */
@@ -498,7 +498,7 @@
         }
 
         .file-upload-area:hover {
-            border-color: #90bb13;
+            border-color: #b10100;
             background: rgba(144, 187, 19, 0.02);
         }
 
@@ -514,7 +514,7 @@
 
         /* Submit Section */
         .submit-section {
-            background: #90bb13;
+            background: #b10100;
             padding: 1.5rem;
             border-radius: 0.75rem;
             margin-top: 2rem;
@@ -529,7 +529,7 @@
         }
 
         .form-control:hover, .form-select:hover {
-            border-color: #90bb13;
+            border-color: #b10100;
         }
 
         textarea.form-control {
