@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva categoria de ticket')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Nueva categoria de ticket'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

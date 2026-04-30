@@ -2,18 +2,19 @@
 
 @section('page_title', 'Gestión de almacenamiento')
 
+@section('page_header')
+    @include('core::components.card', [
+    'title' => 'Gestión de almacenamiento',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Configuración', 'url' => route('manager.backups')],
+    ['label' => 'Almacenamiento', 'active' => true]
+    ]
+    ])
+@endsection
+
 @section('content')
     <div class="container-fluid">
-
-        {{-- Breadcrumb Card --}}
-        @include('core::components.card', [
-            'title' => 'Gestión de almacenamiento',
-            'breadcrumbs' => [
-                ['label' => 'Dashboard', 'url' => url('/home')],
-                ['label' => 'Configuración', 'url' => route('manager.backups')],
-                ['label' => 'Almacenamiento', 'active' => true]
-            ]
-        ])
 
         <div class="widget-content searchable-container list">
 

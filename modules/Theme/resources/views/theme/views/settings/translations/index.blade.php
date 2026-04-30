@@ -2,9 +2,11 @@
 
 @section('title', 'Administrador de traducciones')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Administrador de traducciones'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

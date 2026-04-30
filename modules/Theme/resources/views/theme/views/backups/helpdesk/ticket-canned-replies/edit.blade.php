@@ -2,9 +2,11 @@
 
 @section('title', 'Editar respuesta: ' . $reply->title)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar respuesta'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

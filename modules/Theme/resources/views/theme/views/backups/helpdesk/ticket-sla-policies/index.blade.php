@@ -2,9 +2,11 @@
 
 @section('title', 'Politicas SLA')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Politicas SLA'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

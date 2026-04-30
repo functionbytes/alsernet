@@ -1,290 +1,454 @@
 @php
     use Modules\Theme\Services\NavService;
+    use Illuminate\Support\Facades\Route;
 
-    // Obtener todos los datos de navegación procesados desde el backend
-    // Esto incluye: miniItems filtrados, sidebars filtrados, y el ID del sidebar activo
-    ['miniItems' => $miniItems, 'sidebars' => $allSidebars, 'activeSidebarId' => $activeSidebarId, 'activeMiniId' => $activeMiniId, 'activeItemRoute' => $activeItemRoute] = NavService::getNavDataForUser();
-    $currentRoute = request()->route()?->getName() ?? '';
+    ['miniItems' => $miniItems, 'sidebars' => $allSidebars, 'activeSidebarId' => $activeSidebarId, 'activeItemRoute' => $activeItemRoute] = NavService::getNavDataForUser();
+
+    $siteName  = getSiteName();
+    $initials  = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
+    $userName  = Auth::user()->firstname . ' ' . Auth::user()->lastname;
+    $userEmail = Auth::user()->email;
+
+    try { $dashboardUrl = route('dashboard.index'); } catch (\Exception $e) { $dashboardUrl = url('/panel/dashboard'); }
+    try { $profileUrl   = route('settings.auth.profile'); } catch (\Exception $e) { $profileUrl = '#'; }
+    try { $logoutUrl    = route('auth.logout'); } catch (\Exception $e) { $logoutUrl = '/logout'; }
+    try { $lockUrl      = route('auth.lock.lock'); } catch (\Exception $e) { $lockUrl = null; }
+
+    $svgDefault = '<circle cx="10" cy="10" r="4.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/><circle cx="10" cy="10" r="4.5"/>';
+
+    // SVG icon paths (inner SVG elements) per main sidebar ID
+    $svgMainIcons = [
+        'dashboard' =>
+            '<rect x="2" y="2" width="7" height="7" rx="1.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="2" y="2" width="7" height="7" rx="1.5"/>'.
+            '<rect x="11" y="2" width="7" height="7" rx="1.5"/>'.
+            '<rect x="2" y="11" width="7" height="7" rx="1.5"/>'.
+            '<rect x="11" y="11" width="7" height="7" rx="1.5"/>',
+
+        'users' =>
+            '<circle cx="10" cy="6.5" r="3" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="6.5" r="3"/>'.
+            '<path d="M3.5 17.5c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6"/>',
+
+        'campaigns' =>
+            '<path d="M3 8.5h1.5L13 4.5v11L4.5 11.5H3a1 1 0 01-1-1v-2a1 1 0 011-1z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M3 8.5h1.5L13 4.5v11L4.5 11.5H3a1 1 0 01-1-1v-2a1 1 0 011-1z"/>'.
+            '<path d="M4.5 11.5l1.5 3"/>'.
+            '<path d="M13 7c2.2 1 3.5 2 3.5 3s-1.3 2-3.5 3"/>',
+
+        'campaign_sending_servers' =>
+            '<rect x="2" y="3" width="16" height="5.5" rx="1.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="2" y="3" width="16" height="5.5" rx="1.5"/>'.
+            '<rect x="2" y="11.5" width="16" height="5.5" rx="1.5"/>'.
+            '<circle cx="15.5" cy="5.75" r="1" fill="currentColor" stroke="none"/>'.
+            '<circle cx="15.5" cy="14.25" r="1" fill="currentColor" stroke="none"/>',
+
+        'mailers' =>
+            '<rect x="2" y="4.5" width="16" height="12" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="2" y="4.5" width="16" height="12" rx="2"/>'.
+            '<path d="M2 7.5l8 5 8-5"/>',
+
+        'reviews' =>
+            '<path d="M10 2.5l2 5.5H18l-4.5 3.5 1.5 5.5L10 14l-5 2.5 1.5-5.5L2 8h6z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M10 2.5l2 5.5H18l-4.5 3.5 1.5 5.5L10 14l-5 2.5 1.5-5.5L2 8h6z"/>',
+
+        'attentions' =>
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5c0 2-1.5 3.5-3.5 4.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5"/>'.
+            '<path d="M4.5 11a2 2 0 00-2 2v1a2 2 0 002 2"/>'.
+            '<path d="M15.5 11a2 2 0 012 2v1a2 2 0 01-2 2"/>'.
+            '<path d="M10 17v2M8 19h4"/>',
+
+        'helpdesk' =>
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5c0 2-1.5 3.5-3.5 4.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5"/>'.
+            '<path d="M4.5 11a2 2 0 00-2 2v1a2 2 0 002 2"/>'.
+            '<path d="M15.5 11a2 2 0 012 2v1a2 2 0 01-2 2"/>'.
+            '<path d="M10 17v2M8 19h4"/>',
+
+        'forms-inbox' =>
+            '<rect x="3" y="2" width="14" height="16" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="3" y="2" width="14" height="16" rx="2"/>'.
+            '<path d="M7 7h6M7 10.5h6M7 14h4"/>',
+
+        'ecommerce' =>
+            '<path d="M2 2.5h2.5L7 13.5h10l1.5-8H5.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M2 2.5h2.5L7 13.5h10l1.5-8H5.5"/>'.
+            '<circle cx="8.5" cy="17" r="1.5"/>'.
+            '<circle cx="14.5" cy="17" r="1.5"/>',
+
+        'blog' =>
+            '<rect x="3" y="2" width="14" height="16" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="3" y="2" width="14" height="16" rx="2"/>'.
+            '<path d="M7 7h6M7 10.5h4"/>'.
+            '<path d="M13 14l1.5-5 1.5 5M13.5 12.5h2"/>',
+
+        'pages' =>
+            '<path d="M5 2h8l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M5 2h8l4 4v12a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1z"/>'.
+            '<path d="M13 2v4h4"/>'.
+            '<path d="M7 9h6M7 12.5h6M7 16h4"/>',
+
+        'media' =>
+            '<rect x="2" y="4" width="16" height="12" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="2" y="4" width="16" height="12" rx="2"/>'.
+            '<circle cx="7.5" cy="8.5" r="1.5"/>'.
+            '<path d="M2 13.5l4.5-4.5 3.5 3.5 2.5-2.5 5.5 5.5"/>',
+
+        'notifications' =>
+            '<path d="M10 2a6 6 0 016 6v3.5l1.5 2h-15L4 11.5V8a6 6 0 016-6z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M10 2a6 6 0 016 6v3.5l1.5 2h-15L4 11.5V8a6 6 0 016-6z"/>'.
+            '<path d="M8 13.5a2 2 0 004 0"/>',
+
+        'ads' =>
+            '<path d="M2.5 7.5h10L17.5 10l-5 3h-10V7.5z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M2.5 7.5h10L17.5 10l-5 3h-10V7.5z"/>'.
+            '<path d="M7 13.5l1 3M5.5 16.5h3"/>',
+
+        'faqs' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<path d="M7.5 7.5C7.5 6 8.6 5 10 5s2.5 1 2.5 2.5c0 2-2.5 2.5-2.5 4"/>'.
+            '<circle cx="10" cy="15" r=".75" fill="currentColor" stroke="none"/>',
+
+        'locations' =>
+            '<circle cx="10" cy="8.5" r="3" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="8.5" r="3"/>'.
+            '<path d="M16 8.5c0 5-6 9.5-6 9.5S4 13.5 4 8.5a6 6 0 1112 0z"/>',
+    ];
+
+    // SVG icon paths per settings section title
+    $svgSettingsIcons = [
+        'Historial de actividad' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<path d="M10 6v4l3 3"/>',
+
+        'Analytics' =>
+            '<polyline points="2,16 6,10 10,13 14,5 18,10"/>'.
+            '<path d="M2 16h16"/>',
+
+        'Configuraciones' =>
+            '<circle cx="10" cy="10" r="3" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="3"/>'.
+            '<path d="M10 2v2.5M10 15.5V18M2 10h2.5M15.5 10H18M4.1 4.1l1.8 1.8M14.1 14.1l1.8 1.8M4.1 15.9l1.8-1.8M14.1 5.9l1.8-1.8"/>',
+
+        'Configuración de cookies' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<circle cx="8" cy="8" r="1" fill="currentColor" stroke="none"/>'.
+            '<circle cx="12.5" cy="7.5" r="1" fill="currentColor" stroke="none"/>'.
+            '<circle cx="7" cy="12.5" r="1" fill="currentColor" stroke="none"/>'.
+            '<circle cx="13" cy="12" r="1" fill="currentColor" stroke="none"/>',
+
+        'Localización' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<path d="M10 2.5c-2.5 2.5-3 4.5-3 7.5s.5 5 3 7.5"/>'.
+            '<path d="M10 2.5c2.5 2.5 3 4.5 3 7.5s-.5 5-3 7.5"/>'.
+            '<path d="M2.5 10h15"/>',
+
+        'Marketing' =>
+            '<path d="M3 9h1.5L13 5v10l-8.5-4H3a1 1 0 01-1-1v-1a1 1 0 011-1z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M3 9h1.5L13 5v10l-8.5-4H3a1 1 0 01-1-1v-1a1 1 0 011-1z"/>'.
+            '<path d="M13 7.5c2 1 3 2 3 2.5s-1 1.5-3 2.5"/>',
+
+        'Reseñas' =>
+            '<path d="M10 2.5l2 5.5H18l-4.5 3.5 1.5 5.5L10 14l-5 2.5 1.5-5.5L2 8h6z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M10 2.5l2 5.5H18l-4.5 3.5 1.5 5.5L10 14l-5 2.5 1.5-5.5L2 8h6z"/>',
+
+        'SEO' =>
+            '<circle cx="9" cy="9" r="6.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="9" cy="9" r="6.5"/>'.
+            '<path d="M14 14l4 4"/>',
+
+        'Roles y Permisos' =>
+            '<path d="M10 2L4 5v5c0 4 2.7 7.7 6 9 3.3-1.3 6-5 6-9V5z" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M10 2L4 5v5c0 4 2.7 7.7 6 9 3.3-1.3 6-5 6-9V5z"/>'.
+            '<path d="M7.5 10l2 2 3-3.5"/>',
+
+        'Plantillas' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<circle cx="10" cy="10" r="3"/>'.
+            '<path d="M10 5v2M10 13v2M5 10h2M13 10h2"/>',
+
+        'Configuración de Email' =>
+            '<rect x="2" y="4.5" width="16" height="12" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="2" y="4.5" width="16" height="12" rx="2"/>'.
+            '<path d="M2 7.5l8 5 8-5"/>',
+
+        'Ecommerce' =>
+            '<path d="M2 2.5h2.5L7 13.5h10l1.5-8H5.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M2 2.5h2.5L7 13.5h10l1.5-8H5.5"/>'.
+            '<circle cx="8.5" cy="17" r="1.5"/>'.
+            '<circle cx="14.5" cy="17" r="1.5"/>',
+
+        'Gestión de base de datos' =>
+            '<ellipse cx="10" cy="5.5" rx="7" ry="2.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<ellipse cx="10" cy="5.5" rx="7" ry="2.5"/>'.
+            '<path d="M3 5.5v4c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-4"/>'.
+            '<path d="M3 9.5v4c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-4"/>',
+
+        'Atenciones' =>
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5c0 2-1.5 3.5-3.5 4.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<path d="M4 7.5C4 5 6.7 3 10 3s6 2 6 4.5"/>'.
+            '<path d="M4.5 11a2 2 0 00-2 2v1a2 2 0 002 2"/>'.
+            '<path d="M15.5 11a2 2 0 012 2v1a2 2 0 01-2 2"/>'.
+            '<path d="M10 17v2M8 19h4"/>',
+
+        'Estado del sistema' =>
+            '<circle cx="10" cy="10" r="7.5" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<circle cx="10" cy="10" r="7.5"/>'.
+            '<path d="M6.5 10l3 3 4-5"/>',
+
+        'Formularios' =>
+            '<rect x="3" y="2" width="14" height="16" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="3" y="2" width="14" height="16" rx="2"/>'.
+            '<path d="M7 7h6M7 10.5h6M7 14h4"/>',
+
+        'Copias de seguridad' =>
+            '<rect x="3" y="3" width="14" height="11" rx="2" fill="var(--color-teal)" opacity="0.75" stroke="none"/>'.
+            '<rect x="3" y="3" width="14" height="11" rx="2"/>'.
+            '<path d="M7 3v4h6V3"/>'.
+            '<path d="M5 17h10M8 14v3M12 14v3"/>',
+    ];
+
+    // Fallback label per sidebar without mini-item
+    $sidebarFallbacks = [
+        'campaign_sending_servers' => ['label' => 'Servidores de envío'],
+        'campaigns'                => ['label' => 'Campañas'],
+        'helpdesk'                 => ['label' => 'Helpdesk'],
+    ];
+
+    // Preferred display order for main nav
+    $navOrder = [
+        'dashboard', 'users', 'campaigns', 'campaign_sending_servers', 'mailers',
+        'reviews', 'attentions', 'helpdesk', 'forms-inbox', 'ecommerce',
+        'blog', 'pages', 'media', 'notifications', 'ads', 'faqs', 'locations',
+    ];
+
+    $settingsSidebar = $allSidebars['settings'] ?? null;
+    $mainSidebars    = collect($allSidebars)
+        ->except('settings')
+        ->sortBy(fn ($v, $k) => (($p = array_search($k, $navOrder)) !== false) ? $p : 999)
+        ->all();
+
+    $currentUser = auth()->user();
+
+    $renderIcon = function (string $paths) use ($svgDefault): string {
+        return '<span class="mc-icon"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">' . ($paths ?: $svgDefault) . '</svg></span>';
+    };
 @endphp
 
-<aside class="side-mini-panel {{ $activeSidebarId ? 'with-vertical' : '' }}">
-    <!-- ---------------------------------- -->
-    <!-- Start Vertical Layout Sidebar -->
-    <!-- ---------------------------------- -->
-    <div class="iconbar">
-        <div>
-            <!-- ---------------------------------- -->
-            <!-- Mini Navigation Icons -->
-            <!-- ---------------------------------- -->
-            <div class="mini-nav">
-                <div class="brand-logo d-flex align-items-center justify-content-center">
-                    <a class="nav-link sidebartoggler" id="headerCollapse" href="javascript:void(0)">
-                        <i class="fa-duotone fa-bars fs-6"></i>
-                    </a>
+<aside class="mc-sidebar">
+
+    {{-- ─── Logo ─────────────────────────────────────────────── --}}
+    <a href="{{ $dashboardUrl }}" class="mc-sidebar-logo">
+        <div class="mc-sidebar-favicon">
+            <img src="{{ themeAsset('images/logo.svg') }}" alt="{{ $siteName }}" style="width:28px;height:28px;object-fit:contain;">
+        </div>
+        <div class="mc-sidebar-logo-content">
+            <img src="{{ themeAsset('images/logo.svg') }}" alt="{{ $siteName }}" class="mc-logo-light" style="height:26px;width:auto;object-fit:contain;">
+            <img src="{{ themeAsset('images/logo.svg') }}" alt="{{ $siteName }}" class="mc-logo-dark"  style="height:26px;width:auto;object-fit:contain;filter:brightness(1.4);">
+        </div>
+    </a>
+
+    {{-- ─── Navigation ─────────────────────────────────────────── --}}
+    <nav class="mc-sidebar-nav">
+
+        @if(empty($mainSidebars) && !$settingsSidebar)
+            <div class="mc-nav-group">
+                <div class="mc-nav-item" style="justify-content:center;font-size:12px;color:var(--color-text-muted);">
+                    Sin menús disponibles
                 </div>
-                <ul class="mini-nav-ul" data-simplebar="">
-                    @forelse($miniItems as $miniItem)
-                        @php
-                            $isActive = $activeMiniId === $miniItem['sidebar_id'];
-                        @endphp
-                        <!-- --------------------------------------------------------------------------------------------------------- -->
-                        <!-- {{ $miniItem['tooltip'] }} -->
-                        <!-- --------------------------------------------------------------------------------------------------------- -->
-                        <li class="mini-nav-item {{ $isActive ? 'selected' : '' }}"
-                            id="mini-{{ $miniItem['id'] }}"
-                            data-sidebar-id="{{ $miniItem['sidebar_id'] }}"
-                            @if(!empty($miniItem['url'])) data-direct-url="{{ route($miniItem['url']) }}" @endif>
-                            <a href="{{ !empty($miniItem['url']) ? route($miniItem['url']) : 'javascript:void(0)' }}"
-                               data-bs-toggle="tooltip"
-                               data-bs-custom-class="custom-tooltip"
-                               data-bs-placement="right"
-                               data-bs-title="{{ $miniItem['tooltip'] }}">
-                                <i class="fa {{ $miniItem['icon'] }} fs-5"></i>
-                            </a>
-                        </li>
-
-                        @if(!empty($miniItem['divider_after']) && !$loop->last)
-                            <li>
-                                <span class="sidebar-divider lg"></span>
-                            </li>
-                        @endif
-                    @empty
-                        <li class="text-muted text-center p-3">
-                            <small>No hay menús disponibles</small>
-                        </li>
-                    @endforelse
-                </ul>
-
             </div>
-            <!-- ---------------------------------- -->
-            <!-- Sidebar Menus -->
-            <!-- ---------------------------------- -->
-            <div class="sidebarmenu {{ $activeSidebarId ? '' : 'd-none' }}">
-                @forelse($allSidebars as $sidebarId => $sidebar)
+        @endif
+
+        {{-- ── Main nav items ─────────────────────────────────── --}}
+        @foreach($mainSidebars as $sidebarId => $sidebar)
+            @php
+                $miniItem  = NavService::getMiniItem($sidebarId);
+                $iconPaths = $svgMainIcons[$sidebarId] ?? $svgDefault;
+                $label     = $miniItem['tooltip'] ?? ($sidebarFallbacks[$sidebarId]['label'] ?? ucfirst($sidebarId));
+
+                $sections = $sidebar['sections'] ?? [['title' => '', 'items' => $sidebar['items'] ?? []]];
+                $children = collect($sections)
+                    ->flatMap(fn ($s) => $s['items'] ?? [])
+                    ->filter(fn ($item) => NavService::userCanAccessItem($item, $currentUser))
+                    ->values();
+            @endphp
+
+            @if($children->isEmpty())
+                @continue
+            @endif
+
+            @php
+                $isAnyChildActive = $children->contains(fn ($c) => ($c['route'] ?? '') && request()->routeIs(($c['route'] ?? '') . '*'));
+            @endphp
+
+            @if($children->count() === 1)
+                @php
+                    $singleItem = $children->first();
+                    $sr  = $singleItem['route'] ?? '';
+                    $sUrl = ($sr && Route::has($sr)) ? route($sr) : '#';
+                    $sActive = $sr && request()->routeIs($sr . '*');
+                @endphp
+                <a href="{{ $sUrl }}" class="mc-nav-item{{ $sActive ? ' active' : '' }}">
+                    <span class="mc-nav-item-icon">{!! $renderIcon($iconPaths) !!}</span>
+                    <span class="mc-nav-item-label">{{ $label }}</span>
+                </a>
+            @else
+                <a href="javascript:void(0)"
+                   class="mc-nav-item{{ $isAnyChildActive ? ' active expanded' : '' }}"
+                   data-nav-toggle="1">
+                    <span class="mc-nav-item-icon">{!! $renderIcon($iconPaths) !!}</span>
+                    <span class="mc-nav-item-label">{{ $label }}</span>
+                    <svg class="mc-nav-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                         stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                         width="16" height="16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
+                </a>
+                <div class="mc-nav-submenu">
+                    @foreach($children as $child)
+                        @php
+                            $cr   = $child['route'] ?? '';
+                            $cUrl = ($cr && Route::has($cr)) ? route($cr) : '#';
+                            $cAct = $cr && request()->routeIs($cr . '*');
+                        @endphp
+                        <a href="{{ $cUrl }}" class="mc-nav-item{{ $cAct ? ' active' : '' }}">
+                            <span class="mc-nav-item-icon"></span>
+                            <span class="mc-nav-item-label">{{ $child['label'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        @endforeach
+
+        {{-- ── Settings nav ────────────────────────────────────── --}}
+        @if($settingsSidebar)
+            <div style="height:1px;background:var(--color-border);margin:8px 16px;"></div>
+            <div class="mc-nav-group-label">Configuración</div>
+
+            @foreach($settingsSidebar['sections'] ?? [] as $section)
+                @php
+                    $sectionTitle    = $section['title'] ?? '';
+                    $sectionItems    = collect($section['items'] ?? [])
+                        ->filter(fn ($item) => NavService::userCanAccessItem($item, $currentUser))
+                        ->values();
+                    $sectionIconPaths = $svgSettingsIcons[$sectionTitle] ?? $svgDefault;
+                    $isSectionActive  = $sectionItems->contains(fn ($c) => ($c['route'] ?? '') && request()->routeIs(($c['route'] ?? '') . '*'));
+                @endphp
+
+                @if($sectionItems->isEmpty())
+                    @continue
+                @endif
+
+                @if($sectionItems->count() === 1)
                     @php
-                        $sidebarIsActive = $activeSidebarId === $sidebarId;
+                        $onlyItem = $sectionItems->first();
+                        $or  = $onlyItem['route'] ?? '';
+                        $oUrl = ($or && Route::has($or)) ? route($or) : '#';
+                        $oAct = $or && request()->routeIs($or . '*');
                     @endphp
-                    <!-- ---------------------------------- -->
-                    <!-- Sidebar: {{ $sidebar['sections'][0]['title'] ?? $sidebarId }} -->
-                    <!-- ---------------------------------- -->
-                    <nav class="sidebar-nav scroll-sidebar {{ $sidebarIsActive ? 'd-block' : 'd-none' }}"
-                         id="menu-right-{{ $sidebarId }}"
-                         data-simplebar="">
-                        <ul class="sidebar-menu" id="sidebarnav-{{ $sidebarId }}">
+                    <a href="{{ $oUrl }}" class="mc-nav-item{{ $oAct ? ' active' : '' }}">
+                        <span class="mc-nav-item-icon">{!! $renderIcon($sectionIconPaths) !!}</span>
+                        <span class="mc-nav-item-label">{{ $sectionTitle ?: $onlyItem['label'] }}</span>
+                    </a>
+                @else
+                    <a href="javascript:void(0)"
+                       class="mc-nav-item{{ $isSectionActive ? ' active expanded' : '' }}"
+                       data-nav-toggle="1">
+                        <span class="mc-nav-item-icon">{!! $renderIcon($sectionIconPaths) !!}</span>
+                        <span class="mc-nav-item-label">{{ $sectionTitle }}</span>
+                        <svg class="mc-nav-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                             stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                             width="16" height="16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
+                    </a>
+                    <div class="mc-nav-submenu">
+                        @foreach($sectionItems as $child)
                             @php
-                                // Si el sidebar tiene secciones, usarlas; sino crear una sección única
-                                $sections = isset($sidebar['sections']) && is_array($sidebar['sections'])
-                                    ? $sidebar['sections']
-                                    : [['title' => $sidebar['title'] ?? 'Menu', 'items' => $sidebar['items'] ?? []]];
+                                $cr   = $child['route'] ?? '';
+                                $cUrl = ($cr && Route::has($cr)) ? route($cr) : '#';
+                                $cAct = $cr && request()->routeIs($cr . '*');
                             @endphp
-
-                            @forelse($sections as $section)
-                                <!-- ---------------------------------- -->
-                                <!-- {{ $section['title'] }} Section -->
-                                <!-- ---------------------------------- -->
-                                <li class="nav-small-cap">
-                                    <span class="hide-menu">{{ $section['title'] }}</span>
-                                </li>
-
-                                <!-- Section Items -->
-                                @forelse($section['items'] as $item)
-                                    @php
-                                        $itemRoute = $item['route'] ?? '';
-                                        $isItemActive = $itemRoute && (request()->routeIs($itemRoute . '*') || $itemRoute === $activeItemRoute);
-                                        $canAccessItem = \Modules\Theme\Services\NavService::userCanAccessItem($item, auth()->user());
-                                        $hasSubItems = !empty($item['children']) && is_array($item['children']);
-                                    @endphp
-
-                                    @if($canAccessItem)
-                                        <!-- ---------------------------------- -->
-                                        <!-- {{ $item['label'] }} -->
-                                        <!-- ---------------------------------- -->
-                                        <li class="sidebar-item {{ $isItemActive ? 'selected' : '' }}">
-                                            @if($hasSubItems)
-                                                <!-- Item with dropdown -->
-                                                <a href="javascript:void(0)"
-                                                   class="sidebar-link has-arrow {{ $isItemActive ? 'active' : '' }}"
-                                                   aria-expanded="{{ $isItemActive ? 'true' : 'false' }}">
-                                                    @if(!empty($item['icon']))
-                                                        <i class="fa {{ $item['icon'] }}"></i>
-                                                    @endif
-                                                    <span class="hide-menu">{{ $item['label'] }}</span>
-                                                </a>
-
-                                                <!-- Sub-items -->
-                                                <ul aria-expanded="{{ $isItemActive ? 'true' : 'false' }}"
-                                                    class="collapse first-level {{ $isItemActive ? 'in' : '' }}">
-                                                    @foreach($item['children'] as $child)
-                                                        @php
-                                                            $childRoute = $child['route'] ?? '';
-                                                            $childIsActive = $childRoute && request()->routeIs($childRoute . '*');
-                                                            $canAccessChild = \Modules\Theme\Services\NavService::userCanAccessItem($child, auth()->user());
-                                                        @endphp
-
-                                                        @if($canAccessChild)
-                                                            <li class="sidebar-item {{ $childIsActive ? 'active' : '' }}">
-                                                                <a href="{{ route($childRoute) }}"
-                                                                   class="sidebar-link {{ $childIsActive ? 'active' : '' }}">
-                                                                    <span class="icon-small"></span>
-                                                                    <span class="hide-menu">{{ $child['label'] }}</span>
-                                                                </a>
-                                                            </li>
-                                                        @endif
-                                                    @endforeach
-                                                </ul>
-                                            @else
-                                                <!-- Simple link without dropdown -->
-                                                <a href="{{ $itemRoute ? route($itemRoute) : 'javascript:void(0)' }}"
-                                                   class="sidebar-link {{ $isItemActive ? 'active' : '' }}"
-                                                   aria-expanded="false"
-                                                   data-current-route="{{ $currentRoute }}"
-                                                   data-item-route="{{ $itemRoute }}"
-                                                   data-is-active="{{ $isItemActive ? 'true' : 'false' }}">
-                                                    @if(!empty($item['icon']))
-                                                        <i class="fa {{ $item['icon'] }}"></i>
-                                                    @endif
-                                                    <span class="hide-menu">{{ $item['label'] }}</span>
-
-                                                    @if(!empty($item['badge']))
-                                                        <span class="badge bg-{{ $item['badge']['color'] ?? 'primary' }} rounded ms-auto">
-                                                            {{ $item['badge']['text'] }}
-                                                        </span>
-                                                    @endif
-                                                </a>
-                                            @endif
-                                        </li>
-                                    @endif
-                                @empty
-                                    <li class="sidebar-item">
-                                        <span class="hide-menu text-muted ps-3">Sin opciones disponibles</span>
-                                    </li>
-                                @endforelse
-
-                                <!-- Optional divider after section -->
-                                @if(!$loop->last)
-                                    <li>
-                                        <span class="sidebar-divider"></span>
-                                    </li>
-                                @endif
-                            @empty
-                                <li class="sidebar-item">
-                                    <span class="hide-menu text-muted ps-3">Sin secciones configuradas</span>
-                                </li>
-                            @endforelse
-                        </ul>
-                    </nav>
-                @empty
-                    <!-- No sidebars available -->
-                    <div class="p-3 text-center text-muted">
-                        <small>No hay menús configurados</small>
+                            <a href="{{ $cUrl }}" class="mc-nav-item{{ $cAct ? ' active' : '' }}">
+                                <span class="mc-nav-item-icon"></span>
+                                <span class="mc-nav-item-label">{{ $child['label'] }}</span>
+                            </a>
+                        @endforeach
                     </div>
-                @endforelse
+                @endif
+            @endforeach
+        @endif
+
+    </nav>
+
+    {{-- ─── Footer — User ──────────────────────────────────────── --}}
+    <div class="mc-sidebar-footer">
+        <div class="mc-sidebar-user mc-dropdown" data-dropdown="">
+
+            <div class="mc-avatar mc-avatar-sm mc-avatar-6">{{ $initials }}</div>
+
+            <div class="mc-sidebar-user-info">
+                <div class="mc-sidebar-user-name">{{ $userName }}</div>
+                <div class="mc-sidebar-user-email">{{ $userEmail }}</div>
+            </div>
+
+            <div class="mc-dropdown-menu mc-dropdown-menu-up mc-user-menu">
+
+                <div class="mc-user-menu-header">
+                    <div class="mc-avatar mc-avatar-md mc-avatar-6">{{ $initials }}</div>
+                    <div class="mc-user-menu-info">
+                        <div class="mc-user-menu-name">{{ $userName }}</div>
+                        <div class="mc-user-menu-email">{{ $userEmail }}</div>
+                    </div>
+                </div>
+
+                <div class="mc-dropdown-divider"></div>
+
+                <a href="{{ $profileUrl }}" class="mc-dropdown-item">
+                    <i class="fas fa-user-gear fa-fw"></i>
+                    Configuración
+                </a>
+
+                @if($lockUrl && config('auth.auth-policy.lock_screen.enabled', true))
+                    <form method="POST" action="{{ $lockUrl }}" style="margin:0">
+                        @csrf
+                        <button type="submit" class="mc-dropdown-item">
+                            <i class="fas fa-lock fa-fw"></i>
+                            Bloquear sesión
+                        </button>
+                    </form>
+                @endif
+
+                <div class="mc-dropdown-divider"></div>
+                <div class="mc-dropdown-item" style="cursor:default;pointer-events:none;font-size:11px;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.6px;">
+                    Tema
+                </div>
+                <div data-mc-theme-menu="" style="display:flex;gap:4px;padding:6px 12px 10px;">
+                    <button data-mc-theme-mode="light" class="mc-btn mc-btn-sm mc-btn-secondary" style="flex:1;font-size:12px;padding:5px 8px;">
+                        <i class="fas fa-sun"></i> Claro
+                    </button>
+                    <button data-mc-theme-mode="dark" class="mc-btn mc-btn-sm mc-btn-secondary" style="flex:1;font-size:12px;padding:5px 8px;">
+                        <i class="fas fa-moon"></i> Oscuro
+                    </button>
+                    <button data-mc-theme-mode="system" class="mc-btn mc-btn-sm mc-btn-secondary" style="flex:1;font-size:12px;padding:5px 8px;">
+                        <i class="fas fa-desktop"></i> Sistema
+                    </button>
+                </div>
+
+                <div class="mc-dropdown-divider"></div>
+
+                <form method="POST" action="{{ $logoutUrl }}" style="margin:0">
+                    @csrf
+                    <button type="submit" class="mc-dropdown-item danger">
+                        <i class="fas fa-right-from-bracket fa-fw"></i>
+                        Salir
+                    </button>
+                </form>
+
             </div>
         </div>
     </div>
+
 </aside>
-
-@push('scripts')
-<script>
-    /**
-     * Toggle sidebar visibility when clicking on mini nav items
-     * Updates the active state and shows the corresponding sidebar
-     */
-    document.addEventListener('DOMContentLoaded', function() {
-        'use strict';
-
-        // Reemplazar cada mini-nav-item con un clon para eliminar listeners previos (sidebarmenu.js)
-        document.querySelectorAll('.mini-nav-item').forEach(item => {
-            const clone = item.cloneNode(true);
-            item.parentNode.replaceChild(clone, item);
-        });
-
-        // Add click handlers to mini nav items
-        document.querySelectorAll('.mini-nav-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                // Check if this item has a direct URL
-                const directUrl = this.dataset.directUrl;
-                if (directUrl) {
-                    // Let the link handle navigation naturally
-                    return;
-                }
-
-                // Prevent default for sidebar toggles
-                e.preventDefault();
-
-                // Get the sidebar ID from data attribute
-                const sidebarId = this.dataset.sidebarId;
-                if (!sidebarId) {
-                    console.warn('No sidebar ID found for mini item:', this.id);
-                    return;
-                }
-
-                // Remove 'selected' class from all mini items
-                document.querySelectorAll('.mini-nav-item').forEach(navItem => {
-                    navItem.classList.remove('selected');
-                });
-
-                // Add 'selected' class to clicked mini item
-                this.classList.add('selected');
-
-                // Hide all sidebars
-                document.querySelectorAll('.sidebar-nav').forEach(nav => {
-                    nav.classList.remove('d-block');
-                    nav.classList.add('d-none');
-                });
-
-                // Show the corresponding sidebar
-                const targetSidebar = document.querySelector(`#menu-right-${sidebarId}`);
-                if (targetSidebar) {
-                    targetSidebar.classList.remove('d-none');
-                    targetSidebar.classList.add('d-block');
-
-                    // Asegurar que el contenedor y el aside estén visibles
-                    const sidebarmenu = document.querySelector('.sidebarmenu');
-                    if (sidebarmenu) sidebarmenu.classList.remove('d-none');
-
-                    const miniPanel = document.querySelector('aside.side-mini-panel');
-                    if (miniPanel) miniPanel.classList.add('with-vertical');
-                } else {
-                    console.warn(`Sidebar not found: menu-right-${sidebarId}`);
-                }
-
-                // Set body attribute to full sidebar mode
-                document.body.setAttribute('data-sidebartype', 'full');
-            });
-        });
-
-        // Handle multilevel menu clicks
-        document.querySelectorAll('.sidebar-link.has-arrow').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                const isActive = this.classList.contains('active');
-                const parentUl = this.closest('ul');
-                const submenu = this.nextElementSibling;
-
-                if (!isActive) {
-                    // Close any open menus and remove all other classes
-                    parentUl.querySelectorAll('ul').forEach(function(ul) {
-                        ul.classList.remove('in');
-                    });
-                    parentUl.querySelectorAll('a').forEach(function(navLink) {
-                        navLink.classList.remove('active');
-                    });
-
-                    // Open our new menu and add the open class
-                    if (submenu) {
-                        submenu.classList.add('in');
-                    }
-                    this.classList.add('active');
-                } else {
-                    this.classList.remove('active');
-                    if (submenu) {
-                        submenu.classList.remove('in');
-                    }
-                }
-            });
-        });
-    });
-</script>
-@endpush

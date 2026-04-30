@@ -1,11 +1,13 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Editar Traducciones',
-        'subtitle' => $locale_label . ' - ' . $file_label
+    'title' => 'Editar Traducciones',
+    'subtitle' => $locale_label . ' - ' . $file_label
     ])
+@endsection
+
+@section('content')
 
     <style>
         .field-input,

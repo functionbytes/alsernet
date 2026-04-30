@@ -2,9 +2,11 @@
 
 @section('title', 'Editar grupo: ' . $group->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar grupo'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

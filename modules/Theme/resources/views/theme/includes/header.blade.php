@@ -1,187 +1,149 @@
-<header class="topbar">
-    <div class="with-vertical">
+@php
+    $initials = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
+@endphp
 
+<header class="mc-topbar">
 
+    {{-- ─── Left: sidebar toggle ───────────────────────────────── --}}
+    <div class="mc-topbar-left">
+        <button class="mc-sidebar-toggle" data-sidebar-smart-toggle="" aria-label="Toggle sidebar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 3H7.5V17H4A2 2 0 012 15V5A2 2 0 014 3Z"
+                      fill="var(--color-teal)" opacity="0.2" stroke="none"/>
+                <rect x="2" y="3" width="16" height="14" rx="2"/>
+                <path d="M7.5 3v14"/>
+            </svg>
+        </button>
+    </div>
 
-        <nav class="navbar   p-0">
-            <ul class="navbar-nav">
-                <li class="nav-item d-flex d-xl-none">
-                    <a class="nav-link nav-icon-hover-bg rounded-circle  sidebartoggler " id="headerCollapse" href="javascript:void(0)">
-                        <i class="fa-duotone fa-bars fs-6"></i>
-                    </a>
-                </li>
-            </ul>
-
-            <div class="d-block d-lg-none py-9 py-xl-0">
-
+    {{-- ─── Center: global search ──────────────────────────────── --}}
+    <div class="mc-topbar-center mc-topbar-search-wrap">
+        <div class="mc-topbar-search" style="position:relative;width:100%;max-width:360px;">
+            <svg class="mc-topbar-search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"
+                 width="14" height="14" style="flex-shrink:0;color:var(--color-text-muted);">
+                <circle cx="7" cy="7" r="5"/>
+                <path d="M11 11l3.5 3.5"/>
+            </svg>
+            <input type="text"
+                   id="global-search-input"
+                   placeholder="Buscar en el sistema..."
+                   autocomplete="off"
+                   style="flex:1;border:none;background:transparent;font-size:13px;color:var(--color-text);outline:none;">
+            <div id="global-search-results"
+                 style="position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--color-card-bg);border:1px solid var(--color-border);border-radius:var(--radius-card);box-shadow:var(--shadow-dropdown);z-index:999;max-height:400px;overflow-y:auto;display:none;">
             </div>
+        </div>
+    </div>
 
+    {{-- ─── Right: actions ─────────────────────────────────────── --}}
+    <div class="mc-topbar-right">
 
-            <div class="navbar-toggler p-0 border-0 nav-icon-hover-bg rounded-circle " id="navbarNav">
-                <div class="d-flex justify-content-end w-100">
-                    <ul class="navbar-nav flex-row">
-
-                        <li class="nav-item d-flex align-items-center me-2">
-                            <div class="search-global position-relative" style="width:260px;">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-transparent border-end-0">
-                                        <i class="fas fa-search text-muted"></i>
-                                    </span>
-                                    <input type="text"
-                                           id="global-search-input"
-                                           class="form-control border-start-0 ps-0"
-                                           placeholder="Buscar en todo el sistema..."
-                                           autocomplete="off">
-                                </div>
-                                <div id="global-search-results"
-                                     class="position-absolute top-100 start-0 end-0 bg-white border rounded-2 shadow-lg mt-1 d-none"
-                                     style="z-index:9999;max-height:400px;overflow-y:auto;">
-                                </div>
-                            </div>
-                        </li>
-
-
-
-                        @include('notification::components.notifications')
-
-                        <li class="nav-item dropdown">
-                            @php
-                                $initials = strtoupper(substr(Auth::user()->firstname, 0, 1) . substr(Auth::user()->lastname, 0, 1));
-                            @endphp
-                            <a class="nav-link" href="javascript:void(0)" id="drop1" aria-expanded="false">
-                                <div class="d-flex align-items-center gap-2 lh-base">
-                                    <div class="rounded-circle rounded-profile d-flex align-items-center justify-content-center text-white fw-bold bg-light">
-                                        {{ $initials }}
-                                    </div>
-                                </div>
-                            </a>
-                            <div class="dropdown-menu profile-dropdown dropdown-menu-end dropdown-menu-animate-up" aria-labelledby="drop1">
-                                <div class="position-relative px-4 pt-3 pb-2">
-                                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom gap-6">
-                                        <a class="nav-link" href="javascript:void(0)" aria-expanded="false">
-                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold bg-light rounded-profile">
-                                                {{ $initials }}
-                                            </div>
-                                        </a>
-                                        <div>
-                                            <h5 class="mb-1 fs-3">{{ Auth::user()->firstname }} {{ Auth::user()->lastname }}</h5>
-                                            <span class="mb-0 d-block text-muted">
-                                                {{ Auth::user()->email }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="message-body">
-                                        <a href="{{ route('settings.auth.profile') }}" class="p-2 dropdown-item h6 rounded-1">
-                                            Configuración
-                                        </a>
-                                        @if (config('auth.auth-policy.lock_screen.enabled', true))
-                                            <form method="POST" action="{{ route('auth.lock.lock') }}" class="mb-2">
-                                                @csrf
-                                                <button type="submit" class="btn btn-outline-secondary px-4 waves-effect waves-light w-100">
-                                                    <i class="fas fa-lock me-1"></i> Bloquear sesión
-                                                </button>
-                                            </form>
-                                        @endif
-                                        <form method="POST" action="{{ route('auth.logout') }}">
-                                            @csrf
-                                            <button type="submit" class="btn btn-info px-4 waves-effect waves-light w-100">Salir</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+        {{-- Theme toggle --}}
+        <div class="mc-dropdown" data-dropdown="" style="position:relative;">
+            <button class="mc-topbar-icon-btn" aria-label="Tema" id="mc-theme-btn">
+                <span id="theme-icon-light">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"
+                         stroke-linecap="round" width="18" height="18">
+                        <circle cx="10" cy="10" r="4"/>
+                        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.2 4.2l1.4 1.4M14.4 14.4l1.4 1.4M4.2 15.8l1.4-1.4M14.4 5.6l1.4-1.4"/>
+                    </svg>
+                </span>
+                <span id="theme-icon-dark" class="mc-hidden">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"
+                         stroke-linecap="round" width="18" height="18">
+                        <path d="M17 12A7 7 0 118 3a5 5 0 009 9z"/>
+                    </svg>
+                </span>
+            </button>
+            <div class="mc-dropdown-menu mc-dropdown-menu-end" data-mc-theme-menu=""
+                 style="min-width:140px;">
+                <a href="#" class="mc-dropdown-item" data-mc-theme-mode="light">
+                    <i class="fas fa-sun fa-fw me-2"></i> Claro
+                </a>
+                <a href="#" class="mc-dropdown-item" data-mc-theme-mode="dark">
+                    <i class="fas fa-moon fa-fw me-2"></i> Oscuro
+                </a>
+                <a href="#" class="mc-dropdown-item" data-mc-theme-mode="system">
+                    <i class="fas fa-desktop fa-fw me-2"></i> Sistema
+                </a>
             </div>
-        </nav>
+        </div>
 
+        {{-- Notifications --}}
+        @include('notification::components.notifications')
+
+        {{-- User avatar (triggers sidebar user dropdown) --}}
+        <div class="mc-topbar-avatar-wrap"
+             title="{{ Auth::user()->firstname }} {{ Auth::user()->lastname }}"
+             onclick="document.querySelector('.mc-sidebar-user[data-dropdown]')?.click()">
+            {{ $initials }}
+        </div>
 
     </div>
 </header>
 
+{{-- ─── Global search script ────────────────────────────────── --}}
 <script>
 (function () {
     const input = document.getElementById('global-search-input');
-    const resultsBox = document.getElementById('global-search-results');
-    if (!input || !resultsBox) return;
+    const box   = document.getElementById('global-search-results');
+    if (!input || !box) return;
 
     const searchUrl = '{{ route("search.global") }}';
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-    const colorMap = {
-        warning: 'text-warning',
-        primary: 'text-primary',
-        success: 'text-success',
-        danger: 'text-danger',
-        info: 'text-info',
-        secondary: 'text-secondary',
-    };
-
+    const colorMap  = { warning:'text-warning', primary:'text-primary', success:'text-success',
+                        danger:'text-danger', info:'text-info', secondary:'text-secondary' };
     let timer;
 
-    function renderResults(results) {
+    function esc(s) {
+        const d = document.createElement('span');
+        d.textContent = s ?? '';
+        return d.innerHTML;
+    }
+
+    function render(results) {
         if (!results.length) {
-            resultsBox.innerHTML = '<div class="p-3 text-muted text-center small">Sin resultados</div>';
+            box.innerHTML = '<div style="padding:12px 16px;color:var(--color-text-muted);font-size:13px;text-align:center;">Sin resultados</div>';
             return;
         }
-
-        function esc(str) {
-            const d = document.createElement('span');
-            d.textContent = str ?? '';
-            return d.innerHTML;
-        }
-
-        resultsBox.innerHTML = results.map(function (r) {
-            const colorClass = colorMap[r.color] || 'text-secondary';
-            const subtitle = r.subtitle ? '<div class="text-muted" style="font-size:.75rem">' + esc(r.subtitle) + '</div>' : '';
-            return '<a href="' + esc(r.url) + '" class="d-flex align-items-center gap-2 px-3 py-2 text-decoration-none text-dark border-bottom search-result-item">'
-                + '<div class="flex-shrink-0"><i class="' + esc(r.icon) + ' ' + colorClass + '"></i></div>'
-                + '<div class="flex-grow-1 min-w-0"><div class="fw-semibold small text-truncate">' + esc(r.title) + '</div>' + subtitle + '</div>'
-                + '<div class="flex-shrink-0"><span class="badge bg-light text-dark" style="font-size:.65rem">' + esc(r.type_label) + '</span></div>'
-                + '</a>';
+        box.innerHTML = results.map(r => {
+            const cc = colorMap[r.color] || 'text-secondary';
+            const sub = r.subtitle ? `<div style="font-size:11px;color:var(--color-text-muted)">${esc(r.subtitle)}</div>` : '';
+            return `<a href="${esc(r.url)}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;text-decoration:none;color:var(--color-text);border-bottom:1px solid var(--color-border);" class="mc-sr-item">
+                <span class="${cc}" style="width:16px;text-align:center"><i class="${esc(r.icon)}"></i></span>
+                <span style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.title)}</div>${sub}</span>
+                <span style="font-size:10px;padding:2px 6px;background:var(--color-hover-bg);border-radius:4px;color:var(--color-text-muted)">${esc(r.type_label)}</span>
+            </a>`;
         }).join('');
     }
 
-    function doSearch(q) {
-        if (q.length < 2) {
-            resultsBox.classList.add('d-none');
-            return;
-        }
-
-        $.get(searchUrl, { q: q }, function (data) {
-            renderResults(data.results || []);
-            resultsBox.classList.remove('d-none');
-        }).fail(function () {
-            resultsBox.classList.add('d-none');
-        });
+    function search(q) {
+        if (q.length < 2) { box.style.display = 'none'; return; }
+        $.get(searchUrl, { q }, data => {
+            render(data.results || []);
+            box.style.display = 'block';
+        }).fail(() => { box.style.display = 'none'; });
     }
 
     input.addEventListener('input', function () {
         clearTimeout(timer);
         const q = this.value.trim();
-        timer = setTimeout(function () { doSearch(q); }, 300);
+        timer = setTimeout(() => search(q), 300);
     });
 
     input.addEventListener('focus', function () {
-        if (this.value.trim().length >= 2) {
-            resultsBox.classList.remove('d-none');
-        }
+        if (this.value.trim().length >= 2) box.style.display = 'block';
     });
 
-    document.addEventListener('click', function (e) {
-        if (!input.contains(e.target) && !resultsBox.contains(e.target)) {
-            resultsBox.classList.add('d-none');
-        }
+    document.addEventListener('click', e => {
+        if (!input.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
     });
 
-    resultsBox.addEventListener('mouseover', function (e) {
-        const item = e.target.closest('.search-result-item');
-        if (item) item.classList.add('bg-light');
+    box.addEventListener('mouseover', e => {
+        e.target.closest('.mc-sr-item')?.style.setProperty('background', 'var(--color-hover-bg)');
     });
-
-    resultsBox.addEventListener('mouseout', function (e) {
-        const item = e.target.closest('.search-result-item');
-        if (item) item.classList.remove('bg-light');
+    box.addEventListener('mouseout', e => {
+        e.target.closest('.mc-sr-item')?.style.removeProperty('background');
     });
 }());
 </script>

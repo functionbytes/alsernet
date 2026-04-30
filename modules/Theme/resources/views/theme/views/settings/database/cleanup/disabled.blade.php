@@ -1,9 +1,11 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
+@endsection
+
 @section('content')
     <div class="container-fluid">
-
-        @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
 
         @include('core::components.alerts')
 

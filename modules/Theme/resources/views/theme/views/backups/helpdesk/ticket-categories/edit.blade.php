@@ -2,9 +2,11 @@
 
 @section('title', 'Editar categoria: ' . $category->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar categoria'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 
