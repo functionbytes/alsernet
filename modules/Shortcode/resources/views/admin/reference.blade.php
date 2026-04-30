@@ -2,9 +2,11 @@
 
 @section('title', 'Referencia de shortcodes')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Referencia de shortcodes'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         <div class="card">
             <div class="card-header p-4 border-bottom border-light">
