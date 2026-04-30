@@ -22,7 +22,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: #90bb13, var(--stat-color));
+        background: #b10100, var(--stat-color));
     }
 
     .stat-card:hover {
@@ -30,7 +30,7 @@
         transform: translateY(-4px);
     }
 
-    .stat-card.folders { --stat-color: #90bb13; }
+    .stat-card.folders { --stat-color: #b10100; }
     .stat-card.files { --stat-color: #13C672; }
     .stat-card.storage { --stat-color: #FEC90F; }
 
@@ -44,7 +44,7 @@
     .media-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-4px);
-        border-color: #90bb13;
+        border-color: #b10100;
     }
 
     .folder-card {
@@ -55,7 +55,7 @@
     .folder-card:hover {
         box-shadow: 0 8px 24px rgba(93, 135, 255, 0.15) !important;
         transform: translateY(-4px);
-        border-color: #90bb13 !important;
+        border-color: #b10100 !important;
     }
 
     .folder-preview {
@@ -127,31 +127,31 @@
 
     /* Gradient Backgrounds */
     .bg-gradient-danger {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-success {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-info {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-warning {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-purple {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-dark {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .bg-gradient-secondary {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .text-purple {
@@ -187,46 +187,46 @@
 
     .action-btn:hover {
         background: #f0f4ff;
-        border-color: #90bb13;
-        color: #90bb13;
+        border-color: #b10100;
+        color: #b10100;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.15);
     }
 
     .upload-zone {
-        border: 2px dashed #90bb13;
+        border: 2px dashed #b10100;
         border-radius: 12px;
-        background: #90bb13;
+        background: #b10100;
         transition: all 0.3s ease;
     }
 
     .upload-zone:hover {
         border-color: #3E5BDB;
-        background: #90bb13;
+        background: #b10100;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.12);
     }
 
     .upload-zone.drag-over {
         border-color: #3E5BDB;
-        background: #90bb13;
+        background: #b10100;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
     }
 
     /* Upload Zone Modern */
     .upload-zone-modern {
-        background: #90bb13;
+        background: #b10100;
         border: 2px dashed #e0e7ff;
         transition: all 0.3s ease;
     }
 
     .upload-zone-modern:hover {
-        border-color: #90bb13;
-        background: #90bb13;
+        border-color: #b10100;
+        background: #b10100;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.1);
     }
 
     .upload-zone-modern.drag-active {
-        border-color: #90bb13;
-        background: #90bb13;
+        border-color: #b10100;
+        background: #b10100;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
         transform: scale(1.01);
     }
@@ -237,7 +237,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #90bb13;
+        background: #b10100;
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3);
     }
@@ -254,7 +254,7 @@
     }
 
     .card-header {
-        background: #90bb13;
+        background: #b10100;
         border-color: #f0f0f0 !important;
     }
 
@@ -318,8 +318,8 @@
     }
 
     .folder-file-item:hover {
-        background: #90bb13;
-        border-color: #90bb13 !important;
+        background: #b10100;
+        border-color: #b10100 !important;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);
         transform: translateY(-2px);
     }
@@ -329,7 +329,7 @@
     }
 
     .folder-file-item:hover i {
-        color: #90bb13 !important;
+        color: #b10100 !important;
     }
 
     /* Dropdown for folder options */
@@ -345,7 +345,7 @@
 
     .dropdown-item:hover {
         background: #f0f4ff;
-        color: #90bb13;
+        color: #b10100;
     }
 
     .dropdown-item.text-danger:hover {
@@ -372,14 +372,14 @@
     }
 
     .user-profile-tab .nav-link:hover {
-        color: #90bb13;
+        color: #b10100;
         border-bottom-color: rgba(93, 135, 255, 0.3);
         background: rgba(93, 135, 255, 0.05) !important;
     }
 
     .user-profile-tab .nav-link.active {
-        color: #90bb13;
-        border-bottom-color: #90bb13;
+        color: #b10100;
+        border-bottom-color: #b10100;
         background: transparent !important;
         font-weight: 600;
     }
@@ -431,7 +431,7 @@
 
     .context-menu-item:hover {
         background: #f0f4ff;
-        color: #90bb13;
+        color: #b10100;
     }
 
     .context-menu-item.danger:hover {
@@ -464,8 +464,8 @@
     }
 
     .card.selected {
-        border: 3px solid #90bb13 !important;
-        background: #90bb13;
+        border: 3px solid #b10100 !important;
+        background: #b10100;
         box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.15),
                     0 8px 24px rgba(93, 135, 255, 0.25) !important;
         transform: translateY(-2px);
@@ -483,7 +483,7 @@
         left: 12px;
         width: 28px;
         height: 28px;
-        background: #90bb13;
+        background: #b10100;
         border-radius: 50%;
         z-index: 20;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.5);
@@ -562,13 +562,13 @@
     }
 
     .card-header:has(.text-primary) {
-        background: #90bb13 !important;
-        border-bottom: 2px solid #90bb13 !important;
+        background: #b10100 !important;
+        border-bottom: 2px solid #b10100 !important;
     }
 
     /* Enhanced sidebar-like navigation */
     .user-profile-tab {
-        background: #90bb13;
+        background: #b10100;
     }
 
     .user-profile-tab .nav-link {
@@ -584,7 +584,7 @@
         transform: translateY(-50%);
         width: 0;
         height: 0;
-        background: #90bb13;
+        background: #b10100;
         border-radius: 0 4px 4px 0;
         transition: all 0.3s ease;
     }
@@ -654,6 +654,10 @@
 @endpush
 @endif
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Gestor de Medios'])
+@endsection
+
 @section('content')
 @if($pickerMode)
 <div id="media-picker-banner" class="alert alert-primary mb-3 d-flex align-items-center gap-2 py-2">
@@ -663,8 +667,6 @@
 @endif
 <div id="mediaManagerApp">
 
-
-    @include('core::components.card', ['title' => 'Gestor de Medios'])
 
     <div v-if="loading" class="d-flex justify-content-center align-items-center media-loading-container">
         <div class="spinner-border text-primary media-loading-spinner" role="status">
