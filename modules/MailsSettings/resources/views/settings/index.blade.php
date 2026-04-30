@@ -1,8 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Email'])
+@endsection
+
+@section('content')
 
         @if ($message = session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">

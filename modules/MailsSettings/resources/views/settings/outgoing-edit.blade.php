@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración de email saliente')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Email saliente'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
