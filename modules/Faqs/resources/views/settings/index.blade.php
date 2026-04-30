@@ -2,9 +2,11 @@
 
 @section('title', 'FAQ - Ajustes')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'FAQ'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
