@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva categoría')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Nueva categoría'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 
@@ -55,7 +57,7 @@
                                 <label for="color" class="form-label">Color</label>
                                 <input type="color" id="color" name="color"
                                        class="form-control @error('color') is-invalid @enderror"
-                                       value="{{ old('color', '#90bb13') }}">
+                                       value="{{ old('color', '#b10100') }}">
                                 <small class="form-text text-muted">Color de identificación visual</small>
                                 @error('color')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>

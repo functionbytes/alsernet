@@ -127,9 +127,11 @@
 </style>
 @endpush
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Vista previa'])
+@endsection
+
+@section('content')
 
     <div class="row g-4 align-items-start">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Inbox formularios')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Inbox formularios'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')

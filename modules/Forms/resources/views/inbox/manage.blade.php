@@ -2,9 +2,11 @@
 
 @section('title', 'Gestionar solicitud #' . $submission->id)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestionar solicitud #' . $submission->id])
+@endsection
+
+@section('content')
 
     @php
         $statusMap = [

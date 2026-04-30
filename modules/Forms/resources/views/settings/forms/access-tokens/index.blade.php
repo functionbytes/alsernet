@@ -2,9 +2,11 @@
 
 @section('title', 'Tokens de acceso: ' . $form->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Tokens de acceso'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

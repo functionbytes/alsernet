@@ -2,9 +2,11 @@
 
 @section('title', 'Nuevo formulario')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nuevo formulario'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.forms.store') }}" method="POST" id="createForm" novalidate>

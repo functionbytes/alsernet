@@ -2,9 +2,11 @@
 
 @section('title', 'Plantillas de formularios')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Plantillas de formularios'])
+@endsection
+
+@section('content')
 
     @php
         $categories = collect($templates)->pluck('category')->filter()->unique()->sort()->values();

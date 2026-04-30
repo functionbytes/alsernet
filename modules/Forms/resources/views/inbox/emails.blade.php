@@ -7,9 +7,11 @@
     $activeFilterCount = collect(['type', 'status', 'date_from', 'date_to'])->filter(fn ($f) => request()->filled($f))->count();
 @endphp
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Emails'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

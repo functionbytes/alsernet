@@ -206,8 +206,8 @@
     .preview-email-container.preview-mobile-view { max-width: 375px !important; width: 375px !important; margin: 0 auto !important; }
 
     .btn-group .btn.active {
-        background-color: #90bb13 !important;
-        border-color: #90bb13 !important;
+        background-color: #b10100 !important;
+        border-color: #b10100 !important;
         color: white !important;
     }
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Editar tipo de campo: ' . $typeSetting->label)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar tipo de campo: ' . $typeSetting->label])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="widget-content searchable-container list">

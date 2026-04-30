@@ -24,7 +24,7 @@
         overflow: hidden;
     }
     .field-type-tile span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .field-type-tile:hover { background: #f0f7e0; border-color: #90bb13; color: #5a7a0a; }
+    .field-type-tile:hover { background: #f0f7e0; border-color: #b10100; color: #5a7a0a; }
     .field-type-tile i { font-size: .75rem; flex-shrink: 0; }
 
     /* Config card scrollable body */
@@ -61,7 +61,7 @@
     .nav-tabs-modal .nav-link:hover { color: #5a7a0a; border-bottom-color: #d4e88a; }
     .nav-tabs-modal .nav-link.active {
         color: #5a7a0a;
-        border-bottom-color: #90bb13;
+        border-bottom-color: #b10100;
         font-weight: 600;
     }
     .field-switches-bar { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: .375rem; }
@@ -69,7 +69,7 @@
 
     /* Step header rows */
     .step-header-row td { background: #f0f7e0; padding: .3rem .75rem; font-size: .78rem; font-weight: 600; color: #4a6c0e; border-top: 2px solid #c8e6a0; letter-spacing: .02em; }
-    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #90bb13; color: #fff; font-size: .7rem; font-weight: 700; margin-right: .35rem; }
+    .step-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #b10100; color: #fff; font-size: .7rem; font-weight: 700; margin-right: .35rem; }
 
     /* Form canvas */
     .canvas-header { background: #f8f9fa; }

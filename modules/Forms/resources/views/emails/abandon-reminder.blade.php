@@ -14,7 +14,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#90bb13;padding:32px 40px;text-align:center;">
+                        <td style="background-color:#b10100;padding:32px 40px;text-align:center;">
                             <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:bold;">
                                 ¿Olvidaste algo?
                             </h1>
@@ -38,7 +38,7 @@
                             <!-- CTA Button -->
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
                                 <tr>
-                                    <td style="border-radius:6px;background-color:#90bb13;">
+                                    <td style="border-radius:6px;background-color:#b10100;">
                                         <a href="{{ $restoreUrl }}"
                                            style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:16px;font-weight:bold;text-decoration:none;border-radius:6px;">
                                             Continuar formulario
@@ -49,7 +49,7 @@
 
                             <p style="margin:32px 0 0;color:#888888;font-size:13px;line-height:1.6;">
                                 Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-                                <a href="{{ $restoreUrl }}" style="color:#90bb13;word-break:break-all;">{{ $restoreUrl }}</a>
+                                <a href="{{ $restoreUrl }}" style="color:#b10100;word-break:break-all;">{{ $restoreUrl }}</a>
                             </p>
                         </td>
                     </tr>

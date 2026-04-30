@@ -2,9 +2,11 @@
 
 @section('title', 'Submission #' . $submission->id . ' - ' . ($submission->form->name ?? ''))
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalle de la submission'])
+@endsection
+
+@section('content')
 
     @php
         $statusMap = [

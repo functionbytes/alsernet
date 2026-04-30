@@ -28,7 +28,7 @@ class StoreFormCategoryRequest extends FormRequest
             'name.required' => 'El nombre de la categoría es obligatorio.',
             'name.max' => 'El nombre no puede superar los 100 caracteres.',
             'description.max' => 'La descripción no puede superar los 500 caracteres.',
-            'color.regex' => 'El color debe estar en formato hexadecimal (ej. #90bb13).',
+            'color.regex' => 'El color debe estar en formato hexadecimal (ej. #b10100).',
             'icon.max' => 'El icono no puede superar los 100 caracteres.',
         ];
     }

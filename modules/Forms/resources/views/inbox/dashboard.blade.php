@@ -2,9 +2,11 @@
 
 @section('title', 'Dashboard formularios')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Dashboard formularios'])
+@endsection
+
+@section('content')
 
     {{-- Filters bar --}}
     <div class="card card-body mb-4 border-0 shadow-sm">

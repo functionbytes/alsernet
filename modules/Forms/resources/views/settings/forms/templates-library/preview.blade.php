@@ -2,9 +2,11 @@
 
 @section('title', 'Vista previa: ' . ($template['name'] ?? 'Plantilla'))
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Vista previa de plantilla'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

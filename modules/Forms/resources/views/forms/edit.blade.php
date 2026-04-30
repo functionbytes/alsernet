@@ -6,9 +6,11 @@
 @include('forms::forms.partials._edit-styles')
 @endpush
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Constructor de formulario'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 
