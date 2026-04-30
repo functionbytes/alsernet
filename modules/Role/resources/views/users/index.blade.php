@@ -2,9 +2,11 @@
 
 @section('title', 'Permisos directos de usuarios')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Permisos directos de usuarios'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

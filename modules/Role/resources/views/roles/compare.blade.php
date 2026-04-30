@@ -2,9 +2,11 @@
 
 @section('title', 'Comparar roles')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Comparar roles'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

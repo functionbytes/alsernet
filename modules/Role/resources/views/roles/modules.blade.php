@@ -1,18 +1,19 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', [
+    'title' => 'Gestionar módulos del rol',
+    'breadcrumbs' => [
+    ['label' => 'Dashboard', 'url' => url('/home')],
+    ['label' => 'Roles', 'url' => route('settings.roles.index')],
+    ['label' => $role->name, 'url' => route('settings.roles.edit', $role->id)],
+    ['label' => 'Módulos', 'active' => true]
+    ]
+    ])
+@endsection
+
 @section('content')
 <div class="px-3">
-
-    {{-- Breadcrumb Card --}}
-    @include('core::components.card', [
-        'title' => 'Gestionar módulos del rol',
-        'breadcrumbs' => [
-            ['label' => 'Dashboard', 'url' => url('/home')],
-            ['label' => 'Roles', 'url' => route('settings.roles.index')],
-            ['label' => $role->name, 'url' => route('settings.roles.edit', $role->id)],
-            ['label' => 'Módulos', 'active' => true]
-        ]
-    ])
 
     <div class="widget-content searchable-container list">
 

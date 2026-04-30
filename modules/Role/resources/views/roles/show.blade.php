@@ -2,9 +2,11 @@
 
 @section('title', $role->name . ' - Roles')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalles del rol'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -16,7 +18,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 70px; height: 70px; background: #90bb13;">
+                             style="width: 70px; height: 70px; background: #b10100;">
                             <i class="fas fa-user-shield fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
