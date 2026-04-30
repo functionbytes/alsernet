@@ -14,7 +14,7 @@
                 @else
                     @php $initial = strtoupper(substr($user->firstname ?? 'U', 0, 1)); @endphp
                     <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold fs-2"
-                         style="width:96px;height:96px;background-color:#90bb13;">
+                         style="width:96px;height:96px;background-color:#b10100;">
                         {{ $initial }}
                     </div>
                 @endif
@@ -184,7 +184,7 @@
 
                     <button type="submit"
                             class="btn px-4"
-                            style="background-color:#90bb13;color:#fff;">
+                            style="background-color:#b10100;color:#fff;">
                         <i class="fas fa-save me-2"></i>Guardar cambios
                     </button>
                 </form>

@@ -5,8 +5,8 @@
     <title>Códigos de recuperación 2FA</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; color: #2a2a2a; padding: 30px; }
-        .header { border-bottom: 3px solid #90bb13; padding-bottom: 12px; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 22px; color: #90bb13; }
+        .header { border-bottom: 3px solid #b10100; padding-bottom: 12px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 22px; color: #b10100; }
         .meta { font-size: 11px; color: #666; margin-top: 4px; }
         .warning { background: #fff5e1; border-left: 4px solid #FEC90F; padding: 12px 16px; margin: 20px 0; font-size: 12px; }
         .codes { margin: 24px 0; }
