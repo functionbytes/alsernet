@@ -2,9 +2,11 @@
 
 @section('page_title', 'Notificaciones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Notificaciones'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
