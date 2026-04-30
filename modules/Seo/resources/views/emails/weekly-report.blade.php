@@ -13,7 +13,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#90bb13; padding:24px 32px;">
+                        <td style="background-color:#b10100; padding:24px 32px;">
                             <h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:bold;">
                                 Reporte SEO semanal &mdash; {{ config('app.name') }}
                             </h1>
@@ -36,7 +36,7 @@
                                     <td width="4px"></td>
                                     <td width="50%" style="padding:10px 12px; background-color:#f9f9f9; border:1px solid #e2e2e2; border-radius:4px;">
                                         <p style="margin:0 0 4px; color:#777777; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">Score promedio</p>
-                                        <p style="margin:0; color:#90bb13; font-size:22px; font-weight:bold;">{{ $stats['avg_score'] }}</p>
+                                        <p style="margin:0; color:#b10100; font-size:22px; font-weight:bold;">{{ $stats['avg_score'] }}</p>
                                     </td>
                                 </tr>
                                 <tr><td colspan="3" style="height:6px;"></td></tr>
@@ -98,13 +98,13 @@
                                         {{ $page->title ?: ($page->canonical_url ?: 'Meta #'.$page->id) }}
                                     </td>
                                     <td style="padding:8px 12px; text-align:center; border-bottom:1px solid #eeeeee;">
-                                        <span style="display:inline-block; background-color:{{ $page->seo_score >= 75 ? '#90bb13' : ($page->seo_score >= 50 ? '#FEC90F' : '#e53e3e') }}; color:#ffffff; border-radius:3px; padding:2px 8px; font-size:12px; font-weight:bold;">
+                                        <span style="display:inline-block; background-color:{{ $page->seo_score >= 75 ? '#b10100' : ($page->seo_score >= 50 ? '#FEC90F' : '#e53e3e') }}; color:#ffffff; border-radius:3px; padding:2px 8px; font-size:12px; font-weight:bold;">
                                             {{ $page->seo_grade ?? '-' }} {{ $page->seo_score }}
                                         </span>
                                     </td>
                                     <td style="padding:8px 12px; text-align:center; border-bottom:1px solid #eeeeee;">
                                         <a href="{{ route('settings.seo.metas.edit', $page->id) }}"
-                                           style="color:#90bb13; font-size:12px; text-decoration:none;">Ver</a>
+                                           style="color:#b10100; font-size:12px; text-decoration:none;">Ver</a>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -142,7 +142,7 @@
                     <tr>
                         <td style="padding:28px 32px;">
                             <a href="{{ route('settings.seo.report.index') }}"
-                               style="display:inline-block; background-color:#90bb13; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:4px; font-size:15px; font-weight:bold;">
+                               style="display:inline-block; background-color:#b10100; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:4px; font-size:15px; font-weight:bold;">
                                 Ver reporte completo
                             </a>
                         </td>

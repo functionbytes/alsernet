@@ -2,9 +2,11 @@
 
 @section('title', 'Importar Search Console')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar datos de Google Search Console'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -144,7 +146,7 @@
 @push('styles')
 <style>
     .form-control:focus {
-        border-color: #90bb13;
+        border-color: #b10100;
         box-shadow: 0 0 0 0.2rem rgba(144, 187, 19, 0.15);
     }
 </style>

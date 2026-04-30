@@ -2,9 +2,11 @@
 
 @section('title', 'Dashboard SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Dashboard SEO'])
+@endsection
 
+@section('content')
     <div class="widget-content">
 
         {{-- Actions bar --}}

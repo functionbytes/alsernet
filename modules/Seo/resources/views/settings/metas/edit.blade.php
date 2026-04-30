@@ -2,9 +2,11 @@
 
 @section('title', 'Editar meta SEO')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar meta SEO: ' . ($meta->seoable?->title ?? $meta->seoable?->name ?? ($meta->seoable_type ? class_basename($meta->seoable_type).' #'.$meta->seoable_id : ''))])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -1343,7 +1345,7 @@ $(document).ready(function() {
                 return;
             }
 
-            var gradeColor = { A: '#13C672', B: '#90bb13', C: '#FEC90F', D: '#FA896B', F: '#dc3545' };
+            var gradeColor = { A: '#13C672', B: '#b10100', C: '#FEC90F', D: '#FA896B', F: '#dc3545' };
             var rows = data.map(function (row) {
                 var color = gradeColor[row.seo_grade] || '#6c757d';
                 var issues = Array.isArray(row.issues) ? row.issues.length : 0;
@@ -1614,7 +1616,7 @@ $(document).ready(function() {
         var last = data[data.length - 1];
         var score = last.score;
         var grade = last.grade || '';
-        var color = score >= 80 ? '#13C672' : (score >= 60 ? '#90bb13' : (score >= 40 ? '#FEC90F' : '#FA896B'));
+        var color = score >= 80 ? '#13C672' : (score >= 60 ? '#b10100' : (score >= 40 ? '#FEC90F' : '#FA896B'));
         $('#score-summary-card').css('display', '').show();
         $('#score-summary-label').text('Grado ' + grade);
         $('#score-summary-circle')
@@ -1672,7 +1674,7 @@ $(document).ready(function() {
                 labels: data.map(function(d) { return d.date; }),
                 datasets: [{
                     data: data.map(function(d) { return d.score; }),
-                    borderColor: '#90bb13',
+                    borderColor: '#b10100',
                     backgroundColor: 'rgba(144,187,19,0.1)',
                     borderWidth: 2,
                     pointRadius: 3,

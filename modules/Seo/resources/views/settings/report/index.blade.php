@@ -2,9 +2,11 @@
 
 @section('title', 'Reporte SEO')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Reporte SEO'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -35,7 +37,7 @@
                                 @php
                                 $scoreColor = match(true) {
                                     $stats['avg_score'] >= 90 => '#13C672',
-                                    $stats['avg_score'] >= 75 => '#90bb13',
+                                    $stats['avg_score'] >= 75 => '#b10100',
                                     $stats['avg_score'] >= 60 => '#FEC90F',
                                     $stats['avg_score'] >= 40 => '#FA896B',
                                     default => '#dc3545',

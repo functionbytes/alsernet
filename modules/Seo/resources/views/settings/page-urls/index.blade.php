@@ -2,9 +2,11 @@
 
 @section('title', 'URLs del Sitio')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'URLs del Sitio'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

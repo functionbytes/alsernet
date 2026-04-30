@@ -38,7 +38,7 @@ class WebhookNotificationService
     {
         $message = "📄 *SEO Alert* — {$count} páginas de tipo `{$modelType}` sin configuración SEO.";
 
-        $this->send($message, ['title' => 'Orphan Pages Detected', 'color' => 0x90BB13]);
+        $this->send($message, ['title' => 'Orphan Pages Detected', 'color' => 0xB10100]);
     }
 
     /**
@@ -97,7 +97,7 @@ class WebhookNotificationService
                 'embeds' => [[
                     'title' => $embedData['title'] ?? 'SEO Alert',
                     'description' => $text,
-                    'color' => $embedData['color'] ?? 0x90BB13,
+                    'color' => $embedData['color'] ?? 0xB10100,
                     'fields' => $embedData['fields'] ?? [],
                     'footer' => ['text' => config('app.name').' — SEO Module'],
                     'timestamp' => now()->toIso8601String(),

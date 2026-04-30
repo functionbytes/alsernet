@@ -2,9 +2,11 @@
 
 @section('title', 'Redirecciones SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Redirecciones SEO'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 
@@ -447,7 +449,7 @@ $(document).ready(function() {
                         datasets: [{
                             label: 'Visitas',
                             data: res.data,
-                            borderColor: '#90bb13',
+                            borderColor: '#b10100',
                             backgroundColor: 'rgba(144,187,19,0.1)',
                             borderWidth: 2,
                             pointRadius: 3,

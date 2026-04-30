@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle meta SEO')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Meta SEO'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

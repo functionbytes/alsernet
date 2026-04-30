@@ -2,9 +2,11 @@
 
 @section('title', 'Importar redirecciones')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar redirecciones'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.seo.redirects.import.store') }}" method="POST" enctype="multipart/form-data" novalidate>

@@ -2,9 +2,11 @@
 
 @section('title', 'Historial de auditorías SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Historial de auditorías SEO'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

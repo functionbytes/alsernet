@@ -2,9 +2,11 @@
 
 @section('title', 'Gestión de hreflang')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestión de hreflang'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="row g-4 align-items-start">

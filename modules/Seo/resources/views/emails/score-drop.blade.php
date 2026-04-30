@@ -69,7 +69,7 @@
 
                             <!-- CTA -->
                             <a href="{{ route('settings.seo.metas.edit', $meta->id) }}"
-                               style="display:inline-block; background-color:#90bb13; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:4px; font-size:15px; font-weight:bold;">
+                               style="display:inline-block; background-color:#b10100; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:4px; font-size:15px; font-weight:bold;">
                                 Ver y editar meta SEO
                             </a>
                         </td>

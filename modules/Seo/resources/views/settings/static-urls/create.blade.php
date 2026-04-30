@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva URL estática')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Nueva URL estática'])
+@endsection
 
+@section('content')
     <div class="row">
         {{-- Formulario principal --}}
         <div class="col-lg-8">

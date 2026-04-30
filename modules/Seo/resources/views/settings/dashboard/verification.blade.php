@@ -2,9 +2,11 @@
 
 @section('title', 'Verificación de motores de búsqueda')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Verificación de motores de búsqueda'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

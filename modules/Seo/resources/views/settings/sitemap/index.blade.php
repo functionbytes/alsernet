@@ -2,9 +2,11 @@
 
 @section('title', 'Sitemap XML')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Sitemap XML'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

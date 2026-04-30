@@ -2,9 +2,11 @@
 
 @section('title', 'Importar backup JSON SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar backup JSON SEO'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.seo.metas.import-json.store') }}" method="POST" enctype="multipart/form-data" novalidate>

@@ -2,9 +2,11 @@
 
 @section('title', 'URLs estáticas del sitemap')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'URLs estáticas del sitemap'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

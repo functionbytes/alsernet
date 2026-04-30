@@ -477,7 +477,7 @@ class SeoMetaWebController extends Controller
             'dark' => '#1a1a2e',
             'gradient' => '#16213e',
             'minimal' => '#ffffff',
-            default => $request->input('bg_color', '#90bb13'),
+            default => $request->input('bg_color', '#b10100'),
         };
         $textColor = match ($template) {
             'dark', 'gradient' => '#ffffff',

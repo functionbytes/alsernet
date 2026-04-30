@@ -9,7 +9,7 @@
         .page { padding: 20px; }
 
         /* Header */
-        .header { border-bottom: 3px solid #90bb13; padding-bottom: 12px; margin-bottom: 20px; }
+        .header { border-bottom: 3px solid #b10100; padding-bottom: 12px; margin-bottom: 20px; }
         .header h1 { font-size: 20px; color: #2c3e50; font-weight: bold; }
         .header .meta { font-size: 10px; color: #666; margin-top: 4px; }
 
@@ -22,13 +22,13 @@
         /* Grade distribution */
         .grade-row { display: inline-block; padding: 3px 8px; border-radius: 3px; color: #fff; font-weight: bold; font-size: 10px; }
         .grade-a { background: #13C672; }
-        .grade-b { background: #90bb13; }
+        .grade-b { background: #b10100; }
         .grade-c { background: #FEC90F; color: #333; }
         .grade-d { background: #FA896B; }
         .grade-f { background: #dc3545; }
 
         /* Main data table */
-        .section-title { font-size: 14px; font-weight: bold; color: #2c3e50; margin: 16px 0 8px; border-left: 4px solid #90bb13; padding-left: 8px; }
+        .section-title { font-size: 14px; font-weight: bold; color: #2c3e50; margin: 16px 0 8px; border-left: 4px solid #b10100; padding-left: 8px; }
         .data-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
         .data-table thead th { background: #2c3e50; color: #fff; padding: 6px 8px; text-align: left; }
         .data-table tbody td { padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
@@ -36,7 +36,7 @@
 
         /* Row color coding */
         .row-a td { border-left: 3px solid #13C672; }
-        .row-b td:first-child { border-left: 3px solid #90bb13; }
+        .row-b td:first-child { border-left: 3px solid #b10100; }
         .row-c td:first-child { border-left: 3px solid #FEC90F; }
         .row-d td:first-child { border-left: 3px solid #FA896B; }
         .row-f td:first-child { border-left: 3px solid #dc3545; }
@@ -84,7 +84,7 @@
                 <td>Total redirecciones</td>
                 <td>{{ number_format($stats['total_redirects']) }}</td>
             </tr>
-            @foreach(['A' => '#13C672', 'B' => '#90bb13', 'C' => '#FEC90F', 'D' => '#FA896B', 'F' => '#dc3545'] as $grade => $color)
+            @foreach(['A' => '#13C672', 'B' => '#b10100', 'C' => '#FEC90F', 'D' => '#FA896B', 'F' => '#dc3545'] as $grade => $color)
                 @if(isset($stats['grade_distribution'][$grade]))
                     <tr>
                         <td>Grado {{ $grade }}</td>
@@ -122,7 +122,7 @@
                 };
                 $scoreColor = match(true) {
                     ($meta->seo_score ?? 0) >= 90 => '#13C672',
-                    ($meta->seo_score ?? 0) >= 75 => '#90bb13',
+                    ($meta->seo_score ?? 0) >= 75 => '#b10100',
                     ($meta->seo_score ?? 0) >= 60 => '#FEC90F',
                     ($meta->seo_score ?? 0) >= 40 => '#FA896B',
                     default => '#dc3545',

@@ -2,9 +2,11 @@
 
 @section('title', 'Editar plantilla SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar plantilla SEO'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.seo.templates.update', $template) }}" method="POST" novalidate>

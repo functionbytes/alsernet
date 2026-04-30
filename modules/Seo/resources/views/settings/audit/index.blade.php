@@ -2,9 +2,11 @@
 
 @section('title', 'Auditoría SEO')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Auditoría SEO'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -182,7 +184,7 @@
 
     function scoreColor(score) {
         if (score >= 90) return '#13C672';
-        if (score >= 75) return '#90bb13';
+        if (score >= 75) return '#b10100';
         if (score >= 60) return '#FEC90F';
         if (score >= 40) return '#FA896B';
         return '#dc3545';

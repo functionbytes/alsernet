@@ -2,9 +2,11 @@
 
 @section('title', 'Analytics SEO')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Analytics SEO'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 
@@ -127,7 +129,7 @@
                                             : 0;
                                         $posColor = match(true) {
                                             ($page->gsc_position ?? 999) <= 3  => '#13C672',
-                                            ($page->gsc_position ?? 999) <= 10 => '#90bb13',
+                                            ($page->gsc_position ?? 999) <= 10 => '#b10100',
                                             ($page->gsc_position ?? 999) <= 20 => '#FEC90F',
                                             default                            => '#FA896B',
                                         };
@@ -140,7 +142,7 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <span class="fw-semibold" style="color:#90bb13;">{{ number_format($page->gsc_clicks ?? 0) }}</span>
+                                            <span class="fw-semibold" style="color:#b10100;">{{ number_format($page->gsc_clicks ?? 0) }}</span>
                                         </td>
                                         <td class="text-center">
                                             <span class="small">{{ number_format($page->gsc_impressions ?? 0) }}</span>

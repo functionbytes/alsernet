@@ -2,9 +2,11 @@
 
 @section('title', 'Crear redirección')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Crear redirección'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form id="formRedirect" action="{{ route('settings.seo.redirects.store') }}" method="POST" novalidate>

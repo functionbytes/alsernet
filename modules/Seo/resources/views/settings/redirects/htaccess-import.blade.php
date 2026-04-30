@@ -2,9 +2,11 @@
 
 @section('title', 'Importar desde .htaccess')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar desde .htaccess'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <form action="{{ route('settings.seo.redirects.htaccess-import.store') }}" method="POST" novalidate>

@@ -2,9 +2,11 @@
 
 @section('title', 'Editar redireccion')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar redireccion'])
+@endsection
 
+@section('content')
     <div class="row">
         <!-- Formulario principal -->
         <div class="col-lg-8">

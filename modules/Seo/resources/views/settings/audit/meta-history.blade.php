@@ -2,9 +2,11 @@
 
 @section('title', 'Historial de auditorías - ' . ($meta->display_title ?? "Meta #{$meta->id}"))
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Historial de auditorías'])
+@endsection
 
+@section('content')
     <div class="widget-content">
         @include('core::components.alerts')
 
@@ -37,7 +39,7 @@
                             @php
                                 $score = $log->score ?? 0;
                                 if ($score >= 90) $color = '#13C672';
-                                elseif ($score >= 75) $color = '#90bb13';
+                                elseif ($score >= 75) $color = '#b10100';
                                 elseif ($score >= 60) $color = '#FEC90F';
                                 elseif ($score >= 40) $color = '#FA896B';
                                 else $color = '#dc3545';
