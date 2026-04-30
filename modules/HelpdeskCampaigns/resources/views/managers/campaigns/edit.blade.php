@@ -2,9 +2,11 @@
 
 @section('title', 'Editar campaña — ' . $campaign->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar campaña'])
+@endsection
+
+@section('content')
 
     @php $currentTab = request()->get('tab', 'general'); @endphp
 

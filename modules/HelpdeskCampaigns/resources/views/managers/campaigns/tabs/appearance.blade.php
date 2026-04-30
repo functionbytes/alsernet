@@ -7,7 +7,7 @@
         $appearance = old('appearance', $campaign->appearance ?? []);
         $bgColor = $appearance['background_color'] ?? '#ffffff';
         $textColor = $appearance['text_color'] ?? '#000000';
-        $primaryColor = $appearance['primary_color'] ?? '#90bb13';
+        $primaryColor = $appearance['primary_color'] ?? '#b10100';
         $position = $appearance['position'] ?? 'center';
         $fontSize = $appearance['font_size'] ?? 'medium';
     @endphp

@@ -20,7 +20,7 @@ class CampaignFactory extends Factory
             'appearance' => [
                 'background_color' => '#ffffff',
                 'text_color' => '#000000',
-                'primary_color' => '#90bb13',
+                'primary_color' => '#b10100',
             ],
             'conditions' => [],
             'metadata' => [],

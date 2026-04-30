@@ -284,7 +284,7 @@ class Campaign extends Model
 
         $bgColor = $this->sanitizeCssColor($this->appearance['background_color'] ?? '', '#ffffff');
         $textColor = $this->sanitizeCssColor($this->appearance['text_color'] ?? '', '#000000');
-        $primaryColor = $this->sanitizeCssColor($this->appearance['primary_color'] ?? '', '#90bb13');
+        $primaryColor = $this->sanitizeCssColor($this->appearance['primary_color'] ?? '', '#b10100');
 
         $css = ':root {';
         $css .= "--campaign-bg-color: {$bgColor};";
