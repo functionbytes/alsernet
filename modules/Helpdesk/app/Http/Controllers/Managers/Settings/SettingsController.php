@@ -88,7 +88,7 @@ class SettingsController extends Controller
         // DB settings override cache/config defaults
         $settings = array_merge($settings, $dbSettings);
 
-        return view('helpdesk::managers.helpdesk.settings.tickets', [
+        return view('helpdesk::settings.tickets.index', [
             'backups' => $settings,
         ]);
     }
@@ -179,7 +179,7 @@ class SettingsController extends Controller
 
         $settings = array_merge($settings, $dbSettings);
 
-        return view('helpdesk::managers.helpdesk.settings.livechat', [
+        return view('helpdesk::settings.livechat.index', [
             'backups' => $settings,
             'positions' => $positions,
         ]);
@@ -234,7 +234,7 @@ class SettingsController extends Controller
 
         $settings = array_merge($settings, $dbSettings);
 
-        return view('helpdesk::managers.helpdesk.settings.ai', [
+        return view('helpdesk::settings.ai.index', [
             'backups' => $settings,
             'providers' => $providers,
         ]);
@@ -272,7 +272,7 @@ class SettingsController extends Controller
 
         $settings = array_merge($settings, $dbSettings);
 
-        return view('helpdesk::managers.helpdesk.settings.uploading', [
+        return view('helpdesk::settings.uploading.index', [
             'backups' => $settings,
         ]);
     }

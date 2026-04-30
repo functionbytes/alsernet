@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
 use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
-use Modules\Helpdesk\Models\AgentShift;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -18,9 +17,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\HelpCenterArticle;
 use Modules\Helpdesk\Models\HelpCenterCategory;
-use Modules\Helpdesk\Models\OncallRotation;
 use Modules\Helpdesk\Models\Webhook;
-use Modules\Helpdesk\Policies\AgentShiftPolicy;
 use Modules\Helpdesk\Policies\CannedReplyPolicy;
 use Modules\Helpdesk\Policies\ConversationPolicy;
 use Modules\Helpdesk\Policies\ConversationStatusPolicy;
@@ -31,7 +28,6 @@ use Modules\Helpdesk\Policies\CustomerPolicy;
 use Modules\Helpdesk\Policies\GroupPolicy;
 use Modules\Helpdesk\Policies\HelpCenterArticlePolicy;
 use Modules\Helpdesk\Policies\HelpCenterCategoryPolicy;
-use Modules\Helpdesk\Policies\OncallRotationPolicy;
 use Modules\Helpdesk\Policies\WebhookPolicy;
 use Modules\Helpdesk\Services\CannedReplyService;
 use Modules\Helpdesk\Services\ConversationTagService;
@@ -42,6 +38,7 @@ use Modules\Helpdesk\Services\InstagramService;
 use Modules\Helpdesk\Services\NotificationService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
+use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -66,6 +63,62 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->registerViewComposers();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerHelpdeskSidebar();
+        $this->registerSettingsSidebar();
+    }
+
+    /**
+     * Items del módulo Helpdesk en el sidebar principal (sección "Centro de ayuda").
+     */
+    protected function registerHelpdeskSidebar(): void
+    {
+        NavService::registerSidebar('helpdesk', [
+            'title' => 'Centro de ayuda',
+            'items' => [
+                [
+                    'label' => 'Inicio',
+                    'route' => 'manager.helpdesk.helpcenter.index',
+                    'icon' => 'far fa-book-open',
+                    'permission' => 'helpdesk.helpcenter.view',
+                ],
+                [
+                    'label' => 'Categorías',
+                    'route' => 'manager.helpdesk.helpcenter.categories',
+                    'icon' => 'far fa-folder-tree',
+                    'permission' => 'helpdesk.helpcenter.categories.view',
+                ],
+                [
+                    'label' => 'Artículos',
+                    'route' => 'manager.helpdesk.helpcenter.articles',
+                    'icon' => 'far fa-file-lines',
+                    'permission' => 'helpdesk.helpcenter.articles.view',
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Items del módulo Helpdesk en el sidebar de Configuración.
+     */
+    protected function registerSettingsSidebar(): void
+    {
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk',
+            'items' => [
+                ['label' => 'Configuración de tickets', 'route' => 'settings.helpdesk.tickets', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Chat en vivo', 'route' => 'settings.helpdesk.livechat', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Inteligencia artificial', 'route' => 'settings.helpdesk.ai', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Subida de archivos', 'route' => 'settings.helpdesk.uploading', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Integraciones sociales', 'route' => 'settings.helpdesk.social-integrations.index', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Atributos personalizados', 'route' => 'settings.helpdesk.attributes.index', 'permission' => 'helpdesk.attributes.view'],
+                ['label' => 'Etiquetas', 'route' => 'settings.helpdesk.tags.index', 'permission' => 'helpdesk.tags.view'],
+                ['label' => 'Estados de conversación', 'route' => 'settings.helpdesk.statuses.index', 'permission' => 'helpdesk.statuses.view'],
+                ['label' => 'Vistas personalizadas', 'route' => 'settings.helpdesk.views.index', 'permission' => 'helpdesk.views.view'],
+                ['label' => 'Equipo - Miembros', 'route' => 'settings.helpdesk.team.members', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Equipo - Grupos', 'route' => 'settings.helpdesk.team.groups', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Webhooks', 'route' => 'settings.helpdesk.webhooks.index', 'permission' => 'helpdesk.webhooks.view'],
+            ],
+        ]);
     }
 
     public function register(): void
@@ -104,8 +157,6 @@ class HelpdeskServiceProvider extends ServiceProvider
             ConversationView::class => ConversationViewPolicy::class,
             Group::class => GroupPolicy::class,
             Webhook::class => WebhookPolicy::class,
-            AgentShift::class => AgentShiftPolicy::class,
-            OncallRotation::class => OncallRotationPolicy::class,
             HelpCenterCategory::class => HelpCenterCategoryPolicy::class,
             CustomAttribute::class => CustomAttributePolicy::class,
             CannedReply::class => CannedReplyPolicy::class,

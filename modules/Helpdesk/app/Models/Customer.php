@@ -55,6 +55,7 @@ class Customer extends Model
         return [
             'email_verified_at' => 'datetime',
             'banned_at' => 'datetime',
+            'is_blocked' => 'boolean',
             'last_seen_at' => 'datetime',
             'custom_attributes' => 'array',
             'portal_token_expires_at' => 'datetime',

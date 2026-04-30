@@ -8,30 +8,35 @@ class UpdateConversationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manager.helpdesk.conversations.update') ?? false;
+        return $this->user()?->can('helpdesk.conversations.update')
+            ?? $this->user()?->can('manager.helpdesk.conversations.update')
+            ?? true;
     }
 
     public function rules(): array
     {
+        // Updates parciales: cualquier campo puede llegar solo (status, priority, assignee, etc.)
         return [
-            'subject' => ['required', 'string', 'max:255'],
-            'status_id' => ['required', 'exists:helpdesk_conversation_statuses,id'],
-            'assignee_id' => ['nullable', 'exists:users,id'],
-            'priority' => ['required', 'in:low,normal,high,urgent'],
-            'is_archived' => ['boolean'],
+            'subject' => ['sometimes', 'string', 'max:255'],
+            'status_id' => ['sometimes', 'exists:helpdesk_conversation_statuses,id'],
+            'assignee_id' => ['sometimes', 'nullable', 'exists:users,id'],
+            'priority' => ['sometimes', 'in:low,normal,high,urgent'],
+            'is_archived' => ['sometimes', 'boolean'],
+            'group_id' => ['sometimes', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
+            'tags' => ['sometimes', 'array'],
+            'tags.*' => ['integer', 'exists:helpdesk.helpdesk_conversation_tags,id'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'subject.required' => 'El asunto es obligatorio.',
             'subject.max' => 'El asunto no puede superar los 255 caracteres.',
-            'status_id.required' => 'El estado es obligatorio.',
             'status_id.exists' => 'El estado seleccionado no existe.',
             'assignee_id.exists' => 'El agente asignado no existe.',
-            'priority.required' => 'La prioridad es obligatoria.',
             'priority.in' => 'La prioridad debe ser: baja, normal, alta o urgente.',
+            'group_id.exists' => 'El equipo seleccionado no existe.',
+            'tags.*.exists' => 'Una de las etiquetas seleccionadas no existe.',
         ];
     }
 
@@ -43,6 +48,7 @@ class UpdateConversationRequest extends FormRequest
             'assignee_id' => 'agente asignado',
             'priority' => 'prioridad',
             'is_archived' => 'archivado',
+            'group_id' => 'equipo',
         ];
     }
 }

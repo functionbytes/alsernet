@@ -2,6 +2,8 @@
 
 namespace Modules\Helpdesk\Models;
 
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,12 +13,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Concerns\HasMessageThread;
+use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Conversation extends Model
 {
-    use HasCrossDatabaseUserRelation, HasCustomAttributes, HasFactory, HasMessageThread, SoftDeletes;
+    use HasCrossDatabaseUserRelation, HasCustomAttributes, HasFactory, HasMessageThread, LogsActivity, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -24,16 +29,19 @@ class Conversation extends Model
 
     protected $fillable = [
         'customer_id',
+        'status_id',
         'subject',
         'priority',
         'channel',
         'external_id',
         'external_sender_id',
+        'group_id',
         'assigned_at',
         'closed_at',
         'first_response_at',
         'last_message_at',
         'tags',
+        'is_spam',
     ];
 
     protected function casts(): array
@@ -44,11 +52,21 @@ class Conversation extends Model
             'first_response_at' => 'datetime',
             'last_message_at' => 'datetime',
             'is_archived' => 'boolean',
+            'is_spam' => 'boolean',
             'tags' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status_id', 'priority', 'assignee_id', 'closed_at', 'snoozed_until'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('helpdesk');
     }
 
     /**
@@ -96,11 +114,27 @@ class Conversation extends Model
     }
 
     /**
+     * Get drafts for this conversation (one per user)
+     */
+    public function drafts(): HasMany
+    {
+        return $this->hasMany(ConversationDraft::class, 'conversation_id');
+    }
+
+    /**
      * Get canned replies available for this conversation
      */
     public function cannedReplies(): HasMany
     {
         return $this->hasMany(CannedReply::class, 'conversation_id');
+    }
+
+    /**
+     * Per-user read receipts. Used by ?unread=1 inbox filter.
+     */
+    public function reads(): HasMany
+    {
+        return $this->hasMany(ConversationRead::class, 'conversation_id');
     }
 
     /**
@@ -187,6 +221,8 @@ class Conversation extends Model
             'assigned_at' => now(),
         ]);
 
+        $this->broadcastInboxChanged('assigned');
+
         return $this;
     }
 
@@ -201,6 +237,8 @@ class Conversation extends Model
             'status_id' => $closedStatus->id ?? $this->status_id,
             'closed_at' => now(),
         ]);
+
+        $this->broadcastInboxChanged('status_changed');
 
         return $this;
     }
@@ -219,7 +257,24 @@ class Conversation extends Model
             'closed_at' => null,
         ]);
 
+        $this->broadcastInboxChanged('status_changed');
+
         return $this;
+    }
+
+    /**
+     * Broadcast an inbox change to all relevant agents (assignee + auth user).
+     */
+    protected function broadcastInboxChanged(string $changeType): void
+    {
+        $userIds = array_filter(array_unique([
+            $this->assignee_id,
+            auth()->id(),
+        ]));
+
+        foreach ($userIds as $userId) {
+            event(new InboxItemChanged($this->id, $userId, $changeType));
+        }
     }
 
     /**
@@ -274,5 +329,126 @@ class Conversation extends Model
             'instagram' => ['icon' => 'fab fa-instagram',          'color' => '#E1306C', 'label' => 'Instagram'],
             default => ['icon' => 'fas fa-comment-dots',       'color' => '#6c757d', 'label' => 'Widget'],
         };
+    }
+
+    /**
+     * Map conversation model to the array shape expected by the inbox conv-item partial.
+     *
+     * @return array{
+     *   id: int, name: string, initials: string, color: string,
+     *   channel: string, channelIcon: string, time: string,
+     *   preview: string, sla: array{0: string, 1: string},
+     *   priority: ?string, unread: int, urgent: bool, on: bool
+     * }
+     */
+    public function toInboxArray(?int $selectedId = null): array
+    {
+        $name = $this->customer?->name ?? $this->subject ?? 'Sin nombre';
+        $initials = collect(preg_split('/\s+/', trim($name)))
+            ->take(2)
+            ->map(fn ($w) => mb_substr($w, 0, 1))
+            ->implode('');
+
+        $colorIndex = (($this->customer_id ?? $this->id ?? 1) - 1) % 8 + 1;
+
+        $channelMap = [
+            'whatsapp' => ['code' => 'wa', 'icon' => 'fab fa-whatsapp'],
+            'facebook' => ['code' => 'fb', 'icon' => 'fab fa-facebook-messenger'],
+            'instagram' => ['code' => 'ig', 'icon' => 'fab fa-instagram'],
+            'email' => ['code' => 'email', 'icon' => 'far fa-envelope'],
+            'widget' => ['code' => 'web', 'icon' => 'far fa-comment-dots'],
+        ];
+        $ch = $channelMap[$this->channel ?? 'widget'] ?? $channelMap['widget'];
+
+        $lastAt = $this->last_message_at ?? $this->updated_at ?? $this->created_at;
+        if (! $lastAt) {
+            $time = '—';
+        } elseif ($lastAt->isToday()) {
+            $minutes = (int) round($lastAt->diffInMinutes(now()));
+            if ($minutes < 1) {
+                $time = 'ahora';
+            } elseif ($minutes < 60) {
+                $time = $minutes.'m';
+            } else {
+                $time = $lastAt->format('H:i');
+            }
+        } else {
+            $time = $lastAt->format('d M');
+        }
+
+        $preview = $this->getLatestMessage()?->body ?? $this->subject ?? '';
+        $preview = mb_strimwidth(strip_tags((string) $preview), 0, 90, '…');
+
+        return [
+            'id' => $this->id,
+            'name' => mb_strtoupper(mb_substr($name, 0, 1)).mb_substr($name, 1),
+            'initials' => mb_strtoupper($initials ?: '?'),
+            'color' => 'c'.$colorIndex,
+            'channel' => $ch['code'],
+            'channelIcon' => $ch['icon'],
+            'time' => $time,
+            'preview' => e($preview),
+            'sla' => $this->slaStatusForInbox($lastAt),
+            'priority' => in_array($this->priority, ['low', 'normal', 'high', 'urgent'], true) ? $this->priority : null,
+            'unread' => $this->unreadCountForInbox(),
+            'urgent' => $this->priority === 'urgent',
+            'on' => $selectedId !== null && $this->id === $selectedId,
+        ];
+    }
+
+    /**
+     * Safe unread count for inbox cards. The legacy getUnreadCountForUser()
+     * relies on item-level reads which are not tracked in the current schema,
+     * so we infer from helpdesk_conversation_reads (conversation-level pivot).
+     */
+    protected function unreadCountForInbox(): int
+    {
+        $userId = auth()->id();
+
+        if (! $userId) {
+            return 0;
+        }
+
+        $read = \DB::connection($this->connection)
+            ->table('helpdesk_conversation_reads')
+            ->where('conversation_id', $this->id)
+            ->where('user_id', $userId)
+            ->value('read_at');
+
+        $lastAt = $this->last_message_at ?? $this->updated_at;
+
+        if (! $lastAt) {
+            return 0;
+        }
+
+        if ($read && Carbon::parse($read)->greaterThanOrEqualTo($lastAt)) {
+            return 0;
+        }
+
+        return min(99, max(1, (int) $this->items()->where('type', 'message')->where('user_id', null)->count()));
+    }
+
+    /**
+     * Calculate a tuple [status, label] for the SLA badge: ok / warn / breach.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function slaStatusForInbox(?CarbonInterface $lastAt): array
+    {
+        if (! $lastAt) {
+            return ['ok', '—'];
+        }
+
+        $minutes = (int) round($lastAt->diffInMinutes(now()));
+        $label = match (true) {
+            $minutes < 60 => $minutes.'m',
+            $minutes < 1440 => intdiv($minutes, 60).'h',
+            default => intdiv($minutes, 1440).'d',
+        };
+
+        return [
+            $minutes < 15 ? 'ok' : ($minutes < 60 ? 'warn' : 'breach'),
+            $label,
+        ];
     }
 }

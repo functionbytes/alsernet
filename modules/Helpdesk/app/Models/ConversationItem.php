@@ -29,6 +29,8 @@ class ConversationItem extends Model
         'is_internal',
         'metadata',
         'external_id',
+        'scheduled_at',
+        'scheduled_by',
     ];
 
     protected function casts(): array
@@ -37,10 +39,27 @@ class ConversationItem extends Model
             'attachment_urls' => 'array',
             'metadata' => 'array',
             'is_internal' => 'boolean',
+            'scheduled_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Scope: Get only items pending scheduled send
+     */
+    public function scopeScheduled($query)
+    {
+        return $query->whereNotNull('scheduled_at');
+    }
+
+    /**
+     * Check if this item is pending scheduled send
+     */
+    public function isScheduled(): bool
+    {
+        return $this->scheduled_at !== null;
     }
 
     /**
@@ -49,6 +68,14 @@ class ConversationItem extends Model
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class, 'conversation_id');
+    }
+
+    /**
+     * Get the item this message is quoting (reply-to)
+     */
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(ConversationItem::class, 'metadata->reply_to_id');
     }
 
     /**

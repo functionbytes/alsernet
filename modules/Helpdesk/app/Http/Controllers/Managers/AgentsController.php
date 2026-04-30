@@ -22,7 +22,7 @@ class AgentsController extends Controller
             ->orderBy('firstname')
             ->paginate(20);
 
-        return view('helpdesk::managers.helpdesk.agents.index', compact('agents'));
+        return view('helpdesk::managers.agents.index', compact('agents'));
     }
 
     public function show(User $agent): View
@@ -51,7 +51,7 @@ class AgentsController extends Controller
             ->limit(10)
             ->get();
 
-        return view('helpdesk::managers.helpdesk.agents.show', compact('agent', 'stats', 'recentTickets'));
+        return view('helpdesk::managers.agents.show', compact('agent', 'stats', 'recentTickets'));
     }
 
     public function edit(User $agent): View
@@ -60,7 +60,7 @@ class AgentsController extends Controller
 
         $agentSettings = $agent->agentSettings ?? AgentSettings::newFromDefault();
 
-        return view('helpdesk::managers.helpdesk.agents.edit', compact('agent', 'agentSettings'));
+        return view('helpdesk::managers.agents.edit', compact('agent', 'agentSettings'));
     }
 
     public function update(UpdateAgentSettingsRequest $request, User $agent): RedirectResponse

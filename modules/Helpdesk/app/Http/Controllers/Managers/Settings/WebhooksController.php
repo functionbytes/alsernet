@@ -56,12 +56,12 @@ class WebhooksController extends Controller
             'deliveries_today' => WebhookDelivery::whereDate('created_at', today())->count(),
         ];
 
-        return view('helpdesk::managers.settings.helpdesk.webhooks.index', compact('webhooks', 'stats'));
+        return view('helpdesk::settings.webhooks.index', compact('webhooks', 'stats'));
     }
 
     public function create(): View
     {
-        return view('helpdesk::managers.settings.helpdesk.webhooks.create', [
+        return view('helpdesk::settings.webhooks.create', [
             'availableEvents' => self::AVAILABLE_EVENTS,
         ]);
     }
@@ -76,13 +76,13 @@ class WebhooksController extends Controller
         Webhook::create($validated);
 
         return redirect()
-            ->route('manager.helpdesk.settings.webhooks.index')
+            ->route('settings.helpdesk.webhooks.index')
             ->with('success', 'Webhook creado exitosamente.');
     }
 
     public function edit(Webhook $webhook): View
     {
-        return view('helpdesk::managers.settings.helpdesk.webhooks.edit', [
+        return view('helpdesk::settings.webhooks.edit', [
             'webhook' => $webhook,
             'availableEvents' => self::AVAILABLE_EVENTS,
         ]);
@@ -114,7 +114,7 @@ class WebhooksController extends Controller
         $webhook->update($validated);
 
         return redirect()
-            ->route('manager.helpdesk.settings.webhooks.index')
+            ->route('settings.helpdesk.webhooks.index')
             ->with('success', 'Webhook actualizado exitosamente.');
     }
 
@@ -123,7 +123,7 @@ class WebhooksController extends Controller
         $webhook->delete();
 
         return redirect()
-            ->route('manager.helpdesk.settings.webhooks.index')
+            ->route('settings.helpdesk.webhooks.index')
             ->with('success', 'Webhook eliminado exitosamente.');
     }
 

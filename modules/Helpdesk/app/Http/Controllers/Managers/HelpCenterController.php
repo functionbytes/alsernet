@@ -40,7 +40,7 @@ class HelpCenterController extends Controller
 
         $categories = $query->orderBy('position', 'asc')->paginate(20);
 
-        return view('helpdesk::managers.helpdesk.helpcenter.categories.index', compact('categories'));
+        return view('helpdesk::managers.helpcenter.categories.index', compact('categories'));
     }
 
     /**
@@ -50,7 +50,7 @@ class HelpCenterController extends Controller
     {
         $roles = Role::orderBy('name')->pluck('name', 'name');
 
-        return view('helpdesk::managers.helpdesk.helpcenter.categories.create', compact('roles'));
+        return view('helpdesk::managers.helpcenter.categories.create', compact('roles'));
     }
 
     /**
@@ -87,7 +87,7 @@ class HelpCenterController extends Controller
         $category = HelpCenterCategory::findOrFail($id);
         $roles = Role::orderBy('name')->pluck('name', 'name');
 
-        return view('helpdesk::managers.helpdesk.helpcenter.categories.edit', compact('category', 'roles'));
+        return view('helpdesk::managers.helpcenter.categories.edit', compact('category', 'roles'));
     }
 
     /**
@@ -119,7 +119,7 @@ class HelpCenterController extends Controller
             ->withCount(['sections', 'articles'])
             ->findOrFail($id);
 
-        return view('helpdesk::managers.helpdesk.helpcenter.categories.show', compact('category'));
+        return view('helpdesk::managers.helpcenter.categories.show', compact('category'));
     }
 
     /**
@@ -169,7 +169,7 @@ class HelpCenterController extends Controller
         $parentId = $request->get('parent_id');
         $roles = Role::orderBy('name')->pluck('name', 'name');
 
-        return view('helpdesk::managers.helpdesk.helpcenter.sections.create', compact('categories', 'parentId', 'roles'));
+        return view('helpdesk::managers.helpcenter.sections.create', compact('categories', 'parentId', 'roles'));
     }
 
     /**
@@ -205,7 +205,7 @@ class HelpCenterController extends Controller
             ->get();
         $roles = Role::orderBy('name')->pluck('name', 'name');
 
-        return view('helpdesk::managers.helpdesk.helpcenter.sections.edit', compact('section', 'categories', 'roles'));
+        return view('helpdesk::managers.helpcenter.sections.edit', compact('section', 'categories', 'roles'));
     }
 
     /**
@@ -235,7 +235,7 @@ class HelpCenterController extends Controller
             ->withCount('articles')
             ->findOrFail($id);
 
-        return view('helpdesk::managers.helpdesk.helpcenter.sections.show', compact('section'));
+        return view('helpdesk::managers.helpcenter.sections.show', compact('section'));
     }
 
     /**
@@ -275,7 +275,7 @@ class HelpCenterController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('helpdesk::managers.helpdesk.helpcenter.articles.create', compact('sections', 'section'));
+        return view('helpdesk::managers.helpcenter.articles.create', compact('sections', 'section'));
     }
 
     /**
@@ -297,7 +297,7 @@ class HelpCenterController extends Controller
 
         $articles = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        return view('helpdesk::managers.helpdesk.helpcenter.articles.index', compact('articles'));
+        return view('helpdesk::managers.helpcenter.articles.index', compact('articles'));
     }
 
     /**
@@ -310,7 +310,7 @@ class HelpCenterController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('helpdesk::managers.helpdesk.helpcenter.articles.create', compact('sections'));
+        return view('helpdesk::managers.helpcenter.articles.create', compact('sections'));
     }
 
     /**
@@ -373,7 +373,7 @@ class HelpCenterController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('helpdesk::managers.helpdesk.helpcenter.articles.edit', compact('article', 'sections'));
+        return view('helpdesk::managers.helpcenter.articles.edit', compact('article', 'sections'));
     }
 
     /**

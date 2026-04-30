@@ -79,8 +79,8 @@ class TeamController extends Controller
                 SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as available,
                 SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as working_hours,
                 SUM(CASE WHEN helpdesk_agent_settings.accepts_conversations = ? THEN 1 ELSE 0 END) as unavailable,
-                SUM(CASE WHEN helpdesk_agent_settings.assignment_limit = 0 THEN 1 ELSE 0 END) as with_unlimited,
-                SUM(CASE WHEN helpdesk_agent_settings.assignment_limit > 0 THEN 1 ELSE 0 END) as with_limit
+                SUM(CASE WHEN helpdesk_agent_settings.max_concurrent_conversations = 0 THEN 1 ELSE 0 END) as with_unlimited,
+                SUM(CASE WHEN helpdesk_agent_settings.max_concurrent_conversations > 0 THEN 1 ELSE 0 END) as with_limit
             ', ['yes', 'working_hours', 'no'])
             ->first();
 
@@ -106,7 +106,7 @@ class TeamController extends Controller
             'with_limit' => (int) ($availability->with_limit ?? 0),
         ];
 
-        return view('helpdesk::managers.settings.helpdesk.team.members', [
+        return view('helpdesk::settings.team.members', [
             'members' => $members,
             'groups' => $groups,
             'roles' => $roles,
@@ -131,7 +131,7 @@ class TeamController extends Controller
             $member->setRelation('agentSettings', AgentSettings::newFromDefault());
         }
 
-        return view('helpdesk::managers.settings.helpdesk.team.member-edit', [
+        return view('helpdesk::settings.team.member-edit', [
             'member' => $member,
             'groups' => $groups,
             'roles' => $roles,
@@ -151,7 +151,7 @@ class TeamController extends Controller
             'firstname' => 'required|string|max:255',
             'lastname' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$id,
-            'assignment_limit' => 'nullable|integer|min:0',
+            'max_concurrent_conversations' => 'nullable|integer|min:0',
             'accepts_conversations' => 'required|in:yes,no,working_hours',
             'working_hours' => 'nullable|array',
             'groups' => 'nullable|array',
@@ -170,9 +170,11 @@ class TeamController extends Controller
         $member->agentSettings()->updateOrCreate(
             ['user_id' => $member->id],
             [
-                'assignment_limit' => $validated['assignment_limit'] ?? 0,
+                'max_concurrent_conversations' => $validated['max_concurrent_conversations'] ?? 0,
                 'accepts_conversations' => $validated['accepts_conversations'],
-                'working_hours' => $validated['working_hours'] ?? null,
+                'preferences' => array_filter([
+                    'working_hours' => $validated['working_hours'] ?? null,
+                ]) ?: null,
             ]
         );
 
@@ -196,7 +198,7 @@ class TeamController extends Controller
         }
 
         return redirect()
-            ->route('manager.helpdesk.settings.team.members')
+            ->route('settings.helpdesk.team.members')
             ->with('success', "Configuración de {$member->name} actualizada correctamente");
     }
 
@@ -253,7 +255,7 @@ class TeamController extends Controller
             'priority' => (int) $groupStats->priority,
         ];
 
-        return view('helpdesk::managers.settings.helpdesk.team.groups', [
+        return view('helpdesk::settings.team.groups', [
             'groups' => $groups,
             'stats' => $stats,
         ]);
@@ -270,7 +272,7 @@ class TeamController extends Controller
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
         })->orderBy('firstname')->limit(200)->get();
 
-        return view('helpdesk::managers.settings.helpdesk.team.group-create', [
+        return view('helpdesk::settings.team.group-create', [
             'agents' => $agents,
         ]);
     }
@@ -314,7 +316,7 @@ class TeamController extends Controller
         });
 
         return redirect()
-            ->route('manager.helpdesk.settings.ticket-groups.index')
+            ->route('settings.helpdesk.team.groups')
             ->with('success', 'Grupo creado correctamente');
     }
 
@@ -331,7 +333,7 @@ class TeamController extends Controller
             $q->whereIn('name', ['admin', 'manager', 'support', 'callcenter']);
         })->orderBy('firstname')->limit(200)->get();
 
-        return view('helpdesk::managers.settings.helpdesk.team.group-edit', [
+        return view('helpdesk::settings.team.group-edit', [
             'group' => $group,
             'agents' => $agents,
         ]);
@@ -378,7 +380,7 @@ class TeamController extends Controller
         });
 
         return redirect()
-            ->route('manager.helpdesk.settings.ticket-groups.index')
+            ->route('settings.helpdesk.team.groups')
             ->with('success', 'Grupo actualizado correctamente');
     }
 
@@ -395,7 +397,7 @@ class TeamController extends Controller
         $group->delete();
 
         return redirect()
-            ->route('manager.helpdesk.settings.ticket-groups.index')
+            ->route('settings.helpdesk.team.groups')
             ->with('success', 'Grupo eliminado correctamente');
     }
 }

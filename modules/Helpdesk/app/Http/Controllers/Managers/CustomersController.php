@@ -3,9 +3,12 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Http\Requests\StoreCustomerRequest;
 use Modules\Helpdesk\Http\Requests\UpdateCustomerRequest;
+use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\CustomerStatsService;
 
@@ -45,9 +48,16 @@ class CustomersController extends Controller
 
         $stats = $this->customerStatsService->getStats();
 
-        return view('helpdesk::managers.helpdesk.customers.index', [
+        // Load selected customer for 2-column detail panel
+        $selected = null;
+        if ($request->filled('selected')) {
+            $selected = Customer::find($request->integer('selected'));
+        }
+
+        return view('helpdesk::managers.customers.index', [
             'customers' => $customers,
             'stats' => $stats,
+            'selected' => $selected,
             'tabs' => [
                 'all' => $stats['total'],
                 'verified' => $stats['verified'],
@@ -64,7 +74,7 @@ class CustomersController extends Controller
     {
         $this->authorize('create', Customer::class);
 
-        return view('helpdesk::managers.helpdesk.customers.create');
+        return view('helpdesk::managers.customers.create');
     }
 
     /**
@@ -72,9 +82,22 @@ class CustomersController extends Controller
      */
     public function store(StoreCustomerRequest $request)
     {
-        $validated = $request->validated();
+        $customer = Customer::create($request->validated());
 
-        $customer = Customer::create($validated);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Contacto '{$customer->name}' creado.",
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'email' => $customer->email,
+                    'phone' => $customer->phone,
+                    'avatar_url' => $customer->getAvatarUrl(),
+                    'total_conversations' => 0,
+                ],
+            ], 201);
+        }
 
         return redirect()
             ->route('manager.helpdesk.customers.show', $customer)
@@ -95,7 +118,7 @@ class CustomersController extends Controller
             'latestSession',
         ]);
 
-        return view('helpdesk::managers.helpdesk.customers.show', [
+        return view('helpdesk::managers.customers.show', [
             'customer' => $customer,
         ]);
     }
@@ -107,7 +130,7 @@ class CustomersController extends Controller
     {
         $this->authorize('update', $customer);
 
-        return view('helpdesk::managers.helpdesk.customers.edit', [
+        return view('helpdesk::managers.customers.edit', [
             'customer' => $customer,
         ]);
     }
@@ -117,13 +140,51 @@ class CustomersController extends Controller
      */
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
-        $validated = $request->validated();
+        $customer->update($request->validated());
 
-        $customer->update($validated);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Contacto '{$customer->name}' actualizado.",
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'email' => $customer->email,
+                    'phone' => $customer->phone,
+                ],
+            ]);
+        }
 
         return redirect()
             ->route('manager.helpdesk.customers.show', $customer)
             ->with('success', "Customer '{$customer->name}' updated successfully.");
+    }
+
+    /**
+     * Search customers by name, email or phone. Returns JSON array.
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Customer::class);
+
+        $q = $request->string('q')->trim()->toString();
+
+        $customers = Customer::query()
+            ->when($q, fn ($query) => $query->search($q))
+            ->latest('last_seen_at')
+            ->limit(10)
+            ->get(['id', 'name', 'email', 'phone', 'avatar_url', 'total_conversations']);
+
+        return response()->json(
+            $customers->map(fn (Customer $c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'email' => $c->email,
+                'phone' => $c->phone,
+                'avatar_url' => $c->getAvatarUrl(),
+                'total_conversations' => (int) $c->total_conversations,
+            ])
+        );
     }
 
     /**
@@ -204,5 +265,108 @@ class CustomersController extends Controller
         return redirect()
             ->back()
             ->with('success', __('helpdesk::helpdesk.messages.customer_unbanned', ['name' => $customer->name]));
+    }
+
+    /**
+     * Return all media attachments across all conversations for a customer.
+     * Supports ?type=image|audio|video|document and ?conversation={id} filters.
+     */
+    public function media(Customer $customer, Request $request): JsonResponse
+    {
+        $this->authorize('view', $customer);
+
+        $typeFilter = $request->string('type')->trim()->toString() ?: null;
+        $convFilter = $request->integer('conversation') ?: null;
+
+        $conversationIds = Conversation::query()
+            ->where('customer_id', $customer->id)
+            ->when($convFilter, fn ($q) => $q->where('id', $convFilter))
+            ->pluck('id');
+
+        $items = ConversationItem::query()
+            ->whereIn('conversation_id', $conversationIds)
+            ->whereNotNull('attachment_urls')
+            ->where('attachment_urls', '!=', '[]')
+            ->with(['conversation:id,subject'])
+            ->latest()
+            ->get();
+
+        $media = $items->flatMap(function (ConversationItem $item): array {
+            $urls = $item->attachment_urls ?? [];
+
+            return collect($urls)->map(function (string $url) use ($item): array {
+                $path = parse_url($url, PHP_URL_PATH);
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+                return [
+                    'url' => $url,
+                    'name' => basename($path),
+                    'ext' => $ext,
+                    'type' => $this->resolveMediaType($ext),
+                    'size' => null,
+                    'conversation_id' => $item->conversation_id,
+                    'conversation_subject' => $item->conversation?->subject ?? '#'.$item->conversation_id,
+                    'sent_at' => $item->created_at?->toIso8601String(),
+                    'is_outgoing' => ! empty($item->user_id),
+                ];
+            })->all();
+        });
+
+        if ($typeFilter) {
+            $media = $media->filter(fn ($m) => $m['type'] === $typeFilter);
+        }
+
+        $page = max(1, $request->integer('page', 1));
+        $perPage = 60;
+        $total = $media->count();
+        $paginated = $media->values()->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginated,
+            'meta' => [
+                'total' => $total,
+                'page' => $page,
+                'per_page' => $perPage,
+                'last_page' => (int) ceil($total / $perPage),
+            ],
+        ]);
+    }
+
+    private function resolveMediaType(string $ext): string
+    {
+        return match (true) {
+            in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']) => 'image',
+            in_array($ext, ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac']) => 'audio',
+            in_array($ext, ['mp4', 'webm', 'mov', 'avi', 'mkv']) => 'video',
+            default => 'document',
+        };
+    }
+
+    /**
+     * Return the last 10 conversations for a customer (AJAX, JSON).
+     */
+    public function conversations(Customer $customer): JsonResponse
+    {
+        $this->authorize('view', $customer);
+
+        $conversations = Conversation::query()
+            ->where('customer_id', $customer->id)
+            ->with(['status'])
+            ->latest('last_message_at')
+            ->limit(10)
+            ->get()
+            ->map(fn (Conversation $c) => [
+                'id' => $c->id,
+                'subject' => $c->subject ?? '#'.$c->id,
+                'channel' => $c->channel ?? 'widget',
+                'channel_icon' => $c->channel_info['icon'],
+                'preview' => mb_strimwidth(strip_tags((string) ($c->getLatestMessage()?->body ?? '')), 0, 80, '…'),
+                'time' => $c->last_message_at?->diffForHumans() ?? $c->created_at?->diffForHumans() ?? '—',
+                'status' => $c->status?->name,
+                'status_open' => (bool) $c->status?->is_open,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $conversations]);
     }
 }

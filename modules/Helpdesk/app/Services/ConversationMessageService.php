@@ -3,6 +3,8 @@
 namespace Modules\Helpdesk\Services;
 
 use Illuminate\Http\UploadedFile;
+use Modules\Helpdesk\Events\ConversationItemCreated;
+use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 
@@ -20,6 +22,11 @@ class ConversationMessageService
     {
         $attachmentUrls = $this->processAttachments($data['attachments'] ?? []);
 
+        $metadata = [];
+        if (! empty($data['reply_to_id'])) {
+            $metadata['reply_to_id'] = (int) $data['reply_to_id'];
+        }
+
         $item = $conversation->items()->create([
             'user_id' => auth()->id(),
             'type' => 'message',
@@ -27,6 +34,7 @@ class ConversationMessageService
             'html_body' => nl2br(e($data['body'])),
             'is_internal' => $data['is_internal'] ?? false,
             'attachment_urls' => ! empty($attachmentUrls) ? $attachmentUrls : null,
+            'metadata' => ! empty($metadata) ? $metadata : null,
         ]);
 
         if (empty($data['is_internal'])) {
@@ -39,6 +47,10 @@ class ConversationMessageService
                 ])]);
             }
         }
+
+        event(new ConversationItemCreated($item));
+
+        $this->dispatchInboxChanged($conversation, 'message_added');
 
         $this->updateConversationTimestamps($conversation);
 
@@ -77,6 +89,22 @@ class ConversationMessageService
         }
 
         return $urls;
+    }
+
+    /**
+     * Notify all agents subscribed to helpdesk.user.{id} that the inbox changed.
+     * Broadcasts to the assignee (if any) and to the authenticated user.
+     */
+    private function dispatchInboxChanged(Conversation $conversation, string $changeType): void
+    {
+        $userIds = array_filter(array_unique([
+            $conversation->assignee_id,
+            auth()->id(),
+        ]));
+
+        foreach ($userIds as $userId) {
+            event(new InboxItemChanged($conversation->id, $userId, $changeType));
+        }
     }
 
     private function updateConversationTimestamps(Conversation $conversation): void

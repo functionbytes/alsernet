@@ -35,15 +35,18 @@ class ViewsController extends Controller
                 COUNT(*) as total,
                 SUM(CASE WHEN user_id = ? THEN 1 ELSE 0 END) as personal,
                 SUM(CASE WHEN is_public = 1 THEN 1 ELSE 0 END) as public,
-                SUM(CASE WHEN is_system = 1 THEN 1 ELSE 0 END) as system
+                SUM(CASE WHEN is_default = 1 THEN 1 ELSE 0 END) as `default`
             ', [Auth::id()])
             ->first();
 
         $stats = [
             'total' => (int) $statsRow->total,
             'personal' => (int) $statsRow->personal,
+            'custom' => (int) $statsRow->personal,
             'public' => (int) $statsRow->public,
-            'system' => (int) $statsRow->system,
+            'shared' => (int) $statsRow->public,
+            'default' => (int) $statsRow->default,
+            'system' => (int) $statsRow->default,
         ];
 
         $query = clone $baseQuery;
@@ -65,7 +68,7 @@ class ViewsController extends Controller
 
         $views = $query->ordered()->paginate(20);
 
-        return view('theme.views.backups.helpdesk.views.index', compact('views', 'stats'));
+        return view('helpdesk::settings.views.index', compact('views', 'stats'));
     }
 
     /**
@@ -76,7 +79,7 @@ class ViewsController extends Controller
         $statuses = ConversationStatus::active()->ordered()->get();
         $groups = Group::with('users')->get();
 
-        return view('theme.views.backups.helpdesk.views.create', compact('statuses', 'groups'));
+        return view('helpdesk::settings.views.create', compact('statuses', 'groups'));
     }
 
     /**
@@ -89,12 +92,11 @@ class ViewsController extends Controller
         $validated['user_id'] = Auth::id();
         $validated['is_public'] = $request->boolean('is_public');
         $validated['is_default'] = $request->boolean('is_default');
-        $validated['is_system'] = false;
         $validated['filters'] = $validated['filters'] ?? [];
 
         ConversationView::create($validated);
 
-        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
+        return redirect()->route('settings.helpdesk.views.index')
             ->with('success', 'Vista creada exitosamente.');
     }
 
@@ -105,14 +107,14 @@ class ViewsController extends Controller
     {
         // Check if user can edit this view
         if (! $view->canEdit(Auth::id())) {
-            return redirect()->route('manager.helpdesk.settings.ticket-views.index')
+            return redirect()->route('settings.helpdesk.views.index')
                 ->with('error', 'No tienes permiso para editar esta vista.');
         }
 
         $statuses = ConversationStatus::active()->ordered()->get();
         $groups = Group::with('users')->get();
 
-        return view('theme.views.backups.helpdesk.views.edit', compact('view', 'statuses', 'groups'));
+        return view('helpdesk::settings.views.edit', compact('view', 'statuses', 'groups'));
     }
 
     /**
@@ -133,7 +135,7 @@ class ViewsController extends Controller
 
         $view->update($validated);
 
-        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
+        return redirect()->route('settings.helpdesk.views.index')
             ->with('success', 'Vista actualizada exitosamente.');
     }
 
@@ -153,7 +155,7 @@ class ViewsController extends Controller
 
         $view->delete();
 
-        return redirect()->route('manager.helpdesk.settings.ticket-views.index')
+        return redirect()->route('settings.helpdesk.views.index')
             ->with('success', 'Vista eliminada exitosamente.');
     }
 

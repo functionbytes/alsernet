@@ -30,7 +30,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Nuevo',
                 'key' => 'new',
                 'color' => '#0d6efd', // primary blue
-                'icon' => 'fa-duotone fa-star',
+                'icon' => 'fas fa-star',
                 'is_open' => true,
                 'position' => 1,
                 'description' => 'Conversación nueva iniciada por el cliente',
@@ -40,7 +40,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Activo',
                 'key' => 'active',
                 'color' => '#0dcaf0', // info cyan
-                'icon' => 'fa-duotone fa-comments',
+                'icon' => 'far fa-comments',
                 'is_open' => true,
                 'position' => 2,
                 'description' => 'Conversación en curso con diálogo activo',
@@ -50,7 +50,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Esperando',
                 'key' => 'waiting',
                 'color' => '#ffc107', // warning yellow
-                'icon' => 'fa-duotone fa-hourglass-half',
+                'icon' => 'far fa-hourglass-half',
                 'is_open' => true,
                 'position' => 3,
                 'description' => 'Esperando respuesta del cliente',
@@ -60,7 +60,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Resuelto',
                 'key' => 'resolved',
                 'color' => '#198754', // success green
-                'icon' => 'fa-duotone fa-check-circle',
+                'icon' => 'fas fa-circle-check',
                 'is_open' => false,
                 'position' => 4,
                 'description' => 'Problema resuelto, esperando confirmación',
@@ -70,7 +70,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Cerrado',
                 'key' => 'closed',
                 'color' => '#495057', // dark gray
-                'icon' => 'fa-duotone fa-lock',
+                'icon' => 'fas fa-lock',
                 'is_open' => false,
                 'position' => 5,
                 'description' => 'Conversación finalizada y cerrada',
@@ -80,7 +80,7 @@ class HelpdeskConversationStatusSeeder extends Seeder
                 'name' => 'Archivado',
                 'key' => 'archived',
                 'color' => '#6c757d', // secondary gray
-                'icon' => 'fa-duotone fa-archive',
+                'icon' => 'fas fa-box-archive',
                 'is_open' => false,
                 'position' => 6,
                 'description' => 'Conversación archivada para referencia',

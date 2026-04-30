@@ -19,7 +19,7 @@ class SocialIntegrationsController extends Controller
 
     public function index(): View
     {
-        return view('helpdesk::managers.settings.helpdesk.social-integrations', [
+        return view('helpdesk::settings.social-integrations.index', [
             'whatsappEnabled' => config('helpdesk.integrations.whatsapp.enabled', false),
             'facebookEnabled' => config('helpdesk.integrations.facebook.enabled', false),
             'instagramEnabled' => config('helpdesk.integrations.instagram.enabled', false),

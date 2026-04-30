@@ -4,26 +4,42 @@ use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Api\TagsAutocompleteController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
 use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
+use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomersController as HelpdeskCustomersController;
 use Modules\Helpdesk\Http\Controllers\Managers\DashboardController;
+use Modules\Helpdesk\Http\Controllers\Managers\GlobalSearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\HelpCenterController;
 use Modules\Helpdesk\Http\Controllers\Managers\ReportsController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\AttributesController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\ScheduleController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\StatusesController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\TagsController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\TeamController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\WebhooksController;
-use Modules\Helpdesk\Http\Controllers\Managers\SocialIntegrationsController;
+use Modules\Helpdesk\Http\Controllers\Managers\TranslateController;
 
 Route::group(['prefix' => ''], function () {
+
+    // Translation endpoint
+    Route::post('/translate', TranslateController::class)
+        ->middleware('throttle:30,1')
+        ->name('manager.helpdesk.translate');
 
     // Tags autocomplete (web, throttled, authenticated)
     Route::get('/api/tags-autocomplete', TagsAutocompleteController::class)
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.api.tags.autocomplete');
+
+    // Canned replies search (slash-menu in inbox composer)
+    Route::get('/canned-replies/search', [CannedRepliesController::class, 'search'])
+        ->middleware('throttle:60,1')
+        ->name('manager.helpdesk.canned-replies.search');
+
+    // Customer search (JSON, throttled)
+    Route::get('/customers/search', [HelpdeskCustomersController::class, 'search'])
+        ->middleware('throttle:60,1')
+        ->name('manager.helpdesk.customers.search');
+
+    // Global search (JSON, throttled)
+    Route::get('/search/global', GlobalSearchController::class)
+        ->middleware('throttle:60,1')
+        ->name('manager.helpdesk.search.global');
 
     // Main Helpdesk Index
     Route::get('/', [DashboardController::class, 'index'])->name('manager.helpdesk');
@@ -40,11 +56,14 @@ Route::group(['prefix' => ''], function () {
     Route::delete('/customers/{customer}/force-delete', [HelpdeskCustomersController::class, 'forceDelete'])->name('manager.helpdesk.customers.forceDelete');
     Route::post('/customers/{customer}/ban', [HelpdeskCustomersController::class, 'ban'])->name('manager.helpdesk.customers.ban');
     Route::post('/customers/{customer}/unban', [HelpdeskCustomersController::class, 'unban'])->name('manager.helpdesk.customers.unban');
+    Route::get('/customers/{customer}/conversations', [HelpdeskCustomersController::class, 'conversations'])->name('manager.helpdesk.customers.conversations')->middleware('throttle:30,1');
+    Route::get('/customers/{customer}/media', [HelpdeskCustomersController::class, 'media'])->name('manager.helpdesk.customers.media')->middleware(['throttle:60,1', 'can:helpdesk.conversations.view']);
 
     // Conversations bulk
     Route::post('/conversations/bulk', [BulkConversationsController::class, 'handle'])->name('manager.helpdesk.conversations.bulk');
 
     // Conversations
+    Route::get('/conversations/list', [HelpdeskConversationsController::class, 'listJson'])->middleware('throttle:120,1')->name('manager.helpdesk.conversations.list');
     Route::get('/conversations', [HelpdeskConversationsController::class, 'index'])->name('manager.helpdesk.conversations.index');
     Route::get('/conversations/create', [HelpdeskConversationsController::class, 'create'])->name('manager.helpdesk.conversations.create');
     Route::post('/conversations', [HelpdeskConversationsController::class, 'store'])->name('manager.helpdesk.conversations.store');
@@ -59,6 +78,31 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/archive', [HelpdeskConversationsController::class, 'archive'])->name('manager.helpdesk.conversations.archive');
     Route::post('/conversations/{conversation}/unarchive', [HelpdeskConversationsController::class, 'unarchive'])->name('manager.helpdesk.conversations.unarchive');
     Route::post('/conversations/{conversation}/messages', [HelpdeskConversationsController::class, 'storeMessage'])->name('manager.helpdesk.conversations.messages.store');
+    Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
+    Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
+    Route::post('/conversations/{conversation}/contact', [HelpdeskConversationsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
+    Route::post('/conversations/{conversation}/location', [HelpdeskConversationsController::class, 'storeLocation'])->name('manager.helpdesk.conversations.location.store');
+    Route::post('/conversations/{conversation}/send-email', [HelpdeskConversationsController::class, 'sendEmail'])
+        ->middleware('throttle:30,1')
+        ->name('manager.helpdesk.conversations.send-email');
+    Route::post('/conversations/{conversation}/send-hsm', [HelpdeskConversationsController::class, 'sendHsm'])
+        ->middleware('throttle:30,1')
+        ->name('manager.helpdesk.conversations.send-hsm');
+    Route::get('/conversations/{conversation}/merge-candidates', [HelpdeskConversationsController::class, 'mergeCandidates'])->name('manager.helpdesk.conversations.merge-candidates')->middleware('throttle:30,1');
+    Route::post('/conversations/{conversation}/merge', [HelpdeskConversationsController::class, 'merge'])->name('manager.helpdesk.conversations.merge')->middleware('throttle:10,1');
+    Route::post('/conversations/{conversation}/snooze', [HelpdeskConversationsController::class, 'snooze'])->name('manager.helpdesk.conversations.snooze');
+    Route::post('/conversations/{conversation}/pin', [HelpdeskConversationsController::class, 'togglePin'])->name('manager.helpdesk.conversations.pin');
+    Route::post('/conversations/{conversation}/mute', [HelpdeskConversationsController::class, 'toggleMute'])->name('manager.helpdesk.conversations.mute');
+    Route::post('/conversations/{conversation}/block-contact', [HelpdeskConversationsController::class, 'blockContact'])->name('manager.helpdesk.conversations.block-contact');
+    Route::post('/conversations/{conversation}/mark-spam', [HelpdeskConversationsController::class, 'markSpam'])->name('manager.helpdesk.conversations.mark-spam');
+    Route::post('/conversations/{conversation}/ai-suggestions', [HelpdeskConversationsController::class, 'aiSuggestions'])->name('manager.helpdesk.conversations.ai-suggestions')->middleware('throttle:30,1');
+    Route::put('/conversations/{conversation}/draft', [HelpdeskConversationsController::class, 'saveDraft'])->name('manager.helpdesk.conversations.draft.save');
+    Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
+
+    // Conversation items
+    Route::post('/conversation-items/{item}/react', [ConversationItemsController::class, 'react'])
+        ->name('manager.helpdesk.conversation-items.react')
+        ->middleware('throttle:30,1');
 
     // Agents management
     Route::prefix('agents')->name('agents.')->group(function () {
@@ -107,97 +151,5 @@ Route::group(['prefix' => ''], function () {
         Route::get('/articles/destroy/{id}', [HelpCenterController::class, 'destroyArticle'])->name('manager.helpdesk.helpcenter.articles.destroy');
     });
 
-    // Settings
-    Route::prefix('settings')->name('manager.helpdesk.settings.')->group(function () {
-        // LiveChat Settings
-        Route::get('livechat', [SettingsController::class, 'livechatIndex'])->name('livechat');
-        Route::put('livechat', [SettingsController::class, 'livechatUpdate'])->name('livechat.update');
-
-        // AI Settings
-        Route::get('ai', [SettingsController::class, 'aiIndex'])->name('ai');
-        Route::put('ai', [SettingsController::class, 'aiUpdate'])->name('ai.update');
-
-        // Uploading Settings
-        Route::get('uploading', [SettingsController::class, 'uploadingIndex'])->name('uploading');
-        Route::put('uploading', [SettingsController::class, 'uploadingUpdate'])->name('uploading.update');
-
-        // Social Integrations Settings
-        Route::get('social-integrations', [SocialIntegrationsController::class, 'index'])->name('social-integrations.index');
-        Route::post('social-integrations/test/whatsapp', [SocialIntegrationsController::class, 'testWhatsapp'])->name('social-integrations.test.whatsapp');
-        Route::post('social-integrations/test/facebook', [SocialIntegrationsController::class, 'testFacebook'])->name('social-integrations.test.facebook');
-        Route::post('social-integrations/test/instagram', [SocialIntegrationsController::class, 'testInstagram'])->name('social-integrations.test.instagram');
-
-        // Customers Settings
-        Route::get('customers', [HelpdeskCustomersController::class, 'index'])->name('customers');
-
-        // Outbound Webhooks
-        Route::prefix('webhooks')->name('webhooks.')->group(function () {
-            Route::get('/', [WebhooksController::class, 'index'])->name('index');
-            Route::get('create', [WebhooksController::class, 'create'])->name('create');
-            Route::post('/', [WebhooksController::class, 'store'])->name('store');
-            Route::get('{webhook}/edit', [WebhooksController::class, 'edit'])->name('edit');
-            Route::put('{webhook}', [WebhooksController::class, 'update'])->name('update');
-            Route::delete('{webhook}', [WebhooksController::class, 'destroy'])->name('destroy');
-        });
-
-        // Schedule management (shifts, vacations, on-call)
-        Route::prefix('schedule')->name('schedule.')->group(function () {
-            Route::get('/', [ScheduleController::class, 'index'])->name('index');
-            Route::post('shifts', [ScheduleController::class, 'storeShift'])->name('shifts.store');
-            Route::delete('shifts/{shift}', [ScheduleController::class, 'destroyShift'])->name('shifts.destroy');
-            Route::post('vacations', [ScheduleController::class, 'storeVacation'])->name('vacations.store');
-            Route::delete('vacations/{vacation}', [ScheduleController::class, 'destroyVacation'])->name('vacations.destroy');
-            Route::post('oncall', [ScheduleController::class, 'storeOncall'])->name('oncall.store');
-            Route::delete('oncall/{oncall}', [ScheduleController::class, 'destroyOncall'])->name('oncall.destroy');
-        });
-
-        Route::prefix('tickets')->name('tickets.')->group(function () {
-            // Team Settings
-            Route::prefix('team')->name('team.')->group(function () {
-                Route::get('members', [TeamController::class, 'membersIndex'])->name('members');
-                Route::get('members/{id}/edit', [TeamController::class, 'memberEdit'])->name('member.edit');
-                Route::put('members/{id}', [TeamController::class, 'memberUpdate'])->name('member.update');
-
-                Route::get('groups', [TeamController::class, 'groupsIndex'])->name('groups');
-                Route::get('groups/create', [TeamController::class, 'groupCreate'])->name('group.create');
-                Route::post('groups', [TeamController::class, 'groupStore'])->name('group.store');
-                Route::get('groups/{id}/edit', [TeamController::class, 'groupEdit'])->name('group.edit');
-                Route::put('groups/{id}', [TeamController::class, 'groupUpdate'])->name('group.update');
-                Route::delete('groups/{id}', [TeamController::class, 'groupDestroy'])->name('group.destroy');
-            });
-
-            // Attributes Settings
-            Route::prefix('attributes')->name('attributes.')->group(function () {
-                Route::get('/', [AttributesController::class, 'index'])->name('index');
-                Route::get('create', [AttributesController::class, 'create'])->name('create');
-                Route::post('/', [AttributesController::class, 'store'])->name('store');
-                Route::get('{id}/edit', [AttributesController::class, 'edit'])->name('edit');
-                Route::put('{id}', [AttributesController::class, 'update'])->name('update');
-                Route::delete('{id}', [AttributesController::class, 'destroy'])->name('destroy');
-                Route::patch('{id}/toggle', [AttributesController::class, 'toggleActive'])->name('toggle');
-            });
-
-            // Tags Settings
-            Route::prefix('tags')->name('tags.')->group(function () {
-                Route::get('/', [TagsController::class, 'index'])->name('index');
-                Route::get('create', [TagsController::class, 'create'])->name('create');
-                Route::post('/', [TagsController::class, 'store'])->name('store');
-                Route::get('{tag}/edit', [TagsController::class, 'edit'])->name('edit');
-                Route::put('{tag}', [TagsController::class, 'update'])->name('update');
-                Route::delete('{tag}', [TagsController::class, 'destroy'])->name('destroy');
-            });
-
-            // Conversation Statuses Settings
-            Route::prefix('statuses')->name('statuses.')->group(function () {
-                Route::get('/', [StatusesController::class, 'index'])->name('index');
-                Route::get('create', [StatusesController::class, 'create'])->name('create');
-                Route::post('/', [StatusesController::class, 'store'])->name('store');
-                Route::get('{status}/edit', [StatusesController::class, 'edit'])->name('edit');
-                Route::put('{status}', [StatusesController::class, 'update'])->name('update');
-                Route::delete('{status}', [StatusesController::class, 'destroy'])->name('destroy');
-                Route::post('{status}/toggle', [StatusesController::class, 'toggle'])->name('toggle');
-                Route::post('reorder', [StatusesController::class, 'reorder'])->name('reorder');
-            });
-        });
-    });
+    // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
 });

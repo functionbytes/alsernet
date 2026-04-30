@@ -38,19 +38,19 @@ class StatusesController extends Controller
         // Calculate statistics
         $row = ConversationStatus::query()->selectRaw('
             COUNT(*) as total,
-            SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN active = 0 THEN 1 ELSE 0 END) as inactive,
-            SUM(CASE WHEN is_system = 1 THEN 1 ELSE 0 END) as system
+            SUM(CASE WHEN is_open = 1 THEN 1 ELSE 0 END) as `open`,
+            SUM(CASE WHEN is_closed = 1 THEN 1 ELSE 0 END) as closed,
+            SUM(CASE WHEN is_default = 1 THEN 1 ELSE 0 END) as `default`
         ')->first();
 
         $stats = [
             'total' => (int) $row->total,
-            'active' => (int) $row->active,
-            'inactive' => (int) $row->inactive,
-            'system' => (int) $row->system,
+            'open' => (int) $row->open,
+            'closed' => (int) $row->closed,
+            'default' => (int) $row->default,
         ];
 
-        return view('theme.views.backups.helpdesk.statuses.index', [
+        return view('helpdesk::settings.statuses.index', [
             'statuses' => $statuses,
             'stats' => $stats,
         ]);
@@ -61,7 +61,7 @@ class StatusesController extends Controller
      */
     public function create()
     {
-        return view('theme.views.backups.helpdesk.statuses.create');
+        return view('helpdesk::settings.statuses.create');
     }
 
     /**
@@ -77,7 +77,7 @@ class StatusesController extends Controller
 
         ConversationStatus::create($validated);
 
-        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
+        return redirect()->route('settings.helpdesk.statuses.index')
             ->with('success', 'Estado creado exitosamente.');
     }
 
@@ -86,7 +86,7 @@ class StatusesController extends Controller
      */
     public function edit(ConversationStatus $status)
     {
-        return view('theme.views.backups.helpdesk.statuses.edit', compact('status'));
+        return view('helpdesk::settings.statuses.edit', compact('status'));
     }
 
     /**
@@ -117,7 +117,7 @@ class StatusesController extends Controller
 
         $status->update($validated);
 
-        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
+        return redirect()->route('settings.helpdesk.statuses.index')
             ->with('success', 'Estado actualizado exitosamente.');
     }
 
@@ -136,7 +136,7 @@ class StatusesController extends Controller
 
         $status->delete();
 
-        return redirect()->route('manager.helpdesk.settings.ticket-statuses.index')
+        return redirect()->route('settings.helpdesk.statuses.index')
             ->with('success', 'Estado eliminado exitosamente.');
     }
 

@@ -37,8 +37,10 @@ class PermissionsSeeder extends Seeder
             'helpdesk.webhooks.view', 'helpdesk.webhooks.create', 'helpdesk.webhooks.update', 'helpdesk.webhooks.delete', 'helpdesk.webhooks.manage',
             // Schedule (shifts & on-call)
             'helpdesk.schedule.view', 'helpdesk.schedule.create', 'helpdesk.schedule.update', 'helpdesk.schedule.delete', 'helpdesk.schedule.manage',
-            // Help center categories
+            // Help center
+            'helpdesk.helpcenter.view',
             'helpdesk.helpcenter.categories.view', 'helpdesk.helpcenter.categories.create', 'helpdesk.helpcenter.categories.update', 'helpdesk.helpcenter.categories.delete', 'helpdesk.helpcenter.categories.manage',
+            'helpdesk.helpcenter.articles.view', 'helpdesk.helpcenter.articles.create', 'helpdesk.helpcenter.articles.update', 'helpdesk.helpcenter.articles.delete', 'helpdesk.helpcenter.articles.manage',
             // Custom attributes
             'helpdesk.attributes.view', 'helpdesk.attributes.create', 'helpdesk.attributes.update', 'helpdesk.attributes.delete', 'helpdesk.attributes.manage',
         ];

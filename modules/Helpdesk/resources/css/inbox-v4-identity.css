@@ -4,11 +4,11 @@
    Este archivo contiene TODOS los tokens de identidad visual del módulo.
    Edita aquí para personalizar marca, colores, tipografía, espaciado.
    NO incluye componentes ni layout — solo variables.
-   Cargar ANTES que bandeja-v4.css.
+   Cargar ANTES que inbox-v4.css.
 
    Uso:
-     <link rel="stylesheet" href="vendor/helpdesk/bandeja-v4-identity.css">
-     <link rel="stylesheet" href="vendor/helpdesk/bandeja-v4.css">
+     <link rel="stylesheet" href="vendor/helpdesk/inbox-v4-identity.css">
+     <link rel="stylesheet" href="vendor/helpdesk/inbox-v4.css">
 
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -87,37 +87,37 @@
 }
 
 /* Acento Indigo */
-.bandeja-v4[data-accent="indigo"] {
+.inbox-v4[data-accent="indigo"] {
     --bv-accent:    #4f46e5;
     --bv-accent-fg: #ffffff;
 }
 
 /* Acento Emerald */
-.bandeja-v4[data-accent="emerald"] {
+.inbox-v4[data-accent="emerald"] {
     --bv-accent:    #059669;
     --bv-accent-fg: #ffffff;
 }
 
 /* Acento Amber */
-.bandeja-v4[data-accent="amber"] {
+.inbox-v4[data-accent="amber"] {
     --bv-accent:    #d97706;
     --bv-accent-fg: #ffffff;
 }
 
 /* Acento Rose */
-.bandeja-v4[data-accent="rose"] {
+.inbox-v4[data-accent="rose"] {
     --bv-accent:    #e11d48;
     --bv-accent-fg: #ffffff;
 }
 
 /* Acento Slate */
-.bandeja-v4[data-accent="slate"] {
+.inbox-v4[data-accent="slate"] {
     --bv-accent:    #334155;
     --bv-accent-fg: #ffffff;
 }
 
 /* Acento del proyecto (#90bb13 según CLAUDE.md) — opcional */
-.bandeja-v4[data-accent="brand"] {
+.inbox-v4[data-accent="brand"] {
     --bv-accent:    #90bb13;
     --bv-accent-fg: #ffffff;
 }
@@ -289,10 +289,10 @@
 
 
 /* ═══ TEMA OSCURO — overrides ═══════════════════════════════════════════════
-   Activar con [data-theme="dark"] en el body o en .bandeja-v4
+   Activar con [data-theme="dark"] en el body o en .inbox-v4
    ─────────────────────────────────────────────────────────────────────────── */
-.bandeja-v4[data-theme="dark"],
-[data-theme="dark"] .bandeja-v4 {
+.inbox-v4[data-theme="dark"],
+[data-theme="dark"] .inbox-v4 {
     --bv-text:        #fafafa;
     --bv-text-soft:   #d4d4d8;
     --bv-text-muted:  #a1a1aa;
@@ -329,20 +329,20 @@
 
 
 /* ═══ DENSIDAD DE LA LISTA ════════════════════════════════════════════════
-   Activar con [data-density="X"] en .bandeja-v4
+   Activar con [data-density="X"] en .inbox-v4
    ─────────────────────────────────────────────────────────────────────────── */
-.bandeja-v4[data-density="compact"] {
+.inbox-v4[data-density="compact"] {
     --bv-conv-padding-y: 9px;
     --bv-conv-padding-x: 12px;
 }
 
-.bandeja-v4[data-density="normal"],
-.bandeja-v4 {
+.inbox-v4[data-density="normal"],
+.inbox-v4 {
     --bv-conv-padding-y: 13px;
     --bv-conv-padding-x: 14px;
 }
 
-.bandeja-v4[data-density="relaxed"] {
+.inbox-v4[data-density="relaxed"] {
     --bv-conv-padding-y: 16px;
     --bv-conv-padding-x: 16px;
 }
@@ -355,7 +355,7 @@
 
 /* Descomentar y editar para personalizar:
 
-.bandeja-v4 {
+.inbox-v4 {
     --bv-brand-bg: #90bb13;
     --bv-brand-fg: #ffffff;
     --bv-accent: #90bb13;
