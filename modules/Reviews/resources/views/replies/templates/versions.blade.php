@@ -2,9 +2,11 @@
 
 @section('title', 'Historial de versiones - ' . $template->name)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Historial de versiones'])
+@endsection
 
+@section('content')
     <div class="widget-content">
         @include('core::components.alerts')
 

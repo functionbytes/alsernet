@@ -13,31 +13,31 @@
         .footer-right { display: table-cell; text-align: right; }
 
         /* Cover */
-        .cover-header { background-color: #90bb13; padding: 50px 40px; text-align: center; border-radius: 4px; margin-bottom: 40px; }
+        .cover-header { background-color: #b10100; padding: 50px 40px; text-align: center; border-radius: 4px; margin-bottom: 40px; }
         .cover-header h1 { color: #fff; font-size: 28px; margin-bottom: 10px; }
         .cover-header p { color: rgba(255,255,255,0.85); font-size: 16px; }
         .cover-meta { text-align: center; margin-top: 30px; }
         .cover-meta p { font-size: 14px; color: #555; margin-bottom: 6px; }
 
         /* Section title */
-        .section-title { font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #90bb13; padding-bottom: 8px; margin-bottom: 20px; }
+        .section-title { font-size: 16px; font-weight: bold; color: #333; border-bottom: 2px solid #b10100; padding-bottom: 8px; margin-bottom: 20px; }
 
         /* KPI grid */
         .kpi-grid { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
         .kpi-cell { width: 50%; padding: 6px; vertical-align: top; }
         .kpi-box { background: #f8faf0; border: 1px solid #d9e8a0; border-radius: 6px; padding: 20px; text-align: center; }
-        .kpi-value { font-size: 32px; font-weight: 700; color: #90bb13; }
+        .kpi-value { font-size: 32px; font-weight: 700; color: #b10100; }
         .kpi-label { font-size: 11px; color: #888; margin-top: 6px; }
 
         /* Bar chart */
         .bar-row { margin-bottom: 10px; }
         .bar-label { display: inline-block; width: 80px; font-size: 12px; color: #555; }
         .bar-track { display: inline-block; width: 300px; background: #f0f0f0; border-radius: 3px; height: 16px; vertical-align: middle; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 3px; background: #90bb13; }
+        .bar-fill { height: 100%; border-radius: 3px; background: #b10100; }
         .bar-count { display: inline-block; margin-left: 8px; font-size: 11px; color: #888; }
 
         /* Review card */
-        .review-card { border-left: 3px solid #90bb13; background: #f8faf0; padding: 12px 16px; margin-bottom: 12px; border-radius: 0 4px 4px 0; }
+        .review-card { border-left: 3px solid #b10100; background: #f8faf0; padding: 12px 16px; margin-bottom: 12px; border-radius: 0 4px 4px 0; }
         .review-card.negative { border-left-color: #FA896B; background: #fff9f8; }
         .review-stars { font-size: 14px; margin-bottom: 4px; }
         .review-meta { font-size: 11px; color: #888; margin-bottom: 6px; }

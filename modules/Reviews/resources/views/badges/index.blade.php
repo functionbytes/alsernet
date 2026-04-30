@@ -2,9 +2,11 @@
 
 @section('title', 'Insignias de valoracion')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Insignias de valoracion'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

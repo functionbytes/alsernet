@@ -2,9 +2,11 @@
 
 @section('title', 'Gestión de reseñas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestión de reseñas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -517,7 +519,7 @@
         display: inline-block;
         padding: 4px 8px;
         margin: 2px;
-        background-color: #90bb13;
+        background-color: #b10100;
         color: #fff;
         border-radius: 4px;
         font-size: 0.75rem;

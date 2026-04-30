@@ -2,9 +2,11 @@
 
 @section('title', 'Filtros guardados')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Filtros guardados de reseñas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

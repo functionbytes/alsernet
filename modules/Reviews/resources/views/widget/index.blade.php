@@ -2,9 +2,11 @@
 
 @section('title', 'Widgets de reseñas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Widgets embebibles'])
+@endsection
+
+@section('content')
 
     <div class="widget-content">
 

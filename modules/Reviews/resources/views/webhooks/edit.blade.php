@@ -2,9 +2,11 @@
 
 @section('title', 'Editar suscripcion de webhook')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar suscripcion de webhook'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

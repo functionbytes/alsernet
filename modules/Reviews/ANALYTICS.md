@@ -23,7 +23,7 @@ Comprehensive analytics dashboard for the Reviews module providing real-time ins
 - Breakdown of reviews by star rating (1-5 stars)
 - Color-coded:
   - 5 stars: Green (#13C672)
-  - 4 stars: Primary (#90bb13)
+  - 4 stars: Primary (#b10100)
   - 3 stars: Warning (#FEC90F)
   - 2 stars: Danger (#FA896B)
   - 1 star: Dark Red (#d32f2f)
@@ -175,7 +175,7 @@ All charts and tables gracefully handle empty data with descriptive messages:
 
 ## Styling
 
-- Project color palette (Primary: #90bb13, Success: #13C672, etc.)
+- Project color palette (Primary: #b10100, Success: #13C672, etc.)
 - Smooth hover animations on widgets and cards
 - Responsive design (mobile, tablet, desktop)
 - Scrollable tables with custom scrollbar styling

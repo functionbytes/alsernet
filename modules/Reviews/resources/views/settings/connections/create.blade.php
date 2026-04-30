@@ -2,9 +2,11 @@
 
 @section('title', 'Nueva conexión Google')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Conectar con Google My Business'])
+@endsection
+
+@section('content')
 
     <div class="row justify-content-center">
         <div class="col-md-12">

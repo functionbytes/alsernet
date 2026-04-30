@@ -2,9 +2,11 @@
 
 @section('title', 'Comparacion de rating')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Comparacion de rating'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

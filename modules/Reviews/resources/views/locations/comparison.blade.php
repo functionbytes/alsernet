@@ -2,9 +2,11 @@
 
 @section('title', 'Comparación de ubicaciones')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Comparación de ubicaciones'])
+@endsection
+
+@section('content')
 
     <!-- Filters -->
     <div class="card shadow-sm mb-4">
@@ -124,9 +126,9 @@
     }
     .location-check-item:has(.location-checkbox:checked) {
         background: rgba(144, 187, 19, 0.08);
-        border-color: #90bb13 !important;
+        border-color: #b10100 !important;
     }
-    .badge.bg-light-primary { background: rgba(144, 187, 19, 0.1) !important; color: #90bb13 !important; }
+    .badge.bg-light-primary { background: rgba(144, 187, 19, 0.1) !important; color: #b10100 !important; }
     .badge.bg-light-success { background: rgba(19, 198, 114, 0.1) !important; color: #13C672 !important; }
     .badge.bg-light-danger  { background: rgba(250, 137, 107, 0.1) !important; color: #FA896B !important; }
     .fs-2 { font-size: 0.875rem !important; }

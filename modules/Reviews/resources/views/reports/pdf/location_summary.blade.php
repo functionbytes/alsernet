@@ -10,7 +10,7 @@
         }
         h1 {
             color: #333;
-            border-bottom: 2px solid #90bb13;
+            border-bottom: 2px solid #b10100;
             padding-bottom: 10px;
         }
         table {
@@ -24,7 +24,7 @@
             text-align: left;
         }
         th {
-            background-color: #90bb13;
+            background-color: #b10100;
             color: white;
         }
         .summary-box {

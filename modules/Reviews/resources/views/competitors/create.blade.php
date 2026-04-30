@@ -2,9 +2,11 @@
 
 @section('title', 'Agregar competidor')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Agregar competidor'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

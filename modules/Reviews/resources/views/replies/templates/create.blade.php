@@ -209,7 +209,7 @@
         margin-bottom: 0.25rem;
     }
     .variable-tag:hover {
-        background-color: #90bb13;
+        background-color: #b10100;
         color: white;
         transform: translateY(-1px);
     }

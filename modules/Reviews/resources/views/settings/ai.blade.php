@@ -2,9 +2,11 @@
 
 @section('title', 'Auto-respuesta con IA')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Auto-respuesta con IA'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

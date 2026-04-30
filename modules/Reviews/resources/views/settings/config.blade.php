@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración de reseñas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de reseñas'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 

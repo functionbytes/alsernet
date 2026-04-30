@@ -2,9 +2,11 @@
 
 @section('title', 'Campañas de solicitud de reseñas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Campañas de solicitud de reseñas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Codigo QR — ' . $campaign->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Codigo QR de campaña'])
+@endsection
+
+@section('content')
 
     <div class="row justify-content-center">
         <div class="col-md-12">

@@ -6,9 +6,9 @@
 </head>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
 
-    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #90bb13;">
+    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #b10100;">
 
-        <h2 style="color: #90bb13; margin-top: 0;">
+        <h2 style="color: #b10100; margin-top: 0;">
             Reporte de reseñas listo
         </h2>
 

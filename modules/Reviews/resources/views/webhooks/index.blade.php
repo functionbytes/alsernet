@@ -2,9 +2,11 @@
 
 @section('title', 'Webhooks salientes')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Webhooks salientes'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

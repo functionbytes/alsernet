@@ -2,9 +2,11 @@
 
 @section('title', 'Crear regla de auto-respuesta')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Crear regla de auto-respuesta'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

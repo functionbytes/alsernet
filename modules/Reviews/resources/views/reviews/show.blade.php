@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle de reseña')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Detalle de reseña'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
@@ -456,7 +458,7 @@
 <link href="{{ asset('core/select2/css/select2.min.css') }}" rel="stylesheet" />
 <style>
     .select2-container--default .select2-selection--multiple .select2-selection__choice {
-        background-color: #90bb13;
+        background-color: #b10100;
         border-color: #7a9b10;
         color: #fff;
         padding: 3px 8px;

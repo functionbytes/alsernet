@@ -127,7 +127,7 @@ Features:
 
 ### By Rating:
 - ⭐⭐⭐⭐⭐ (5 stars) → Green (#13C672)
-- ⭐⭐⭐⭐ (4 stars) → Primary (#90bb13)
+- ⭐⭐⭐⭐ (4 stars) → Primary (#b10100)
 - ⭐⭐⭐ (3 stars) → Warning (#FEC90F)
 - ⭐⭐ (2 stars) → Danger (#FA896B)
 - ⭐ (1 star) → Dark Red (#d32f2f)

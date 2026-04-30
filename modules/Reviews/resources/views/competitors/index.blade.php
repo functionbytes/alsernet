@@ -2,9 +2,11 @@
 
 @section('title', 'Seguimiento de competidores')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Seguimiento de competidores'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Respuestas programadas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Respuestas programadas'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Conexiones Google')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Conexiones Google My Business'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
         @include('core::components.alerts')
 

@@ -6,9 +6,9 @@
 </head>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
 
-    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #90bb13;">
+    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #b10100;">
 
-        <h2 style="color: #90bb13; margin-top: 0;">
+        <h2 style="color: #b10100; margin-top: 0;">
             Comparte tu opinion
         </h2>
 
@@ -22,7 +22,7 @@
 
         <div style="text-align: center; margin: 28px 0;">
             <a href="{{ $campaign->review_url }}"
-               style="background: #90bb13; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block;">
+               style="background: #b10100; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block;">
                 Dejar resena
             </a>
         </div>

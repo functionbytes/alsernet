@@ -6,9 +6,9 @@
 </head>
 <body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
 
-    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #90bb13;">
+    <div style="background: #fff; border-radius: 8px; padding: 30px; border-top: 4px solid #b10100;">
 
-        <h2 style="color: #90bb13; margin-top: 0;">
+        <h2 style="color: #b10100; margin-top: 0;">
             Tu resumen semanal de reseñas
         </h2>
 
@@ -23,25 +23,25 @@
             <tr>
                 <td style="width: 25%; padding: 4px;">
                     <div style="background: #f8faf0; border: 1px solid #d9e8a0; border-radius: 6px; padding: 16px 12px; text-align: center;">
-                        <div style="font-size: 26px; font-weight: 700; color: #90bb13;">{{ $stats['new_reviews'] }}</div>
+                        <div style="font-size: 26px; font-weight: 700; color: #b10100;">{{ $stats['new_reviews'] }}</div>
                         <div style="font-size: 11px; color: #888; margin-top: 4px;">Nuevas reseñas</div>
                     </div>
                 </td>
                 <td style="width: 25%; padding: 4px;">
                     <div style="background: #f8faf0; border: 1px solid #d9e8a0; border-radius: 6px; padding: 16px 12px; text-align: center;">
-                        <div style="font-size: 26px; font-weight: 700; color: #90bb13;">{{ number_format($stats['avg_rating'], 1) }}</div>
+                        <div style="font-size: 26px; font-weight: 700; color: #b10100;">{{ number_format($stats['avg_rating'], 1) }}</div>
                         <div style="font-size: 11px; color: #888; margin-top: 4px;">Rating promedio</div>
                     </div>
                 </td>
                 <td style="width: 25%; padding: 4px;">
                     <div style="background: #f8faf0; border: 1px solid #d9e8a0; border-radius: 6px; padding: 16px 12px; text-align: center;">
-                        <div style="font-size: 26px; font-weight: 700; color: #90bb13;">{{ $stats['response_rate'] }}%</div>
+                        <div style="font-size: 26px; font-weight: 700; color: #b10100;">{{ $stats['response_rate'] }}%</div>
                         <div style="font-size: 11px; color: #888; margin-top: 4px;">Tasa de respuesta</div>
                     </div>
                 </td>
                 <td style="width: 25%; padding: 4px;">
                     <div style="background: {{ $stats['pending_replies'] > 0 ? '#fff5f0' : '#f8faf0' }}; border: 1px solid {{ $stats['pending_replies'] > 0 ? '#fdc8a0' : '#d9e8a0' }}; border-radius: 6px; padding: 16px 12px; text-align: center;">
-                        <div style="font-size: 26px; font-weight: 700; color: {{ $stats['pending_replies'] > 0 ? '#FA896B' : '#90bb13' }};">{{ $stats['pending_replies'] }}</div>
+                        <div style="font-size: 26px; font-weight: 700; color: {{ $stats['pending_replies'] > 0 ? '#FA896B' : '#b10100' }};">{{ $stats['pending_replies'] }}</div>
                         <div style="font-size: 11px; color: #888; margin-top: 4px;">Sin respuesta</div>
                     </div>
                 </td>
@@ -122,7 +122,7 @@
         {{-- CTA --}}
         <div style="text-align: center; margin: 28px 0;">
             <a href="{{ route('reviews.dashboard') }}"
-               style="background: #90bb13; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">
+               style="background: #b10100; color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">
                 Ver dashboard
             </a>
         </div>

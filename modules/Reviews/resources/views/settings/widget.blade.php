@@ -2,9 +2,11 @@
 
 @section('title', 'Widget de reseñas')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Widget de reseñas'])
+@endsection
+
+@section('content')
 
     <div class="row g-3">
 

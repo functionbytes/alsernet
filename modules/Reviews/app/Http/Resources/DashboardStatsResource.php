@@ -58,7 +58,7 @@ class DashboardStatsResource extends JsonResource
                 [
                     'label' => 'Calificación promedio',
                     'data' => $avgRatings,
-                    'borderColor' => '#90bb13',
+                    'borderColor' => '#b10100',
                     'backgroundColor' => 'rgba(144, 187, 19, 0.1)',
                     'yAxisID' => 'y-rating',
                 ],
@@ -98,7 +98,7 @@ class DashboardStatsResource extends JsonResource
                 [
                     'label' => 'Cantidad de reseñas',
                     'data' => $counts,
-                    'backgroundColor' => '#90bb13',
+                    'backgroundColor' => '#b10100',
                 ],
             ],
         ];
@@ -163,7 +163,7 @@ class DashboardStatsResource extends JsonResource
                     ],
                     'backgroundColor' => [
                         '#13C672',
-                        '#90bb13',
+                        '#b10100',
                         '#FEC90F',
                         '#FA896B',
                         '#d32f2f',

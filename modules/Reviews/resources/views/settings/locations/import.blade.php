@@ -2,9 +2,11 @@
 
 @section('title', 'Importar reseñas - ' . $location->name)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar reseñas'])
+@endsection
 
+@section('content')
     <div class="row g-3">
         {{-- CSV Import --}}
         <div class="col-12 col-lg-6">

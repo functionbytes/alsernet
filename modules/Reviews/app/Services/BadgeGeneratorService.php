@@ -113,8 +113,8 @@ class BadgeGeneratorService
         return <<<SVG
         <svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="120" rx="8" fill="white" stroke="#e0e0e0" stroke-width="1"/>
-          <rect width="72" height="120" rx="8" fill="#90bb13"/>
-          <rect x="64" width="8" height="120" fill="#90bb13"/>
+          <rect width="72" height="120" rx="8" fill="#b10100"/>
+          <rect x="64" width="8" height="120" fill="#b10100"/>
           <text x="36" y="52" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="white" text-anchor="middle">G</text>
           <text x="36" y="78" font-family="Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.85)" text-anchor="middle">Google</text>
           <text x="96" y="32" font-family="Arial,sans-serif" font-size="12" fill="#555" dominant-baseline="middle">{$name}</text>
@@ -141,7 +141,7 @@ class BadgeGeneratorService
           <text x="20" y="68" font-family="Arial,sans-serif" font-size="36" font-weight="bold" fill="#333">{$rating}</text>
           <text x="72" y="59" font-family="Arial,sans-serif" font-size="20" fill="#F5A623">{$stars}</text>
           <text x="20" y="95" font-family="Arial,sans-serif" font-size="11" fill="#999">Basado en {$reviewText} · Google</text>
-          <circle cx="376" cy="28" r="16" fill="#90bb13"/>
+          <circle cx="376" cy="28" r="16" fill="#b10100"/>
           <text x="376" y="34" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">G</text>
         </svg>
         SVG;
@@ -159,8 +159,8 @@ class BadgeGeneratorService
         return <<<SVG
         <svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="120" rx="8" fill="#1e1e2e"/>
-          <rect width="72" height="120" rx="8" fill="#90bb13"/>
-          <rect x="64" width="8" height="120" fill="#90bb13"/>
+          <rect width="72" height="120" rx="8" fill="#b10100"/>
+          <rect x="64" width="8" height="120" fill="#b10100"/>
           <text x="36" y="52" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="white" text-anchor="middle">G</text>
           <text x="36" y="78" font-family="Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.75)" text-anchor="middle">Google</text>
           <text x="96" y="32" font-family="Arial,sans-serif" font-size="12" fill="#aaa" dominant-baseline="middle">{$name}</text>
@@ -183,8 +183,8 @@ class BadgeGeneratorService
         return <<<SVG
         <svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
           <rect width="400" height="120" rx="12" fill="#f0f7e0" stroke="#c5e07b" stroke-width="1.5"/>
-          <rect width="72" height="120" rx="12" fill="#90bb13"/>
-          <rect x="64" width="8" height="120" fill="#90bb13"/>
+          <rect width="72" height="120" rx="12" fill="#b10100"/>
+          <rect x="64" width="8" height="120" fill="#b10100"/>
           <text x="36" y="52" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="white" text-anchor="middle">G</text>
           <text x="36" y="78" font-family="Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.85)" text-anchor="middle">Google</text>
           <text x="96" y="32" font-family="Arial,sans-serif" font-size="12" fill="#6a7a40" dominant-baseline="middle">{$name}</text>
