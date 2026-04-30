@@ -2,9 +2,11 @@
 
 @section('title', 'Herramientas de optimización')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Herramientas de optimización'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     {{-- Stats globales --}}

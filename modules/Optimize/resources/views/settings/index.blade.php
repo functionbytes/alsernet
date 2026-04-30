@@ -2,9 +2,11 @@
 
 @section('title', 'Optimización')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Optimización'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="widget-content searchable-container list">
