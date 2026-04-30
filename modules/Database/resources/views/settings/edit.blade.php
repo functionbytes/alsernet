@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración de base de datos')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Base de datos'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
