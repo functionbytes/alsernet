@@ -23,7 +23,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="tag_color">Color <span class="text-danger">*</span></label>
-                                <input type="color" class="form-control form-control-color w-100" id="tag_color" name="color" value="#90bb13">
+                                <input type="color" class="form-control form-control-color w-100" id="tag_color" name="color" value="#b10100">
                             </div>
                             <div class="col-12">
                                 <label class="form-label" for="tag_description">Descripcion</label>

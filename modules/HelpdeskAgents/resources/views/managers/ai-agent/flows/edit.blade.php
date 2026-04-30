@@ -341,7 +341,7 @@
 
 @push('css')
 <style>
-.node-item { border-left: 3px solid #90bb13; }
+.node-item { border-left: 3px solid #b10100; }
 .node-item .node-handle { cursor: grab; color: #adb5bd; }
 .node-item .node-handle:hover { color: #6c757d; }
 .node-item.sortable-ghost { opacity: 0.4; }

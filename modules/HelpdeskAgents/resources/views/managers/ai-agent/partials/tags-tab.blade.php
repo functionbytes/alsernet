@@ -76,7 +76,7 @@
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="rounded-circle d-inline-block flex-shrink-0"
-                                      style="width:12px;height:12px;background-color:{{ $tag->color ?? '#90bb13' }};"></span>
+                                      style="width:12px;height:12px;background-color:{{ $tag->color ?? '#b10100' }};"></span>
                                 <span class="fw-semibold">{{ $tag->name }}</span>
                             </div>
                         </td>
@@ -104,7 +104,7 @@
                                            data-id="{{ $tag->id }}"
                                            data-name="{{ $tag->name }}"
                                            data-description="{{ $tag->description }}"
-                                           data-color="{{ $tag->color ?? '#90bb13' }}"
+                                           data-color="{{ $tag->color ?? '#b10100' }}"
                                            data-icon="{{ $tag->icon }}"
                                            data-priority="{{ $tag->priority ?? 0 }}"
                                            data-system-prompt="{{ $tag->system_prompt_addition }}"
@@ -151,7 +151,7 @@ $(function () {
     $(document).on('click', '#btn-new-tag, #btn-new-tag-empty', function () {
         $('#tag_id').val('');
         $('#tagForm')[0].reset();
-        $('#tag_color').val('#90bb13');
+        $('#tag_color').val('#b10100');
         $('#tagModalLabel').text('Nuevo tag');
         $('#tagModal').modal('show');
     });
