@@ -3,7 +3,8 @@
 namespace Modules\CampaignSendingServers\Console\Commands;
 
 use Illuminate\Console\Command;
-use Modules\Campaign\Models\CampaignTrackingLog;
+use Modules\CampaignSendingServers\Events\BounceDetected;
+use Modules\CampaignSendingServers\Events\FeedbackLoopDetected;
 use Modules\CampaignSendingServers\Library\ImapMailbox;
 use Modules\CampaignSendingServers\Models\Blacklist;
 use Modules\CampaignSendingServers\Models\BounceHandler;
@@ -117,13 +118,10 @@ class RunHandlersCommand extends Command
                 ['email' => $email],
                 ['reason' => 'hard bounce', 'source' => Blacklist::SOURCE_BOUNCE],
             );
-
-            // Actualiza tracking_log si existe
-            if (class_exists(CampaignTrackingLog::class) && $messageId) {
-                CampaignTrackingLog::where('message_id', $messageId)
-                    ->update(['status' => 'bounced']);
-            }
         }
+
+        // Emitir evento para que Campaign (u otros listeners) actualicen sus tablas
+        BounceDetected::dispatch($email, $messageId, $isHard, substr($msg['body'], 0, 1000));
     }
 
     /**
@@ -148,12 +146,10 @@ class RunHandlersCommand extends Command
                 ['email' => $email],
                 ['reason' => 'feedback loop / spam complaint', 'source' => Blacklist::SOURCE_FEEDBACK],
             );
-
-            if (class_exists(CampaignTrackingLog::class) && $messageId) {
-                CampaignTrackingLog::where('message_id', $messageId)
-                    ->update(['status' => 'feedback']);
-            }
         }
+
+        // Emitir evento para que Campaign (u otros listeners) actualicen sus tablas
+        FeedbackLoopDetected::dispatch($email, $messageId, substr($msg['body'], 0, 1000));
     }
 
     /**
