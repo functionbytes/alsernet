@@ -2,9 +2,11 @@
 
 @section('title', "Traducciones — {$group} / {$locale}")
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Traducciones'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 

@@ -2,9 +2,11 @@
 
 @section('title', 'Nuevo idioma')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Nuevo idioma'])
+@endsection
+
+@section('content')
 
     @include('core::components.alerts')
 
