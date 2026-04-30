@@ -10,7 +10,7 @@
         .card { max-width: 420px; margin: 0 auto; background: #fff; padding: 32px 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         h1 { color: {{ $success ? '#13c672' : '#fa896b' }}; margin: 0 0 12px; font-size: 22px; }
         p { color: #666; line-height: 1.5; }
-        a { color: #90bb13; text-decoration: none; font-weight: 600; }
+        a { color: #b10100; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>

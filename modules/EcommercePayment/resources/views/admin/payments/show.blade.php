@@ -2,9 +2,11 @@
 
 @section('title', 'Detalle de pago #' . $payment->id)
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Ecommerce - Detalle de pago'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="card mb-3">

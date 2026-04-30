@@ -6,10 +6,10 @@
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #90bb13; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header { background: #b10100; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
         .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
         .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
-        .btn { display: inline-block; padding: 12px 24px; background: #90bb13; color: white; text-decoration: none; border-radius: 4px; }
+        .btn { display: inline-block; padding: 12px 24px; background: #b10100; color: white; text-decoration: none; border-radius: 4px; }
         table { width: 100%; border-collapse: collapse; margin: 15px 0; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f0f0f0; }

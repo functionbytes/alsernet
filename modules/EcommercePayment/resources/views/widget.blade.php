@@ -11,7 +11,7 @@
         body { background: #fbfbfb; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
         .payment-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
         .payment-card { background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.1); overflow: hidden; max-width: 600px; width: 100%; }
-        .payment-header { background: #90bb13; color: white; padding: 2rem; text-align: center; }
+        .payment-header { background: #b10100; color: white; padding: 2rem; text-align: center; }
         .payment-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.9; }
         .payment-body { padding: 2rem; }
         .payment-summary { background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
@@ -19,18 +19,18 @@
         .wompi-form { text-align: center; padding: 2rem 0; min-height: 100px; }
         .back-button { background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; height: 40px; line-height: 40px; width: 100%; margin-top: 10px; }
         .back-button:hover { background: #5a6268; transform: translateY(-1px); }
-        .fallback-button { background: #90bb13; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; height: 40px; line-height: 40px; width: 100%; margin-top: 10px; }
+        .fallback-button { background: #b10100; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; height: 40px; line-height: 40px; width: 100%; margin-top: 10px; }
         .fallback-button:hover { background: #7aa30f; transform: translateY(-1px); }
         .payment-instructions { background: rgba(144,187,19,0.1); border: 1px solid rgba(144,187,19,0.3); border-radius: 4px; padding: 1rem; color: #5a7a0e; }
         .security-info { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 2rem; color: #000; font-size: 0.9rem; }
         .security-badges { display: flex; align-items: center; gap: 0.5rem; }
         .loading-indicator { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 20px; color: #000; }
-        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #90bb13; border-radius: 50%; animation: spin 1s linear infinite; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #b10100; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .error-message { display: none; background: #f8d7da; color: #842029; padding: 1.5rem; border-radius: 10px; margin: 1rem 0; border-left: 4px solid #dc3545; }
-        .widget-status { text-align: center; margin: 1rem 0; font-size: 0.9rem; color: #90bb13; display: none !important; }
-        .waybox-button { background-color: #90bb13 !important; width: 100% !important; }
-        .security-info i { color: #90bb13 !important; }
+        .widget-status { text-align: center; margin: 1rem 0; font-size: 0.9rem; color: #b10100; display: none !important; }
+        .waybox-button { background-color: #b10100 !important; width: 100% !important; }
+        .security-info i { color: #b10100 !important; }
     </style>
 </head>
 <body>

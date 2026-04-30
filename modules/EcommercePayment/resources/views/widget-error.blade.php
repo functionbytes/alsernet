@@ -14,10 +14,10 @@
         .error-icon { font-size: 4rem; margin-bottom: 1rem; }
         .error-body { padding: 2rem; }
         .error-details { background: #f8f9fa; border-radius: 10px; padding: 1.5rem; margin: 1.5rem 0; text-align: left; }
-        .btn-primary { background: #90bb13; border-color: #90bb13; }
+        .btn-primary { background: #b10100; border-color: #b10100; }
         .btn-primary:hover { background: #7aa30f; border-color: #7aa30f; }
-        .btn-outline-primary { color: #90bb13; border-color: #90bb13; }
-        .btn-outline-primary:hover { background: #90bb13; border-color: #90bb13; color: white; }
+        .btn-outline-primary { color: #b10100; border-color: #b10100; }
+        .btn-outline-primary:hover { background: #b10100; border-color: #b10100; color: white; }
     </style>
 </head>
 <body>

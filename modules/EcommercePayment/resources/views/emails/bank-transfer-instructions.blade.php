@@ -7,7 +7,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
         .container { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        .header { background: #90bb13; color: #fff; padding: 32px 32px 24px; text-align: center; }
+        .header { background: #b10100; color: #fff; padding: 32px 32px 24px; text-align: center; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 700; }
         .header p { margin: 8px 0 0; opacity: .85; font-size: 14px; }
         .body { padding: 32px; }
@@ -16,9 +16,9 @@
         .bank-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
         .bank-table td:first-child { color: #666; width: 45%; }
         .bank-table td:last-child { font-weight: 600; color: #1a2030; }
-        .amount { font-size: 24px; font-weight: 700; color: #90bb13; }
+        .amount { font-size: 24px; font-weight: 700; color: #b10100; }
         .reference { font-family: monospace; font-size: 16px; background: #f8f9fa; padding: 8px 12px; border-radius: 4px; display: inline-block; }
-        .instructions { background: #f0f7e6; border-left: 4px solid #90bb13; padding: 16px; border-radius: 0 4px 4px 0; margin: 20px 0; font-size: 14px; color: #444; }
+        .instructions { background: #f0f7e6; border-left: 4px solid #b10100; padding: 16px; border-radius: 0 4px 4px 0; margin: 20px 0; font-size: 14px; color: #444; }
         .footer { padding: 24px 32px; background: #f8f9fa; text-align: center; font-size: 12px; color: #888; }
     </style>
 </head>

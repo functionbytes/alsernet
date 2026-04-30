@@ -2,9 +2,11 @@
 
 @section('title', 'Configuracion de pagos Wompi')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuracion de pagos Wompi'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="card">
