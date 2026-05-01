@@ -33,6 +33,19 @@ class ConversationAjaxActionRequest extends FormRequest
             ];
         }
 
+        if ($this->has('status_id')) {
+            return [
+                'status_id' => ['required', 'integer', 'exists:helpdesk_conversation_statuses,id'],
+            ];
+        }
+
+        if ($this->has('tag_ids')) {
+            return [
+                'tag_ids' => ['nullable', 'array'],
+                'tag_ids.*' => ['integer', 'exists:helpdesk.helpdesk_conversation_tags,id'],
+            ];
+        }
+
         return [];
     }
 

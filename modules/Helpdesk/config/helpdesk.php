@@ -1,6 +1,13 @@
 <?php
 
 return [
+    /*
+     * Public URL used when Meta (or any external channel) needs to fetch our
+     * attachments. Falls back to APP_URL but in local dev that's system.test
+     * which is not reachable from Meta — use the Cloudflare tunnel instead.
+     */
+    'public_url' => env('HELPDESK_PUBLIC_URL', env('APP_URL')),
+
     'navigation' => [
         'manager' => [
             ['label' => 'Dashboard', 'route' => 'manager.helpdesk', 'icon' => 'fas fa-tachometer-alt'],
@@ -80,7 +87,7 @@ return [
             'text/plain',
             'text/csv',
         ],
-        'disk' => 'local',
+        'disk' => env('HELPDESK_ATTACHMENTS_DISK', 'public'),
         'path' => 'helpdesk/attachments',
     ],
 
@@ -176,8 +183,11 @@ return [
         ],
         'instagram' => [
             'enabled' => env('INSTAGRAM_ENABLED', false),
+            'app_id' => env('INSTAGRAM_APP_ID'),
+            'app_secret' => env('INSTAGRAM_APP_SECRET'),
             'business_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),
             'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
+            'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
         ],
     ],
 ];

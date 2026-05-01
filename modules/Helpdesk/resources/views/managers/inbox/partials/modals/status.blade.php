@@ -11,7 +11,7 @@
             <div class="bv-opt-list" data-bv-opt-group="status">
                 @foreach($statuses as $s)
                     <button class="bv-opt" data-bv-value="{{ $s->id }}" data-bv-label="{{ $s->name }}" data-bv-color="{{ $s->color }}">
-                        <span class="dot" style="background:var(--bv-{{ $s->color ?? 'success' }})"></span>
+                        <span class="dot" style="background:{{ $s->color ?? '#6c757d' }}"></span>
                         <div class="body">
                             <div class="name">{{ $s->name }}</div>
                             @if($s->description)

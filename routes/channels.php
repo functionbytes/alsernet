@@ -85,6 +85,17 @@ Broadcast::channel('customer.{id}', function ($user, $id) {
         && (int) $user->id === (int) $id;
 });
 
+// Canal privado para mensajes de conversaciones helpdesk (panel de agentes)
+Broadcast::channel('helpdesk.conversation.{conversationId}', function ($user) {
+    return $user instanceof User && $user->can('helpdesk.conversations.view');
+});
+
+// Canal privado global para la bandeja de helpdesk: recibe avisos de nuevas
+// conversaciones y nuevos mensajes para que el sidebar se actualice solo.
+Broadcast::channel('helpdesk.inbox', function ($user) {
+    return $user instanceof User && $user->can('helpdesk.conversations.view');
+});
+
 // Presence channel para colaboracion en tiempo real en tickets de helpdesk
 // Permite collision detection y typing indicator entre agentes
 Broadcast::channel('ticket.{ticketId}', function ($user, int $ticketId) {

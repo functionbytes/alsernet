@@ -27,67 +27,34 @@
             {{-- Tag list --}}
             <div class="bv-right-section-title bv-mb-8">Etiquetas disponibles</div>
             <div class="bv-opt-list" id="tags-list">
-                <div class="bv-opt on" data-tag-id="urgente">
-                    <span class="dot bv-tag-dot bv-tag-dot--red"></span>
-                    <div class="body">
-                        <div class="name">Urgente</div>
-                        <div class="sub">34 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
-                <div class="bv-opt" data-tag-id="envio">
-                    <span class="dot bv-tag-dot bv-tag-dot--orange"></span>
-                    <div class="body">
-                        <div class="name">Problema de envío</div>
-                        <div class="sub">21 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
-                <div class="bv-opt on" data-tag-id="reembolso">
-                    <span class="dot bv-tag-dot bv-tag-dot--green"></span>
-                    <div class="body">
-                        <div class="name">Reembolso</div>
-                        <div class="sub">15 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
-                <div class="bv-opt" data-tag-id="vip">
-                    <span class="dot bv-tag-dot bv-tag-dot--blue"></span>
-                    <div class="body">
-                        <div class="name">Cliente VIP</div>
-                        <div class="sub">12 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
-                <div class="bv-opt" data-tag-id="tecnico">
-                    <span class="dot bv-tag-dot bv-tag-dot--purple"></span>
-                    <div class="body">
-                        <div class="name">Soporte técnico</div>
-                        <div class="sub">9 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
-                <div class="bv-opt" data-tag-id="postventa">
-                    <span class="dot bv-tag-dot bv-tag-dot--pink"></span>
-                    <div class="body">
-                        <div class="name">Postventa</div>
-                        <div class="sub">7 conversaciones</div>
-                    </div>
-                    <i class="fas fa-check check"></i>
-                </div>
+                @if($inboxTags->isEmpty())
+                    <em class="text-muted small">Sin etiquetas disponibles</em>
+                @else
+                    @foreach($inboxTags as $tag)
+                        <div class="bv-opt {{ $selectedConversation && $selectedConversation->conversationTags->contains('id', $tag->id) ? 'on' : '' }}"
+                             data-tag-id="{{ $tag->id }}">
+                            <span class="dot bv-tag-dot" style="background:{{ $tag->color ?? '#6c757d' }}"></span>
+                            <div class="body">
+                                <div class="name">{{ $tag->name }}</div>
+                                <div class="sub">{{ $tag->conversations_count ?? 0 }} conversaciones</div>
+                            </div>
+                            <i class="fas fa-check check"></i>
+                        </div>
+                    @endforeach
+                @endif
             </div>
 
             {{-- Applied chips --}}
             <div class="bv-right-section-title bv-mt-14 bv-mb-8">Aplicadas a esta conversación</div>
             <div id="tags-applied" class="bv-tags-applied">
-                <span class="bv-chpill on" data-tag-id="urgente">
-                    Urgente
-                    <button type="button" class="tags-remove-chip bv-chip-remove"><i class="fas fa-xmark bv-icon-xs"></i></button>
-                </span>
-                <span class="bv-chpill on" data-tag-id="reembolso">
-                    Reembolso
-                    <button type="button" class="tags-remove-chip bv-chip-remove"><i class="fas fa-xmark bv-icon-xs"></i></button>
-                </span>
+                @forelse($selectedConversation?->conversationTags ?? [] as $tag)
+                    <span class="bv-chpill on" data-tag-id="{{ $tag->id }}">
+                        {{ $tag->name }}
+                        <button type="button" class="tags-remove-chip bv-chip-remove"><i class="fas fa-xmark bv-icon-xs"></i></button>
+                    </span>
+                @empty
+                    <em class="text-muted small">Ninguna aplicada</em>
+                @endforelse
             </div>
 
         </div>

@@ -35,6 +35,7 @@ return [
         // Tags
         'tag_added' => 'Etiqueta agregada',
         'tag_removed' => 'Etiqueta eliminada',
+        'tags_updated' => 'Etiquetas actualizadas',
 
         // AJAX field updates
         'priority_updated' => 'Prioridad actualizada',

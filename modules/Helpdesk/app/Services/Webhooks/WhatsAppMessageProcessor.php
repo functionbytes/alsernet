@@ -63,7 +63,7 @@ class WhatsAppMessageProcessor
 
             $conversation->update(['last_message_at' => now()]);
 
-            event(new ConversationMessageCreated($item));
+            broadcast(new ConversationMessageCreated($item));
             event(new ConversationItemCreated($item));
 
             if ($conversation->assignee_id) {

@@ -29,6 +29,8 @@ class Conversation extends Model
 
     protected $fillable = [
         'customer_id',
+        'inbox_id',
+        'assignee_id',
         'status_id',
         'subject',
         'priority',
@@ -42,6 +44,11 @@ class Conversation extends Model
         'last_message_at',
         'tags',
         'is_spam',
+        'is_archived',
+        'is_public',
+        'snoozed_until',
+        'snoozed_by',
+        'sla_warned_at',
     ];
 
     protected function casts(): array
@@ -51,6 +58,7 @@ class Conversation extends Model
             'closed_at' => 'datetime',
             'first_response_at' => 'datetime',
             'last_message_at' => 'datetime',
+            'sla_warned_at' => 'datetime',
             'is_archived' => 'boolean',
             'is_spam' => 'boolean',
             'tags' => 'array',
@@ -75,6 +83,22 @@ class Conversation extends Model
     public function status(): BelongsTo
     {
         return $this->belongsTo(ConversationStatus::class, 'status_id');
+    }
+
+    /**
+     * Inbox the conversation belongs to (polymorphic via Inbox->channel).
+     */
+    public function inbox(): BelongsTo
+    {
+        return $this->belongsTo(Inbox::class, 'inbox_id');
+    }
+
+    /**
+     * Customer who initiated the conversation.
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     /**

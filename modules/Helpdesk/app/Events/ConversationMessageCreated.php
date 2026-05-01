@@ -4,24 +4,29 @@ namespace Modules\Helpdesk\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Modules\Helpdesk\Models\ConversationItem;
 
-class ConversationMessageCreated implements ShouldBroadcast
+class ConversationMessageCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public ConversationItem $item) {}
+    public function __construct(
+        public ConversationItem $item,
+        public bool $isNewConversation = false,
+    ) {}
 
     /**
-     * Get the channels the event should broadcast on.
+     * Broadcast on BOTH the conversation channel (for the open thread) and the
+     * global inbox channel (so the sidebar list updates without an extra event).
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('conversations.'.$this->item->conversation_id),
+            new PrivateChannel('helpdesk.conversation.'.$this->item->conversation_id),
+            new PrivateChannel('helpdesk.inbox'),
         ];
     }
 
@@ -30,6 +35,9 @@ class ConversationMessageCreated implements ShouldBroadcast
      */
     public function broadcastWith(): array
     {
+        $conversation = $this->item->conversation;
+        $customer = $conversation?->customer;
+
         return [
             'message' => [
                 'id' => $this->item->id,
@@ -40,11 +48,27 @@ class ConversationMessageCreated implements ShouldBroadcast
                 'body' => $this->item->body,
                 'html_body' => $this->item->html_body,
                 'is_internal' => $this->item->is_internal,
+                'is_incoming' => empty($this->item->user_id) && ! empty($this->item->author_id),
                 'attachment_urls' => $this->item->attachment_urls,
-                'created_at' => $this->item->created_at,
+                'metadata' => $this->item->metadata,
+                'created_at' => $this->item->created_at?->toIso8601String(),
                 'sender_name' => $this->item->getSenderNameAttribute(),
                 'sender_avatar' => $this->item->getSenderAvatarAttribute(),
             ],
+            'conversation' => [
+                'id' => $conversation?->id,
+                'channel' => $conversation?->channel,
+                'subject' => $conversation?->subject,
+                'priority' => $conversation?->priority,
+                'last_message_at' => $conversation?->last_message_at?->toIso8601String() ?? $this->item->created_at?->toIso8601String(),
+                'customer' => $customer ? [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'email' => $customer->email,
+                    'avatar_url' => $customer->avatar_url,
+                ] : null,
+            ],
+            'is_new_conversation' => $this->isNewConversation,
         ];
     }
 
@@ -53,6 +77,6 @@ class ConversationMessageCreated implements ShouldBroadcast
      */
     public function broadcastAs(): string
     {
-        return 'ConversationMessageCreated';
+        return 'item.created';
     }
 }

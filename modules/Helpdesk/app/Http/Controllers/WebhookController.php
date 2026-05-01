@@ -89,7 +89,7 @@ class WebhookController extends Controller
         $events = $service->parseWebhookPayload($request->all());
 
         foreach ($events as $event) {
-            if (in_array($event['type'], ['message', 'postback'])) {
+            if (in_array($event['type'], ['message', 'postback', 'read', 'delivery'])) {
                 ProcessSocialWebhookJob::dispatch('facebook', $event['type'], $event);
             }
         }
@@ -131,7 +131,7 @@ class WebhookController extends Controller
         $events = $service->parseWebhookPayload($request->all());
 
         foreach ($events as $event) {
-            if (in_array($event['type'], ['message', 'story_reply'])) {
+            if (in_array($event['type'], ['message', 'story_reply', 'read', 'delivery', 'reaction'])) {
                 ProcessSocialWebhookJob::dispatch('instagram', $event['type'], $event);
             }
         }

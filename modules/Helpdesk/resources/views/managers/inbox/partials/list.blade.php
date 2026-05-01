@@ -50,30 +50,71 @@
         </div>
     </div>
 
+    @php
+        $sidebarCounters = $sidebarCounters ?? [];
+        $totalConversations = $totalConversations ?? 0;
+        $activeChannel = request()->input('channel');
+        $isAllChannels = ! $activeChannel;
+        $isUnread = request()->boolean('unread');
+        $isMine = request()->boolean('mine');
+        $isUrgent = request()->boolean('urgent');
+        $isVip = request()->boolean('vip');
+    @endphp
+
     <div class="bv-list-channels">
-        <button class="bv-chpill on" data-bv-channel="all">Todos <span class="c">79</span></button>
-        <button class="bv-chpill bv-chpill-wa" data-bv-channel="whatsapp">
-            <i class="fab fa-whatsapp"></i>WA <span class="c">42</span>
-        </button>
-        <button class="bv-chpill bv-chpill-fb" data-bv-channel="facebook">
-            <i class="fab fa-facebook-messenger"></i>FB <span class="c">18</span>
-        </button>
-        <button class="bv-chpill bv-chpill-ig" data-bv-channel="instagram">
-            <i class="fab fa-instagram"></i>IG <span class="c">9</span>
-        </button>
-        <button class="bv-chpill" data-bv-channel="email">
-            <i class="far fa-envelope"></i>Email <span class="c">7</span>
-        </button>
-        <button class="bv-chpill" data-bv-channel="web">
-            <i class="far fa-comment-dots"></i>Widget <span class="c">3</span>
-        </button>
+        <a href="{{ route('manager.helpdesk.conversations.index') }}"
+           class="bv-chpill {{ $isAllChannels ? 'on' : '' }}"
+           data-bv-channel="all">
+            Todos <span class="c">{{ $totalConversations }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['channel' => 'whatsapp']) }}"
+           class="bv-chpill bv-chpill-wa {{ $activeChannel === 'whatsapp' ? 'on' : '' }}"
+           data-bv-channel="whatsapp">
+            <i class="fab fa-whatsapp"></i>WA <span class="c">{{ $sidebarCounters['whatsapp'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['channel' => 'facebook']) }}"
+           class="bv-chpill bv-chpill-fb {{ $activeChannel === 'facebook' ? 'on' : '' }}"
+           data-bv-channel="facebook">
+            <i class="fab fa-facebook-messenger"></i>FB <span class="c">{{ $sidebarCounters['facebook'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['channel' => 'instagram']) }}"
+           class="bv-chpill bv-chpill-ig {{ $activeChannel === 'instagram' ? 'on' : '' }}"
+           data-bv-channel="instagram">
+            <i class="fab fa-instagram"></i>IG <span class="c">{{ $sidebarCounters['instagram'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['channel' => 'email']) }}"
+           class="bv-chpill {{ $activeChannel === 'email' ? 'on' : '' }}"
+           data-bv-channel="email">
+            <i class="far fa-envelope"></i>Email <span class="c">{{ $sidebarCounters['email'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['channel' => 'web']) }}"
+           class="bv-chpill {{ in_array($activeChannel, ['web', 'widget']) ? 'on' : '' }}"
+           data-bv-channel="web">
+            <i class="far fa-comment-dots"></i>Widget <span class="c">{{ $sidebarCounters['widget'] ?? 0 }}</span>
+        </a>
     </div>
 
     <div class="bv-list-sub">
-        <button class="bv-chip on" data-bv-filter="unread">Sin leer <span class="c">12</span></button>
-        <button class="bv-chip" data-bv-filter="mine">Mías <span class="c">8</span></button>
-        <button class="bv-chip" data-bv-filter="urgent">Urgentes <span class="c">2</span></button>
-        <button class="bv-chip" data-bv-filter="vip">VIP <span class="c">5</span></button>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['unread' => 1]) }}"
+           class="bv-chip {{ $isUnread ? 'on' : '' }}"
+           data-bv-filter="unread">
+            Sin leer <span class="c">{{ $sidebarCounters['unread'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['mine' => 1]) }}"
+           class="bv-chip {{ $isMine ? 'on' : '' }}"
+           data-bv-filter="mine">
+            Mías <span class="c">{{ $sidebarCounters['mine'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['urgent' => 1]) }}"
+           class="bv-chip {{ $isUrgent ? 'on' : '' }}"
+           data-bv-filter="urgent">
+            Urgentes <span class="c">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
+        </a>
+        <a href="{{ route('manager.helpdesk.conversations.index', ['vip' => 1]) }}"
+           class="bv-chip {{ $isVip ? 'on' : '' }}"
+           data-bv-filter="vip">
+            VIP <span class="c">{{ $sidebarCounters['vip'] ?? 0 }}</span>
+        </a>
     </div>
 
     <div class="bv-conv-list" id="bv-conv-list">

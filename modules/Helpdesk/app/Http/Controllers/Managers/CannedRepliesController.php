@@ -18,20 +18,22 @@ class CannedRepliesController extends Controller
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('title', 'like', "%{$q}%")
-                        ->orWhere('short_code', 'like', "%{$q}%")
-                        ->orWhere('content', 'like', "%{$q}%");
+                        ->orWhere('shortcut', 'like', "%{$q}%")
+                        ->orWhere('body', 'like', "%{$q}%");
                 });
             })
             ->orderByDesc('usage_count')
-            ->limit(10)
-            ->get(['id', 'title', 'short_code', 'content']);
+            ->limit(50)
+            ->get(['id', 'title', 'shortcut', 'body', 'category', 'usage_count']);
 
         return response()->json(
             $replies->map(fn ($reply) => [
                 'id' => $reply->id,
                 'name' => $reply->title,
-                'shortcut' => $reply->short_code,
-                'body' => $reply->content,
+                'shortcut' => $reply->shortcut,
+                'body' => $reply->body,
+                'category' => $reply->category,
+                'usage_count' => (int) $reply->usage_count,
             ])
         );
     }

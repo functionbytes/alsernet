@@ -9,7 +9,10 @@ class InstagramService
 {
     private const API_VERSION = 'v19.0';
 
-    private const BASE_URL = 'https://graph.instagram.com';
+    // When using a Facebook Page Access Token with instagram_manage_messages scope,
+    // the Send API endpoint lives under graph.facebook.com (not graph.instagram.com,
+    // which requires a separate Instagram Login token).
+    private const BASE_URL = 'https://graph.facebook.com';
 
     private string $accessToken;
 
@@ -162,6 +165,48 @@ class InstagramService
         return $events;
     }
 
+    /**
+     * Send a quick replies message (text + up to 13 reply buttons).
+     *
+     * @param  array<int, array{title: string, payload: string}>  $replies
+     */
+    public function sendQuickReplies(string $igUserId, string $text, array $replies): ?string
+    {
+        return $this->send($igUserId, [
+            'text' => $text,
+            'quick_replies' => array_map(fn ($r) => [
+                'content_type' => 'text',
+                'title' => $r['title'],
+                'payload' => $r['payload'],
+            ], array_slice($replies, 0, 13)),
+        ]);
+    }
+
+    /**
+     * Send sender_action (mark_seen / typing_on / typing_off) to the IG conversation.
+     */
+    public function sendSenderAction(string $igUserId, string $action = 'mark_seen'): bool
+    {
+        if (! $this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($this->accessToken)
+                ->timeout(8)
+                ->post(self::BASE_URL.'/'.self::API_VERSION.'/me/messages', [
+                    'recipient' => ['id' => $igUserId],
+                    'sender_action' => $action,
+                ]);
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::warning('Instagram sender_action failed', ['ig_user_id' => $igUserId, 'action' => $action, 'error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
     // ─── Internals ────────────────────────────────────────────────────────────
 
     private function send(string $igUserId, array $message, string $messagingType = 'RESPONSE'): ?string
@@ -171,10 +216,12 @@ class InstagramService
         }
 
         try {
+            // Instagram Messaging via Facebook Page Access Token uses /me/messages,
+            // identical to Messenger. Recipient is the Instagram-Scoped User ID (IGSID).
             $response = Http::withToken($this->accessToken)
                 ->timeout(15)
                 ->retry(2, 500)
-                ->post(self::BASE_URL.'/'.self::API_VERSION.'/'.$this->businessAccountId.'/messages', [
+                ->post(self::BASE_URL.'/'.self::API_VERSION.'/me/messages', [
                     'recipient' => ['id' => $igUserId],
                     'messaging_type' => $messagingType,
                     'message' => $message,

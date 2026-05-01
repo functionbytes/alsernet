@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -100,6 +101,16 @@ class Customer extends Model
     {
         return $this->hasOne(CustomerSession::class, 'customer_id')
             ->latest('created_at');
+    }
+
+    /**
+     * Inboxes the customer has interacted with (pivot helpdesk_customer_inboxes).
+     */
+    public function inboxes(): BelongsToMany
+    {
+        return $this->belongsToMany(Inbox::class, 'helpdesk_customer_inboxes')
+            ->withPivot(['source_id', 'last_seen_at'])
+            ->withTimestamps();
     }
 
     /**

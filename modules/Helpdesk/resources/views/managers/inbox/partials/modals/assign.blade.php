@@ -31,54 +31,31 @@
             {{-- Tab: Agentes --}}
             <div class="bv-assign-tab" data-panel="agentes">
                 <div class="bv-opt-list" id="assign-agents-list">
-                    <button class="bv-opt on" data-agent-id="1">
-                        <div class="bv-av c1">ML<span class="bv-av-dot online"></span></div>
+                    {{-- Unassign option --}}
+                    <button class="bv-opt {{ !$selectedConversation?->assignee_id ? 'on' : '' }}" data-agent-id="">
+                        <div class="bv-av bv-av--none"><i class="fas fa-user-slash bv-icon-sm"></i></div>
                         <div class="body">
-                            <div class="name">María López</div>
-                            <div class="sub">Disponible · 4 conversaciones activas</div>
+                            <div class="name">Sin asignar</div>
+                            <div class="sub">Quitar la asignación actual</div>
                         </div>
                         <i class="fas fa-check check"></i>
                     </button>
-                    <button class="bv-opt" data-agent-id="2">
-                        <div class="bv-av c2">JR<span class="bv-av-dot online"></span></div>
-                        <div class="body">
-                            <div class="name">Juan Ruiz</div>
-                            <div class="sub">Disponible · 2 conversaciones activas</div>
-                        </div>
-                        <i class="fas fa-check check"></i>
-                    </button>
-                    <button class="bv-opt" data-agent-id="3">
-                        <div class="bv-av c3">AT<span class="bv-av-dot busy"></span></div>
-                        <div class="body">
-                            <div class="name">Ana Torres</div>
-                            <div class="sub">Ocupada · 8 conversaciones activas</div>
-                        </div>
-                        <i class="fas fa-check check"></i>
-                    </button>
-                    <button class="bv-opt" data-agent-id="4">
-                        <div class="bv-av c4">CR<span class="bv-av-dot online"></span></div>
-                        <div class="body">
-                            <div class="name">Carlos Ruiz</div>
-                            <div class="sub">Disponible · 1 conversación activa</div>
-                        </div>
-                        <i class="fas fa-check check"></i>
-                    </button>
-                    <button class="bv-opt" data-agent-id="5">
-                        <div class="bv-av c5">LP<span class="bv-av-dot offline"></span></div>
-                        <div class="body">
-                            <div class="name">Laura Prieto</div>
-                            <div class="sub">Offline</div>
-                        </div>
-                        <i class="fas fa-check check"></i>
-                    </button>
-                    <button class="bv-opt" data-agent-id="6">
-                        <div class="bv-av c6">DM<span class="bv-av-dot offline"></span></div>
-                        <div class="body">
-                            <div class="name">Diego Mora</div>
-                            <div class="sub">Offline</div>
-                        </div>
-                        <i class="fas fa-check check"></i>
-                    </button>
+
+                    @if(empty($agents) || (is_countable($agents) && count($agents) === 0))
+                        <em class="text-muted small">No hay agentes disponibles</em>
+                    @else
+                        @foreach($agents as $agent)
+                            <button class="bv-opt {{ $selectedConversation?->assignee_id === $agent->id ? 'on' : '' }}"
+                                    data-agent-id="{{ $agent->id }}">
+                                <div class="bv-av c{{ ($loop->index % 7) + 1 }}">{{ strtoupper(substr($agent->firstname, 0, 1) . substr($agent->lastname, 0, 1)) }}</div>
+                                <div class="body">
+                                    <div class="name">{{ $agent->firstname }} {{ $agent->lastname }}</div>
+                                    <div class="sub">{{ $agent->email }}</div>
+                                </div>
+                                <i class="fas fa-check check"></i>
+                            </button>
+                        @endforeach
+                    @endif
                 </div>
             </div>
 

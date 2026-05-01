@@ -33,6 +33,8 @@
 @include('helpdesk::managers.inbox.partials.modals.schedule')
 @include('helpdesk::managers.inbox.partials.modals.snooze')
 @include('helpdesk::managers.inbox.partials.modals.note')
+@include('helpdesk::managers.inbox.partials.modals.mention')
+@include('helpdesk::managers.inbox.partials.modals.mention-help')
 
 {{-- Modal: Lightbox de archivos --}}
 @include('helpdesk::managers.inbox.partials.modals.file-preview')

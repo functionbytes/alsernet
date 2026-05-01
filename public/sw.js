@@ -2,8 +2,19 @@ const CACHE_NAME = 'helpdesk-v1';
 const STATIC_ASSETS = ['/'];
 
 self.addEventListener('install', event => {
+    // addAll() rejects the whole batch if any single request fails (e.g. when
+    // the user is logged out and '/' returns a 302). Use Promise.allSettled
+    // with put() so a single failure doesn't abort install.
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+        caches.open(CACHE_NAME).then(cache =>
+            Promise.allSettled(
+                STATIC_ASSETS.map(url =>
+                    fetch(url, { credentials: 'same-origin' })
+                        .then(res => res.ok ? cache.put(url, res) : null)
+                        .catch(() => null)
+                )
+            )
+        )
     );
     self.skipWaiting();
 });

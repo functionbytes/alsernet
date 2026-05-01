@@ -2,17 +2,24 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Api\TagsAutocompleteController;
+use Modules\Helpdesk\Http\Controllers\Managers\AgentPerformanceController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
+use Modules\Helpdesk\Http\Controllers\Managers\AiController;
 use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
+use Modules\Helpdesk\Http\Controllers\Managers\CustomerInsightsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomersController as HelpdeskCustomersController;
 use Modules\Helpdesk\Http\Controllers\Managers\DashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\GlobalSearchController;
+use Modules\Helpdesk\Http\Controllers\Managers\HeatmapReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\HelpCenterController;
+use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\ReportsController;
 use Modules\Helpdesk\Http\Controllers\Managers\TranslateController;
+use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
 
 Route::group(['prefix' => ''], function () {
 
@@ -44,6 +51,10 @@ Route::group(['prefix' => ''], function () {
     // Main Helpdesk Index
     Route::get('/', [DashboardController::class, 'index'])->name('manager.helpdesk');
 
+    // Live dashboard
+    Route::get('/dashboard/live', [LiveDashboardController::class, 'index'])->name('manager.helpdesk.dashboard.live');
+    Route::get('/dashboard/live/metrics', [LiveDashboardController::class, 'metrics'])->middleware('throttle:30,1')->name('manager.helpdesk.dashboard.live.metrics');
+
     // Customers
     Route::get('/customers', [HelpdeskCustomersController::class, 'index'])->name('manager.helpdesk.customers.index');
     Route::get('/customers/create', [HelpdeskCustomersController::class, 'create'])->name('manager.helpdesk.customers.create');
@@ -64,6 +75,7 @@ Route::group(['prefix' => ''], function () {
 
     // Conversations
     Route::get('/conversations/list', [HelpdeskConversationsController::class, 'listJson'])->middleware('throttle:120,1')->name('manager.helpdesk.conversations.list');
+    Route::get('/conversations/kanban', [HelpdeskConversationsController::class, 'kanban'])->name('manager.helpdesk.conversations.kanban');
     Route::get('/conversations', [HelpdeskConversationsController::class, 'index'])->name('manager.helpdesk.conversations.index');
     Route::get('/conversations/create', [HelpdeskConversationsController::class, 'create'])->name('manager.helpdesk.conversations.create');
     Route::post('/conversations', [HelpdeskConversationsController::class, 'store'])->name('manager.helpdesk.conversations.store');
@@ -78,6 +90,16 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/archive', [HelpdeskConversationsController::class, 'archive'])->name('manager.helpdesk.conversations.archive');
     Route::post('/conversations/{conversation}/unarchive', [HelpdeskConversationsController::class, 'unarchive'])->name('manager.helpdesk.conversations.unarchive');
     Route::post('/conversations/{conversation}/messages', [HelpdeskConversationsController::class, 'storeMessage'])->name('manager.helpdesk.conversations.messages.store');
+    Route::post('/conversations/{conversation}/mark-read', [ConversationMessagesController::class, 'markConversationRead'])->name('manager.helpdesk.conversations.mark-read');
+    Route::post('/conversations/{conversation}/typing', [ConversationMessagesController::class, 'broadcastTyping'])->name('manager.helpdesk.conversations.typing');
+
+    // AI assistant endpoints (sugerir respuesta + traducir mensaje)
+    Route::post('/conversations/{conversation}/ai/suggest-replies', [AiController::class, 'suggestReplies'])
+        ->middleware('throttle:30,1')
+        ->name('manager.helpdesk.conversations.ai.suggest-replies');
+    Route::post('/conversations/items/{item}/translate', [AiController::class, 'translateItem'])
+        ->middleware('throttle:60,1')
+        ->name('manager.helpdesk.conversations.items.translate');
     Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
     Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
     Route::post('/conversations/{conversation}/contact', [HelpdeskConversationsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
@@ -98,6 +120,14 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/ai-suggestions', [HelpdeskConversationsController::class, 'aiSuggestions'])->name('manager.helpdesk.conversations.ai-suggestions')->middleware('throttle:30,1');
     Route::put('/conversations/{conversation}/draft', [HelpdeskConversationsController::class, 'saveDraft'])->name('manager.helpdesk.conversations.draft.save');
     Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
+
+    // AI features
+    Route::post('/conversations/{conversation}/ai/suggest-replies', [AiController::class, 'suggestReplies'])
+        ->name('manager.helpdesk.conversations.ai.suggest-replies')
+        ->middleware('throttle:20,1');
+    Route::post('/conversation-items/{item}/translate', [AiController::class, 'translateItem'])
+        ->name('manager.helpdesk.conversation-items.translate')
+        ->middleware('throttle:30,1');
 
     // Conversation items
     Route::post('/conversation-items/{item}/react', [ConversationItemsController::class, 'react'])
@@ -150,6 +180,18 @@ Route::group(['prefix' => ''], function () {
         Route::post('/articles/update', [HelpCenterController::class, 'updateArticle'])->name('manager.helpdesk.helpcenter.articles.update');
         Route::get('/articles/destroy/{id}', [HelpCenterController::class, 'destroyArticle'])->name('manager.helpdesk.helpcenter.articles.destroy');
     });
+
+    // Reports avanzados (Fase 5)
+    Route::prefix('reports')->name('manager.helpdesk.reports.')->group(function () {
+        Route::get('heatmap', [HeatmapReportController::class, 'index'])->name('heatmap');
+        Route::get('agents', [AgentPerformanceController::class, 'index'])->name('agents');
+        Route::get('trends', [TrendsReportController::class, 'index'])->name('trends');
+        Route::get('trends/data', [TrendsReportController::class, 'data'])->name('trends.data');
+    });
+
+    // Customer 360 endpoint
+    Route::get('/customers/{customer}/insights', [CustomerInsightsController::class, 'show'])
+        ->name('manager.helpdesk.customers.insights');
 
     // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
 });

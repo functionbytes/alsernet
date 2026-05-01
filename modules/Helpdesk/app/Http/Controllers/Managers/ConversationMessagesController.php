@@ -4,19 +4,26 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationMessageRead;
 use Modules\Helpdesk\Events\ConversationUserTyping;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Http\Requests\BroadcastTypingRequest;
 use Modules\Helpdesk\Http\Requests\StoreConversationMessageRequest;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationRead;
+use Modules\Helpdesk\Services\OutboundMessageService;
 
 class ConversationMessagesController extends Controller
 {
+    public function __construct(
+        private readonly OutboundMessageService $outbound,
+    ) {}
+
     /**
      * Get all messages for a conversation (API endpoint)
      */
@@ -39,16 +46,24 @@ class ConversationMessagesController extends Controller
     {
         $validated = $request->validated();
 
-        // Handle attachments
+        // Handle attachments — store with full metadata (matches widget format)
+        // so the thread renderer always has {url, name, size, mime_type, type}.
         $attachmentUrls = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('helpdesk/attachments', 'public');
-                $attachmentUrls[] = Storage::url($path);
+                $mime = $file->getMimeType() ?? 'application/octet-stream';
+                $attachmentUrls[] = [
+                    'url' => Storage::url($path),
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'mime_type' => $mime,
+                    'type' => $this->mediaTypeFromMime($mime),
+                    'path' => $path,
+                ];
             }
         }
 
-        // Create message item
         $item = $conversation->items()->create([
             'type' => 'message',
             'body' => $validated['body'],
@@ -58,21 +73,60 @@ class ConversationMessagesController extends Controller
             'attachment_urls' => $attachmentUrls,
         ]);
 
-        // Load relationships
         $item->load(['user']);
 
-        // Update conversation metadata
-        $conversation->update([
-            'last_message_at' => now(),
-        ]);
+        $conversation->update(['last_message_at' => now()]);
 
-        // If first response and not internal, update SLA
         if ($item->is_internal === false && ! $conversation->first_response_at) {
             $conversation->update(['first_response_at' => now()]);
         }
 
-        // Broadcast event for real-time
-        broadcast(new ConversationMessageCreated($item))->toOthers();
+        // Send to the customer via the channel API (Facebook/Instagram/WhatsApp).
+        // Text first, then each attachment as a separate API call (Meta requires
+        // one attachment per message).
+        if (! $item->is_internal && $this->outbound->supports($conversation)) {
+            try {
+                $bodyText = (string) $item->body;
+                $externalId = null;
+
+                if (filled($bodyText)) {
+                    $externalId = $this->outbound->sendReply($conversation, $bodyText);
+                }
+
+                foreach ($attachmentUrls as $att) {
+                    $absUrl = $this->absoluteUrl((string) $att['url']);
+                    $attExternalId = $this->outbound->sendAttachment(
+                        $conversation,
+                        $att['type'] ?? 'file',
+                        $absUrl,
+                        null,
+                        $att['name'] ?? null,
+                    );
+                    // Use the first available external id so we can correlate later.
+                    $externalId = $externalId ?: $attExternalId;
+                }
+
+                if ($externalId) {
+                    $item->external_id = $externalId;
+                    $item->save();
+                }
+            } catch (\Throwable $e) {
+                Log::error('Outbound send threw exception', [
+                    'conversation_id' => $conversation->id,
+                    'channel' => $conversation->channel,
+                    'item_id' => $item->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Single broadcast reaches both the open thread channel and the global
+        // inbox channel — sidebar updates without a second round-trip.
+        broadcast(new ConversationMessageCreated($item, false))->toOthers();
+
+        if (! $item->is_internal) {
+            broadcast(new MessageReceived($conversation, $item));
+        }
 
         return response()->json([
             'id' => $item->id,
@@ -109,19 +163,85 @@ class ConversationMessagesController extends Controller
     }
 
     /**
-     * Broadcast typing indicator
+     * Mark all customer messages in a conversation as read AND notify the
+     * customer's external channel (Facebook/Instagram seen indicator).
+     */
+    public function markConversationRead(Request $request, Conversation $conversation)
+    {
+        $this->authorize('helpdesk.conversations.show');
+
+        $userId = auth()->id();
+
+        // Mark the whole conversation as read for this user (idempotent).
+        // The reads table is keyed by (conversation_id, user_id), not per-item.
+        ConversationRead::updateOrCreate(
+            ['conversation_id' => $conversation->id, 'user_id' => $userId],
+            ['read_at' => now()],
+        );
+
+        // Send "seen" receipt to the customer via the channel API.
+        if ($this->outbound->supports($conversation)) {
+            $latestItem = $conversation->items()
+                ->whereNotNull('author_id')
+                ->whereNull('user_id')
+                ->latest('id')
+                ->first(['id', 'external_id']);
+
+            $this->outbound->markSeen($conversation, $latestItem?->external_id);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    private function mediaTypeFromMime(string $mime): string
+    {
+        $primary = strtolower(explode('/', explode(';', $mime, 2)[0], 2)[0] ?? '');
+
+        return match ($primary) {
+            'image' => 'image',
+            'audio' => 'audio',
+            'video' => 'video',
+            default => 'document',
+        };
+    }
+
+    /**
+     * Convert a relative URL like "/storage/..." into an absolute https URL
+     * that Meta can fetch when delivering attachments.
+     */
+    private function absoluteUrl(string $url): string
+    {
+        if (preg_match('#^https?://#i', $url)) {
+            return $url;
+        }
+
+        // Prefer the public webhook host if configured, otherwise fall back to APP_URL.
+        $base = rtrim(config('helpdesk.public_url') ?? config('app.url'), '/');
+
+        return $base.'/'.ltrim($url, '/');
+    }
+
+    /**
+     * Broadcast typing indicator to other agents AND to the customer's channel
+     * (Facebook/Instagram show "Typing..." live).
      */
     public function broadcastTyping(BroadcastTypingRequest $request, Conversation $conversation)
     {
         $this->authorize('helpdesk.conversations.update');
 
         $validated = $request->validated();
+        $isTyping = (bool) $validated['is_typing'];
 
         broadcast(new ConversationUserTyping(
             $conversation,
             auth()->user(),
-            $validated['is_typing']
+            $isTyping,
         ))->toOthers();
+
+        // Forward typing state to the customer's channel for FB/IG.
+        if ($this->outbound->supports($conversation)) {
+            $this->outbound->setTyping($conversation, $isTyping);
+        }
 
         return response()->json(['success' => true]);
     }

@@ -17,41 +17,79 @@ class AgentSettings extends Model
         'assignment_limit',
         'accepts_conversations',
         'working_hours',
+        'is_available',
+        'max_concurrent_conversations',
+        'auto_assign',
+        'vacation_until',
+        'current_open_count',
+        'preferences',
     ];
 
     protected function casts(): array
     {
         return [
             'assignment_limit' => 'integer',
+            'max_concurrent_conversations' => 'integer',
+            'current_open_count' => 'integer',
             'working_hours' => 'array',
+            'preferences' => 'array',
+            'is_available' => 'boolean',
+            'auto_assign' => 'boolean',
+            'vacation_until' => 'datetime',
         ];
     }
 
-    /**
-     * Get the user that owns the agent backups.
-     * Note: User model is in the default connection, not helpdesk
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)
             ->setConnection(config('database.default'));
     }
 
-    /**
-     * Create default backups for an agent.
-     */
     public static function newFromDefault(): self
     {
         return new self([
             'assignment_limit' => 0,
             'accepts_conversations' => 'yes',
+            'is_available' => true,
+            'max_concurrent_conversations' => 10,
+            'auto_assign' => true,
             'working_hours' => null,
         ]);
     }
 
     /**
-     * Check if agent accepts conversations right now.
+     * Whether the agent is currently on vacation.
      */
+    public function isOnVacation(): bool
+    {
+        return $this->vacation_until !== null && $this->vacation_until->isFuture();
+    }
+
+    /**
+     * Whether the agent can receive new assignment right now.
+     */
+    public function canReceiveAssignment(): bool
+    {
+        if (! $this->is_available) {
+            return false;
+        }
+
+        if ($this->isOnVacation()) {
+            return false;
+        }
+
+        if (! ($this->auto_assign ?? true)) {
+            return false;
+        }
+
+        $maxOpen = $this->max_concurrent_conversations ?? 10;
+        if ($maxOpen > 0 && ($this->current_open_count ?? 0) >= $maxOpen) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function acceptsConversationsNow(): bool
     {
         if ($this->accepts_conversations === 'no') {
@@ -62,10 +100,9 @@ class AgentSettings extends Model
             return true;
         }
 
-        // Check working hours
         if ($this->accepts_conversations === 'working_hours' && $this->working_hours) {
             $now = now();
-            $dayOfWeek = strtolower($now->format('l')); // monday, tuesday, etc.
+            $dayOfWeek = strtolower($now->format('l'));
 
             if (! isset($this->working_hours[$dayOfWeek])) {
                 return false;
@@ -73,7 +110,7 @@ class AgentSettings extends Model
 
             $hours = $this->working_hours[$dayOfWeek];
 
-            if (! $hours['enabled'] ?? false) {
+            if (! ($hours['enabled'] ?? false)) {
                 return false;
             }
 
@@ -86,20 +123,20 @@ class AgentSettings extends Model
         return false;
     }
 
-    /**
-     * Check if agent has reached assignment limit.
-     */
     public function hasReachedLimit(): bool
     {
-        if ($this->assignment_limit === 0) {
-            return false; // Unlimited
+        $limit = $this->max_concurrent_conversations ?? $this->assignment_limit ?? 0;
+
+        if ($limit === 0) {
+            return false;
         }
 
-        $activeConversations = $this->user
-            ->conversations()
-            ->whereIn('status', ['open', 'pending'])
-            ->count();
+        $activeCount = $this->current_open_count
+            ?? Conversation::query()
+                ->where('assignee_id', $this->user_id)
+                ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                ->count();
 
-        return $activeConversations >= $this->assignment_limit;
+        return $activeCount >= $limit;
     }
 }

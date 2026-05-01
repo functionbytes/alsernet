@@ -4,15 +4,12 @@ namespace Modules\Helpdesk\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController;
 
 class RouteServiceProvider extends ServiceProvider
 {
     protected string $name = 'Helpdesk';
-
-    public function boot(): void
-    {
-        parent::boot();
-    }
 
     public function map(): void
     {
@@ -23,14 +20,14 @@ class RouteServiceProvider extends ServiceProvider
 
     protected function mapWebhookRoutes(): void
     {
-        // Public routes — no auth, no CSRF (already excluded via VerifyCsrfToken::$except)
         Route::middleware('api')
+            ->prefix('api/helpdesk')
             ->group(module_path($this->name, 'routes/webhooks.php'));
     }
 
     protected function mapWebRoutes(): void
     {
-        // Helpdesk settings routes (Patrón A: panel/settings/{module})
+        // Settings routes: panel/settings/helpdesk/*
         Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
             ->prefix('panel/settings/helpdesk')
             ->name('settings.helpdesk.')
@@ -51,7 +48,6 @@ class RouteServiceProvider extends ServiceProvider
             Route::redirect('panel/helpdesk/settings/tickets/team/members', 'panel/settings/helpdesk/team/members', 301);
             Route::redirect('panel/helpdesk/settings/tickets/team/groups', 'panel/settings/helpdesk/team/groups', 301);
 
-            // Legacy nested under settings/helpdesk/tickets/* → settings/helpdesk/* (post-rename)
             Route::redirect('panel/settings/helpdesk/tickets/attributes', 'panel/settings/helpdesk/attributes', 301);
             Route::redirect('panel/settings/helpdesk/tickets/tags', 'panel/settings/helpdesk/tags', 301);
             Route::redirect('panel/settings/helpdesk/tickets/statuses', 'panel/settings/helpdesk/statuses', 301);
@@ -65,19 +61,30 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('panel/helpdesk')
             ->group(module_path($this->name, 'routes/managers.php'));
 
-        // Inbox v4 — Diseño nuevo (acceso solo con auth, sin role restrictivo)
+        // Inbox v4 (auth only, no role restriction)
         Route::middleware(['web', 'auth'])
             ->prefix('panel/helpdesk')
             ->group(function () {
                 Route::view('/inbox', 'helpdesk::managers.inbox.index')
                     ->name('manager.helpdesk.inbox.index');
+
+                Route::get('/api/agents-autocomplete', [AgentsController::class, 'search'])
+                    ->middleware('throttle:120,1')
+                    ->name('manager.helpdesk.api.agents.autocomplete');
+
+                Route::get('/api/attachment-download', [ConversationsController::class, 'downloadAttachment'])
+                    ->middleware('throttle:60,1')
+                    ->name('manager.helpdesk.api.attachment-download');
             });
 
-        // Portal + Agent routes moved to HelpdeskTickets module.
-
-        // Public routes (feedback/CSAT survey — no auth)
         Route::middleware(['web'])
             ->group(module_path($this->name, 'routes/public.php'));
+
+        Route::middleware(['web'])
+            ->group(module_path($this->name, 'routes/web-widget.php'));
+
+        Route::middleware(['web'])
+            ->group(module_path($this->name, 'routes/portal.php'));
     }
 
     protected function mapApiRoutes(): void
@@ -87,10 +94,9 @@ class RouteServiceProvider extends ServiceProvider
             ->name('api.v1.helpdesk.')
             ->group(module_path($this->name, 'routes/api.php'));
 
-        // Widget/Live chat routes (public — no auth required)
         Route::middleware(['api', 'throttle:120,1'])
-            ->prefix('lc/api')
-            ->name('widget.')
+            ->prefix('hd/api')
+            ->name('helpdesk.widget.')
             ->group(module_path($this->name, 'routes/widget.php'));
     }
 }

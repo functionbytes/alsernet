@@ -321,6 +321,61 @@ class ConversationItem extends Model
     }
 
     /**
+     * Normaliza URLs de attachments: si una URL absoluta apunta a un host
+     * antiguo (ej. cuando se migró el sitio entre dominios), se reescribe
+     * con el host actual del APP_URL para que el archivo siga sirviéndose
+     * desde el symlink /storage local.
+     */
+    public function getAttachmentUrlsAttribute($value): array
+    {
+        if (is_string($value)) {
+            $urls = json_decode($value, true);
+        } else {
+            $urls = $value;
+        }
+        if (! is_array($urls)) {
+            return [];
+        }
+
+        $appUrl = rtrim(config('app.url') ?: url('/'), '/');
+
+        return array_map(function ($url) use ($appUrl) {
+            if (! is_string($url) || $url === '') {
+                return $url;
+            }
+            // Si es path relativo /storage/... lo dejamos.
+            if (str_starts_with($url, '/')) {
+                return $url;
+            }
+            // Si es absoluta, comprueba host. Si difiere del actual, reemplaza por APP_URL.
+            if (preg_match('#^https?://[^/]+(/.*)$#', $url, $m)) {
+                $path = $m[1];
+                // Solo reescribimos si el path empieza con /storage/ (nuestro disk public)
+                if (str_starts_with($path, '/storage/')) {
+                    return $appUrl.$path;
+                }
+            }
+
+            return $url;
+        }, $urls);
+    }
+
+    /**
+     * Get safe HTML version of body with @mentions converted to chips.
+     * Fallback al body plano con nl2br + e() cuando no hay menciones.
+     */
+    public function getBodyHtmlAttribute(): string
+    {
+        $body = nl2br(e($this->body ?? ''));
+
+        return preg_replace_callback(
+            '/(^|\s|>)@([\p{L}0-9._-]+)/u',
+            fn ($m) => $m[1].'<span class="bv-mention-chip" data-bv-mention-handle="'.e($m[2]).'">@'.e($m[2]).'</span>',
+            $body
+        );
+    }
+
+    /**
      * Check if message has attachments
      */
     public function hasAttachments()

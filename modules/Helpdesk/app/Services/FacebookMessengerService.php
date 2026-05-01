@@ -233,6 +233,32 @@ class FacebookMessengerService
         }
     }
 
+    /**
+     * Send a sender_action to update the read receipt on the customer's side.
+     * Valid actions: mark_seen, typing_on, typing_off.
+     */
+    public function sendSenderAction(string $psid, string $action = 'mark_seen'): bool
+    {
+        if (! $this->isEnabled()) {
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($this->pageAccessToken)
+                ->timeout(8)
+                ->post(self::BASE_URL.'/'.self::API_VERSION.'/me/messages', [
+                    'recipient' => ['id' => $psid],
+                    'sender_action' => $action,
+                ]);
+
+            return $response->successful();
+        } catch (\Throwable $e) {
+            Log::warning('Facebook sender_action failed', ['psid' => $psid, 'action' => $action, 'error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
     // ─── Internals ────────────────────────────────────────────────────────────
 
     /** @return string|null  The message_id on success */

@@ -1,0 +1,26 @@
+<?php
+
+namespace Modules\Helpdesk\Http\Controllers\Managers;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\CustomerInsightsService;
+
+class CustomerInsightsController extends Controller
+{
+    public function __construct(
+        private readonly CustomerInsightsService $insights
+    ) {
+        $this->middleware('can:helpdesk.customers.view');
+    }
+
+    public function show(Customer $customer): JsonResponse
+    {
+        return response()->json([
+            'health_score' => $this->insights->healthScore($customer),
+            'lifetime_metrics' => $this->insights->lifetimeMetrics($customer),
+            'journey_timeline' => $this->insights->journeyTimeline($customer),
+        ]);
+    }
+}

@@ -122,7 +122,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'memory_limit' => 64,
+    'memory_limit' => 256,
 
     /*
     |--------------------------------------------------------------------------
@@ -162,7 +162,7 @@ return [
             ],
             'supervisor-webhooks' => [
                 'connection' => 'redis',
-                'queue' => ['webhooks'],
+                'queue' => ['webhooks', 'helpdesk-webhooks'],
                 'balance' => 'simple',
                 'processes' => 2,
                 'tries' => 3,
@@ -234,9 +234,18 @@ return [
                 'tries' => 1,
                 'timeout' => 120,
             ],
+            'supervisor-helpdesk-webhooks' => [
+                'connection' => 'redis',
+                'queue' => ['helpdesk-webhooks'],
+                'balance' => 'simple',
+                'minProcesses' => 3,
+                'maxProcesses' => 8,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
             'supervisor-helpdesk' => [
                 'connection' => 'redis',
-                'queue' => ['helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-webhooks'],
+                'queue' => ['helpdesk-scheduled', 'helpdesk-heavy'],
                 'balance' => 'auto',
                 'autoScalingStrategy' => 'time',
                 'minProcesses' => 1,
@@ -249,9 +258,17 @@ return [
         ],
 
         'local' => [
+            'supervisor-local-webhooks' => [
+                'connection' => 'redis',
+                'queue' => ['helpdesk-webhooks', 'webhooks'],
+                'balance' => 'simple',
+                'processes' => 5,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
             'supervisor-local' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'webhooks', 'pagespeed', 'google-sync', 'notifications', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk-scheduled', 'helpdesk-heavy', 'helpdesk-webhooks'],
+                'queue' => ['default', 'pagespeed', 'google-sync', 'notifications', 'reviews-sync', 'exports', 'reviews-replies', 'replies', 'emails', 'sla', 'helpdesk-scheduled', 'helpdesk-heavy'],
                 'balance' => 'simple',
                 'processes' => 3,
                 'tries' => 1,

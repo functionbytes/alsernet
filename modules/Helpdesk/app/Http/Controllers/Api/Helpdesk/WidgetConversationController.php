@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
@@ -299,6 +300,7 @@ class WidgetConversationController extends Controller
 
         // Broadcast message to manager panel and widget
         broadcast(new MessageReceived($conversation, $message))->toOthers();
+        event(new ConversationItemCreated($message));
 
         return response()->json([
             'success' => true,
@@ -431,6 +433,7 @@ class WidgetConversationController extends Controller
 
         // Broadcast message to widget and other agents
         broadcast(new MessageReceived($conversation, $message))->toOthers();
+        event(new ConversationItemCreated($message));
 
         return response()->json([
             'success' => true,

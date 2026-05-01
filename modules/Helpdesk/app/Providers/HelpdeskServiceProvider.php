@@ -2,9 +2,12 @@
 
 namespace Modules\Helpdesk\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Helpdesk\Console\Commands\CheckSlaBreaches;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
 use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
 use Modules\Helpdesk\Models\CannedReply;
@@ -17,6 +20,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\HelpCenterArticle;
 use Modules\Helpdesk\Models\HelpCenterCategory;
+use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Webhook;
 use Modules\Helpdesk\Policies\CannedReplyPolicy;
 use Modules\Helpdesk\Policies\ConversationPolicy;
@@ -65,6 +69,23 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerHelpdeskSidebar();
         $this->registerSettingsSidebar();
+        $this->registerChannelMorphMap();
+    }
+
+    /**
+     * Register the morph alias map so Inbox->channel() resolves to the correct
+     * channel implementation (Web, Email, Facebook, Instagram, Sms, Whatsapp, Api)
+     * based on the helpdesk_inboxes.channel_type slug.
+     */
+    protected function registerChannelMorphMap(): void
+    {
+        // Use morphMap (soft) rather than enforceMorphMap so we only ADD aliases
+        // for the Helpdesk channel implementations without forcing the rest of
+        // the application's models (Chat, Page, etc.) to also be in the map.
+        Relation::morphMap(
+            Inbox::CHANNEL_TYPE_MAP,
+            true
+        );
     }
 
     /**
@@ -106,10 +127,18 @@ class HelpdeskServiceProvider extends ServiceProvider
             'title' => 'Helpdesk',
             'items' => [
                 ['label' => 'Configuración de tickets', 'route' => 'settings.helpdesk.tickets', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Notificaciones', 'route' => 'settings.helpdesk.notifications', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Horarios de atención', 'route' => 'settings.helpdesk.business-hours', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Chat en vivo', 'route' => 'settings.helpdesk.livechat', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Inteligencia artificial', 'route' => 'settings.helpdesk.ai', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Email', 'route' => 'settings.helpdesk.email', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Subida de archivos', 'route' => 'settings.helpdesk.uploading', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones sociales', 'route' => 'settings.helpdesk.social-integrations.index', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Bandejas (multi-canal)', 'route' => 'settings.helpdesk.inboxes.index', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Reglas de automatización', 'route' => 'settings.helpdesk.automation-rules.index', 'permission' => 'helpdesk.automation-rules.view'],
+                ['label' => 'Macros', 'route' => 'settings.helpdesk.macros.index', 'permission' => 'helpdesk.macros.view'],
+                ['label' => 'Respuestas predefinidas', 'route' => 'settings.helpdesk.canned-replies.index', 'permission' => 'helpdesk.canned-replies.view'],
+                ['label' => 'Políticas SLA', 'route' => 'settings.helpdesk.sla-policies.index', 'permission' => 'helpdesk.sla-policies.view'],
                 ['label' => 'Atributos personalizados', 'route' => 'settings.helpdesk.attributes.index', 'permission' => 'helpdesk.attributes.view'],
                 ['label' => 'Etiquetas', 'route' => 'settings.helpdesk.tags.index', 'permission' => 'helpdesk.tags.view'],
                 ['label' => 'Estados de conversación', 'route' => 'settings.helpdesk.statuses.index', 'permission' => 'helpdesk.statuses.view'],
@@ -117,6 +146,7 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Equipo - Miembros', 'route' => 'settings.helpdesk.team.members', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Equipo - Grupos', 'route' => 'settings.helpdesk.team.groups', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Webhooks', 'route' => 'settings.helpdesk.webhooks.index', 'permission' => 'helpdesk.webhooks.view'],
+                ['label' => 'Registro de auditoría', 'route' => 'settings.helpdesk.audits.index', 'permission' => 'helpdesk.settings.view'],
             ],
         ]);
     }
@@ -141,7 +171,14 @@ class HelpdeskServiceProvider extends ServiceProvider
         // Email inbound service
         $this->app->singleton(EmailInboundService::class);
 
-        $this->commands([FetchEmailTicketsCommand::class]);
+        $this->commands([
+            FetchEmailTicketsCommand::class,
+            CheckSlaBreaches::class,
+        ]);
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('helpdesk:check-sla')->everyFiveMinutes();
+        });
 
         $this->registerPolicies();
     }

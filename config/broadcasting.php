@@ -41,6 +41,11 @@ return [
                 'scheme' => env('REVERB_SCHEME', 'http'),
                 'useTLS' => env('REVERB_SCHEME', 'http') === 'https',
             ],
+            'client_options' => [
+                // Local Herd certificates aren't in the system CA bundle, so we
+                // skip verification here. In production this should stay enabled.
+                'verify' => env('REVERB_TLS_VERIFY', false),
+            ],
             'timeout' => 30,
         ],
 

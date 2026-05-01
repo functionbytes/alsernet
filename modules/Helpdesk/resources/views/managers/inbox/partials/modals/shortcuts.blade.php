@@ -15,6 +15,7 @@
                         @foreach([
                             ['J / ↓', 'Siguiente conversacion'],
                             ['K / ↑', 'Conversacion anterior'],
+                            ['/', 'Buscar conversaciones'],
                             ['⌘K', 'Buscar cliente'],
                             ['?', 'Mostrar atajos'],
                             ['Tab', 'Saltar al hilo (desde lista)'],
@@ -31,7 +32,7 @@
                     <div class="bv-right-section-title bv-rst-mb8">Acciones sobre conversacion</div>
                     <div class="bv-sc-group">
                         @foreach([
-                            ['R', 'Responder'],
+                            ['R', 'Responder (enfocar compositor)'],
                             ['N', 'Nota interna'],
                             ['A', 'Asignar'],
                             ['T', 'Etiquetar'],
@@ -42,6 +43,7 @@
                             ['⌘E', 'Archivar conversacion'],
                             ['⌘⇧D', 'Cerrar conversacion (directo)'],
                             ['⌘/', 'Abrir/cerrar atajos'],
+                            ['Esc', 'Cerrar modal / salir de modo concentracion'],
                         ] as $sc)
                             <div class="bv-sc-row">
                                 <span>{{ $sc[1] }}</span>
@@ -58,6 +60,20 @@
                             ['G → M', 'Mis conversaciones'],
                             ['G → A', 'Todas'],
                             ['G → R', 'Urgentes'],
+                        ] as $sc)
+                            <div class="bv-sc-row">
+                                <span>{{ $sc[1] }}</span>
+                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <div>
+                    <div class="bv-right-section-title bv-rst-mb8">Productividad</div>
+                    <div class="bv-sc-group">
+                        @foreach([
+                            ['Icono expandir', 'Modo concentracion (oculta paneles laterales)'],
+                            ['Icono volumen', 'Activar/silenciar sonido de notificacion'],
                         ] as $sc)
                             <div class="bv-sc-row">
                                 <span>{{ $sc[1] }}</span>

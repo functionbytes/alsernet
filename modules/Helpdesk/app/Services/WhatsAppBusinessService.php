@@ -279,7 +279,11 @@ class WhatsAppBusinessService
                         'document' => $this->fillMediaEvent($event, $msg['document'] ?? [], withFilename: true),
                         'audio' => $this->fillMediaEvent($event, $msg['audio'] ?? []),
                         'video' => $this->fillMediaEvent($event, $msg['video'] ?? []),
+                        'sticker' => $this->fillMediaEvent($event, $msg['sticker'] ?? []),
+                        'voice' => $this->fillMediaEvent($event, $msg['voice'] ?? []),
                         'interactive' => $event['body'] = $this->parseInteractiveReply($msg['interactive'] ?? []),
+                        'location' => $event['body'] = $this->parseLocation($msg['location'] ?? []),
+                        'contacts' => $event['body'] = '[contacto]',
                         default => $event['body'] = "[{$msg['type']}]",
                     };
 
@@ -451,6 +455,24 @@ class WhatsAppBusinessService
             'list_reply' => $interactive['list_reply']['title'] ?? '[list item]',
             default => '[interactive]',
         };
+    }
+
+    private function parseLocation(array $location): string
+    {
+        $name = $location['name'] ?? null;
+        $address = $location['address'] ?? null;
+        $lat = $location['latitude'] ?? null;
+        $lng = $location['longitude'] ?? null;
+
+        if ($name || $address) {
+            return '[ubicación: '.trim(($name ? $name : '').($address ? ", {$address}" : ''), ', ').']';
+        }
+
+        if ($lat !== null && $lng !== null) {
+            return "[ubicación: {$lat}, {$lng}]";
+        }
+
+        return '[ubicación]';
     }
 
     private function logApiError(string $action, ?array $body, string $recipient): void

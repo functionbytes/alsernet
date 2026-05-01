@@ -35,6 +35,7 @@ return [
         // Tags
         'tag_added' => 'Tag added',
         'tag_removed' => 'Tag removed',
+        'tags_updated' => 'Tags updated',
 
         // AJAX field updates
         'priority_updated' => 'Priority updated',

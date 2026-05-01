@@ -24,7 +24,7 @@
 
         // Status
         $rpStatusName  = $rpConvo?->status?->name  ?? 'Abierta';
-        $rpStatusColor = $rpConvo?->status?->color ?? 'success';
+        $rpStatusColor = $rpConvo?->status?->color ?? '#6c757d';
 
         // Tickets (HelpdeskTickets module)
         $rpTickets = collect();
@@ -67,7 +67,15 @@
                 $urls = $item->attachment_urls ?? [];
                 $metas = $item->metadata['attachments'] ?? [];
                 foreach ($urls as $idx => $url) {
+                    // attachment_urls may be a plain URL string or an object {url, name, size, mime_type}
+                    $urlEntry = is_array($url) ? $url : ['url' => $url];
+                    $url      = $urlEntry['url'] ?? $url;
                     $meta = $metas[$idx] ?? [];
+                    $meta = array_merge([
+                        'name' => $urlEntry['name'] ?? null,
+                        'size' => $urlEntry['size'] ?? null,
+                        'type' => isset($urlEntry['mime_type']) ? explode('/', $urlEntry['mime_type'])[0] : null,
+                    ], $meta ?: []);
                     $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
                     $type = $meta['type'] ?? (
                         in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image'
@@ -226,7 +234,7 @@
                 <div class="bv-right-row">
                     <span class="lbl">Estado</span>
                     <button class="bv-th-pill" data-bv-modal="status">
-                        <span class="dot bv-dot-{{ $rpStatusColor }}"></span>{{ $rpStatusName }}
+                        <span class="dot" style="background:{{ $rpStatusColor }}"></span>{{ $rpStatusName }}
                         <i class="fas fa-chevron-down bv-pill-chev"></i>
                     </button>
                 </div>

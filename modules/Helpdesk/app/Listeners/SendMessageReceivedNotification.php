@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Notifications\MessageReceivedNotification;
+use Spatie\Permission\Models\Role;
 
 class SendMessageReceivedNotification implements ShouldQueue
 {
@@ -25,11 +26,12 @@ class SendMessageReceivedNotification implements ShouldQueue
         $conversation = $event->conversation;
         $message = $event->message;
 
-        // Notify the assigned agent, or all agents if unassigned
+        // Notify the assigned agent, or all admins/managers if unassigned
         if ($conversation->assignee_id) {
             $recipients = User::where('id', $conversation->assignee_id)->get();
         } else {
-            $recipients = User::role('helpdesk-agent')->get();
+            $agentRoles = array_filter(['helpdesk-agent', 'administrative', 'manager'], fn ($r) => Role::where('name', $r)->where('guard_name', 'web')->exists());
+            $recipients = $agentRoles ? User::role(array_values($agentRoles))->get() : collect();
         }
 
         if ($recipients->isEmpty()) {

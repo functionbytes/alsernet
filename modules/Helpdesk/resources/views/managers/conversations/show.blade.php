@@ -274,10 +274,16 @@
                             <i class="{{ $conversation->channelInfo['icon'] }}"></i>
                         </span>
                     </div>
-                    <button type="button" class="btn btn-light btn-sm d-none d-xl-block" id="toggleSidebarBtn" onclick="toggleCustomerSidebar()">
-                        <i class="fas fa-bars"></i>
-                        <span class="ms-1">Ocultar</span>
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-light btn-sm" onclick="openSnoozeModal()">
+                            <i class="far fa-clock"></i>
+                            <span class="d-none d-md-inline ms-1">Posponer</span>
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm d-none d-xl-block" id="toggleSidebarBtn" onclick="toggleCustomerSidebar()">
+                            <i class="fas fa-bars"></i>
+                            <span class="ms-1">Ocultar</span>
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Messages Container --}}
@@ -363,9 +369,9 @@
                                 <input type="hidden" name="is_internal" id="isInternalInput" value="0">
 
                                 {{-- Canned Replies --}}
-                                <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#cannedRepliesModal">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span class="d-none d-md-inline ms-1">Plantillas</span>
+                                <button type="button" class="btn btn-light btn-sm" onclick="openCannedModal()">
+                                    <i class="fas fa-bolt"></i>
+                                    <span class="d-none d-md-inline ms-1">Respuesta rápida</span>
                                 </button>
                             </div>
 
@@ -710,62 +716,96 @@
         </div>
     </div>
 
-    {{-- Canned Replies Modal --}}
-    <div class="modal fade" id="cannedRepliesModal" tabindex="-1" aria-labelledby="cannedRepliesModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cannedRepliesModalLabel">
-                        <i class="fas fa-file-alt me-2"></i>Plantillas de Respuestas
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    {{-- Canned Replies Modal (Custom) --}}
+    <div class="hd-overlay" id="hdCannedOverlay">
+        <div class="hd-modal w-md">
+            <div class="modal-head">
+                <div class="modal-icon"><i class="fa-solid fa-bolt"></i></div>
+                <div class="modal-title-wrap">
+                    <span class="modal-label">HELPDESK · PLANTILLAS</span>
+                    <span class="modal-title">Respuesta rápida</span>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <input type="text" class="form-control" id="cannedSearch" placeholder="Buscar plantilla...">
+                <button class="modal-close" onclick="closeCannedModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-field">
+                    <i class="fa-solid fa-magnifying-glass sf-ic"></i>
+                    <input class="finput" id="hdCannedSearch" placeholder="Buscar plantilla… (escribe / para atajos)" autocomplete="off">
+                </div>
+                <div class="seg" id="hdCannedSeg">
+                    <button class="active" data-cat="" onclick="hdCannedFilter('')">Todas <span class="kbd" id="hdCannedCount">0</span></button>
+                </div>
+                <div class="flat-col" id="hdCannedList">
+                    <div style="text-align:center;padding:16px;color:#9aa0ab;font-size:13px">Cargando…</div>
+                </div>
+                <div class="field">
+                    <label class="flabel">Vista previa <span class="hint">Editable antes de enviar</span></label>
+                    <textarea class="finput" id="hdCannedPreview" rows="2" placeholder="Selecciona una plantilla…"></textarea>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <div class="hint-txt">
+                    <span class="kbd">↑↓</span> navegar &nbsp;
+                    <span class="kbd">↵</span> insertar
+                </div>
+                <div class="ml"></div>
+                <button class="btn btn-ghost btn-sm" onclick="closeCannedModal()">Cancelar</button>
+                <button class="btn btn-primary btn-sm" onclick="hdInsertCanned()">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Insertar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Snooze Modal (Custom) --}}
+    <div class="hd-overlay" id="hdSnoozeOverlay">
+        <div class="hd-modal w-sm">
+            <div class="modal-head">
+                <div class="modal-icon"><i class="fa-regular fa-clock"></i></div>
+                <div class="modal-title-wrap">
+                    <span class="modal-label">HELPDESK · BANDEJA</span>
+                    <span class="modal-title">Posponer conversación</span>
+                </div>
+                <button class="modal-close" onclick="closeSnoozeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div style="font-size:11.5px;color:#9aa0ab">Vuelve a la bandeja cuando…</div>
+                <div class="opt-list" id="hdSnoozeOpts">
+                    <div class="opt-row on" data-value="1h">
+                        <i class="fa-solid fa-clock ico"></i> En 1 hora
+                        <span class="c" id="snz-1h">--:--</span>
                     </div>
-
-                    <div class="row g-3">
-                        @php
-                            $cannedReplies = \Modules\Helpdesk\Models\CannedReply::forUser(auth()->id())
-                                ->latest()
-                                ->get();
-                        @endphp
-
-                        @forelse($cannedReplies as $reply)
-                            <div class="col-12 canned-reply-item">
-                                <div class="card border">
-                                    <div class="card-body p-3">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">{{ $reply->title }}</h6>
-                                            @if($reply->category)
-                                                <span class="badge bg-primary-subtle text-primary">{{ $reply->category }}</span>
-                                            @endif
-                                        </div>
-                                        <p class="small text-muted mb-2">{{ $reply->preview }}</p>
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <small class="text-muted">
-                                                <i class="fas fa-chart-line me-1"></i>Usado {{ $reply->usage_count }} veces
-                                            </small>
-                                            <button type="button"
-                                                    class="btn btn-sm btn-primary"
-                                                    onclick="insertCannedReply(`{{ addslashes($reply->body) }}`, {{ $reply->id }})">
-                                                <i class="fas fa-plus me-1"></i>Usar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="col-12">
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    No hay plantillas disponibles. Crea una nueva desde el panel de configuración.
-                                </div>
-                            </div>
-                        @endforelse
+                    <div class="opt-row" data-value="3h">
+                        <i class="fa-solid fa-clock ico"></i> En 3 horas
+                        <span class="c" id="snz-3h">--:--</span>
+                    </div>
+                    <div class="opt-row" data-value="tomorrow">
+                        <i class="fa-solid fa-sun ico"></i> Mañana por la mañana
+                        <span class="c">09:00</span>
+                    </div>
+                    <div class="opt-row" data-value="next-monday">
+                        <i class="fa-solid fa-calendar-week ico"></i> Próximo lunes
+                        <span class="c" id="snz-monday">--</span>
+                    </div>
+                    <div class="opt-row" data-value="custom">
+                        <i class="fa-regular fa-calendar-plus ico"></i> Elegir fecha…
                     </div>
                 </div>
+                <div class="hr-divide"></div>
+                <div class="date-row" id="hdSnoozeDateRow">
+                    <i class="fa-regular fa-calendar ico" style="color:#9aa0ab;font-size:13px;flex-shrink:0"></i>
+                    <input type="datetime-local" id="hdSnoozeCustomDate">
+                </div>
+                <label class="check">
+                    <input type="checkbox" id="hdSnoozeReopen"> Reabrir si el cliente responde antes
+                </label>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-ghost btn-sm" onclick="closeSnoozeModal()">Cancelar</button>
+                <div class="ml"></div>
+                <button class="btn btn-primary btn-sm" onclick="hdSnoozeSubmit()">
+                    <i class="fa-regular fa-clock"></i> Posponer
+                </button>
             </div>
         </div>
     </div>
@@ -1028,8 +1068,411 @@
         width: 30%;
     }
 
+    /* ── Custom HelpDesk Modals ─────────────────────────────── */
+    .hd-overlay {
+        display: none; position: fixed; inset: 0; z-index: 1060;
+        background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
+        align-items: center; justify-content: center;
+    }
+    .hd-overlay.open { display: flex; }
 
+    .hd-modal {
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.18);
+        display: flex; flex-direction: column;
+        max-height: 82vh; overflow: hidden;
+        animation: hd-in .18s ease;
+    }
+    .hd-modal.w-md { width: 520px; max-width: 95vw; }
+    .hd-modal.w-sm { width: 340px; max-width: 95vw; }
+    @keyframes hd-in {
+        from { opacity:0; transform: translateY(10px) scale(.97); }
+        to   { opacity:1; transform: none; }
+    }
+
+    .hd-modal .modal-head {
+        display:flex; align-items:center; gap:10px;
+        padding:14px 16px 12px; border-bottom:1px solid #f0f0f0; flex-shrink:0;
+    }
+    .hd-modal .modal-icon {
+        width:32px; height:32px; background:#fce7e7; border-radius:8px;
+        display:flex; align-items:center; justify-content:center;
+        font-size:14px; color:#b10100;
+    }
+    .hd-modal .modal-title-wrap { flex:1; display:flex; flex-direction:column; gap:1px; }
+    .hd-modal .modal-label { font-size:10px; font-weight:600; letter-spacing:.06em; color:#9aa0ab; text-transform:uppercase; }
+    .hd-modal .modal-title { font-size:14px; font-weight:600; color:#1a1a2e; }
+    .hd-modal .modal-close {
+        background:none; border:none; width:28px; height:28px; border-radius:6px;
+        display:flex; align-items:center; justify-content:center;
+        color:#9aa0ab; cursor:pointer; font-size:14px; transition:background .15s,color .15s;
+        padding:0;
+    }
+    .hd-modal .modal-close:hover { background:#f3f4f6; color:#374151; }
+
+    .hd-modal .modal-body {
+        flex:1; overflow-y:auto; padding:14px 16px;
+        display:flex; flex-direction:column; gap:10px; min-height:0;
+    }
+    .hd-modal .modal-foot {
+        display:flex; align-items:center; gap:8px;
+        padding:10px 16px; border-top:1px solid #f0f0f0; flex-shrink:0;
+    }
+    .hd-modal .ml { margin-left:auto; }
+
+    .hd-modal .search-field {
+        display:flex; align-items:center; gap:8px;
+        background:#f8f9fa; border:1px solid #e5e7eb; border-radius:8px; padding:7px 12px;
+        flex-shrink:0;
+    }
+    .hd-modal .sf-ic { color:#9aa0ab; font-size:13px; flex-shrink:0; }
+    .hd-modal .finput {
+        border:none; background:none; outline:none;
+        width:100%; font-size:13px; color:#374151;
+    }
+    .hd-modal .finput::placeholder { color:#b0b7c3; }
+    .hd-modal textarea.finput {
+        resize:none; border:1px solid #e5e7eb; border-radius:8px;
+        background:#f8f9fa; padding:8px 10px;
+    }
+
+    .hd-modal .seg {
+        display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; flex-shrink:0;
+    }
+    .hd-modal .seg::-webkit-scrollbar { display:none; }
+    .hd-modal .seg button {
+        background:none; border:1px solid #e5e7eb; border-radius:6px;
+        padding:4px 12px; font-size:12px; color:#6b7280; cursor:pointer;
+        white-space:nowrap; display:flex; align-items:center; gap:5px; transition:all .15s;
+    }
+    .hd-modal .seg button.active { background:#b10100; border-color:#b10100; color:#fff; }
+    .hd-modal .seg button:hover:not(.active) { background:#f3f4f6; }
+
+    .hd-modal .flat-col {
+        display:flex; flex-direction:column; gap:2px;
+        overflow-y:auto; flex:1; min-height:80px; max-height:200px;
+    }
+    .hd-modal .row-pick {
+        display:flex; align-items:flex-start; gap:10px;
+        padding:8px 10px; border-radius:8px; cursor:pointer; transition:background .12s; flex-shrink:0;
+    }
+    .hd-modal .row-pick:hover { background:#f3f4f6; }
+    .hd-modal .row-pick.on { background:#fce7e7; }
+    .hd-modal .row-pick .rp-mono {
+        flex-shrink:0; margin-top:2px; font-size:10px;
+        background:#f3f4f6; padding:2px 6px; border-radius:3px; color:#9aa0ab; font-family:monospace;
+    }
+    .hd-modal .row-pick.on .rp-mono { background:#f9d0d0; color:#b10100; }
+    .hd-modal .row-pick .body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .hd-modal .row-pick .t {
+        font-size:13px; font-weight:500; color:#1a1a2e;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+    }
+    .hd-modal .row-pick .s { font-size:11px; color:#9aa0ab; }
+
+    .hd-modal .field { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+    .hd-modal .flabel {
+        font-size:12px; font-weight:500; color:#6b7280;
+        display:flex; align-items:center; gap:6px;
+    }
+    .hd-modal .hint { font-size:11px; color:#b0b7c3; font-weight:400; }
+
+    .hd-modal .hint-txt { font-size:11px; color:#9aa0ab; display:flex; align-items:center; gap:4px; }
+    .hd-modal .kbd {
+        display:inline-flex; align-items:center; background:#e5e7eb;
+        border-radius:3px; padding:1px 5px; font-size:10px; color:#6b7280; font-family:monospace;
+    }
+
+    .hd-modal .opt-list { display:flex; flex-direction:column; gap:2px; }
+    .hd-modal .opt-row {
+        display:flex; align-items:center; gap:10px;
+        padding:9px 12px; border-radius:8px; cursor:pointer;
+        font-size:13px; color:#374151; transition:background .12s;
+    }
+    .hd-modal .opt-row:hover, .hd-modal .opt-row.on { background:#fce7e7; color:#b10100; }
+    .hd-modal .opt-row .ico { color:#9aa0ab; font-size:13px; }
+    .hd-modal .opt-row:hover .ico, .hd-modal .opt-row.on .ico { color:#b10100; }
+    .hd-modal .opt-row .c { margin-left:auto; font-size:12px; color:#9aa0ab; font-weight:500; }
+    .hd-modal .opt-row.on .c { color:#b10100; }
+
+    .hd-modal .hr-divide { border:none; border-top:1px solid #f0f0f0; margin:2px 0; flex-shrink:0; }
+    .hd-modal .check {
+        display:flex; align-items:center; gap:8px;
+        font-size:13px; color:#374151; cursor:pointer; flex-shrink:0;
+    }
+
+    .hd-modal .date-row {
+        padding:4px 0; display:none; align-items:center; gap:8px; flex-shrink:0;
+    }
+    .hd-modal .date-row.visible { display:flex; }
+    .hd-modal .date-row input[type="datetime-local"] {
+        border:1px solid #e5e7eb; border-radius:6px; padding:5px 8px;
+        font-size:13px; color:#374151; flex:1; outline:none;
+    }
+
+    .hd-modal .btn {
+        display:inline-flex; align-items:center; gap:6px;
+        border-radius:7px; font-size:13px; font-weight:500;
+        cursor:pointer; transition:all .15s; border:none;
+        padding:6px 14px; line-height:1.4; text-decoration:none;
+    }
+    .hd-modal .btn.btn-sm { padding:5px 12px; font-size:12px; }
+    .hd-modal .btn.btn-ghost { background:none; color:#6b7280; border:1px solid #e5e7eb; }
+    .hd-modal .btn.btn-ghost:hover { background:#f3f4f6; }
+    .hd-modal .btn.btn-primary { background:#b10100; color:#fff; }
+    .hd-modal .btn.btn-primary:hover { background:#8f0000; }
 </style>
+
+<script>
+// ── Helpers ──────────────────────────────────────────────
+function hdEscape(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Overlay click-outside ─────────────────────────────────
+document.getElementById('hdCannedOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeCannedModal();
+});
+document.getElementById('hdSnoozeOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSnoozeModal();
+});
+
+// ── CANNED REPLIES ────────────────────────────────────────
+var hdCannedAll      = [];
+var hdCannedFiltered = [];
+var hdCannedActive   = -1;
+var hdCannedSelId    = null;
+var hdCannedTimer    = null;
+var hdCannedCat      = '';
+
+function openCannedModal() {
+    document.getElementById('hdCannedOverlay').classList.add('open');
+    var inp = document.getElementById('hdCannedSearch');
+    inp.value = '';
+    inp.focus();
+    if (!hdCannedAll.length) { hdCannedFetch(''); }
+    else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
+}
+
+function closeCannedModal() {
+    document.getElementById('hdCannedOverlay').classList.remove('open');
+}
+
+function hdCannedFetch(q) {
+    var url = '/manager/helpdesk/canned-replies/search' + (q ? '?q=' + encodeURIComponent(q) : '');
+    fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        if (!q) {
+            hdCannedAll = data;
+            hdCannedBuildSeg();
+        }
+        hdCannedRender(hdCannedApplyFilters(data, hdCannedCat));
+    });
+}
+
+function hdCannedBuildSeg() {
+    var cats = [];
+    hdCannedAll.forEach(function(r) {
+        if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category);
+    });
+    var seg = document.getElementById('hdCannedSeg');
+    var html = '<button class="' + (!hdCannedCat ? 'active' : '') + '" data-cat="" onclick="hdCannedFilter(\'\')">'
+        + 'Todas <span class="kbd">' + hdCannedAll.length + '</span></button>';
+    cats.forEach(function(cat) {
+        var cnt = hdCannedAll.filter(function(r){ return r.category === cat; }).length;
+        html += '<button class="' + (hdCannedCat === cat ? 'active' : '') + '" data-cat="' + hdEscape(cat)
+            + '" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
+            + hdEscape(cat) + ' <span class="kbd">' + cnt + '</span></button>';
+    });
+    seg.innerHTML = html;
+}
+
+function hdCannedFilter(cat) {
+    hdCannedCat = cat;
+    document.querySelectorAll('#hdCannedSeg button').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.cat === cat);
+    });
+    hdCannedRender(hdCannedApplyFilters(hdCannedAll, cat));
+}
+
+function hdCannedApplyFilters(list, cat) {
+    var q = document.getElementById('hdCannedSearch').value.toLowerCase();
+    return list.filter(function(r) {
+        var matchCat = !cat || r.category === cat;
+        var matchQ   = !q || (r.name && r.name.toLowerCase().includes(q))
+                           || (r.shortcut && r.shortcut.toLowerCase().includes(q))
+                           || (r.body && r.body.toLowerCase().includes(q));
+        return matchCat && matchQ;
+    });
+}
+
+function hdCannedRender(list) {
+    hdCannedFiltered = list;
+    hdCannedActive   = list.length ? 0 : -1;
+    hdCannedSelId    = list.length ? list[0].id : null;
+    var el = document.getElementById('hdCannedList');
+    if (!list.length) {
+        el.innerHTML = '<div style="text-align:center;padding:16px;color:#9aa0ab;font-size:13px">Sin resultados</div>';
+        document.getElementById('hdCannedPreview').value = '';
+        return;
+    }
+    el.innerHTML = list.map(function(r, i) {
+        return '<div class="row-pick ' + (i === 0 ? 'on' : '') + '" data-idx="' + i + '" onclick="hdCannedSelect(' + i + ')">'
+            + (r.shortcut ? '<span class="rp-mono">/' + hdEscape(r.shortcut) + '</span>' : '')
+            + '<div class="body">'
+            + '<span class="t">' + hdEscape(r.name) + '</span>'
+            + '<span class="s">' + (r.category ? hdEscape(r.category) + ' · ' : '') + 'usada ' + (r.usage_count || 0) + ' veces</span>'
+            + '</div></div>';
+    }).join('');
+    document.getElementById('hdCannedPreview').value = list[0].body || '';
+}
+
+function hdCannedSelect(idx) {
+    hdCannedActive = idx;
+    hdCannedSelId  = hdCannedFiltered[idx] ? hdCannedFiltered[idx].id : null;
+    document.querySelectorAll('#hdCannedList .row-pick').forEach(function(el, i) {
+        el.classList.toggle('on', i === idx);
+    });
+    document.getElementById('hdCannedPreview').value = hdCannedFiltered[idx] ? hdCannedFiltered[idx].body || '' : '';
+}
+
+function hdInsertCanned() {
+    var txt = document.getElementById('hdCannedPreview').value;
+    if (!txt.trim()) { return; }
+    document.querySelector('textarea[name="body"]').value = txt;
+    document.querySelector('textarea[name="body"]').focus();
+    if (hdCannedSelId) {
+        fetch('/manager/helpdesk/canned-replies/' + hdCannedSelId + '/use', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+        }).catch(function(){});
+    }
+    closeCannedModal();
+    toastr.success('Plantilla insertada');
+}
+
+// Search events
+(function() {
+    var inp = document.getElementById('hdCannedSearch');
+    inp.addEventListener('input', function() {
+        clearTimeout(hdCannedTimer);
+        var q = this.value.trim();
+        hdCannedTimer = setTimeout(function() {
+            if (q) {
+                hdCannedFetch(q);
+            } else {
+                hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat));
+            }
+        }, 250);
+    });
+    inp.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (hdCannedActive < hdCannedFiltered.length - 1) hdCannedSelect(hdCannedActive + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (hdCannedActive > 0) hdCannedSelect(hdCannedActive - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault(); hdInsertCanned();
+        } else if (e.key === 'Escape') {
+            closeCannedModal();
+        }
+    });
+})();
+
+// ── SNOOZE ────────────────────────────────────────────────
+var hdSnoozeSelected = '1h';
+var hdSnoozeRoute    = '{{ route("manager.helpdesk.conversations.snooze", $conversation) }}';
+var hdCsrf           = '{{ csrf_token() }}';
+
+function openSnoozeModal() {
+    var now  = new Date();
+    var in1h = new Date(now.getTime() + 3600000);
+    var in3h = new Date(now.getTime() + 10800000);
+    document.getElementById('snz-1h').textContent  = in1h.toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('snz-3h').textContent  = in3h.toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+    var nextMon = new Date(now);
+    var diff = now.getDay() === 0 ? 1 : 8 - now.getDay();
+    nextMon.setDate(now.getDate() + diff);
+    document.getElementById('snz-monday').textContent = nextMon.toLocaleDateString('es', {day:'numeric',month:'short'});
+
+    hdSnoozeSelected = '1h';
+    document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(r) {
+        r.classList.toggle('on', r.dataset.value === '1h');
+    });
+    document.getElementById('hdSnoozeDateRow').classList.remove('visible');
+    document.getElementById('hdSnoozeOverlay').classList.add('open');
+}
+
+function closeSnoozeModal() {
+    document.getElementById('hdSnoozeOverlay').classList.remove('open');
+}
+
+document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+        hdSnoozeSelected = this.dataset.value;
+        document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(r){ r.classList.remove('on'); });
+        this.classList.add('on');
+        document.getElementById('hdSnoozeDateRow').classList.toggle('visible', hdSnoozeSelected === 'custom');
+    });
+});
+
+function hdSnoozeGetDate() {
+    var now = new Date();
+    if (hdSnoozeSelected === '1h')   return new Date(now.getTime() + 3600000);
+    if (hdSnoozeSelected === '3h')   return new Date(now.getTime() + 10800000);
+    if (hdSnoozeSelected === 'tomorrow') {
+        var t = new Date(now); t.setDate(t.getDate() + 1); t.setHours(9,0,0,0); return t;
+    }
+    if (hdSnoozeSelected === 'next-monday') {
+        var t = new Date(now);
+        t.setDate(t.getDate() + (now.getDay() === 0 ? 1 : 8 - now.getDay()));
+        t.setHours(9,0,0,0); return t;
+    }
+    if (hdSnoozeSelected === 'custom') {
+        var v = document.getElementById('hdSnoozeCustomDate').value;
+        return v ? new Date(v) : null;
+    }
+    return null;
+}
+
+function hdSnoozeSubmit() {
+    var until = hdSnoozeGetDate();
+    if (!until) { toastr.warning('Selecciona una fecha válida'); return; }
+    fetch(hdSnoozeRoute, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': hdCsrf
+        },
+        body: JSON.stringify({ until: until.toISOString() })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            toastr.success(data.message || 'Conversación pospuesta');
+            closeSnoozeModal();
+        } else {
+            toastr.error('Error al posponer la conversación');
+        }
+    })
+    .catch(function() { toastr.error('Error al conectar con el servidor'); });
+}
+
+// Escape key global
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('hdCannedOverlay').classList.contains('open')) { closeCannedModal(); return; }
+    if (document.getElementById('hdSnoozeOverlay').classList.contains('open')) { closeSnoozeModal(); return; }
+});
+</script>
 @endpush
 
 @push('scripts')
@@ -1085,14 +1528,6 @@
             });
         });
 
-        // Search canned replies in modal
-        $('#cannedSearch').on('keyup', function() {
-            const searchTerm = $(this).val().toLowerCase();
-            $('.canned-reply-item').each(function() {
-                const text = $(this).text().toLowerCase();
-                $(this).toggle(text.includes(searchTerm));
-            });
-        });
     });
 
     // Toggle internal note
@@ -1191,31 +1626,6 @@
         });
     }
 
-    // Insert canned reply
-    function insertCannedReply(content, replyId) {
-        const textarea = document.querySelector('textarea[name="body"]');
-        textarea.value = content;
-        textarea.focus();
-
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('cannedRepliesModal'));
-        modal.hide();
-
-        // Increment usage count
-        if (replyId) {
-            fetch(`/manager/helpdesk/canned-replies/${replyId}/use`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            });
-        }
-
-        toastr.success('Plantilla insertada');
-    }
-
     // Add tag by ID
     function addTagById(tagId, tagName, tagColor) {
         fetch('{{ route('manager.helpdesk.conversations.update', $conversation) }}', {
@@ -1309,6 +1719,7 @@
             toastr.error('Error al eliminar etiqueta');
         });
     }
+
 
     // Tag search functionality
     $('#tagSearchInput').on('input', function() {

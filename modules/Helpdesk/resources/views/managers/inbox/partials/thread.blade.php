@@ -1,6 +1,10 @@
 {{-- Hilo de chat — Refined v4 --}}
+@php
+    $convo = $selectedConversation ?? null;
+    $cust = $convo?->customer;
+@endphp
 <div class="bv-thread">
-@if(empty($selectedConversationId))
+@if(empty($selectedConversationId) || !$convo)
     <div class="bv-thread-empty">
         <div class="bv-thread-empty-icon">
             <i class="far fa-comments"></i>
@@ -10,8 +14,6 @@
     </div>
 @else
     @php
-        $convo = $selectedConversation;
-        $cust = $convo?->customer;
         $custName = $cust?->name ?? 'Sin nombre';
         $custInitials = mb_strtoupper(collect(preg_split('/\s+/', trim($custName)))->take(2)->map(fn($w) => mb_substr($w,0,1))->implode(''));
         $colorIdx = (($cust?->id ?? $convo?->id ?? 1) - 1) % 8 + 1;
@@ -24,14 +26,14 @@
         ];
         $ch = $channelMap[$convo?->channel ?? 'widget'] ?? $channelMap['widget'];
         $statusName = $convo?->status?->name ?? 'Abierta';
-        $statusColor = $convo?->status?->color ?? 'success';
+        $statusColor = $convo?->status?->color ?? '#6c757d';
         $priority = $convo?->priority ?? 'normal';
         $priorityLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
         $priorityColors = ['low' => 'muted', 'normal' => 'info', 'high' => 'warning', 'urgent' => 'danger'];
     @endphp
 
     {{-- Cabecera del hilo --}}
-    <div class="bv-th-head">
+    <div class="bv-th-head" data-bv-conv-created="{{ $convo?->created_at?->toIso8601String() }}">
         <div class="who">
             <div class="av bv-th-av-c{{ $colorIdx }}">
                 {{ $custInitials ?: '?' }}
@@ -50,7 +52,7 @@
         </div>
         <div class="actions">
             <button class="bv-th-pill" data-bv-modal="status">
-                <span class="dot bv-dot-{{ $statusColor }}"></span>
+                <span class="dot" style="background:{{ $statusColor }}"></span>
                 {{ $statusName }}
                 <i class="fas fa-chevron-down bv-pill-chevron"></i>
             </button>
@@ -69,7 +71,7 @@
             <button class="bv-th-action" data-bv-modal="schedule" title="Agendar">
                 <i class="far fa-calendar-plus"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="snooze" title="Snooze">
+            <button class="bv-th-action" title="Posponer" onclick="openSnoozeModal()">
                 <i class="far fa-clock"></i>
             </button>
             <button class="bv-th-action" data-bv-modal="assign" title="Asignar">
@@ -78,9 +80,16 @@
             <button class="bv-th-action" data-bv-modal="tags" title="Etiquetar">
                 <i class="fas fa-tag"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="close-conv" title="Cerrar">
-                <i class="fas fa-check"></i>
-            </button>
+            @if($convo?->closed_at)
+                <button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen" title="Reabrir conversación"
+                        data-reopen-url="{{ route('manager.helpdesk.conversations.reopen', $convo) }}">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
+            @elseif($convo)
+                <button class="bv-th-action" data-bv-modal="close-conv" title="Cerrar conversación">
+                    <i class="fas fa-check"></i>
+                </button>
+            @endif
             {{-- Botón "más" con dropdown --}}
             <div class="bv-th-more-wrap">
                 <button class="bv-th-action" id="bv-btn-more" title="Más">
@@ -144,7 +153,12 @@
                     @endif
                     <div class="{{ $bubbleClass }}"
                          data-bv-item-id="{{ $item->id }}"
-                         data-bv-react-url="{{ route('manager.helpdesk.conversation-items.react', $item) }}">
+                         data-bv-react-url="{{ route('manager.helpdesk.conversation-items.react', $item) }}"
+                         data-bv-author="{{ $authorLabel }}"
+                         data-bv-is-internal="{{ $isInternal ? '1' : '0' }}"
+                         data-bv-is-out="{{ $isOut ? '1' : '0' }}"
+                         data-bv-body="{{ $item->body }}"
+                         data-bv-body-preview="{{ \Illuminate\Support\Str::limit($item->body ?? '', 80) }}">
                         @if($isInternal)
                             <div class="note-badge"><i class="fas fa-lock"></i> Nota interna</div>
                         @endif
@@ -167,7 +181,7 @@
                             </div>
                         @endif
                         @if($item->body)
-                            {!! nl2br(e($item->body)) !!}
+                            {!! $item->body_html !!}
                         @endif
                         @if($item->hasAttachments())
                             @php
@@ -176,7 +190,15 @@
                             <div class="bv-attachment-gallery">
                                 @foreach($item->attachment_urls as $idx => $url)
                                     @php
-                                        $meta = $metaAttachments->get($idx);
+                                        // attachment_urls may be a plain URL string or an object {url, name, size, mime_type}
+                                        $urlEntry = is_array($url) ? $url : ['url' => $url];
+                                        $url      = $urlEntry['url'] ?? $url;
+                                        $meta = $metaAttachments->get($idx) ?? [];
+                                        $meta = array_merge([
+                                            'name' => $urlEntry['name'] ?? null,
+                                            'size' => $urlEntry['size'] ?? null,
+                                            'type' => isset($urlEntry['mime_type']) ? explode('/', $urlEntry['mime_type'])[0] : null,
+                                        ], $meta ?: []);
                                         $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
                                         $attachType = $meta['type'] ?? (in_array($ext, ['jpg','jpeg','png','gif','webp']) ? 'image' : (in_array($ext, ['mp4','mov','webm']) ? 'video' : (in_array($ext, ['mp3','ogg','wav','webm','oga']) ? 'audio' : 'document')));
                                         $fileName = $meta['name'] ?? basename(parse_url($url, PHP_URL_PATH));
@@ -189,7 +211,8 @@
                                            class="bv-attach-thumb"
                                            data-bv-modal="file-preview"
                                            data-bv-preview-src="{{ $url }}"
-                                           data-bv-preview-type="image">
+                                           data-bv-preview-type="image"
+                                           data-bv-name="{{ $fileName }}">
                                             <img src="{{ $url }}" alt="{{ $fileName }}" loading="lazy" width="200">
                                         </a>
                                     @elseif($attachType === 'video')
@@ -201,7 +224,6 @@
                                         </div>
                                     @elseif($attachType === 'audio')
                                         @php
-                                            // Waveform pseudo-aleatorio determinista basado en la URL
                                             $seed = crc32($url);
                                             mt_srand($seed);
                                             $bars = [];
@@ -209,8 +231,10 @@
                                                 $bars[] = mt_rand(25, 100);
                                             }
                                             mt_srand();
+                                            $audioInitials = mb_strtoupper(mb_substr($authorLabel, 0, 1)).mb_strtoupper(mb_substr(explode(' ', $authorLabel)[1] ?? '', 0, 1));
                                         @endphp
                                         <div class="bv-audio-msg" data-bv-audio-src="{{ $url }}">
+                                            <div class="bv-audio-avatar bv-th-av-c{{ $colorIdx }}">{{ $audioInitials }}<span class="bv-audio-mic"><i class="fas fa-microphone"></i></span></div>
                                             <button type="button" class="bv-audio-play" aria-label="Reproducir">
                                                 <i class="fas fa-play"></i>
                                             </button>
@@ -218,6 +242,7 @@
                                                 @foreach($bars as $h)
                                                     <span class="bv-audio-bar" style="--bv-audio-bar-h:{{ $h }}%"></span>
                                                 @endforeach
+                                                <span class="bv-audio-progress-dot"></span>
                                             </div>
                                             <span class="bv-audio-time">0:00</span>
                                             <button type="button" class="bv-audio-speed" data-bv-speed="1" title="Velocidad">1x</button>
@@ -287,18 +312,6 @@
                                 @endforeach
                             </div>
                         @endif
-                        @if($item->body && ! $isInternal)
-                            <button class="bv-bubble-translate"
-                                    data-bv-translate-text="{{ $item->body }}">
-                                <i class="fas fa-language"></i> Traducir
-                            </button>
-                            <button class="bv-bubble-reply"
-                                    data-bv-reply-id="{{ $item->id }}"
-                                    data-bv-reply-author="{{ $authorLabel }}"
-                                    data-bv-reply-body="{{ \Illuminate\Support\Str::limit($item->body, 80) }}">
-                                <i class="fas fa-reply"></i> Responder
-                            </button>
-                        @endif
                         <div class="meta">
                             <span>{{ $isOut ? $authorLabel.' · ' : '' }}{{ $time }}</span>
                             @if($isOut && ! $isInternal)
@@ -321,6 +334,7 @@
          data-bv-conversation-id="{{ $convo?->id }}"
          data-bv-send-url="{{ $convo ? route('manager.helpdesk.conversations.messages.store', $convo) : '' }}"
          data-bv-update-url="{{ $convo ? route('manager.helpdesk.conversations.update', $convo) : '' }}"
+         data-bv-reopen-url="{{ $convo ? route('manager.helpdesk.conversations.reopen', $convo) : '' }}"
          data-bv-send-email-url="{{ $convo ? route('manager.helpdesk.conversations.send-email', $convo) : '' }}"
          data-bv-send-hsm-url="{{ $convo ? route('manager.helpdesk.conversations.send-hsm', $convo) : '' }}"
          data-bv-attach-url="{{ $convo ? route('manager.helpdesk.conversations.attachments.store', $convo) : '' }}"
@@ -554,13 +568,13 @@
                 <div class="bv-upload-progress bv-hidden" id="bv-upload-progress">
                     <div class="bv-upload-bar" id="bv-upload-bar"></div>
                 </div>
-                <button class="btn-ico" title="Emoji">
+                <button class="btn-ico" id="bv-btn-emoji" type="button" data-tooltip="Emoji" aria-label="Emoji">
                     <i class="far fa-face-smile"></i>
                 </button>
-                <button class="btn-ico" title="Mención">
+                <button class="btn-ico" id="bv-btn-mention" type="button" data-bv-modal="mention" data-tooltip="Mencionar agente" aria-label="Mencionar agente">
                     <i class="fas fa-at"></i>
                 </button>
-                <button class="btn-ico" title="Respuesta rápida">
+                <button class="btn-ico" title="Respuesta rápida" onclick="openCannedModal()">
                     <i class="fas fa-bolt"></i>
                 </button>
                 <button class="btn-ico" id="bv-btn-record" title="Grabar audio" data-bv-attach-type="record">
@@ -569,12 +583,416 @@
                 <button class="btn-ico" title="Sugerencia IA">
                     <i class="fas fa-sparkles"></i>
                 </button>
-                <button class="btn-send">
-                    <i class="far fa-paper-plane"></i>Enviar
-                    <kbd class="bv-kbd-send">⌘↵</kbd>
-                </button>
+                <div class="bv-send-group">
+                    <button class="btn-send" type="button">
+                        <i class="far fa-paper-plane"></i>Enviar
+                        <kbd class="bv-kbd-send" id="bv-kbd-send">⌘↵</kbd>
+                    </button>
+                    <button class="btn-send-config" type="button" id="bv-send-config" data-tooltip="Atajo de envío" aria-label="Configurar atajo de envío" aria-haspopup="menu" aria-expanded="false">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="bv-send-menu bv-hidden" id="bv-send-menu" role="menu">
+                    <div class="bv-send-menu-head">Atajo para enviar</div>
+                    <button class="bv-send-menu-opt" type="button" role="menuitemradio" data-bv-send-shortcut="ctrl-enter">
+                        <i class="fas fa-check bv-send-menu-check"></i>
+                        <div class="bv-send-menu-text">
+                            <div class="bv-send-menu-title">⌘ / Ctrl + Enter <span class="bv-send-menu-default">(predeterminado)</span></div>
+                            <div class="bv-send-menu-sub">Enter inserta salto de línea</div>
+                        </div>
+                    </button>
+                    <button class="bv-send-menu-opt" type="button" role="menuitemradio" data-bv-send-shortcut="enter">
+                        <i class="fas fa-check bv-send-menu-check"></i>
+                        <div class="bv-send-menu-text">
+                            <div class="bv-send-menu-title">Enter</div>
+                            <div class="bv-send-menu-sub">Shift + Enter inserta salto de línea</div>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 @endif
 </div>
+
+{{-- ── Custom HD Modals (Respuesta rápida + Posponer) ──────────────── --}}
+@if($convo)
+<div class="hd-overlay" id="hdCannedOverlay">
+    <div class="hd-modal w-md">
+        <div class="modal-head">
+            <div class="modal-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="modal-title-wrap">
+                <span class="modal-label">HELPDESK · PLANTILLAS</span>
+                <span class="modal-title">Respuesta rápida</span>
+            </div>
+            <button class="modal-close" onclick="closeCannedModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="search-field">
+                <i class="fa-solid fa-magnifying-glass sf-ic"></i>
+                <input class="finput" id="hdCannedSearch" placeholder="Buscar plantilla… (escribe / para atajos)" autocomplete="off">
+            </div>
+            <div class="seg" id="hdCannedSeg">
+                <button class="active" data-cat="" onclick="hdCannedFilter('')">Todas <span class="kbd" id="hdCannedCount">0</span></button>
+            </div>
+            <div class="flat-col" id="hdCannedList">
+                <div style="text-align:center;padding:16px;color:#9aa0ab;font-size:13px">Cargando…</div>
+            </div>
+            <div class="field">
+                <label class="flabel">Vista previa <span class="hint">Editable antes de enviar</span></label>
+                <textarea class="finput" id="hdCannedPreview" rows="2" placeholder="Selecciona una plantilla…"></textarea>
+            </div>
+        </div>
+        <div class="modal-foot">
+            <div class="hint-txt">
+                <span class="kbd">↑↓</span> navegar &nbsp;
+                <span class="kbd">↵</span> insertar
+            </div>
+            <div class="ml"></div>
+            <button class="btn btn-ghost btn-sm" onclick="closeCannedModal()">Cancelar</button>
+            <button class="btn btn-primary btn-sm" onclick="hdInsertCanned()">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Insertar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="hd-overlay" id="hdSnoozeOverlay">
+    <div class="hd-modal w-sm">
+        <div class="modal-head">
+            <div class="modal-icon"><i class="fa-regular fa-clock"></i></div>
+            <div class="modal-title-wrap">
+                <span class="modal-label">HELPDESK · BANDEJA</span>
+                <span class="modal-title">Posponer conversación</span>
+            </div>
+            <button class="modal-close" onclick="closeSnoozeModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <div style="font-size:11.5px;color:#9aa0ab">Vuelve a la bandeja cuando…</div>
+            <div class="opt-list" id="hdSnoozeOpts">
+                <div class="opt-row on" data-value="1h"><i class="fa-solid fa-clock ico"></i> En 1 hora<span class="c" id="snz-1h">--:--</span></div>
+                <div class="opt-row" data-value="3h"><i class="fa-solid fa-clock ico"></i> En 3 horas<span class="c" id="snz-3h">--:--</span></div>
+                <div class="opt-row" data-value="tomorrow"><i class="fa-solid fa-sun ico"></i> Mañana por la mañana<span class="c">09:00</span></div>
+                <div class="opt-row" data-value="next-monday"><i class="fa-solid fa-calendar-week ico"></i> Próximo lunes<span class="c" id="snz-monday">--</span></div>
+                <div class="opt-row" data-value="custom"><i class="fa-regular fa-calendar-plus ico"></i> Elegir fecha…</div>
+            </div>
+            <div class="hr-divide"></div>
+            <div class="date-row" id="hdSnoozeDateRow">
+                <i class="fa-regular fa-calendar ico" style="color:#9aa0ab;font-size:13px;flex-shrink:0"></i>
+                <input type="datetime-local" id="hdSnoozeCustomDate">
+            </div>
+            <label class="check">
+                <input type="checkbox" id="hdSnoozeReopen"> Reabrir si el cliente responde antes
+            </label>
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-ghost btn-sm" onclick="closeSnoozeModal()">Cancelar</button>
+            <div class="ml"></div>
+            <button class="btn btn-primary btn-sm" onclick="hdSnoozeSubmit()">
+                <i class="fa-regular fa-clock"></i> Posponer
+            </button>
+        </div>
+    </div>
+</div>
+
+@push('css')
+<style>
+.hd-overlay{display:none;position:fixed;inset:0;z-index:1060;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);align-items:center;justify-content:center}
+.hd-overlay.open{display:flex}
+.hd-modal{background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:82vh;overflow:hidden;animation:hd-in .18s ease}
+.hd-modal.w-md{width:520px;max-width:95vw}
+.hd-modal.w-sm{width:340px;max-width:95vw}
+@keyframes hd-in{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.hd-modal .modal-head{display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid #f0f0f0;flex-shrink:0}
+.hd-modal .modal-icon{width:32px;height:32px;background:#fce7e7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#b10100}
+.hd-modal .modal-title-wrap{flex:1;display:flex;flex-direction:column;gap:1px}
+.hd-modal .modal-label{font-size:10px;font-weight:600;letter-spacing:.06em;color:#9aa0ab;text-transform:uppercase}
+.hd-modal .modal-title{font-size:14px;font-weight:600;color:#1a1a2e}
+.hd-modal .modal-close{background:none;border:none;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#9aa0ab;cursor:pointer;font-size:14px;transition:background .15s,color .15s;padding:0}
+.hd-modal .modal-close:hover{background:#f3f4f6;color:#374151}
+.hd-modal .modal-body{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.hd-modal .modal-foot{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid #f0f0f0;flex-shrink:0}
+.hd-modal .ml{margin-left:auto}
+.hd-modal .search-field{display:flex;align-items:center;gap:8px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:7px 12px;flex-shrink:0}
+.hd-modal .sf-ic{color:#9aa0ab;font-size:13px;flex-shrink:0}
+.hd-modal .finput{border:none;background:none;outline:none;width:100%;font-size:13px;color:#374151}
+.hd-modal .finput::placeholder{color:#b0b7c3}
+.hd-modal textarea.finput{resize:none;border:1px solid #e5e7eb;border-radius:8px;background:#f8f9fa;padding:8px 10px}
+.hd-modal .seg{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.hd-modal .seg::-webkit-scrollbar{display:none}
+.hd-modal .seg button{background:none;border:1px solid #e5e7eb;border-radius:6px;padding:4px 12px;font-size:12px;color:#6b7280;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:all .15s}
+.hd-modal .seg button.active{background:#b10100;border-color:#b10100;color:#fff}
+.hd-modal .seg button:hover:not(.active){background:#f3f4f6}
+.hd-modal .flat-col{display:flex;flex-direction:column;gap:2px;overflow-y:auto;flex:1;min-height:80px;max-height:200px}
+.hd-modal .row-pick{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s;flex-shrink:0}
+.hd-modal .row-pick:hover{background:#f3f4f6}
+.hd-modal .row-pick.on{background:#fce7e7}
+.hd-modal .row-pick .rp-mono{flex-shrink:0;margin-top:2px;font-size:10px;background:#f3f4f6;padding:2px 6px;border-radius:3px;color:#9aa0ab;font-family:monospace}
+.hd-modal .row-pick.on .rp-mono{background:#f9d0d0;color:#b10100}
+.hd-modal .row-pick .body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hd-modal .row-pick .t{font-size:13px;font-weight:500;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.hd-modal .row-pick .s{font-size:11px;color:#9aa0ab}
+.hd-modal .field{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.hd-modal .flabel{font-size:12px;font-weight:500;color:#6b7280;display:flex;align-items:center;gap:6px}
+.hd-modal .hint{font-size:11px;color:#b0b7c3;font-weight:400}
+.hd-modal .hint-txt{font-size:11px;color:#9aa0ab;display:flex;align-items:center;gap:4px}
+.hd-modal .kbd{display:inline-flex;align-items:center;background:#e5e7eb;border-radius:3px;padding:1px 5px;font-size:10px;color:#6b7280;font-family:monospace}
+.hd-modal .opt-list{display:flex;flex-direction:column;gap:2px}
+.hd-modal .opt-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:#374151;transition:background .12s}
+.hd-modal .opt-row:hover,.hd-modal .opt-row.on{background:#fce7e7;color:#b10100}
+.hd-modal .opt-row .ico{color:#9aa0ab;font-size:13px}
+.hd-modal .opt-row:hover .ico,.hd-modal .opt-row.on .ico{color:#b10100}
+.hd-modal .opt-row .c{margin-left:auto;font-size:12px;color:#9aa0ab;font-weight:500}
+.hd-modal .opt-row.on .c{color:#b10100}
+.hd-modal .hr-divide{border:none;border-top:1px solid #f0f0f0;margin:2px 0;flex-shrink:0}
+.hd-modal .check{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151;cursor:pointer;flex-shrink:0}
+.hd-modal .date-row{padding:4px 0;display:none;align-items:center;gap:8px;flex-shrink:0}
+.hd-modal .date-row.visible{display:flex}
+.hd-modal .date-row input[type="datetime-local"]{border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;font-size:13px;color:#374151;flex:1;outline:none}
+.hd-modal .btn{display:inline-flex;align-items:center;gap:6px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;padding:6px 14px;line-height:1.4;text-decoration:none}
+.hd-modal .btn.btn-sm{padding:5px 12px;font-size:12px}
+.hd-modal .btn.btn-ghost{background:none;color:#6b7280;border:1px solid #e5e7eb}
+.hd-modal .btn.btn-ghost:hover{background:#f3f4f6}
+.hd-modal .btn.btn-primary{background:#b10100;color:#fff}
+.hd-modal .btn.btn-primary:hover{background:#8f0000}
+</style>
+@endpush
+
+@push('scripts')
+
+<script>
+(function() {
+    var hdSnoozeRoute = '{{ route("manager.helpdesk.conversations.snooze", $convo) }}';
+    var hdCsrf        = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '';
+
+    // Contexto para reemplazar placeholders en plantillas
+    var hdCtx = {
+        'contact.name':    '{{ addslashes($cust?->name ?? '') }}',
+        'contact.email':   '{{ addslashes($cust?->email ?? '') }}',
+        'contact.phone':   '{{ addslashes($cust?->phone ?? '') }}',
+        'agent.name':      '{{ addslashes(auth()->user()->name ?? '') }}',
+        'agent.email':     '{{ addslashes(auth()->user()->email ?? '') }}',
+        'company.name':    '{{ addslashes(config("app.name")) }}',
+        'conversation.id': '{{ $convo?->id ?? '' }}',
+    };
+
+    function hdReplace(text) {
+        if (!text) { return text; }
+        return text.replace(/\{\{([^}]+)\}\}/g, function(match, key) {
+            var k = key.trim();
+            return hdCtx.hasOwnProperty(k) ? hdCtx[k] : match;
+        });
+    }
+
+    function hdEscape(str) {
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    document.getElementById('hdCannedOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeCannedModal();
+    });
+    document.getElementById('hdSnoozeOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeSnoozeModal();
+    });
+
+    // ── CANNED REPLIES ─────────────────────────────────────
+    var hdCannedAll = [], hdCannedFiltered = [], hdCannedActive = -1, hdCannedSelId = null, hdCannedTimer = null, hdCannedCat = '';
+
+    window.openCannedModal = function() {
+        document.getElementById('hdCannedOverlay').classList.add('open');
+        var inp = document.getElementById('hdCannedSearch');
+        inp.value = ''; inp.focus();
+        if (!hdCannedAll.length) { hdCannedFetch(''); }
+        else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
+    };
+    window.closeCannedModal = function() {
+        document.getElementById('hdCannedOverlay').classList.remove('open');
+    };
+    window.hdCannedFilter = function(cat) {
+        hdCannedCat = cat;
+        document.querySelectorAll('#hdCannedSeg button').forEach(function(b) {
+            b.classList.toggle('active', b.dataset.cat === cat);
+        });
+        hdCannedRender(hdCannedApplyFilters(hdCannedAll, cat));
+    };
+
+    function hdCannedFetch(q) {
+        var url = '{{ route("manager.helpdesk.canned-replies.search") }}' + (q ? '?q=' + encodeURIComponent(q) : '');
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': hdCsrf } })
+            .then(function(r){ return r.json(); })
+            .then(function(data) {
+                if (!q) { hdCannedAll = data; hdCannedBuildSeg(); }
+                hdCannedRender(hdCannedApplyFilters(data, hdCannedCat));
+            });
+    }
+
+    function hdCannedBuildSeg() {
+        var cats = [];
+        hdCannedAll.forEach(function(r) { if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category); });
+        var seg = document.getElementById('hdCannedSeg');
+        var html = '<button class="' + (!hdCannedCat ? 'active' : '') + '" data-cat="" onclick="hdCannedFilter(\'\')">'
+            + 'Todas <span class="kbd">' + hdCannedAll.length + '</span></button>';
+        cats.forEach(function(cat) {
+            var cnt = hdCannedAll.filter(function(r){ return r.category === cat; }).length;
+            html += '<button class="' + (hdCannedCat === cat ? 'active' : '') + '" data-cat="' + hdEscape(cat)
+                + '" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
+                + hdEscape(cat) + ' <span class="kbd">' + cnt + '</span></button>';
+        });
+        seg.innerHTML = html;
+    }
+
+    function hdCannedApplyFilters(list, cat) {
+        var q = document.getElementById('hdCannedSearch').value.toLowerCase();
+        return list.filter(function(r) {
+            var matchCat = !cat || r.category === cat;
+            var matchQ   = !q || (r.name && r.name.toLowerCase().includes(q))
+                               || (r.shortcut && r.shortcut.toLowerCase().includes(q))
+                               || (r.body && r.body.toLowerCase().includes(q));
+            return matchCat && matchQ;
+        });
+    }
+
+    function hdCannedRender(list) {
+        hdCannedFiltered = list;
+        hdCannedActive   = list.length ? 0 : -1;
+        hdCannedSelId    = list.length ? list[0].id : null;
+        var el = document.getElementById('hdCannedList');
+        if (!list.length) {
+            el.innerHTML = '<div style="text-align:center;padding:16px;color:#9aa0ab;font-size:13px">Sin resultados</div>';
+            document.getElementById('hdCannedPreview').value = '';
+            return;
+        }
+        el.innerHTML = list.map(function(r, i) {
+            return '<div class="row-pick ' + (i === 0 ? 'on' : '') + '" data-idx="' + i + '" onclick="hdCannedSelect(' + i + ')">'
+                + (r.shortcut ? '<span class="rp-mono">/' + hdEscape(r.shortcut) + '</span>' : '')
+                + '<div class="body"><span class="t">' + hdEscape(r.name) + '</span>'
+                + '<span class="s">' + (r.category ? hdEscape(r.category) + ' · ' : '') + 'usada ' + (r.usage_count || 0) + ' veces</span>'
+                + '</div></div>';
+        }).join('');
+        document.getElementById('hdCannedPreview').value = hdReplace(list[0].body || '');
+    }
+
+    window.hdCannedSelect = function(idx) {
+        hdCannedActive = idx;
+        hdCannedSelId  = hdCannedFiltered[idx] ? hdCannedFiltered[idx].id : null;
+        document.querySelectorAll('#hdCannedList .row-pick').forEach(function(el, i) {
+            el.classList.toggle('on', i === idx);
+        });
+        document.getElementById('hdCannedPreview').value = hdCannedFiltered[idx] ? hdReplace(hdCannedFiltered[idx].body || '') : '';
+    };
+
+    window.hdInsertCanned = function() {
+        var txt = document.getElementById('hdCannedPreview').value;
+        if (!txt.trim()) { return; }
+        var ta = document.querySelector('.bv-composer-input');
+        if (ta) { ta.value = txt; ta.focus(); ta.dispatchEvent(new Event('input')); }
+        if (hdCannedSelId) {
+            fetch('/panel/helpdesk/canned-replies/' + hdCannedSelId + '/use', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': hdCsrf }
+            }).catch(function(){});
+        }
+        closeCannedModal();
+        if (typeof toastr !== 'undefined') toastr.success('Plantilla insertada');
+    };
+
+    var hdCannedSearchInp = document.getElementById('hdCannedSearch');
+    hdCannedSearchInp.addEventListener('input', function() {
+        clearTimeout(hdCannedTimer);
+        var q = this.value.trim();
+        hdCannedTimer = setTimeout(function() {
+            if (q) { hdCannedFetch(q); }
+            else { hdCannedRender(hdCannedApplyFilters(hdCannedAll, hdCannedCat)); }
+        }, 250);
+    });
+    hdCannedSearchInp.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') { e.preventDefault(); if (hdCannedActive < hdCannedFiltered.length - 1) hdCannedSelect(hdCannedActive + 1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if (hdCannedActive > 0) hdCannedSelect(hdCannedActive - 1); }
+        else if (e.key === 'Enter') { e.preventDefault(); hdInsertCanned(); }
+        else if (e.key === 'Escape') { closeCannedModal(); }
+    });
+
+    // ── SNOOZE ─────────────────────────────────────────────
+    var hdSnoozeSelected = '1h';
+
+    window.openSnoozeModal = function() {
+        var now = new Date();
+        document.getElementById('snz-1h').textContent  = new Date(now.getTime() + 3600000).toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+        document.getElementById('snz-3h').textContent  = new Date(now.getTime() + 10800000).toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'});
+        var nextMon = new Date(now);
+        nextMon.setDate(now.getDate() + (now.getDay() === 0 ? 1 : 8 - now.getDay()));
+        document.getElementById('snz-monday').textContent = nextMon.toLocaleDateString('es', {day:'numeric',month:'short'});
+        hdSnoozeSelected = '1h';
+        document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(r) {
+            r.classList.toggle('on', r.dataset.value === '1h');
+        });
+        document.getElementById('hdSnoozeDateRow').classList.remove('visible');
+        document.getElementById('hdSnoozeOverlay').classList.add('open');
+    };
+    window.closeSnoozeModal = function() {
+        document.getElementById('hdSnoozeOverlay').classList.remove('open');
+    };
+
+    document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(row) {
+        row.addEventListener('click', function() {
+            hdSnoozeSelected = this.dataset.value;
+            document.querySelectorAll('#hdSnoozeOpts .opt-row').forEach(function(r){ r.classList.remove('on'); });
+            this.classList.add('on');
+            document.getElementById('hdSnoozeDateRow').classList.toggle('visible', hdSnoozeSelected === 'custom');
+        });
+    });
+
+    window.hdSnoozeSubmit = function() {
+        var now = new Date();
+        var until = null;
+        if (hdSnoozeSelected === '1h')   until = new Date(now.getTime() + 3600000);
+        else if (hdSnoozeSelected === '3h') until = new Date(now.getTime() + 10800000);
+        else if (hdSnoozeSelected === 'tomorrow') { until = new Date(now); until.setDate(until.getDate() + 1); until.setHours(9,0,0,0); }
+        else if (hdSnoozeSelected === 'next-monday') { until = new Date(now); until.setDate(until.getDate() + (now.getDay() === 0 ? 1 : 8 - now.getDay())); until.setHours(9,0,0,0); }
+        else if (hdSnoozeSelected === 'custom') { var v = document.getElementById('hdSnoozeCustomDate').value; until = v ? new Date(v) : null; }
+        if (!until) { if (typeof toastr !== 'undefined') toastr.warning('Selecciona una fecha válida'); return; }
+        fetch(hdSnoozeRoute, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': hdCsrf },
+            body: JSON.stringify({ until: until.toISOString() })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            if (data.success) { if (typeof toastr !== 'undefined') toastr.success(data.message || 'Conversación pospuesta'); closeSnoozeModal(); }
+            else { if (typeof toastr !== 'undefined') toastr.error('Error al posponer la conversación'); }
+        })
+        .catch(function() { if (typeof toastr !== 'undefined') toastr.error('Error al conectar con el servidor'); });
+    };
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('hdCannedOverlay').classList.contains('open')) { closeCannedModal(); return; }
+        if (document.getElementById('hdSnoozeOverlay').classList.contains('open')) { closeSnoozeModal(); return; }
+    });
+
+    // ── Integración con el slash-menu de inbox-v4.js ───────
+    // inbox-v4.js ya incluye su propio slash menu (#bv-slash-menu).
+    // Aquí solo configuramos la URL de búsqueda y aplicamos
+    // reemplazo de placeholders cuando se inserta una plantilla.
+    window.bvCannedRepliesUrl = '{{ route("manager.helpdesk.canned-replies.search") }}';
+
+    // Reemplazar marcadores de posición en el composer después de insertar una plantilla.
+    // Usamos jQuery .on() porque inbox-v4.js dispara $textarea.trigger('input'),
+    // que no siempre propaga al addEventListener nativo.
+    $(document).on('input', '.bv-composer-input', function() {
+        var ta = this;
+        var val = ta.value;
+        if (!/\{\{/.test(val)) return;
+        var replaced = hdReplace(val);
+        if (replaced !== val) {
+            var pos = ta.selectionStart;
+            ta.value = replaced;
+            ta.setSelectionRange(pos, pos);
+            // Evento nativo para auto-resize (ya sin {{}} no vuelve a procesar)
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+})();
+</script>
+@endpush
+@endif

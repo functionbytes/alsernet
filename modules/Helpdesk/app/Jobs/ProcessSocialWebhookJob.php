@@ -2,12 +2,13 @@
 
 namespace Modules\Helpdesk\Jobs;
 
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -16,14 +17,17 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Inbox;
+use Modules\Helpdesk\Models\OffHoursResponse;
+use Modules\Helpdesk\Services\BusinessHoursService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
+use Modules\Helpdesk\Services\OutboundMessageService;
+use Modules\Helpdesk\Services\RoutingRuleService;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
 
 class ProcessSocialWebhookJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public string $queue = 'helpdesk-webhooks';
 
     public int $tries = 3;
 
@@ -41,13 +45,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
         public readonly string $channel,
         public readonly string $eventType,
         public readonly array $event,
-    ) {}
+    ) {
+        $this->onQueue('helpdesk-webhooks');
+    }
 
     public function middleware(): array
     {
-        $messageId = $this->event['message_id'] ?? $this->event['mid'] ?? uniqid();
-
-        return [(new WithoutOverlapping("webhook-{$this->channel}-{$messageId}"))->dontRelease()];
+        // Duplicate protection is handled at the application layer by
+        // isDuplicate() which checks external_id; no queue lock needed.
+        return [];
     }
 
     public function failed(\Throwable $exception): void
@@ -59,20 +65,111 @@ class ProcessSocialWebhookJob implements ShouldQueue
         ]);
     }
 
-    public function handle(WhatsAppBusinessService $whatsappService, FacebookMessengerService $facebookService): void
-    {
+    public function handle(
+        WhatsAppBusinessService $whatsappService,
+        FacebookMessengerService $facebookService,
+        OutboundMessageService $outboundService,
+        BusinessHoursService $businessHoursService,
+        RoutingRuleService $routingRuleService,
+    ): void {
+        // Status events (read/delivery/reaction) are channel-agnostic.
+        if (in_array($this->eventType, ['read', 'delivery', 'reaction'], true)) {
+            $this->processStatusEvent();
+
+            return;
+        }
+
         match ($this->channel) {
-            'whatsapp' => $this->processWhatsApp($whatsappService),
-            'facebook' => $this->processFacebook($facebookService),
-            'instagram' => $this->processInstagram(),
+            'whatsapp' => $this->processWhatsApp($whatsappService, $outboundService, $businessHoursService, $routingRuleService),
+            'facebook' => $this->processFacebook($facebookService, $outboundService, $businessHoursService, $routingRuleService),
+            'instagram' => $this->processInstagram($outboundService, $businessHoursService, $routingRuleService),
             default => Log::warning("Unknown webhook channel: {$this->channel}"),
         };
     }
 
+    /**
+     * Mark agent-sent items as delivered/read or attach reactions, then
+     * broadcast the change so the thread updates the receipt UI live.
+     */
+    private function processStatusEvent(): void
+    {
+        $event = $this->event;
+        $externalSenderId = $event['psid'] ?? $event['ig_user_id'] ?? null;
+        if (! $externalSenderId) {
+            return;
+        }
+
+        $conversation = Conversation::query()
+            ->where('channel', $this->channel)
+            ->where('external_sender_id', $externalSenderId)
+            ->first();
+
+        if (! $conversation) {
+            return;
+        }
+
+        $watermark = $event['watermark'] ?? null;
+        $messageId = $event['message_id'] ?? null;
+
+        if ($this->eventType === 'reaction' && $messageId) {
+            $item = ConversationItem::query()
+                ->where('conversation_id', $conversation->id)
+                ->where('external_id', $messageId)
+                ->first();
+
+            if (! $item) {
+                return;
+            }
+
+            $reactions = is_array($item->metadata['customer_reactions'] ?? null) ? $item->metadata['customer_reactions'] : [];
+            $action = $event['action'] ?? 'react';
+            if ($action === 'unreact') {
+                $reactions = [];
+            } else {
+                $reactions = [['emoji' => $event['emoji'] ?? '❤️', 'at' => now()->toIso8601String()]];
+            }
+
+            $meta = is_array($item->metadata) ? $item->metadata : [];
+            $meta['customer_reactions'] = $reactions;
+            $item->metadata = $meta;
+            $item->save();
+
+            broadcast(new ConversationMessageCreated($item, false));
+
+            return;
+        }
+
+        // For read / delivery: mark all our outbound items up to the watermark.
+        $field = $this->eventType === 'read' ? 'customer_read_at' : 'customer_delivered_at';
+        $now = now()->toIso8601String();
+
+        $items = ConversationItem::query()
+            ->where('conversation_id', $conversation->id)
+            ->whereNotNull('user_id')
+            ->when($watermark, fn ($q) => $q->where('created_at', '<=', Carbon::createFromTimestampMs($watermark)))
+            ->get();
+
+        foreach ($items as $item) {
+            $meta = is_array($item->metadata) ? $item->metadata : [];
+            if (isset($meta[$field])) {
+                continue;
+            }
+            $meta[$field] = $now;
+            $item->metadata = $meta;
+            $item->save();
+
+            broadcast(new ConversationMessageCreated($item, false));
+        }
+    }
+
     // ─── WhatsApp ─────────────────────────────────────────────────────────────
 
-    private function processWhatsApp(WhatsAppBusinessService $whatsappService): void
-    {
+    private function processWhatsApp(
+        WhatsAppBusinessService $whatsappService,
+        OutboundMessageService $outboundService,
+        BusinessHoursService $businessHoursService,
+        RoutingRuleService $routingRuleService,
+    ): void {
         if ($this->eventType !== 'message') {
             return;
         }
@@ -82,7 +179,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
         try {
             $customer = Customer::firstOrCreate(
                 ['whatsapp_phone' => $event['phone']],
-                ['name' => $event['name'], 'whatsapp_phone' => $event['phone']],
+                ['name' => $event['name'], 'whatsapp_phone' => $event['phone'], 'email' => null],
             );
 
             $conversation = $this->findOrCreateConversation('whatsapp', $event['phone'], $customer->id);
@@ -91,7 +188,8 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 return;
             }
 
-            [$body, $attachments] = $this->buildWhatsAppBodyAndAttachments($event);
+            // Build body label only — media downloads happen in the background.
+            [$body, $pendingAttachment] = $this->buildWhatsAppBody($event);
 
             $item = ConversationItem::create([
                 'conversation_id' => $conversation->id,
@@ -99,15 +197,27 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 'type' => 'message',
                 'body' => $body,
                 'external_id' => $event['message_id'],
-                'metadata' => array_merge(
-                    $this->buildWhatsAppMetadata($event),
-                    $attachments ? ['attachments' => $attachments] : []
-                ),
+                'attachment_urls' => [],
+                'metadata' => $this->buildWhatsAppMetadata($event),
             ]);
 
-            event(new ConversationMessageCreated($item));
+            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
+
+            if ($conversation->wasRecentlyCreated) {
+                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService, $routingRuleService);
+            }
 
             $whatsappService->markAsRead($event['message_id']);
+
+            // Hand off media resolution + download to the background job.
+            if ($pendingAttachment) {
+                DownloadConversationAttachmentsJob::dispatch(
+                    $item->id,
+                    [$pendingAttachment],
+                    'whatsapp',
+                    config('helpdesk.integrations.whatsapp.access_token'),
+                );
+            }
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: WhatsApp failed', [
@@ -120,21 +230,32 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     // ─── Facebook ─────────────────────────────────────────────────────────────
 
-    private function processFacebook(FacebookMessengerService $facebookService): void
-    {
+    private function processFacebook(
+        FacebookMessengerService $facebookService,
+        OutboundMessageService $outboundService,
+        BusinessHoursService $businessHoursService,
+        RoutingRuleService $routingRuleService,
+    ): void {
         $event = $this->event;
 
         try {
-            $profile = $facebookService->getUserProfile($event['psid']);
-            $name = filled($profile['name'] ?? null) ? $profile['name'] : $event['psid'];
+            // Try to find existing customer first (avoids Graph API call entirely
+            // for known PSIDs — the slowest step in the pipeline at 200-400ms).
+            $customer = Customer::query()->where('facebook_psid', $event['psid'])->first();
 
-            $customer = Customer::firstOrCreate(
-                ['facebook_psid' => $event['psid']],
-                ['name' => $name, 'facebook_psid' => $event['psid']],
-            );
+            if (! $customer) {
+                $profile = Cache::remember(
+                    "fb_profile:{$event['psid']}",
+                    now()->addHours(6),
+                    fn () => $facebookService->getUserProfile($event['psid'])
+                );
 
-            if ($profile && $customer->name === $event['psid'] && filled($profile['name'])) {
-                $customer->update(['name' => $profile['name']]);
+                $name = filled($profile['name'] ?? null) ? $profile['name'] : $event['psid'];
+
+                $customer = Customer::firstOrCreate(
+                    ['facebook_psid' => $event['psid']],
+                    ['name' => $name, 'facebook_psid' => $event['psid']],
+                );
             }
 
             $conversation = $this->findOrCreateConversation('facebook', $event['psid'], $customer->id);
@@ -157,6 +278,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 'type' => 'message',
                 'body' => $body,
                 'external_id' => $event['message_id'] ?? null,
+                'attachment_urls' => $this->toAttachmentUrls($downloadedAttachments),
                 'metadata' => array_filter([
                     'attachments' => $downloadedAttachments ?: null,
                     'quick_reply' => $event['quick_reply'] ?? null,
@@ -165,7 +287,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 ]),
             ]);
 
-            event(new ConversationMessageCreated($item));
+            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
+
+            if ($conversation->wasRecentlyCreated) {
+                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService, $routingRuleService);
+            }
+
+            if ($downloadedAttachments) {
+                DownloadConversationAttachmentsJob::dispatch($item->id, $downloadedAttachments, 'facebook');
+            }
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: Facebook failed', [
@@ -178,8 +308,11 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     // ─── Instagram ────────────────────────────────────────────────────────────
 
-    private function processInstagram(): void
-    {
+    private function processInstagram(
+        OutboundMessageService $outboundService,
+        BusinessHoursService $businessHoursService,
+        RoutingRuleService $routingRuleService,
+    ): void {
         $event = $this->event;
 
         try {
@@ -207,6 +340,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 'type' => 'message',
                 'body' => $body,
                 'external_id' => $event['message_id'],
+                'attachment_urls' => $this->toAttachmentUrls($downloadedAttachments),
                 'metadata' => array_filter([
                     'attachments' => $downloadedAttachments ?: null,
                     'is_ephemeral' => $event['is_ephemeral'] ?? null,
@@ -215,7 +349,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 ]),
             ]);
 
-            event(new ConversationMessageCreated($item));
+            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
+
+            if ($conversation->wasRecentlyCreated) {
+                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService, $routingRuleService);
+            }
+
+            if ($downloadedAttachments) {
+                DownloadConversationAttachmentsJob::dispatch($item->id, $downloadedAttachments, 'instagram');
+            }
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: Instagram failed', [
@@ -227,6 +369,45 @@ class ProcessSocialWebhookJob implements ShouldQueue
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Run post-creation automations for new conversations:
+     * 1. Route by keyword (routing rules).
+     * 2. Send off-hours auto-reply when business is closed.
+     */
+    private function handleNewConversationAutomations(
+        Conversation $conversation,
+        ConversationItem $item,
+        OutboundMessageService $outboundService,
+        BusinessHoursService $businessHoursService,
+        RoutingRuleService $routingRuleService,
+    ): void {
+        try {
+            $routingRuleService->matchAndAssign($conversation, $item);
+        } catch (\Throwable $e) {
+            Log::warning('ProcessSocialWebhookJob: routing rule failed', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        if ($businessHoursService->isOpenNow()) {
+            return;
+        }
+
+        try {
+            $response = OffHoursResponse::findForChannel($conversation->channel);
+
+            if ($response) {
+                $outboundService->sendReply($conversation, $response->message);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('ProcessSocialWebhookJob: off-hours reply failed', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 
     private function findOrCreateConversation(string $channel, string $externalSenderId, int $customerId): Conversation
     {
@@ -241,19 +422,33 @@ class ProcessSocialWebhookJob implements ShouldQueue
             return $existing;
         }
 
-        $statusId = ConversationStatus::query()
-            ->where('is_default', true)
-            ->orWhere('is_open', true)
-            ->orderByDesc('is_default')
-            ->value('id') ?? 1;
+        // Cache the default status ID and per-channel inbox ID for 30 minutes —
+        // these almost never change and saved 2 DB queries per webhook.
+        $statusId = Cache::remember(
+            'helpdesk:default_status_id',
+            now()->addMinutes(30),
+            fn () => ConversationStatus::query()
+                ->where('is_default', true)
+                ->orWhere('is_open', true)
+                ->orderByDesc('is_default')
+                ->value('id') ?? 1,
+        );
+
+        $inboxId = Cache::remember(
+            "helpdesk:inbox_id:{$channel}",
+            now()->addMinutes(30),
+            fn () => Inbox::query()
+                ->where('channel_type', $channel)
+                ->value('id'),
+        );
 
         $conversation = Conversation::create([
             'customer_id' => $customerId,
             'channel' => $channel,
             'external_sender_id' => $externalSenderId,
+            'inbox_id' => $inboxId,
+            'status_id' => $statusId,
         ]);
-        $conversation->status_id = $statusId;
-        $conversation->save();
 
         return $conversation;
     }
@@ -276,40 +471,42 @@ class ProcessSocialWebhookJob implements ShouldQueue
      *
      * @return array{string, array<int, array{type: string, path: string, original_url: string}>}
      */
-    private function buildWhatsAppBodyAndAttachments(array $event): array
+    /**
+     * Build the body label for a WhatsApp message and a "pending" attachment
+     * descriptor for the background download job (no HTTP calls done here).
+     *
+     * @return array{0: string, 1: array{type: string, media_id: string}|null}
+     */
+    private function buildWhatsAppBody(array $event): array
     {
-        if (filled($event['body'] ?? null)) {
-            return [$event['body'], []];
-        }
-
         $messageType = $event['message_type'] ?? 'text';
         $mediaId = $event['media_id'] ?? null;
         $caption = filled($event['caption'] ?? null) ? $event['caption'] : '';
+        $body = filled($event['body'] ?? null) ? $event['body'] : null;
 
-        if ($mediaId && in_array($messageType, ['image', 'audio', 'video', 'document', 'sticker'])) {
-            $downloadUrl = $this->resolveWhatsAppMediaUrl($mediaId);
-
-            if ($downloadUrl) {
-                $path = $this->downloadMedia($downloadUrl, $messageType, 'whatsapp');
-
-                if ($path) {
-                    $attachment = ['type' => $messageType, 'path' => $path, 'original_url' => $downloadUrl];
-                    $body = $caption ? "[{$messageType}]: {$caption}" : "[{$messageType}]";
-
-                    return [$body, [$attachment]];
-                }
-            }
+        $pending = null;
+        if ($mediaId && in_array($messageType, ['image', 'audio', 'voice', 'video', 'document', 'sticker'])) {
+            $pending = [
+                'type' => $messageType,
+                'media_id' => $mediaId,
+            ];
         }
 
-        $body = match ($messageType) {
-            'image' => $caption ? "[imagen]: {$caption}" : '[imagen]',
-            'document' => '[documento'.($event['filename'] ? ": {$event['filename']}" : '').']',
-            'audio' => '[audio]',
-            'video' => $caption ? "[video]: {$caption}" : '[video]',
-            default => '[mensaje]',
-        };
+        // Body = user-provided text/caption only. The media bubble renders
+        // separately. No "[imagen]" or "[audio]" placeholders.
+        if ($body !== null) {
+            return [$body, $pending];
+        }
 
-        return [$body, []];
+        if (filled($caption)) {
+            return [$caption, $pending];
+        }
+
+        if ($pending !== null) {
+            return ['', $pending];
+        }
+
+        return ['[mensaje]', null];
     }
 
     /**
@@ -360,61 +557,105 @@ class ProcessSocialWebhookJob implements ShouldQueue
      * Downloads each attachment and stores its path in the returned attachments array.
      *
      * @param  array<int, array{type: string, url?: string}>  $rawAttachments
-     * @return array{string, array<int, array{type: string, path: string, original_url: string}>}
+     * @return array{string, array<int, array{type: string, path: string, original_url: string, mime_type: ?string, size: ?int}>}
      */
     private function resolveBodyAndAttachments(?string $text, array $rawAttachments, string $platform, string $fallbackBody): array
     {
-        if (filled($text)) {
-            return [$text, []];
-        }
-
-        if (empty($rawAttachments)) {
-            return [$fallbackBody, []];
-        }
-
+        // FAST PATH: do NOT download here — return the external CDN URL so the
+        // broadcast happens immediately. DownloadConversationAttachmentsJob
+        // replaces these URLs with locally-stored copies in the background.
         $attachments = [];
-        $labels = [];
 
         foreach ($rawAttachments as $attachment) {
             $type = $attachment['type'] ?? 'file';
             $url = $attachment['url'] ?? $attachment['payload']['url'] ?? null;
 
             if ($url) {
-                $path = $this->downloadMedia($url, $type, $platform);
-
-                if ($path) {
-                    $attachments[] = ['type' => $type, 'path' => $path, 'original_url' => $url];
-                }
+                $attachments[] = [
+                    'type' => $type,
+                    'original_url' => $url,
+                    'url' => $url,
+                    'name' => basename(parse_url($url, PHP_URL_PATH) ?: $url),
+                    'mime_type' => null,
+                    'size' => 0,
+                ];
             }
-
-            $labels[] = "[{$type}]";
         }
 
-        $body = $labels ? implode(' ', $labels) : $fallbackBody;
+        // Body shows ONLY the user's text. Attachments render on their own
+        // (image/audio/video bubble in the thread). If there's no text and no
+        // attachments, fall back to the caller-provided placeholder.
+        if (filled($text)) {
+            return [$text, $attachments];
+        }
 
-        return [$body, $attachments];
+        if ($attachments !== []) {
+            return ['', $attachments];
+        }
+
+        return [$fallbackBody, $attachments];
+    }
+
+    /**
+     * Convert internal attachment metadata into the {url, name, size, mime_type}
+     * format expected by ConversationItem.attachment_urls (matches widget output).
+     *
+     * @param  array<int, array<string, mixed>>  $attachments
+     * @return array<int, array{url: string, name: string, size: int, mime_type: string}>
+     */
+    private function toAttachmentUrls(array $attachments): array
+    {
+        $out = [];
+
+        foreach ($attachments as $a) {
+            $url = $a['url'] ?? null;
+
+            if (! $url) {
+                continue;
+            }
+
+            $out[] = [
+                'url' => $url,
+                'name' => $a['name'] ?? basename(parse_url($url, PHP_URL_PATH) ?: $url),
+                'size' => (int) ($a['size'] ?? 0),
+                'mime_type' => $a['mime_type'] ?? 'application/octet-stream',
+            ];
+        }
+
+        return $out;
+    }
+
+    private function labelForType(string $type): string
+    {
+        return match ($type) {
+            'image' => '[imagen]',
+            'audio' => '[audio]',
+            'video' => '[video]',
+            'document', 'file' => '[documento]',
+            'sticker' => '[sticker]',
+            'location' => '[ubicación]',
+            'contact' => '[contacto]',
+            'template' => '[plantilla]',
+            default => "[{$type}]",
+        };
     }
 
     /**
      * Download a media file from the given URL and store it on disk.
-     * Returns the stored file path on success, or null on failure.
+     * Detects the real mime type from response headers to pick the correct extension.
+     *
+     * @return array{path: string, url: string, name: string, mime_type: ?string, size: int}|null
      */
-    private function downloadMedia(string $url, string $mediaType, string $platform): ?string
+    private function downloadMedia(string $url, string $mediaType, string $platform, ?string $bearerToken = null): ?array
     {
         try {
-            $extension = match ($mediaType) {
-                'image' => 'jpg',
-                'audio' => 'ogg',
-                'video' => 'mp4',
-                'document' => 'pdf',
-                'sticker' => 'webp',
-                default => 'bin',
-            };
+            $request = Http::timeout(30);
 
-            $filename = 'helpdesk/social-media/'.$platform.'/'.uniqid().'.'.$extension;
-            $disk = config('helpdesk.attachments.disk', 'local');
+            if (filled($bearerToken)) {
+                $request = $request->withToken($bearerToken);
+            }
 
-            $response = Http::timeout(30)->get($url);
+            $response = $request->get($url);
 
             if ($response->failed()) {
                 Log::warning("Failed to download media from {$platform}", ['url' => $url, 'status' => $response->status()]);
@@ -422,13 +663,88 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 return null;
             }
 
-            Storage::disk($disk)->put($filename, $response->body());
+            $body = $response->body();
+            $mime = $response->header('Content-Type') ?: null;
+            $extension = $this->extensionFromMime($mime, $mediaType);
+            $name = $platform.'_'.$mediaType.'_'.date('Ymd_His').'.'.$extension;
+            $filename = 'helpdesk/social-media/'.$platform.'/'.date('Y/m/d').'/'.uniqid('', true).'.'.$extension;
 
-            return $filename;
+            $disk = config('helpdesk.attachments.disk', 'public');
+            Storage::disk($disk)->put($filename, $body);
+
+            try {
+                $publicUrl = Storage::disk($disk)->url($filename);
+            } catch (\Throwable) {
+                $publicUrl = $filename;
+            }
+
+            return [
+                'path' => $filename,
+                'url' => $publicUrl,
+                'name' => $name,
+                'mime_type' => $mime,
+                'size' => strlen($body),
+            ];
         } catch (\Throwable $e) {
             Log::error("Media download failed for {$platform}", ['error' => $e->getMessage()]);
 
             return null;
         }
+    }
+
+    /**
+     * Determine the file extension from the Content-Type header, falling back to
+     * a sensible default based on the declared media type.
+     */
+    private function extensionFromMime(?string $mime, string $fallbackType): string
+    {
+        $mime = $mime ? strtolower(explode(';', $mime, 2)[0]) : '';
+        $mime = trim($mime);
+
+        $map = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            'image/svg+xml' => 'svg',
+            'audio/mpeg' => 'mp3',
+            'audio/mp3' => 'mp3',
+            'audio/ogg' => 'ogg',
+            'audio/opus' => 'opus',
+            'audio/wav' => 'wav',
+            'audio/x-wav' => 'wav',
+            'audio/aac' => 'aac',
+            'audio/mp4' => 'm4a',
+            'audio/x-m4a' => 'm4a',
+            'audio/webm' => 'webm',
+            'audio/3gpp' => '3gp',
+            'video/mp4' => 'mp4',
+            'video/quicktime' => 'mov',
+            'video/webm' => 'webm',
+            'video/3gpp' => '3gp',
+            'video/x-matroska' => 'mkv',
+            'application/pdf' => 'pdf',
+            'application/zip' => 'zip',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'text/plain' => 'txt',
+            'text/csv' => 'csv',
+        ];
+
+        if (isset($map[$mime])) {
+            return $map[$mime];
+        }
+
+        return match ($fallbackType) {
+            'image' => 'jpg',
+            'audio', 'voice' => 'ogg',
+            'video' => 'mp4',
+            'document', 'file' => 'bin',
+            'sticker' => 'webp',
+            default => 'bin',
+        };
     }
 }

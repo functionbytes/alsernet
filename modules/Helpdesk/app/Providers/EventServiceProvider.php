@@ -11,6 +11,8 @@ use Modules\Helpdesk\Events\ConversationStatusChanged;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MentionDetected;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Listeners\AnalyzeSentimentOnIncoming;
+use Modules\Helpdesk\Listeners\AutoTagFirstMessage;
 use Modules\Helpdesk\Listeners\BroadcastConversationMessage;
 use Modules\Helpdesk\Listeners\DispatchConversationWebhooks;
 use Modules\Helpdesk\Listeners\LogConversationCreated;
@@ -35,6 +37,8 @@ class EventServiceProvider extends ServiceProvider
         ],
         ConversationMessageCreated::class => [
             BroadcastConversationMessage::class,
+            AnalyzeSentimentOnIncoming::class,
+            AutoTagFirstMessage::class,
         ],
         MessageReceived::class => [
             SendMessageReceivedNotification::class,

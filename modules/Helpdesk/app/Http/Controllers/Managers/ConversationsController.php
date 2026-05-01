@@ -3,11 +3,14 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +18,9 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\ImageManager;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Exceptions\WhatsAppHsmException;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
@@ -43,13 +49,15 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Services\ConversationMessageService;
 use Modules\Helpdesk\Services\ConversationTagService;
+use Modules\Helpdesk\Services\CsatService;
+use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\WhatsAppHsmService;
 
 class ConversationsController extends Controller
 {
     public function __construct(private ConversationTagService $tagService)
     {
-        $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'listJson']);
+        $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'listJson', 'kanban']);
         $this->middleware('can:helpdesk.conversations.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.conversations.update')->only([
             'edit', 'update', 'close', 'reopen', 'archive', 'unarchive',
@@ -116,6 +124,13 @@ class ConversationsController extends Controller
                     'customer',
                     fn ($c) => $c->where('total_conversations', '>=', 5)
                 )
+            )
+            ->when(
+                $request->filled('tag'),
+                fn ($q) => $q->whereHas(
+                    'conversationTags',
+                    fn ($t) => $t->where('helpdesk_conversation_tags.id', $request->integer('tag'))
+                )
             );
 
         $this->applySortOrder($query, $request->input('sort', 'newest'), $userId);
@@ -125,6 +140,53 @@ class ConversationsController extends Controller
         $groups = Group::orderBy('name')->get();
 
         $totalConversations = Conversation::query()->count();
+
+        $inboxTags = cache()->remember(
+            'helpdesk:inbox:tags',
+            60,
+            fn () => ConversationTag::query()
+                ->where('is_active', true)
+                ->withCount('conversations')
+                ->orderBy('name')
+                ->get()
+        );
+
+        $statusbarMetrics = cache()->remember(
+            'helpdesk:inbox:statusbar',
+            30,
+            function () {
+                $today = now()->startOfDay();
+
+                $activeChannels = (int) Conversation::query()
+                    ->whereNotNull('channel')
+                    ->where('channel', '!=', '')
+                    ->distinct()
+                    ->count('channel');
+
+                $resolvedToday = (int) Conversation::query()
+                    ->where('closed_at', '>=', $today)
+                    ->count();
+
+                $firstResponseAvg = (int) Conversation::query()
+                    ->whereNotNull('first_response_at')
+                    ->whereDate('first_response_at', $today)
+                    ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, first_response_at)) as avg_sec')
+                    ->value('avg_sec');
+
+                $agentsOnline = (int) DB::table('sessions')
+                    ->whereNotNull('user_id')
+                    ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)
+                    ->distinct('user_id')
+                    ->count('user_id');
+
+                return [
+                    'active_channels' => $activeChannels,
+                    'agents_online' => $agentsOnline,
+                    'sla_avg_seconds' => $firstResponseAvg,
+                    'resolved_today' => $resolvedToday,
+                ];
+            }
+        );
 
         // Counters reales para el sidebar (cacheados 60s para no penalizar la lista)
         $sidebarCounters = cache()->remember(
@@ -150,6 +212,9 @@ class ConversationsController extends Controller
                     'instagram' => (clone $base)->where('channel', 'instagram')->count(),
                     'email' => (clone $base)->where('channel', 'email')->count(),
                     'widget' => (clone $base)->whereIn('channel', ['widget', 'web'])->count(),
+                    'vip' => (clone $base)
+                        ->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5))
+                        ->count(),
                 ];
             }
         );
@@ -186,16 +251,24 @@ class ConversationsController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
+        $agents = User::query()
+            ->select(['id', 'firstname', 'lastname', 'email'])
+            ->orderBy('firstname')
+            ->get();
+
         return view('helpdesk::managers.inbox.index', [
             'conversations' => $conversations,
             'inboxGroups' => $inboxGroups,
             'statuses' => $statuses,
             'groups' => $groups,
+            'agents' => $agents,
             'views' => $views,
             'currentView' => $currentView,
-            'filters' => $request->only(['status', 'assignee', 'group', 'priority', 'search', 'archived', 'channel', 'unread', 'mine', 'urgent', 'vip']),
+            'filters' => $request->only(['status', 'assignee', 'group', 'priority', 'search', 'archived', 'channel', 'unread', 'mine', 'urgent', 'vip', 'tag']),
             'totalConversations' => $totalConversations,
             'sidebarCounters' => $sidebarCounters,
+            'inboxTags' => $inboxTags,
+            'statusbarMetrics' => $statusbarMetrics,
             'selectedConversationId' => $selectedId,
             'selectedConversation' => $selectedConversation,
             'composerDraft' => $composerDraft,
@@ -763,6 +836,16 @@ class ConversationsController extends Controller
 
         $conversation->close();
 
+        // Fire CSAT survey (best effort — never block close on a survey error).
+        try {
+            app(CsatService::class)->dispatchForConversation($conversation);
+        } catch (\Throwable $e) {
+            \Log::warning('CSAT dispatch failed on close', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -934,7 +1017,11 @@ class ConversationsController extends Controller
                     'is_internal' => (bool) $item?->is_internal,
                     'created_at' => $item?->created_at?->toIso8601String(),
                     'time' => $item?->created_at?->format('H:i'),
-                    'author' => $item?->user?->name ?? auth()->user()?->name,
+                    'author' => $item?->user?->firstname
+                        ? trim($item->user->firstname.' '.$item->user->lastname)
+                        : (auth()->user()?->firstname
+                            ? trim(auth()->user()->firstname.' '.auth()->user()->lastname)
+                            : null),
                     'is_outgoing' => true,
                     'reply_to' => $replyMeta,
                 ],
@@ -943,6 +1030,44 @@ class ConversationsController extends Controller
 
         return redirect()->route('manager.helpdesk.conversations.show', $conversation)
             ->with('success', $successMessage);
+    }
+
+    /**
+     * Sirve un attachment como descarga forzada con Content-Disposition.
+     * Usado por el lightbox y el menú "Descargar" del bubble.
+     *
+     * Recibe ?url= con la URL completa o solo el path /storage/... y devuelve
+     * el archivo bajo la disk public con el filename original.
+     */
+    public function downloadAttachment(Request $request)
+    {
+        $url = trim((string) $request->input('url', ''));
+        if ($url === '') {
+            abort(400, 'URL requerida');
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        if (! is_string($path)) {
+            abort(400, 'URL inválida');
+        }
+
+        // Solo permitimos paths bajo /storage/helpdesk/ por seguridad
+        if (! preg_match('#^/storage/(helpdesk/.+)$#', $path, $m)) {
+            abort(403, 'Path no permitido');
+        }
+        $relPath = $m[1];
+
+        $disk = Storage::disk('public');
+        if (! $disk->exists($relPath)) {
+            abort(404, 'Archivo no encontrado');
+        }
+
+        $filename = basename($relPath);
+
+        return $disk->download($relPath, $filename, [
+            'Content-Type' => $disk->mimeType($relPath) ?: 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**
@@ -1177,7 +1302,7 @@ class ConversationsController extends Controller
 
     /**
      * Upload one or more file attachments to a conversation.
-     * Detects media type (image/video/audio/document) from MIME type.
+     * Images > 1 MB are compressed (max 1920px, JPEG 80%) before saving.
      */
     public function uploadAttachments(UploadAttachmentRequest $request, Conversation $conversation): JsonResponse
     {
@@ -1190,40 +1315,84 @@ class ConversationsController extends Controller
         $attachments = [];
 
         foreach ($request->file('files') as $file) {
-            $filename = $file->hashName();
+            $mime = $file->getMimeType() ?? 'application/octet-stream';
             $folder = "helpdesk/customers/{$customerId}/conversations/{$conversation->id}/{$dateFolder}";
-            Storage::disk('public')->putFileAs($folder, $file, $filename);
+            $disk = Storage::disk('public');
+
+            if ($this->shouldCompressImage($mime, $file->getSize())) {
+                [$filename, $storedMime, $storedSize] = $this->compressAndStoreImage($file, $folder, $disk);
+            } else {
+                $filename = $file->hashName();
+                $disk->putFileAs($folder, $file, $filename);
+                $storedMime = $mime;
+                $storedSize = $file->getSize();
+            }
 
             $attachments[] = [
-                'url' => Storage::disk('public')->url("{$folder}/{$filename}"),
+                'url' => $disk->url("{$folder}/{$filename}"),
                 'name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'mime' => $file->getMimeType(),
-                'type' => $this->resolveAttachmentType($file->getMimeType()),
+                'size' => $storedSize,
+                'mime' => $storedMime,
+                'mime_type' => $storedMime,
+                'type' => $this->resolveAttachmentType($storedMime),
+                'path' => "{$folder}/{$filename}",
             ];
         }
 
-        $urls = array_column($attachments, 'url');
-
-        $item = DB::transaction(function () use ($conversation, $urls, $attachments): ConversationItem {
+        $item = DB::transaction(function () use ($conversation, $attachments): ConversationItem {
             return $conversation->items()->create([
                 'user_id' => auth()->id(),
-                'type' => 'attachment_added',
+                'type' => 'message',
                 'body' => '',
                 'is_internal' => false,
-                'attachment_urls' => $urls,
+                // Store rich objects (matches widget format) so the thread renderer
+                // has {url, name, size, mime_type} for image/audio/video/document.
+                'attachment_urls' => $attachments,
                 'metadata' => ['attachments' => $attachments],
             ]);
         });
 
+        // Forward each attachment to the customer through the channel API.
+        $outbound = app(OutboundMessageService::class);
+        if ($outbound->supports($conversation)) {
+            $externalIds = [];
+            foreach ($attachments as $att) {
+                try {
+                    $absUrl = $this->absoluteUrl((string) $att['url']);
+                    $externalId = $outbound->sendAttachment(
+                        $conversation,
+                        (string) ($att['type'] ?? 'file'),
+                        $absUrl,
+                        null,
+                        $att['name'] ?? null,
+                    );
+                    if ($externalId) {
+                        $externalIds[] = $externalId;
+                    }
+                } catch (\Throwable $e) {
+                    \Log::error('uploadAttachments: outbound send failed', [
+                        'conversation_id' => $conversation->id,
+                        'channel' => $conversation->channel,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            if ($externalIds) {
+                $item->external_id = $externalIds[0];
+                $item->save();
+            }
+        }
+
+        broadcast(new ConversationMessageCreated($item, false))->toOthers();
+
         return response()->json([
             'success' => true,
-            'message' => count($urls).' archivo(s) adjunto(s) correctamente.',
+            'message' => count($attachments).' archivo(s) adjunto(s) correctamente.',
             'item' => [
                 'id' => $item->id,
                 'body' => $item->body,
                 'type' => $item->type,
-                'attachment_urls' => $urls,
+                'attachment_urls' => $attachments,
                 'attachments' => $attachments,
                 'is_internal' => false,
                 'created_at' => $item->created_at?->toIso8601String(),
@@ -1232,6 +1401,22 @@ class ConversationsController extends Controller
                 'is_outgoing' => true,
             ],
         ], 201);
+    }
+
+    private function absoluteUrl(string $url): string
+    {
+        $base = rtrim(config('helpdesk.public_url') ?? config('app.url'), '/');
+        $appUrl = rtrim((string) config('app.url'), '/');
+
+        if (preg_match('#^https?://#i', $url)) {
+            if ($appUrl && $base !== $appUrl && str_starts_with($url, $appUrl.'/')) {
+                return $base.substr($url, strlen($appUrl));
+            }
+
+            return $url;
+        }
+
+        return $base.'/'.ltrim($url, '/');
     }
 
     /**
@@ -1424,6 +1609,72 @@ class ConversationsController extends Controller
     }
 
     /**
+     * Whether an uploaded image should be compressed before storage.
+     * GIFs are skipped (animation). PNGs with alpha are skipped (transparency).
+     */
+    private function shouldCompressImage(string $mime, int $bytes): bool
+    {
+        if (! str_starts_with($mime, 'image/')) {
+            return false;
+        }
+
+        if ($bytes <= 1 * 1024 * 1024) {
+            return false;
+        }
+
+        // Skip GIF (animation)
+        if ($mime === 'image/gif') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Compress an image: resize to max 1920px on the longest side, save as JPEG 80%.
+     * PNG images with alpha channel are also saved as JPEG (alpha is not preserved).
+     *
+     * Returns [filename, mime, size] of the stored file.
+     */
+    private function compressAndStoreImage(UploadedFile $file, string $folder, Filesystem $disk): array
+    {
+        $originalBytes = $file->getSize();
+        $manager = new ImageManager(new GdDriver);
+
+        $image = $manager->read($file->getRealPath());
+
+        // Skip PNG with alpha channel (preserve transparency)
+        if ($file->getMimeType() === 'image/png') {
+            $gd = $image->core()->native();
+            if (imageistruecolor($gd) && imagecolorsforindex($gd, 0)['alpha'] > 0) {
+                $filename = $file->hashName();
+                $disk->putFileAs($folder, $file, $filename);
+
+                return [$filename, 'image/png', $originalBytes];
+            }
+        }
+
+        // Resize: max 1920px on the longest side, keep aspect ratio
+        $image->scaleDown(width: 1920, height: 1920);
+
+        $encoded = $image->toJpeg(quality: 80);
+        $filename = pathinfo($file->hashName(), PATHINFO_FILENAME).'.jpg';
+        $disk->put("{$folder}/{$filename}", $encoded->toString());
+
+        $storedSize = $disk->size("{$folder}/{$filename}");
+        $savedKb = round(($originalBytes - $storedSize) / 1024);
+
+        Log::info('Helpdesk: image compressed', [
+            'original_bytes' => $originalBytes,
+            'stored_bytes' => $storedSize,
+            'saved_kb' => $savedKb,
+            'file' => $filename,
+        ]);
+
+        return [$filename, 'image/jpeg', $storedSize];
+    }
+
+    /**
      * Determine the semantic attachment type from a MIME type.
      */
     private function resolveAttachmentType(string $mime): string
@@ -1434,5 +1685,23 @@ class ConversationsController extends Controller
             str_starts_with($mime, 'audio/') => 'audio',
             default => 'document',
         };
+    }
+
+    /**
+     * Kanban board view grouped by status
+     */
+    public function kanban(): View
+    {
+        $statuses = ConversationStatus::active()->ordered()->get();
+
+        $conversations = Conversation::query()
+            ->with(['customer', 'status'])
+            ->orderByDesc('last_message_at')
+            ->limit(200)
+            ->get();
+
+        $byStatus = $conversations->groupBy('status_id');
+
+        return view('helpdesk::managers.inbox.kanban', compact('statuses', 'byStatus'));
     }
 }
