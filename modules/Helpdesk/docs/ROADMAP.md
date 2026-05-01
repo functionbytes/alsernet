@@ -173,6 +173,23 @@ Total entregado:
 | Skills-based routing | ✅ | `helpdesk_skills` + `Services/SkillsRoutingService` |
 | Multi-brand support | ✅ | `helpdesk_brands` + middleware `DetectBrand` |
 
+## Fase 16 — Admin UI Wave 1 (✅ completada 2026-05-01)
+
+| Feature | Estado | Archivos clave |
+|---|---|---|
+| **Agent Settings UI** | ✅ | `Controllers/Managers/Settings/AgentSettingsController.php` · `views/settings/agent-settings/` · `Requests/Settings/UpdateAgentSettingsRequest.php` |
+| **2FA setup wizard** | ✅ | `Controllers/Managers/Compliance/TwoFactorController.php` (existente) · `views/compliance/2fa/setup.blade.php` · `views/compliance/2fa/challenge.blade.php` · rutas `panel/helpdesk/2fa/*` |
+| **Companies CRUD** | ✅ | `Controllers/Managers/Settings/CompaniesController.php` · `views/settings/companies/` · `Requests/Settings/Store|UpdateCompanyRequest.php` |
+| **Skills CRUD** | ✅ | `Controllers/Managers/Settings/SkillsController.php` · `views/settings/skills/` · `Requests/Settings/Store|UpdateSkillRequest.php` |
+
+Endpoints activos:
+- `GET /panel/settings/helpdesk/agent-settings` — lista agentes con disponibilidad y skills
+- `GET /panel/settings/helpdesk/agent-settings/{user}/edit` — editar configuración de agente
+- `GET /panel/helpdesk/2fa/setup` — wizard TOTP (generar QR, confirmar, recovery codes)
+- `GET /panel/helpdesk/2fa/challenge` — desafío 2FA al login
+- `GET /panel/settings/helpdesk/companies` — CRUD empresas
+- `GET /panel/settings/helpdesk/skills` — CRUD skills para routing
+
 ## Fase 13 — Self-service + Onboarding (✅ completada 2026-05-01)
 
 | Feature | Estado | Archivo clave |

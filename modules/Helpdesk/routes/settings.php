@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\AgentSettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AttributesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AuditController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AutomationRulesController;
@@ -268,6 +269,33 @@ Route::prefix('status')->name('status.')->group(function () {
     Route::post('incidents', [StatusPageController::class, 'storeIncident'])->name('incidents.store');
     Route::put('incidents/{incident}', [StatusPageController::class, 'updateIncident'])->name('incidents.update');
     Route::delete('incidents/{incident}', [StatusPageController::class, 'destroyIncident'])->name('incidents.destroy');
+});
+
+// Agent settings
+Route::prefix('agent-settings')->name('agent-settings.')->group(function () {
+    Route::get('/', [AgentSettingsController::class, 'index'])->name('index');
+    Route::get('{user}/edit', [AgentSettingsController::class, 'edit'])->name('edit');
+    Route::put('{user}', [AgentSettingsController::class, 'update'])->name('update');
+});
+
+// Skills
+Route::prefix('skills')->name('skills.')->group(function () {
+    Route::get('/', [SkillsController::class, 'index'])->name('index');
+    Route::get('create', [SkillsController::class, 'create'])->name('create');
+    Route::post('/', [SkillsController::class, 'store'])->name('store');
+    Route::get('{skill}/edit', [SkillsController::class, 'edit'])->name('edit');
+    Route::put('{skill}', [SkillsController::class, 'update'])->name('update');
+    Route::delete('{skill}', [SkillsController::class, 'destroy'])->name('destroy');
+});
+
+// Companies
+Route::prefix('companies')->name('companies.')->group(function () {
+    Route::get('/', [CompaniesController::class, 'index'])->name('index');
+    Route::get('create', [CompaniesController::class, 'create'])->name('create');
+    Route::post('/', [CompaniesController::class, 'store'])->name('store');
+    Route::get('{company}/edit', [CompaniesController::class, 'edit'])->name('edit');
+    Route::put('{company}', [CompaniesController::class, 'update'])->name('update');
+    Route::delete('{company}', [CompaniesController::class, 'destroy'])->name('destroy');
 });
 
 // Audit log viewer (también accesible desde /panel/helpdesk/audit)

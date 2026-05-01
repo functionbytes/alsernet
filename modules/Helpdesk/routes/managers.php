@@ -7,6 +7,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
 use Modules\Helpdesk\Http\Controllers\Managers\AiController;
 use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Compliance\TwoFactorController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
@@ -194,4 +195,14 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.customers.insights');
 
     // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
+
+    // 2FA
+    Route::prefix('2fa')->name('manager.helpdesk.2fa.')->group(function () {
+        Route::get('setup', [TwoFactorController::class, 'setup'])->name('setup');
+        Route::get('challenge', [TwoFactorController::class, 'challenge'])->name('challenge');
+        Route::post('enable', [TwoFactorController::class, 'enable'])->name('enable');
+        Route::post('confirm', [TwoFactorController::class, 'confirm'])->name('confirm');
+        Route::post('verify', [TwoFactorController::class, 'verify'])->name('verify');
+        Route::post('disable', [TwoFactorController::class, 'disable'])->name('disable');
+    });
 });
