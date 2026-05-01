@@ -150,6 +150,7 @@ Route::prefix('inboxes')->name('inboxes.')->group(function () {
     Route::put('{inbox}', [InboxesController::class, 'update'])->name('update');
     Route::delete('{inbox}', [InboxesController::class, 'destroy'])->name('destroy');
     Route::patch('{inbox}/toggle', [InboxesController::class, 'toggle'])->name('toggle');
+    Route::post('{inbox}/test', [InboxesController::class, 'test'])->name('test');
 });
 
 // Conversation Views
@@ -208,6 +209,7 @@ Route::prefix('pre-chat-forms')->name('pre-chat-forms.')->group(function () {
 
 // Status page
 Route::prefix('status')->name('status.')->group(function () {
+    Route::get('/', [StatusPageController::class, 'index'])->name('index');
     Route::get('components', [StatusPageController::class, 'componentsIndex'])->name('components');
     Route::get('components/create', [StatusPageController::class, 'componentCreate'])->name('components.create');
     Route::post('components', [StatusPageController::class, 'componentStore'])->name('components.store');
@@ -260,25 +262,7 @@ Route::prefix('routing-rules')->name('routing-rules.')->group(function () {
 // Email accounts (IMAP/SMTP)
 Route::prefix('email-accounts')->name('email-accounts.')->group(function () {
     Route::get('/', [EmailSettingsController::class, 'index'])->name('index');
-    Route::get('create', [EmailSettingsController::class, 'create'])->name('create');
-    Route::post('/', [EmailSettingsController::class, 'store'])->name('store');
-    Route::get('{account}/edit', [EmailSettingsController::class, 'edit'])->name('edit');
-    Route::put('{account}', [EmailSettingsController::class, 'update'])->name('update');
-    Route::delete('{account}', [EmailSettingsController::class, 'destroy'])->name('destroy');
-    Route::post('{account}/test', [EmailSettingsController::class, 'test'])->name('test');
-});
-
-// Status page components + incidents (admin)
-Route::prefix('status')->name('status.')->group(function () {
-    Route::get('/', [StatusPageController::class, 'index'])->name('index');
-    Route::get('components/create', [StatusPageController::class, 'createComponent'])->name('components.create');
-    Route::post('components', [StatusPageController::class, 'storeComponent'])->name('components.store');
-    Route::put('components/{component}', [StatusPageController::class, 'updateComponent'])->name('components.update');
-    Route::delete('components/{component}', [StatusPageController::class, 'destroyComponent'])->name('components.destroy');
-    Route::get('incidents/create', [StatusPageController::class, 'createIncident'])->name('incidents.create');
-    Route::post('incidents', [StatusPageController::class, 'storeIncident'])->name('incidents.store');
-    Route::put('incidents/{incident}', [StatusPageController::class, 'updateIncident'])->name('incidents.update');
-    Route::delete('incidents/{incident}', [StatusPageController::class, 'destroyIncident'])->name('incidents.destroy');
+    Route::put('/', [EmailSettingsController::class, 'update'])->name('update');
 });
 
 // Agent settings
