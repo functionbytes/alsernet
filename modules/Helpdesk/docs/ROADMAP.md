@@ -173,6 +173,24 @@ Total entregado:
 | Skills-based routing | ✅ | `helpdesk_skills` + `Services/SkillsRoutingService` |
 | Multi-brand support | ✅ | `helpdesk_brands` + middleware `DetectBrand` |
 
+## Fase 17 — Admin UI Wave 2+3 (✅ completada 2026-05-01)
+
+| Feature | Estado | Archivos clave |
+|---|---|---|
+| **Workflows UI** | ✅ | `WorkflowsController` · `views/settings/workflows/` · JSON textarea editor |
+| **AI Agents UI** | ✅ | `AiAgentsController` · `views/settings/ai-agents/` · canales + escalación |
+| **Drip Campaigns UI** | ✅ | `DripCampaignsController` · `views/settings/drip-campaigns/` · wizard dinámico con pasos |
+| **Broadcasts UI** | ✅ | `BroadcastsController` · `views/settings/broadcasts/` · wizard 4 pasos |
+| **Brands CRUD** | ✅ | `BrandsController` · `views/settings/brands/` · slug+token autogenerados |
+| **WhatsApp Templates** | ✅ | `WhatsAppTemplatesController` · `views/settings/whatsapp-templates/` · sync vía Artisan |
+| **Custom Fields CRUD** | ✅ | `CustomFieldsController` · `views/settings/custom-fields/` · tipos dinámicos |
+| **Slack Integrations CRUD** | ✅ | `SlackIntegrationsController` · `views/settings/slack-integrations/` · webhook cifrado |
+| **Live Visitors** | ✅ | `LiveVisitorsController` · `views/managers/live-visitors/` · auto-refresh 10s |
+| **Team Leaderboard** | ✅ | `LeaderboardController` · `views/managers/leaderboard/` · 1d/7d/30d |
+| **GDPR UI** | ✅ | `GdprController::panel` · `views/settings/gdpr/` + `compliance/gdpr/customer-panel` |
+
+Endpoints activos: `/panel/settings/helpdesk/{workflows,ai-agents,drip-campaigns,broadcasts,brands,whatsapp-templates,custom-fields,slack-integrations}` + `/panel/helpdesk/{live-visitors,team/leaderboard,gdpr}`
+
 ## Fase 16 — Admin UI Wave 1 (✅ completada 2026-05-01)
 
 | Feature | Estado | Archivos clave |

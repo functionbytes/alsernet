@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Compliance;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Models\Customer;
@@ -16,6 +17,16 @@ class GdprController extends Controller
         private readonly GdprExportService $exportService,
         private readonly GdprDeletionService $deletionService,
     ) {}
+
+    /**
+     * GDPR management panel (settings page).
+     */
+    public function panel(): View
+    {
+        $this->authorize('manage', Customer::class);
+
+        return view('helpdesk::settings.gdpr.index');
+    }
 
     /**
      * Stream a ZIP export of all data for the given customer.

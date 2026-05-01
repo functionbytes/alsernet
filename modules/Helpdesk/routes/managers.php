@@ -7,6 +7,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
 use Modules\Helpdesk\Http\Controllers\Managers\AiController;
 use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Compliance\GdprController;
 use Modules\Helpdesk\Http\Controllers\Managers\Compliance\TwoFactorController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
@@ -17,7 +18,9 @@ use Modules\Helpdesk\Http\Controllers\Managers\DashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\GlobalSearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\HeatmapReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\HelpCenterController;
+use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
+use Modules\Helpdesk\Http\Controllers\Managers\LiveVisitorsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ReportsController;
 use Modules\Helpdesk\Http\Controllers\Managers\TranslateController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
@@ -195,6 +198,24 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.customers.insights');
 
     // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
+
+    // Live Visitors
+    Route::prefix('live-visitors')->name('manager.helpdesk.live-visitors.')->group(function () {
+        Route::get('/', [LiveVisitorsController::class, 'index'])->name('index');
+        Route::get('data', [LiveVisitorsController::class, 'data'])->name('data')->middleware('throttle:30,1');
+    });
+
+    // Team Leaderboard
+    Route::get('team/leaderboard', [LeaderboardController::class, 'index'])->name('manager.helpdesk.team.leaderboard');
+
+    // GDPR panel
+    Route::get('gdpr', [GdprController::class, 'panel'])->name('manager.helpdesk.gdpr.panel');
+
+    // GDPR per-customer actions
+    Route::prefix('customers/{customer}/gdpr')->name('manager.helpdesk.customers.gdpr.')->group(function () {
+        Route::get('export', [GdprController::class, 'export'])->name('export');
+        Route::post('delete', [GdprController::class, 'delete'])->name('delete');
+    });
 
     // 2FA
     Route::prefix('2fa')->name('manager.helpdesk.2fa.')->group(function () {

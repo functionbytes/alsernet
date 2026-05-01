@@ -2,12 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AgentSettingsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\AiAgentsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AttributesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AuditController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\AutomationRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BannersController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\BrandsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\BroadcastsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BusinessHoursController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CannedRepliesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\CustomFieldsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\DripCampaignsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\EmailSettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\InboxesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\MacrosController;
@@ -15,6 +20,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\NotificationSettingsCont
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\PreChatFormsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\RoutingRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlackIntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlaPoliciesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\StatusesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\StatusPageController;
@@ -23,6 +29,8 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\TagsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\TeamController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\ViewsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\WebhooksController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\WhatsAppTemplatesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\WorkflowsController;
 use Modules\Helpdesk\Http\Controllers\Managers\SocialIntegrationsController;
 
 // Notification Settings
@@ -296,6 +304,86 @@ Route::prefix('companies')->name('companies.')->group(function () {
     Route::get('{company}/edit', [CompaniesController::class, 'edit'])->name('edit');
     Route::put('{company}', [CompaniesController::class, 'update'])->name('update');
     Route::delete('{company}', [CompaniesController::class, 'destroy'])->name('destroy');
+});
+
+// Workflows
+Route::prefix('workflows')->name('workflows.')->group(function () {
+    Route::get('/', [WorkflowsController::class, 'index'])->name('index');
+    Route::get('create', [WorkflowsController::class, 'create'])->name('create');
+    Route::post('/', [WorkflowsController::class, 'store'])->name('store');
+    Route::get('{workflow}/edit', [WorkflowsController::class, 'edit'])->name('edit');
+    Route::put('{workflow}', [WorkflowsController::class, 'update'])->name('update');
+    Route::delete('{workflow}', [WorkflowsController::class, 'destroy'])->name('destroy');
+    Route::post('{workflow}/toggle', [WorkflowsController::class, 'toggle'])->name('toggle');
+});
+
+// AI Agents
+Route::prefix('ai-agents')->name('ai-agents.')->group(function () {
+    Route::get('/', [AiAgentsController::class, 'index'])->name('index');
+    Route::get('create', [AiAgentsController::class, 'create'])->name('create');
+    Route::post('/', [AiAgentsController::class, 'store'])->name('store');
+    Route::get('{aiAgent}/edit', [AiAgentsController::class, 'edit'])->name('edit');
+    Route::put('{aiAgent}', [AiAgentsController::class, 'update'])->name('update');
+    Route::delete('{aiAgent}', [AiAgentsController::class, 'destroy'])->name('destroy');
+    Route::post('{aiAgent}/toggle', [AiAgentsController::class, 'toggle'])->name('toggle');
+});
+
+// Drip Campaigns
+Route::prefix('drip-campaigns')->name('drip-campaigns.')->group(function () {
+    Route::get('/', [DripCampaignsController::class, 'index'])->name('index');
+    Route::get('create', [DripCampaignsController::class, 'create'])->name('create');
+    Route::post('/', [DripCampaignsController::class, 'store'])->name('store');
+    Route::get('{dripCampaign}/edit', [DripCampaignsController::class, 'edit'])->name('edit');
+    Route::put('{dripCampaign}', [DripCampaignsController::class, 'update'])->name('update');
+    Route::delete('{dripCampaign}', [DripCampaignsController::class, 'destroy'])->name('destroy');
+    Route::post('{dripCampaign}/toggle', [DripCampaignsController::class, 'toggle'])->name('toggle');
+});
+
+// Broadcasts
+Route::prefix('broadcasts')->name('broadcasts.')->group(function () {
+    Route::get('/', [BroadcastsController::class, 'index'])->name('index');
+    Route::get('create', [BroadcastsController::class, 'create'])->name('create');
+    Route::post('/', [BroadcastsController::class, 'store'])->name('store');
+    Route::get('{broadcast}', [BroadcastsController::class, 'show'])->name('show');
+    Route::delete('{broadcast}', [BroadcastsController::class, 'destroy'])->name('destroy');
+});
+
+// Brands
+Route::prefix('brands')->name('brands.')->group(function () {
+    Route::get('/', [BrandsController::class, 'index'])->name('index');
+    Route::get('create', [BrandsController::class, 'create'])->name('create');
+    Route::post('/', [BrandsController::class, 'store'])->name('store');
+    Route::get('{brand}/edit', [BrandsController::class, 'edit'])->name('edit');
+    Route::put('{brand}', [BrandsController::class, 'update'])->name('update');
+    Route::delete('{brand}', [BrandsController::class, 'destroy'])->name('destroy');
+    Route::post('{brand}/toggle', [BrandsController::class, 'toggle'])->name('toggle');
+});
+
+// WhatsApp Templates
+Route::prefix('whatsapp-templates')->name('whatsapp-templates.')->group(function () {
+    Route::get('/', [WhatsAppTemplatesController::class, 'index'])->name('index');
+    Route::post('sync', [WhatsAppTemplatesController::class, 'sync'])->name('sync');
+});
+
+// Custom Fields
+Route::prefix('custom-fields')->name('custom-fields.')->group(function () {
+    Route::get('/', [CustomFieldsController::class, 'index'])->name('index');
+    Route::get('create', [CustomFieldsController::class, 'create'])->name('create');
+    Route::post('/', [CustomFieldsController::class, 'store'])->name('store');
+    Route::get('{customField}/edit', [CustomFieldsController::class, 'edit'])->name('edit');
+    Route::put('{customField}', [CustomFieldsController::class, 'update'])->name('update');
+    Route::delete('{customField}', [CustomFieldsController::class, 'destroy'])->name('destroy');
+});
+
+// Slack Integrations
+Route::prefix('slack-integrations')->name('slack-integrations.')->group(function () {
+    Route::get('/', [SlackIntegrationsController::class, 'index'])->name('index');
+    Route::get('create', [SlackIntegrationsController::class, 'create'])->name('create');
+    Route::post('/', [SlackIntegrationsController::class, 'store'])->name('store');
+    Route::get('{slackIntegration}/edit', [SlackIntegrationsController::class, 'edit'])->name('edit');
+    Route::put('{slackIntegration}', [SlackIntegrationsController::class, 'update'])->name('update');
+    Route::delete('{slackIntegration}', [SlackIntegrationsController::class, 'destroy'])->name('destroy');
+    Route::post('{slackIntegration}/toggle', [SlackIntegrationsController::class, 'toggle'])->name('toggle');
 });
 
 // Audit log viewer (también accesible desde /panel/helpdesk/audit)
