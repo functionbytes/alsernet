@@ -275,6 +275,10 @@
                         </span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-light btn-sm" onclick="openMergeModal()">
+                            <i class="fas fa-code-merge"></i>
+                            <span class="d-none d-md-inline ms-1">Fusionar</span>
+                        </button>
                         <button type="button" class="btn btn-light btn-sm" onclick="openSnoozeModal()">
                             <i class="far fa-clock"></i>
                             <span class="d-none d-md-inline ms-1">Posponer</span>
@@ -871,6 +875,34 @@
             </div>
         </div>
     </div>
+
+    {{-- Merge Conversation Modal --}}
+    <div class="hd-overlay" id="hdMergeOverlay">
+        <div class="hd-modal w-md">
+            <div class="modal-head">
+                <div class="modal-icon"><i class="fa-solid fa-code-merge"></i></div>
+                <div class="modal-title-wrap">
+                    <span class="modal-label">HELPDESK · CONVERSACIÓN</span>
+                    <span class="modal-title">Fusionar con otra conversación</span>
+                </div>
+                <button class="modal-close" onclick="closeMergeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Selecciona la conversación destino. Los mensajes de esta conversación se moverán allí y esta se eliminará.</p>
+                <div id="hdMergeCandidatesList">
+                    <div class="text-center py-4 text-muted small">Cargando conversaciones del mismo contacto…</div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-ghost btn-sm" onclick="closeMergeModal()">Cancelar</button>
+                <div class="ml"></div>
+                <button class="btn btn-primary btn-sm" id="hdMergeConfirmBtn" onclick="hdMergeConfirm()" disabled>
+                    <i class="fa-solid fa-code-merge"></i> Fusionar
+                </button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('css')
@@ -1221,6 +1253,11 @@
     .hd-modal .btn.btn-ghost:hover { background:#f3f4f6; }
     .hd-modal .btn.btn-primary { background:#b10100; color:#fff; }
     .hd-modal .btn.btn-primary:hover { background:#8f0000; }
+
+    /* Merge Candidates */
+    .hd-merge-candidate { cursor: pointer; transition: border-color 0.15s; }
+    .hd-merge-candidate:hover { border-color: #b10100 !important; }
+    .hd-merge-candidate.border-primary { border-color: #b10100 !important; background: #fff5f5; }
 </style>
 
 <script>
@@ -1471,7 +1508,82 @@ document.addEventListener('keydown', function(e) {
     if (e.key !== 'Escape') return;
     if (document.getElementById('hdCannedOverlay').classList.contains('open')) { closeCannedModal(); return; }
     if (document.getElementById('hdSnoozeOverlay').classList.contains('open')) { closeSnoozeModal(); return; }
+    if (document.getElementById('hdMergeOverlay').classList.contains('visible')) { closeMergeModal(); return; }
 });
+
+// === Merge Conversation ===
+let hdMergeSelectedId = null;
+const hdMergeCandidatesUrl = '{{ route('manager.helpdesk.conversations.merge-candidates', $conversation) }}';
+const hdMergeUrl = '{{ route('manager.helpdesk.conversations.merge', $conversation) }}';
+
+function openMergeModal() {
+    hdMergeSelectedId = null;
+    document.getElementById('hdMergeConfirmBtn').disabled = true;
+    document.getElementById('hdMergeOverlay').classList.add('visible');
+    hdLoadMergeCandidates();
+}
+
+function closeMergeModal() {
+    document.getElementById('hdMergeOverlay').classList.remove('visible');
+}
+
+function hdLoadMergeCandidates() {
+    const list = document.getElementById('hdMergeCandidatesList');
+    list.innerHTML = '<div class="text-center py-4 text-muted small">Cargando…</div>';
+    $.get(hdMergeCandidatesUrl, function(res) {
+        if (!res.data || res.data.length === 0) {
+            list.innerHTML = '<div class="text-center py-4 text-muted small">No hay otras conversaciones para este contacto.</div>';
+            return;
+        }
+        list.innerHTML = res.data.map(function(c) {
+            return '<div class="hd-merge-candidate p-3 rounded mb-2 border" data-id="' + c.id + '" onclick="hdMergeSelect(' + c.id + ', this)">' +
+                '<div class="d-flex justify-content-between align-items-start">' +
+                    '<strong class="small">#' + c.id + ' — ' + escapeHtml(c.subject) + '</strong>' +
+                    '<span class="badge bg-secondary-subtle text-secondary ms-2">' + escapeHtml(c.status || '') + '</span>' +
+                '</div>' +
+                '<div class="text-muted small mt-1">' + escapeHtml(c.preview || '') + '</div>' +
+                '<div class="text-muted small mt-1"><i class="fas fa-clock me-1"></i>' + escapeHtml(c.time || '') + '</div>' +
+            '</div>';
+        }).join('');
+    }).fail(function() {
+        list.innerHTML = '<div class="text-center py-4 text-danger small">Error al cargar conversaciones.</div>';
+    });
+}
+
+function hdMergeSelect(id, el) {
+    document.querySelectorAll('.hd-merge-candidate').forEach(function(e) {
+        e.classList.remove('border-primary');
+    });
+    el.classList.add('border-primary');
+    hdMergeSelectedId = id;
+    document.getElementById('hdMergeConfirmBtn').disabled = false;
+}
+
+function hdMergeConfirm() {
+    if (!hdMergeSelectedId) { return; }
+    if (!confirm('¿Confirmas la fusión? Esta conversación se eliminará y sus mensajes pasarán a la conversación #' + hdMergeSelectedId + '.')) { return; }
+    $.ajax({
+        url: hdMergeUrl,
+        method: 'POST',
+        data: { target_id: hdMergeSelectedId, _token: $('meta[name="csrf-token"]').attr('content') },
+        success: function(res) {
+            if (res.success) {
+                window.location.href = '/panel/helpdesk/conversations/' + res.target_id;
+            } else {
+                toastr.error(res.message || 'Error al fusionar');
+            }
+        },
+        error: function(xhr) {
+            toastr.error((xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Error al fusionar');
+        }
+    });
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+}
 </script>
 @endpush
 

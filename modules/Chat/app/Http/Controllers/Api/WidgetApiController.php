@@ -18,6 +18,7 @@ use Modules\Chat\Models\Customers\Customer;
 use Modules\Chat\Models\Customers\CustomerInbox;
 use Modules\Chat\Services\AgentPresenceService;
 use Modules\Chat\Services\Customers\CustomerLookupService;
+use Modules\Helpdesk\Models\AgentSettings;
 
 class WidgetApiController extends Controller
 {
@@ -113,7 +114,7 @@ class WidgetApiController extends Controller
             }
 
             // Verify customer ownership - customer must own the conversation
-            if ($conversation->customer_id !== $request->validated('customer_id')) {
+            if ((int) $conversation->customer_id !== (int) $request->input('customer_id')) {
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
@@ -191,7 +192,7 @@ class WidgetApiController extends Controller
             }
 
             // Verify customer ownership - customer must own the conversation
-            if ($conversation->customer_id !== $request->validated('customer_id')) {
+            if ((int) $conversation->customer_id !== (int) $request->input('customer_id')) {
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
@@ -252,12 +253,14 @@ class WidgetApiController extends Controller
                 $isWithinBusinessHours = $this->isWithinBusinessHours($inbox->business_hours ?? []);
             }
 
-            // Check if any agents are actually online
+            // Check if any agents are currently available by schedule
+            $scheduleAvailable = $this->hasAnyScheduleAvailableAgent($webWidget->account_id);
+
+            // Check physical presence (online via heartbeat)
             $presenceService = new AgentPresenceService;
-            $agentsOnline = $presenceService->hasAvailableAgents($webWidget->account_id);
             $onlineCount = $presenceService->getAvailableAgentsCount($webWidget->account_id);
 
-            $available = $isWithinBusinessHours && $agentsOnline;
+            $available = $isWithinBusinessHours && $scheduleAvailable;
 
             $message = $available
                 ? ($inbox->greeting_message ?? 'We\'re online and ready to help!')
@@ -300,5 +303,17 @@ class WidgetApiController extends Controller
         $dayHours = $businessHours[$dayOfWeek];
 
         return $currentTime >= $dayHours['start'] && $currentTime <= $dayHours['end'];
+    }
+
+    /**
+     * Return true if at least one agent is accepting conversations right now
+     * based on their configured schedule (accepts_conversations field).
+     */
+    protected function hasAnyScheduleAvailableAgent(int $accountId): bool
+    {
+        return AgentSettings::query()
+            ->whereHas('user', fn ($q) => $q->where('account_id', $accountId)->whereNull('deleted_at'))
+            ->get()
+            ->contains(fn (AgentSettings $s) => $s->acceptsConversationsNow());
     }
 }

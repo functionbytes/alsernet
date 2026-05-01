@@ -2,11 +2,11 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\UpdateAgentSettingsRequest;
 use Modules\Helpdesk\Models\AgentSettings;
@@ -20,9 +20,9 @@ class AgentsController extends Controller
     {
         $this->authorize('helpdesk.manage');
 
-        $agents = User::role('helpdesk-agent')
+        $agents = User::role(['administrative', 'manager', 'settings', 'super-settings'])
             ->select(['id', 'firstname', 'lastname', 'email'])
-            ->with('agentSettings')
+            ->with(['agentSettings', 'roles:id,name'])
             ->orderBy('firstname')
             ->paginate(20);
 
@@ -210,11 +210,39 @@ class AgentsController extends Controller
     {
         $validated = $request->validated();
 
+        $validated['working_hours'] = $this->buildWorkingHours($validated);
+
+        if (empty($validated['vacation_until'])) {
+            $validated['vacation_until'] = null;
+        }
+
         $agent->agentSettings()->updateOrCreate(
             ['user_id' => $agent->id],
             $validated
         );
 
         return back()->with('success', 'Configuración del agente actualizada.');
+    }
+
+    private function buildWorkingHours(array $validated): ?array
+    {
+        if ($validated['accepts_conversations'] !== 'working_hours') {
+            return null;
+        }
+
+        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $input = $validated['working_hours'] ?? [];
+        $hours = [];
+
+        foreach ($days as $day) {
+            $day_data = $input[$day] ?? [];
+            $hours[$day] = [
+                'enabled' => (bool) ($day_data['enabled'] ?? false),
+                'start' => $day_data['start'] ?? '09:00',
+                'end' => $day_data['end'] ?? '18:00',
+            ];
+        }
+
+        return $hours;
     }
 }

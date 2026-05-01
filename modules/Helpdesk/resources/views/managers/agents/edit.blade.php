@@ -64,6 +64,59 @@
                             </div>
                         </div>
 
+                        {{-- Schedule block: visible only when accepts_conversations = working_hours --}}
+                        @php
+                            $wh = $agentSettings->working_hours ?? null;
+                            $days = [
+                                'monday'    => ['label' => 'Lunes',      'default_enabled' => true],
+                                'tuesday'   => ['label' => 'Martes',     'default_enabled' => true],
+                                'wednesday' => ['label' => 'Miércoles',  'default_enabled' => true],
+                                'thursday'  => ['label' => 'Jueves',     'default_enabled' => true],
+                                'friday'    => ['label' => 'Viernes',    'default_enabled' => true],
+                                'saturday'  => ['label' => 'Sábado',     'default_enabled' => false],
+                                'sunday'    => ['label' => 'Domingo',    'default_enabled' => false],
+                            ];
+                        @endphp
+
+                        <div id="schedule-block" class="mb-4" style="display:none">
+                            <label class="form-label fw-semibold">Horario semanal</label>
+                            <p class="text-muted small mb-3">Define los días y horas en que el agente acepta conversaciones</p>
+
+                            @foreach ($days as $key => $day)
+                                @php
+                                    $enabled = $wh[$key]['enabled'] ?? $day['default_enabled'];
+                                    $start   = $wh[$key]['start']   ?? '09:00';
+                                    $end     = $wh[$key]['end']     ?? '18:00';
+                                @endphp
+                                <div class="row g-2 align-items-center mb-2 border-bottom pb-2">
+                                    <div class="col-md-3 d-flex align-items-center gap-2">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input day-toggle" type="checkbox"
+                                                   name="working_hours[{{ $key }}][enabled]" value="1"
+                                                   id="wh_{{ $key }}_enabled"
+                                                   {{ $enabled ? 'checked' : '' }}>
+                                        </div>
+                                        <label class="form-check-label fw-semibold" for="wh_{{ $key }}_enabled">
+                                            {{ $day['label'] }}
+                                        </label>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="time" class="form-control form-control-sm day-time"
+                                               name="working_hours[{{ $key }}][start]"
+                                               value="{{ $start }}"
+                                               {{ ! $enabled ? 'disabled' : '' }}>
+                                    </div>
+                                    <div class="col-auto d-flex align-items-center text-muted">a</div>
+                                    <div class="col-md-4">
+                                        <input type="time" class="form-control form-control-sm day-time"
+                                               name="working_hours[{{ $key }}][end]"
+                                               value="{{ $end }}"
+                                               {{ ! $enabled ? 'disabled' : '' }}>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
                         {{-- Max concurrent conversations --}}
                         <div class="mb-4">
                             <label for="max_concurrent_conversations" class="form-label fw-semibold">
@@ -79,6 +132,28 @@
                             <div class="form-text text-muted">
                                 Número máximo de conversaciones abiertas asignadas a este agente al mismo tiempo.
                             </div>
+                        </div>
+
+                        {{-- Vacation mode --}}
+                        <div class="mb-4">
+                            <label for="vacation_until" class="form-label fw-semibold">
+                                Modo vacaciones
+                            </label>
+                            <input type="datetime-local" name="vacation_until" id="vacation_until"
+                                   class="form-control @error('vacation_until') is-invalid @enderror"
+                                   value="{{ old('vacation_until', $agentSettings->vacation_until ? $agentSettings->vacation_until->format('Y-m-d\TH:i') : '') }}">
+                            @error('vacation_until')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text text-muted">
+                                El agente no recibirá nuevas conversaciones hasta esta fecha y hora. Deja en blanco para desactivar.
+                            </div>
+                            @if($agentSettings->isOnVacation())
+                                <div class="alert alert-warning mt-2 py-2">
+                                    <i class="fas fa-umbrella-beach me-1"></i>
+                                    El agente está actualmente en modo vacaciones hasta {{ $agentSettings->vacation_until->format('d/m/Y H:i') }}.
+                                </div>
+                            @endif
                         </div>
 
                         <div class="d-flex gap-2">
@@ -97,3 +172,28 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+$(function () {
+    const $sel   = $('#accepts_conversations');
+    const $block = $('#schedule-block');
+
+    function toggleSchedule() {
+        $block.toggle($sel.val() === 'working_hours');
+    }
+
+    function toggleDayInputs($row, enabled) {
+        $row.find('.day-time').prop('disabled', !enabled);
+    }
+
+    // Bind day toggle switches
+    $(document).on('change', '.day-toggle', function () {
+        toggleDayInputs($(this).closest('.row'), this.checked);
+    });
+
+    toggleSchedule();
+    $sel.on('change', toggleSchedule);
+});
+</script>
+@endpush

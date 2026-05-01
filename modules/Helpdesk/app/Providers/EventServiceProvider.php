@@ -11,12 +11,14 @@ use Modules\Helpdesk\Events\ConversationStatusChanged;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MentionDetected;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Events\SlaBreached;
 use Modules\Helpdesk\Listeners\AnalyzeSentimentOnIncoming;
 use Modules\Helpdesk\Listeners\AutoTagFirstMessage;
 use Modules\Helpdesk\Listeners\BroadcastConversationMessage;
 use Modules\Helpdesk\Listeners\DispatchConversationWebhooks;
 use Modules\Helpdesk\Listeners\LogConversationCreated;
 use Modules\Helpdesk\Listeners\LogConversationUpdated;
+use Modules\Helpdesk\Listeners\NotifySlackOnSlaBreached;
 use Modules\Helpdesk\Listeners\SendConversationAssignedNotification;
 use Modules\Helpdesk\Listeners\SendEscalationNotification;
 use Modules\Helpdesk\Listeners\SendMentionNotification;
@@ -55,6 +57,9 @@ class EventServiceProvider extends ServiceProvider
         ConversationUpdated::class => [
             LogConversationUpdated::class,
             DispatchConversationWebhooks::class,
+        ],
+        SlaBreached::class => [
+            NotifySlackOnSlaBreached::class,
         ],
     ];
 }

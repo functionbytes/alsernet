@@ -638,10 +638,12 @@ class ConversationsController extends Controller
 
         $conversation->load(['customer', 'status', 'assignee']);
         $statuses = ConversationStatus::orderBy('order')->get();
+        $agents = User::select(['id', 'firstname', 'lastname', 'email'])->orderBy('firstname')->get();
 
         return view('helpdesk::managers.conversations.edit', [
             'conversation' => $conversation,
             'statuses' => $statuses,
+            'agents' => $agents,
         ]);
     }
 
