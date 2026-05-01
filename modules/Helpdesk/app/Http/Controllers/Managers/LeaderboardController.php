@@ -32,7 +32,7 @@ class LeaderboardController extends Controller
                 DB::raw("CONCAT(u.firstname, ' ', u.lastname) as name"),
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CASE WHEN c.status_id IN (SELECT id FROM helpdesk_conversation_statuses WHERE is_open = 0) THEN 1 ELSE 0 END) as resolved'),
-                DB::raw('AVG(TIMESTAMPDIFF(MINUTE, c.created_at, c.resolved_at)) as avg_resolution_minutes'),
+                DB::raw('AVG(TIMESTAMPDIFF(MINUTE, c.created_at, c.closed_at)) as avg_resolution_minutes'),
             )
             ->groupBy('u.id', 'u.firstname', 'u.lastname')
             ->orderByDesc('resolved')

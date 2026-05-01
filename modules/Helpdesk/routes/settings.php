@@ -11,6 +11,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\BrandsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BroadcastsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BusinessHoursController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CannedRepliesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\CompaniesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CustomFieldsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\DripCampaignsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\EmailSettingsController;
@@ -20,6 +21,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\NotificationSettingsCont
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\PreChatFormsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\RoutingRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\SkillsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlackIntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SlaPoliciesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\StatusesController;
