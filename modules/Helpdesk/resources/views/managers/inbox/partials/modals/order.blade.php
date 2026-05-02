@@ -1,169 +1,113 @@
 {{-- Modal: Detalle de pedido --}}
 <div class="bv-modal" data-bv-modal-name="order">
-    <div class="bv-modal-dialog lg">
-        <div class="bv-modal-head">
-            <div class="bv-modal-title">
-                <i class="fas fa-box bv-modal-title-icon"></i>
-                Pedido #1234
-                <span class="bv-modal-title-badge bv-modal-title-badge-success">Entregado</span>
+    <div class="bv-modal-dialog lg" style="max-width: 820px;">
+        <div class="modal-head">
+            <div class="t">
+                <i class="fa-solid fa-box"></i>
+                <span id="bv-order-modal-ref">Pedido #—</span>
             </div>
-            <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
+            <button class="x" data-bv-close><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="bv-modal-body">
-
-            {{-- Timeline horizontal --}}
-            <div class="bv-htl-wrap">
-                <div class="bv-htl-track">
-                    {{-- Progress line --}}
-                    <div class="bv-htl-line">
-                        <div class="bv-htl-fill"></div>
-                    </div>
-
-                    @foreach([
-                        ['Creado', '15 abr 10:23'],
-                        ['Pagado', '15 abr 10:25'],
-                        ['Preparando', '15 abr 14:12'],
-                        ['Enviado', '16 abr 09:00'],
-                        ['Entregado', '17 abr 11:45'],
-                    ] as $step)
-                    <div class="bv-htl-step">
-                        <div class="bv-htl-dot">
-                            <i class="fas fa-check bv-htl-check"></i>
-                        </div>
-                        <div class="bv-htl-step-text">
-                            <div class="bv-htl-step-name">{{ $step[0] }}</div>
-                            <div class="bv-htl-step-date">{{ $step[1] }}</div>
-                        </div>
-                    </div>
-                    @endforeach
+        <div class="modal-body">
+            <div class="mv4-order-head">
+                <div>
+                    <div class="mv4-order-num" id="bv-order-modal-title">Pedido #—</div>
+                    <div class="mv4-order-sub" id="bv-order-modal-sub">— · —</div>
+                </div>
+                <div class="mv4-order-status">
+                    <span class="dot" id="bv-order-modal-status-dot" style="background: var(--info);"></span>
+                    <span id="bv-order-modal-status">—</span>
                 </div>
             </div>
-
-            {{-- Grid: products + side --}}
-            <div class="bv-order-grid">
-
-                {{-- Left --}}
+            <div class="mv4-order-grid">
                 <div>
-                    {{-- Products --}}
-                    <div class="bv-right-section-title bv-rst-mb8">Productos</div>
-                    <div class="bv-product-list">
-                        <div class="bv-product-item">
-                            <div class="bv-product-thumb">
-                                <i class="fas fa-shoe-prints bv-product-icon"></i>
+                    {{-- Productos --}}
+                    <div class="mv4-section">
+                        <div class="mv4-sec-title">Productos</div>
+                        <div id="bv-order-modal-products">
+                            {{-- Se rellena vía JS --}}
+                        </div>
+                        <div class="mv4-totals">
+                            <div>
+                                <span>Subtotal</span>
+                                <span id="bv-order-modal-subtotal">—</span>
                             </div>
-                            <div class="bv-spacer">
-                                <div class="bv-product-name">Zapatillas Nike Air Max 270</div>
-                                <div class="bv-product-sku">SKU: NK-AM270-42 · Talla 42 · Negro</div>
+                            <div>
+                                <span>Envío</span>
+                                <span>Gratis</span>
                             </div>
-                            <div class="bv-product-qty">×1</div>
-                            <div class="bv-product-price">€89.00</div>
-                        </div>
-                        <div class="bv-product-item">
-                            <div class="bv-product-thumb">
-                                <i class="fas fa-shirt bv-product-icon"></i>
+                            <div>
+                                <span>IVA (21%)</span>
+                                <span id="bv-order-modal-tax">—</span>
                             </div>
-                            <div class="bv-spacer">
-                                <div class="bv-product-name">Calcetines deportivos (pack 3)</div>
-                                <div class="bv-product-sku">SKU: CALC-DEP-3 · Talla M</div>
+                            <div class="grand">
+                                <span>Total</span>
+                                <span id="bv-order-modal-total">—</span>
                             </div>
-                            <div class="bv-product-qty">×1</div>
-                            <div class="bv-product-price">€12.90</div>
-                        </div>
-                    </div>
-
-                    {{-- Totals --}}
-                    <div class="bv-order-totals">
-                        <div class="bv-total-row">
-                            <span>Subtotal</span><span>€101.90</span>
-                        </div>
-                        <div class="bv-total-row">
-                            <span>IVA (21%)</span><span>€21.40</span>
-                        </div>
-                        <div class="bv-total-row">
-                            <span>Envío</span><span class="bv-shipping-free">Gratis</span>
-                        </div>
-                        <div class="bv-total-row-final">
-                            <span>Total</span><span>€123.30</span>
                         </div>
                     </div>
 
                     {{-- Tracking --}}
-                    <div class="bv-right-section-title bv-rst-mt16-mb8">Número de seguimiento</div>
-                    <div class="bv-tracking-row">
-                        <i class="fas fa-truck bv-icon-muted"></i>
-                        <span class="bv-tracking-text">Nacex · <strong>ES1234-NC</strong></span>
-                        <button type="button" class="bv-btn-ghost-sm bv-ml-auto">
-                            <i class="far fa-copy"></i> Copiar
-                        </button>
-                        <a href="#" class="bv-link-accent">
-                            <i class="fas fa-arrow-up-right-from-square bv-icon-xs"></i> Rastrear
-                        </a>
+                    <div class="mv4-section">
+                        <div class="mv4-sec-title">Tracking</div>
+                        <div class="mv4-track-id">
+                            <i class="fa-solid fa-truck"></i>
+                            <span>Nacex · <b>ES0000-NC</b></span>
+                            <button class="btn ghost sm"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                        <div class="mv4-track">
+                            <div class="mv4-track-step done"><span class="bullet"></span><div><b>Pedido recibido</b><span>—</span></div></div>
+                            <div class="mv4-track-step done"><span class="bullet"></span><div><b>Pago confirmado</b><span>—</span></div></div>
+                            <div class="mv4-track-step done"><span class="bullet"></span><div><b>Preparando</b><span>—</span></div></div>
+                            <div class="mv4-track-step done current"><span class="bullet"></span><div><b>Enviado</b><span>—</span></div></div>
+                            <div class="mv4-track-step"><span class="bullet"></span><div><b>En reparto</b><span>pendiente</span></div></div>
+                            <div class="mv4-track-step"><span class="bullet"></span><div><b>Entregado</b><span>pendiente</span></div></div>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Right sidebar --}}
-                <aside>
-                    <div class="bv-flex-col-14">
-
-                        {{-- Customer --}}
-                        <div>
-                            <div class="bv-field-label-mb6">Cliente</div>
-                            <div class="bv-flex-row">
-                                <div class="bv-av c1">CP</div>
-                                <div>
-                                    <div class="bv-aside-name">Carmen Pérez</div>
-                                    <div class="bv-payment-sub">carmen@email.com</div>
-                                </div>
+                <aside class="mv4-order-side">
+                    <div class="mv4-side-block">
+                        <div class="lbl">Cliente</div>
+                        <div class="mv4-cust">
+                            <div class="av c1" id="bv-order-modal-avatar">??</div>
+                            <div>
+                                <b id="bv-order-modal-cust-name">—</b>
+                                <span id="bv-order-modal-cust-email">—</span>
                             </div>
                         </div>
-
-                        {{-- Payment --}}
-                        <div>
-                            <div class="bv-field-label-mb6">Pago</div>
-                            <div class="bv-flex-row">
-                                <i class="fab fa-cc-visa bv-icon-visa"></i>
-                                <div>
-                                    <div class="bv-payment-name">Visa ••4242</div>
-                                    <div class="bv-payment-sub">Pagado · 15 abr</div>
-                                </div>
+                    </div>
+                    <div class="mv4-side-block">
+                        <div class="lbl">Pago</div>
+                        <div class="mv4-pay">
+                            <i class="fa-brands fa-cc-visa" style="font-size: 18px; color: rgb(26, 31, 113);"></i>
+                            <div>
+                                <b>Visa ••4242</b>
+                                <span>Pagado · —</span>
                             </div>
                         </div>
-
-                        {{-- Shipping address --}}
-                        <div>
-                            <div class="bv-field-label-mb6">Dirección de envío</div>
-                            <div class="bv-shipping-address">
-                                Calle Mayor 42, 3ºB<br>
-                                28013 Madrid · España
-                            </div>
-                        </div>
-
-                        {{-- Quick actions --}}
-                        <div>
-                            <div class="bv-field-label-mb6">Acciones</div>
-                            <div class="bv-order-actions">
-                                <button type="button" class="bv-order-action-btn">
-                                    <i class="far fa-envelope bv-icon-w14"></i> Reenviar confirmación
-                                </button>
-                                <button type="button" class="bv-order-action-btn">
-                                    <i class="fas fa-receipt bv-icon-w14"></i> Descargar factura
-                                </button>
-                                <button type="button" class="bv-order-action-btn-danger">
-                                    <i class="fas fa-rotate-left bv-icon-w14"></i> Solicitar reembolso
-                                </button>
-                            </div>
-                        </div>
-
+                    </div>
+                    <div class="mv4-side-block">
+                        <div class="lbl">Envío</div>
+                        <div class="mv4-addr">—</div>
+                    </div>
+                    <div class="mv4-side-block">
+                        <div class="lbl">Acciones rápidas</div>
+                        <button class="mv4-quick"><i class="fa-regular fa-envelope"></i>Reenviar confirmación</button>
+                        <button class="mv4-quick"><i class="fa-solid fa-receipt"></i>Descargar factura</button>
+                        <button class="mv4-quick"><i class="fa-solid fa-headset"></i>Crear ticket de soporte</button>
                     </div>
                 </aside>
-
             </div>
-
         </div>
-        <div class="bv-modal-foot">
-            <button class="btn-primary">Seguir envío</button>
-            <button class="btn-secondary">Solicitar devolución</button>
-            <button class="btn-secondary">Descargar factura</button>
+        <div class="modal-foot">
+            <button class="btn"><i class="fa-solid fa-print"></i>Imprimir</button>
+            <button class="btn"><i class="fa-solid fa-rotate-left"></i>Reembolso</button>
+            <span style="flex: 1 1 0%;"></span>
+            <button class="btn" data-bv-close>Cerrar</button>
+            <a href="#" target="_blank" rel="noopener" class="btn primary" id="bv-order-modal-external-link" style="display:none;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>Abrir en tienda
+            </a>
         </div>
     </div>
 </div>

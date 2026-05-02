@@ -4517,6 +4517,228 @@
 
     });
 
+    // ─── Order detail modal (rp3-order click → populate mv4-modal) ───────────
+    $(document).on('click', '.rp3-order[data-bv-modal="order"]', function () {
+        const $el = $(this).closest('.rp3-order[data-bv-modal="order"]');
+        const ref = $el.data('order-ref') || '—';
+        const status = $el.data('order-status') || '—';
+        const statusColor = $el.data('order-status-color') || 'var(--info)';
+        const date = $el.data('order-date') || '—';
+        const total = $el.data('order-total') || '—';
+        const productsJson = $el.attr('data-order-products');
+        let products = [];
+        try { products = JSON.parse(productsJson); } catch (e) { }
+        const url = $el.data('order-url') || '';
+        const platform = $el.data('order-platform') || '';
+
+        $('#bv-order-modal-ref').text('Pedido ' + ref);
+        $('#bv-order-modal-title').text('Pedido ' + ref);
+        $('#bv-order-modal-sub').text(date + ' · ' + (products.length || 1) + ' producto' + (products.length === 1 ? '' : 's') + ' · ' + total + ' €');
+        $('#bv-order-modal-status').text(status);
+        $('#bv-order-modal-status-dot').css('background', statusColor);
+        $('#bv-order-modal-total').text(total + ' €');
+
+        var subtotal = 0;
+        products.forEach(function (p) {
+            subtotal += (parseFloat(p.price) || 0) * (parseInt(p.qty) || 1);
+        });
+        var tax = subtotal * 0.21;
+        $('#bv-order-modal-subtotal').text(subtotal.toFixed(2).replace('.', ',') + ' €');
+        $('#bv-order-modal-tax').text(tax.toFixed(2).replace('.', ',') + ' €');
+
+        var productsHtml = '';
+        if (products.length === 0) {
+            productsHtml = '<div class="mv4-product"><div class="body"><b>Sin productos</b></div></div>';
+        } else {
+            products.forEach(function (p) {
+                var price = (parseFloat(p.price) || 0).toFixed(2).replace('.', ',');
+                productsHtml +=
+                    '<div class="mv4-product">' +
+                        '<div class="thumb"><i class="fa-solid fa-box"></i></div>' +
+                        '<div class="body"><b>' + escapeHtml(p.name || 'Producto') + '</b></div>' +
+                        '<div class="qty">×' + (parseInt(p.qty) || 1) + '</div>' +
+                        '<div class="price">' + price + ' €</div>' +
+                    '</div>';
+            });
+        }
+        $('#bv-order-modal-products').html(productsHtml);
+
+        var custName = $('.bv-right-name').first().text() || '—';
+        var custEmail = $('.bv-right-row .val.bv-right-val-sm').first().text() || '—';
+        var initials = $('.bv-right-avatar').first().text() || '??';
+        $('#bv-order-modal-cust-name').text(custName);
+        $('#bv-order-modal-cust-email').text(custEmail);
+        $('#bv-order-modal-avatar').text(initials);
+
+        var $link = $('#bv-order-modal-external-link');
+        if (url) {
+            $link.attr('href', url).show();
+            if (platform === 'prestashop') {
+                $link.html('<i class="fa-solid fa-arrow-up-right-from-square"></i>Abrir en PrestaShop');
+            } else if (platform === 'shopify') {
+                $link.html('<i class="fa-solid fa-arrow-up-right-from-square"></i>Abrir en Shopify');
+            } else {
+                $link.html('<i class="fa-solid fa-arrow-up-right-from-square"></i>Abrir en tienda');
+            }
+        } else {
+            $link.hide();
+        }
+    });
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+
+    // Pre-fill create-ticket modal when opened
+    $(document).on('click', '[data-bv-modal="create-ticket"]', function () {
+        var $selected = $('.bv-conv.on');
+        var convId = $selected.data('bv-conv-id') || '';
+        var $messages = $('.bv-msg');
+        var msgCount = $messages.length;
+
+        // Update context
+        $('#bv-ticket-conv-id').text('#' + (convId || '—'));
+        $('#bv-ticket-message-count').text(msgCount);
+
+        // Build description from recent messages (last 5)
+        var descLines = [];
+        $messages.slice(-5).each(function () {
+            var $bubble = $(this).find('.bv-bubble');
+            var author = $bubble.data('bv-author') || '—';
+            var body = $bubble.data('bv-body') || '';
+            if (body) {
+                descLines.push(author + ': ' + body);
+            }
+        });
+        var description = descLines.join('\n');
+        if (description) {
+            $('#bv-ticket-description').val(description);
+        }
+
+        // Pre-fill subject from first customer message if empty
+        var $subjectInput = $('#bv-ticket-subject');
+        if (!$subjectInput.val().trim() && descLines.length > 0) {
+            var firstMsg = descLines[0].replace(/^[^:]+:\s*/, '').substring(0, 80);
+            $subjectInput.val(firstMsg);
+        }
+    });
+
+    // ─── Create Ticket Modal ──────────────────────────────────────────────────
+    $(document).on('click', '#bv-ticket-priority .r-prio-btn', function () {
+        $(this).siblings().removeClass('on');
+        $(this).addClass('on');
+    });
+
+    $(document).on('click', '#bv-btn-create-ticket', function () {
+        var $btn = $(this);
+        var subject = $('#bv-ticket-subject').val().trim();
+        if (!subject) {
+            if (window.toastr) toastr.error('El asunto es obligatorio.');
+            else alert('El asunto es obligatorio.');
+            return;
+        }
+        var priority = $('#bv-ticket-priority .r-prio-btn.on').data('priority') || 'normal';
+        var categoryId = $('#bv-ticket-category').val() || null;
+        var assigneeId = $('#bv-ticket-assignee').val() || null;
+        var description = $('#bv-ticket-description').val().trim();
+        var attachChat = $('#bv-ticket-attach-chat').is(':checked');
+        var notify = $('#bv-ticket-notify').is(':checked');
+
+        var convId = window.selectedConversationId || $('.bv-thread').data('conversation-id');
+        var customerId = $('.bv-right').data('customer-id');
+
+        $btn.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i> Creando...');
+
+        $.ajax({
+            url: '/panel/helpdesk/tickets',
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                subject: subject,
+                description: description,
+                priority: priority,
+                category_id: categoryId,
+                assignee_id: assigneeId,
+                customer_id: customerId || null,
+                source: 'widget',
+                conversation_id: convId || null,
+                attach_chat_transcript: attachChat ? 1 : 0,
+                notify_customer: notify ? 1 : 0,
+            },
+            success: function (res) {
+                if (window.toastr) toastr.success('Ticket creado correctamente.');
+                closeModal($('[data-bv-modal-name="create-ticket"]'));
+                // Refresh the tickets tab if visible
+                if ($('[data-bv-tab-content="tickets"]').is(':visible')) {
+                    location.reload();
+                }
+            },
+            error: function (xhr) {
+                var msg = 'Error al crear el ticket.';
+                if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                if (window.toastr) toastr.error(msg);
+                else alert(msg);
+            },
+            complete: function () {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-ticket"></i> Crear ticket');
+            }
+        });
+    });
+
+    // ─── Ticket detail modal (rp3-ticket click) ───────────────────────────────
+    $(document).on('click', '.rp3-ticket[data-bv-modal="ticket"]', function () {
+        var $el = $(this).closest('.rp3-ticket[data-bv-modal="ticket"]');
+        var ticketId = $el.data('ticket-id');
+        if (!ticketId) return;
+
+        // For now populate from data attributes; in future could fetch via AJAX
+        var title = $el.find('.t').text() || 'Sin título';
+        var subtitle = $el.find('.s').text() || '—';
+        var ticketNum = $el.find('.id').text() || 'T-—';
+
+        $('#bv-ticket-modal-num').text(ticketNum);
+        $('#bv-ticket-modal-title').text(title);
+
+        var parts = subtitle.split('·');
+        var prio = (parts[0] || 'Normal').trim();
+        var status = (parts[1] || 'Abierto').trim();
+        var prioColor = 'var(--info)';
+        if (prio === 'Urgente') prioColor = 'var(--danger)';
+        else if (prio === 'Alta') prioColor = 'var(--warning)';
+        else if (prio === 'Baja') prioColor = 'var(--success)';
+
+        $('#bv-ticket-modal-pills').html(
+            '<span class="mv4-pill"><span class="d" style="background:' + prioColor + ';"></span>' + escapeHtml(prio) + '</span>' +
+            '<span class="mv4-pill"><span class="d" style="background:var(--info);"></span>' + escapeHtml(status) + '</span>' +
+            '<span class="mv4-pill">Soporte</span>'
+        );
+
+        var custName = $('.bv-right-name').first().text() || '—';
+        var custEmail = $('.bv-right-row .val.bv-right-val-sm').first().text() || '—';
+        var initials = $('.bv-right-avatar').first().text() || '??';
+        $('#bv-ticket-modal-cust-name').text(custName);
+        $('#bv-ticket-modal-side-name').text(custName);
+        $('#bv-ticket-modal-side-meta').text(custEmail);
+        $('#bv-ticket-modal-avatar').text(initials);
+
+        var now = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        $('#bv-ticket-modal-convo-meta').text(now + ' · ' + ($('.bv-thread-msg').length || 0) + ' mensajes');
+
+        $('#bv-ticket-modal-desc').text('Descripción no disponible. Edita el ticket para añadir más detalles.');
+        $('#bv-ticket-modal-activity').html(
+            '<div class="mv4-tl-item"><span class="dot success"></span><div><b>Sistema</b> creó el ticket <span class="t">· ' + now + '</span></div></div>'
+        );
+        $('#bv-ticket-modal-related-order').text('—');
+        $('#bv-ticket-modal-assignee').text('Sin asignar');
+        $('#bv-ticket-modal-group').text('—');
+        $('#bv-ticket-modal-created').text(now);
+        $('#bv-ticket-modal-updated').text('hace un momento');
+        $('#bv-ticket-modal-priority').html('<span style="color:' + prioColor + ';">● ' + escapeHtml(prio) + '</span>');
+    });
+
     // ─── Service Worker (PWA) ─────────────────────────────────────────────────
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(function (err) {

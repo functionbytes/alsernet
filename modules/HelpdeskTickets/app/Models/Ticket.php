@@ -35,7 +35,6 @@ class Ticket extends Model
         'sla_policy_id',
         'group_id',
         'assignee_id',
-        'title',
         'subject',
         'description',
         'priority',

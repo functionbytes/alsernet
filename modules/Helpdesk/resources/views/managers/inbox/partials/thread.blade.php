@@ -68,6 +68,9 @@
             <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Email">
                 <i class="far fa-envelope"></i>
             </button>
+            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket">
+                <i class="fas fa-ticket"></i>
+            </button>
             <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar">
                 <i class="far fa-calendar-plus"></i>
             </button>

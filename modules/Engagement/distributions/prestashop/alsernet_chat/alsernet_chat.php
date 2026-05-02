@@ -196,6 +196,7 @@ class Alsernet_chat extends Module
         $apiUrl = rtrim($apiUrl, '/');
         $tokenJs = json_encode($token);
         $apiUrlJs = json_encode($apiUrl);
+        $identityJson = $this->getCustomerIdentityJson();
 
         return <<<HTML
 <!-- Alsernet Engagement SDK -->
@@ -211,7 +212,7 @@ window.chat('init', { token: {$tokenJs}, apiUrl: {$apiUrlJs}, consent: true });
 
 <!-- Alsernet Live Chat widget -->
 <script>
-(function(w, d, apiUrl, token) {
+(function(w, d, apiUrl, token, identity) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', apiUrl + '/widget/helpdesk/config/' + token, true);
     xhr.onload = function() {
@@ -235,17 +236,22 @@ window.chat('init', { token: {$tokenJs}, apiUrl: {$apiUrlJs}, consent: true });
         // (nginx static serves /build-* without CORS, blocking module scripts).
         var css = d.createElement('link');
         css.rel = 'stylesheet';
-        css.href = apiUrl + '/eng/api/assets/livechat-widget-css';
+        css.href = apiUrl + '/eng/api/assets/livechat-widget-css?v={$this->version}';
         d.head.appendChild(css);
 
         var js = d.createElement('script');
-        js.src = apiUrl + '/eng/api/assets/livechat-widget';
+        js.src = apiUrl + '/eng/api/assets/livechat-widget?v={$this->version}';
         js.type = 'module';
         js.crossOrigin = 'anonymous';
         js.async = true;
+        js.onload = function() {
+            if (identity && w.helpdeskWidgetIdentify) {
+                w.helpdeskWidgetIdentify(identity);
+            }
+        };
         d.head.appendChild(js);
     }
-})(window, document, {$apiUrlJs}, {$tokenJs});
+})(window, document, {$apiUrlJs}, {$tokenJs}, {$identityJson});
 </script>
 HTML;
     }
@@ -453,6 +459,67 @@ HTML;
         curl_setopt_array($ch, $opts);
         curl_exec($ch);
         curl_close($ch);
+    }
+
+    /**
+     * Build the visitor identity payload for the livechat widget.
+     * Returns JSON-encoded object or the string 'null' when guest.
+     */
+    private function getCustomerIdentityJson(): string
+    {
+        $context = Context::getContext();
+        $customer = $context->customer ?? null;
+
+        if (! $customer || ! $customer->isLogged()) {
+            return 'null';
+        }
+
+        $cart = $context->cart ?? null;
+        $cartData = null;
+        if ($cart && $cart->id) {
+            $products = $cart->getProducts();
+            $cartData = [
+                'id' => (int) $cart->id,
+                'total' => (float) $cart->getOrderTotal(true, Cart::BOTH),
+                'products' => array_map(fn ($p) => [
+                    'id' => (int) $p['id_product'],
+                    'name' => (string) $p['name'],
+                    'quantity' => (int) $p['cart_quantity'],
+                    'price' => (float) $p['price'],
+                ], $products),
+            ];
+        }
+
+        // Fetch real customer orders from PrestaShop
+        $orders = [];
+        try {
+            $rawOrders = Order::getCustomerOrders((int) $customer->id);
+            foreach ($rawOrders as $o) {
+                $orders[] = [
+                    'id' => (int) $o['id_order'],
+                    'reference' => (string) $o['reference'],
+                    'total' => (float) $o['total_paid'],
+                    'status' => (string) $o['order_state'],
+                    'date' => (string) $o['date_add'],
+                    'url' => Context::getContext()->link->getPageLink('order-detail', true, null, 'id_order='.(int) $o['id_order']),
+                ];
+            }
+        } catch (Throwable $e) {
+            // silently fail — orders are optional
+        }
+
+        $identity = [
+            'email' => (string) $customer->email,
+            'name' => trim((string) $customer->firstname.' '.(string) $customer->lastname),
+            'customer_id' => (int) $customer->id,
+            'platform' => 'prestashop',
+            'custom_attributes' => [
+                'cart' => $cartData,
+                'orders' => $orders,
+            ],
+        ];
+
+        return json_encode($identity);
     }
 
     /**

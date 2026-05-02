@@ -30,6 +30,7 @@
 {{-- Modales de búsqueda y composer --}}
 @include('helpdesk::managers.inbox.partials.modals.customer-search')
 @include('helpdesk::managers.inbox.partials.modals.email')
+@include('helpdesk::managers.inbox.partials.modals.create-ticket')
 @include('helpdesk::managers.inbox.partials.modals.schedule')
 @include('helpdesk::managers.inbox.partials.modals.snooze')
 @include('helpdesk::managers.inbox.partials.modals.note')

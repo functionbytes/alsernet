@@ -20,17 +20,9 @@ class StoreTicketRequest extends BaseTicketRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
-    protected function prepareForValidation(): void
-    {
-        if ($this->filled('subject') && ! $this->filled('title')) {
-            $this->merge(['title' => $this->input('subject')]);
-        }
-    }
-
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
             'subject' => 'nullable|string|max:255',
             'description' => 'required|string|max:50000',
             'category_id' => 'nullable|integer|exists:helpdesk_ticket_categories,id',

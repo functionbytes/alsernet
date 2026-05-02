@@ -284,59 +284,193 @@
                 @endif
             </div>
 
-            {{-- Integraciones (mock — no hay módulos reales) --}}
+            {{-- Integraciones reales detectadas desde custom_attributes --}}
+            @php
+                $platform = $rpCust?->custom_attributes['platform'] ?? null;
+                $platformMap = [
+                    'prestashop' => ['name' => 'PrestaShop', 'icon' => 'P', 'class' => 'bv-integration-logo-prestashop', 'color' => '#df0067'],
+                    'shopify'    => ['name' => 'Shopify',    'icon' => 'S', 'class' => 'bv-integration-logo-shopify',    'color' => '#95bf47'],
+                    'woocommerce'=> ['name' => 'WooCommerce','icon' => 'W', 'class' => 'bv-integration-logo-woocommerce','color' => '#96588a'],
+                    'magento'    => ['name' => 'Magento',    'icon' => 'M', 'class' => 'bv-integration-logo-magento',    'color' => '#f26322'],
+                    'bigcommerce'=> ['name' => 'BigCommerce','icon' => 'B', 'class' => 'bv-integration-logo-bigcommerce','color' => '#34313f'],
+                ];
+                $detected = $platform ? ($platformMap[$platform] ?? null) : null;
+            @endphp
             <div class="bv-right-section bv-right-section-last">
                 <div class="bv-right-section-head">
                     <span class="bv-right-section-title"><i class="fas fa-plug bv-section-icon"></i> Integraciones</span>
                 </div>
                 <div class="bv-integrations-list">
-                    <div class="bv-integration-row">
-                        <span class="bv-integration-logo bv-integration-logo-shopify">S</span>
-                        <span class="bv-integration-name">Shopify</span>
-                        <span class="bv-integration-status">
-                            <span class="bv-dot-status bv-dot-status-success"></span>Conectado
-                        </span>
-                    </div>
-                    <div class="bv-integration-row">
-                        <span class="bv-integration-logo bv-integration-logo-hubspot">H</span>
-                        <span class="bv-integration-name">HubSpot</span>
-                        <span class="bv-integration-status">
-                            <span class="bv-dot-status bv-dot-status-success"></span>Conectado
-                        </span>
-                    </div>
+                    @if($detected)
+                        <div class="bv-integration-row">
+                            <span class="bv-integration-logo {{ $detected['class'] }}" style="background:{{ $detected['color'] }}">{{ $detected['icon'] }}</span>
+                            <span class="bv-integration-name">{{ $detected['name'] }}</span>
+                            <span class="bv-integration-status">
+                                <span class="bv-dot-status bv-dot-status-success"></span>Conectado
+                            </span>
+                        </div>
+                    @else
+                        <div class="bv-integration-row">
+                            <span class="bv-integration-logo bv-integration-logo-generic" style="background:#6c757d">G</span>
+                            <span class="bv-integration-name">Widget Web</span>
+                            <span class="bv-integration-status">
+                                <span class="bv-dot-status bv-dot-status-success"></span>Activo
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
         {{-- ── Tab: Pedidos ── --}}
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="orders">
-            @if($rpOrders->isEmpty())
+            @php
+                $rawAttrs = $rpCust?->custom_attributes ?? [];
+                // Support nested custom_attributes (PrestaShop widget sends custom_attributes inside custom_attributes)
+                $nestedAttrs = is_array($rawAttrs['custom_attributes'] ?? null) ? $rawAttrs['custom_attributes'] : [];
+                $externalOrders = $nestedAttrs['orders'] ?? $rawAttrs['orders'] ?? [];
+                $cartData = $nestedAttrs['cart'] ?? $rawAttrs['cart'] ?? null;
+                $allOrders = $rpOrders->isNotEmpty() || !empty($externalOrders);
+                $totalOrders = $rpOrders->count() + count($externalOrders);
+            @endphp
+            @if(!$allOrders && empty($cartData))
                 <div class="bv-tab-empty">
                     <i class="far fa-cart-shopping"></i>
                     <div class="bv-tab-empty-title">Sin pedidos vinculados</div>
                     <div class="bv-tab-empty-sub">No hay pedidos asociados a este cliente</div>
                 </div>
             @else
-                <div class="bv-orders-list">
-                    @foreach($rpOrders as $order)
-                        @php
-                            $orderTotal = $order->total ?? $order->grand_total ?? 0;
-                            $orderStatus = $order->status?->name ?? $order->status_name ?? $order->status ?? 'Pendiente';
-                            $orderStatusColor = is_object($order->status ?? null) ? ($order->status->color ?? 'secondary') : 'secondary';
-                            $itemsCount = method_exists($order, 'items') ? $order->items()->count() : ($order->items_count ?? 0);
-                        @endphp
-                        <div class="bv-order-card">
-                            <div class="bv-card-head-row">
-                                <span class="bv-id-mono-sm">#{{ $order->order_number ?? $order->reference ?? $order->id }}</span>
-                                <span class="bv-ticket-badge bv-ticket-badge-{{ $orderStatusColor }}">{{ $orderStatus }}</span>
+                <div class="rp3-scroll">
+                    @if($allOrders)
+                    <div class="rp3-section">
+                        <div class="rp3-sec-head">
+                            Historial de pedidos
+                            <span class="count">· {{ $totalOrders }}</span>
+                            <span class="spacer"></span>
+                        </div>
+                        {{-- Pedidos locales (módulo Ecommerce) --}}
+                        @foreach($rpOrders as $order)
+                            @php
+                                $orderTotal = $order->total ?? $order->grand_total ?? 0;
+                                $orderStatus = $order->status?->name ?? $order->status_name ?? $order->status ?? 'Pendiente';
+                                $orderStatusColor = match(strtolower($orderStatus)) {
+                                    'entregado', 'completed', 'complete' => 'var(--success)',
+                                    'enviado', 'shipped' => 'var(--info)',
+                                    'cancelado', 'cancelled', 'canceled' => 'var(--danger)',
+                                    default => 'var(--warning)',
+                                };
+                                $orderDate = $order->created_at?->translatedFormat('d M') ?? '—';
+                            @endphp
+                            <div class="rp3-order" data-bv-modal="order" data-order-type="local"
+                                 data-order-id="{{ $order->id }}"
+                                 data-order-ref="#{{ $order->order_number ?? $order->reference ?? $order->id }}"
+                                 data-order-status="{{ $orderStatus }}"
+                                 data-order-status-color="{{ $orderStatusColor }}"
+                                 data-order-date="{{ $order->created_at?->translatedFormat('d M Y') ?? '—' }}"
+                                 data-order-total="{{ number_format((float) $orderTotal, 2, ',', '.') }}"
+                                 data-order-products="{{ json_encode([['name' => $order->title ?? 'Producto', 'qty' => 1, 'price' => $orderTotal]]) }}"
+                                 style="cursor: pointer;">
+                                <div class="thumb"><i class="fa-solid fa-box"></i></div>
+                                <div class="body">
+                                    <div class="id">#{{ $order->order_number ?? $order->reference ?? $order->id }}</div>
+                                    <div class="t">{{ $order->title ?? 'Pedido #' . $order->id }}</div>
+                                    <div class="meta">
+                                        <b>{{ number_format((float) $orderTotal, 2, ',', '.') }} €</b>
+                                        <span style="color: {{ $orderStatusColor }}; font-weight: 600;">●</span>
+                                        <span>{{ $orderStatus }}</span>
+                                        <span>·</span>
+                                        <span>{{ $orderDate }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="bv-ticket-title">{{ $order->title ?? ($itemsCount . ' producto' . ($itemsCount === 1 ? '' : 's')) }}</div>
-                            <div class="bv-ticket-meta">
-                                {{ $order->created_at?->translatedFormat('d M Y') }} ·
-                                <strong>{{ number_format((float) $orderTotal, 2, ',', '.') }} €</strong>
+                        @endforeach
+
+                        {{-- Pedidos externos (PrestaShop, Shopify, etc.) --}}
+                        @foreach($externalOrders as $extOrder)
+                            @php
+                                $extStatus = $extOrder['status'] ?? 'Pendiente';
+                                $extStatusColor = match(strtolower($extStatus)) {
+                                    'entregado', 'completed', 'complete' => 'var(--success)',
+                                    'enviado', 'shipped' => 'var(--info)',
+                                    'cancelado', 'cancelled', 'canceled' => 'var(--danger)',
+                                    default => 'var(--warning)',
+                                };
+                                $extDateRaw = $extOrder['date'] ?? null;
+                                try {
+                                    $extDate = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M') : '—';
+                                    $extDateFull = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M Y') : '—';
+                                } catch (\Throwable $e) {
+                                    $extDate = '—';
+                                    $extDateFull = '—';
+                                }
+                                $extTotal = (float) ($extOrder['total'] ?? 0);
+                                $extRef = $extOrder['reference'] ?? $extOrder['id'] ?? '—';
+                                $extUrl = $extOrder['url'] ?? null;
+                                $extProducts = [];
+                                if (!empty($extOrder['products']) && is_array($extOrder['products'])) {
+                                    foreach ($extOrder['products'] as $p) {
+                                        $extProducts[] = ['name' => $p['name'] ?? 'Producto', 'qty' => $p['quantity'] ?? 1, 'price' => $p['price'] ?? 0];
+                                    }
+                                }
+                            @endphp
+                            <div class="rp3-order" data-bv-modal="order" data-order-type="external"
+                                 data-order-id="{{ $extOrder['id'] ?? '' }}"
+                                 data-order-ref="#{{ $extRef }}"
+                                 data-order-status="{{ $extStatus }}"
+                                 data-order-status-color="{{ $extStatusColor }}"
+                                 data-order-date="{{ $extDateFull }}"
+                                 data-order-total="{{ number_format($extTotal, 2, ',', '.') }}"
+                                 data-order-products="{{ json_encode($extProducts) }}"
+                                 data-order-url="{{ $extUrl }}"
+                                 data-order-platform="{{ $rpCust?->custom_attributes['platform'] ?? '' }}"
+                                 style="cursor: pointer;">
+                                <div class="thumb"><i class="fa-solid fa-box"></i></div>
+                                <div class="body">
+                                    <div class="id">#{{ $extRef }}</div>
+                                    <div class="t">Pedido #{{ $extRef }}</div>
+                                    <div class="meta">
+                                        <b>{{ number_format($extTotal, 2, ',', '.') }} €</b>
+                                        <span style="color: {{ $extStatusColor }}; font-weight: 600;">●</span>
+                                        <span>{{ $extStatus }}</span>
+                                        <span>·</span>
+                                        <span>{{ $extDate }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                    @endif
+
+                    {{-- Carrito abandonado --}}
+                    @if(!empty($cartData) && is_array($cartData))
+                    <div class="rp3-section">
+                        <div class="rp3-sec-head">Carrito abandonado</div>
+                        <div class="rp3-cart">
+                            <div class="hd">
+                                <span class="dot"></span>
+                                <i class="fa-solid fa-cart-shopping"></i>
+                                @php
+                                    $cartItemCount = count($cartData['products'] ?? []);
+                                    $cartTotal = (float) ($cartData['total'] ?? 0);
+                                @endphp
+                                {{ $cartItemCount }} item{{ $cartItemCount === 1 ? '' : 's' }}
+                            </div>
+                            <div class="rp3-cart-items">
+                                @foreach($cartData['products'] ?? [] as $product)
+                                <div class="rp3-cart-item">
+                                    <div class="th"></div>
+                                    <div class="n">{{ $product['name'] ?? 'Producto' }}</div>
+                                    <div class="p">{{ number_format((float) ($product['price'] ?? 0), 2, ',', '.') }} €</div>
+                                </div>
+                                @endforeach
+                            </div>
+                            <div class="rp3-cart-total">
+                                <span>Total</span>
+                                <span>{{ number_format($cartTotal, 2, ',', '.') }} €</span>
                             </div>
                         </div>
-                    @endforeach
+                    </div>
+                    @endif
                 </div>
             @endif
         </div>
@@ -388,6 +522,10 @@
 
         {{-- ── Tab: Tickets ── --}}
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="tickets">
+            @php
+                $ticketPriorityColors = ['low' => 'var(--success)', 'normal' => 'var(--info)', 'high' => 'var(--warning)', 'urgent' => 'var(--danger)'];
+                $ticketPriorityLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
+            @endphp
             @if($rpTickets->isEmpty())
                 <div class="bv-tab-empty">
                     <i class="far fa-ticket"></i>
@@ -395,29 +533,32 @@
                     <div class="bv-tab-empty-sub">No hay tickets asociados a este cliente</div>
                 </div>
             @else
-                <div class="bv-right-section">
-                    <div class="bv-right-section-head">
-                        <span class="bv-right-section-title"><i class="fas fa-ticket bv-section-icon"></i> Tickets relacionados</span>
-                    </div>
-                    <div class="bv-ticket-list">
-                        @foreach($rpTickets as $ticket)
-                        <div class="bv-ticket-card">
-                            <div class="bv-card-head-row">
-                                <span class="bv-id-mono-sm">#{{ $ticket->ticket_number }}</span>
-                                @if($ticket->status)
-                                <span class="bv-ticket-badge bv-ticket-badge-{{ $ticket->status->color ?? 'secondary' }}">
-                                    {{ $ticket->status->name }}
-                                </span>
-                                @endif
-                            </div>
-                            <div class="bv-ticket-title">{{ $ticket->subject ?? $ticket->title ?? 'Sin título' }}</div>
-                            <div class="bv-ticket-meta">
-                                {{ $ticket->created_at?->translatedFormat('d M Y') }}
-                                @if($priorityLabels[$ticket->priority ?? ''] ?? null)
-                                    · {{ $priorityLabels[$ticket->priority] }}
-                                @endif
-                            </div>
+                <div class="rp3-scroll">
+                    <div class="rp3-section">
+                        <div class="rp3-sec-head">
+                            Tickets
+                            <span class="count">· {{ $rpTickets->count() }}</span>
+                            <span class="spacer"></span>
+                            <button class="add-btn tt" data-bv-modal="create-ticket" data-tt="Nuevo ticket">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
                         </div>
+                        @foreach($rpTickets as $ticket)
+                            @php
+                                $tStatusName = $ticket->status?->name ?? 'Abierto';
+                                $tStatusColor = $ticket->status?->color ?? 'info';
+                                $tPrioLabel = $ticketPriorityLabels[$ticket->priority] ?? 'Normal';
+                                $tPrioColor = $ticketPriorityColors[$ticket->priority] ?? 'var(--info)';
+                                $tSubject = $ticket->subject ?? $ticket->title ?? 'Sin título';
+                            @endphp
+                            <div class="rp3-ticket" data-bv-modal="ticket" data-ticket-id="{{ $ticket->id }}" style="cursor: pointer;">
+                                <div class="id">{{ $ticket->ticket_number }}</div>
+                                <div style="width: 3px; height: 28px; border-radius: 2px; background: {{ $tPrioColor }}; flex-shrink: 0;"></div>
+                                <div class="body">
+                                    <div class="t">{{ $tSubject }}</div>
+                                    <div class="s">{{ $tPrioLabel }} · {{ $tStatusName }}</div>
+                                </div>
+                            </div>
                         @endforeach
                     </div>
                 </div>
