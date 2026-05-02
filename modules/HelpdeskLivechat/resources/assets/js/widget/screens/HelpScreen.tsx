@@ -34,7 +34,7 @@ export function HelpScreen() {
 
     useEffect(() => {
         let cancelled = false;
-        fetch('/hd/api/helpcenter')
+        fetch(apiUrl('/hd/api/helpcenter'))
             .then(r => r.ok ? r.json() : null)
             .then((data: HelpCenterData | null) => {
                 if (cancelled || !data) return;

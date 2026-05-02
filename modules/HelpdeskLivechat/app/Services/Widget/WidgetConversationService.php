@@ -40,15 +40,45 @@ class WidgetConversationService
                 ]
             );
 
+            $email = $data['email'] ?? null;
+            if (empty($email)) {
+                $email = 'guest-'.Str::random(8).'@anonymous.local';
+            }
+
             $customerDefaults = [
                 'name' => $data['name'] ?? 'Anonymous',
                 'phone' => $data['phone_number'] ?? null,
                 'language' => $data['language'] ?? 'es',
             ];
-            $customer = Customer::firstOrCreate(
-                ['email' => $data['email'] ?? null],
-                $customerDefaults
-            );
+
+            $customer = null;
+
+            // If the widget already knows a customer_id, prefer it and update
+            // email/name when the visitor has logged in since the last message.
+            if (! empty($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
+                if ($customer && $email && $customer->email !== $email) {
+                    $customer->update([
+                        'email' => $email,
+                        'name' => $data['name'] ?? $customer->name,
+                    ]);
+                }
+            }
+
+            if (! $customer) {
+                $customer = Customer::firstOrCreate(
+                    ['email' => $email],
+                    $customerDefaults
+                );
+            }
+
+            // Persist visitor metadata (cart, orders, etc.) sent by the host site.
+            if (! empty($data['custom_attributes']) && is_array($data['custom_attributes'])) {
+                $existing = $customer->custom_attributes ?? [];
+                $customer->update([
+                    'custom_attributes' => array_merge($existing, $data['custom_attributes']),
+                ]);
+            }
 
             $existing = Conversation::where('customer_id', $customer->id)
                 ->where('inbox_id', $inbox->id)
@@ -77,6 +107,11 @@ class WidgetConversationService
                 return [
                     'conversation_id' => (int) $existing->id,
                     'customer_id' => (int) $customer->id,
+                    'customer' => [
+                        'id' => $customer->id,
+                        'email' => $customer->email,
+                        'name' => $customer->name,
+                    ],
                     'reused' => true,
                 ];
             }
@@ -109,6 +144,11 @@ class WidgetConversationService
             return [
                 'conversation_id' => (int) $conversation->id,
                 'customer_id' => (int) $customer->id,
+                'customer' => [
+                    'id' => $customer->id,
+                    'email' => $customer->email,
+                    'name' => $customer->name,
+                ],
                 'reused' => false,
             ];
         });
@@ -143,6 +183,33 @@ class WidgetConversationService
     public function sendMessage(int $conversationId, int $customerId, array $data): array
     {
         $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
+
+        // If the visitor has identified themselves (logged in) since the
+        // conversation started, update the customer record so the agent sees
+        // the real name / email instead of the guest placeholder.
+        if (! empty($data['email']) || ! empty($data['name'])) {
+            $customer = Customer::find($customerId);
+            if ($customer) {
+                $update = [];
+                if (! empty($data['email']) && $customer->email !== $data['email']) {
+                    $update['email'] = $data['email'];
+                }
+                if (! empty($data['name']) && $customer->name !== $data['name']) {
+                    $update['name'] = $data['name'];
+                }
+                if (! empty($update)) {
+                    $customer->update($update);
+                }
+
+                // Persist visitor metadata (cart, orders, etc.) sent by the host site.
+                if (! empty($data['custom_attributes']) && is_array($data['custom_attributes'])) {
+                    $existing = $customer->custom_attributes ?? [];
+                    $customer->update([
+                        'custom_attributes' => array_merge($existing, $data['custom_attributes']),
+                    ]);
+                }
+            }
+        }
 
         $attachments = $this->storeAttachments($conversationId, $data['attachments'] ?? []);
 

@@ -24,10 +24,10 @@ class WidgetScriptController extends Controller
                 ->header('Content-Type', 'application/javascript; charset=UTF-8');
         }
 
-        $bundlePath = public_path('build-helpdesk/widget.js');
+        $bundlePath = public_path('build-helpdesklivechat/widget.js');
         if (! File::exists($bundlePath)) {
             return response(
-                "// Widget bundle not built yet — run: cd modules/Helpdesk && npm run widget:build\n",
+                "// Widget bundle not built yet — run: cd modules/HelpdeskLivechat && npm run widget:build\n",
                 503
             )->header('Content-Type', 'application/javascript; charset=UTF-8');
         }

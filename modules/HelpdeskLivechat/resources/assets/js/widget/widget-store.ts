@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiUrl } from './api';
 
 interface LiveChatSettings {
     // Widget - Home Screen
@@ -115,8 +116,8 @@ export const useWidgetStore = create<WidgetState>()((set) => ({
                 (window as any).HELPDESK_WIDGET_CONFIG?.websiteToken ??
                 new URLSearchParams(window.location.search).get('website_token');
             const url = token
-                ? `/hd/api/settings?website_token=${encodeURIComponent(token)}`
-                : '/hd/api/settings';
+                ? apiUrl(`/hd/api/settings?website_token=${encodeURIComponent(token)}`)
+                : apiUrl('/hd/api/settings');
 
             const response = await fetch(url);
             if (!response.ok) {

@@ -20,6 +20,19 @@ class StoreWidgetConversationRequest extends FormRequest
             'phone_number' => ['nullable', 'string', 'max:50'],
             'message' => ['nullable', 'string', 'max:5000'],
             'language' => ['nullable', 'string', 'max:10'],
+            'customer_id' => ['nullable', 'integer'],
+            'custom_attributes' => ['nullable', 'array'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $ca = $this->input('custom_attributes');
+        if (is_string($ca) && str_starts_with(trim($ca), '{')) {
+            $decoded = json_decode($ca, true);
+            if (is_array($decoded)) {
+                $this->merge(['custom_attributes' => $decoded]);
+            }
+        }
     }
 }

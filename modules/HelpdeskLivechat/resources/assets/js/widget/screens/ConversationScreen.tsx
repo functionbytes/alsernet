@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { echo } from '../echo';
+import { apiUrl } from '../api';
 import { EmojiPicker } from '../components/EmojiPicker';
+import { getVisitorIdentity } from '../widget-identity';
 
 interface LinkPreview {
     url: string;
@@ -82,6 +84,15 @@ export function ConversationScreen() {
         return localStorage.getItem('livechat_customer_email') || '';
     });
 
+    const [customerName, setCustomerName] = useState<string>(() => {
+        return localStorage.getItem('livechat_customer_name') || '';
+    });
+
+    const [customerId, setCustomerId] = useState<number | null>(() => {
+        const stored = localStorage.getItem('livechat_customer_id');
+        return stored ? parseInt(stored, 10) : null;
+    });
+
     useEffect(() => {
         if (conversationId) {
             localStorage.setItem('livechat_conversation_id', conversationId);
@@ -93,6 +104,31 @@ export function ConversationScreen() {
             localStorage.setItem('livechat_customer_email', customerEmail);
         }
     }, [customerEmail]);
+
+    useEffect(() => {
+        if (customerName) {
+            localStorage.setItem('livechat_customer_name', customerName);
+        }
+    }, [customerName]);
+
+    useEffect(() => {
+        if (customerId) {
+            localStorage.setItem('livechat_customer_id', String(customerId));
+        }
+    }, [customerId]);
+
+    // Listen for identity updates from the host site (e.g. PrestaShop login).
+    useEffect(() => {
+        const handler = (e: any) => {
+            const identity = e.detail;
+            if (identity?.email) setCustomerEmail(identity.email);
+            if (identity?.name) setCustomerName(identity.name);
+            const id = identity?.customer_id ?? identity?.userId;
+            if (id != null) setCustomerId(Number(id));
+        };
+        window.addEventListener('helpdesk:identity:changed', handler);
+        return () => window.removeEventListener('helpdesk:identity:changed', handler);
+    }, []);
 
     useEffect(() => {
         if (!conversationId) return;
@@ -233,8 +269,10 @@ export function ConversationScreen() {
             if (!conversationId) return;
 
             try {
-                const url = new URL(`/hd/api/conversation/${conversationId}/messages`, window.location.origin);
-                if (customerEmail) {
+                const url = new URL(apiUrl(`/hd/api/conversation/${conversationId}/messages`));
+                if (customerId) {
+                    url.searchParams.append('customer_id', String(customerId));
+                } else if (customerEmail) {
                     url.searchParams.append('customer_email', customerEmail);
                 }
 
@@ -311,16 +349,27 @@ export function ConversationScreen() {
             ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
         };
 
+        const identity = getVisitorIdentity();
+        const customAttributes = identity
+            ? Object.fromEntries(
+                Object.entries(identity).filter(
+                    ([k]) => !['email', 'name', 'phone', 'userId'].includes(k)
+                )
+            )
+            : null;
+
         try {
             if (!conversationId) {
-                const response = await fetch('/hd/api/conversation', {
+                const response = await fetch(apiUrl('/hd/api/conversation'), {
                     method: 'POST',
                     headers: { ...baseHeaders, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         website_token: websiteToken,
                         email: customerEmail || null,
-                        name: customerEmail ? customerEmail.split('@')[0] : 'Guest',
+                        name: customerName || (customerEmail ? customerEmail.split('@')[0] : 'Guest'),
                         message: messageContent,
+                        customer_id: customerId ?? null,
+                        custom_attributes: customAttributes,
                     }),
                 });
 
@@ -332,6 +381,12 @@ export function ConversationScreen() {
                     if (data.data?.customer?.email) {
                         setCustomerEmail(data.data.customer.email);
                     }
+                    if (data.data?.customer?.name) {
+                        setCustomerName(data.data.customer.name);
+                    }
+                    if (data.data?.customer?.id) {
+                        setCustomerId(data.data.customer.id);
+                    }
                     setMessages(prev => prev.map(msg =>
                         msg.id === userMessage.id ? { ...msg, status: 'sent' as const } : msg
                     ));
@@ -339,13 +394,18 @@ export function ConversationScreen() {
             } else {
                 const formData = new FormData();
                 formData.append('website_token', websiteToken ?? '');
+                if (customerId) formData.append('customer_id', String(customerId));
                 if (customerEmail) formData.append('customer_email', customerEmail);
+                if (customerName) formData.append('name', customerName);
                 if (messageContent) formData.append('message', messageContent);
+                if (customAttributes && Object.keys(customAttributes).length > 0) {
+                    formData.append('custom_attributes', JSON.stringify(customAttributes));
+                }
                 attachedFiles.forEach((file, index) => {
                     formData.append(`attachments[${index}]`, file);
                 });
 
-                const response = await fetch(`/hd/api/conversation/${conversationId}/messages`, {
+                const response = await fetch(apiUrl(`/hd/api/conversation/${conversationId}/messages`), {
                     method: 'POST',
                     headers: baseHeaders,
                     body: formData,
@@ -390,10 +450,13 @@ export function ConversationScreen() {
         setIsClosing(true);
 
         try {
-            const response = await fetch(`/hd/api/conversation/${conversationId}/close`, {
+            const response = await fetch(apiUrl(`/hd/api/conversation/${conversationId}/close`), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ customer_email: customerEmail }),
+                body: JSON.stringify({
+                    customer_id: customerId ?? null,
+                    customer_email: customerEmail,
+                }),
             });
 
             const data = await response.json();

@@ -18,6 +18,9 @@ class SendWidgetMessageRequest extends FormRequest
             'message' => ['nullable', 'string', 'max:5000'],
             'customer_id' => ['nullable', 'integer'],
             'customer_email' => ['nullable', 'email'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'name' => ['nullable', 'string', 'max:200'],
+            'custom_attributes' => ['nullable', 'array'],
             'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => ['file', 'max:10240'],
         ];
@@ -30,6 +33,14 @@ class SendWidgetMessageRequest extends FormRequest
     {
         if (! $this->has('content') && $this->has('message')) {
             $this->merge(['content' => (string) $this->input('message')]);
+        }
+
+        $ca = $this->input('custom_attributes');
+        if (is_string($ca) && str_starts_with(trim($ca), '{')) {
+            $decoded = json_decode($ca, true);
+            if (is_array($decoded)) {
+                $this->merge(['custom_attributes' => $decoded]);
+            }
         }
     }
 

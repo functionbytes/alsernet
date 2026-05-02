@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { apiUrl } from '../api';
 
 interface Article {
     id: string;
@@ -25,7 +26,7 @@ export function ArticleDetailScreen() {
         }
         let cancelled = false;
         setFeedback(null);
-        fetch(`/hd/api/helpcenter/articles/${articleId}`)
+        fetch(apiUrl(`/hd/api/helpcenter/articles/${articleId}`))
             .then(r => r.ok ? r.json() : null)
             .then((data: Article | null) => {
                 if (cancelled) return;
@@ -44,7 +45,7 @@ export function ArticleDetailScreen() {
         if (!article) return;
         setFeedback(value);
         const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-        fetch(`/hd/api/helpcenter/articles/${article.id}/feedback`, {
+        fetch(apiUrl(`/hd/api/helpcenter/articles/${article.id}/feedback`), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

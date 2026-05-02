@@ -2,7 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { WidgetApp } from './WidgetApp';
 import { WidgetContainer } from './WidgetContainer';
+import { registerGlobalApi } from './widget-identity';
 import './widget.css';
+
+// Register window.helpdeskWidgetIdentify() so the host site can update
+// visitor data (name, email, cart, orders) at any time — e.g. after login.
+registerGlobalApi();
 
 // Find existing root or create one for embed mode (launcher)
 let rootElement = document.getElementById('widget-root');

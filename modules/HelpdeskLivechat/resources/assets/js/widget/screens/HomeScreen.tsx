@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { useTranslation } from '../i18n/useLanguage';
+import { apiUrl } from '../api';
 
 interface Article {
     id: number;
@@ -59,9 +60,14 @@ export function HomeScreen() {
         let cancelled = false;
         const conversationId = localStorage.getItem('livechat_conversation_id');
         if (!conversationId) return;
+        const customerId = localStorage.getItem('livechat_customer_id');
         const customerEmail = localStorage.getItem('livechat_customer_email') || '';
-        const url = new URL(`/hd/api/conversation/${conversationId}/messages`, window.location.origin);
-        if (customerEmail) url.searchParams.append('customer_email', customerEmail);
+        const url = new URL(apiUrl(`/hd/api/conversation/${conversationId}/messages`));
+        if (customerId) {
+            url.searchParams.append('customer_id', customerId);
+        } else if (customerEmail) {
+            url.searchParams.append('customer_email', customerEmail);
+        }
 
         fetch(url.toString())
             .then(r => r.ok ? r.json() : null)
@@ -89,7 +95,7 @@ export function HomeScreen() {
 
     useEffect(() => {
         let cancelled = false;
-        fetch('/hd/api/helpcenter')
+        fetch(apiUrl('/hd/api/helpcenter'))
             .then(r => r.ok ? r.json() : null)
             .then((data: HelpcenterResponse | null) => {
                 if (cancelled || !data) return;
