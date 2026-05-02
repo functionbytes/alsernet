@@ -110,7 +110,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="assign-btn-notify"><i class="fas fa-user-check"></i> Asignar y notificar</button>
+            <button class="btn-primary" id="assign-btn-notify">Asignar y notificar</button>
             <button class="btn-secondary" id="assign-btn-silent">Asignar</button>
         </div>
     </div>

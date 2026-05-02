@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Helpdesk\Http\Controllers\CsatController;
 use Modules\Helpdesk\Http\Controllers\FeedbackController;
 use Modules\Helpdesk\Http\Controllers\HealthController;
 use Modules\Helpdesk\Http\Controllers\HelpCenterPublicController;
@@ -43,4 +44,13 @@ Route::middleware(['web', 'throttle:30,1'])
     ->group(function () {
         Route::get('{token}', [SurveyController::class, 'show'])->name('show');
         Route::post('{token}', [SurveyController::class, 'submit'])->name('submit');
+    });
+
+// CSAT surveys (public magic-link)
+Route::middleware(['web', 'throttle:10,5'])
+    ->prefix('helpdesk/csat')
+    ->name('helpdesk.csat.')
+    ->group(function () {
+        Route::get('{token}', [CsatController::class, 'show'])->name('show');
+        Route::post('{token}', [CsatController::class, 'submit'])->name('submit');
     });

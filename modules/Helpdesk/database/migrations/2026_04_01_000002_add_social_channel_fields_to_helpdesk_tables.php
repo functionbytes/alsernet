@@ -19,7 +19,7 @@ return new class extends Migration
         }
 
         Schema::connection('helpdesk')->table('helpdesk_conversations', function (Blueprint $table) {
-            $table->string('channel')->nullable()->default('widget')->after('customer_id');
+            $table->string('channel')->nullable()->default('web')->after('customer_id');
             $table->string('external_id')->nullable()->after('channel');
             $table->string('external_sender_id')->nullable()->after('external_id');
 

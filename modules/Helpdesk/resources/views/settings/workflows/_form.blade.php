@@ -53,7 +53,7 @@
         <label class="form-label">Configuracion del trigger</label>
         <textarea name="trigger_config" rows="3"
             class="form-control font-monospace @error('trigger_config') is-invalid @enderror"
-            placeholder='{"key": "value"}'>{{ old('trigger_config', $workflow->trigger_config ? json_encode($workflow->trigger_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '') }}</textarea>
+            placeholder='{"key": "value"}'>{{ old('trigger_config', $workflow?->trigger_config ? json_encode($workflow->trigger_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '') }}</textarea>
         <div class="form-text">JSON con parametros adicionales del trigger (opcional)</div>
         @error('trigger_config')
             <div class="invalid-feedback">{{ $message }}</div>
@@ -74,7 +74,7 @@
             placeholder='[
   {"type": "action", "action": "assign_to_group", "config": {"group_id": 1}},
   {"type": "action", "action": "add_tag", "config": {"tag": "urgente"}}
-]'>{{ old('nodes', $workflow->nodes ? json_encode($workflow->nodes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '') }}</textarea>
+]'>{{ old('nodes', $workflow?->nodes ? json_encode($workflow->nodes, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : '') }}</textarea>
         <div class="form-text">
             Tipos de nodo disponibles:
             @foreach(\Modules\Helpdesk\Models\Workflow::NODE_TYPES as $key => $label)

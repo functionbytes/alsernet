@@ -69,6 +69,10 @@ class MessageReceived implements ShouldBroadcast
 
         $attachments = $this->normalizeAttachments();
 
+        // Only forward the link preview to the widget when the agent is the sender —
+        // a visitor URL should NOT auto-unfurl on the widget side.
+        $linkPreview = $isAgent ? ($this->message->metadata['link_preview'] ?? null) : null;
+
         return [
             // ── Widget-friendly flat shape (consumed by Helpdesk React widget) ──
             'id' => $this->message->id,
@@ -83,6 +87,7 @@ class MessageReceived implements ShouldBroadcast
                 'name' => $this->message->sender_name ?? ($isAgent ? 'Agent' : 'Visitor'),
             ],
             'attachments' => $attachments,
+            'link_preview' => $linkPreview,
 
             // ── Legacy nested shape (preserved for existing listeners) ──
             'message' => [

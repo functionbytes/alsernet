@@ -13,10 +13,10 @@ use Modules\Helpdesk\Http\Requests\Settings\StoreInboxRequest;
 use Modules\Helpdesk\Models\Channels\Email;
 use Modules\Helpdesk\Models\Channels\Facebook;
 use Modules\Helpdesk\Models\Channels\Instagram;
-use Modules\Helpdesk\Models\Channels\Web;
 use Modules\Helpdesk\Models\Channels\Whatsapp;
 use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\HelpdeskLivechat\Models\Channels\Web;
 
 class InboxesController extends Controller
 {
@@ -48,7 +48,7 @@ class InboxesController extends Controller
     public function create(Request $request): View
     {
         $channel = $request->input('channel', Inbox::CHANNEL_WHATSAPP);
-        if (! in_array($channel, Inbox::CHANNEL_TYPES, true)) {
+        if (! in_array($channel, Inbox::availableChannelTypes(), true)) {
             $channel = Inbox::CHANNEL_WHATSAPP;
         }
 
@@ -145,7 +145,7 @@ class InboxesController extends Controller
                 return response()->json(['ok' => $ok, 'message' => $message]);
             }
 
-            if ($inbox->channel_type === Inbox::CHANNEL_WIDGET) {
+            if ($inbox->channel_type === Inbox::CHANNEL_WEB) {
                 return response()->json(['ok' => true, 'message' => 'No hay conexión externa que verificar.']);
             }
 
@@ -189,7 +189,7 @@ class InboxesController extends Controller
         $creds = $request->input('credentials', []);
 
         match ($inbox->channel_type) {
-            Inbox::CHANNEL_WIDGET => $this->syncWebChannel($inbox, $creds),
+            Inbox::CHANNEL_WEB => $this->syncWebChannel($inbox, $creds),
             Inbox::CHANNEL_WHATSAPP => $this->syncWhatsappChannel($inbox, $creds, $request->input('wa_provider', 'whatsapp_cloud')),
             Inbox::CHANNEL_FACEBOOK => $this->syncFacebookChannel($inbox, $creds),
             Inbox::CHANNEL_INSTAGRAM => $this->syncInstagramChannel($inbox, $creds),

@@ -148,7 +148,7 @@
                 /* Usar var(--token-name) para tokens del proyecto */
             }
             .{component-class}--primary {
-                background-color: var(--color-primary, #90bb13);
+                background-color: var(--color-primary, #b10100);
             }
         </style>
     @endpush

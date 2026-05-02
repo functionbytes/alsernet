@@ -87,9 +87,6 @@ function handleNotification(notification) {
         });
     }
 
-    // Show in-app notification
-    showInAppNotification(notification);
-
     // Trigger custom event for components to handle
     window.dispatchEvent(
         new CustomEvent('notification-received', {

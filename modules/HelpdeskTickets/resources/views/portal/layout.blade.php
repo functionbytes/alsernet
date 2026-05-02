@@ -28,10 +28,15 @@
                         {{ \Modules\Helpdesk\Models\Customer::find(session('portal_customer_id'))?->name }}
                     </span>
                     <a href="{{ route('portal.tickets') }}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-ticket-alt me-1"></i>My Tickets
+                        <i class="fas fa-ticket-alt me-1"></i>Mis tickets
                     </a>
+                    @if(\Illuminate\Support\Facades\Route::has('helpdesk.portal.conversations'))
+                    <a href="{{ route('helpdesk.portal.conversations') }}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-comments me-1"></i>Conversaciones
+                    </a>
+                    @endif
                     <a href="{{ route('portal.account') }}" class="btn btn-sm btn-outline-secondary me-2">
-                        <i class="fas fa-user"></i> Account
+                        <i class="fas fa-user"></i> Cuenta
                     </a>
                     <form action="{{ route('portal.logout') }}" method="POST" class="d-inline">
                         @csrf

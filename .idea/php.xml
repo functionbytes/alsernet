@@ -1391,6 +1391,13 @@
       <path value="$PROJECT_DIR$/vendor/swagger-api/swagger-ui" />
       <path value="$PROJECT_DIR$/vendor/radebatz/type-info-extras" />
       <path value="$PROJECT_DIR$/vendor/symfony/type-info" />
+      <path value="$PROJECT_DIR$/vendor/shalvah/upgrader" />
+      <path value="$PROJECT_DIR$/vendor/parsedown/parsedown" />
+      <path value="$PROJECT_DIR$/vendor/knuckleswtf/scribe" />
+      <path value="$PROJECT_DIR$/vendor/mpociot/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/pragmarx/google2fa" />
+      <path value="$PROJECT_DIR$/vendor/pragmarx/google2fa-qrcode" />
+      <path value="$PROJECT_DIR$/vendor/pragmarx/google2fa-laravel" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.4" />

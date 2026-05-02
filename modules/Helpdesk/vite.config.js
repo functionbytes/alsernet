@@ -3,43 +3,11 @@ import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+// Helpdesk core no longer ships its own JS bundle. The live-chat widget
+// lives in modules/HelpdeskLivechat/. This file is kept as a placeholder
+// in case the Helpdesk module needs its own assets in the future.
 export default defineConfig({
-    build: {
-        outDir: '../../public/build-helpdesk',
-        emptyOutDir: true,
-        manifest: true,
-        rollupOptions: {
-            input: {
-                main: resolve(__dirname, 'resources/assets/js/widget/widget-entry.tsx'),
-                'widget-embed': resolve(__dirname, 'resources/assets/js/widget-embed.ts'),
-            },
-            output: {
-                entryFileNames: (chunkInfo) => {
-                    if (chunkInfo.name === 'widget-embed') {
-                        return 'widget.js';
-                    }
-                    return 'widget/[name].js';
-                },
-                chunkFileNames: 'widget/chunks/[name]-[hash].js',
-                assetFileNames: (assetInfo) => {
-                    if (assetInfo.name && assetInfo.name.endsWith('.css')) {
-                        return 'widget/[name][extname]';
-                    }
-                    return 'widget/assets/[name]-[hash][extname]';
-                },
-            },
-        },
-    },
     plugins: [
-        laravel({
-            publicDirectory: '../../public',
-            buildDirectory: 'build-helpdesk',
-            input: [
-                __dirname + '/resources/assets/js/widget/widget-entry.tsx',
-                __dirname + '/resources/assets/js/widget-embed.ts',
-            ],
-            refresh: true,
-        }),
         react({
             jsxRuntime: 'automatic',
         }),
@@ -48,8 +16,5 @@ export default defineConfig({
         alias: {
             '@': resolve(__dirname, 'resources/assets/js'),
         },
-    },
-    esbuild: {
-        jsx: 'automatic',
     },
 });

@@ -3,171 +3,140 @@
 namespace Modules\Helpdesk\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
-use Modules\Helpdesk\Models\CannedReply;
+use Illuminate\Support\Facades\DB;
 
 class HelpdeskCannedReplySeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * Seeds the helpdesk_canned_replies table with predefined response templates.
-     * These templates allow support agents to quickly respond to common inquiries
-     * with consistent, professional messaging.
-     *
-     * Templates are organized by category for easy discovery:
-     * - Billing & Payments
-     * - Technical Support
-     * - Account Management
-     * - Order & Shipping
-     * - General Information
-     * - Follow-up & Closing
-     *
-     * Depends on: None (independent)
-     */
     public function run(): void
     {
+        $now = now();
+
         $replies = [
-            // Billing & Payments
+            // Saludos
             [
-                'uid' => Str::ulid(),
-                'title' => 'Información de pago recibida',
-                'key' => 'payment_received_info',
-                'shortcut' => ':payment_info',
-                'content' => 'Gracias por tu pago. Confirmo que hemos recibido tu transacción exitosamente. Tu recibo será enviado a tu correo electrónico en los próximos minutos.',
-                'category' => 'billing_payments',
-                'is_active' => true,
-                'position' => 1,
+                'shortcut' => '/bienvenida',
+                'title' => 'Saludo de bienvenida',
+                'category' => 'Saludos',
+                'body' => 'Hola {{nombre}}, bienvenido/a a nuestro soporte. Mi nombre es {{agente}} y estoy aquí para ayudarte. ¿En qué te puedo asistir hoy?',
+                'is_global' => 1,
             ],
             [
-                'uid' => Str::ulid(),
-                'title' => 'Factura no recibida',
-                'key' => 'invoice_not_received',
-                'shortcut' => ':invoice_issue',
-                'content' => 'Disculpa por el inconveniente. Por favor, verifica tu carpeta de spam o correo no deseado. Si aún no la encuentras, podré reenviarte la factura. Proporciona tu número de pedido o correo asociado.',
-                'category' => 'billing_payments',
-                'is_active' => true,
-                'position' => 2,
+                'shortcut' => '/gracias',
+                'title' => 'Agradecimiento al cliente',
+                'category' => 'Saludos',
+                'body' => 'Muchas gracias por contactarnos, {{nombre}}. Es un placer atenderte. Si tienes cualquier otra consulta, no dudes en escribirnos.',
+                'is_global' => 1,
+            ],
+
+            // Cierre
+            [
+                'shortcut' => '/cierre',
+                'title' => 'Cierre de conversación',
+                'category' => 'Cierre',
+                'body' => 'Ha sido un placer ayudarte, {{nombre}}. Vamos a cerrar esta conversación. Si necesitas algo más en el futuro, estaremos encantados de asistirte.',
+                'is_global' => 1,
             ],
             [
-                'uid' => Str::ulid(),
+                'shortcut' => '/sin-respuesta',
+                'title' => 'Cierre por falta de respuesta',
+                'category' => 'Cierre',
+                'body' => 'Hola {{nombre}}, cerramos tu conversación al no haber recibido respuesta. Si aún necesitas ayuda, puedes escribirnos en cualquier momento y con gusto te atendemos.',
+                'is_global' => 1,
+            ],
+
+            // Facturación
+            [
+                'shortcut' => '/pago-recibido',
+                'title' => 'Pago recibido con éxito',
+                'category' => 'Facturación',
+                'body' => 'Confirmamos que hemos recibido tu pago correctamente. En breve recibirás el comprobante en tu correo electrónico. Si tienes alguna duda adicional, aquí estamos.',
+                'is_global' => 1,
+            ],
+            [
+                'shortcut' => '/factura-spam',
+                'title' => 'Factura en carpeta spam',
+                'category' => 'Facturación',
+                'body' => 'Disculpa el inconveniente. Te pedimos que revises tu carpeta de spam o correo no deseado. Si aún no encuentras la factura, indícanos tu número de pedido y te la reenviamos de inmediato.',
+                'is_global' => 1,
+            ],
+            [
+                'shortcut' => '/reembolso',
                 'title' => 'Reembolso procesado',
-                'key' => 'refund_processed',
-                'shortcut' => ':refund_status',
-                'content' => 'Tu reembolso ha sido aprobado y procesado. Según tu banco, puede tomar de 5 a 10 días hábiles para que aparezca en tu cuenta. El número de referencia del reembolso es: [REFUND_REF]',
-                'category' => 'billing_payments',
-                'is_active' => true,
-                'position' => 3,
+                'category' => 'Facturación',
+                'body' => 'Tu reembolso ha sido aprobado y procesado. Dependiendo de tu banco, puede tardar entre 5 y 10 días hábiles en reflejarse. Número de referencia: {{ref}}. Lamentamos los inconvenientes.',
+                'is_global' => 1,
             ],
 
-            // Technical Support
+            // Soporte técnico
             [
-                'uid' => Str::ulid(),
-                'title' => 'Reiniciar navegador',
-                'key' => 'restart_browser',
-                'shortcut' => ':browser_restart',
-                'content' => 'Gracias por reportar esto. Como primer paso, intenta: 1) Cerrar completamente el navegador 2) Borrar cookies y caché 3) Reiniciar tu navegador 4) Intentar nuevamente. Si el problema persiste, avísame.',
-                'category' => 'technical_support',
-                'is_active' => true,
-                'position' => 4,
+                'shortcut' => '/limpia-cache',
+                'title' => 'Limpiar caché del navegador',
+                'category' => 'Soporte técnico',
+                'body' => 'Te recomendamos limpiar la caché del navegador: 1) Presiona Ctrl+Shift+Delete (PC) o Cmd+Shift+Delete (Mac) 2) Selecciona "Todo el tiempo" como rango 3) Marca "Caché e imágenes" 4) Haz clic en Borrar. Luego intenta nuevamente.',
+                'is_global' => 1,
             ],
             [
-                'uid' => Str::ulid(),
-                'title' => 'Problema técnico en investigación',
-                'key' => 'technical_investigation',
-                'shortcut' => ':tech_investigate',
-                'content' => 'Lamento el inconveniente técnico que experimentas. He escalado este problema a nuestro equipo técnico para investigación. Te contactaré en las próximas 24 horas con una actualización. Referencia: [TICKET_REF]',
-                'category' => 'technical_support',
-                'is_active' => true,
-                'position' => 5,
+                'shortcut' => '/escalando',
+                'title' => 'Escalando al equipo técnico',
+                'category' => 'Soporte técnico',
+                'body' => 'Gracias por tu paciencia, {{nombre}}. He escalado tu caso a nuestro equipo técnico especializado. Recibirás una respuesta en un máximo de 24 horas. Referencia del caso: {{ticket}}.',
+                'is_global' => 1,
             ],
 
-            // Account Management
+            // Envíos
             [
-                'uid' => Str::ulid(),
-                'title' => 'Instrucciones de reset de contraseña',
-                'key' => 'password_reset_instructions',
-                'shortcut' => ':password_reset',
-                'content' => 'Para resetear tu contraseña: 1) Ve a la página de login 2) Haz clic en "Olvidé mi contraseña" 3) Ingresa tu correo electrónico 4) Revisa tu email para el enlace de confirmación 5) Crea una nueva contraseña segura.',
-                'category' => 'account_management',
-                'is_active' => true,
-                'position' => 6,
+                'shortcut' => '/rastreo',
+                'title' => 'Información de rastreo',
+                'category' => 'Envíos',
+                'body' => 'Tu pedido está en camino. Número de seguimiento: {{tracking}}. Puedes rastrearlo en: {{url_rastreo}}. Fecha estimada de entrega: {{fecha}}. ¡Esperamos que llegue pronto!',
+                'is_global' => 1,
             ],
             [
-                'uid' => Str::ulid(),
-                'title' => 'Cuenta bloqueada por seguridad',
-                'key' => 'account_locked_security',
-                'shortcut' => ':account_locked',
-                'content' => 'Tu cuenta ha sido temporalmente bloqueada por medidas de seguridad después de múltiples intentos de login fallidos. Esto es normal. Intenta nuevamente en 30 minutos o usa la opción de "Olvidé mi contraseña".',
-                'category' => 'account_management',
-                'is_active' => true,
-                'position' => 7,
-            ],
-
-            // Order & Shipping
-            [
-                'uid' => Str::ulid(),
-                'title' => 'Rastreo de pedido',
-                'key' => 'order_tracking',
-                'shortcut' => ':track_order',
-                'content' => 'Tu pedido está en camino. Puedes rastrear tu envío usando este enlace: [TRACKING_URL] El número de seguimiento es: [TRACKING_NUMBER]. La entrega estimada es: [DELIVERY_DATE].',
-                'category' => 'order_shipping',
-                'is_active' => true,
-                'position' => 8,
-            ],
-            [
-                'uid' => Str::ulid(),
+                'shortcut' => '/retraso-envio',
                 'title' => 'Retraso en envío',
-                'key' => 'shipping_delay',
-                'shortcut' => ':shipping_delay',
-                'content' => 'Disculpa por el retraso en tu envío. Estamos investigando el problema con el transportista. Recibirás una actualización dentro de 24 horas. Como disculpa, ofrecemos [COMPENSATION]. ¿Hay algo más que pueda hacer?',
-                'category' => 'order_shipping',
-                'is_active' => true,
-                'position' => 9,
+                'category' => 'Envíos',
+                'body' => 'Lamentamos el retraso en tu envío, {{nombre}}. Estamos coordinando con la empresa de mensajería para resolverlo. Te notificaremos en cuanto tengamos una actualización. Disculpa los inconvenientes.',
+                'is_global' => 1,
             ],
 
-            // General Information
+            // Devoluciones
             [
-                'uid' => Str::ulid(),
+                'shortcut' => '/politica-devolucion',
                 'title' => 'Política de devoluciones',
-                'key' => 'returns_policy_info',
-                'shortcut' => ':returns_policy',
-                'content' => 'Aceptamos devoluciones dentro de 30 días de la compra. Los artículos deben estar sin usar y en su embalaje original. El envío de devolución es gratis con nuestras etiquetas. Más información: [RETURNS_LINK]',
-                'category' => 'general_information',
-                'is_active' => true,
-                'position' => 10,
+                'category' => 'Devoluciones',
+                'body' => 'Aceptamos devoluciones dentro de los 30 días posteriores a la compra. El producto debe estar en su estado original con el embalaje intacto. El envío de retorno corre por nuestra cuenta. Inicia tu devolución aquí: {{url_devolucion}}.',
+                'is_global' => 1,
+            ],
+            [
+                'shortcut' => '/devolucion-aprobada',
+                'title' => 'Devolución aprobada',
+                'category' => 'Devoluciones',
+                'body' => 'Tu solicitud de devolución ha sido aprobada. En breve recibirás la etiqueta de envío en tu correo. Una vez que recibamos el producto, procesaremos tu reembolso en 3-5 días hábiles.',
+                'is_global' => 1,
             ],
 
-            // Follow-up & Closing
+            // Seguimiento
             [
-                'uid' => Str::ulid(),
+                'shortcut' => '/seguimiento',
                 'title' => 'Seguimiento de satisfacción',
-                'key' => 'satisfaction_followup',
-                'shortcut' => ':satisfaction',
-                'content' => '¿Se ha resuelto tu problema? Nos encantaría saber tu opinión. Por favor, califica tu experiencia de soporte. Si aún tienes preguntas, no dudes en contactarnos nuevamente.',
-                'category' => 'followup_closing',
-                'is_active' => true,
-                'position' => 11,
-            ],
-            [
-                'uid' => Str::ulid(),
-                'title' => 'Cierre automático de ticket',
-                'key' => 'ticket_auto_close',
-                'shortcut' => ':auto_close',
-                'content' => 'Como no hemos recibido respuesta en 5 días, cerramos tu ticket. Si aún necesitas ayuda, responde a este mensaje o abre un nuevo ticket. ¡Estamos aquí para ayudarte!',
-                'category' => 'followup_closing',
-                'is_active' => true,
-                'position' => 12,
+                'category' => 'Seguimiento',
+                'body' => '¡Hola {{nombre}}! Esperamos que tu consulta haya quedado resuelta. ¿Puedes calificar tu experiencia con nuestro soporte? Tu opinión nos ayuda a mejorar. Gracias por confiar en nosotros.',
+                'is_global' => 1,
             ],
         ];
 
         foreach ($replies as $reply) {
-            CannedReply::firstOrCreate(
-                ['key' => $reply['key']],
-                $reply
+            DB::connection('helpdesk')->table('helpdesk_canned_replies')->updateOrInsert(
+                ['shortcut' => $reply['shortcut']],
+                array_merge($reply, [
+                    'content' => $reply['body'],
+                    'usage_count' => 0,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
             );
         }
 
-        $this->command->info('✅ Helpdesk canned replies seeded successfully');
+        $this->command->info('✅ Respuestas rápidas creadas ('.count($replies).')');
     }
 }

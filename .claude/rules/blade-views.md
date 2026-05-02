@@ -14,4 +14,4 @@ globs: "modules/*/resources/views/**/*.blade.php"
 - Table actions: ALWAYS dropdown with `fa-ellipsis-vertical`, no icons in items, no `text-danger` on delete
 - Modals: ALWAYS `modal-dialog-centered` with footer buttons w-100 stacked (primary mb-2 top, secondary bottom)
 - select2: NEVER use `theme: 'bootstrap-5'` (CSS not loaded)
-- Primary color: `#90bb13`
+- Primary color: `#b10100`

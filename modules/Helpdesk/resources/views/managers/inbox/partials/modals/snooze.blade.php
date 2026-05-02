@@ -57,12 +57,8 @@
 
         </div>
         <div class="bv-modal-foot">
+            <button class="btn-primary" id="snzBtnApply">Posponer</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
-            <div class="bv-ml-auto">
-                <button class="btn-primary" id="snzBtnApply">
-                    <i class="fas fa-clock"></i> Posponer
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -154,7 +150,6 @@
         }).done(function (resp) {
             $('[data-bv-modal-name="snooze"]').removeClass('on');
             $('body').css('overflow', '');
-            toastr.success(resp?.message || 'Conversación pospuesta hasta ' + until.toLocaleString('es'));
         }).fail(function (xhr) {
             var msg = xhr?.responseJSON?.errors
                 ? Object.values(xhr.responseJSON.errors)[0]?.[0]

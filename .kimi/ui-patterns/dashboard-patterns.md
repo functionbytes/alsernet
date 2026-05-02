@@ -200,7 +200,7 @@
                     zoom: { enabled: false },
                     fontFamily: 'inherit'
                 },
-                colors: ['#90bb13'],
+                colors: ['#b10100'],
                 stroke: { curve: 'smooth', width: 2 },
                 fill: {
                     type: 'gradient',
@@ -240,7 +240,7 @@
                 series: data.series || [],
                 labels: data.labels || [],
                 chart: { type: 'donut', height: 200, fontFamily: 'inherit' },
-                colors: ['#90bb13', '#13C672', '#FEC90F', '#FA896B', '#333333'],
+                colors: ['#b10100', '#13C672', '#FEC90F', '#FA896B', '#333333'],
                 legend: { show: false },
                 dataLabels: { enabled: false },
                 tooltip: { y: { formatter: v => fmt(v) } },
@@ -319,7 +319,7 @@ Sparkline config:
 new ApexCharts(document.querySelector('#spark-id'), {
     series: [{ data: sparkData }],
     chart: { type: 'area', height: 70, width: 70, sparkline: { enabled: true }, animations: { enabled: false } },
-    colors: ['#90bb13'],
+    colors: ['#b10100'],
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
     tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } } }
@@ -417,4 +417,4 @@ const emptyState = msg => `<div class="text-center py-4 text-muted"><i class="fa
 7. **Recent list**: al final, con link "Ver todos" al listado completo
 8. **Numbers**: siempre `number_format()` o `Intl.NumberFormat('es-ES')` para display
 9. **Font family**: usar `fontFamily: 'inherit'` en ApexCharts para heredar del tema
-10. **Colors**: Primary `#90bb13`, Success `#13C672`, Danger `#FA896B`, Warning `#FEC90F`
+10. **Colors**: Primary `#b10100`, Success `#13C672`, Danger `#FA896B`, Warning `#FEC90F`

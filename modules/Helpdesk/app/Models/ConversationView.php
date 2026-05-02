@@ -72,8 +72,7 @@ class ConversationView extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)
-            ->setConnection(config('database.default'));
+        return $this->belongsTo(User::class);
     }
 
     /**

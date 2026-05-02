@@ -62,37 +62,37 @@
                 <i class="fas fa-chevron-down bv-pill-chevron"></i>
             </button>
             <span class="bv-th-sep"></span>
-            <button class="bv-th-action" id="bv-th-search-btn" title="Buscar en la conversación">
+            <button class="bv-th-action" id="bv-th-search-btn" data-bv-tip="Buscar en la conversación">
                 <i class="fas fa-magnifying-glass"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="email" title="Email">
+            <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Email">
                 <i class="far fa-envelope"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="schedule" title="Agendar">
+            <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar">
                 <i class="far fa-calendar-plus"></i>
             </button>
-            <button class="bv-th-action" title="Posponer" onclick="openSnoozeModal()">
+            <button class="bv-th-action" data-bv-tip="Posponer" onclick="openSnoozeModal()">
                 <i class="far fa-clock"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="assign" title="Asignar">
+            <button class="bv-th-action" data-bv-modal="assign" data-bv-tip="Asignar">
                 <i class="far fa-user-plus"></i>
             </button>
-            <button class="bv-th-action" data-bv-modal="tags" title="Etiquetar">
+            <button class="bv-th-action" data-bv-modal="tags" data-bv-tip="Etiquetar">
                 <i class="fas fa-tag"></i>
             </button>
             @if($convo?->closed_at)
-                <button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen" title="Reabrir conversación"
+                <button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen" data-bv-tip="Reabrir conversación"
                         data-reopen-url="{{ route('manager.helpdesk.conversations.reopen', $convo) }}">
                     <i class="fas fa-rotate-left"></i>
                 </button>
             @elseif($convo)
-                <button class="bv-th-action" data-bv-modal="close-conv" title="Cerrar conversación">
+                <button class="bv-th-action" data-bv-modal="close-conv" data-bv-tip="Cerrar conversación">
                     <i class="fas fa-check"></i>
                 </button>
             @endif
             {{-- Botón "más" con dropdown --}}
             <div class="bv-th-more-wrap">
-                <button class="bv-th-action" id="bv-btn-more" title="Más">
+                <button class="bv-th-action" id="bv-btn-more" data-bv-tip="Más">
                     <i class="fas fa-ellipsis-vertical"></i>
                 </button>
                 <div class="bv-more-menu" id="bv-more-menu">
@@ -102,6 +102,16 @@
                     <div class="sep"></div>
                     <button data-bv-modal="preview-conv"><i class="far fa-clock-rotate-left"></i>Conversaciones anteriores</button>
                     <button data-bv-modal="note"><i class="far fa-note-sticky"></i>Añadir nota</button>
+                    <button id="bv-btn-send-csat"
+                            data-csat-url="{{ $convo ? route('manager.helpdesk.conversations.send-csat', $convo) : '' }}">
+                        <i class="far fa-star"></i>Enviar encuesta CSAT
+                    </button>
+                    @if(\Illuminate\Support\Facades\Route::has('manager.helpdesk.conversations.ticket'))
+                    <button id="bv-btn-create-ticket"
+                            data-ticket-url="{{ $convo ? route('manager.helpdesk.conversations.ticket', $convo) : '' }}">
+                        <i class="fas fa-ticket-simple"></i>Crear ticket
+                    </button>
+                    @endif
                     <div class="sep"></div>
                     <button class="danger"><i class="fas fa-ban"></i>Spam</button>
                     <button class="danger"><i class="fas fa-user-slash"></i>Bloquear contacto</button>
@@ -116,9 +126,9 @@
         <i class="fas fa-magnifying-glass bv-th-search-icon"></i>
         <input type="text" id="bv-th-search-input" class="bv-th-search-input" placeholder="Buscar en la conversación…" autocomplete="off">
         <span class="bv-th-search-count" id="bv-th-search-count"></span>
-        <button class="bv-th-search-nav" id="bv-th-search-prev" title="Anterior" disabled><i class="fas fa-chevron-up"></i></button>
-        <button class="bv-th-search-nav" id="bv-th-search-next" title="Siguiente" disabled><i class="fas fa-chevron-down"></i></button>
-        <button class="bv-th-search-close" id="bv-th-search-close" title="Cerrar"><i class="fas fa-xmark"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-prev" data-bv-tip="Anterior" disabled><i class="fas fa-chevron-up"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-next" data-bv-tip="Siguiente" disabled><i class="fas fa-chevron-down"></i></button>
+        <button class="bv-th-search-close" id="bv-th-search-close" data-bv-tip="Cerrar"><i class="fas fa-xmark"></i></button>
     </div>
 
     {{-- Cuerpo del hilo --}}
@@ -180,8 +190,38 @@
                                 </div>
                             </div>
                         @endif
-                        @if($item->body)
+                        @php
+                            $linkPreview = $item->metadata['link_preview'] ?? null;
+                            $previewUrlNorm = rtrim((string) ($linkPreview['url'] ?? ''), '/');
+                            $bodyTrimmed = trim((string) $item->body);
+                            $bodyTrimmedNorm = rtrim($bodyTrimmed, '/');
+                            $hideBody = $linkPreview && $previewUrlNorm !== '' && (
+                                $bodyTrimmed === $linkPreview['url']
+                                || $bodyTrimmedNorm === $previewUrlNorm
+                            );
+                        @endphp
+                        @if($item->body && ! $hideBody)
                             {!! $item->body_html !!}
+                        @endif
+
+                        @if($linkPreview && (! empty($linkPreview['title']) || ! empty($linkPreview['description']) || ! empty($linkPreview['image'])))
+                            <a href="{{ $linkPreview['url'] }}" target="_blank" rel="noopener noreferrer" class="bv-link-preview">
+                                @if(! empty($linkPreview['image']))
+                                    <img src="{{ $linkPreview['image'] }}" alt="{{ $linkPreview['title'] ?? '' }}" loading="lazy" class="bv-lp-img">
+                                @endif
+                                <div class="bv-lp-body">
+                                    @if(! empty($linkPreview['title']))
+                                        <p class="bv-lp-title">{{ $linkPreview['title'] }}</p>
+                                    @endif
+                                    @if(! empty($linkPreview['description']))
+                                        <p class="bv-lp-desc">{{ $linkPreview['description'] }}</p>
+                                    @endif
+                                    <div class="bv-lp-meta">
+                                        <i class="fas fa-link"></i>
+                                        <span>{{ $linkPreview['site'] ?? parse_url($linkPreview['url'], PHP_URL_HOST) }}</span>
+                                    </div>
+                                </div>
+                            </a>
                         @endif
                         @if($item->hasAttachments())
                             @php
@@ -485,7 +525,7 @@
             <div class="bv-composer-toolbar">
                 {{-- Adjuntar con menú --}}
                 <div class="bv-attach-wrap">
-                    <button class="btn-ico" id="bv-btn-attach" title="Adjuntar">
+                    <button class="btn-ico" id="bv-btn-attach" data-bv-tip="Adjuntar">
                         <i class="fas fa-paperclip"></i>
                     </button>
                     <div class="bv-attach-menu" id="bv-attach-menu">
@@ -553,14 +593,14 @@
                 </div>
                 {{-- Voice recorder (shown when audio attach chosen and user clicks record) --}}
                 <div class="bv-voice-recorder bv-hidden" id="bv-voice-recorder">
-                    <button class="bv-voice-btn" id="bv-voice-record" title="Grabar">
+                    <button class="bv-voice-btn" id="bv-voice-record" data-bv-tip="Grabar">
                         <i class="fas fa-microphone"></i>
                     </button>
                     <span class="bv-voice-time" id="bv-voice-time">0:00</span>
-                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" title="Detener">
+                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" data-bv-tip="Detener">
                         <i class="fas fa-stop"></i>
                     </button>
-                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" title="Cancelar">
+                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" data-bv-tip="Cancelar">
                         <i class="fas fa-xmark"></i>
                     </button>
                 </div>
@@ -568,19 +608,19 @@
                 <div class="bv-upload-progress bv-hidden" id="bv-upload-progress">
                     <div class="bv-upload-bar" id="bv-upload-bar"></div>
                 </div>
-                <button class="btn-ico" id="bv-btn-emoji" type="button" data-tooltip="Emoji" aria-label="Emoji">
+                <button class="btn-ico" id="bv-btn-emoji" type="button" data-bv-tip="Emoji" aria-label="Emoji">
                     <i class="far fa-face-smile"></i>
                 </button>
-                <button class="btn-ico" id="bv-btn-mention" type="button" data-bv-modal="mention" data-tooltip="Mencionar agente" aria-label="Mencionar agente">
+                <button class="btn-ico" id="bv-btn-mention" type="button" data-bv-modal="mention" data-bv-tip="Mencionar agente" aria-label="Mencionar agente">
                     <i class="fas fa-at"></i>
                 </button>
-                <button class="btn-ico" title="Respuesta rápida" onclick="openCannedModal()">
+                <button class="btn-ico" data-bv-tip="Respuesta rápida" onclick="openCannedModal()">
                     <i class="fas fa-bolt"></i>
                 </button>
-                <button class="btn-ico" id="bv-btn-record" title="Grabar audio" data-bv-attach-type="record">
+                <button class="btn-ico" id="bv-btn-record" data-bv-tip="Grabar audio" data-bv-attach-type="record">
                     <i class="fas fa-microphone"></i>
                 </button>
-                <button class="btn-ico" title="Sugerencia IA">
+                <button class="btn-ico" data-bv-tip="Sugerencia IA">
                     <i class="fas fa-sparkles"></i>
                 </button>
                 <div class="bv-send-group">
@@ -588,7 +628,7 @@
                         <i class="far fa-paper-plane"></i>Enviar
                         <kbd class="bv-kbd-send" id="bv-kbd-send">⌘↵</kbd>
                     </button>
-                    <button class="btn-send-config" type="button" id="bv-send-config" data-tooltip="Atajo de envío" aria-label="Configurar atajo de envío" aria-haspopup="menu" aria-expanded="false">
+                    <button class="btn-send-config" type="button" id="bv-send-config" data-bv-tip="Atajo de envío" aria-label="Configurar atajo de envío" aria-haspopup="menu" aria-expanded="false">
                         <i class="fas fa-chevron-up"></i>
                     </button>
                 </div>
@@ -893,7 +933,6 @@
             }).catch(function(){});
         }
         closeCannedModal();
-        if (typeof toastr !== 'undefined') toastr.success('Plantilla insertada');
     };
 
     var hdCannedSearchInp = document.getElementById('hdCannedSearch');
@@ -958,7 +997,7 @@
         })
         .then(function(r){ return r.json(); })
         .then(function(data) {
-            if (data.success) { if (typeof toastr !== 'undefined') toastr.success(data.message || 'Conversación pospuesta'); closeSnoozeModal(); }
+            if (data.success) { closeSnoozeModal(); }
             else { if (typeof toastr !== 'undefined') toastr.error('Error al posponer la conversación'); }
         })
         .catch(function() { if (typeof toastr !== 'undefined') toastr.error('Error al conectar con el servidor'); });
@@ -970,14 +1009,57 @@
         if (document.getElementById('hdSnoozeOverlay').classList.contains('open')) { closeSnoozeModal(); return; }
     });
 
-    // ── Integración con el slash-menu de inbox-v4.js ───────
-    // inbox-v4.js ya incluye su propio slash menu (#bv-slash-menu).
+    // ── CSAT ───────────────────────────────────────────────
+    $(document).on('click', '#bv-btn-send-csat', function() {
+        var url = $(this).data('csat-url');
+        if (!url) { toastr.error('No hay conversación seleccionada'); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': hdCsrf, 'Accept': 'application/json' },
+        }).done(function(resp) {
+        }).fail(function(xhr) {
+            var msg = xhr?.responseJSON?.message || 'No se pudo enviar la encuesta';
+            toastr.error(msg);
+        }).always(function() {
+            $btn.prop('disabled', false);
+            $('#bv-more-menu').removeClass('open');
+        });
+    });
+
+    // ── CREAR TICKET ────────────────────────────────────────
+    $(document).on('click', '#bv-btn-create-ticket', function() {
+        var url = $(this).data('ticket-url');
+        if (!url) { toastr.error('No hay conversación seleccionada'); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': hdCsrf, 'Accept': 'application/json' },
+        }).done(function(resp) {
+            if (resp.ticket_url) {
+                window.open(resp.ticket_url, '_blank');
+            }
+        }).fail(function(xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se pudo crear el ticket';
+            toastr.error(msg);
+        }).always(function() {
+            $btn.prop('disabled', false);
+            $('#bv-more-menu').removeClass('open');
+        });
+    });
+
+    // ── Integración con el slash-menu de conversations.js ───────
+    // conversations.js ya incluye su propio slash menu (#bv-slash-menu).
     // Aquí solo configuramos la URL de búsqueda y aplicamos
     // reemplazo de placeholders cuando se inserta una plantilla.
     window.bvCannedRepliesUrl = '{{ route("manager.helpdesk.canned-replies.search") }}';
 
     // Reemplazar marcadores de posición en el composer después de insertar una plantilla.
-    // Usamos jQuery .on() porque inbox-v4.js dispara $textarea.trigger('input'),
+    // Usamos jQuery .on() porque conversations.js dispara $textarea.trigger('input'),
     // que no siempre propaga al addEventListener nativo.
     $(document).on('input', '.bv-composer-input', function() {
         var ta = this;

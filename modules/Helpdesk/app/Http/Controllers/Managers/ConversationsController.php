@@ -20,7 +20,10 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
+use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Events\ConversationTagAdded;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Exceptions\WhatsAppHsmException;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
@@ -50,8 +53,12 @@ use Modules\Helpdesk\Models\Group;
 use Modules\Helpdesk\Services\ConversationMessageService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CsatService;
+use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\WhatsAppHsmService;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\Mailer\Models\MailerTemplate;
+use Modules\Mailer\Services\MailerTemplateRendererService;
 
 class ConversationsController extends Controller
 {
@@ -64,10 +71,10 @@ class ConversationsController extends Controller
             'storeMessage', 'snooze', 'togglePin', 'toggleMute',
             'sendEmail', 'sendHsm', 'merge', 'mergeCandidates',
             'saveDraft', 'storeScheduledMessage', 'aiSuggestions',
-            'uploadAttachments', 'storeContact', 'storeLocation',
+            'uploadAttachments', 'storeContact', 'storeLocation', 'createTicket',
         ]);
         $this->middleware('can:helpdesk.conversations.delete')->only(['destroy', 'restore', 'forceDelete', 'blockContact']);
-        $this->middleware('can:helpdesk.conversations.update')->only(['markSpam']);
+        $this->middleware('can:helpdesk.conversations.update')->only(['markSpam', 'sendCsatSurvey']);
     }
 
     /**
@@ -211,7 +218,7 @@ class ConversationsController extends Controller
                     'facebook' => (clone $base)->where('channel', 'facebook')->count(),
                     'instagram' => (clone $base)->where('channel', 'instagram')->count(),
                     'email' => (clone $base)->where('channel', 'email')->count(),
-                    'widget' => (clone $base)->whereIn('channel', ['widget', 'web'])->count(),
+                    'web' => (clone $base)->whereIn('channel', ['web'])->count(),
                     'vip' => (clone $base)
                         ->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5))
                         ->count(),
@@ -437,13 +444,71 @@ class ConversationsController extends Controller
     }
 
     /**
+     * List enabled Mailer templates for the helpdesk module.
+     */
+    public function emailTemplates(): JsonResponse
+    {
+        $templates = MailerTemplate::query()
+            ->module('helpdesk')
+            ->enabled()
+            ->with('translations')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (MailerTemplate $t) => [
+                'id' => $t->id,
+                'key' => $t->key,
+                'name' => $t->name,
+                'subject' => $t->subject ?? '',
+            ]);
+
+        return response()->json(['templates' => $templates]);
+    }
+
+    /**
+     * Preview a Mailer template rendered with conversation variables.
+     */
+    public function previewEmailTemplate(Request $request, Conversation $conversation): JsonResponse
+    {
+        $templateId = (int) $request->input('template_id');
+        $template = MailerTemplate::module('helpdesk')->enabled()->with(['translations', 'layout'])->find($templateId);
+
+        if (! $template) {
+            return response()->json(['success' => false, 'message' => 'Plantilla no encontrada.'], 404);
+        }
+
+        $conversation->loadMissing(['customer', 'inbox']);
+        $agent = auth()->user();
+
+        $variables = [
+            'CUSTOMER_NAME' => $conversation->customer?->name ?? 'Cliente',
+            'CUSTOMER_EMAIL' => $conversation->customer?->email ?? '',
+            'CONVERSATION_ID' => $conversation->id,
+            'AGENT_NAME' => trim(($agent?->firstname ?? '').' '.($agent?->lastname ?? '')) ?: ($agent?->email ?? ''),
+            'INBOX_NAME' => $conversation->inbox?->name ?? '',
+            'COMPANY_NAME' => config('app.name'),
+        ];
+
+        $htmlBody = MailerTemplateRendererService::renderEmailTemplate($template, $variables);
+        $plainBody = strip_tags(html_entity_decode(preg_replace('/<br\s*\/?>/i', "\n", $htmlBody)));
+        $plainBody = trim(preg_replace('/[ \t]+/', ' ', preg_replace('/\n{3,}/', "\n\n", $plainBody)));
+
+        $subject = MailerTemplateRendererService::replaceVariables($template->subject ?? '', $variables);
+
+        return response()->json([
+            'subject' => $subject,
+            'body' => $plainBody,
+            'html_body' => $htmlBody,
+        ]);
+    }
+
+    /**
      * Send a real email to the customer and persist it as a ConversationItem.
      */
     public function sendEmail(SendEmailFromConversationRequest $request, Conversation $conversation): JsonResponse
     {
         $validated = $request->validated();
 
-        $conversation->loadMissing('customer');
+        $conversation->loadMissing(['customer', 'inbox']);
         $customer = $conversation->customer;
 
         if (! filled($customer?->email)) {
@@ -455,19 +520,47 @@ class ConversationsController extends Controller
 
         $cc = $validated['cc'] ?? [];
         $bcc = $validated['bcc'] ?? [];
-        $bodyHtml = nl2br(e($validated['body']));
 
-        $item = DB::transaction(function () use ($conversation, $validated, $cc, $bcc, $bodyHtml): ConversationItem {
+        // Si se eligió una plantilla del módulo Mailer, renderizar como HTML.
+        if (! empty($validated['template_id'])) {
+            $template = MailerTemplate::module('helpdesk')->enabled()
+                ->with(['translations', 'layout'])
+                ->find((int) $validated['template_id']);
+
+            if ($template) {
+                $agent = auth()->user();
+                $variables = [
+                    'CUSTOMER_NAME' => $customer->name ?? 'Cliente',
+                    'CUSTOMER_EMAIL' => $customer->email ?? '',
+                    'CONVERSATION_ID' => $conversation->id,
+                    'AGENT_NAME' => trim(($agent?->firstname ?? '').' '.($agent?->lastname ?? '')) ?: ($agent?->email ?? ''),
+                    'INBOX_NAME' => $conversation->inbox?->name ?? '',
+                    'COMPANY_NAME' => config('app.name'),
+                ];
+                $bodyHtml = MailerTemplateRendererService::renderEmailTemplate($template, $variables);
+                $bodyPlain = strip_tags(html_entity_decode(preg_replace('/<br\s*\/?>/i', "\n", $bodyHtml)));
+                $bodyPlain = trim(preg_replace('/[ \t]+/', ' ', preg_replace('/\n{3,}/', "\n\n", $bodyPlain)));
+            } else {
+                $bodyHtml = nl2br(e($validated['body']));
+                $bodyPlain = $validated['body'];
+            }
+        } else {
+            $bodyHtml = nl2br(e($validated['body']));
+            $bodyPlain = $validated['body'];
+        }
+
+        $item = DB::transaction(function () use ($conversation, $validated, $cc, $bcc, $bodyHtml, $bodyPlain): ConversationItem {
             return $conversation->items()->create([
                 'user_id' => auth()->id(),
                 'type' => 'email_sent',
-                'body' => $validated['body'],
+                'body' => $bodyPlain,
                 'html_body' => $bodyHtml,
                 'is_internal' => false,
                 'metadata' => [
                     'subject' => $validated['subject'],
                     'cc' => $cc,
                     'bcc' => $bcc,
+                    'template_key' => $validated['template_id'] ?? null,
                 ],
             ]);
         });
@@ -479,7 +572,7 @@ class ConversationsController extends Controller
                 conversation: $conversation,
                 subject: $validated['subject'],
                 bodyHtml: $bodyHtml,
-                bodyPlain: $validated['body'],
+                bodyPlain: $bodyPlain,
                 cc: $cc,
                 bcc: $bcc,
             ));
@@ -719,6 +812,12 @@ class ConversationsController extends Controller
             $tagIds = array_map('intval', $request->validated()['tag_ids'] ?? []);
             $conversation->conversationTags()->sync($tagIds);
 
+            $conversation->load('conversationTags');
+
+            foreach ($conversation->conversationTags as $tag) {
+                ConversationTagAdded::dispatch($conversation, $tag);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => __('helpdesk::helpdesk.messages.tags_updated'),
@@ -838,6 +937,8 @@ class ConversationsController extends Controller
 
         $conversation->close();
 
+        ConversationClosed::dispatch($conversation);
+
         // Fire CSAT survey (best effort — never block close on a survey error).
         try {
             app(CsatService::class)->dispatchForConversation($conversation);
@@ -937,7 +1038,7 @@ class ConversationsController extends Controller
             ->map(fn (Conversation $c) => [
                 'id' => $c->id,
                 'subject' => $c->subject ?? '#'.$c->id,
-                'channel' => $c->channel ?? 'widget',
+                'channel' => $c->channel ?? 'web',
                 'channel_icon' => $c->channel_info['icon'],
                 'preview' => mb_strimwidth(strip_tags((string) ($c->getLatestMessage()?->body ?? '')), 0, 80, '…'),
                 'time' => $c->last_message_at?->diffForHumans() ?? $c->created_at?->diffForHumans() ?? '—',
@@ -1010,6 +1111,31 @@ class ConversationsController extends Controller
         }
 
         if ($request->wantsJson()) {
+            // Read back to pick up metadata.link_preview enriched by the
+            // ConversationItemLinkPreviewObserver (and add it inline as a
+            // fallback so the agent panel always renders the unfurl card on
+            // first paint without waiting for a follow-up broadcast).
+            if ($item) {
+                $reloaded = ConversationItem::with('user')->find($item->id);
+                if ($reloaded) {
+                    $item = $reloaded;
+                }
+
+                $existingMeta = $item->metadata ?? [];
+                if (
+                    ! ($validated['is_internal'] ?? false)
+                    && ! isset($existingMeta['link_preview'])
+                    && filled($item->body)
+                ) {
+                    $preview = app(LinkPreviewService::class)
+                        ->previewFromBody((string) $item->body);
+                    if ($preview !== null) {
+                        $item->metadata = array_merge($existingMeta, ['link_preview' => $preview]);
+                        $item->saveQuietly();
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => $successMessage,
@@ -1026,6 +1152,8 @@ class ConversationsController extends Controller
                             : null),
                     'is_outgoing' => true,
                     'reply_to' => $replyMeta,
+                    'attachment_urls' => $item?->attachment_urls ?? [],
+                    'metadata' => $item?->metadata ?? [],
                 ],
             ], 201);
         }
@@ -1041,6 +1169,138 @@ class ConversationsController extends Controller
      * Recibe ?url= con la URL completa o solo el path /storage/... y devuelve
      * el archivo bajo la disk public con el filename original.
      */
+    /**
+     * Toggle a reaction (emoji) on a conversation item. The agent can react
+     * with one of a fixed set of emojis; reacting with the same emoji again
+     * removes it.
+     */
+    public function reactToMessage(Request $request, ConversationItem $item): JsonResponse
+    {
+        $emoji = (string) $request->input('emoji', '');
+        if ($emoji === '') {
+            return response()->json(['success' => false, 'message' => 'Emoji requerido'], 422);
+        }
+
+        $userId = (int) auth()->id();
+        $metadata = $item->metadata ?? [];
+        $reactions = collect($metadata['reactions'] ?? []);
+
+        $existing = $reactions->first(
+            fn ($r) => ($r['user_id'] ?? null) === $userId && ($r['emoji'] ?? null) === $emoji
+        );
+
+        if ($existing) {
+            $reactions = $reactions->reject(
+                fn ($r) => ($r['user_id'] ?? null) === $userId && ($r['emoji'] ?? null) === $emoji
+            )->values();
+            $action = 'removed';
+        } else {
+            $reactions = $reactions->reject(fn ($r) => ($r['user_id'] ?? null) === $userId)->values();
+            $reactions->push([
+                'user_id' => $userId,
+                'emoji' => $emoji,
+                'at' => now()->toIso8601String(),
+            ]);
+            $action = 'added';
+        }
+
+        $metadata['reactions'] = $reactions->values()->all();
+        $item->metadata = $metadata;
+        $item->save();
+
+        return response()->json([
+            'success' => true,
+            'action' => $action,
+            'emoji' => $emoji,
+            'reactions' => $metadata['reactions'],
+        ]);
+    }
+
+    /**
+     * Forward an existing message to another customer (creates or reuses a
+     * conversation with that customer and posts a copy of the body and
+     * attachments).
+     */
+    public function forwardMessage(Request $request, ConversationItem $item): JsonResponse
+    {
+        $customerId = (int) $request->input('customer_id');
+        if ($customerId <= 0) {
+            return response()->json(['success' => false, 'message' => 'Cliente requerido'], 422);
+        }
+
+        $targetCustomer = Customer::find($customerId);
+        if (! $targetCustomer) {
+            return response()->json(['success' => false, 'message' => 'Cliente no encontrado'], 404);
+        }
+
+        $sourceConv = $item->conversation;
+        $defaultStatus = ConversationStatus::query()->where('is_default', true)->first()
+            ?? ConversationStatus::query()->where('slug', 'open')->first();
+
+        $targetConv = Conversation::firstOrCreate(
+            [
+                'customer_id' => $customerId,
+                'status_id' => $defaultStatus?->id,
+                'inbox_id' => $sourceConv?->inbox_id,
+            ],
+            [
+                'channel' => $sourceConv?->channel ?? 'web',
+                'priority' => 'normal',
+                'last_message_at' => now(),
+            ]
+        );
+
+        $forwarded = $targetConv->items()->create([
+            'type' => 'message',
+            'body' => $item->body,
+            'html_body' => $item->html_body,
+            'attachment_urls' => $item->attachment_urls,
+            'metadata' => array_merge($item->metadata ?? [], [
+                'forwarded_from' => $item->id,
+                'forwarded_by' => auth()->id(),
+                'forwarded_at' => now()->toIso8601String(),
+            ]),
+            'user_id' => auth()->id(),
+            'is_internal' => false,
+        ]);
+
+        $targetConv->update(['last_message_at' => now()]);
+
+        broadcast(new ConversationMessageCreated($forwarded, false))->toOthers();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Mensaje reenviado a '.($targetCustomer->name ?? $targetCustomer->email),
+            'conversation_id' => $targetConv->id,
+            'item_id' => $forwarded->id,
+        ]);
+    }
+
+    /**
+     * Return delivery / read / metadata info for a single message.
+     */
+    public function messageInfo(ConversationItem $item): JsonResponse
+    {
+        $item->loadMissing(['user', 'author', 'conversation']);
+        $meta = $item->metadata ?? [];
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $item->id,
+                'sent_at' => $item->created_at?->toIso8601String(),
+                'delivered_at' => $meta['customer_delivered_at'] ?? null,
+                'read_at' => $meta['customer_read_at'] ?? null,
+                'author_name' => $item->user?->name ?? $item->author?->name ?? '—',
+                'channel' => $item->conversation?->channel ?? '—',
+                'external_id' => $item->external_id ?? '—',
+                'is_internal' => (bool) $item->is_internal,
+                'reactions' => $meta['reactions'] ?? [],
+                'updated_at' => $item->updated_at?->toIso8601String(),
+            ],
+        ]);
+    }
+
     public function downloadAttachment(Request $request)
     {
         $url = trim((string) $request->input('url', ''));
@@ -1387,6 +1647,9 @@ class ConversationsController extends Controller
 
         broadcast(new ConversationMessageCreated($item, false))->toOthers();
 
+        // NOTE: MessageReceived (widget channel) is now broadcast by the
+        // ConversationItemLinkPreviewObserver — single source of truth.
+
         return response()->json([
             'success' => true,
             'message' => count($attachments).' archivo(s) adjunto(s) correctamente.',
@@ -1705,5 +1968,69 @@ class ConversationsController extends Controller
         $byStatus = $conversations->groupBy('status_id');
 
         return view('helpdesk::managers.inbox.kanban', compact('statuses', 'byStatus'));
+    }
+
+    public function sendCsatSurvey(Request $request, Conversation $conversation): JsonResponse
+    {
+        $csatService = app(CsatService::class);
+        $rating = $csatService->dispatchForConversation($conversation);
+
+        if ($rating === null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo enviar la encuesta. El canal de esta conversación no es compatible.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Encuesta CSAT enviada al cliente.',
+        ]);
+    }
+
+    /**
+     * Create a support ticket from a conversation.
+     */
+    public function createTicket(Conversation $conversation): JsonResponse
+    {
+        if (! class_exists(Ticket::class)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Módulo de tickets no disponible.',
+            ], 422);
+        }
+
+        $firstItem = $conversation->items()
+            ->whereNull('user_id')
+            ->oldest()
+            ->first()
+            ?? $conversation->items()->oldest()->first();
+
+        $rawTitle = $firstItem ? strip_tags($firstItem->body ?? '') : '';
+        $title = blank($rawTitle)
+            ? "Conversación #{$conversation->id}"
+            : Str::limit($rawTitle, 100, '…');
+
+        $ticket = Ticket::create([
+            'customer_id' => $conversation->customer_id,
+            'title' => $title,
+            'description' => $firstItem?->body ?? '',
+            'priority' => 'medium',
+            'source' => 'conversation',
+            'assignee_id' => $conversation->assignee_id,
+        ]);
+
+        $ticket->items()->create([
+            'type' => 'message',
+            'user_id' => auth()->id(),
+            'body' => "Ticket creado desde conversación #{$conversation->id}.",
+            'is_internal' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Ticket #{$ticket->ticket_number} creado correctamente.",
+            'ticket_url' => route('manager.helpdesk.tickets.show', $ticket),
+        ]);
     }
 }

@@ -17,8 +17,9 @@ use Modules\Helpdesk\Models\Channels\Email;
 use Modules\Helpdesk\Models\Channels\Facebook;
 use Modules\Helpdesk\Models\Channels\Instagram;
 use Modules\Helpdesk\Models\Channels\Sms;
-use Modules\Helpdesk\Models\Channels\Web;
 use Modules\Helpdesk\Models\Channels\Whatsapp;
+use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Nwidart\Modules\Facades\Module;
 
 class Inbox extends Model
 {
@@ -36,15 +37,39 @@ class Inbox extends Model
 
     public const CHANNEL_EMAIL = 'email';
 
-    public const CHANNEL_WIDGET = 'widget';
+    public const CHANNEL_WEB = 'web';
 
     public const CHANNEL_TYPES = [
         self::CHANNEL_WHATSAPP,
         self::CHANNEL_FACEBOOK,
         self::CHANNEL_INSTAGRAM,
         self::CHANNEL_EMAIL,
-        self::CHANNEL_WIDGET,
+        self::CHANNEL_WEB,
     ];
+
+    /**
+     * Channel types currently available for new inboxes.
+     *
+     * The "web" channel (live chat widget) is only offered when the
+     * HelpdeskLivechat module is installed and enabled. Existing inboxes
+     * with channel_type='web' keep working even if the module is later
+     * disabled, but no new ones can be created from the UI.
+     *
+     * @return list<string>
+     */
+    public static function availableChannelTypes(): array
+    {
+        $available = self::CHANNEL_TYPES;
+
+        if (! Module::find('HelpdeskLivechat')?->isEnabled()) {
+            $available = array_values(array_filter(
+                $available,
+                fn ($type) => $type !== self::CHANNEL_WEB
+            ));
+        }
+
+        return $available;
+    }
 
     protected $fillable = [
         'uid',
@@ -73,7 +98,6 @@ class Inbox extends Model
      */
     public const CHANNEL_TYPE_MAP = [
         'web' => Web::class,
-        'widget' => Web::class,
         'email' => Email::class,
         'facebook' => Facebook::class,
         'instagram' => Instagram::class,
@@ -108,8 +132,7 @@ class Inbox extends Model
 
     public function defaultAssignee(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'default_assignee_id')
-            ->setConnection(config('database.default'));
+        return $this->belongsTo(User::class, 'default_assignee_id');
     }
 
     public function defaultGroup(): BelongsTo
@@ -204,8 +227,22 @@ class Inbox extends Model
             self::CHANNEL_FACEBOOK => 'Facebook Messenger',
             self::CHANNEL_INSTAGRAM => 'Instagram DMs',
             self::CHANNEL_EMAIL => 'Email',
-            self::CHANNEL_WIDGET => 'Website (widget)',
+            self::CHANNEL_WEB => 'Website (chat widget)',
         ];
+    }
+
+    /**
+     * Channel labels filtered by which channel types are currently available
+     * (respects optional modules like HelpdeskLivechat being installed).
+     *
+     * @return array<string, string>
+     */
+    public static function availableChannelLabels(): array
+    {
+        return array_intersect_key(
+            self::channelLabels(),
+            array_flip(self::availableChannelTypes())
+        );
     }
 
     public function channelLabel(): string
@@ -220,7 +257,7 @@ class Inbox extends Model
             self::CHANNEL_FACEBOOK => 'fab fa-facebook-messenger',
             self::CHANNEL_INSTAGRAM => 'fab fa-instagram',
             self::CHANNEL_EMAIL => 'far fa-envelope',
-            self::CHANNEL_WIDGET => 'far fa-comment-dots',
+            self::CHANNEL_WEB => 'far fa-comment-dots',
         ];
     }
 
@@ -261,7 +298,7 @@ class Inbox extends Model
                 ['key' => 'provider', 'label' => 'Proveedor del webhook', 'type' => 'text', 'help' => 'mailgun, sendgrid, postmark o generic'],
                 ['key' => 'forward_address', 'label' => 'Dirección de reenvío', 'type' => 'text', 'help' => 'Opcional: reenviar a este buzón externo'],
             ],
-            self::CHANNEL_WIDGET => [
+            self::CHANNEL_WEB => [
                 ['key' => 'site_url', 'label' => 'URL del sitio', 'type' => 'text', 'required' => true],
                 ['key' => 'allowed_origins', 'label' => 'Orígenes permitidos (CORS)', 'type' => 'text', 'help' => 'Separados por coma'],
                 ['key' => 'primary_color', 'label' => 'Color primario', 'type' => 'text'],

@@ -248,7 +248,6 @@ $(document).ready(function () {
                 } else {
                     btn.removeClass('btn-success').addClass('btn-secondary').text('Inactiva');
                 }
-                toastr.success(response.message, 'Listo');
             },
             error: function () {
                 toastr.error('No se pudo cambiar el estado.', 'Error');
@@ -257,7 +256,6 @@ $(document).ready(function () {
     });
 
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
 
     @if(session('error'))

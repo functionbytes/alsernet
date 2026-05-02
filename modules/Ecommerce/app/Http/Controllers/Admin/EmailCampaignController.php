@@ -14,7 +14,9 @@ class EmailCampaignController extends Controller
 {
     public function __construct(private readonly CustomerSegmentService $segments)
     {
-        $this->authorize('email-campaign.manage');
+        // Authorize each method via middleware so route:list can resolve
+        // the controller without invoking authorization in the constructor.
+        $this->middleware('can:email-campaign.manage');
         $this->authorizeResource(EmailCampaign::class, 'campaign');
     }
 

@@ -1,0 +1,46 @@
+<?php
+
+namespace Modules\Remarketing\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class OrderItem extends Model
+{
+    use HasFactory;
+
+    protected $table = 'remarketing_order_items';
+
+    public $timestamps = false;
+
+    protected $fillable = [
+        'order_id',
+        'product_id',
+        'external_product_id',
+        'title',
+        'sku',
+        'quantity',
+        'price',
+        'total',
+        'image_url',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'total' => 'decimal:2',
+        ];
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+}

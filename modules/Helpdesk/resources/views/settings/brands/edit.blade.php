@@ -91,7 +91,6 @@ $(document).ready(function () {
     $('.btn-copy-token').on('click', function () {
         const token = $(this).closest('.input-group').find('input').val();
         navigator.clipboard.writeText(token).then(function () {
-            toastr.success('Token copiado al portapapeles');
         });
     });
 });

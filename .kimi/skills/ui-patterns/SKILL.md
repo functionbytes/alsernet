@@ -32,7 +32,7 @@ Standard design system for all views in this project.
 ```
 
 ### Colors
-- Primary: `#90bb13` | Success: `#13C672` | Danger: `#FA896B` | Warning: `#FEC90F`
+- Primary: `#b10100` | Success: `#13C672` | Danger: `#FA896B` | Warning: `#FEC90F`
 - Badge pattern: `bg-{color}-subtle text-{color}`
 
 ### Icons
@@ -54,7 +54,7 @@ Standard design system for all views in this project.
 - Font Awesome 6 ONLY (never Tabler `ti-*`)
 - jQuery + AJAX (never Livewire/Inertia)
 - Section titles: capitalize first word only
-- Primary color: `#90bb13`
+- Primary color: `#b10100`
 - Modals: `modal-dialog-centered`, footer buttons `w-100` stacked
 - select2: NEVER `theme: 'bootstrap-5'`
 - No inline `style=""` attributes — use Bootstrap classes

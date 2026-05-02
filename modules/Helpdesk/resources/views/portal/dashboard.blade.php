@@ -1,44 +1,80 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis conversaciones</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>body { background:#f7f7fa; }</style>
-</head>
-<body class="py-4">
-    <div class="container" style="max-width:780px">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="far fa-comments text-primary"></i> Mis conversaciones</h3>
-            <form method="POST" action="{{ route('helpdesk.portal.logout') }}">
-                @csrf
-                <button class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-sign-out-alt"></i> Salir
-                </button>
-            </form>
+@extends('helpdesk::portal.layouts.base')
+
+@section('title', 'Mis conversaciones')
+
+@section('content')
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">Mis conversaciones</h4>
+            <small class="text-muted">Hola, {{ $customer->name }}</small>
+        </div>
+        <span class="badge bg-secondary rounded-pill fs-6">
+            {{ $conversations->total() }} {{ Str::plural('conversacion', $conversations->total()) }}
+        </span>
+    </div>
+
+    @if ($conversations->isEmpty())
+        <div class="card border-0 shadow-sm text-center py-5">
+            <div class="card-body">
+                <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+                     style="width:72px;height:72px;">
+                    <i class="far fa-comments fa-2x text-muted"></i>
+                </div>
+                <h5 class="fw-semibold">Sin conversaciones aún</h5>
+                <p class="text-muted mb-0">Cuando contactes a nuestro equipo de soporte aparecerán aquí.</p>
+            </div>
+        </div>
+    @else
+        <div class="d-flex flex-column gap-3">
+            @foreach ($conversations as $conv)
+                <a href="{{ route('helpdesk.portal.conversation', $conv->id) }}"
+                   class="conversation-card card text-decoration-none text-reset">
+                    <div class="card-body d-flex align-items-center gap-3 py-3">
+                        {{-- Channel icon --}}
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width:44px;height:44px;background:#f0f0f0;">
+                            @php $channelInfo = $conv->channel_info @endphp
+                            <i class="{{ $channelInfo['icon'] }} fa-lg" style="color:{{ $channelInfo['color'] }};"></i>
+                        </div>
+
+                        {{-- Main info --}}
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="d-flex align-items-baseline gap-2">
+                                <span class="fw-semibold text-truncate">
+                                    {{ $conv->subject ?? 'Conversación #'.$conv->id }}
+                                </span>
+                                <small class="text-muted flex-shrink-0">
+                                    {{ $conv->last_message_at?->diffForHumans() ?? $conv->created_at->diffForHumans() }}
+                                </small>
+                            </div>
+                            <small class="text-muted d-block text-truncate">
+                                {{ $channelInfo['label'] }}
+                                @if ($conv->inbox)
+                                    · {{ $conv->inbox->name }}
+                                @endif
+                            </small>
+                        </div>
+
+                        {{-- Status badge --}}
+                        <div class="flex-shrink-0 d-flex align-items-center gap-2">
+                            @if ($conv->status)
+                                <span class="badge rounded-pill"
+                                      style="background-color: {{ $conv->status->is_open ? '#13C672' : '#6c757d' }}">
+                                    {{ $conv->status->name }}
+                                </span>
+                            @endif
+                            <i class="fas fa-chevron-right text-muted small"></i>
+                        </div>
+                    </div>
+                </a>
+            @endforeach
         </div>
 
-        <div class="bg-white border rounded p-3">
-            @forelse($conversations ?? [] as $conv)
-                <a href="{{ route('helpdesk.portal.conversations.show', $conv->id) }}"
-                   class="d-flex justify-content-between align-items-center py-3 border-bottom text-decoration-none text-dark">
-                    <div>
-                        <strong>{{ $conv->subject ?? 'Conversación #'.$conv->id }}</strong>
-                        <div class="text-muted small">{{ $conv->channel }} · {{ $conv->last_message_at?->diffForHumans() }}</div>
-                    </div>
-                    <span class="badge bg-{{ $conv->status?->is_open ? 'success' : 'secondary' }}">
-                        {{ $conv->status?->name }}
-                    </span>
-                </a>
-            @empty
-                <div class="text-center text-muted py-5">
-                    <i class="far fa-folder-open" style="font-size:2.5rem"></i>
-                    <p class="mt-3 mb-0">No tienes conversaciones aún</p>
-                </div>
-            @endforelse
-        </div>
-    </div>
-</body>
-</html>
+        {{-- Pagination --}}
+        @if ($conversations->hasPages())
+            <div class="mt-4 d-flex justify-content-center">
+                {{ $conversations->links() }}
+            </div>
+        @endif
+    @endif
+@endsection

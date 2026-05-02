@@ -93,7 +93,11 @@ class TagsController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        ConversationTag::create($validated);
+        $tag = ConversationTag::create($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'tag' => ['id' => $tag->id, 'name' => $tag->name, 'color' => $tag->color]]);
+        }
 
         return redirect()->route('settings.helpdesk.tags.index')
             ->with('success', 'Tag creado exitosamente.');

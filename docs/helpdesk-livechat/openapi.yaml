@@ -1,0 +1,373 @@
+openapi: 3.0.3
+info:
+  title: Alsernet HelpdeskLivechat SDK API
+  version: 1.0.0
+  description: |
+    REST API consumida por el SDK de engagement instalado en sitios e-commerce de
+    terceros (PrestaShop, Shopify, WooCommerce, custom). Todas las rutas SDK requieren
+    el header `X-Website-Token` salvo los webhooks que usan firma HMAC.
+  contact:
+    name: Alsernet
+servers:
+  - url: https://panel.alsernet.com
+    description: Producción
+  - url: http://system.test
+    description: Desarrollo local (Herd)
+
+components:
+  securitySchemes:
+    websiteToken:
+      type: apiKey
+      in: header
+      name: X-Website-Token
+    sessionToken:
+      type: apiKey
+      in: header
+      name: X-Session-Token
+    hmacSignature:
+      type: apiKey
+      in: header
+      name: X-Alsernet-Signature
+
+  schemas:
+    InitRequest:
+      type: object
+      required: [page, device]
+      properties:
+        visitorId:
+          type: string
+        page:
+          type: object
+          required: [url, title]
+          properties:
+            url: { type: string, format: uri }
+            title: { type: string }
+            referrer: { type: string, nullable: true }
+        device:
+          type: object
+          properties:
+            userAgent: { type: string }
+            language: { type: string }
+            timezone: { type: string }
+            viewport:
+              type: object
+              properties:
+                width: { type: integer }
+                height: { type: integer }
+        attribution:
+          $ref: '#/components/schemas/UTMAttribution'
+
+    InitResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        data:
+          type: object
+          properties:
+            visitorId: { type: string }
+            sessionToken: { type: string }
+            customerId: { type: integer, nullable: true }
+            score: { type: integer, minimum: 0, maximum: 100 }
+            segment: { type: string, enum: [cold, warm, hot] }
+            triggers: { type: array, items: { $ref: '#/components/schemas/TriggerRule' } }
+            personalizations: { type: array, items: { $ref: '#/components/schemas/PersonalizationRule' } }
+            wsChannel: { type: string }
+            config:
+              type: object
+              properties:
+                consent: { type: string, example: 'opt-in' }
+                batchInterval: { type: integer }
+                batchSize: { type: integer }
+                realtime:
+                  type: object
+                  properties:
+                    driver: { type: string, example: reverb }
+                    key: { type: string }
+                    host: { type: string }
+                    port: { type: integer }
+                    scheme: { type: string }
+
+    UTMAttribution:
+      type: object
+      properties:
+        utm_source: { type: string, nullable: true }
+        utm_medium: { type: string, nullable: true }
+        utm_campaign: { type: string, nullable: true }
+        utm_term: { type: string, nullable: true }
+        utm_content: { type: string, nullable: true }
+        referrer_host: { type: string, nullable: true }
+
+    IdentifyRequest:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        phone: { type: string }
+        attributes:
+          type: object
+          additionalProperties: true
+
+    TrackBatchRequest:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            required: [name, ts]
+            properties:
+              name: { type: string }
+              ts: { type: string, format: date-time }
+              properties:
+                type: object
+                additionalProperties: true
+
+    SetContextRequest:
+      type: object
+      required: [context]
+      properties:
+        context:
+          type: object
+          additionalProperties: true
+
+    TriggerRule:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        conditions: { $ref: '#/components/schemas/ConditionGroup' }
+        action: { $ref: '#/components/schemas/TriggerAction' }
+        priority: { type: integer }
+        firesPerSession: { type: integer }
+
+    ConditionGroup:
+      type: object
+      properties:
+        operator: { type: string, enum: [AND, OR] }
+        rules:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string, enum: [time_on_page, scroll, score, segment, url, context] }
+              operator: { type: string, enum: ['>=', '>', '<=', '<', '==', '!=', contains] }
+              value: {}
+              key: { type: string, nullable: true }
+
+    TriggerAction:
+      type: object
+      properties:
+        type: { type: string, enum: [open_chat, show_banner, redirect, callback] }
+        html: { type: string, nullable: true }
+        selector: { type: string, nullable: true }
+        url: { type: string, nullable: true }
+        name: { type: string, nullable: true }
+        payload: { nullable: true }
+
+    PersonalizationRule:
+      type: object
+      properties:
+        id: { type: integer }
+        selector: { type: string }
+        conditions: { $ref: '#/components/schemas/ConditionGroup', nullable: true }
+        mutation:
+          type: object
+          properties:
+            op: { type: string, enum: [text, attribute, insert_before, insert_after, class] }
+            value: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            html: { type: string, nullable: true }
+            add: { type: array, items: { type: string }, nullable: true }
+            remove: { type: array, items: { type: string }, nullable: true }
+
+    CatalogSyncRequest:
+      type: object
+      required: [products]
+      properties:
+        products:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            type: object
+            required: [productId, name]
+            properties:
+              productId: { type: string }
+              name: { type: string }
+              description: { type: string, nullable: true }
+              price: { type: number }
+              currency: { type: string, example: EUR }
+              url: { type: string, nullable: true }
+              imageUrl: { type: string, nullable: true }
+              category: { type: string, nullable: true }
+
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string }
+
+paths:
+  /hd/api/sdk/init:
+    post:
+      summary: Inicializar sesión del SDK
+      security: [{ websiteToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InitResponse' }
+        '401': { description: 'Token inválido o ausente', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '403': { description: 'Inbox inactivo' }
+
+  /hd/api/sdk/identify:
+    post:
+      summary: Identificar visitante con email/id
+      security: [{ websiteToken: [] }, { sessionToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/IdentifyRequest' }
+      responses:
+        '200': { description: OK }
+        '401': { description: 'No autorizado' }
+        '422': { description: 'Validación falló' }
+
+  /hd/api/sdk/track:
+    post:
+      summary: Tracking en lote (batch)
+      security: [{ websiteToken: [] }, { sessionToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrackBatchRequest' }
+      responses:
+        '202': { description: 'Aceptado' }
+        '401': { description: 'Falta session token' }
+
+  /hd/api/sdk/context:
+    post:
+      summary: Actualizar contexto del visitante (cart_value, plan, etc.)
+      security: [{ websiteToken: [] }, { sessionToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetContextRequest' }
+      responses:
+        '200': { description: OK }
+
+  /hd/api/sdk/triggers:
+    get:
+      summary: Listar reglas de trigger activas para el inbox
+      security: [{ websiteToken: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      rules: { type: array, items: { $ref: '#/components/schemas/TriggerRule' } }
+
+  /hd/api/sdk/personalizations:
+    get:
+      summary: Listar reglas de personalización DOM
+      security: [{ websiteToken: [] }]
+      responses:
+        '200': { description: OK }
+
+  /hd/api/sdk/recommendations:
+    get:
+      summary: Recomendaciones de productos
+      security: [{ websiteToken: [] }, { sessionToken: [] }]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 5, minimum: 1, maximum: 20 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      products:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            productId: { type: string }
+                            name: { type: string }
+                            url: { type: string }
+                            imageUrl: { type: string, nullable: true }
+                            price: { type: number }
+                            currency: { type: string }
+
+  /hd/api/sdk/catalog/sync:
+    post:
+      summary: Sincronizar catálogo de productos (server-to-server desde plugin)
+      security: [{ websiteToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogSyncRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      synced: { type: integer }
+
+  /hd/api/sdk/webhook/{platform}/{integrationId}:
+    post:
+      summary: Webhook desde plataforma e-commerce (HMAC verified)
+      security: [{ hmacSignature: [] }]
+      parameters:
+        - in: path
+          name: platform
+          required: true
+          schema: { type: string, enum: [prestashop, shopify, woocommerce, custom] }
+        - in: path
+          name: integrationId
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object }
+      responses:
+        '202': { description: Aceptado, procesado en background con reintentos }
+        '401': { description: Firma HMAC inválida }
+        '404': { description: Integración no encontrada }

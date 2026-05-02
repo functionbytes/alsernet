@@ -2,16 +2,20 @@
 
 namespace Modules\Helpdesk\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Console\Commands\CheckSlaBreaches;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
+use Modules\Helpdesk\Console\Commands\ProcessScheduledBroadcasts;
 use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\ConversationView;
@@ -22,6 +26,7 @@ use Modules\Helpdesk\Models\HelpCenterArticle;
 use Modules\Helpdesk\Models\HelpCenterCategory;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Webhook;
+use Modules\Helpdesk\Observers\ConversationItemLinkPreviewObserver;
 use Modules\Helpdesk\Policies\CannedReplyPolicy;
 use Modules\Helpdesk\Policies\ConversationPolicy;
 use Modules\Helpdesk\Policies\ConversationStatusPolicy;
@@ -70,6 +75,31 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerHelpdeskSidebar();
         $this->registerSettingsSidebar();
         $this->registerChannelMorphMap();
+        $this->registerObservers();
+        $this->registerRateLimiters();
+    }
+
+    /**
+     * Register named rate limiters so endpoints can opt out of the global
+     * throttle (which is constantly being burned by background pollers).
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('helpdesk-msg-actions', function ($request) {
+            return Limit::perMinute(120)
+                ->by(optional($request->user())->id ?: $request->ip());
+        });
+    }
+
+    /**
+     * Register Eloquent model observers for cross-cutting concerns
+     * (link previews, etc.).
+     */
+    protected function registerObservers(): void
+    {
+        ConversationItem::observe(
+            ConversationItemLinkPreviewObserver::class
+        );
     }
 
     /**
@@ -129,7 +159,6 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'Configuración de tickets', 'route' => 'settings.helpdesk.tickets', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Notificaciones', 'route' => 'settings.helpdesk.notifications', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Horarios de atención', 'route' => 'settings.helpdesk.business-hours', 'permission' => 'helpdesk.settings.view'],
-                ['label' => 'Chat en vivo', 'route' => 'settings.helpdesk.livechat', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Inteligencia artificial', 'route' => 'settings.helpdesk.ai', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Email', 'route' => 'settings.helpdesk.email', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Subida de archivos', 'route' => 'settings.helpdesk.uploading', 'permission' => 'helpdesk.settings.view'],
@@ -174,10 +203,12 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->commands([
             FetchEmailTicketsCommand::class,
             CheckSlaBreaches::class,
+            ProcessScheduledBroadcasts::class,
         ]);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->command('helpdesk:check-sla')->everyFiveMinutes();
+            $schedule->command('helpdesk:process-broadcasts')->everyMinute();
         });
 
         $this->registerPolicies();

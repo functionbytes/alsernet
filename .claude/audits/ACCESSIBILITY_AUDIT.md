@@ -25,8 +25,8 @@ Escaneo automatizado estático sobre todas las blade templates del proyecto.
   - `modules/Seo/resources/views/components/seo-image.blade.php` y `seo-hero-image.blade.php`
   Fix: añadir `alt="{{ $description }}"` descriptivo o `alt=""` para imágenes decorativas.
 
-- [ ] **Color contrast: `#90bb13` sobre blanco = ~3.5:1** — No alcanza el mínimo AA de 4.5:1 para texto normal.
-  Fix: oscurecer el primario a `#6e9010` (~4.6:1) para texto, o usar `#ffffff` sobre fondo `#90bb13` solo en botones grandes (ratio OK para texto grande ≥18px).
+- [ ] **Color contrast: `#b10100` sobre blanco = ~3.5:1** — No alcanza el mínimo AA de 4.5:1 para texto normal.
+  Fix: oscurecer el primario a `#6e9010` (~4.6:1) para texto, o usar `#ffffff` sobre fondo `#b10100` solo en botones grandes (ratio OK para texto grande ≥18px).
 
 ### Warnings
 
@@ -73,7 +73,7 @@ grep -rn 'aria-label\|role=' modules --include='*.blade.php' | wc -l
 grep -rn '<html' modules --include='*.blade.php'
 # Result: layouts principales usan lang="{{ str_replace('_', '-', app()->getLocale()) }}"
 
-# Color contrast: primary #90bb13 on white
+# Color contrast: primary #b10100 on white
 # Calculated luminance ratio: ~3.5:1 (WCAG AA requires 4.5:1 for normal text, 3:1 for large text)
 ```
 

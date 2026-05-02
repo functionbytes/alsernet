@@ -18,7 +18,6 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\EmailSettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\InboxesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\MacrosController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\NotificationSettingsController;
-use Modules\Helpdesk\Http\Controllers\Managers\Settings\PreChatFormsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\RoutingRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SkillsController;
@@ -39,9 +38,8 @@ use Modules\Helpdesk\Http\Controllers\Managers\SocialIntegrationsController;
 Route::get('notifications', [NotificationSettingsController::class, 'index'])->name('notifications');
 Route::put('notifications', [NotificationSettingsController::class, 'update'])->name('notifications.update');
 
-// LiveChat Settings
-Route::get('livechat', [SettingsController::class, 'livechatIndex'])->name('livechat');
-Route::put('livechat', [SettingsController::class, 'livechatUpdate'])->name('livechat.update');
+// LiveChat Settings → routes are now provided by the HelpdeskLivechat module
+// (named `settings.helpdesk-livechat.*`).
 
 // AI Settings
 Route::get('ai', [SettingsController::class, 'aiIndex'])->name('ai');
@@ -197,15 +195,8 @@ Route::put('email', [EmailSettingsController::class, 'update'])->name('email.upd
 // Audit log
 Route::get('audits', [AuditController::class, 'index'])->name('audits.index');
 
-// Pre-chat forms
-Route::prefix('pre-chat-forms')->name('pre-chat-forms.')->group(function () {
-    Route::get('/', [PreChatFormsController::class, 'index'])->name('index');
-    Route::get('create', [PreChatFormsController::class, 'create'])->name('create');
-    Route::post('/', [PreChatFormsController::class, 'store'])->name('store');
-    Route::get('{preChatForm}/edit', [PreChatFormsController::class, 'edit'])->name('edit');
-    Route::put('{preChatForm}', [PreChatFormsController::class, 'update'])->name('update');
-    Route::delete('{preChatForm}', [PreChatFormsController::class, 'destroy'])->name('destroy');
-});
+// Pre-chat forms → routes are now provided by the HelpdeskLivechat module
+// (named `settings.helpdesk-livechat.pre-chat-forms.*`).
 
 // Status page
 Route::prefix('status')->name('status.')->group(function () {
@@ -246,8 +237,8 @@ Route::prefix('surveys')->name('surveys.')->group(function () {
     Route::get('{survey}/responses', [SurveysController::class, 'responses'])->name('responses');
 });
 
-// Settings root index (overview de todas las settings)
-Route::get('/', [SettingsController::class, 'livechatIndex'])->name('index');
+// Settings root index — redirige al primer panel (tickets) por defecto
+Route::redirect('/', '/panel/settings/helpdesk/tickets')->name('index');
 
 // Routing rules (asignación automática por palabra clave)
 Route::prefix('routing-rules')->name('routing-rules.')->group(function () {
@@ -323,6 +314,7 @@ Route::prefix('drip-campaigns')->name('drip-campaigns.')->group(function () {
     Route::put('{dripCampaign}', [DripCampaignsController::class, 'update'])->name('update');
     Route::delete('{dripCampaign}', [DripCampaignsController::class, 'destroy'])->name('destroy');
     Route::post('{dripCampaign}/toggle', [DripCampaignsController::class, 'toggle'])->name('toggle');
+    Route::post('{dripCampaign}/enroll', [DripCampaignsController::class, 'enroll'])->name('enroll');
 });
 
 // Broadcasts
@@ -332,6 +324,7 @@ Route::prefix('broadcasts')->name('broadcasts.')->group(function () {
     Route::post('/', [BroadcastsController::class, 'store'])->name('store');
     Route::get('{broadcast}', [BroadcastsController::class, 'show'])->name('show');
     Route::delete('{broadcast}', [BroadcastsController::class, 'destroy'])->name('destroy');
+    Route::post('{broadcast}/dispatch', [BroadcastsController::class, 'send'])->name('dispatch');
 });
 
 // Brands

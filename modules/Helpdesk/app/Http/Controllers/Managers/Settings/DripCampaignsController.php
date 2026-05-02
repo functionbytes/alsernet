@@ -3,12 +3,15 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\Settings\StoreDripCampaignRequest;
 use Modules\Helpdesk\Http\Requests\Settings\UpdateDripCampaignRequest;
+use Modules\Helpdesk\Jobs\ProcessDripStepJob;
 use Modules\Helpdesk\Models\Campaigns\DripCampaign;
 use Modules\Helpdesk\Models\Campaigns\DripExecution;
 use Modules\Helpdesk\Models\Campaigns\DripStep;
@@ -18,7 +21,7 @@ class DripCampaignsController extends Controller
     public function __construct()
     {
         $this->middleware('can:helpdesk.drip-campaigns.view')->only(['index']);
-        $this->middleware('can:helpdesk.drip-campaigns.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle']);
+        $this->middleware('can:helpdesk.drip-campaigns.manage')->only(['create', 'store', 'edit', 'update', 'destroy', 'toggle', 'enroll']);
     }
 
     public function index(Request $request): View
@@ -150,5 +153,29 @@ class DripCampaignsController extends Controller
         return redirect()
             ->route('settings.helpdesk.drip-campaigns.index')
             ->with('success', "Campaña drip {$label} exitosamente.");
+    }
+
+    public function enroll(Request $request, DripCampaign $dripCampaign): JsonResponse
+    {
+        $request->validate([
+            'customer_id' => [
+                'required',
+                'integer',
+                Rule::exists('helpdesk.helpdesk_customers', 'id'),
+            ],
+        ]);
+
+        $execution = DripExecution::updateOrCreate(
+            ['campaign_id' => $dripCampaign->id, 'customer_id' => $request->integer('customer_id')],
+            ['status' => 'active', 'current_step' => 0, 'started_at' => now()],
+        );
+
+        ProcessDripStepJob::dispatch($execution);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cliente enrolado en la campaña drip correctamente.',
+            'data' => ['execution_id' => $execution->id],
+        ]);
     }
 }

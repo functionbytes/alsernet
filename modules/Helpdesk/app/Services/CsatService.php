@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Services;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Events\CsatRatingAnswered;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\CsatRating;
 
@@ -26,7 +27,7 @@ class CsatService
      */
     public function dispatchForConversation(Conversation $conversation): ?CsatRating
     {
-        if (! $this->outbound->supports($conversation) && $conversation->channel !== 'widget') {
+        if (! $this->outbound->supports($conversation) && $conversation->channel !== 'web') {
             return null;
         }
 
@@ -87,6 +88,8 @@ class CsatService
             'comment' => $comment,
             'answered_at' => now(),
         ]);
+
+        CsatRatingAnswered::dispatch($survey->fresh());
 
         return $survey;
     }

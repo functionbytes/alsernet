@@ -33,12 +33,9 @@
                     @foreach($inboxTags as $tag)
                         <div class="bv-opt {{ $selectedConversation && $selectedConversation->conversationTags->contains('id', $tag->id) ? 'on' : '' }}"
                              data-tag-id="{{ $tag->id }}">
-                            <span class="dot bv-tag-dot" style="background:{{ $tag->color ?? '#6c757d' }}"></span>
                             <div class="body">
                                 <div class="name">{{ $tag->name }}</div>
-                                <div class="sub">{{ $tag->conversations_count ?? 0 }} conversaciones</div>
                             </div>
-                            <i class="fas fa-check check"></i>
                         </div>
                     @endforeach
                 @endif
@@ -59,72 +56,287 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-tags-apply"><i class="fas fa-check"></i> Guardar etiquetas</button>
+            <button class="btn-primary" id="bv-tags-apply">Guardar etiquetas</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>
 </div>
 
 @once
+<style>
+/* Lista de opts como chips inline en vez de filas full-width */
+[data-bv-modal-name="tags"] .bv-opt-list {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px;
+}
+[data-bv-modal-name="tags"] .bv-opt {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+[data-bv-modal-name="tags"] .bv-opt .body { flex: none; }
+
+/* Etiqueta ya aplicada al abrir el modal */
+[data-bv-modal-name="tags"] .bv-opt.on {
+    background: #e8e8e8;
+    color: #555;
+    border-color: #ccc;
+}
+/* Etiqueta recién seleccionada en esta sesión */
+[data-bv-modal-name="tags"] .bv-opt.on--new {
+    background: rgba(177,1,0,.08);
+    color: #b10100;
+    border-color: #b10100;
+    font-weight: 600;
+}
+</style>
+@endonce
+
+@once
 @push('scripts')
 <script>
-$(document).on('click', '[data-bv-modal-name="tags"] .bv-opt', function () {
-    $(this).toggleClass('on');
-    var tagId = $(this).data('tag-id');
-    var tagName = $(this).find('.name').text();
-    var applied = $('#tags-applied');
+(function () {
+    /* ── helpers ─────────────────────────────────────────── */
+    function tagsModal() { return $('[data-bv-modal-name="tags"]'); }
 
-    if ($(this).hasClass('on')) {
+    var preAppliedIds = new Set();
+
+    function addChip(tagId, tagName) {
+        var applied = $('#tags-applied');
+        applied.find('em').remove();
         if (!applied.find('[data-tag-id="' + tagId + '"]').length) {
             applied.append(
                 '<span class="bv-chpill on" data-tag-id="' + tagId + '">' +
-                tagName +
-                '<button type="button" class="tags-remove-chip bv-chip-remove"><i class="fas fa-xmark bv-icon-xs"></i></button>' +
-                '</span>'
+                $('<span>').text(tagName).html() +
+                '<button type="button" class="tags-remove-chip bv-chip-remove">' +
+                '<i class="fas fa-xmark bv-icon-xs"></i></button></span>'
             );
         }
-    } else {
-        applied.find('[data-tag-id="' + tagId + '"]').remove();
     }
-});
 
-$(document).on('click', '.tags-remove-chip', function () {
-    var chip = $(this).closest('.bv-chpill');
-    var tagId = chip.data('tag-id');
-    chip.remove();
-    $('[data-bv-modal-name="tags"] .bv-opt[data-tag-id="' + tagId + '"]').removeClass('on');
-});
+    function removeChip(tagId) {
+        $('#tags-applied [data-tag-id="' + tagId + '"]').remove();
+        if (!$('#tags-applied .bv-chpill').length) {
+            $('#tags-applied').html('<em class="text-muted small">Ninguna aplicada</em>');
+        }
+    }
 
-$(document).on('input', '#tags-search', function () {
-    var q = $(this).val().toLowerCase().trim();
-    var hasExact = false;
+    /* ── sincroniza opts al abrir el modal ──────────────── */
+    (new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            if (m.attributeName !== 'class') { return; }
+            var $modal = $(m.target);
+            if (!$modal.hasClass('on')) { return; }
+            preAppliedIds = new Set();
+            $modal.find('.bv-opt').removeClass('on on--new');
+            $('#tags-applied .bv-chpill').each(function () {
+                var id = String($(this).data('tag-id'));
+                preAppliedIds.add(id);
+                $modal.find('.bv-opt[data-tag-id="' + id + '"]').addClass('on');
+            });
+            $('#tags-search').val('').trigger('input');
+        });
+    })).observe(document.querySelector('[data-bv-modal-name="tags"]'), { attributes: true });
 
-    $('[data-bv-modal-name="tags"] .bv-opt').each(function () {
-        var name = $(this).find('.name').text().toLowerCase();
-        var visible = !q || name.includes(q);
-        $(this).toggle(visible);
-        if (name === q) { hasExact = true; }
+    /* ── toggle selección (en el modal, no en document, para disparar antes que bandeja-v4) */
+    $(document.querySelector('[data-bv-modal-name="tags"]')).on('click', '.bv-opt', function (e) {
+        e.stopPropagation();                                   // evita que bandeja-v4 resetee los opts
+        var $opt    = $(this);
+        var tagId   = String($opt.data('tag-id'));
+        var tagName = $opt.find('.name').text().trim();
+        var wasOn   = $opt.hasClass('on');
+
+        if (wasOn) {
+            $opt.removeClass('on on--new');
+            removeChip(tagId);
+        } else {
+            $opt.addClass('on');
+            if (!preAppliedIds.has(tagId)) {
+                $opt.addClass('on--new');
+            }
+            addChip(tagId, tagName);
+        }
     });
 
-    if (q && !hasExact) {
-        $('#tags-create-text').text($(this).val());
-        $('#tags-create-hint').show();
-    } else {
-        $('#tags-create-hint').hide();
-    }
-});
+    /* ── quitar chip ─────────────────────────────────────── */
+    $(document).on('click', '.tags-remove-chip', function () {
+        var chip  = $(this).closest('.bv-chpill');
+        var tagId = String(chip.data('tag-id'));
+        chip.remove();
+        if (!$('#tags-applied .bv-chpill').length) {
+            $('#tags-applied').html('<em class="text-muted small">Ninguna aplicada</em>');
+        }
+        tagsModal().find('.bv-opt[data-tag-id="' + tagId + '"]').removeClass('on on--new');
+    });
 
-$(document).on('click', '#tags-create-hint', function () {
-    var newTag = $('#tags-search').val().trim();
-    if (!newTag) { return; }
-    $('#tags-search').val('').trigger('input');
-    $('#tags-list').append(
-        '<div class="bv-opt on" data-tag-id="new-' + Date.now() + '">' +
-        '<span class="dot bv-tag-dot bv-tag-dot--purple"></span>' +
-        '<div class="body"><div class="name">' + $('<span>').text(newTag).html() + '</div><div class="sub">Nueva etiqueta</div></div>' +
-        '<i class="fas fa-check check"></i></div>'
-    );
-});
+    /* ── búsqueda ────────────────────────────────────────── */
+    $(document).on('input', '#tags-search', function () {
+        var q = $(this).val().toLowerCase().trim();
+        var hasExact = false;
+        tagsModal().find('.bv-opt').each(function () {
+            var name = $(this).find('.name').text().toLowerCase();
+            var show = !q || name.includes(q);
+            $(this).toggle(show);
+            if (name === q) { hasExact = true; }
+        });
+        if (q && !hasExact) {
+            $('#tags-create-text').text($(this).val());
+            $('#tags-create-hint').removeClass('d-none').show();
+        } else {
+            $('#tags-create-hint').addClass('d-none').hide();
+        }
+    });
+
+    /* ── crear etiqueta nueva ────────────────────────────── */
+    $(document).on('click', '#tags-create-hint', function () {
+        var newName = $('#tags-search').val().trim();
+        if (!newName) { return; }
+        var tempId = 'new-' + Date.now();
+        // Optimistic: add to list with temp ID
+        $('#tags-list').append(
+            '<div class="bv-opt on on--new" data-tag-id="' + tempId + '">' +
+            '<div class="body"><div class="name">' + $('<span>').text(newName).html() + '</div></div>' +
+            '</div>'
+        );
+        addChip(tempId, newName);
+        $('#tags-search').val('').trigger('input');
+    });
+
+    /* ── guardar etiquetas ───────────────────────────────── */
+    $(document).on('click', '#bv-tags-apply', function () {
+        var $btn       = $(this).prop('disabled', true).text('Guardando…');
+        var updateUrl  = $('.bv-composer').data('bv-update-url');
+        var csrf       = $('meta[name="csrf-token"]').attr('content');
+        var existingIds = [];
+        var newOpts     = [];
+
+        tagsModal().find('.bv-opt.on').each(function () {
+            var id = String($(this).data('tag-id'));
+            if (id.startsWith('new-')) {
+                newOpts.push({ el: $(this), name: $(this).find('.name').text().trim() });
+            } else {
+                existingIds.push(parseInt(id));
+            }
+        });
+
+        // Crea primero las etiquetas nuevas, luego sincroniza
+        var createPromises = newOpts.map(function (opt) {
+            return $.ajax({
+                url: '{{ route("settings.helpdesk.tags.store") }}',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+                data: { name: opt.name, is_active: 1 },
+            }).then(function (resp) {
+                if (resp && resp.tag && resp.tag.id) {
+                    // Reemplaza el temp-id en la opt y en el chip
+                    opt.el.attr('data-tag-id', resp.tag.id);
+                    $('#tags-applied [data-tag-id="' + opt.el.data('tag-id') + '"]')
+                        .attr('data-tag-id', resp.tag.id);
+                    existingIds.push(resp.tag.id);
+                }
+            }).fail(function () {
+                // Si falla la creación, ignora esa etiqueta
+            });
+        });
+
+        $.when.apply($, createPromises).always(function () {
+            if (!updateUrl) {
+                toastr.error('No se pudo determinar la conversación activa.');
+                $btn.prop('disabled', false).text('Guardar etiquetas');
+                return;
+            }
+
+            // Envía como JSON para que el array vacío llegue correctamente al backend
+            $.ajax({
+                url: updateUrl,
+                method: 'PUT',
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': csrf },
+                data: JSON.stringify({ tag_ids: existingIds }),
+            }).done(function (resp) {
+                if (resp && resp.success) {
+                    // Actualiza contadores del nav lateral
+                    var finalIds = new Set(existingIds.map(String));
+                    preAppliedIds.forEach(function (id) {
+                        if (!finalIds.has(String(id))) {
+                            // Tag eliminado: decrementa contador
+                            var $c = $('.bv-nav-item--tag[data-bv-tag-id="' + id + '"] .c');
+                            var n = parseInt($c.text()) || 0;
+                            if (n > 1) { $c.text(n - 1); } else { $c.text('0'); }
+                        }
+                    });
+                    finalIds.forEach(function (id) {
+                        if (!preAppliedIds.has(id)) {
+                            // Tag añadido: incrementa contador
+                            var $c = $('.bv-nav-item--tag[data-bv-tag-id="' + id + '"] .c');
+                            var n = parseInt($c.text()) || 0;
+                            $c.text(n + 1);
+                        }
+                    });
+                    // Cierra el modal
+                    $('[data-bv-modal-name="tags"]').removeClass('on');
+                    if (!$('.bv-modal.on').length) { $('body').css('overflow', ''); }
+                    // Actualiza chips del panel derecho
+                    updateRightPanelTags();
+                } else {
+                    toastr.error(resp.message || 'Error al guardar etiquetas');
+                }
+            }).fail(function () {
+                toastr.error('Error al guardar las etiquetas. Intenta de nuevo.');
+            }).always(function () {
+                $btn.prop('disabled', false).text('Guardar etiquetas');
+            });
+        });
+    });
+
+    /* ── actualiza chips del panel derecho ───────────────── */
+    function updateRightPanelTags() {
+        var chips = [];
+
+        $('#tags-applied .bv-chpill').each(function () {
+            var id    = $(this).data('tag-id');
+            var name  = $(this).clone().children().remove().end().text().trim();
+            var $dot  = tagsModal().find('.bv-opt[data-tag-id="' + id + '"] .bv-tag-dot');
+            var color = $dot.length ? $dot.css('background-color') : '#6c757d';
+            chips.push({ name: name, color: color });
+        });
+
+        // El panel derecho tiene la sección de etiquetas con .bv-right-section
+        // Buscamos la sección que contiene .bv-tags-wrap o .bv-tab-empty-inline con "Sin etiquetas"
+        var $section = $('.bv-right-section').filter(function () {
+            return $(this).find('.bv-tags-wrap, .bv-tab-empty-inline').length > 0;
+        }).first();
+
+        if (!$section.length) { return; }
+
+        var $wrap  = $section.find('.bv-tags-wrap');
+        var $empty = $section.find('.bv-tab-empty-inline');
+
+        if (chips.length) {
+            var html = chips.map(function (t) {
+                return '<span class="bv-tag-pill bv-tag-pill--dynamic" style="--bv-tag-color:' +
+                    $('<span>').text(t.color).html() + '">' +
+                    $('<span>').text(t.name).html() + '</span>';
+            }).join('');
+            if ($wrap.length) {
+                $wrap.html(html);
+            } else {
+                $empty.before('<div class="bv-tags-wrap">' + html + '</div>');
+            }
+            $empty.hide();
+        } else {
+            $wrap.remove();
+            $empty.show();
+        }
+    }
+})();
 </script>
 @endpush
 @endonce

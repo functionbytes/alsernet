@@ -32,20 +32,15 @@ return [
     'routes' => [
         [
             'match' => [
-                // Match only the v1 mobile API endpoints
-                'prefixes' => ['api/v1/*'],
+                // Match mobile API prefixes only (ecommerce + me profile)
+                'prefixes' => ['api/v1/ecommerce/*', 'api/v1/me*'],
 
                 'domains' => ['*'],
             ],
 
-            'include' => [
-                'api.v1.*',
-            ],
+            'include' => [],
 
-            'exclude' => [
-                'api.v1.health.*',
-                'api.v1.admin.*',
-            ],
+            'exclude' => [],
         ],
     ],
 
@@ -171,13 +166,25 @@ return [
 
     'groups' => [
         // Endpoints which don't have a @group will be placed in this default group.
-        'default' => 'Endpoints',
+        'default' => 'Otros',
 
-        // By default, Scribe will sort groups alphabetically, and endpoints in the order their routes are defined.
-        // You can override this by listing the groups, subgroups and endpoints here in the order you want them.
         // See https://scribe.knuckles.wtf/blog/laravel-v4#easier-sorting and https://scribe.knuckles.wtf/laravel/reference/config#order for details
         // Note: does not work for `external` docs types
-        'order' => [],
+        'order' => [
+            'Autenticación',
+            'Perfil del cliente',
+            'Catálogo - Productos',
+            'Catálogo - Categorías',
+            'Catálogo - Marcas',
+            'Catálogo - Filtros',
+            'Reseñas',
+            'Lista de deseos',
+            'Carrito',
+            'Direcciones',
+            'Pedidos',
+            'Pagos',
+            'Páginas legales',
+        ],
     ],
 
     // Custom logo path. This will be used as the value of the src attribute for the <img> tag,

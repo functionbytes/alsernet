@@ -2,8 +2,8 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Conversation;
@@ -89,7 +89,7 @@ class DashboardController extends Controller
             1
         );
 
-        return view('helpdesk::managers.helpdesk.dashboard', compact(
+        return view('helpdesk::managers.dashboard', compact(
             'ticketStats', 'convStats', 'agentStats', 'recentBreaches', 'recentTickets', 'avgRating'
         ));
     }

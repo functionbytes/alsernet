@@ -251,7 +251,6 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token</code></pre>
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                toastr.success(data.message);
             } else {
                 toastr.error(data.message);
             }
@@ -266,11 +265,9 @@ INSTAGRAM_VERIFY_TOKEN=your_verify_token</code></pre>
     function copyToClipboard(inputId) {
         const input = document.getElementById(inputId);
         navigator.clipboard.writeText(input.value).then(() => {
-            toastr.success('URL copiada al portapapeles');
         }).catch(() => {
             input.select();
             document.execCommand('copy');
-            toastr.success('URL copiada al portapapeles');
         });
     }
 </script>

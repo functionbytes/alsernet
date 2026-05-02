@@ -19,8 +19,8 @@
     <style>
         body { background: #f5f6f8; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; font-family: 'Nunito Sans', sans-serif; }
         .error-card { background: #fff; border-radius: 12px; padding: 3rem 2.5rem; text-align: center; max-width: 480px; width: 90%; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
-        .error-code { font-size: 5rem; font-weight: 800; color: #90bb13; line-height: 1; }
-        .error-icon { font-size: 4rem; color: #90bb13; margin-bottom: 1rem; }
+        .error-code { font-size: 5rem; font-weight: 800; color: #b10100; line-height: 1; }
+        .error-icon { font-size: 4rem; color: #b10100; margin-bottom: 1rem; }
     </style>
 </head>
 <body>

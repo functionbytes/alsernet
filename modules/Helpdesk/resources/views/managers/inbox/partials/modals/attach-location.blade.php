@@ -61,9 +61,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="attach-location-send">
-                <i class="fas fa-paper-plane"></i> Enviar ubicación
-            </button>
+            <button class="btn-primary" id="attach-location-send">Enviar ubicación</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

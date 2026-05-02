@@ -16,7 +16,7 @@ class ConversationFactory extends Factory
             'customer_id' => CustomerFactory::new(),
             'subject' => fake()->sentence(6),
             'priority' => fake()->randomElement(['low', 'normal', 'high', 'urgent']),
-            'channel' => fake()->randomElement(['widget', 'email', 'whatsapp', 'facebook', 'instagram']),
+            'channel' => fake()->randomElement(['web', 'email', 'whatsapp', 'facebook', 'instagram']),
             'external_id' => null,
             'external_sender_id' => null,
             'assigned_at' => null,

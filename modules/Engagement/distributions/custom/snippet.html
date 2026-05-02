@@ -1,0 +1,37 @@
+<!--
+    Alsernet Live Chat — Custom integration snippet
+
+    Pega este bloque dentro de <head> en cualquier sitio que NO sea PrestaShop,
+    Shopify ni WooCommerce. El SDK funciona igual, solo que el merchant es
+    responsable de alimentar los datos de carrito/cliente/producto vía
+    chat.platform.set({...}).
+-->
+
+<script>
+(function (w, d) {
+    w.chat = w.chat || function () { (w.chat.q = w.chat.q || []).push(arguments); };
+})(window, document);
+</script>
+<script async src="https://panel.alsernet.com/build-engagement/sdk.js"></script>
+<script>
+window.chat('init', {
+    token: 'TU_WEBSITE_TOKEN',
+    apiUrl: 'https://panel.alsernet.com',
+    consent: true
+});
+
+// (Opcional) Identificar al usuario logueado
+// window.chat('identify', { id: '123', email: 'user@example.com', name: 'María García' });
+
+// (Opcional) Alimentar el adapter custom con datos del carrito y producto actual
+// window.chat('platform', 'set', {
+//     cart: { items: 3, value: 129.50, currency: 'EUR' },
+//     customer: { email: 'user@example.com', name: 'María García' },
+//     product: { id: 'sku-123', name: 'Producto X', price: 49.99 }
+// });
+
+// (Opcional) Notificar add to cart
+// document.querySelector('.btn-add-cart').addEventListener('click', function () {
+//     window.chat('track', 'add_to_cart', { productId: 'sku-123', value: 49.99 });
+// });
+</script>

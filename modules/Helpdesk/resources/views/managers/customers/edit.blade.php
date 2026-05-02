@@ -426,7 +426,6 @@ $(document).ready(function() {
     });
 
     @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
     @endif
 
     @if (session('error'))

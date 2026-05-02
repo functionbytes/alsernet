@@ -20,7 +20,6 @@ use Modules\Helpdesk\Http\Controllers\Managers\HeatmapReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\HelpCenterController;
 use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
-use Modules\Helpdesk\Http\Controllers\Managers\LiveVisitorsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ReportsController;
 use Modules\Helpdesk\Http\Controllers\Managers\TranslateController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
@@ -82,6 +81,9 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/kanban', [HelpdeskConversationsController::class, 'kanban'])->name('manager.helpdesk.conversations.kanban');
     Route::get('/conversations', [HelpdeskConversationsController::class, 'index'])->name('manager.helpdesk.conversations.index');
     Route::get('/conversations/create', [HelpdeskConversationsController::class, 'create'])->name('manager.helpdesk.conversations.create');
+    Route::get('/conversations/email-templates', [HelpdeskConversationsController::class, 'emailTemplates'])
+        ->middleware('throttle:60,1')
+        ->name('manager.helpdesk.conversations.email-templates');
     Route::post('/conversations', [HelpdeskConversationsController::class, 'store'])->name('manager.helpdesk.conversations.store');
     Route::get('/conversations/{conversation}', [HelpdeskConversationsController::class, 'show'])->name('manager.helpdesk.conversations.show');
     Route::get('/conversations/{conversation}/edit', [HelpdeskConversationsController::class, 'edit'])->name('manager.helpdesk.conversations.edit');
@@ -108,6 +110,9 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
     Route::post('/conversations/{conversation}/contact', [HelpdeskConversationsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
     Route::post('/conversations/{conversation}/location', [HelpdeskConversationsController::class, 'storeLocation'])->name('manager.helpdesk.conversations.location.store');
+    Route::get('/conversations/{conversation}/email-templates/preview', [HelpdeskConversationsController::class, 'previewEmailTemplate'])
+        ->middleware('throttle:30,1')
+        ->name('manager.helpdesk.conversations.email-templates.preview');
     Route::post('/conversations/{conversation}/send-email', [HelpdeskConversationsController::class, 'sendEmail'])
         ->middleware('throttle:30,1')
         ->name('manager.helpdesk.conversations.send-email');
@@ -124,6 +129,21 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/ai-suggestions', [HelpdeskConversationsController::class, 'aiSuggestions'])->name('manager.helpdesk.conversations.ai-suggestions')->middleware('throttle:30,1');
     Route::put('/conversations/{conversation}/draft', [HelpdeskConversationsController::class, 'saveDraft'])->name('manager.helpdesk.conversations.draft.save');
     Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
+    Route::post('/conversations/{conversation}/send-csat', [HelpdeskConversationsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.conversations.send-csat')->middleware('throttle:10,1');
+    Route::post('/conversations/{conversation}/ticket', [HelpdeskConversationsController::class, 'createTicket'])->name('manager.helpdesk.conversations.ticket');
+
+    // Bubble context-menu actions: react / forward / info — agent-only, light load.
+    // Use named throttler so they don't share the global counter that the
+    // notifications poller (which fires every 3s) is constantly burning.
+    Route::post('/messages/{item}/react', [HelpdeskConversationsController::class, 'reactToMessage'])
+        ->middleware('throttle:helpdesk-msg-actions')
+        ->name('manager.helpdesk.messages.react');
+    Route::post('/messages/{item}/forward', [HelpdeskConversationsController::class, 'forwardMessage'])
+        ->middleware('throttle:helpdesk-msg-actions')
+        ->name('manager.helpdesk.messages.forward');
+    Route::get('/messages/{item}/info', [HelpdeskConversationsController::class, 'messageInfo'])
+        ->middleware('throttle:helpdesk-msg-actions')
+        ->name('manager.helpdesk.messages.info');
 
     // AI features
     Route::post('/conversations/{conversation}/ai/suggest-replies', [AiController::class, 'suggestReplies'])
@@ -139,7 +159,7 @@ Route::group(['prefix' => ''], function () {
         ->middleware('throttle:30,1');
 
     // Agents management
-    Route::prefix('agents')->name('agents.')->group(function () {
+    Route::prefix('agents')->name('manager.helpdesk.agents.')->group(function () {
         Route::get('/', [AgentsController::class, 'index'])->name('index');
         Route::get('{agent}', [AgentsController::class, 'show'])->name('show');
         Route::get('{agent}/edit', [AgentsController::class, 'edit'])->name('edit');
@@ -165,7 +185,7 @@ Route::group(['prefix' => ''], function () {
         Route::get('/categories/{id}', [HelpCenterController::class, 'showCategory'])->name('manager.helpdesk.helpcenter.categories.show');
         Route::get('/categories/edit/{id}', [HelpCenterController::class, 'edit'])->name('manager.helpdesk.helpcenter.categories.edit');
         Route::post('/categories/update', [HelpCenterController::class, 'update'])->name('manager.helpdesk.helpcenter.categories.update');
-        Route::get('/categories/destroy/{id}', [HelpCenterController::class, 'destroy'])->name('manager.helpdesk.helpcenter.categories.destroy');
+        Route::delete('/categories/{id}', [HelpCenterController::class, 'destroy'])->name('manager.helpdesk.helpcenter.categories.destroy');
 
         // Sections
         Route::get('/sections/create', [HelpCenterController::class, 'createSection'])->name('manager.helpdesk.helpcenter.sections.create');
@@ -173,7 +193,7 @@ Route::group(['prefix' => ''], function () {
         Route::get('/sections/{id}', [HelpCenterController::class, 'showSection'])->name('manager.helpdesk.helpcenter.sections.show');
         Route::get('/sections/{id}/edit', [HelpCenterController::class, 'editSection'])->name('manager.helpdesk.helpcenter.sections.edit');
         Route::post('/sections/update', [HelpCenterController::class, 'updateSection'])->name('manager.helpdesk.helpcenter.sections.update');
-        Route::get('/sections/{id}/destroy', [HelpCenterController::class, 'destroySection'])->name('manager.helpdesk.helpcenter.sections.destroy');
+        Route::delete('/sections/{id}', [HelpCenterController::class, 'destroySection'])->name('manager.helpdesk.helpcenter.sections.destroy');
         Route::get('/sections/{id}/articles/create', [HelpCenterController::class, 'createArticleInSection'])->name('manager.helpdesk.helpcenter.sections.articles.create');
 
         // Articles
@@ -182,7 +202,7 @@ Route::group(['prefix' => ''], function () {
         Route::post('/articles/store', [HelpCenterController::class, 'storeArticle'])->name('manager.helpdesk.helpcenter.articles.store');
         Route::get('/articles/edit/{id}', [HelpCenterController::class, 'editArticle'])->name('manager.helpdesk.helpcenter.articles.edit');
         Route::post('/articles/update', [HelpCenterController::class, 'updateArticle'])->name('manager.helpdesk.helpcenter.articles.update');
-        Route::get('/articles/destroy/{id}', [HelpCenterController::class, 'destroyArticle'])->name('manager.helpdesk.helpcenter.articles.destroy');
+        Route::delete('/articles/{id}', [HelpCenterController::class, 'destroyArticle'])->name('manager.helpdesk.helpcenter.articles.destroy');
     });
 
     // Reports avanzados (Fase 5)
@@ -198,12 +218,6 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.customers.insights');
 
     // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
-
-    // Live Visitors
-    Route::prefix('live-visitors')->name('manager.helpdesk.live-visitors.')->group(function () {
-        Route::get('/', [LiveVisitorsController::class, 'index'])->name('index');
-        Route::get('data', [LiveVisitorsController::class, 'data'])->name('data')->middleware('throttle:30,1');
-    });
 
     // Team Leaderboard
     Route::get('team/leaderboard', [LeaderboardController::class, 'index'])->name('manager.helpdesk.team.leaderboard');

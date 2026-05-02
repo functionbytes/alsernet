@@ -16,12 +16,14 @@ use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationRead;
+use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 
 class ConversationMessagesController extends Controller
 {
     public function __construct(
         private readonly OutboundMessageService $outbound,
+        private readonly LinkPreviewService $linkPreview,
     ) {}
 
     /**
@@ -64,6 +66,18 @@ class ConversationMessagesController extends Controller
             }
         }
 
+        // Link preview (OG metadata) for URLs in the agent's body — shown in the
+        // visitor widget like a WhatsApp/Instagram link unfurl. Only attached
+        // when the agent sends (this controller is agent-side) and only on
+        // public messages (skip internal notes).
+        $metadata = null;
+        if (! ($validated['is_internal'] ?? false) && filled($validated['body'])) {
+            $preview = $this->linkPreview->previewFromBody($validated['body']);
+            if ($preview !== null) {
+                $metadata = ['link_preview' => $preview];
+            }
+        }
+
         $item = $conversation->items()->create([
             'type' => 'message',
             'body' => $validated['body'],
@@ -71,6 +85,7 @@ class ConversationMessagesController extends Controller
             'user_id' => auth()->id(),
             'is_internal' => $validated['is_internal'] ?? false,
             'attachment_urls' => $attachmentUrls,
+            'metadata' => $metadata,
         ]);
 
         $item->load(['user']);
@@ -124,11 +139,37 @@ class ConversationMessagesController extends Controller
         // inbox channel — sidebar updates without a second round-trip.
         broadcast(new ConversationMessageCreated($item, false))->toOthers();
 
-        if (! $item->is_internal) {
-            broadcast(new MessageReceived($conversation, $item));
+        // NOTE: MessageReceived (widget channel) is broadcast by the
+        // ConversationItemLinkPreviewObserver after metadata is enriched, to
+        // avoid a race where the widget receives the message twice (once
+        // without preview, once with) and dedupes the second.
+
+        // The ConversationItemLinkPreviewObserver runs synchronously on the
+        // `created` event and mutates $item->metadata in place. Read it back
+        // explicitly to make sure the response carries the enriched metadata.
+        $reloaded = ConversationItem::with('user')->find($item->id);
+        if ($reloaded) {
+            $item = $reloaded;
         }
 
-        return response()->json([
+        // Belt-and-suspenders: if for any reason metadata.link_preview is still
+        // missing (e.g. observer not registered, OPcache lag, etc.), generate
+        // it inline so the agent panel always renders the unfurl card on the
+        // first paint.
+        $existingMeta = $item->metadata ?? [];
+        if (
+            ! ($validated['is_internal'] ?? false)
+            && ! isset($existingMeta['link_preview'])
+            && filled($item->body)
+        ) {
+            $preview = $this->linkPreview->previewFromBody((string) $item->body);
+            if ($preview !== null) {
+                $item->metadata = array_merge($existingMeta, ['link_preview' => $preview]);
+                $item->saveQuietly();
+            }
+        }
+
+        $payload = [
             'id' => $item->id,
             'conversation_id' => $conversation->id,
             'user_id' => $item->user_id,
@@ -137,10 +178,19 @@ class ConversationMessagesController extends Controller
             'html_body' => $item->html_body,
             'is_internal' => $item->is_internal,
             'created_at' => $item->created_at,
+            'time' => $item->created_at?->format('H:i'),
+            'author' => $item->user->name ?? 'Tú',
             'sender_name' => $item->user->name ?? 'Unknown',
             'sender_avatar' => $item->user?->getAvatarUrl(),
             'attachment_urls' => $item->attachment_urls,
-        ], 201);
+            'metadata' => $item->metadata,
+            'is_incoming' => false,
+        ];
+
+        // Returned in two shapes for backward compatibility:
+        //   - flat: legacy callers reading top-level fields
+        //   - .item: the conversations composer expects `resp.item`
+        return response()->json(array_merge($payload, ['item' => $payload]), 201);
     }
 
     /**

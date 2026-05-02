@@ -37,9 +37,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="move-team-btn">
-                <i class="fas fa-arrow-right-arrow-left"></i> Mover conversación
-            </button>
+            <button class="btn-primary" id="move-team-btn">Mover conversación</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>
@@ -87,7 +85,6 @@ $(document).on('click', '#move-team-btn', function () {
         },
     })
     .done(function (resp) {
-        if (window.toastr) toastr.success(resp.message || 'Conversación movida al equipo');
         $('[data-bv-modal-name="move-to-team"]').removeClass('on');
         if ($('body').css('overflow') !== '') $('body').css('overflow', '');
 

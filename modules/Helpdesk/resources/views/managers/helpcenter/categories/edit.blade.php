@@ -152,25 +152,13 @@
         errorPlacement: function (error, element) {
           error.insertAfter(element);
         },
-        submitHandler: function (form, event) {
-          event.preventDefault();
+        submitHandler: function (form) {
+          const submitBtn = $(form).find('button[type="submit"]');
 
-          $.blockUI({
-            message: '<i class="icon-spinner4 spinner"></i>',
-            overlayCSS: {
-              backgroundColor: '#1b2024',
-              opacity: 0.8,
-              zIndex: 1200,
-              cursor: 'wait'
-            },
-            css: {
-              border: 0,
-              color: '#fff',
-              padding: 0,
-              zIndex: 1201,
-              backgroundColor: 'transparent'
-            }
-          });
+          const originalBtnText = submitBtn.html();
+
+          submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Guardando...');
+
 
           $.ajax({
             type: 'POST',
@@ -178,16 +166,15 @@
             data: $(form).serialize(),
             dataType: 'json',
             success: function (data) {
-              $.unblockUI();
+              submitBtn.prop('disabled', false).html(originalBtnText);
               if (data.success) {
-                toastr.success(data.message);
                 setTimeout(function () {
                   window.location.href = data.redirect;
                 }, 1000);
               }
             },
             error: function (xhr) {
-              $.unblockUI();
+              submitBtn.prop('disabled', false).html(originalBtnText);
               if (xhr.status === 422) {
                 var errors = xhr.responseJSON.errors;
                 $.each(errors, function (key, value) {

@@ -284,7 +284,6 @@ $(document).ready(function() {
     @endif
 
     @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
     @endif
 });
 </script>

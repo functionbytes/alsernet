@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,6 +14,8 @@ use Modules\Auth\Traits\HasBasicRelations;
 use Modules\Auth\Traits\HasUserAttributes;
 use Modules\Auth\Traits\HasUserScopes;
 use Modules\Core\Traits\HasQuotaManagement;
+use Modules\Helpdesk\Models\AgentSettings;
+use Modules\Helpdesk\Models\Group;
 use Modules\Notification\Traits\HasNotificationSystem;
 use Modules\Reviews\Traits\HasNotificationPreferences;
 use Modules\Storage\Traits\HasFileSystemPaths;
@@ -121,6 +125,7 @@ class User extends Authenticatable
         'two_factor_confirmed_at',
         'failed_login_count',
         'locked_until',
+        'email_signature',
     ];
 
     /*
@@ -173,5 +178,20 @@ class User extends Authenticatable
     public function isLocked(): bool
     {
         return $this->locked_until !== null && $this->locked_until->isFuture();
+    }
+
+    public function agentSettings(): HasOne
+    {
+        return $this->hasOne(AgentSettings::class);
+    }
+
+    public function groups(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Group::class,
+            'helpdesk_group_user',
+            'user_id',
+            'group_id'
+        )->withPivot('conversation_priority')->withTimestamps();
     }
 }

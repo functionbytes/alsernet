@@ -10828,7 +10828,7 @@ img {
 .blog-auhtor-side-area .helping-area {
     margin-bottom: 30px;
     padding: 24px 20px;
-    background: #90bb13;
+    background: #b10100;
     border-radius: 8px;
     text-align: center
 }
@@ -10847,7 +10847,7 @@ img {
     gap: 8px;
     padding: 10px 20px;
     background: #fff;
-    color: #90bb13;
+    color: #b10100;
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
@@ -10937,7 +10937,7 @@ img {
 }
 
 .blog-auhtor-side-area .social-icons-sidebar ul li a:hover {
-    background: #90bb13;
+    background: #b10100;
     color: #fff
 }
 
@@ -13110,7 +13110,7 @@ img {
 
 .section-header {
     padding: 1rem;
-    border-left: 4px solid #90bb13;
+    border-left: 4px solid #b10100;
     background: linear-gradient(90deg,rgba(144,187,19,.05) 0,transparent 100%);
     border-radius: 0 .5rem .5rem 0
 }
@@ -13157,7 +13157,7 @@ img {
 }
 
 .response-type-card input[type=radio]:checked~.response-type-content,.response-type-card:hover .response-type-content {
-    border-color: #90bb13;
+    border-color: #b10100;
     box-shadow: 0 4px 12px rgba(144,187,19,.15)
 }
 
@@ -13166,7 +13166,7 @@ img {
 }
 
 .response-type-card input[type=radio]:checked~.response-type-content i,.response-type-card input[type=radio]:checked~.response-type-content span {
-    color: #90bb13
+    color: #b10100
 }
 
 .file-upload-area {
@@ -13180,7 +13180,7 @@ img {
 }
 
 .file-upload-area:hover {
-    border-color: #90bb13
+    border-color: #b10100
 }
 
 .file-upload-input {
@@ -13230,7 +13230,7 @@ img {
 
 .radicado-box {
     background: linear-gradient(135deg,rgba(144,187,19,.05),rgba(19,198,114,.05));
-    border: 2px solid #90bb13;
+    border: 2px solid #b10100;
     border-radius: 1rem;
     padding: 1.5rem
 }
@@ -13252,7 +13252,7 @@ img {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg,#90bb13 0,#13c672 100%);
+    background: linear-gradient(135deg,#b10100 0,#13c672 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13262,11 +13262,11 @@ img {
 }
 
 .text-brand {
-    color: var(--color-brand,#90bb13)
+    color: var(--color-brand,#b10100)
 }
 
 .text-main-color {
-    color: var(--main-color,#90bb13)
+    color: var(--main-color,#b10100)
 }
 
 .fs-13 {
@@ -13301,7 +13301,7 @@ img {
 .tracking-icon-box {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg,#90bb13 0,#13c672 100%);
+    background: linear-gradient(135deg,#b10100 0,#13c672 100%);
     box-shadow: 0 4px 20px rgba(144,187,19,.3)
 }
 
@@ -13313,7 +13313,7 @@ img {
     left: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #90bb13;
+    color: #b10100;
     z-index: 5
 }
 
@@ -13343,11 +13343,11 @@ img {
 }
 
 .pqrsf-info-icon {
-    color: #90bb13
+    color: #b10100
 }
 
 .pqrsf-help-icon {
-    color: #90bb13
+    color: #b10100
 }
 
 .pqrsf-sidebar-icon {
@@ -13358,7 +13358,7 @@ img {
 .success-icon-box {
     width: 120px;
     height: 120px;
-    background: linear-gradient(135deg,#13c672 0,#90bb13 100%);
+    background: linear-gradient(135deg,#13c672 0,#b10100 100%);
     box-shadow: 0 8px 24px rgba(19,198,114,.4)
 }
 
@@ -13367,12 +13367,12 @@ img {
 }
 
 .success-text-brand {
-    color: #90bb13
+    color: #b10100
 }
 
 .success-radicado-text {
     letter-spacing: 2px;
-    color: #90bb13
+    color: #b10100
 }
 
 .success-warn-icon {
@@ -13746,7 +13746,7 @@ img {
 .review-avatar {
     width: 48px;
     height: 48px;
-    background: var(--accent-color,#90bb13);
+    background: var(--accent-color,#b10100);
     color: #fff;
     font-size: 1.1rem
 }

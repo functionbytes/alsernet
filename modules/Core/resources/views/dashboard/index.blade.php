@@ -579,6 +579,15 @@
         </div>
         @endcan
 
+        {{-- Social Inbox Widget --}}
+        @if(class_exists(\Modules\HelpdeskSocial\Widgets\SocialInboxWidget::class))
+            <div class="row mb-4 g-3">
+                <div class="col-12">
+                    {!! (new \Modules\HelpdeskSocial\Widgets\SocialInboxWidget)->render() !!}
+                </div>
+            </div>
+        @endif
+
         {{-- Analytics KPI Widget --}}
         @include('analytics::components.dashboard-widget')
 

@@ -11,7 +11,6 @@
                 {{-- Para --}}
                 <div class="row">
                     <span class="lbl">Para</span>
-                    <div class="chip">julia.g@gmail.com <i class="fas fa-xmark"></i></div>
                     <input type="email" id="emailTo" placeholder="Añadir destinatario…" value="{{ $selectedConversation?->customer?->email ?? '' }}">
                 </div>
 
@@ -24,7 +23,7 @@
                 {{-- Asunto --}}
                 <div class="row">
                     <span class="lbl">Asunto</span>
-                    <input type="text" id="emailSubject" name="subject" value="Re: Tu pedido #8421">
+                    <input type="text" id="emailSubject" name="subject" placeholder="Asunto del correo…">
                 </div>
 
                 {{-- Plantilla --}}
@@ -32,11 +31,10 @@
                     <span class="lbl">Plantilla</span>
                     <select id="emailTemplate">
                         <option value="">— Sin plantilla —</option>
-                        <option value="confirm">Confirmación de envío</option>
-                        <option value="delay">Disculpa por retraso</option>
-                        <option value="feedback">Solicitud de feedback</option>
-                        <option value="welcome">Bienvenida</option>
                     </select>
+                    <span id="emailTemplateLoading" class="bv-hidden" style="font-size:12px;color:#6b7280;margin-left:8px;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
                 </div>
 
             </div>
@@ -67,50 +65,126 @@
             </div>
 
             {{-- Body --}}
-            <textarea id="emailBody" rows="8" class="bv-email-body">Hola Julia,
+            <textarea id="emailBody" rows="8" class="bv-email-body" placeholder="Escribe el mensaje o selecciona una plantilla…"></textarea>
 
-Gracias por tu paciencia. Te confirmo que tu pedido #8421 está siendo gestionado con prioridad.
+            {{-- Preview HTML (cuando se usa plantilla) --}}
+            <div id="emailHtmlPreviewWrap" class="bv-hidden" style="margin-top:8px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:12px;color:#6b7280;font-weight:600;">Vista previa HTML de la plantilla</span>
+                    <button type="button" id="emailTogglePreview" style="font-size:11px;color:#b10100;background:none;border:none;cursor:pointer;padding:0;">
+                        Ocultar
+                    </button>
+                </div>
+                <iframe id="emailHtmlPreview" sandbox="allow-same-origin"
+                    style="width:100%;min-height:220px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;"></iframe>
+            </div>
 
-Un saludo,
-María López — Soporte Functionbytes</textarea>
+            <input type="hidden" id="emailTemplateId" value="">
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-secondary">
-                <i class="fas fa-paperclip"></i> Adjuntar
-            </button>
-            <button class="btn-secondary">
-                <i class="far fa-floppy-disk"></i> Borrador
-            </button>
-            <div class="bv-email-foot-actions">
-                <button class="btn-secondary" data-bv-close>Cancelar</button>
-                <button class="btn-primary" id="bv-email-send">
-                    <i class="far fa-paper-plane"></i> Enviar
-                </button>
-            </div>
+            <button class="btn-primary" id="bv-email-send">Enviar</button>
+            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-secondary">Adjuntar</button>
+            <button class="btn-secondary">Borrador</button>
         </div>
     </div>
 </div>
 
 @push('scripts')
-@verbatim
 <script>
-(function() {
-    var templates = {
-        confirm: "Hola {{nombre}},\n\nTe confirmamos que tu pedido #{{numero}} ha sido enviado y llegará en los próximos días.\n\nUn saludo,\nEquipo de Soporte",
-        delay: "Hola {{nombre}},\n\nLamentamos los inconvenientes causados por el retraso en tu pedido. Estamos trabajando para resolverlo lo antes posible.\n\nDisculpa las molestias,\nEquipo de Soporte",
-        feedback: "Hola {{nombre}},\n\n¿Cómo fue tu experiencia con nosotros? Tu opinión es muy importante para mejorar nuestro servicio.\n\nGracias de antemano,\nEquipo de Soporte",
-        welcome: "Hola {{nombre}},\n\nBienvenido/a a Functionbytes. Estamos encantados de tenerte con nosotros.\n\n¿En qué podemos ayudarte?\nEquipo de Soporte"
-    };
+(function () {
+    var _templatesLoaded = false;
+    var _templateMap = {};     // id -> {name, subject, key}
+    var _previewXhr = null;
 
-    $(document).on('change', '#emailTemplate', function() {
-        var val = $(this).val();
-        if (val && templates[val]) {
-            $('#emailBody').val(templates[val]);
+    // Cargar plantillas cuando el DOM esté listo (una sola vez).
+    $(function () { loadEmailTemplates(); });
+
+    function loadEmailTemplates() {
+        $('#emailTemplateLoading').removeClass('bv-hidden');
+        $.ajax({
+            url: '/panel/helpdesk/conversations/email-templates',
+            method: 'GET',
+            dataType: 'json',
+            headers: { 'Accept': 'application/json' },
+        }).done(function (resp) {
+            var $sel = $('#emailTemplate');
+            var templates = resp.templates || [];
+            templates.forEach(function (t) {
+                _templateMap[t.id] = t;
+                $sel.append($('<option>').val(t.id).text(t.name));
+            });
+        }).fail(function () {
+            // Si falla silenciosamente, el select queda solo con "Sin plantilla".
+        }).always(function () {
+            $('#emailTemplateLoading').addClass('bv-hidden');
+        });
+    }
+
+    // Al cambiar plantilla → obtener preview del servidor.
+    $(document).on('change', '#emailTemplate', function () {
+        var templateId = $(this).val();
+
+        $('#emailTemplateId').val(templateId);
+        $('#emailHtmlPreviewWrap').addClass('bv-hidden');
+
+        if (!templateId) {
+            $('#emailSubject').val('');
+            $('#emailBody').val('');
+            return;
         }
+
+        var convId = $('.bv-composer').data('bv-conversation-id');
+        if (!convId) {
+            // Sin conversación activa: usar datos del map para rellenar subject vacío.
+            var t = _templateMap[templateId];
+            if (t) { $('#emailSubject').val(t.subject || ''); }
+            return;
+        }
+
+        if (_previewXhr) { _previewXhr.abort(); }
+
+        $('#emailBody').prop('disabled', true).val('Cargando plantilla…');
+
+        _previewXhr = $.ajax({
+            url: '/panel/helpdesk/conversations/' + convId + '/email-templates/preview',
+            method: 'GET',
+            dataType: 'json',
+            data: { template_id: templateId },
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            },
+        }).done(function (resp) {
+            $('#emailSubject').val(resp.subject || '');
+            $('#emailBody').val(resp.body || '');
+
+            if (resp.html_body) {
+                var iframe = document.getElementById('emailHtmlPreview');
+                if (iframe) {
+                    iframe.srcdoc = resp.html_body;
+                }
+                $('#emailHtmlPreviewWrap').removeClass('bv-hidden');
+            }
+        }).fail(function (xhr) {
+            if (xhr.statusText === 'abort') { return; }
+            $('#emailBody').val('');
+            toastr.warning('No se pudo cargar la plantilla.');
+        }).always(function () {
+            $('#emailBody').prop('disabled', false);
+        });
     });
 
-    $(document).on('click', '#emailToggleCc', function() {
+    // Ocultar/mostrar iframe de preview.
+    $(document).on('click', '#emailTogglePreview', function () {
+        var $iframe = $('#emailHtmlPreview');
+        var hidden = $iframe.is(':hidden');
+        $iframe.toggle();
+        $(this).text(hidden ? 'Ocultar' : 'Mostrar');
+    });
+
+    $(document).on('click', '#emailToggleCc', function () {
         var row = $('#emailCcRow');
         var visible = row.toggle().is(':visible');
         $(this).html(visible
@@ -119,45 +193,62 @@ María López — Soporte Functionbytes</textarea>
         );
     });
 
-    $(document).on('click', '#emailScheduleToggle', function() {
+    $(document).on('click', '#emailScheduleToggle', function () {
         $('#emailScheduleRow').toggle();
-    });
-
-    $(document).on('click', '.mv4-email .chip i', function() {
-        $(this).closest('.chip').remove();
     });
 
     $(document).on('click', '#bv-email-send', function () {
         var $btn = $(this);
         var convId = $('.bv-composer').data('bv-conversation-id');
         if (!convId) { toastr.error('No hay conversación seleccionada'); return; }
+
         var to = ($('#emailTo').val() || '').trim();
         var subject = ($('#emailSubject').val() || '').trim();
         var body = ($('#emailBody').val() || '').trim();
-        if (!to || !subject || !body) {
-            toastr.warning('Completa destinatario, asunto y cuerpo');
+        var templateId = $('#emailTemplateId').val() || null;
+
+        if (!to || !subject) {
+            toastr.warning('Completa el destinatario y el asunto');
             return;
         }
+
+        if (!templateId && !body) {
+            toastr.warning('Escribe un mensaje o selecciona una plantilla');
+            return;
+        }
+
         $btn.prop('disabled', true);
+
         var ccVal = ($('#emailCc').val() || '').trim();
         var ccList = ccVal ? ccVal.split(/[,;]\s*/).filter(Boolean) : [];
+
+        var payload = {
+            subject: subject,
+            cc: ccList,
+        };
+
+        if (templateId) {
+            payload.template_id = templateId;
+        } else {
+            payload.body = body;
+        }
+
         $.ajax({
             url: '/panel/helpdesk/conversations/' + convId + '/send-email',
             method: 'POST',
             dataType: 'json',
-            data: {
-                subject: subject,
-                body: body,
-                cc: ccList,
-            },
+            data: payload,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                 'Accept': 'application/json',
             },
         }).done(function (resp) {
-            toastr.success(resp?.message || 'Correo enviado');
             $('[data-bv-modal-name="email"]').removeClass('on');
             $('body').css('overflow', '');
+            $('#emailTemplate').val('').trigger('change-silent');
+            $('#emailSubject, #emailBody').val('');
+            $('#emailTemplateId').val('');
+            $('#emailHtmlPreviewWrap').addClass('bv-hidden');
             if (resp?.item && typeof window.appendBubbleToThread === 'function') {
                 window.appendBubbleToThread(resp.item, false);
             }
@@ -172,5 +263,4 @@ María López — Soporte Functionbytes</textarea>
     });
 }());
 </script>
-@endverbatim
 @endpush

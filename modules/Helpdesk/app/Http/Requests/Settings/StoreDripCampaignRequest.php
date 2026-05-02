@@ -21,7 +21,7 @@ class StoreDripCampaignRequest extends FormRequest
             'is_active' => ['boolean'],
             'steps' => ['nullable', 'array'],
             'steps.*.delay_minutes' => ['required', 'integer', 'min:0'],
-            'steps.*.channel' => ['required', 'in:widget,email,whatsapp'],
+            'steps.*.channel' => ['required', 'in:web,email,whatsapp'],
             'steps.*.template_type' => ['nullable', 'in:text,hsm'],
             'steps.*.body' => ['nullable', 'string', 'max:2000'],
         ];

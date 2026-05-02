@@ -359,7 +359,7 @@ class CustomersController extends Controller
             ->map(fn (Conversation $c) => [
                 'id' => $c->id,
                 'subject' => $c->subject ?? '#'.$c->id,
-                'channel' => $c->channel ?? 'widget',
+                'channel' => $c->channel ?? 'web',
                 'channel_icon' => $c->channel_info['icon'],
                 'preview' => mb_strimwidth(strip_tags((string) ($c->getLatestMessage()?->body ?? '')), 0, 80, '…'),
                 'time' => $c->last_message_at?->diffForHumans() ?? $c->created_at?->diffForHumans() ?? '—',

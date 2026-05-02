@@ -109,7 +109,7 @@
                                     </td>
                                     <td class="text-center align-middle">
                                         <span class="fw-semibold">
-                                            {{ $agent->openTicketsCount ?? ($agent->assignedTickets()->whereHas('status', fn($q) => $q->where('is_open', true))->count()) }}
+                                            {{ $agent->openTicketsCount ?? 0 }}
                                         </span>
                                     </td>
                                     <td class="text-center align-middle">

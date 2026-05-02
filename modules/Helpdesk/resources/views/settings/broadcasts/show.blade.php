@@ -17,9 +17,20 @@
                             <h5 class="mb-1 fw-bold">{{ $broadcast->name }}</h5>
                             <p class="small mb-0 text-muted">Detalle del broadcast y sus destinatarios</p>
                         </div>
-                        <a href="{{ route('settings.helpdesk.broadcasts.index') }}" class="btn btn-light">
-                            Volver
-                        </a>
+                        <div class="d-flex gap-2">
+                            @if($broadcast->isDraft())
+                                <form action="{{ route('settings.helpdesk.broadcasts.dispatch', $broadcast) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary"
+                                        onclick="return confirm('¿Confirmas el envío de este broadcast a todos los destinatarios?')">
+                                        Enviar ahora
+                                    </button>
+                                </form>
+                            @endif
+                            <a href="{{ route('settings.helpdesk.broadcasts.index') }}" class="btn btn-light">
+                                Volver
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -246,7 +257,6 @@
 <script>
 $(document).ready(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
 
     @if(session('error'))

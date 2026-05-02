@@ -3,82 +3,79 @@
 namespace Modules\Helpdesk\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Modules\Helpdesk\Models\Group;
 
 class HelpdeskGroupSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * Seeds the helpdesk_groups table with default agent groups/teams.
-     * Groups organize agents and can handle different types of support tickets.
-     *
-     * Default groups:
-     * - General Support: General questions and issues
-     * - Technical Support: Technical problems and bugs
-     * - Billing Support: Payment and billing inquiries
-     * - Premium Support: VIP customers (paid support tier)
-     *
-     * Each group can have multiple agents assigned with different roles.
-     */
     public function run(): void
     {
+        $now = now();
+
         $groups = [
             [
-                'uid' => Str::ulid(),
-                'name' => 'Soporte General',
                 'key' => 'general_support',
+                'name' => 'Soporte General',
                 'description' => 'Equipo de soporte general para preguntas generales y consultas',
                 'email' => 'support@alsernet.local',
-                'is_active' => true,
+                'assignment_mode' => 'round_robin',
+                'is_active' => 1,
+                'default' => 1,
                 'position' => 1,
             ],
             [
-                'uid' => Str::ulid(),
-                'name' => 'Soporte Técnico',
                 'key' => 'technical_support',
+                'name' => 'Soporte Técnico',
                 'description' => 'Equipo especializado en problemas técnicos y bugs',
                 'email' => 'tech@alsernet.local',
-                'is_active' => true,
+                'assignment_mode' => 'round_robin',
+                'is_active' => 1,
+                'default' => 0,
                 'position' => 2,
             ],
             [
-                'uid' => Str::ulid(),
-                'name' => 'Soporte Facturación',
                 'key' => 'billing_support',
+                'name' => 'Soporte Facturación',
                 'description' => 'Equipo encargado de consultas de pagos y facturación',
                 'email' => 'billing@alsernet.local',
-                'is_active' => true,
+                'assignment_mode' => 'load_balanced',
+                'is_active' => 1,
+                'default' => 0,
                 'position' => 3,
             ],
             [
-                'uid' => Str::ulid(),
-                'name' => 'Soporte Premium',
                 'key' => 'premium_support',
+                'name' => 'Soporte Premium',
                 'description' => 'Equipo de soporte prioritario para clientes VIP',
                 'email' => 'premium@alsernet.local',
-                'is_active' => true,
+                'assignment_mode' => 'load_balanced',
+                'is_active' => 1,
+                'default' => 0,
                 'position' => 4,
             ],
             [
-                'uid' => Str::ulid(),
-                'name' => 'Devoluciones y Logística',
                 'key' => 'returns_logistics',
+                'name' => 'Devoluciones y Logística',
                 'description' => 'Equipo especializado en devoluciones y gestión logística',
                 'email' => 'returns@alsernet.local',
-                'is_active' => true,
+                'assignment_mode' => 'round_robin',
+                'is_active' => 1,
+                'default' => 0,
                 'position' => 5,
             ],
         ];
 
         foreach ($groups as $group) {
-            Group::firstOrCreate(
+            DB::connection('helpdesk')->table('helpdesk_groups')->updateOrInsert(
                 ['key' => $group['key']],
-                $group
+                array_merge($group, [
+                    'uid' => (string) Str::ulid(),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
             );
         }
 
-        $this->command->info('✅ Helpdesk groups seeded successfully');
+        $this->command->info('✅ Equipos (grupos) creados ('.count($groups).')');
     }
 }

@@ -93,7 +93,7 @@ modules/Template/Templates/{Name}/
 /* Variables CSS del template {Name} adaptadas al brand Alsernet */
 :root {
     /* Brand */
-    --color-primary: #90bb13;          /* Alsernet — sustituye color original del template */
+    --color-primary: #b10100;          /* Alsernet — sustituye color original del template */
     --color-primary-hover: #7da010;
     --color-primary-light: #d3e8a8;
     
@@ -159,7 +159,7 @@ php artisan optimize:clear
 
 ## Design Tokens
 
-Ver `tokens.css`. Color primario `#90bb13` (Alsernet) reemplaza el original `{color}`.
+Ver `tokens.css`. Color primario `#b10100` (Alsernet) reemplaza el original `{color}`.
 
 ## Plugins JS
 

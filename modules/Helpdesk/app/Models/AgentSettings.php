@@ -41,8 +41,7 @@ class AgentSettings extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class)
-            ->setConnection(config('database.default'));
+        return $this->belongsTo(User::class);
     }
 
     public static function newFromDefault(): self

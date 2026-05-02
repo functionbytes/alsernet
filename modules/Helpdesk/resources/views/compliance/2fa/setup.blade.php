@@ -327,7 +327,6 @@ $(function () {
     $('#btn-copy-secret').on('click', function () {
         const secret = $('#secret-text').text();
         navigator.clipboard.writeText(secret).then(function () {
-            toastr.info('Clave copiada al portapapeles', '');
         });
     });
 
@@ -364,7 +363,6 @@ $(function () {
                     return;
                 }
 
-                toastr.success('Código verificado correctamente.', '');
                 buildRecoveryCodes();
                 goToStep(3);
             },
@@ -402,7 +400,6 @@ $(function () {
     $('#btn-copy-codes').on('click', function () {
         const text = recoveryCodes.join('\n');
         navigator.clipboard.writeText(text).then(function () {
-            toastr.success('Códigos copiados al portapapeles.', '');
         });
     });
 
@@ -426,7 +423,6 @@ $(function () {
             data: { password: password },
             success: function (res) {
                 if (res.success) {
-                    toastr.success(res.message, '');
                     setTimeout(function () { location.reload(); }, 1200);
                 }
             },

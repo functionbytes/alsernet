@@ -23,11 +23,16 @@ class HelpCenterArticle extends Model implements HasMedia
         'category_id',
         'title',
         'slug',
+        'body',
         'content',
+        'description',
         'excerpt',
+        'position',
         'order',
         'views_count',
         'active',
+        'draft',
+        'hide_from_structure',
         'is_published',
         'author_id',
         'published_at',
@@ -62,8 +67,7 @@ class HelpCenterArticle extends Model implements HasMedia
      */
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'author_id')
-            ->setConnection(config('database.default'));
+        return $this->belongsTo(User::class, 'author_id');
     }
 
     /**

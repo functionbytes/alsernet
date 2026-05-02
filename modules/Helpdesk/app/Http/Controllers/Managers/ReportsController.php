@@ -2,14 +2,14 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Modules\Helpdesk\Http\Requests\DateRangeRequest;
+use Modules\Helpdesk\Models\CsatRating;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketDailyReport;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -93,6 +93,21 @@ class ReportsController extends Controller
             ->orderBy('rating')
             ->pluck('count', 'rating');
 
+        // CSAT from conversations
+        $csatRow = CsatRating::query()
+            ->whereBetween('answered_at', [$from, $to])
+            ->whereNotNull('answered_at')
+            ->selectRaw('COUNT(*) as total, AVG(rating) as avg_rating, SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_count')
+            ->first();
+
+        $csatDistribution = CsatRating::query()
+            ->whereBetween('answered_at', [$from, $to])
+            ->whereNotNull('answered_at')
+            ->selectRaw('rating, COUNT(*) as count')
+            ->groupBy('rating')
+            ->orderBy('rating')
+            ->pluck('count', 'rating');
+
         return view('helpdesk::managers.helpdesk.reports.index', [
             'from' => $from,
             'to' => $to,
@@ -109,6 +124,10 @@ class ReportsController extends Controller
             'avgRating' => round($ratedRow->avg_rating ?? 0, 1),
             'ratedCount' => (int) $ratedRow->rated_count,
             'ratingDistribution' => $ratingDistribution,
+            'csatAvg' => round($csatRow->avg_rating ?? 0, 1),
+            'csatTotal' => (int) $csatRow->total,
+            'csatPositive' => (int) $csatRow->positive_count,
+            'csatDistribution' => $csatDistribution,
         ]);
     }
 
@@ -259,7 +278,7 @@ class ReportsController extends Controller
      *
      * @return array{0: Carbon, 1: Carbon}
      */
-    private function resolveDateRange(DateRangeRequest $request): array
+    private function resolveDateRange(Request $request): array
     {
         $from = $request->filled('from')
             ? Carbon::parse($request->from)->startOfDay()

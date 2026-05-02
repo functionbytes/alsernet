@@ -178,8 +178,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary"><i class="fas fa-check"></i> Resolver ticket</button>
-            <button class="btn-secondary"><i class="fas fa-user-check"></i> Asignar otro agente</button>
+            <button class="btn-primary">Resolver ticket</button>
+            <button class="btn-secondary">Asignar otro agente</button>
         </div>
     </div>
 </div>

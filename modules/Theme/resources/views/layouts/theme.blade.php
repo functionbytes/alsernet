@@ -230,6 +230,34 @@ $(function () {
         $('#delete-modal').modal('show');
         $('#delete-form').attr('action', url);
     });
+
+    $(document).on('submit', '#delete-form', function (e) {
+        e.preventDefault();
+        const form = $(this);
+        const btn = form.find('button[type="submit"]');
+        btn.prop('disabled', true);
+        $.ajax({
+            url: form.attr('action'),
+            method: 'POST',
+            data: form.serialize(),
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (data) {
+                $('#delete-modal').modal('hide');
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(data.message || 'Eliminado exitosamente');
+                }
+                setTimeout(function () { window.location.reload(); }, 600);
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false);
+                $('#delete-modal').modal('hide');
+                const msg = xhr.responseJSON?.message || 'No se pudo eliminar';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                }
+            },
+        });
+    });
 });
 </script>
 

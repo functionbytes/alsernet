@@ -325,7 +325,6 @@
 <script>
     $(document).ready(function () {
         @if(session('success'))
-            toastr.success('{{ session('success') }}', 'Éxito');
         @endif
         @if(session('error'))
             toastr.error('{{ session('error') }}', 'Error');

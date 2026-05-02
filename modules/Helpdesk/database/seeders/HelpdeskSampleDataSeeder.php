@@ -150,7 +150,7 @@ class HelpdeskSampleDataSeeder extends Seeder
         array $closedStatusIds,
         array $userIds
     ): void {
-        $channels = ['whatsapp', 'facebook', 'instagram', 'email', 'widget'];
+        $channels = ['whatsapp', 'facebook', 'instagram', 'email', 'web'];
         $priorities = ['low', 'normal', 'normal', 'normal', 'high', 'urgent'];
 
         for ($i = 0; $i < self::CONVERSATIONS_COUNT; $i++) {
@@ -251,7 +251,7 @@ class HelpdeskSampleDataSeeder extends Seeder
                 'Consulta por correo electrónico',
                 'Reporte de incidencia por email',
             ],
-            'widget' => [
+            'web' => [
                 'Chat en vivo desde el sitio web',
                 "Consulta de {$customerName} en el chat",
                 'Soporte en tiempo real',

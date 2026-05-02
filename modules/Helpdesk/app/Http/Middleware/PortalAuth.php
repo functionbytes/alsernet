@@ -14,7 +14,7 @@ class PortalAuth
         $customerId = session('portal_customer_id');
 
         if (! $customerId) {
-            return redirect()->route('helpdesk.portal.login')
+            return redirect()->route('portal.login')
                 ->with('error', 'Debes iniciar sesion para acceder al portal.');
         }
 
@@ -23,7 +23,7 @@ class PortalAuth
         if (! $customer) {
             session()->forget('portal_customer_id');
 
-            return redirect()->route('helpdesk.portal.login')
+            return redirect()->route('portal.login')
                 ->with('error', 'Sesion invalida. Por favor inicia sesion nuevamente.');
         }
 

@@ -74,12 +74,8 @@
 
         </div>
         <div class="bv-modal-foot">
+            <button class="btn-primary" id="noteBtnSave">Añadir nota</button>
             <button class="btn-secondary" data-bv-close>Cerrar</button>
-            <div class="bv-ml-auto">
-                <button class="btn-primary" id="noteBtnSave">
-                    <i class="fas fa-check"></i> Añadir nota
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -123,7 +119,6 @@
                 if (resp && resp.item) {
                     $(document).trigger('bv:message:added', [resp.item, true]);
                 }
-                toastr.success(resp.message || 'Nota guardada');
                 $('#noteBody').val('');
                 $('#notePin').prop('checked', false);
                 $('[data-bv-modal-name="note"]').removeClass('on');

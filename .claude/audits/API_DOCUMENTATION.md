@@ -428,7 +428,7 @@ Response:
 {
     "success": true,
     "data": [
-        { "id": 1, "name": "Hardware", "slug": "hardware", "description": "...", "icon": "fas fa-desktop", "color": "#90bb13" }
+        { "id": 1, "name": "Hardware", "slug": "hardware", "description": "...", "icon": "fas fa-desktop", "color": "#b10100" }
     ]
 }
 ```

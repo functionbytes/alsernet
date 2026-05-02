@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class SendEmailFromConversationRequest extends FormRequest
 {
@@ -18,12 +19,22 @@ class SendEmailFromConversationRequest extends FormRequest
     {
         return [
             'subject' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
+            'body' => ['nullable', 'string'],
+            'template_id' => ['nullable', 'integer', 'exists:mailer_templates,id'],
             'cc' => ['nullable', 'array'],
             'cc.*' => ['email'],
             'bcc' => ['nullable', 'array'],
             'bcc.*' => ['email'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($v) {
+            if (! $this->filled('body') && ! $this->filled('template_id')) {
+                $v->errors()->add('body', 'El cuerpo del email es obligatorio cuando no se selecciona una plantilla.');
+            }
+        });
     }
 
     public function messages(): array

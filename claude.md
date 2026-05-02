@@ -298,7 +298,7 @@ registra el autoload y activa el template. Tiempo estimado: 3-5 horas con agente
 - No usar `style=""` inline — utility classes o `data-*`
 - Font Awesome 6 ONLY (nunca `d-icon-*` ni Tabler `ti ti-*`)
 - jQuery + Bootstrap 5.3 nativo (no Livewire/React/Alpine)
-- Color primario `#90bb13` sustituye al `#26c` original de Riode
+- Color primario `#b10100` sustituye al `#26c` original de Riode
 - `loading="lazy"` + dimensiones explicitas en `<img>`
 - Multi-idioma con `__('shortcode::messages.X')`
 - Tests Feature: happy path + edge cases por cada shortcode
@@ -348,7 +348,7 @@ Always use Context7 MCP tools for up-to-date documentation on project technologi
 - **NEVER**: Use Tabler Icons (`ti ti-*`) - they are NOT loaded in this project
 
 ### Colors
-- Primary: `#90bb13`, Success: `#13C672`, Danger: `#FA896B`, Warning: `#FEC90F`
+- Primary: `#b10100`, Success: `#13C672`, Danger: `#FA896B`, Warning: `#FEC90F`
 
 ### Typography Rules
 - Section titles: capitalize only first word (`Informacion basica`, NOT `Informacion Basica`)

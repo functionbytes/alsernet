@@ -1,0 +1,59 @@
+name: 'Catálogo - Filtros'
+description: |-
+
+  Opciones de filtrado disponibles (marcas, categorías, rango de precios). Acceso público.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/ecommerce/filters
+    metadata:
+      custom: []
+      groupName: 'Catálogo - Filtros'
+      groupDescription: |-
+
+        Opciones de filtrado disponibles (marcas, categorías, rango de precios). Acceso público.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Opciones de filtrado'
+      description: |-
+        Devuelve todas las opciones disponibles para filtrar productos: marcas, categorías y rango de precios.
+        Respuesta cacheada 10 minutos por locale.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"message":"ok","data":{"brands":[{"id":5,"name":"Adidas","slug":"adidas","logo":null,"isFeatured":false},{"id":3,"name":"Apple","slug":"apple","logo":null,"isFeatured":false},{"id":4,"name":"Nike","slug":"nike","logo":null,"isFeatured":false},{"id":2,"name":"Samsung","slug":"samsung","logo":null,"isFeatured":false},{"id":1,"name":"Sony","slug":"sony","logo":null,"isFeatured":false}],"categories":[{"id":1,"name":"Electronica","slug":"electronica","image":null,"isFeatured":false,"parentId":null,"children":[]},{"id":2,"name":"Ropa","slug":"ropa","image":null,"isFeatured":false,"parentId":null,"children":[]},{"id":3,"name":"Hogar","slug":"hogar","image":null,"isFeatured":false,"parentId":null,"children":[]},{"id":4,"name":"Deportes","slug":"deportes","image":null,"isFeatured":false,"parentId":null,"children":[]}],"priceRange":{"min":35,"max":999}}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          content-language: en
+          x-ratelimit-limit: '30'
+          x-ratelimit-remaining: '20'
+          x-frame-options: SAMEORIGIN
+          x-content-type-options: nosniff
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          permissions-policy: 'camera=(), microphone=(), geolocation=(), payment=()'
+          strict-transport-security: 'max-age=31536000; includeSubDomains'
+          x-robots-tag: 'noindex, nofollow, noarchive, nosnippet'
+          vary: Origin
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

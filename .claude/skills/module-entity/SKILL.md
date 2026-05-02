@@ -241,7 +241,7 @@ Route::get('panel/{alias}/dashboard/chart-data', [{ModuleName}DashboardControlle
 ### View
 File: `modules/{ModuleName}/resources/views/dashboard/index.blade.php`
 - Row of KPI cards (Bootstrap + rounded-circle icons)
-- Chart card with DevExpress `dxChart` (bar type, color `#90bb13`)
+- Chart card with DevExpress `dxChart` (bar type, color `#b10100`)
 - Range selector (7/30/90 days) with jQuery `$.getJSON`
 - `number_format()` for stats display
 
@@ -285,4 +285,4 @@ Add "Dashboard" as first sidebar item:
 - No inline styles
 - No `style=""` - create CSS classes
 - select2: NEVER `theme: 'bootstrap-5'`
-- Primary color: `#90bb13`
+- Primary color: `#b10100`

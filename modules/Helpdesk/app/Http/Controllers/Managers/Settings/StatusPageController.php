@@ -16,6 +16,11 @@ class StatusPageController extends Controller
         $this->middleware('can:helpdesk.status.manage');
     }
 
+    public function index(): RedirectResponse
+    {
+        return redirect()->route('settings.helpdesk.status.components');
+    }
+
     public function componentsIndex(): View
     {
         $components = StatusComponent::query()->orderBy('order')->paginate(20);

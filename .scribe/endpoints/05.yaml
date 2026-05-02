@@ -1,0 +1,121 @@
+name: 'Catálogo - Marcas'
+description: |-
+
+  Listado de marcas y sus productos. Acceso público.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/ecommerce/brands
+    metadata:
+      custom: []
+      groupName: 'Catálogo - Marcas'
+      groupDescription: |-
+
+        Listado de marcas y sus productos. Acceso público.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Listar marcas'
+      description: 'Devuelve la lista paginada de marcas publicadas con conteo de productos.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"message":"ok","data":[{"id":5,"name":"Adidas","slug":"adidas","logo":null,"isFeatured":false,"productsCount":1},{"id":3,"name":"Apple","slug":"apple","logo":null,"isFeatured":false,"productsCount":1},{"id":4,"name":"Nike","slug":"nike","logo":null,"isFeatured":false,"productsCount":1},{"id":2,"name":"Samsung","slug":"samsung","logo":null,"isFeatured":false,"productsCount":1},{"id":1,"name":"Sony","slug":"sony","logo":null,"isFeatured":false,"productsCount":1}],"meta":{"currentPage":1,"perPage":30,"total":5,"lastPage":1},"links":{"first":"https:\/\/system.functionbytes.com\/api\/v1\/ecommerce\/brands?page=1","last":"https:\/\/system.functionbytes.com\/api\/v1\/ecommerce\/brands?page=1","prev":null,"next":null}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          content-language: en
+          x-ratelimit-limit: '30'
+          x-ratelimit-remaining: '22'
+          x-frame-options: SAMEORIGIN
+          x-content-type-options: nosniff
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          permissions-policy: 'camera=(), microphone=(), geolocation=(), payment=()'
+          strict-transport-security: 'max-age=31536000; includeSubDomains'
+          x-robots-tag: 'noindex, nofollow, noarchive, nosnippet'
+          vary: Origin
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/ecommerce/brands/{slug}'
+    metadata:
+      custom: []
+      groupName: 'Catálogo - Marcas'
+      groupDescription: |-
+
+        Listado de marcas y sus productos. Acceso público.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Detalle de marca con productos'
+      description: 'Devuelve la marca con la lista paginada de sus productos.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      slug:
+        custom: []
+        name: slug
+        description: 'Slug de la marca.'
+        required: true
+        example: nike
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      slug: nike
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"message":"ok","data":{"id":4,"name":"Nike","slug":"nike","description":null,"logo":null,"website":"https:\/\/nike.com","isFeatured":false,"productsCount":{},"createdAt":"2026-04-25T15:40:43+02:00","products":[{"id":3,"name":"Zapatillas Nike Air Max","slug":"zapatillas-nike-air-max","price":129.99,"salePrice":99.99,"finalPrice":129.99,"isOnSale":false,"featuredImage":"https:\/\/system.functionbytes.com\/modules\/ecommerce\/images\/product-placeholder.svg","stockStatus":"in_stock","isFeatured":false,"status":"published","brand":{"id":4,"name":"Nike","slug":"nike","logo":null,"isFeatured":false},"createdAt":"2026-04-25T15:40:43+02:00"}],"meta":{"currentPage":1,"perPage":15,"total":1,"lastPage":1}}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          content-language: en
+          x-ratelimit-limit: '30'
+          x-ratelimit-remaining: '21'
+          x-frame-options: SAMEORIGIN
+          x-content-type-options: nosniff
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          permissions-policy: 'camera=(), microphone=(), geolocation=(), payment=()'
+          strict-transport-security: 'max-age=31536000; includeSubDomains'
+          x-robots-tag: 'noindex, nofollow, noarchive, nosnippet'
+          vary: Origin
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

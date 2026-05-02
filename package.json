@@ -23,9 +23,9 @@
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
         "react-hook-form": "^7.0.0",
-        "react-router-dom": "^7.0.0",
+        "react-router-dom": "^7.14.2",
         "zod": "^3.0.0",
-        "zustand": "^5.0.0"
+        "zustand": "^5.0.12"
     },
     "devDependencies": {
         "@fullhuman/postcss-purgecss": "^8.0.0",
@@ -38,11 +38,11 @@
         "@types/react-dom": "^19.0.0",
         "@vitejs/plugin-react": "^4.0.0",
         "concurrently": "^9.0.1",
-        "laravel-echo": "^2.2.7",
+        "laravel-echo": "^2.3.4",
         "laravel-vite-plugin": "^2.0.0",
         "lighthouse": "^13.1.0",
         "purgecss": "^8.0.0",
-        "pusher-js": "^8.4.0",
+        "pusher-js": "^8.5.0",
         "tailwindcss": "^4.0.0",
         "terser": "^5.46.1",
         "tsx": "^4.0.0",

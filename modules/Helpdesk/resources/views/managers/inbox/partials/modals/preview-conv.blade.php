@@ -72,15 +72,9 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-secondary">
-                <i class="fas fa-print"></i> Exportar
-            </button>
-            <div class="bv-foot-end">
-                <button class="btn-secondary" data-bv-close>Cerrar</button>
-                <button class="btn-secondary">
-                    <i class="fas fa-arrow-up-right-from-square"></i> Abrir conversación
-                </button>
-            </div>
+            <button class="btn-secondary">Abrir conversación</button>
+            <button class="btn-secondary">Exportar</button>
+            <button class="btn-secondary" data-bv-close>Cerrar</button>
         </div>
     </div>
 </div>

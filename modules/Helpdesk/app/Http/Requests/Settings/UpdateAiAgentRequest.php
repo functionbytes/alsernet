@@ -19,7 +19,7 @@ class UpdateAiAgentRequest extends FormRequest
             'system_prompt' => ['required', 'string', 'max:10000'],
             'max_messages_before_escalation' => ['required', 'integer', 'min:1', 'max:100'],
             'enabled_channels' => ['nullable', 'array'],
-            'enabled_channels.*' => ['in:widget,facebook,instagram,whatsapp,email'],
+            'enabled_channels.*' => ['in:web,facebook,instagram,whatsapp,email'],
             'escalation_keywords' => ['nullable', 'string'],
             'knowledge_sources' => ['nullable', 'string'],
             'is_active' => ['boolean'],

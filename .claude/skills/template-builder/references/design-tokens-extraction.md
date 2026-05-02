@@ -78,7 +78,7 @@ Una vez identificados los colores del template original, mapear:
 
 | Original | Reemplazar por | Variable destino |
 |----------|----------------|------------------|
-| Primary del template | `#90bb13` (Alsernet) | `--color-primary` |
+| Primary del template | `#b10100` (Alsernet) | `--color-primary` |
 | Hover del primary | `#7da010` (10% más oscuro) | `--color-primary-hover` |
 | Light del primary | `#d3e8a8` (70% lightness) | `--color-primary-light` |
 | Secondary | `#222529` (dark) | `--color-secondary` |
@@ -221,14 +221,14 @@ Si el template usa breakpoints distintos (común en Riode: 480, 1600), añadir o
    TEMPLATE {NAME} → ALSERNET — Design Tokens
    Origen: {URL/Path}
    Color primario original: {color del template}
-   Sustituido por: #90bb13 (verde Alsernet)
+   Sustituido por: #b10100 (verde Alsernet)
    ============================================================================ */
 
 :root {
     /* ────────────────────────────────────────
        BRAND COLORS (Alsernet)
        ──────────────────────────────────────── */
-    --color-primary: #90bb13;
+    --color-primary: #b10100;
     --color-primary-hover: #7da010;
     --color-primary-light: #d3e8a8;
     --color-primary-dark: #5e7d0c;

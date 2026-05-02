@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\StoreHelpCenterArticleRequest;
 use Modules\Helpdesk\Http\Requests\StoreHelpCenterCategoryRequest;
@@ -68,6 +69,7 @@ class HelpCenterController extends Controller
         $position = HelpCenterCategory::whereNull('parent_id')->max('position') + 1;
         $validated['position'] = $position;
         $validated['is_section'] = false;
+        $validated['slug'] = $this->uniqueSlug($validated['name']);
 
         $category = HelpCenterCategory::create($validated);
         $this->clearWidgetCache();
@@ -182,6 +184,7 @@ class HelpCenterController extends Controller
         $position = HelpCenterCategory::where('parent_id', $validated['parent_id'])->max('position') + 1;
         $validated['position'] = $position;
         $validated['is_section'] = true;
+        $validated['slug'] = $this->uniqueSlug($validated['name']);
 
         $section = HelpCenterCategory::create($validated);
         $this->clearWidgetCache();
@@ -483,7 +486,7 @@ class HelpCenterController extends Controller
         $version = Cache::get('helpdesk:widget:version', 1);
         $cacheKey = "helpdesk:widget:articles:{$version}:{$limit}:{$page}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($limit, $page) {
+        $data = Cache::remember($cacheKey, 3600, function () use ($limit, $page) {
             $categories = HelpCenterCategory::whereNull('parent_id')
                 ->where('is_section', false)
                 ->with(['sections' => function ($q) {
@@ -525,21 +528,35 @@ class HelpCenterController extends Controller
                 }
             }
 
-            // Manual pagination over flat article list
             $total = count($widgetArticles);
             $offset = ($page - 1) * $limit;
-            $paged = array_slice($widgetArticles, $offset, $limit);
 
-            return response()->json([
+            return [
                 'categories' => $widgetCategories,
-                'articles' => $paged,
+                'articles' => array_slice($widgetArticles, $offset, $limit),
                 'meta' => [
                     'total' => $total,
                     'per_page' => $limit,
                     'current_page' => $page,
                     'last_page' => (int) ceil($total / $limit),
                 ],
-            ]);
+            ];
         });
+
+        return response()->json($data);
+    }
+
+    private function uniqueSlug(string $name): string
+    {
+        $base = Str::slug($name);
+        $slug = $base;
+        $i = 1;
+
+        while (HelpCenterCategory::withTrashed()->where('slug', $slug)->exists()) {
+            $slug = "{$base}-{$i}";
+            $i++;
+        }
+
+        return $slug;
     }
 }

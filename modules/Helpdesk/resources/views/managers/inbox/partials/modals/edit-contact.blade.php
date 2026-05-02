@@ -52,7 +52,7 @@
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary"><i class="far fa-floppy-disk"></i> Guardar cambios</button>
+            <button class="btn-primary">Guardar cambios</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

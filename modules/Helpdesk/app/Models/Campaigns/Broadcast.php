@@ -43,7 +43,7 @@ class Broadcast extends Model
         ];
     }
 
-    public const CHANNELS = ['whatsapp', 'facebook', 'instagram', 'email', 'widget'];
+    public const CHANNELS = ['whatsapp', 'facebook', 'instagram', 'email', 'web'];
 
     public const TEMPLATE_TYPES = ['text', 'hsm'];
 

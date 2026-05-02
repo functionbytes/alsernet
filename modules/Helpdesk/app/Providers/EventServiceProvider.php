@@ -4,11 +4,14 @@ namespace Modules\Helpdesk\Providers;
 
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Modules\Helpdesk\Events\ConversationAssigned;
+use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationEscalated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationStatusChanged;
+use Modules\Helpdesk\Events\ConversationTagAdded;
 use Modules\Helpdesk\Events\ConversationUpdated;
+use Modules\Helpdesk\Events\CsatRatingAnswered;
 use Modules\Helpdesk\Events\MentionDetected;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Events\SlaBreached;
@@ -16,6 +19,9 @@ use Modules\Helpdesk\Listeners\AnalyzeSentimentOnIncoming;
 use Modules\Helpdesk\Listeners\AutoTagFirstMessage;
 use Modules\Helpdesk\Listeners\BroadcastConversationMessage;
 use Modules\Helpdesk\Listeners\DispatchConversationWebhooks;
+use Modules\Helpdesk\Listeners\EnrollCustomerDripOnCsat;
+use Modules\Helpdesk\Listeners\EnrollCustomerDripOnTagAdded;
+use Modules\Helpdesk\Listeners\EnrollCustomerToDripCampaigns;
 use Modules\Helpdesk\Listeners\LogConversationCreated;
 use Modules\Helpdesk\Listeners\LogConversationUpdated;
 use Modules\Helpdesk\Listeners\NotifySlackOnSlaBreached;
@@ -60,6 +66,15 @@ class EventServiceProvider extends ServiceProvider
         ],
         SlaBreached::class => [
             NotifySlackOnSlaBreached::class,
+        ],
+        ConversationClosed::class => [
+            EnrollCustomerToDripCampaigns::class,
+        ],
+        CsatRatingAnswered::class => [
+            EnrollCustomerDripOnCsat::class,
+        ],
+        ConversationTagAdded::class => [
+            EnrollCustomerDripOnTagAdded::class,
         ],
     ];
 }

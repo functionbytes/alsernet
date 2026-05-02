@@ -3,7 +3,7 @@
  *
  * Adds a dedicated mic button (#bv-mic-record) next to the attach button.
  * Uses MediaRecorder + audio/webm and uploads via the existing attachments endpoint.
- * Loaded after inbox-v4.js. Does NOT modify inbox-v4.js.
+ * Loaded after conversations.js. Does NOT modify conversations.js.
  */
 (function ($) {
     'use strict';
@@ -151,7 +151,6 @@
                 'Accept': 'application/json',
             },
             success: function (resp) {
-                toastr.success(resp?.message || 'Nota de voz enviada');
                 if (resp?.item && typeof window.appendBubbleToThread === 'function') {
                     window.appendBubbleToThread(resp.item, false);
                 }

@@ -100,7 +100,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-success" id="bv-close-apply"><i class="fas fa-circle-check"></i> Resolver y cerrar</button>
+            <button class="btn-success" id="bv-close-apply">Resolver y cerrar</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

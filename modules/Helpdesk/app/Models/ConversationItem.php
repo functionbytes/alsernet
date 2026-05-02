@@ -368,6 +368,24 @@ class ConversationItem extends Model
     {
         $body = nl2br(e($this->body ?? ''));
 
+        // Auto-linkify URLs (http/https) so the agent can click them. Matches
+        // `https?://` followed by anything that is not whitespace or HTML
+        // delimiter, then trims trailing punctuation.
+        $body = preg_replace_callback(
+            '#(https?://[^\s<>"\']+)#i',
+            function ($m) {
+                $url = $m[1];
+                $trim = '';
+                while (in_array(substr($url, -1), ['.', ',', ';', ':', '!', '?', ')', ']'], true)) {
+                    $trim = substr($url, -1).$trim;
+                    $url = substr($url, 0, -1);
+                }
+
+                return '<a href="'.e($url).'" target="_blank" rel="noopener noreferrer" class="bv-msg-link">'.e($url).'</a>'.$trim;
+            },
+            $body
+        );
+
         return preg_replace_callback(
             '/(^|\s|>)@([\p{L}0-9._-]+)/u',
             fn ($m) => $m[1].'<span class="bv-mention-chip" data-bv-mention-handle="'.e($m[2]).'">@'.e($m[2]).'</span>',

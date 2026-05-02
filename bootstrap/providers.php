@@ -16,12 +16,14 @@ use Modules\Cookie\Providers\CookieServiceProvider;
 use Modules\Core\Providers\CoreServiceProvider;
 use Modules\Database\Providers\DatabaseServiceProvider;
 use Modules\Ecommerce\Providers\EcommerceServiceProvider;
+use Modules\Engagement\Providers\EngagementServiceProvider;
 use Modules\Faqs\Providers\FaqsServiceProvider;
 use Modules\Forms\Providers\FormsServiceProvider;
 use Modules\Health\Providers\HealthServiceProvider;
 use Modules\Helpdesk\Providers\HelpdeskServiceProvider;
 use Modules\HelpdeskAgents\Providers\HelpdeskAgentsServiceProvider;
 use Modules\HelpdeskCampaigns\Providers\HelpdeskCampaignsServiceProvider;
+use Modules\HelpdeskLivechat\Providers\HelpdeskLivechatServiceProvider;
 use Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider;
 use Modules\Locales\Providers\LocalesServiceProvider;
 use Modules\Locations\Providers\LocationsServiceProvider;
@@ -34,6 +36,7 @@ use Modules\Notification\Providers\NotificationServiceProvider;
 use Modules\Optimize\Providers\OptimizeServiceProvider;
 use Modules\Page\Providers\PageServiceProvider;
 use Modules\Queue\Providers\QueueServiceProvider;
+use Modules\Remarketing\Providers\RemarketingServiceProvider;
 use Modules\Reverb\Providers\ReverServiceProvider;
 use Modules\Reviews\Providers\ReviewsServiceProvider;
 use Modules\Role\Providers\RoleServiceProvider;
@@ -64,11 +67,13 @@ return [
     CoreServiceProvider::class,
     DatabaseServiceProvider::class,
     EcommerceServiceProvider::class,
+    EngagementServiceProvider::class,
     FaqsServiceProvider::class,
     FormsServiceProvider::class,
     HealthServiceProvider::class,
     HelpdeskAgentsServiceProvider::class,
     HelpdeskCampaignsServiceProvider::class,
+    HelpdeskLivechatServiceProvider::class,
     HelpdeskTicketsServiceProvider::class,
     HelpdeskServiceProvider::class,
     LocalesServiceProvider::class,
@@ -82,6 +87,7 @@ return [
     OptimizeServiceProvider::class,
     PageServiceProvider::class,
     QueueServiceProvider::class,
+    RemarketingServiceProvider::class,
     ReverServiceProvider::class,
     ReviewsServiceProvider::class,
     RoleServiceProvider::class,

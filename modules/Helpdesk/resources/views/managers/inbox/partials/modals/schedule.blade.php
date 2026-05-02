@@ -154,12 +154,8 @@
 
         </div>
         <div class="bv-modal-foot">
+            <button class="btn-primary" id="bv-sched-save">Crear evento</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
-            <div class="bv-foot-right">
-                <button class="btn-primary" id="bv-sched-save">
-                    <i class="fas fa-check"></i> Crear evento
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -220,7 +216,6 @@
                     'Accept': 'application/json',
                 },
             }).done(function (resp) {
-                toastr.success(resp?.message || 'Mensaje programado');
                 $('[data-bv-modal-name="schedule"]').removeClass('on');
                 $('body').css('overflow', '');
             }).fail(function (xhr) {
@@ -256,7 +251,6 @@
                 'Accept': 'application/json',
             },
         }).done(function (resp) {
-            toastr.success('Evento agendado como nota interna');
             $('[data-bv-modal-name="schedule"]').removeClass('on');
             $('body').css('overflow', '');
             if (resp?.item && typeof window.appendBubbleToThread === 'function') {

@@ -23,7 +23,7 @@ This is the STANDARD design system for all views in this project. ALWAYS follow 
 - **Table actions**: ALWAYS dropdown with `fa-ellipsis-vertical`, no icons in items, no `text-danger` on delete
 - **Modals**: ALWAYS `modal-dialog-centered`, footer buttons `w-100` stacked (primary `mb-2` top, secondary bottom)
 - **select2**: NEVER `theme: 'bootstrap-5'` (CSS not loaded, breaks styles)
-- **Primary color**: `#90bb13` (Analytics uses red palette `#b10100, #333333, #7b0000`)
+- **Primary color**: `#b10100` (Analytics uses red palette `#b10100, #333333, #7b0000`)
 
 ## Shared Components Always Used
 

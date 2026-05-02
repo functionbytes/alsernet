@@ -24,7 +24,7 @@
 /* ── Full-width variant (default) ─────────────────────── */
 
 .cookie-consent-full-width {
-    border-top: 3px solid var(--color-brand, #90bb13);
+    border-top: 3px solid var(--color-brand, #b10100);
 }
 
 /* ── Minimal variant ──────────────────────────────────── */
@@ -36,7 +36,7 @@
     bottom: 1.5rem;
     border-radius: 6px;
     border: 1px solid rgba(0, 0, 0, 0.12);
-    border-top: 3px solid var(--color-brand, #90bb13);
+    border-top: 3px solid var(--color-brand, #b10100);
 }
 
 /* ── Body container ───────────────────────────────────── */
@@ -118,10 +118,10 @@
 }
 
 .cookie-consent__agree {
-    background-color: var(--color-brand, #90bb13);
+    background-color: var(--color-brand, #b10100);
     color: #ffffff;
     font-weight: bold;
-    border-color: var(--color-brand, #90bb13);
+    border-color: var(--color-brand, #b10100);
 }
 
 .cookie-consent__save-button {

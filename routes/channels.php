@@ -105,3 +105,15 @@ Broadcast::channel('ticket.{ticketId}', function ($user, int $ticketId) {
 
     return false;
 });
+
+// Canal privado para la bandeja social (comentarios de redes sociales)
+Broadcast::channel('helpdesk.social.inbox', function ($user) {
+    return $user instanceof User
+        && $user->hasAnyRole(['helpdesk-agent', 'administrative', 'manager', 'super-admin']);
+});
+
+// Canal privado para un comentario social específico (detalle en tiempo real)
+Broadcast::channel('helpdesk.social.comment.{commentId}', function ($user) {
+    return $user instanceof User
+        && $user->hasAnyRole(['helpdesk-agent', 'administrative', 'manager', 'super-admin']);
+});

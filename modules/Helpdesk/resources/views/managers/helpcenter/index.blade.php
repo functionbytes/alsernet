@@ -460,7 +460,6 @@ $(document).ready(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function() {
-                toastr.success('Orden actualizado correctamente');
             },
             error: function() {
                 toastr.error('Error al actualizar el orden');
@@ -496,7 +495,6 @@ $(document).ready(function() {
     function handleEdit(itemId) {
         // For now, just open modal with edit mode
         // In a full implementation, you'd fetch the item data first
-        toastr.info('Función de edición próximamente');
     }
 
     // Handle Delete
@@ -516,7 +514,6 @@ $(document).ready(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function() {
-                toastr.success('Elemento eliminado correctamente');
                 loadContent();
             },
             error: function(xhr) {
@@ -555,7 +552,6 @@ $(document).ready(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function() {
-                toastr.success('Elemento creado correctamente');
                 $('#itemModal').modal('hide');
                 loadContent();
             },

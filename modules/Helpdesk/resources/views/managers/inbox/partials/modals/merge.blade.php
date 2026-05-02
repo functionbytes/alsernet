@@ -76,7 +76,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-merge-apply"><i class="fas fa-code-merge"></i> Fusionar conversaciones</button>
+            <button class="btn-primary" id="bv-merge-apply">Fusionar conversaciones</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>
@@ -146,7 +146,6 @@ $(document).on('click', '#bv-merge-apply', function () {
             'Accept': 'application/json',
         },
     }).done(function (resp) {
-        toastr.success(resp?.message || 'Conversaciones fusionadas');
         var redirect = '/panel/helpdesk/conversations?selected=' + targetId;
         setTimeout(function () { window.location.href = redirect; }, 600);
     }).fail(function (xhr) {

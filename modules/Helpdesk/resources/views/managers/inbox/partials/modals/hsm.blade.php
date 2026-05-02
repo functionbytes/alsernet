@@ -127,7 +127,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-hsm-send"><i class="far fa-paper-plane"></i> Enviar plantilla</button>
+            <button class="btn-primary" id="bv-hsm-send">Enviar plantilla</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

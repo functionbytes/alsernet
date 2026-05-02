@@ -235,7 +235,6 @@ $(document).ready(function () {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (response) {
-                toastr.success(response.message, 'Exito');
                 setTimeout(() => location.reload(), 800);
             },
             error: function () {
@@ -245,7 +244,6 @@ $(document).ready(function () {
     });
 
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
 
     @if(session('error'))

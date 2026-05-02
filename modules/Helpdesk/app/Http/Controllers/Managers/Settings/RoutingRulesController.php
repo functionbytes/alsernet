@@ -51,7 +51,7 @@ class RoutingRulesController extends Controller
 
     public function create(): View
     {
-        $agents = User::query()->orderBy('name')->get(['id', 'name']);
+        $agents = User::query()->orderBy('firstname')->get(['id', 'firstname', 'lastname']);
 
         return view('helpdesk::settings.routing-rules.create', compact('agents'));
     }
@@ -70,7 +70,7 @@ class RoutingRulesController extends Controller
 
     public function edit(RoutingRule $routingRule): View
     {
-        $agents = User::query()->orderBy('name')->get(['id', 'name']);
+        $agents = User::query()->orderBy('firstname')->get(['id', 'firstname', 'lastname']);
 
         return view('helpdesk::settings.routing-rules.edit', compact('routingRule', 'agents'));
     }

@@ -194,6 +194,14 @@ return [
             0 => 'Nwidart\\Modules\\LaravelModulesServiceProvider',
         ],
     ],
+    'pragmarx/google2fa-laravel' => [
+        'aliases' => [
+            'Google2FA' => 'PragmaRX\\Google2FALaravel\\Facade',
+        ],
+        'providers' => [
+            0 => 'PragmaRX\\Google2FALaravel\\ServiceProvider',
+        ],
+    ],
     'sentry/sentry-laravel' => [
         'aliases' => [
             'Sentry' => 'Sentry\\Laravel\\Facade',

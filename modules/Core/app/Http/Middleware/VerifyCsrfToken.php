@@ -21,5 +21,9 @@ class VerifyCsrfToken extends Middleware
         'frontend/*',
         'manager/*',
         'lc/api/*', // LiveChat widget public API
+        'r/track',
+        'r/unsubscribe/*',
+        'r/preferences/*',
+        'r/webhooks/*',
     ];
 }

@@ -16,7 +16,7 @@ Unificar todas las vistas al golden standard del proyecto y erradicar los siguie
 - `container-fluid` en HTML de vistas — eliminado
 - `linear-gradient` en CSS inline — eliminado
 - `btn-primary-custom` — eliminado, se usa Bootstrap nativo
-- Color `#5D87FF` (tema anterior) — reemplazado por `#90bb13`
+- Color `#5D87FF` (tema anterior) — reemplazado por `#b10100`
 - `theme: 'bootstrap-5'` en select2 — eliminado (CSS no cargado)
 
 ---
@@ -58,7 +58,7 @@ Attention, Blog, Calendar, Cookie, Core, Database, Forms, Gallery, Leads, Locale
 | Footer botones | `btn btn-primary w-100 mb-1` + `btn btn-light w-100` |
 | Iconos | Font Awesome 6 exclusivo (`fas`, `far`, `fab`) |
 | AJAX CSRF | `headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }` |
-| Color primario | `#90bb13` |
+| Color primario | `#b10100` |
 
 ---
 

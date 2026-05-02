@@ -38,14 +38,14 @@
         .error-code {
             font-size: 7rem;
             font-weight: 900;
-            color: #90bb13;
+            color: #b10100;
             line-height: 1;
             letter-spacing: -4px;
         }
         .error-divider {
             width: 56px;
             height: 4px;
-            background: #90bb13;
+            background: #b10100;
             border-radius: 2px;
             margin: 1.25rem auto;
         }
@@ -65,7 +65,7 @@
             display: inline-flex;
             align-items: center;
             gap: .4rem;
-            background: #90bb13;
+            background: #b10100;
             color: #fff;
             font-weight: 600;
             border: none;
@@ -92,7 +92,7 @@
             transition: border-color .2s, color .2s;
             margin-left: .5rem;
         }
-        .btn-back:hover { border-color: #90bb13; color: #90bb13; }
+        .btn-back:hover { border-color: #b10100; color: #b10100; }
     </style>
 </head>
 <body>

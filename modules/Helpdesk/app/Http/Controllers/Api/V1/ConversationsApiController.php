@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationStatusChanged;
@@ -143,6 +144,7 @@ class ConversationsApiController extends Controller
         $this->authorize('update', $conversation);
 
         $conversation->close();
+        ConversationClosed::dispatch($conversation);
         $conversation->load(['customer', 'status', 'assignee']);
 
         return ApiResponse::success(new ConversationResource($conversation), 'Conversación cerrada.');

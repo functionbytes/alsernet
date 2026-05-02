@@ -126,11 +126,9 @@
 
         </div>
         <div class="bv-modal-foot">
+            <button class="btn-primary" id="ncBtnNext">Continuar</button>
+            <button class="btn-secondary d-none" id="ncBtnBack">Atrás</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
-            <div class="bv-newconv-foot-end">
-                <button class="btn-secondary d-none" id="ncBtnBack"><i class="fas fa-chevron-left"></i> Atrás</button>
-                <button class="btn-primary" id="ncBtnNext">Continuar <i class="fas fa-chevron-right"></i></button>
-            </div>
         </div>
     </div>
 </div>
@@ -151,9 +149,9 @@
         });
         $('#ncBtnBack').toggle(n === 2);
         if (n === 2) {
-            $('#ncBtnNext').html('<i class="far fa-paper-plane"></i> Iniciar conversación');
+            $('#ncBtnNext').text('Iniciar conversación');
         } else {
-            $('#ncBtnNext').html('Continuar <i class="fas fa-chevron-right"></i>');
+            $('#ncBtnNext').text('Continuar');
         }
     }
 
@@ -205,7 +203,6 @@
                 if (convId) {
                     window.location.href = '/panel/helpdesk/conversations?selected=' + convId;
                 } else {
-                    toastr.success(resp.message || 'Conversación iniciada');
                 }
             })
             .fail(function(xhr) {

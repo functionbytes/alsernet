@@ -2,8 +2,8 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Routing\Controller;
 use Modules\Helpdesk\Http\Requests\SearchCannedRepliesRequest;
 
 class CannedRepliesController extends Controller

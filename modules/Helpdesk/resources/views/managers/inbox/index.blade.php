@@ -7,14 +7,14 @@
     <script>
     (function () {
         if (localStorage.getItem('bv:theme:dark') === '1') {
-            // Aplicar al documento como atributo; .inbox-v4 lo hereda via [data-theme="dark"] .inbox-v4
+            // Aplicar al documento como atributo; .conversations lo hereda via [data-theme="dark"] .conversations
             document.documentElement.setAttribute('data-bv-dark', '1');
         }
     })();
     </script>
     <style>
-    /* FOUC prevention: mientras bv-dark está activo y .inbox-v4 aún no tiene data-theme */
-    html[data-bv-dark="1"] .inbox-v4:not([data-theme="dark"]) {
+    /* FOUC prevention: mientras bv-dark está activo y .conversations aún no tiene data-theme */
+    html[data-bv-dark="1"] .conversations:not([data-theme="dark"]) {
         background: #09090b;
     }
     </style>
@@ -25,15 +25,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
     {{-- Identidad visual (tokens: colores, fonts, radius, shadows) --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4-identity.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}"/>
     {{-- Componentes y layout --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/inbox-v4.css')) }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
     {{-- Dark mode overrides --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4-dark.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/inbox-v4-dark.css')) }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-dark.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-dark.css')) }}"/>
 @endpush
 
 @section('content')
-<div class="inbox-v4" data-theme="light" data-right="on" data-bv-mobile-tab="list">
+<div class="conversations" data-theme="light" data-right="on" data-bv-mobile-tab="list">
 
  
 
@@ -291,7 +291,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('vendor/helpdesk/inbox-v4.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/inbox-v4.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/conversations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.js')) }}"></script>
 
     {{-- Listener global de la bandeja: nuevas conversaciones / nuevos mensajes --}}
     <script>
@@ -456,14 +456,6 @@
             if (sessionStorage.getItem(SESSION_KEY)) return;
             sessionStorage.setItem(SESSION_KEY, '1');
 
-            if (window.toastr) {
-                toastr.info(
-                    '<span>Activa las notificaciones para recibir alertas de nuevos mensajes. '
-                    + '<a href="#" id="bv-notif-allow" style="color:#fff;text-decoration:underline">Activar</a></span>',
-                    'Notificaciones de escritorio',
-                    { timeOut: 8000, extendedTimeOut: 3000, closeButton: true, enableHtml: true }
-                );
-            }
         }
 
         $(document).on('click', '#bv-notif-allow', function (e) {
@@ -494,7 +486,6 @@
             setNotifEnabled(!notifEnabled());
             syncBellUI();
             const msg = notifEnabled() ? 'Notificaciones activadas.' : 'Notificaciones desactivadas.';
-            toastr && toastr.info(msg);
         });
 
         // Show a native push notification for an incoming message

@@ -4,7 +4,6 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Modules\Helpdesk\Http\Requests\UpdateAiSettingsRequest;
-use Modules\Helpdesk\Http\Requests\UpdateLivechatSettingsRequest;
 use Modules\Helpdesk\Http\Requests\UpdateTicketsSettingsRequest;
 use Modules\Helpdesk\Http\Requests\UpdateUploadingSettingsRequest;
 use Modules\Helpdesk\Models\Setting;
@@ -13,8 +12,8 @@ class SettingsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('can:helpdesk.settings.view')->only(['ticketsIndex', 'livechatIndex', 'aiIndex', 'uploadingIndex']);
-        $this->middleware('can:helpdesk.settings.update')->only(['ticketsUpdate', 'livechatUpdate', 'aiUpdate', 'uploadingUpdate']);
+        $this->middleware('can:helpdesk.settings.view')->only(['ticketsIndex', 'aiIndex', 'uploadingIndex']);
+        $this->middleware('can:helpdesk.settings.update')->only(['ticketsUpdate', 'aiUpdate', 'uploadingUpdate']);
     }
 
     /**
@@ -114,94 +113,6 @@ class SettingsController extends Controller
             'success' => true,
             'message' => 'Configuración de tickets actualizada correctamente',
         ]);
-    }
-
-    /**
-     * LiveChat Settings
-     */
-    public function livechatIndex()
-    {
-        $dbSettings = Setting::allAsArray('livechat');
-        $settings = $this->getSettings('helpdesk.livechat', [
-            // Widget - Home Screen
-            'show_avatars' => true,
-            'show_help_center' => true,
-            'hide_suggested_articles' => false,
-            'show_tickets_section' => true,
-            'enable_send_message' => true,
-            'enable_create_ticket' => true,
-            'enable_search_help' => true,
-
-            // Widget - Chat Screen
-            'welcome_message' => 'Hola! ¿Cómo podemos ayudarte?',
-            'input_placeholder' => 'Escribe tu mensaje...',
-            'offline_message' => 'Nuestros agentes no están disponibles en este momento, pero puedes enviar mensajes. Te notificaremos aquí y en tu correo cuando obtengas una respuesta.',
-            'queue_message' => 'Uno de nuestros agentes estará contigo en breve. Eres el número :number en la cola.',
-
-            // Widget - Launcher
-            'position' => 'bottom-right',
-            'side_spacing' => 16,
-            'bottom_spacing' => 16,
-            'hide_launcher' => false,
-
-            // Widget - Style
-            'primary_color' => '#b10100',
-            'secondary_color' => '#ffffff',
-            'header_title' => 'Chat de Soporte',
-            'show_dark_mode_preview' => true,
-
-            // Widget - Additional Options
-            'show_timestamps' => true,
-            'typing_indicator' => true,
-            'sound_notifications' => true,
-            'enable_email_transcripts' => true,
-
-            // Timeouts
-            'enable_auto_transfer' => false,
-            'auto_transfer_minutes' => 5,
-            'enable_auto_inactive' => false,
-            'auto_inactive_minutes' => 10,
-            'enable_auto_close' => false,
-            'auto_close_minutes' => 15,
-
-            // Security
-            'trusted_domains' => '',
-            'enforce_identity_verification' => false,
-            'secret_key' => Setting::get('livechat.secret_key') ?? tap(\Str::random(40), fn ($key) => Setting::set('livechat.secret_key', $key, 'livechat')),
-        ]);
-
-        $positions = [
-            'bottom-right' => 'Abajo Derecha',
-            'bottom-left' => 'Abajo Izquierda',
-            'top-right' => 'Arriba Derecha',
-            'top-left' => 'Arriba Izquierda',
-        ];
-
-        $settings = array_merge($settings, $dbSettings);
-
-        return view('helpdesk::settings.livechat.index', [
-            'backups' => $settings,
-            'positions' => $positions,
-        ]);
-    }
-
-    public function livechatUpdate(UpdateLivechatSettingsRequest $request)
-    {
-        $validated = $request->validated();
-
-        // Map field names if needed
-        if (isset($validated['no_agents_message'])) {
-            $validated['offline_message'] = $validated['no_agents_message'];
-            unset($validated['no_agents_message']);
-        }
-
-        $this->saveSettings('helpdesk.livechat', $validated);
-
-        foreach ($validated as $key => $value) {
-            Setting::set('livechat.'.$key, $value, 'livechat');
-        }
-
-        return back()->with('success', 'Configuración de LiveChat actualizada correctamente');
     }
 
     /**

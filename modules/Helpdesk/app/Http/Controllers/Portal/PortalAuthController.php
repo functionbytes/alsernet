@@ -39,13 +39,13 @@ class PortalAuthController extends Controller
         $customer = $this->authService->verifyToken($token);
 
         if (! $customer) {
-            return redirect()->route('helpdesk.portal.login')
+            return redirect()->route('portal.login')
                 ->with('error', 'El enlace es invalido o ha expirado. Solicita uno nuevo.');
         }
 
         session(['portal_customer_id' => $customer->id]);
 
-        return redirect()->route('helpdesk.portal.dashboard')
+        return redirect()->route('helpdesk.portal.conversations')
             ->with('success', '¡Bienvenido, '.$customer->name.'!');
     }
 
@@ -53,7 +53,7 @@ class PortalAuthController extends Controller
     {
         session()->forget('portal_customer_id');
 
-        return redirect()->route('helpdesk.portal.login')
+        return redirect()->route('portal.login')
             ->with('success', 'Has cerrado sesion correctamente.');
     }
 }

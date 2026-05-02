@@ -12,7 +12,9 @@ class HelpdeskSeeder extends Seeder
             PermissionsSeeder::class,
             HelpdeskConversationStatusSeeder::class,
             HelpdeskGroupSeeder::class,
+            HelpdeskTagSeeder::class,
             HelpdeskCannedReplySeeder::class,
+            HelpdeskWhatsAppTemplateSeeder::class,
             ConversationViewSeeder::class,
             HelpCenterSeeder::class,
         ]);

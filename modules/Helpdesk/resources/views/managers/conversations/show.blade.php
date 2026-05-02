@@ -1391,7 +1391,6 @@ function hdInsertCanned() {
         }).catch(function(){});
     }
     closeCannedModal();
-    toastr.success('Plantilla insertada');
 }
 
 // Search events
@@ -1494,7 +1493,6 @@ function hdSnoozeSubmit() {
     .then(function(r){ return r.json(); })
     .then(function(data) {
         if (data.success) {
-            toastr.success(data.message || 'Conversación pospuesta');
             closeSnoozeModal();
         } else {
             toastr.error('Error al posponer la conversación');
@@ -1627,7 +1625,6 @@ function escapeHtml(str) {
         $('#attachmentInput').on('change', function() {
             const fileCount = this.files.length;
             if (fileCount > 0) {
-                toastr.info(`${fileCount} archivo(s) seleccionado(s)`);
             }
         });
 
@@ -1651,7 +1648,6 @@ function escapeHtml(str) {
             input.value = '1';
             button.classList.add('btn-warning');
             button.classList.remove('btn-light');
-            toastr.info('Nota interna activada');
         } else {
             input.value = '0';
             button.classList.remove('btn-warning');
@@ -1672,7 +1668,6 @@ function escapeHtml(str) {
         })
         .then(response => response.json())
         .then(data => {
-            toastr.success('Prioridad actualizada');
             setTimeout(() => location.reload(), 1000);
         })
         .catch(error => {
@@ -1695,7 +1690,6 @@ function escapeHtml(str) {
         })
         .then(response => response.json())
         .then(data => {
-            toastr.success('Conversación desasignada');
             setTimeout(() => location.reload(), 1000);
         })
         .catch(error => {
@@ -1730,7 +1724,6 @@ function escapeHtml(str) {
         })
         .then(response => response.json())
         .then(data => {
-            toastr.success('Agente asignado');
             setTimeout(() => location.reload(), 1000);
         })
         .catch(error => {
@@ -1755,7 +1748,6 @@ function escapeHtml(str) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                toastr.success('Etiqueta agregada');
 
                 // Add tag to container
                 const tagsContainer = document.getElementById('tagsContainer');
@@ -1806,7 +1798,6 @@ function escapeHtml(str) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                toastr.success('Etiqueta eliminada');
 
                 // Remove badge from container
                 const badge = document.querySelector(`#tagsContainer [data-tag-id="${tagId}"]`);

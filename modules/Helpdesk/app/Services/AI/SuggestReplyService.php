@@ -46,7 +46,7 @@ PROMPT;
         $conversation->loadMissing('customer');
 
         $customerName = $conversation->customer?->name ?? 'Cliente';
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $subject = $conversation->subject ?? 'Sin asunto';
 
         $recentItems = $conversation->items()

@@ -45,12 +45,12 @@
         }
         .maintenance-icon {
             font-size: 3.5rem;
-            color: #90bb13;
+            color: #b10100;
             margin-bottom: 1.25rem;
         }
         .maintenance-badge {
             display: inline-block;
-            background: #90bb13;
+            background: #b10100;
             color: #fff;
             padding: .35rem 1.1rem;
             border-radius: 20px;
@@ -81,7 +81,7 @@
             margin-top: .25rem;
         }
         .maintenance-contact a {
-            color: #90bb13;
+            color: #b10100;
             text-decoration: none;
             font-weight: 600;
         }

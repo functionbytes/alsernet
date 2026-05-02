@@ -223,7 +223,6 @@ $(document).ready(function () {
     });
 
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
 
     @if(session('error'))

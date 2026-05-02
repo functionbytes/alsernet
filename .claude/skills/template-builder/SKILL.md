@@ -120,7 +120,7 @@ Sigue este pipeline (detalle en `references/workflow.md`):
 - ❌ NO `style=""` inline (excepción: bg-image dinámica via `data-bg-image`)
 - ✅ Font Awesome 6 ONLY (`fas fa-*`, `far fa-*`, `fab fa-*`) — NUNCA `d-icon-*` ni Tabler
 - ✅ jQuery + Bootstrap 5.3 nativo (NO Livewire/React/Inertia/Alpine)
-- ✅ Color primario `#90bb13` (Alsernet) — sustituir el del template original
+- ✅ Color primario `#b10100` (Alsernet) — sustituir el del template original
 - ✅ Vanilla JS preferido sobre plugins jQuery pesados
 - ✅ `prefers-reduced-motion` en animaciones
 - ✅ `loading="lazy"` y dimensiones explícitas en imágenes
@@ -250,7 +250,7 @@ Cuando se invoca, la skill decide:
 | ¿Usar Owl Carousel o Swiper? | Swiper (más mantenido) |
 | ¿Magnific Popup o GLightbox? | Bootstrap 5 modal nativo > GLightbox |
 | ¿Iconos d-icon-*? | Mapear a FA6 obligatorio |
-| ¿Color primario template? | Sustituir por `#90bb13` Alsernet |
+| ¿Color primario template? | Sustituir por `#b10100` Alsernet |
 | ¿Activar template inmediatamente? | Sí, vía seeder con `status='active'` |
 | ¿Crear tests? | Sí, ≥1 happy path + 1 edge case por shortcode |
 

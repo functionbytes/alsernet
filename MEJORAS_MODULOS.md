@@ -985,7 +985,7 @@ La mayoría de endpoints API devuelven arrays/modelos crudos en lugar de Eloquen
 - `testImapConnection` solo hace `fsockopen()` (TCP socket) — NO valida credenciales reales.
 - `OutgoingEmailSettingsController::testConnection` igual — solo `fsockopen`.
 - No hay job/queue para envío test (síncrono dentro del request).
-- HTML email test con gradient `#b10100 → #7a9f11` en código PHP (no en Blade) y viola paleta `#90bb13`.
+- HTML email test con gradient `#b10100 → #7a9f11` en código PHP (no en Blade) y viola paleta `#b10100`.
 - No hay policy para `apiDocumentation`.
 - `Setting::set('incoming_email', json_encode([...]))` se llama múltiples veces — race condition.
 - `generateApiKey` no invalida key vieja.
@@ -1854,7 +1854,7 @@ La mayoría de endpoints API devuelven arrays/modelos crudos en lugar de Eloquen
 - Falta srcset responsive automático (existe `GenerateSrcsetCommand` manual).
 
 **P2**
-- `view/index.blade.php` con CSS inline custom + bug en línea 25: `background: #90bb13, var(--stat-color));` — coma extra, malformed CSS.
+- `view/index.blade.php` con CSS inline custom + bug en línea 25: `background: #b10100, var(--stat-color));` — coma extra, malformed CSS.
 - Carpeta `vendor/` dentro del módulo con autoload.
 - `config/media-library.php` y `config/media.php` separados — consolidar o documentar.
 - Bulk action via `bulkAction` en `MediaController`: validación en `BulkActionRequest`. Verificar acciones soportadas.

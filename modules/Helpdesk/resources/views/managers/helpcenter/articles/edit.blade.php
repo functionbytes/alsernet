@@ -308,25 +308,11 @@
         submitHandler: function (form, event) {
           event.preventDefault();
 
-          // Create FormData to handle file upload
-          var formData = new FormData(form);
+          var submitBtn = $(form).find('button[type="submit"]');
+          var originalBtnText = submitBtn.html();
+          submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando...');
 
-          $.blockUI({
-            message: '<i class="icon-spinner4 spinner"></i>',
-            overlayCSS: {
-              backgroundColor: '#1b2024',
-              opacity: 0.8,
-              zIndex: 1200,
-              cursor: 'wait'
-            },
-            css: {
-              border: 0,
-              color: '#fff',
-              padding: 0,
-              zIndex: 1201,
-              backgroundColor: 'transparent'
-            }
-          });
+          var formData = new FormData(form);
 
           $.ajax({
             type: 'POST',
@@ -336,16 +322,15 @@
             contentType: false,
             dataType: 'json',
             success: function (data) {
-              $.unblockUI();
+              submitBtn.prop('disabled', false).html(originalBtnText);
               if (data.success) {
-                toastr.success(data.message);
                 setTimeout(function () {
                   window.location.href = data.redirect;
                 }, 1000);
               }
             },
             error: function (xhr) {
-              $.unblockUI();
+              submitBtn.prop('disabled', false).html(originalBtnText);
               if (xhr.status === 422) {
                 var errors = xhr.responseJSON.errors;
                 $.each(errors, function (key, value) {

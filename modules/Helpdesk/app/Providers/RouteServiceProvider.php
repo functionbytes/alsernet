@@ -81,9 +81,6 @@ class RouteServiceProvider extends ServiceProvider
             ->group(module_path($this->name, 'routes/public.php'));
 
         Route::middleware(['web'])
-            ->group(module_path($this->name, 'routes/web-widget.php'));
-
-        Route::middleware(['web'])
             ->group(module_path($this->name, 'routes/portal.php'));
     }
 
@@ -93,10 +90,5 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('api/v1/helpdesk')
             ->name('api.v1.helpdesk.')
             ->group(module_path($this->name, 'routes/api.php'));
-
-        Route::middleware(['api', 'throttle:120,1'])
-            ->prefix('hd/api')
-            ->name('helpdesk.widget.')
-            ->group(module_path($this->name, 'routes/widget.php'));
     }
 }

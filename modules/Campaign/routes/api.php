@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Campaign\Http\Controllers\Api\AutomationController;
 use Modules\Campaign\Http\Controllers\Api\AutomationRuleController;
+use Modules\Campaign\Http\Controllers\Api\BlacklistController;
 use Modules\Campaign\Http\Controllers\Api\CampaignBackupController;
 use Modules\Campaign\Http\Controllers\Api\CampaignController;
 use Modules\Campaign\Http\Controllers\Api\CampaignDuplicateController;
@@ -18,6 +19,7 @@ use Modules\Campaign\Http\Controllers\Api\MaillistController;
 use Modules\Campaign\Http\Controllers\Api\SegmentController;
 use Modules\Campaign\Http\Controllers\Api\SenderDomainController;
 use Modules\Campaign\Http\Controllers\Api\SendingServerTestController;
+use Modules\Campaign\Http\Controllers\Api\SubscriberBulkController;
 use Modules\Campaign\Http\Controllers\Api\SubscriberController;
 use Modules\Campaign\Http\Controllers\Api\SubscriberExportController;
 use Modules\Campaign\Http\Controllers\Api\SubscriberSearchController;
@@ -25,6 +27,7 @@ use Modules\Campaign\Http\Controllers\Api\SubscriberTimelineController;
 use Modules\Campaign\Http\Controllers\Api\SuppressionListController;
 use Modules\Campaign\Http\Controllers\Api\TemplateController;
 use Modules\Campaign\Http\Controllers\Api\WebhookController;
+use Modules\Campaign\Http\Controllers\Api\WebhookLogController;
 
 /*
 |--------------------------------------------------------------------------

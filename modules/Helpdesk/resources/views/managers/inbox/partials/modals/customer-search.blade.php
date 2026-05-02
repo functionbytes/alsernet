@@ -60,12 +60,8 @@
 
         </div>
         <div class="bv-modal-foot">
+            <a href="{{ route('manager.helpdesk.customers.create') }}" class="btn-secondary">Crear nuevo cliente</a>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
-            <div class="bv-foot-end">
-                <a href="{{ route('manager.helpdesk.customers.create') }}" class="btn-secondary">
-                    <i class="fas fa-user-plus"></i> Crear nuevo cliente
-                </a>
-            </div>
         </div>
     </div>
 </div>

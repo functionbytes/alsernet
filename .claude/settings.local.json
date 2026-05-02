@@ -149,7 +149,15 @@
       "Bash(mkdir -p /Users/developerts/Herd/system/.claude/skills/template-builder/examples)",
       "Bash(rm -rf storage/testing/database.sqlite)",
       "Bash(rm -rf bootstrap/cache/)",
-      "Bash(rm -rf storage/framework/cache/*)"
+      "Bash(rm -rf storage/framework/cache/*)",
+      "Bash(cp \"/Users/developerts/.claude/projects/-Users-developerts-Herd-system/5f11f295-fa6a-46b0-8b48-cc199e3cc73b/tool-results/webfetch-1777477803509-19szwy.bin\" /tmp/design.gz)",
+      "Bash(gunzip /tmp/design.gz)",
+      "Read(//tmp/**)",
+      "Bash(rm -f /Users/developerts/Herd/system/.git/index.lock)",
+      "Bash(git mv *)",
+      "Bash(cp /Users/developerts/Herd/system/public/vendor/helpdesk/inbox-v4.css /Users/developerts/Herd/system/modules/Helpdesk/resources/css/inbox-v4.css)",
+      "Bash(rm -rf /Users/developerts/Herd/system/storage/framework/views/*)",
+      "Bash(cat)"
     ],
     "deny": []
   },

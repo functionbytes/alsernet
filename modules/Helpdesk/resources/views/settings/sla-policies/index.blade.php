@@ -204,7 +204,6 @@ $(document).ready(function () {
                     btn.attr('title', 'Activar');
                     btn.html('<span class="badge bg-secondary-subtle text-secondary">Inactivo</span>');
                 }
-                toastr.success('Estado actualizado correctamente.', 'Exito');
             },
             error: function () {
                 toastr.error('No se pudo actualizar el estado.', 'Error');
@@ -213,7 +212,6 @@ $(document).ready(function () {
     });
 
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
 
     @if(session('error'))

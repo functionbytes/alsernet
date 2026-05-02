@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" data-bv-apply="priority"><i class="fas fa-check"></i> Guardar cambios</button>
+            <button class="btn-primary" data-bv-apply="priority">Guardar cambios</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

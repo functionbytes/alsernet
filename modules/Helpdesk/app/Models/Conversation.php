@@ -175,7 +175,7 @@ class Conversation extends Model
     }
 
     /**
-     * Scope: Filter by channel (whatsapp, facebook, instagram, widget, email)
+     * Scope: Filter by channel (whatsapp, facebook, instagram, web, email)
      */
     public function scopeByChannel(Builder $query, string $channel): Builder
     {
@@ -347,11 +347,11 @@ class Conversation extends Model
      */
     public function getChannelInfoAttribute(): array
     {
-        return match ($this->channel ?? 'widget') {
+        return match ($this->channel ?? 'web') {
             'whatsapp' => ['icon' => 'fab fa-whatsapp',           'color' => '#25D366', 'label' => 'WhatsApp'],
             'facebook' => ['icon' => 'fab fa-facebook-messenger', 'color' => '#0084FF', 'label' => 'Messenger'],
             'instagram' => ['icon' => 'fab fa-instagram',          'color' => '#E1306C', 'label' => 'Instagram'],
-            default => ['icon' => 'fas fa-comment-dots',       'color' => '#6c757d', 'label' => 'Widget'],
+            default => ['icon' => 'fas fa-comment-dots',       'color' => '#6c757d', 'label' => 'Web'],
         };
     }
 
@@ -380,9 +380,9 @@ class Conversation extends Model
             'facebook' => ['code' => 'fb', 'icon' => 'fab fa-facebook-messenger'],
             'instagram' => ['code' => 'ig', 'icon' => 'fab fa-instagram'],
             'email' => ['code' => 'email', 'icon' => 'far fa-envelope'],
-            'widget' => ['code' => 'web', 'icon' => 'far fa-comment-dots'],
+            'web' => ['code' => 'web', 'icon' => 'far fa-comment-dots'],
         ];
-        $ch = $channelMap[$this->channel ?? 'widget'] ?? $channelMap['widget'];
+        $ch = $channelMap[$this->channel ?? 'web'] ?? $channelMap['web'];
 
         $lastAt = $this->last_message_at ?? $this->updated_at ?? $this->created_at;
         if (! $lastAt) {

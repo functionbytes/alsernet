@@ -6,8 +6,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4-identity.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}"/>
 @endpush
 
 @section('content')
@@ -100,7 +100,6 @@
 <script>
 $(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Éxito');
     @endif
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');

@@ -2,8 +2,8 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
-use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\ConversationItem;
 

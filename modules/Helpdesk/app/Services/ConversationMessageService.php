@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Services;
 
 use Illuminate\Http\UploadedFile;
+use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Events\MentionDetected;
@@ -110,6 +111,7 @@ class ConversationMessageService
 
         if ($shouldClose) {
             $conversation->close();
+            ConversationClosed::dispatch($conversation);
         }
 
         $successMessage = $shouldClose

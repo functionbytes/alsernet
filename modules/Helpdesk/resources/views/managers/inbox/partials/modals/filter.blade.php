@@ -133,16 +133,10 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-secondary" id="flBtnClear">
-                <i class="fas fa-rotate-left"></i> Limpiar
-            </button>
+            <button class="btn-primary" id="flBtnApply">Aplicar filtros</button>
+            <button class="btn-secondary">Guardar vista</button>
             <span id="flActiveCount" class="bv-filter-count">3 filtros activos</span>
-            <div class="bv-filter-foot-actions">
-                <button class="btn-secondary">
-                    <i class="far fa-bookmark"></i> Guardar vista
-                </button>
-                <button class="btn-primary" id="flBtnApply"><i class="fas fa-check"></i> Aplicar filtros</button>
-            </div>
+            <button class="btn-secondary" id="flBtnClear">Limpiar</button>
         </div>
     </div>
 </div>

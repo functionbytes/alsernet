@@ -21,10 +21,10 @@ class OutboundMessageService
      */
     public function sendReply(Conversation $conversation, string $text): ?string
     {
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
 
-        if (blank($externalId) || $channel === 'widget') {
+        if (blank($externalId) || $channel === 'web') {
             return null; // Widget conversations don't need outbound API calls
         }
 
@@ -52,7 +52,7 @@ class OutboundMessageService
      */
     public function supports(Conversation $conversation): bool
     {
-        return in_array($conversation->channel ?? 'widget', ['whatsapp', 'facebook', 'instagram'], true)
+        return in_array($conversation->channel ?? 'web', ['whatsapp', 'facebook', 'instagram'], true)
             && filled($conversation->external_sender_id);
     }
 
@@ -65,10 +65,10 @@ class OutboundMessageService
      */
     public function sendAttachment(Conversation $conversation, string $type, string $url, ?string $caption = null, ?string $filename = null): ?string
     {
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
 
-        if (blank($externalId) || $channel === 'widget') {
+        if (blank($externalId) || $channel === 'web') {
             return null;
         }
 
@@ -137,7 +137,7 @@ class OutboundMessageService
      */
     public function sendQuickReplies(Conversation $conversation, string $text, array $buttons): ?string
     {
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
 
         if (blank($externalId)) {
@@ -166,7 +166,7 @@ class OutboundMessageService
      */
     public function setTyping(Conversation $conversation, bool $on): bool
     {
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
 
         if (blank($externalId)) {
@@ -198,10 +198,10 @@ class OutboundMessageService
      */
     public function markSeen(Conversation $conversation, ?string $externalMessageId = null): bool
     {
-        $channel = $conversation->channel ?? 'widget';
+        $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
 
-        if (blank($externalId) || $channel === 'widget') {
+        if (blank($externalId) || $channel === 'web') {
             return false;
         }
 

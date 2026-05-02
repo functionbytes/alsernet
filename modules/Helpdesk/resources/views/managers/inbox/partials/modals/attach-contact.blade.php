@@ -49,9 +49,7 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="attach-contact-send" disabled>
-                <i class="fas fa-paper-plane"></i> Enviar contacto
-            </button>
+            <button class="btn-primary" id="attach-contact-send" disabled>Enviar contacto</button>
             <button class="btn-secondary" data-bv-close>Cancelar</button>
         </div>
     </div>

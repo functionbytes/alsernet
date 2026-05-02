@@ -161,9 +161,9 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary"><i class="fas fa-arrow-up-right-from-square"></i> Seguir envío</button>
-            <button class="btn-secondary"><i class="fas fa-rotate-left"></i> Solicitar devolución</button>
-            <button class="btn-secondary"><i class="fas fa-file-invoice"></i> Descargar factura</button>
+            <button class="btn-primary">Seguir envío</button>
+            <button class="btn-secondary">Solicitar devolución</button>
+            <button class="btn-secondary">Descargar factura</button>
         </div>
     </div>
 </div>

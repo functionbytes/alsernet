@@ -47,7 +47,7 @@
             gap: .4rem;
             background: rgba(144, 187, 19, .15);
             border: 1px solid rgba(144, 187, 19, .4);
-            color: #90bb13;
+            color: #b10100;
             padding: .4rem 1rem;
             border-radius: 20px;
             font-size: .8rem;
@@ -87,7 +87,7 @@
         .cs-unit-value {
             font-size: 2.25rem;
             font-weight: 900;
-            color: #90bb13;
+            color: #b10100;
             line-height: 1;
             display: block;
         }
@@ -118,9 +118,9 @@
             transition: border-color .2s;
         }
         .cs-notify-form input[type="email"]::placeholder { color: rgba(255,255,255,.4); }
-        .cs-notify-form input[type="email"]:focus { border-color: #90bb13; }
+        .cs-notify-form input[type="email"]:focus { border-color: #b10100; }
         .cs-notify-form button {
-            background: #90bb13;
+            background: #b10100;
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -153,8 +153,8 @@
             transition: background .2s, color .2s, border-color .2s;
         }
         .cs-social a:hover {
-            background: #90bb13;
-            border-color: #90bb13;
+            background: #b10100;
+            border-color: #b10100;
             color: #fff;
         }
         .cs-contact {
@@ -162,7 +162,7 @@
             color: rgba(255, 255, 255, .35);
         }
         .cs-contact a {
-            color: #90bb13;
+            color: #b10100;
             text-decoration: none;
             font-weight: 600;
         }
@@ -173,7 +173,7 @@
             display: none;
             background: rgba(144, 187, 19, .15);
             border: 1px solid rgba(144, 187, 19, .4);
-            color: #90bb13;
+            color: #b10100;
             border-radius: 8px;
             padding: .75rem 1rem;
             font-size: .9rem;

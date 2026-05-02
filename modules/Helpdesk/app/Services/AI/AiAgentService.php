@@ -27,7 +27,7 @@ class AiAgentService
 
         $agent = AiAgent::active()
             ->get()
-            ->first(fn (AiAgent $a) => $a->handlesChannel($conv->channel ?? 'widget'));
+            ->first(fn (AiAgent $a) => $a->handlesChannel($conv->channel ?? 'web'));
 
         if (! $agent) {
             return false;

@@ -601,7 +601,7 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        const colors = ['#90bb13', '#13C672', '#FEC90F', '#FA896B'];
+        const colors = ['#b10100', '#13C672', '#FEC90F', '#FA896B'];
         const particles = Array.from({ length: 80 }, function() {
             return {
                 x: Math.random() * canvas.width,

@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -26,7 +27,9 @@ class JsonExceptionRenderer
             $e instanceof ValidationException => $this->validationError($e),
             $e instanceof AuthenticationException => $this->authenticationError(),
             $e instanceof AuthorizationException,
-            $e instanceof AccessDeniedHttpException => $this->authorizationError(),
+            $e instanceof AccessDeniedHttpException,
+            $e instanceof HttpException && $e->getStatusCode() === 403 => $this->authorizationError(),
+            $e instanceof HttpException && $e->getStatusCode() === 422 => $this->unprocessableError($e),
             $e instanceof ModelNotFoundException,
             $e instanceof NotFoundHttpException => $this->notFoundError(),
             $e instanceof TooManyRequestsHttpException => $this->tooManyRequestsError($e),
@@ -66,6 +69,15 @@ class JsonExceptionRenderer
             'message' => 'No autorizado.',
             'code' => 'FORBIDDEN',
         ], 403);
+    }
+
+    private function unprocessableError(HttpException $e): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage() ?: 'Datos inválidos.',
+            'code' => 'VALIDATION_ERROR',
+        ], 422);
     }
 
     private function notFoundError(): JsonResponse

@@ -238,7 +238,6 @@
 <script>
 $(document).ready(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
@@ -271,7 +270,6 @@ $(document).ready(function () {
                     _token: '{{ csrf_token() }}',
                     ids: ids,
                 }).done(function (res) {
-                    toastr.success(res.message || 'Orden actualizado', 'Exito');
                 }).fail(function () {
                     toastr.error('Error al actualizar el orden', 'Error');
                     $('#statuses-sortable').sortable('cancel');

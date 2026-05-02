@@ -1,0 +1,236 @@
+name: Pagos
+description: |-
+
+  Métodos de pago disponibles e iniciación de pagos para pedidos.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/ecommerce/payment-methods
+    metadata:
+      custom: []
+      groupName: Pagos
+      groupDescription: |-
+
+        Métodos de pago disponibles e iniciación de pagos para pedidos.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Métodos de pago disponibles'
+      description: 'Devuelve los métodos de pago habilitados en la tienda (Wompi, COD, transferencia bancaria, etc.).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"success":false,"message":"No autenticado.","code":"UNAUTHENTICATED"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-frame-options: SAMEORIGIN
+          x-content-type-options: nosniff
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          permissions-policy: 'camera=(), microphone=(), geolocation=(), payment=()'
+          strict-transport-security: 'max-age=31536000; includeSubDomains'
+          x-robots-tag: 'noindex, nofollow, noarchive, nosnippet'
+          vary: Origin
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/ecommerce/orders/{order_id}/payments'
+    metadata:
+      custom: []
+      groupName: Pagos
+      groupDescription: |-
+
+        Métodos de pago disponibles e iniciación de pagos para pedidos.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Iniciar pago de un pedido'
+      description: |-
+        Genera la URL de pago o instrucciones según el canal elegido.
+        Para Wompi: abre la URL en un WebView o navegador externo.
+        Para COD/transferencia: devuelve las instrucciones directamente.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Idempotency-Key: 'string UUID único para idempotencia. Example: 550e8400-e29b-41d4-a716-446655440000'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      order_id:
+        custom: []
+        name: order_id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'ID del pedido.'
+        required: true
+        example: 42
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      order_id: 1
+      order: 42
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      channel:
+        custom: []
+        name: channel
+        description: 'Canal de pago. Must not be greater than 60 characters.'
+        required: true
+        example: wompi
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      return_url:
+        custom: []
+        name: return_url
+        description: 'URL de retorno tras el pago (para deep link). Must not be greater than 500 characters.'
+        required: false
+        example: 'miapp://payment-result'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      channel: wompi
+      return_url: 'miapp://payment-result'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/ecommerce/orders/{order_id}/payments/{payment}'
+    metadata:
+      custom: []
+      groupName: Pagos
+      groupDescription: |-
+
+        Métodos de pago disponibles e iniciación de pagos para pedidos.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Estado de pago de un pedido'
+      description: 'Consulta el estado actual del pago. El cliente hace polling desde la app después de volver del WebView de pago.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      order_id:
+        custom: []
+        name: order_id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      payment:
+        custom: []
+        name: payment
+        description: 'ID del pago (puede ser cualquier valor, se ignora actualmente).'
+        required: true
+        example: '1'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'ID del pedido.'
+        required: true
+        example: 42
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      order_id: 1
+      payment: '1'
+      order: 42
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"success":false,"message":"No autenticado.","code":"UNAUTHENTICATED"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-frame-options: SAMEORIGIN
+          x-content-type-options: nosniff
+          x-xss-protection: '1; mode=block'
+          referrer-policy: strict-origin-when-cross-origin
+          permissions-policy: 'camera=(), microphone=(), geolocation=(), payment=()'
+          strict-transport-security: 'max-age=31536000; includeSubDomains'
+          x-robots-tag: 'noindex, nofollow, noarchive, nosnippet'
+          vary: Origin
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

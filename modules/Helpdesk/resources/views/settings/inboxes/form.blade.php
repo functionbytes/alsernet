@@ -43,7 +43,7 @@
             <div class="col-lg-8">
 
                 {{-- Código de instalación (widget existente) --}}
-                @if($inbox->channel_type === 'widget' && $isEdit && $channel !== null)
+                @if($inbox->channel_type === 'web' && $isEdit && $channel !== null)
                     <div class="card mb-3 border-success">
                         <div class="card-header bg-success bg-opacity-10 border-0">
                             <h6 class="mb-0 fw-bold text-success">
@@ -59,7 +59,7 @@
   window.helpdeskSettings = { websiteToken: '{{ $channel->website_token }}' };
   (function(d,t) {
     var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-    g.src='{{ url('/widget.js') }}';g.defer=true;g.async=true;s.parentNode.insertBefore(g,s);
+    g.src='{{ asset('build-helpdesklivechat/widget.js') }}';g.defer=true;g.async=true;s.parentNode.insertBefore(g,s);
   })(document,'script');
 &lt;/script&gt;</pre>
                                 <button type="button"
@@ -99,7 +99,14 @@
                                 <select name="channel_type"
                                         class="form-select @error('channel_type') is-invalid @enderror"
                                         {{ $isEdit ? 'disabled' : '' }} required>
-                                    @foreach($channelLabels as $key => $label)
+                                    @php
+                                        // Para edit: mantenemos todas las opciones para no perder el canal actual
+                                        // si el módulo del canal se deshabilitó. Para create: solo canales disponibles.
+                                        $channelOptions = $isEdit
+                                            ? \Modules\Helpdesk\Models\Inbox::channelLabels()
+                                            : \Modules\Helpdesk\Models\Inbox::availableChannelLabels();
+                                    @endphp
+                                    @foreach($channelOptions as $key => $label)
                                         <option value="{{ $key }}" @selected(old('channel_type', $inbox->channel_type) === $key)>
                                             {{ $label }}
                                         </option>
@@ -533,7 +540,6 @@ $(function () {
     window.copyEmbedCode = function () {
         const code = document.getElementById('embed-code').textContent;
         navigator.clipboard.writeText(code).then(function () {
-            toastr.success('Código copiado al portapapeles');
         });
     };
 

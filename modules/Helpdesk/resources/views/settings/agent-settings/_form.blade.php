@@ -109,7 +109,7 @@
                         @selected(in_array($skill->id, old('skills', $assignedSkillIds)))>
                         {{ $skill->name }}
                     </option>
-                </select>
+                @endforeach
             </select>
             <div class="form-text">Mantén presionado Ctrl (o Cmd en Mac) para seleccionar varias habilidades</div>
             @error('skills')

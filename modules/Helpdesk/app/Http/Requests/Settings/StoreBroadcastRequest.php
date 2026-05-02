@@ -15,7 +15,7 @@ class StoreBroadcastRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'channel' => ['required', 'in:whatsapp,facebook,instagram,email,widget'],
+            'channel' => ['required', 'in:whatsapp,facebook,instagram,email,web'],
             'template_type' => ['required', 'in:text,hsm'],
             'body' => ['required_if:template_type,text', 'nullable', 'string', 'max:4096'],
             'template_id' => ['required_if:template_type,hsm', 'nullable', 'string'],

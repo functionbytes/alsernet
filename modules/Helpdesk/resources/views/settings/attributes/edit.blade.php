@@ -296,7 +296,6 @@ $(document).ready(function() {
     });
 
     @if (session('success'))
-        toastr.success('{{ session('success') }}', 'Atributo actualizado');
     @endif
 
     @if (session('error'))

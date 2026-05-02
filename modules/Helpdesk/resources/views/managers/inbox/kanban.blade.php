@@ -3,7 +3,7 @@
 @section('title', 'Kanban · Conversaciones')
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/inbox-v4-identity.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}"/>
     <style>
         .hd-kanban-wrap {
             display: flex;
@@ -424,9 +424,6 @@
                         'Accept': 'application/json',
                     },
                     success: function (resp) {
-                        if (window.toastr) {
-                            toastr.success(resp?.message || 'Estado actualizado');
-                        }
                     },
                     error: function (xhr) {
                         // Revert: move card back to original column

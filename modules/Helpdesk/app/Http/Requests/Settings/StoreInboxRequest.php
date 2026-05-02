@@ -17,7 +17,7 @@ class StoreInboxRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:120'],
-            'channel_type' => ['required', Rule::in(Inbox::CHANNEL_TYPES)],
+            'channel_type' => ['required', Rule::in(Inbox::availableChannelTypes())],
             'is_active' => ['boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
             'color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{3,8}$/'],

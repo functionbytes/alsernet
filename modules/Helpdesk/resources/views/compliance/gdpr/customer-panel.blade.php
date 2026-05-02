@@ -91,7 +91,6 @@ $(document).ready(function () {
             data: form.serialize(),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (res) {
-                toastr.success(res.message || 'Solicitud GDPR procesada correctamente.');
                 setTimeout(function () { location.reload(); }, 2000);
             },
             error: function (xhr) {

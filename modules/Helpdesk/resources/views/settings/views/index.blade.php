@@ -249,7 +249,6 @@
 <script>
 $(document).ready(function () {
     @if(session('success'))
-        toastr.success('{{ session('success') }}', 'Exito');
     @endif
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
@@ -284,7 +283,6 @@ $(document).ready(function () {
                     data: JSON.stringify({ ids }),
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     success: function (res) {
-                        toastr.success(res.message || 'Orden actualizado.');
                     },
                     error: function () {
                         toastr.error('Error al actualizar el orden.');
