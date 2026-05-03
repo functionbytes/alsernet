@@ -19,7 +19,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['entity_type', 'entity_id']);
-            $table->unique(['field_id', 'entity_type', 'entity_id']);
+            $table->unique(['field_id', 'entity_type', 'entity_id'], 'hd_cfv_field_entity_unique');
         });
     }
 

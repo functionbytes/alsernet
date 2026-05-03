@@ -4,8 +4,10 @@ namespace Modules\Helpdesk\Models;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Helpdesk\Database\Factories\GroupFactory;
 
 class Group extends Model
 {
@@ -19,6 +21,7 @@ class Group extends Model
         'name',
         'assignment_mode',
         'default',
+        'tag_id',
     ];
 
     protected function casts(): array
@@ -33,6 +36,14 @@ class Group extends Model
         'updated_at',
         'pivot',
     ];
+
+    /**
+     * Get the conversation tag associated with this group.
+     */
+    public function tag(): BelongsTo
+    {
+        return $this->belongsTo(ConversationTag::class, 'tag_id');
+    }
 
     /**
      * Get the users (agents) that belong to the group.
@@ -164,5 +175,10 @@ class Group extends Model
     public static function filterableFields(): array
     {
         return ['id', 'default', 'created_at', 'updated_at'];
+    }
+
+    protected static function newFactory(): GroupFactory
+    {
+        return new GroupFactory;
     }
 }

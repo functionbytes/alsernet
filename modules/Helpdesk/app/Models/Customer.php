@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Database\Factories\CustomerFactory;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
 
 class Customer extends Model
@@ -76,6 +77,46 @@ class Customer extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'customer_id');
+    }
+
+    /**
+     * External IDs across integrated platforms (PrestaShop, ERP, Shopify, ...).
+     * Allows a single customer to be linked to multiple platform IDs.
+     */
+    public function externalIds(): HasMany
+    {
+        return $this->hasMany(CustomerExternalId::class, 'customer_id');
+    }
+
+    /**
+     * Resolve a customer by their external ID on a specific platform.
+     */
+    public static function findByExternalId(string $platform, string $externalId): ?self
+    {
+        $link = CustomerExternalId::query()
+            ->forExternal($platform, $externalId)
+            ->first();
+
+        return $link?->customer;
+    }
+
+    /**
+     * Link this customer with an external platform ID. Idempotent.
+     */
+    public function linkExternalId(string $platform, string $externalId, ?array $metadata = null): CustomerExternalId
+    {
+        return $this->externalIds()->updateOrCreate(
+            ['platform' => $platform, 'external_id' => $externalId],
+            ['metadata' => $metadata],
+        );
+    }
+
+    /**
+     * Returns the external_id on a given platform, or null.
+     */
+    public function externalIdFor(string $platform): ?string
+    {
+        return $this->externalIds->firstWhere('platform', $platform)?->external_id;
     }
 
     /**
@@ -270,5 +311,10 @@ class Customer extends Model
         ]);
 
         return $token;
+    }
+
+    protected static function newFactory(): CustomerFactory
+    {
+        return new CustomerFactory;
     }
 }

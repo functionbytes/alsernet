@@ -3,17 +3,21 @@
 namespace Modules\Helpdesk\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ConversationsControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $manager;
 
@@ -31,13 +35,8 @@ class ConversationsControllerTest extends TestCase
         );
 
         $this->manager = User::factory()->create();
-        $this->manager->givePermissionTo([
-            'helpdesk.conversations.view',
-            'helpdesk.conversations.create',
-            'helpdesk.conversations.update',
-            'helpdesk.conversations.delete',
-            'helpdesk.manage',
-        ]);
+        $role = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
+        $this->manager->assignRole($role);
     }
 
     // ─── index ────────────────────────────────────────────────────────────────
@@ -64,7 +63,7 @@ class ConversationsControllerTest extends TestCase
         $this->actingAs($this->manager)
             ->get(route('manager.helpdesk.conversations.index'))
             ->assertOk()
-            ->assertViewIs('helpdesk::managers.helpdesk.conversations.index')
+            ->assertViewIs('helpdesk::managers.inbox.index')
             ->assertViewHas('conversations');
     }
 
@@ -311,6 +310,178 @@ class ConversationsControllerTest extends TestCase
         $this->assertDatabaseHas('helpdesk_conversations', [
             'id' => $conversation->id,
             'deleted_at' => null,
+        ]);
+    }
+
+    // ─── close ────────────────────────────────────────────────────────────────
+
+    public function test_manager_can_close_conversation(): void
+    {
+        $conversation = $this->createConversation();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.close', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertNotNull($conversation->closed_at);
+    }
+
+    // ─── reopen ─────────────────────────────────────────────────────────────────
+
+    public function test_manager_can_reopen_conversation(): void
+    {
+        $conversation = $this->createConversation();
+        $conversation->close();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.reopen', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertNull($conversation->closed_at);
+    }
+
+    // ─── snooze ─────────────────────────────────────────────────────────────────
+
+    public function test_manager_can_snooze_conversation(): void
+    {
+        $conversation = $this->createConversation();
+        $until = now()->addHours(3)->format('Y-m-d H:i:s');
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.snooze', $conversation), [
+                'until' => $until,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertNotNull($conversation->snoozed_until);
+    }
+
+    // ─── archive / unarchive ────────────────────────────────────────────────────
+
+    public function test_manager_can_archive_conversation(): void
+    {
+        $conversation = $this->createConversation();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.archive', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertTrue($conversation->is_archived);
+    }
+
+    public function test_manager_can_unarchive_conversation(): void
+    {
+        $conversation = $this->createConversation();
+        $conversation->archive();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.unarchive', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertFalse($conversation->is_archived);
+    }
+
+    // ─── mark spam ──────────────────────────────────────────────────────────────
+
+    public function test_manager_can_mark_conversation_as_spam(): void
+    {
+        $conversation = $this->createConversation();
+        $customer = $conversation->customer;
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.mark-spam', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $customer->refresh();
+        $this->assertTrue($conversation->is_spam);
+        $this->assertTrue($conversation->is_archived);
+        $this->assertNotNull($customer->banned_at);
+    }
+
+    // ─── block contact ──────────────────────────────────────────────────────────
+
+    public function test_manager_can_block_contact(): void
+    {
+        $conversation = $this->createConversation();
+        $customer = $conversation->customer;
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.block-contact', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $customer->refresh();
+        $this->assertNotNull($customer->banned_at);
+    }
+
+    // ─── assign (ajax) ──────────────────────────────────────────────────────────
+
+    public function test_manager_can_assign_conversation_via_ajax(): void
+    {
+        $conversation = $this->createConversation();
+        $agent = User::factory()->create();
+
+        $this->actingAs($this->manager)
+            ->putJson(route('manager.helpdesk.conversations.update', $conversation), [
+                'assignee_id' => $agent->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $conversation->refresh();
+        $this->assertEquals($agent->id, $conversation->assignee_id);
+    }
+
+    // ─── merge ──────────────────────────────────────────────────────────────────
+
+    public function test_manager_can_merge_conversations(): void
+    {
+        $customer = Customer::factory()->create();
+        $source = $this->createConversation(['customer_id' => $customer->id]);
+        $target = $this->createConversation(['customer_id' => $customer->id]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.merge', $source), [
+                'target_id' => $target->id,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $source->refresh();
+        $target->refresh();
+        $this->assertSoftDeleted('helpdesk_conversations', ['id' => $source->id]);
+    }
+
+    // ─── create ticket ──────────────────────────────────────────────────────────
+
+    public function test_manager_can_create_ticket_from_conversation(): void
+    {
+        if (! class_exists(Ticket::class)) {
+            $this->markTestSkipped('HelpdeskTickets module not available.');
+        }
+
+        $conversation = $this->createConversation();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.ticket', $conversation))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('helpdesk_tickets', [
+            'customer_id' => $conversation->customer_id,
+            'source' => 'conversation',
         ]);
     }
 

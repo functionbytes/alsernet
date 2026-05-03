@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Helpdesk\Database\Factories\ConversationItemFactory;
 use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 
 class ConversationItem extends Model
@@ -407,5 +408,10 @@ class ConversationItem extends Model
     public function getAttachmentCountAttribute()
     {
         return $this->hasAttachments() ? count($this->attachment_urls) : 0;
+    }
+
+    protected static function newFactory(): ConversationItemFactory
+    {
+        return new ConversationItemFactory;
     }
 }

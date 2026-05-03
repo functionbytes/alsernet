@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Database\Factories\ConversationTagFactory;
 
 class ConversationTag extends Model
 {
@@ -120,5 +121,10 @@ class ConversationTag extends Model
             htmlspecialchars($color),
             htmlspecialchars($this->name)
         );
+    }
+
+    protected static function newFactory(): ConversationTagFactory
+    {
+        return new ConversationTagFactory;
     }
 }

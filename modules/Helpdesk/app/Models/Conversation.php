@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Concerns\HasMessageThread;
+use Modules\Helpdesk\Database\Factories\ConversationFactory;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Concerns\HasCrossDatabaseUserRelation;
 use Modules\Helpdesk\Models\Concerns\HasCustomAttributes;
@@ -474,5 +475,10 @@ class Conversation extends Model
             $minutes < 15 ? 'ok' : ($minutes < 60 ? 'warn' : 'breach'),
             $label,
         ];
+    }
+
+    protected static function newFactory(): ConversationFactory
+    {
+        return new ConversationFactory;
     }
 }

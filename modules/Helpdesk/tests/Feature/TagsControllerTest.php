@@ -21,16 +21,16 @@ class TagsControllerTest extends TestCase
 
     public function test_index_route_registered(): void
     {
-        $this->assertTrue(Route::has('manager.helpdesk.settings.tickets.tags.index'));
+        $this->assertTrue(Route::has('settings.helpdesk.tags.index'));
     }
 
     public function test_store_route_registered(): void
     {
-        $this->assertTrue(Route::has('manager.helpdesk.settings.tickets.tags.store'));
+        $this->assertTrue(Route::has('settings.helpdesk.tags.store'));
     }
 
     public function test_destroy_route_registered(): void
     {
-        $this->assertTrue(Route::has('manager.helpdesk.settings.tickets.tags.destroy'));
+        $this->assertTrue(Route::has('settings.helpdesk.tags.destroy'));
     }
 }

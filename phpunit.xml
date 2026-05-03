@@ -43,14 +43,14 @@
         <env name="DB_CONNECTION" value="mariadb" force="true"/>
         <env name="DB_HOST" value="localhost" force="true"/>
         <env name="DB_PORT" value="3306" force="true"/>
-        <env name="DB_DATABASE" value="system_testing" force="true"/>
+        <env name="DB_DATABASE" value="system_test_pristine" force="true"/>
         <env name="DB_USERNAME" value="root" force="true"/>
         <env name="DB_PASSWORD" value="6cWRY1PUmiwYciQxJXkg" force="true"/>
         <!-- Force all module-specific connections to the same testing DB -->
         <env name="DB_CONNECTION_HELPDESK" value="mariadb" force="true"/>
         <env name="DB_HOST_HELPDESK" value="localhost" force="true"/>
         <env name="DB_PORT_HELPDESK" value="3306" force="true"/>
-        <env name="DB_DATABASE_HELPDESK" value="system_testing" force="true"/>
+        <env name="DB_DATABASE_HELPDESK" value="system_test_pristine" force="true"/>
         <env name="DB_USERNAME_HELPDESK" value="root" force="true"/>
         <env name="DB_PASSWORD_HELPDESK" value="6cWRY1PUmiwYciQxJXkg" force="true"/>
         <env name="MAIL_MAILER" value="array"/>

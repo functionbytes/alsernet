@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Helpdesk\Database\Factories\CannedReplyFactory;
 
 class CannedReply extends Model
 {
@@ -151,5 +152,10 @@ class CannedReply extends Model
     public function getContentAttribute()
     {
         return $this->html_body ?? $this->body;
+    }
+
+    protected static function newFactory(): CannedReplyFactory
+    {
+        return new CannedReplyFactory;
     }
 }
