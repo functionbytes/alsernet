@@ -65,6 +65,7 @@ class Conversation extends Model
             'tags' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'snoozed_until' => 'datetime',
             'deleted_at' => 'datetime',
         ];
     }

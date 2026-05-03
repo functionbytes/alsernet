@@ -8,16 +8,16 @@ class StoreConversationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manager.helpdesk.conversations.create') ?? false;
+        return $this->user()?->can('helpdesk.conversations.create') ?? false;
     }
 
     public function rules(): array
     {
         return [
-            'customer_id' => ['required', 'exists:helpdesk_customers,id'],
+            'customer_id' => ['required', 'exists:helpdesk.helpdesk_customers,id'],
             'subject' => ['required', 'string', 'max:255'],
             'priority' => ['required', 'in:low,normal,high,urgent'],
-            'status_id' => ['required', 'exists:helpdesk_conversation_statuses,id'],
+            'status_id' => ['required', 'exists:helpdesk.helpdesk_conversation_statuses,id'],
         ];
     }
 

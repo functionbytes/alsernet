@@ -3,7 +3,7 @@
 namespace Modules\Helpdesk\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 class ConversationsControllerTest extends TestCase
 {
-    use DatabaseTransactions;
+    use RefreshDatabase;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -74,7 +74,7 @@ class ConversationsControllerTest extends TestCase
         $this->actingAs($this->manager)
             ->get(route('manager.helpdesk.conversations.create'))
             ->assertOk()
-            ->assertViewIs('helpdesk::managers.helpdesk.conversations.create');
+            ->assertViewIs('helpdesk::managers.conversations.create');
     }
 
     public function test_user_without_create_permission_cannot_access_create_form(): void
@@ -106,7 +106,7 @@ class ConversationsControllerTest extends TestCase
             'customer_id' => $customer->id,
             'subject' => 'Test conversation subject',
             'priority' => 'normal',
-        ]);
+        ], 'helpdesk');
     }
 
     public function test_store_validation_rejects_missing_required_fields(): void
@@ -152,10 +152,12 @@ class ConversationsControllerTest extends TestCase
     {
         $conversation = $this->createConversation();
 
+        $this->assertNotNull($conversation->fresh()->status);
+
         $this->actingAs($this->manager)
             ->get(route('manager.helpdesk.conversations.show', $conversation))
             ->assertOk()
-            ->assertViewIs('helpdesk::managers.helpdesk.conversations.show')
+            ->assertViewIs('helpdesk::managers.conversations.show')
             ->assertViewHas('conversation');
     }
 
@@ -187,7 +189,7 @@ class ConversationsControllerTest extends TestCase
             'id' => $conversation->id,
             'subject' => 'Updated subject',
             'priority' => 'high',
-        ]);
+        ], 'helpdesk');
     }
 
     public function test_user_without_update_permission_cannot_update_conversation(): void
@@ -222,7 +224,7 @@ class ConversationsControllerTest extends TestCase
         $this->assertDatabaseHas('helpdesk_conversations', [
             'id' => $conversation->id,
             'priority' => 'urgent',
-        ]);
+        ], 'helpdesk');
     }
 
     // ─── update (AJAX — tag) ──────────────────────────────────────────────────
@@ -284,7 +286,7 @@ class ConversationsControllerTest extends TestCase
             ->delete(route('manager.helpdesk.conversations.destroy', $conversation))
             ->assertRedirect(route('manager.helpdesk.conversations.index'));
 
-        $this->assertSoftDeleted('helpdesk_conversations', ['id' => $conversation->id]);
+        $this->assertSoftDeleted('helpdesk_conversations', ['id' => $conversation->id], 'helpdesk');
     }
 
     public function test_user_without_delete_permission_cannot_destroy_conversation(): void
@@ -310,7 +312,7 @@ class ConversationsControllerTest extends TestCase
         $this->assertDatabaseHas('helpdesk_conversations', [
             'id' => $conversation->id,
             'deleted_at' => null,
-        ]);
+        ], 'helpdesk');
     }
 
     // ─── close ────────────────────────────────────────────────────────────────
@@ -461,7 +463,7 @@ class ConversationsControllerTest extends TestCase
 
         $source->refresh();
         $target->refresh();
-        $this->assertSoftDeleted('helpdesk_conversations', ['id' => $source->id]);
+        $this->assertSoftDeleted('helpdesk_conversations', ['id' => $source->id], 'helpdesk');
     }
 
     // ─── create ticket ──────────────────────────────────────────────────────────
@@ -482,7 +484,7 @@ class ConversationsControllerTest extends TestCase
         $this->assertDatabaseHas('helpdesk_tickets', [
             'customer_id' => $conversation->customer_id,
             'source' => 'conversation',
-        ]);
+        ], 'helpdesk');
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

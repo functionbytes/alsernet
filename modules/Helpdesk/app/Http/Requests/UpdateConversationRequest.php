@@ -9,7 +9,7 @@ class UpdateConversationRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()?->can('helpdesk.conversations.update')
-            ?? $this->user()?->can('manager.helpdesk.conversations.update')
+            ?? $this->user()?->can('helpdesk.conversations.update')
             ?? true;
     }
 
@@ -18,7 +18,7 @@ class UpdateConversationRequest extends FormRequest
         // Updates parciales: cualquier campo puede llegar solo (status, priority, assignee, etc.)
         return [
             'subject' => ['sometimes', 'string', 'max:255'],
-            'status_id' => ['sometimes', 'exists:helpdesk_conversation_statuses,id'],
+            'status_id' => ['sometimes', 'exists:helpdesk.helpdesk_conversation_statuses,id'],
             'assignee_id' => ['sometimes', 'nullable', 'exists:users,id'],
             'priority' => ['sometimes', 'in:low,normal,high,urgent'],
             'is_archived' => ['sometimes', 'boolean'],

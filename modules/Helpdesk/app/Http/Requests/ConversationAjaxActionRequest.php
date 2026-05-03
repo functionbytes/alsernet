@@ -35,7 +35,7 @@ class ConversationAjaxActionRequest extends FormRequest
 
         if ($this->has('status_id')) {
             return [
-                'status_id' => ['required', 'integer', 'exists:helpdesk_conversation_statuses,id'],
+                'status_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_conversation_statuses,id'],
             ];
         }
 
