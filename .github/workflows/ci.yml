@@ -91,3 +91,6 @@ jobs:
 
       - name: Run EcommercePayment tests
         run: php artisan test --compact modules/EcommercePayment/tests/
+
+      - name: Run HelpdeskPrestashop tests
+        run: php artisan test --compact modules/HelpdeskPrestashop/tests/

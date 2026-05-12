@@ -26,6 +26,7 @@
         <include>
             <directory>app</directory>
             <directory>modules/Helpdesk/app</directory>
+            <directory>modules/HelpdeskPrestashop/app</directory>
         </include>
         <exclude>
             <directory>vendor</directory>
