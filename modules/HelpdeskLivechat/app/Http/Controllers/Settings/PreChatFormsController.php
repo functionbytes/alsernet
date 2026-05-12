@@ -7,6 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\HelpdeskLivechat\Http\Requests\StorePreChatFormRequest;
+use Modules\HelpdeskLivechat\Http\Requests\UpdatePreChatFormRequest;
 use Modules\HelpdeskLivechat\Models\PreChatForm;
 
 class PreChatFormsController extends Controller
@@ -40,9 +42,9 @@ class PreChatFormsController extends Controller
         return view('helpdesklivechat::settings.pre-chat-forms.form', compact('inboxes'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StorePreChatFormRequest $request): RedirectResponse
     {
-        $data = $this->validateForm($request);
+        $data = $this->prepareFormData($request);
 
         PreChatForm::create($data);
 
@@ -60,9 +62,9 @@ class PreChatFormsController extends Controller
         ]);
     }
 
-    public function update(Request $request, PreChatForm $preChatForm): RedirectResponse
+    public function update(UpdatePreChatFormRequest $request, PreChatForm $preChatForm): RedirectResponse
     {
-        $data = $this->validateForm($request);
+        $data = $this->prepareFormData($request);
 
         $preChatForm->update($data);
 
@@ -78,22 +80,9 @@ class PreChatFormsController extends Controller
             ->with('success', 'Formulario pre-chat eliminado exitosamente.');
     }
 
-    private function validateForm(Request $request): array
+    private function prepareFormData(StorePreChatFormRequest|UpdatePreChatFormRequest $request): array
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'inbox_id' => ['nullable', 'exists:helpdesk_inboxes,id'],
-            'fields' => ['required', 'array', 'min:1'],
-            'fields.*.key' => ['required', 'string'],
-            'fields.*.label' => ['required', 'string'],
-            'fields.*.type' => ['required', 'in:text,email,phone,select,textarea,checkbox'],
-            'fields.*.required' => ['boolean'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'fields.required' => 'Debes agregar al menos un campo.',
-            'fields.min' => 'Debes agregar al menos un campo.',
-        ]);
-
+        $validated = $request->validated();
         $validated['is_active'] = $request->boolean('is_active', true);
 
         return $validated;

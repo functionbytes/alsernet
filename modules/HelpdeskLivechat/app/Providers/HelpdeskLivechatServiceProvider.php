@@ -2,9 +2,18 @@
 
 namespace Modules\HelpdeskLivechat\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Modules\Theme\Services\NavService;
+use Modules\Helpdesk\Events\ConversationClosed;
+use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\HelpdeskLivechat\Console\Commands\CheckIntegrationHealthCommand;
+use Modules\HelpdeskLivechat\Http\Middleware\ValidateTrustedOrigin;
+use Modules\HelpdeskLivechat\Http\Middleware\VerifyWidgetHmac;
+use Modules\HelpdeskLivechat\Jobs\PruneLivestreamEventsJob;
+use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskLivechatServiceProvider extends ServiceProvider
@@ -20,12 +29,25 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
         }
 
         $this->registerConfig();
+        $this->registerTranslations();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->registerRoutes();
         $this->registerChannels();
         $this->registerMenus();
         $this->registerEngagementBridge();
+        $this->registerEngagementBridgeListeners();
+        $this->commands([CheckIntegrationHealthCommand::class]);
+
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
+            $schedule->command('helpdesk-livechat:check-health')
+                ->dailyAt('06:00')
+                ->onOneServer();
+
+            $schedule->job(new PruneLivestreamEventsJob)
+                ->dailyAt('03:30')
+                ->onOneServer();
+        });
     }
 
     public function register(): void
@@ -39,6 +61,13 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
      * and triggers the widget open. If Engagement is disabled, widget runs
      * standalone with no tracking.
      */
+    protected function registerEngagementBridgeListeners(): void
+    {
+        Event::listen(ConversationCreated::class, [EngagementBridgeListener::class, 'handleConversationCreated']);
+        Event::listen(ConversationMessageCreated::class, [EngagementBridgeListener::class, 'handleMessageCreated']);
+        Event::listen(ConversationClosed::class, [EngagementBridgeListener::class, 'handleConversationClosed']);
+    }
+
     protected function registerEngagementBridge(): void
     {
         $engagementActive = Module::find('Engagement')?->isEnabled() ?? false;
@@ -52,21 +81,8 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
-        if (! class_exists(NavService::class)) {
-            return;
-        }
-
-        NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk',
-            'items' => [
-                [
-                    'label' => 'Chat en vivo',
-                    'route' => 'settings.helpdesk-livechat.index',
-                    'permission' => 'helpdesk.livechat.settings.view',
-                ],
-            ],
-        ]);
-
+        // La configuración del chat web (livechat) se accede desde
+        // Settings > Helpdesk > Bandejas > canal Web — no necesita entrada directa en sidebar.
     }
 
     protected function registerConfig(): void
@@ -79,6 +95,19 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
 
         $this->publishes([$configPath => config_path($this->moduleNameLower.'.php')], 'config');
         $this->mergeConfigFrom($configPath, $this->moduleNameLower);
+    }
+
+    protected function registerTranslations(): void
+    {
+        $langPath = resource_path('lang/modules/'.$this->moduleNameLower);
+
+        if (is_dir($langPath)) {
+            $this->loadTranslationsFrom($langPath, $this->moduleNameLower);
+            $this->loadJsonTranslationsFrom($langPath);
+        } else {
+            $this->loadTranslationsFrom(module_path($this->moduleName, 'lang'), $this->moduleNameLower);
+            $this->loadJsonTranslationsFrom(module_path($this->moduleName, 'lang'));
+        }
     }
 
     protected function registerViews(): void
@@ -106,7 +135,22 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
     {
         $this->loadWebWidgetRoutes();
         $this->loadWidgetApiRoutes();
+        $this->loadApiRoutes();
         $this->loadSettingsRoutes();
+    }
+
+    protected function loadApiRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/api.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::middleware(['api', 'throttle:60,1'])
+            ->prefix('api/v1/helpdesk-livechat')
+            ->name('helpdesklivechat.')
+            ->group($path);
     }
 
     protected function registerChannels(): void
@@ -137,7 +181,7 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
             return;
         }
 
-        Route::middleware(['api', 'throttle:120,1'])
+        Route::middleware(['api', ValidateTrustedOrigin::class, VerifyWidgetHmac::class])
             ->prefix('hd/api')
             ->name('helpdesk-livechat.widget.')
             ->group($path);

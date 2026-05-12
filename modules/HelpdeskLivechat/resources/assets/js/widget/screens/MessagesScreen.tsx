@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
+import { Icon } from '../components/Icon';
 
 export function MessagesScreen() {
     const settings = useWidgetStore(state => state.settings);
@@ -10,7 +11,7 @@ export function MessagesScreen() {
             <div className="widget-header" style={{ backgroundColor: settings.primary_color }}>
                 <div className="header-title">Messages</div>
                 <button className="new-button">
-                    <i className="fa fa-plus-circle"></i>
+                    <Icon name="plus-circle" />
                 </button>
             </div>
 
@@ -40,15 +41,15 @@ export function MessagesScreen() {
 
             <div className="bottom-nav">
                 <Link to="/" className="nav-button">
-                    <i className="fa fa-home"></i>
+                    <Icon name="home" />
                     <small>Home</small>
                 </Link>
                 <button className="nav-button active" style={{ color: settings.primary_color }}>
-                    <i className="fa fa-comments"></i>
+                    <Icon name="comments" />
                     <small>Conversations</small>
                 </button>
                 <button className="nav-button">
-                    <i className="fa fa-question-circle"></i>
+                    <Icon name="question-circle" />
                     <small>Help</small>
                 </button>
             </div>

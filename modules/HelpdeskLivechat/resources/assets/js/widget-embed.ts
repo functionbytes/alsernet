@@ -23,37 +23,69 @@
         window.ChatWidget = chatWidget;
     }
 
-    // Load the main widget bundle
-    const loadWidget = () => {
-        // Get script tag that loaded this embed script
-        const scripts = document.getElementsByTagName('script');
-        const currentScript = scripts[scripts.length - 1];
-        const scriptSrc = currentScript ? currentScript.src : '';
+    // Capture the script tag that loaded this embed BEFORE any async work,
+    // so we still have a reference even if more scripts are added later.
+    const embedScriptSrc =
+        ((document as any).currentScript && (document as any).currentScript.src) ||
+        // Last <script src=...> in the DOM matching widget.js (excludes inline scripts).
+        (() => {
+            const scripts = Array.from(document.getElementsByTagName('script'))
+                .filter(s => s.src && s.src.includes('/build-helpdesklivechat/widget.js'));
+            return scripts.length ? scripts[scripts.length - 1].src : '';
+        })();
 
-        // Extract base URL
+    // Load the main widget bundle
+    const loadWidget = async () => {
+        // Extract base URL from the embed script we captured at load time.
         let baseUrl = '';
-        if (scriptSrc) {
-            const url = new URL(scriptSrc);
+        if (embedScriptSrc) {
+            const url = new URL(embedScriptSrc);
             baseUrl = `${url.protocol}//${url.host}`;
         } else {
-            // Fallback: use current domain
+            // Last-resort fallback: current page (works when embed served from same origin).
             baseUrl = `${window.location.protocol}//${window.location.host}`;
         }
 
-        // Load Font Awesome (if not already loaded)
-        if (!document.querySelector('link[href*="font-awesome"]')) {
-            const fontAwesome = document.createElement('link');
-            fontAwesome.rel = 'stylesheet';
-            fontAwesome.href =
-                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-            document.head.appendChild(fontAwesome);
+        // Fetch widget configuration BEFORE loading the bundle so that echo.ts
+        // (which runs at import time) sees window.HELPDESK_WIDGET_CONFIG with the
+        // correct reverbHost/Port/scheme/baseUrl values for this tenant.
+        const websiteToken = (window as any).helpdeskSettings?.websiteToken;
+        if (websiteToken) {
+            try {
+                const res = await fetch(
+                    `${baseUrl}/widget/helpdesk/config/${encodeURIComponent(websiteToken)}`,
+                    { credentials: 'omit' }
+                );
+                if (res.ok) {
+                    const cfg = await res.json();
+                    (window as any).HELPDESK_WIDGET_CONFIG = {
+                        ...((window as any).HELPDESK_WIDGET_CONFIG || {}),
+                        ...cfg,
+                        baseUrl,
+                        websiteToken,
+                    };
+                }
+            } catch (e) {
+                console.warn('Widget config fetch failed, using defaults', e);
+            }
         }
+        // Always ensure baseUrl is set (used by api.ts).
+        (window as any).HELPDESK_WIDGET_CONFIG = {
+            ...((window as any).HELPDESK_WIDGET_CONFIG || {}),
+            baseUrl,
+            websiteToken,
+        };
 
-        // Load main widget bundle (Pusher + Echo are bundled inside)
+        // Load main widget bundle through Laravel route (which adds CORS headers).
+        // The static path /build-helpdesklivechat/widget/main.js is served directly
+        // by nginx without CORS, blocking <script type="module"> from external origins.
+        // __WIDGET_BUILD_VERSION__ is replaced at build time by Vite define — it changes
+        // with every rebuild so browsers never serve a stale bundle from disk cache.
         const widgetScript = document.createElement('script');
-        widgetScript.src = `${baseUrl}/build-helpdesklivechat/widget/main.js`;
+        widgetScript.src = `${baseUrl}/hd/assets/main.js?v=${__WIDGET_BUILD_VERSION__}`;
         widgetScript.async = true;
         widgetScript.type = 'module';
+        widgetScript.crossOrigin = 'anonymous';
 
         widgetScript.onerror = () => {
             console.error('Failed to load Chat widget');
@@ -61,10 +93,10 @@
 
         document.head.appendChild(widgetScript);
 
-        // Load widget CSS (emitted alongside main.js by Vite)
+        // Load widget CSS (also via Laravel route for CORS)
         const widgetStyles = document.createElement('link');
         widgetStyles.rel = 'stylesheet';
-        widgetStyles.href = `${baseUrl}/build-helpdesklivechat/widget/main.css`;
+        widgetStyles.href = `${baseUrl}/hd/assets/main.css?v=${__WIDGET_BUILD_VERSION__}`;
         document.head.appendChild(widgetStyles);
     };
 

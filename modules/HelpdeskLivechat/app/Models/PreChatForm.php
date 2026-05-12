@@ -2,11 +2,16 @@
 
 namespace Modules\HelpdeskLivechat\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Helpdesk\Models\Inbox;
 
 class PreChatForm extends Model
 {
+    use HasFactory;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_pre_chat_forms';
@@ -31,7 +36,7 @@ class PreChatForm extends Model
         return $this->belongsTo(Inbox::class, 'inbox_id');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }

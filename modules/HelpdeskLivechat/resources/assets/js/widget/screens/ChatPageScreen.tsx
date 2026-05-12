@@ -1,5 +1,6 @@
 import React from 'react';
 import { useWidgetStore } from '../widget-store';
+import { Icon } from '../components/Icon';
 
 interface ChatPageScreenProps {
     conversationId?: string;
@@ -16,10 +17,10 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
                     <small className="header-status">We'll reply as soon as we can</small>
                 </div>
                 <button className="minimize-button">
-                    <i className="fa fa-minus"></i>
+                    <Icon name="minus" />
                 </button>
                 <button className="close-button">
-                    <i className="fa fa-times"></i>
+                    <Icon name="times" />
                 </button>
             </div>
 
@@ -27,7 +28,7 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
                 <div className="message bot-message">
                     {settings.show_avatars && (
                         <div className="bot-avatar" style={{ backgroundColor: settings.primary_color }}>
-                            <i className="fa fa-robot"></i>
+                            <Icon name="robot" />
                         </div>
                     )}
                     <div className="message-content">
@@ -47,7 +48,7 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
 
             <div className="input-area">
                 <button className="attachment-button">
-                    <i className="fa fa-paperclip"></i>
+                    <Icon name="paperclip" />
                 </button>
                 <input
                     type="text"
@@ -55,7 +56,7 @@ export function ChatPageScreen({ conversationId }: ChatPageScreenProps = {}) {
                     placeholder={settings.input_placeholder}
                 />
                 <button className="send-button" style={{ backgroundColor: settings.primary_color }}>
-                    <i className="fa fa-paper-plane"></i>
+                    <Icon name="paper-plane" />
                 </button>
             </div>
             <div className="powered-by">

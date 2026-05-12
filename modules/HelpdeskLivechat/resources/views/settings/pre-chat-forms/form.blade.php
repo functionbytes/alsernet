@@ -20,9 +20,9 @@
                         @method('PUT')
                     @endif
 
-                    <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">{{ isset($form) ? 'Editar: ' . $form->name : 'Nuevo formulario pre-chat' }}</h5>
-                        <small class="text-muted">{{ isset($form) ? 'Modifica la configuracion del formulario' : 'Define los campos que el cliente vera antes de iniciar el chat' }}</small>
+                    <div class="card-header p-4 border-bottom border-light">
+                        <h5 class="mb-1 fw-bold">{{ isset($form) ? 'Editar: '.$form->name : 'Nuevo formulario pre-chat' }}</h5>
+                        <p class="small mb-0 text-muted">{{ isset($form) ? 'Modifica la configuración del formulario' : 'Define los campos que el cliente verá antes de iniciar el chat' }}</p>
                     </div>
 
                     <div class="card-body">

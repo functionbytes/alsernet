@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useWidgetStore } from '../widget-store';
+import { useWidgetStore, RecommendationProduct } from '../widget-store';
 import { useTranslation } from '../i18n/useLanguage';
 import { apiUrl } from '../api';
+import { NewTicketCard } from '../components/NewTicketCard';
+import { TicketListCard } from '../components/TicketListCard';
 
 interface Article {
     id: number;
@@ -27,6 +29,47 @@ interface ActiveConversation {
     unread: boolean;
 }
 
+function RecommendationsCard({ products }: { products: RecommendationProduct[] }) {
+    if (products.length === 0) return null;
+    return (
+        <div className="wgt-bedesk-card wgt-bedesk-card-padded">
+            <div className="wgt-rec-list">
+                {products.map((p) => (
+                    <a
+                        key={p.id}
+                        href={p.url ?? '#'}
+                        className="wgt-rec-item"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        {p.image_url && (
+                            <img
+                                className="wgt-rec-thumb"
+                                src={p.image_url}
+                                alt={p.name}
+                                loading="lazy"
+                                width="40"
+                                height="40"
+                            />
+                        )}
+                        <div className="wgt-rec-info">
+                            <p className="wgt-rec-name">{p.name}</p>
+                            {p.price !== undefined && (
+                                <p className="wgt-rec-price">
+                                    {p.price.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}
+                                </p>
+                            )}
+                        </div>
+                        <svg className="wgt-bedesk-send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                        </svg>
+                    </a>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function timeAgo(d: Date): string {
     const sec = Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000));
     if (sec < 60) return 'ahora';
@@ -41,6 +84,8 @@ function timeAgo(d: Date): string {
 
 export function HomeScreen() {
     const settings = useWidgetStore(state => state.settings);
+    const segment = useWidgetStore(state => state.engagement.segment);
+    const engagementRecs = useWidgetStore(state => state.engagement.recommendations);
     const t = useTranslation();
     const navigate = useNavigate();
     const [articles, setArticles] = useState<Article[]>([]);
@@ -149,6 +194,20 @@ export function HomeScreen() {
             </div>
 
             <div className="wgt-bedesk-cards">
+                {segment === 'hot' && (
+                    <div className="hd-segment-banner hd-segment-hot" role="status">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16">
+                            <path d="M12 23a7.5 7.5 0 0 1-5.138-12.963C8.204 8.774 11.5 6.5 11 1.5c6 4 9 8 3 14 1 0 2.5 0 3-1.5.5.75 1 2.5 1 3.5a7 7 0 0 1-6 5.5z" />
+                        </svg>
+                        <span>¿Necesitas ayuda con tu compra?</span>
+                        <Link to="/conversation" className="hd-segment-banner-cta">Chatear ahora</Link>
+                    </div>
+                )}
+
+                {segment === 'warm' && engagementRecs.length > 0 && (
+                    <RecommendationsCard products={engagementRecs.slice(0, 3)} />
+                )}
+
                 {activeConversation && (
                     <div className="wgt-bedesk-card">
                         <Link to="/conversation" className="wgt-resume-link">
@@ -181,7 +240,17 @@ export function HomeScreen() {
                     </div>
                 )}
 
-                {settings.enable_send_message && !activeConversation && (
+                {/* Fix 5: offline notice — shown when outside business hours */}
+                {settings.is_open === false && settings.offline_message_enabled && settings.offline_message && (
+                    <div className="wgt-bedesk-card wgt-bedesk-card-padded wgt-offline-notice" role="status">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="wgt-offline-notice-icon">
+                            <path d="M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zm0 20a9 9 0 1 1 9-9 9.011 9.011 0 0 1-9 9zm0-13a1 1 0 0 0-1 1v5a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1zm0 8a1 1 0 1 0 1 1 1 1 0 0 0-1-1z" />
+                        </svg>
+                        <p className="wgt-offline-notice-text">{settings.offline_message}</p>
+                    </div>
+                )}
+
+                {settings.enable_send_message && !activeConversation && settings.is_open !== false && (
                     <div className="wgt-bedesk-card">
                         <Link
                             to={settings.pre_chat_form_enabled
@@ -199,6 +268,35 @@ export function HomeScreen() {
                             </svg>
                         </Link>
                     </div>
+                )}
+
+                {/* Fix 5: offline — show "leave your email" CTA when business is closed */}
+                {settings.is_open === false && settings.offline_message_enabled && !activeConversation && (
+                    <div className="wgt-bedesk-card">
+                        <Link
+                            to={settings.pre_chat_form_enabled
+                                && !localStorage.getItem('livechat_customer_email')
+                                ? '/pre-chat'
+                                : '/conversation'}
+                            className="wgt-bedesk-send-link"
+                        >
+                            <div>
+                                <div className="wgt-bedesk-send-title">Déjanos tu mensaje</div>
+                                <div className="wgt-bedesk-send-subtitle">Te responderemos cuando estemos disponibles</div>
+                            </div>
+                            <svg className="wgt-bedesk-send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+                            </svg>
+                        </Link>
+                    </div>
+                )}
+
+                {settings.show_tickets_section && settings.enable_create_ticket && (
+                    <NewTicketCard />
+                )}
+
+                {settings.show_tickets_section && (
+                    <TicketListCard />
                 )}
 
                 {settings.show_help_center && settings.enable_search_help && (

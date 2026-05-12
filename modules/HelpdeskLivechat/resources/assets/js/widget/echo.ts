@@ -40,12 +40,40 @@ export const echo = new Echo({
     disableStats: true,
 });
 
+/** Connection states emitted by pusher-js state_change events. */
+export type WsConnectionState =
+    | 'initialized'
+    | 'connecting'
+    | 'connected'
+    | 'disconnected'
+    | 'unavailable'
+    | 'failed';
+
+/**
+ * Subscribe to WebSocket connection state changes.
+ * Returns an unsubscribe function.
+ */
+export function onWsStateChange(
+    handler: (current: WsConnectionState, previous: WsConnectionState) => void
+): () => void {
+    const conn = echo.connector.pusher.connection;
+    const wrappedHandler = ({ current, previous }: { current: string; previous: string }) => {
+        handler(current as WsConnectionState, previous as WsConnectionState);
+    };
+    conn.bind('state_change', wrappedHandler);
+    return () => conn.unbind('state_change', wrappedHandler);
+}
+
 echo.connector.pusher.connection.bind('connected', () => {
-    console.log(`✅ Connected to Reverb @ ${reverbScheme}://${reverbHost}:${reverbPort}`);
+    if (import.meta.env.DEV) {
+        console.log(`✅ Connected to Reverb @ ${reverbScheme}://${reverbHost}:${reverbPort}`);
+    }
 });
 
 echo.connector.pusher.connection.bind('disconnected', () => {
-    console.log('❌ Disconnected from Reverb WebSocket');
+    if (import.meta.env.DEV) {
+        console.log('❌ Disconnected from Reverb WebSocket');
+    }
 });
 
 echo.connector.pusher.connection.bind('error', (err: any) => {

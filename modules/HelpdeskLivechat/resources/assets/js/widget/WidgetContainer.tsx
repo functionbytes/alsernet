@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { WidgetApp } from './WidgetApp';
 import { ChatBubbleLauncher } from './components/ChatBubbleLauncher';
 import { useWidgetStore } from './widget-store';
@@ -8,23 +8,24 @@ interface WidgetContainerProps {
 }
 
 export function WidgetContainer({ isPreview = false }: WidgetContainerProps) {
-    const [isOpen, setIsOpen] = useState(false);
+    const isOpen = useWidgetStore(state => state.isOpen);
+    const setOpen = useWidgetStore(state => state.setOpen);
     const settings = useWidgetStore(state => state.settings);
 
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             if (event.data.type === 'OPEN_WIDGET') {
-                setIsOpen(true);
+                setOpen(true);
             } else if (event.data.type === 'CLOSE_WIDGET') {
-                setIsOpen(false);
+                setOpen(false);
             }
         };
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, []);
+    }, [setOpen]);
 
-    const handleToggle = () => setIsOpen(!isOpen);
+    const handleToggle = () => setOpen(!isOpen);
 
     return (
         <div className="widget-root">

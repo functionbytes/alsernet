@@ -41,6 +41,10 @@ class UpdateLivechatSettingsRequest extends FormRequest
             'typing_indicator' => ['boolean'],
             'sound_notifications' => ['boolean'],
             'enable_email_transcripts' => ['boolean'],
+            'enable_file_upload' => ['boolean'],
+            'enable_emoji' => ['boolean'],
+            'allowed_file_types' => ['nullable', 'array'],
+            'allowed_file_types.*' => ['string', 'in:images,documents,video,audio'],
 
             'enable_auto_transfer' => ['boolean'],
             'auto_transfer_minutes' => ['nullable', 'integer', 'min:1', 'max:60'],
@@ -61,6 +65,16 @@ class UpdateLivechatSettingsRequest extends FormRequest
             // Chat page
             'chat_page_title' => ['nullable', 'string', 'max:100'],
             'chat_page_subtitle' => ['nullable', 'string', 'max:200'],
+
+            // Tracking (page views, heartbeat, SDK batch)
+            'heartbeat_interval_seconds' => ['nullable', 'integer', 'min:5', 'max:120'],
+            'heartbeat_cooldown_seconds' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'sdk_batch_interval_ms' => ['nullable', 'integer', 'min:500', 'max:10000'],
+            'sdk_batch_size' => ['nullable', 'integer', 'min:1', 'max:100'],
+
+            // Branding URLs — validated proactively so future form inputs are covered
+            'logo_url' => ['nullable', 'url', 'max:500'],
+            'website_url' => ['nullable', 'url', 'max:500'],
         ];
     }
 
@@ -100,6 +114,13 @@ class UpdateLivechatSettingsRequest extends FormRequest
             'post_chat_info' => 'información del formulario post-chat',
             'chat_page_title' => 'título de la página de chat',
             'chat_page_subtitle' => 'subtítulo de la página de chat',
+            'heartbeat_interval_seconds' => 'intervalo de heartbeat',
+            'heartbeat_cooldown_seconds' => 'cooldown del servidor',
+            'sdk_batch_interval_ms' => 'intervalo de batch del SDK',
+            'sdk_batch_size' => 'tamaño de batch del SDK',
+            'enable_file_upload' => 'envío de archivos',
+            'enable_emoji' => 'emojis',
+            'allowed_file_types' => 'tipos de archivo permitidos',
         ];
     }
 }

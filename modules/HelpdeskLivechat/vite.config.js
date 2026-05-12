@@ -51,6 +51,9 @@ export default defineConfig({
             '@': resolve(__dirname, 'resources/assets/js'),
         },
     },
+    define: {
+        __WIDGET_BUILD_VERSION__: JSON.stringify(Date.now().toString(36)),
+    },
     esbuild: {
         jsx: 'automatic',
     },

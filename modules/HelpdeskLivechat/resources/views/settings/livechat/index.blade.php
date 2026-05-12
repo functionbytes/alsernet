@@ -145,7 +145,6 @@
 
 @section('content')
 
-<div class="container-fluid">
 
     {{-- Breadcrumb --}}
     <nav aria-label="breadcrumb" class="mb-3">
@@ -311,6 +310,11 @@
                 <li class="nav-item">
                     <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-timeouts" type="button">
                         <i class="fas fa-clock me-1"></i>Tiempos
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tracking" type="button">
+                        <i class="fas fa-satellite-dish me-1"></i>Tracking
                     </button>
                 </li>
                 <li class="nav-item">
@@ -554,6 +558,60 @@
                                             </label>
                                         </div>
                                         @endforeach
+
+                                        <hr class="my-3">
+                                        <p class="fw-semibold small mb-3">Archivos y emojis</p>
+
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="hidden" name="enable_file_upload" value="0">
+                                                <input class="form-check-input lc-sync" type="checkbox" role="switch"
+                                                       id="enable_file_upload" name="enable_file_upload" value="1"
+                                                       @checked($settings['enable_file_upload'] ?? true)>
+                                                <label class="form-check-label" for="enable_file_upload">
+                                                    Permitir envío de archivos
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block mt-1">El cliente puede adjuntar archivos en el chat</small>
+                                        </div>
+
+                                        <div id="file-types-section" class="ms-2 mb-3">
+                                            <p class="form-label mb-2 fw-semibold small">Tipos de archivo permitidos</p>
+                                            @php
+                                                $allowedTypes = $settings['allowed_file_types'] ?? ['images', 'documents'];
+                                            @endphp
+                                            @foreach([
+                                                'images'    => ['label' => 'Imágenes',   'desc' => 'JPG, PNG, GIF, WebP, SVG'],
+                                                'documents' => ['label' => 'Documentos', 'desc' => 'PDF, Word, Excel, PowerPoint, TXT'],
+                                                'video'     => ['label' => 'Vídeos',     'desc' => 'MP4, MOV, AVI, WebM'],
+                                                'audio'     => ['label' => 'Audio',      'desc' => 'MP3, WAV, OGG, M4A'],
+                                            ] as $type => $info)
+                                                <div class="form-check mb-1">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           id="file_type_{{ $type }}"
+                                                           name="allowed_file_types[]"
+                                                           value="{{ $type }}"
+                                                           @checked(in_array($type, $allowedTypes))>
+                                                    <label class="form-check-label" for="file_type_{{ $type }}">
+                                                        <span class="fw-medium">{{ $info['label'] }}</span>
+                                                        <small class="text-muted ms-1">{{ $info['desc'] }}</small>
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input type="hidden" name="enable_emoji" value="0">
+                                                <input class="form-check-input lc-sync" type="checkbox" role="switch"
+                                                       id="enable_emoji" name="enable_emoji" value="1"
+                                                       @checked($settings['enable_emoji'] ?? true)>
+                                                <label class="form-check-label" for="enable_emoji">
+                                                    Permitir emojis
+                                                </label>
+                                            </div>
+                                            <small class="text-muted d-block mt-1">Muestra el selector de emojis en el compositor</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -738,6 +796,103 @@
                     </div>
 
                     {{-- ═══════════════════════════════════════════ --}}
+                    {{-- TAB: TRACKING (page views, heartbeat)       --}}
+                    {{-- ═══════════════════════════════════════════ --}}
+                    <div class="tab-pane fade" id="tab-tracking">
+                        <div class="card">
+                            <div class="card-body">
+                                <p class="lc-section-title"><i class="fas fa-satellite-dish"></i>Tracking de visitantes</p>
+                                <p class="text-muted small mb-4">
+                                    Configura la frecuencia con que el widget reporta la página actual del visitante al panel de agentes.
+                                    Valores más bajos = más reactivo en tiempo real, valores más altos = menor consumo de red.
+                                </p>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="heartbeat_interval_seconds" class="form-label">
+                                            Intervalo de heartbeat (cliente)
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                   class="form-control"
+                                                   id="heartbeat_interval_seconds"
+                                                   name="heartbeat_interval_seconds"
+                                                   value="{{ $backups['heartbeat_interval_seconds'] ?? 15 }}"
+                                                   min="5" max="120" step="1">
+                                            <span class="input-group-text">segundos</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Cada cuánto el widget envía latido al servidor con la URL actual. Recomendado: 15s.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="heartbeat_cooldown_seconds" class="form-label">
+                                            Cooldown servidor (registro)
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                   class="form-control"
+                                                   id="heartbeat_cooldown_seconds"
+                                                   name="heartbeat_cooldown_seconds"
+                                                   value="{{ $backups['heartbeat_cooldown_seconds'] ?? 5 }}"
+                                                   min="1" max="60" step="1">
+                                            <span class="input-group-text">segundos</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Tiempo mínimo entre registros de página visitada (si la URL no cambió). Recomendado: 5s.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="sdk_batch_interval_ms" class="form-label">
+                                            Batch del SDK Engagement
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                   class="form-control"
+                                                   id="sdk_batch_interval_ms"
+                                                   name="sdk_batch_interval_ms"
+                                                   value="{{ $backups['sdk_batch_interval_ms'] ?? 1500 }}"
+                                                   min="500" max="10000" step="100">
+                                            <span class="input-group-text">ms</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Cada cuánto el SDK envía eventos acumulados (analytics, conversiones). Recomendado: 1500ms.
+                                        </small>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="sdk_batch_size" class="form-label">
+                                            Tamaño de batch del SDK
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="number"
+                                                   class="form-control"
+                                                   id="sdk_batch_size"
+                                                   name="sdk_batch_size"
+                                                   value="{{ $backups['sdk_batch_size'] ?? 10 }}"
+                                                   min="1" max="100" step="1">
+                                            <span class="input-group-text">eventos</span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Eventos acumulados antes de enviar de inmediato (sin esperar el intervalo). Recomendado: 10.
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mt-4 mb-0 d-flex align-items-start gap-2">
+                                    <i class="fas fa-circle-info mt-1"></i>
+                                    <div class="small">
+                                        <strong>Nota:</strong> el evento <code>page_view</code> hace flush inmediato sin importar el batch,
+                                        y los cambios de URL en SPAs disparan heartbeat al instante. Estos valores son límites de fondo.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ═══════════════════════════════════════════ --}}
                     {{-- TAB: INSTALAR                               --}}
                     {{-- ═══════════════════════════════════════════ --}}
                     <div class="tab-pane fade" id="tab-install">
@@ -898,7 +1053,6 @@
         </div>
 
     </div>
-</div>
 @endsection
 
 @push('scripts')
@@ -986,6 +1140,16 @@ $(document).ready(function () {
     @if(session('success'))
         toastr.success('{{ session('success') }}', 'Configuración guardada');
     @endif
+
+    // File types section visibility
+    (function () {
+        var toggle  = document.getElementById('enable_file_upload');
+        var section = document.getElementById('file-types-section');
+        if (!toggle || !section) { return; }
+        function sync() { section.style.display = toggle.checked ? '' : 'none'; }
+        toggle.addEventListener('change', sync);
+        sync();
+    }());
 });
 
 // ── Timeout toggles ────────────────────────────────────────────────────────

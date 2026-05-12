@@ -36,22 +36,22 @@ class WidgetConversationSecurityTest extends TestCase
     public function test_show_requires_customer_email(): void
     {
         $this->getJson(route('helpdesk-livechat.widget.conversation.show', $this->conversation->id))
-            ->assertForbidden()
-            ->assertJsonPath('message', 'No autorizado para ver esta conversación.');
+            ->assertUnauthorized()
+            ->assertJsonPath('error', 'Unauthorized');
     }
 
     public function test_show_allows_owner_with_email(): void
     {
         $this->getJson(route('helpdesk-livechat.widget.conversation.show', $this->conversation->id).'?customer_email='.urlencode($this->customer->email))
             ->assertOk()
-            ->assertJsonPath('data.conversation.id', $this->conversation->id);
+            ->assertJsonPath('data.id', $this->conversation->id);
     }
 
     public function test_get_messages_requires_customer_email(): void
     {
         $this->getJson(route('helpdesk-livechat.widget.conversation.messages.index', $this->conversation->id))
-            ->assertForbidden()
-            ->assertJsonPath('message', 'No autorizado para ver estos mensajes.');
+            ->assertUnauthorized()
+            ->assertJsonPath('error', 'Unauthorized');
     }
 
     public function test_get_messages_allows_owner_with_email(): void

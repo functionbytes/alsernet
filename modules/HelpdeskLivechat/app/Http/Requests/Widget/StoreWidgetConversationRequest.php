@@ -21,7 +21,13 @@ class StoreWidgetConversationRequest extends FormRequest
             'message' => ['nullable', 'string', 'max:5000'],
             'language' => ['nullable', 'string', 'max:10'],
             'customer_id' => ['nullable', 'integer'],
-            'custom_attributes' => ['nullable', 'array'],
+            'widget_session_token' => ['nullable', 'string', 'max:64'],
+            'custom_attributes' => ['nullable', 'array', 'max:20'],
+            'custom_attributes.*' => ['nullable', 'string', 'max:255'],
+            'engagement_context' => ['nullable', 'array'],
+            'engagement_context.score' => ['nullable', 'integer'],
+            'engagement_context.segment' => ['nullable', 'string', 'max:32'],
+            'engagement_context.identified' => ['nullable', 'boolean'],
         ];
     }
 

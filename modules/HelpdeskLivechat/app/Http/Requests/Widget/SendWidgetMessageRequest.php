@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskLivechat\Http\Requests\Widget;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendWidgetMessageRequest extends FormRequest
@@ -20,9 +21,16 @@ class SendWidgetMessageRequest extends FormRequest
             'customer_email' => ['nullable', 'email'],
             'email' => ['nullable', 'email', 'max:255'],
             'name' => ['nullable', 'string', 'max:200'],
-            'custom_attributes' => ['nullable', 'array'],
+            'custom_attributes' => ['nullable', 'array', 'max:20'],
+            'custom_attributes.*' => ['nullable', 'string', 'max:255'],
             'attachments' => ['nullable', 'array', 'max:10'],
-            'attachments.*' => ['file', 'max:10240'],
+            'attachments.*' => [
+                'file',
+                'max:10240',
+                // Allow common safe types. Dangerous formats (exe, html, js, php, svg)
+                // are excluded because svg can embed JS and server-executed files pose RCE risk.
+                'mimes:jpeg,jpg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,mp3,mp4,wav,ogg,webm',
+            ],
         ];
     }
 
@@ -44,7 +52,7 @@ class SendWidgetMessageRequest extends FormRequest
         }
     }
 
-    public function withValidator($validator): void
+    public function withValidator(Validator $validator): void
     {
         $validator->after(function ($v) {
             $hasContent = trim((string) $this->input('content', '')) !== '';
@@ -61,6 +69,7 @@ class SendWidgetMessageRequest extends FormRequest
             'attachments.max' => 'Máximo 10 archivos por mensaje.',
             'attachments.*.file' => 'Cada adjunto debe ser un archivo válido.',
             'attachments.*.max' => 'Cada archivo no puede superar 10 MB.',
+            'attachments.*.mimes' => 'Tipo de archivo no permitido. Se aceptan: imágenes, PDF, documentos Office, audio y video.',
         ];
     }
 }

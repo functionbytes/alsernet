@@ -3,9 +3,11 @@
 namespace Modules\HelpdeskLivechat\Services\Widget;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
@@ -14,9 +16,15 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Models\WidgetSession;
+use Modules\HelpdeskLivechat\Services\WidgetSessionService;
 
 class WidgetConversationService
 {
+    public function __construct(
+        private readonly WidgetSessionService $sessionService
+    ) {}
+
     /**
      * Create (or reuse) a conversation initiated from the widget.
      *
@@ -80,10 +88,16 @@ class WidgetConversationService
                 ]);
             }
 
+            $openStatusIds = Cache::remember(
+                'helpdesklivechat:open_status_ids',
+                now()->addMinutes(30),
+                fn (): array => ConversationStatus::query()->where('is_open', true)->pluck('id')->all()
+            );
+
             $existing = Conversation::where('customer_id', $customer->id)
                 ->where('inbox_id', $inbox->id)
                 ->whereNull('closed_at')
-                ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                ->whereIn('status_id', $openStatusIds)
                 ->latest('last_message_at')
                 ->first();
 
@@ -104,6 +118,18 @@ class WidgetConversationService
 
                 $this->syncCustomerInbox($customer, $inbox);
 
+                // Recover or backfill the pubsub_token for existing conversations.
+                $existingMeta = is_array($existing->metadata)
+                    ? $existing->metadata
+                    : (json_decode((string) ($existing->metadata ?? '{}'), true) ?? []);
+                $existingPubsubToken = $existingMeta['widget_pubsub_token'] ?? null;
+
+                if (! $existingPubsubToken) {
+                    $existingPubsubToken = Str::random(32);
+                    $existingMeta['widget_pubsub_token'] = $existingPubsubToken;
+                    $existing->update(['metadata' => json_encode($existingMeta)]);
+                }
+
                 return [
                     'conversation_id' => (int) $existing->id,
                     'customer_id' => (int) $customer->id,
@@ -112,6 +138,7 @@ class WidgetConversationService
                         'email' => $customer->email,
                         'name' => $customer->name,
                     ],
+                    'pubsub_token' => $existingPubsubToken,
                     'reused' => true,
                 ];
             }
@@ -120,6 +147,35 @@ class WidgetConversationService
                 ->orderBy('order')
                 ->first();
 
+            // Generate a cryptographically random pubsub_token stored in metadata.
+            // The widget receives this token and appends it to the channel name so
+            // that the broadcast channel is unguessable even if the conversation ID
+            // is known. No migration needed — metadata is an existing JSON column.
+            $pubsubToken = Str::random(32);
+
+            $metadata = ['widget_pubsub_token' => $pubsubToken];
+            if (! empty($data['engagement_context']) && is_array($data['engagement_context'])) {
+                $metadata['engagement_context'] = $data['engagement_context'];
+            }
+            // Track widget session token so the agent panel can show technology
+            // (IP, browser, OS, country) and visited pages for this conversation.
+            // Also link the WidgetSession to the customer so analytics works.
+            if (! empty($data['widget_session_token'])) {
+                $sessionToken = (string) $data['widget_session_token'];
+                $metadata['widget_session_token'] = $sessionToken;
+
+                $req = request();
+                $referer = $req->header('Referer') ?? $req->header('Origin') ?? 'https://unknown';
+
+                // Guarantee the session exists (heartbeat may lose the race with conversation creation).
+                $this->sessionService->heartbeat($sessionToken, $referer, null, $req);
+
+                WidgetSession::query()
+                    ->where('session_token', $sessionToken)
+                    ->whereNull('customer_id')
+                    ->update(['customer_id' => $customer->id]);
+            }
+
             $conversation = Conversation::create([
                 'customer_id' => $customer->id,
                 'inbox_id' => $inbox->id,
@@ -127,7 +183,17 @@ class WidgetConversationService
                 'status_id' => $openStatus?->id,
                 'subject' => Str::limit($data['message'] ?? 'Nueva conversación desde widget', 80, ''),
                 'last_message_at' => now(),
+                'metadata' => json_encode($metadata),
             ]);
+
+            // Cache session→conversation mapping for real-time heartbeat broadcasts.
+            if (! empty($data['widget_session_token'])) {
+                Cache::put(
+                    'helpdesklivechat:session_conv:'.(string) $data['widget_session_token'],
+                    $conversation->id,
+                    now()->addDay()
+                );
+            }
 
             if (! empty($data['message'])) {
                 ConversationItem::create([
@@ -141,6 +207,8 @@ class WidgetConversationService
 
             $this->syncCustomerInbox($customer, $inbox);
 
+            ConversationCreated::dispatch($conversation);
+
             return [
                 'conversation_id' => (int) $conversation->id,
                 'customer_id' => (int) $customer->id,
@@ -149,30 +217,54 @@ class WidgetConversationService
                     'email' => $customer->email,
                     'name' => $customer->name,
                 ],
+                'pubsub_token' => $pubsubToken,
                 'reused' => false,
             ];
         });
     }
 
     /**
-     * @return array{conversation_id: int, messages: array<int, array<string, mixed>>}
+     * Cursor-based pagination for conversation messages.
+     *
+     * @param  int|null  $beforeId  Fetch messages older than this id (for "load more")
+     * @param  int  $limit  Page size, clamped to [1, 200]
+     * @return array{conversation_id: int, messages: array<int, array<string, mixed>>, has_more: bool, next_cursor: int|null}
      */
-    public function getMessages(int $conversationId, int $customerId): array
+    public function getMessages(int $conversationId, int $customerId, ?int $beforeId = null, int $limit = 100): array
     {
         $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
 
-        $messages = ConversationItem::where('conversation_id', $conversation->id)
+        $limit = max(1, min(200, $limit));
+
+        $items = ConversationItem::query()
+            ->with(['user:id,firstname,lastname', 'author:id,name,email'])
+            ->where('conversation_id', $conversation->id)
             ->where('is_internal', false)
-            ->orderBy('created_at', 'asc')
-            ->limit(200)
-            ->get()
+            ->where('type', '!=', 'activity')
+            ->when($beforeId !== null, fn ($q) => $q->where('id', '<', $beforeId))
+            ->orderBy('id', 'desc')
+            ->limit($limit + 1)
+            ->get();
+
+        $hasMore = $items->count() > $limit;
+
+        if ($hasMore) {
+            $items = $items->take($limit);
+        }
+
+        // Reverse so the API still returns oldest-first within the page.
+        $messages = $items->reverse()
             ->map(fn (ConversationItem $item) => $this->itemToArray($item))
             ->values()
             ->all();
 
+        $nextCursor = $hasMore ? (int) $items->last()->id : null;
+
         return [
             'conversation_id' => $conversation->id,
             'messages' => $messages,
+            'has_more' => $hasMore,
+            'next_cursor' => $nextCursor,
         ];
     }
 
@@ -213,11 +305,18 @@ class WidgetConversationService
 
         $attachments = $this->storeAttachments($conversationId, $data['attachments'] ?? []);
 
+        // Sanitize visitor-supplied body before persisting. Only applied to web
+        // channel messages (widget visitors). Agent messages are NOT sanitized here
+        // — agents may send rich HTML via the admin panel using their own editor.
+        // clean() uses HTMLPurifier (ezyang/htmlpurifier) which strips dangerous
+        // attributes (onclick, javascript:, etc.) — safer than strip_tags allowlist.
+        $body = clean((string) ($data['content'] ?? ''));
+
         $item = ConversationItem::create([
             'conversation_id' => $conversation->id,
             'author_id' => $customerId,
             'type' => 'message',
-            'body' => $data['content'] ?? '',
+            'body' => $body,
             'is_internal' => false,
             'attachment_urls' => $attachments,
         ]);
@@ -225,7 +324,7 @@ class WidgetConversationService
         $conversation->update(['last_message_at' => now()]);
 
         // Broadcast to widget + agent panel + sidebar (single event reaches both).
-        event(new MessageReceived($conversation->fresh(), $item));
+        event(new MessageReceived($conversation, $item));
         broadcast(new ConversationMessageCreated(
             $item,
             $conversation->wasRecentlyCreated ?? false,

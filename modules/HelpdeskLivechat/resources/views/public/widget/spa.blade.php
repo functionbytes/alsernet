@@ -35,17 +35,17 @@
 <body>
     @php
         $widgetConfig = array_merge($config ?? [], [
-            'reverbKey' => env('REVERB_APP_KEY', 'local-key'),
-            'reverbHost' => env('REVERB_HOST', request()->getHost()),
-            'reverbPort' => (int) env('REVERB_PORT', 8090),
-            'reverbScheme' => env('REVERB_SCHEME', request()->isSecure() ? 'https' : 'http'),
+            'reverbKey' => config('broadcasting.connections.reverb.key', 'local-key'),
+            'reverbHost' => config('broadcasting.connections.reverb.options.host', request()->getHost()),
+            'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
+            'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', request()->isSecure() ? 'https' : 'http'),
             'channelPrefix' => 'helpdesk-widget-conversation',
             'eventName' => '.message.received',
+            'baseUrl' => url('/'),
         ]);
     @endphp
-    @if($websiteToken && !empty($config))
-        <script>window.HELPDESK_WIDGET_CONFIG = {!! json_encode($widgetConfig) !!};</script>
-    @endif
+    {{-- Always inject config: even in preview (without token) the widget needs reverbHost/Port and baseUrl. --}}
+    <script>window.HELPDESK_WIDGET_CONFIG = {!! json_encode($widgetConfig) !!};</script>
 
     <div id="widget-root" data-launcher="false" data-preview="{{ ($isPreview ?? false) ? 'true' : 'false' }}" data-inline="{{ ($isPreview ?? false) ? 'false' : 'true' }}"></div>
 
@@ -73,8 +73,30 @@
             consent: true,
         });
         window.chat('on', 'trigger:fired', function (e) {
-            if (e && e.action && e.action.type === 'open_chat' && window.HelpdeskWidget && typeof window.HelpdeskWidget.open === 'function') {
-                window.HelpdeskWidget.open();
+            var action = (e && e.action) ? e.action : {};
+            var w = window.HelpdeskWidget;
+            if (!w) return;
+
+            switch (action.type) {
+                case 'open_chat':
+                    w.open();
+                    break;
+                case 'show_message_in_chat':
+                    w.botMessage(action.text || action.message || '');
+                    w.open();
+                    break;
+                case 'prefill_form':
+                    w.prefill(action.fields || {});
+                    w.open();
+                    break;
+                case 'request_rating':
+                    w.requestRating();
+                    w.open();
+                    break;
+                case 'inject_recommendations':
+                    w.showRecommendations(action.products || []);
+                    w.open();
+                    break;
             }
         });
         </script>

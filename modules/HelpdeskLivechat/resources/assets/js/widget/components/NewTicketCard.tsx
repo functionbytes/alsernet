@@ -1,24 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CardLayout } from './CardLayout';
 import { useTranslation } from '../i18n/useLanguage';
 
 export function NewTicketCard() {
     const t = useTranslation();
 
     return (
-        <CardLayout>
-            <Link to="/tickets/new" className="wgt-card-link">
-                <div className="wgt-flex-1">
-                    <div className="wgt-card-body-title">{t('home.create_ticket')}</div>
-                    <div className="wgt-card-body-desc">{t('home.create_ticket_desc')}</div>
+        <div className="wgt-bedesk-card">
+            <Link to="/tickets/new" className="wgt-bedesk-send-link">
+                <div>
+                    <div className="wgt-bedesk-send-title">{t('home.create_ticket')}</div>
+                    <div className="wgt-bedesk-send-subtitle">{t('home.create_ticket_desc')}</div>
                 </div>
-                <div className="wgt-card-chevron">
-                    <svg className="wgt-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                    </svg>
-                </div>
+                <svg className="wgt-bedesk-send-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z" />
+                </svg>
             </Link>
-        </CardLayout>
+        </div>
     );
 }

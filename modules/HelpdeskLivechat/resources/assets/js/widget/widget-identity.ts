@@ -84,12 +84,10 @@ export function getCustomAttributes(): Record<string, unknown> | null {
 /** Register the global API so the host site can identify the visitor. */
 export function registerGlobalApi(): void {
     (window as any).helpdeskWidgetIdentify = (identity: VisitorIdentity) => {
-        console.log('[Helpdesk Widget] Visitor identified:', identity);
         setVisitorIdentity(identity);
     };
 
     (window as any).helpdeskWidgetClearIdentity = () => {
-        console.log('[Helpdesk Widget] Visitor identity cleared');
         clearVisitorIdentity();
     };
 }

@@ -69,10 +69,10 @@ class WidgetScriptController extends Controller
         return array_merge(
             $web->getWidgetConfig(),
             [
-                'reverbKey' => env('REVERB_APP_KEY', 'local-key'),
-                'reverbHost' => env('REVERB_HOST', request()->getHost()),
-                'reverbPort' => (int) env('REVERB_PORT', 8090),
-                'reverbScheme' => env('REVERB_SCHEME', request()->isSecure() ? 'https' : 'http'),
+                'reverbKey' => config('broadcasting.connections.reverb.key', ''),
+                'reverbHost' => config('broadcasting.connections.reverb.options.host', request()->getHost()),
+                'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
+                'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', request()->isSecure() ? 'https' : 'http'),
                 'channelPrefix' => 'helpdesk-widget-conversation',
                 'eventName' => '.message.received',
             ]

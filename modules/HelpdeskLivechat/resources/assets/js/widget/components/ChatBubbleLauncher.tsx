@@ -11,20 +11,16 @@ export function ChatBubbleLauncher({ onToggle, isOpen }: ChatBubbleLauncherProps
     const [isHovered, setIsHovered] = useState(false);
 
     const position = settings.position || 'bottom-right';
-    const sideSpacing = settings.side_spacing || 16;
-    const bottomSpacing = settings.bottom_spacing || 16;
+    const sideSpacing = settings.side_spacing ?? 16;
+    const bottomSpacing = settings.bottom_spacing ?? 16;
+    const isOnline = settings.is_open !== false;
 
     const positionStyles: React.CSSProperties = {
         position: 'fixed',
         zIndex: 9999,
         bottom: `${bottomSpacing}px`,
+        ...(position === 'bottom-right' ? { right: `${sideSpacing}px` } : { left: `${sideSpacing}px` }),
     };
-
-    if (position === 'bottom-right') {
-        positionStyles.right = `${sideSpacing}px`;
-    } else {
-        positionStyles.left = `${sideSpacing}px`;
-    }
 
     return (
         <div style={positionStyles} className="wgt-launcher">
@@ -37,8 +33,12 @@ export function ChatBubbleLauncher({ onToggle, isOpen }: ChatBubbleLauncherProps
                     backgroundColor: settings.primary_color || '#b10100',
                     transform: isHovered ? 'scale(1.05)' : 'scale(1)',
                 }}
-                aria-label={isOpen ? 'Close chat' : 'Open chat'}
+                aria-label={isOpen ? 'Cerrar chat' : 'Abrir chat'}
             >
+                {/* Fix 5: offline dot indicator */}
+                {!isOnline && !isOpen && (
+                    <span className="wgt-launcher-offline-dot" aria-label="Fuera de línea" />
+                )}
                 <div
                     className="wgt-launcher-icon"
                     style={{ transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}

@@ -27,7 +27,7 @@ export function SettingsPreviewListener() {
                     break;
 
                 default:
-                    console.log('Unknown command type:', event.data.type);
+                    break;
             }
         };
 
