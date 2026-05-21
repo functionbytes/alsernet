@@ -13,6 +13,7 @@ use Modules\Remarketing\Http\Requests\Web\StoreCampaignRequest;
 use Modules\Remarketing\Http\Requests\Web\UpdateCampaignRequest;
 use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Campaign;
+use Modules\Remarketing\Models\CampaignVariant;
 use Modules\Remarketing\Models\Segment;
 use Modules\Remarketing\Models\Store;
 use Modules\Remarketing\Models\Template;
@@ -67,7 +68,9 @@ class CampaignController extends Controller
             $data['status'] = 'draft';
         }
 
-        Campaign::query()->create($data);
+        $campaign = Campaign::query()->create($data);
+
+        $this->syncVariants($campaign, $request->input('ab_variants', []));
 
         return redirect()->route('remarketing.campaigns.index')
             ->with('success', 'Campaña creada correctamente.');
@@ -77,6 +80,7 @@ class CampaignController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        $campaign->load('variants');
         [$stores, $templates, $segments, $languages] = $this->getFormData();
 
         return view('remarketing::campaigns.form', compact('campaign', 'stores', 'templates', 'segments', 'languages'));
@@ -98,6 +102,8 @@ class CampaignController extends Controller
         }
 
         $campaign->update($data);
+
+        $this->syncVariants($campaign, $request->input('ab_variants', []));
 
         return redirect()->route('remarketing.campaigns.index')
             ->with('success', 'Campaña actualizada correctamente.');
@@ -175,6 +181,30 @@ class CampaignController extends Controller
         }
 
         return view('remarketing::campaigns.preview', compact('campaign', 'html'));
+    }
+
+    private function syncVariants(Campaign $campaign, array $incoming): void
+    {
+        $incomingIds = array_filter(array_column($incoming, 'id'));
+
+        // Remove variants not in the submitted list
+        $campaign->variants()->whereNotIn('id', $incomingIds)->delete();
+
+        foreach ($incoming as $row) {
+            $id = $row['id'] ?? null;
+            $attrs = [
+                'campaign_id' => $campaign->id,
+                'name' => $row['name'] ?? 'Variante',
+                'subject' => $row['subject'] ?? null,
+                'weight' => max(1, min(99, (int) ($row['weight'] ?? 50))),
+            ];
+
+            if ($id) {
+                CampaignVariant::query()->where('id', $id)->update($attrs);
+            } else {
+                CampaignVariant::query()->create($attrs);
+            }
+        }
     }
 
     private function preparePreviewVariables(Campaign $campaign): array

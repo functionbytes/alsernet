@@ -16,6 +16,7 @@ class Message extends Model
         'store_id',
         'customer_id',
         'campaign_id',
+        'variant_id',
         'automation_run_id',
         'email',
         'subject',
@@ -67,5 +68,10 @@ class Message extends Model
     public function automationRun(): BelongsTo
     {
         return $this->belongsTo(AutomationRun::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(CampaignVariant::class);
     }
 }

@@ -38,6 +38,11 @@
                             Programación
                         </button>
                     </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ab">
+                            A/B test
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div class="tab-content">
@@ -213,6 +218,65 @@
                     </div>
                 </div>
 
+                {{-- Tab: A/B test --}}
+                <div class="tab-pane fade p-4" id="tab-ab">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-0">Variantes A/B</h6>
+                            <small class="text-muted">Cada variante envía a un porcentaje del segmento. Los pesos deben sumar 100.</small>
+                        </div>
+                        <button type="button" id="btn-add-variant" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i> Añadir variante
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Métrica ganadora</label>
+                        <select name="ab_winner_metric" class="form-select" style="max-width:220px">
+                            <option value="open_rate" {{ old('ab_winner_metric', $campaign->ab_winner_metric ?? 'open_rate') === 'open_rate' ? 'selected' : '' }}>Open rate</option>
+                            <option value="ctr"        {{ old('ab_winner_metric', $campaign->ab_winner_metric ?? '') === 'ctr'        ? 'selected' : '' }}>CTR (clicks)</option>
+                            <option value="revenue"    {{ old('ab_winner_metric', $campaign->ab_winner_metric ?? '') === 'revenue'    ? 'selected' : '' }}>Revenue atribuido</option>
+                        </select>
+                    </div>
+
+                    <div id="ab-variants-container">
+                        @forelse($campaign->variants ?? [] as $variant)
+                            <div class="ab-variant-row border rounded p-3 mb-2" data-variant-id="{{ $variant->id }}">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-4">
+                                        <input type="text" name="ab_variants[{{ $loop->index }}][name]"
+                                               class="form-control form-control-sm" placeholder="Nombre (ej. Variante A)"
+                                               value="{{ $variant->name }}" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" name="ab_variants[{{ $loop->index }}][subject]"
+                                               class="form-control form-control-sm" placeholder="Asunto del email"
+                                               value="{{ $variant->subject }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" name="ab_variants[{{ $loop->index }}][weight]"
+                                                   class="form-control" placeholder="%" value="{{ $variant->weight }}" min="1" max="99">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-variant">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @if($variant->is_winner)
+                                    <div class="mt-1"><span class="badge bg-warning-subtle text-warning"><i class="fas fa-trophy me-1"></i> Ganadora</span></div>
+                                @endif
+                                <input type="hidden" name="ab_variants[{{ $loop->index }}][id]" value="{{ $variant->id }}">
+                            </div>
+                        @empty
+                            <p class="text-muted small" id="ab-no-variants">Sin variantes. El envío usará el asunto principal de la campaña.</p>
+                        @endforelse
+                    </div>
+                </div>
+
             </div>
 
             <div class="card-footer d-flex gap-2">
@@ -274,6 +338,29 @@ $(document).ready(function () {
 
     // Load preview on init
     loadPreview($('#templateSelect').val());
+
+    // A/B variants
+    var abIndex = {{ isset($campaign) ? $campaign->variants->count() : 0 }};
+
+    $('#btn-add-variant').on('click', function () {
+        $('#ab-no-variants').hide();
+        var html = '<div class="ab-variant-row border rounded p-3 mb-2">' +
+            '<div class="row g-2 align-items-center">' +
+            '<div class="col-md-4"><input type="text" name="ab_variants[' + abIndex + '][name]" class="form-control form-control-sm" placeholder="Nombre (ej. Variante ' + String.fromCharCode(65 + abIndex) + ')" required></div>' +
+            '<div class="col-md-5"><input type="text" name="ab_variants[' + abIndex + '][subject]" class="form-control form-control-sm" placeholder="Asunto del email"></div>' +
+            '<div class="col-md-2"><div class="input-group input-group-sm"><input type="number" name="ab_variants[' + abIndex + '][weight]" class="form-control" placeholder="%" value="50" min="1" max="99"><span class="input-group-text">%</span></div></div>' +
+            '<div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-variant"><i class="fas fa-trash"></i></button></div>' +
+            '</div></div>';
+        $('#ab-variants-container').append(html);
+        abIndex++;
+    });
+
+    $(document).on('click', '.btn-remove-variant', function () {
+        $(this).closest('.ab-variant-row').remove();
+        if ($('.ab-variant-row').length === 0) {
+            $('#ab-no-variants').show();
+        }
+    });
 
 });
 </script>

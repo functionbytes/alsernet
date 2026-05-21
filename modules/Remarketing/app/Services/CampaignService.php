@@ -3,11 +3,13 @@
 namespace Modules\Remarketing\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Campaign;
+use Modules\Remarketing\Models\CampaignVariant;
 use Modules\Remarketing\Models\ConsentEvent;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Message;
@@ -63,6 +65,7 @@ class CampaignService
         $holdoutCount = 0;
 
         $holdoutPct = $this->resolveHoldoutPct($campaign);
+        $variants = $campaign->variants()->get();
 
         // Pre-load all suppressions for this store into memory (O(1) lookup per customer)
         $suppressedEmails = Suppression::query()
@@ -77,7 +80,7 @@ class CampaignService
                 ->where('store_id', $campaign->store_id)
                 ->withEmailMarketingConsent();
 
-        $query->chunk(500, function ($customers) use ($campaign, $holdoutPct, &$dispatched, &$holdoutCount, $suppressedEmails): void {
+        $query->chunk(500, function ($customers) use ($campaign, $holdoutPct, $variants, &$dispatched, &$holdoutCount, $suppressedEmails): void {
             foreach ($customers as $customer) {
                 if (! $customer->email) {
                     continue;
@@ -89,12 +92,19 @@ class CampaignService
 
                 $isHoldout = $this->shouldHoldOut($customer->email, $campaign->id, $holdoutPct);
 
+                $variant = $variants->isNotEmpty()
+                    ? $this->pickVariant($customer->email, $campaign->id, $variants)
+                    : null;
+
+                $subject = $variant?->subject ?? $campaign->subject;
+
                 $message = Message::create([
                     'store_id' => $campaign->store_id,
                     'customer_id' => $customer->id,
                     'campaign_id' => $campaign->id,
+                    'variant_id' => $variant?->id,
                     'email' => $customer->email,
-                    'subject' => $campaign->subject,
+                    'subject' => $subject,
                     'status' => $isHoldout ? 'suppressed' : 'queued',
                     'is_holdout' => $isHoldout,
                     'open_token' => Str::random(64),
@@ -122,6 +132,78 @@ class CampaignService
         ]);
 
         return $dispatched;
+    }
+
+    /**
+     * Deterministic variant assignment: same email always gets same variant.
+     * Respects variant weights (should sum to 100; tolerant if they don't).
+     */
+    protected function pickVariant(string $email, int $campaignId, Collection $variants): ?CampaignVariant
+    {
+        $totalWeight = $variants->sum('weight');
+
+        if ($totalWeight <= 0) {
+            return $variants->first();
+        }
+
+        $bucket = abs(crc32(strtolower(trim($email)).'|ab|'.$campaignId)) % $totalWeight;
+        $cumulative = 0;
+
+        foreach ($variants as $variant) {
+            $cumulative += $variant->weight;
+            if ($bucket < $cumulative) {
+                return $variant;
+            }
+        }
+
+        return $variants->last();
+    }
+
+    /**
+     * Recalculate per-variant stats from messages table. Also picks a winner.
+     */
+    public function recalculateVariantStats(Campaign $campaign): void
+    {
+        $variants = $campaign->variants()->get();
+
+        if ($variants->isEmpty()) {
+            return;
+        }
+
+        $winnerMetric = $campaign->ab_winner_metric ?? 'open_rate';
+
+        foreach ($variants as $variant) {
+            $stats = Message::query()
+                ->where('variant_id', $variant->id)
+                ->where('is_holdout', false)
+                ->selectRaw('
+                    COUNT(*) as sent,
+                    SUM(status IN ("opened","clicked")) as opened,
+                    SUM(status = "clicked") as clicked,
+                    SUM(revenue) as revenue
+                ')
+                ->first();
+
+            $variant->update([
+                'sent' => (int) ($stats->sent ?? 0),
+                'opened' => (int) ($stats->opened ?? 0),
+                'clicked' => (int) ($stats->clicked ?? 0),
+                'revenue' => (float) ($stats->revenue ?? 0),
+            ]);
+        }
+
+        // Refresh after updates
+        $variants = $campaign->variants()->get();
+
+        $winner = $variants->sortByDesc(fn (CampaignVariant $v) => match ($winnerMetric) {
+            'ctr' => $v->ctr(),
+            'revenue' => (float) $v->revenue,
+            default => $v->openRate(),
+        })->first();
+
+        if ($winner) {
+            $variants->each(fn (CampaignVariant $v) => $v->update(['is_winner' => $v->id === $winner->id]));
+        }
     }
 
     /**

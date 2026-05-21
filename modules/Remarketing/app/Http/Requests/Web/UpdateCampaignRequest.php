@@ -26,6 +26,12 @@ class UpdateCampaignRequest extends FormRequest
             'scheduled_at' => ['nullable', 'date'],
             'settings' => ['nullable', 'array'],
             'settings.holdout_pct' => ['nullable', 'integer', 'between:0,50'],
+            'ab_winner_metric' => ['nullable', 'string', 'in:open_rate,ctr,revenue'],
+            'ab_variants' => ['nullable', 'array'],
+            'ab_variants.*.id' => ['nullable', 'integer', 'exists:remarketing_campaign_variants,id'],
+            'ab_variants.*.name' => ['required_with:ab_variants', 'string', 'max:100'],
+            'ab_variants.*.subject' => ['nullable', 'string', 'max:255'],
+            'ab_variants.*.weight' => ['nullable', 'integer', 'between:1,99'],
         ];
     }
 
