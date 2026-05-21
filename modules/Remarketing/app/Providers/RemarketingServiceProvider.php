@@ -40,6 +40,7 @@ use Modules\Remarketing\Models\Segment;
 use Modules\Remarketing\Models\Store;
 use Modules\Remarketing\Models\Suppression;
 use Modules\Remarketing\Models\Template;
+use Modules\Remarketing\Models\Webhook;
 use Modules\Remarketing\Observers\ConsentEventObserver;
 use Modules\Remarketing\Observers\OrderObserver;
 use Modules\Remarketing\Policies\AutomationPolicy;
@@ -50,6 +51,7 @@ use Modules\Remarketing\Policies\SegmentPolicy;
 use Modules\Remarketing\Policies\StorePolicy;
 use Modules\Remarketing\Policies\SuppressionPolicy;
 use Modules\Remarketing\Policies\TemplatePolicy;
+use Modules\Remarketing\Policies\WebhookPolicy;
 use Modules\Remarketing\Services\ChannelRegistry;
 use Modules\Remarketing\Services\StepHandlerRegistry;
 use Modules\Remarketing\Steps\SendEmailStepHandler;
@@ -197,6 +199,11 @@ class RemarketingServiceProvider extends ServiceProvider
                     'route' => 'settings.remarketing.suppressions',
                     'permission' => 'remarketing.suppressions.view',
                 ],
+                [
+                    'label' => 'Webhooks',
+                    'route' => 'settings.remarketing.webhooks.index',
+                    'permission' => 'remarketing.settings.view',
+                ],
             ],
         ]);
     }
@@ -211,6 +218,7 @@ class RemarketingServiceProvider extends ServiceProvider
             Automation::class => AutomationPolicy::class,
             Template::class => TemplatePolicy::class,
             Suppression::class => SuppressionPolicy::class,
+            Webhook::class => WebhookPolicy::class,
         ];
 
         foreach ($policies as $model => $policy) {

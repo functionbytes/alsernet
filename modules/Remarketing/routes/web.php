@@ -68,6 +68,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/suppressions', [Settings\SettingsController::class, 'suppressions'])->name('suppressions');
             Route::get('/suppressions/export', [Settings\SettingsController::class, 'exportSuppressions'])->name('suppressions.export');
             Route::post('/suppressions/import', [Settings\SettingsController::class, 'importSuppressions'])->name('suppressions.import');
+
+            Route::prefix('webhooks')->name('webhooks.')->group(function () {
+                Route::get('/', [Settings\WebhookSettingsController::class, 'index'])->name('index');
+                Route::post('/', [Settings\WebhookSettingsController::class, 'store'])->name('store');
+                Route::put('/{webhook}', [Settings\WebhookSettingsController::class, 'update'])->name('update');
+                Route::delete('/{webhook}', [Settings\WebhookSettingsController::class, 'destroy'])->name('destroy');
+            });
         });
 });
 

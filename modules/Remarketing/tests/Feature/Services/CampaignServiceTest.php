@@ -18,6 +18,7 @@ use Modules\Remarketing\Models\Suppression;
 use Modules\Remarketing\Services\CampaignService;
 use Modules\Remarketing\Services\ConsentService;
 use Modules\Remarketing\Services\SegmentService;
+use Modules\Remarketing\Services\WebhookService;
 use Tests\TestCase;
 
 class CampaignServiceTest extends TestCase
@@ -39,6 +40,7 @@ class CampaignServiceTest extends TestCase
         $this->service = new CampaignService(
             new ConsentService,
             new SegmentService,
+            new WebhookService,
         );
         $this->store = $this->createStore();
     }

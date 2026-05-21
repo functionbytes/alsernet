@@ -20,6 +20,7 @@ class CampaignService
     public function __construct(
         private readonly ConsentService $consentService,
         private readonly SegmentService $segmentService,
+        private readonly WebhookService $webhookService,
     ) {}
 
     /**
@@ -129,6 +130,12 @@ class CampaignService
                 'holdout_count' => $holdoutCount,
                 'holdout_pct_applied' => $holdoutPct,
             ]),
+        ]);
+
+        $this->webhookService->fire('campaign.sent', $campaign->store_id, [
+            'campaign_id' => $campaign->id,
+            'campaign_name' => $campaign->name,
+            'dispatched' => $dispatched,
         ]);
 
         return $dispatched;
@@ -307,6 +314,15 @@ class CampaignService
                 'holdout_revenue' => round($holdoutRevenue, 2),
                 'incremental_revenue' => round($incrementalRevenue, 2),
             ]),
+        ]);
+
+        $this->webhookService->fire('campaign.completed', $campaign->store_id, [
+            'campaign_id' => $campaign->id,
+            'campaign_name' => $campaign->name,
+            'sent' => (int) ($stats->sent ?? 0),
+            'opened' => (int) ($stats->opened ?? 0),
+            'clicked' => (int) ($stats->clicked ?? 0),
+            'revenue' => (float) ($stats->revenue ?? 0),
         ]);
     }
 }
