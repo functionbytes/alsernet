@@ -17,9 +17,11 @@ class CustomerController extends Controller
 
         $user = auth()->user();
 
-        $storeIds = Store::query()
+        $stores = Store::query()
             ->when(! $user->can('remarketing.manage'), fn ($q) => $q->where('user_id', $user->id))
-            ->pluck('id');
+            ->get();
+
+        $storeIds = $stores->pluck('id');
 
         $customers = Customer::query()
             ->with('store')
@@ -38,7 +40,7 @@ class CustomerController extends Controller
             ->latest()
             ->paginate(20);
 
-        return view('remarketing::customers.index', compact('customers'));
+        return view('remarketing::customers.index', compact('customers', 'stores'));
     }
 
     public function show(Customer $customer): View
@@ -47,22 +49,102 @@ class CustomerController extends Controller
 
         $customer->load('store');
 
-        $recentMessages = $customer->messages()
+        $messages = $customer->messages()
             ->with('campaign')
             ->latest('sent_at')
             ->limit(10)
             ->get();
 
-        $timeline = $customer->events()
+        $events = $customer->events()
             ->latest('occurred_at')
             ->limit(30)
             ->get();
 
-        $consentHistory = $customer->consentEvents()
+        $orders = $customer->orders()
+            ->latest('placed_at')
+            ->limit(20)
+            ->get();
+
+        $consentEvents = $customer->consentEvents()
             ->latest('occurred_at')
             ->get();
 
-        return view('remarketing::customers.show', compact('customer', 'recentMessages', 'timeline', 'consentHistory'));
+        $timeline = $this->buildTimeline($events, $orders, $messages, $consentEvents);
+
+        return view('remarketing::customers.show', compact('customer', 'messages', 'events', 'orders', 'consentEvents', 'timeline'));
+    }
+
+    /**
+     * Merge events, orders, messages and consent events into a unified timeline (desc by date).
+     */
+    private function buildTimeline(mixed $events, mixed $orders, mixed $messages, mixed $consentEvents): array
+    {
+        $items = [];
+
+        foreach ($events as $e) {
+            $items[] = [
+                'kind' => 'event',
+                'date' => $e->occurred_at,
+                'icon' => 'fa-circle-dot',
+                'tone' => 'primary',
+                'title' => $e->type,
+                'subtitle' => $this->summarizeProperties($e->properties ?? []),
+                'meta' => null,
+            ];
+        }
+
+        foreach ($orders as $o) {
+            $items[] = [
+                'kind' => 'order',
+                'date' => $o->placed_at,
+                'icon' => 'fa-shopping-bag',
+                'tone' => 'success',
+                'title' => 'Pedido '.($o->order_number ?: '#'.$o->id),
+                'subtitle' => $o->status.' · '.number_format($o->total, 2).' '.$o->currency,
+                'meta' => null,
+            ];
+        }
+
+        foreach ($messages as $m) {
+            $items[] = [
+                'kind' => 'message',
+                'date' => $m->sent_at ?? $m->created_at,
+                'icon' => 'fa-envelope',
+                'tone' => 'info',
+                'title' => $m->subject,
+                'subtitle' => 'Email '.$m->status.($m->campaign ? ' · '.$m->campaign->name : ''),
+                'meta' => null,
+            ];
+        }
+
+        foreach ($consentEvents as $ce) {
+            $tone = in_array($ce->event_type, ['granted', 'confirmed'], true) ? 'success' : 'danger';
+
+            $items[] = [
+                'kind' => 'consent',
+                'date' => $ce->occurred_at,
+                'icon' => 'fa-shield-halved',
+                'tone' => $tone,
+                'title' => 'Consent '.$ce->event_type,
+                'subtitle' => $ce->source.($ce->ip ? ' · '.$ce->ip : ''),
+                'meta' => null,
+            ];
+        }
+
+        usort($items, fn ($a, $b) => ($b['date']?->timestamp ?? 0) <=> ($a['date']?->timestamp ?? 0));
+
+        return array_slice($items, 0, 80);
+    }
+
+    private function summarizeProperties(array $properties): string
+    {
+        $pieces = [];
+
+        foreach (array_slice($properties, 0, 3) as $k => $v) {
+            $pieces[] = $k.': '.(is_array($v) ? json_encode($v) : (string) $v);
+        }
+
+        return implode(' · ', $pieces);
     }
 
     public function destroy(Customer $customer): RedirectResponse

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Mailer\Models\MailerTemplate;
 
 class Campaign extends Model
 {
@@ -23,6 +24,8 @@ class Campaign extends Model
         'from_name',
         'from_email',
         'template_id',
+        'mailer_template_id',
+        'lang_id',
         'segment_id',
         'status',
         'scheduled_at',
@@ -62,6 +65,11 @@ class Campaign extends Model
     public function template(): BelongsTo
     {
         return $this->belongsTo(Template::class);
+    }
+
+    public function mailerTemplate(): BelongsTo
+    {
+        return $this->belongsTo(MailerTemplate::class, 'mailer_template_id');
     }
 
     public function segment(): BelongsTo

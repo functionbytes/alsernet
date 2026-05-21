@@ -151,6 +151,20 @@ class PrestaShopConnector extends AbstractConnector
         }, $filters);
     }
 
+    public function syncCarts(callable $onChunk, ?Carbon $since = null): void
+    {
+        $filters = [];
+
+        if ($since) {
+            $filters['date'] = '1';
+            $filters['filter[date_add]'] = '>['.$since->toDateTimeString().']';
+        }
+
+        $this->paginate('carts', 100, function (array $items) use ($onChunk) {
+            $onChunk(array_map(fn ($c) => $this->normalizeCart($c), $items));
+        }, $filters);
+    }
+
     public function handleWebhook(string $topic, array $payload): EventDTO
     {
         $type = $this->mapTopicToEventType($topic);
@@ -347,6 +361,54 @@ class PrestaShopConnector extends AbstractConnector
                 'ps_module' => $o['module'] ?? null,
             ],
             'items' => $items,
+        ];
+    }
+
+    protected function normalizeCart(array $c): array
+    {
+        $items = [];
+        $total = 0;
+
+        $rows = $c['associations']['cart_rows'] ?? [];
+
+        if (isset($rows['cart_row'])) {
+            $rows = $this->ensureList($rows['cart_row']);
+        } elseif (is_array($rows) && ! array_is_list($rows)) {
+            $rows = [$rows];
+        }
+
+        if (! is_array($rows)) {
+            $rows = [];
+        }
+
+        foreach ($rows as $row) {
+            $qty = (int) ($row['quantity'] ?? 1);
+            $price = (float) ($row['unit_price'] ?? 0);
+            $lineTotal = $price * $qty;
+            $total += $lineTotal;
+
+            $items[] = [
+                'external_product_id' => (string) ($row['id_product'] ?? ''),
+                'title' => $row['name'] ?? '',
+                'sku' => $row['reference'] ?? null,
+                'quantity' => $qty,
+                'price' => $price,
+                'total' => $lineTotal,
+                'image_url' => null,
+            ];
+        }
+
+        return [
+            'external_id' => (string) ($c['id'] ?? ''),
+            'customer_external_id' => (string) ($c['id_customer'] ?? ''),
+            'items' => $items,
+            'total' => $total,
+            'currency' => $this->defaultCurrency(),
+            'created_at' => isset($c['date_add']) ? Carbon::parse($c['date_add']) : now(),
+            'metadata' => [
+                'ps_id_currency' => $c['id_currency'] ?? null,
+                'ps_id_lang' => $c['id_lang'] ?? null,
+            ],
         ];
     }
 

@@ -80,10 +80,7 @@ class ConsentService
             'status' => 'pending',
         ]);
 
-        // Dispatch mail via job (placeholder — SendDoubleOptinMailJob created by jobs agent)
-        if (class_exists(SendDoubleOptinMailJob::class)) {
-            SendDoubleOptinMailJob::dispatch($customer);
-        }
+        SendDoubleOptinMailJob::dispatch($customer);
     }
 
     /**

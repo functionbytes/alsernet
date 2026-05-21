@@ -5,6 +5,7 @@ namespace Modules\Remarketing\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Mailer\Models\MailerTemplate;
 
 class AutomationStep extends Model
 {
@@ -17,6 +18,7 @@ class AutomationStep extends Model
         'sort_order',
         'type',
         'config',
+        'mailer_template_id',
     ];
 
     protected function casts(): array
@@ -31,5 +33,10 @@ class AutomationStep extends Model
     public function automation(): BelongsTo
     {
         return $this->belongsTo(Automation::class);
+    }
+
+    public function mailerTemplate(): BelongsTo
+    {
+        return $this->belongsTo(MailerTemplate::class, 'mailer_template_id');
     }
 }

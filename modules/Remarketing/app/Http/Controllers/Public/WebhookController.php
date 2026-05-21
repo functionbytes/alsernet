@@ -37,6 +37,13 @@ class WebhookController extends Controller
 
     public function emailEvents(Request $request, string $provider): JsonResponse
     {
+        $expected = (string) config("remarketing.webhooks.email_events_secrets.{$provider}", '');
+        $received = (string) $request->header('X-Webhook-Token', '');
+
+        if ($expected === '' || $received === '' || ! hash_equals($expected, $received)) {
+            return response()->json(['ok' => false, 'error' => 'invalid token'], 401);
+        }
+
         $payload = $request->all();
         $events = data_get($payload, 'events', $payload);
 

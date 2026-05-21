@@ -64,7 +64,7 @@ class CampaignServiceTest extends TestCase
         Queue::fake();
 
         // Use a segment that matches our 2 subscribed customers
-        $tag = 'send-tag-'.uniqid();
+        $tag = 'st-'.substr(uniqid(), 0, 5);
         $segment = $this->createSegment([
             'conditions' => [
                 'operator' => 'AND',
@@ -92,7 +92,7 @@ class CampaignServiceTest extends TestCase
     {
         Queue::fake();
 
-        $tag = 'suppress-tag-'.uniqid();
+        $tag = 'sp-'.substr(uniqid(), 0, 5);
         $segment = $this->createSegment([
             'conditions' => [
                 'operator' => 'AND',
@@ -110,7 +110,7 @@ class CampaignServiceTest extends TestCase
         Suppression::query()->create([
             'store_id' => $this->store->id,
             'email' => $suppressedCustomer->email,
-            'reason' => 'bounce',
+            'reason' => 'hard_bounce',
         ]);
 
         $dispatched = $this->service->send($campaign);
@@ -183,23 +183,24 @@ class CampaignServiceTest extends TestCase
     private function createStore(array $attributes = []): Store
     {
         return Store::query()->create(array_merge([
-            'user_id' => User::query()->first()?->id ?? 1,
+            'user_id' => $this->testUser?->id ?? User::factory()->create()->id,
             'platform' => 'manual',
             'name' => 'Test Store '.uniqid(),
             'domain' => 'test-'.uniqid().'.example.com',
             'status' => 'active',
+            'webhook_token' => Str::random(64),
         ], $attributes));
     }
 
-    private function createSubscribedCustomer(): Customer
+    private function createSubscribedCustomer(array $attributes = []): Customer
     {
-        return Customer::query()->create([
+        return Customer::query()->create(array_merge([
             'store_id' => $this->store->id,
             'email' => 'sub-'.uniqid().'@example.com',
             'email_hash' => hash('sha256', uniqid()),
             'status' => 'subscribed',
             'consent_marketing' => true,
-        ]);
+        ], $attributes));
     }
 
     private function createCampaign(array $attributes = []): Campaign

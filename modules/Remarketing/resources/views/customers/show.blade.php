@@ -58,7 +58,7 @@
                     <h6 class="fw-bold mb-3">Consentimiento</h6>
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="small">Email marketing</span>
-                        @if($customer->email_consent)
+                        @if($customer->consent_marketing)
                             <span class="badge bg-success-subtle text-success">Otorgado</span>
                         @else
                             <span class="badge bg-secondary-subtle text-secondary">No otorgado</span>
@@ -66,7 +66,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="small">Double opt-in</span>
-                        @if($customer->double_optin_confirmed_at)
+                        @if($customer->consent_confirmed_at)
                             <span class="badge bg-success-subtle text-success">Confirmado</span>
                         @else
                             <span class="badge bg-warning-subtle text-warning">Pendiente</span>
@@ -110,7 +110,10 @@
                 <div class="card-header border-bottom p-0">
                     <ul class="nav nav-tabs border-0 px-3" id="customerTabs">
                         <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-events">Eventos</button>
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-timeline">Timeline</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-events">Eventos</button>
                         </li>
                         <li class="nav-item">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders">Pedidos</button>
@@ -125,8 +128,35 @@
                 </div>
                 <div class="tab-content card-body">
 
+                    {{-- Unified timeline --}}
+                    <div class="tab-pane fade show active" id="tab-timeline">
+                        @if(isset($timeline) && count($timeline) > 0)
+                            <div class="customer-timeline">
+                                @foreach($timeline as $item)
+                                    <div class="d-flex gap-3 mb-3 timeline-item">
+                                        <div class="rounded-circle bg-{{ $item['tone'] }}-subtle d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px">
+                                            <i class="fas {{ $item['icon'] }} text-{{ $item['tone'] }} small"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                                <div class="fw-semibold small">{{ $item['title'] }}</div>
+                                                <span class="badge bg-light text-muted small text-uppercase">{{ $item['kind'] }}</span>
+                                            </div>
+                                            @if($item['subtitle'])
+                                                <div class="text-muted small mt-1">{{ $item['subtitle'] }}</div>
+                                            @endif
+                                            <div class="text-muted small">{{ $item['date']?->format('d/m/Y H:i') ?? '—' }}</div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-muted text-center py-4 mb-0">Sin actividad registrada</p>
+                        @endif
+                    </div>
+
                     {{-- Events timeline --}}
-                    <div class="tab-pane fade show active" id="tab-events">
+                    <div class="tab-pane fade" id="tab-events">
                         @if(isset($events) && $events->count() > 0)
                             <div class="timeline">
                                 @foreach($events as $event)
@@ -270,7 +300,7 @@
                     <p class="mb-0 text-muted small">Esta operación es irreversible y cumple con los derechos de supresión del GDPR/LGPD.</p>
                 </div>
                 <div class="modal-footer flex-column">
-                    <form action="{{ route('remarketing.customers.dsr-delete', $customer) }}" method="POST" class="w-100">
+                    <form action="{{ route('remarketing.customers.destroy', $customer) }}" method="POST" class="w-100">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger w-100 mb-2">Confirmar eliminación DSR</button>

@@ -20,6 +20,8 @@ class Automation extends Model
         'name',
         'trigger',
         'trigger_config',
+        'goal_event',
+        'goal_window_hours',
         'status',
         'runs_total',
     ];
@@ -28,10 +30,16 @@ class Automation extends Model
     {
         return [
             'trigger_config' => 'array',
+            'goal_window_hours' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
+    }
+
+    public function hasGoal(): bool
+    {
+        return ! empty($this->goal_event);
     }
 
     public function store(): BelongsTo

@@ -68,6 +68,30 @@
                                 </select>
                             </div>
 
+                            <div class="col-12">
+                                <hr class="my-2">
+                                <h6 class="mb-1">Goal (evento de salida)</h6>
+                                <p class="text-muted small mb-2">
+                                    Si el cliente realiza este evento durante la ventana, la automatización termina y no recibe más mensajes.
+                                </p>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Evento goal</label>
+                                <input type="text" name="goal_event" class="form-control"
+                                       value="{{ old('goal_event', $automation->goal_event ?? '') }}"
+                                       placeholder="purchase, signup, custom_event">
+                                <div class="form-text">Nombre del evento (deja vacío para sin goal).</div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Ventana (horas)</label>
+                                <input type="number" name="goal_window_hours" class="form-control"
+                                       value="{{ old('goal_window_hours', $automation->goal_window_hours ?? '') }}"
+                                       min="1" max="8760">
+                                <div class="form-text">Vacío = sin límite temporal.</div>
+                            </div>
+
                         </div>
                     </div>
                     <div class="card-footer">

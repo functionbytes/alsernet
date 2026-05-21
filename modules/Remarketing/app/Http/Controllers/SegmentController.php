@@ -44,7 +44,7 @@ class SegmentController extends Controller
 
         $stores = $this->getUserStores();
 
-        return view('remarketing::segments.create', compact('stores'));
+        return view('remarketing::segments.form', compact('stores'));
     }
 
     public function store(StoreSegmentRequest $request): RedirectResponse
@@ -61,7 +61,7 @@ class SegmentController extends Controller
 
         $stores = $this->getUserStores();
 
-        return view('remarketing::segments.edit', compact('segment', 'stores'));
+        return view('remarketing::segments.form', compact('segment', 'stores'));
     }
 
     public function update(UpdateSegmentRequest $request, Segment $segment): RedirectResponse

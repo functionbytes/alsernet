@@ -113,6 +113,28 @@
                             </select>
                         </div>
 
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <h6 class="mb-2">Holdout group (control)</h6>
+                            <p class="text-muted small mb-3">
+                                Un porcentaje aleatorio (pero determinístico) de la audiencia queda excluido del envío para medir el revenue incremental real de la campaña.
+                                Recomendado 10% para campañas con audiencia &gt; 10.000.
+                            </p>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Holdout %</label>
+                            <div class="input-group">
+                                <input type="number" name="settings[holdout_pct]"
+                                       class="form-control @error('settings.holdout_pct') is-invalid @enderror"
+                                       value="{{ old('settings.holdout_pct', data_get($campaign->settings ?? [], 'holdout_pct', 0)) }}"
+                                       min="0" max="50" step="1">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            @error('settings.holdout_pct') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                            <div class="form-text">0 = sin holdout. Máximo 50%.</div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -127,6 +149,18 @@
                                 @foreach($templates as $tpl)
                                     <option value="{{ $tpl->id }}" {{ old('template_id', $campaign->template_id ?? '') == $tpl->id ? 'selected' : '' }}>
                                         {{ $tpl->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Idioma de envío</label>
+                            <select name="lang_id" id="langSelect" class="form-select">
+                                <option value="">Predeterminado del sistema</option>
+                                @foreach($languages as $lang)
+                                    <option value="{{ $lang->id }}" {{ old('lang_id', $campaign->lang_id ?? '') == $lang->id ? 'selected' : '' }}>
+                                        {{ $lang->title }}
                                     </option>
                                 @endforeach
                             </select>
@@ -210,8 +244,8 @@ $(document).ready(function () {
     toggleScheduleField();
 
     // Preview template on change
-    $('#templateSelect').on('change', function () {
-        loadPreview($(this).val());
+    $('#templateSelect, #langSelect').on('change', function () {
+        loadPreview($('#templateSelect').val());
     });
 
     $('#btn-refresh-preview').on('click', function () {
@@ -219,17 +253,27 @@ $(document).ready(function () {
     });
 
     function loadPreview(templateId) {
-        if (!templateId) return;
-        $.get('/panel/remarketing/templates/' + templateId + '/preview', function (html) {
-            $('#template-preview').attr('srcdoc', html);
-        }).fail(function () {
-            $('#template-preview').attr('srcdoc', '<p style="font-family:sans-serif;color:#888;text-align:center;padding:40px">No se pudo cargar la previsualización</p>');
-        });
+        var langId = $('#langSelect').val();
+        @if(isset($campaign))
+            // Existing campaign: render via campaign preview endpoint (includes layout + campaign variables)
+            $.get('{{ route('remarketing.campaigns.preview', $campaign) }}', { lang_id: langId }, function (html) {
+                $('#template-preview').attr('srcdoc', html);
+            }).fail(function () {
+                $('#template-preview').attr('srcdoc', '<p style="font-family:sans-serif;color:#888;text-align:center;padding:40px">No se pudo cargar la previsualización</p>');
+            });
+        @else
+            // New campaign: render template preview only
+            if (!templateId) return;
+            $.get('/panel/remarketing/templates/' + templateId + '/preview', { lang_id: langId }, function (html) {
+                $('#template-preview').attr('srcdoc', html);
+            }).fail(function () {
+                $('#template-preview').attr('srcdoc', '<p style="font-family:sans-serif;color:#888;text-align:center;padding:40px">No se pudo cargar la previsualización</p>');
+            });
+        @endif
     }
 
-    // Load preview if template pre-selected
-    var initialTemplate = $('#templateSelect').val();
-    if (initialTemplate) { loadPreview(initialTemplate); }
+    // Load preview on init
+    loadPreview($('#templateSelect').val());
 
 });
 </script>

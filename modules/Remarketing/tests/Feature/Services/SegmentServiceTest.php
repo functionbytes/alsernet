@@ -5,6 +5,7 @@ namespace Modules\Remarketing\Tests\Feature\Services;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Event;
 use Modules\Remarketing\Models\Segment;
@@ -20,6 +21,8 @@ class SegmentServiceTest extends TestCase
 
     private Store $store;
 
+    private ?User $testUser = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,6 +31,7 @@ class SegmentServiceTest extends TestCase
             $this->markTestSkipped('Migraciones del módulo Remarketing no aplicadas.');
         }
 
+        $this->testUser = User::factory()->create();
         $this->service = new SegmentService;
         $this->store = $this->createStore();
     }
@@ -72,7 +76,7 @@ class SegmentServiceTest extends TestCase
 
     public function test_compiles_rfm_gte_condition(): void
     {
-        $highValue = $this->createCustomer(['rfm_monetary' => 500]);
+        $highValue = $this->createCustomer(['rfm_monetary' => 250]);
         $this->createCustomer(['rfm_monetary' => 50]);
 
         $segment = $this->createSegment([
@@ -162,11 +166,12 @@ class SegmentServiceTest extends TestCase
     private function createStore(array $attributes = []): Store
     {
         return Store::query()->create(array_merge([
-            'user_id' => User::query()->first()?->id ?? 1,
+            'user_id' => $this->testUser?->id ?? User::factory()->create()->id,
             'platform' => 'manual',
             'name' => 'Test Store '.uniqid(),
             'domain' => 'test-'.uniqid().'.example.com',
             'status' => 'active',
+            'webhook_token' => Str::random(64),
         ], $attributes));
     }
 

@@ -73,6 +73,9 @@ class RemarketingPermissionsSeeder extends Seeder
             // DSR (Data Subject Requests)
             'remarketing.dsr.export' => 'Exportar datos de solicitudes DSR',
             'remarketing.dsr.delete' => 'Eliminar datos de solicitudes DSR',
+
+            // Automation triggers log
+            'remarketing.triggers.view' => 'Ver log de triggers de automation',
         ];
 
         foreach ($permissions as $name => $description) {

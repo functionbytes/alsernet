@@ -2,11 +2,15 @@
 
 namespace Modules\Remarketing\Services;
 
+use Illuminate\Support\Str;
 use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Automation;
 use Modules\Remarketing\Models\AutomationRun;
 use Modules\Remarketing\Models\AutomationStep;
 use Modules\Remarketing\Models\Customer;
+use Modules\Remarketing\Models\Event;
+use Modules\Remarketing\Models\Message;
+use Modules\Remarketing\Models\Template;
 
 class AutomationService
 {
@@ -42,6 +46,16 @@ class AutomationService
      */
     public function advance(AutomationRun $run): void
     {
+        if ($this->goalReached($run)) {
+            $run->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+                'goal_reached_at' => now(),
+            ]);
+
+            return;
+        }
+
         $steps = $run->automation->steps()->orderBy('sort_order')->get();
 
         if ($run->current_step >= $steps->count()) {
@@ -64,6 +78,35 @@ class AutomationService
         }
 
         $run->update(['current_step' => $nextIndex]);
+    }
+
+    /**
+     * Check whether the automation's goal event has occurred for the customer
+     * within the goal window since the run started.
+     */
+    protected function goalReached(AutomationRun $run): bool
+    {
+        $automation = $run->automation;
+
+        if (! $automation->hasGoal() || ! $run->customer_id) {
+            return false;
+        }
+
+        $since = $run->started_at;
+
+        if ($automation->goal_window_hours) {
+            $windowEnd = $run->started_at->copy()->addHours($automation->goal_window_hours);
+
+            if (now()->greaterThan($windowEnd)) {
+                return false;
+            }
+        }
+
+        return Event::query()
+            ->where('customer_id', $run->customer_id)
+            ->where('type', $automation->goal_event)
+            ->where('occurred_at', '>=', $since)
+            ->exists();
     }
 
     /**
@@ -96,8 +139,23 @@ class AutomationService
 
     private function executeSendEmailStep(AutomationRun $run, array $config): void
     {
+        $templateId = $config['template_id'] ?? null;
+        $template = $templateId ? Template::query()->find($templateId) : null;
+        $subject = $config['subject'] ?? $template?->subject ?? 'Sin asunto';
+
+        $message = Message::query()->create([
+            'store_id' => $run->automation->store_id,
+            'customer_id' => $run->customer_id,
+            'automation_run_id' => $run->id,
+            'email' => $run->customer?->email ?? '',
+            'subject' => $subject,
+            'status' => 'queued',
+            'open_token' => Str::random(64),
+            'click_token' => Str::random(64),
+        ]);
+
         if (class_exists(SendEmailJob::class)) {
-            SendEmailJob::dispatch(null, $run->customer, $run, $config)
+            SendEmailJob::dispatch($message)
                 ->onQueue('remarketing');
         }
 

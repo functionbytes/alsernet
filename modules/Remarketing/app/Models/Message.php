@@ -20,6 +20,7 @@ class Message extends Model
         'email',
         'subject',
         'status',
+        'is_holdout',
         'provider',
         'provider_message_id',
         'open_token',
@@ -37,6 +38,7 @@ class Message extends Model
     {
         return [
             'revenue' => 'decimal:2',
+            'is_holdout' => 'boolean',
             'opened_at' => 'datetime',
             'clicked_at' => 'datetime',
             'bounced_at' => 'datetime',

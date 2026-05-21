@@ -3,6 +3,7 @@
 namespace Modules\Remarketing\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -69,7 +70,14 @@ class StoreController extends Controller
     {
         $this->authorize('update', $store);
 
-        $store->update($request->validated());
+        $data = $request->safe()->except('settings_raw');
+
+        if ($request->filled('settings_raw')) {
+            $decoded = json_decode($request->input('settings_raw'), true);
+            $data['settings'] = is_array($decoded) ? $decoded : [];
+        }
+
+        $store->update($data);
 
         return redirect()->route('remarketing.stores.index')
             ->with('success', 'Tienda actualizada correctamente.');
@@ -95,6 +103,37 @@ class StoreController extends Controller
 
         return redirect()->back()
             ->with('success', 'Sincronización iniciada. Los datos se actualizarán en breve.');
+    }
+
+    public function verify(StoreStoreRequest $request): JsonResponse
+    {
+        // Basic connectivity check — attempt to parse domain
+        $domain = $request->input('domain');
+        $host = parse_url($domain, PHP_URL_HOST) ?? $domain;
+
+        $check = $this->deliverabilityChecker->check($host);
+
+        if (! $check['dns_valid']) {
+            return response()->json(['message' => 'No se pudo resolver el DNS del dominio.'], 422);
+        }
+
+        return response()->json(['message' => 'Conexión verificada.']);
+    }
+
+    public function dnsCheck(Store $store): JsonResponse
+    {
+        $this->authorize('view', $store);
+
+        $host = parse_url($store->domain, PHP_URL_HOST) ?? $store->domain;
+        $result = $this->deliverabilityChecker->check($host);
+
+        return response()->json([
+            'domain' => $host,
+            'spf' => $result['spf'],
+            'dkim' => $result['dkim'],
+            'dmarc' => $result['dmarc'],
+            'details' => $result['details'],
+        ]);
     }
 
     public function health(Store $store): View

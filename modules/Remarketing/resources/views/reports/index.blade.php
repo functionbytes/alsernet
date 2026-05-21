@@ -3,7 +3,12 @@
 @section('title', 'Reportes')
 
 @section('page_header')
-    @include('core::components.card', ['title' => 'Reportes de rendimiento'])
+    @include('core::components.card', [
+        'title' => 'Reportes de rendimiento',
+        'actions' => '<a href="' . route('remarketing.reports.export-pdf') . '" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-file-pdf me-1"></i> Exportar PDF
+        </a>',
+    ])
 @endsection
 
 @section('content')

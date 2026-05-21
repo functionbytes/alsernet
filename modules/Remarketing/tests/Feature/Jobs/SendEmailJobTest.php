@@ -7,6 +7,9 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Modules\Mailer\Models\MailerLang;
+use Modules\Mailer\Models\MailerTemplate;
+use Modules\Mailer\Models\MailerTemplateLang;
 use Modules\Mailrelay\Exceptions\ProviderException;
 use Modules\Mailrelay\Services\ProviderManager;
 use Modules\Remarketing\Jobs\SendEmailJob;
@@ -24,6 +27,8 @@ class SendEmailJobTest extends TestCase
 
     private Store $store;
 
+    private ?User $testUser = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,6 +37,22 @@ class SendEmailJobTest extends TestCase
             $this->markTestSkipped('Migraciones del módulo Remarketing no aplicadas.');
         }
 
+        if (Schema::hasTable('langs') && ! MailerLang::query()->exists()) {
+            MailerLang::query()->create([
+                'uid' => 'es',
+                'title' => 'Español',
+                'iso_code' => 'es',
+                'lenguage_code' => 'es',
+                'locate' => 'es_ES',
+                'date_format_full' => 'd/m/Y H:i:s',
+                'date_format_lite' => 'd/m/Y',
+                'available' => 1,
+            ]);
+        }
+
+        MailerLang::clearResolvedDefault();
+
+        $this->testUser = User::factory()->create();
         $this->store = $this->createStore();
     }
 
@@ -42,7 +63,7 @@ class SendEmailJobTest extends TestCase
         Suppression::query()->create([
             'store_id' => $this->store->id,
             'email' => $message->email,
-            'reason' => 'bounce',
+            'reason' => 'hard_bounce',
         ]);
 
         $mockProviders = $this->createMock(ProviderManager::class);
@@ -166,14 +187,52 @@ class SendEmailJobTest extends TestCase
         $this->assertStringNotContainsString('href="https://example.com/product"', $capturedHtml);
     }
 
+    public function test_handle_uses_mailer_template_when_mailer_template_id_exists(): void
+    {
+        $mailerTemplate = $this->createMailerTemplate('<html><body>Hello {CUSTOMER_NAME} from Mailer!</body></html>');
+        $remarketingTemplate = $this->createTemplate('<html><body>Hello {{firstName}} from Legacy!</body></html>');
+        $remarketingTemplate->update(['mailer_template_id' => $mailerTemplate->id]);
+
+        $campaign = $this->createCampaign();
+        $campaign->update([
+            'template_id' => $remarketingTemplate->id,
+            'mailer_template_id' => $mailerTemplate->id,
+        ]);
+
+        $customer = $this->createCustomer(['first_name' => 'Juan']);
+        $message = $this->createMessage([
+            'campaign_id' => $campaign->id,
+            'customer_id' => $customer->id,
+            'email' => $customer->email,
+        ]);
+
+        $capturedHtml = null;
+        $mockProviders = $this->createMock(ProviderManager::class);
+        $mockProviders->method('sendWithFailover')
+            ->willReturnCallback(function ($to, $subject, $html) use (&$capturedHtml) {
+                $capturedHtml = $html;
+
+                return ['provider_name' => 'test', 'message_id' => 'test-id'];
+            });
+
+        $job = new SendEmailJob($message);
+        $job->handle($mockProviders);
+
+        $this->assertNotNull($capturedHtml);
+        $this->assertStringContainsString('Hello Juan from Mailer!', $capturedHtml);
+        $this->assertStringNotContainsString('from Legacy', $capturedHtml);
+        $this->assertStringContainsString('/r/open/', $capturedHtml);
+    }
+
     private function createStore(array $attributes = []): Store
     {
         return Store::query()->create(array_merge([
-            'user_id' => User::query()->first()?->id ?? 1,
+            'user_id' => $this->testUser?->id ?? User::factory()->create()->id,
             'platform' => 'manual',
             'name' => 'Test Store '.uniqid(),
             'domain' => 'test-'.uniqid().'.example.com',
             'status' => 'active',
+            'webhook_token' => Str::random(64),
         ], $attributes));
     }
 
@@ -205,11 +264,35 @@ class SendEmailJobTest extends TestCase
         return Template::query()->create([
             'store_id' => $this->store->id,
             'name' => 'Test Template '.uniqid(),
-            'type' => 'email',
+            'type' => 'campaign',
             'subject' => 'Test',
             'html_content' => $html,
             'is_global' => false,
         ]);
+    }
+
+    private function createMailerTemplate(string $content): MailerTemplate
+    {
+        $mailerTemplate = MailerTemplate::query()->create([
+            'uid' => (string) Str::uuid(),
+            'key' => 'remarketing.test.'.uniqid(),
+            'name' => 'Test Mailer Template',
+            'module' => 'remarketing',
+            'is_enabled' => true,
+        ]);
+
+        $defaultLangId = MailerLang::resolveDefaultId();
+
+        MailerTemplateLang::query()->create([
+            'mailer_template_id' => $mailerTemplate->id,
+            'lang_id' => $defaultLangId,
+            'subject' => 'Test Subject',
+            'preheader' => 'Test Preheader',
+            'content' => $content,
+            'uid' => (string) Str::uuid(),
+        ]);
+
+        return $mailerTemplate;
     }
 
     private function createMessage(array $attributes = []): Message

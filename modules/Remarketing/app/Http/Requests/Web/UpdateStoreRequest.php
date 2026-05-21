@@ -15,10 +15,11 @@ class UpdateStoreRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'domain' => ['required', 'string', 'max:255'],
+            'domain' => ['nullable', 'string', 'max:255'],
             'access_token' => ['nullable', 'string'],
             'api_key' => ['nullable', 'string', 'max:255'],
             'api_secret' => ['nullable', 'string'],
+            'settings_raw' => ['nullable', 'string'],
             'settings' => ['nullable', 'array'],
             'status' => ['nullable', 'string', 'in:pending,active,error,paused'],
         ];

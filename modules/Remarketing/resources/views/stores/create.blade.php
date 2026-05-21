@@ -130,11 +130,11 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">API Key <span class="text-danger">*</span></label>
-                                    <input type="text" name="settings[api_key]" class="form-control" placeholder="shpat_...">
+                                    <input type="text" name="api_key" class="form-control" placeholder="shpat_...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">API Secret</label>
-                                    <input type="password" name="settings[api_secret]" class="form-control" placeholder="shpss_...">
+                                    <input type="password" name="api_secret" class="form-control" placeholder="shpss_...">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Webhook Secret</label>
@@ -148,11 +148,11 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Consumer Key <span class="text-danger">*</span></label>
-                                    <input type="text" name="settings[consumer_key]" class="form-control" placeholder="ck_...">
+                                    <input type="text" name="api_key" class="form-control" placeholder="ck_...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Consumer Secret <span class="text-danger">*</span></label>
-                                    <input type="password" name="settings[consumer_secret]" class="form-control" placeholder="cs_...">
+                                    <input type="password" name="api_secret" class="form-control" placeholder="cs_...">
                                 </div>
                             </div>
                         </div>
@@ -160,13 +160,13 @@
                         {{-- PrestaShop credentials --}}
                         <div class="platform-fields col-12 d-none" data-platform="prestashop">
                             <label class="form-label">API Key <span class="text-danger">*</span></label>
-                            <input type="text" name="settings[api_key]" class="form-control">
+                            <input type="text" name="api_key" class="form-control">
                         </div>
 
                         {{-- Magento credentials --}}
                         <div class="platform-fields col-12 d-none" data-platform="magento">
                             <label class="form-label">Access Token <span class="text-danger">*</span></label>
-                            <input type="text" name="settings[access_token]" class="form-control">
+                            <input type="text" name="access_token" class="form-control">
                         </div>
 
                         {{-- BigCommerce credentials --}}
@@ -174,11 +174,11 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Store Hash <span class="text-danger">*</span></label>
-                                    <input type="text" name="settings[store_hash]" class="form-control">
+                                    <input type="text" name="api_key" class="form-control">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Access Token <span class="text-danger">*</span></label>
-                                    <input type="password" name="settings[access_token]" class="form-control">
+                                    <input type="password" name="access_token" class="form-control">
                                 </div>
                             </div>
                         </div>

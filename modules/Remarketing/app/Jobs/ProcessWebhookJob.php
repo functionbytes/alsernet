@@ -11,9 +11,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\Remarketing\Connectors\ConnectorRegistry;
 use Modules\Remarketing\DTOs\EventDTO;
+use Modules\Remarketing\Models\Cart;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Event;
 use Modules\Remarketing\Models\Order;
+use Modules\Remarketing\Models\OrderItem;
 use Modules\Remarketing\Models\Store;
 
 class ProcessWebhookJob implements ShouldQueue
@@ -50,6 +52,7 @@ class ProcessWebhookJob implements ShouldQueue
 
         match ($dto->type) {
             'placed_order', 'order_updated' => $this->handleOrder($dto),
+            'cart_abandoned', 'add_to_cart' => $this->handleCart($dto),
             'identify' => $this->handleIdentify($dto),
             default => null,
         };
@@ -82,7 +85,7 @@ class ProcessWebhookJob implements ShouldQueue
             return;
         }
 
-        Order::create([
+        $order = Order::create([
             'store_id' => $dto->storeId,
             'customer_id' => $customer->id,
             'external_id' => $externalId,
@@ -97,6 +100,72 @@ class ProcessWebhookJob implements ShouldQueue
             'placed_at' => isset($p['created_at']) ? Carbon::parse($p['created_at']) : now(),
             'metadata' => $p,
         ]);
+
+        $this->syncOrderItems($order, $p);
+    }
+
+    private function syncOrderItems(Order $order, array $payload): void
+    {
+        $lines = $payload['items']
+            ?? $payload['line_items']
+            ?? $payload['order_rows']
+            ?? $payload['products']
+            ?? [];
+
+        foreach ($lines as $line) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'external_product_id' => (string) ($line['external_product_id'] ?? $line['product_id'] ?? $line['id'] ?? ''),
+                'title' => $line['title'] ?? $line['name'] ?? $line['product_name'] ?? '',
+                'sku' => $line['sku'] ?? $line['product_reference'] ?? null,
+                'quantity' => $line['quantity'] ?? $line['product_quantity'] ?? $line['qty'] ?? 1,
+                'price' => $line['price'] ?? $line['unit_price_tax_incl'] ?? $line['product_price'] ?? 0,
+                'total' => $line['total'] ?? $line['line_total'] ?? (($line['price'] ?? 0) * ($line['quantity'] ?? 1)),
+                'image_url' => $line['image_url'] ?? $line['image'] ?? null,
+            ]);
+        }
+    }
+
+    private function handleCart(EventDTO $dto): void
+    {
+        $p = $dto->properties;
+        $email = $p['email'] ?? $p['customer']['email'] ?? null;
+        $externalId = (string) ($p['cart_id'] ?? $p['id'] ?? '');
+
+        if (! $externalId) {
+            return;
+        }
+
+        $customer = null;
+        if ($email) {
+            $customer = Customer::firstOrCreate(
+                ['store_id' => $dto->storeId, 'email' => strtolower($email)],
+                [
+                    'email_hash' => hash('sha256', strtolower($email)),
+                    'first_name' => $p['customer']['first_name'] ?? null,
+                    'last_name' => $p['customer']['last_name'] ?? null,
+                    'external_id' => (string) ($p['customer']['id'] ?? $p['customer_id'] ?? null),
+                    'status' => 'subscribed',
+                ]
+            );
+        }
+
+        $items = $p['items'] ?? $p['products'] ?? $p['cart_items'] ?? [];
+        $total = $p['total'] ?? $p['cart_total'] ?? $p['total_price'] ?? 0;
+
+        Cart::updateOrCreate(
+            ['store_id' => $dto->storeId, 'external_id' => $externalId],
+            [
+                'customer_id' => $customer?->id,
+                'email' => $email ? strtolower($email) : null,
+                'items' => $items,
+                'total' => $total,
+                'currency' => $p['currency'] ?? 'EUR',
+                'status' => 'abandoned',
+                'abandoned_at' => $dto->occurredAt,
+                'url' => $p['url'] ?? $p['checkout_url'] ?? null,
+            ]
+        );
     }
 
     private function handleIdentify(EventDTO $dto): void

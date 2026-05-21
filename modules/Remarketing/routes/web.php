@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Remarketing\Http\Controllers as Web;
+use Modules\Remarketing\Http\Controllers\Manager\AutomationTriggersController;
 use Modules\Remarketing\Http\Controllers\Public as PublicCtrl;
 use Modules\Remarketing\Http\Controllers\Settings;
 
@@ -10,10 +11,13 @@ Route::middleware(['auth'])->group(function () {
         ->name('remarketing.')
         ->group(function () {
             Route::get('/', [Web\DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/chart-data', [Web\DashboardController::class, 'chartData'])->name('dashboard.chart-data');
 
             Route::resource('stores', Web\StoreController::class)->except(['show']);
             Route::post('stores/{store}/sync', [Web\StoreController::class, 'sync'])->name('stores.sync');
             Route::get('stores/{store}/health', [Web\StoreController::class, 'health'])->name('stores.health');
+            Route::get('stores/{store}/dns-check', [Web\StoreController::class, 'dnsCheck'])->name('stores.dns-check');
+            Route::post('stores/verify', [Web\StoreController::class, 'verify'])->name('stores.verify');
 
             Route::get('customers', [Web\CustomerController::class, 'index'])->name('customers.index');
             Route::get('customers/{customer}', [Web\CustomerController::class, 'show'])->name('customers.show');
@@ -37,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('campaigns/{campaign}/schedule', [Web\CampaignController::class, 'schedule'])->name('campaigns.schedule');
             Route::post('campaigns/{campaign}/send-test', [Web\CampaignController::class, 'sendTest'])->name('campaigns.sendTest');
             Route::post('campaigns/{campaign}/cancel', [Web\CampaignController::class, 'cancel'])->name('campaigns.cancel');
+            Route::get('campaigns/{campaign}/preview', [Web\CampaignController::class, 'preview'])->name('campaigns.preview');
 
             Route::resource('automations', Web\AutomationController::class)->except(['show']);
             Route::post('automations/{automation}/activate', [Web\AutomationController::class, 'activate'])->name('automations.activate');
@@ -46,6 +51,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('templates/{template}/preview', [Web\TemplateController::class, 'preview'])->name('templates.preview');
 
             Route::get('reports', [Web\ReportController::class, 'index'])->name('reports.index');
+            Route::get('/reports/export-pdf', [Web\ReportController::class, 'exportPdf'])->name('reports.export-pdf');
+            Route::get('/reports/chart-data', [Web\ReportController::class, 'chartData'])->name('reports.chart-data');
+            Route::get('/reports/campaigns-data', [Web\ReportController::class, 'campaignsData'])->name('reports.campaigns-data');
+
+            Route::get('triggers', [AutomationTriggersController::class, 'index'])->name('triggers.index');
         });
 
     Route::prefix('panel/settings/remarketing')
@@ -56,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/consent', [Settings\SettingsController::class, 'consent'])->name('consent');
             Route::patch('/consent', [Settings\SettingsController::class, 'updateConsent'])->name('updateConsent');
             Route::get('/suppressions', [Settings\SettingsController::class, 'suppressions'])->name('suppressions');
+            Route::get('/suppressions/export', [Settings\SettingsController::class, 'exportSuppressions'])->name('suppressions.export');
+            Route::post('/suppressions/import', [Settings\SettingsController::class, 'importSuppressions'])->name('suppressions.import');
         });
 });
 

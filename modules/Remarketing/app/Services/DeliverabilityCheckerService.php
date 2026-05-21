@@ -13,6 +13,20 @@ class DeliverabilityCheckerService
     {
         $domain = strtolower(trim($domain));
 
+        // Skip DNS lookups for localhost or IP addresses
+        if ($domain === 'localhost' || filter_var($domain, FILTER_VALIDATE_IP)) {
+            return [
+                'spf' => false,
+                'dkim' => false,
+                'dmarc' => false,
+                'details' => [
+                    'spf' => ['found' => false, 'record' => null],
+                    'dkim' => ['found' => false, 'record' => null, 'selector' => 'rmk'],
+                    'dmarc' => ['found' => false, 'record' => null],
+                ],
+            ];
+        }
+
         $spfResult = $this->checkSpf($domain);
         $dkimResult = $this->checkDkim($domain);
         $dmarcResult = $this->checkDmarc($domain);

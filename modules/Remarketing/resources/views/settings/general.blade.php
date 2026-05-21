@@ -13,7 +13,7 @@
     <div class="row g-3">
 
         <div class="col-12 col-lg-8">
-            <form action="{{ route('settings.remarketing.update') }}" method="POST">
+            <form action="{{ route('settings.remarketing.updateGeneral') }}" method="POST">
                 @csrf
                 @method('PATCH')
 
@@ -52,18 +52,18 @@
 
                             <div class="col-md-6">
                                 <label class="form-label">Nombre del remitente</label>
-                                <input type="text" name="from_name" class="form-control @error('from_name') is-invalid @enderror"
-                                       value="{{ old('from_name', $get('from_name')) }}"
+                                <input type="text" name="sender_name" class="form-control @error('sender_name') is-invalid @enderror"
+                                       value="{{ old('sender_name', $get('sender_name')) }}"
                                        placeholder="Mi Tienda">
-                                @error('from_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @error('sender_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label">Email del remitente</label>
-                                <input type="email" name="from_email" class="form-control @error('from_email') is-invalid @enderror"
-                                       value="{{ old('from_email', $get('from_email')) }}"
+                                <input type="email" name="sender_email" class="form-control @error('sender_email') is-invalid @enderror"
+                                       value="{{ old('sender_email', $get('sender_email')) }}"
                                        placeholder="noreply@mitienda.com">
-                                @error('from_email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                @error('sender_email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
                         </div>

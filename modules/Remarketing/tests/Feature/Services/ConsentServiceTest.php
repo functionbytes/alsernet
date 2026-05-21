@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Store;
 use Modules\Remarketing\Models\Suppression;
@@ -20,6 +21,8 @@ class ConsentServiceTest extends TestCase
 
     private Store $store;
 
+    private ?User $testUser = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,6 +31,7 @@ class ConsentServiceTest extends TestCase
             $this->markTestSkipped('Migraciones del módulo Remarketing no aplicadas.');
         }
 
+        $this->testUser = User::factory()->create();
         $this->service = new ConsentService;
         $this->store = $this->createStore();
     }
@@ -51,7 +55,7 @@ class ConsentServiceTest extends TestCase
         Queue::fake();
         $customer = $this->createCustomer(['country' => 'ES', 'status' => 'pending']);
 
-        $this->service->grantConsent($customer, 'form');
+        $this->service->grantConsent($customer, 'popup');
 
         $customer->refresh();
         $this->assertEquals('pending', $customer->status);
@@ -152,7 +156,7 @@ class ConsentServiceTest extends TestCase
         Suppression::query()->create([
             'store_id' => $this->store->id,
             'email' => $email,
-            'reason' => 'bounce',
+            'reason' => 'hard_bounce',
         ]);
 
         $this->assertTrue($this->service->isSuppressed($this->store, $email));
@@ -162,11 +166,12 @@ class ConsentServiceTest extends TestCase
     private function createStore(array $attributes = []): Store
     {
         return Store::query()->create(array_merge([
-            'user_id' => User::query()->first()?->id ?? 1,
+            'user_id' => $this->testUser?->id ?? User::factory()->create()->id,
             'platform' => 'manual',
             'name' => 'Test Store '.uniqid(),
             'domain' => 'test-'.uniqid().'.example.com',
             'status' => 'active',
+            'webhook_token' => Str::random(64),
         ], $attributes));
     }
 

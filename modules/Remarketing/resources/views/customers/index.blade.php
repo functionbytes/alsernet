@@ -95,7 +95,7 @@
                                                 @php
                                                     $rfm = $customer->rfm_score;
                                                     $segments = [
-                                                        'champion' => ['Champions', 'success'],
+                                                        'champions' => ['Champions', 'success'],
                                                         'loyal' => ['Fiel', 'primary'],
                                                         'at_risk' => ['En riesgo', 'warning'],
                                                         'lost' => ['Perdido', 'danger'],
@@ -190,7 +190,7 @@
                                 <label class="form-label">Segmento RFM</label>
                                 <select name="rfm_score" class="form-select">
                                     <option value="">Todos</option>
-                                    <option value="champion" {{ request('rfm_score') === 'champion' ? 'selected' : '' }}>Champions</option>
+                                    <option value="champions" {{ request('rfm_score') === 'champions' ? 'selected' : '' }}>Champions</option>
                                     <option value="loyal" {{ request('rfm_score') === 'loyal' ? 'selected' : '' }}>Fieles</option>
                                     <option value="at_risk" {{ request('rfm_score') === 'at_risk' ? 'selected' : '' }}>En riesgo</option>
                                     <option value="lost" {{ request('rfm_score') === 'lost' ? 'selected' : '' }}>Perdidos</option>

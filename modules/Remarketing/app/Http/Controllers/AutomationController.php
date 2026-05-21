@@ -5,11 +5,13 @@ namespace Modules\Remarketing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Modules\Remarketing\Http\Requests\Web\StoreAutomationRequest;
 use Modules\Remarketing\Http\Requests\Web\UpdateAutomationRequest;
 use Modules\Remarketing\Models\Automation;
 use Modules\Remarketing\Models\Store;
+use Modules\Remarketing\Models\Template;
 
 class AutomationController extends Controller
 {
@@ -38,12 +40,25 @@ class AutomationController extends Controller
 
         $stores = $this->getUserStores();
 
-        return view('remarketing::automations.create', compact('stores'));
+        return view('remarketing::automations.edit', compact('stores'));
     }
 
     public function store(StoreAutomationRequest $request): RedirectResponse
     {
-        Automation::query()->create($request->safe()->except('steps'));
+        $data = $request->safe()->except('steps');
+        $steps = $request->input('steps', []);
+
+        DB::transaction(function () use ($data, $steps): void {
+            $automation = Automation::query()->create($data);
+            foreach ($steps as $step) {
+                $automation->steps()->create([
+                    'sort_order' => $step['sort_order'] ?? 0,
+                    'type' => $step['type'],
+                    'config' => $step['config'] ?? [],
+                    'mailer_template_id' => $this->resolveStepMailerTemplateId($step),
+                ]);
+            }
+        });
 
         return redirect()->route('remarketing.automations.index')
             ->with('success', 'Automatización creada correctamente.');
@@ -63,7 +78,21 @@ class AutomationController extends Controller
     {
         $this->authorize('update', $automation);
 
-        $automation->update($request->safe()->except('steps'));
+        $data = $request->safe()->except('steps');
+        $steps = $request->input('steps', []);
+
+        DB::transaction(function () use ($automation, $data, $steps): void {
+            $automation->update($data);
+            $automation->steps()->delete();
+            foreach ($steps as $step) {
+                $automation->steps()->create([
+                    'sort_order' => $step['sort_order'] ?? 0,
+                    'type' => $step['type'],
+                    'config' => $step['config'] ?? [],
+                    'mailer_template_id' => $this->resolveStepMailerTemplateId($step),
+                ]);
+            }
+        });
 
         return redirect()->route('remarketing.automations.index')
             ->with('success', 'Automatización actualizada correctamente.');
@@ -97,6 +126,22 @@ class AutomationController extends Controller
 
         return redirect()->back()
             ->with('success', 'Automatización pausada correctamente.');
+    }
+
+    private function resolveStepMailerTemplateId(array $step): ?int
+    {
+        if (($step['type'] ?? '') !== 'send_email') {
+            return null;
+        }
+
+        $templateId = $step['config']['template_id'] ?? null;
+        if ($templateId === null) {
+            return null;
+        }
+
+        $template = Template::query()->find($templateId);
+
+        return $template?->mailer_template_id;
     }
 
     private function getUserStores(): Collection

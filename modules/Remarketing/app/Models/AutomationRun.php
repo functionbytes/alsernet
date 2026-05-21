@@ -23,6 +23,7 @@ class AutomationRun extends Model
         'next_step_at',
         'started_at',
         'completed_at',
+        'goal_reached_at',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class AutomationRun extends Model
             'next_step_at' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'goal_reached_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

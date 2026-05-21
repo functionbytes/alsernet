@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Mailer\Models\MailerTemplate;
 
 class Template extends Model
 {
@@ -16,6 +17,9 @@ class Template extends Model
 
     protected $fillable = [
         'store_id',
+        'visibility',
+        'mailer_template_id',
+        'layout_id',
         'name',
         'type',
         'subject',
@@ -31,6 +35,8 @@ class Template extends Model
         return [
             'json_content' => 'array',
             'is_global' => 'boolean',
+            'mailer_template_id' => 'integer',
+            'layout_id' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -45,5 +51,10 @@ class Template extends Model
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
+    }
+
+    public function mailerTemplate(): BelongsTo
+    {
+        return $this->belongsTo(MailerTemplate::class, 'mailer_template_id');
     }
 }

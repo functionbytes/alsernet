@@ -51,21 +51,29 @@ class CalculateRfmJob implements ShouldQueue
         $frequencyValues = $customers->pluck('orders_count');
         $monetaryValues = $customers->pluck('clv_historical');
 
-        foreach ($customers as $customer) {
-            $recencyDays = $customer->last_order_at
-                ? $customer->last_order_at->diffInDays(now())
-                : PHP_INT_MAX;
+        // Quintile scoring requires the full dataset to compute percentiles,
+        // so the initial ->get() is intentional. We only chunk the writes.
+        $recencyArray = $recencyValues->toArray();
+        $frequencyArray = $frequencyValues->toArray();
+        $monetaryArray = $monetaryValues->toArray();
 
-            // Lower recency days = higher score (more recent is better)
-            $rScore = $this->quintileScore($recencyDays, $recencyValues->toArray(), true);
-            $fScore = $this->quintileScore($customer->orders_count, $frequencyValues->toArray());
-            $mScore = $this->quintileScore((float) $customer->clv_historical, $monetaryValues->toArray());
+        foreach ($customers->chunk(1000) as $chunk) {
+            foreach ($chunk as $customer) {
+                $recencyDays = $customer->last_order_at
+                    ? $customer->last_order_at->diffInDays(now())
+                    : PHP_INT_MAX;
 
-            Customer::query()->where('id', $customer->id)->update([
-                'rfm_recency' => $rScore,
-                'rfm_frequency' => $fScore,
-                'rfm_monetary' => $mScore,
-            ]);
+                // Lower recency days = higher score (more recent is better)
+                $rScore = $this->quintileScore($recencyDays, $recencyArray, true);
+                $fScore = $this->quintileScore($customer->orders_count, $frequencyArray);
+                $mScore = $this->quintileScore((float) $customer->clv_historical, $monetaryArray);
+
+                Customer::query()->where('id', $customer->id)->update([
+                    'rfm_recency' => $rScore,
+                    'rfm_frequency' => $fScore,
+                    'rfm_monetary' => $mScore,
+                ]);
+            }
         }
 
         $this->triggerWinBackAutomations($store, $automationService);

@@ -4,12 +4,32 @@ namespace Modules\Remarketing\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\HelpdeskPrestashop\Events\PsBackInStock;
+use Modules\HelpdeskPrestashop\Events\PsCartAbandoned;
+use Modules\HelpdeskPrestashop\Events\PsOrderCreated;
+use Modules\HelpdeskPrestashop\Events\PsOrderReturned;
+use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
+use Modules\HelpdeskPrestashop\Events\PsPriceDropped;
 use Modules\Remarketing\Console\Commands\CalculateRfmCommand;
 use Modules\Remarketing\Console\Commands\MarkAbandonedCartsCommand;
+use Modules\Remarketing\Console\Commands\PopulateProductWatchesCommand;
 use Modules\Remarketing\Console\Commands\ProcessAutomationsCommand;
 use Modules\Remarketing\Console\Commands\ReconcileCatalogCommand;
+use Modules\Remarketing\Jobs\DetectBrowseAbandonmentJob;
+use Modules\Remarketing\Jobs\DetectOrderAnniversaryJob;
+use Modules\Remarketing\Jobs\DetectReplenishmentJob;
+use Modules\Remarketing\Jobs\DetectWinBackJob;
+use Modules\Remarketing\Listeners\ApologyAfterReturnListener;
+use Modules\Remarketing\Listeners\CheckVipMilestoneListener;
+use Modules\Remarketing\Listeners\CrossSellOnDeliveredListener;
+use Modules\Remarketing\Listeners\NotifyBackInStockToWatchersListener;
+use Modules\Remarketing\Listeners\NotifyPriceDropToWatchersListener;
+use Modules\Remarketing\Listeners\RecoverAbandonedCartListener;
+use Modules\Remarketing\Listeners\RequestReviewOnDeliveredListener;
+use Modules\Remarketing\Listeners\SendWelcomeOnFirstOrderListener;
 use Modules\Remarketing\Models\Automation;
 use Modules\Remarketing\Models\Campaign;
 use Modules\Remarketing\Models\ConsentEvent;
@@ -67,7 +87,7 @@ class RemarketingServiceProvider extends ServiceProvider
     protected function registerNavService(): void
     {
         NavService::registerMiniItem('remarketing', [
-            'icon' => 'fas fa-bullhorn',
+            'icon' => 'fa-duotone fa-thin fa-bullhorn',
             'tooltip' => 'Remarketing',
             'sidebar_id' => 'remarketing',
             'order' => 50,
@@ -207,6 +227,30 @@ class RemarketingServiceProvider extends ServiceProvider
             $schedule->command('remarketing:reconcile-catalog')
                 ->dailyAt('04:00')
                 ->withoutOverlapping();
+
+            // Smart triggers (PS-aware)
+            if (class_exists(DetectReplenishmentJob::class)) {
+                $schedule->job(new DetectReplenishmentJob)
+                    ->dailyAt('09:00')
+                    ->withoutOverlapping();
+            }
+            if (class_exists(DetectWinBackJob::class)) {
+                $schedule->job(new DetectWinBackJob)
+                    ->dailyAt('10:00')
+                    ->withoutOverlapping();
+            }
+
+            if (class_exists(DetectBrowseAbandonmentJob::class)) {
+                $schedule->job(new DetectBrowseAbandonmentJob)
+                    ->hourly()
+                    ->withoutOverlapping();
+            }
+
+            if (class_exists(DetectOrderAnniversaryJob::class)) {
+                $schedule->job(new DetectOrderAnniversaryJob)
+                    ->dailyAt('11:00')
+                    ->withoutOverlapping();
+            }
         });
     }
 
@@ -217,12 +261,52 @@ class RemarketingServiceProvider extends ServiceProvider
             CalculateRfmCommand::class,
             ReconcileCatalogCommand::class,
             MarkAbandonedCartsCommand::class,
+            PopulateProductWatchesCommand::class,
         ];
 
         $existing = array_filter($commands, fn (string $class) => class_exists($class));
 
         if (! empty($existing)) {
             $this->commands($existing);
+        }
+
+        $this->registerEventListeners();
+    }
+
+    protected function registerEventListeners(): void
+    {
+        $events = [
+            PsOrderCreated::class => [
+                SendWelcomeOnFirstOrderListener::class,
+                CheckVipMilestoneListener::class,
+            ],
+            PsOrderStatusChanged::class => [
+                RequestReviewOnDeliveredListener::class,
+                CrossSellOnDeliveredListener::class,
+            ],
+            PsOrderReturned::class => [
+                ApologyAfterReturnListener::class,
+            ],
+            PsCartAbandoned::class => [
+                RecoverAbandonedCartListener::class,
+            ],
+            PsPriceDropped::class => [
+                NotifyPriceDropToWatchersListener::class,
+            ],
+            PsBackInStock::class => [
+                NotifyBackInStockToWatchersListener::class,
+            ],
+        ];
+
+        foreach ($events as $event => $listeners) {
+            if (! class_exists($event)) {
+                continue;
+            }
+            foreach ($listeners as $listener) {
+                if (class_exists($listener)) {
+                    Event::listen($event, $listener);
+                }
+            }
         }
     }
 

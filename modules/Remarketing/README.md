@@ -222,27 +222,47 @@ modules/Remarketing/
 
 ## Roadmap
 
-Implementado en **v1 (MVP)**:
-- Conectores Shopify y WooCommerce.
-- 4 automations pre-construidas (welcome, cart_abandoned, post_purchase, win_back).
-- Campañas one-off + segmentación dinámica básica + RFM.
-- Pixel JS + identity resolution.
-- Compliance GDPR + RFC 8058.
-- 109 rutas Web + 49 API.
+Implementado en **v1**:
+- **Conectores**: Shopify, WooCommerce, **PrestaShop** (plugin bridge en `resources/plugins/prestashop-bridge/`).
+- **13 automations pre-construidas**:
+  - `welcome` (`SendWelcomeOnFirstOrderListener`)
+  - `cart_abandoned` (`RecoverAbandonedCartListener` + `MarkAbandonedCartsCommand` cada 15 min)
+  - `browse_abandonment` (`DetectBrowseAbandonmentJob` + `BrowseAbandonmentMail`)
+  - `back_in_stock` (`NotifyBackInStockToWatchersListener` + `BackInStockMail` + `product_watches` table)
+  - `price_drop` (`NotifyPriceDropToWatchersListener` + `PriceDropMail` + `product_price_history` table)
+  - `post_purchase_review` (`RequestReviewOnDeliveredListener`)
+  - `cross_sell` (`CrossSellOnDeliveredListener` + `CrossSellMail`)
+  - `win_back` (`DetectWinBackJob` + `WinBackMail`)
+  - `replenishment` (`DetectReplenishmentJob` + `ReplenishmentMail` + `consumable_definitions`)
+  - `order_anniversary` (`DetectOrderAnniversaryJob` + `OrderAnniversaryMail`)
+  - `double_optin` (`SendDoubleOptinMailJob` + `DoubleOptinMail`)
+  - `vip_reward` (`CheckVipMilestoneListener` + `VipRewardMail`)
+  - `apology_after_return` (`ApologyAfterReturnListener`)
+- **Campañas one-off** + segmentación dinámica (AST OR/AND/property/event/RFM) + RFM scoring + CLV histórico.
+- **Pixel JS** + identity resolution + visitor→customer event reassignment.
+- **Compliance**: GDPR/LGPD + double opt-in con geofence UE/Brasil + DSR export/delete + audit trail inmutable + RFC 8058 one-click unsubscribe.
+- **Deliverability**: DKIM/SPF/DMARC checker (`DeliverabilityCheckerService`), open/click tracking, bounce/complaint auto-suppression.
+- **API REST** completa (Sanctum) + 109 rutas Web + 49 API.
 
-Pendiente **v2**:
-- Conector PrestaShop (diferenciador regional España/LATAM).
-- Browse abandonment, back-in-stock, price-drop flows.
-- A/B testing con holdout.
-- Editor visual de flows (branching).
-- SMS via Twilio.
-- Predictive segments (CLV, churn risk).
+Pendiente **v2** (en desarrollo):
+- A/B testing con holdout group y winner auto-pick.
+- Editor visual de flows (branching, conditional split, goals, exit).
+- Email editor drag-and-drop (MJML/GrapesJS).
+- SMS marketing (Twilio/MessageBird).
+- Predictive segments (churn risk, propensity to buy, CLV predicho).
+- Send-time optimization.
+- Outbound webhooks (Zapier/Make integration).
+- Forms / popups embebibles (exit-intent, signup wheel).
+- Starter template library curada.
+- OpenAPI/Swagger annotations.
 
 Pendiente **v3**:
-- Conectores Magento + BigCommerce.
+- Conectores Magento + BigCommerce + Salesforce/HubSpot.
 - WhatsApp Business API.
 - Web push.
-- Send-time optimization.
+- Loyalty/points tier engine.
+- Recomendaciones de producto AI.
+- Inbox preview (Litmus-like) + dark mode preview.
 
 Detalles en `docs/proposals/remarketing-module-plan.md` sección 14.
 

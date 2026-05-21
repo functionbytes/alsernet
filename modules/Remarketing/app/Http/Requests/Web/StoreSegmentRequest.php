@@ -11,6 +11,16 @@ class StoreSegmentRequest extends FormRequest
         return $this->user()->can('remarketing.segments.create');
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('conditions')) {
+            $decoded = json_decode($this->input('conditions'), true);
+            $this->merge([
+                'conditions' => is_array($decoded) ? $decoded : [],
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [

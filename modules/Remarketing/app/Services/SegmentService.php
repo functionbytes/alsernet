@@ -3,6 +3,7 @@
 namespace Modules\Remarketing\Services;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Segment;
 
@@ -21,11 +22,22 @@ class SegmentService
     }
 
     /**
-     * Return the count of matching customers for a segment.
+     * Return the count of matching customers for a segment, cached by TTL.
      */
     public function getMemberCount(Segment $segment): int
     {
-        return $this->getMembers($segment)->count();
+        $ttl = (int) config('remarketing.segment_cache_ttl', 300);
+        $key = "remarketing.segment.{$segment->id}.count";
+
+        return Cache::remember($key, $ttl, fn () => $this->getMembers($segment)->count());
+    }
+
+    /**
+     * Invalidate the cached member count for a segment.
+     */
+    public function forgetMemberCountCache(Segment $segment): void
+    {
+        Cache::forget("remarketing.segment.{$segment->id}.count");
     }
 
     /**
@@ -33,6 +45,8 @@ class SegmentService
      */
     public function recalculate(Segment $segment): int
     {
+        $this->forgetMemberCountCache($segment);
+
         $count = $this->getMemberCount($segment);
 
         $segment->update([
@@ -55,11 +69,19 @@ class SegmentService
         // Top-level OR/AND group
         if (isset($node['conditions']) && is_array($node['conditions'])) {
             $operator = strtoupper($node['operator']);
-            $method = $operator === 'OR' ? 'orWhere' : 'where';
+            $isOr = $operator === 'OR';
 
-            $query->{$method}(function (Builder $sub) use ($node): void {
-                foreach ($node['conditions'] as $condition) {
-                    $this->applyCondition($sub, $condition);
+            $query->where(function (Builder $sub) use ($node, $isOr): void {
+                foreach ($node['conditions'] as $index => $condition) {
+                    if ($isOr && $index > 0) {
+                        $sub->orWhere(function (Builder $orSub) use ($condition): void {
+                            $this->applyCondition($orSub, $condition);
+                        });
+                    } else {
+                        $sub->where(function (Builder $andSub) use ($condition): void {
+                            $this->applyCondition($andSub, $condition);
+                        });
+                    }
                 }
             });
 
