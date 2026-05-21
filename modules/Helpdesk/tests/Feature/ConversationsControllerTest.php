@@ -3,7 +3,7 @@
 namespace Modules\Helpdesk\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -15,9 +15,9 @@ use Tests\TestCase;
 
 class ConversationsControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $manager;
 
