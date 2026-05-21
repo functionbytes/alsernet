@@ -2,18 +2,18 @@
 
 namespace Modules\Remarketing\Services;
 
-use Illuminate\Support\Str;
-use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Automation;
 use Modules\Remarketing\Models\AutomationRun;
 use Modules\Remarketing\Models\AutomationStep;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Event;
-use Modules\Remarketing\Models\Message;
-use Modules\Remarketing\Models\Template;
 
 class AutomationService
 {
+    public function __construct(
+        private readonly StepHandlerRegistry $registry
+    ) {}
+
     /**
      * Create a new automation run for a customer if none is currently active.
      * Returns the created run or null if one already exists.
@@ -117,49 +117,14 @@ class AutomationService
         $run->update(['status' => 'cancelled', 'completed_at' => now()]);
     }
 
-    /**
-     * Execute a single step based on its type.
-     */
     private function executeStep(AutomationRun $run, AutomationStep $step): void
     {
-        $config = $step->config ?? [];
+        $handler = $this->registry->get($step->type);
 
-        match ($step->type) {
-            'wait' => $this->executeWaitStep($run, $config),
-            'send_email' => $this->executeSendEmailStep($run, $config),
-            default => null,
-        };
-    }
-
-    private function executeWaitStep(AutomationRun $run, array $config): void
-    {
-        $hours = (int) ($config['hours'] ?? 0);
-        $run->update(['next_step_at' => now()->addHours($hours)]);
-    }
-
-    private function executeSendEmailStep(AutomationRun $run, array $config): void
-    {
-        $templateId = $config['template_id'] ?? null;
-        $template = $templateId ? Template::query()->find($templateId) : null;
-        $subject = $config['subject'] ?? $template?->subject ?? 'Sin asunto';
-
-        $message = Message::query()->create([
-            'store_id' => $run->automation->store_id,
-            'customer_id' => $run->customer_id,
-            'automation_run_id' => $run->id,
-            'email' => $run->customer?->email ?? '',
-            'subject' => $subject,
-            'status' => 'queued',
-            'open_token' => Str::random(64),
-            'click_token' => Str::random(64),
-        ]);
-
-        if (class_exists(SendEmailJob::class)) {
-            SendEmailJob::dispatch($message)
-                ->onQueue('remarketing');
+        if ($handler === null) {
+            return;
         }
 
-        // Advance next_step_at immediately so the scheduler can pick up the next step
-        $run->update(['next_step_at' => now()]);
+        $handler->execute($run, $step->config ?? []);
     }
 }

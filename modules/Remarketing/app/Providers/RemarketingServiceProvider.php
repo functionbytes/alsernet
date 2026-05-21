@@ -13,6 +13,7 @@ use Modules\HelpdeskPrestashop\Events\PsOrderCreated;
 use Modules\HelpdeskPrestashop\Events\PsOrderReturned;
 use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
 use Modules\HelpdeskPrestashop\Events\PsPriceDropped;
+use Modules\Remarketing\Channels\EmailChannel;
 use Modules\Remarketing\Console\Commands\CalculateRfmCommand;
 use Modules\Remarketing\Console\Commands\MarkAbandonedCartsCommand;
 use Modules\Remarketing\Console\Commands\PopulateProductWatchesCommand;
@@ -49,6 +50,10 @@ use Modules\Remarketing\Policies\SegmentPolicy;
 use Modules\Remarketing\Policies\StorePolicy;
 use Modules\Remarketing\Policies\SuppressionPolicy;
 use Modules\Remarketing\Policies\TemplatePolicy;
+use Modules\Remarketing\Services\ChannelRegistry;
+use Modules\Remarketing\Services\StepHandlerRegistry;
+use Modules\Remarketing\Steps\SendEmailStepHandler;
+use Modules\Remarketing\Steps\WaitStepHandler;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use RecursiveDirectoryIterator;
@@ -78,6 +83,21 @@ class RemarketingServiceProvider extends ServiceProvider
     {
         $this->app->register(RouteServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
+
+        $this->app->singleton(ChannelRegistry::class, function () {
+            $registry = new ChannelRegistry;
+            $registry->register(new EmailChannel);
+
+            return $registry;
+        });
+
+        $this->app->singleton(StepHandlerRegistry::class, function ($app) {
+            $registry = new StepHandlerRegistry;
+            $registry->register('wait', new WaitStepHandler);
+            $registry->register('send_email', new SendEmailStepHandler($app->make(ChannelRegistry::class)));
+
+            return $registry;
+        });
 
         $this->registerPolicies();
         $this->registerSchedule();

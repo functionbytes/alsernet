@@ -41,6 +41,7 @@ class Campaign extends Model
         'complained',
         'revenue',
         'settings',
+        'ab_winner_metric',
     ];
 
     protected function casts(): array
@@ -80,6 +81,16 @@ class Campaign extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(CampaignVariant::class)->orderBy('weight', 'desc');
+    }
+
+    public function isAbTest(): bool
+    {
+        return $this->variants()->exists();
     }
 
     public function scopeDraft(Builder $query): Builder

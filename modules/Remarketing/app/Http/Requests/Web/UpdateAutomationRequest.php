@@ -3,6 +3,8 @@
 namespace Modules\Remarketing\Http\Requests\Web;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Remarketing\Services\StepHandlerRegistry;
 
 class UpdateAutomationRequest extends FormRequest
 {
@@ -30,7 +32,7 @@ class UpdateAutomationRequest extends FormRequest
             'goal_window_hours' => ['nullable', 'integer', 'between:1,8760'],
             'status' => ['nullable', 'string', 'in:active,paused,draft'],
             'steps' => ['nullable', 'array'],
-            'steps.*.type' => ['required_with:steps', 'string', 'in:wait,send_email'],
+            'steps.*.type' => ['required_with:steps', 'string', Rule::in(app(StepHandlerRegistry::class)->types())],
             'steps.*.config' => ['required_with:steps', 'array'],
             'steps.*.sort_order' => ['required_with:steps', 'integer'],
         ];
