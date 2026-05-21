@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Campaign;
+use Modules\Remarketing\Models\CampaignVariant;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Message;
 use Modules\Remarketing\Models\Segment;
@@ -181,6 +182,135 @@ class CampaignServiceTest extends TestCase
         $this->assertEquals(1, $campaign->bounced);
         $this->assertEquals(1, $campaign->clicked);
     }
+
+    // -------------------------------------------------------------------------
+    // A/B Variant assignment
+    // -------------------------------------------------------------------------
+
+    public function test_pick_variant_is_deterministic(): void
+    {
+        Queue::fake();
+
+        $campaign = $this->createCampaign();
+        $variantA = CampaignVariant::query()->create([
+            'campaign_id' => $campaign->id,
+            'name' => 'Variant A',
+            'subject' => 'Subject A',
+            'weight' => 50,
+        ]);
+        $variantB = CampaignVariant::query()->create([
+            'campaign_id' => $campaign->id,
+            'name' => 'Variant B',
+            'subject' => 'Subject B',
+            'weight' => 50,
+        ]);
+
+        $variants = collect([$variantA, $variantB]);
+        $email = 'deterministic@example.com';
+
+        $pickVariant = $this->reflectMethod('pickVariant');
+
+        $first = $pickVariant($email, $campaign->id, $variants);
+        $second = $pickVariant($email, $campaign->id, $variants);
+        $third = $pickVariant($email, $campaign->id, $variants);
+
+        $this->assertEquals($first->id, $second->id);
+        $this->assertEquals($second->id, $third->id);
+    }
+
+    public function test_send_creates_messages_with_variant_ids(): void
+    {
+        Queue::fake();
+
+        $tag = 'ab-'.substr(uniqid(), 0, 5);
+        $segment = $this->createSegment([
+            'conditions' => [
+                'operator' => 'AND',
+                'conditions' => [
+                    ['type' => 'property', 'field' => 'status', 'operator' => 'equals', 'value' => 'subscribed'],
+                    ['type' => 'property', 'field' => 'locale', 'operator' => 'equals', 'value' => $tag],
+                ],
+            ],
+        ]);
+        $campaign = $this->createCampaign(['segment_id' => $segment->id]);
+
+        CampaignVariant::query()->create([
+            'campaign_id' => $campaign->id,
+            'name' => 'Variant A',
+            'subject' => 'A subject',
+            'weight' => 50,
+        ]);
+        CampaignVariant::query()->create([
+            'campaign_id' => $campaign->id,
+            'name' => 'Variant B',
+            'subject' => 'B subject',
+            'weight' => 50,
+        ]);
+
+        $this->createSubscribedCustomer(['locale' => $tag]);
+        $this->createSubscribedCustomer(['locale' => $tag]);
+        $this->createSubscribedCustomer(['locale' => $tag]);
+
+        $this->service->send($campaign);
+
+        $messagesWithVariant = Message::query()
+            ->where('campaign_id', $campaign->id)
+            ->whereNotNull('variant_id')
+            ->count();
+
+        $this->assertEquals(3, $messagesWithVariant);
+    }
+
+    // -------------------------------------------------------------------------
+    // Send-time optimization
+    // -------------------------------------------------------------------------
+
+    public function test_compute_send_delay_returns_null_when_no_preference(): void
+    {
+        $computeDelay = $this->reflectMethod('computeSendDelay');
+
+        $this->assertNull($computeDelay(null));
+    }
+
+    public function test_compute_send_delay_returns_positive_seconds_for_future_hour(): void
+    {
+        $computeDelay = $this->reflectMethod('computeSendDelay');
+        $futureHour = (now()->utc()->hour + 2) % 24;
+
+        $delay = $computeDelay($futureHour);
+
+        $this->assertNotNull($delay);
+        $this->assertGreaterThan(0, $delay);
+    }
+
+    public function test_compute_send_delay_wraps_to_next_day_for_past_hour(): void
+    {
+        $computeDelay = $this->reflectMethod('computeSendDelay');
+        $nowUtc = now()->utc();
+        $pastHour = $nowUtc->hour > 0 ? $nowUtc->hour - 1 : 0;
+
+        $delay = $computeDelay($pastHour);
+
+        $this->assertNotNull($delay);
+        $this->assertGreaterThan(60, $delay);
+    }
+
+    public function test_compute_send_delay_is_capped_at_86340_seconds(): void
+    {
+        $computeDelay = $this->reflectMethod('computeSendDelay');
+
+        $delay = $computeDelay(0);
+
+        $this->assertNotNull($delay);
+        $this->assertLessThanOrEqual(86340, $delay);
+    }
+
+    private function reflectMethod(string $method): \Closure
+    {
+        return (new \ReflectionMethod($this->service, $method))->getClosure($this->service);
+    }
+
+    // -------------------------------------------------------------------------
 
     private function createStore(array $attributes = []): Store
     {
