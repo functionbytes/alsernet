@@ -6,7 +6,7 @@ use Modules\Remarketing\Http\Controllers\Manager\AutomationTriggersController;
 use Modules\Remarketing\Http\Controllers\Public as PublicCtrl;
 use Modules\Remarketing\Http\Controllers\Settings;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     Route::prefix('panel/remarketing')
         ->name('remarketing.')
         ->group(function () {
@@ -91,12 +91,14 @@ Route::prefix('r')->group(function () {
         Route::post('/preferences/{token}', [PublicCtrl\PreferencesController::class, 'update'])->name('remarketing.public.preferences.update');
     });
 
-    Route::get('/open/{messageId}.gif', [PublicCtrl\TrackingController::class, 'open'])
-        ->where('messageId', '[0-9]+')
-        ->name('remarketing.public.open');
-    Route::get('/click/{messageId}/{linkHash}', [PublicCtrl\TrackingController::class, 'click'])
-        ->where('messageId', '[0-9]+')
-        ->name('remarketing.public.click');
+    Route::middleware(['throttle:120,1'])->group(function () {
+        Route::get('/open/{messageId}.gif', [PublicCtrl\TrackingController::class, 'open'])
+            ->where('messageId', '[0-9]+')
+            ->name('remarketing.public.open');
+        Route::get('/click/{messageId}/{linkHash}', [PublicCtrl\TrackingController::class, 'click'])
+            ->where('messageId', '[0-9]+')
+            ->name('remarketing.public.click');
+    });
 
     Route::prefix('webhooks')->group(function () {
         Route::post('/shopify/{storeToken}', [PublicCtrl\WebhookController::class, 'shopify'])->name('remarketing.public.webhook.shopify');

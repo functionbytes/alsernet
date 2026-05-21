@@ -13,8 +13,7 @@ class DeliverabilityCheckerService
     {
         $domain = strtolower(trim($domain));
 
-        // Skip DNS lookups for localhost or IP addresses
-        if ($domain === 'localhost' || filter_var($domain, FILTER_VALIDATE_IP)) {
+        if ($this->isInternalHost($domain)) {
             return [
                 'spf' => false,
                 'dkim' => false,
@@ -41,6 +40,27 @@ class DeliverabilityCheckerService
                 'dmarc' => $dmarcResult,
             ],
         ];
+    }
+
+    /**
+     * Returns true if the domain is localhost, a raw IP, or resolves to a private/reserved address.
+     * Prevents SSRF when checking user-supplied domains.
+     */
+    private function isInternalHost(string $domain): bool
+    {
+        if ($domain === 'localhost' || filter_var($domain, FILTER_VALIDATE_IP)) {
+            return true;
+        }
+
+        $ips = @gethostbynamel($domain) ?: [];
+
+        foreach ($ips as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                return true;
+            }
+        }
+
+        return empty($ips);
     }
 
     /**

@@ -12,6 +12,8 @@ class Webhook extends Model
 
     protected $table = 'remarketing_webhooks';
 
+    protected $hidden = ['secret'];
+
     protected $fillable = [
         'store_id',
         'url',

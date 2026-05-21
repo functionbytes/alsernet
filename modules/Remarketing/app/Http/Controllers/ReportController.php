@@ -144,13 +144,15 @@ class ReportController extends Controller
 
     public function chartData(): JsonResponse
     {
+        $this->authorize('viewAny-report');
+
         $user = auth()->user();
         $storeIds = Store::query()
             ->when(! $user->can('remarketing.manage'), fn ($q) => $q->where('user_id', $user->id))
             ->pluck('id')
             ->all();
 
-        $months = request()->integer('months', 12);
+        $months = min(request()->integer('months', 12), 24);
         $labels = [];
         $data = [];
 
@@ -169,6 +171,8 @@ class ReportController extends Controller
 
     public function campaignsData(Request $request): JsonResponse
     {
+        $this->authorize('viewAny-report');
+
         $user = auth()->user();
         $storeIds = Store::query()
             ->when(! $user->can('remarketing.manage'), fn ($q) => $q->where('user_id', $user->id))

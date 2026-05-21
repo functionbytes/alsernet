@@ -35,26 +35,28 @@ class TrackingController extends Controller
     {
         $message = Message::find($messageId);
 
+        if (! $message) {
+            return redirect('/');
+        }
+
         $encoded = $request->query('u');
         $destination = $encoded ? base64_decode($encoded, true) : null;
-
-        if ($message && $destination) {
-            $expectedHash = substr(hash_hmac('sha256', $destination, $message->click_token), 0, 16);
-
-            if (! hash_equals($expectedHash, $linkHash)) {
-                return redirect('/');
-            }
-
-            $message->forceFill([
-                'clicked_at' => $message->clicked_at ?? now(),
-                'opened_at' => $message->opened_at ?? now(),
-                'status' => 'clicked',
-            ])->save();
-        }
 
         if (! $destination || ! filter_var($destination, FILTER_VALIDATE_URL)) {
             return redirect('/');
         }
+
+        $expectedHash = substr(hash_hmac('sha256', $destination, $message->click_token), 0, 16);
+
+        if (! hash_equals($expectedHash, $linkHash)) {
+            return redirect('/');
+        }
+
+        $message->forceFill([
+            'clicked_at' => $message->clicked_at ?? now(),
+            'opened_at' => $message->opened_at ?? now(),
+            'status' => 'clicked',
+        ])->save();
 
         return redirect()->away($destination);
     }

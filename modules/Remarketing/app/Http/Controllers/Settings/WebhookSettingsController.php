@@ -43,6 +43,8 @@ class WebhookSettingsController extends Controller
 
     public function update(UpdateWebhookRequest $request, Webhook $webhook): RedirectResponse
     {
+        $this->authorize('update', $webhook);
+
         $data = $request->validated();
         $data['is_active'] = $request->has('is_active');
 

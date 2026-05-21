@@ -188,27 +188,32 @@ class CampaignService
 
         $winnerMetric = $campaign->ab_winner_metric ?? 'open_rate';
 
-        foreach ($variants as $variant) {
-            $stats = Message::query()
-                ->where('variant_id', $variant->id)
-                ->where('is_holdout', false)
-                ->selectRaw('
-                    COUNT(*) as sent,
-                    SUM(status IN ("opened","clicked")) as opened,
-                    SUM(status = "clicked") as clicked,
-                    SUM(revenue) as revenue
-                ')
-                ->first();
+        // Single query: aggregate stats for all variants at once
+        $statsByVariant = Message::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('is_holdout', false)
+            ->whereIn('variant_id', $variants->pluck('id'))
+            ->selectRaw('
+                variant_id,
+                COUNT(*) as sent,
+                SUM(status IN ("opened","clicked")) as opened,
+                SUM(status = "clicked") as clicked,
+                SUM(revenue) as revenue
+            ')
+            ->groupBy('variant_id')
+            ->get()
+            ->keyBy('variant_id');
 
+        foreach ($variants as $variant) {
+            $row = $statsByVariant->get($variant->id);
             $variant->update([
-                'sent' => (int) ($stats->sent ?? 0),
-                'opened' => (int) ($stats->opened ?? 0),
-                'clicked' => (int) ($stats->clicked ?? 0),
-                'revenue' => (float) ($stats->revenue ?? 0),
+                'sent' => (int) ($row->sent ?? 0),
+                'opened' => (int) ($row->opened ?? 0),
+                'clicked' => (int) ($row->clicked ?? 0),
+                'revenue' => (float) ($row->revenue ?? 0),
             ]);
         }
 
-        // Refresh after updates
         $variants = $campaign->variants()->get();
 
         $winner = $variants->sortByDesc(fn (CampaignVariant $v) => match ($winnerMetric) {
@@ -218,7 +223,13 @@ class CampaignService
         })->first();
 
         if ($winner) {
-            $variants->each(fn (CampaignVariant $v) => $v->update(['is_winner' => $v->id === $winner->id]));
+            CampaignVariant::query()
+                ->where('campaign_id', $campaign->id)
+                ->update(['is_winner' => false]);
+
+            CampaignVariant::query()
+                ->where('id', $winner->id)
+                ->update(['is_winner' => true]);
         }
     }
 
