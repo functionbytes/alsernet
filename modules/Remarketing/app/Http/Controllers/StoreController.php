@@ -107,13 +107,12 @@ class StoreController extends Controller
 
     public function verify(StoreStoreRequest $request): JsonResponse
     {
-        // Basic connectivity check — attempt to parse domain
         $domain = $request->input('domain');
         $host = parse_url($domain, PHP_URL_HOST) ?? $domain;
 
-        $check = $this->deliverabilityChecker->check($host);
+        $resolved = @gethostbynamel($host);
 
-        if (! $check['dns_valid']) {
+        if (empty($resolved)) {
             return response()->json(['message' => 'No se pudo resolver el DNS del dominio.'], 422);
         }
 

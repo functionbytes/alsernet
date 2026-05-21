@@ -95,7 +95,9 @@
                                                         <a class="dropdown-item" href="{{ route('remarketing.stores.edit', $store) }}">Editar</a>
                                                     </li>
                                                     <li>
-                                                        <button class="dropdown-item btn-health" data-id="{{ $store->id }}">Health check</button>
+                                                        <a class="dropdown-item" href="{{ route('remarketing.stores.health', $store) }}">
+                                                            Configuración DNS
+                                                        </a>
                                                     </li>
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
@@ -175,16 +177,6 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on('click', '.btn-health', function () {
-        var id = $(this).data('id');
-        $.ajax({
-            url: '/api/remarketing/stores/' + id + '/health',
-            method: 'GET',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) { toastr.info(res.message || 'Health check completado'); },
-            error: function ()    { toastr.error('Error al ejecutar health check'); }
-        });
-    });
 
 });
 </script>
