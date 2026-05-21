@@ -60,7 +60,7 @@ class WebhookSettingsTest extends TestCase
             ->post(route('settings.remarketing.webhooks.store'), [
                 'store_id' => $store->id,
                 'url' => 'https://example.com/my-hook',
-                'events' => ['order.created'],
+                'events' => ['campaign.sent'],
             ])
             ->assertRedirect(route('settings.remarketing.webhooks.index'));
 

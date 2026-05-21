@@ -35,7 +35,7 @@ class AutomationServiceTest extends TestCase
         }
 
         $this->testUser = User::factory()->create();
-        $this->service = new AutomationService;
+        $this->service = app(AutomationService::class);
         $this->store = $this->createStore();
     }
 

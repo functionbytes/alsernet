@@ -4,6 +4,7 @@ namespace Modules\Remarketing\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
@@ -13,7 +14,7 @@ use Modules\Remarketing\Models\Customer;
 
 class SendDoubleOptinMailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
 
