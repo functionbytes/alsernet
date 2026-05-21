@@ -18,6 +18,7 @@ use Modules\Remarketing\Http\Requests\Web\StoreTemplateRequest;
 use Modules\Remarketing\Http\Requests\Web\UpdateTemplateRequest;
 use Modules\Remarketing\Models\Store;
 use Modules\Remarketing\Models\Template;
+use Modules\Remarketing\Support\StarterTemplates;
 
 class TemplateController extends Controller
 {
@@ -114,6 +115,40 @@ class TemplateController extends Controller
 
         return redirect()->route('remarketing.templates.index')
             ->with('success', 'Plantilla eliminada correctamente.');
+    }
+
+    public function starters(): View
+    {
+        $this->authorize('create', Template::class);
+
+        $starters = StarterTemplates::all();
+
+        return view('remarketing::templates.starters', compact('starters'));
+    }
+
+    public function cloneStarter(string $slug): RedirectResponse
+    {
+        $this->authorize('create', Template::class);
+
+        $starter = StarterTemplates::get($slug);
+
+        abort_if($starter === null, 404, 'Plantilla de inicio no encontrada.');
+
+        $store = $this->getUserStores()->first();
+
+        abort_if($store === null, 422, 'No tienes tiendas disponibles para guardar la plantilla.');
+
+        Template::query()->create([
+            'store_id' => $store->id,
+            'name' => $starter['name'].' (copia)',
+            'type' => $starter['type'],
+            'subject' => $starter['subject'],
+            'html_content' => $starter['html_content'],
+            'visibility' => 'user',
+        ]);
+
+        return redirect()->route('remarketing.templates.index')
+            ->with('success', "Plantilla «{$starter['name']}» añadida a tu biblioteca.");
     }
 
     public function preview(Template $template): View

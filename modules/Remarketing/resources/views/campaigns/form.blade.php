@@ -140,6 +140,27 @@
                             <div class="form-text">0 = sin holdout. Máximo 50%.</div>
                         </div>
 
+                        <div class="col-12">
+                            <hr class="my-3">
+                            <h6 class="mb-2">Envío inteligente</h6>
+                            <p class="text-muted small mb-3">
+                                Cuando está activado, cada mensaje se retrasa hasta la hora del día en la que ese contacto históricamente tiene mayor tasa de apertura.
+                                Requiere ejecutar <code>remarketing:compute-send-time</code> previamente.
+                            </p>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="settings[send_time_optimization]"
+                                       value="1" id="sendTimeOptCheck"
+                                       {{ old('settings.send_time_optimization', data_get($campaign->settings ?? [], 'send_time_optimization', false)) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="sendTimeOptCheck">
+                                    Activar envío en la hora óptima por contacto
+                                </label>
+                            </div>
+                            <div class="form-text">Los mensajes se encolarán con un retraso de hasta 24 h para alcanzar la hora preferida del contacto.</div>
+                        </div>
+
                     </div>
                 </div>
 

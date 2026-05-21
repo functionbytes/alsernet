@@ -15,6 +15,7 @@ use Modules\HelpdeskPrestashop\Events\PsOrderStatusChanged;
 use Modules\HelpdeskPrestashop\Events\PsPriceDropped;
 use Modules\Remarketing\Channels\EmailChannel;
 use Modules\Remarketing\Console\Commands\CalculateRfmCommand;
+use Modules\Remarketing\Console\Commands\ComputeSendTimeCommand;
 use Modules\Remarketing\Console\Commands\MarkAbandonedCartsCommand;
 use Modules\Remarketing\Console\Commands\PopulateProductWatchesCommand;
 use Modules\Remarketing\Console\Commands\ProcessAutomationsCommand;
@@ -256,6 +257,10 @@ class RemarketingServiceProvider extends ServiceProvider
                 ->dailyAt('04:00')
                 ->withoutOverlapping();
 
+            $schedule->command('remarketing:compute-send-time')
+                ->weeklyOn(0, '02:00')
+                ->withoutOverlapping();
+
             // Smart triggers (PS-aware)
             if (class_exists(DetectReplenishmentJob::class)) {
                 $schedule->job(new DetectReplenishmentJob)
@@ -287,6 +292,7 @@ class RemarketingServiceProvider extends ServiceProvider
         $commands = [
             ProcessAutomationsCommand::class,
             CalculateRfmCommand::class,
+            ComputeSendTimeCommand::class,
             ReconcileCatalogCommand::class,
             MarkAbandonedCartsCommand::class,
             PopulateProductWatchesCommand::class,

@@ -47,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('automations/{automation}/activate', [Web\AutomationController::class, 'activate'])->name('automations.activate');
             Route::post('automations/{automation}/pause', [Web\AutomationController::class, 'pause'])->name('automations.pause');
 
+            Route::get('templates/starters', [Web\TemplateController::class, 'starters'])->name('templates.starters');
+            Route::post('templates/starters/{slug}/clone', [Web\TemplateController::class, 'cloneStarter'])->name('templates.starters.clone');
             Route::resource('templates', Web\TemplateController::class)->except(['show']);
             Route::get('templates/{template}/preview', [Web\TemplateController::class, 'preview'])->name('templates.preview');
 

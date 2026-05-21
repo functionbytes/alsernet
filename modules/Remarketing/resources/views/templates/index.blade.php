@@ -12,9 +12,16 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <p class="text-muted mb-0 small">Diseños de email reutilizables para campañas y automatizaciones</p>
-        <a href="{{ route('remarketing.templates.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Nueva plantilla
-        </a>
+        <div class="d-flex gap-2">
+            @can('remarketing.templates.create')
+                <a href="{{ route('remarketing.templates.starters') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-layer-group me-1"></i> Plantillas de inicio
+                </a>
+            @endcan
+            <a href="{{ route('remarketing.templates.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Nueva plantilla
+            </a>
+        </div>
     </div>
 
     @if($templates->isEmpty())

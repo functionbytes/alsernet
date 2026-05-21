@@ -40,6 +40,7 @@ class Customer extends Model
         'orders_count',
         'last_order_at',
         'birthday',
+        'preferred_send_hour',
     ];
 
     protected function casts(): array
@@ -54,6 +55,7 @@ class Customer extends Model
             'clv_historical' => 'decimal:2',
             'last_order_at' => 'datetime',
             'birthday' => 'date',
+            'preferred_send_hour' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',

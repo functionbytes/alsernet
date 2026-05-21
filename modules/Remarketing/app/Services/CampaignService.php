@@ -66,6 +66,7 @@ class CampaignService
         $holdoutCount = 0;
 
         $holdoutPct = $this->resolveHoldoutPct($campaign);
+        $sendTimeOpt = (bool) data_get($campaign->settings, 'send_time_optimization', false);
         $variants = $campaign->variants()->get();
 
         // Pre-load all suppressions for this store into memory (O(1) lookup per customer)
@@ -81,7 +82,7 @@ class CampaignService
                 ->where('store_id', $campaign->store_id)
                 ->withEmailMarketingConsent();
 
-        $query->chunk(500, function ($customers) use ($campaign, $holdoutPct, $variants, &$dispatched, &$holdoutCount, $suppressedEmails): void {
+        $query->chunk(500, function ($customers) use ($campaign, $holdoutPct, $sendTimeOpt, $variants, &$dispatched, &$holdoutCount, $suppressedEmails): void {
             foreach ($customers as $customer) {
                 if (! $customer->email) {
                     continue;
@@ -118,7 +119,15 @@ class CampaignService
                     continue;
                 }
 
-                SendEmailJob::dispatch($message)->onQueue('remarketing');
+                $delay = $sendTimeOpt
+                    ? $this->computeSendDelay($customer->preferred_send_hour)
+                    : null;
+
+                $job = SendEmailJob::dispatch($message)->onQueue('remarketing');
+
+                if ($delay !== null) {
+                    $job->delay($delay);
+                }
 
                 $dispatched++;
             }
@@ -211,6 +220,29 @@ class CampaignService
         if ($winner) {
             $variants->each(fn (CampaignVariant $v) => $v->update(['is_winner' => $v->id === $winner->id]));
         }
+    }
+
+    /**
+     * Return the number of seconds to delay a message so it arrives at the customer's
+     * preferred hour. Returns null when no preference is set.
+     * Max delay capped at 23 h 59 m so a message is never pushed to the next day's cycle.
+     */
+    protected function computeSendDelay(?int $preferredHour): ?int
+    {
+        if ($preferredHour === null) {
+            return null;
+        }
+
+        $now = now()->utc();
+        $target = $now->copy()->setTime($preferredHour, 0, 0);
+
+        if ($target->lte($now)) {
+            $target->addDay();
+        }
+
+        $seconds = (int) $now->diffInSeconds($target);
+
+        return min($seconds, 86340); // cap at 23h59m
     }
 
     /**
