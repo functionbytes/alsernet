@@ -1,0 +1,27 @@
+{
+    "name": "modules/helpdeskanalytics",
+    "description": "Dashboard de analytics cross-canal del Helpdesk",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskAnalytics\\": "app/",
+            "Modules\\HelpdeskAnalytics\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskAnalytics\\Tests\\": "tests/"
+        }
+    }
+}

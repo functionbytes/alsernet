@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskAnalytics",
+    "alias": "helpdeskanalytics",
+    "description": "Dashboard de analytics cross-canal del Helpdesk: volumen, CSAT, tiempos de respuesta, rendimiento de agentes y salud de clientes, con agregacion sin N+1",
+    "keywords": ["helpdesk", "analytics", "reporting", "dashboard", "kpi"],
+    "priority": 0,
+    "providers": [
+        "Modules\\HelpdeskAnalytics\\Providers\\HelpdeskAnalyticsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

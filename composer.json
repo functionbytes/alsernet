@@ -1,0 +1,291 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "laravel/laravel",
+    "type": "project",
+    "description": "The skeleton application for the Laravel framework.",
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "aerni/cloudflared": "^1.1",
+        "darkaonline/l5-swagger": "^11.0",
+        "doctrine/annotations": "^2.0",
+        "guzzlehttp/psr7": "2.7",
+        "keepsuit/liquid": "^0.9.1",
+        "knuckleswtf/scribe": "^5.9",
+        "laravel/framework": "^12.0",
+        "laravel/horizon": "^5.45",
+        "laravel/mcp": "^0.5.1",
+        "laravel/pennant": "^1.23",
+        "laravel/reverb": "^1.10",
+        "laravel/sanctum": "^4.0",
+        "laravel/scout": "^10.0",
+        "laravel/socialite": "^5.26",
+        "laravel/telescope": "^5.19",
+        "laravel/tinker": "^2.8",
+        "laravel/ui": "^4.6",
+        "nesbot/carbon": "^3.8",
+        "nwidart/laravel-modules": "^12.0",
+        "php-imap/php-imap": "^5.0",
+        "pragmarx/google2fa-laravel": "^3.0",
+        "pragmarx/google2fa-qrcode": "^3.0",
+        "ramsey/uuid": "^4.7",
+        "sentry/sentry-laravel": "^4.24",
+        "spatie/laravel-backup": "^9.4",
+        "symfony/finder": "^7.2",
+        "symfony/mime": "^7.2",
+        "yajra/laravel-oci8": "^12.0"
+    },
+    "require-dev": {
+        "barryvdh/laravel-debugbar": "^4.1",
+        "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.9",
+        "laravel/boost": "1.8.9",
+        "laravel/pail": "^1.2.2",
+        "laravel/pint": "^1.24",
+        "laravel/sail": "^1.41",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "php-debugbar/php-debugbar": "^3.1",
+        "phpunit/phpunit": "^11.5.3",
+        "spatie/laravel-ignition": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/",
+            "Spatie\\MediaLibrary\\": "modules/Media/vendor/spatie/laravel-medialibrary/src/",
+            "Spatie\\Activitylog\\": "modules/Activity/vendor/spatie/laravel-activitylog/src/",
+            "Laravel\\Pulse\\": "modules/Pulse/vendor/laravel/pulse/src/",
+            "Laravel\\Telescope\\": "modules/Telescope/vendor/laravel/telescope/src/",
+            "Laravel\\Reverb\\": "modules/Reverb/vendor/laravel/reverb/src/",
+            "Modules\\Activity\\": "modules/Activity/app/",
+            "Modules\\Analytics\\": "modules/Analytics/app/",
+            "Modules\\Auth\\": "modules/Auth/app/",
+            "Modules\\Backup\\": "modules/Backup/app/",
+            "Modules\\Core\\": "modules/Core/app/",
+            "Modules\\Compliance\\": "modules/Compliance/app/",
+            "Modules\\Health\\": "modules/Health/app/",
+            "Modules\\Horizon\\": "modules/Horizon/app/",
+            "Modules\\Mail\\": "modules/Mail/app/",
+            "Modules\\Mailer\\": "modules/Mailer/app/",
+            "Modules\\Mailing\\": "modules/Mailing/app/",
+            "Modules\\MailsSettings\\": "modules/MailsSettings/app/",
+            "Modules\\Media\\": "modules/Media/app/",
+            "Modules\\Menu\\": "modules/Menu/app/",
+            "Modules\\Modules\\": "modules/Modules/app/",
+            "Modules\\Notification\\": "modules/Notification/app/",
+            "Modules\\Optimize\\": "modules/Optimize/app/",
+            "Modules\\Page\\": "modules/Page/app/",
+            "Modules\\Prestashop\\": "modules/Prestashop/app/",
+            "Modules\\Pulse\\": "modules/Pulse/app/",
+            "Modules\\Queue\\": "modules/Queue/app/",
+            "Modules\\Reverb\\": "modules/Reverb/app/",
+            "Modules\\Role\\": "modules/Role/app/",
+            "Modules\\Attention\\": "modules/Attention/app/",
+            "Modules\\Blog\\": "modules/Blog/app/",
+            "Modules\\Cache\\": "modules/Cache/app/",
+            "Modules\\Cache\\Database\\Seeders\\": "modules/Cache/database/seeders/",
+            "Modules\\Activity\\Database\\Seeders\\": "modules/Activity/database/seeders/",
+            "Modules\\Optimize\\Database\\Seeders\\": "modules/Optimize/database/seeders/",
+            "Modules\\Pulse\\Database\\Seeders\\": "modules/Pulse/database/seeders/",
+            "Modules\\Health\\Database\\Seeders\\": "modules/Health/database/seeders/",
+            "Modules\\Locales\\Database\\Seeders\\": "modules/Locales/database/seeders/",
+            "Modules\\User\\Database\\Seeders\\": "modules/User/database/seeders/",
+            "Modules\\Theme\\Database\\Seeders\\": "modules/Theme/database/seeders/",
+            "Modules\\MailsSettings\\Database\\Seeders\\": "modules/MailsSettings/database/seeders/",
+            "Modules\\System\\Database\\Seeders\\": "modules/System/database/seeders/",
+            "Modules\\Captcha\\Database\\Seeders\\": "modules/Captcha/database/seeders/",
+            "Modules\\Ads\\": "modules/Ads/app/",
+            "Modules\\Ads\\Database\\Factories\\": "modules/Ads/database/factories/",
+            "Modules\\Ads\\Database\\Seeders\\": "modules/Ads/database/seeders/",
+            "Modules\\Captcha\\": "modules/Captcha/app/",
+            "Modules\\Chat\\": "modules/Chat/app/",
+            "Modules\\Chat\\Database\\Factories\\": "modules/Chat/database/factories/",
+            "Modules\\Chat\\Database\\Seeders\\": "modules/Chat/database/seeders/",
+            "Modules\\Cookie\\": "modules/Cookie/app/",
+            "Modules\\Faqs\\": "modules/Faqs/app/",
+            "Modules\\Faqs\\Database\\Factories\\": "modules/Faqs/database/factories/",
+            "Modules\\Faqs\\Database\\Seeders\\": "modules/Faqs/database/seeders/",
+            "Modules\\Database\\": "modules/Database/app/",
+            "Modules\\Document\\": "modules/Document/app/",
+            "Modules\\Document\\Database\\Factories\\": "modules/Document/database/factories/",
+            "Modules\\Document\\Database\\Seeders\\": "modules/Document/database/seeders/",
+            "Modules\\Forms\\": "modules/Forms/app/",
+            "Modules\\Forms\\Database\\Factories\\": "modules/Forms/database/factories/",
+            "Modules\\Forms\\Database\\Seeders\\": "modules/Forms/database/seeders/",
+            "Modules\\Helpdesk\\": "modules/Helpdesk/app/",
+            "Modules\\HelpdeskTickets\\": "modules/HelpdeskTickets/app/",
+            "Modules\\HelpdeskAgents\\": "modules/HelpdeskAgents/app/",
+            "Modules\\HelpdeskChatFlow\\": "modules/HelpdeskChatFlow/app/",
+            "Modules\\HelpdeskChatFlow\\Database\\Factories\\": "modules/HelpdeskChatFlow/database/factories/",
+            "Modules\\HelpdeskChatFlow\\Database\\Seeders\\": "modules/HelpdeskChatFlow/database/seeders/",
+            "Modules\\HelpdeskAnalytics\\": "modules/HelpdeskAnalytics/app/",
+            "Modules\\HelpdeskAnalytics\\Database\\Seeders\\": "modules/HelpdeskAnalytics/database/seeders/",
+            "Modules\\HelpdeskCampaigns\\": "modules/HelpdeskCampaigns/app/",
+            "Modules\\HelpdeskCompliance\\": "modules/HelpdeskCompliance/app/",
+            "Modules\\HelpdeskCompliance\\Database\\Seeders\\": "modules/HelpdeskCompliance/database/seeders/",
+            "Modules\\HelpdeskLivechat\\": "modules/HelpdeskLivechat/app/",
+            "Modules\\HelpdeskLivechat\\Database\\Factories\\": "modules/HelpdeskLivechat/database/factories/",
+            "Modules\\HelpdeskLivechat\\Database\\Seeders\\": "modules/HelpdeskLivechat/database/seeders/",
+            "Modules\\HelpdeskErp\\": "modules/HelpdeskErp/app/",
+            "Modules\\HelpdeskErp\\Database\\Seeders\\": "modules/HelpdeskErp/database/seeders/",
+            "Modules\\HelpdeskContacts\\": "modules/HelpdeskContacts/app/",
+            "Modules\\HelpdeskContacts\\Database\\Seeders\\": "modules/HelpdeskContacts/database/seeders/",
+            "Modules\\HelpdeskPrestashop\\": "modules/HelpdeskPrestashop/app/",
+            "Modules\\HelpdeskPrestashop\\Database\\Factories\\": "modules/HelpdeskPrestashop/database/factories/",
+            "Modules\\HelpdeskPrestashop\\Database\\Seeders\\": "modules/HelpdeskPrestashop/database/seeders/",
+            "Modules\\HelpdeskSla\\": "modules/HelpdeskSla/app/",
+            "Modules\\HelpdeskSla\\Database\\Seeders\\": "modules/HelpdeskSla/database/seeders/",
+            "Modules\\HelpdeskHelpcenter\\": "modules/HelpdeskHelpcenter/app/",
+            "Modules\\HelpdeskHelpcenter\\Database\\Factories\\": "modules/HelpdeskHelpcenter/database/factories/",
+            "Modules\\HelpdeskHelpcenter\\Database\\Seeders\\": "modules/HelpdeskHelpcenter/database/seeders/",
+            "Modules\\Engagement\\": "modules/Engagement/app/",
+            "Modules\\Engagement\\Database\\Factories\\": "modules/Engagement/database/factories/",
+            "Modules\\Engagement\\Database\\Seeders\\": "modules/Engagement/database/seeders/",
+            "Modules\\Mailrelay\\": "modules/Mailrelay/app/",
+            "Modules\\Reviews\\": "modules/Reviews/app/",
+            "Modules\\Seo\\": "modules/Seo/app/",
+            "Modules\\Shortcode\\": "modules/Shortcode/app/",
+            "Modules\\SimpleSlider\\": "modules/SimpleSlider/app/",
+            "Modules\\Sitemap\\": "modules/Sitemap/app/",
+            "Modules\\Storage\\": "modules/Storage/app/",
+            "Modules\\System\\": "modules/System/app/",
+            "Modules\\Telescope\\": "modules/Telescope/app/",
+            "Modules\\Template\\": "modules/Template/app/",
+            "Modules\\Theme\\": "modules/Theme/app/",
+            "Modules\\User\\": "modules/User/app/",
+            "Modules\\Warehouse\\": "modules/Warehouse/app/",
+            "Modules\\Webhook\\": "modules/Webhook/app/",
+            "Modules\\Widget\\": "modules/Widget/app/",
+            "Modules\\Locales\\": "modules/Locales/app/",
+            "Modules\\Locations\\": "modules/Locations/app/",
+            "Modules\\Locations\\Database\\Factories\\": "modules/Locations/database/factories/",
+            "Modules\\Locations\\Database\\Seeders\\": "modules/Locations/database/seeders/",
+            "Modules\\Remarketing\\": "modules/Remarketing/app/",
+            "Modules\\Remarketing\\Database\\Factories\\": "modules/Remarketing/database/factories/",
+            "Modules\\Remarketing\\Database\\Seeders\\": "modules/Remarketing/database/seeders/",
+            "Modules\\Erp\\": "modules/Erp/app/",
+            "Modules\\Erp\\Database\\Seeders\\": "modules/Erp/database/seeders/",
+            "Modules\\HelpdeskDocument\\": "modules/HelpdeskDocument/app/"
+        },
+        "files": [
+            "app/helpers.php",
+            "modules/Page/helpers/helpers.php",
+            "modules/System/app/Helpers/SettingsHelper.php",
+            "modules/System/app/Helpers/EnvironmentHelper.php",
+            "modules/Core/app/Helpers/DateHelper.php",
+            "modules/Core/app/Helpers/LocalizationHelper.php",
+            "modules/Core/app/Helpers/DataFormatHelper.php",
+            "modules/Core/app/Helpers/UrlValidationHelper.php",
+            "modules/Core/app/Helpers/RateLimitHelper.php",
+            "modules/Core/app/Helpers/SiteHelper.php",
+            "modules/Database/app/Helpers/QueryHelper.php",
+            "modules/Storage/app/Helpers/PathHelper.php",
+            "modules/Role/app/Helpers/PermissionHelper.php",
+            "modules/Core/app/Helpers/SecretHelper.php",
+            "modules/Core/app/Helpers/Helper.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Modules\\Analytics\\Tests\\": "Modules/Analytics/tests/",
+            "Modules\\Attention\\Tests\\": "Modules/Attention/tests/",
+            "Modules\\Blog\\Tests\\": "Modules/Blog/tests/",
+            "Modules\\Cookie\\Tests\\": "Modules/Cookie/tests/",
+            "Modules\\Forms\\Tests\\": "Modules/Forms/tests/",
+            "Modules\\Mailer\\Tests\\": "Modules/Mailer/tests/",
+            "Modules\\Notification\\Tests\\": "Modules/Notification/tests/",
+            "Modules\\Reviews\\Tests\\": "Modules/Reviews/tests/",
+            "Modules\\Role\\Tests\\": "Modules/Role/tests/",
+            "Modules\\Seo\\Tests\\": "Modules/Seo/tests/",
+            "Modules\\Captcha\\Tests\\": "modules/Captcha/tests/",
+            "Modules\\HelpdeskErp\\Tests\\": "modules/HelpdeskErp/tests/",
+            "Modules\\Erp\\Tests\\": "modules/Erp/tests/"
+        },
+        "files": [
+            "modules/Core/app/Helpers/Helper.php"
+        ]
+    },
+    "scripts": {
+        "stan": "./vendor/bin/phpstan analyse --memory-limit=2G",
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "npm install",
+            "npm run build"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ],
+        "docs": [
+            "@php artisan docs:generate-commands"
+        ],
+        "setup:hooks": [
+            "bash manual/setup-hooks.sh"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        },
+        "merge-plugin": {
+            "include": [
+                "modules/*/composer.json"
+            ],
+            "recurse": true,
+            "replace": false,
+            "ignore-duplicates": true,
+            "merge-dev": true,
+            "merge-extra": false,
+            "merge-extra-deep": false,
+            "merge-scripts": false
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "ext-oci8": "3.0.1",
+            "ext-imap": "8.4.0"
+        },
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true,
+            "wikimedia/composer-merge-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
