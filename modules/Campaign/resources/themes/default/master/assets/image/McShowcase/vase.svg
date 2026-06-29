@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Ceramic vase line drawing">
+  <rect width="400" height="500" fill="#F7F5F0"/>
+  <g fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- vase body: narrow neck, flared shoulders, tapered base -->
+    <path d="M 172 108
+             C 172 100, 180 94, 200 94
+             C 220 94, 228 100, 228 108
+             L 228 146
+             C 228 156, 232 164, 244 174
+             C 268 192, 284 218, 288 252
+             L 288 316
+             C 288 354, 268 384, 234 396
+             L 166 396
+             C 132 384, 112 354, 112 316
+             L 112 252
+             C 116 218, 132 192, 156 174
+             C 168 164, 172 156, 172 146 Z" fill="#FEFDFA"/>
+    <!-- rim highlight -->
+    <ellipse cx="200" cy="104" rx="26" ry="4" stroke-width="1" fill="#F7F5F0"/>
+    <!-- interior rim hint -->
+    <path d="M 180 106 C 192 108, 210 108, 220 106" stroke-width="1.2" fill="none"/>
+    <!-- mid-body decorative line (subtle banding) -->
+    <line x1="128" y1="286" x2="272" y2="286" stroke="#C9C2B2" stroke-width="1"/>
+    <line x1="134" y1="304" x2="266" y2="304" stroke="#D6D1C4" stroke-width="1"/>
+    <!-- single stem sprout -->
+    <path d="M 200 94 C 200 70, 210 52, 234 40" stroke-width="1.4" fill="none"/>
+    <!-- leaf -->
+    <path d="M 234 40 C 246 32, 262 34, 266 46 C 260 54, 244 54, 234 40 Z" fill="#E6E1D2" stroke-width="1.2"/>
+    <!-- base shadow -->
+    <ellipse cx="200" cy="412" rx="110" ry="7" fill="#E5E1D8" stroke="none"/>
+    <!-- floor -->
+    <line x1="84" y1="416" x2="316" y2="416" stroke="#D6D1C4" stroke-width="1"/>
+    <!-- highlight crescent -->
+    <path d="M 138 260 C 128 304, 128 360, 144 394" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+  </g>
+</svg>

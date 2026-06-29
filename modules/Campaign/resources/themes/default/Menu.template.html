@@ -1,0 +1,35 @@
+<%
+var orientation = formatter.getFormat('orientation', 'horizontal');
+var flexDirection = orientation === 'vertical' ? 'column' : 'row';
+var separatorPaddingProp = orientation === 'vertical' ? 'padding-top' : 'padding-left';
+var separatorPaddingProp2 = orientation === 'vertical' ? 'padding-bottom' : 'padding-right';
+var textAlign = formatter.getFormat('text_align');
+var alignItems = 'center';
+if (orientation === 'vertical' && textAlign) {
+    alignItems = textAlign === 'left' ? 'flex-start' : (textAlign === 'right' ? 'flex-end' : 'center');
+}
+// Only dump the text/style-relevant formats onto the <a>. Without this
+// filter, non-style keys (align, orientation, separator, separator_gap)
+// get kebab-cased into the style attribute as invalid CSS like
+// `align: center; orientation: horizontal;` — benign visually but
+// confusing when inspecting and makes audits harder to reason about.
+var anchorStyles = formatter.toStyleStringAll(['font_family', 'font_weight', 'font_size', 'text_color']);
+%>
+<div style="display: flex; justify-content: <%- formatter.getFormat('align', 'center') %>;">
+    <ul style="display: flex; gap: <%- menu_gap %>px; flex-direction: <%- flexDirection %>; list-style: none; padding: 0; align-items: <%- alignItems %>; margin: 0;">
+        <% items.forEach(function(item, idx) { %>
+            <li>
+                <a href="<%= item.url %>" style="text-decoration: none; <%- anchorStyles %>">
+                    <%= item.text %>
+                </a>
+            </li>
+
+            <% if (idx < items.length - 1 && formatter && formatter.getFormat && formatter.getFormat('separator')) { %>
+                <li class="menu-separator" style="display:flex; align-items:center; <%- separatorPaddingProp %>:<%- formatter.getFormat('separator_gap', menu_gap) %>px; <%- separatorPaddingProp2 %>:<%- formatter.getFormat('separator_gap', menu_gap) %>px;">
+                    <span style="color: <%- formatter.getFormat('text_color') || '#000' %>;"> <%- formatter.getFormat('separator') %> </span>
+                </li>
+            <% } %>
+
+        <% }); %>
+    </ul>
+</div>

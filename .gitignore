@@ -1,0 +1,49 @@
+# Dependencias
+/vendor/
+/node_modules/
+modules/*/vendor/
+modules/*/node_modules/
+
+# Build / assets compilados de Vite
+/public/build/
+/public/hot
+
+# Storage runtime (mantener estructura via .gitignore propios de Laravel)
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/app/public/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+/bootstrap/cache/*
+
+# Entorno y secretos
+.env
+.env.*
+!.env.example
+*.bak
+auth.json
+
+# Caches de herramientas
+.phpunit.result.cache
+.phpunit.cache
+/.phpunit.cache
+.phpstan.cache
+.phpactor.json
+
+# Claude Code (worktrees de agentes + locales)
+.claude/worktrees/
+.claude/settings.local.json
+.claude/projects/
+
+# Snapshots / dumps de testing del proyecto
+/system_testing
+/system_test_clean
+/snapshot_*.txt
+
+# macOS
+.DS_Store
+**/.DS_Store

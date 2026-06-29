@@ -1,0 +1,777 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#D0D0D0",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": null,
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 50,
+                "padding_bottom": 20
+            },
+            "elements": [
+                {
+                    "name": "LinkElement",
+                    "template": "Link",
+                    "formats": {
+                        "text_color": "#000000",
+                        "text_align": "center",
+                        "text_decoration": "underline"
+                    },
+                    "text": "View this email in your browser",
+                    "url": "{{WEB_VIEW_URL}}",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": ""
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 20,
+                "padding_bottom": 20
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 130,
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/email/logo.png",
+                    "alt": "",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_bottom": 0
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "text_align": "center"
+                    },
+                    "type": "h1",
+                    "text": "Share your story"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "text_align": "center"
+                    },
+                    "text": "Newsletters keep people engaged with your brand. Share articles or videos, let people know about new products or promotions, or invite them to events."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_right": 0,
+                "padding_left": 0
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": "100%",
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/email/banner_wide.png",
+                    "alt": "",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_bottom": 0
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {},
+                    "type": "h2",
+                    "text": "The main story"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {},
+                                            "text": "Make your email easy to scan by leading with one big feature or idea, like your latest blog post or a new product feature."
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {},
+                                            "text": "Start by replacing images with your own, or use a solid color background."
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 40
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#F0F0F0",
+                "padding_top": 40,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/placeholder_default.svg",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": 0,
+                                                "sepia": 0,
+                                                "invert": 0,
+                                                "blur": 0,
+                                                "brightness": 100,
+                                                "contrast": 100,
+                                                "saturate": 100,
+                                                "hueRotate": 0,
+                                                "opacity": 100
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 15
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {},
+                                            "type": "h2",
+                                            "text": "Show off what you do"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {},
+                                            "text": "Replace the image with a photo of a new product or your latest project."
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 40
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 40,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 15
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {},
+                                            "type": "h2",
+                                            "text": "Make articles more visual"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 20
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {},
+                                            "text": "Pair a compelling image with your text to entice readers to click."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "text_decoration": "underline"
+                                            },
+                                            "text": "Keep reading",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/placeholder_default.svg",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": 0,
+                                                "sepia": 0,
+                                                "invert": 0,
+                                                "blur": 0,
+                                                "brightness": 100,
+                                                "contrast": 100,
+                                                "saturate": 100,
+                                                "hueRotate": 0,
+                                                "opacity": 100
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 40
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#F0F0F0",
+                "padding_top": 40,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/placeholder_default.svg",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": 0,
+                                                "sepia": 0,
+                                                "invert": 0,
+                                                "blur": 0,
+                                                "brightness": 100,
+                                                "contrast": 100,
+                                                "saturate": 100,
+                                                "hueRotate": 0,
+                                                "opacity": 100
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 15
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {},
+                                            "type": "h2",
+                                            "text": "Upcoming events"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 20
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {},
+                                            "text": "Invite people to your next event or give them a sneak peek at a new collection that’s coming soon."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "text_decoration": "underline"
+                                            },
+                                            "text": "RSVP",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 40
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#000000"
+            },
+            "elements": [
+                {
+                    "name": "SocialIconsElement",
+                    "template": "SocialIcons",
+                    "formats": {
+                        "background_position": "center",
+                        "background_size": "100%",
+                        "background_repeat": "no-repeat"
+                    },
+                    "items": [
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/icons/facebook.png",
+                            "label": "Facebook"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/icons/linkedin.png",
+                            "label": "LinkedIn"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/icons/youtube.png",
+                            "label": "YouTube"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/icons/twitter.png",
+                            "label": "X"
+                        }
+                    ],
+                    "size": 50,
+                    "gap": 10,
+                    "align": "center"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#000000",
+                "padding_top": 0,
+                "padding_bottom": 0
+            },
+            "elements": [
+                {
+                    "name": "DividerElement",
+                    "template": "Divider",
+                    "formats": {
+                        "background_color": "#FFFFFF",
+                        "height": 2,
+                        "divider_style": "solid",
+                        "padding_top": 10,
+                        "padding_bottom": 10
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#000000"
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 70,
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/email/logo.png",
+                    "alt": "",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 40,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 13,
+                        "text_align": "center"
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 13,
+                        "text_align": "center"
+                    },
+                    "text": "If you no longer want to receive these emails, you can <a href=\"{{UNSUBSCRIBE_URL}}\">unsubscribe</a>"
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "medium",
+    "block_padding_bottom": 20,
+    "block_padding_top": 20,
+    "block_padding_right": 20,
+    "block_padding_left": 20,
+    "default_block_background_color": "#FFFFFF"
+}

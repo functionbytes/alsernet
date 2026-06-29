@@ -1,0 +1,28 @@
+{
+    "name": "modules/ads",
+    "description": "Gestión de banners publicitarios y anuncios",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Ads\\": "app/",
+            "Modules\\Ads\\Database\\Factories\\": "database/factories/",
+            "Modules\\Ads\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Ads\\Tests\\": "tests/"
+        }
+    }
+}

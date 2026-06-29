@@ -1,0 +1,172 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Default Theme Support Showcase</title>
+
+    <style>
+        html {
+            margin: 0;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.4;
+        }
+        p, h1, h2, h3, h4, h5, h6, label, ul {
+            margin: 0;
+        }
+        a {
+            color: inherit;
+        }
+        [builder-element="PageElement"] {
+            min-height: 100vh;
+            display: block;
+            flex-direction: ;
+            justify-content: ;
+            align-items: ;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"]:not(:last-child) {
+            margin-bottom: 24px;
+        }
+
+        
+
+        
+        @media (min-width: 900px) {
+            [builder-element="PageElement"] > [builder-element="BlockElement"] {
+                max-width: 1024px;
+            }
+        }
+        
+
+        
+        /* default_block_background_color targets the INNER styled div (`> :first-child`),
+           NOT the outer `<div builder-element="BlockElement">` wrapper. The outer is a
+           hover/selection anchor with no painting role; the inner is where the formatter
+           writes per-block bg + border + radius + padding. Painting the default bg on
+           the outer (legacy behavior, retired 2026-05-05) caused outer's flat-edge
+           rectangle to visually mask any per-block `border_radius`. Targeting the inner
+           lets default bg compose with per-block radius — they paint the same div,
+           formatter's `!important` inline style still wins when set. */
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            background-color: #ffffff;
+        }
+        
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            padding-top: 0px;
+            padding-right: 0px;
+            padding-bottom: 0px;
+            padding-left: 0px;
+        }
+    </style>
+</head>
+<body>
+    <div builder-element="PageElement" style="background-color: rgb(238, 242, 255); font-family: Arial, Helvetica, sans-serif; padding: 40px 24px !important;"><div builder-element="BlockElement"><div style="background-color: #ffffff; border-radius: 20px !important; padding-top: 48px !important; padding-right: 40px !important; padding-bottom: 24px !important; padding-left: 40px !important;">
+    <div builder-element="HeadingElement">
+    <h1 style="font-weight: 700; font-size: 40px !important; padding-bottom: 12px !important;" data-bjs-inline-text="_hy7rj3f3o">Default Theme Support Showcase</h1>
+
+</div><div builder-element="PElement"><p style="font-size: 16px !important; color: #475569;" data-bjs-inline-text="_bccw4m7hp">This sample covers the Phase 0 support set added for the default theme: Select, Radio, Checkbox, and Pricing Table.</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #ffffff; border-radius: 20px !important; padding-top: 16px !important; padding-right: 40px !important; padding-bottom: 40px !important; padding-left: 40px !important;">
+    <div builder-element="LabelElement"><label style="font-weight: 600; text-align: left; direction: ltr; background-position: center; background-size: 100%; background-repeat: no-repeat; padding-top: 0px !important; padding-right: 0px !important; padding-bottom: 8px !important; padding-left: 0px !important; border-radius: 0px !important;">Topic</label></div><div builder-element="SelectElement"><div style="width: 100%;">
+    <select name="topic" style="background-position: center; background-size: 100%; background-repeat: no-repeat; padding-top: 10px !important; padding-right: 14px !important; padding-bottom: 10px !important; padding-left: 14px !important; height: 48px !important;box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 12px; color: #0f172a; background-color: #ffffff; width: 100%; ">
+        
+            <option value="" selected="">Choose a topic</option>
+        
+            <option value="product_updates">Product updates</option>
+        
+            <option value="events">Events</option>
+        
+            <option value="growth_tips">Growth tips</option>
+        
+    </select>
+</div>
+</div><div builder-element="LabelElement"><label style="font-weight: 600; text-align: left; direction: ltr; background-position: center; background-size: 100%; background-repeat: no-repeat; padding-top: 24px !important; padding-right: 0px !important; padding-bottom: 8px !important; padding-left: 0px !important; border-radius: 0px !important;">Preferred contact</label></div><div builder-element="RadioElement"><div style="display: grid; gap: 10px;">
+    
+    
+        
+        <label for="preferred_contact_0" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="preferred_contact_0" type="radio" name="preferred_contact" value="email" checked="" style="margin-top: 3px;">
+            <span>Email</span>
+        </label>
+    
+        
+        <label for="preferred_contact_1" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="preferred_contact_1" type="radio" name="preferred_contact" value="phone" style="margin-top: 3px;">
+            <span>Phone</span>
+        </label>
+    
+        
+        <label for="preferred_contact_2" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="preferred_contact_2" type="radio" name="preferred_contact" value="sms" style="margin-top: 3px;">
+            <span>SMS</span>
+        </label>
+    
+</div>
+</div><div builder-element="LabelElement"><label style="font-weight: 600; text-align: left; direction: ltr; background-position: center; background-size: 100%; background-repeat: no-repeat; padding-top: 24px !important; padding-right: 0px !important; padding-bottom: 8px !important; padding-left: 0px !important; border-radius: 0px !important;">Interests</label></div><div builder-element="CheckboxElement"><div style="display: grid; gap: 10px;">
+    
+    
+        
+        <label for="interests_0" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="interests_0" type="checkbox" name="interests[]" value="automation" style="margin-top: 3px;">
+            <span>Automation</span>
+        </label>
+    
+        
+        <label for="interests_1" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="interests_1" type="checkbox" name="interests[]" value="analytics" style="margin-top: 3px;">
+            <span>Analytics</span>
+        </label>
+    
+        
+        <label for="interests_2" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="interests_2" type="checkbox" name="interests[]" value="deliverability" style="margin-top: 3px;">
+            <span>Deliverability</span>
+        </label>
+    
+</div>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #ffffff; border-radius: 20px !important; padding-top: 40px !important; padding-right: 40px !important; padding-bottom: 48px !important; padding-left: 40px !important;">
+    <div builder-element="HeadingElement">
+    <h2 style="font-weight: 700; font-size: 28px !important; padding-bottom: 16px !important;" data-bjs-inline-text="_w2lxl31op">Pricing Table</h2>
+
+</div><div builder-element="PricingCardsElement"><div data-pricing-cards-style="minimal" style="background-position: center; background-size: 100%; background-repeat: no-repeat; align-items: stretch; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); width: 100%; gap: 20px; align-items: stretch;">
+    
+<div builder-element="PricingCardElement" data-pricing-card="" data-style="minimal" data-highlighted="0" style="position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 20px; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); margin-top: 0; margin-bottom: 0; color: #111827; transition: box-shadow 150ms ease, border-color 150ms ease; overflow: visible;"><div builder-element="BlockElement"><div style="">
+    <div builder-element="HeadingElement">
+    <h3 style="" data-bjs-inline-text="_er7wpygbv">Starter</h3>
+
+</div><div builder-element="PElement"><p style="font-weight: 800; font-size: 40px !important;" data-bjs-inline-text="_444o61jnu">$19/mo</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_op2isctnh">3 team members</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_w6pgvkhxd">Email support</p>
+</div>
+</div></div></div><div builder-element="PricingCardElement" data-pricing-card="" data-style="minimal" data-highlighted="0" style="position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 20px; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); margin-top: 0; margin-bottom: 0; color: #111827; transition: box-shadow 150ms ease, border-color 150ms ease; overflow: visible;"><div builder-element="BlockElement"><div style="">
+    <div builder-element="HeadingElement">
+    <h3 style="" data-bjs-inline-text="_j936kv0o3">Growth</h3>
+
+</div><div builder-element="PElement"><p style="font-weight: 800; font-size: 40px !important;" data-bjs-inline-text="_gc3e5y95o">$49/mo</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_3iieraf6m">10 team members</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_pfp03108l">Automation workflows</p>
+</div>
+</div></div></div><div builder-element="PricingCardElement" data-pricing-card="" data-style="minimal" data-highlighted="0" style="position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px 20px; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.04); margin-top: 0; margin-bottom: 0; color: #111827; transition: box-shadow 150ms ease, border-color 150ms ease; overflow: visible;"><div builder-element="BlockElement"><div style="">
+    <div builder-element="HeadingElement">
+    <h3 style="" data-bjs-inline-text="_umq4sjxci">Scale</h3>
+
+</div><div builder-element="PElement"><p style="font-weight: 800; font-size: 40px !important;" data-bjs-inline-text="_0kk8khygo">$99/mo</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_9lvejlafg">Unlimited members</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_znvgeztil">Priority support</p>
+</div>
+</div></div></div></div>
+</div>
+</div></div></div>
+
+</body></html>

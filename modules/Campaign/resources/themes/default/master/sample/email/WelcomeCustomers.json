@@ -1,0 +1,478 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#F8F1FB",
+        "padding_top": 40,
+        "padding_right": 0,
+        "padding_bottom": 40,
+        "padding_left": 0
+    },
+    "page_title": "Welcome New Customers",
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 60,
+                "padding_right": 0,
+                "padding_bottom": 0,
+                "padding_left": 0
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "padding_bottom": 40,
+                        "width": 60,
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/WelcomeCustomers/logo.png",
+                    "alt": "Brand Logo",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                },
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 660,
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/WelcomeCustomers/hero.png",
+                    "alt": "Hero Image",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                },
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_size": 70,
+                        "text_color": "#FFFFFF",
+                        "text_align": "left",
+                        "padding_top": 50,
+                        "padding_right": 0,
+                        "padding_left": 80
+                    },
+                    "type": "h1",
+                    "text": "Welcome"
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 18,
+                        "text_color": "#FFFFFF",
+                        "text_align": "left",
+                        "line_height": 1.6,
+                        "padding_top": 20,
+                        "padding_right": 30,
+                        "padding_left": 80
+                    },
+                    "text": "Thanks for joining us. When I first started Tandu, my vision was to cultivate an approachable cycling community. 5 years later, I'm proud to say that our gear has taken part in adventures of all kinds. We're excited to join your next one."
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 16,
+                        "text_color": "#FFFFFF",
+                        "text_align": "left",
+                        "padding_top": 25,
+                        "padding_bottom": 60,
+                        "padding_left": 80
+                    },
+                    "text": "Fiona McCloud, Founder & CEO of TANDU"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#A78FC3",
+                "padding_top": 40,
+                "padding_right": 0,
+                "padding_bottom": 40,
+                "padding_left": 0
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "padding_left": 30,
+                                                "width": 290,
+                                                "height": 300,
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/WelcomeCustomers/bike.png",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "border_bottom_style": "solid",
+                                        "border_bottom_width": 1,
+                                        "border_bottom_color": "#FFFFFF",
+                                        "padding_right": 30,
+                                        "padding_bottom": 12,
+                                        "padding_left": 30
+                                    },
+                                    "elements": []
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 20,
+                                                "text_color": "#FFFFFF",
+                                                "text_align": "left",
+                                                "padding_top": 20,
+                                                "padding_left": 30
+                                            },
+                                            "text": "Shop Bikes →"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "border_bottom_style": "solid",
+                                        "border_bottom_width": 1,
+                                        "border_bottom_color": "#FFFFFF",
+                                        "padding_top": 12,
+                                        "padding_right": 30,
+                                        "padding_left": 30
+                                    },
+                                    "elements": []
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "padding_right": 30,
+                                                "width": 290,
+                                                "height": 300,
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/WelcomeCustomers/woman.png",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "border_bottom_style": "solid",
+                                        "border_bottom_width": 1,
+                                        "border_bottom_color": "#FFFFFF",
+                                        "padding_right": 30,
+                                        "padding_bottom": 12,
+                                        "padding_left": 30
+                                    },
+                                    "elements": []
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 20,
+                                                "text_color": "#FFFFFF",
+                                                "text_align": "left",
+                                                "padding_top": 20
+                                            },
+                                            "text": "Shop Clothing →"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "border_bottom_style": "solid",
+                                        "border_bottom_width": 1,
+                                        "border_bottom_color": "#FFFFFF",
+                                        "padding_top": 12,
+                                        "padding_right": 30,
+                                        "padding_left": 30
+                                    },
+                                    "elements": []
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 30
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#6E4A93",
+                "padding_top": 70,
+                "padding_bottom": 100
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_size": 28,
+                        "text_color": "#FFFFFF",
+                        "text_align": "center"
+                    },
+                    "type": "h2",
+                    "text": "Let's get social"
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 16,
+                        "text_color": "#FFFFFF",
+                        "text_align": "center",
+                        "padding_top": 15,
+                        "padding_bottom": 30
+                    },
+                    "text": "Follow us on social to keep in touch with our events and more."
+                },
+                {
+                    "name": "SocialIconsElement",
+                    "template": "SocialIcons",
+                    "formats": {
+                        "background_position": "center",
+                        "background_size": "100%",
+                        "background_repeat": "no-repeat"
+                    },
+                    "items": [
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/WelcomeCustomers/facebook.png",
+                            "label": "Facebook"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/WelcomeCustomers/instagram.png",
+                            "label": "Instagram"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/WelcomeCustomers/twitter.png",
+                            "label": "X"
+                        }
+                    ],
+                    "size": 40,
+                    "gap": 20,
+                    "align": "center"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#1B0C28",
+                "padding_top": 40,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "LinkElement",
+                    "template": "Link",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "white",
+                        "text_align": "center"
+                    },
+                    "text": "View in browser",
+                    "url": "{{WEB_VIEW_URL}}",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": ""
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "#FFFFFF",
+                        "text_align": "center",
+                        "padding_bottom": 10
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "#FFFFFF",
+                        "text_align": "center",
+                        "padding_bottom": 20
+                    },
+                    "text": "If you no longer want to receive these emails, you can <a href=\"{{UNSUBSCRIBE_URL}}\">unsubscribe</a>."
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "medium",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 0,
+    "block_padding_left": 0,
+    "default_block_background_color": "#401D66"
+}

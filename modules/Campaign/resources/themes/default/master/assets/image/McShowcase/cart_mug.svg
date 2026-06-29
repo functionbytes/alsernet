@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Ceramic mug card thumbnail with steam wisp and sprig accent, editorial line drawing">
+  <rect width="400" height="400" fill="#F7F5F0"/>
+
+  <!-- ambient floor shadow -->
+  <ellipse cx="200" cy="334" rx="116" ry="6" fill="#C9C2B2" opacity="0.55"/>
+
+  <g fill="none" stroke="#1C1917" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- steam wisps (top) -->
+    <path d="M 174 78 C 170 64, 184 58, 178 44" stroke-width="1.2" opacity="0.7"/>
+    <path d="M 200 78 C 196 60, 212 56, 204 38" stroke-width="1.2" opacity="0.7"/>
+    <path d="M 226 78 C 222 64, 236 58, 230 44" stroke-width="1.2" opacity="0.7"/>
+
+    <!-- mug body: stout cylinder with slight taper, vertically centered -->
+    <path d="M 134 134
+             C 134 118, 146 110, 160 110
+             L 244 110
+             C 258 110, 270 118, 270 134
+             L 274 280
+             C 274 302, 260 314, 240 314
+             L 164 314
+             C 144 314, 130 302, 130 280 Z" fill="#FEFDFA" stroke-width="2"/>
+
+    <!-- rim ellipse (top opening) -->
+    <ellipse cx="202" cy="118" rx="68" ry="11" fill="#FEFDFA" stroke-width="2"/>
+    <ellipse cx="202" cy="118" rx="60" ry="7" stroke-width="1.2" fill="none"/>
+
+    <!-- handle: bold D-curve on right -->
+    <path d="M 270 158
+             C 318 158, 332 184, 330 218
+             C 328 250, 308 268, 274 268"
+          stroke-width="2.4"/>
+    <path d="M 270 178
+             C 304 178, 314 196, 310 218
+             C 306 240, 298 252, 274 252"
+          stroke-width="1.6"/>
+
+    <!-- base ring -->
+    <path d="M 134 314 C 170 322, 234 322, 272 314" stroke-width="1.4"/>
+
+    <!-- subtle volume hatching (left side) -->
+    <path d="M 150 150 C 142 188, 142 248, 152 290" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+
+    <!-- coffee surface (subtle ring inside) -->
+    <ellipse cx="202" cy="130" rx="56" ry="6" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+
+    <!-- sprig accent on saucer -->
+    <path d="M 274 330 C 290 326, 304 322, 314 320" stroke="#1C1917" stroke-width="1.2"/>
+    <ellipse cx="312" cy="319" rx="4" ry="2" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.9" transform="rotate(-15 312 319)"/>
+    <ellipse cx="298" cy="324" rx="3.4" ry="1.8" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.8" transform="rotate(-12 298 324)"/>
+
+    <!-- floor line -->
+    <line x1="60" y1="342" x2="340" y2="342" stroke="#C9C2B2" stroke-width="1"/>
+  </g>
+</svg>

@@ -1,0 +1,350 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#5D5956",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": null,
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 80,
+                "padding_right": 10
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 180,
+                        "align": "left",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/ThankYouPersonalized/Assembly.png",
+                    "alt": "",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 20,
+                "padding_bottom": 20
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_family": "Merriweather, Georgia, Times New Roman, serif",
+                        "font_weight": "bold",
+                        "font_size": 50,
+                        "text_color": "#ffffff",
+                        "text_align": "left"
+                    },
+                    "type": "h2",
+                    "text": "Simple lights for complicated times"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "DividerElement",
+                    "template": "Divider",
+                    "formats": {
+                        "background_color": "#ffffff",
+                        "height": 2,
+                        "divider_style": "solid",
+                        "padding_top": 10,
+                        "padding_bottom": 10
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 40,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "Hi,"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "I wanted to take a moment to express my sincerest gratitude for your continued patronage and support."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "For nearly three decades, I traveled the world, eating in the finest restaurants and earning awards for my journalism. But eventually the grind got to me and I longed for something new. Turning my appreciation for ambiance and simplicity into a vocation, I founded Assembly in 2019."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "It is your trust in our brand that has kept us motivated to innovate and improve our products and services. I am proud to say that Assembly has come a long way since our early days."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "We are committed to maintaining the highest standards of quality and customer satisfaction. Your feedback and suggestions have been instrumental in our growth and success. We value your loyalty and will continue to work hard to earn it every day."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "Sincerely,"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 18,
+                        "text_color": "#ffffff",
+                        "text_align": "left",
+                        "line_height": 1.25
+                    },
+                    "text": "Grace <br> Founder & CEO"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "DividerElement",
+                    "template": "Divider",
+                    "formats": {
+                        "background_color": "#ffffff",
+                        "height": 2,
+                        "divider_style": "solid",
+                        "padding_top": 20,
+                        "padding_bottom": 30
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "LinkElement",
+                    "template": "Link",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 14,
+                        "text_color": "#ffffff",
+                        "text_align": "center",
+                        "text_decoration": "underline"
+                    },
+                    "text": "View in browser",
+                    "url": "{{WEB_VIEW_URL}}",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": ""
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 10,
+                "padding_bottom": 20
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 12,
+                        "text_color": "#ffffff",
+                        "text_align": "center"
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 30
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Work Sans, sans-serif",
+                        "font_size": 12,
+                        "text_color": "#ffffff",
+                        "text_align": "center"
+                    },
+                    "text": "If you no longer want to receive these emails, you can <a href=\"{{UNSUBSCRIBE_URL}}\">unsubscribe</a>"
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "medium",
+    "block_padding_bottom": 20,
+    "block_padding_top": 20,
+    "block_padding_right": 60,
+    "block_padding_left": 60,
+    "default_block_background_color": "#5D5956"
+}

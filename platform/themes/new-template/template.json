@@ -1,0 +1,9 @@
+{
+    "name": "New Template",
+    "namespace": "Template\\NewTemplate\\",
+    "description": null,
+    "author": "Alsernet",
+    "version": "1.0.0",
+    "inherit": null,
+    "required_plugins": []
+}

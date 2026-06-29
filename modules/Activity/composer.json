@@ -1,0 +1,32 @@
+{
+    "name": "modules/activity",
+    "description": "Activity Module - User action auditing, activity logging, and history tracking",
+    "keywords": ["activity", "audit", "logging", "history", "tracking"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-activitylog": "^4.9|^5.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Activity\\": "app/",
+            "Modules\\Activity\\Database\\Factories\\": "database/factories/",
+            "Modules\\Activity\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Activity\\Tests\\": "tests/"
+        }
+    }
+}

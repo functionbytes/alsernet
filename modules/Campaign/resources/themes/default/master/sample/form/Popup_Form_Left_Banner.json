@@ -1,0 +1,179 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Form",
+    "formats": {
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": null,
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "40%",
+                                "background_color": "#F1F2F2",
+                                "background_position": "center",
+                                "background_size": "100%",
+                                "background_repeat": "no-repeat"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 0,
+                                        "padding_left": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/placeholder_popup_form.svg",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "60%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 40,
+                                        "padding_right": 40,
+                                        "padding_bottom": 15,
+                                        "padding_left": 40
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_weight": "bold"
+                                            },
+                                            "type": "h2",
+                                            "text": "Welcome to {{LIST_NAME}}!"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 40,
+                                        "padding_bottom": 10,
+                                        "padding_left": 40
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "padding_bottom": 17
+                                            },
+                                            "text": "Fill out the form below to get started."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 15,
+                                        "padding_right": 40,
+                                        "padding_bottom": 15,
+                                        "padding_left": 40
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "GridElement",
+                                            "template": "Grid",
+                                            "formats": {
+                                                "align_items": "stretch"
+                                            },
+                                            "cells": [
+                                                {
+                                                    "name": "FormContainerCell",
+                                                    "template": "FormContainerCell",
+                                                    "formats": {
+                                                        "width": "fill"
+                                                    },
+                                                    "blocks": [],
+                                                    "vertical_align": "top",
+                                                    "action": "",
+                                                    "method": ""
+                                                }
+                                            ],
+                                            "cell_gap": 0
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "auto",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 0,
+    "block_padding_left": 0,
+    "default_block_background_color": null
+}

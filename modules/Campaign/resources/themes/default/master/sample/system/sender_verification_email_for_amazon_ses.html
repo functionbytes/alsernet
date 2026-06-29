@@ -1,0 +1,104 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email Address (Amazon SES)</title>
+
+    <style>
+        html {
+            margin: 0;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.4;
+        }
+        p, h1, h2, h3, h4, h5, h6, label, ul {
+            margin: 0;
+        }
+        a {
+            color: inherit;
+        }
+        [builder-element="PageElement"] {
+            min-height: 100vh;
+            display: block;
+            flex-direction: ;
+            justify-content: ;
+            align-items: ;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"]:not(:last-child) {
+            margin-bottom: 0px;
+        }
+
+        
+
+        
+        @media (min-width: 800px) {
+            [builder-element="PageElement"] > [builder-element="BlockElement"] {
+                max-width: 800px;
+            }
+        }
+        
+
+        
+        /* default_block_background_color targets the INNER styled div (`> :first-child`),
+           NOT the outer `<div builder-element="BlockElement">` wrapper. The outer is a
+           hover/selection anchor with no painting role; the inner is where the formatter
+           writes per-block bg + border + radius + padding. Painting the default bg on
+           the outer (legacy behavior, retired 2026-05-05) caused outer's flat-edge
+           rectangle to visually mask any per-block `border_radius`. Targeting the inner
+           lets default bg compose with per-block radius — they paint the same div,
+           formatter's `!important` inline style still wins when set. */
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            background-color: #FFFFFF;
+        }
+        
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            padding-top: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div builder-element="PageElement" style="background-color: rgb(244, 244, 244); padding: 40px 60px !important;"><div builder-element="BlockElement"><div style="background-color: #FFFFFF; padding-top: 40px !important;">
+    <div builder-element="HeadingElement">
+    <h1 style="" data-bjs-inline-text="_m95jf7qgo">Verify Your Email Address (Amazon SES)</h1>
+
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_me85pjzga">{{CURRENT_DATE}}</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-top: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="DividerElement"><div style="padding-top: 10px !important; padding-bottom: 10px !important;">
+    <div style="background-color: #D0D0D0; height: 2px !important; border-top: 2px solid #D0D0D0; background-color: transparent; height: 0;"></div>
+</div>
+    </div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_80arfxv3z">Hi {{USER_NAME}}, we need to confirm your email</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_4pc769iem">We received a request to register <strong>{{USER_EMAIL}}</strong> as a sender in our system. To complete this process, please confirm that you own this email address by clicking the button below:</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF;">
+    <div builder-element="LinkElement"><a href="{{VERIFICATION_LINK}}" style="display: block;" data-bjs-inline-text="_u926td6j2">Verify My Email</a>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_jtnmo43hi">If the button above does not work, copy and paste this link into your browser:</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF;">
+    <div builder-element="LinkElement"><a href="{{VERIFICATION_LINK}}" style="display: block;" data-bjs-inline-text="_gvzv5zd6e">{{VERIFICATION_LINK}}</a>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF;">
+    <div builder-element="PElement"><p style="font-size: 13px !important; text-align: center;" data-bjs-inline-text="_gmq7ecs00">Copyright (C). All rights reserved.</p>
+</div>
+</div></div></div>
+
+</body></html>

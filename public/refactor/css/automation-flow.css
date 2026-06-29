@@ -1,0 +1,169 @@
+.ad-root {
+  --ad-accent: #2563EB;
+  --ad-bg: #FAFAFA;
+  --ad-grid: #E5E7EB;
+  --ad-card: #FFFFFF;
+  --ad-border: #E5E7EB;
+  --ad-border-strong: #0A0A0A;
+  --ad-text: #0A0A0A;
+  --ad-text-muted: #6B7280;
+  --ad-text-faint: #9CA3AF;
+  --ad-edge: #D1D5DB;
+  --ad-divider: #F3F4F6;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 1px 1px, var(--ad-grid) 1px, transparent 0),
+    var(--ad-bg);
+  background-size: 22px 22px;
+  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ad-text);
+}
+
+.ad-viewport {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+.ad-grabbing { cursor: grabbing; }
+
+.ad-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.ad-edges {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: visible;
+}
+
+.ad-edge {
+  fill: none;
+  stroke: var(--ad-edge);
+  stroke-width: 1.5;
+  pointer-events: none;
+  transition: stroke 0.12s ease, stroke-width 0.12s ease;
+}
+
+.ad-edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.ad-edge-group:hover .ad-edge {
+  stroke: var(--ad-accent);
+  stroke-width: 2;
+}
+
+.ad-branch, .ad-branch * { pointer-events: none; }
+
+.ad-branch-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  fill: white;
+  letter-spacing: 0.6px;
+}
+.ad-branch-no .ad-branch-label { fill: var(--ad-text-muted); }
+
+.ad-nodes { position: relative; }
+
+.ad-node {
+  position: absolute;
+  display: flex;
+  align-items: stretch;
+  background: var(--ad-card);
+  border: 1px solid var(--ad-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  cursor: default;
+}
+
+.ad-node:hover {
+  border-color: var(--ad-border-strong);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.ad-node-accent {
+  display: none;
+}
+
+.ad-node-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  flex-shrink: 0;
+  color: var(--ad-text);
+  background: transparent;
+  border-right: 1px solid var(--ad-divider);
+}
+
+.ad-node-icon .material-symbols-rounded {
+  font-size: 22px;
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+.ad-node-body {
+  flex: 1;
+  padding: 10px 14px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.ad-node-kind {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--ad-text-faint);
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.ad-node-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ad-text);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-node-sub {
+  font-size: 11px;
+  color: var(--ad-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Trigger gets a subtle accent — it's the entry point */
+.ad-node-trigger {
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+.ad-node-trigger .ad-node-kind {
+  color: var(--ad-accent);
+}
+.ad-node-trigger .ad-node-icon {
+  color: var(--ad-accent);
+  border-right-color: rgba(37, 99, 235, 0.15);
+}

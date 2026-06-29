@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Ceramic tea cup with saucer and rising steam, editorial line drawing">
+  <rect width="400" height="400" fill="#F7F5F0"/>
+
+  <!-- ambient floor shadow -->
+  <ellipse cx="200" cy="330" rx="150" ry="7" fill="#C9C2B2" opacity="0.55"/>
+
+  <g fill="none" stroke="#1C1917" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- saucer: shallow disk with inner well -->
+    <ellipse cx="200" cy="306" rx="144" ry="22" fill="#FEFDFA" stroke-width="2"/>
+    <ellipse cx="200" cy="298" rx="144" ry="22" stroke-width="1.2" fill="none"/>
+    <ellipse cx="200" cy="298" rx="90" ry="11" fill="#F7F5F0" stroke="#C9C2B2" stroke-width="1"/>
+    <ellipse cx="200" cy="296" rx="62" ry="7" stroke="#C9C2B2" stroke-width="0.8" fill="none"/>
+
+    <!-- cup body: short + wide tapered -->
+    <path d="M 132 184
+             C 136 170, 152 160, 170 160
+             L 230 160
+             C 248 160, 264 170, 268 184
+             L 264 248
+             C 260 268, 238 282, 212 282
+             L 188 282
+             C 162 282, 140 268, 136 248 Z"
+          fill="#FEFDFA" stroke-width="2"/>
+
+    <!-- cup rim (outer ellipse shows ceramic thickness) -->
+    <ellipse cx="200" cy="164" rx="66" ry="10" fill="#FEFDFA" stroke-width="2"/>
+    <!-- tea surface (darker liquid visible inside cup) -->
+    <ellipse cx="200" cy="166" rx="58" ry="8" fill="#C9C2B2" stroke="#1C1917" stroke-width="1"/>
+
+    <!-- handle: compact D on right -->
+    <path d="M 266 202
+             C 304 204, 314 224, 312 246
+             C 308 268, 292 278, 262 274"
+          stroke-width="2.2"/>
+    <!-- handle inner curve for thickness -->
+    <path d="M 268 216 C 296 220, 302 236, 300 248 C 296 262, 286 268, 268 266"
+          stroke="#C9C2B2" stroke-width="1"/>
+
+    <!-- left-side highlight crescent on body -->
+    <path d="M 148 196 C 140 220, 140 250, 154 270" stroke="#C9C2B2" stroke-width="1"/>
+
+    <!-- decoration band: 7 dots ringing the cup waist -->
+    <circle cx="148" cy="220" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="168" cy="224" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="188" cy="226" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="208" cy="226" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="228" cy="224" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="248" cy="220" r="1.8" fill="#1C1917" stroke="none"/>
+    <circle cx="258" cy="214" r="1.6" fill="#1C1917" stroke="none"/>
+
+    <!-- small emblem triad (front center, lower) -->
+    <circle cx="194" cy="252" r="1.4" fill="#1C1917" stroke="none"/>
+    <circle cx="200" cy="258" r="1.4" fill="#1C1917" stroke="none"/>
+    <circle cx="206" cy="252" r="1.4" fill="#1C1917" stroke="none"/>
+
+    <!-- steam wisps (3 curves rising from rim) -->
+    <path d="M 178 150 C 170 128, 186 114, 178 90 C 172 74, 186 64, 180 48"
+          stroke="#C9C2B2" stroke-width="1.6" opacity="0.9"/>
+    <path d="M 200 146 C 192 122, 210 108, 202 82 C 196 64, 212 52, 204 34"
+          stroke="#C9C2B2" stroke-width="1.6" opacity="0.9"/>
+    <path d="M 222 150 C 214 130, 230 116, 224 94 C 220 80, 232 68, 228 54"
+          stroke="#C9C2B2" stroke-width="1.6" opacity="0.9"/>
+
+    <!-- floor line beyond shadow -->
+    <line x1="40" y1="336" x2="360" y2="336" stroke="#C9C2B2" stroke-width="1"/>
+  </g>
+</svg>

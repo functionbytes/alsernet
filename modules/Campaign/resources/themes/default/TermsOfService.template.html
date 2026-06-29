@@ -1,0 +1,66 @@
+<%
+    var msgAttr = errorMessage ? ' data-msg-required="' + String(errorMessage).replace(/"/g, '&quot;') + '"' : '';
+    var requiredAttr = required ? ' required' : '';
+    /* Structural flex styles are emitted INLINE because the builder canvas
+     * iframe doesn't load the host's visitor-side form-popup stylesheet.
+     * Class-based rules only apply on the visitor-side popup; inline styles
+     * guarantee the same layout in both surfaces. */
+    var rowStyle = 'display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;margin:0;';
+    /* `outline:none` suppresses Chrome/Edge's default contenteditable focus
+     * ring around the legal-text host — BuilderJS already paints its own
+     * selection chrome around the parent block, so the native ring just
+     * stacks awkwardly. Visitor-side the host has no `contenteditable`
+     * attribute (added at runtime by BuilderJS only inside the builder),
+     * so the rule is a no-op on the public form.  */
+    /* `min-width:0` + `overflow-wrap:anywhere` lets the text shrink below
+     * its natural longest-word width — without it, narrow viewports force
+     * a flex-wrap that knocks the checkbox onto its own row in inline
+     * layouts. With anywhere-wrap, min-content collapses to 1 character so
+     * the input + text always share the row regardless of viewport width.
+     * The validation error label still drops to a new row because IT has
+     * an explicit `flex-basis:100%` rule that forces the wrap. */
+    /* `flex: 1 1 0` (basis ZERO not auto) is critical: with `flex-basis:auto`
+     * the text item's intrinsic basis equals its full content width — on
+     * narrow viewports that exceeds container width and triggers a flex-
+     * wrap BEFORE the browser tries to shrink the item, dropping the
+     * checkbox onto its own row. With basis:0 the item starts at 0 width
+     * and grows into available space (= container - input - gap), so the
+     * sum of bases (input + 0) is always less than container — wrap never
+     * kicks in for the inline children. The validation error label still
+     * drops to a new row because IT has its own `flex-basis:100%` rule
+     * that explicitly forces wrap.
+     *
+     * `overflow-wrap:anywhere` + `word-break:break-word` belt-and-suspenders
+     * for ultra-narrow viewports where even a single long word wouldn't
+     * fit — text breaks mid-word rather than overflowing horizontally. */
+    var textStyle = 'flex:1 1 0;min-width:0;overflow-wrap:anywhere;word-break:break-word;outline:none;';
+    var inputStyle = 'flex:0 0 auto;margin-top:3px;';
+    var inputHtml = '<input type="checkbox" name="' + inputName + '" value="1"' + requiredAttr + msgAttr + ' class="acm-terms__input" style="' + inputStyle + '" />';
+%>
+<% if (checkboxPosition === 'inline_left') { %>
+    <div class="acm-terms acm-terms--inline acm-terms--inline-left" style="<%- formatter.toStyleStringAll() %>;<%- rowStyle %>">
+        <%- inputHtml %>
+        <div class="acm-terms__text" inline-edit="termsText" style="<%- textStyle %>"><%- termsText %></div>
+    </div>
+<% } else if (checkboxPosition === 'inline_right') { %>
+    <div class="acm-terms acm-terms--inline acm-terms--inline-right" style="<%- formatter.toStyleStringAll() %>;<%- rowStyle %>">
+        <div class="acm-terms__text" inline-edit="termsText" style="<%- textStyle %>"><%- termsText %></div>
+        <%- inputHtml %>
+    </div>
+<% } else if (checkboxPosition === 'above') { %>
+    <div class="acm-terms acm-terms--stacked acm-terms--above" style="<%- formatter.toStyleStringAll() %>">
+        <label class="acm-terms__agree" style="<%- rowStyle %>cursor:pointer;user-select:none;">
+            <%- inputHtml %>
+            <span class="acm-terms__agree-label" style="<%- textStyle %>line-height:1.45;"><%- checkboxLabel %></span>
+        </label>
+        <div class="acm-terms__text" inline-edit="termsText" style="margin-top:6px;outline:none;"><%- termsText %></div>
+    </div>
+<% } else { %>
+    <div class="acm-terms acm-terms--stacked acm-terms--below" style="<%- formatter.toStyleStringAll() %>">
+        <div class="acm-terms__text" inline-edit="termsText" style="margin-bottom:6px;outline:none;"><%- termsText %></div>
+        <label class="acm-terms__agree" style="<%- rowStyle %>cursor:pointer;user-select:none;">
+            <%- inputHtml %>
+            <span class="acm-terms__agree-label" style="<%- textStyle %>line-height:1.45;"><%- checkboxLabel %></span>
+        </label>
+    </div>
+<% } %>

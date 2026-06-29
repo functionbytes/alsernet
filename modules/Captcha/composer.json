@@ -1,0 +1,32 @@
+{
+    "name": "inoqualab/module-captcha",
+    "description": "reCAPTCHA and Math Captcha for form security",
+    "type": "nwidart-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Inoqualab",
+            "email": "info@inoqualab.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Modules\\Captcha\\": "app/",
+            "Modules\\Captcha\\Database\\Factories\\": "database/factories/",
+            "Modules\\Captcha\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "require": {
+        "php": "^8.2"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Captcha\\Providers\\CaptchaServiceProvider"
+            ],
+            "aliases": {
+                "Captcha": "Modules\\Captcha\\Facades\\Captcha"
+            }
+        }
+    }
+}

@@ -1,0 +1,1458 @@
+openapi: 3.0.3
+
+info:
+  title: InoqualabSystem API
+  description: |
+    REST API for the InoqualabSystem platform (Alsernet / Inoqualab).
+
+    ## Authentication
+    All protected endpoints require a **Sanctum Bearer token**.
+    Obtain a token via your application's login flow, then pass it as:
+    ```
+    Authorization: Bearer <token>
+    ```
+
+    ## Rate limits
+    | Scope | Limit |
+    |---|---|
+    | Admin (super-admin / administrative / manager) | 1 000 req / hour |
+    | Authenticated users | 100 req / hour |
+    | Guest (by IP) | 20 req / hour |
+    | Widget endpoints | 60 req / minute |
+    | Webhook endpoints | Custom (reviews:webhooks throttle) |
+
+    Rate-limit headers returned on every response:
+    - `X-RateLimit-Limit`
+    - `X-RateLimit-Remaining`
+    - `X-RateLimit-Reset` (Unix timestamp)
+    - `Retry-After` (only on 429 responses)
+
+    ## Common response headers
+    - `X-API-Version: 1.0`
+    - `X-Request-ID` — UUID for tracing
+
+    ## Error format
+    ```json
+    {
+      "success": false,
+      "message": "Human-readable error",
+      "errors": { "field": ["validation message"] }
+    }
+    ```
+  version: "1.0"
+  contact:
+    name: Inoqualab
+  license:
+    name: Proprietary
+
+servers:
+  - url: "{scheme}://{host}"
+    description: Application server
+    variables:
+      scheme:
+        default: http
+        enum: [http, https]
+      host:
+        default: localhost
+
+tags:
+  - name: Health
+    description: Service health and liveness checks
+  - name: Auth (current user)
+    description: Authenticated user profile
+  - name: Reviews
+    description: Google review management (v1 API)
+  - name: Reviews (module)
+    description: Reviews module direct API (Sanctum-protected)
+  - name: Review Stats
+    description: Aggregated review statistics
+  - name: Review Suggestions
+    description: AI-powered reply suggestions
+  - name: Review Widget
+    description: Public embeddable widget endpoints
+  - name: Review Webhooks
+    description: Google Cloud Pub/Sub webhook callbacks
+  - name: Backup Schedules
+    description: Backup schedule read endpoints
+
+# ─────────────────────────────────────────────
+# Security
+# ─────────────────────────────────────────────
+components:
+  securitySchemes:
+    sanctum:
+      type: http
+      scheme: bearer
+      bearerFormat: SanctumToken
+      description: Laravel Sanctum token
+
+  # ─── Reusable schemas ───────────────────────
+  schemas:
+
+    SuccessEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Success"
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        request_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    PaginationMeta:
+      type: object
+      properties:
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: 100
+            count:
+              type: integer
+              example: 20
+            per_page:
+              type: integer
+              example: 20
+            current_page:
+              type: integer
+              example: 1
+            total_pages:
+              type: integer
+              example: 5
+            has_more_pages:
+              type: boolean
+              example: true
+
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          format: uri
+          nullable: true
+        last:
+          type: string
+          format: uri
+          nullable: true
+        prev:
+          type: string
+          format: uri
+          nullable: true
+        next:
+          type: string
+          format: uri
+          nullable: true
+
+    StarRating:
+      type: string
+      enum: [ONE, TWO, THREE, FOUR, FIVE]
+      description: Google star rating label
+      example: FIVE
+
+    ReviewLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Alsernet Madrid"
+        google_location_id:
+          type: string
+          example: "accounts/123456/locations/789"
+
+    ReviewModeration:
+      type: object
+      properties:
+        is_visible:
+          type: boolean
+          example: true
+        is_featured:
+          type: boolean
+          example: false
+        tags:
+          type: array
+          items:
+            type: string
+
+    ReviewReply:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        reply_text:
+          type: string
+          example: "Thank you for your feedback!"
+        status:
+          type: string
+          enum: [draft, approved, published, scheduled]
+          example: published
+        scheduled_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        googleReviewId:
+          type: string
+          example: "accounts/123/locations/456/reviews/abc123"
+        reviewerName:
+          type: string
+          example: "Juan García"
+        reviewerPhotoUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://lh3.googleusercontent.com/photo.jpg"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        ratingLabel:
+          $ref: '#/components/schemas/StarRating'
+        comment:
+          type: string
+          nullable: true
+          example: "Excelente servicio, muy recomendable."
+        reviewTime:
+          type: string
+          format: date-time
+          example: "2026-03-15T14:30:00+00:00"
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+        googleReplyText:
+          type: string
+          nullable: true
+          example: "Gracias por tu reseña, Juan!"
+        googleReplyTime:
+          type: string
+          format: date-time
+          nullable: true
+        hasGoogleReply:
+          type: boolean
+          example: false
+        hasComment:
+          type: boolean
+          example: true
+        syncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        location:
+          $ref: '#/components/schemas/ReviewLocation'
+        moderation:
+          $ref: '#/components/schemas/ReviewModeration'
+          nullable: true
+          description: Only present when authenticated user has viewAny permission
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewReply'
+
+    ReviewStats:
+      type: object
+      properties:
+        totalReviews:
+          type: integer
+          example: 350
+        averageRating:
+          type: number
+          format: float
+          example: 4.32
+        ratingDistribution:
+          type: object
+          properties:
+            "5":
+              type: integer
+              example: 180
+            "4":
+              type: integer
+              example: 90
+            "3":
+              type: integer
+              example: 45
+            "2":
+              type: integer
+              example: 20
+            "1":
+              type: integer
+              example: 15
+        totalVisible:
+          type: integer
+          example: 310
+        totalFeatured:
+          type: integer
+          example: 12
+        totalWithComment:
+          type: integer
+          example: 280
+        totalWithGoogleReply:
+          type: integer
+          example: 220
+
+    ReplySuggestion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+        name:
+          type: string
+          example: "Respuesta positiva estándar"
+        body:
+          type: string
+          example: "Muchas gracias por tu valoración, {reviewer_name}!"
+
+    HealthChecks:
+      type: object
+      properties:
+        database:
+          type: boolean
+          example: true
+        cache:
+          type: boolean
+          example: true
+
+    BackupSchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Daily full backup"
+        enabled:
+          type: boolean
+          example: true
+        frequency:
+          type: string
+          example: "daily"
+        scheduled_time:
+          type: string
+          example: "02:00"
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    BackupScheduleDetail:
+      allOf:
+        - $ref: '#/components/schemas/BackupSchedule'
+        - type: object
+          properties:
+            days_of_week:
+              type: array
+              items:
+                type: integer
+              nullable: true
+            days_of_month:
+              type: array
+              items:
+                type: integer
+              nullable: true
+            custom_interval_hours:
+              type: integer
+              nullable: true
+            backup_types:
+              type: array
+              items:
+                type: string
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Admin User"
+        email:
+          type: string
+          format: email
+          example: "admin@example.com"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["super-admin"]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["reviews.reviews.view", "reviews.replies.publish"]
+        created_at:
+          type: string
+          format: date-time
+
+  # ─── Reusable responses ─────────────────────
+  responses:
+    Unauthorized:
+      description: Unauthenticated — missing or invalid Sanctum token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            message: "Unauthenticated."
+
+    Forbidden:
+      description: Authenticated but lacking required permission
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            message: "This action is unauthorized."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            message: "No query results for model."
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the rate limit resets
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            message: "Too Many Requests. Please retry in 120 seconds."
+
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+          example:
+            success: false
+            message: "The given data was invalid."
+            errors:
+              reply_text: ["The reply text field is required."]
+
+# ─────────────────────────────────────────────
+# Paths
+# ─────────────────────────────────────────────
+paths:
+
+  # ── Health ──────────────────────────────────
+
+  /api/v1/ping:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      description: Returns `ok` if the application is reachable. No authentication required.
+      operationId: health.ping
+      responses:
+        "200":
+          description: Application is alive
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            example: ok
+                          timestamp:
+                            type: string
+                            format: date-time
+
+  /api/v1/health:
+    get:
+      tags: [Health]
+      summary: Readiness / dependency check
+      description: |
+        Checks database and cache connectivity.
+        Returns HTTP 200 when all checks pass, HTTP 503 when any check fails.
+        No authentication required.
+      operationId: health.status
+      responses:
+        "200":
+          description: All systems operational
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: '#/components/schemas/HealthChecks'
+              example:
+                success: true
+                message: "All systems operational"
+                data:
+                  checks:
+                    database: true
+                    cache: true
+        "503":
+          description: One or more dependencies are unhealthy
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: '#/components/schemas/HealthChecks'
+              example:
+                success: true
+                message: "Some systems degraded"
+                data:
+                  checks:
+                    database: false
+                    cache: true
+
+  # ── Current User ─────────────────────────────
+
+  /api/v1/me:
+    get:
+      tags: [Auth (current user)]
+      summary: Get authenticated user profile
+      description: Returns the profile, roles, and permissions of the currently authenticated user.
+      operationId: user.me
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfile'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Reviews v1 API ───────────────────────────
+
+  /api/v1/reviews:
+    get:
+      tags: [Reviews]
+      summary: List reviews (v1)
+      description: |
+        Returns a paginated list of reviews.
+        Requires authentication and the `reviews.reviews.view` permission.
+      operationId: v1.reviews.index
+      security:
+        - sanctum: []
+      parameters:
+        - name: location_id
+          in: query
+          description: Filter by location ID
+          schema:
+            type: integer
+          example: 1
+        - name: rating
+          in: query
+          description: Filter by star rating label
+          schema:
+            $ref: '#/components/schemas/StarRating'
+        - name: is_visible
+          in: query
+          description: Filter by visibility (moderation)
+          schema:
+            type: boolean
+        - name: is_featured
+          in: query
+          description: Filter featured reviews only
+          schema:
+            type: boolean
+        - name: has_reply
+          in: query
+          description: Filter by whether a Google reply exists
+          schema:
+            type: boolean
+        - name: has_comment
+          in: query
+          description: Filter by whether a reviewer comment exists
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          description: Results per page (max 100, default 20)
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Paginated list of reviews
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Review'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+                      links:
+                        $ref: '#/components/schemas/PaginationLinks'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/v1/reviews/stats:
+    get:
+      tags: [Review Stats]
+      summary: Review statistics (v1)
+      description: |
+        Aggregated statistics: totals, average rating, distribution, visibility.
+        Results are cached for up to 5 minutes.
+        Requires authentication and the `reviews.reviews.view` permission.
+      operationId: v1.reviews.stats
+      security:
+        - sanctum: []
+      parameters:
+        - name: location_id
+          in: query
+          description: Scope stats to a single location
+          schema:
+            type: integer
+          example: 1
+        - name: days
+          in: query
+          description: Limit stats to the last N days
+          schema:
+            type: integer
+          example: 30
+      responses:
+        "200":
+          description: Review statistics
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReviewStats'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  # ── Reviews module API ───────────────────────
+
+  /api/reviews:
+    get:
+      tags: [Reviews (module)]
+      summary: List reviews (module API)
+      description: |
+        Returns a paginated list of reviews from the Reviews module endpoint.
+        Requires Sanctum authentication and the `reviews.reviews.view` permission.
+
+        **Rate limit:** 100 req/hour (1 000/hour for admin roles).
+      operationId: reviews.index
+      security:
+        - sanctum: []
+      parameters:
+        - name: location_id
+          in: query
+          schema:
+            type: integer
+          example: 1
+        - name: rating
+          in: query
+          schema:
+            $ref: '#/components/schemas/StarRating'
+        - name: is_visible
+          in: query
+          schema:
+            type: boolean
+        - name: is_featured
+          in: query
+          schema:
+            type: boolean
+        - name: has_reply
+          in: query
+          schema:
+            type: boolean
+        - name: has_comment
+          in: query
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Paginated list of reviews
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Review'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+                      links:
+                        $ref: '#/components/schemas/PaginationLinks'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/reviews/stats:
+    get:
+      tags: [Review Stats]
+      summary: Review statistics (module API)
+      description: |
+        Aggregated statistics scoped by location and/or date range.
+        Results cached for up to 5 minutes (configurable via `reviews.general.cache.stats_ttl_minutes`).
+      operationId: reviews.stats
+      security:
+        - sanctum: []
+      parameters:
+        - name: location_id
+          in: query
+          schema:
+            type: integer
+        - name: days
+          in: query
+          schema:
+            type: integer
+          example: 30
+      responses:
+        "200":
+          description: Review statistics
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReviewStats'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/reviews/{review}:
+    get:
+      tags: [Reviews (module)]
+      summary: Get a single review
+      description: Returns full detail for one review including location, moderation, and replies.
+      operationId: reviews.show
+      security:
+        - sanctum: []
+      parameters:
+        - name: review
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+          example: 123
+      responses:
+        "200":
+          description: Review detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Review'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/reviews/{review}/suggestions:
+    get:
+      tags: [Review Suggestions]
+      summary: Get AI reply suggestions for a review
+      description: |
+        Returns a list of reply template suggestions generated by the
+        `ReviewAutoSuggestionService` based on the review's rating and content.
+      operationId: reviews.suggestions
+      security:
+        - sanctum: []
+      parameters:
+        - name: review
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+          example: 123
+      responses:
+        "200":
+          description: Reply suggestions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          review_id:
+                            type: integer
+                            example: 123
+                          star_rating:
+                            type: integer
+                            example: 5
+                          has_comment:
+                            type: boolean
+                            example: true
+                          suggestions:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ReplySuggestion'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  # ── Reply management (web routes returning JSON) ─
+
+  /reviews/replies:
+    post:
+      tags: [Reviews (module)]
+      summary: Create a reply (draft / approved / published)
+      description: |
+        Creates a new reply for a review. The `status` field controls the initial state:
+        - `draft` (default) — saved locally only
+        - `approved` — marks the reply as approved (requires `reviews.replies.approve` permission)
+        - `published` — immediately publishes to Google (requires `reviews.replies.publish` permission)
+
+        **Note:** This endpoint is served by the web router (`/reviews/replies`) and uses
+        CSRF protection — include the `X-CSRF-TOKEN` header or cookie when calling from the browser.
+        Session authentication (`auth` middleware) is required.
+      operationId: reviews.replies.store
+      security:
+        - sanctum: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [review_id, reply_text]
+              properties:
+                review_id:
+                  type: integer
+                  example: 123
+                reply_text:
+                  type: string
+                  example: "Thank you for your kind review!"
+                status:
+                  type: string
+                  enum: [draft, approved, published]
+                  default: draft
+      responses:
+        "200":
+          description: Reply created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      reply:
+                        $ref: '#/components/schemas/ReviewReply'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /reviews/replies/{reply}/publish:
+    post:
+      tags: [Reviews (module)]
+      summary: Publish a reply to Google
+      description: |
+        Publishes an existing draft or approved reply to Google Business Profile.
+        Requires the `reviews.replies.publish` permission.
+      operationId: reviews.replies.publish
+      security:
+        - sanctum: []
+      parameters:
+        - name: reply
+          in: path
+          required: true
+          description: ReviewReply ID
+          schema:
+            type: integer
+          example: 42
+      responses:
+        "200":
+          description: Reply published
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      reply:
+                        $ref: '#/components/schemas/ReviewReply'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /reviews/replies/{reply}/schedule:
+    post:
+      tags: [Reviews (module)]
+      summary: Schedule a reply for future publication
+      description: |
+        Schedules a reply to be published at a future date/time.
+        Requires the `reviews.replies.approve` permission.
+      operationId: reviews.replies.schedule
+      security:
+        - sanctum: []
+      parameters:
+        - name: reply
+          in: path
+          required: true
+          description: ReviewReply ID
+          schema:
+            type: integer
+          example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scheduled_at]
+              properties:
+                scheduled_at:
+                  type: string
+                  format: date-time
+                  description: Must be a future date/time
+                  example: "2026-04-10T09:00:00+00:00"
+      responses:
+        "200":
+          description: Reply scheduled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      reply:
+                        $ref: '#/components/schemas/ReviewReply'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /reviews/replies/{reply}/approve:
+    post:
+      tags: [Reviews (module)]
+      summary: Approve a pending reply
+      description: |
+        Approves a reply that is in the `draft` state.
+        Requires the `reviews.replies.approve` permission.
+      operationId: reviews.replies.approve
+      security:
+        - sanctum: []
+      parameters:
+        - name: reply
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 42
+      responses:
+        "200":
+          description: Reply approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessEnvelope'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ── Dashboard ────────────────────────────────
+
+  /reviews/dashboard/data:
+    get:
+      tags: [Reviews (module)]
+      summary: Dashboard — full data payload
+      description: |
+        Returns all dashboard data in a single request: KPIs, rating trends,
+        location stats, reviews by day, sentiment trend, recent reviews, etc.
+        Requires `reviews.reviews.view` permission.
+      operationId: reviews.dashboard.data
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kpis:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      avg_rating:
+                        type: number
+                      unanswered:
+                        type: integer
+                      response_rate:
+                        type: number
+                  rating_trends:
+                    type: array
+                    items:
+                      type: object
+                  location_stats:
+                    type: array
+                    items:
+                      type: object
+                  reviews_by_day:
+                    type: array
+                    items:
+                      type: object
+                  rating_distribution:
+                    type: object
+                  recent_reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  attention_needed:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+                  avg_response_time:
+                    type: number
+                    description: Average response time in hours
+                  top_reviewers:
+                    type: array
+                    items:
+                      type: object
+                  sentiment_trend:
+                    type: array
+                    items:
+                      type: object
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /reviews/dashboard/kpis:
+    get:
+      tags: [Reviews (module)]
+      summary: Dashboard — KPIs only (polling-friendly)
+      description: |
+        Lightweight endpoint for real-time KPI polling in the dashboard.
+        Returns total reviews, average rating, pending replies, response rate,
+        and a `last_updated` timestamp.
+        Requires `reviews.reviews.view` permission.
+      operationId: reviews.dashboard.kpis
+      security:
+        - sanctum: []
+      responses:
+        "200":
+          description: KPI snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_reviews:
+                    type: integer
+                    example: 350
+                  avg_rating:
+                    type: string
+                    example: "4.3"
+                  pending_replies:
+                    type: integer
+                    example: 12
+                  response_rate:
+                    type: string
+                    example: "62.9%"
+                  last_updated:
+                    type: string
+                    example: "14:30:05"
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Widget (public) ──────────────────────────
+
+  /api/reviews-widget/{token}.js:
+    get:
+      tags: [Review Widget]
+      summary: Widget JavaScript bundle
+      description: |
+        Returns the JavaScript bundle for the embeddable review widget.
+        Public endpoint — no authentication required.
+        Rate limited to 60 req/min per IP.
+      operationId: reviews.widget.js
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: Widget token (UUID)
+          schema:
+            type: string
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        "200":
+          description: JavaScript widget bundle
+          content:
+            application/javascript:
+              schema:
+                type: string
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/reviews-widget/{token}/reviews:
+    get:
+      tags: [Review Widget]
+      summary: Widget — public reviews list
+      description: |
+        Returns the public (visible, moderated) reviews for the widget.
+        Public endpoint — no authentication required.
+        Rate limited to 60 req/min per IP.
+      operationId: reviews.widget.reviews
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: Widget token (UUID)
+          schema:
+            type: string
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      responses:
+        "200":
+          description: Public reviews for the widget
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Review'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  # ── Webhooks ─────────────────────────────────
+
+  /api/reviews/webhooks/google:
+    post:
+      tags: [Review Webhooks]
+      summary: Receive Google Cloud Pub/Sub notification
+      description: |
+        Webhook called by Google Cloud Pub/Sub when a new review event occurs.
+        **No authentication** — signature is verified via `VerifyGoogleWebhookSignature` middleware.
+        Custom throttle: `reviews:webhooks`.
+      operationId: reviews.webhooks.google
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Google Cloud Pub/Sub push message
+              properties:
+                message:
+                  type: object
+                  properties:
+                    data:
+                      type: string
+                      format: byte
+                      description: Base64-encoded Pub/Sub message payload
+                    messageId:
+                      type: string
+                    publishTime:
+                      type: string
+                      format: date-time
+                subscription:
+                  type: string
+      responses:
+        "200":
+          description: Notification received and queued
+        "401":
+          description: Invalid Google webhook signature
+        "429":
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/reviews/webhooks/google/verify:
+    get:
+      tags: [Review Webhooks]
+      summary: Verify Google webhook subscription
+      description: |
+        Challenge-response endpoint for verifying a Google webhook subscription.
+        Returns the challenge token provided by Google.
+      operationId: reviews.webhooks.google.verify
+      parameters:
+        - name: hub.challenge
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Challenge echoed back to Google
+
+  # ── Backup Schedules ─────────────────────────
+
+  /api/v1/backup/schedules:
+    get:
+      tags: [Backup Schedules]
+      summary: List backup schedules
+      description: |
+        Returns a paginated list of backup schedules (name, enabled, frequency, timings).
+        Requires authentication and the `Backup.schedules.index` permission.
+      operationId: backup.schedules.index
+      security:
+        - sanctum: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        "200":
+          description: Paginated list of backup schedules
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BackupSchedule'
+                      meta:
+                        type: object
+                        properties:
+                          current_page:
+                            type: integer
+                          last_page:
+                            type: integer
+                          per_page:
+                            type: integer
+                          total:
+                            type: integer
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/backup/schedules/{schedule}:
+    get:
+      tags: [Backup Schedules]
+      summary: Get backup schedule detail
+      description: Returns full detail of a single backup schedule.
+      operationId: backup.schedules.show
+      security:
+        - sanctum: []
+      parameters:
+        - name: schedule
+          in: path
+          required: true
+          description: BackupSchedule ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: Backup schedule detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BackupScheduleDetail'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+
+  # ── Public pages ─────────────────────────────
+
+  /api/v1/pages:
+    get:
+      tags: [Health]
+      summary: List public pages
+      description: |
+        Returns a list of publicly published pages.
+        No authentication required.
+        Rate limited to 60 req/min.
+      operationId: v1.pages.index
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of pages
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+        "429":
+          $ref: '#/components/responses/TooManyRequests'

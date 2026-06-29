@@ -1,0 +1,34 @@
+<div style="display: flex; align-items: center; justify-content: <%- formatter.getFormat('align', 'center') %>;">
+    <% if (!youtubeID) { %>
+        <%
+            var placeholderStyle = formatter.toStyleStringAll([
+                'width','height',
+                'border_top_style','border_top_width','border_top_color',
+                'border_right_style','border_right_width','border_right_color',
+                'border_bottom_style','border_bottom_width','border_bottom_color',
+                'border_left_style','border_left_width','border_left_color',
+                'border_radius'
+            ]);
+        %>
+        <div class="bjs-video-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 2.25rem 1rem; text-align: center; box-sizing: border-box; max-width: 100%; min-width: 240px; min-height: 180px; <%- placeholderStyle %> border: 1px dashed #c7ccd4; background: #f6f7f9; color: #5a6270;">
+            <svg width="96" height="72" viewBox="0 0 96 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="flex: 0 0 auto;">
+                <rect x="1" y="1" width="94" height="62" rx="10" fill="#ffffff" stroke="#c7ccd4" stroke-width="1.5"/>
+                <path d="M40 22 L62 32 L40 42 Z" fill="#EA333D" opacity="0.9"/>
+                <line x1="10" y1="68" x2="86" y2="68" stroke="#c7ccd4" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <div>
+                <h4 style="margin: 0 0 4px; font-weight: 600; font-size: 15px; color: #1f2937;" inline-edit="text">No YouTube video yet</h4>
+                <p style="margin: 0; font-size: 13px; line-height: 1.5;" inline-edit="text">Paste a YouTube URL (youtube.com/watch?v=… or youtu.be/…) in the right panel to embed it here.</p>
+            </div>
+        </div>
+    <% } else { %>
+        <iframe
+            style="display: block; max-width: 100%; <%- formatter.toStyleStringAll(['width','height','border_top_style','border_top_width','border_top_color','border_right_style','border_right_width','border_right_color','border_bottom_style','border_bottom_width','border_bottom_color','border_left_style','border_left_width','border_left_color','border_radius']) %>"
+            src="https://www.youtube.com/embed/<%= youtubeID %>"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen></iframe>
+    <% } %>
+</div>

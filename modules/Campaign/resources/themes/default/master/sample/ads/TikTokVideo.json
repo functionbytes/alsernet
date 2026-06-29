@@ -1,0 +1,168 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#000000",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": "TikTok Video Ad",
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#000000",
+                "padding_top": 0,
+                "padding_right": 0,
+                "padding_bottom": 0,
+                "padding_left": 0
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "padding_top": 0,
+                        "padding_right": 0,
+                        "padding_bottom": 0,
+                        "padding_left": 0,
+                        "width": "100%",
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "https://images.unsplash.com/photo-1599687267812-35c05ff70ee9?w=1080&h=1920&fit=crop",
+                    "alt": "Video cover",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#0F172A",
+                "padding_top": 16,
+                "padding_right": 0,
+                "padding_bottom": 24,
+                "padding_left": 0
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_weight": "800",
+                        "font_size": "20px",
+                        "text_color": "#FFFFFF",
+                        "text_align": "left",
+                        "line_height": "1.25",
+                        "padding_top": 16,
+                        "padding_right": 20,
+                        "padding_bottom": 8,
+                        "padding_left": 20
+                    },
+                    "type": "h2",
+                    "text": "Try it yourself — you won't believe #2"
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": "14px",
+                        "text_color": "#E5E7EB",
+                        "text_align": "left",
+                        "line_height": "1.5",
+                        "padding_top": 0,
+                        "padding_right": 20,
+                        "padding_bottom": 16,
+                        "padding_left": 20
+                    },
+                    "text": "Tap to download the app — rated 4.8 stars by 50k+ creators."
+                },
+                {
+                    "name": "ButtonElement",
+                    "template": "Button",
+                    "formats": {
+                        "align": "left",
+                        "font_family": "inherit",
+                        "font_weight": "700",
+                        "font_size": "15px",
+                        "text_color": "#000000",
+                        "link_color": "#000000",
+                        "text_align": "center",
+                        "line_height": "1.2",
+                        "text_direction": "ltr",
+                        "background_color": "#FE2C55",
+                        "background_position": "center",
+                        "background_size": "100%",
+                        "background_repeat": "no-repeat",
+                        "padding_top": 12,
+                        "padding_right": 28,
+                        "padding_bottom": 12,
+                        "padding_left": 28,
+                        "border_top_style": "solid",
+                        "border_top_width": "0",
+                        "border_top_color": "#FE2C55",
+                        "border_right_style": "solid",
+                        "border_right_width": "0",
+                        "border_right_color": "#FE2C55",
+                        "border_bottom_style": "solid",
+                        "border_bottom_width": "0",
+                        "border_bottom_color": "#FE2C55",
+                        "border_left_width": "0",
+                        "border_left_style": "solid",
+                        "border_left_color": "#FE2C55",
+                        "border_radius": "4px"
+                    },
+                    "text": "Download",
+                    "url": "#",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": "",
+                    "preset_id": "solid-ink",
+                    "size_key": "lg",
+                    "shadow_key": "none",
+                    "hover_effect": "none",
+                    "icon": null,
+                    "icon_position": "none"
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "narrow",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 0,
+    "block_padding_left": 0,
+    "default_block_background_color": null
+}

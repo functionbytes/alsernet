@@ -1,0 +1,19 @@
+{
+    "name": "Reviews",
+    "alias": "Reviews",
+    "description": "Google Business Profile reviews integration with moderation, replies and templates",
+    "keywords": [
+        "reviews",
+        "google",
+        "business",
+        "moderation",
+        "reputation"
+    ],
+    "priority": 0,
+    "active": 1,
+    "providers": [
+        "Modules\\Reviews\\Providers\\ReviewsServiceProvider",
+        "Modules\\Reviews\\Providers\\RouteServiceProvider"
+    ],
+    "files": []
+}

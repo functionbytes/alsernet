@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showcase — Helpdesk Inbox (CSS + HTML reales)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   SHOWCASE FRAME — no pertenece al proyecto, solo al showcase
+   ══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0f0f10;
+  color: #e4e4e7;
+  min-height: 100vh;
+}
+
+/* Nav fijo */
+.sc-nav {
+  position: sticky; top: 0; z-index: 1000;
+  background: rgba(15,15,16,.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 0 32px;
+  display: flex; align-items: center; gap: 0; height: 52px;
+}
+.sc-nav-brand {
+  font-size: 13px; font-weight: 700; color: #f5f6f8;
+  margin-right: 32px; letter-spacing: -.01em;
+}
+.sc-nav-brand span { color: #71717a; font-weight: 400; margin-left: 6px; }
+.sc-nav-link {
+  padding: 0 14px; height: 52px; display: inline-flex; align-items: center;
+  font-size: 12px; color: #71717a; text-decoration: none;
+  border-bottom: 2px solid transparent; transition: color .12s, border-color .12s;
+}
+.sc-nav-link:hover { color: #f5f6f8; }
+.sc-nav-link.on { color: #f5f6f8; border-bottom-color: #90bb13; }
+.sc-nav-pill {
+  margin-left: auto; background: rgba(177,1,0,.15); color: #f87171;
+  border: 1px solid rgba(177,1,0,.3); border-radius: 6px;
+  padding: 4px 10px; font-size: 11px; font-weight: 600;
+}
+
+/* Stage */
+.sc-stage {
+  padding: 48px 32px;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Sección */
+.sc-section { margin-bottom: 64px; }
+.sc-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: #52525b; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 12px;
+}
+.sc-section-title::after {
+  content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.06);
+}
+
+/* Grid de cards */
+.sc-grid { display: grid; gap: 16px; }
+.sc-grid-1 { grid-template-columns: 1fr; }
+.sc-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.sc-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.sc-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Card del showcase */
+.sc-card {
+  background: #18181b;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.sc-card-head {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.sc-card-name { font-size: 12px; font-weight: 600; color: #a1a1aa; }
+.sc-card-class {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  background: rgba(99,102,241,.15); color: #818cf8;
+  border: 1px solid rgba(99,102,241,.2); border-radius: 4px;
+  padding: 2px 7px; margin-left: auto;
+}
+.sc-card-body { padding: 20px; }
+.sc-card-body.p-0 { padding: 0; }
+.sc-card-body.light-bg { background: #fff; }
+.sc-card-body.subtle-bg { background: #f4f4f5; }
+
+/* ══════════════════════════════════════════════════════════════════
+   CSS REAL — conversations-identity.css (tokens exactos del proyecto)
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  --bv-brand-bg: #18181b;
+  --bv-brand-fg: #ffffff;
+  --bv-brand-radius: 7px;
+  --bv-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bv-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+  --bv-text-xs: 10px; --bv-text-sm: 11px; --bv-text-base: 12.5px; --bv-text-md: 13px;
+  --bv-text-lg: 13.5px; --bv-text-xl: 14px; --bv-text-2xl: 15px; --bv-text-3xl: 16px;
+  --bv-weight-normal: 400; --bv-weight-medium: 500; --bv-weight-semi: 600;
+  --bv-weight-bold: 700; --bv-weight-black: 800;
+  --bv-tracking-tight: -.015em; --bv-tracking-normal: 0;
+  --bv-tracking-wide: .08em; --bv-tracking-wider: .14em;
+  /* Paleta grises — tema claro */
+  --bv-text: #18181b;
+  --bv-text-soft: #3f3f46;
+  --bv-text-muted: #71717a;
+  --bv-bg: #f5f6f8;
+  --bv-bg-panel: #ffffff;
+  --bv-bg-subtle: #f4f4f5;
+  --bv-border: #e4e4e7;
+  --bv-border-soft: #ececef;
+  /* Acento por defecto */
+  --bv-accent: #18181b;
+  --bv-accent-fg: #ffffff;
+  /* Semánticos */
+  --bv-success: #0d7a3f; --bv-success-bg: #ecfdf5; --bv-success-border: #a7f3d0;
+  --bv-warning: #b45309; --bv-warning-bg: #fffbeb; --bv-warning-border: #fde68a;
+  --bv-danger: #b91c1c; --bv-danger-bg: #fef2f2; --bv-danger-border: #fecaca;
+  --bv-info: #1d4ed8; --bv-info-bg: #eff6ff; --bv-info-border: #bfdbfe;
+  --bv-neutral: #71717a; --bv-neutral-bg: #f4f4f5; --bv-neutral-border: #e4e4e7;
+  /* Canales */
+  --bv-channel-whatsapp: #25d366;
+  --bv-channel-facebook: #1877f2;
+  --bv-channel-instagram: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+  --bv-channel-email: #6b7280;
+  --bv-channel-web: #18181b;
+  /* Avatares (8 gradientes) */
+  --bv-av-c1: linear-gradient(135deg, #18181b, #52525b);
+  --bv-av-c2: linear-gradient(135deg, #8b5cf6, #6366f1);
+  --bv-av-c3: linear-gradient(135deg, #06b6d4, #0ea5e9);
+  --bv-av-c4: linear-gradient(135deg, #10b981, #059669);
+  --bv-av-c5: linear-gradient(135deg, #ec4899, #f43f5e);
+  --bv-av-c6: linear-gradient(135deg, #3b82f6, #6366f1);
+  --bv-av-c7: linear-gradient(135deg, #f59e0b, #d97706);
+  --bv-av-c8: linear-gradient(135deg, #14b8a6, #0d9488);
+  /* Prioridades */
+  --bv-priority-low: #a1a1aa; --bv-priority-normal: #52525b;
+  --bv-priority-high: #b91c1c; --bv-priority-urgent: #dc2626;
+  --bv-priority-urgent-bg: #fef2f2; --bv-priority-urgent-glow: rgba(220,38,38,.18);
+  /* Espaciado */
+  --bv-space-1:4px; --bv-space-2:6px; --bv-space-3:8px; --bv-space-4:10px;
+  --bv-space-5:12px; --bv-space-6:14px; --bv-space-7:16px; --bv-space-8:20px;
+  --bv-space-9:24px; --bv-space-10:32px;
+  /* Radios */
+  --bv-radius-xs:4px; --bv-radius-sm:6px; --bv-radius:10px; --bv-radius-md:9px;
+  --bv-radius-lg:12px; --bv-radius-xl:14px; --bv-radius-2xl:16px; --bv-radius-pill:999px;
+  /* Sombras */
+  --bv-shadow-card: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --bv-shadow-modal: 0 10px 40px -8px rgba(0,0,0,.18), 0 4px 12px -4px rgba(0,0,0,.08);
+  --bv-shadow-popover: 0 4px 12px rgba(0,0,0,.08);
+  --bv-ring: 0 0 0 3px rgba(24,24,27,.08);
+  /* Densidad por defecto */
+  --bv-conv-padding-y: 13px; --bv-conv-padding-x: 14px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   CSS REAL — conversations.css (extracto de componentes del proyecto)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Nav items */
+.bv-nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+  border-radius: 7px; font-size: 12.5px; color: var(--bv-text-soft);
+  cursor: pointer; text-decoration: none; transition: all .12s;
+  position: relative; margin-bottom: 1px;
+}
+.bv-nav-item:hover { background: var(--bv-bg-subtle); color: var(--bv-text); }
+.bv-nav-item.on { background: var(--bv-text); color: var(--bv-bg-panel); font-weight: 600; }
+.bv-nav-item i { font-size: 13px; width: 16px; text-align: center; }
+.bv-nav-item .c {
+  margin-left: auto; font-size: 10.5px; font-weight: 600;
+  background: var(--bv-bg-subtle); padding: 2px 6px; border-radius: 6px;
+  color: var(--bv-text-muted); font-variant-numeric: tabular-nums;
+}
+.bv-nav-item.on .c { background: rgba(255,255,255,.15); color: rgba(255,255,255,.9); }
+.bv-nav-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.bv-nav-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+  font-weight: 700; color: var(--bv-text-muted); padding: 0 8px; margin-bottom: 6px;
+}
+
+/* Channel pills */
+.bv-chpill {
+  background: transparent; border: 0; padding: 6px 10px; font-size: 11px;
+  font-weight: 500; border-radius: 7px; color: var(--bv-text-muted); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.bv-chpill.on { background: var(--bv-bg-subtle); color: var(--bv-text); font-weight: 600; }
+.bv-chpill .c { font-weight: 500; margin-left: 2px; opacity: .7; font-variant-numeric: tabular-nums; }
+
+/* Filter chips */
+.bv-chip {
+  padding: 4px 11px; font-size: 11.5px; border-radius: 999px;
+  border: 1px solid var(--bv-border); background: transparent;
+  color: var(--bv-text-soft); cursor: pointer;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.bv-chip.on { background: var(--bv-text); color: var(--bv-bg-panel); border-color: var(--bv-text); }
+.bv-chip .c { font-size: 10.5px; font-variant-numeric: tabular-nums; opacity: .55; font-weight: 500; }
+
+/* Conv item (estructura exacta del Blade conv-item.blade.php) */
+.bv-conv {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 16px 13px 14px; border-bottom: 1px solid var(--bv-border);
+  position: relative; cursor: pointer; transition: background .12s;
+  background: var(--bv-bg-panel);
+}
+.bv-conv::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0; background: transparent; border-radius: 0 3px 3px 0; transition: all .14s;
+}
+.bv-conv:hover { background: var(--bv-bg-subtle); }
+.bv-conv.on { background: var(--bv-bg-subtle); }
+.bv-conv.on::before { width: 3px; background: var(--bv-text); }
+.bv-conv.unread { background: linear-gradient(90deg, rgba(28,27,26,.02), transparent 40%); }
+.bv-conv.urgent { border-left: 3px solid var(--bv-danger); padding-left: 11px; }
+.bv-conv input[type="checkbox"] {
+  width: 14px; height: 14px; border-radius: 4px; accent-color: var(--bv-text);
+  opacity: 0; transition: opacity .14s; align-self: flex-start; margin-top: 11px;
+}
+.bv-conv:hover input[type="checkbox"] { opacity: 1; }
+
+/* Avatar (.bv-av.cN) */
+.bv-av {
+  width: 38px; height: 38px; border-radius: 11px; color: #fff;
+  display: grid; place-items: center; font-size: 12px; font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.04);
+  align-self: center; position: relative; flex-shrink: 0;
+}
+.bv-av.c1 { background: linear-gradient(135deg, #18181b, #52525b); }
+.bv-av.c2 { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
+.bv-av.c3 { background: linear-gradient(135deg, #06b6d4, #0ea5e9); }
+.bv-av.c4 { background: linear-gradient(135deg, #10b981, #059669); }
+.bv-av.c5 { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+.bv-av.c6 { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+.bv-av.c7 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.bv-av.c8 { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+
+/* Channel badge en avatar */
+.bv-av .badge-ch {
+  position: absolute; bottom: -4px; right: -4px; width: 16px; height: 16px;
+  border-radius: 5px; border: 2.5px solid var(--bv-bg-panel);
+  font-size: 8.5px; box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  display: grid; place-items: center; color: #fff;
+}
+.bv-av .badge-ch.wa { background: #25d366; }
+.bv-av .badge-ch.fb { background: #1877f2; }
+.bv-av .badge-ch.ig { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); }
+.bv-av .badge-ch.email { background: #6b7280; }
+.bv-av .badge-ch.web { background: var(--bv-text); }
+
+/* Cuerpo del conv item */
+.bv-conv .body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.bv-conv .row1 { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.bv-conv .name {
+  font-size: 13.25px; font-weight: 600; letter-spacing: -.008em;
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--bv-text);
+}
+.bv-conv.unread .name { font-weight: 700; }
+.bv-conv .time {
+  font-size: 10.5px; font-weight: 500; color: var(--bv-text-muted);
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.bv-conv.unread .time { color: var(--bv-text); font-weight: 600; }
+.bv-conv .row2 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bv-conv .preview {
+  font-size: 12px; line-height: 1.4; color: var(--bv-text-muted);
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bv-conv.unread .preview { color: var(--bv-text-soft); }
+.bv-conv .preview .me { color: var(--bv-text-muted); font-weight: 500; margin-right: 3px; }
+.bv-conv .meta { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+
+/* SLA pills */
+.bv-sla {
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
+  font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 4px;
+}
+.bv-sla.ok { background: #ecfdf5; color: var(--bv-success); }
+.bv-sla.warn { background: #fffbeb; color: var(--bv-warning); }
+.bv-sla.breach { background: #fef2f2; color: var(--bv-danger); }
+
+/* Priority tags */
+.bv-tag {
+  font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.bv-tag.urgent { background: #fef2f2; color: var(--bv-danger); }
+.bv-tag.high { background: #fffbeb; color: var(--bv-warning); }
+
+/* Unread count */
+.bv-ucount {
+  min-width: 18px; height: 18px; padding: 0 6px; border-radius: 9px;
+  background: var(--bv-text); color: var(--bv-bg-panel); font-size: 10px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center; font-variant-numeric: tabular-nums;
+}
+
+/* Hover actions */
+.bv-conv-hactions {
+  display: none; gap: 2px; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+}
+.bv-conv:hover .bv-conv-hactions { display: flex; }
+.bv-conv-hactions button {
+  width: 26px; height: 26px; border-radius: 6px; background: var(--bv-bg-panel);
+  border: 1px solid var(--bv-border); color: var(--bv-text-muted); cursor: pointer;
+  display: grid; place-items: center; font-size: 11px; transition: all .12s;
+}
+
+/* Bubbles */
+.bv-msg { display: flex; margin-bottom: 14px; align-items: flex-end; gap: 10px; }
+.bv-msg.in { justify-content: flex-start; }
+.bv-msg.out { justify-content: flex-end; }
+.bv-msg .av-sm {
+  width: 30px; height: 30px; border-radius: 9px; color: #fff;
+  display: grid; place-items: center; font-size: 10px; font-weight: 700; flex-shrink: 0;
+  background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+}
+.bv-bubble {
+  max-width: 72%; padding: 10px 14px; border-radius: 14px;
+  font-size: 13.5px; line-height: 1.5; word-wrap: break-word; position: relative;
+}
+.bv-msg.in .bv-bubble {
+  background: var(--bv-bg-panel); border: 1px solid var(--bv-border);
+  border-radius: 4px 14px 14px 14px; color: var(--bv-text);
+}
+.bv-msg.out .bv-bubble {
+  background: var(--bv-text); color: #fff;
+  border-radius: 14px 4px 14px 14px; max-width: 66%;
+}
+.bv-bubble.note {
+  background: #fffbeb !important; border: 1px solid #fde68a !important; color: var(--bv-text) !important;
+}
+.bv-bubble .meta {
+  margin-top: 5px; font-size: 10px; color: var(--bv-text-muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.bv-msg.out .bv-bubble .meta { color: rgba(255,255,255,.6); }
+.bv-bubble.note .note-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700;
+  color: var(--bv-warning); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .04em;
+}
+
+/* Day separator */
+.bv-day-sep { text-align: center; margin: 18px 0; position: relative; }
+.bv-day-sep::before {
+  content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--bv-border);
+}
+.bv-day-sep span {
+  background: var(--bv-bg); padding: 0 12px; position: relative;
+  font-size: 11px; color: var(--bv-text-muted); font-weight: 500;
+}
+
+/* Composer */
+.bv-composer {
+  background: var(--bv-bg-panel); border-top: 1px solid var(--bv-border); padding: 12px 24px 16px;
+}
+.bv-composer-tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.bv-composer-tab {
+  padding: 6px 12px; font-size: 11.5px; font-weight: 600; color: var(--bv-text-muted);
+  background: transparent; border: 0; border-radius: 7px; cursor: pointer; transition: all .12s; font-family: inherit;
+}
+.bv-composer-tab.on { background: var(--bv-text); color: var(--bv-bg-panel); }
+.bv-composer-box {
+  background: var(--bv-bg-subtle); border: 1px solid var(--bv-border); border-radius: 12px; padding: 10px 14px;
+}
+.bv-composer-input {
+  border: 0; background: transparent; width: 100%; font-size: 13px;
+  font-family: inherit; color: var(--bv-text); outline: 0; resize: none; min-height: 48px; line-height: 1.5;
+}
+.bv-composer-toolbar { display: flex; align-items: center; gap: 4px; margin-top: 8px; }
+.bv-composer-toolbar .btn-ico {
+  width: 30px; height: 30px; border-radius: 7px; background: transparent; border: 0;
+  color: var(--bv-text-soft); cursor: pointer; display: grid; place-items: center; font-size: 12px;
+}
+.bv-composer-toolbar .bv-send-group { margin-left: auto; display: inline-flex; align-items: stretch; }
+.bv-composer-toolbar .btn-send {
+  background: var(--bv-text); color: var(--bv-bg-panel); border: 0; border-radius: 8px 0 0 8px;
+  height: 32px; padding: 0 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+}
+.bv-composer-toolbar .btn-send-config {
+  background: var(--bv-text); color: var(--bv-bg-panel); border: 0;
+  border-left: 1px solid rgba(255,255,255,.18); border-radius: 0 8px 8px 0;
+  height: 32px; width: 28px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
+}
+
+/* Modales */
+.bv-modal-dialog {
+  background: var(--bv-bg-panel); border-radius: 14px; box-shadow: var(--bv-shadow-modal);
+  width: 100%; max-width: 520px; display: flex; flex-direction: column; overflow: hidden;
+}
+.bv-modal-head {
+  padding: 14px 20px; border-bottom: 1px solid var(--bv-border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.bv-modal-head > div:first-child { min-width: 0; flex: 1; }
+.bv-modal-label {
+  font-size: 10.5px; color: var(--bv-text-muted); font-weight: 500;
+  letter-spacing: .04em; display: block; margin-bottom: 2px;
+}
+.bv-modal-title { font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: var(--bv-text); }
+.bv-chip-id {
+  font-family: var(--bv-font-mono); font-size: 11px; color: var(--bv-text-muted);
+  background: var(--bv-bg-subtle); border: 1px solid var(--bv-border);
+  padding: 1px 6px; border-radius: 5px; margin-left: 6px; font-weight: 500;
+}
+.bv-modal-close {
+  background: transparent; border: 0; cursor: pointer; color: var(--bv-text-muted);
+  width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center;
+}
+.bv-modal-close:hover { background: var(--bv-bg-subtle); color: var(--bv-text); }
+.bv-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+.bv-modal-foot {
+  padding: 12px 20px; border-top: 1px solid var(--bv-border); background: #f5f6f8;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.bv-modal-foot .btn-primary {
+  background: var(--bv-text); color: var(--bv-bg-panel); border: 0; border-radius: 9px;
+  height: 38px; font-size: 12.5px; font-weight: 600; cursor: pointer; width: 100%; font-family: inherit;
+}
+.bv-modal-foot .btn-secondary {
+  background: transparent; color: var(--bv-text-soft); border: 1px solid var(--bv-border);
+  border-radius: 9px; height: 38px; font-size: 12.5px; font-weight: 500;
+  cursor: pointer; width: 100%; font-family: inherit;
+}
+.bv-modal-foot .btn-success {
+  height: 38px; border-radius: 9px; font-size: 12.5px; font-weight: 600; width: 100%;
+  background: var(--bv-success); color: #fff; border: 0; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+}
+.bv-modal-search {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  border: 1.5px solid var(--bv-border); border-radius: 9px; margin-bottom: 12px;
+}
+.bv-modal-search i { color: var(--bv-text-muted); flex-shrink: 0; }
+.bv-modal-search input {
+  border: 0; outline: none; background: transparent; flex: 1;
+  font-size: 12.5px; color: var(--bv-text); font-family: inherit;
+}
+.bv-modal-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.bv-modal-tab {
+  padding: 6px 14px; font-size: 11.5px; font-weight: 600; color: var(--bv-text-muted);
+  background: var(--bv-bg-subtle); border: 1px solid transparent; border-radius: 7px;
+  cursor: pointer; font-family: inherit; transition: all .12s;
+}
+.bv-modal-tab.on { background: var(--bv-text); color: var(--bv-bg-panel); }
+
+/* Opt list (.bv-opt-list · .bv-opt) */
+.bv-opt-list { display: flex; flex-direction: column; gap: 6px; }
+.bv-opt {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--bv-border); border-radius: 10px; background: transparent;
+  cursor: pointer; text-align: left; transition: all .12s; width: 100%; font-family: inherit;
+}
+.bv-opt:hover { background: var(--bv-bg-subtle); }
+.bv-opt.on { border-color: var(--bv-text); box-shadow: var(--bv-ring); }
+.bv-opt .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.bv-opt .body { flex: 1; }
+.bv-opt .name { font-size: 13px; font-weight: 600; color: var(--bv-text); }
+.bv-opt .sub { font-size: 11px; color: var(--bv-text-muted); margin-top: 1px; }
+.bv-opt .check { color: var(--bv-text); font-size: 14px; opacity: 0; }
+.bv-opt.on .check { opacity: 1; }
+
+/* Steps wizard (nueva conversación) */
+.nc-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.nc-step {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  background: var(--bv-bg-subtle); color: var(--bv-text-muted); font-weight: 600; font-size: 10.5px;
+}
+.nc-step.active { background: var(--bv-text); color: var(--bv-bg-panel); }
+.nc-step-num {
+  width: 16px; height: 16px; border-radius: 50%; background: rgba(255,255,255,.2);
+  display: grid; place-items: center; font-size: 9px;
+}
+.nc-step-line { flex: 1; height: 1px; background: var(--bv-border); }
+.nc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nc-channel {
+  padding: 14px 12px; border: 1px solid var(--bv-border); border-radius: 11px;
+  background: var(--bv-bg-panel); cursor: pointer; transition: all .14s;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.nc-channel.on { border-color: var(--bv-text); background: var(--bv-bg-subtle); }
+.nc-channel .logo {
+  width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center;
+  font-size: 15px; color: #fff;
+}
+.nc-channel.wa .logo { background: var(--bv-channel-whatsapp); }
+.nc-channel.fb .logo { background: var(--bv-channel-facebook); }
+.nc-channel.ig .logo { background: var(--bv-channel-instagram); }
+.nc-channel.widget .logo { background: var(--bv-channel-web); }
+.nc-channel.email .logo { background: var(--bv-channel-email); }
+.nc-channel .t { font-size: 12.5px; font-weight: 600; color: var(--bv-text); }
+.nc-channel .s { font-size: 11px; color: var(--bv-text-muted); line-height: 1.35; }
+
+/* Filter pills (modal filtros) */
+.fl-section { margin-bottom: 16px; }
+.fl-section-title {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+  color: var(--bv-text-muted); text-transform: uppercase; margin-bottom: 8px;
+}
+.fl-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.fl-pill {
+  padding: 5px 11px; border-radius: 999px; background: var(--bv-bg-subtle);
+  border: 1px solid transparent; font-size: 11.5px; font-weight: 500; color: var(--bv-text-soft);
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all .12s;
+}
+.fl-pill.on { background: var(--bv-text); color: var(--bv-bg-panel); border-color: var(--bv-text); }
+.fl-pill .d { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Modal radio cards (close-conv) */
+.bv-modal-radio-card {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--bv-border); border-radius: 10px; background: transparent;
+  cursor: pointer; transition: all .12s; margin-bottom: 6px;
+}
+.bv-modal-radio-card.on { border-color: var(--bv-text); box-shadow: var(--bv-ring); }
+.bv-modal-radio-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.bv-modal-radio-icon--success { background: var(--bv-success-bg); color: var(--bv-success); }
+.bv-modal-radio-icon--danger { background: var(--bv-danger-bg); color: var(--bv-danger); }
+.bv-modal-radio-icon--warning { background: var(--bv-warning-bg); color: var(--bv-warning); }
+.bv-modal-radio-icon--muted { background: var(--bv-bg-subtle); color: var(--bv-text-muted); }
+.bv-modal-radio-card .body { flex: 1; }
+.bv-modal-radio-card .name { font-size: 13px; font-weight: 600; color: var(--bv-text); }
+.bv-modal-radio-card .sub { font-size: 11px; color: var(--bv-text-muted); margin-top: 1px; }
+.bv-modal-radio-dot {
+  width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bv-border); flex-shrink: 0;
+}
+.bv-modal-radio-card.on .bv-modal-radio-dot {
+  border-color: var(--bv-text); background: var(--bv-text); box-shadow: inset 0 0 0 3px var(--bv-bg-panel);
+}
+.bv-modal-check {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 12.5px; color: var(--bv-text); margin-bottom: 8px;
+}
+.bv-modal-check input { accent-color: var(--bv-text); width: 14px; height: 14px; }
+.bv-modal-ta {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--bv-border); border-radius: 9px;
+  background: var(--bv-bg-panel); font-size: 12.5px; color: var(--bv-text); font-family: inherit;
+  outline: none; resize: vertical; line-height: 1.5;
+}
+.bv-modal-divider { height: 1px; background: var(--bv-border); margin: 14px 0; }
+.bv-csat-stars { display: flex; gap: 4px; margin-bottom: 10px; }
+.bv-star-active { color: #f59e0b; }
+.bv-star-inactive { color: var(--bv-border); }
+
+/* Utilidades de spacing del proyecto */
+.bv-right-section-title {
+  font-size: 11px; font-weight: 700; color: var(--bv-text-muted);
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.bv-mb-8 { margin-bottom: 8px; }
+.bv-mt-14 { margin-top: 14px; }
+.bv-mb-6 { margin-bottom: 6px; }
+
+/* Right panel */
+.bv-right-cover { height: 64px; background: linear-gradient(135deg, #fef3c7, #fce7f3); }
+.bv-right-avatar {
+  width: 64px; height: 64px; border-radius: 16px; color: #fff;
+  display: grid; place-items: center; font-size: 22px; font-weight: 700;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  margin: -32px auto 12px; border: 3px solid var(--bv-bg-panel);
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.bv-right-name { text-align: center; font-size: 16px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 2px; color: var(--bv-text); }
+.bv-right-sub { text-align: center; font-size: 12px; color: var(--bv-text-muted); margin-bottom: 12px; }
+.bv-right-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; padding: 0 16px 12px; }
+.bv-right-action {
+  background: var(--bv-bg-subtle); border: 1px solid var(--bv-border); border-radius: 8px;
+  padding: 8px 4px; font-size: 10.5px; font-weight: 600; color: var(--bv-text-soft);
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.bv-right-action i { font-size: 13px; }
+.bv-right-stats { display: grid; grid-template-columns: repeat(3,1fr); border-top: 1px solid var(--bv-border); border-bottom: 1px solid var(--bv-border); }
+.bv-right-stat { padding: 12px 8px; text-align: center; border-right: 1px solid var(--bv-border); }
+.bv-right-stat:last-child { border-right: 0; }
+.bv-right-stat .val { font-size: 14px; font-weight: 700; letter-spacing: -.015em; color: var(--bv-text); }
+.bv-right-stat .lbl { font-size: 9.5px; color: var(--bv-text-muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+.bv-right-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 0; font-size: 12px; gap: 8px; border-bottom: 1px solid var(--bv-border-soft, #ececef);
+}
+.bv-right-row .lbl { color: var(--bv-text-muted); flex-shrink: 0; }
+.bv-right-row .val { color: var(--bv-text); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<!-- Nav fijo -->
+<nav class="sc-nav">
+  <div class="sc-nav-brand">Helpdesk Inbox <span>showcase · CSS real embebido</span></div>
+  <a class="sc-nav-link on" href="#conv-items">Conv items</a>
+  <a class="sc-nav-link" href="#badges">Badges</a>
+  <a class="sc-nav-link" href="#chips">Chips</a>
+  <a class="sc-nav-link" href="#bubbles">Bubbles</a>
+  <a class="sc-nav-link" href="#composer">Composer</a>
+  <a class="sc-nav-link" href="#modals">Modales</a>
+  <a class="sc-nav-link" href="#nav">Nav</a>
+  <a class="sc-nav-link" href="#right-panel">Right panel</a>
+  <span class="sc-nav-pill">conversations.css · real</span>
+</nav>
+
+<div class="sc-stage">
+
+  <!-- ═══ CONV ITEMS ═══════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="conv-items">
+    <div class="sc-section-title">Conversation list items — .bv-conv (conv-item.blade.php)</div>
+
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Estado normal — email</span>
+          <code class="sc-card-class">.bv-conv</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="bv-conv">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c3">MA<span class="badge-ch email"><i class="fas fa-envelope"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">María Álvarez</span><span class="time">14:32</span></div>
+              <div class="row2">
+                <span class="preview">Hola, necesito información sobre el pedido #8234</span>
+                <span class="meta"><span class="bv-sla ok"><i class="far fa-clock"></i>4h 20m</span></span>
+              </div>
+            </div>
+            <div class="bv-conv-hactions">
+              <button title="Fijar" data-bv-action="pin"><i class="fas fa-thumbtack"></i></button>
+              <button title="Silenciar" data-bv-action="mute"><i class="far fa-bell-slash"></i></button>
+              <button title="Archivar" data-bv-action="archive"><i class="fas fa-archive"></i></button>
+              <button title="Snooze" data-bv-modal="snooze"><i class="far fa-clock"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">No leída — WhatsApp + unread count</span>
+          <code class="sc-card-class">.bv-conv.unread</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="bv-conv unread">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c5">JL<span class="badge-ch wa"><i class="fab fa-whatsapp"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Juan López</span><span class="time">2m</span></div>
+              <div class="row2">
+                <span class="preview">Necesito ayuda con mi pedido, llevo 3 días esperando</span>
+                <span class="meta">
+                  <span class="bv-sla warn"><i class="far fa-clock"></i>1h 10m</span>
+                  <span class="bv-ucount">3</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Urgente — Facebook + SLA breach</span>
+          <code class="sc-card-class">.bv-conv.urgent.unread</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="bv-conv urgent unread">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c6">RP<span class="badge-ch fb"><i class="fab fa-facebook-f"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Roberto Pérez</span><span class="time">5m</span></div>
+              <div class="row2">
+                <span class="preview">¡Esto es inaceptable! Exijo solución inmediata para mi pedido</span>
+                <span class="meta">
+                  <span class="bv-sla breach"><i class="far fa-clock"></i>SLA</span>
+                  <span class="bv-tag urgent">urgent</span>
+                  <span class="bv-ucount">9+</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Activa / seleccionada — Instagram</span>
+          <code class="sc-card-class">.bv-conv.on</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="bv-conv on">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c7">SC<span class="badge-ch ig"><i class="fab fa-instagram"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Sofía Castro</span><span class="time">ayer</span></div>
+              <div class="row2">
+                <span class="preview"><span class="me">Tú:</span>Le enviamos el reemplazo hoy mismo</span>
+                <span class="meta">
+                  <span class="bv-sla ok"><i class="far fa-clock"></i>6h</span>
+                  <span class="bv-tag high">high</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Lista agrupada -->
+    <div style="margin-top: 16px;">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Lista con separador de grupo HOY / AYER</span>
+          <code class="sc-card-class">.bv-list-group-label + .bv-conv</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div style="background: var(--bv-bg-panel); padding: 12px 16px 6px; font-size: 9.5px; letter-spacing: .14em; font-weight: 700; color: var(--bv-text-muted); text-transform: uppercase; position: sticky; top: 0; z-index: 1;">HOY</div>
+          <div class="bv-conv unread">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c2">AL<span class="badge-ch web"><i class="fas fa-globe"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Ana Lima</span><span class="time">09:14</span></div>
+              <div class="row2">
+                <span class="preview">Buenos días, quería saber si procesaron mi devolución</span>
+                <span class="meta"><span class="bv-sla ok"><i class="far fa-clock"></i>3h</span><span class="bv-ucount">1</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="bv-conv">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c4">CF<span class="badge-ch wa"><i class="fab fa-whatsapp"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Carlos Fernández</span><span class="time">08:45</span></div>
+              <div class="row2">
+                <span class="preview"><span class="me">Tú:</span>Su pedido está en camino, llegará mañana</span>
+                <span class="meta"><span class="bv-sla ok"><i class="far fa-clock"></i>5h</span></span>
+              </div>
+            </div>
+          </div>
+          <div style="background: var(--bv-bg-panel); padding: 14px 16px 6px; font-size: 9.5px; letter-spacing: .14em; font-weight: 700; color: var(--bv-text-muted); text-transform: uppercase;">AYER</div>
+          <div class="bv-conv">
+            <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+            <div class="bv-av c8">LP<span class="badge-ch email"><i class="fas fa-envelope"></i></span></div>
+            <div class="body">
+              <div class="row1"><span class="name">Lucía Paredes</span><span class="time">ayer 16:30</span></div>
+              <div class="row2">
+                <span class="preview">Gracias, quedé muy satisfecha con la atención recibida</span>
+                <span class="meta"><span class="bv-sla ok"><i class="far fa-clock"></i>OK</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ BADGES ═══════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="badges">
+    <div class="sc-section-title">Avatares · canales · SLA · prioridad — .bv-av · .badge-ch · .bv-sla · .bv-tag</div>
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Gradientes de avatar c1–c8</span>
+          <code class="sc-card-class">.bv-av.cN</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <div class="bv-av c1">AB</div>
+          <div class="bv-av c2">CD</div>
+          <div class="bv-av c3">EF</div>
+          <div class="bv-av c4">GH</div>
+          <div class="bv-av c5">IJ</div>
+          <div class="bv-av c6">KL</div>
+          <div class="bv-av c7">MN</div>
+          <div class="bv-av c8">OP</div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Channel badges sobre avatar</span>
+          <code class="sc-card-class">.badge-ch.{wa|fb|ig|email|web}</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+          <div class="bv-av c1">WA<span class="badge-ch wa"><i class="fab fa-whatsapp"></i></span></div>
+          <div class="bv-av c2">FB<span class="badge-ch fb"><i class="fab fa-facebook-f"></i></span></div>
+          <div class="bv-av c3">IG<span class="badge-ch ig"><i class="fab fa-instagram"></i></span></div>
+          <div class="bv-av c4">EM<span class="badge-ch email"><i class="fas fa-envelope"></i></span></div>
+          <div class="bv-av c6">WB<span class="badge-ch web"><i class="fas fa-globe"></i></span></div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">SLA pills (ok / warn / breach)</span>
+          <code class="sc-card-class">.bv-sla.{ok|warn|breach}</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span class="bv-sla ok"><i class="far fa-clock"></i>4h 20m</span>
+          <span class="bv-sla warn"><i class="far fa-clock"></i>1h 10m</span>
+          <span class="bv-sla breach"><i class="far fa-clock"></i>Vencido</span>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Priority tags + unread count</span>
+          <code class="sc-card-class">.bv-tag.{urgent|high} · .bv-ucount</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span class="bv-tag urgent">urgent</span>
+          <span class="bv-tag high">high</span>
+          <span class="bv-ucount">3</span>
+          <span class="bv-ucount">9+</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ CHIPS ════════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="chips">
+    <div class="sc-section-title">Filtros y canales — .bv-chip · .bv-chpill</div>
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Filter chips (bv-list-sub)</span>
+          <code class="sc-card-class">.bv-chip[.on]</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 5px; flex-wrap: wrap;">
+          <button class="bv-chip on">Todos <span class="c">142</span></button>
+          <button class="bv-chip">Abiertos <span class="c">38</span></button>
+          <button class="bv-chip">Sin asignar <span class="c">12</span></button>
+          <button class="bv-chip">Urgentes <span class="c">5</span></button>
+          <button class="bv-chip">VIP <span class="c">3</span></button>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Channel pills (bv-list-channels)</span>
+          <code class="sc-card-class">.bv-chpill[.on]</code>
+        </div>
+        <div class="sc-card-body light-bg" style="display:flex; gap: 2px; flex-wrap: wrap;">
+          <button class="bv-chpill on"><i class="fas fa-inbox"></i> Todos <span class="c">142</span></button>
+          <button class="bv-chpill"><i class="fab fa-whatsapp" style="color:#25d366"></i> WA <span class="c">54</span></button>
+          <button class="bv-chpill"><i class="fab fa-facebook-f" style="color:#1877f2"></i> FB <span class="c">23</span></button>
+          <button class="bv-chpill"><i class="fab fa-instagram" style="color:#dd2a7b"></i> IG <span class="c">18</span></button>
+          <button class="bv-chpill"><i class="fas fa-envelope" style="color:#6b7280"></i> Email <span class="c">47</span></button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ BUBBLES ═══════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="bubbles">
+    <div class="sc-section-title">Thread de mensajes — .bv-msg · .bv-bubble</div>
+    <div class="sc-grid sc-grid-1">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Entrante (.in) · Saliente (.out) · Nota interna (.note)</span>
+          <code class="sc-card-class">.bv-msg.{in|out} · .bv-bubble[.note]</code>
+        </div>
+        <div class="sc-card-body subtle-bg">
+          <div class="bv-day-sep"><span>HOY</span></div>
+
+          <div class="bv-msg in">
+            <div class="bv-av c3" style="width:30px;height:30px;border-radius:9px;font-size:10px;">JL</div>
+            <div class="bv-bubble">
+              Hola, buenos días. Quería preguntar sobre el estado de mi pedido #12345. Llevo 3 días esperando y todavía no llegó.
+              <div class="meta"><span>09:14</span><i class="fas fa-check-double" style="font-size:10px;color:#71717a;"></i></div>
+            </div>
+          </div>
+
+          <div class="bv-msg out">
+            <div class="bv-bubble">
+              Buenos días Juan, disculpa la demora. He revisado su pedido y está en tránsito. Debería llegar hoy antes de las 18:00.
+              <div class="meta"><span>09:17</span><i class="fas fa-check-double" style="font-size:10px;color:rgba(255,255,255,.6);"></i></div>
+            </div>
+          </div>
+
+          <div class="bv-msg in">
+            <div class="bv-av c3" style="width:30px;height:30px;border-radius:9px;font-size:10px;">JL</div>
+            <div class="bv-bubble">
+              Perfecto, muchas gracias. ¿Me puede enviar el número de seguimiento?
+              <div class="meta"><span>09:18</span></div>
+            </div>
+          </div>
+
+          <div class="bv-msg out">
+            <div class="bv-bubble note">
+              <div class="note-badge"><i class="fas fa-lock"></i> Nota interna</div>
+              Cliente reincidente — tuvo problemas el mes pasado. Verificar stock antes de confirmar envío adicional.
+              <div class="meta"><span>09:20 · Agente: Tú</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COMPOSER ══════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="composer">
+    <div class="sc-section-title">Compositor — .bv-composer · .bv-composer-box · .btn-send</div>
+    <div class="sc-grid sc-grid-1">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Composer con tabs (Respuesta / Nota / Email) y botón Enviar</span>
+          <code class="sc-card-class">.bv-composer · .bv-composer-tabs · .bv-send-group</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="bv-composer">
+            <div class="bv-composer-tabs">
+              <button class="bv-composer-tab on">Respuesta</button>
+              <button class="bv-composer-tab">Nota interna</button>
+              <button class="bv-composer-tab">Email</button>
+            </div>
+            <div class="bv-composer-box">
+              <textarea class="bv-composer-input" rows="3">El número de seguimiento es 9876543210. Puede rastrearlo en el sitio de la transportista.</textarea>
+              <div class="bv-composer-toolbar">
+                <button class="btn-ico" title="Emoji"><i class="far fa-face-smile"></i></button>
+                <button class="btn-ico" title="Adjunto"><i class="fas fa-paperclip"></i></button>
+                <button class="btn-ico" title="Plantillas"><i class="fas fa-bolt"></i></button>
+                <button class="btn-ico" title="Formato"><i class="fas fa-bold"></i></button>
+                <div class="bv-send-group">
+                  <button class="btn-send"><i class="fas fa-paper-plane"></i> Enviar</button>
+                  <button class="btn-send-config"><i class="fas fa-chevron-up"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MODALES ═══════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="modals">
+    <div class="sc-section-title">Modales del inbox — .bv-modal-dialog · .bv-opt-list · .nc-channel</div>
+
+    <div class="sc-grid sc-grid-2">
+
+      <!-- Modal asignar (assign.blade.php) -->
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Modal asignar conversación (assign.blade.php)</span>
+          <code class="sc-card-class">.bv-modal-dialog · .bv-opt</code>
+        </div>
+        <div class="sc-card-body light-bg" style="padding:16px;">
+          <div class="bv-modal-dialog">
+            <div class="bv-modal-head">
+              <div>
+                <span class="bv-modal-label">Chat · Bandeja</span>
+                <div class="bv-modal-title"><i class="fas fa-user-plus" style="margin-right:6px;color:var(--bv-text-muted);font-size:13px;"></i>Asignar conversación<span class="bv-chip-id">#1042</span></div>
+              </div>
+              <button class="bv-modal-close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="bv-modal-body" style="max-height:300px;">
+              <div class="bv-modal-search">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" placeholder="Buscar agente o equipo…">
+              </div>
+              <div class="bv-modal-tabs">
+                <button class="bv-modal-tab on"><i class="fas fa-user" style="font-size:11px;margin-right:4px;"></i>Agentes</button>
+                <button class="bv-modal-tab"><i class="fas fa-users" style="font-size:11px;margin-right:4px;"></i>Equipos</button>
+              </div>
+              <div class="bv-opt-list">
+                <button class="bv-opt">
+                  <div class="bv-av c1" style="width:32px;height:32px;border-radius:9px;font-size:10px;"><i class="fas fa-user-slash" style="font-size:11px;"></i></div>
+                  <div class="body"><div class="name">Sin asignar</div><div class="sub">Quitar la asignación actual</div></div>
+                  <i class="fas fa-check check"></i>
+                </button>
+                <button class="bv-opt on">
+                  <div class="bv-av c2" style="width:32px;height:32px;border-radius:9px;font-size:10px;">AG</div>
+                  <div class="body"><div class="name">Andrea García</div><div class="sub">andrea@empresa.com</div></div>
+                  <i class="fas fa-check check"></i>
+                </button>
+                <button class="bv-opt">
+                  <div class="bv-av c4" style="width:32px;height:32px;border-radius:9px;font-size:10px;">ML</div>
+                  <div class="body"><div class="name">Miguel López</div><div class="sub">miguel@empresa.com</div></div>
+                  <i class="fas fa-check check"></i>
+                </button>
+              </div>
+            </div>
+            <div class="bv-modal-foot">
+              <button class="btn-primary">Asignar y notificar</button>
+              <button class="btn-secondary">Asignar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal cerrar conversación (close-conv.blade.php) -->
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Modal cerrar conversación (close-conv.blade.php)</span>
+          <code class="sc-card-class">.bv-modal-radio-card[.on]</code>
+        </div>
+        <div class="sc-card-body light-bg" style="padding:16px;">
+          <div class="bv-modal-dialog">
+            <div class="bv-modal-head">
+              <div>
+                <span class="bv-modal-label">Chat · Acción irreversible</span>
+                <div class="bv-modal-title"><i class="fas fa-circle-check" style="margin-right:6px;color:var(--bv-success);font-size:13px;"></i>Cerrar conversación<span class="bv-chip-id">#1042</span></div>
+              </div>
+              <button class="bv-modal-close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="bv-modal-body" style="max-height:320px;">
+              <div class="bv-right-section-title bv-mb-8">Motivo de cierre</div>
+              <label class="bv-modal-radio-card on">
+                <input type="radio" name="close_reason" value="resolved" style="display:none;">
+                <span class="bv-modal-radio-icon bv-modal-radio-icon--success"><i class="fas fa-circle-check"></i></span>
+                <div class="body"><div class="name">Resuelto</div><div class="sub">El cliente quedó satisfecho con la solución</div></div>
+                <span class="bv-modal-radio-dot"></span>
+              </label>
+              <label class="bv-modal-radio-card">
+                <input type="radio" name="close_reason" value="duplicated" style="display:none;">
+                <span class="bv-modal-radio-icon bv-modal-radio-icon--muted"><i class="fas fa-clone"></i></span>
+                <div class="body"><div class="name">Duplicado</div><div class="sub">Ya hay otra conversación abierta</div></div>
+                <span class="bv-modal-radio-dot"></span>
+              </label>
+              <label class="bv-modal-radio-card">
+                <input type="radio" name="close_reason" value="spam" style="display:none;">
+                <span class="bv-modal-radio-icon bv-modal-radio-icon--danger"><i class="fas fa-ban"></i></span>
+                <div class="body"><div class="name">Spam / no procede</div><div class="sub">Mensaje no solicitado o fuera de contexto</div></div>
+                <span class="bv-modal-radio-dot"></span>
+              </label>
+              <label class="bv-modal-radio-card">
+                <input type="radio" name="close_reason" value="unresponsive" style="display:none;">
+                <span class="bv-modal-radio-icon bv-modal-radio-icon--warning"><i class="fas fa-user-slash"></i></span>
+                <div class="body"><div class="name">Sin respuesta del cliente</div><div class="sub">Cerrar por inactividad prolongada</div></div>
+                <span class="bv-modal-radio-dot"></span>
+              </label>
+              <div class="bv-modal-divider"></div>
+              <label class="bv-modal-check"><input type="checkbox" checked><span>Enviar encuesta CSAT al cliente</span></label>
+              <div class="bv-csat-stars">
+                <i class="fas fa-star bv-star-active"></i>
+                <i class="fas fa-star bv-star-active"></i>
+                <i class="fas fa-star bv-star-active"></i>
+                <i class="fas fa-star bv-star-active"></i>
+                <i class="fas fa-star bv-star-inactive"></i>
+              </div>
+              <label class="bv-modal-check"><input type="checkbox" checked><span>Notificar al cliente con plantilla de cierre</span></label>
+            </div>
+            <div class="bv-modal-foot">
+              <button class="btn-success">Resolver y cerrar</button>
+              <button class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal nueva conversación — canal selector -->
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Modal nueva conversación — paso 1 canal</span>
+          <code class="sc-card-class">.nc-step · .nc-grid · .nc-channel</code>
+        </div>
+        <div class="sc-card-body light-bg" style="padding:16px;">
+          <div class="bv-modal-dialog">
+            <div class="bv-modal-head">
+              <div>
+                <span class="bv-modal-label">Chat · Bandeja</span>
+                <div class="bv-modal-title"><i class="fas fa-plus" style="margin-right:6px;color:var(--bv-text-muted);font-size:13px;"></i>Nueva conversación</div>
+              </div>
+              <button class="bv-modal-close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="bv-modal-body">
+              <div class="nc-steps">
+                <div class="nc-step active"><span class="nc-step-num">1</span>Canal</div>
+                <div class="nc-step-line"></div>
+                <div class="nc-step"><span class="nc-step-num">2</span>Contacto</div>
+                <div class="nc-step-line"></div>
+                <div class="nc-step"><span class="nc-step-num">3</span>Mensaje</div>
+              </div>
+              <div class="nc-grid">
+                <div class="nc-channel wa on"><div class="logo"><i class="fab fa-whatsapp"></i></div><div class="t">WhatsApp</div><div class="s">Mensajería instantánea</div></div>
+                <div class="nc-channel fb"><div class="logo"><i class="fab fa-facebook-f"></i></div><div class="t">Facebook</div><div class="s">Página de empresa</div></div>
+                <div class="nc-channel ig"><div class="logo"><i class="fab fa-instagram"></i></div><div class="t">Instagram</div><div class="s">Direct messages</div></div>
+                <div class="nc-channel email"><div class="logo"><i class="fas fa-envelope"></i></div><div class="t">Email</div><div class="s">Correo electrónico</div></div>
+              </div>
+            </div>
+            <div class="bv-modal-foot">
+              <button class="btn-primary">Continuar</button>
+              <button class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal etiquetas (tags.blade.php) -->
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Modal etiquetas (tags.blade.php)</span>
+          <code class="sc-card-class">.bv-opt-list · .bv-chpill.on</code>
+        </div>
+        <div class="sc-card-body light-bg" style="padding:16px;">
+          <div class="bv-modal-dialog">
+            <div class="bv-modal-head">
+              <div>
+                <span class="bv-modal-label">Chat · Bandeja</span>
+                <div class="bv-modal-title"><i class="fas fa-tags" style="margin-right:6px;color:var(--bv-text-muted);font-size:13px;"></i>Etiquetas</div>
+              </div>
+              <button class="bv-modal-close"><i class="fas fa-xmark"></i></button>
+            </div>
+            <div class="bv-modal-body">
+              <div class="bv-modal-search"><i class="fas fa-magnifying-glass"></i><input type="text" placeholder="Buscar o crear etiqueta…"></div>
+              <div class="bv-right-section-title bv-mb-8">Etiquetas disponibles</div>
+              <div class="bv-opt-list">
+                <div class="bv-opt on"><div class="body"><div class="name">Urgente</div></div></div>
+                <div class="bv-opt on"><div class="body"><div class="name">Devolución</div></div></div>
+                <div class="bv-opt"><div class="body"><div class="name">Envío perdido</div></div></div>
+                <div class="bv-opt"><div class="body"><div class="name">Cliente VIP</div></div></div>
+              </div>
+              <div class="bv-right-section-title bv-mt-14 bv-mb-8">Aplicadas a esta conversación</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <span class="bv-chpill on">Urgente <button style="background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-size:9px;color:inherit;"><i class="fas fa-xmark"></i></button></span>
+                <span class="bv-chpill on">Devolución <button style="background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-size:9px;color:inherit;"><i class="fas fa-xmark"></i></button></span>
+              </div>
+            </div>
+            <div class="bv-modal-foot">
+              <button class="btn-primary">Guardar etiquetas</button>
+              <button class="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Filter modal pills -->
+    <div style="margin-top:16px;">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Modal filtros avanzados — estado · canal · prioridad</span>
+          <code class="sc-card-class">.fl-section · .fl-pills · .fl-pill[.on]</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="fl-section">
+            <div class="fl-section-title">Estado</div>
+            <div class="fl-pills">
+              <button class="fl-pill on">Abierto</button>
+              <button class="fl-pill">Cerrado</button>
+              <button class="fl-pill">Pendiente</button>
+              <button class="fl-pill on">Sin asignar</button>
+              <button class="fl-pill">Archivado</button>
+            </div>
+          </div>
+          <div class="fl-section">
+            <div class="fl-section-title">Canal</div>
+            <div class="fl-pills">
+              <button class="fl-pill on"><span class="d" style="background:#25d366;"></span>WhatsApp</button>
+              <button class="fl-pill"><span class="d" style="background:#1877f2;"></span>Facebook</button>
+              <button class="fl-pill"><span class="d" style="background:#dd2a7b;"></span>Instagram</button>
+              <button class="fl-pill"><span class="d" style="background:#6b7280;"></span>Email</button>
+            </div>
+          </div>
+          <div class="fl-section">
+            <div class="fl-section-title">Prioridad</div>
+            <div class="fl-pills">
+              <button class="fl-pill on"><span class="d" style="background:#b91c1c;"></span>Urgente</button>
+              <button class="fl-pill"><span class="d" style="background:#b45309;"></span>Alta</button>
+              <button class="fl-pill"><span class="d" style="background:#52525b;"></span>Normal</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ NAV ITEMS ═════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="nav">
+    <div class="sc-section-title">Navegación lateral — .bv-nav-item · .bv-nav-label</div>
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Nav items — bandejas y equipos</span>
+          <code class="sc-card-class">.bv-nav-item[.on] · .bv-nav-label</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="bv-nav-label">Bandejas</div>
+          <a class="bv-nav-item on"><i class="fas fa-inbox"></i>Todas las conversaciones<span class="c">142</span></a>
+          <a class="bv-nav-item"><i class="fas fa-user-check"></i>Asignadas a mí<span class="c">24</span></a>
+          <a class="bv-nav-item"><i class="fas fa-triangle-exclamation"></i>Sin asignar<span class="c">12</span></a>
+          <a class="bv-nav-item"><i class="fas fa-fire"></i>Urgentes<span class="c">5</span></a>
+          <div class="bv-nav-label" style="margin-top:16px;">Equipos</div>
+          <a class="bv-nav-item"><i class="fas fa-users"></i>Soporte técnico<span class="c">38</span></a>
+          <a class="bv-nav-item"><i class="fas fa-users"></i>Ventas<span class="c">29</span></a>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Nav items — etiquetas con dot color</span>
+          <code class="sc-card-class">.bv-nav-item--tag .dot</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="bv-nav-label">Etiquetas</div>
+          <a class="bv-nav-item"><span class="dot" style="background:#b91c1c;"></span>Urgente<span class="c">8</span></a>
+          <a class="bv-nav-item"><span class="dot" style="background:#d97706;"></span>Devolución<span class="c">14</span></a>
+          <a class="bv-nav-item"><span class="dot" style="background:#0d7a3f;"></span>Resuelto rápido<span class="c">32</span></a>
+          <a class="bv-nav-item"><span class="dot" style="background:#1d4ed8;"></span>Cliente VIP<span class="c">6</span></a>
+          <a class="bv-nav-item"><span class="dot" style="background:#6b7280;"></span>Seguimiento<span class="c">21</span></a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ RIGHT PANEL ════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="right-panel">
+    <div class="sc-section-title">Panel derecho — .bv-right-cover · .bv-right-avatar · .bv-right-stats · .bv-right-row</div>
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Hero del contacto — cover + avatar + stats</span>
+          <code class="sc-card-class">.bv-right-cover · .bv-right-avatar · .bv-right-stats</code>
+        </div>
+        <div class="sc-card-body p-0 light-bg">
+          <div class="bv-right-cover"></div>
+          <div class="bv-right-avatar">JL</div>
+          <div class="bv-right-name">Juan López</div>
+          <div class="bv-right-sub">+52 555 123 4567 · WhatsApp</div>
+          <div class="bv-right-actions">
+            <div class="bv-right-action"><i class="fas fa-phone"></i>Llamar</div>
+            <div class="bv-right-action"><i class="fas fa-envelope"></i>Email</div>
+            <div class="bv-right-action"><i class="fas fa-user-plus"></i>Asignar</div>
+            <div class="bv-right-action"><i class="fas fa-ellipsis"></i>Más</div>
+          </div>
+          <div class="bv-right-stats">
+            <div class="bv-right-stat"><div class="val">12</div><div class="lbl">Convs.</div></div>
+            <div class="bv-right-stat"><div class="val">4.8</div><div class="lbl">CSAT</div></div>
+            <div class="bv-right-stat"><div class="val">2.3h</div><div class="lbl">T. resp.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Datos del contacto — .bv-right-row</span>
+          <code class="sc-card-class">.bv-right-section-title · .bv-right-row .lbl/.val</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="bv-right-section-title bv-mb-8">Información del contacto</div>
+          <div class="bv-right-row"><span class="lbl">Email</span><span class="val">juan@ejemplo.com</span></div>
+          <div class="bv-right-row"><span class="lbl">Teléfono</span><span class="val">+52 555 123 4567</span></div>
+          <div class="bv-right-row"><span class="lbl">Ciudad</span><span class="val">Ciudad de México</span></div>
+          <div class="bv-right-row"><span class="lbl">Canal</span><span class="val">WhatsApp</span></div>
+          <div class="bv-right-row"><span class="lbl">Cliente desde</span><span class="val">Mar 2024</span></div>
+          <div class="bv-right-section-title bv-mt-14 bv-mb-8">Conversación activa</div>
+          <div class="bv-right-row"><span class="lbl">Asignado a</span><span class="val">Andrea García</span></div>
+          <div class="bv-right-row"><span class="lbl">Equipo</span><span class="val">Soporte</span></div>
+          <div class="bv-right-row"><span class="lbl">SLA</span><span class="val"><span class="bv-sla warn"><i class="far fa-clock"></i>1h 10m</span></span></div>
+          <div class="bv-right-row"><span class="lbl">Prioridad</span><span class="val"><span class="bv-tag urgent">urgent</span></span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

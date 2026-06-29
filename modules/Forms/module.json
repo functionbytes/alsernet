@@ -1,0 +1,13 @@
+{
+    "name": "Forms",
+    "alias": "forms",
+    "version": "1.1.0",
+    "description": "Constructor de formularios personalizados con shortcodes, multi-paso, condicionales y analytics",
+    "keywords": ["forms", "formularios", "builder", "shortcodes", "visual-editor"],
+    "priority": 110,
+    "providers": [
+        "Modules\\Forms\\Providers\\FormsServiceProvider"
+    ],
+    "files": [],
+    "requires": ["Shortcode", "Template", "Page", "Seo"]
+}

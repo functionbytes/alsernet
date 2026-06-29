@@ -1,0 +1,11 @@
+{
+    "name": "Shortcode",
+    "alias": "shortcode",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Shortcode\\Providers\\ShortcodeServiceProvider"
+    ],
+    "files": []
+}

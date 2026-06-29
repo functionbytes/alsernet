@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskDocument",
+    "alias": "helpdeskdocument",
+    "description": "Integración de documentación (módulo Document) en el inbox del Helpdesk: tab, modales y carga desde la galería del chat.",
+    "keywords": ["helpdesk", "document", "inbox", "validation"],
+    "priority": 0,
+    "providers": [
+        "Modules\\HelpdeskDocument\\Providers\\HelpdeskDocumentServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk", "Document"]
+}

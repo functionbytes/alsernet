@@ -1,0 +1,28 @@
+{
+    "name": "nwidart/ecommerce",
+    "description": "Módulo de ecommerce con productos, categorías, clientes, órdenes, descuentos y más",
+    "authors": [
+        {
+            "name": "Inoqualab",
+            "email": "dev@inoqualab.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Ecommerce\\": "app/",
+            "Modules\\Ecommerce\\Database\\Factories\\": "database/factories/",
+            "Modules\\Ecommerce\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Ecommerce\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "name": "modules/analytics",
+    "description": "Analytics Module - Application analytics, data tracking, reporting, insights",
+    "keywords": ["analytics", "tracking", "reporting", "data"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "google/analytics-data": "^0.23.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Analytics\\": "app/",
+            "Modules\\Analytics\\Database\\Factories\\": "database/factories/",
+            "Modules\\Analytics\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Analytics\\Tests\\": "tests/"
+        }
+    }
+}

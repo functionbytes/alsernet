@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskChatFlow",
+    "alias": "helpdesk-chatflow",
+    "description": "Sistema de chatbot flows interactivos para el helpdesk multicanal",
+    "keywords": ["helpdesk", "chatbot", "flows", "automation"],
+    "priority": 56,
+    "providers": [
+        "Modules\\HelpdeskChatFlow\\Providers\\HelpdeskChatFlowServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}

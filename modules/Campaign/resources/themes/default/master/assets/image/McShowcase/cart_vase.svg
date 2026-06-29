@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Bud vase card thumbnail with single stem and dried sprig, editorial line drawing">
+  <rect width="400" height="400" fill="#F7F5F0"/>
+
+  <!-- ambient floor shadow -->
+  <ellipse cx="200" cy="332" rx="92" ry="6" fill="#C9C2B2" opacity="0.55"/>
+
+  <g fill="none" stroke="#1C1917" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- stem rising from neck -->
+    <path d="M 200 142 C 204 110, 220 88, 232 56" stroke-width="1.4"/>
+    <!-- bud at top -->
+    <ellipse cx="232" cy="54" rx="5" ry="3" fill="#1C1917" stroke="none" transform="rotate(-22 232 54)"/>
+    <!-- second leaf -->
+    <ellipse cx="220" cy="92" rx="6.5" ry="2.6" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.9" transform="rotate(-30 220 92)"/>
+    <!-- third leaf -->
+    <ellipse cx="208" cy="118" rx="5.2" ry="2.2" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.8" transform="rotate(-22 208 118)"/>
+
+    <!-- second stem (smaller, slight bend right) -->
+    <path d="M 204 142 C 212 122, 226 110, 250 102" stroke-width="1.1" opacity="0.85"/>
+    <ellipse cx="252" cy="100" rx="4" ry="2" fill="#1C1917" stroke="none" transform="rotate(-12 252 100)"/>
+
+    <!-- vase body: bulb shape -->
+    <path d="M 168 158
+             C 152 178, 144 210, 144 242
+             C 144 282, 168 312, 200 312
+             C 232 312, 256 282, 256 242
+             C 256 210, 248 178, 232 158
+             Z" fill="#FEFDFA" stroke-width="2"/>
+
+    <!-- vase neck (short) -->
+    <rect x="184" y="138" width="32" height="22" fill="#FEFDFA" stroke-width="2" rx="2"/>
+
+    <!-- mouth opening -->
+    <ellipse cx="200" cy="138" rx="16" ry="4" fill="#FEFDFA" stroke-width="2"/>
+    <ellipse cx="200" cy="138" rx="11" ry="2.4" stroke-width="1" fill="none"/>
+
+    <!-- subtle decoration line on belly -->
+    <path d="M 156 240 C 174 254, 226 254, 244 240" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+    <path d="M 158 256 C 176 268, 224 268, 242 256" stroke="#C9C2B2" stroke-width="0.9" fill="none" opacity="0.8"/>
+
+    <!-- shading crescent left -->
+    <path d="M 162 200 C 154 230, 154 270, 168 300" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+
+    <!-- base shadow line -->
+    <path d="M 170 312 C 184 318, 216 318, 230 312" stroke-width="1.4"/>
+
+    <!-- floor line -->
+    <line x1="80" y1="340" x2="320" y2="340" stroke="#C9C2B2" stroke-width="1"/>
+  </g>
+</svg>

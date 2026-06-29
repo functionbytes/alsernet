@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1440"/>
+<title>Bandeja de conversaciones · Refinamientos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<link rel="stylesheet" href="styles/core.css"/>
+<link rel="stylesheet" href="styles/thread.css"/>
+<link rel="stylesheet" href="styles/modal-tweaks.css"/>
+<link rel="stylesheet" href="styles/list-thread-v2.css"/>
+<link rel="stylesheet" href="styles/composer-v2.css"/>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="js/data.js"></script>
+<script type="text/babel" src="js/components-nav.jsx"></script>
+<script type="text/babel" src="js/components-list-thread.jsx"></script>
+<script type="text/babel" src="js/components-composer-right.jsx"></script>
+<script type="text/babel" src="js/components-modals.jsx"></script>
+
+<script type="text/babel">
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "theme": "light",
+  "density": "dense",
+  "bubbles": "traditional",
+  "accent": "neutral",
+  "rightPanel": true,
+  "compact": false,
+  "translate": false
+}/*EDITMODE-END*/;
+
+const ACCENTS = {
+  neutral: { a:'#18181b', fg:'#fff', sw:'#18181b' },
+  indigo:  { a:'#4f46e5', fg:'#fff', sw:'#4f46e5' },
+  emerald: { a:'#059669', fg:'#fff', sw:'#059669' },
+  amber:   { a:'#d97706', fg:'#fff', sw:'#d97706' },
+  rose:    { a:'#e11d48', fg:'#fff', sw:'#e11d48' },
+  slate:   { a:'#334155', fg:'#fff', sw:'#334155' },
+};
+
+/* Thread body component */
+const ThreadBody = ({ conv, translate, onReply }) => {
+  const msgs = CONV_DATA.MESSAGES_J1 || [];
+  return (
+    <div className="th-body">
+      {msgs.map((m,i)=>{
+        if(m.t === 'day') return <div key={i} className="day-sep"><span>{m.label}</span></div>;
+        if(m.t === 'event') return (
+          <div key={i} className="event-row">
+            <i className={`fa-solid ${m.ico}`}></i>
+            <span dangerouslySetInnerHTML={{__html:m.body}}/>
+            <span className="t">· {m.time}</span>
+          </div>
+        );
+        return <Message key={m.id||i} m={m} onReply={onReply} translate={translate}/>;
+      })}
+      <div className="typing-row">
+        <Avatar initials={conv.initials} color={conv.color} size={24} round={6}/>
+        <div className="typing-bubble">
+          <span></span><span></span><span></span>
+        </div>
+        <span className="typing-lbl">{conv.contact} está escribiendo…</span>
+      </div>
+    </div>
+  );
+};
+
+const Tweaks = ({ t, set, onClose }) => (
+  <div className="tweaks">
+    <div className="tweaks-head">
+      <div className="t"><i className="fa-solid fa-sliders"></i>Tweaks</div>
+      <button className="x" onClick={onClose}><i className="fa-solid fa-xmark"></i></button>
+    </div>
+    <div className="tweaks-body">
+      <div className="tweak-grp">
+        <div className="tweak-lbl">Tema</div>
+        <div className="tweak-row">
+          <button className={t.theme==='light'?'on':''} onClick={()=>set('theme','light')}><i className="fa-regular fa-sun" style={{marginRight:4}}></i>Claro</button>
+          <button className={t.theme==='dark'?'on':''} onClick={()=>set('theme','dark')}><i className="fa-regular fa-moon" style={{marginRight:4}}></i>Oscuro</button>
+        </div>
+      </div>
+      <div className="tweak-grp">
+        <div className="tweak-lbl">Acento</div>
+        <div className="tweak-swatches">
+          {Object.entries(ACCENTS).map(([k,v])=>(
+            <div key={k} className={`tweak-swatch ${t.accent===k?'on':''}`} style={{background:v.sw}} onClick={()=>set('accent',k)}></div>
+          ))}
+        </div>
+      </div>
+      <div className="tweak-grp">
+        <div className="tweak-lbl">Densidad de lista</div>
+        <div className="tweak-row">
+          <button className={t.density==='dense'?'on':''} onClick={()=>set('density','dense')}>Densa</button>
+          <button className={t.density==='medium'?'on':''} onClick={()=>set('density','medium')}>Media</button>
+          <button className={t.density==='relaxed'?'on':''} onClick={()=>set('density','relaxed')}>Relajada</button>
+        </div>
+      </div>
+      <div className="tweak-grp">
+        <div className="tweak-lbl">Estilo de burbujas</div>
+        <div className="tweak-row">
+          <button className={t.bubbles==='traditional'?'on':''} onClick={()=>set('bubbles','traditional')}>Tradicional</button>
+          <button className={t.bubbles==='flat'?'on':''} onClick={()=>set('bubbles','flat')}>Plano</button>
+          <button className={t.bubbles==='blocks'?'on':''} onClick={()=>set('bubbles','blocks')}>Bloques</button>
+        </div>
+      </div>
+      <div className="tweak-grp">
+        <div className="tweak-toggle" onClick={()=>set('rightPanel',!t.rightPanel)}>
+          <span>Panel derecho</span>
+          <span className={`tweak-switch ${t.rightPanel?'on':''}`}></span>
+        </div>
+        <div className="tweak-toggle" onClick={()=>set('compact',!t.compact)}>
+          <span>Modo compacto</span>
+          <span className={`tweak-switch ${t.compact?'on':''}`}></span>
+        </div>
+        <div className="tweak-toggle" onClick={()=>set('translate',!t.translate)}>
+          <span>Traducción automática</span>
+          <span className={`tweak-switch ${t.translate?'on':''}`}></span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const Topbar = ({ onShortcuts, onTweaks, tweaksOn }) => (
+  <div className="topbar">
+    <div className="brand">
+      <div className="brand-mark">F</div>
+      <span>Functionbytes</span>
+    </div>
+    <div className="crumb">
+      <i className="fa-regular fa-inbox" style={{color:'var(--text-muted)',fontSize:11}}></i>
+      <span>Bandeja</span>
+      <span className="sep"><i className="fa-solid fa-chevron-right"></i></span>
+      <span className="current">Todas las conversaciones</span>
+      <span className="dot" style={{marginLeft:6}}></span>
+    </div>
+    <div className="search-global">
+      <i className="fa-solid fa-magnifying-glass"></i>
+      <span>Buscar conversaciones, contactos, pedidos…</span>
+      <span className="kbd">⌘K</span>
+    </div>
+    <button className="topbtn tt" data-tt="Novedades"><i className="fa-regular fa-bell"></i><span className="bad">3</span></button>
+    <button className="topbtn tt" data-tt="Análisis"><i className="fa-solid fa-chart-line"></i></button>
+    <button className="topbtn tt" data-tt="Atajos (?)" onClick={onShortcuts}><i className="fa-solid fa-keyboard"></i></button>
+    <button className="topbtn tt" data-tt="Ajustes"><i className="fa-solid fa-gear"></i></button>
+    <button className="avbtn">
+      <span className="av">ML</span>
+      <span className="nm">María L.</span>
+      <i className="fa-solid fa-chevron-down"></i>
+    </button>
+  </div>
+);
+
+const StatusBar = ({ tweaksOn, onTweaks, ws }) => (
+  <div className="statusbar">
+    <span className="sb-item"><span className="dot"></span>Conectado · {ws} canales</span>
+    <span className="sep">│</span>
+    <span className="sb-item"><i className="fa-solid fa-users"></i>3 agentes en línea</span>
+    <span className="sep">│</span>
+    <span className="sb-item"><i className="fa-solid fa-gauge-high"></i>SLA medio hoy: 2m 14s</span>
+    <span className="sep">│</span>
+    <span className="sb-item"><i className="fa-regular fa-circle-check"></i>24 resueltas</span>
+    <span className="spacer"></span>
+    <span className="sb-item" style={{cursor:'pointer'}} onClick={onTweaks}><i className="fa-solid fa-sliders"></i>Tweaks {tweaksOn?'ON':'OFF'}</span>
+    <span className="sep">│</span>
+    <span className="sb-item">v1.0 · Refinamientos</span>
+  </div>
+);
+
+function App(){
+  const [t, setT] = React.useState(TWEAKS);
+  const [tweaksOn, setTweaksOn] = React.useState(false);
+  const [currentId, setCurrentId] = React.useState(1);
+  const [selected, setSelected] = React.useState(new Set());
+  const [replyTo, setReplyTo] = React.useState(null);
+  const [internal, setInternal] = React.useState(false);
+  const [modal, setModal] = React.useState(null);
+  const [density, setDensity] = React.useState('dense');
+
+  const conv = CONV_DATA.CONVERSATIONS.find(c=>c.id===currentId);
+
+  const set = (k,v)=>{
+    const nt = {...t,[k]:v};
+    setT(nt);
+    window.parent.postMessage({type:'__edit_mode_set_keys', edits:{[k]:v}}, '*');
+  };
+
+  // apply theme
+  React.useEffect(()=>{
+    document.documentElement.setAttribute('data-theme', t.theme);
+  },[t.theme]);
+
+  // apply accent
+  React.useEffect(()=>{
+    const a = ACCENTS[t.accent] || ACCENTS.neutral;
+    if(t.accent !== 'neutral'){
+      document.documentElement.style.setProperty('--accent', a.a);
+      document.documentElement.style.setProperty('--accent-fg', a.fg);
+    } else {
+      document.documentElement.style.removeProperty('--accent');
+      document.documentElement.style.removeProperty('--accent-fg');
+    }
+  },[t.accent, t.theme]);
+
+  // apply density + bubbles on .app (CSS selectors target .app)
+  const BMAP = { traditional:'bubble', flat:'flat', blocks:'hybrid' };
+  const DMAP = { dense:'compact', medium:'normal', relaxed:'relaxed' };
+
+  // Edit-mode protocol
+  React.useEffect(()=>{
+    const h = (e)=>{
+      if(e.data?.type === '__activate_edit_mode'){ setTweaksOn(true); }
+      if(e.data?.type === '__deactivate_edit_mode'){ setTweaksOn(false); }
+    };
+    window.addEventListener('message', h);
+    window.parent.postMessage({type:'__edit_mode_available'}, '*');
+    return ()=>window.removeEventListener('message', h);
+  },[]);
+
+  // Keyboard shortcuts
+  React.useEffect(()=>{
+    const h = (e)=>{
+      if(e.target.matches('input, textarea, [contenteditable]')) return;
+      if(e.metaKey || e.ctrlKey) return;
+      if(e.key === '?') { setModal('shortcuts'); }
+      if(e.key === 'a' || e.key === 'A') { setModal('assign'); }
+      if(e.key === 't' || e.key === 'T') { setModal('tags'); }
+      if(e.key === '#') { setModal('close'); }
+      if(e.key === 'r' || e.key === 'R') { setInternal(false); }
+      if(e.key === 'n' || e.key === 'N') { setInternal(true); }
+      if(e.key === 'j' || e.key === 'ArrowDown') {
+        const i = CONV_DATA.CONVERSATIONS.findIndex(c=>c.id===currentId);
+        if(i < CONV_DATA.CONVERSATIONS.length-1) setCurrentId(CONV_DATA.CONVERSATIONS[i+1].id);
+      }
+      if(e.key === 'k' || e.key === 'ArrowUp') {
+        const i = CONV_DATA.CONVERSATIONS.findIndex(c=>c.id===currentId);
+        if(i > 0) setCurrentId(CONV_DATA.CONVERSATIONS[i-1].id);
+      }
+    };
+    window.addEventListener('keydown', h);
+    return ()=>window.removeEventListener('keydown', h);
+  },[currentId]);
+
+  const handleSelect = (id)=>{
+    const n = new Set(selected);
+    n.has(id)?n.delete(id):n.add(id);
+    setSelected(n);
+  };
+
+  return (
+    <div className="app" data-right={t.rightPanel?'on':'off'} data-compact={t.compact?'1':'0'} data-density={DMAP[t.density]||'compact'} data-bubbles={BMAP[t.bubbles]||'bubble'}>
+      <Topbar onShortcuts={()=>setModal('shortcuts')}/>
+      <div className="rail" data-screen-label="rail">
+        <Rail view="inbox" onView={()=>{}}/>
+      </div>
+      <div className="nav" data-screen-label="nav">
+        <Nav current="all" onSelect={()=>{}}/>
+      </div>
+      <ConvList currentId={currentId} onPick={setCurrentId} selected={selected} onSelect={handleSelect} onToggleBulk={()=>setSelected(new Set())} density={density} onDensity={()=>{}}/>
+      <div className="thread" data-screen-label="thread">
+        {conv ? (
+          <>
+            <ThreadHead conv={conv} onAction={(a)=>setModal(a)}/>
+            <ThreadBody conv={conv} translate={t.translate} onReply={(m)=>setReplyTo({who:m.author, text:(m.body||'').slice(0,80)})}/>
+            <Composer replyTo={replyTo} onClearReply={()=>setReplyTo(null)} internal={internal} onInternal={setInternal}/>
+          </>
+        ) : <EmptyThread/>}
+      </div>
+      {t.rightPanel && conv && <RightPanel conv={conv}/>}
+      <StatusBar tweaksOn={tweaksOn} onTweaks={()=>setTweaksOn(!tweaksOn)} ws={5}/>
+
+      {tweaksOn && <Tweaks t={t} set={set} onClose={()=>setTweaksOn(false)}/>}
+
+      <AssignModal open={modal==='assign'} onClose={()=>setModal(null)}/>
+      <CloseModal open={modal==='close'} onClose={()=>setModal(null)}/>
+      <TagsModal open={modal==='tags'} onClose={()=>setModal(null)}/>
+      <MergeModal open={modal==='merge'} onClose={()=>setModal(null)}/>
+      <HSMModal open={modal==='hsm' || modal==='ticket'} onClose={()=>setModal(null)}/>
+      <ShortcutsModal open={modal==='shortcuts'} onClose={()=>setModal(null)}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

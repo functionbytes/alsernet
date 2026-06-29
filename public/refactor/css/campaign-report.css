@@ -1,0 +1,797 @@
+/* ================================================================
+   Campaign Report — cr-* namespace
+   Unique components for the campaign overview/report page.
+   ALL colors use --chart-N pastel tokens, NEVER raw status colors.
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   cr-insight — Engagement insight banner (dynamic verdict)
+   ---------------------------------------------------------------- */
+.cr-insight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    padding: var(--space-5) var(--space-6);
+    margin-bottom: var(--space-6);
+    border-radius: var(--radius-card);
+    border: none;
+    border-left: 2px solid var(--color-border);
+}
+
+.cr-insight-teal {
+    background: var(--color-teal-light);
+    border-left-color: var(--chart-1);
+}
+
+.cr-insight-neutral {
+    background: var(--color-hover-bg);
+}
+
+.cr-insight-warning {
+    background: var(--chart-4-bg);
+    border-left-color: var(--chart-4);
+}
+
+.cr-insight-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.cr-insight-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    font-size: var(--text-base, 16px);
+    color: var(--color-text);
+}
+
+.cr-insight-header .material-symbols-rounded {
+    font-size: 22px;
+    color: var(--chart-1);
+}
+
+.cr-insight-warning .cr-insight-header .material-symbols-rounded {
+    color: var(--chart-4);
+}
+
+.cr-insight-text {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary, var(--color-text-muted));
+    line-height: 1.5;
+    margin: 0;
+}
+
+.cr-insight-sub {
+    font-size: var(--text-xs, 12px);
+    color: var(--color-text-muted);
+    margin: var(--space-2) 0 0;
+}
+
+.cr-insight-illust {
+    flex-shrink: 0;
+    width: 120px;
+}
+
+.cr-insight-illust svg {
+    width: 100%;
+    height: auto;
+}
+
+@media (max-width: 600px) {
+    .cr-insight-illust { display: none; }
+}
+
+/* ----------------------------------------------------------------
+   cr-nav — Icon pill navigation bar
+   ---------------------------------------------------------------- */
+.cr-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) 0;
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+.cr-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    border: none;
+    background: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.cr-nav-item .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.cr-nav-item:hover {
+    background: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+/* Count badge inside nav item (subscriber count, etc.) */
+.cr-nav-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 var(--space-1);
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    line-height: 1;
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+    border-radius: var(--radius-full);
+    margin-left: var(--space-1);
+}
+
+.cr-nav-item.active {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+    font-weight: var(--weight-semibold);
+    border: 2px solid var(--color-teal);
+}
+
+.cr-nav-item.active .cr-nav-count {
+    background: var(--color-teal);
+    color: #fff;
+}
+
+/* Divider + hint for A/B nav */
+.cr-nav-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--color-border);
+    margin: 0 var(--space-2);
+}
+
+.cr-nav-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-disabled);
+    font-weight: var(--weight-medium);
+    padding: 0 var(--space-1);
+    white-space: nowrap;
+}
+
+/* Dropdown */
+.cr-nav-dropdown {
+    position: relative;
+}
+
+.cr-caret {
+    font-size: 16px !important;
+    margin-left: -2px;
+    transition: transform 0.2s;
+}
+
+.cr-nav-dropdown.open .cr-caret {
+    transform: rotate(180deg);
+}
+
+.cr-nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    left: 0;
+    min-width: 220px;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-dropdown, 0 8px 24px rgba(0,0,0,0.12));
+    padding: var(--space-2) 0;
+    z-index: 100;
+}
+
+.cr-nav-dropdown.open .cr-nav-dropdown-menu {
+    display: block;
+}
+
+.cr-nav-dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: background 0.1s;
+}
+
+.cr-nav-dropdown-menu a:hover {
+    background: var(--color-hover-bg);
+}
+
+.cr-nav-dropdown-menu a .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--color-text-muted);
+}
+
+/* ----------------------------------------------------------------
+   cr-hero — Stat cards with mini donut ring (4-column)
+   Like the old view icon-box cards but with circle chart accent.
+   ---------------------------------------------------------------- */
+.cr-hero {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+@media (max-width: 900px) {
+    .cr-hero { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 500px) {
+    .cr-hero { grid-template-columns: 1fr; }
+}
+
+.cr-stat-card {
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+}
+
+.cr-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+}
+
+.cr-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cr-stat-icon .material-symbols-rounded {
+    font-size: 22px;
+}
+
+/* Mini donut ring — 36x36 SVG, thin 3px stroke, pastel */
+.cr-mini-ring {
+    width: 40px;
+    height: 40px;
+    transform: rotate(-90deg);
+}
+
+.cr-mini-ring-bg {
+    fill: none;
+    stroke: var(--color-hover-bg);
+    stroke-width: 3;
+}
+
+.cr-mini-ring-fill {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.8s ease-out;
+}
+
+.cr-mini-ring-text {
+    fill: var(--color-text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    text-anchor: middle;
+    dominant-baseline: central;
+    transform: rotate(90deg);
+    transform-origin: 18px 18px;
+}
+
+.cr-stat-body {
+    margin-top: var(--space-2);
+}
+
+.cr-stat-label {
+    font-size: 11px;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.cr-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.1;
+}
+
+.cr-stat-pct {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+/* ----------------------------------------------------------------
+   cr-stats-split — Bar chart + rate summary side by side
+   ---------------------------------------------------------------- */
+.cr-stats-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+@media (max-width: 900px) {
+    .cr-stats-split { grid-template-columns: 1fr; }
+}
+
+.cr-stats-chart-card,
+.cr-stats-rates-card {
+    min-height: 340px;
+}
+
+/* Rate rows */
+.cr-rate-rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.cr-rate-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+    text-decoration: none;
+    color: var(--color-text);
+    transition: background 0.1s;
+}
+
+.cr-rate-row:last-child { border-bottom: none; }
+
+.cr-rate-row:hover {
+    background: var(--color-hover-bg);
+}
+
+.cr-rate-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cr-rate-name {
+    flex: 1;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+}
+
+.cr-rate-badge {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--chart-1);
+    min-width: 50px;
+    text-align: right;
+}
+
+.cr-rate-badge.muted { color: var(--color-text-muted); }
+.cr-rate-badge.soft-warn { color: var(--chart-4); }
+
+.cr-rate-detail {
+    font-size: var(--text-xs, 12px);
+    color: var(--color-text-muted);
+    min-width: 80px;
+    text-align: right;
+}
+
+.cr-rate-arrow {
+    font-size: 16px !important;
+    color: var(--color-text-disabled);
+    transition: color 0.1s;
+}
+
+.cr-rate-row:hover .cr-rate-arrow {
+    color: var(--color-teal);
+}
+
+/* ----------------------------------------------------------------
+   cr-engage-grid — Open & Click rate side-by-side
+   ---------------------------------------------------------------- */
+.cr-engage-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+@media (max-width: 768px) {
+    .cr-engage-grid { grid-template-columns: 1fr; }
+}
+
+.cr-engage-hero {
+    padding: var(--space-4) var(--space-5);
+}
+
+.cr-engage-pct {
+    display: block;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: var(--space-2);
+}
+
+/* Pastel progress bars for engagement cards */
+.mc-progress-bar-teal {
+    background: var(--chart-1);
+}
+
+.mc-progress-bar-blue {
+    background: var(--chart-3);
+}
+
+/* ----------------------------------------------------------------
+   cr-details — Campaign info with SVG illustration
+   ---------------------------------------------------------------- */
+.cr-details-banner {
+    margin-top: var(--space-6);
+}
+
+.cr-details-grid {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: var(--space-4);
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .cr-details-grid { grid-template-columns: 1fr; }
+    .cr-details-illust { display: none; }
+}
+
+.cr-details-illust {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+}
+
+.cr-details-illust svg {
+    width: 160px;
+    height: auto;
+}
+
+/* ----------------------------------------------------------------
+   cr-link-row — Ranked link/subscriber/location rows
+   ---------------------------------------------------------------- */
+.cr-link-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.cr-link-row:last-child { border-bottom: none; }
+
+.cr-link-rank {
+    font-size: var(--text-xs, 12px);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    min-width: 24px;
+}
+
+.cr-link-url {
+    flex: 1;
+    font-size: var(--text-sm);
+    color: var(--color-teal);
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cr-link-url:hover { text-decoration: underline; }
+
+.cr-link-clicks {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------
+   cr-secondary-grid — Small metric tiles (4-column)
+   ---------------------------------------------------------------- */
+.cr-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-6);
+}
+
+@media (max-width: 700px) {
+    .cr-secondary-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cr-mini-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+}
+
+.cr-mini-icon {
+    font-size: 24px;
+}
+
+.cr-mini-value {
+    font-size: var(--text-base, 16px);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.cr-mini-value small {
+    font-size: var(--text-xs, 12px);
+    font-weight: var(--weight-regular, 400);
+    color: var(--color-text-muted);
+}
+
+.cr-mini-label {
+    font-size: var(--text-xs, 12px);
+    color: var(--color-text-muted);
+}
+
+/* ----------------------------------------------------------------
+   cr-filter-bar — Filter controls for log/subscriber tables
+   ---------------------------------------------------------------- */
+.cr-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    margin: 0 var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+}
+
+/* Compact filter inputs — smaller than default --input-height for inline use */
+.cr-filter-bar .mc-form-input {
+    height: 34px;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.cr-filter-bar .mc-form-select,
+.cr-filter-bar .mc-select-inline {
+    height: 34px;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
+    padding-left: var(--space-3);
+    padding-right: var(--space-9);  /* preserve space for arrow */
+    font-size: var(--text-sm);
+}
+
+.cr-filter-bar .mc-btn-sm {
+    height: 34px;
+}
+
+.cr-filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.cr-filter-search {
+    display: flex;
+    align-items: center;
+}
+
+/* Active dropdown menu item */
+.cr-nav-dropdown-menu a.active {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+    font-weight: var(--weight-semibold);
+}
+
+/* Nav dropdown — section header (Forms/Pages grouped dropdown) */
+.cr-nav-dropdown-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    padding: var(--space-2) var(--space-4);
+    font-size: 10px;
+    font-weight: var(--weight-bold);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--color-text-muted);
+    background: var(--color-hover-bg);
+    margin: 0 0 var(--space-1);
+}
+
+.cr-nav-dropdown-head .material-symbols-rounded {
+    font-size: 14px;
+}
+
+.cr-nav-dropdown-head ~ a:not(.cr-nav-dropdown-head) {
+    padding-left: var(--space-5);
+}
+
+.cr-nav-dropdown-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--space-1) 0;
+}
+
+/* Wider dropdown for Forms/Pages */
+.cr-nav-dropdown-menu-wide {
+    min-width: 280px;
+}
+
+/* Leaflet panes default to z-index 200-700 which can break out of card flow
+   and cover the topbar notification/theme/user dropdowns (--z-dropdown: 100).
+   Wrapping the map in its own stacking context (z-index:0 + position:relative)
+   keeps all internal pane z-indexes scoped to the map card. */
+.leaflet-container {
+    position: relative;
+    z-index: 0;
+}
+
+/* Hover affordance: every subscriber email anchor (auto-tagged via the
+   data-subscriber-card-list-uid attribute) and every map drill-down link
+   get a strong "pull-in" hover effect — bg + color + lift — so users feel
+   the row is clickable. Negative margin offsets the inline padding so
+   layout stays put when the bg appears. */
+a[data-subscriber-card-list-uid],
+.cr-marker-link,
+.cr-fullmsg {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: -2px -6px;
+    border-radius: 4px;
+    transition: background var(--transition-fast), color var(--transition-fast);
+    cursor: pointer;
+}
+a[data-subscriber-card-list-uid]:hover,
+.cr-marker-link:hover,
+.cr-fullmsg:hover {
+    background: var(--chart-1-bg);
+    color: var(--color-teal) !important;
+    text-decoration: none !important;
+}
+
+/* Subscriber business card — lazy-fetched popover on hover over an email
+   anchor with [data-subscriber-card]. Positioned fixed by JS so it floats
+   above table cells / cards / map. */
+.mc-subscriber-card {
+    width: 280px;
+    background: var(--color-card-bg);
+    border: var(--space-px) solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-dropdown);
+    overflow: hidden;
+    font-size: var(--text-sm);
+}
+.mc-subscriber-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: var(--space-px) solid var(--color-border);
+    background: linear-gradient(135deg, var(--chart-1-bg), var(--color-card-bg));
+}
+.mc-subscriber-card-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--chart-1);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--weight-semibold);
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Leaflet popup, made to mirror the subscriber business card. */
+.cr-marker-card { font-size: 13px; line-height: 1.5; min-width: 220px; }
+.cr-marker-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+}
+.cr-marker-card-avatar {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-sm, 8px);
+    background: var(--chart-1);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: var(--weight-semibold);
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.cr-marker-card-id { min-width: 0; flex: 1; }
+.cr-marker-card-name {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cr-marker-card-email {
+    color: var(--color-text-muted);
+    font-size: 11px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cr-marker-card-meta { color: var(--color-text-muted); font-size: 12px; }
+.cr-marker-card-area { color: var(--color-text); }
+.mc-subscriber-card-id { min-width: 0; flex: 1; }
+.mc-subscriber-card-name {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mc-subscriber-card-email {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mc-subscriber-card-body { padding: var(--space-2) var(--space-4); }
+.mc-subscriber-card-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-1) 0;
+    color: var(--color-text);
+}
+.mc-subscriber-card-label { color: var(--color-text-muted); font-size: var(--text-xs); }
+.mc-subscriber-card-val { font-weight: var(--weight-medium); }
+.mc-subscriber-card-cta {
+    display: block;
+    padding: var(--space-2) var(--space-4);
+    border-top: var(--space-px) solid var(--color-border);
+    text-align: center;
+    color: var(--color-teal);
+    text-decoration: none;
+    font-weight: var(--weight-medium);
+}
+.mc-subscriber-card-cta:hover { background: var(--color-hover-bg); }
+
+/* Floating popover wrapper — set by JS, position:fixed to escape table overflow. */
+.mc-subscriber-card-popover {
+    position: fixed;
+    z-index: var(--z-tooltip, 700);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    pointer-events: none;
+}
+.mc-subscriber-card-popover.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}

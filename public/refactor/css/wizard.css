@@ -1,0 +1,1683 @@
+/* ================================================================
+   McWizard — Multi-step wizard component
+   Premium step-by-step flow for campaign creation, onboarding, etc.
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   mc-wizard-nav — Clean pill-tab step indicator
+   ---------------------------------------------------------------- */
+.mc-wizard-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: var(--space-6);
+    padding: var(--space-3) 0;
+}
+
+.mc-wizard-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-disabled);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.mc-wizard-nav-icon .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.mc-wizard-nav-divider {
+    width: 20px;
+    height: 1px;
+    background: var(--color-border);
+    flex-shrink: 0;
+}
+
+.mc-wizard-nav-divider.filled {
+    background: var(--color-teal);
+}
+
+/* Completed — subtle teal text, clickable */
+.mc-wizard-nav-item.completed {
+    color: var(--color-teal);
+    cursor: pointer;
+}
+
+.mc-wizard-nav-item.completed:hover {
+    background: var(--color-teal-light);
+}
+
+.mc-wizard-nav-item.completed .mc-wizard-nav-icon .material-symbols-rounded {
+    color: var(--color-teal);
+}
+
+/* Active — teal border pill */
+.mc-wizard-nav-item.active {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+    font-weight: var(--weight-semibold);
+    border: 2px solid var(--color-teal);
+}
+
+/* Available — can click but not completed */
+.mc-wizard-nav-item.available {
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+
+.mc-wizard-nav-item.available:hover {
+    background: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+/* Locked — greyed out */
+.mc-wizard-nav-item.locked {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .mc-wizard-nav { flex-wrap: wrap; gap: var(--space-1); }
+    .mc-wizard-nav-divider { display: none; }
+    .mc-wizard-nav-label { display: none; }
+    .mc-wizard-nav-item { padding: var(--space-2); }
+}
+
+/* ----------------------------------------------------------------
+   mc-wizard-content — Step page layout
+   ---------------------------------------------------------------- */
+.mc-wizard-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+}
+
+.mc-wizard-header-text {
+    flex: 1;
+}
+
+.mc-wizard-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--space-2);
+}
+
+.mc-wizard-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.mc-wizard-header-illust {
+    flex-shrink: 0;
+    width: 120px;
+}
+
+.mc-wizard-header-illust svg {
+    width: 100%;
+    height: auto;
+}
+
+@media (max-width: 600px) {
+    .mc-wizard-header { flex-direction: column; text-align: center; }
+    .mc-wizard-header-illust { width: 80px; }
+}
+
+.mc-wizard-body {
+    margin-bottom: var(--space-6);
+}
+
+.mc-wizard-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+.mc-wizard-footer-right {
+    display: flex;
+    gap: var(--space-3);
+}
+
+/* ----------------------------------------------------------------
+   mc-radio-card — Card-style radio selection (schedule step)
+   ---------------------------------------------------------------- */
+.mc-radio-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+@media (max-width: 500px) {
+    .mc-radio-cards { grid-template-columns: 1fr; }
+}
+
+.mc-radio-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4);
+    background: var(--color-card-bg);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-card);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.mc-radio-card:hover {
+    border-color: var(--color-teal);
+}
+
+.mc-radio-card.active,
+.mc-radio-card:has(input:checked) {
+    border-color: var(--color-teal);
+    background: var(--color-teal-light);
+}
+
+.mc-radio-card input[type="radio"] {
+    display: none;
+}
+
+.mc-radio-card-icon {
+    font-size: 32px;
+    color: var(--color-text-muted);
+}
+
+.mc-radio-card.active .mc-radio-card-icon,
+.mc-radio-card:has(input:checked) .mc-radio-card-icon {
+    color: var(--color-teal);
+}
+
+.mc-radio-card-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.mc-radio-card-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.mc-radio-card-svg {
+    width: 56px;
+}
+
+.mc-wizard-type-grid {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.mc-wizard-alert {
+    margin-bottom: var(--space-4);
+}
+
+.mc-wizard-alert-icon {
+    flex-shrink: 0;
+    margin-right: var(--space-2);
+}
+
+.mc-wizard-error-list {
+    margin: var(--space-1) 0 0;
+    padding-left: var(--space-4);
+}
+
+.mc-card-title-icon {
+    vertical-align: middle;
+    margin-right: var(--space-1);
+}
+
+.mc-btn-icon-right {
+    margin-left: var(--space-1);
+}
+
+.mc-btn-icon-left {
+    margin-right: var(--space-1);
+}
+
+.mc-lsp-add-row {
+    padding: var(--space-3) var(--space-5);
+}
+
+.mc-wizard-form-grid {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.mc-wizard-form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+@media (max-width: 600px) {
+    .mc-wizard-form-grid-2 { grid-template-columns: 1fr; }
+}
+
+.mc-wizard-form-grid-2 .mc-wizard-full-span {
+    grid-column: 1 / -1;
+}
+
+.mc-wizard-toggle-row {
+    display: flex;
+    gap: var(--space-6);
+    margin-bottom: var(--space-4);
+}
+
+.mc-wizard-toggle-row .mc-checkbox-label {
+    padding: 0;
+}
+
+.mc-wizard-webhook-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.mc-wizard-webhook-count {
+    font-size: var(--text-sm);
+}
+
+.mc-wizard-webhook-icon {
+    color: var(--color-text-muted);
+}
+
+.mc-wizard-advanced-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.mc-wizard-advanced-col .mc-checkbox-label {
+    padding: 0;
+}
+
+/* ----------------------------------------------------------------
+   mc-lsp — List/Segment Picker rows (creative layout)
+   ---------------------------------------------------------------- */
+.mc-lsp-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.mc-lsp-row {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-subtle-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    transition: border-color 0.15s;
+}
+
+.mc-lsp-row:hover {
+    border-color: var(--color-teal);
+}
+
+.mc-lsp-row-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+@media (max-width: 700px) {
+    .mc-lsp-row-main { grid-template-columns: 1fr; }
+}
+
+.mc-lsp-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.mc-form-label-sm {
+    font-size: 11px;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.mc-lsp-row-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--color-border);
+    min-width: 70px;
+}
+
+.mc-lsp-default-radio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--color-text-muted);
+}
+
+.mc-lsp-default-input {
+    accent-color: var(--color-teal);
+}
+
+.mc-form-label-optional {
+    color: var(--color-text-disabled);
+    font-weight: normal;
+}
+
+.mc-lsp-remove-btn {
+    color: var(--color-text-disabled) !important;
+}
+
+.mc-lsp-remove-btn:hover {
+    color: var(--color-error) !important;
+}
+
+/* ----------------------------------------------------------------
+   mc-form-section — Grouped form fields with title
+   ---------------------------------------------------------------- */
+.mc-form-section {
+    margin-bottom: var(--space-6);
+}
+
+.mc-form-section-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mc-form-section-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin: calc(-1 * var(--space-2)) 0 var(--space-4) 0;
+}
+
+.mc-wizard-toggle-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.mc-wizard-toggle-col .mc-checkbox-label {
+    padding: 0;
+    align-items: flex-start;
+}
+
+/* ----------------------------------------------------------------
+   Tracking domain switcher — full-width variant of mc-list-switcher
+   (overrides the inline-flex "Choose field" chrome to match form-input width)
+   ---------------------------------------------------------------- */
+.mc-td-switcher {
+    display: block;
+    width: 100%;
+}
+
+.mc-td-switcher-trigger.mc-list-switcher-trigger {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+    padding: var(--space-2) var(--space-3);
+    justify-content: flex-start;
+    text-align: left;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+}
+
+.mc-td-switcher-trigger .mc-list-switcher-trigger-name {
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+    color: var(--color-text);
+}
+
+.mc-td-switcher-trigger .mc-list-switcher-trigger-caret {
+    margin-left: auto;
+}
+
+.mc-td-switcher-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+.mc-td-switcher .mc-list-switcher-dropdown {
+    right: auto;
+    left: 0;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+}
+
+.mc-td-switcher-item-icon {
+    font-size: 18px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+.mc-td-switcher .mc-list-switcher-item.active .mc-td-switcher-item-icon {
+    color: var(--color-teal);
+}
+
+.mc-checkbox-title {
+    display: block;
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+}
+
+.mc-checkbox-desc {
+    display: block;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+/* ----------------------------------------------------------------
+   mc-preflight — Centered pre-flight review card
+   Inspired by "Data Mapper for Mailchimp" style.
+   Centered card with hero banner, accordion sections, status badges.
+   ---------------------------------------------------------------- */
+.mc-preflight {
+    max-width: min(680px, 100%);
+    margin: 0 auto var(--space-5);
+    background: var(--color-card-bg);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+}
+
+/* Hero banner — distinctive gradient header with SVG illustration */
+.mc-preflight-hero {
+    background: linear-gradient(135deg, var(--chart-2-bg) 0%, var(--color-teal-light) 60%, var(--chart-1-bg) 100%);
+    padding: var(--space-6) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+}
+
+.mc-preflight-hero-illust {
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
+}
+
+.mc-preflight-hero-illust svg {
+    width: 100%;
+    height: 100%;
+}
+
+.mc-preflight-hero-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-black);
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.mc-preflight-hero-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: var(--space-1);
+    line-height: 1.4;
+}
+
+/* Summary info rows — campaign + audience context */
+.mc-preflight-info {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mc-preflight-info-label {
+    font-size: var(--text-base);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+
+.mc-preflight-info-value {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* Status bar — overall checklist health */
+.mc-preflight-status-bar {
+    padding: var(--space-3) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mc-preflight-status-bar .material-symbols-rounded { font-size: 18px; }
+
+.mc-preflight-status-bar--ok {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+}
+
+.mc-preflight-status-bar--warning {
+    background: var(--chart-4-bg);
+    color: var(--chart-4);
+}
+
+/* Section heading — "Pre-flight checklist" */
+.mc-preflight-heading {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--text-base);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Accordion section */
+.mc-preflight-section {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.mc-preflight-section:last-child {
+    border-bottom: none;
+}
+
+/* Section header row — clickable toggle */
+.mc-preflight-row {
+    display: flex;
+    align-items: center;
+    padding: var(--space-4) var(--space-6);
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: var(--space-3);
+    user-select: none;
+}
+
+.mc-preflight-row:hover {
+    background: var(--color-hover-bg);
+}
+
+/* Chevron */
+.mc-preflight-chevron .material-symbols-rounded {
+    font-size: 20px;
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+    display: block;
+}
+
+.mc-preflight-section.is-open .mc-preflight-chevron .material-symbols-rounded {
+    transform: rotate(90deg);
+}
+
+/* Row icon — pastel circle per section */
+.mc-preflight-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.mc-preflight-icon .material-symbols-rounded {
+    font-size: 18px;
+    color: inherit;
+}
+
+.mc-preflight-icon-1 { background: var(--chart-1-bg); color: var(--chart-1); }
+.mc-preflight-icon-2 { background: var(--chart-3-bg); color: var(--chart-3); }
+.mc-preflight-icon-3 { background: var(--chart-4-bg); color: var(--chart-4); }
+.mc-preflight-icon-4 { background: var(--chart-6-bg); color: var(--chart-6); }
+.mc-preflight-icon-5 { background: var(--chart-2-bg); color: var(--chart-2); }
+.mc-preflight-icon-6 { background: var(--chart-5-bg); color: var(--chart-5); }
+.mc-preflight-icon-teal { background: var(--color-teal-light); color: var(--color-teal); }
+
+/* Inline template thumbnail on row (before toggle) */
+.mc-preflight-row-thumb {
+    width: 36px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--color-hover-bg);
+}
+
+.mc-preflight-row-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+/* Section main content */
+.mc-preflight-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.mc-preflight-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    line-height: 1.3;
+}
+
+.mc-preflight-subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+/* Status badge — right side */
+.mc-preflight-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    flex-shrink: 0;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+}
+
+.mc-preflight-badge .material-symbols-rounded { font-size: 20px; }
+
+.mc-preflight-badge--ok      { color: var(--color-teal); }
+.mc-preflight-badge--error   { color: var(--chart-5); }
+.mc-preflight-badge--warning { color: var(--chart-4); }
+.mc-preflight-badge--info    { color: var(--chart-3); }
+
+/* Detail panel — hidden by default, indented past chevron + icon */
+.mc-preflight-detail {
+    display: none;
+    padding: 0 var(--space-6) var(--space-5);
+    padding-left: calc(var(--space-6) + 20px + 36px + var(--space-3) + var(--space-3));
+}
+
+.mc-preflight-section.is-open .mc-preflight-detail {
+    display: block;
+}
+
+/* Detail value + description */
+.mc-preflight-detail-value {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.mc-preflight-detail-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* Tags */
+.mc-preflight-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1-5);
+    margin-top: var(--space-2);
+}
+
+.mc-preflight-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2-5);
+    background: var(--color-hover-bg);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.mc-preflight-tag .material-symbols-rounded { font-size: 14px; }
+
+.mc-preflight-tag--accent {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+}
+
+/* Hint callouts */
+.mc-preflight-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    margin-top: var(--space-2-5);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-input);
+    font-size: var(--text-sm);
+    line-height: 1.4;
+    color: var(--color-text-secondary);
+}
+
+.mc-preflight-hint .material-symbols-rounded {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.mc-preflight-hint--tip     { background: var(--color-teal-light); }
+.mc-preflight-hint--tip     .material-symbols-rounded { color: var(--color-teal); }
+.mc-preflight-hint--info    { background: var(--chart-3-bg); }
+.mc-preflight-hint--info    .material-symbols-rounded { color: var(--chart-3); }
+.mc-preflight-hint--warning { background: var(--chart-4-bg); }
+.mc-preflight-hint--warning .material-symbols-rounded { color: var(--chart-4); }
+.mc-preflight-hint--error   { background: var(--chart-5-bg); }
+.mc-preflight-hint--error   .material-symbols-rounded { color: var(--chart-5); }
+
+/* Edit button — outlined pill style */
+.mc-preflight-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-top: var(--space-3);
+    padding: var(--space-1-5) var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--color-teal);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-teal);
+    border-radius: var(--radius-full);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+}
+
+.mc-preflight-edit:hover {
+    background: var(--color-teal);
+    color: var(--color-white);
+    text-decoration: none;
+}
+
+.mc-preflight-edit .material-symbols-rounded {
+    font-size: 14px;
+}
+
+/* Template thumbnail */
+.mc-preflight-thumb-row {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.mc-preflight-thumb {
+    width: 72px;
+    height: 90px;
+    border-radius: var(--radius-input);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--color-hover-bg);
+}
+
+.mc-preflight-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.mc-preflight-thumb-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    justify-content: center;
+}
+
+/* Tracking toggles */
+.mc-preflight-toggles {
+    display: flex;
+    gap: var(--space-5);
+    margin-top: var(--space-2);
+}
+
+.mc-preflight-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+}
+
+.mc-preflight-toggle-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.mc-preflight-toggle-dot--on  { background: var(--color-teal); }
+.mc-preflight-toggle-dot--off { background: var(--color-text-disabled); }
+
+.mc-preflight-toggle-label {
+    color: var(--color-text);
+    font-weight: var(--weight-medium);
+}
+
+.mc-preflight-toggle-status {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+/* Breathing action row — no box, just centered buttons with air */
+.mc-preflight-actions {
+    max-width: min(680px, 100%);
+    margin: 0 auto var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+}
+
+/* Centered footer */
+.mc-preflight-footer {
+    max-width: min(680px, 100%);
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Launch button — prominent CTA pill */
+.mc-btn-launch {
+    height: var(--space-12);
+    padding: 0 var(--space-8);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transition: all 0.2s ease;
+}
+
+.mc-btn-launch:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .mc-preflight { margin-left: var(--space-3); margin-right: var(--space-3); }
+    .mc-preflight-hero { flex-direction: column; text-align: center; gap: var(--space-3); }
+    .mc-preflight-hero-illust { width: 56px; height: 56px; }
+    .mc-preflight-icon { width: 28px; height: 28px; border-radius: 7px; }
+    .mc-preflight-icon .material-symbols-rounded { font-size: 15px; }
+    .mc-preflight-row { flex-wrap: wrap; }
+    .mc-preflight-badge { margin-left: auto; }
+    .mc-preflight-detail { padding-left: var(--space-6); }
+    .mc-preflight-thumb-row { flex-direction: column; }
+    .mc-preflight-toggles { flex-direction: column; gap: var(--space-2); }
+    .mc-preflight-actions { flex-direction: column; margin-left: var(--space-3); margin-right: var(--space-3); }
+    .mc-preflight-footer { flex-direction: column; gap: var(--space-3); }
+}
+
+
+/* ----------------------------------------------------------------
+   cr-template-grid — Template gallery thumbnails
+   ---------------------------------------------------------------- */
+.cr-template-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+}
+
+@media (max-width: 1100px) { .cr-template-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) { .cr-template-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .cr-template-grid { grid-template-columns: 1fr; } }
+
+.cr-template-card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cr-template-card:hover {
+    border-color: var(--color-teal);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.cr-template-thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 9 / 10;
+    background: var(--color-hover-bg);
+    overflow: hidden;
+}
+
+.cr-template-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.cr-template-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--color-text-disabled);
+}
+
+.cr-template-thumb-placeholder .material-symbols-rounded {
+    font-size: 48px;
+}
+
+.cr-template-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.cr-template-card:hover .cr-template-overlay {
+    opacity: 1;
+}
+
+.cr-template-info {
+    padding: var(--space-3);
+}
+
+.cr-template-name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Gallery tabs now use mc-tabs component (see components.css) */
+
+/* ----------------------------------------------------------------
+   Template step — assigned preview, extras grid, preheader
+   ---------------------------------------------------------------- */
+.mc-wizard-template-preview {
+    display: flex;
+    gap: var(--space-5);
+    padding: 0 var(--space-5) var(--space-5);
+}
+
+.mc-wizard-template-thumb {
+    width: 140px;
+    aspect-ratio: 9/10;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--color-hover-bg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.mc-wizard-template-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mc-wizard-template-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.mc-wizard-template-name {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-lg);
+}
+
+.mc-wizard-template-desc {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    margin: 0 0 var(--space-3);
+}
+
+.mc-wizard-template-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+}
+
+.mc-wizard-template-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.mc-wizard-template-actions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.mc-wizard-extras-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+@media (max-width: 768px) {
+    .mc-wizard-extras-grid { grid-template-columns: 1fr; }
+    .mc-wizard-template-preview { flex-direction: column; }
+    .mc-wizard-template-thumb { width: 100%; aspect-ratio: 16/9; }
+}
+
+.mc-wizard-card-body {
+    padding: 0 var(--space-5) var(--space-5);
+}
+
+.mc-wizard-plain-textarea {
+    font-family: monospace;
+    font-size: var(--text-sm);
+}
+
+.mc-wizard-tags-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-2);
+}
+
+.mc-wizard-loading {
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--color-text-muted);
+}
+
+.mc-wizard-badge-count {
+    margin-left: var(--space-1);
+}
+
+.mc-wizard-preheader-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+}
+
+.mc-wizard-preheader-row {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.mc-wizard-preheader-row .mc-form-input {
+    flex: 1;
+}
+
+.mc-wizard-preheader-saved {
+    font-size: var(--text-xs);
+    color: var(--chart-2);
+    margin-top: var(--space-1);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.mc-form-section--last {
+    margin-bottom: 0;
+}
+
+.mc-radio-card-svg-sm {
+    width: 40px;
+}
+
+.mc-wizard-schedule-fields {
+    padding: 0 var(--space-5) var(--space-5);
+}
+
+.mc-wizard-timezone-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-2);
+}
+
+.mc-text-chart-2 {
+    color: var(--chart-2);
+}
+
+.mc-text-disabled {
+    color: var(--color-text-disabled);
+}
+
+.mc-popup-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.mc-wizard-webhook-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    margin-bottom: var(--space-2);
+}
+
+.mc-wizard-webhook-endpoint {
+    font-size: var(--text-sm);
+    margin-left: var(--space-2);
+}
+
+.mc-wizard-empty-text {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+}
+
+.mc-form-help {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: var(--space-1);
+}
+
+.mc-wizard-pagination {
+    padding: var(--space-4) 0;
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.mc-wizard-pagination-text {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+.mc-wizard-empty-gallery {
+    text-align: center;
+    padding: var(--space-8);
+}
+
+.mc-wizard-empty-gallery-svg {
+    width: 120px;
+    margin: 0 auto var(--space-4);
+}
+
+.mc-wizard-empty-gallery-title {
+    margin-bottom: var(--space-1);
+}
+
+.mc-wizard-empty-gallery-desc {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+}
+
+/* ================================================================
+   Automation Trigger Grid — card selector for wizard step 1
+   ================================================================ */
+.mc-auto-trigger-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.mc-auto-trigger-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-card-bg);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+    text-align: left;
+    font: inherit;
+}
+.mc-auto-trigger-card:hover {
+    border-color: var(--color-teal);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.mc-auto-trigger-card.selected {
+    border-color: var(--color-teal);
+    box-shadow: 0 0 0 3px var(--color-teal-ring);
+    background: var(--chart-2-bg);
+}
+
+/* Bold, prominent icon — dark default, teal on hover/select */
+.mc-auto-trigger-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-hover-bg);
+    color: var(--color-text);
+    font-size: 0;
+    transition: background 0.15s, color 0.15s;
+}
+.mc-auto-trigger-icon .material-symbols-rounded {
+    font-size: 26px;
+    font-variation-settings: 'FILL' 1, 'wght' 500;
+}
+.mc-auto-trigger-card:hover .mc-auto-trigger-icon {
+    background: var(--color-teal);
+    color: #fff;
+}
+.mc-auto-trigger-card.selected .mc-auto-trigger-icon {
+    background: var(--color-teal);
+    color: #fff;
+}
+
+.mc-auto-trigger-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.mc-auto-trigger-name {
+    font-weight: var(--weight-semibold, 600);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+}
+.mc-auto-trigger-desc {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* ================================================================
+   Configure card — centered, compact
+   ================================================================ */
+.mc-auto-configure-card {
+    max-width: 680px;
+    margin: var(--space-4) 0 0;
+}
+
+/* Options form layout */
+.mc-auto-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-4);
+}
+.mc-auto-options-row {
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-end;
+}
+
+/* Time field — compact, aligned with sibling inputs */
+.mc-auto-time-field {
+    flex: 0 0 140px;
+    max-width: 140px;
+}
+.mc-auto-time-field .mc-form-input {
+    text-align: center;
+    line-height: var(--input-height);
+    padding-top: 2px;
+}
+
+@media (max-width: 640px) {
+    .mc-auto-options-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .mc-auto-time-field {
+        flex: 1 1 auto;
+        max-width: none;
+    }
+}
+
+/* Day toggles (weekly/monthly picker) */
+.mc-auto-day-grid {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+.mc-auto-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-1);
+}
+.mc-auto-day-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 40px;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-text-muted);
+    transition: all 0.15s;
+    user-select: none;
+}
+.mc-auto-day-toggle input { display: none; }
+.mc-auto-day-toggle:has(input:checked) {
+    background: var(--color-teal);
+    border-color: var(--color-teal);
+    color: #fff;
+}
+.mc-auto-day-toggle:hover {
+    border-color: var(--color-teal);
+    color: var(--color-teal);
+}
+.mc-auto-day-toggle-sm {
+    width: 36px;
+    height: 36px;
+    font-size: var(--text-xs);
+}
+
+/* Wizard step transition */
+.mc-wizard-step {
+    animation: mc-wizard-fadein 0.25s ease-out;
+}
+@keyframes mc-wizard-fadein {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom HTML — source view toggle */
+.html-mode-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+}
+#html-mode-wysiwyg,
+#html-mode-source {
+    min-height: 600px;
+}
+#html-editor {
+    display: none;
+}
+.html-source-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+.html-source-pane,
+.html-preview-pane {
+    height: 600px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-white);
+}
+#html-cm {
+    height: 100%;
+}
+#html-cm .cm-editor {
+    height: 100%;
+    font-size: 13px;
+}
+#html-cm .cm-scroller {
+    font-family: var(--font-mono, 'SFMono-Regular', Menlo, Consolas, monospace);
+}
+#html-preview {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+}
+@media (max-width: 767px) {
+    .html-source-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ----------------------------------------------------------------
+   Campaign setup step — left card (Basic + Sender) | right stack
+   (Advanced Settings + Sending Servers)
+   ---------------------------------------------------------------- */
+.mc-wizard-setup-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: var(--space-5);
+    align-items: start;
+}
+
+@media (max-width: 1023px) {
+    .mc-wizard-setup-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+}
+
+.mc-wizard-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    min-width: 0;
+}
+
+@media (max-width: 1023px) {
+    .mc-wizard-right-col {
+        gap: var(--space-4);
+    }
+}
+
+/* ----------------------------------------------------------------
+   Per-campaign sending server picker
+   Visual parity with admin plan-sending-servers list (icon + name + meta + switch).
+   Layout: [icon] [name + meta]                                    [switch]
+   ---------------------------------------------------------------- */
+
+/* Master "Use all servers randomly" toggle — sits above the narrow block. */
+.mc-sending-servers-master {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-card-bg);
+    margin-bottom: var(--space-4);
+}
+
+.mc-sending-servers-master-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.mc-sending-servers-master-title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.mc-sending-servers-master-desc {
+    margin-top: 2px;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.45;
+}
+
+.mc-sending-servers-narrow-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-3);
+}
+
+.mc-sending-servers-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.mc-sending-servers-header .mc-form-section-title {
+    margin-bottom: var(--space-1);
+}
+
+.mc-sending-servers-header .mc-form-section-desc {
+    margin: 0;
+}
+
+.mc-sending-servers-list {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.mc-sending-server-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    background: var(--color-card-bg);
+    transition: background 0.15s ease;
+}
+
+.mc-sending-server-row + .mc-sending-server-row {
+    border-top: 1px solid var(--color-border);
+}
+
+.mc-sending-server-row.is-selected {
+    background: linear-gradient(90deg, var(--color-teal-light) 0%, var(--color-card-bg) 60%);
+}
+
+.mc-sending-server-row.is-readonly {
+    cursor: default;
+}
+
+.mc-sending-server-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--chart-1-bg);
+    color: var(--chart-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mc-sending-server-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.mc-sending-server-name {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    word-break: break-word;
+}
+
+.mc-sending-server-sub {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+.mc-sending-server-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+/* Explicit pointer cursor on the switch and its slider/knob — some browsers
+   don't inherit cursor reliably onto the pseudo-elements that make up the
+   toggle, leaving users unsure that the row is clickable. */
+.mc-sending-server-actions .mc-switch,
+.mc-sending-server-actions .mc-switch-slider,
+.mc-sending-server-actions .mc-switch-slider::after {
+    cursor: pointer;
+}
+
+/* ─── Fitness modal (opened by "Adjust weights" button) ─── */
+.mc-fitness-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.mc-fitness-modal-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.mc-fitness-modal-row-meta {
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+.mc-fitness-modal-row-name {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-sm);
+    color: var(--color-text);
+}
+
+.mc-fitness-modal-row-type {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.mc-fitness-modal-row-slider {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.mc-fitness-modal-row-slider input[type="range"] {
+    flex: 1;
+    accent-color: var(--color-teal);
+}
+
+.mc-fitness-modal-row-pct {
+    min-width: 48px;
+    text-align: right;
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-sm);
+    color: var(--color-teal);
+}

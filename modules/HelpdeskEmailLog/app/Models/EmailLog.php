@@ -1,0 +1,229 @@
+<?php
+
+namespace Modules\HelpdeskEmailLog\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Modules\HelpdeskEmailLog\Database\Factories\EmailLogFactory;
+use Modules\HelpdeskEmailLog\Enums\EmailStatus;
+
+/**
+ * @property string $uid
+ * @property ?string $mailable_class
+ * @property ?string $module
+ * @property ?string $entity_type
+ * @property ?int $entity_id
+ * @property string $from_address
+ * @property ?string $from_name
+ * @property array<int, string> $to_addresses
+ * @property ?array<int, string> $cc_addresses
+ * @property ?array<int, string> $bcc_addresses
+ * @property ?array<int, string> $reply_to
+ * @property ?string $recipients_index
+ * @property string $subject
+ * @property ?string $message_id
+ * @property ?string $body_html
+ * @property ?string $body_text
+ * @property ?array<int, array{name: string, size: ?int, mime: ?string}> $attachments
+ * @property EmailStatus $status
+ * @property ?string $error_message
+ * @property ?Carbon $sent_at
+ * @property ?Carbon $failed_at
+ * @property ?array<string, mixed> $metadata
+ * @property ?Carbon $created_at
+ */
+class EmailLog extends Model
+{
+    /** @use HasFactory<EmailLogFactory> */
+    use HasFactory;
+
+    protected $table = 'email_logs';
+
+    /**
+     * Columns safe to load for list views (excludes the heavy body columns).
+     *
+     * @var list<string>
+     */
+    public const LIST_COLUMNS = [
+        'id', 'uid', 'mailable_class', 'module', 'entity_type', 'entity_id',
+        'from_address', 'from_name', 'to_addresses', 'subject', 'status',
+        'error_message', 'sent_at', 'failed_at', 'created_at',
+    ];
+
+    protected $fillable = [
+        'uid',
+        'mailable_class',
+        'module',
+        'entity_type',
+        'entity_id',
+        'causer_id',
+        'causer_type',
+        'from_address',
+        'from_name',
+        'to_addresses',
+        'cc_addresses',
+        'bcc_addresses',
+        'reply_to',
+        'subject',
+        'message_id',
+        'body_html',
+        'body_text',
+        'attachments',
+        'status',
+        'error_message',
+        'sent_at',
+        'failed_at',
+        'metadata',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'entity_id' => 'integer',
+            'to_addresses' => 'array',
+            'cc_addresses' => 'array',
+            'bcc_addresses' => 'array',
+            'reply_to' => 'array',
+            'attachments' => 'array',
+            'metadata' => 'array',
+            'status' => EmailStatus::class,
+            'sent_at' => 'datetime',
+            'failed_at' => 'datetime',
+        ];
+    }
+
+    protected static function newFactory(): EmailLogFactory
+    {
+        return EmailLogFactory::new();
+    }
+
+    protected static function booting(): void
+    {
+        static::creating(function (self $model) {
+            if (empty($model->uid)) {
+                $model->uid = (string) Str::orderedUuid();
+            }
+
+            $model->recipients_index = collect()
+                ->merge($model->to_addresses ?? [])
+                ->merge($model->cc_addresses ?? [])
+                ->merge($model->bcc_addresses ?? [])
+                ->filter()
+                ->implode(' ');
+        });
+
+        $invalidateCaches = function (self $model): void {
+            Cache::forget('helpdeskemaillog:stats');
+
+            if ($model->wasChanged('module') || $model->wasRecentlyCreated || ! $model->exists) {
+                Cache::forget('helpdeskemaillog:modules');
+            }
+        };
+
+        static::created($invalidateCaches);
+        static::updated($invalidateCaches);
+        static::deleted($invalidateCaches);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uid';
+    }
+
+    public function causer(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function markAsSent(): void
+    {
+        $this->update(['status' => EmailStatus::Sent, 'sent_at' => now()]);
+    }
+
+    public function markAsFailed(string $error): void
+    {
+        $this->update([
+            'status' => EmailStatus::Failed,
+            'error_message' => Str::limit($error, 2000),
+            'failed_at' => now(),
+        ]);
+    }
+
+    public function scopeStatus(Builder $query, EmailStatus|string $status): Builder
+    {
+        return $query->where('status', $status instanceof EmailStatus ? $status->value : $status);
+    }
+
+    public function scopeQueued(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Queued->value);
+    }
+
+    public function scopeStaleQueued(Builder $query, int $hours): Builder
+    {
+        return $query->queued()->where('created_at', '<', now()->subHours($hours));
+    }
+
+    public function scopeSent(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Sent->value);
+    }
+
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Failed->value);
+    }
+
+    public function scopeForModule(Builder $query, string $module): Builder
+    {
+        return $query->where('module', $module);
+    }
+
+    public function scopeForEntity(Builder $query, string $type, int|string $id): Builder
+    {
+        return $query->where('entity_type', $type)->where('entity_id', $id);
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return $this->status?->color() ?? 'warning';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status?->label() ?? (string) ($this->attributes['status'] ?? '');
+    }
+
+    public function getDisplayDateAttribute(): Carbon
+    {
+        return $this->sent_at ?? $this->failed_at ?? $this->created_at ?? now();
+    }
+
+    /**
+     * Best-effort URL to the related entity, or null if there is no safe mapping.
+     */
+    public function getEntityUrlAttribute(): ?string
+    {
+        if (! $this->entity_type || ! $this->entity_id) {
+            return null;
+        }
+
+        $route = config('helpdeskemaillog.entity_routes.'.$this->entity_type);
+
+        if (! $route || ! Route::has($route)) {
+            return null;
+        }
+
+        try {
+            return route($route, $this->entity_id);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+    "name": "Cookie",
+    "alias": "Cookie",
+    "description": "GDPR-compliant cookie consent management",
+    "keywords": [],
+    "priority": 0,
+    "active": 1,
+    "providers": [
+        "Modules\\Cookie\\Providers\\CookieServiceProvider"
+    ],
+    "files": []
+}

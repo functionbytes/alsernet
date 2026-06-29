@@ -1,0 +1,11 @@
+{
+    "name": "Locales",
+    "alias": "locales",
+    "description": "Locale and translation management",
+    "keywords": ["locales", "translations", "languages"],
+    "priority": 0,
+    "providers": ["Modules\\Locales\\Providers\\LocalesServiceProvider"],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

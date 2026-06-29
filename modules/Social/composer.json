@@ -1,0 +1,38 @@
+{
+    "name": "channels/social",
+    "description": "Multi-channel social media management and publishing module",
+    "type": "laravel-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Channels Team",
+            "email": "dev@channels.app"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "intervention/image": "^3.0",
+        "league/csv": "^9.0"
+    },
+    "require-dev": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Social\\Providers\\SocialServiceProvider"
+            ],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Social\\": "app/",
+            "Modules\\Social\\Database\\Factories\\": "database/factories/",
+            "Modules\\Social\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Social\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/sitemap",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Sitemap\\": "app/",
+            "Modules\\Sitemap\\Database\\Factories\\": "database/factories/",
+            "Modules\\Sitemap\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Sitemap\\Tests\\": "tests/"
+        }
+    }
+}

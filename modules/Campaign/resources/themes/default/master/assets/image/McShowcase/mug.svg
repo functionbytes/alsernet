@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" role="img" aria-label="Ceramic mug line drawing">
+  <rect width="400" height="500" fill="#F7F5F0"/>
+  <g fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- mug body: stout cylinder with slight taper -->
+    <path d="M 130 200
+             C 130 182, 144 172, 160 172
+             L 248 172
+             C 264 172, 278 182, 278 200
+             L 282 350
+             C 282 374, 268 388, 246 388
+             L 162 388
+             C 140 388, 126 374, 126 350 Z" fill="#FEFDFA"/>
+    <!-- rim ellipse -->
+    <ellipse cx="204" cy="180" rx="74" ry="12" fill="#FEFDFA"/>
+    <ellipse cx="204" cy="180" rx="66" ry="8" stroke-width="1.2" fill="none"/>
+    <!-- handle: bold D-curve on right -->
+    <path d="M 278 230
+             C 330 230, 346 256, 344 292
+             C 342 326, 322 344, 282 344"
+          stroke-width="2.4"/>
+    <path d="M 278 250
+             C 316 250, 326 270, 322 292
+             C 318 314, 308 326, 282 326"
+          stroke-width="1.6"/>
+    <!-- base ring -->
+    <path d="M 132 388 C 170 396, 240 396, 278 388" stroke-width="1.4"/>
+    <!-- shadow beneath -->
+    <ellipse cx="204" cy="404" rx="100" ry="7" fill="#E5E1D8" stroke="none"/>
+    <!-- floor line -->
+    <line x1="90" y1="408" x2="320" y2="408" stroke="#D6D1C4" stroke-width="1"/>
+    <!-- subtle shading crescent left -->
+    <path d="M 146 220 C 138 260, 138 320, 148 360" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+  </g>
+</svg>

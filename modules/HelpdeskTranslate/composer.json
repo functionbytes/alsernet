@@ -1,0 +1,28 @@
+{
+    "name": "modules/helpdesktranslate",
+    "description": "Translation services for Helpdesk conversations (DeepL provider).",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskTranslate\\": "app/",
+            "Modules\\HelpdeskTranslate\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskTranslate\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskTranslate\\Tests\\": "tests/"
+        }
+    }
+}

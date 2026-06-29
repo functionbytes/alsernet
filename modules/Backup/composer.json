@@ -1,0 +1,33 @@
+{
+    "name": "modules/backup",
+    "description": "Backup Module - Automated backups, database dumps, backup scheduling and restoration",
+    "keywords": ["backup", "database", "dump", "automation"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "spatie/laravel-backup": "^9.3",
+        "ifsnop/mysqldump-php": "^2.12"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Backup\\": "app/",
+            "Modules\\Backup\\Database\\Factories\\": "database/factories/",
+            "Modules\\Backup\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Backup\\Tests\\": "tests/"
+        }
+    }
+}

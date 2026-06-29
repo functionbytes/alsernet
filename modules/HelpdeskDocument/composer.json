@@ -1,0 +1,16 @@
+{
+    "name": "inoqualab/helpdesk-document",
+    "description": "Integración de documentación en el inbox del Helpdesk (puente al módulo Document).",
+    "type": "laravel-module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskDocument\\": "app/",
+            "Modules\\HelpdeskDocument\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskDocument\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\HelpdeskDocument\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "nwidart/laravel-modules": "^12.0"
+    }
+}

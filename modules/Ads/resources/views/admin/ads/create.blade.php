@@ -1,0 +1,166 @@
+@extends('layouts.theme')
+
+@section('title', $pageTitle)
+
+@section('content')
+
+    @include('core::components.alerts')
+
+    <div class="card">
+        <div class="card-header p-4 border-bottom">
+            <h5 class="mb-0 fw-bold">{{ $pageTitle }}</h5>
+            <p class="small mb-0 text-muted">Crea un nuevo banner publicitario</p>
+        </div>
+
+        <form method="POST" action="{{ route('ads.store') }}">
+            @csrf
+
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                        <ul class="nav nav-tabs" id="nameLangTabs" role="tablist">
+                            @foreach($locales as $locale)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {{ $locale['is_default'] ? 'active' : '' }}" id="name-tab-{{ $locale['code'] }}"
+                                        data-bs-toggle="tab" data-bs-target="#name-pane-{{ $locale['code'] }}"
+                                        type="button" role="tab">{{ $locale['native_name'] }}</button>
+                            </li>
+                            @endforeach
+                        </ul>
+                        <div class="tab-content pt-2" id="nameLangTabContent">
+                            @foreach($locales as $locale)
+                            <div class="tab-pane fade {{ $locale['is_default'] ? 'show active' : '' }}" id="name-pane-{{ $locale['code'] }}" role="tabpanel">
+                                <input type="text" name="translations[{{ $loop->index }}][name]"
+                                       class="form-control @error('translations.*.name') is-invalid @enderror"
+                                       value="{{ old('translations.'.$loop->index.'.name') }}" required>
+                                <input type="hidden" name="translations[{{ $loop->index }}][locale]" value="{{ $locale['code'] }}">
+                                @error('translations.*.name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Clave única <span class="text-danger">*</span></label>
+                        <input type="text" name="key" class="form-control @error('key') is-invalid @enderror"
+                               value="{{ old('key') }}" required placeholder="ej: banner-home-top">
+                        @error('key')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <select name="ads_type" class="form-select @error('ads_type') is-invalid @enderror">
+                            @foreach($types as $type)
+                                <option value="{{ $type->value }}" {{ old('ads_type', 'image') === $type->value ? 'selected' : '' }}>
+                                    {{ $type->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('ads_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select name="status" class="form-select @error('status') is-invalid @enderror">
+                            @foreach($statuses as $status)
+                                <option value="{{ $status->value }}" {{ old('status', 'published') === $status->value ? 'selected' : '' }}>
+                                    {{ $status->label() }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Orden</label>
+                        <input type="number" name="order" class="form-control @error('order') is-invalid @enderror"
+                               value="{{ old('order', 0) }}" min="0">
+                        @error('order')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Ubicación</label>
+                        <input type="text" name="location" class="form-control @error('location') is-invalid @enderror"
+                               value="{{ old('location') }}" placeholder="ej: home-header">
+                        @error('location')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">URL de destino</label>
+                        <input type="url" name="url" class="form-control @error('url') is-invalid @enderror"
+                               value="{{ old('url') }}" placeholder="https://...">
+                        @error('url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fecha de expiración</label>
+                        <input type="date" name="expired_at" class="form-control @error('expired_at') is-invalid @enderror"
+                               value="{{ old('expired_at') }}">
+                        @error('expired_at')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="open_in_new_tab" value="1" id="openNewTab" {{ old('open_in_new_tab') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="openNewTab">Abrir en nueva pestaña</label>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Imagen desktop</label>
+                        <input type="text" name="image" class="form-control @error('image') is-invalid @enderror"
+                               value="{{ old('image') }}" placeholder="Ruta de la imagen (storage/...)">
+                        @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Imagen tablet</label>
+                        <input type="text" name="tablet_image" class="form-control @error('tablet_image') is-invalid @enderror"
+                               value="{{ old('tablet_image') }}" placeholder="Opcional">
+                        @error('tablet_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Imagen móvil</label>
+                        <input type="text" name="mobile_image" class="form-control @error('mobile_image') is-invalid @enderror"
+                               value="{{ old('mobile_image') }}" placeholder="Opcional">
+                        @error('mobile_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="col-12 d-none" id="adsenseSlotField">
+                        <label class="form-label fw-semibold">Google AdSense Slot ID</label>
+                        <input type="text" name="google_adsense_slot_id" class="form-control @error('google_adsense_slot_id') is-invalid @enderror"
+                               value="{{ old('google_adsense_slot_id') }}">
+                        @error('google_adsense_slot_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Guardar anuncio
+                </button>
+                <a href="{{ route('ads.index') }}" class="btn btn-light">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+@endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    function toggleAdsenseField() {
+        if ($('select[name="ads_type"]').val() === 'google_adsense') {
+            $('#adsenseSlotField').removeClass('d-none');
+        } else {
+            $('#adsenseSlotField').addClass('d-none');
+        }
+    }
+
+    $('select[name="ads_type"]').on('change', toggleAdsenseField);
+    toggleAdsenseField();
+});
+</script>
+@endpush

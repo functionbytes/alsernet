@@ -1,0 +1,21 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#FFFFFF",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": "Blank ad",
+    "blocks": [],
+    "block_gap": 0,
+    "container_width": "narrow",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 0,
+    "block_padding_left": 0,
+    "default_block_background_color": null
+}

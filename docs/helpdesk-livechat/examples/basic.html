@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo SDK HelpdeskLivechat</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.5; }
+    h1 { color: #90bb13; }
+    .product { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 16px 0; }
+    .btn { display: inline-block; padding: 10px 20px; background: #90bb13; color: #fff; text-decoration: none; border-radius: 6px; cursor: pointer; border: none; }
+    .btn:hover { opacity: 0.9; }
+    .panel { background: #f5f5f5; border-radius: 8px; padding: 16px; font-family: monospace; font-size: 13px; white-space: pre-wrap; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+  </style>
+</head>
+<body>
+
+<h1>Demo de integración SDK</h1>
+
+<p>Esta página demuestra los métodos clave del SDK <code>window.chat</code>.
+   Abre la consola del navegador para ver los logs (modo <code>debug: true</code>).</p>
+
+<div class="product">
+  <h3>Zapatilla X — 79,90 €</h3>
+  <p>Producto de ejemplo. Al cargar esta página se emite <code>product_view</code>.</p>
+  <button class="btn" data-track="buy" id="add-to-cart">Comprar</button>
+</div>
+
+<div class="row">
+  <button class="btn" id="btn-identify">Identificar usuario</button>
+  <button class="btn" id="btn-context">Setear cartValue=120</button>
+  <button class="btn" id="btn-checkout">Iniciar checkout</button>
+  <button class="btn" id="btn-purchase">Confirmar compra</button>
+  <button class="btn" id="btn-open">Abrir chat</button>
+  <button class="btn" id="btn-close">Cerrar chat</button>
+</div>
+
+<h3>Estado del SDK</h3>
+<div class="panel" id="state">esperando ready…</div>
+
+<!-- ============ Loader del SDK ============ -->
+<script>
+  // Reemplaza WEBSITE_TOKEN_AQUI con tu token real
+  // Reemplaza TU-DOMINIO.com con el host donde corre Laravel
+  (function (d, s) {
+    window.chat = window.chat || function () { (chat.q = chat.q || []).push(arguments); };
+    var j = d.createElement(s); j.async = 1;
+    j.src = 'https://TU-DOMINIO.com/widget/script/WEBSITE_TOKEN_AQUI';
+    d.head.appendChild(j);
+  })(document, 'script');
+
+  // Init con consent ya otorgado para esta demo
+  chat('init', {
+    token: 'WEBSITE_TOKEN_AQUI',
+    debug: true,
+    consent: true
+  });
+
+  // product_view automático del producto en pantalla
+  chat('track', 'product_view', {
+    id: 'SKU123',
+    name: 'Zapatilla X',
+    price: 79.90,
+    currency: 'EUR',
+    category: 'shoes/running'
+  });
+
+  // Hooks
+  chat('on', 'ready', function (info) {
+    document.getElementById('state').textContent =
+      'SDK listo\n' + JSON.stringify(info, null, 2);
+  });
+
+  chat('on', 'score:changed', function (info) {
+    document.getElementById('state').textContent =
+      'Score actualizado\n' + JSON.stringify(info, null, 2);
+  });
+
+  chat('on', 'trigger:fired', function (info) {
+    console.log('Trigger disparado:', info);
+  });
+
+  // ============ Botones de demo ============
+  document.getElementById('add-to-cart').addEventListener('click', function () {
+    chat('track', 'add_to_cart', {
+      id: 'SKU123',
+      price: 79.90,
+      currency: 'EUR',
+      quantity: 1
+    });
+  });
+
+  document.getElementById('btn-identify').addEventListener('click', function () {
+    chat('identify', {
+      id: 'USR-9012',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      attributes: { membershipTier: 'gold' }
+    });
+  });
+
+  document.getElementById('btn-context').addEventListener('click', function () {
+    chat('setContext', { cartValue: 120, itemsCount: 1, currency: 'EUR' });
+  });
+
+  document.getElementById('btn-checkout').addEventListener('click', function () {
+    chat('track', 'checkout_start', { cartValue: 120, itemsCount: 1, currency: 'EUR' });
+  });
+
+  document.getElementById('btn-purchase').addEventListener('click', function () {
+    chat('track', 'purchase', {
+      orderId: 'ORD-' + Date.now(),
+      total: 120,
+      currency: 'EUR',
+      items: [{ id: 'SKU123', qty: 1, price: 120 }]
+    });
+  });
+
+  document.getElementById('btn-open').addEventListener('click', function () {
+    chat('open');
+  });
+
+  document.getElementById('btn-close').addEventListener('click', function () {
+    chat('close');
+  });
+</script>
+
+</body>
+</html>

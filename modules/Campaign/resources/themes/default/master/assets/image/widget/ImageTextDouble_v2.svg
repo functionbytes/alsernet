@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 120">
+  <rect width="210" height="120" fill="#F7F7F7"/>
+  <rect x="14" y="12" width="84" height="44" rx="4" fill="#EEEEEE"/>
+  <circle cx="34" cy="26" r="5" fill="#D8D8D8"/>
+  <polygon points="32,46 44,30 56,46" fill="#D0D0D0"/>
+  <polygon points="50,46 60,36 70,46" fill="#DCDCDC"/>
+  <rect x="14" y="64" width="56" height="7" rx="3.5" fill="#C0C0C0"/>
+  <rect x="14" y="78" width="84" height="5" rx="2.5" fill="#DEDEDE"/>
+  <rect x="14" y="88" width="68" height="5" rx="2.5" fill="#DEDEDE"/>
+  <rect x="14" y="102" width="36" height="10" rx="3" fill="#404040"/>
+  <rect x="112" y="12" width="84" height="44" rx="4" fill="#EEEEEE"/>
+  <circle cx="132" cy="26" r="5" fill="#D8D8D8"/>
+  <polygon points="130,46 142,30 154,46" fill="#D0D0D0"/>
+  <polygon points="148,46 158,36 168,46" fill="#DCDCDC"/>
+  <rect x="112" y="64" width="56" height="7" rx="3.5" fill="#C0C0C0"/>
+  <rect x="112" y="78" width="84" height="5" rx="2.5" fill="#DEDEDE"/>
+  <rect x="112" y="88" width="68" height="5" rx="2.5" fill="#DEDEDE"/>
+  <rect x="112" y="102" width="36" height="10" rx="3" fill="#404040"/>
+</svg>

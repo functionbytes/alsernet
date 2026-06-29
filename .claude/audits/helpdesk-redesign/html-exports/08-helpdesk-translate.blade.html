@@ -1,0 +1,407 @@
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskTranslate/resources/views/partials/composer-tab.blade.php -->
+<!-- ================================================================ -->
+{{--
+    Composer tab button — rendered inside the helpdesk inbox composer tab bar.
+    Self-gates on the module being enabled so the host view doesn't need to
+    know about HelpdeskTranslate.
+--}}
+@if(\Nwidart\Modules\Facades\Module::find('HelpdeskTranslate')?->isEnabled())
+<button class="bv-composer-tab" data-bv-tab="translate">
+    <i class="fas fa-language bv-tab-icon"></i>Traducir
+</button>
+@endif
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskTranslate/resources/views/partials/translate-panel.blade.php -->
+<!-- ================================================================ -->
+{{--
+    Translate panel — appended to the chat thread composer.
+    Shown/hidden via the "Traducir" tab; the JS that toggles the `on`
+    class still lives in modules/Helpdesk's compiled conversations.js
+    (jQuery delegated handlers — no source available to extract).
+--}}
+@if(\Nwidart\Modules\Facades\Module::find('HelpdeskTranslate')?->isEnabled())
+@once
+@push('css')
+<link rel="stylesheet" href="{{ asset('vendor/helpdesktranslate/translate-panel.css') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/translate-panel.css')) }}">
+@endpush
+@endonce
+<div class="bv-translate-panel" id="bv-translate-panel">
+    <div class="bv-panel-head">
+        <i class="fas fa-language"></i>
+        <span>Traducción de conversación</span>
+        <button id="bv-translate-close"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="bv-tp-body">
+        <div>
+            <div class="bv-tp-lbl">Modo de traducción</div>
+            <div class="bv-tp-mode-list">
+                <div class="bv-tp-mode on" data-mode="incoming">
+                    <i class="fas fa-arrow-down"></i>
+                    <div>
+                        <div class="t">Entrantes</div>
+                        <div class="s">Traducir mensajes del cliente</div>
+                    </div>
+                </div>
+                <div class="bv-tp-mode" data-mode="outgoing">
+                    <i class="fas fa-arrow-up"></i>
+                    <div>
+                        <div class="t">Salientes</div>
+                        <div class="s">Traducir mis mensajes antes de enviar</div>
+                    </div>
+                </div>
+                <div class="bv-tp-mode" data-mode="both">
+                    <i class="fas fa-arrows-up-down"></i>
+                    <div>
+                        <div class="t">Ambos</div>
+                        <div class="s">Traducción bidireccional</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bv-tp-lang-row">
+            <div class="bv-tp-lang-col">
+                <div class="bv-tp-lbl">Idioma origen</div>
+                <select class="bv-tp-sel" id="bv-tp-from">
+                    <option value="auto">Detectar automáticamente</option>
+                    <option value="es">Español</option>
+                    <option value="en">Inglés</option>
+                    <option value="fr">Francés</option>
+                    <option value="pt">Portugués</option>
+                </select>
+            </div>
+            <i class="fas fa-arrow-right bv-tp-lang-arrow"></i>
+            <div class="bv-tp-lang-col">
+                <div class="bv-tp-lbl">Idioma destino</div>
+                <select class="bv-tp-sel" id="bv-tp-to">
+                    @php $defaultTarget = strtolower((string) (\Modules\Helpdesk\Models\Setting::get('helpdesktranslate.default_target') ?? config('helpdesktranslate.default_target', 'es'))); @endphp
+                    <option value="es" {{ $defaultTarget === 'es' ? 'selected' : '' }}>Español</option>
+                    <option value="en" {{ $defaultTarget === 'en' ? 'selected' : '' }}>Inglés</option>
+                    <option value="fr" {{ $defaultTarget === 'fr' ? 'selected' : '' }}>Francés</option>
+                    <option value="pt" {{ $defaultTarget === 'pt' ? 'selected' : '' }}>Portugués</option>
+                    <option value="de" {{ $defaultTarget === 'de' ? 'selected' : '' }}>Alemán</option>
+                    <option value="it" {{ $defaultTarget === 'it' ? 'selected' : '' }}>Italiano</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="bv-tp-foot">
+        <button class="bv-panel-btn bv-panel-btn-cancel" id="bv-translate-close-2"><i class="fas fa-power-off"></i> Desactivar</button>
+        <button class="bv-panel-btn bv-panel-btn-confirm"><i class="fas fa-language"></i> Activar traducción</button>
+    </div>
+</div>
+@endif
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskTranslate/resources/views/settings/index.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Configuración de traducciones')
+
+@push('css')
+<link rel="stylesheet" href="{{ asset('vendor/helpdesktranslate/settings.css') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/settings.css')) }}">
+@endpush
+
+@section('content')
+
+    @include('core::components.alerts')
+
+    <div class="card">
+        <div class="card-header p-4 border-bottom border-light">
+            <div class="d-flex align-items-start gap-3">
+                <div class="ht-settings-icon">
+                    <i class="fas fa-language"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h5 class="mb-1 fw-bold">Traducciones (HelpdeskTranslate)</h5>
+                    <p class="small mb-0 text-muted">
+                        Configura el proveedor de traducciones, la API key de DeepL y el idioma destino predeterminado.
+                        Estos ajustes se aplican al botón <strong>Traducir</strong> del chat y a la traducción automática de mensajes entrantes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Cache stats --}}
+        <div class="card-body border-bottom">
+            <h6 class="text-uppercase fw-bold text-muted mb-3 small">Caché local de traducciones</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="ht-stat-card">
+                        <div class="ht-stat-label"><i class="fas fa-database me-1"></i> Frases cacheadas</div>
+                        <div class="ht-stat-value">{{ number_format($stats['cached'] ?? 0) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ht-stat-card">
+                        <div class="ht-stat-label"><i class="fas fa-bullseye me-1"></i> Hits totales</div>
+                        <div class="ht-stat-value">{{ number_format($stats['hits'] ?? 0) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ht-stat-card">
+                        <div class="ht-stat-label"><i class="fas fa-text-slash me-1"></i> Caracteres ahorrados</div>
+                        <div class="ht-stat-value">{{ number_format($stats['chars_saved'] ?? 0) }}</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="ht-stat-card ht-stat-card-success">
+                        <div class="ht-stat-label"><i class="fas fa-coins me-1"></i> Ahorro estimado</div>
+                        <div class="ht-stat-value">€{{ number_format($stats['estimated_saving_eur'] ?? 0, 4) }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" class="btn btn-sm btn-outline-danger" id="ht-clear-cache">
+                    <i class="fas fa-broom me-1"></i> Limpiar caché
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <form method="POST" action="{{ route('settings.helpdesk-translate.update') }}" id="ht-settings-form">
+                @csrf
+                @method('PUT')
+
+                {{-- Proveedor + idioma destino --}}
+                <h6 class="text-uppercase fw-bold text-muted mb-3 small">Proveedor y comportamiento</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label for="provider" class="form-label">Proveedor</label>
+                        <select id="provider" name="provider" class="form-select">
+                            <option value="deepl" {{ ($backups['provider'] ?? 'deepl') === 'deepl' ? 'selected' : '' }}>DeepL (en la nube · pago)</option>
+                            <option value="libretranslate" {{ ($backups['provider'] ?? 'deepl') === 'libretranslate' ? 'selected' : '' }}>LibreTranslate (self-hosted · gratis)</option>
+                        </select>
+                        <small class="text-muted">DeepL ofrece mejor calidad. LibreTranslate corre local (Docker) sin coste por uso.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="default_target" class="form-label">Idioma destino predeterminado</label>
+                        <select id="default_target" name="default_target" class="form-select">
+                            @php $target = strtolower($backups['default_target'] ?? 'es'); @endphp
+                            <option value="es" {{ $target === 'es' ? 'selected' : '' }}>Español (ES)</option>
+                            <option value="en" {{ $target === 'en' ? 'selected' : '' }}>English (EN)</option>
+                            <option value="fr" {{ $target === 'fr' ? 'selected' : '' }}>Français (FR)</option>
+                            <option value="de" {{ $target === 'de' ? 'selected' : '' }}>Deutsch (DE)</option>
+                            <option value="pt" {{ $target === 'pt' ? 'selected' : '' }}>Português (PT)</option>
+                            <option value="it" {{ $target === 'it' ? 'selected' : '' }}>Italiano (IT)</option>
+                        </select>
+                        <small class="text-muted">Idioma usado cuando el agente no especifica uno explícitamente.</small>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="auto_translate_incoming" value="0">
+                            <input class="form-check-input" type="checkbox" id="auto_translate_incoming"
+                                   name="auto_translate_incoming" value="1"
+                                   {{ ! empty($backups['auto_translate_incoming']) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="auto_translate_incoming">
+                                Auto-traducir mensajes entrantes
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Traduce automáticamente los mensajes del visitante cuando el idioma detectado no coincide con el del agente.
+                            Configurable también por bandeja en <code>additional_attributes.auto_translate_enabled</code>.
+                        </small>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="auto_translate_outgoing" value="0">
+                            <input class="form-check-input" type="checkbox" id="auto_translate_outgoing"
+                                   name="auto_translate_outgoing" value="1"
+                                   {{ ! empty($backups['auto_translate_outgoing']) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="auto_translate_outgoing">
+                                Auto-traducir respuestas del agente
+                            </label>
+                        </div>
+                        <small class="text-muted">
+                            Traduce automáticamente las respuestas del agente al idioma detectado del visitante.
+                            Requiere que el idioma del visitante haya sido detectado previamente.
+                        </small>
+                    </div>
+                </div>
+
+                {{-- LibreTranslate endpoint --}}
+                <div id="ht-libre-section" class="ht-provider-section mb-4 {{ ($backups['provider'] ?? 'deepl') !== 'libretranslate' ? 'd-none' : '' }}">
+                    <h6 class="text-uppercase fw-bold text-muted mb-3 small">LibreTranslate (self-hosted)</h6>
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <label for="libretranslate_endpoint" class="form-label">Endpoint</label>
+                            <input type="url"
+                                   class="form-control"
+                                   id="libretranslate_endpoint"
+                                   name="libretranslate_endpoint"
+                                   value="{{ $backups['libretranslate_endpoint'] ?? '' }}"
+                                   placeholder="http://libretranslate:5000/translate">
+                            <small class="text-muted">URL completa al endpoint <code>/translate</code> de tu instancia LibreTranslate.</small>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="libretranslate_api_key" class="form-label">API key (opcional)</label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="libretranslate_api_key"
+                                   name="libretranslate_api_key"
+                                   value="{{ $backups['libretranslate_api_key'] ?? '' }}"
+                                   placeholder="Solo si tu instancia la requiere"
+                                   autocomplete="new-password">
+                            <small class="text-muted">Por defecto LibreTranslate no requiere autenticación.</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0 small d-flex align-items-start gap-2">
+                        <i class="fas fa-circle-info mt-1"></i>
+                        <div>
+                            <strong>¿Aún no tienes LibreTranslate corriendo?</strong>
+                            Levanta el contenedor con:
+                            <code>docker compose -f docker-compose.libretranslate.yml up -d</code>
+                            (incluido en la raíz del proyecto). Tarda unos minutos la primera vez en bajar los modelos.
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Credenciales DeepL --}}
+                <div id="ht-deepl-section" class="ht-provider-section {{ ($backups['provider'] ?? 'deepl') !== 'deepl' ? 'd-none' : '' }}">
+                <h6 class="text-uppercase fw-bold text-muted mb-3 small">Credenciales DeepL</h6>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-7">
+                        <label for="deepl_key" class="form-label">API key</label>
+                        <div class="input-group">
+                            <input type="password"
+                                   class="form-control"
+                                   id="deepl_key"
+                                   name="deepl_key"
+                                   value="{{ $backups['deepl_key'] ?? '' }}"
+                                   placeholder="DeepL-Auth-Key …"
+                                   autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary" id="ht-toggle-key" title="Mostrar/ocultar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">
+                            @if(! empty($backups['has_env_key']))
+                                Hay una key configurada en <code>.env</code> (<code>DEEPL_API_KEY</code>) — la key guardada aquí la sobrescribe.
+                            @else
+                                Genera una key gratuita en <a href="https://www.deepl.com/pro-api" target="_blank" rel="noopener">deepl.com/pro-api</a>.
+                            @endif
+                        </small>
+                    </div>
+
+                    <div class="col-md-5">
+                        <label for="deepl_url" class="form-label">URL de la API</label>
+                        <select id="deepl_url" name="deepl_url" class="form-select">
+                            @php $url = $backups['deepl_url'] ?? 'https://api-free.deepl.com'; @endphp
+                            <option value="https://api-free.deepl.com" {{ $url === 'https://api-free.deepl.com' ? 'selected' : '' }}>
+                                Free (api-free.deepl.com)
+                            </option>
+                            <option value="https://api.deepl.com" {{ $url === 'https://api.deepl.com' ? 'selected' : '' }}>
+                                Pro (api.deepl.com)
+                            </option>
+                        </select>
+                        <small class="text-muted">Usa Pro si tu key es de pago.</small>
+                    </div>
+                </div>
+                </div>{{-- /#ht-deepl-section --}}
+
+                {{-- Acciones --}}
+                <div class="d-flex flex-wrap gap-2 align-items-center pt-3 border-top">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Guardar configuración
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="ht-test-connection">
+                        <i class="fas fa-plug me-1"></i> Probar conexión
+                    </button>
+                    <span id="ht-test-result" class="ms-2 small"></span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+@endsection
+
+@push('scripts')
+<script>
+$(function () {
+    // Toggle visibility of API key
+    $('#ht-toggle-key').on('click', function () {
+        var input = $('#deepl_key');
+        var isPassword = input.attr('type') === 'password';
+        input.attr('type', isPassword ? 'text' : 'password');
+        $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+    });
+
+    // Show only the section matching the selected provider
+    $('#provider').on('change', function () {
+        var p = $(this).val();
+        $('#ht-deepl-section').toggleClass('d-none', p !== 'deepl');
+        $('#ht-libre-section').toggleClass('d-none', p !== 'libretranslate');
+    });
+
+    // Clear cache button
+    $('#ht-clear-cache').on('click', function () {
+        if (!confirm('¿Eliminar todas las traducciones cacheadas? Esto no se puede deshacer.')) {
+            return;
+        }
+        var $btn = $(this);
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Limpiando...');
+        $.ajax({
+            url: "{{ route('settings.helpdesk-translate.cache.clear') }}",
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (resp) {
+                if (window.toastr) {
+                    toastr.success(resp.message || 'Caché limpiado.');
+                }
+                setTimeout(function () { window.location.reload(); }, 800);
+            },
+            error: function () {
+                if (window.toastr) {
+                    toastr.error('No se pudo limpiar el caché.');
+                }
+                $btn.prop('disabled', false).html('<i class="fas fa-broom me-1"></i> Limpiar caché');
+            }
+        });
+    });
+
+    // Test DeepL connection
+    $('#ht-test-connection').on('click', function () {
+        var $btn = $(this);
+        var $result = $('#ht-test-result');
+
+        $btn.prop('disabled', true);
+        $result.removeClass('text-success text-danger').addClass('text-muted')
+            .html('<i class="fas fa-spinner fa-spin"></i> Probando…');
+
+        $.ajax({
+            url: "{{ route('settings.helpdesk-translate.test') }}",
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (resp) {
+                var msg = resp.message || 'Conexión OK';
+                if (resp.usage && resp.usage.character_count !== null) {
+                    msg += ' — Uso: ' + resp.usage.character_count.toLocaleString()
+                        + ' / ' + (resp.usage.character_limit || '∞').toLocaleString() + ' caracteres';
+                }
+                $result.removeClass('text-muted text-danger').addClass('text-success')
+                    .html('<i class="fas fa-check-circle"></i> ' + msg);
+            },
+            error: function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'Error de conexión';
+                $result.removeClass('text-muted text-success').addClass('text-danger')
+                    .html('<i class="fas fa-circle-xmark"></i> ' + msg);
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+});
+</script>
+@endpush
+

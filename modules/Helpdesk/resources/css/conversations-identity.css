@@ -1,0 +1,365 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BANDEJA v4 — IDENTIDAD VISUAL
+   ───────────────────────────────────────────────────────────────────────────
+   Este archivo contiene TODOS los tokens de identidad visual del módulo.
+   Edita aquí para personalizar marca, colores, tipografía, espaciado.
+   NO incluye componentes ni layout — solo variables.
+   Cargar ANTES que conversations.css.
+
+   Uso:
+     <link rel="stylesheet" href="vendor/helpdesk/conversations-identity.css">
+     <link rel="stylesheet" href="vendor/helpdesk/conversations.css">
+
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══ MARCA / BRAND ═══════════════════════════════════════════════════════ */
+:root {
+    /* Nombre del producto (usado en topbar) */
+    --bv-brand-name: 'Functionbytes';
+
+    /* Inicial de la marca (para el cuadro brand-mark del topbar) */
+    --bv-brand-initial: 'F';
+
+    /* Color principal de la marca (cuadrado del logo en topbar) */
+    --bv-brand-bg: #18181b;
+    --bv-brand-fg: #ffffff;
+    --bv-brand-radius: 7px;
+}
+
+
+/* ═══ ESCALA TIPOGRÁFICA ══════════════════════════════════════════════════ */
+:root {
+    /* Familia principal (Inter por defecto - alvarez line) */
+    --bv-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --bv-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
+
+    /* Tamaños */
+    --bv-text-xs:    10px;    /* badges, kbd */
+    --bv-text-sm:    11px;    /* meta, hints */
+    --bv-text-base:  12.5px;  /* body text general */
+    --bv-text-md:    13px;    /* nav items, list previews */
+    --bv-text-lg:    13.5px;  /* bubble text */
+    --bv-text-xl:    14px;    /* modal titles */
+    --bv-text-2xl:   15px;    /* thread head name */
+    --bv-text-3xl:   16px;    /* right panel name */
+
+    /* Pesos */
+    --bv-weight-normal: 400;
+    --bv-weight-medium: 500;
+    --bv-weight-semi:   600;
+    --bv-weight-bold:   700;
+    --bv-weight-black:  800;
+
+    /* Letter spacing */
+    --bv-tracking-tight:  -.015em;   /* títulos grandes */
+    --bv-tracking-normal: 0;
+    --bv-tracking-wide:   .08em;     /* labels uppercase */
+    --bv-tracking-wider:  .14em;     /* group labels HOY/AYER */
+}
+
+
+/* ═══ PALETA DE GRISES (TEMA CLARO) ═══════════════════════════════════════ */
+:root {
+    /* Texto */
+    --bv-text:        #18181b;   /* texto principal */
+    --bv-text-soft:   #3f3f46;   /* texto secundario */
+    --bv-text-muted:  #71717a;   /* texto deshabilitado / placeholders */
+
+    /* Fondos */
+    --bv-bg:          #f5f6f8;   /* fondo del thread/body */
+    --bv-bg-panel:    #ffffff;   /* fondo de paneles (rail/nav/list/right) */
+    --bv-bg-subtle:   #f4f4f5;   /* hover / chip on / search box */
+
+    /* Bordes */
+    --bv-border:       #e4e4e7;   /* borders standard */
+    --bv-border-soft:  #ececef;   /* borders sutiles */
+}
+
+
+/* ═══ COLOR DE ACENTO (cambia toda la app) ═══════════════════════════════════
+   Por defecto: Neutral (#18181b — Alvarez/Refined v4)
+   Alternativas predefinidas se aplican con [data-accent="X"] en el body
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bv-accent:    #18181b;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento Indigo */
+.conversations[data-accent="indigo"] {
+    --bv-accent:    #4f46e5;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento Emerald */
+.conversations[data-accent="emerald"] {
+    --bv-accent:    #059669;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento Amber */
+.conversations[data-accent="amber"] {
+    --bv-accent:    #d97706;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento Rose */
+.conversations[data-accent="rose"] {
+    --bv-accent:    #e11d48;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento Slate */
+.conversations[data-accent="slate"] {
+    --bv-accent:    #334155;
+    --bv-accent-fg: #ffffff;
+}
+
+/* Acento del proyecto (#90bb13 según CLAUDE.md) — opcional */
+.conversations[data-accent="brand"] {
+    --bv-accent:    #90bb13;
+    --bv-accent-fg: #ffffff;
+}
+
+
+/* ═══ COLORES SEMÁNTICOS (estados/feedback) ══════════════════════════════════
+   Usados en: SLA pills, badges, status dots, alertas
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    /* Success — SLA OK, conectado, entregado */
+    --bv-success:        #0d7a3f;
+    --bv-success-bg:     #ecfdf5;
+    --bv-success-border: #a7f3d0;
+
+    /* Warning — SLA warn, pendiente, en proceso */
+    --bv-warning:        #b45309;
+    --bv-warning-bg:     #fffbeb;
+    --bv-warning-border: #fde68a;
+
+    /* Danger — SLA breach, urgente, error */
+    --bv-danger:         #b91c1c;
+    --bv-danger-bg:      #fef2f2;
+    --bv-danger-border:  #fecaca;
+
+    /* Info — leído, link, neutral activo */
+    --bv-info:           #64748b;
+    --bv-info-bg:        #f4f4f5;
+    --bv-info-border:    #e4e4e7;
+
+    /* Neutral — placeholder, deshabilitado */
+    --bv-neutral:        #71717a;
+    --bv-neutral-bg:     #f4f4f5;
+    --bv-neutral-border: #e4e4e7;
+}
+
+
+/* ═══ COLORES DE CANALES (WhatsApp, FB, IG, etc.) ════════════════════════════
+   Mantener marcas oficiales para reconocimiento inmediato
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bv-channel-whatsapp:  #25d366;
+    --bv-channel-facebook:  #1877f2;
+    --bv-channel-instagram: linear-gradient(135deg, #f58529, #dd2a7b, #8134af);
+    --bv-channel-email:     #6b7280;
+    --bv-channel-web:       #18181b;
+    --bv-channel-telegram:  #0088cc;
+    --bv-channel-sms:       #10b981;
+    --bv-channel-twitter:   #1da1f2;
+}
+
+
+/* ═══ AVATARES — GRADIENTES (8 variantes) ════════════════════════════════════
+   Asignación automática vía hash del nombre o ID
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bv-av-c1: linear-gradient(135deg, #18181b, #52525b);  /* naranja → rosa */
+    --bv-av-c2: linear-gradient(135deg, #8b5cf6, #6366f1);  /* púrpura → indigo */
+    --bv-av-c3: linear-gradient(135deg, #06b6d4, #0ea5e9);  /* cian → azul */
+    --bv-av-c4: linear-gradient(135deg, #10b981, #059669);  /* esmeralda */
+    --bv-av-c5: linear-gradient(135deg, #ec4899, #f43f5e);  /* rosa → rojo */
+    --bv-av-c6: linear-gradient(135deg, #3b82f6, #6366f1);  /* azul → indigo */
+    --bv-av-c7: linear-gradient(135deg, #f59e0b, #d97706);  /* ámbar */
+    --bv-av-c8: linear-gradient(135deg, #14b8a6, #0d9488);  /* teal */
+}
+
+
+/* ═══ PRIORIDADES (paleta grises + rojos, sin amarillo/azul) ═════════════════
+   Decisión del chat: usar grises escalonados + rojos para urgentes
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bv-priority-low:     #a1a1aa;   /* gris claro */
+    --bv-priority-normal:  #52525b;   /* gris medio */
+    --bv-priority-high:    #b91c1c;   /* rojo */
+    --bv-priority-urgent:  #dc2626;   /* rojo intenso (con halo) */
+
+    --bv-priority-urgent-bg:    #fef2f2;
+    --bv-priority-urgent-glow:  rgba(220, 38, 38, .18);
+}
+
+
+/* ═══ ESPACIADO ═══════════════════════════════════════════════════════════════ */
+:root {
+    --bv-space-1:  4px;
+    --bv-space-2:  6px;
+    --bv-space-3:  8px;
+    --bv-space-4:  10px;
+    --bv-space-5:  12px;
+    --bv-space-6:  14px;
+    --bv-space-7:  16px;
+    --bv-space-8:  20px;
+    --bv-space-9:  24px;
+    --bv-space-10: 32px;
+}
+
+
+/* ═══ RADIOS ════════════════════════════════════════════════════════════════ */
+:root {
+    --bv-radius-xs:  4px;     /* badges, kbd */
+    --bv-radius-sm:  6px;     /* small chips */
+    --bv-radius:     10px;    /* default — buttons, inputs */
+    --bv-radius-md:  9px;     /* nav items, action buttons */
+    --bv-radius-lg:  12px;    /* avatars grandes, composer box */
+    --bv-radius-xl:  14px;    /* modales, bubbles */
+    --bv-radius-2xl: 16px;    /* right panel hero avatar */
+    --bv-radius-pill: 999px;  /* píldoras, filtros */
+}
+
+
+/* ═══ SOMBRAS ═══════════════════════════════════════════════════════════════ */
+:root {
+    --bv-shadow-card:
+        0 1px 3px rgba(0, 0, 0, .06),
+        0 1px 2px rgba(0, 0, 0, .04);
+
+    --bv-shadow-modal:
+        0 10px 40px -8px rgba(0, 0, 0, .18),
+        0 4px 12px -4px rgba(0, 0, 0, .08);
+
+    --bv-shadow-popover:
+        0 4px 12px rgba(0, 0, 0, .08);
+
+    --bv-shadow-inset:
+        inset 0 1px 0 rgba(255, 255, 255, .25),
+        0 1px 2px rgba(0, 0, 0, .04);
+
+    --bv-ring:
+        0 0 0 3px rgba(24, 24, 27, .08);
+
+    --bv-ring-danger:
+        0 0 0 3px rgba(220, 38, 38, .12);
+
+    --bv-ring-success:
+        0 0 0 2.5px rgba(13, 122, 63, .18);
+}
+
+
+/* ═══ DIMENSIONES DEL LAYOUT ═══════════════════════════════════════════════ */
+:root {
+    /* Filas grid */
+    --bv-topbar-height:    48px;
+    --bv-statusbar-height: 32px;
+
+    /* Columnas grid (4 columnas + right panel opcional) */
+    --bv-rail-width:    56px;
+    --bv-nav-width:     240px;
+    --bv-list-width:    360px;
+    --bv-right-width:   360px;
+
+    /* Tamaños de avatar */
+    --bv-av-size-xs:  24px;
+    --bv-av-size-sm:  30px;
+    --bv-av-size-md:  38px;   /* lista de conversaciones */
+    --bv-av-size-lg:  42px;   /* thread head */
+    --bv-av-size-xl:  64px;   /* right panel hero */
+
+    /* Tamaños de iconos */
+    --bv-icon-size-sm: 11px;
+    --bv-icon-size:    13px;
+    --bv-icon-size-lg: 15px;
+}
+
+
+/* ═══ TRANSICIONES ═════════════════════════════════════════════════════════ */
+:root {
+    --bv-transition-fast:   .12s ease;
+    --bv-transition:        .14s ease;
+    --bv-transition-slow:   .25s ease-out;
+}
+
+
+/* ═══ TEMA OSCURO — overrides ═══════════════════════════════════════════════
+   Activar con [data-theme="dark"] en el body o en .conversations
+   ─────────────────────────────────────────────────────────────────────────── */
+.conversations[data-theme="dark"],
+[data-theme="dark"] .conversations {
+    --bv-text:        #f5f6f8;
+    --bv-text-soft:   #d4d4d8;
+    --bv-text-muted:  #a1a1aa;
+
+    --bv-bg:          #09090b;
+    --bv-bg-panel:    #18181b;
+    --bv-bg-subtle:   #27272a;
+
+    --bv-border:      #27272a;
+    --bv-border-soft: #3f3f46;
+
+    --bv-brand-bg:    #f5f6f8;
+    --bv-brand-fg:    #18181b;
+
+    --bv-accent:      #f5f6f8;
+    --bv-accent-fg:   #18181b;
+
+    --bv-success-bg:  rgba(13, 122, 63, .18);
+    --bv-warning-bg:  rgba(180, 83, 9, .18);
+    --bv-danger-bg:   rgba(185, 28, 28, .18);
+    --bv-info-bg:     rgba(100, 116, 139, .18);
+
+    --bv-shadow-modal:
+        0 10px 40px -8px rgba(0, 0, 0, .55),
+        0 4px 12px -4px rgba(0, 0, 0, .35);
+
+    --bv-shadow-card:
+        0 1px 3px rgba(0, 0, 0, .35),
+        0 1px 2px rgba(0, 0, 0, .25);
+
+    --bv-ring:
+        0 0 0 3px rgba(250, 250, 250, .12);
+}
+
+
+/* ═══ DENSIDAD DE LA LISTA ════════════════════════════════════════════════
+   Activar con [data-density="X"] en .conversations
+   ─────────────────────────────────────────────────────────────────────────── */
+.conversations[data-density="compact"] {
+    --bv-conv-padding-y: 9px;
+    --bv-conv-padding-x: 12px;
+}
+
+.conversations[data-density="normal"],
+.conversations {
+    --bv-conv-padding-y: 13px;
+    --bv-conv-padding-x: 14px;
+}
+
+.conversations[data-density="relaxed"] {
+    --bv-conv-padding-y: 16px;
+    --bv-conv-padding-x: 16px;
+}
+
+
+/* ═══ CUSTOMIZACIÓN POR PROYECTO ═══════════════════════════════════════════
+   Aquí puedes sobreescribir cualquier token por marca/proyecto.
+   Ejemplo: usar el verde corporativo del proyecto Alsernet (#90bb13)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Descomentar y editar para personalizar:
+
+.conversations {
+    --bv-brand-bg: #90bb13;
+    --bv-brand-fg: #ffffff;
+    --bv-accent: #90bb13;
+    --bv-accent-fg: #ffffff;
+}
+
+*/

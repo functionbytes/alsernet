@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskLivechat",
+    "alias": "helpdesklivechat",
+    "description": "Live chat widget público (canal Web), embeds en sitios externos y configuración del widget.",
+    "keywords": ["helpdesk", "livechat", "widget", "chat", "web"],
+    "priority": 50,
+    "providers": [
+        "Modules\\HelpdeskLivechat\\Providers\\HelpdeskLivechatServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk"]
+}

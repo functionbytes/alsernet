@@ -1,0 +1,15 @@
+/* TEAM */
+Company: Caixilharia Blanco
+Contact: info@caixilhariablanco.pt
+Location: Alcobaça, Portugal
+Site: https://caixilhariablanco.pt
+
+/* THANKS */
+Distribuidor oficial Salamander desde 2009
++2.000 clientes satisfechos
+4.9/5 en Google Maps
+
+/* SITE */
+Language: Español / Português
+Doctype: HTML5
+IDE: Laravel 12

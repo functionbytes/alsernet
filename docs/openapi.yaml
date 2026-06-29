@@ -1,0 +1,3328 @@
+openapi: 3.0.3
+
+info:
+  title: Alsernet (Inoqualab) API
+  version: "1.0.0"
+  description: |
+    REST API for the Alsernet system. All endpoints are under the `/api/v1` prefix.
+
+    **Viewing this spec**: Paste this file at https://editor.swagger.io or import it
+    into Postman / Insomnia for an interactive explorer.
+
+    **Authentication**: Protected endpoints require a Laravel Sanctum bearer token.
+    Obtain one by authenticating through the application's login flow and including
+    the token in every request as `Authorization: Bearer <token>`.
+
+servers:
+  - url: "{baseUrl}/api/v1"
+    description: API v1
+    variables:
+      baseUrl:
+        default: "http://localhost"
+        description: Base URL of the application (no trailing slash)
+
+# ---------------------------------------------------------------------------
+# Security schemes
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Laravel Sanctum token obtained after login.
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    # --- Generic wrappers -------------------------------------------------
+
+    SuccessEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "OK"
+        data:
+          description: Present when the endpoint returns a single object or flat payload.
+
+    PaginationMeta:
+      type: object
+      required: [current_page, last_page, per_page, total]
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 5
+        per_page:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 97
+
+    ErrorEnvelope:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Unauthenticated."
+        errors:
+          type: object
+          description: Field-level validation errors (present on 422 responses).
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+    # --- Health -----------------------------------------------------------
+
+    PingData:
+      type: object
+      required: [status, timestamp]
+      properties:
+        status:
+          type: string
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-04-02T10:00:00+00:00"
+
+    HealthChecks:
+      type: object
+      required: [database, cache]
+      properties:
+        database:
+          type: boolean
+          description: Whether the database connection is healthy.
+          example: true
+        cache:
+          type: boolean
+          description: Whether the Redis/cache connection is healthy.
+          example: true
+
+    # --- User (me) --------------------------------------------------------
+
+    UserProfile:
+      type: object
+      required: [id, name, email, roles, permissions, created_at]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Jane Doe"
+        email:
+          type: string
+          format: email
+          example: "jane@example.com"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["admin", "editor"]
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["Backup.schedules.index", "Reviews.viewAny"]
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-01-15T08:30:00+00:00"
+
+    # --- Pages ------------------------------------------------------------
+
+    PublicPage:
+      type: object
+      required: [id, title, slug, url, published_at]
+      properties:
+        id:
+          type: integer
+          example: 42
+        title:
+          type: string
+          example: "Sobre nosotros"
+        slug:
+          type: string
+          example: "sobre-nosotros"
+        description:
+          type: string
+          nullable: true
+          example: "Conoce nuestro equipo y misión."
+        excerpt:
+          type: string
+          nullable: true
+          example: "Somos una empresa dedicada a..."
+        template:
+          type: string
+          nullable: true
+          example: "default"
+        url:
+          type: string
+          format: uri
+          example: "http://localhost/sobre-nosotros"
+        featured_image:
+          type: string
+          format: uri
+          nullable: true
+          example: "http://localhost/storage/pages/sobre-nosotros.jpg"
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2025-03-01T00:00:00+00:00"
+
+    # --- Reviews ----------------------------------------------------------
+
+    ReviewLocation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 7
+        name:
+          type: string
+          example: "Oficina Central"
+
+    ReviewModeration:
+      type: object
+      properties:
+        is_visible:
+          type: boolean
+          example: true
+        is_featured:
+          type: boolean
+          example: false
+
+    ReviewReply:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 3
+        body:
+          type: string
+          example: "Gracias por su comentario."
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-10T09:00:00+00:00"
+
+    Review:
+      type: object
+      required: [id, rating, ratingLabel, reviewTime, hasGoogleReply, hasComment, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          example: 101
+        googleReviewId:
+          type: string
+          nullable: true
+          example: "ChIJN1t_tDeuEmsRUsoyG83frY4"
+        reviewerName:
+          type: string
+          nullable: true
+          example: "Ana García"
+        reviewerPhotoUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://lh3.googleusercontent.com/a/abc123"
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Numeric star rating (1–5).
+          example: 5
+        ratingLabel:
+          type: string
+          enum: [ONE, TWO, THREE, FOUR, FIVE]
+          example: "FIVE"
+        comment:
+          type: string
+          nullable: true
+          example: "Excelente servicio, muy recomendable."
+        reviewTime:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+        updateTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-21T09:00:00+00:00"
+        googleReplyText:
+          type: string
+          nullable: true
+          example: "Muchas gracias por su reseña."
+        googleReplyTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-22T10:00:00+00:00"
+        hasGoogleReply:
+          type: boolean
+          example: true
+        hasComment:
+          type: boolean
+          example: true
+        syncedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-20T15:00:00+00:00"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-03-22T10:01:00+00:00"
+        location:
+          $ref: "#/components/schemas/ReviewLocation"
+        moderation:
+          nullable: true
+          description: Only included when the authenticated user has the viewAny permission.
+          allOf:
+            - $ref: "#/components/schemas/ReviewModeration"
+        replies:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewReply"
+
+    ReviewStats:
+      type: object
+      required:
+        - totalReviews
+        - averageRating
+        - ratingDistribution
+        - totalVisible
+        - totalFeatured
+        - totalWithComment
+        - totalWithGoogleReply
+      properties:
+        totalReviews:
+          type: integer
+          example: 248
+        averageRating:
+          type: number
+          format: float
+          example: 4.72
+        ratingDistribution:
+          type: object
+          required: ["1", "2", "3", "4", "5"]
+          properties:
+            "5":
+              type: integer
+              example: 180
+            "4":
+              type: integer
+              example: 40
+            "3":
+              type: integer
+              example: 15
+            "2":
+              type: integer
+              example: 8
+            "1":
+              type: integer
+              example: 5
+        totalVisible:
+          type: integer
+          example: 220
+        totalFeatured:
+          type: integer
+          example: 12
+        totalWithComment:
+          type: integer
+          example: 195
+        totalWithGoogleReply:
+          type: integer
+          example: 130
+
+    # --- Backup schedules ------------------------------------------------
+
+    BackupScheduleSummary:
+      type: object
+      required: [id, name, enabled, frequency, scheduled_time]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Respaldo diario BD"
+        enabled:
+          type: boolean
+          example: true
+        frequency:
+          type: string
+          example: "daily"
+        scheduled_time:
+          type: string
+          example: "02:00"
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-01T02:00:00+00:00"
+        next_run_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-02T02:00:00+00:00"
+
+    BackupScheduleDetail:
+      allOf:
+        - $ref: "#/components/schemas/BackupScheduleSummary"
+        - type: object
+          properties:
+            days_of_week:
+              type: array
+              nullable: true
+              items:
+                type: integer
+                minimum: 0
+                maximum: 6
+              example: [1, 3, 5]
+            days_of_month:
+              type: array
+              nullable: true
+              items:
+                type: integer
+                minimum: 1
+                maximum: 31
+              example: [1, 15]
+            custom_interval_hours:
+              type: integer
+              nullable: true
+              example: null
+            backup_types:
+              type: array
+              nullable: true
+              items:
+                type: string
+              example: ["database", "files"]
+
+    SocialAccount:
+      type: object
+      required: [id, name, platform, external_id, is_active, comments_enabled]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Alsernet Facebook"
+        platform:
+          type: string
+          enum: [facebook, instagram, whatsapp, tiktok, x, linkedin]
+          example: "facebook"
+        account_type:
+          type: string
+          enum: [page, profile, business]
+          nullable: true
+          example: "page"
+        external_id:
+          type: string
+          example: "123456789012345"
+        username:
+          type: string
+          nullable: true
+          example: "alsernet"
+        profile_url:
+          type: string
+          format: uri
+          nullable: true
+          example: "https://facebook.com/alsernet"
+        is_active:
+          type: boolean
+          example: true
+        comments_enabled:
+          type: boolean
+          example: true
+        messages_enabled:
+          type: boolean
+          example: true
+        auto_reply_enabled:
+          type: boolean
+          example: false
+        consecutive_failures:
+          type: integer
+          example: 0
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-01T10:00:00+00:00"
+        last_error_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        token_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-15T08:30:00+00:00"
+
+    SocialComment:
+      type: object
+      required: [id, platform, author_name, body, status, is_spam]
+      properties:
+        id:
+          type: integer
+          example: 101
+        platform:
+          type: string
+          example: "facebook"
+        author_name:
+          type: string
+          example: "Ana García"
+        author_username:
+          type: string
+          nullable: true
+          example: "ana_garcia"
+        body:
+          type: string
+          example: "Excelente servicio, muy recomendable."
+        intent:
+          type: string
+          nullable: true
+          example: "praise"
+        intent_confidence:
+          type: number
+          format: float
+          nullable: true
+          example: 0.95
+        urgency:
+          type: string
+          enum: [low, medium, high, critical]
+          nullable: true
+          example: "medium"
+        status:
+          type: string
+          enum: [pending, replied, escalated, spam]
+          example: "pending"
+        reply_type:
+          type: string
+          enum: [manual, auto]
+          nullable: true
+          example: null
+        reply_body:
+          type: string
+          nullable: true
+          example: null
+        replied_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        is_mention:
+          type: boolean
+          example: false
+        is_spam:
+          type: boolean
+          example: false
+        is_hidden:
+          type: boolean
+          example: false
+        assigned_to_user_id:
+          type: integer
+          nullable: true
+          example: null
+        assigned_user:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              example: 5
+            name:
+              type: string
+              example: "Juan Pérez"
+        social_account:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/SocialAccount"
+        posted_at:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-03-20T14:22:00+00:00"
+
+    SocialRule:
+      type: object
+      required: [id, name, conditions, actions, is_active]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Responder a preguntas de horario"
+        description:
+          type: string
+          nullable: true
+          example: "Responde automáticamente cuando preguntan el horario."
+        platform:
+          type: string
+          enum: [facebook, instagram, whatsapp]
+          nullable: true
+          example: "facebook"
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "body"
+              operator:
+                type: string
+                example: "contains"
+              value:
+                type: string
+                example: "horario"
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "reply"
+              params:
+                type: object
+                nullable: true
+        priority:
+          type: integer
+          example: 10
+        is_active:
+          type: boolean
+          example: true
+        stop_processing:
+          type: boolean
+          example: false
+        trigger_count:
+          type: integer
+          example: 42
+        last_triggered_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-04-01T09:00:00+00:00"
+        valid_from:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        valid_until:
+          type: string
+          format: date
+          nullable: true
+          example: null
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-15T08:30:00+00:00"
+
+    SocialTemplate:
+      type: object
+      required: [id, name, body, is_active, is_default]
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Bienvenida"
+        description:
+          type: string
+          nullable: true
+          example: "Mensaje de bienvenida para nuevos seguidores."
+        platform:
+          type: string
+          enum: [facebook, instagram, whatsapp]
+          nullable: true
+          example: "facebook"
+        body:
+          type: string
+          example: "¡Hola {{name}}! Bienvenido a nuestra comunidad."
+        variables:
+          type: array
+          nullable: true
+          items:
+            type: string
+          example: ["name"]
+        quick_replies:
+          type: array
+          nullable: true
+          items:
+            type: string
+          example: ["Sí", "No"]
+        category:
+          type: string
+          nullable: true
+          example: "greeting"
+        is_active:
+          type: boolean
+          example: true
+        is_default:
+          type: boolean
+          example: false
+        usage_count:
+          type: integer
+          example: 15
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-01-15T08:30:00+00:00"
+
+    SocialStats:
+      type: object
+      required: [total, pending, replied, auto_replied, escalated, spam, intents]
+      properties:
+        total:
+          type: integer
+          example: 248
+        pending:
+          type: integer
+          example: 12
+        replied:
+          type: integer
+          example: 180
+        auto_replied:
+          type: integer
+          example: 45
+        escalated:
+          type: integer
+          example: 8
+        spam:
+          type: integer
+          example: 15
+        intents:
+          type: object
+          additionalProperties:
+            type: integer
+          example: { praise: 120, complaint: 30, question: 98 }
+
+    SocialBulkResult:
+      type: object
+      required: [message, results]
+      properties:
+        message:
+          type: string
+          example: "Procesados 5 comentarios."
+        results:
+          type: object
+          required: [processed, failed]
+          properties:
+            processed:
+              type: integer
+              example: 5
+            failed:
+              type: integer
+              example: 0
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # --- Health -------------------------------------------------------------
+
+  /ping:
+    get:
+      summary: Ping
+      description: Lightweight liveness probe. Returns `ok` with the current server timestamp. No authentication required.
+      operationId: health.ping
+      tags: [Health]
+      responses:
+        "200":
+          description: Application is alive.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/PingData"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  status: "ok"
+                  timestamp: "2026-04-02T10:00:00+00:00"
+
+  /health:
+    get:
+      summary: Health status
+      description: |
+        Checks the health of backing services (database and cache).
+        Returns HTTP 200 when all checks pass, or HTTP 503 when one or more checks fail.
+        No authentication required.
+      operationId: health.status
+      tags: [Health]
+      responses:
+        "200":
+          description: All systems operational.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: "#/components/schemas/HealthChecks"
+              example:
+                success: true
+                message: "All systems operational"
+                data:
+                  checks:
+                    database: true
+                    cache: true
+        "503":
+          description: One or more systems are degraded.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          checks:
+                            $ref: "#/components/schemas/HealthChecks"
+              example:
+                success: true
+                message: "Some systems degraded"
+                data:
+                  checks:
+                    database: true
+                    cache: false
+
+  # --- Pages --------------------------------------------------------------
+
+  /pages:
+    get:
+      summary: List published pages
+      description: |
+        Returns a paginated list of published pages. Public endpoint — no authentication required.
+        Rate-limited to **60 requests per minute** per IP.
+      operationId: pages.index
+      tags: [Pages]
+      parameters:
+        - name: search
+          in: query
+          required: false
+          description: Full-text search term (minimum 3 characters activates full-text search engine; shorter terms use a LIKE fallback).
+          schema:
+            type: string
+            example: "nosotros"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of published pages.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, links, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PublicPage"
+                  links:
+                    type: object
+                    description: Laravel pagination links (first, last, prev, next).
+                    properties:
+                      first:
+                        type: string
+                        format: uri
+                        nullable: true
+                      last:
+                        type: string
+                        format: uri
+                        nullable: true
+                      prev:
+                        type: string
+                        format: uri
+                        nullable: true
+                      next:
+                        type: string
+                        format: uri
+                        nullable: true
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "429":
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # --- Current user -------------------------------------------------------
+
+  /me:
+    get:
+      summary: Current user profile
+      description: Returns the profile of the currently authenticated user, including their assigned roles and permissions.
+      operationId: user.me
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user profile.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserProfile"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  id: 1
+                  name: "Jane Doe"
+                  email: "jane@example.com"
+                  roles: ["admin"]
+                  permissions: ["Backup.schedules.index", "Reviews.viewAny"]
+                  created_at: "2025-01-15T08:30:00+00:00"
+        "401":
+          description: Unauthenticated — missing or invalid bearer token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+              example:
+                success: false
+                message: "Unauthenticated."
+
+  # --- Reviews ------------------------------------------------------------
+
+  /reviews:
+    get:
+      summary: List reviews
+      description: |
+        Returns a paginated list of Google reviews. Requires the `viewAny` policy on the Review model.
+
+        All filter parameters are optional and can be combined.
+      operationId: reviews.index
+      tags: [Reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: location_id
+          in: query
+          required: false
+          description: Filter reviews by location ID.
+          schema:
+            type: integer
+            example: 7
+        - name: rating
+          in: query
+          required: false
+          description: Filter by star rating label.
+          schema:
+            type: string
+            enum: [ONE, TWO, THREE, FOUR, FIVE]
+            example: "FIVE"
+        - name: is_visible
+          in: query
+          required: false
+          description: When `true`, return only reviews marked visible by moderation.
+          schema:
+            type: boolean
+        - name: is_featured
+          in: query
+          required: false
+          description: When `true`, return only featured reviews.
+          schema:
+            type: boolean
+        - name: has_reply
+          in: query
+          required: false
+          description: Filter by whether a Google reply exists.
+          schema:
+            type: boolean
+        - name: has_comment
+          in: query
+          required: false
+          description: Filter by whether the reviewer left a written comment.
+          schema:
+            type: boolean
+        - name: per_page
+          in: query
+          required: false
+          description: Number of results per page (max 100, default 20).
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of reviews.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, message, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reviews retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Review"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the viewAny permission on reviews.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /reviews/stats:
+    get:
+      summary: Review statistics
+      description: |
+        Returns aggregate statistics for reviews. Results are cached for up to
+        5 minutes (configurable via `reviews.general.cache.stats_ttl_minutes`).
+
+        Requires the `viewAny` policy on the Review model.
+      operationId: reviews.stats
+      tags: [Reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: location_id
+          in: query
+          required: false
+          description: Scope statistics to a specific location.
+          schema:
+            type: integer
+            example: 7
+        - name: days
+          in: query
+          required: false
+          description: Restrict statistics to the last N days.
+          schema:
+            type: integer
+            example: 30
+      responses:
+        "200":
+          description: Review statistics payload.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/ReviewStats"
+              example:
+                success: true
+                message: "Statistics retrieved successfully"
+                data:
+                  totalReviews: 248
+                  averageRating: 4.72
+                  ratingDistribution:
+                    "5": 180
+                    "4": 40
+                    "3": 15
+                    "2": 8
+                    "1": 5
+                  totalVisible: 220
+                  totalFeatured: 12
+                  totalWithComment: 195
+                  totalWithGoogleReply: 130
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the viewAny permission on reviews.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # --- Backup schedules ---------------------------------------------------
+
+  /backup/schedules:
+    get:
+      summary: List backup schedules
+      description: |
+        Returns a paginated list of backup schedules (20 per page, ordered by name).
+
+        Requires **both** a valid bearer token and the `Backup.schedules.index` permission.
+      operationId: backup.schedules.index
+      tags: [Backup]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of backup schedules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BackupScheduleSummary"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+              example:
+                success: true
+                data:
+                  - id: 1
+                    name: "Respaldo diario BD"
+                    enabled: true
+                    frequency: "daily"
+                    scheduled_time: "02:00"
+                    last_run_at: "2026-04-01T02:00:00+00:00"
+                    next_run_at: "2026-04-02T02:00:00+00:00"
+                meta:
+                  current_page: 1
+                  last_page: 1
+                  per_page: 20
+                  total: 3
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `Backup.schedules.index` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /backup/schedules/{id}:
+    get:
+      summary: Get backup schedule
+      description: |
+        Returns full details for a single backup schedule, including scheduling configuration
+        and backup type list.
+
+        Requires **both** a valid bearer token and the `Backup.schedules.index` permission.
+      operationId: backup.schedules.show
+      tags: [Backup]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the backup schedule.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Full backup schedule detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/BackupScheduleDetail"
+              example:
+                success: true
+                message: "OK"
+                data:
+                  id: 1
+                  name: "Respaldo diario BD"
+                  enabled: true
+                  frequency: "daily"
+                  scheduled_time: "02:00"
+                  days_of_week: null
+                  days_of_month: null
+                  custom_interval_hours: null
+                  backup_types: ["database"]
+                  last_run_at: "2026-04-01T02:00:00+00:00"
+                  next_run_at: "2026-04-02T02:00:00+00:00"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `Backup.schedules.index` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Schedule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  # --- HelpdeskSocial -----------------------------------------------------
+
+  /helpdesk-social/accounts:
+    get:
+      summary: List social accounts
+      description: Returns a paginated list of social media accounts.
+      operationId: helpdesksocial.accounts.index
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of social accounts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialAccount"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+              example:
+                success: true
+                data:
+                  - id: 1
+                    name: "Alsernet Facebook"
+                    platform: "facebook"
+                    is_active: true
+                meta:
+                  current_page: 1
+                  last_page: 1
+                  per_page: 20
+                  total: 3
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `helpdesksocial.manage-accounts` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      summary: Create social account
+      description: Create a new social media account.
+      operationId: helpdesksocial.accounts.store
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, platform, external_id]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: "Alsernet Facebook"
+                platform:
+                  type: string
+                  enum: [facebook, instagram, whatsapp, tiktok, x, linkedin]
+                  example: "facebook"
+                account_type:
+                  type: string
+                  enum: [page, profile, business]
+                  nullable: true
+                  example: "page"
+                external_id:
+                  type: string
+                  maxLength: 255
+                  example: "123456789012345"
+                username:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                  example: "alsernet"
+                profile_url:
+                  type: string
+                  format: uri
+                  maxLength: 500
+                  nullable: true
+                  example: "https://facebook.com/alsernet"
+                page_access_token:
+                  type: string
+                  nullable: true
+                user_access_token:
+                  type: string
+                  nullable: true
+                comments_enabled:
+                  type: boolean
+                  example: true
+                messages_enabled:
+                  type: boolean
+                  example: true
+                auto_reply_enabled:
+                  type: boolean
+                  example: false
+      responses:
+        "201":
+          description: Social account created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialAccount"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/accounts/{account}:
+    get:
+      summary: Get social account
+      description: Returns a single social media account.
+      operationId: helpdesksocial.accounts.show
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: account
+          in: path
+          required: true
+          description: The ID of the social account.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Social account detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialAccount"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    put:
+      summary: Update social account
+      description: Update an existing social media account.
+      operationId: helpdesksocial.accounts.update
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: account
+          in: path
+          required: true
+          description: The ID of the social account.
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                username:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                profile_url:
+                  type: string
+                  format: uri
+                  maxLength: 500
+                  nullable: true
+                page_access_token:
+                  type: string
+                  nullable: true
+                user_access_token:
+                  type: string
+                  nullable: true
+                is_active:
+                  type: boolean
+                comments_enabled:
+                  type: boolean
+                messages_enabled:
+                  type: boolean
+                auto_reply_enabled:
+                  type: boolean
+                settings:
+                  type: object
+                  nullable: true
+      responses:
+        "200":
+          description: Social account updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialAccount"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      summary: Delete social account
+      description: Delete a social media account.
+      operationId: helpdesksocial.accounts.destroy
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: account
+          in: path
+          required: true
+          description: The ID of the social account.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Account deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Cuenta eliminada correctamente"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/accounts/{account}/toggle:
+    post:
+      summary: Toggle social account active status
+      description: Toggle the is_active flag of a social account.
+      operationId: helpdesksocial.accounts.toggle
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: account
+          in: path
+          required: true
+          description: The ID of the social account.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Account toggled.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialAccount"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox:
+    get:
+      summary: List inbox comments
+      description: Returns a paginated list of social comments (inbox items).
+      operationId: helpdesksocial.inbox.index
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: platform
+          in: query
+          required: false
+          description: Filter by platform.
+          schema:
+            type: string
+            example: "facebook"
+        - name: status
+          in: query
+          required: false
+          description: Filter by status.
+          schema:
+            type: string
+            enum: [pending, replied, escalated, spam]
+            example: "pending"
+        - name: intent
+          in: query
+          required: false
+          description: Filter by intent.
+          schema:
+            type: string
+            example: "praise"
+        - name: account_id
+          in: query
+          required: false
+          description: Filter by social account ID.
+          schema:
+            type: integer
+            example: 1
+        - name: assigned_to
+          in: query
+          required: false
+          description: Filter by assigned user ID.
+          schema:
+            type: integer
+            example: 5
+        - name: search
+          in: query
+          required: false
+          description: Search in body and author name.
+          schema:
+            type: string
+            example: "horario"
+        - name: date_from
+          in: query
+          required: false
+          description: Filter from date.
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+        - name: date_to
+          in: query
+          required: false
+          description: Filter to date.
+          schema:
+            type: string
+            format: date
+            example: "2026-04-30"
+        - name: sort_by
+          in: query
+          required: false
+          description: Sort field.
+          schema:
+            type: string
+            default: "posted_at"
+            example: "posted_at"
+        - name: sort_order
+          in: query
+          required: false
+          description: Sort direction.
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: "desc"
+            example: "desc"
+        - name: per_page
+          in: query
+          required: false
+          description: Results per page.
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            example: 25
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of comments.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialComment"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `helpdesksocial.view` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      summary: Bulk action on comments
+      description: Apply a bulk action to multiple comments.
+      operationId: helpdesksocial.inbox.bulk
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, action]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+                action:
+                  type: string
+                  enum: [spam, escalate, assign, reply]
+                  example: "spam"
+                params:
+                  type: object
+                  nullable: true
+                  description: Additional parameters depending on the action.
+                  example: { "user_id": 5 }
+      responses:
+        "200":
+          description: Bulk action result.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialBulkResult"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/stats:
+    get:
+      summary: Inbox statistics
+      description: Returns aggregate statistics for the inbox.
+      operationId: helpdesksocial.inbox.stats
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: platform
+          in: query
+          required: false
+          description: Filter by platform.
+          schema:
+            type: string
+            example: "facebook"
+        - name: account_id
+          in: query
+          required: false
+          description: Filter by social account ID.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Inbox statistics.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialStats"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/{comment}:
+    get:
+      summary: Get inbox comment
+      description: Returns a single inbox comment.
+      operationId: helpdesksocial.inbox.show
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comment
+          in: path
+          required: true
+          description: The ID of the comment.
+          schema:
+            type: integer
+            example: 101
+      responses:
+        "200":
+          description: Comment detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialComment"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Comment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/{comment}/reply:
+    post:
+      summary: Reply to comment
+      description: Reply to a social comment.
+      operationId: helpdesksocial.inbox.reply
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comment
+          in: path
+          required: true
+          description: The ID of the comment.
+          schema:
+            type: integer
+            example: 101
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body:
+                  type: string
+                  maxLength: 2000
+                  example: "Gracias por tu comentario."
+      responses:
+        "200":
+          description: Reply sent.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialComment"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Comment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error or comment already replied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/{comment}/spam:
+    post:
+      summary: Mark comment as spam
+      description: Mark a comment as spam.
+      operationId: helpdesksocial.inbox.spam
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comment
+          in: path
+          required: true
+          description: The ID of the comment.
+          schema:
+            type: integer
+            example: 101
+      responses:
+        "200":
+          description: Comment marked as spam.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialComment"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Comment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/{comment}/escalate:
+    post:
+      summary: Escalate comment
+      description: Mark a comment as escalated.
+      operationId: helpdesksocial.inbox.escalate
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comment
+          in: path
+          required: true
+          description: The ID of the comment.
+          schema:
+            type: integer
+            example: 101
+      responses:
+        "200":
+          description: Comment escalated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialComment"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Comment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/inbox/{comment}/assign:
+    post:
+      summary: Assign comment to user
+      description: Assign a comment to a specific user.
+      operationId: helpdesksocial.inbox.assign
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: comment
+          in: path
+          required: true
+          description: The ID of the comment.
+          schema:
+            type: integer
+            example: 101
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id:
+                  type: integer
+                  example: 5
+      responses:
+        "200":
+          description: Comment assigned.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialComment"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Comment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/rules:
+    get:
+      summary: List social rules
+      description: Returns a paginated list of social automation rules.
+      operationId: helpdesksocial.rules.index
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialRule"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `helpdesksocial.manage-rules` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      summary: Create social rule
+      description: Create a new automation rule.
+      operationId: helpdesksocial.rules.store
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, conditions, actions]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: "Responder a preguntas de horario"
+                description:
+                  type: string
+                  nullable: true
+                  example: "Responde automáticamente cuando preguntan el horario."
+                platform:
+                  type: string
+                  enum: [facebook, instagram, whatsapp]
+                  nullable: true
+                  example: "facebook"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: [field, operator, value]
+                    properties:
+                      field:
+                        type: string
+                        example: "body"
+                      operator:
+                        type: string
+                        example: "contains"
+                      value: {}
+                actions:
+                  type: array
+                  items:
+                    type: object
+                    required: [type]
+                    properties:
+                      type:
+                        type: string
+                        example: "reply"
+                      params:
+                        type: object
+                        nullable: true
+                priority:
+                  type: integer
+                  minimum: 0
+                  maximum: 9999
+                  example: 10
+                stop_processing:
+                  type: boolean
+                  example: false
+                valid_from:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: null
+                valid_until:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: null
+      responses:
+        "201":
+          description: Rule created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialRule"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/rules/{rule}:
+    get:
+      summary: Get social rule
+      description: Returns a single automation rule.
+      operationId: helpdesksocial.rules.show
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule
+          in: path
+          required: true
+          description: The ID of the rule.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Rule detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialRule"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Rule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    put:
+      summary: Update social rule
+      description: Update an existing automation rule.
+      operationId: helpdesksocial.rules.update
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule
+          in: path
+          required: true
+          description: The ID of the rule.
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  nullable: true
+                platform:
+                  type: string
+                  enum: [facebook, instagram, whatsapp]
+                  nullable: true
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: [field, operator, value]
+                    properties:
+                      field:
+                        type: string
+                      operator:
+                        type: string
+                      value: {}
+                actions:
+                  type: array
+                  items:
+                    type: object
+                    required: [type]
+                    properties:
+                      type:
+                        type: string
+                      params:
+                        type: object
+                        nullable: true
+                priority:
+                  type: integer
+                  minimum: 0
+                  maximum: 9999
+                is_active:
+                  type: boolean
+                stop_processing:
+                  type: boolean
+                valid_from:
+                  type: string
+                  format: date
+                  nullable: true
+                valid_until:
+                  type: string
+                  format: date
+                  nullable: true
+      responses:
+        "200":
+          description: Rule updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialRule"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Rule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      summary: Delete social rule
+      description: Delete an automation rule.
+      operationId: helpdesksocial.rules.destroy
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule
+          in: path
+          required: true
+          description: The ID of the rule.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Rule deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Regla eliminada correctamente"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Rule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/rules/{rule}/toggle:
+    post:
+      summary: Toggle rule active status
+      description: Toggle the is_active flag of a rule.
+      operationId: helpdesksocial.rules.toggle
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: rule
+          in: path
+          required: true
+          description: The ID of the rule.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Rule toggled.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialRule"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Rule not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/rules/simulate:
+    post:
+      summary: Simulate rules
+      description: Simulate rule matching against a sample comment.
+      operationId: helpdesksocial.rules.simulate
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body, platform]
+              properties:
+                body:
+                  type: string
+                  example: "¿Cuál es el horario de atención?"
+                platform:
+                  type: string
+                  enum: [facebook, instagram]
+                  example: "facebook"
+                intent:
+                  type: string
+                  nullable: true
+                  example: null
+      responses:
+        "200":
+          description: Simulation result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required: [classification, matched_rules]
+                    properties:
+                      classification:
+                        type: object
+                        properties:
+                          intent:
+                            type: string
+                            example: "question"
+                          confidence:
+                            type: number
+                            format: float
+                            example: 0.92
+                      matched_rules:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/SocialRule"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/templates:
+    get:
+      summary: List social templates
+      description: Returns a paginated list of response templates.
+      operationId: helpdesksocial.templates.index
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Page number.
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+      responses:
+        "200":
+          description: Paginated list of templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data, meta]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialTemplate"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `helpdesksocial.manage-templates` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      summary: Create social template
+      description: Create a new response template.
+      operationId: helpdesksocial.templates.store
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, body]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: "Bienvenida"
+                description:
+                  type: string
+                  nullable: true
+                  example: "Mensaje de bienvenida para nuevos seguidores."
+                platform:
+                  type: string
+                  enum: [facebook, instagram, whatsapp]
+                  nullable: true
+                  example: "facebook"
+                body:
+                  type: string
+                  maxLength: 5000
+                  example: "¡Hola {{name}}! Bienvenido a nuestra comunidad."
+                variables:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                  example: ["name"]
+                quick_replies:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                  example: ["Sí", "No"]
+                category:
+                  type: string
+                  maxLength: 50
+                  nullable: true
+                  example: "greeting"
+                is_default:
+                  type: boolean
+                  example: false
+      responses:
+        "201":
+          description: Template created.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialTemplate"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/templates/{template}:
+    get:
+      summary: Get social template
+      description: Returns a single response template.
+      operationId: helpdesksocial.templates.show
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          description: The ID of the template.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Template detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialTemplate"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Template not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    put:
+      summary: Update social template
+      description: Update an existing response template.
+      operationId: helpdesksocial.templates.update
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          description: The ID of the template.
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, body]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                description:
+                  type: string
+                  nullable: true
+                platform:
+                  type: string
+                  enum: [facebook, instagram, whatsapp]
+                  nullable: true
+                body:
+                  type: string
+                  maxLength: 5000
+                variables:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                quick_replies:
+                  type: array
+                  nullable: true
+                  items:
+                    type: string
+                category:
+                  type: string
+                  maxLength: 50
+                  nullable: true
+                is_active:
+                  type: boolean
+                is_default:
+                  type: boolean
+      responses:
+        "200":
+          description: Template updated.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SocialTemplate"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Template not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    delete:
+      summary: Delete social template
+      description: Delete a response template.
+      operationId: helpdesksocial.templates.destroy
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          description: The ID of the template.
+          schema:
+            type: integer
+            example: 1
+      responses:
+        "200":
+          description: Template deleted.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Plantilla eliminada correctamente"
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Template not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/templates/{template}/preview:
+    post:
+      summary: Preview template
+      description: Render a template with variables.
+      operationId: helpdesksocial.templates.preview
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: template
+          in: path
+          required: true
+          description: The ID of the template.
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [template_id]
+              properties:
+                template_id:
+                  type: integer
+                  description: The ID of the template to preview.
+                  example: 1
+                variables:
+                  type: object
+                  nullable: true
+                  description: Variables to inject into the template.
+                  example: { "name": "Juan" }
+      responses:
+        "200":
+          description: Rendered template.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required: [rendered]
+                    properties:
+                      rendered:
+                        type: string
+                        example: "¡Hola Juan! Bienvenido a nuestra comunidad."
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "422":
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/analytics/overview:
+    get:
+      summary: Analytics overview
+      description: Returns an overview of social analytics for a date range.
+      operationId: helpdesksocial.analytics.overview
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Start date.
+          schema:
+            type: string
+            format: date
+            example: "2026-03-01"
+        - name: until
+          in: query
+          required: false
+          description: End date.
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+      responses:
+        "200":
+          description: Analytics overview.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required: [period, summary, by_date, by_platform, by_intent]
+                    properties:
+                      period:
+                        type: object
+                        properties:
+                          since:
+                            type: string
+                            format: date
+                            example: "2026-03-01"
+                          until:
+                            type: string
+                            format: date
+                            example: "2026-04-01"
+                      summary:
+                        type: object
+                        properties:
+                          total_comments:
+                            type: integer
+                            example: 248
+                          total_replies:
+                            type: integer
+                            example: 180
+                          avg_response_time_min:
+                            type: number
+                            format: float
+                            nullable: true
+                            example: 15.5
+                          auto_reply_rate:
+                            type: number
+                            format: float
+                            example: 18.2
+                      by_date:
+                        type: object
+                        additionalProperties:
+                          type: object
+                          properties:
+                            comments:
+                              type: integer
+                              example: 10
+                            replies:
+                              type: integer
+                              example: 8
+                            avg_response_time_min:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 12.3
+                            escalations:
+                              type: integer
+                              example: 1
+                            metrics_automation_rate:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 0.25
+                      by_platform:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              example: 120
+                            replies:
+                              type: integer
+                              example: 90
+                            auto_replied:
+                              type: integer
+                              example: 30
+                      by_intent:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              example: 80
+                            avg_urgency:
+                              type: number
+                              format: float
+                              example: 2.5
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden — user lacks the `helpdesksocial.view-analytics` permission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/analytics/metrics:
+    get:
+      summary: Daily metrics
+      description: Returns daily metrics for a date range.
+      operationId: helpdesksocial.analytics.metrics
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Start date.
+          schema:
+            type: string
+            format: date
+            example: "2026-03-01"
+        - name: until
+          in: query
+          required: false
+          description: End date.
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+      responses:
+        "200":
+          description: Daily metrics.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required: [period, metrics]
+                    properties:
+                      period:
+                        type: object
+                        properties:
+                          since:
+                            type: string
+                            format: date
+                            example: "2026-03-01"
+                          until:
+                            type: string
+                            format: date
+                            example: "2026-04-01"
+                      metrics:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              format: date
+                              example: "2026-03-01"
+                            total_comments:
+                              type: integer
+                              example: 10
+                            total_replies:
+                              type: integer
+                              example: 8
+                            avg_response_time_min:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 12.3
+                            auto_reply_rate:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 25.0
+                            escalation_rate:
+                              type: number
+                              format: float
+                              example: 5.0
+                            avg_sentiment:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 12.5
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /helpdesk-social/analytics/agents:
+    get:
+      summary: Agent performance
+      description: Returns agent performance metrics for a date range.
+      operationId: helpdesksocial.analytics.agents
+      tags: [HelpdeskSocial]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          description: Start date.
+          schema:
+            type: string
+            format: date
+            example: "2026-03-01"
+        - name: until
+          in: query
+          required: false
+          description: End date.
+          schema:
+            type: string
+            format: date
+            example: "2026-04-01"
+      responses:
+        "200":
+          description: Agent performance.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required: [period, agents]
+                    properties:
+                      period:
+                        type: object
+                        properties:
+                          since:
+                            type: string
+                            format: date
+                            example: "2026-03-01"
+                          until:
+                            type: string
+                            format: date
+                            example: "2026-04-01"
+                      agents:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            user_id:
+                              type: integer
+                              example: 5
+                            user_name:
+                              type: string
+                              example: "Juan Pérez"
+                            comments_assigned:
+                              type: integer
+                              example: 45
+                            comments_replied:
+                              type: integer
+                              example: 40
+                            avg_response_time_min:
+                              type: number
+                              format: float
+                              nullable: true
+                              example: 10.2
+        "401":
+          description: Unauthenticated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "403":
+          description: Forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+# ---------------------------------------------------------------------------
+# Tags (define display order in Swagger UI)
+# ---------------------------------------------------------------------------
+tags:
+  - name: Health
+    description: Liveness and readiness probes. No authentication required.
+  - name: Pages
+    description: Public listing of published CMS pages.
+  - name: User
+    description: Authenticated user profile.
+  - name: Reviews
+    description: Google review data and aggregated statistics.
+  - name: Backup
+    description: Read-only access to backup schedule configuration. Requires the `Backup.schedules.index` permission.
+  - name: HelpdeskSocial
+    description: Social helpdesk accounts, inbox, rules, templates and analytics. Requires helpdesksocial.* permissions.

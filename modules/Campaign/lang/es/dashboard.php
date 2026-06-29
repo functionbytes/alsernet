@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Panel',
+    'subtitle' => 'Resumen de tu actividad de email marketing.',
+    'count.campaigns' => 'Campañas',
+    'count.lists' => 'Listas',
+    'count.subscribers' => 'Suscriptores',
+    'count.forms' => 'Formularios',
+    'count.funnels' => 'Embudos',
+    'count.automations' => 'Automatizaciones',
+    'email.title' => 'Métricas de email',
+    'email.sent' => 'Enviados',
+    'email.opens' => 'Aperturas',
+    'email.clicks' => 'Clics',
+    'email.bounces' => 'Rebotes',
+    'email.open_rate' => 'Tasa de apertura',
+    'email.click_rate' => 'Tasa de clic',
+    'email.bounce_rate' => 'Tasa de rebote',
+    'trend.title' => 'Enviados — últimos 7 días',
+    'recent.title' => 'Campañas recientes',
+    'recent.empty' => 'Aún no hay campañas.',
+    'recent.name' => 'Nombre',
+    'recent.status' => 'Estado',
+    'recent.created' => 'Creada',
+];
