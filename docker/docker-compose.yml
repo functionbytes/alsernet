@@ -1,0 +1,298 @@
+name: system
+
+services:
+
+  # Servicio Laravel/PHP
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: system
+    container_name: system-app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+      - ./php/fpm-zz-custom.conf:/usr/local/etc/php-fpm.d/zz-custom.conf:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    # Permitir acceso a la red del host Mac
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "manager.test:host-gateway"
+      - "oracle.local:192.168.253.8"
+    # Configurar DNS para resolver IPs externas
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    # Permitir traffic de red externa
+    cap_add:
+      - NET_ADMIN
+    # Aumentar límites de archivos abiertos
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - APP_URL=http://localhost:8090
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
+      - DB_CONNECTION=mysql
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_DATABASE=system
+      - DB_USERNAME=root
+      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      - DB_DATABASE_PRESTASHOP=prestashop
+      - DB_DATABASE_WEBADMIN=webadmin
+      # Oracle Database
+      - ORACLE_HOST=192.168.253.8
+      - ORACLE_PORT=1521
+      - ORACLE_DATABASE=GESTCENT
+      - ORACLE_SERVICE_NAME=GESTCENT
+      - ORACLE_USERNAME=lectura
+      - ORACLE_PASSWORD=alsernet
+      - ORACLE_SCHEMA=DEVELOPER
+      - ORACLE_CHARSET=AL32UTF8
+      # AI Services
+      - OPENAI_API_KEY=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
+      # Manager webhook (recibe eventos desde manager)
+      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
+      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
+      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
+      - ERP_MANAGER_URL=http://host.docker.internal:8090
+      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
+      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
+      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      # Broadcasting — deshabilitado en Docker (no hay servidor Reverb local)
+      - BROADCAST_CONNECTION=null
+      - BROADCAST_DRIVER=null
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=system-mailpit
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+
+  # Redis — caché, sesiones y colas
+  redis:
+    image: redis:7-alpine
+    container_name: system-redis
+    restart: unless-stopped
+    command: redis-server --requirepass 6cWRY1PUmiwYciQxJXkg
+    ports:
+      - "6380:6379"
+    networks:
+      - system-network
+
+  # Redis Commander — UI web para Redis → http://localhost:8082
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: system-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8082:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:6cWRY1PUmiwYciQxJXkg
+    networks:
+      - system-network
+    depends_on:
+      - redis
+
+  # Mailpit — captura de emails en desarrollo
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: system-mailpit
+    restart: unless-stopped
+    ports:
+      - "1026:1025"   # SMTP
+      - "8026:8025"   # Web UI → http://localhost:8026
+    networks:
+      - system-network
+
+  # Queue worker — procesa colas sync, high, default, low
+  worker:
+    image: system
+    container_name: system-worker
+    restart: unless-stopped
+    working_dir: /tmp
+    command: php /var/www/artisan queue:work redis --queue=helpdesk-webhooks,webhooks,notifications-high,helpdesk-events,helpdesk,emails,notifications,broadcasts,exports,sync,drip,high,default,low --sleep=3 --tries=3 --timeout=960 --max-jobs=500
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - APP_URL=http://localhost:8090
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
+      - DB_CONNECTION=mysql
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_DATABASE=system
+      - DB_USERNAME=root
+      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      - DB_DATABASE_PRESTASHOP=prestashop
+      - DB_DATABASE_WEBADMIN=webadmin
+      - ORACLE_HOST=192.168.253.8
+      - ORACLE_PORT=1521
+      - ORACLE_DATABASE=GESTCENT
+      - ORACLE_SERVICE_NAME=GESTCENT
+      - ORACLE_USERNAME=lectura
+      - ORACLE_PASSWORD=alsernet
+      - ORACLE_SCHEMA=DEVELOPER
+      - ORACLE_CHARSET=AL32UTF8
+      - OPENAI_API_KEY=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
+      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
+      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
+      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
+      - ERP_MANAGER_URL=http://host.docker.internal:8090
+      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
+      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
+      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      - BROADCAST_CONNECTION=null
+      - BROADCAST_DRIVER=null
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=system-mailpit
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+    depends_on:
+      - app
+      - redis
+
+  # Scheduler — ejecuta artisan schedule:run cada minuto
+  scheduler:
+    image: system
+    container_name: system-scheduler
+    restart: unless-stopped
+    working_dir: /tmp
+    command: >
+      sh -c "while true; do php /var/www/artisan schedule:run --no-interaction >> /dev/null 2>&1; sleep 60; done"
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    environment:
+      - APP_URL=http://localhost:8090
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
+      - DB_CONNECTION=mysql
+      - DB_HOST=host.docker.internal
+      - DB_PORT=3306
+      - DB_DATABASE=system
+      - DB_USERNAME=root
+      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      - DB_DATABASE_PRESTASHOP=prestashop
+      - DB_DATABASE_WEBADMIN=webadmin
+      - ORACLE_HOST=192.168.253.8
+      - ORACLE_PORT=1521
+      - ORACLE_DATABASE=GESTCENT
+      - ORACLE_SERVICE_NAME=GESTCENT
+      - ORACLE_USERNAME=lectura
+      - ORACLE_PASSWORD=alsernet
+      - ORACLE_SCHEMA=DEVELOPER
+      - ORACLE_CHARSET=AL32UTF8
+      - OPENAI_API_KEY=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
+      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
+      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
+      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
+      - ERP_MANAGER_URL=http://host.docker.internal:8090
+      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
+      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
+      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
+      - BROADCAST_CONNECTION=null
+      - BROADCAST_DRIVER=null
+      - MAIL_MAILER=smtp
+      - MAIL_HOST=system-mailpit
+      - MAIL_PORT=1025
+      - MAIL_USERNAME=null
+      - MAIL_PASSWORD=null
+      - MAIL_ENCRYPTION=null
+    depends_on:
+      - app
+      - redis
+
+  # Servicio Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: system-nginx
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+      - "8490:443"
+    volumes:
+      - ../src:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - system-network
+    depends_on:
+      - app
+    dns:
+      - 127.0.0.1
+      - 8.8.8.8
+    environment:
+      - SERVER_NAME=system-docker.test
+      - UPSTREAM_HOST=app
+      - UPSTREAM_PORT=9000
+
+networks:
+  system-network:
+    driver: bridge
+    driver_opts:
+      # Permitir acceso a redes externas
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
