@@ -71,7 +71,7 @@ class HealthScoreBatchService
             $score += intdiv((int) ($closedCounts[$id] ?? 0), 5) * 20;
 
             $last = $lastContact[$id] ?? null;
-            if ($last && now()->diffInMonths($last) > 6) {
+            if ($last && abs(now()->diffInMonths($last)) > 6) {
                 $score -= 20;
             }
 
