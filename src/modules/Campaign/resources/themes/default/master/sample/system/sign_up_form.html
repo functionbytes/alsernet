@@ -1,0 +1,99 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untitled Page</title>
+
+    <style>
+        html {
+            margin: 0;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.4;
+        }
+        p, h1, h2, h3, h4, h5, h6, label, ul {
+            margin: 0;
+        }
+        a {
+            color: inherit;
+        }
+        [builder-element="PageElement"] {
+            min-height: 100vh;
+            display: block;
+            flex-direction: ;
+            justify-content: ;
+            align-items: ;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"]:not(:last-child) {
+            margin-bottom: 0px;
+        }
+
+        
+
+        
+        @media (min-width: 800px) {
+            [builder-element="PageElement"] > [builder-element="BlockElement"] {
+                max-width: 800px;
+            }
+        }
+        
+
+        
+        /* default_block_background_color targets the INNER styled div (`> :first-child`),
+           NOT the outer `<div builder-element="BlockElement">` wrapper. The outer is a
+           hover/selection anchor with no painting role; the inner is where the formatter
+           writes per-block bg + border + radius + padding. Painting the default bg on
+           the outer (legacy behavior, retired 2026-05-05) caused outer's flat-edge
+           rectangle to visually mask any per-block `border_radius`. Targeting the inner
+           lets default bg compose with per-block radius — they paint the same div,
+           formatter's `!important` inline style still wins when set. */
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            background-color: #FFFFFF;
+        }
+        
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            padding-top: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div builder-element="PageElement" style="background-color: rgb(244, 244, 244); padding: 40px 60px !important;"><div builder-element="BlockElement"><div style="background-color: #FFFFFF;">
+    <div builder-element="HeadingElement">
+    <h1 style="" data-bjs-inline-text="_i5ia7a31r">Welcome to {{LIST_NAME}}!</h1>
+
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_iu090m0un">{{LIST_NAME}}</p>
+</div><div builder-element="PElement"><p style="" data-bjs-inline-text="_2iw7gavue">{{CURRENT_DATE}}</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-top: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="DividerElement"><div style="padding-top: 10px !important; padding-bottom: 10px !important;">
+    <div style="background-color: #D0D0D0; height: 2px !important; border-top: 2px solid #D0D0D0; background-color: transparent; height: 0;"></div>
+</div>
+    </div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important; padding-bottom: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_fgjcfooyp"><strong>Note from {{LIST_NAME}}:</strong> At <strong>{{LIST_NAME}}</strong>, we’re excited to welcome you into our community of curious minds and passionate creators. Your subscription on <strong>{{CURRENT_DATE}}</strong> marks the beginning of your journey with us — where we’ll share insights, updates, and resources designed to inspire and support you.</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; padding-bottom: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_nmsj367jf">{{FIELDS}}</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; border-radius: 0px !important;">
+    <div builder-element="PElement"><p style="" data-bjs-inline-text="_sunlakamz">{{SUBSCRIBE_BUTTON}}</p>
+</div>
+</div></div><div builder-element="BlockElement"><div style="background-color: #FFFFFF; padding-top: 60px !important;">
+    <div builder-element="PElement"><p style="font-size: 13px !important; text-align: center;" data-bjs-inline-text="_m3xhrabvk">Copyright (C). {{LIST_NAME}} | This is an automated message, please do not reply.</p>
+</div>
+</div></div></div>
+
+</body></html>

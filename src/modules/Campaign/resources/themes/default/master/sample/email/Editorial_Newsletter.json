@@ -1,0 +1,912 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#1e4634",
+        "padding_top": 40,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": null,
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_right": 0,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "70%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 20
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_size": 60,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h1",
+                                            "text": "The GARDEN"
+                                        },
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_size": 60,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h1",
+                                            "text": "GAZETTE"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "30%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "height": "auto",
+                                                "align": "right",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/editorial_newsletter/logo.png",
+                                            "alt": "Alternative text",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "70%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Code Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_weight": "bold",
+                                                "font_size": 12,
+                                                "text_color": "#1e4634"
+                                            },
+                                            "text": "A NEWSLETTER FROM YOUR FRIENDS AT THE POTTED PLANTER"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "30%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Code Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_weight": "bold",
+                                                "font_size": 12,
+                                                "text_color": "#1e4634",
+                                                "text_align": "right"
+                                            },
+                                            "text": "VOLUME 3"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "height": "auto",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/editorial_newsletter/plant.png",
+                                            "alt": "Alternative text",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Code Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left"
+                                            },
+                                            "text": "PHOTOGRAPHY <i>by Jacob Barnes</i>"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "50%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_weight": "bold",
+                                                "font_size": 32,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h2",
+                                            "text": "The Science of Soil: Understanding Your Plant's Needs"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Code Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#1e4634"
+                                            },
+                                            "text": "WRITTEN <i>by Emily Greenberg</i>"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.25
+                                            },
+                                            "text": "Soil is the foundation of healthy plant growth, and understanding its properties is crucial for any plant enthusiast. At a basic level, soil is composed of mineral particles, organic matter, air, and water. The composition of soil can vary widely depending on factors such as climate, geology, and human activity, but all soils contain these basic components."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.25
+                                            },
+                                            "text": "One of the most important aspects of soil for plant growth is its texture. Soil texture refers to the size of mineral particles in the soil. This can range from clay (very small particles) to sand (large particles) with many variations in between. Soil texture affects water and nutrient retention and plant root growth."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 30
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.25
+                                            },
+                                            "text": "In addition to texture, soil fertility is also important for plant growth. Fertility refers to the amount and availability of essential plant nutrients such as nitrogen, phosphorus, and potassium. These nutrients are often added to soil through fertilizers, compost, and other organic matter.It is important to note that too much of a good thing can be harmful to plants. Excessive nutrients can lead to nutrient imbalances and toxicity.  Understanding soil composition and fertility is key to providing the optimal growing conditions for your plants."
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 20
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 40,
+                "padding_right": 20,
+                "padding_bottom": 40,
+                "padding_left": 20
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_weight": "bold",
+                                                "font_size": 20,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h4",
+                                            "text": "TIPS"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "height": "auto",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/editorial_newsletter/granny.png",
+                                            "alt": "Alternative text",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 30,
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Lora', Georgia, 'Times New Roman', serif",
+                                                "font_size": 16,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "Propagate Your Plants for More Greenery"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "Learn more →"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_weight": "bold",
+                                                "font_size": 20,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h4",
+                                            "text": "DESIGN"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "height": "auto",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/editorial_newsletter/garden.png",
+                                            "alt": "Alternative text",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 30,
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Lora', Georgia, 'Times New Roman', serif",
+                                                "font_size": 16,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "How to Choose the Right Pot for Your Plant"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "Read now →"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Lora, Georgia, 'Times New Roman', serif",
+                                                "font_weight": "bold",
+                                                "font_size": 20,
+                                                "text_color": "#1e4634",
+                                                "text_align": "left",
+                                                "text_direction": "ltr"
+                                            },
+                                            "type": "h4",
+                                            "text": "HEALTH"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "height": "auto",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/editorial_newsletter/flowers.png",
+                                            "alt": "Alternative text",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_right": 30,
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Lora', Georgia, 'Times New Roman', serif",
+                                                "font_size": 16,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "A Playlist Can Benefit Your Plants"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_bottom": 10
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                                                "font_size": 14,
+                                                "text_color": "#314841",
+                                                "line_height": 1.5
+                                            },
+                                            "text": "Listen now →"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 20
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 40,
+                "padding_bottom": 20
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 300,
+                        "height": "auto",
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/editorial_newsletter/planter.png",
+                    "alt": "The Potted Planter Logo",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "LinkElement",
+                    "template": "Link",
+                    "formats": {
+                        "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                        "font_size": 14,
+                        "text_color": "#1e4634",
+                        "text_align": "center"
+                    },
+                    "text": "View in browser",
+                    "url": "{{WEB_VIEW_URL}}",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": ""
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 10
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                        "font_size": 14,
+                        "text_color": "#314841",
+                        "text_align": "center",
+                        "line_height": 1.5,
+                        "letter_spacing": 0
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 30
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "'Source Sans 3', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+                        "font_size": 14,
+                        "text_color": "#314841",
+                        "text_align": "center",
+                        "line_height": 1.5,
+                        "letter_spacing": 0
+                    },
+                    "text": "If you no longer want to receive these emails, you can <a href=\"{{UNSUBSCRIBE_URL}}\">unsubscribe</a>"
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "medium",
+    "block_padding_bottom": 20,
+    "block_padding_top": 20,
+    "block_padding_right": 20,
+    "block_padding_left": 20,
+    "default_block_background_color": "#faded5"
+}

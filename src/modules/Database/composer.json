@@ -1,0 +1,33 @@
+{
+    "name": "modules/database",
+    "description": "Database Module - Database schema management, migrations, cleanup utilities",
+    "keywords": ["database", "migrations", "schema", "maintenance"],
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "require": {
+        "doctrine/dbal": "^4.3",
+        "setasign/fpdi-tcpdf": "^2.3"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Database\\": "app/",
+            "Modules\\Database\\Database\\Factories\\": "database/factories/",
+            "Modules\\Database\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Database\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,666 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#FFFFFF",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0,
+        "font_family": "Inter, Helvetica, Arial, sans-serif"
+    },
+    "page_title": "Our collection",
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 56,
+                "padding_bottom": 24
+            },
+            "elements": [
+                {
+                    "name": "ImageElement",
+                    "template": "Image",
+                    "formats": {
+                        "width": 120,
+                        "align": "center",
+                        "border_radius": 0
+                    },
+                    "src": "master/assets/image/McLogos/showcase.svg",
+                    "alt": "",
+                    "url": "",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "effect": {
+                        "grayscale": null,
+                        "sepia": null,
+                        "invert": null,
+                        "blur": null,
+                        "brightness": null,
+                        "contrast": null,
+                        "saturate": null,
+                        "hueRotate": null,
+                        "opacity": null
+                    },
+                    "crop": {
+                        "enabled": false,
+                        "ratioX": 3,
+                        "ratioY": 2,
+                        "zoom": 1,
+                        "posX": 50,
+                        "posY": 50
+                    }
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 16,
+                "padding_bottom": 8
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_weight": "700",
+                        "font_size": 32,
+                        "text_color": "#111111",
+                        "text_align": "center",
+                        "line_height": "1.1"
+                    },
+                    "type": "h1",
+                    "text": "Our collection"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 48
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 15,
+                        "text_color": "#6B7280",
+                        "text_align": "center",
+                        "line_height": "1.6"
+                    },
+                    "text": "Handmade ceramics — made to last a lifetime."
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 64
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "flex-start"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 8,
+                                        "padding_bottom": 12,
+                                        "padding_left": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "left",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/McShowcase/pitcher.svg",
+                                            "alt": "Handmade ceramic pitcher line illustration",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 4,
+                                                "ratioY": 5,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 8,
+                                        "padding_bottom": 4,
+                                        "padding_left": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_weight": "700",
+                                                "font_size": 16,
+                                                "text_color": "#111111",
+                                                "text_align": "left",
+                                                "line_height": "1.3"
+                                            },
+                                            "type": "h3",
+                                            "text": "Pitcher"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 8,
+                                        "padding_bottom": 0,
+                                        "padding_left": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 14,
+                                                "text_color": "#6B7280",
+                                                "text_align": "left"
+                                            },
+                                            "text": "$64.00"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 4,
+                                        "padding_bottom": 12,
+                                        "padding_left": 4
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "left",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/McShowcase/mug.svg",
+                                            "alt": "Handmade ceramic mug line illustration",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 4,
+                                                "ratioY": 5,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 4,
+                                        "padding_bottom": 4,
+                                        "padding_left": 4
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_weight": "700",
+                                                "font_size": 16,
+                                                "text_color": "#111111",
+                                                "text_align": "left",
+                                                "line_height": "1.3"
+                                            },
+                                            "type": "h3",
+                                            "text": "Mug"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 4,
+                                        "padding_bottom": 0,
+                                        "padding_left": 4
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 14,
+                                                "text_color": "#6B7280",
+                                                "text_align": "left"
+                                            },
+                                            "text": "$28.00"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "33.33%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 0,
+                                        "padding_bottom": 12,
+                                        "padding_left": 8
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "left",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/McShowcase/vase.svg",
+                                            "alt": "Handmade ceramic vase line illustration",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 4,
+                                                "ratioY": 5,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 0,
+                                        "padding_bottom": 4,
+                                        "padding_left": 8
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_weight": "700",
+                                                "font_size": 16,
+                                                "text_color": "#111111",
+                                                "text_align": "left",
+                                                "line_height": "1.3"
+                                            },
+                                            "type": "h3",
+                                            "text": "Vase"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_right": 0,
+                                        "padding_bottom": 0,
+                                        "padding_left": 8
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 14,
+                                                "text_color": "#6B7280",
+                                                "text_align": "left"
+                                            },
+                                            "text": "$48.00"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 48,
+                "padding_bottom": 48
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "center"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "40%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_bottom": 0
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "left",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/McShowcase/craft_hands.svg",
+                                            "alt": "Hands shaping clay on a potter's wheel",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 1,
+                                                "ratioY": 1,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "60%"
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_bottom": 8,
+                                        "padding_left": 32
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_weight": "700",
+                                                "font_size": 12,
+                                                "text_color": "#9CA3AF",
+                                                "letter_spacing": 2
+                                            },
+                                            "text": "THE CRAFT"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_bottom": 12,
+                                        "padding_left": 32
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_weight": "700",
+                                                "font_size": 22,
+                                                "text_color": "#111111",
+                                                "line_height": "1.3"
+                                            },
+                                            "type": "h2",
+                                            "text": "Hand-thrown in Portland, one of a hundred."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_bottom": 12,
+                                        "padding_left": 32
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 14,
+                                                "text_color": "#6B7280",
+                                                "line_height": "1.65"
+                                            },
+                                            "text": "Every piece begins on the wheel — stoneware clay, slow hands, no two alike. Cone-10 fired and glazed twice for a finish that earns its patina the longer you live with it."
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {
+                                        "padding_top": 0,
+                                        "padding_bottom": 0,
+                                        "padding_left": 32
+                                    },
+                                    "elements": [
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "font_weight": "500",
+                                                "font_size": 14,
+                                                "text_color": "#111111"
+                                            },
+                                            "text": "Read the journal →",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "border_top_style": "solid",
+                "border_top_width": 1,
+                "border_top_color": "#E5E7EB",
+                "padding_top": 24,
+                "padding_bottom": 12
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 12,
+                        "text_color": "#6B7280",
+                        "text_align": "center",
+                        "letter_spacing": 1
+                    },
+                    "text": "Shop · Story · Support · Help"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 0,
+                "padding_bottom": 48
+            },
+            "elements": [
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 13,
+                        "text_color": "#6B7280",
+                        "text_align": "center"
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "medium",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 40,
+    "block_padding_left": 40,
+    "default_block_background_color": "#FFFFFF"
+}

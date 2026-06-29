@@ -1,0 +1,14 @@
+{
+    "name": "Captcha",
+    "alias": "captcha",
+    "description": "reCAPTCHA and Math Captcha for form security",
+    "keywords": ["captcha", "recaptcha", "security", "math-captcha"],
+    "active": 1,
+    "order": 0,
+    "providers": [
+        "Modules\\Captcha\\Providers\\CaptchaServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

@@ -1,0 +1,386 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "background_color": "#3F130A",
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": "The Veronica Theatre",
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#3F130A",
+                "padding_top": 10,
+                "padding_bottom": 10
+            },
+            "elements": []
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#3F130A",
+                "padding_top": 25,
+                "padding_bottom": 35
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_family": "Arial Black",
+                        "font_size": 25,
+                        "text_color": "#FFFFFF",
+                        "text_align": "center",
+                        "letter_spacing": 1
+                    },
+                    "type": "h1",
+                    "text": "THE VERONICA THEATRE"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 60,
+                "padding_bottom": 60
+            },
+            "elements": [
+                {
+                    "name": "HeadingElement",
+                    "template": "Heading",
+                    "formats": {
+                        "font_family": "Georgia",
+                        "font_size": 52,
+                        "text_color": "#000000",
+                        "text_align": "center",
+                        "letter_spacing": 1,
+                        "padding_bottom": 20
+                    },
+                    "type": "h1",
+                    "text": "BUY ONE — GET ONE"
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_family": "Courier New",
+                        "font_size": 16,
+                        "text_color": "#000000",
+                        "text_align": "center",
+                        "line_height": 1.6,
+                        "padding_top": 10,
+                        "padding_bottom": 0
+                    },
+                    "text": "Hey, it’s been a while. We’d love to welcome you back with a special offer: <b>buy one full-priced ticket and get an additional ticket free!</b>"
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "background_color": "#EAE111",
+                "padding_top": 40,
+                "padding_bottom": 40
+            },
+            "elements": [
+                {
+                    "name": "GridElement",
+                    "template": "Grid",
+                    "formats": {
+                        "align_items": "stretch"
+                    },
+                    "cells": [
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "auto",
+                                "padding_top": 60,
+                                "padding_right": 20,
+                                "padding_left": 40
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "HeadingElement",
+                                            "template": "Heading",
+                                            "formats": {
+                                                "font_family": "Georgia",
+                                                "font_size": 22,
+                                                "text_color": "#000000",
+                                                "text_align": "left",
+                                                "padding_bottom": 8
+                                            },
+                                            "type": "h2",
+                                            "text": "UPCOMING SHOWS"
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_size": 20,
+                                                "text_color": "#000000",
+                                                "text_align": "left",
+                                                "padding_bottom": 35,
+                                                "padding_left": 90
+                                            },
+                                            "text": "↓"
+                                        },
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "font_family": "Georgia",
+                                                "font_size": 18,
+                                                "text_color": "#000000",
+                                                "text_align": "left",
+                                                "text_decoration": "underline"
+                                            },
+                                            "text": "Quest for Valoria",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "Courier New",
+                                                "font_size": 15,
+                                                "padding_bottom": 40
+                                            },
+                                            "text": "May 1 – June 30 • $25"
+                                        },
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "font_family": "Georgia",
+                                                "font_size": 18,
+                                                "text_color": "#000000",
+                                                "text_align": "left",
+                                                "text_decoration": "underline"
+                                            },
+                                            "text": "Reflection in Motion",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "Courier New",
+                                                "font_size": 15,
+                                                "padding_bottom": 40
+                                            },
+                                            "text": "May 15 – July 15 • $20"
+                                        },
+                                        {
+                                            "name": "LinkElement",
+                                            "template": "Link",
+                                            "formats": {
+                                                "font_family": "Georgia",
+                                                "font_size": 18,
+                                                "text_color": "#000000",
+                                                "text_align": "left",
+                                                "text_decoration": "underline"
+                                            },
+                                            "text": "Harmony High",
+                                            "url": "#",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "ariaLabel": ""
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "font_family": "Courier New",
+                                                "font_size": 15,
+                                                "padding_bottom": 50
+                                            },
+                                            "text": "May 1 – July 31 • $15"
+                                        },
+                                        {
+                                            "name": "PElement",
+                                            "template": "P",
+                                            "formats": {
+                                                "text_align": "left",
+                                                "padding_top": 10
+                                            },
+                                            "text": "<a href='#' style='background:#252525;color:#fff;padding:12px 36px;text-decoration:none;font-family:Arial;font-size:14px;border-radius:3px;display:inline-block;'>GET OFFER</a>"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        },
+                        {
+                            "name": "CellElement",
+                            "template": "Cell",
+                            "formats": {
+                                "width": "auto",
+                                "padding_right": 0,
+                                "padding_left": 0
+                            },
+                            "blocks": [
+                                {
+                                    "name": "BlockElement",
+                                    "template": "Block",
+                                    "formats": {},
+                                    "elements": [
+                                        {
+                                            "name": "ImageElement",
+                                            "template": "Image",
+                                            "formats": {
+                                                "width": "100%",
+                                                "align": "center",
+                                                "border_radius": 0
+                                            },
+                                            "src": "master/assets/image/ProductPromotion/image1.png",
+                                            "alt": "",
+                                            "url": "",
+                                            "target": "",
+                                            "rel": "",
+                                            "title": "",
+                                            "download": "",
+                                            "effect": {
+                                                "grayscale": null,
+                                                "sepia": null,
+                                                "invert": null,
+                                                "blur": null,
+                                                "brightness": null,
+                                                "contrast": null,
+                                                "saturate": null,
+                                                "hueRotate": null,
+                                                "opacity": null
+                                            },
+                                            "crop": {
+                                                "enabled": false,
+                                                "ratioX": 3,
+                                                "ratioY": 2,
+                                                "zoom": 1,
+                                                "posX": 50,
+                                                "posY": 50
+                                            }
+                                        }
+                                    ]
+                                }
+                            ],
+                            "vertical_align": "top"
+                        }
+                    ],
+                    "cell_gap": 0
+                }
+            ]
+        },
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {
+                "padding_top": 50,
+                "padding_bottom": 50
+            },
+            "elements": [
+                {
+                    "name": "SocialIconsElement",
+                    "template": "SocialIcons",
+                    "formats": {
+                        "background_position": "center",
+                        "background_size": "100%",
+                        "background_repeat": "no-repeat",
+                        "padding_bottom": 30
+                    },
+                    "items": [
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/ProductPromotion/facebook.png",
+                            "label": "Facebook"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/ProductPromotion/instagram.png",
+                            "label": "Instagram"
+                        },
+                        {
+                            "link": "#",
+                            "image_url": "master/assets/image/ProductPromotion/twitter.png",
+                            "label": "X"
+                        }
+                    ],
+                    "size": 36,
+                    "gap": 20,
+                    "align": "center"
+                },
+                {
+                    "name": "LinkElement",
+                    "template": "Link",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "#4A3034",
+                        "text_align": "center"
+                    },
+                    "text": "View in browser",
+                    "url": "{{WEB_VIEW_URL}}",
+                    "target": "",
+                    "rel": "",
+                    "title": "",
+                    "download": "",
+                    "ariaLabel": ""
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "#4A3034",
+                        "text_align": "center",
+                        "line_height": 1.4,
+                        "padding_bottom": 20
+                    },
+                    "text": "Copyright (C) {{CURRENT_YEAR}}. All rights reserved."
+                },
+                {
+                    "name": "PElement",
+                    "template": "P",
+                    "formats": {
+                        "font_size": 14,
+                        "text_color": "#4A3034",
+                        "text_align": "center",
+                        "line_height": 1.4
+                    },
+                    "text": "If you no longer want to receive these emails, you can <a href=\"{{UNSUBSCRIBE_URL}}\">unsubscribe</a>."
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "narrow",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 20,
+    "block_padding_left": 20,
+    "default_block_background_color": "#F8F5EE"
+}

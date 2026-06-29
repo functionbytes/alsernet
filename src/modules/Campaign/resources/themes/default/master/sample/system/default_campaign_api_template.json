@@ -1,0 +1,43 @@
+{
+    "theme": "default",
+    "name": "PageElement",
+    "template": "Page",
+    "formats": {
+        "padding_top": 0,
+        "padding_right": 0,
+        "padding_bottom": 0,
+        "padding_left": 0
+    },
+    "page_title": "Manage Your Subscription Preferences",
+    "blocks": [
+        {
+            "name": "BlockElement",
+            "template": "Block",
+            "formats": {},
+            "elements": [
+                {
+                    "name": "HTMLElement",
+                    "template": "HTML",
+                    "formats": {
+                        "background_position": "center",
+                        "background_size": "100%",
+                        "background_repeat": "no-repeat",
+                        "padding_top": 0,
+                        "padding_right": 0,
+                        "padding_bottom": 0,
+                        "padding_left": 0,
+                        "border_radius": 0
+                    },
+                    "html": "[HTML]"
+                }
+            ]
+        }
+    ],
+    "block_gap": 0,
+    "container_width": "auto",
+    "block_padding_bottom": 0,
+    "block_padding_top": 0,
+    "block_padding_right": 0,
+    "block_padding_left": 0,
+    "default_block_background_color": null
+}

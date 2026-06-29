@@ -47,6 +47,7 @@ class Campaign extends Model
     protected $fillable = [
         'name',
         'description',
+        'template_id',
         'type',
         'status',
         'content',

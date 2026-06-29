@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Ceramic serving bowl stacked on two plates with berries, herb sprig and rim pattern, editorial line drawing">
+  <rect width="400" height="400" fill="#F7F5F0"/>
+
+  <!-- ambient floor shadow -->
+  <ellipse cx="200" cy="342" rx="156" ry="7" fill="#C9C2B2" opacity="0.55"/>
+
+  <g fill="none" stroke="#1C1917" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- stack: lower plate -->
+    <ellipse cx="200" cy="332" rx="158" ry="14" fill="#FEFDFA" stroke-width="1.8"/>
+    <ellipse cx="200" cy="326" rx="158" ry="14" stroke-width="1" fill="none"/>
+    <!-- stack: upper plate -->
+    <ellipse cx="200" cy="318" rx="150" ry="13" fill="#FEFDFA" stroke-width="1.8"/>
+    <ellipse cx="200" cy="312" rx="150" ry="13" stroke-width="1" fill="none"/>
+
+    <!-- bowl body curve (above the plates) -->
+    <path d="M 54 186
+             C 58 246, 110 302, 200 302
+             C 290 302, 342 246, 346 186"
+          fill="#FEFDFA" stroke-width="2"/>
+
+    <!-- outer rim (wide ellipse) -->
+    <ellipse cx="200" cy="184" rx="150" ry="36" fill="#FEFDFA" stroke-width="2"/>
+    <!-- inner rim (thickness) -->
+    <ellipse cx="200" cy="188" rx="134" ry="30" fill="#F7F5F0" stroke="#C9C2B2" stroke-width="1.2"/>
+
+    <!-- inner decoration concentric rings -->
+    <ellipse cx="200" cy="192" rx="96" ry="17" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+    <ellipse cx="200" cy="196" rx="62" ry="10" stroke="#C9C2B2" stroke-width="0.9" fill="none"/>
+
+    <!-- rim pattern: tiny tick marks around outer edge (front arc) -->
+    <g stroke="#1C1917" stroke-width="1.2">
+      <line x1="66"  y1="174" x2="66"  y2="168"/>
+      <line x1="88"  y1="170" x2="88"  y2="163"/>
+      <line x1="112" y1="167" x2="112" y2="160"/>
+      <line x1="140" y1="165" x2="140" y2="158"/>
+      <line x1="170" y1="164" x2="170" y2="157"/>
+      <line x1="200" y1="164" x2="200" y2="157"/>
+      <line x1="230" y1="164" x2="230" y2="157"/>
+      <line x1="260" y1="165" x2="260" y2="158"/>
+      <line x1="288" y1="167" x2="288" y2="160"/>
+      <line x1="312" y1="170" x2="312" y2="163"/>
+      <line x1="334" y1="174" x2="334" y2="168"/>
+    </g>
+
+    <!-- leaf accent (larger, more defined) -->
+    <path d="M 218 184 C 232 174, 252 176, 258 188
+             C 250 198, 230 196, 218 184 Z"
+          fill="#C9C2B2" stroke="#1C1917" stroke-width="1.2"/>
+    <!-- leaf vein -->
+    <path d="M 222 185 C 234 184, 246 186, 254 189" stroke="#1C1917" stroke-width="0.9" fill="none"/>
+
+    <!-- three berries inside the bowl -->
+    <circle cx="178" cy="192" r="5.2" fill="#1C1917" stroke="none"/>
+    <circle cx="174" cy="192" r="1" fill="#FEFDFA" stroke="none"/>
+    <circle cx="204" cy="198" r="5.2" fill="#1C1917" stroke="none"/>
+    <circle cx="200" cy="198" r="1" fill="#FEFDFA" stroke="none"/>
+    <circle cx="192" cy="184" r="4.4" fill="#1C1917" stroke="none"/>
+    <circle cx="189" cy="184" r="0.9" fill="#FEFDFA" stroke="none"/>
+
+    <!-- herb sprig emerging over rim (left) -->
+    <path d="M 98 168 C 106 152, 118 144, 132 142" stroke="#1C1917" stroke-width="1.2"/>
+    <path d="M 112 152 C 118 146, 122 144, 128 146" stroke="#1C1917" stroke-width="0.9"/>
+    <path d="M 108 158 C 102 154, 100 150, 102 146" stroke="#1C1917" stroke-width="0.9"/>
+    <ellipse cx="128" cy="141" rx="4" ry="2" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.9" transform="rotate(-30 128 141)"/>
+    <ellipse cx="118" cy="148" rx="3.4" ry="1.8" fill="#C9C2B2" stroke="#1C1917" stroke-width="0.8" transform="rotate(-20 118 148)"/>
+
+    <!-- bowl body volume hatching (subtle, right side) -->
+    <path d="M 312 212 C 322 244, 306 280, 272 296" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 88 212 C 80 242, 92 278, 124 294" stroke="#C9C2B2" stroke-width="0.8" opacity="0.75"/>
+
+    <!-- floor line -->
+    <line x1="32" y1="350" x2="368" y2="350" stroke="#C9C2B2" stroke-width="1"/>
+  </g>
+</svg>

@@ -1,0 +1,980 @@
+/* ================================================================
+   A/B Test Wizard — Premium UI Components
+   Namespace: ab-  |  Uses design tokens from variables.css
+   ================================================================ */
+
+@import url('variables.css');
+
+/* ----------------------------------------------------------------
+   ab-layout — Two-column layout for config + sidebar
+   ---------------------------------------------------------------- */
+.ab-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: var(--space-6);
+    align-items: start;
+}
+
+@media (max-width: 960px) {
+    .ab-layout { grid-template-columns: 1fr; }
+}
+
+/* ----------------------------------------------------------------
+   ab-slider — Custom range input for test percentage
+   ---------------------------------------------------------------- */
+.ab-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(to right, var(--color-teal) 0%, var(--color-border) 0%);
+    outline: none;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ab-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-teal);
+    cursor: pointer;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+    border: 3px solid var(--color-card-bg);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ab-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+}
+
+.ab-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-teal);
+    cursor: pointer;
+    border: 3px solid var(--color-card-bg);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+
+/* ----------------------------------------------------------------
+   ab-split-viz — Visual split bar (test vs winner)
+   ---------------------------------------------------------------- */
+.ab-split-viz {
+    margin-top: var(--space-4);
+}
+
+.ab-split-bar {
+    display: flex;
+    height: 8px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: var(--color-border);
+}
+
+.ab-split-bar-test {
+    background: var(--color-teal);
+    border-radius: var(--radius-full) 0 0 var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.ab-split-bar-winner {
+    background: var(--chart-2);
+    flex: 1;
+    border-radius: 0 var(--radius-full) var(--radius-full) 0;
+    transition: all 0.3s ease;
+}
+
+.ab-split-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+/* ----------------------------------------------------------------
+   ab-pct-badge — Animated percentage display
+   ---------------------------------------------------------------- */
+.ab-pct-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    padding: var(--space-1) var(--space-2-5);
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    transition: all 0.2s;
+}
+
+/* ----------------------------------------------------------------
+   ab-sidebar — Rollout summary sidebar card
+   ---------------------------------------------------------------- */
+.ab-sidebar {
+    position: sticky;
+    top: var(--space-6);
+}
+
+.ab-sidebar-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-5);
+}
+
+.ab-sidebar-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.ab-sidebar-title .material-symbols-rounded {
+    font-size: 20px;
+    color: var(--color-teal);
+}
+
+.ab-rollout-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+.ab-rollout-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.ab-rollout-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ab-rollout-icon .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.ab-rollout-icon--test {
+    background: var(--color-teal-light);
+    color: var(--color-teal);
+}
+
+.ab-rollout-icon--winner {
+    background: var(--chart-2-bg);
+    color: var(--chart-2);
+}
+
+.ab-rollout-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    margin-bottom: 2px;
+}
+
+.ab-rollout-value {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    line-height: 1;
+}
+
+.ab-rollout-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.ab-rollout-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ab-rollout-meta-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.ab-rollout-meta-value {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+/* ----------------------------------------------------------------
+   ab-strategy-cards — Exact / Hash radio selection
+   ---------------------------------------------------------------- */
+.ab-strategy-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+@media (max-width: 500px) {
+    .ab-strategy-cards { grid-template-columns: 1fr; }
+}
+
+.ab-strategy-card {
+    display: block;
+    cursor: pointer;
+}
+
+.ab-strategy-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ab-strategy-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-card-bg);
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    height: 100%;
+}
+
+.ab-strategy-body:hover {
+    border-color: var(--color-teal);
+}
+
+.ab-strategy-card input[type="radio"]:checked + .ab-strategy-body {
+    border-color: var(--color-teal);
+    background: var(--color-teal-light);
+    box-shadow: 0 0 0 3px var(--color-teal-ring);
+}
+
+.ab-strategy-title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.ab-strategy-title .material-symbols-rounded {
+    font-size: 18px;
+    color: var(--color-teal);
+}
+
+.ab-strategy-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+/* ----------------------------------------------------------------
+   ab-variant-grid — Variant cards container
+   ---------------------------------------------------------------- */
+.ab-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+}
+
+/* ----------------------------------------------------------------
+   ab-variant-card — Individual variant display card
+   ---------------------------------------------------------------- */
+.ab-variant-card {
+    background: var(--color-card-bg);
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.ab-variant-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-border-strong);
+}
+
+.ab-variant-card--control {
+    border-color: var(--color-border-strong);
+}
+
+.ab-variant-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4) 0;
+}
+
+.ab-variant-letter {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    color: var(--color-white);
+    flex-shrink: 0;
+}
+
+.ab-variant-letter--0 { background: var(--chart-1); }
+.ab-variant-letter--1 { background: var(--chart-6); }
+.ab-variant-letter--2 { background: var(--chart-4); }
+.ab-variant-letter--3 { background: var(--chart-3); }
+
+.ab-variant-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ab-variant-name {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.ab-variant-control-badge {
+    display: inline-flex;
+    padding: 1px var(--space-2);
+    background: var(--color-hover-bg);
+    color: var(--color-text-muted);
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ab-variant-actions {
+    display: flex;
+    gap: var(--space-1);
+    flex-shrink: 0;
+}
+
+.ab-variant-body {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.ab-variant-field {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.ab-variant-field-label {
+    font-size: 11px;
+    color: var(--color-text-disabled);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: var(--weight-medium);
+    flex-shrink: 0;
+    min-width: 52px;
+}
+
+.ab-variant-field-value {
+    font-size: var(--text-sm);
+    color: var(--color-text);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-variant-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-subtle-bg);
+    border-top: 1px solid var(--color-border);
+}
+
+.ab-variant-split-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-2-5);
+    background: var(--color-hover-bg);
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+}
+
+.ab-variant-footer-hint {
+    color: var(--color-text-disabled);
+    display: flex;
+    align-items: center;
+}
+
+/* ----------------------------------------------------------------
+   ab-empty — No variants empty state
+   ---------------------------------------------------------------- */
+.ab-empty {
+    text-align: center;
+    padding: var(--space-10) var(--space-6);
+    background: var(--color-card-bg);
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-card);
+    margin-bottom: var(--space-5);
+}
+
+.ab-empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    background: var(--chart-6-bg);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ab-empty-icon .material-symbols-rounded {
+    font-size: 28px;
+    color: var(--chart-6);
+}
+
+.ab-empty-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.ab-empty-hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+/* ----------------------------------------------------------------
+   ab-criteria-cards — Win condition selection
+   ---------------------------------------------------------------- */
+.ab-criteria-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+
+@media (max-width: 640px) {
+    .ab-criteria-cards { grid-template-columns: 1fr; }
+}
+
+.ab-criteria-card {
+    display: block;
+    cursor: pointer;
+}
+
+.ab-criteria-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ab-criteria-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-2);
+    padding: var(--space-5) var(--space-4);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-card-bg);
+    transition: border-color 0.15s, background 0.15s;
+    height: 100%;
+}
+
+.ab-criteria-body:hover {
+    border-color: var(--color-teal);
+}
+
+.ab-criteria-card input[type="radio"]:checked + .ab-criteria-body {
+    border-color: var(--color-teal);
+    background: var(--color-teal-light);
+}
+
+.ab-criteria-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ab-criteria-icon .material-symbols-rounded {
+    font-size: 24px;
+}
+
+.ab-criteria-icon--opens { background: var(--chart-1-bg); color: var(--chart-1); }
+.ab-criteria-icon--clicks { background: var(--chart-2-bg); color: var(--chart-2); }
+.ab-criteria-icon--manual { background: var(--chart-4-bg); color: var(--chart-4); }
+
+.ab-criteria-title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.ab-criteria-hint {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+/* ----------------------------------------------------------------
+   ab-wait-row — Wait hours input
+   ---------------------------------------------------------------- */
+.ab-wait-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    background: var(--color-subtle-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+}
+
+.ab-wait-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--chart-4-bg);
+    color: var(--chart-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ab-wait-icon .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.ab-wait-text {
+    flex: 1;
+}
+
+.ab-wait-text strong {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+
+.ab-wait-text span {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.ab-wait-input {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-input);
+    overflow: hidden;
+    background: var(--color-card-bg);
+    flex-shrink: 0;
+}
+
+.ab-wait-input input[type="number"] {
+    width: 72px;
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    outline: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    background: transparent;
+    color: var(--color-text);
+    text-align: center;
+}
+
+.ab-wait-input-unit {
+    padding: var(--space-2) var(--space-3);
+    background: var(--color-subtle-bg);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--weight-medium);
+    border-left: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------
+   ab-checklist — Launch readiness
+   ---------------------------------------------------------------- */
+.ab-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.ab-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.ab-checklist-item--done {
+    color: var(--color-text);
+}
+
+.ab-checklist-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ab-checklist-icon .material-symbols-rounded {
+    font-size: 14px;
+}
+
+.ab-checklist-icon--done {
+    background: var(--chart-2-bg);
+    color: var(--chart-2);
+}
+
+.ab-checklist-icon--pending {
+    background: var(--color-subtle-bg);
+    color: var(--color-text-disabled);
+    border: 1px solid var(--color-border);
+}
+
+/* ----------------------------------------------------------------
+   ab-add-form — Add variant form card
+   ---------------------------------------------------------------- */
+.ab-add-form {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-5);
+}
+
+.ab-add-form-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.ab-add-form-hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-4);
+}
+
+.ab-add-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 100px;
+    gap: var(--space-3);
+    align-items: end;
+}
+
+@media (max-width: 640px) {
+    .ab-add-form-grid { grid-template-columns: 1fr; }
+}
+
+/* ----------------------------------------------------------------
+   ab-split-status — Split percentage status alert
+   ---------------------------------------------------------------- */
+/* ----------------------------------------------------------------
+   Tighter alert styling for A/B context — stronger text contrast
+   ---------------------------------------------------------------- */
+.ab-variant-grid + .ab-add-form,
+.ab-empty + .ab-add-form {
+    margin-top: 0;
+}
+
+/* ----------------------------------------------------------------
+   ab-split-status — Split percentage status alert
+   ---------------------------------------------------------------- */
+.ab-split-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-card);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-4);
+}
+
+.ab-split-status .material-symbols-rounded {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ab-split-status--warning {
+    background: var(--chart-4-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--chart-4);
+}
+
+.ab-split-status--ok {
+    background: var(--color-success-bg);
+    color: var(--color-success-dark);
+    border: 1px solid var(--color-success);
+}
+
+/* ----------------------------------------------------------------
+   ab-variant-template-strip — Template thumbnail in variant card
+   ---------------------------------------------------------------- */
+.ab-variant-template-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2-5) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-hover-bg);
+}
+
+.ab-variant-template-thumb-mini {
+    width: 32px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    flex-shrink: 0;
+}
+
+.ab-variant-template-thumb-mini img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+.ab-variant-template-detail {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ab-variant-template-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-variant-template-label--empty {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-text-disabled);
+    font-style: italic;
+}
+
+.ab-variant-template-status {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.ab-variant-template-status--ready {
+    color: var(--color-teal);
+}
+
+.ab-variant-template-status--missing {
+    color: var(--color-text-disabled);
+    font-style: italic;
+}
+
+.ab-variant-template-btns {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.ab-variant-review-btn {
+    flex-shrink: 0;
+    padding: var(--space-1) !important;
+    color: var(--color-text-muted) !important;
+    border-radius: var(--radius-sm);
+}
+
+.ab-variant-review-btn:hover {
+    color: var(--color-teal) !important;
+    background: var(--color-teal-bg, rgba(0,128,128,0.08));
+}
+
+/* ----------------------------------------------------------------
+   A/B Confirm / Preflight page
+   ---------------------------------------------------------------- */
+.ab-confirm-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: var(--space-6);
+    align-items: start;
+}
+
+@media (max-width: 960px) {
+    .ab-confirm-layout { grid-template-columns: 1fr; }
+}
+
+.ab-confirm-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+}
+
+.ab-confirm-hero {
+    text-align: center;
+    padding: var(--space-6) var(--space-6) var(--space-4);
+    background: var(--color-subtle-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.ab-confirm-hero svg {
+    width: 160px;
+    height: 80px;
+    margin-bottom: var(--space-3);
+}
+
+.ab-confirm-hero-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--color-text);
+    margin-bottom: var(--space-1);
+}
+
+.ab-confirm-hero-desc {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+}
+
+.ab-confirm-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+}
+
+.ab-confirm-status--ok {
+    background: var(--chart-2-bg);
+    color: var(--chart-2);
+}
+
+.ab-confirm-status--warning {
+    background: var(--chart-4-bg);
+    color: var(--chart-4);
+}
+
+.ab-confirm-status .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.ab-confirm-checks {
+    padding: 0;
+}
+
+.ab-confirm-row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.ab-confirm-row:last-child {
+    border-bottom: none;
+}
+
+.ab-confirm-row--error {
+    background: rgba(211, 47, 47, 0.03);
+}
+
+.ab-confirm-row-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ab-confirm-row-icon .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.ab-confirm-row-icon--ok {
+    color: var(--chart-2);
+}
+
+.ab-confirm-row-icon--error {
+    color: var(--color-error);
+}
+
+.ab-confirm-row-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.ab-confirm-row-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+
+.ab-confirm-row-value {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.ab-confirm-row-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1-5);
+    margin-top: var(--space-1);
+}
+
+.ab-confirm-actions {
+    position: sticky;
+    top: var(--space-4);
+}

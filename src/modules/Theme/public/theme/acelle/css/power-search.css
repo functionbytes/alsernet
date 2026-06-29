@@ -1,0 +1,489 @@
+/* ============================================================
+   Power Search — Command Palette (Cmd+K / Ctrl+K)
+   ============================================================ */
+
+/* Backdrop overlay */
+.mc-power-search-backdrop {
+    position: fixed;
+    inset: 0;
+    background: var(--color-overlay-heavy);
+    z-index: var(--z-modal-backdrop);
+    opacity: 0;
+    transition: opacity 200ms ease;
+    pointer-events: none;
+}
+.mc-power-search-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Main container */
+.mc-power-search {
+    position: fixed;
+    top: 12%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.97);
+    width: 90vw;
+    max-width: 640px;
+    max-height: 70vh;
+    background: var(--color-card-bg);
+    border-radius: var(--radius-card);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18), 0 2px 12px rgba(0, 0, 0, 0.08);
+    z-index: var(--z-modal);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 200ms ease, transform 200ms ease;
+    pointer-events: none;
+    overflow: hidden;
+}
+.mc-power-search.is-open {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    pointer-events: auto;
+}
+
+/* ---- Header / Input area ---- */
+.mc-power-search-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+.mc-power-search-header svg {
+    width: 20px;
+    height: 20px;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+.mc-power-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: var(--font-size-md);
+    font-family: var(--font-family);
+    color: var(--color-text);
+    min-width: 0;
+}
+.mc-power-search-input::placeholder {
+    color: var(--color-text-muted);
+}
+/* Close button (X icon) — works on both desktop and mobile */
+.mc-power-search-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: var(--color-hover-bg);
+    border-radius: 6px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 100ms ease, color 100ms ease;
+}
+.mc-power-search-close:hover {
+    background: var(--color-active-bg);
+    color: var(--color-text);
+}
+.mc-power-search-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---- Scrollable body ---- */
+.mc-power-search-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-2) 0;
+    overscroll-behavior: contain;
+}
+
+/* Section label */
+.mc-power-search-section-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-5) var(--space-1);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+}
+.mc-power-search-section-count {
+    font-weight: 400;
+    color: var(--color-text-disabled);
+}
+
+/* ---- Result item ---- */
+.mc-power-search-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-5);
+    min-height: 44px;
+    text-decoration: none;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background 80ms ease;
+}
+.mc-power-search-item:hover,
+.mc-power-search-item.is-active {
+    background: var(--color-hover-bg);
+}
+.mc-power-search-item.is-active {
+    background: var(--color-active-bg);
+}
+
+/* Item icon */
+.mc-power-search-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--color-hover-bg);
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+}
+.mc-power-search-item-icon .material-symbols-rounded {
+    font-size: 18px;
+}
+/* Action icon — teal accent */
+.mc-power-search-item--action .mc-power-search-item-icon {
+    background: var(--color-teal-ring);
+    color: var(--color-teal);
+}
+
+/* Item avatar */
+.mc-power-search-item-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Item thumbnail — portrait (email templates, ~9:12 ratio, prominent) */
+.mc-power-search-item-thumb--portrait {
+    width: 72px;
+    height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--color-hover-bg);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+/* Item thumbnail — landscape (form templates, 5:3 ratio) */
+.mc-power-search-item-thumb--landscape {
+    width: 72px;
+    height: 43px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--color-hover-bg);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+/* Shared thumb image styles */
+.mc-power-search-item-thumb--portrait img,
+.mc-power-search-item-thumb--landscape img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.mc-power-search-item-thumb--portrait svg,
+.mc-power-search-item-thumb--landscape svg {
+    width: 28px;
+    height: 28px;
+    color: var(--color-text-disabled);
+}
+
+/* Item detail */
+.mc-power-search-item-detail {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.mc-power-search-item-title {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mc-power-search-item-sub {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Description line — secondary info for pages & actions */
+.mc-power-search-item-desc {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+/* Item badge */
+.mc-power-search-item-badge {
+    flex-shrink: 0;
+}
+
+/* Action type label */
+.mc-power-search-item-type {
+    font-size: 11px;
+    color: var(--color-text-disabled);
+    flex-shrink: 0;
+}
+
+/* ---- Footer (keyboard hints) ---- */
+.mc-power-search-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    font-size: 11px;
+    color: var(--color-text-disabled);
+    flex-shrink: 0;
+}
+.mc-power-search-footer-hint {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.mc-power-search-footer kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    padding: 1px 4px;
+    font-size: 11px;
+    font-family: var(--font-family);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: var(--color-hover-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    line-height: 1.4;
+}
+
+/* ---- Empty state ---- */
+.mc-power-search-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--space-5);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+.mc-power-search-empty .material-symbols-rounded {
+    font-size: 40px;
+    color: var(--color-text-disabled);
+    margin-bottom: var(--space-3);
+}
+.mc-power-search-empty-title {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+}
+.mc-power-search-empty-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-disabled);
+}
+
+/* ---- Rich card items ---- */
+.mc-power-search-item--rich {
+    align-items: flex-start;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+}
+.mc-power-search-item--template {
+    align-items: flex-start;
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-3);
+}
+
+/* Stats row (campaign metrics, subscriber info, customer plan) */
+.mc-power-search-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: 3px;
+}
+.mc-power-search-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+.mc-power-search-stat .material-symbols-rounded {
+    font-size: 14px;
+    color: var(--color-text-disabled);
+}
+
+/* Action buttons row (Preview, Edit for templates) */
+.mc-power-search-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: 4px;
+}
+.mc-power-search-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-teal);
+    background: var(--color-teal-ring);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 100ms ease;
+}
+.mc-power-search-action-btn:hover {
+    background: var(--color-teal);
+    color: #fff;
+}
+.mc-power-search-action-btn .material-symbols-rounded {
+    font-size: 14px;
+}
+
+/* ---- Loading state ---- */
+.mc-power-search-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+}
+
+/* ---- Topbar trigger button ---- */
+/* Matches the old input styling from layouts.css (.mc-topbar-search input) */
+.mc-topbar-search-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-2) var(--space-3-5) var(--space-2) var(--space-10);
+    font-family: var(--font-family);
+    font-size: var(--text-sm, 13px);
+    color: var(--color-text-muted);
+    background: var(--color-subtle-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    outline: none;
+    transition: all var(--transition-fast);
+}
+.mc-topbar-search-trigger:hover {
+    background: var(--color-card-bg);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-text-secondary);
+}
+.mc-topbar-search-trigger:focus-visible {
+    background: var(--color-card-bg);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+}
+.mc-topbar-search-kbd {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-disabled);
+    background: var(--color-hover-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    line-height: 1.3;
+    flex-shrink: 0;
+    margin-left: var(--space-2);
+}
+
+/* ---- Mobile search icon in topbar ---- */
+.mc-topbar-search-mobile {
+    display: none;  /* hidden on desktop */
+}
+@media (max-width: 767px) {
+    .mc-topbar-search-mobile {
+        display: flex;  /* visible on mobile where mc-topbar-center is hidden */
+    }
+}
+
+/* ---- Avatar colors (reuse mc-avatar palette) ---- */
+.mc-power-search-avatar-1 { background: var(--avatar-color-1, #007c89); }
+.mc-power-search-avatar-2 { background: var(--avatar-color-2, #c2185b); }
+.mc-power-search-avatar-3 { background: var(--avatar-color-3, #1565c0); }
+.mc-power-search-avatar-4 { background: var(--avatar-color-4, #6a1b9a); }
+.mc-power-search-avatar-5 { background: var(--avatar-color-5, #00838f); }
+.mc-power-search-avatar-6 { background: var(--avatar-color-6, #4e342e); }
+.mc-power-search-avatar-7 { background: var(--avatar-color-7, #2e7d32); }
+.mc-power-search-avatar-8 { background: var(--avatar-color-8, #d84315); }
+
+/* ---- Mobile responsive ---- */
+@media (max-width: 640px) {
+    .mc-power-search {
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100vh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+    .mc-power-search.is-open {
+        transform: none;
+    }
+    .mc-power-search-header {
+        padding: var(--space-3) var(--space-4);
+    }
+    .mc-power-search-item {
+        padding: var(--space-2) var(--space-4);
+    }
+    .mc-power-search-section-label {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+    .mc-power-search-footer {
+        padding: var(--space-2) var(--space-4);
+    }
+    .mc-topbar-search-kbd {
+        display: none;
+    }
+}

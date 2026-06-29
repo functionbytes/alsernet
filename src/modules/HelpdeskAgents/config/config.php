@@ -1,0 +1,88 @@
+<?php
+
+return [
+    'name' => 'HelpdeskAgents',
+
+    'llm_rate_limits' => [
+        'per_user_per_minute' => 10,
+        'per_session_per_5min' => 30,
+        'per_user_per_day' => 1000,
+    ],
+
+    'prompt_injection_patterns' => [
+        '/ignore\s+(all\s+)?previous\s+instructions/i',
+        '/system\s+prompt/i',
+        '/reveal\s+your\s+(system\s+)?prompt/i',
+        '/you\s+are\s+(now\s+)?a/i',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | LLM Providers
+    |--------------------------------------------------------------------------
+    | Keyed by provider slug. Each entry defines the available models array
+    | that the AgentSettingsController and views iterate over.
+    */
+    'providers' => [
+        'openai' => [
+            'label' => 'OpenAI',
+            'models' => [
+                'gpt-4o' => 'GPT-4o',
+                'gpt-4o-mini' => 'GPT-4o Mini',
+                'gpt-4-turbo' => 'GPT-4 Turbo',
+                'gpt-3.5-turbo' => 'GPT-3.5 Turbo',
+            ],
+        ],
+        'anthropic' => [
+            'label' => 'Anthropic (Claude)',
+            'models' => [
+                'claude-3-5-sonnet-20241022' => 'Claude 3.5 Sonnet',
+                'claude-3-5-haiku-20241022' => 'Claude 3.5 Haiku',
+                'claude-3-opus-20240229' => 'Claude 3 Opus',
+            ],
+        ],
+        'gemini' => [
+            'label' => 'Google Gemini',
+            'models' => [
+                'gemini-1.5-pro' => 'Gemini 1.5 Pro',
+                'gemini-1.5-flash' => 'Gemini 1.5 Flash',
+            ],
+        ],
+        'local' => [
+            'label' => 'Local Model',
+            'models' => [
+                'llama3' => 'Llama 3',
+                'mistral' => 'Mistral',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Embeddings
+    |--------------------------------------------------------------------------
+    */
+    'embeddings' => [
+        'api_key' => env('HELPDESKAGENTS_EMBEDDING_API_KEY', null),
+        'model' => env('HELPDESKAGENTS_EMBEDDING_MODEL', 'text-embedding-3-small'),
+        'timeout' => 30,
+        'top_k' => 5,
+        'min_similarity' => 0.75,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tool Execution
+    |--------------------------------------------------------------------------
+    | allow_api is FALSE by default (SSRF risk). Enable explicitly per deploy.
+    | allowed_hosts: HTTPS allowlist for API tools. Empty = all blocked.
+    */
+    'tools' => [
+        'allow_api' => env('HELPDESKAGENTS_TOOLS_ALLOW_API', false),
+        'api_timeout' => 15,
+        'allow_database' => env('HELPDESKAGENTS_TOOLS_ALLOW_DATABASE', false),
+        'allow_function' => env('HELPDESKAGENTS_TOOLS_ALLOW_FUNCTION', false),
+        'allowed_functions' => [],
+        'allowed_hosts' => [],
+    ],
+];

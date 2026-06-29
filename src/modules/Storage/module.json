@@ -1,0 +1,16 @@
+{
+    "name": "Storage",
+    "alias": "storage",
+    "description": "Storage configuration and management module",
+    "keywords": [
+        "storage",
+        "configuration",
+        "file management",
+        "upload settings"
+    ],
+    "priority": 0,
+    "providers": [
+        "Modules\\Storage\\Providers\\StorageServiceProvider"
+    ],
+    "files": []
+}

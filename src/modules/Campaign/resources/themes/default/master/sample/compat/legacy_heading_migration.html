@@ -1,0 +1,92 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legacy Heading Migration</title>
+
+    <style>
+        html {
+            margin: 0;
+        }
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.4;
+        }
+        p, h1, h2, h3, h4, h5, h6, label, ul {
+            margin: 0;
+        }
+        a {
+            color: inherit;
+        }
+        [builder-element="PageElement"] {
+            min-height: 100vh;
+            display: block;
+            flex-direction: ;
+            justify-content: ;
+            align-items: ;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"]:not(:last-child) {
+            margin-bottom: 24px;
+        }
+
+        
+
+        
+        @media (min-width: 900px) {
+            [builder-element="PageElement"] > [builder-element="BlockElement"] {
+                max-width: 1024px;
+            }
+        }
+        
+
+        
+        /* default_block_background_color targets the INNER styled div (`> :first-child`),
+           NOT the outer `<div builder-element="BlockElement">` wrapper. The outer is a
+           hover/selection anchor with no painting role; the inner is where the formatter
+           writes per-block bg + border + radius + padding. Painting the default bg on
+           the outer (legacy behavior, retired 2026-05-05) caused outer's flat-edge
+           rectangle to visually mask any per-block `border_radius`. Targeting the inner
+           lets default bg compose with per-block radius — they paint the same div,
+           formatter's `!important` inline style still wins when set. */
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            background-color: #ffffff;
+        }
+        
+
+        [builder-element="PageElement"] > [builder-element="BlockElement"] > :first-child {
+            padding-top: 0px;
+            padding-right: 0px;
+            padding-bottom: 0px;
+            padding-left: 0px;
+        }
+    </style>
+</head>
+<body>
+    <div builder-element="PageElement" style="background-color: rgb(248, 250, 252); padding: 32px 24px !important;"><div builder-element="BlockElement"><div style="background-color: #ffffff; border-radius: 16px !important; padding-top: 40px !important; padding-right: 40px !important; padding-bottom: 40px !important; padding-left: 40px !important;">
+    <div builder-element="HeadingElement">
+    <h1 style="font-weight: 700;" data-bjs-inline-text="_t0ali4s3l">Legacy Heading One</h1>
+
+</div><div builder-element="HeadingElement">
+    <h2 style="padding-top: 12px !important;" data-bjs-inline-text="_u8o9hemra">Legacy Heading Two</h2>
+
+</div><div builder-element="HeadingElement">
+    <h3 style="padding-top: 12px !important;" data-bjs-inline-text="_ug2hbgbrr">Legacy Heading Three</h3>
+
+</div><div builder-element="HeadingElement">
+    <h4 style="padding-top: 12px !important;" data-bjs-inline-text="_qd1l4xejx">Legacy Heading Four</h4>
+
+</div><div builder-element="HeadingElement">
+    <h5 style="padding-top: 12px !important;" data-bjs-inline-text="_69417o9dx">Legacy Heading Five</h5>
+
+</div>
+</div></div></div>
+
+</body></html>

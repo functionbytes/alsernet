@@ -1,0 +1,10 @@
+<div style="display: grid; gap: 10px;">
+    <% var groupName = inputName || 'checkbox_group'; %>
+    <% items.forEach(function(item, index) { %>
+        <% var optionId = groupName + '_' + index; %>
+        <label for="<%- optionId %>" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: #0f172a;">
+            <input id="<%- optionId %>" type="checkbox" name="<%- groupName %>[]" value="<%- item.value %>" style="margin-top: 3px;" />
+            <span><%- item.label %></span>
+        </label>
+    <% }); %>
+</div>

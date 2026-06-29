@@ -1,0 +1,5 @@
+<div data-pricing-cards-style="<%= (typeof style === 'string' && style) ? style : 'highlighted' %>" style="<%- formatter.toStyleStringAll() %> display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); width: 100%; gap: <%= cell_gap %>px; align-items: <%= align_items || 'stretch' %>;">
+    <% cells.forEach(function(cell) { %>
+        <%- cell %>
+    <% }); %>
+</div>

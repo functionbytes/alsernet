@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" role="img" aria-label="Product showcase urn mark">
+  <g fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- single urn silhouette: neck, shoulders, belly, foot -->
+    <path d="M 86 12 L 114 12 L 112 18 C 128 24, 134 40, 126 48 L 74 48 C 66 40, 72 24, 88 18 Z" fill="#FFFFFF" />
+    <line x1="90" y1="14" x2="110" y2="14" stroke-width="1" />
+    <path d="M 78 34 C 90 36, 110 36, 122 34" stroke-width="1" />
+    <!-- radial tick marks evoking "one of one" -->
+    <line x1="100" y1="2" x2="100" y2="6" stroke-width="1.2" />
+    <line x1="62" y1="30" x2="66" y2="30" stroke-width="1.2" />
+    <line x1="134" y1="30" x2="138" y2="30" stroke-width="1.2" />
+    <!-- bespoke hand-drawn signature baseline -->
+    <path d="M 48 54 C 70 52, 130 52, 152 54" stroke-width="0.8" />
+  </g>
+</svg>

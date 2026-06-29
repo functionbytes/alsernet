@@ -1,0 +1,11 @@
+{
+    "name": "Remarketing",
+    "alias": "remarketing",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "modules\\Remarketing\\Providers\\RemarketingServiceProvider"
+    ],
+    "files": []
+}

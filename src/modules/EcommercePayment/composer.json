@@ -1,0 +1,28 @@
+{
+    "name": "nwidart/ecommerce-payment",
+    "description": "Módulo de pasarelas de pago para ecommerce con integración Wompi",
+    "authors": [
+        {
+            "name": "Inoqualab",
+            "email": "dev@inoqualab.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\EcommercePayment\\": "app/",
+            "Modules\\EcommercePayment\\Database\\Factories\\": "database/factories/",
+            "Modules\\EcommercePayment\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\EcommercePayment\\Tests\\": "tests/"
+        }
+    }
+}

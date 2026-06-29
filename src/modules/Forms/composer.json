@@ -1,0 +1,24 @@
+{
+    "name": "modules/forms",
+    "description": "Constructor de formularios personalizados con shortcodes, multi-paso, condicionales y analytics",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Forms\\Providers\\FormsServiceProvider"
+            ]
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Forms\\": "app/",
+            "Modules\\Forms\\Database\\Factories\\": "database/factories/",
+            "Modules\\Forms\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Forms\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev"
+}

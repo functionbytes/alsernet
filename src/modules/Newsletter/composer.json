@@ -1,0 +1,17 @@
+{
+    "name": "nwidart/newsletter",
+    "description": "Newsletter module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Newsletter\\": "app/",
+            "Modules\\Newsletter\\Database\\Factories\\": "database/factories/",
+            "Modules\\Newsletter\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    }
+}

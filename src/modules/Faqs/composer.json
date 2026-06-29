@@ -1,0 +1,28 @@
+{
+    "name": "modules/faqs",
+    "description": "Gestión de preguntas frecuentes con categorías",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Faqs\\": "app/",
+            "Modules\\Faqs\\Database\\Factories\\": "database/factories/",
+            "Modules\\Faqs\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\Faqs\\Tests\\": "tests/"
+        }
+    }
+}

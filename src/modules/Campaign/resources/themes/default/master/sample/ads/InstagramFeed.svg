@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Instagram Feed ad preview">
+  <rect width="180" height="200" fill="var(--illust-bg)"/>
+
+  <!-- Post card (square hero top, actions bottom) -->
+  <g transform="translate(22 14)">
+    <rect x="0" y="0" width="136" height="172" rx="6"
+          fill="var(--color-card-bg)"
+          stroke="var(--illust-stroke-bold)" stroke-width="1.2"/>
+
+    <!-- Brand row -->
+    <circle cx="13" cy="11" r="4" fill="none" stroke="var(--illust-stroke-bold)" stroke-width=".9"/>
+    <circle cx="13" cy="11" r="2.4" fill="var(--illust-fill)"/>
+    <rect x="20" y="9" width="38" height="2"  rx="1"  fill="var(--illust-stroke-bold)"/>
+    <rect x="20" y="12.4" width="22" height="1.4" rx=".7" fill="var(--illust-stroke)" opacity=".6"/>
+    <!-- Ellipsis -->
+    <circle cx="124" cy="11" r=".9" fill="var(--illust-stroke-bold)"/>
+    <circle cx="120" cy="11" r=".9" fill="var(--illust-stroke-bold)"/>
+    <circle cx="116" cy="11" r=".9" fill="var(--illust-stroke-bold)"/>
+
+    <!-- Square hero image (1:1) -->
+    <rect x="8" y="20" width="120" height="120" fill="var(--illust-fill)"
+          stroke="var(--illust-stroke)" stroke-width=".5"/>
+    <path d="M8 122 L30 100 L46 110 L66 88 L88 108 L110 96 L128 110 L128 140 L8 140 Z"
+          fill="var(--illust-stroke)" opacity=".55"/>
+    <circle cx="108" cy="48" r="5" fill="var(--color-card-bg)" stroke="var(--illust-stroke)" stroke-width=".7"/>
+
+    <!-- Action row (heart, comment, share, bookmark) -->
+    <path d="M12 148 C10.4 146 8.8 146.8 8.8 148.4 C8.8 150 12 152.8 12 152.8 C12 152.8 15.2 150 15.2 148.4 C15.2 146.8 13.6 146 12 148 Z"
+          stroke="var(--illust-stroke-bold)" stroke-width=".9" fill="none"/>
+    <path d="M20 146 L26 146 L26 152 L24 152 L22.5 153.4 L22.5 152 L20 152 Z"
+          stroke="var(--illust-stroke-bold)" stroke-width=".9" fill="none"/>
+    <path d="M30 146 L36 149 L30 152 L31.6 149 Z"
+          stroke="var(--illust-stroke-bold)" stroke-width=".9" fill="none"/>
+    <path d="M120 145 L120 152 L123 150 L126 152 L126 145 Z"
+          stroke="var(--illust-stroke-bold)" stroke-width=".9" fill="none"/>
+
+    <!-- Caption (2 lines) -->
+    <rect x="8"  y="158" width="102" height="1.6" rx=".8" fill="var(--illust-stroke-bold)"/>
+    <rect x="8"  y="162" width="82"  height="1.4" rx=".7" fill="var(--illust-stroke)" opacity=".65"/>
+  </g>
+
+  <!-- Aspect label -->
+  <rect x="144" y="188" width="22" height="10" rx="5" fill="var(--color-card-bg)"
+        stroke="var(--illust-stroke)" stroke-width=".7"/>
+  <text x="155" y="195" text-anchor="middle" font-family="system-ui, sans-serif"
+        font-size="6" font-weight="700" fill="var(--illust-stroke-bold)" letter-spacing=".4">1:1</text>
+</svg>

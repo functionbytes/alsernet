@@ -1,0 +1,13 @@
+{
+    "name": "Ads",
+    "alias": "ads",
+    "description": "Gestión de banners publicitarios y anuncios",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Ads\\Providers\\AdsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

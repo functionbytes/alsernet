@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'title' => 'Dashboard',
+    'subtitle' => 'Overview of your email marketing activity.',
+    'count.campaigns' => 'Campaigns',
+    'count.lists' => 'Lists',
+    'count.subscribers' => 'Subscribers',
+    'count.forms' => 'Forms',
+    'count.funnels' => 'Funnels',
+    'count.automations' => 'Automations',
+    'email.title' => 'Email metrics',
+    'email.sent' => 'Sent',
+    'email.opens' => 'Opens',
+    'email.clicks' => 'Clicks',
+    'email.bounces' => 'Bounces',
+    'email.open_rate' => 'Open rate',
+    'email.click_rate' => 'Click rate',
+    'email.bounce_rate' => 'Bounce rate',
+    'trend.title' => 'Sent — last 7 days',
+    'recent.title' => 'Recent campaigns',
+    'recent.empty' => 'No campaigns yet.',
+    'recent.name' => 'Name',
+    'recent.status' => 'Status',
+    'recent.created' => 'Created',
+];

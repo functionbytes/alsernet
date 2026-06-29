@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Two hands shaping clay on a potter's wheel, editorial line drawing">
+  <rect width="400" height="400" fill="#F7F5F0"/>
+
+  <!-- ambient floor shadow under wheel -->
+  <ellipse cx="200" cy="346" rx="148" ry="8" fill="#C9C2B2" opacity="0.55"/>
+
+  <g fill="none" stroke="#1C1917" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- potter's wheel disc (lower, wide) -->
+    <ellipse cx="200" cy="328" rx="146" ry="20" fill="#FEFDFA" stroke-width="2"/>
+    <ellipse cx="200" cy="320" rx="146" ry="20" stroke-width="1.2" fill="none"/>
+    <!-- wheel rim concentric (showing rotation) -->
+    <ellipse cx="200" cy="318" rx="120" ry="14" stroke="#C9C2B2" stroke-width="1" fill="none"/>
+    <ellipse cx="200" cy="318" rx="86" ry="9" stroke="#C9C2B2" stroke-width="0.9" fill="none"/>
+
+    <!-- wheel column / pedestal beneath -->
+    <path d="M 168 348 L 168 372 C 168 380, 232 380, 232 372 L 232 348" fill="#C9C2B2" stroke-width="1.6"/>
+
+    <!-- clay form being thrown (vase-in-progress) -->
+    <path d="M 156 314
+             C 158 286, 168 268, 178 252
+             C 184 240, 184 224, 184 210
+             L 216 210
+             C 216 224, 216 240, 222 252
+             C 232 268, 242 286, 244 314 Z"
+          fill="#FEFDFA" stroke-width="2"/>
+    <!-- clay neck + rim -->
+    <ellipse cx="200" cy="206" rx="18" ry="4" fill="#FEFDFA" stroke-width="1.6"/>
+    <!-- vertical center seam (dim) -->
+    <line x1="200" y1="208" x2="200" y2="312" stroke="#C9C2B2" stroke-width="0.8"/>
+
+    <!-- LEFT hand: wraps around clay (visible: thumb + 3 finger tips) -->
+    <path d="M 116 250
+             C 124 232, 144 222, 158 222
+             L 178 232
+             C 174 250, 168 270, 156 280
+             C 142 286, 124 280, 118 268 Z"
+          fill="#FEFDFA" stroke-width="2"/>
+    <!-- left-hand thumb on top of clay -->
+    <path d="M 158 222 C 168 218, 178 220, 184 226"
+          stroke-width="1.6"/>
+    <!-- finger separation creases -->
+    <path d="M 134 240 C 142 244, 150 246, 158 244" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 132 252 C 140 256, 148 258, 156 256" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 132 264 C 140 268, 148 270, 154 268" stroke="#C9C2B2" stroke-width="1"/>
+    <!-- left wrist tapering off-canvas left -->
+    <path d="M 116 250 L 88 268 C 80 274, 72 278, 60 280" stroke-width="1.8"/>
+    <path d="M 118 268 L 90 286 C 82 292, 74 294, 64 296" stroke="#C9C2B2" stroke-width="1.4"/>
+
+    <!-- RIGHT hand: cupped on outer wall (palm + 4 fingers) -->
+    <path d="M 284 250
+             C 276 232, 256 222, 242 222
+             L 222 232
+             C 226 250, 232 270, 244 280
+             C 258 286, 276 280, 282 268 Z"
+          fill="#FEFDFA" stroke-width="2"/>
+    <path d="M 242 222 C 232 218, 222 220, 216 226"
+          stroke-width="1.6"/>
+    <path d="M 266 240 C 258 244, 250 246, 242 244" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 268 252 C 260 256, 252 258, 244 256" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 268 264 C 260 268, 252 270, 246 268" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 284 250 L 312 268 C 320 274, 328 278, 340 280" stroke-width="1.8"/>
+    <path d="M 282 268 L 310 286 C 318 292, 326 294, 336 296" stroke="#C9C2B2" stroke-width="1.4"/>
+
+    <!-- spiral motion wisps above clay (rotation cue) -->
+    <path d="M 178 188 C 188 178, 200 180, 210 188 C 218 196, 218 204, 212 208"
+          stroke="#C9C2B2" stroke-width="1.2" opacity="0.85"/>
+    <path d="M 182 178 C 192 168, 208 168, 218 178"
+          stroke="#C9C2B2" stroke-width="1" opacity="0.7"/>
+
+    <!-- clay water droplets falling (3 small) -->
+    <path d="M 152 298 Q 152 304 154 308" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 240 296 Q 240 302 238 306" stroke="#C9C2B2" stroke-width="1"/>
+    <path d="M 200 312 Q 200 318 200 322" stroke="#C9C2B2" stroke-width="1"/>
+
+    <!-- floor line beyond wheel base -->
+    <line x1="32" y1="382" x2="368" y2="382" stroke="#C9C2B2" stroke-width="1"/>
+  </g>
+</svg>

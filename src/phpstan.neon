@@ -1,0 +1,32 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - modules
+    level: 5
+    parallel:
+        maximumNumberOfProcesses: 1
+    excludePaths:
+        analyse:
+            - vendor
+            - bootstrap/cache
+            - modules/*/vendor
+            - modules/*/vendor/*
+            - modules/*/database/migrations
+            - modules/*/database/seeders
+            - modules/*/database/factories
+            - modules/*/tests
+            - '**/*.blade.php'
+            - tests
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model#'
+        - '#Class App\\Events\\Auth\\Password\\ForgotPasswordCreated not found#'
+        - '#Class App\\Events\\Auth\\Password\\ResetPasswordCreated not found#'
+        - '#Class App\\Jobs\\ProcessEmailImportJob not found#'
+        - '#Class App\\Jobs\\SyncMailrelaySubscriberJob not found#'
+        - '#Class App\\Jobs\\SyncSubscriberJob not found#'
+        - '#Instantiation of class App\\Events\\Auth\\Password\\ForgotPasswordCreated is not allowed#'
+        - '#Instantiation of class App\\Events\\Auth\\Password\\ResetPasswordCreated is not allowed#'

@@ -1,0 +1,13 @@
+{
+    "name": "SimpleSlider",
+    "alias": "simple_slider",
+    "description": "Gestión de controles deslizantes simples con Owl Carousel",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\SimpleSlider\\Providers\\SimpleSliderServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

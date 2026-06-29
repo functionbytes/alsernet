@@ -1,0 +1,242 @@
+/* Media Manager - Extracted inline styles */
+
+/* Loading spinner container */
+.media-loading-container {
+    height: 400px;
+}
+
+/* Spinner size */
+.media-loading-spinner {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Disk selector min-width */
+.media-disk-select {
+    min-width: 150px;
+}
+
+/* Cancel selection button */
+.media-cancel-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+}
+
+/* Content area min-height */
+.media-content-area {
+    min-height: 400px;
+}
+
+/* File image preview height */
+.media-image-preview {
+    height: 180px;
+    object-fit: cover;
+}
+
+/* Non-image icon preview container */
+.media-icon-preview {
+    height: 180px;
+}
+
+/* Floating dropdown z-index */
+.media-dropdown-overlay {
+    z-index: 10;
+}
+
+/* Floating dropdown trigger button */
+.media-dropdown-btn {
+    width: 36px;
+    height: 36px;
+}
+
+/* Upload queue item remove button */
+.media-remove-btn {
+    width: 32px;
+    height: 32px;
+}
+
+/* Upload queue file icon */
+.media-file-icon {
+    width: 48px;
+    height: 48px;
+}
+
+/* Upload progress bar */
+.media-progress-bar {
+    height: 8px;
+}
+
+/* Storage quota widget */
+.media-storage-widget {
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.media-quota-progress {
+    height: 6px;
+}
+
+/* Duplicate detector card */
+.media-dup-card {
+    text-align: center;
+}
+
+/* Empty state icon size */
+.media-empty-circle {
+    width: 80px;
+    height: 80px;
+}
+
+.media-empty-icon {
+    font-size: 3rem;
+}
+
+/* UID text truncation in properties modal */
+.media-uid-text {
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+/* File UID small text */
+.media-uid-text {
+    font-size: 0.85rem;
+}
+
+/* Empty state upload icon */
+.media-empty-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+}
+
+/* Bulk actions toolbar */
+.media-bulk-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Item checkbox overlay */
+.media-item-check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 2;
+}
+
+/* Filter/sort selects min-width */
+.media-filter-select {
+    min-width: 160px;
+}
+
+/* Preview lightbox */
+.media-preview-body {
+    min-height: 300px;
+}
+
+.media-preview-iframe {
+    width: 100%;
+    height: 70vh;
+    border: 0;
+}
+
+/* Empty state icon circle */
+.media-empty-circle {
+    width: 80px;
+    height: 80px;
+}
+
+/* Folder card cursor */
+.folder-card {
+    cursor: pointer;
+}
+
+/* Preview modal iframe */
+.media-preview-iframe {
+    width: 100%;
+    height: 70vh;
+    border: 0;
+}
+
+/* Tag pills */
+.media-tag-pill {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.media-tag-pill-sm {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    color: white;
+    font-size: 0.7rem;
+}
+
+/* Version timeline */
+.media-version-timeline {
+    border-left: 2px solid #dee2e6;
+    padding-left: 1rem;
+}
+
+.media-version-item {
+    position: relative;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.media-version-item::before {
+    content: '';
+    position: absolute;
+    left: -1.4rem;
+    top: 1rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #90bb13;
+}
+
+/* Activity heatmap (GitHub-style calendar) */
+.media-heatmap {
+    display: grid;
+    grid-template-columns: repeat(13, 1fr);
+    gap: 3px;
+}
+
+.media-heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: #ebedf0;
+    display: inline-block;
+    min-width: 14px;
+    min-height: 14px;
+}
+
+.media-heatmap-cell.level-1 { background: #c6e48b; }
+.media-heatmap-cell.level-2 { background: #7bc96f; }
+.media-heatmap-cell.level-3 { background: #239a3b; }
+.media-heatmap-cell.level-4 { background: #196127; }
+
+/* Context menu (Vue-driven) */
+.media-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 0.25rem 0;
+    z-index: 9999;
+    min-width: 180px;
+}
+
+.media-context-menu-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+}
+
+.media-context-menu-item:hover {
+    background: #f8f9fa;
+}

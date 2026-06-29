@@ -1,0 +1,47 @@
+{
+  "_comment": "Test user credentials for browser/E2E testing. Do NOT commit real credentials.",
+  "app_url": "http://localhost:8000",
+  "users": {
+    "admin": {
+      "email": "admin@test.local",
+      "password": "password",
+      "role": "admin",
+      "name": "Test Admin",
+      "description": "Full system access, all permissions"
+    },
+    "manager": {
+      "email": "manager@test.local",
+      "password": "password",
+      "role": "manager",
+      "name": "Test Manager",
+      "description": "Module management, limited admin access"
+    },
+    "user": {
+      "email": "user@test.local",
+      "password": "password",
+      "role": "user",
+      "name": "Test User",
+      "description": "Basic user access, read-only on most modules"
+    },
+    "warehouse": {
+      "email": "warehouse@test.local",
+      "password": "password",
+      "role": "warehouse_worker",
+      "name": "Test Warehouse",
+      "description": "Warehouse module access only"
+    }
+  },
+  "api": {
+    "base_url": "http://localhost:8000/api/v1",
+    "auth_endpoint": "/auth/login",
+    "token_type": "Bearer"
+  },
+  "pages": {
+    "login": "/login",
+    "dashboard": "/admin/dashboard",
+    "products": "/admin/products",
+    "orders": "/admin/orders",
+    "users": "/admin/users",
+    "settings": "/admin/settings"
+  }
+}

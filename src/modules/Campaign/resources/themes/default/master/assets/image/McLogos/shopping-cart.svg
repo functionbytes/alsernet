@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 56" role="img" aria-label="Shopping cart stacked monogram">
+  <g fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- brutalist stacked H/C monogram in a rounded square -->
+    <rect x="64" y="6" width="72" height="44" rx="6" fill="#111111" stroke="none" />
+    <!-- inside mark: letter H built from 3 bars -->
+    <rect x="74" y="16" width="4" height="24" fill="#FFFFFF" stroke="none" />
+    <rect x="96" y="16" width="4" height="24" fill="#FFFFFF" stroke="none" />
+    <rect x="74" y="26" width="26" height="4" fill="#FFFFFF" stroke="none" />
+    <!-- letter C to the right -->
+    <path d="M 124 20 A 8 8 0 1 0 124 36" stroke="#FFFFFF" stroke-width="4" fill="none" />
+  </g>
+  <g fill="none" stroke="#111111" stroke-width="1" stroke-linecap="round">
+    <!-- baseline tick marks flanking the mark -->
+    <line x1="16" y1="28" x2="52" y2="28" />
+    <line x1="148" y1="28" x2="184" y2="28" />
+  </g>
+</svg>

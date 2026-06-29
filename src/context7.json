@@ -1,0 +1,84 @@
+{
+  "name": "Alsernet Documentation",
+  "description": "Alsernet E-commerce Admin System - Complete documentation for frontend, backend, database, and deployment with agent rules",
+  "include": [
+    "docs/**/*.md",
+    ".claude/**/*.md",
+    ".claude/agents/**/*.md",
+    ".claude/database-optimization/**/*.md",
+    ".claude/guides/**/*.md",
+    ".claude/reference/**/*.md"
+  ],
+  "exclude": [
+    "node_modules",
+    "vendor",
+    "storage",
+    "bootstrap/cache",
+    ".git",
+    "*.log",
+    "*.lock",
+    "*.DS_Store",
+    "*.pdf",
+    "setup/hooks",
+    "setup/*.sh"
+  ],
+  "sections": {
+    "frontend": {
+      "path": "docs/frontend",
+      "description": "Frontend development rules, components, and design standards"
+    },
+    "frontend_agents": {
+      "path": ".claude/agents/frontend",
+      "description": "Frontend agent capabilities, design rules, and color palette"
+    },
+    "backend": {
+      "path": "docs/backend",
+      "description": "Laravel backend architecture, API endpoints, and services"
+    },
+    "backend_agents": {
+      "path": ".claude/agents/backend",
+      "description": "Backend agent capabilities and implementation guidelines"
+    },
+    "database": {
+      "path": "docs/database",
+      "description": "Database schema, migrations, and optimization"
+    },
+    "database_optimization": {
+      "path": ".claude/database-optimization",
+      "description": "Database optimization guides, denormalization strategies, and warehouse references"
+    },
+    "devops": {
+      "path": "docs/devops",
+      "description": "Deployment, Docker, and environment configuration"
+    },
+    "api": {
+      "path": "docs/api",
+      "description": "API specifications and endpoint documentation"
+    },
+    "guides": {
+      "path": "docs/guides",
+      "description": "Setup guides, workflows, and troubleshooting"
+    },
+    "claude_guides": {
+      "path": ".claude/guides",
+      "description": "Claude Code guides and project-specific instructions"
+    },
+    "reference": {
+      "path": ".claude/reference",
+      "description": "Code references and project structure documentation"
+    },
+    "agents_summary": {
+      "path": ".claude",
+      "description": "Agent configuration, summary, and main index documentation"
+    }
+  },
+  "priority_files": [
+    "docs/frontend/design-rules.md",
+    "docs/frontend/README.md",
+    ".claude/agents/FRONTEND_AGENT_RULES.md",
+    ".claude/agents/frontend/capabilities.md",
+    ".claude/index.md",
+    ".claude/agents.md",
+    ".claude/summary.md"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "resources/assets/js/widget-embed.ts": {
+    "file": "widget.js",
+    "name": "widget-embed",
+    "src": "resources/assets/js/widget-embed.ts",
+    "isEntry": true
+  },
+  "resources/assets/js/widget/widget-entry.tsx": {
+    "file": "widget/main.js",
+    "name": "main",
+    "src": "resources/assets/js/widget/widget-entry.tsx",
+    "isEntry": true,
+    "css": [
+      "widget/main.css"
+    ]
+  }
+}

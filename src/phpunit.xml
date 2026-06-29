@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+            <directory>modules/*/tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+            <directory>modules/*/tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <coverage>
+        <report>
+            <clover outputFile="coverage.xml"/>
+            <html outputDirectory="coverage/"/>
+            <text outputFile="coverage.txt" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+
+    <source>
+        <include>
+            <directory>app</directory>
+            <directory>modules/Helpdesk/app</directory>
+            <directory>modules/HelpdeskPrestashop/app</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>storage</directory>
+        </exclude>
+    </source>
+    <php>
+        <ini name="memory_limit" value="512M"/>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <!-- MariaDB 12+ testing (uses mariadb driver for compatible DDL) -->
+        <env name="DB_CONNECTION" value="mariadb" force="true"/>
+        <env name="DB_HOST" value="localhost" force="true"/>
+        <env name="DB_PORT" value="3306" force="true"/>
+        <env name="DB_DATABASE" value="system_test_pristine" force="true"/>
+        <env name="DB_USERNAME" value="root" force="true"/>
+        <env name="DB_PASSWORD" value="6cWRY1PUmiwYciQxJXkg" force="true"/>
+        <!-- Force all module-specific connections to the same testing DB -->
+        <env name="DB_CONNECTION_HELPDESK" value="mariadb" force="true"/>
+        <env name="DB_HOST_HELPDESK" value="localhost" force="true"/>
+        <env name="DB_PORT_HELPDESK" value="3306" force="true"/>
+        <env name="DB_DATABASE_HELPDESK" value="system_test_pristine" force="true"/>
+        <env name="DB_USERNAME_HELPDESK" value="root" force="true"/>
+        <env name="DB_PASSWORD_HELPDESK" value="6cWRY1PUmiwYciQxJXkg" force="true"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

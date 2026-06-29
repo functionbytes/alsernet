@@ -1,0 +1,114 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   BANDEJA v4 — DARK MODE OVERRIDES
+   ───────────────────────────────────────────────────────────────────────────
+   Activado cuando .conversations tiene [data-theme="dark"] o cuando body/html
+   tiene [data-theme="dark"].
+
+   El tema oscuro ya está definido en conversations-identity.css bajo el selector:
+     .conversations[data-theme="dark"], [data-theme="dark"] .conversations
+
+   Este archivo refuerza los overrides y aplica estilos adicionales que
+   no se pueden expresar solo con variables CSS.
+
+   Cargar DESPUÉS de conversations.css:
+     <link rel="stylesheet" href="vendor/helpdesk/conversations-dark.css">
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ─── Activación: selector amplio para cualquier punto de aplicación ─────── */
+.conversations[data-theme="dark"],
+[data-theme="dark"] .conversations,
+body[data-theme="dark"] .conversations,
+html[data-theme="dark"] .conversations {
+
+    /* ── Fondos base ── */
+    --bv-bg:          #09090b;
+    --bv-bg-panel:    #18181b;
+    --bv-bg-subtle:   #27272a;
+
+    /* ── Texto ── */
+    --bv-text:        #f5f6f8;
+    --bv-text-soft:   #d4d4d8;
+    --bv-text-muted:  #a1a1aa;
+
+    /* ── Bordes ── */
+    --bv-border:      #27272a;
+    --bv-border-soft: #3f3f46;
+
+    /* ── Marca (invertida para fondo oscuro) ── */
+    --bv-brand-bg:    #f5f6f8;
+    --bv-brand-fg:    #18181b;
+
+    /* ── Acento ── */
+    --bv-accent:      #f5f6f8;
+    --bv-accent-fg:   #18181b;
+
+    /* ── Semánticos (fondos translúcidos) ── */
+    --bv-success-bg:  rgba(13, 122, 63, .18);
+    --bv-warning-bg:  rgba(180, 83, 9, .18);
+    --bv-danger-bg:   rgba(185, 28, 28, .18);
+    --bv-info-bg:     rgba(29, 78, 216, .18);
+
+    /* ── Sombras más pronunciadas para dark ── */
+    --bv-shadow-modal:
+        0 10px 40px -8px rgba(0, 0, 0, .55),
+        0 4px 12px -4px rgba(0, 0, 0, .35);
+
+    --bv-shadow-card:
+        0 1px 3px rgba(0, 0, 0, .35),
+        0 1px 2px rgba(0, 0, 0, .25);
+
+    --bv-ring:
+        0 0 0 3px rgba(250, 250, 250, .12);
+
+    color-scheme: dark;
+}
+
+/* ─── Scrollbars oscuras (Webkit) ──────────────────────────────────────────  */
+.conversations[data-theme="dark"] ::-webkit-scrollbar,
+[data-theme="dark"] .conversations ::-webkit-scrollbar,
+body[data-theme="dark"] .conversations ::-webkit-scrollbar,
+html[data-theme="dark"] .conversations ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.conversations[data-theme="dark"] ::-webkit-scrollbar-track,
+[data-theme="dark"] .conversations ::-webkit-scrollbar-track,
+body[data-theme="dark"] .conversations ::-webkit-scrollbar-track,
+html[data-theme="dark"] .conversations ::-webkit-scrollbar-track {
+    background: var(--bv-bg);
+}
+
+.conversations[data-theme="dark"] ::-webkit-scrollbar-thumb,
+[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb,
+body[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb,
+html[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb {
+    background: var(--bv-border);
+    border-radius: 3px;
+}
+
+.conversations[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb:hover,
+body[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] .conversations ::-webkit-scrollbar-thumb:hover {
+    background: var(--bv-border-soft);
+}
+
+/* ─── Botón de toggle de dark mode en statusbar ──────────────────────────── */
+#bv-theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+    color: inherit;
+    font-size: var(--bv-icon-size);
+    line-height: 1;
+    opacity: .7;
+    transition: opacity var(--bv-transition);
+}
+
+#bv-theme-toggle:hover {
+    opacity: 1;
+}
+

@@ -1,0 +1,9 @@
+{
+    "name": "Default Template",
+    "namespace": "Template\\Default\\",
+    "description": "Plantilla predeterminada para contenido general",
+    "author": "Alsernet",
+    "version": "1.0.0",
+    "inherit": null,
+    "required_plugins": []
+}

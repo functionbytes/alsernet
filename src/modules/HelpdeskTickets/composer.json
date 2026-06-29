@@ -1,0 +1,28 @@
+{
+    "name": "modules/helpdesktickets",
+    "description": "Gestion de tickets del helpdesk",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskTickets\\": "app/",
+            "Modules\\HelpdeskTickets\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskTickets\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskTickets\\Tests\\": "tests/"
+        }
+    }
+}

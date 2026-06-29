@@ -1,0 +1,95 @@
+/* HelpdeskEmailLog — styles for index + preview views */
+
+.email-log-filter-search {
+    min-width: 200px;
+}
+
+.email-log-filter-module,
+.email-log-filter-status,
+.email-log-filter-daterange {
+    min-width: 170px;
+    width: auto;
+}
+
+.email-log-filter-status {
+    min-width: 160px;
+}
+
+.email-log-filter-daterange {
+    min-width: 200px;
+}
+
+.email-log-filter-perpage {
+    min-width: 110px;
+    width: auto;
+}
+
+.email-log-bulk-toolbar {
+    z-index: 1050;
+}
+
+.email-log-preview-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.email-log-preview-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    padding: 24px;
+    background: #f8f9fa;
+    min-height: 480px;
+}
+
+.email-log-preview-frame {
+    width: 100%;
+    max-width: 100%;
+    min-height: 70vh;
+    border: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
+    transition: max-width .3s ease, width .3s ease;
+}
+
+.email-log-preview-frame.is-mobile {
+    max-width: 375px;
+}
+
+.email-log-toggle-group .btn.active {
+    background-color: var(--bs-primary, #90bb13) !important;
+    border-color: var(--bs-primary, #90bb13) !important;
+    color: #fff !important;
+}
+
+@media print {
+    .email-log-print-hide,
+    .email-log-toggle-group,
+    .card-header,
+    .card-footer,
+    button,
+    .btn {
+        display: none !important;
+    }
+
+    .email-log-preview-wrapper {
+        background: #fff !important;
+        padding: 0 !important;
+        min-height: auto !important;
+    }
+
+    .email-log-preview-frame {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        min-height: auto !important;
+    }
+}
+
+@media (max-width: 991px) {
+    .email-log-preview-wrapper {
+        padding: 12px !important;
+        min-height: auto !important;
+    }
+}
