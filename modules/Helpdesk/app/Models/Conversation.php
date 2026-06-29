@@ -233,6 +233,19 @@ class Conversation extends Model
     }
 
     /**
+     * Skills required to handle this conversation (used by SkillsRoutingService).
+     */
+    public function skills(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Skill::class,
+            'helpdesk_conversation_skills',
+            'conversation_id',
+            'skill_id'
+        );
+    }
+
+    /**
      * Get tags assigned to this conversation
      */
     public function conversationTags(): BelongsToMany
@@ -347,6 +360,27 @@ class Conversation extends Model
             $q->where('subject', 'like', "%{$term}%")
                 ->orWhereHas('customer', fn ($q2) => $q2->where('name', 'like', "%{$term}%"));
         });
+    }
+
+    /**
+     * Scope: restrict to inboxes the given agent may access.
+     *
+     * Reuses the inbox-isolation mechanism of ConversationPolicy::canAccessInbox():
+     * managers (helpdesk.manage) see everything; agents only see conversations in
+     * inboxes assigned via AgentInboxCapacity. A restricted agent with no assigned
+     * inboxes sees nothing (fail-closed).
+     */
+    public function scopeForAgent(Builder $query, User $user): Builder
+    {
+        if ($user->hasPermissionTo('helpdesk.manage')) {
+            return $query;
+        }
+
+        $inboxIds = AgentInboxCapacity::query()
+            ->where('user_id', $user->id)
+            ->pluck('inbox_id');
+
+        return $query->whereIn('inbox_id', $inboxIds);
     }
 
     /**
