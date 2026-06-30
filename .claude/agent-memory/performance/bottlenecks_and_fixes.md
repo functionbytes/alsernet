@@ -59,6 +59,34 @@ type: project
 - **Problem**: `DATE(review_replies.created_at) = CURDATE()` wraps column in a function, preventing index use.
 - **Fix**: Replaced with `created_at >= CURDATE() AND created_at < DATE_ADD(CURDATE(), INTERVAL 1 DAY)` — sargable range that allows the index on `created_at` to be used.
 
+## HelpdeskSocial Module Audit (2026-05-21)
+
+### Key bottlenecks identified (not yet fixed):
+
+1. **SlaOverview loads all replied comments in-memory** (`SocialAnalyticsController:193`) — `->get()` with no date cap, then PHP filters for SLA compliance. Replace with SQL `SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, posted_at, replied_at) <= ? THEN 1 ELSE 0 END)`.
+
+2. **SentimentBreakdown loads all mentions in-memory** (`SocialAnalyticsController:229`) — full `->get()` then PHP groupBy/count. Replace with `selectRaw('sentiment, COUNT(*) as count') ->groupBy('sentiment')`.
+
+3. **AgentsPerformance loads all assigned comments in-memory** (`SocialAnalyticsController:130`) — unbounded `->get()` then PHP groupBy. Use SQL `GROUP BY assigned_to_user_id` with aggregates.
+
+4. **Analytics has zero caching** — all analytics endpoints hit DB on every request. Add `Cache::tags(['helpdesksocial','analytics'])->remember(key, 300, ...)` for all analytics endpoints.
+
+5. **SyncSocialCommentsJob N+1: one EXISTS check per comment** (`SyncSocialCommentsJob:74`) — does `SocialComment::where()->first()` per iteration across up to 100 comments. Replace with `whereIn('external_comment_id', $externalIds)->pluck('external_comment_id')` before the loop.
+
+6. **CheckSlaBreachesJob: update per row** (`CheckSlaBreachesJob:41,62`) — `$comment->update()` in foreach. Replace with `SocialComment::whereIn('id', $ids)->update(['sla_response_breached' => true])`.
+
+7. **CalculateSocialMetricsJob loads all comments in memory** — `$query->get()` with no chunking. Use `->lazy()` or SQL aggregates directly.
+
+8. **SocialInboxWidget: 5 separate COUNT queries** (`SocialInboxWidget:12-25`) — stats run 4 independent COUNT queries. Replace with a single `selectRaw` with CASE expressions.
+
+9. **Export uses `FromCollection` (loads all into memory)** — should implement `FromQuery` or `LazyCollection` instead.
+
+10. **Missing composite index for SLA breach check** — `CheckSlaBreachesJob` queries `WHERE sla_response_deadline <= ? AND sla_response_breached = 0 AND first_response_at IS NULL` with no composite index covering these three columns.
+
+11. **All 9 Listeners have no `$queue` property** — all default to `default` queue, bypassing the 3 dedicated queues defined in config. Add `public string $queue = 'helpdesk-social-processing'` to each listener.
+
+12. **`CheckSlaBreachesCommand` and `SyncCompetitorMetricsCommand` not scheduled** — only `sync-comments` and `health-check` are in `routes/console.php`. SLA breaches and competitor metrics have no automated schedule.
+
 ## Ecommerce Module Optimizations (2026-04-26)
 
 ### Fix 8 — N+1 in ProductController::show() relatedProducts

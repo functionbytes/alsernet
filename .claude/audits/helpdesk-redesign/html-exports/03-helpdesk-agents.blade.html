@@ -1,0 +1,3376 @@
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/flows/create.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Nuevo flujo de IA')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nuevo flujo de IA'])
+@endsection
+
+@section('content')
+
+    <div class="row g-3">
+
+        {{-- Form --}}
+        <div class="col-12 col-lg-8">
+            <div class="card">
+                <form action="{{ route('helpdesk.ai.flows.store') }}" method="POST">
+                    @csrf
+
+                    <div class="card-header border-bottom p-3">
+                        <h5 class="mb-0 fw-bold">Nuevo flujo</h5>
+                        <small class="text-muted">Define el flujo de automatizacion del agente IA</small>
+                    </div>
+
+                    <div class="card-body">
+                        @include('core::components.alerts')
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Nombre y descripcion del flujo de IA</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" name="name"
+                                       class="form-control @error('name') is-invalid @enderror"
+                                       value="{{ old('name') }}"
+                                       placeholder="Ej: Saludo inicial, Informacion de productos..."
+                                       required autofocus>
+                                @error('name')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Descripcion</label>
+                                <textarea name="description" rows="3"
+                                          class="form-control @error('description') is-invalid @enderror"
+                                          placeholder="Describe el proposito de este flujo...">{{ old('description') }}</textarea>
+                                @error('description')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                        </div>
+
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Trigger</h6>
+                        <p class="text-muted small mb-3">Evento que activa la ejecucion de este flujo</p>
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-12">
+                                <label class="form-label">Activador <span class="text-danger">*</span></label>
+                                <select name="trigger" class="form-select @error('trigger') is-invalid @enderror" required>
+                                    <option value="">Seleccionar activador...</option>
+                                    <option value="message" {{ old('trigger') === 'message' ? 'selected' : '' }}>
+                                        Mensaje — se activa al recibir un mensaje especifico
+                                    </option>
+                                    <option value="intent" {{ old('trigger') === 'intent' ? 'selected' : '' }}>
+                                        Intencion — se activa al detectar una intencion del usuario
+                                    </option>
+                                    <option value="keyword" {{ old('trigger') === 'keyword' ? 'selected' : '' }}>
+                                        Palabra clave — se activa cuando se menciona una palabra clave
+                                    </option>
+                                    <option value="conversation_start" {{ old('trigger') === 'conversation_start' ? 'selected' : '' }}>
+                                        Inicio de conversacion — se activa al comenzar una nueva sesion
+                                    </option>
+                                </select>
+                                @error('trigger')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Crear flujo</button>
+                        <a href="{{ route('helpdesk.ai.flows.index') }}" class="btn btn-light w-100">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- Help panel --}}
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Sobre los flujos de IA</h6>
+                    <p class="card-text text-muted">
+                        Un flujo es una secuencia de pasos que el agente IA sigue para responder a los clientes de forma automatizada.
+                    </p>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Tipos de nodos</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Entrada — inicia el flujo</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Prompt — envia una instruccion al agente</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Condicion — ramifica segun la respuesta</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Accion — realiza tareas como guardar datos o enviar emails</li>
+                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Salida — finaliza el flujo</li>
+                    </ul>
+                </div>
+                <hr class="my-0">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Buenas practicas</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que reflejen el objetivo del flujo</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Elige el trigger que mejor se adapte al contexto de activacion</li>
+                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Despues de crear el flujo disenha los nodos en el editor visual</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+@endsection
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/flows/edit.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Editar flujo: ' . $flow->name)
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar flujo'])
+@endsection
+
+@section('content')
+
+    @php
+        $statusColor = match($flow->status) {
+            'published' => 'success',
+            'archived'  => 'secondary',
+            default     => 'warning',
+        };
+        $statusLabels = ['draft' => 'Borrador', 'published' => 'Publicado', 'archived' => 'Archivado'];
+    @endphp
+
+    {{-- Page-level tabs --}}
+    <ul class="nav nav-tabs mb-3" id="flowTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-meta" data-bs-toggle="tab" data-bs-target="#pane-meta" type="button" role="tab">
+                <i class="fas fa-sliders me-1"></i> Metadatos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-nodes" data-bs-toggle="tab" data-bs-target="#pane-nodes" type="button" role="tab">
+                <i class="fas fa-diagram-project me-1"></i> Nodos y conexiones
+                <span class="badge bg-secondary ms-1" id="badge-node-count">{{ count($flow->nodes ?? []) }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="flowTabsContent">
+
+        {{-- ==================== TAB: METADATOS ==================== --}}
+        <div class="tab-pane fade show active" id="pane-meta" role="tabpanel">
+            <div class="row g-3">
+
+                <div class="col-12 col-lg-8">
+                    <div class="card">
+                        <form action="{{ route('helpdesk.ai.flows.update', $flow) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Editar: {{ $flow->name }}</h5>
+                                <small class="text-muted">Modifica los metadatos del flujo de IA</small>
+                            </div>
+
+                            <div class="card-body">
+                                @include('core::components.alerts')
+
+                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                                <p class="text-muted small mb-3">Nombre y descripcion del flujo de IA</p>
+                                <div class="row g-3 mb-4">
+
+                                    <div class="col-12">
+                                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        <input type="text" name="name"
+                                               class="form-control @error('name') is-invalid @enderror"
+                                               value="{{ old('name', $flow->name) }}"
+                                               required>
+                                        @error('name')
+                                            <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label">Descripcion</label>
+                                        <textarea name="description" rows="3"
+                                                  class="form-control @error('description') is-invalid @enderror"
+                                                  placeholder="Describe el proposito de este flujo...">{{ old('description', $flow->description) }}</textarea>
+                                        @error('description')
+                                            <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                </div>
+
+                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Trigger</h6>
+                                <p class="text-muted small mb-3">Evento que activa la ejecucion de este flujo</p>
+                                <div class="row g-3 mb-4">
+
+                                    <div class="col-12">
+                                        <label class="form-label">Activador <span class="text-danger">*</span></label>
+                                        <select name="trigger" class="form-select @error('trigger') is-invalid @enderror" required>
+                                            <option value="message" {{ old('trigger', $flow->trigger) === 'message' ? 'selected' : '' }}>
+                                                Mensaje — se activa al recibir un mensaje especifico
+                                            </option>
+                                            <option value="intent" {{ old('trigger', $flow->trigger) === 'intent' ? 'selected' : '' }}>
+                                                Intencion — se activa al detectar una intencion del usuario
+                                            </option>
+                                            <option value="keyword" {{ old('trigger', $flow->trigger) === 'keyword' ? 'selected' : '' }}>
+                                                Palabra clave — se activa cuando se menciona una palabra clave
+                                            </option>
+                                            <option value="conversation_start" {{ old('trigger', $flow->trigger) === 'conversation_start' ? 'selected' : '' }}>
+                                                Inicio de conversacion — se activa al comenzar una nueva sesion
+                                            </option>
+                                        </select>
+                                        @error('trigger')
+                                            <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                </div>
+
+                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                                <p class="text-muted small mb-3">Publicacion y estado del flujo</p>
+                                <div class="row g-3">
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Estado actual</label>
+                                        <div class="form-control bg-light d-flex align-items-center gap-2">
+                                            <span class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }}">
+                                                {{ $statusLabels[$flow->status] ?? $flow->status }}
+                                            </span>
+                                            <small class="text-muted">
+                                                @if($flow->status === 'draft')
+                                                    Aun no publicado
+                                                @elseif($flow->status === 'published')
+                                                    Activo y funcional en conversaciones
+                                                @else
+                                                    Oculto del uso activo
+                                                @endif
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
+                                <a href="{{ route('helpdesk.ai.flows.index') }}" class="btn btn-light w-100">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Help panel --}}
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">Sobre los flujos de IA</h6>
+                            <p class="card-text text-muted">
+                                Aqui editas los metadatos del flujo. Para disenar los nodos y la logica del flujo usa la pestana "Nodos y conexiones".
+                            </p>
+                        </div>
+                        <hr class="my-0">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">Buenas practicas</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que reflejen el objetivo del flujo</li>
+                                <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Elige el trigger que mejor se adapte al contexto de activacion</li>
+                                <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Publica el flujo solo cuando este completamente disenado y probado</li>
+                            </ul>
+                        </div>
+                        <hr class="my-0">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">Informacion del registro</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2 text-muted small">
+                                    <span class="fw-semibold">Creado:</span> {{ $flow->created_at->format('d/m/Y H:i') }}
+                                </li>
+                                <li class="text-muted small">
+                                    <span class="fw-semibold">Actualizado:</span> {{ $flow->updated_at->format('d/m/Y H:i') }}
+                                </li>
+                            </ul>
+                        </div>
+
+                        @if($flow->status === 'draft')
+                            <hr class="my-0">
+                            <div class="card-body">
+                                <h6 class="card-title mb-3">Publicar flujo</h6>
+                                <p class="text-muted small mb-3">Una vez que el flujo este listo, publicaló para activarlo en conversaciones.</p>
+                                <form action="{{ route('helpdesk.ai.flows.publish', $flow) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fas fa-rocket me-1"></i> Publicar flujo
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        {{-- ==================== TAB: NODOS Y CONEXIONES ==================== --}}
+        <div class="tab-pane fade" id="pane-nodes" role="tabpanel">
+            <div class="row g-3">
+
+                {{-- Node editor --}}
+                <div class="col-12 col-lg-8">
+
+                    {{-- Nodes card --}}
+                    <div class="card mb-3">
+                        <div class="card-header border-bottom p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Nodos del flujo</h6>
+                                <small class="text-muted">Arrastra para reordenar. Cada nodo es un paso del flujo.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" id="btn-add-node">
+                                <i class="fas fa-plus me-1"></i> Agregar nodo
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div id="nodes-list" class="list-group list-group-flush">
+                                {{-- Nodes rendered by JS --}}
+                            </div>
+                            <div id="nodes-empty" class="text-center py-5 text-muted d-none">
+                                <i class="fas fa-diagram-project fa-2x mb-2 d-block"></i>
+                                <small>No hay nodos aun. Haz clic en "Agregar nodo" para comenzar.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Edges card --}}
+                    <div class="card mb-3">
+                        <div class="card-header border-bottom p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Conexiones (edges)</h6>
+                                <small class="text-muted">Define como se conectan los nodos entre si.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-add-edge">
+                                <i class="fas fa-arrow-right-arrow-left me-1"></i> Agregar conexion
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0" id="edges-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Desde</th>
+                                            <th>Hasta</th>
+                                            <th>Label</th>
+                                            <th class="text-end">Accion</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="edges-body">
+                                        {{-- Edges rendered by JS --}}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="edges-empty" class="text-center py-4 text-muted d-none">
+                                <small>No hay conexiones. Agrega nodos primero.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Save structure --}}
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="button" class="btn btn-primary flex-grow-1" id="btn-save-structure">
+                            <i class="fas fa-save me-1"></i> Guardar estructura
+                        </button>
+                    </div>
+
+                    {{-- JSON fallback accordion --}}
+                    <div class="accordion" id="acc-json">
+                        <div class="accordion-item border">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#json-pane">
+                                    <i class="fas fa-code me-2"></i> Editar JSON avanzado
+                                </button>
+                            </h2>
+                            <div id="json-pane" class="accordion-collapse collapse" data-bs-parent="#acc-json">
+                                <div class="accordion-body">
+                                    <p class="text-muted small mb-2">Edita el JSON directamente. Al guardar, sobreescribe los nodos y conexiones.</p>
+                                    <div class="mb-2">
+                                        <label class="form-label fw-semibold">Nodos (JSON)</label>
+                                        <textarea id="json-nodes" class="form-control font-monospace" rows="8"
+                                                  placeholder="[]"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Edges (JSON)</label>
+                                        <textarea id="json-edges" class="form-control font-monospace" rows="5"
+                                                  placeholder="[]"></textarea>
+                                    </div>
+                                    <button type="button" class="btn btn-warning w-100" id="btn-save-json">
+                                        <i class="fas fa-bolt me-1"></i> Guardar JSON directamente
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- Side help --}}
+                <div class="col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">Tipos de nodo</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2 d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary">input</span>
+                                    <small class="text-muted">Entrada — recibe datos del usuario</small>
+                                </li>
+                                <li class="mb-2 d-flex align-items-center gap-2">
+                                    <span class="badge bg-info-subtle text-info">prompt</span>
+                                    <small class="text-muted">Prompt — procesa con IA</small>
+                                </li>
+                                <li class="mb-2 d-flex align-items-center gap-2">
+                                    <span class="badge bg-warning-subtle text-warning">condition</span>
+                                    <small class="text-muted">Condicion — ramifica segun logica</small>
+                                </li>
+                                <li class="mb-2 d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success">action</span>
+                                    <small class="text-muted">Accion — ejecuta una operacion</small>
+                                </li>
+                                <li class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary-subtle text-secondary">output</span>
+                                    <small class="text-muted">Salida — responde al usuario</small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">Consejos</h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> Cada flujo debe comenzar con un nodo de tipo <strong>input</strong>.</li>
+                                <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> Usa <strong>condition</strong> para bifurcar segun variables.</li>
+                                <li class="text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> El campo "Config JSON" acepta pares clave-valor en formato JSON.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+@endsection
+
+@push('css')
+<style>
+.node-item { border-left: 3px solid #90bb13; }
+.node-item .node-handle { cursor: grab; color: #adb5bd; }
+.node-item .node-handle:hover { color: #6c757d; }
+.node-item.sortable-ghost { opacity: 0.4; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+$(document).ready(function () {
+
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Exito');
+    @endif
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
+    @endif
+
+    // ==================== State ====================
+
+    const STRUCTURE_URL = '{{ route('helpdesk.ai.flows.structure', $flow) }}';
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    const NODE_TYPES = @json($nodeTypes);
+    const NODE_TYPE_COLORS = {
+        input: 'primary', prompt: 'info', condition: 'warning', action: 'success', output: 'secondary'
+    };
+
+    let nodes = @json($flow->nodes ?? []);
+    let edges = @json($flow->edges ?? []);
+
+    // ==================== Render nodes ====================
+
+    function nodeTypeOptions(selected) {
+        return Object.entries(NODE_TYPES)
+            .map(([val, label]) => `<option value="${val}" ${val === selected ? 'selected' : ''}>${label}</option>`)
+            .join('');
+    }
+
+    function renderNode(node, index) {
+        const color = NODE_TYPE_COLORS[node.type] || 'secondary';
+        const configJson = node.data ? JSON.stringify(node.data, null, 2) : '';
+        return `
+            <div class="list-group-item node-item py-3" data-id="${node.id}">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="node-handle pt-1">
+                        <i class="fas fa-grip-vertical"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="row g-2 mb-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label form-label-sm mb-1">Nombre del nodo</label>
+                                <input type="text" class="form-control form-control-sm node-label"
+                                       value="${escHtml(node.label || '')}" placeholder="Ej: Bienvenida">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label form-label-sm mb-1">Tipo</label>
+                                <select class="form-select form-select-sm node-type">
+                                    ${nodeTypeOptions(node.type)}
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label form-label-sm mb-1">Config JSON <small class="text-muted">(opcional)</small></label>
+                            <textarea class="form-control form-control-sm font-monospace node-config"
+                                      rows="2" placeholder="{}">${escHtml(configJson)}</textarea>
+                        </div>
+                    </div>
+                    <div class="ms-1 pt-1">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><button class="dropdown-item btn-remove-node" type="button">Eliminar nodo</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <span class="badge bg-${color}-subtle text-${color} small">${NODE_TYPES[node.type] || node.type}</span>
+                    <small class="text-muted ms-2">ID: ${escHtml(node.id)}</small>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderNodes() {
+        const $list = $('#nodes-list');
+        const $empty = $('#nodes-empty');
+        $list.empty();
+
+        if (nodes.length === 0) {
+            $list.addClass('d-none');
+            $empty.removeClass('d-none');
+        } else {
+            $list.removeClass('d-none');
+            $empty.addClass('d-none');
+            nodes.forEach((node, i) => $list.append(renderNode(node, i)));
+        }
+
+        updateBadge();
+        syncJsonTextareas();
+    }
+
+    // ==================== Render edges ====================
+
+    function nodeSelectOptions(selectedId) {
+        const placeholder = `<option value="">-- Seleccionar --</option>`;
+        const opts = nodes.map(n =>
+            `<option value="${escHtml(n.id)}" ${n.id === selectedId ? 'selected' : ''}>${escHtml(n.label || n.id)}</option>`
+        ).join('');
+        return placeholder + opts;
+    }
+
+    function renderEdgeRow(edge, index) {
+        return `
+            <tr data-idx="${index}">
+                <td>
+                    <select class="form-select form-select-sm edge-source">
+                        ${nodeSelectOptions(edge.source)}
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm edge-target">
+                        ${nodeSelectOptions(edge.target)}
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm edge-label"
+                           value="${escHtml(edge.label || '')}" placeholder="Opcional">
+                </td>
+                <td class="text-end">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><button class="dropdown-item btn-remove-edge" type="button">Eliminar</button></li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function renderEdges() {
+        const $body = $('#edges-body');
+        const $empty = $('#edges-empty');
+        $body.empty();
+
+        if (edges.length === 0) {
+            $('#edges-table').addClass('d-none');
+            $empty.removeClass('d-none');
+        } else {
+            $('#edges-table').removeClass('d-none');
+            $empty.addClass('d-none');
+            edges.forEach((edge, i) => $body.append(renderEdgeRow(edge, i)));
+        }
+
+        syncJsonTextareas();
+    }
+
+    // ==================== Collect state from DOM ====================
+
+    function collectNodes() {
+        const collected = [];
+        $('#nodes-list .node-item').each(function () {
+            const id = $(this).data('id');
+            const label = $(this).find('.node-label').val().trim();
+            const type = $(this).find('.node-type').val();
+            const configRaw = $(this).find('.node-config').val().trim();
+            let data = {};
+            if (configRaw) {
+                try { data = JSON.parse(configRaw); } catch (e) { data = { raw: configRaw }; }
+            }
+            collected.push({ id, label, type, data });
+        });
+        return collected;
+    }
+
+    function collectEdges() {
+        const collected = [];
+        $('#edges-body tr').each(function () {
+            const source = $(this).find('.edge-source').val();
+            const target = $(this).find('.edge-target').val();
+            const label  = $(this).find('.edge-label').val().trim();
+            if (source && target) {
+                collected.push({ id: `e-${source}-${target}`, source, target, label });
+            }
+        });
+        return collected;
+    }
+
+    // ==================== Save structure ====================
+
+    function saveStructure(nodesData, edgesData, successMsg) {
+        $.ajax({
+            url: STRUCTURE_URL,
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ nodes: nodesData, edges: edgesData }),
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            success: function (res) {
+                nodes = nodesData;
+                edges = edgesData;
+                updateBadge();
+                syncJsonTextareas();
+                toastr.success(res.message || successMsg || 'Estructura guardada', 'Exito');
+            },
+            error: function (xhr) {
+                const msg = xhr.responseJSON?.message || 'Error al guardar la estructura';
+                toastr.error(msg, 'Error');
+            },
+        });
+    }
+
+    // ==================== Helpers ====================
+
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function generateId() {
+        return 'node-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
+
+    function updateBadge() {
+        const count = $('#nodes-list .node-item').length;
+        $('#badge-node-count').text(count);
+    }
+
+    function syncJsonTextareas() {
+        const n = collectNodes();
+        const e = collectEdges();
+        $('#json-nodes').val(JSON.stringify(n, null, 2));
+        $('#json-edges').val(JSON.stringify(e, null, 2));
+    }
+
+    // ==================== Sortable --====================
+
+    const sortable = new Sortable(document.getElementById('nodes-list'), {
+        handle: '.node-handle',
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: function () {
+            updateBadge();
+            syncJsonTextareas();
+        },
+    });
+
+    // ==================== Events ====================
+
+    // Add node
+    $('#btn-add-node').on('click', function () {
+        const newNode = { id: generateId(), label: '', type: 'input', data: {} };
+        nodes.push(newNode);
+        renderNodes();
+        renderEdges();
+        $('#nodes-list .node-item:last-child .node-label').focus();
+    });
+
+    // Remove node (event delegation)
+    $(document).on('click', '.btn-remove-node', function () {
+        const $item = $(this).closest('.node-item');
+        const id = $item.data('id');
+        // Remove from edges too
+        edges = edges.filter(e => e.source !== id && e.target !== id);
+        nodes = nodes.filter(n => n.id !== id);
+        $item.remove();
+        updateBadge();
+        renderEdges();
+        syncJsonTextareas();
+
+        if ($('#nodes-list .node-item').length === 0) {
+            $('#nodes-list').addClass('d-none');
+            $('#nodes-empty').removeClass('d-none');
+        }
+    });
+
+    // Sync JSON on node input changes
+    $(document).on('input change', '.node-label, .node-type, .node-config', function () {
+        syncJsonTextareas();
+    });
+
+    // Add edge
+    $('#btn-add-edge').on('click', function () {
+        edges.push({ id: generateId(), source: '', target: '', label: '' });
+        renderEdges();
+    });
+
+    // Remove edge
+    $(document).on('click', '.btn-remove-edge', function () {
+        const idx = $(this).closest('tr').data('idx');
+        edges.splice(idx, 1);
+        renderEdges();
+    });
+
+    // Save structure button
+    $('#btn-save-structure').on('click', function () {
+        const n = collectNodes();
+        const e = collectEdges();
+        saveStructure(n, e, 'Estructura guardada correctamente');
+    });
+
+    // Save raw JSON
+    $('#btn-save-json').on('click', function () {
+        let n, e;
+        try {
+            n = JSON.parse($('#json-nodes').val() || '[]');
+            e = JSON.parse($('#json-edges').val() || '[]');
+        } catch (err) {
+            toastr.error('El JSON no es valido. Revisa la sintaxis.', 'Error');
+            return;
+        }
+        nodes = n;
+        edges = e;
+        saveStructure(n, e, 'JSON guardado correctamente');
+        renderNodes();
+        renderEdges();
+    });
+
+    // ==================== Init ====================
+
+    renderNodes();
+    renderEdges();
+
+});
+</script>
+@endpush
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/flows/index.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Flujos de IA')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Flujos de IA'])
+@endsection
+
+@section('content')
+
+    <div class="widget-content searchable-container list">
+
+        @include('core::components.alerts')
+
+        <div class="card">
+
+            {{-- Header --}}
+            <div class="card-header p-4 border-bottom border-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1 fw-bold">Flujos de agente IA</h5>
+                        <p class="small mb-0 text-muted">Secuencias de pasos automatizados que el agente ejecuta en conversaciones</p>
+                    </div>
+                    <div class="ms-auto">
+                        <a href="{{ route('helpdesk.ai.flows.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Nuevo flujo
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Stats --}}
+            <div class="card-body border-bottom">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Total</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($flows->total()) }}</h4>
+                                <small class="text-muted">Flujos registrados</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Publicados</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['published']) }}</h4>
+                                <small class="text-muted">Activos y funcionales</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Borradores</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['draft']) }}</h4>
+                                <small class="text-muted">Aun no publicados</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Archivados</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['archived']) }}</h4>
+                                <small class="text-muted">Ocultos del uso</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Search --}}
+            <div class="card-body border-bottom">
+                <form method="GET" action="{{ route('helpdesk.ai.flows.index') }}" id="filterForm">
+                    <div class="d-flex gap-2 align-items-center">
+                        <div class="flex-fill">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-1">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
+                                       placeholder="Buscar por nombre..."
+                                       value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <select name="status" class="form-select w-auto flex-shrink-0">
+                            <option value="">Todos los estados</option>
+                            @foreach ($statuses as $key => $label)
+                                <option value="{{ $key }}" {{ request('status') === $key ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <select name="trigger" class="form-select w-auto flex-shrink-0">
+                            <option value="">Todos los triggers</option>
+                            @foreach ($triggers as $key => $label)
+                                <option value="{{ $key }}" {{ request('trigger') === $key ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        @if(request('search') || request('status') || request('trigger'))
+                            <a href="{{ route('helpdesk.ai.flows.index') }}"
+                               class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+
+            {{-- Table --}}
+            <div class="card-body">
+                @if($flows->count() > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Trigger</th>
+                                    <th>Version</th>
+                                    <th>Estado</th>
+                                    <th>Actualizado</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($flows as $flow)
+                                    <tr>
+                                        <td>
+                                            <span class="fw-semibold">{{ $flow->name }}</span>
+                                            @if($flow->description)
+                                                <div class="small text-muted">{{ Str::limit($flow->description, 60) }}</div>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info-subtle text-info">
+                                                {{ $triggers[$flow->trigger] ?? $flow->trigger }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted small">v{{ $flow->version ?? '1' }}</span>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $statusColor = match($flow->status) {
+                                                    'published' => 'success',
+                                                    'archived'  => 'secondary',
+                                                    default     => 'warning',
+                                                };
+                                            @endphp
+                                            <span class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }}">
+                                                {{ $statuses[$flow->status] ?? $flow->status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ $flow->updated_at->diffForHumans() }}</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="dropdown">
+                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('helpdesk.ai.flows.edit', $flow) }}">
+                                                            Editar
+                                                        </a>
+                                                    </li>
+                                                    @if($flow->status === 'draft')
+                                                        <li>
+                                                            <form action="{{ route('helpdesk.ai.flows.publish', $flow) }}" method="POST">
+                                                                @csrf
+                                                                <button type="submit" class="dropdown-item">Publicar</button>
+                                                            </form>
+                                                        </li>
+                                                    @endif
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ route('helpdesk.ai.flows.duplicate', $flow) }}">
+                                                            Duplicar
+                                                        </a>
+                                                    </li>
+                                                    @if($flow->status !== 'archived')
+                                                        <li>
+                                                            <form action="{{ route('helpdesk.ai.flows.archive', $flow) }}" method="POST">
+                                                                @csrf
+                                                                <button type="submit" class="dropdown-item">Archivar</button>
+                                                            </form>
+                                                        </li>
+                                                    @endif
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item delete-btn" href="#"
+                                                           data-bs-toggle="modal"
+                                                           data-bs-target="#delete-modal"
+                                                           data-url="{{ route('helpdesk.ai.flows.destroy', $flow) }}"
+                                                           data-title="Eliminar flujo: {{ $flow->name }}">
+                                                            Eliminar
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-5">
+                        <i class="fas fa-diagram-project fa-3x mb-3 text-muted opacity-50"></i>
+                        <h5 class="fw-bold mb-2">
+                            @if(request('search') || request('status') || request('trigger'))
+                                No se encontraron resultados
+                            @else
+                                No hay flujos configurados
+                            @endif
+                        </h5>
+                        <p class="text-muted mb-4">
+                            @if(request('search') || request('status') || request('trigger'))
+                                Prueba ajustando los filtros de busqueda
+                            @else
+                                Crea tu primer flujo para automatizar conversaciones del agente IA
+                            @endif
+                        </p>
+                        @if(request('search') || request('status') || request('trigger'))
+                            <a href="{{ route('helpdesk.ai.flows.index') }}" class="btn btn-secondary">Limpiar filtros</a>
+                        @else
+                            <a href="{{ route('helpdesk.ai.flows.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Nuevo flujo
+                            </a>
+                        @endif
+                    </div>
+                @endif
+            </div>
+
+            {{-- Pagination --}}
+            @if($flows->hasPages())
+                <div class="card-footer bg-white border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            Mostrando {{ $flows->firstItem() }} - {{ $flows->lastItem() }} de {{ $flows->total() }}
+                        </div>
+                        <div>
+                            {{ $flows->appends(request()->input())->links() }}
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+        </div>
+    </div>
+
+    @include('core::components.delete')
+
+@endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    @if(session('success'))
+        toastr.success(@json(session('success')), 'Exito');
+    @endif
+    @if(session('error'))
+        toastr.error(@json(session('error')), 'Error');
+    @endif
+
+    $(document).on('click', '.delete-btn', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').attr('action', $(this).data('url'));
+    });
+});
+</script>
+@endpush
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/modals/knowledge-modal.blade.php -->
+<!-- ================================================================ -->
+{{-- Knowledge modal: shared create/edit --}}
+<div class="modal fade" id="knowledgeModal" tabindex="-1" aria-labelledby="knowledgeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="knowledgeModalLabel">Nuevo documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="knowledgeForm">
+                <div class="modal-body">
+                    <input type="hidden" id="knowledge_id" name="id">
+
+                    {{-- Informacion basica --}}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Titulo y contenido</p>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label" for="knowledge_title">Titulo <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="knowledge_title" name="title"
+                                       placeholder="Titulo del documento o articulo" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="knowledge_type">Tipo <span class="text-danger">*</span></label>
+                                <select class="form-select" id="knowledge_type" name="type" required>
+                                    <option value="document">Documento</option>
+                                    <option value="faq">FAQ</option>
+                                    <option value="article">Articulo</option>
+                                    <option value="manual">Manual</option>
+                                    <option value="url">URL</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="knowledge_content">Contenido <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="knowledge_content" name="content" rows="10"
+                                          placeholder="Contenido del documento que el agente usara para generar respuestas..." required></textarea>
+                                <div class="form-text">Este contenido sera indexado y usado por el agente para responder preguntas</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Metadata --}}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Metadata</h6>
+                        <p class="text-muted small mb-3">Tags, categorias y fuente</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="knowledge_source_url">URL de origen</label>
+                                <input type="url" class="form-control" id="knowledge_source_url" name="source_url"
+                                       placeholder="https://ejemplo.com/articulo">
+                                <div class="form-text">Enlace al documento original (opcional)</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="knowledge_source_type">Tipo de fuente</label>
+                                <select class="form-select" id="knowledge_source_type" name="source_type">
+                                    <option value="">Sin especificar</option>
+                                    <option value="manual">Entrada manual</option>
+                                    <option value="import">Importacion</option>
+                                    <option value="scrape">Web scraping</option>
+                                    <option value="help_center">Centro de ayuda</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="knowledge_tags">Tags (separados por comas)</label>
+                                <input type="text" class="form-control" id="knowledge_tags" name="tags"
+                                       placeholder="soporte, tutorial, api, configuracion">
+                                <div class="form-text">Ayuda a categorizar y encontrar este contenido</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="knowledge_summary">Resumen</label>
+                                <textarea class="form-control" id="knowledge_summary" name="summary" rows="2"
+                                          placeholder="Resumen breve del contenido (se genera automaticamente si se deja vacio)"></textarea>
+                                <div class="form-text">Un resumen corto para busquedas rapidas</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Configuracion --}}
+                    <div>
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Configuracion</h6>
+                        <p class="text-muted small mb-3">Visibilidad</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="knowledge_is_active">Estado</label>
+                                <select class="form-select" id="knowledge_is_active" name="is_active">
+                                    <option value="1">Activo</option>
+                                    <option value="0">Inactivo</option>
+                                </select>
+                                <div class="form-text">Solo los documentos activos seran usados por el agente</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="submit" class="btn btn-primary w-100 mb-1">Guardar documento</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/modals/tag-modal.blade.php -->
+<!-- ================================================================ -->
+{{-- Tag modal: shared create/edit --}}
+<div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tagModalLabel">Nuevo tag</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="tagForm">
+                <div class="modal-body">
+                    <input type="hidden" id="tag_id" name="id">
+
+                    {{-- Informacion basica --}}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Nombre, descripcion y color identificador</p>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label" for="tag_name">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tag_name" name="name"
+                                       placeholder="Ej: Urgente, Soporte tecnico" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="tag_color">Color <span class="text-danger">*</span></label>
+                                <input type="color" class="form-control form-control-color w-100" id="tag_color" name="color" value="#90bb13">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="tag_description">Descripcion</label>
+                                <textarea class="form-control" id="tag_description" name="description" rows="2"
+                                          placeholder="Breve descripcion del proposito de este tag"></textarea>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="tag_icon">Icono (Font Awesome)</label>
+                                <input type="text" class="form-control" id="tag_icon" name="icon"
+                                       placeholder="fas fa-star">
+                                <div class="form-text">Ej: fas fa-star, fas fa-flag, fas fa-bolt</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Configuracion --}}
+                    <div>
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Configuracion</h6>
+                        <p class="text-muted small mb-3">Prioridad de uso y disponibilidad</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="tag_priority">Prioridad</label>
+                                <input type="number" class="form-control" id="tag_priority" name="priority"
+                                       value="0" min="0" max="100">
+                                <div class="form-text">Mayor prioridad = mas relevante</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="tag_is_active">Estado</label>
+                                <select class="form-select" id="tag_is_active" name="is_active">
+                                    <option value="1">Activo</option>
+                                    <option value="0">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="tag_system_prompt_addition">Instruccion adicional para el system prompt</label>
+                                <textarea class="form-control" id="tag_system_prompt_addition" name="system_prompt_addition" rows="3"
+                                          placeholder="Instrucciones que se añadiran al prompt cuando este tag este activo..."></textarea>
+                                <div class="form-text">Este texto se agrega al prompt del agente cuando una conversacion tenga este tag</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="submit" class="btn btn-primary w-100 mb-1">Guardar tag</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/modals/tool-modal.blade.php -->
+<!-- ================================================================ -->
+{{-- Tool modal: shared create/edit --}}
+<div class="modal fade" id="toolModal" tabindex="-1" aria-labelledby="toolModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="toolModalLabel">Nueva herramienta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="toolForm">
+                <div class="modal-body">
+                    <input type="hidden" id="tool_id" name="id">
+
+                    {{-- Informacion basica --}}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Informacion basica</h6>
+                        <p class="text-muted small mb-3">Nombre y descripcion del tool</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="tool_name">Nombre de la funcion <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="tool_name" name="name"
+                                       placeholder="get_weather, search_database" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="tool_type">Tipo <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tool_type" name="type" required>
+                                    <option value="function">Funcion</option>
+                                    <option value="api">API externa</option>
+                                    <option value="database">Consulta base de datos</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="tool_description">Descripcion <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="tool_description" name="description" rows="2"
+                                          placeholder="Describe que hace esta herramienta..." required></textarea>
+                                <div class="form-text">Esta descripcion ayudara al LLM a decidir cuando usar esta herramienta</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Parametros --}}
+                    <div class="mb-4">
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Parametros</h6>
+                        <p class="text-muted small mb-3">Configuracion del tool</p>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label" for="tool_parameters">Parametros (JSON Schema)</label>
+                                <textarea class="form-control font-monospace" id="tool_parameters" name="parameters" rows="6"
+                                          placeholder='{"type":"object","properties":{"city":{"type":"string","description":"The city name"}},"required":["city"]}'></textarea>
+                                <div class="form-text">Define los parametros que acepta esta funcion en formato JSON Schema</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="tool_implementation">Implementacion (codigo/endpoint)</label>
+                                <textarea class="form-control font-monospace" id="tool_implementation" name="implementation" rows="3"
+                                          placeholder="URL del endpoint, codigo PHP, o referencia a clase/metodo"></textarea>
+                                <div class="form-text">URL de API, codigo ejecutable, o ruta a metodo PHP</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="tool_auth_config">Configuracion de autenticacion (JSON)</label>
+                                <textarea class="form-control font-monospace" id="tool_auth_config" name="auth_config" rows="3"
+                                          placeholder='{"type":"bearer","token":"xxx"}'></textarea>
+                                <div class="form-text">API keys, tokens u otras credenciales necesarias</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Configuracion --}}
+                    <div>
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Configuracion</h6>
+                        <p class="text-muted small mb-3">Disponibilidad</p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label" for="tool_requires_approval">Requiere aprobacion</label>
+                                <select class="form-select" id="tool_requires_approval" name="requires_approval">
+                                    <option value="0">No requiere aprobacion</option>
+                                    <option value="1">Requiere aprobacion</option>
+                                </select>
+                                <div class="form-text">El agente pedira permiso antes de ejecutar esta herramienta</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="tool_is_active">Estado</label>
+                                <select class="form-select" id="tool_is_active" name="is_active">
+                                    <option value="1">Activa</option>
+                                    <option value="0">Inactiva</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="submit" class="btn btn-primary w-100 mb-1">Guardar herramienta</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/partials/knowledge-tab.blade.php -->
+<!-- ================================================================ -->
+{{-- Knowledge tab partial - loaded via AJAX into #knowledge-container --}}
+
+@php
+    $total = $knowledge->total();
+    $active = $knowledge->where('is_active', true)->count();
+    $inactive = $total - $active;
+@endphp
+
+{{-- Header --}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-1 fw-bold">Base de conocimiento</h5>
+        <p class="text-muted mb-0 small">Documentos que el agente utiliza para generar respuestas precisas</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-new-knowledge">
+        <i class="fas fa-plus me-1"></i> Nuevo documento
+    </button>
+</div>
+
+{{-- Stats --}}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Total</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($total) }}</h4>
+                <small class="text-muted">Documentos registrados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Activos</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($active) }}</h4>
+                <small class="text-muted">Indexados por el agente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Inactivos</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($inactive) }}</h4>
+                <small class="text-muted">No usados por el agente</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Table --}}
+@if($knowledge->isEmpty())
+    <div class="text-center py-5">
+        <i class="fas fa-brain fa-3x mb-3 text-muted opacity-50"></i>
+        <h5 class="fw-bold mb-2">No hay documentos en la base de conocimiento</h5>
+        <p class="text-muted mb-4">Agrega documentos, FAQs o articulos para que el agente responda con mas precision.</p>
+        <button type="button" class="btn btn-primary" id="btn-new-knowledge-empty">
+            <i class="fas fa-plus me-1"></i> Nuevo documento
+        </button>
+    </div>
+@else
+    <div class="table-responsive">
+        <table class="table table-hover align-middle text-nowrap">
+            <thead class="table-light">
+                <tr>
+                    <th>Titulo</th>
+                    <th>Tipo</th>
+                    <th>Usos</th>
+                    <th>Embedding</th>
+                    <th>Estado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($knowledge as $item)
+                    @php
+                        $typeLabels = ['document' => 'Documento', 'faq' => 'FAQ', 'article' => 'Articulo', 'manual' => 'Manual', 'url' => 'URL'];
+                    @endphp
+                    <tr data-count-item>
+                        <td>
+                            <span class="fw-semibold">{{ Str::limit($item->title, 50) }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ $typeLabels[$item->type] ?? $item->type }}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ $item->usage_count ?? 0 }} veces</small>
+                        </td>
+                        <td>
+                            @if($item->embedding_model)
+                                <span class="badge bg-success-subtle text-success">Generado</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary">Sin embedding</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($item->is_active)
+                                <span class="badge bg-success-subtle text-success">Activo</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary">Inactivo</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-vertical"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item knowledge-edit-btn" href="#" data-id="{{ $item->id }}">
+                                            Editar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item knowledge-toggle-btn" href="#"
+                                           data-id="{{ $item->id }}"
+                                           data-active="{{ $item->is_active ? '1' : '0' }}">
+                                            {{ $item->is_active ? 'Desactivar' : 'Activar' }}
+                                        </a>
+                                    </li>
+                                    @unless($item->embedding_model)
+                                        <li>
+                                            <a class="dropdown-item knowledge-embedding-btn" href="#"
+                                               data-id="{{ $item->id }}">
+                                                Generar embedding
+                                            </a>
+                                        </li>
+                                    @endunless
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item knowledge-delete-btn" href="#"
+                                           data-id="{{ $item->id }}"
+                                           data-name="{{ $item->title }}">
+                                            Eliminar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if($knowledge->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $knowledge->links() }}
+        </div>
+    @endif
+@endif
+
+<script>
+$(function () {
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    // New document
+    $(document).on('click', '#btn-new-knowledge, #btn-new-knowledge-empty', function () {
+        $('#knowledge_id').val('');
+        $('#knowledgeForm')[0].reset();
+        $('#knowledgeModalLabel').text('Nuevo documento');
+        $('#knowledgeModal').modal('show');
+    });
+
+    // Edit document (load via AJAX)
+    $(document).on('click', '.knowledge-edit-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+
+        $.get('{{ route("helpdesk.ai.knowledge.index") }}/' + id, function (data) {
+            $('#knowledge_id').val(data.id);
+            $('#knowledge_title').val(data.title);
+            $('#knowledge_content').val(data.content);
+            $('#knowledge_type').val(data.type);
+            $('#knowledge_source_url').val(data.source_url);
+            $('#knowledge_source_type').val(data.source_type);
+            $('#knowledge_tags').val(data.tags ? data.tags.join(', ') : '');
+            $('#knowledge_summary').val(data.summary);
+            $('#knowledge_is_active').val(data.is_active ? '1' : '0');
+            $('#knowledgeModalLabel').text('Editar documento');
+            $('#knowledgeModal').modal('show');
+        }).fail(function () {
+            toastr.error('Error al cargar el documento', 'Error');
+        });
+    });
+
+    // Toggle active
+    $(document).on('click', '.knowledge-toggle-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const active = $(this).data('active') == '1' ? 0 : 1;
+
+        $.ajax({
+            url: '{{ route("helpdesk.ai.knowledge.toggle", "__ID__") }}'.replace('__ID__', id),
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: { is_active: active }
+        }).done(function () {
+            toastr.success(active ? 'Documento activado' : 'Documento desactivado', 'Exito');
+            reloadKnowledgeTab();
+        }).fail(function () {
+            toastr.error('Error al actualizar el documento', 'Error');
+        });
+    });
+
+    // Generate embedding
+    $(document).on('click', '.knowledge-embedding-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+
+        $.ajax({
+            url: '{{ route("helpdesk.ai.knowledge.generate-embedding", "__ID__") }}'.replace('__ID__', id),
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF }
+        }).done(function () {
+            toastr.success('Embedding generado correctamente', 'Exito');
+            reloadKnowledgeTab();
+        }).fail(function () {
+            toastr.error('Error al generar el embedding', 'Error');
+        });
+    });
+
+    // Delete
+    $(document).on('click', '.knowledge-delete-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+
+        $('#delete-modal .modal-title').text('Eliminar documento: ' + name);
+        $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
+            ev.preventDefault();
+            $.ajax({
+                url: '{{ route("helpdesk.ai.knowledge.destroy", "__ID__") }}'.replace('__ID__', id),
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': CSRF }
+            }).done(function () {
+                $('#delete-modal').modal('hide');
+                toastr.success('Documento eliminado correctamente', 'Exito');
+                reloadKnowledgeTab();
+            }).fail(function () {
+                toastr.error('Error al eliminar el documento', 'Error');
+            });
+        });
+        $('#delete-modal').modal('show');
+    });
+
+    // Form submit
+    $('#knowledgeForm').off('submit').on('submit', function (e) {
+        e.preventDefault();
+        const id = $('#knowledge_id').val();
+        const url = id
+            ? '{{ route("helpdesk.ai.knowledge.update", "__ID__") }}'.replace('__ID__', id)
+            : '{{ route("helpdesk.ai.knowledge.store") }}';
+
+        const tagsRaw = $('#knowledge_tags').val().trim();
+        const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+        $('.is-invalid').removeClass('is-invalid');
+
+        $.ajax({
+            url: url,
+            method: id ? 'PUT' : 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: {
+                title: $('#knowledge_title').val(),
+                content: $('#knowledge_content').val(),
+                type: $('#knowledge_type').val(),
+                source_url: $('#knowledge_source_url').val(),
+                source_type: $('#knowledge_source_type').val(),
+                tags: tags,
+                summary: $('#knowledge_summary').val(),
+                is_active: $('#knowledge_is_active').val(),
+            }
+        }).done(function (res) {
+            $('#knowledgeModal').modal('hide');
+            toastr.success(res.message || 'Documento guardado correctamente', 'Exito');
+            reloadKnowledgeTab();
+        }).fail(function (xhr) {
+            if (xhr.status === 422) {
+                $.each(xhr.responseJSON.errors, function (field, messages) {
+                    $('#knowledge_' + field).addClass('is-invalid')
+                        .siblings('.invalid-feedback').text(messages[0]);
+                });
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar el documento', 'Error');
+            }
+        });
+    });
+
+    function reloadKnowledgeTab() {
+        $.get('{{ route("helpdesk.ai.knowledge.index") }}', function (html) {
+            $('#knowledge-container').html(html);
+            const count = $('#knowledge-container [data-count-item]').length;
+            $('#knowledge-count').text(count);
+        });
+    }
+});
+</script>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/partials/settings-tab.blade.php -->
+<!-- ================================================================ -->
+<div class="row">
+    <!-- Main Settings Form -->
+    <div class="col-lg-8">
+        <form method="POST" action="{{ route('helpdesk.ai.settings.update') }}" id="settingsForm">
+            @csrf
+            @method('PUT')
+
+            <!-- Basic Information -->
+            <div class="card mb-3">
+                <div class="card-header bg-light-primary">
+                    <h5 class="mb-0"><i class="fa-solid fa-circle-info me-2"></i>Información Básica</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre del Agente <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                            value="{{ old('name', $agent->name ?? 'Asistente IA') }}" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea name="description" class="form-control @error('description') is-invalid @enderror"
+                            rows="2" placeholder="Breve descripción del propósito del agente">{{ old('description', $agent->description ?? '') }}</textarea>
+                        @error('description')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+                        <select name="status" class="form-select @error('status') is-invalid @enderror">
+                            @foreach ($statuses as $value => $label)
+                                <option value="{{ $value }}" {{ old('status', $agent->status ?? 'inactive') === $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('status')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personality/System Prompt -->
+            <div class="card mb-3">
+                <div class="card-header bg-light-info">
+                    <h5 class="mb-0"><i class="fa-solid fa-message me-2"></i>Personalidad</h5>
+                </div>
+                <div class="card-body">
+                    <label class="form-label fw-semibold">System Prompt (Instrucciones Base) <span class="text-danger">*</span></label>
+                    <textarea name="personality" class="form-control @error('personality') is-invalid @enderror"
+                        rows="6" required placeholder="Define el comportamiento y personalidad del agente...">{{ old('personality', $agent->personality ?? 'Eres un asistente útil y amable.') }}</textarea>
+                    <small class="text-muted d-block mt-2">Este prompt controla cómo el agente se comporta y responde a los usuarios.</small>
+                    @error('personality')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+
+            <!-- LLM Provider & Model -->
+            <div class="card mb-3">
+                <div class="card-header bg-light-success">
+                    <h5 class="mb-0"><i class="fa-solid fa-microchip me-2"></i>Proveedor LLM</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Proveedor <span class="text-danger">*</span></label>
+                        <select name="provider" id="provider" class="form-select @error('provider') is-invalid @enderror" required>
+                            <option value="">-- Seleccionar Proveedor --</option>
+                            @foreach ($providers as $key => $provider)
+                                <option value="{{ $key }}" {{ old('provider', $agent->provider ?? '') === $key ? 'selected' : '' }}>
+                                    {{ $provider['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('provider')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Modelo <span class="text-danger">*</span></label>
+                        <select name="model" id="model" class="form-select @error('model') is-invalid @enderror" required>
+                            <option value="">-- Seleccionar Modelo --</option>
+                            @if ($agent->provider ?? false)
+                                @foreach ($providers[$agent->provider]['models'] as $model)
+                                    <option value="{{ $model }}" {{ old('model', $agent->model ?? '') === $model ? 'selected' : '' }}>
+                                        {{ $model }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('model')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">API Key</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+                            <input type="password" name="api_key" id="api_key" class="form-control @error('api_key') is-invalid @enderror"
+                                placeholder="sk-... o xxxx-xxxx-xxxx" value="{{ old('api_key', $agent->settings['api_key'] ?? '') }}">
+                            <button class="btn btn-outline-secondary" type="button" id="toggleApiKey">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                            <button class="btn btn-primary" type="button" id="testConnection">
+                                <i class="fa-solid fa-plug"></i> Probar
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-2">Tu API key se cifra y almacena de forma segura.</small>
+                        @error('api_key')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Parameters -->
+            <div class="card mb-3">
+                <div class="card-header bg-light-warning">
+                    <h5 class="mb-0"><i class="fa-solid fa-sliders me-2"></i>Parámetros Avanzados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Temperature (0-2)</label>
+                            <input type="number" name="temperature" class="form-control" step="0.1" min="0" max="2"
+                                value="{{ old('temperature', $agent->settings['temperature'] ?? 0.7) }}">
+                            <small class="text-muted">Mayor = más creativo, Menor = más determinista</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Max Tokens</label>
+                            <input type="number" name="max_tokens" class="form-control" min="1" max="128000"
+                                value="{{ old('max_tokens', $agent->settings['max_tokens'] ?? 2048) }}">
+                            <small class="text-muted">Máximo de tokens en la respuesta</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Top P (0-1)</label>
+                            <input type="number" name="top_p" class="form-control" step="0.01" min="0" max="1"
+                                value="{{ old('top_p', $agent->settings['top_p'] ?? 1.0) }}">
+                            <small class="text-muted">Nucleus sampling</small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Frequency Penalty (-2 a 2)</label>
+                            <input type="number" name="frequency_penalty" class="form-control" step="0.1" min="-2" max="2"
+                                value="{{ old('frequency_penalty', $agent->settings['frequency_penalty'] ?? 0) }}">
+                            <small class="text-muted">Penaliza palabras repetidas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-check me-2"></i>Guardar Configuración
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar - Statistics & Info -->
+    <div class="col-lg-4">
+        <!-- Status Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-light-secondary">
+                <h5 class="mb-0"><i class="fa-solid fa-chart-pie me-2"></i>Estado del Agente</h5>
+            </div>
+            <div class="card-body">
+                @if ($hasAgent ?? false)
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <span class="badge bg-{{ $agent->status === 'active' ? 'success' : 'secondary' }} p-3 fs-6">
+                                <i class="fa-solid fa-robot me-1"></i>{{ $agent->status_label }}
+                            </span>
+                        </div>
+                        <h5 class="mb-2">{{ $agent->name ?? 'Sin nombre' }}</h5>
+                        <p class="text-muted mb-1">Proveedor: <strong>{{ $agent->provider_label ?? 'N/A' }}</strong></p>
+                        <p class="text-muted mb-3">Modelo: <strong>{{ $agent->model ?? 'N/A' }}</strong></p>
+
+                        @if ($agent->enabled_at)
+                            <div class="alert alert-info py-2">
+                                <small><i class="fa-solid fa-calendar me-1"></i>Activado: {{ $agent->enabled_at->format('d/m/Y H:i') }}</small>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="alert alert-info mb-0">
+                        <i class="fa-solid fa-circle-info me-2"></i>
+                        <strong>Sin configurar</strong>
+                        <p class="mb-0 mt-2 small">Rellena el formulario para crear tu primer agente IA.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Quick Links Card -->
+        <div class="card">
+            <div class="card-header bg-light-info">
+                <h5 class="mb-0"><i class="fa-solid fa-circle-question me-2"></i>Ayuda Rápida</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-2">¿Cómo obtener API Keys?</h6>
+                <ul class="small mb-3">
+                    <li><a href="https://platform.openai.com/api-keys" target="_blank" class="text-decoration-none">OpenAI <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://console.anthropic.com/" target="_blank" class="text-decoration-none">Anthropic <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://aistudio.google.com/" target="_blank" class="text-decoration-none">Google Gemini <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                    <li><a href="https://ollama.ai/" target="_blank" class="text-decoration-none">Ollama (Local) <i class="fa-solid fa-arrow-up-right-from-square"></i></a></li>
+                </ul>
+
+                <hr>
+
+                <h6 class="mb-2">Parámetros</h6>
+                <ul class="small mb-0">
+                    <li><strong>Temperature:</strong> Creatividad (0=determinista, 2=muy creativo)</li>
+                    <li><strong>Max Tokens:</strong> Largo máximo de la respuesta</li>
+                    <li><strong>Top P:</strong> Diversidad de tokens seleccionados</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+const providers = @json($providers);
+
+// Toggle API key visibility
+document.getElementById('toggleApiKey')?.addEventListener('click', function() {
+    const input = document.getElementById('api_key');
+    const icon = this.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+});
+
+// Update model dropdown when provider changes
+document.getElementById('provider')?.addEventListener('change', function() {
+    const provider = this.value;
+    const modelSelect = document.getElementById('model');
+    modelSelect.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
+
+    if (provider && providers[provider]) {
+        providers[provider].models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model;
+            modelSelect.appendChild(option);
+        });
+    }
+});
+
+// Test connection
+document.getElementById('testConnection')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    const provider = document.getElementById('provider').value;
+    const model = document.getElementById('model').value;
+    const apiKey = document.getElementById('api_key').value;
+
+    if (!provider || !model) {
+        toastr.warning('Por favor selecciona proveedor y modelo', 'Advertencia');
+        return;
+    }
+
+    const btn = this;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Probando...';
+
+    fetch('{{ route("helpdesk.ai.settings.test") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ provider, model, api_key: apiKey }),
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            toastr.success(data.message, 'Conexión exitosa');
+        } else {
+            toastr.error(data.message, 'Error');
+        }
+    })
+    .catch(err => {
+        toastr.error('Error al conectar: ' + err.message, 'Error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    });
+});
+</script>
+@endpush
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/partials/tags-tab.blade.php -->
+<!-- ================================================================ -->
+{{-- Tags tab partial - loaded via AJAX into #tags-container --}}
+
+@php
+    $total = $tags->total();
+    $active = $tags->where('is_active', true)->count();
+    $inactive = $total - $active;
+@endphp
+
+@push('styles')
+<style>.tag-color-dot { width: 12px; height: 12px; }</style>
+@endpush
+
+{{-- Header --}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-1 fw-bold">Tags del agente</h5>
+        <p class="text-muted mb-0 small">Los tags categorizan conversaciones y modifican el comportamiento del agente</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-new-tag">
+        <i class="fas fa-plus me-1"></i> Nuevo tag
+    </button>
+</div>
+
+{{-- Stats --}}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Total</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($total) }}</h4>
+                <small class="text-muted">Tags registrados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Activos</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($active) }}</h4>
+                <small class="text-muted">Disponibles para el agente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Inactivos</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($inactive) }}</h4>
+                <small class="text-muted">Sin efecto en el agente</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Table --}}
+@if($tags->isEmpty())
+    <div class="text-center py-5">
+        <i class="fas fa-tags fa-3x mb-3 text-muted opacity-50"></i>
+        <h5 class="fw-bold mb-2">No hay tags configurados</h5>
+        <p class="text-muted mb-4">Crea tu primer tag para categorizar conversaciones y personalizar el comportamiento del agente.</p>
+        <button type="button" class="btn btn-primary" id="btn-new-tag-empty">
+            <i class="fas fa-plus me-1"></i> Nuevo tag
+        </button>
+    </div>
+@else
+    <div class="table-responsive">
+        <table class="table table-hover align-middle text-nowrap">
+            <thead class="table-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripcion</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tags as $tag)
+                    <tr data-count-item>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="rounded-circle d-inline-block flex-shrink-0 tag-color-dot"
+                                      style="background-color:{{ $tag->color ?? '#90bb13' }};"></span>
+                                <span class="fw-semibold">{{ $tag->name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ $tag->description ? Str::limit($tag->description, 60) : '—' }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ $tag->priority ?? 0 }}</span>
+                        </td>
+                        <td>
+                            @if($tag->is_active)
+                                <span class="badge bg-success-subtle text-success">Activo</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary">Inactivo</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-vertical"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item tag-edit-btn" href="#"
+                                           data-id="{{ $tag->id }}"
+                                           data-name="{{ $tag->name }}"
+                                           data-description="{{ $tag->description }}"
+                                           data-color="{{ $tag->color ?? '#90bb13' }}"
+                                           data-icon="{{ $tag->icon }}"
+                                           data-priority="{{ $tag->priority ?? 0 }}"
+                                           data-system-prompt="{{ $tag->system_prompt_addition }}"
+                                           data-is-active="{{ $tag->is_active ? '1' : '0' }}">
+                                            Editar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item tag-toggle-btn" href="#"
+                                           data-id="{{ $tag->id }}"
+                                           data-active="{{ $tag->is_active ? '1' : '0' }}">
+                                            {{ $tag->is_active ? 'Desactivar' : 'Activar' }}
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item tag-delete-btn" href="#"
+                                           data-id="{{ $tag->id }}"
+                                           data-name="{{ $tag->name }}">
+                                            Eliminar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if($tags->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $tags->links() }}
+        </div>
+    @endif
+@endif
+
+<script>
+$(function () {
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    // Open modal for new tag
+    $(document).on('click', '#btn-new-tag, #btn-new-tag-empty', function () {
+        $('#tag_id').val('');
+        $('#tagForm')[0].reset();
+        $('#tag_color').val('#90bb13');
+        $('#tagModalLabel').text('Nuevo tag');
+        $('#tagModal').modal('show');
+    });
+
+    // Open modal to edit tag (data embedded in row)
+    $(document).on('click', '.tag-edit-btn', function (e) {
+        e.preventDefault();
+        const d = $(this).data();
+        $('#tag_id').val(d.id);
+        $('#tag_name').val(d.name);
+        $('#tag_description').val(d.description);
+        $('#tag_color').val(d.color);
+        $('#tag_icon').val(d.icon);
+        $('#tag_priority').val(d.priority);
+        $('#tag_system_prompt_addition').val(d.systemPrompt);
+        $('#tag_is_active').val(d.isActive ? '1' : '0');
+        $('#tagModalLabel').text('Editar tag');
+        $('#tagModal').modal('show');
+    });
+
+    // Toggle active
+    $(document).on('click', '.tag-toggle-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const active = $(this).data('active') == '1' ? 0 : 1;
+
+        $.ajax({
+            url: '{{ route("helpdesk.ai.tags.toggle", "__ID__") }}'.replace('__ID__', id),
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: { is_active: active }
+        }).done(function () {
+            toastr.success(active ? 'Tag activado' : 'Tag desactivado', 'Exito');
+            reloadTagsTab();
+        }).fail(function () {
+            toastr.error('Error al actualizar el tag', 'Error');
+        });
+    });
+
+    // Delete
+    $(document).on('click', '.tag-delete-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+
+        $('#delete-modal .modal-title').text('Eliminar tag: ' + name);
+        $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
+            ev.preventDefault();
+            $.ajax({
+                url: '{{ route("helpdesk.ai.tags.destroy", "__ID__") }}'.replace('__ID__', id),
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': CSRF }
+            }).done(function () {
+                $('#delete-modal').modal('hide');
+                toastr.success('Tag eliminado correctamente', 'Exito');
+                reloadTagsTab();
+            }).fail(function () {
+                toastr.error('Error al eliminar el tag', 'Error');
+            });
+        });
+        $('#delete-modal').modal('show');
+    });
+
+    // Form submit (create / update)
+    $('#tagForm').off('submit').on('submit', function (e) {
+        e.preventDefault();
+        const id = $('#tag_id').val();
+        const url = id
+            ? '{{ route("helpdesk.ai.tags.update", "__ID__") }}'.replace('__ID__', id)
+            : '{{ route("helpdesk.ai.tags.store") }}';
+
+        $('.is-invalid').removeClass('is-invalid');
+
+        $.ajax({
+            url: url,
+            method: id ? 'PUT' : 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: {
+                name: $('#tag_name').val(),
+                description: $('#tag_description').val(),
+                color: $('#tag_color').val(),
+                icon: $('#tag_icon').val(),
+                priority: $('#tag_priority').val(),
+                system_prompt_addition: $('#tag_system_prompt_addition').val(),
+                is_active: $('#tag_is_active').val(),
+            }
+        }).done(function (res) {
+            $('#tagModal').modal('hide');
+            toastr.success(res.message || 'Tag guardado correctamente', 'Exito');
+            reloadTagsTab();
+        }).fail(function (xhr) {
+            if (xhr.status === 422) {
+                $.each(xhr.responseJSON.errors, function (field, messages) {
+                    $('#tag_' + field).addClass('is-invalid')
+                        .siblings('.invalid-feedback').text(messages[0]);
+                });
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar el tag', 'Error');
+            }
+        });
+    });
+
+    function reloadTagsTab() {
+        $.get('{{ route("helpdesk.ai.tags.index") }}', function (html) {
+            $('#tags-container').html(html);
+            const count = $('#tags-container [data-count-item]').length;
+            $('#tags-count').text(count);
+        });
+    }
+});
+</script>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/partials/tools-tab.blade.php -->
+<!-- ================================================================ -->
+{{-- Tools tab partial - loaded via AJAX into #tools-container --}}
+
+@php
+    $total = $tools->total();
+    $active = $tools->where('is_active', true)->count();
+    $inactive = $total - $active;
+@endphp
+
+{{-- Header --}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-1 fw-bold">Herramientas del agente</h5>
+        <p class="text-muted mb-0 small">Funciones y APIs que el agente puede invocar para realizar acciones</p>
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-new-tool">
+        <i class="fas fa-plus me-1"></i> Nueva herramienta
+    </button>
+</div>
+
+{{-- Stats --}}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Total</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($total) }}</h4>
+                <small class="text-muted">Herramientas registradas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Activas</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($active) }}</h4>
+                <small class="text-muted">Disponibles para el agente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="card bg-light-secondary h-100">
+            <div class="card-body">
+                <h6 class="card-title mb-2">Inactivas</h6>
+                <h4 class="mb-1 fw-bold">{{ number_format($inactive) }}</h4>
+                <small class="text-muted">No disponibles para el agente</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Table --}}
+@if($tools->isEmpty())
+    <div class="text-center py-5">
+        <i class="fas fa-wrench fa-3x mb-3 text-muted opacity-50"></i>
+        <h5 class="fw-bold mb-2">No hay herramientas configuradas</h5>
+        <p class="text-muted mb-4">Crea herramientas para que el agente pueda consultar APIs, bases de datos o ejecutar funciones.</p>
+        <button type="button" class="btn btn-primary" id="btn-new-tool-empty">
+            <i class="fas fa-plus me-1"></i> Nueva herramienta
+        </button>
+    </div>
+@else
+    <div class="table-responsive">
+        <table class="table table-hover align-middle text-nowrap">
+            <thead class="table-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Descripcion</th>
+                    <th>Usos</th>
+                    <th>Estado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($tools as $tool)
+                    <tr data-count-item>
+                        <td>
+                            <span class="fw-semibold">{{ $tool->name }}</span>
+                            @if($tool->requires_approval)
+                                <span class="badge bg-warning-subtle text-warning ms-1">Aprobacion</span>
+                            @endif
+                        </td>
+                        <td>
+                            @php
+                                $typeLabels = ['function' => 'Funcion', 'api' => 'API', 'database' => 'Base de datos', 'custom' => 'Personalizado'];
+                                $typeBadges = ['function' => 'primary', 'api' => 'info', 'database' => 'warning', 'custom' => 'secondary'];
+                            @endphp
+                            <span class="badge bg-{{ $typeBadges[$tool->type] ?? 'secondary' }}-subtle text-{{ $typeBadges[$tool->type] ?? 'secondary' }}">
+                                {{ $typeLabels[$tool->type] ?? $tool->type }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ Str::limit($tool->description, 60) }}</small>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ $tool->usage_count ?? 0 }} veces</small>
+                        </td>
+                        <td>
+                            @if($tool->is_active)
+                                <span class="badge bg-success-subtle text-success">Activa</span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-vertical"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item tool-edit-btn" href="#" data-id="{{ $tool->id }}">
+                                            Editar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item tool-toggle-btn" href="#"
+                                           data-id="{{ $tool->id }}"
+                                           data-active="{{ $tool->is_active ? '1' : '0' }}">
+                                            {{ $tool->is_active ? 'Desactivar' : 'Activar' }}
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item tool-delete-btn" href="#"
+                                           data-id="{{ $tool->id }}"
+                                           data-name="{{ $tool->name }}">
+                                            Eliminar
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if($tools->hasPages())
+        <div class="d-flex justify-content-end mt-3">
+            {{ $tools->links() }}
+        </div>
+    @endif
+@endif
+
+<script>
+$(function () {
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+
+    // New tool
+    $(document).on('click', '#btn-new-tool, #btn-new-tool-empty', function () {
+        $('#tool_id').val('');
+        $('#toolForm')[0].reset();
+        $('#toolModalLabel').text('Nueva herramienta');
+        $('#toolModal').modal('show');
+    });
+
+    // Edit tool (load via AJAX)
+    $(document).on('click', '.tool-edit-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+
+        $.get('{{ route("helpdesk.ai.tools.index") }}/' + id, function (data) {
+            $('#tool_id').val(data.id);
+            $('#tool_name').val(data.name);
+            $('#tool_description').val(data.description);
+            $('#tool_type').val(data.type);
+            $('#tool_parameters').val(data.parameters ? JSON.stringify(data.parameters, null, 2) : '');
+            $('#tool_implementation').val(data.implementation);
+            $('#tool_auth_config').val(data.auth_config ? JSON.stringify(data.auth_config, null, 2) : '');
+            $('#tool_requires_approval').val(data.requires_approval ? '1' : '0');
+            $('#tool_is_active').val(data.is_active ? '1' : '0');
+            $('#toolModalLabel').text('Editar herramienta');
+            $('#toolModal').modal('show');
+        }).fail(function () {
+            toastr.error('Error al cargar la herramienta', 'Error');
+        });
+    });
+
+    // Toggle active
+    $(document).on('click', '.tool-toggle-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const active = $(this).data('active') == '1' ? 0 : 1;
+
+        $.ajax({
+            url: '{{ route("helpdesk.ai.tools.toggle", "__ID__") }}'.replace('__ID__', id),
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: { is_active: active }
+        }).done(function () {
+            toastr.success(active ? 'Herramienta activada' : 'Herramienta desactivada', 'Exito');
+            reloadToolsTab();
+        }).fail(function () {
+            toastr.error('Error al actualizar la herramienta', 'Error');
+        });
+    });
+
+    // Delete
+    $(document).on('click', '.tool-delete-btn', function (e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+
+        $('#delete-modal .modal-title').text('Eliminar herramienta: ' + name);
+        $('#delete-form').attr('action', '#').off('submit').on('submit', function (ev) {
+            ev.preventDefault();
+            $.ajax({
+                url: '{{ route("helpdesk.ai.tools.destroy", "__ID__") }}'.replace('__ID__', id),
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': CSRF }
+            }).done(function () {
+                $('#delete-modal').modal('hide');
+                toastr.success('Herramienta eliminada correctamente', 'Exito');
+                reloadToolsTab();
+            }).fail(function () {
+                toastr.error('Error al eliminar la herramienta', 'Error');
+            });
+        });
+        $('#delete-modal').modal('show');
+    });
+
+    // Form submit
+    $('#toolForm').off('submit').on('submit', function (e) {
+        e.preventDefault();
+        const id = $('#tool_id').val();
+        const url = id
+            ? '{{ route("helpdesk.ai.tools.update", "__ID__") }}'.replace('__ID__', id)
+            : '{{ route("helpdesk.ai.tools.store") }}';
+
+        let parameters = null;
+        let authConfig = null;
+
+        try {
+            const pVal = $('#tool_parameters').val().trim();
+            const aVal = $('#tool_auth_config').val().trim();
+            parameters = pVal ? JSON.parse(pVal) : null;
+            authConfig = aVal ? JSON.parse(aVal) : null;
+        } catch (err) {
+            toastr.error('Formato JSON invalido: ' + err.message, 'Error');
+            return;
+        }
+
+        $('.is-invalid').removeClass('is-invalid');
+
+        $.ajax({
+            url: url,
+            method: id ? 'PUT' : 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF },
+            data: {
+                name: $('#tool_name').val(),
+                description: $('#tool_description').val(),
+                type: $('#tool_type').val(),
+                parameters: parameters,
+                implementation: $('#tool_implementation').val(),
+                auth_config: authConfig,
+                requires_approval: $('#tool_requires_approval').val(),
+                is_active: $('#tool_is_active').val(),
+            }
+        }).done(function (res) {
+            $('#toolModal').modal('hide');
+            toastr.success(res.message || 'Herramienta guardada correctamente', 'Exito');
+            reloadToolsTab();
+        }).fail(function (xhr) {
+            if (xhr.status === 422) {
+                $.each(xhr.responseJSON.errors, function (field, messages) {
+                    $('#tool_' + field).addClass('is-invalid')
+                        .siblings('.invalid-feedback').text(messages[0]);
+                });
+            } else {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar la herramienta', 'Error');
+            }
+        });
+    });
+
+    function reloadToolsTab() {
+        $.get('{{ route("helpdesk.ai.tools.index") }}', function (html) {
+            $('#tools-container').html(html);
+            const count = $('#tools-container [data-count-item]').length;
+            $('#tools-count').text(count);
+        });
+    }
+});
+</script>
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/managers/ai-agent/settings.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Configuración - Agente IA')
+
+@section('content')
+<div>
+    <!-- Breadcrumb -->
+    <div class="card bg-info-subtle shadow-none position-relative overflow-hidden mb-4">
+        <div class="card-body px-4 py-3">
+            <div class="row align-items-center">
+                <div class="col-9">
+                    <h4 class="fw-semibold mb-3"><i class="fa-solid fa-robot me-2"></i>Configuración del Agente IA</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ route('core.dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('manager.helpdesk.conversations.index') }}">Helpdesk</a></li>
+                            <li class="breadcrumb-item active">Agente IA</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-3">
+                    <div class="text-center mb-n5">
+                        <img src="{{ asset('theme/images/breadcrumb/ChatBc.png') }}" alt="" class="img-fluid mb-n4 bv-breadcrumb-img">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error al guardar</strong>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    <!-- Main Content Card with Tabs -->
+    <div class="card">
+        <div class="card-body">
+            <!-- Tabs Navigation -->
+            <ul class="nav nav-pills user-profile-tab justify-content-start mt-2 bg-light-info rounded-2" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link position-relative rounded-0 active d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-settings" role="tab" aria-selected="true">
+                        <i class="fa-solid fa-gear me-2 fs-6"></i>
+                        <span class="d-none d-md-block">Configuración</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-tags" role="tab" aria-selected="false">
+                        <i class="fa-solid fa-tags me-2 fs-6"></i>
+                        <span class="d-none d-md-block">Tags</span>
+                        <span class="badge bg-primary ms-2" id="tags-count">0</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-tools" role="tab" aria-selected="false">
+                        <i class="fa-solid fa-wrench me-2 fs-6"></i>
+                        <span class="d-none d-md-block">Tools</span>
+                        <span class="badge bg-success ms-2" id="tools-count">0</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" data-bs-toggle="tab" href="#tab-knowledge" role="tab" aria-selected="false">
+                        <i class="fa-solid fa-brain me-2 fs-6"></i>
+                        <span class="d-none d-md-block">Base de conocimiento</span>
+                        <span class="badge bg-warning ms-2" id="knowledge-count">0</span>
+                    </a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-6" href="{{ route('helpdesk.ai.flows.index') }}" role="tab">
+                        <i class="fa-solid fa-timeline me-2 fs-6"></i>
+                        <span class="d-none d-md-block">Flows</span>
+                        <span class="badge bg-info ms-2" id="flows-count">0</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Tabs Content -->
+            <div class="tab-content mt-4" id="aiAgentTabContent">
+                <!-- Settings Tab -->
+                <div class="tab-pane fade show active" id="tab-settings" role="tabpanel">
+                    @include('helpdeskagents::managers.ai-agent.partials.settings-tab', ['agent' => $agent, 'providers' => $providers, 'statuses' => $statuses])
+                </div>
+
+                <!-- Tags Tab -->
+                <div class="tab-pane fade" id="tab-tags" role="tabpanel">
+                    <div id="tags-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools Tab -->
+                <div class="tab-pane fade" id="tab-tools" role="tabpanel">
+                    <div id="tools-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge Base Tab -->
+                <div class="tab-pane fade" id="tab-knowledge" role="tabpanel">
+                    <div id="knowledge-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flows Tab -->
+                <div class="tab-pane fade" id="tab-flows" role="tabpanel">
+                    <div id="flows-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('core::components.delete')
+
+{{-- Modals --}}
+@include('helpdeskagents::managers.ai-agent.modals.tag-modal')
+@include('helpdeskagents::managers.ai-agent.modals.tool-modal')
+@include('helpdeskagents::managers.ai-agent.modals.knowledge-modal')
+
+@endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Track loaded tabs to avoid reloading
+    const loadedTabs = {
+        settings: true, // Already loaded
+        tags: false,
+        tools: false,
+        knowledge: false,
+        flows: false
+    };
+
+    // Load tab content on tab show
+    $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+        const target = $(e.target).attr('href');
+        const tabName = target.replace('#tab-', '');
+
+        if (!loadedTabs[tabName]) {
+            loadTabContent(tabName);
+            loadedTabs[tabName] = true;
+        }
+    });
+
+    // Load tab content via AJAX
+    function loadTabContent(tabName) {
+        const container = $(`#${tabName}-container`);
+
+        let url = '';
+        switch(tabName) {
+            case 'tags':
+                url = '{{ route("helpdesk.ai.tags.index") }}';
+                break;
+            case 'tools':
+                url = '{{ route("helpdesk.ai.tools.index") }}';
+                break;
+            case 'knowledge':
+                url = '{{ route("helpdesk.ai.knowledge.index") }}';
+                break;
+            case 'flows':
+                url = '{{ route("helpdesk.ai.flows.index") }}';
+                break;
+        }
+
+        if (url) {
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(response) {
+                    container.html(response);
+                    updateTabCounter(tabName);
+                },
+                error: function(xhr) {
+                    container.html(`
+                        <div class="alert alert-danger">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i>
+                            Error al cargar el contenido. Por favor, intenta de nuevo.
+                        </div>
+                    `);
+                }
+            });
+        }
+    }
+
+    // Update tab counter
+    function updateTabCounter(tabName) {
+        const container = $(`#${tabName}-container`);
+        const count = container.find('[data-count-item]').length;
+        $(`#${tabName}-count`).text(count);
+    }
+
+    // Global success toast
+    window.showSuccess = function(message) {
+        toastr.success(message, 'Éxito');
+    };
+
+    // Global error toast
+    window.showError = function(message) {
+        toastr.error(message, 'Error');
+    };
+
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+@endpush
+
+
+<!-- ================================================================ -->
+<!-- FILE: modules/HelpdeskAgents/resources/views/settings/schedule/index.blade.php -->
+<!-- ================================================================ -->
+@extends('layouts.theme')
+
+@section('title', 'Horarios de agentes')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Horarios de agentes'])
+@endsection
+
+@section('content')
+
+    <div class="widget-content searchable-container list">
+
+        @include('core::components.alerts')
+
+        {{-- Tabs navigation --}}
+        <ul class="nav nav-tabs mb-3" id="scheduleTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="shifts-tab" data-bs-toggle="tab" data-bs-target="#shifts" type="button" role="tab">
+                    <i class="fas fa-clock me-1"></i> Turnos
+                    <span class="badge bg-secondary ms-1">{{ $shifts->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="vacations-tab" data-bs-toggle="tab" data-bs-target="#vacations" type="button" role="tab">
+                    <i class="fas fa-umbrella-beach me-1"></i> Ausencias
+                    <span class="badge bg-secondary ms-1">{{ $vacations->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="oncall-tab" data-bs-toggle="tab" data-bs-target="#oncall" type="button" role="tab">
+                    <i class="fas fa-bell me-1"></i> Guardias
+                    <span class="badge bg-secondary ms-1">{{ $oncalls->count() }}</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="scheduleTabContent">
+
+            {{-- ===================== SHIFTS TAB ===================== --}}
+            <div class="tab-pane fade show active" id="shifts" role="tabpanel">
+                <div class="row g-3">
+
+                    {{-- Add shift form --}}
+                    <div class="col-12 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Nuevo turno</h5>
+                                <small class="text-muted">Asigna un horario semanal a un agente</small>
+                            </div>
+                            <form action="{{ route('settings.helpdesk.schedule.shifts.store') }}" method="POST">
+                                @csrf
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Agente <span class="text-danger">*</span></label>
+                                        <select name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
+                                            <option value="">Seleccionar agente...</option>
+                                            @foreach($agents as $agent)
+                                                <option value="{{ $agent->id }}" {{ old('user_id') == $agent->id ? 'selected' : '' }}>
+                                                    {{ $agent->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('user_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Dia de la semana <span class="text-danger">*</span></label>
+                                        <select name="day_of_week" class="form-select @error('day_of_week') is-invalid @enderror" required>
+                                            <option value="">Seleccionar dia...</option>
+                                            @foreach([0 => 'Domingo', 1 => 'Lunes', 2 => 'Martes', 3 => 'Miercoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sabado'] as $num => $label)
+                                                <option value="{{ $num }}" {{ old('day_of_week') == $num ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('day_of_week')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label">Inicio <span class="text-danger">*</span></label>
+                                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
+                                                   value="{{ old('start_time') }}" required>
+                                            @error('start_time')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Fin <span class="text-danger">*</span></label>
+                                            <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
+                                                   value="{{ old('end_time') }}" required>
+                                            @error('end_time')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <label class="form-label">Zona horaria</label>
+                                        <input type="text" name="timezone" class="form-control"
+                                               value="{{ old('timezone', 'UTC') }}" placeholder="UTC">
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus me-1"></i> Agregar turno
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {{-- Shifts list --}}
+                    <div class="col-12 col-lg-8">
+                        <div class="card">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Turnos configurados</h5>
+                                <small class="text-muted">Horarios semanales de los agentes</small>
+                            </div>
+                            <div class="card-body p-0">
+                                @if($shifts->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Agente</th>
+                                                    <th>Dia</th>
+                                                    <th>Horario</th>
+                                                    <th>Zona</th>
+                                                    <th class="text-center">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($shifts as $shift)
+                                                    <tr>
+                                                        <td>
+                                                            <span class="fw-semibold">{{ $shift->user?->name ?? '—' }}</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-primary-subtle text-primary">
+                                                                {{ \Modules\HelpdeskAgents\Models\AgentShift::dayName($shift->day_of_week) }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <code class="bg-light px-2 py-1 rounded small">
+                                                                {{ substr($shift->start_time, 0, 5) }} – {{ substr($shift->end_time, 0, 5) }}
+                                                            </code>
+                                                        </td>
+                                                        <td>
+                                                            <small class="text-muted">{{ $shift->timezone }}</small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <div class="dropdown">
+                                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport">
+                                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                                </a>
+                                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                                    <li>
+                                                                        <a class="dropdown-item delete-btn" href="#"
+                                                                           data-bs-toggle="modal"
+                                                                           data-bs-target="#delete-modal"
+                                                                           data-url="{{ route('settings.helpdesk.schedule.shifts.destroy', $shift->id) }}"
+                                                                           data-title="Eliminar turno de {{ $shift->user?->name }}">
+                                                                            Eliminar
+                                                                        </a>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-clock fa-3x mb-3 text-muted opacity-50"></i>
+                                        <h5 class="fw-bold mb-2">Sin turnos configurados</h5>
+                                        <p class="text-muted mb-0">Usa el formulario para agregar el primer turno</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ===================== VACATIONS TAB ===================== --}}
+            <div class="tab-pane fade" id="vacations" role="tabpanel">
+                <div class="row g-3">
+
+                    {{-- Add vacation form --}}
+                    <div class="col-12 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Registrar ausencia</h5>
+                                <small class="text-muted">Vacaciones, permisos o bajas</small>
+                            </div>
+                            <form action="{{ route('settings.helpdesk.schedule.vacations.store') }}" method="POST">
+                                @csrf
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Agente <span class="text-danger">*</span></label>
+                                        <select name="user_id" class="form-select @error('user_id') is-invalid @enderror" required>
+                                            <option value="">Seleccionar agente...</option>
+                                            @foreach($agents as $agent)
+                                                <option value="{{ $agent->id }}" {{ old('user_id') == $agent->id ? 'selected' : '' }}>
+                                                    {{ $agent->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('user_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Fecha inicio <span class="text-danger">*</span></label>
+                                        <input type="date" name="starts_at" class="form-control @error('starts_at') is-invalid @enderror"
+                                               value="{{ old('starts_at') }}" required>
+                                        @error('starts_at')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Fecha fin <span class="text-danger">*</span></label>
+                                        <input type="date" name="ends_at" class="form-control @error('ends_at') is-invalid @enderror"
+                                               value="{{ old('ends_at') }}" required>
+                                        @error('ends_at')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Estado</label>
+                                        <select name="status" class="form-select @error('status') is-invalid @enderror">
+                                            <option value="approved" {{ old('status', 'approved') === 'approved' ? 'selected' : '' }}>Aprobado</option>
+                                            <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pendiente</option>
+                                            <option value="rejected" {{ old('status') === 'rejected' ? 'selected' : '' }}>Rechazado</option>
+                                        </select>
+                                        @error('status')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-1">
+                                        <label class="form-label">Motivo</label>
+                                        <textarea name="reason" class="form-control" rows="2"
+                                                  placeholder="Descripcion opcional...">{{ old('reason') }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus me-1"></i> Registrar ausencia
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {{-- Vacations list --}}
+                    <div class="col-12 col-lg-8">
+                        <div class="card">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Ausencias registradas</h5>
+                                <small class="text-muted">Vacaciones y permisos de agentes</small>
+                            </div>
+                            <div class="card-body p-0">
+                                @if($vacations->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Agente</th>
+                                                    <th>Periodo</th>
+                                                    <th>Motivo</th>
+                                                    <th class="text-center">Estado</th>
+                                                    <th class="text-center">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($vacations as $vacation)
+                                                    <tr>
+                                                        <td>
+                                                            <span class="fw-semibold">{{ $vacation->user?->name ?? '—' }}</span>
+                                                        </td>
+                                                        <td>
+                                                            <small>
+                                                                {{ $vacation->starts_at->format('d/m/Y') }}
+                                                                <i class="fas fa-arrow-right mx-1 text-muted"></i>
+                                                                {{ $vacation->ends_at->format('d/m/Y') }}
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <small class="text-muted">{{ $vacation->reason ?? '—' }}</small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @php
+                                                                $badgeMap = [
+                                                                    'approved' => 'bg-success-subtle text-success',
+                                                                    'pending' => 'bg-warning-subtle text-warning',
+                                                                    'rejected' => 'bg-danger-subtle text-danger',
+                                                                ];
+                                                                $labelMap = [
+                                                                    'approved' => 'Aprobado',
+                                                                    'pending' => 'Pendiente',
+                                                                    'rejected' => 'Rechazado',
+                                                                ];
+                                                            @endphp
+                                                            <span class="badge {{ $badgeMap[$vacation->status] ?? 'bg-secondary-subtle text-secondary' }}">
+                                                                {{ $labelMap[$vacation->status] ?? $vacation->status }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <div class="dropdown">
+                                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport">
+                                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                                </a>
+                                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                                    <li>
+                                                                        <a class="dropdown-item delete-btn" href="#"
+                                                                           data-bs-toggle="modal"
+                                                                           data-bs-target="#delete-modal"
+                                                                           data-url="{{ route('settings.helpdesk.schedule.vacations.destroy', $vacation->id) }}"
+                                                                           data-title="Eliminar ausencia de {{ $vacation->user?->name }}">
+                                                                            Eliminar
+                                                                        </a>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-umbrella-beach fa-3x mb-3 text-muted opacity-50"></i>
+                                        <h5 class="fw-bold mb-2">Sin ausencias registradas</h5>
+                                        <p class="text-muted mb-0">Usa el formulario para registrar la primera ausencia</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ===================== ON-CALL TAB ===================== --}}
+            <div class="tab-pane fade" id="oncall" role="tabpanel">
+                <div class="row g-3">
+
+                    {{-- Add on-call form --}}
+                    <div class="col-12 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Nueva rotacion de guardia</h5>
+                                <small class="text-muted">Configura quien esta de guardia y cuanto tiempo</small>
+                            </div>
+                            <form action="{{ route('settings.helpdesk.schedule.oncall.store') }}" method="POST">
+                                @csrf
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                                               value="{{ old('name') }}" placeholder="Ej. Guardia nocturna" required>
+                                        @error('name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Agentes en rotacion <span class="text-danger">*</span></label>
+                                        <select name="user_ids[]" class="form-select @error('user_ids') is-invalid @enderror" multiple size="5" required>
+                                            @foreach($agents as $agent)
+                                                <option value="{{ $agent->id }}"
+                                                    {{ in_array($agent->id, old('user_ids', [])) ? 'selected' : '' }}>
+                                                    {{ $agent->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="form-text">Mantén Ctrl/Cmd para seleccionar varios</div>
+                                        @error('user_ids')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Duracion del turno (horas) <span class="text-danger">*</span></label>
+                                        <input type="number" name="shift_duration_hours" class="form-control @error('shift_duration_hours') is-invalid @enderror"
+                                               value="{{ old('shift_duration_hours', 24) }}" min="1" max="720" required>
+                                        @error('shift_duration_hours')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Inicio de la rotacion <span class="text-danger">*</span></label>
+                                        <input type="datetime-local" name="started_at" class="form-control @error('started_at') is-invalid @enderror"
+                                               value="{{ old('started_at') }}" required>
+                                        @error('started_at')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-1">
+                                        <label class="form-label">Agente de guardia actual</label>
+                                        <select name="current_user_id" class="form-select">
+                                            <option value="">Auto (primer agente)</option>
+                                            @foreach($agents as $agent)
+                                                <option value="{{ $agent->id }}" {{ old('current_user_id') == $agent->id ? 'selected' : '' }}>
+                                                    {{ $agent->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus me-1"></i> Crear rotacion
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {{-- On-call list --}}
+                    <div class="col-12 col-lg-8">
+                        <div class="card">
+                            <div class="card-header border-bottom p-3">
+                                <h5 class="mb-0 fw-bold">Rotaciones de guardia</h5>
+                                <small class="text-muted">Agentes on-call y handoffs configurados</small>
+                            </div>
+                            <div class="card-body p-0">
+                                @if($oncalls->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Nombre</th>
+                                                    <th>Guardia actual</th>
+                                                    <th>Duracion (h)</th>
+                                                    <th>Proximo handoff</th>
+                                                    <th class="text-center">Estado</th>
+                                                    <th class="text-center">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($oncalls as $oncall)
+                                                    <tr>
+                                                        <td>
+                                                            <span class="fw-semibold">{{ $oncall->name }}</span>
+                                                        </td>
+                                                        <td>
+                                                            {{ $oncall->currentUser?->name ?? '—' }}
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-light text-dark border">{{ $oncall->shift_duration_hours }}h</span>
+                                                        </td>
+                                                        <td>
+                                                            <small class="text-muted">
+                                                                {{ $oncall->next_handoff_at?->format('d/m/Y H:i') ?? '—' }}
+                                                            </small>
+                                                        </td>
+                                                        <td class="text-center">
+                                                            @if($oncall->is_active)
+                                                                <span class="badge bg-success-subtle text-success">Activa</span>
+                                                            @else
+                                                                <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
+                                                            @endif
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <div class="dropdown">
+                                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport">
+                                                                    <i class="fas fa-ellipsis-vertical"></i>
+                                                                </a>
+                                                                <ul class="dropdown-menu dropdown-menu-end">
+                                                                    <li>
+                                                                        <a class="dropdown-item delete-btn" href="#"
+                                                                           data-bs-toggle="modal"
+                                                                           data-bs-target="#delete-modal"
+                                                                           data-url="{{ route('settings.helpdesk.schedule.oncall.destroy', $oncall->id) }}"
+                                                                           data-title="Eliminar rotacion: {{ $oncall->name }}">
+                                                                            Eliminar
+                                                                        </a>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-bell fa-3x mb-3 text-muted opacity-50"></i>
+                                        <h5 class="fw-bold mb-2">Sin rotaciones configuradas</h5>
+                                        <p class="text-muted mb-0">Usa el formulario para crear la primera rotacion</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>{{-- end tab-content --}}
+
+    </div>
+
+    @include('core::components.delete')
+
+@endsection
+
+@push('scripts')
+<script>
+$(document).ready(function () {
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Exito');
+    @endif
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
+    @endif
+
+    $(document).on('click', '.delete-btn', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').attr('action', $(this).data('url'));
+    });
+
+    // Restore active tab on page reload (after form submit)
+    const activeTab = localStorage.getItem('scheduleActiveTab');
+    if (activeTab) {
+        const tabEl = document.querySelector('#scheduleTabs button[data-bs-target="' + activeTab + '"]');
+        if (tabEl) {
+            new bootstrap.Tab(tabEl).show();
+        }
+    }
+
+    document.querySelectorAll('#scheduleTabs button[data-bs-toggle="tab"]').forEach(function (btn) {
+        btn.addEventListener('shown.bs.tab', function (e) {
+            localStorage.setItem('scheduleActiveTab', e.target.getAttribute('data-bs-target'));
+        });
+    });
+});
+</script>
+@endpush
+

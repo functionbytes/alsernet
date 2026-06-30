@@ -38,5 +38,13 @@ modules/*.zip
 
 # Claude Code - local files (not shared)
 .claude/settings.local.json
+.claude/worktrees/
 CLAUDE.local.md
 .aider*
+
+# Secretos / backups / caches / dumps (proteccion baseline)
+.env.*
+!.env.example
+*.bak
+/.phpunit.cache/
+*.zip

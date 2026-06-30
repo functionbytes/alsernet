@@ -53,7 +53,7 @@ ls blog-*.html | wc -l  # → 12
 
 Sin variables CSS modernas en `style.min.css` (only 5 customs en 334KB). Hard-coded:
 - Color primario detectado: `#26c` (azul Riode)
-- **Sustituido por `#b10100` Alsernet** ← regla del proyecto
+- **Sustituido por `#90bb13` Alsernet** ← regla del proyecto
 - Fonts: Poppins (Google) + 4 display fonts por vertical
 - Bootstrap-like grid (custom reimplementado, NO Bootstrap real)
 

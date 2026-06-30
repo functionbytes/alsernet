@@ -1,9 +1,0 @@
-{
-    "name": "Caixilharia Blanco",
-    "namespace": "Template\\Caixilhariablanco\\",
-    "description": "Plantilla Caixilharia Blanco - Diseño limpio y moderno para sitios corporativos y de servicios",
-    "author": "Alsernet",
-    "version": "1.0.0",
-    "inherit": null,
-    "required_plugins": []
-}

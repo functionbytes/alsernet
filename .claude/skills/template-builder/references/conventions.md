@@ -144,7 +144,7 @@ const observer = new IntersectionObserver((entries) => {
 
 ## 4. Color primario
 
-✅ **SIEMPRE**: `--color-primary: #b10100` (verde Alsernet)
+✅ **SIEMPRE**: `--color-primary: #90bb13` (verde Alsernet)
 ❌ **NUNCA**: usar el color primario del template original (Riode usa `#26c` o `#d26e4b`)
 
 En `tokens.css` del template:
@@ -152,7 +152,7 @@ En `tokens.css` del template:
 ```css
 :root {
     /* Brand Alsernet — sustituye color del template original */
-    --color-primary: #b10100;
+    --color-primary: #90bb13;
     --color-primary-hover: #7da010;
     --color-primary-light: #d3e8a8;
     
@@ -325,7 +325,7 @@ Antes de mergear cualquier template:
 - [ ] Sin `style=""` inline (excepto excepciones documentadas)
 - [ ] Iconos: solo FA6
 - [ ] JS: jQuery / Bootstrap 5.3 / vanilla
-- [ ] Color primario `#b10100` en tokens.css
+- [ ] Color primario `#90bb13` en tokens.css
 - [ ] Atributos validados (enum + fallback)
 - [ ] `loading="lazy"` + dimensiones en `<img>`
 - [ ] Eager loading en queries DB

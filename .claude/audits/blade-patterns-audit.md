@@ -68,7 +68,7 @@ Documento de referencia para aplicar el "golden standard" del proyecto a los 4 m
 - [x] Acciones en tabla: dropdown con `fa-ellipsis-vertical`, sin iconos en items, sin `text-danger` en Eliminar
 - [x] NO inline styles (`style=""`) excepto valores dinámicos Blade (`style="background: {{ $x->color }}"`)
 - [x] Select2: NUNCA `theme: 'bootstrap-5'` (CSS no cargado, rompe estilos)
-- [x] Color primario: `#b10100` (no `#5D87FF` ni gradientes violeta)
+- [x] Color primario: `#90bb13` (no `#5D87FF` ni gradientes violeta)
 - [x] Tabla: `table table-hover align-middle text-nowrap`, `thead class="table-light"`
 - [x] Badge status: `bg-{color}-subtle text-{color}`
 - [x] Stats cards: `card bg-light-secondary h-100`

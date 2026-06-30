@@ -1,0 +1,31 @@
+[Unit]
+Description=Laravel Queue Worker
+After=network.target mariadb.service
+Requires=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home2/webadminpruebas/web
+ExecStart=/usr/bin/php artisan queue:work --queue=default,emails,notifications --timeout=0 --tries=3 --sleep=3
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=laravel-queue
+Environment="HOME=/var/www"
+Environment="LARAVEL_ENV=production"
+
+# Security settings
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=partial
+ProtectHome=yes
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=65535
+
+[Install]
+WantedBy=multi-user.target

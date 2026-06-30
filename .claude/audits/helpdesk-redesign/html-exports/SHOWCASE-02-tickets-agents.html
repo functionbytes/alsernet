@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Showcase — Helpdesk Tickets (CSS + HTML reales)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   SHOWCASE FRAME
+   ══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #0f0f10; color: #e4e4e7; min-height: 100vh; }
+
+.sc-nav {
+  position: sticky; top: 0; z-index: 1000;
+  background: rgba(15,15,16,.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  padding: 0 32px; display: flex; align-items: center; height: 52px;
+}
+.sc-nav-brand { font-size: 13px; font-weight: 700; color: #f5f6f8; margin-right: 32px; }
+.sc-nav-brand span { color: #71717a; font-weight: 400; margin-left: 6px; }
+.sc-nav-link {
+  padding: 0 14px; height: 52px; display: inline-flex; align-items: center;
+  font-size: 12px; color: #71717a; text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.sc-nav-link:hover { color: #f5f6f8; }
+.sc-nav-link.on { color: #f5f6f8; border-bottom-color: #90bb13; }
+.sc-nav-pill {
+  margin-left: auto; background: rgba(177,1,0,.15); color: #f87171;
+  border: 1px solid rgba(177,1,0,.3); border-radius: 6px;
+  padding: 4px 10px; font-size: 11px; font-weight: 600;
+}
+.sc-stage {
+  padding: 48px 32px;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.sc-section { margin-bottom: 64px; }
+.sc-section-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: #52525b; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+}
+.sc-section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.06); }
+.sc-grid { display: grid; gap: 16px; }
+.sc-grid-1 { grid-template-columns: 1fr; }
+.sc-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.sc-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.sc-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.sc-card { background: #18181b; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; }
+.sc-card-head {
+  padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.sc-card-name { font-size: 12px; font-weight: 600; color: #a1a1aa; }
+.sc-card-class {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  background: rgba(99,102,241,.15); color: #818cf8;
+  border: 1px solid rgba(99,102,241,.2); border-radius: 4px;
+  padding: 2px 7px; margin-left: auto;
+}
+.sc-card-body { padding: 20px; }
+.sc-card-body.p-0 { padding: 0; }
+.sc-card-body.light-bg { background: #fff; }
+.sc-card-body.subtle-bg { background: #f4f4f5; }
+
+/* ══════════════════════════════════════════════════════════════════
+   CSS REAL — tickets.css (exacto del proyecto, scoped bajo .helpdesk-tickets-page)
+   ══════════════════════════════════════════════════════════════════ */
+.helpdesk-tickets-page {
+  --htk-bg: #f7f7f8; --htk-bg-panel: #fff; --htk-bg-subtle: #f4f4f5; --htk-bg-hover: #ececed;
+  --htk-border: #e8e8e8; --htk-border-strong: #d4d4d8;
+  --htk-text: #18181b; --htk-text-soft: #52525b; --htk-text-muted: #a1a1aa;
+  --htk-success: #16a34a; --htk-warning: #d97706; --htk-danger: #dc2626; --htk-info: #2563eb;
+  --htk-wa: #25d366; --htk-fb: #1877f2; --htk-ig: #e4405f; --htk-widget: #6366f1; --htk-email: #52525b;
+  --htk-radius: 10px; --htk-shadow-sm: 0 1px 2px rgba(0,0,0,.05);
+  --htk-shadow-md: 0 4px 12px rgba(0,0,0,.06); --htk-shadow-lg: 0 8px 24px rgba(0,0,0,.08);
+  --htk-primary: #90bb13;
+  font-size: 13px; color: var(--htk-text); background: var(--htk-bg); letter-spacing: -.005em;
+  font-family: 'Inter', sans-serif;
+}
+.helpdesk-tickets-page .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+/* Page bar */
+.helpdesk-tickets-page .htk-page-bar {
+  display: flex; align-items: center; padding: 14px 22px;
+  border-bottom: 1px solid var(--htk-border); background: #fff; gap: 12px;
+}
+.helpdesk-tickets-page .htk-page-bar h2 { font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+.helpdesk-tickets-page .htk-page-bar .sub { font-size: 11.5px; color: var(--htk-text-muted); margin-top: 2px; }
+.helpdesk-tickets-page .htk-page-bar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* Buttons */
+.helpdesk-tickets-page .htk-btn {
+  padding: 7px 12px; font-size: 12px; font-weight: 500; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 6px; transition: .12s;
+  border: 1px solid transparent; white-space: nowrap; cursor: pointer;
+  background: transparent; color: inherit; line-height: 1; font-family: inherit;
+}
+.helpdesk-tickets-page .htk-btn i { font-size: 11px; }
+.helpdesk-tickets-page .htk-btn-primary { background: var(--htk-text); color: #fff; }
+.helpdesk-tickets-page .htk-btn-primary:hover { background: #000; color: #fff; }
+.helpdesk-tickets-page .htk-btn-outline { background: #fff; color: var(--htk-text); border-color: var(--htk-border); }
+.helpdesk-tickets-page .htk-btn-outline:hover { border-color: var(--htk-text); }
+.helpdesk-tickets-page .htk-btn-success { background: var(--htk-success); color: #fff; }
+.helpdesk-tickets-page .htk-btn-sm { padding: 5px 9px; font-size: 11px; }
+.helpdesk-tickets-page .htk-btn-icon {
+  width: 30px; height: 30px; padding: 0; justify-content: center;
+  border: 1px solid var(--htk-border); background: #fff; color: var(--htk-text-soft);
+}
+.helpdesk-tickets-page .htk-btn-icon:hover { border-color: var(--htk-text); color: var(--htk-text); }
+
+/* Segment switcher */
+.helpdesk-tickets-page .htk-seg {
+  display: inline-flex; background: var(--htk-bg-subtle); border-radius: 7px; padding: 3px; gap: 2px;
+}
+.helpdesk-tickets-page .htk-seg button {
+  padding: 5px 10px; font-size: 11.5px; font-weight: 500; color: var(--htk-text-soft);
+  border-radius: 5px; display: inline-flex; align-items: center; gap: 5px;
+  transition: .12s; cursor: pointer; border: none; background: transparent; font-family: inherit;
+}
+.helpdesk-tickets-page .htk-seg button.active { background: #fff; color: var(--htk-text); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+
+/* Toolbar */
+.helpdesk-tickets-page .htk-toolbar {
+  padding: 10px 22px; border-bottom: 1px solid var(--htk-border); background: #fff;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.helpdesk-tickets-page .htk-filters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.helpdesk-tickets-page .htk-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border: 1px solid var(--htk-border); border-radius: 6px; font-size: 11.5px;
+  color: var(--htk-text-soft); background: #fff; cursor: pointer; transition: .1s; font-weight: 500;
+}
+.helpdesk-tickets-page .htk-pill i { color: var(--htk-text-muted); font-size: 10.5px; }
+.helpdesk-tickets-page .htk-pill:hover { border-color: var(--htk-border-strong); color: var(--htk-text); }
+.helpdesk-tickets-page .htk-pill.active { background: var(--htk-text); color: #fff; border-color: var(--htk-text); }
+.helpdesk-tickets-page .htk-pill.active i { color: #fff; }
+.helpdesk-tickets-page .htk-pill .c {
+  margin-left: 2px; background: var(--htk-bg-subtle); padding: 0 5px; border-radius: 8px;
+  font-size: 9.5px; font-family: 'JetBrains Mono', monospace;
+}
+.helpdesk-tickets-page .htk-pill.active .c { background: rgba(255,255,255,.18); color: #fff; }
+
+/* Badges */
+.helpdesk-tickets-page .htk-badge {
+  display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px;
+  border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: .01em; white-space: nowrap;
+}
+.helpdesk-tickets-page .htk-badge.open { background: #dbeafe; color: #1e3a8a; }
+.helpdesk-tickets-page .htk-badge.pending { background: #fffbeb; color: #92400e; }
+.helpdesk-tickets-page .htk-badge.progress { background: #ede9fe; color: #5b21b6; }
+.helpdesk-tickets-page .htk-badge.resolved { background: #dcfce7; color: #166534; }
+.helpdesk-tickets-page .htk-badge.closed { background: var(--htk-bg-subtle); color: var(--htk-text-soft); }
+.helpdesk-tickets-page .htk-badge.escalated { background: #fef2f2; color: var(--htk-danger); }
+.helpdesk-tickets-page .htk-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 1px 6px;
+  border-radius: 999px; font-size: 9.5px; font-weight: 500;
+  color: var(--htk-text-soft); background: var(--htk-bg-subtle); border: 1px solid transparent;
+}
+
+/* Avatares */
+.helpdesk-tickets-page .htk-av {
+  border-radius: 8px; display: grid; place-items: center; font-weight: 600;
+  position: relative; flex-shrink: 0; font-size: 11px;
+}
+.helpdesk-tickets-page .htk-av-xs { width: 20px; height: 20px; font-size: 8.5px; border-radius: 5px; }
+.helpdesk-tickets-page .htk-av-sm { width: 24px; height: 24px; font-size: 9px; border-radius: 6px; }
+.helpdesk-tickets-page .htk-av-md { width: 32px; height: 32px; font-size: 11px; }
+.helpdesk-tickets-page .htk-av-xl { width: 56px; height: 56px; font-size: 18px; border-radius: 12px; }
+.helpdesk-tickets-page .htk-av.c1 { background: #fef3c7; color: #92400e; }
+.helpdesk-tickets-page .htk-av.c2 { background: #dbeafe; color: #1e3a8a; }
+.helpdesk-tickets-page .htk-av.c3 { background: #dcfce7; color: #166534; }
+.helpdesk-tickets-page .htk-av.c4 { background: #fce7f3; color: #9f1239; }
+.helpdesk-tickets-page .htk-av.c5 { background: #ede9fe; color: #5b21b6; }
+.helpdesk-tickets-page .htk-av.c6 { background: #fee2e2; color: #991b1b; }
+.helpdesk-tickets-page .htk-av.c7 { background: #cffafe; color: #155e75; }
+.helpdesk-tickets-page .htk-av.c8 { background: #fef9c3; color: #713f12; }
+
+/* Channel tags */
+.helpdesk-tickets-page .htk-tag-ch {
+  display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px;
+  border-radius: 4px; font-size: 10px; font-weight: 600;
+}
+.helpdesk-tickets-page .htk-tag-ch.wa { background: rgba(37,211,102,.12); color: #0d6b3a; }
+.helpdesk-tickets-page .htk-tag-ch.fb { background: rgba(24,119,242,.1); color: #0b4595; }
+.helpdesk-tickets-page .htk-tag-ch.ig { background: rgba(228,64,95,.1); color: #9b1c35; }
+.helpdesk-tickets-page .htk-tag-ch.widget { background: rgba(99,102,241,.12); color: #3730a3; }
+.helpdesk-tickets-page .htk-tag-ch.email { background: var(--htk-bg-subtle); color: var(--htk-text-soft); }
+.helpdesk-tickets-page .htk-ch-dot {
+  width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block;
+}
+.helpdesk-tickets-page .htk-ch-dot.wa { background: var(--htk-wa); }
+.helpdesk-tickets-page .htk-ch-dot.fb { background: var(--htk-fb); }
+.helpdesk-tickets-page .htk-ch-dot.widget { background: var(--htk-widget); }
+.helpdesk-tickets-page .htk-ch-dot.email { background: var(--htk-email); }
+.helpdesk-tickets-page .htk-ch-dot.ig { background: var(--htk-ig); }
+
+/* SLA y prioridad */
+.helpdesk-tickets-page .htk-sla {
+  font-size: 9.5px; font-weight: 500; padding: 2px 6px; border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.helpdesk-tickets-page .htk-sla.ok { background: #f0fdf4; color: var(--htk-success); }
+.helpdesk-tickets-page .htk-sla.warn { background: #fffbeb; color: var(--htk-warning); }
+.helpdesk-tickets-page .htk-sla.breach { background: #fef2f2; color: var(--htk-danger); }
+.helpdesk-tickets-page .htk-prio { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--htk-text-soft); }
+.helpdesk-tickets-page .htk-prio .d { width: 7px; height: 7px; border-radius: 50%; }
+.helpdesk-tickets-page .htk-prio.low .d { background: var(--htk-success); }
+.helpdesk-tickets-page .htk-prio.normal .d { background: var(--htk-info); }
+.helpdesk-tickets-page .htk-prio.high .d { background: var(--htk-warning); }
+.helpdesk-tickets-page .htk-prio.urgent .d { background: var(--htk-danger); }
+
+/* Bulk action bar */
+.helpdesk-tickets-page .htk-bulk {
+  background: var(--htk-text); color: #fff; padding: 8px 22px;
+  display: none; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.helpdesk-tickets-page .htk-bulk.show { display: flex; }
+.helpdesk-tickets-page .htk-bulk .count { font-weight: 600; font-size: 12.5px; }
+.helpdesk-tickets-page .htk-bulk .acts { margin-left: auto; display: flex; gap: 6px; }
+.helpdesk-tickets-page .htk-bulk .b {
+  padding: 5px 11px; font-size: 11.5px; border-radius: 5px;
+  background: rgba(255,255,255,.12); color: #fff;
+  display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; font-family: inherit;
+}
+.helpdesk-tickets-page .htk-bulk .b:hover { background: rgba(255,255,255,.2); }
+.helpdesk-tickets-page .htk-bulk .b i { font-size: 10.5px; }
+
+/* Tabla */
+.helpdesk-tickets-page .htk-list-wrap { overflow: auto; background: #fff; border: 1px solid var(--htk-border); border-top: none; }
+.helpdesk-tickets-page .htk-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 0; }
+.helpdesk-tickets-page .htk-table thead th {
+  position: sticky; top: 0; background: #f5f6f8;
+  border-bottom: 1px solid var(--htk-border); text-align: left; padding: 8px 12px;
+  font-size: 10px; font-weight: 700; color: var(--htk-text-muted);
+  text-transform: uppercase; letter-spacing: .08em; z-index: 5; white-space: nowrap;
+}
+.helpdesk-tickets-page .htk-table tbody td { padding: 10px 12px; border-bottom: 1px solid var(--htk-border); vertical-align: middle; }
+.helpdesk-tickets-page .htk-table tbody tr { cursor: pointer; transition: .08s; }
+.helpdesk-tickets-page .htk-table tbody tr:hover { background: #f5f6f8; }
+.helpdesk-tickets-page .htk-table tbody tr.active { background: #f4f4f5; }
+.helpdesk-tickets-page .htk-table tbody tr.active td:first-child { box-shadow: inset 3px 0 0 var(--htk-text); }
+.helpdesk-tickets-page .htk-id { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--htk-text-muted); font-weight: 500; }
+.helpdesk-tickets-page .htk-subj { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; letter-spacing: -.005em; }
+.helpdesk-tickets-page .htk-subj .unread { width: 7px; height: 7px; border-radius: 50%; background: var(--htk-info); flex-shrink: 0; }
+.helpdesk-tickets-page .htk-meta { font-size: 10.5px; color: var(--htk-text-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.helpdesk-tickets-page .htk-cust { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.helpdesk-tickets-page .htk-cust .nm { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+.helpdesk-tickets-page .htk-cust .em { font-size: 10px; color: var(--htk-text-muted); }
+.helpdesk-tickets-page .htk-checkbox { width: 14px; height: 14px; accent-color: var(--htk-text); margin: 0; cursor: pointer; }
+
+/* Kanban */
+.helpdesk-tickets-page .htk-kanban { overflow-x: auto; padding: 14px; display: flex; gap: 12px; background: var(--htk-bg); min-height: 480px; }
+.helpdesk-tickets-page .htk-col { flex: 0 0 290px; display: flex; flex-direction: column; background: var(--htk-bg-subtle); border-radius: 10px; overflow: hidden; max-height: 70vh; }
+.helpdesk-tickets-page .htk-col-h { padding: 10px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--htk-border); }
+.helpdesk-tickets-page .htk-col-h .nm { font-size: 11.5px; font-weight: 700; letter-spacing: -.005em; display: flex; align-items: center; gap: 7px; }
+.helpdesk-tickets-page .htk-col-h .nm .d { width: 8px; height: 8px; border-radius: 50%; background: var(--htk-text-muted); }
+.helpdesk-tickets-page .htk-col-h .c { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--htk-text-muted); background: #fff; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--htk-border); }
+.helpdesk-tickets-page .htk-cards { padding: 8px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.helpdesk-tickets-page .htk-card { background: #fff; border: 1px solid var(--htk-border); border-radius: 8px; padding: 10px; cursor: pointer; transition: .1s; }
+.helpdesk-tickets-page .htk-card:hover { border-color: var(--htk-border-strong); box-shadow: var(--htk-shadow-sm); transform: translateY(-1px); }
+.helpdesk-tickets-page .htk-card.active { border-color: var(--htk-text); box-shadow: 0 0 0 1px var(--htk-text); }
+.helpdesk-tickets-page .htk-card .row1 { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.helpdesk-tickets-page .htk-card .row1 .id { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--htk-text-muted); }
+.helpdesk-tickets-page .htk-card .row1 .htk-sla { margin-left: auto; }
+.helpdesk-tickets-page .htk-card .ts { font-size: 12px; font-weight: 600; line-height: 1.35; letter-spacing: -.005em; margin-bottom: 6px; color: var(--htk-text); }
+.helpdesk-tickets-page .htk-card .row2 { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--htk-text-muted); }
+.helpdesk-tickets-page .htk-card .row2 .from { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Empty state */
+.helpdesk-tickets-page .htk-empty-state { text-align: center; padding: 60px 20px; color: var(--htk-text-muted); }
+.helpdesk-tickets-page .htk-empty-state .ic { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 14px; background: var(--htk-bg-subtle); display: grid; place-items: center; font-size: 20px; }
+.helpdesk-tickets-page .htk-empty-state .t { font-size: 14px; font-weight: 600; color: var(--htk-text); margin-bottom: 4px; }
+.helpdesk-tickets-page .htk-empty-state .s { font-size: 12px; line-height: 1.5; }
+
+/* Detail panel */
+.htk-detail {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 12px;
+  display: flex; flex-direction: column; overflow: hidden; font-size: 13px; color: #18181b;
+  font-family: 'Inter', sans-serif;
+}
+.htk-detail .htk-d-head {
+  padding: 14px 18px; border-bottom: 1px solid #e8e8e8;
+  display: flex; align-items: flex-start; gap: 12px; background: #f5f6f8; flex-shrink: 0;
+}
+.htk-detail .htk-d-head .ico {
+  width: 36px; height: 36px; border-radius: 8px; background: #dbeafe; color: #1e3a8a;
+  display: grid; place-items: center; font-size: 14px; flex-shrink: 0;
+}
+.htk-detail .htk-d-head .body { flex: 1; min-width: 0; }
+.htk-detail .htk-d-head .row1 { font-size: 10.5px; color: #a1a1aa; font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.htk-detail .htk-d-head .ts { font-size: 15px; font-weight: 700; letter-spacing: -.015em; line-height: 1.3; }
+.htk-detail .htk-d-head .row3 { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.htk-detail .htk-d-head .acts { display: flex; align-items: flex-start; gap: 5px; flex-shrink: 0; }
+.htk-detail .htk-d-tabs {
+  display: flex; border-bottom: 1px solid #e8e8e8; padding: 0 12px; background: #f5f6f8; overflow-x: auto;
+}
+.htk-detail .htk-d-tab {
+  padding: 9px 14px; font-size: 12px; font-weight: 500; color: #a1a1aa;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px; transition: .12s;
+  background: transparent; border-left: none; border-right: none; border-top: none; white-space: nowrap; font-family: inherit;
+}
+.htk-detail .htk-d-tab.on { color: #18181b; border-bottom-color: #18181b; font-weight: 600; }
+.htk-detail .htk-d-tab .c { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; background: #f4f4f5; padding: 1px 5px; border-radius: 8px; color: #a1a1aa; }
+.htk-detail .htk-d-body { display: grid; grid-template-columns: 1fr 240px; overflow: hidden; }
+.htk-detail .htk-d-main { overflow-y: auto; padding: 18px; }
+.htk-detail .htk-d-side { border-left: 1px solid #e8e8e8; background: #f5f6f8; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.htk-detail .htk-d-side-block { display: flex; flex-direction: column; gap: 6px; }
+.htk-detail .htk-d-side-block .lbl { font-size: 9.5px; font-weight: 700; color: #a1a1aa; text-transform: uppercase; letter-spacing: .1em; }
+.htk-detail .htk-d-side-row {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; font-size: 11.5px; cursor: pointer;
+}
+.htk-detail .htk-d-side-row .nm { flex: 1; font-weight: 500; }
+.htk-detail .htk-d-meta-row { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; padding: 5px 0; }
+.htk-detail .htk-d-meta-row .l { color: #a1a1aa; font-weight: 500; }
+.htk-detail .htk-d-meta-row .v { color: #18181b; font-weight: 500; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.htk-detail .htk-msg { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+.htk-detail .htk-msg.out { flex-direction: row-reverse; }
+.htk-detail .htk-msg .htk-av { margin-top: 4px; border-radius: 8px; display: grid; place-items: center; font-weight: 600; font-size: 9px; }
+.htk-detail .htk-msg .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; max-width: 75%; }
+.htk-detail .htk-msg.out .body { align-items: flex-end; }
+.htk-detail .htk-msg .meta-mini { font-size: 10px; color: #a1a1aa; display: flex; align-items: center; gap: 6px; }
+.htk-detail .htk-msg .bubble { padding: 8px 12px; border-radius: 14px; font-size: 12.5px; line-height: 1.5; display: inline-block; }
+.htk-detail .htk-msg .bubble.in { background: #fff; border: 1px solid #e8e8e8; color: #18181b; border-radius: 4px 14px 14px 14px; }
+.htk-detail .htk-msg .bubble.out { background: #18181b; color: #fff; border-radius: 14px 4px 14px 14px; }
+.htk-detail .htk-msg .bubble.note { background: #fffbeb; border: 1px solid #fde68a; color: #78350f; border-radius: 8px; }
+.htk-detail .htk-event { font-size: 10.5px; color: #a1a1aa; text-align: center; padding: 8px 0; display: flex; align-items: center; gap: 8px; }
+.htk-detail .htk-event::before, .htk-detail .htk-event::after { content: ''; flex: 1; height: 1px; background: #e8e8e8; }
+.htk-detail .htk-event b { color: #52525b; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<nav class="sc-nav">
+  <div class="sc-nav-brand">Helpdesk Tickets <span>showcase · CSS real embebido</span></div>
+  <a class="sc-nav-link on" href="#page-bar">Page bar</a>
+  <a class="sc-nav-link" href="#badges">Badges</a>
+  <a class="sc-nav-link" href="#table">Tabla lista</a>
+  <a class="sc-nav-link" href="#kanban">Kanban</a>
+  <a class="sc-nav-link" href="#detail">Panel detalle</a>
+  <span class="sc-nav-pill">tickets.css · real</span>
+</nav>
+
+<div class="sc-stage">
+
+  <!-- ═══ PAGE BAR ════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="page-bar">
+    <div class="sc-section-title">Page bar + toolbar + bulk action — .htk-page-bar · .htk-toolbar · .htk-bulk</div>
+    <div class="sc-grid sc-grid-1">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Page bar completa con botones y segmento lista/kanban</span>
+          <code class="sc-card-class">.helpdesk-tickets-page .htk-page-bar</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="helpdesk-tickets-page">
+            <div class="htk-page-bar">
+              <div>
+                <h2>Tickets</h2>
+                <div class="sub">Gestión de soporte estructurado · 142 tickets activos</div>
+              </div>
+              <div class="right">
+                <div class="htk-seg">
+                  <button class="active"><i class="fas fa-list"></i> Lista</button>
+                  <button><i class="fas fa-columns"></i> Kanban</button>
+                </div>
+                <button class="htk-btn htk-btn-outline htk-btn-sm"><i class="fas fa-download"></i> Exportar</button>
+                <button class="htk-btn htk-btn-primary"><i class="fas fa-plus"></i> Nuevo ticket</button>
+              </div>
+            </div>
+
+            <div class="htk-toolbar">
+              <div class="htk-filters">
+                <button class="htk-pill active"><i class="fas fa-inbox"></i> Todos <span class="c">142</span></button>
+                <button class="htk-pill"><i class="fas fa-circle-dot"></i> Abiertos <span class="c">38</span></button>
+                <button class="htk-pill"><i class="fas fa-hourglass-half"></i> Pendientes <span class="c">24</span></button>
+                <button class="htk-pill"><i class="fas fa-spinner"></i> En progreso <span class="c">19</span></button>
+                <button class="htk-pill"><i class="fas fa-circle-check"></i> Resueltos <span class="c">61</span></button>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:6px;">
+                <button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-filter"></i></button>
+                <button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-magnifying-glass"></i></button>
+                <button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-arrows-up-down"></i></button>
+              </div>
+            </div>
+
+            <!-- Bulk action bar visible -->
+            <div class="htk-bulk show">
+              <span class="count">3 tickets seleccionados</span>
+              <div class="acts">
+                <button class="b"><i class="fas fa-user-plus"></i> Asignar</button>
+                <button class="b"><i class="fas fa-tags"></i> Etiquetar</button>
+                <button class="b"><i class="fas fa-circle-check"></i> Resolver</button>
+                <button class="b"><i class="fas fa-trash"></i> Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ BADGES ════════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="badges">
+    <div class="sc-section-title">Badges · avatares · channel · SLA · prioridad — .htk-badge · .htk-av · .htk-sla · .htk-prio</div>
+    <div class="sc-grid sc-grid-2">
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Status badges (htk-badge)</span>
+          <code class="sc-card-class">.htk-badge.{open|pending|progress|resolved|closed|escalated}</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="helpdesk-tickets-page" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:transparent;">
+            <span class="htk-badge open">Abierto</span>
+            <span class="htk-badge pending">Pendiente</span>
+            <span class="htk-badge progress">En progreso</span>
+            <span class="htk-badge resolved">Resuelto</span>
+            <span class="htk-badge closed">Cerrado</span>
+            <span class="htk-badge escalated">Escalado</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Avatares c1–c8 + SLA + prioridad</span>
+          <code class="sc-card-class">.htk-av · .htk-sla · .htk-prio</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="helpdesk-tickets-page" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:transparent;margin-bottom:12px;">
+            <div class="htk-av htk-av-md c1">AG</div>
+            <div class="htk-av htk-av-md c2">JL</div>
+            <div class="htk-av htk-av-md c3">MF</div>
+            <div class="htk-av htk-av-md c4">SR</div>
+            <div class="htk-av htk-av-md c5">PP</div>
+            <div class="htk-av htk-av-md c6">RT</div>
+            <div class="htk-av htk-av-md c7">CN</div>
+            <div class="htk-av htk-av-md c8">BQ</div>
+          </div>
+          <div class="helpdesk-tickets-page" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:transparent;margin-bottom:8px;">
+            <span class="htk-sla ok"><i class="far fa-clock"></i>4h 20m</span>
+            <span class="htk-sla warn"><i class="far fa-clock"></i>1h 10m</span>
+            <span class="htk-sla breach"><i class="far fa-clock"></i>Vencido</span>
+          </div>
+          <div class="helpdesk-tickets-page" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:transparent;">
+            <span class="htk-prio low"><span class="d"></span>Baja</span>
+            <span class="htk-prio normal"><span class="d"></span>Normal</span>
+            <span class="htk-prio high"><span class="d"></span>Alta</span>
+            <span class="htk-prio urgent"><span class="d"></span>Urgente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Channel tags + channel dots</span>
+          <code class="sc-card-class">.htk-tag-ch.{wa|fb|ig|widget|email} · .htk-ch-dot</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="helpdesk-tickets-page" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:transparent;margin-bottom:12px;">
+            <span class="htk-tag-ch wa"><i class="fab fa-whatsapp"></i> WhatsApp</span>
+            <span class="htk-tag-ch fb"><i class="fab fa-facebook-f"></i> Facebook</span>
+            <span class="htk-tag-ch ig"><i class="fab fa-instagram"></i> Instagram</span>
+            <span class="htk-tag-ch widget"><i class="fas fa-globe"></i> Widget</span>
+            <span class="htk-tag-ch email"><i class="fas fa-envelope"></i> Email</span>
+          </div>
+          <div class="helpdesk-tickets-page" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:transparent;">
+            <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#52525b;"><span class="htk-ch-dot wa"></span>WA</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#52525b;"><span class="htk-ch-dot fb"></span>FB</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#52525b;"><span class="htk-ch-dot widget"></span>Widget</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#52525b;"><span class="htk-ch-dot email"></span>Email</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#52525b;"><span class="htk-ch-dot ig"></span>IG</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Filter pills (htk-pill)</span>
+          <code class="sc-card-class">.htk-pill[.active]</code>
+        </div>
+        <div class="sc-card-body light-bg">
+          <div class="helpdesk-tickets-page" style="display:flex;gap:6px;flex-wrap:wrap;background:transparent;">
+            <button class="htk-pill active"><i class="fas fa-inbox"></i> Todos <span class="c">142</span></button>
+            <button class="htk-pill"><i class="fas fa-circle-dot"></i> Abiertos</button>
+            <button class="htk-pill"><i class="fas fa-triangle-exclamation"></i> Urgentes <span class="c">5</span></button>
+            <button class="htk-pill"><i class="fas fa-user-slash"></i> Sin asignar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══ TABLA ════════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="table">
+    <div class="sc-section-title">Vista tabla — .htk-table · .htk-subj · .htk-cust · .htk-id</div>
+    <div class="sc-grid sc-grid-1">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Tabla de tickets con columnas SLA / prioridad / asignado / estado</span>
+          <code class="sc-card-class">.htk-list-wrap > .htk-table</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="helpdesk-tickets-page">
+            <div class="htk-list-wrap" style="border-top:1px solid #e8e8e8;">
+              <table class="htk-table">
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" class="htk-checkbox"></th>
+                    <th>Ticket</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Canal</th>
+                    <th>SLA</th>
+                    <th>Prioridad</th>
+                    <th>Asignado</th>
+                    <th>Actualizado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="active">
+                    <td><input type="checkbox" class="htk-checkbox" checked></td>
+                    <td>
+                      <div class="htk-subj"><span class="unread"></span>Problema con entrega del pedido</div>
+                      <div class="htk-meta"><span class="htk-id">#TK-1042</span> · Soporte general</div>
+                    </td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-sm c2">JL</div>
+                        <div>
+                          <div class="nm">Juan López</div>
+                          <div class="em">juan@email.com</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="htk-badge open">Abierto</span></td>
+                    <td><span class="htk-tag-ch wa"><i class="fab fa-whatsapp"></i> WA</span></td>
+                    <td><span class="htk-sla warn"><i class="far fa-clock"></i>1h 10m</span></td>
+                    <td><span class="htk-prio urgent"><span class="d"></span>Urgente</span></td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-xs c3">AG</div>
+                        <span style="font-size:11px;">Andrea G.</span>
+                      </div>
+                    </td>
+                    <td style="font-size:11px;color:#a1a1aa;">hace 5m</td>
+                    <td><button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-ellipsis-vertical"></i></button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="htk-checkbox"></td>
+                    <td>
+                      <div class="htk-subj">Factura incorrecta en compra de noviembre</div>
+                      <div class="htk-meta"><span class="htk-id">#TK-1039</span> · Facturación</div>
+                    </td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-sm c4">MA</div>
+                        <div>
+                          <div class="nm">María Álvarez</div>
+                          <div class="em">maria@email.com</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="htk-badge progress">En progreso</span></td>
+                    <td><span class="htk-tag-ch email"><i class="fas fa-envelope"></i> Email</span></td>
+                    <td><span class="htk-sla ok"><i class="far fa-clock"></i>4h 30m</span></td>
+                    <td><span class="htk-prio high"><span class="d"></span>Alta</span></td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-xs c5">ML</div>
+                        <span style="font-size:11px;">Miguel L.</span>
+                      </div>
+                    </td>
+                    <td style="font-size:11px;color:#a1a1aa;">hace 23m</td>
+                    <td><button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-ellipsis-vertical"></i></button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="htk-checkbox"></td>
+                    <td>
+                      <div class="htk-subj">Solicitud de devolución — producto defectuoso</div>
+                      <div class="htk-meta"><span class="htk-id">#TK-1035</span> · Devoluciones</div>
+                    </td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-sm c7">SC</div>
+                        <div>
+                          <div class="nm">Sofía Castro</div>
+                          <div class="em">sofia@email.com</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="htk-badge pending">Pendiente</span></td>
+                    <td><span class="htk-tag-ch ig"><i class="fab fa-instagram"></i> IG</span></td>
+                    <td><span class="htk-sla breach"><i class="far fa-clock"></i>Vencido</span></td>
+                    <td><span class="htk-prio normal"><span class="d"></span>Normal</span></td>
+                    <td style="font-size:11px;color:#a1a1aa;">Sin asignar</td>
+                    <td style="font-size:11px;color:#a1a1aa;">hace 2h</td>
+                    <td><button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-ellipsis-vertical"></i></button></td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox" class="htk-checkbox"></td>
+                    <td>
+                      <div class="htk-subj">Contraseña de acceso olvidada — reset urgente</div>
+                      <div class="htk-meta"><span class="htk-id">#TK-1031</span> · Acceso y seguridad</div>
+                    </td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-sm c1">RP</div>
+                        <div>
+                          <div class="nm">Roberto Pérez</div>
+                          <div class="em">roberto@empresa.com</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="htk-badge resolved">Resuelto</span></td>
+                    <td><span class="htk-tag-ch widget"><i class="fas fa-globe"></i> Widget</span></td>
+                    <td><span class="htk-sla ok"><i class="far fa-clock"></i>OK</span></td>
+                    <td><span class="htk-prio low"><span class="d"></span>Baja</span></td>
+                    <td>
+                      <div class="htk-cust">
+                        <div class="htk-av htk-av-xs c6">CP</div>
+                        <span style="font-size:11px;">Carlos P.</span>
+                      </div>
+                    </td>
+                    <td style="font-size:11px;color:#a1a1aa;">ayer</td>
+                    <td><button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-ellipsis-vertical"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ KANBAN ═══════════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="kanban">
+    <div class="sc-section-title">Vista kanban — .htk-kanban · .htk-col · .htk-card</div>
+    <div class="sc-grid sc-grid-1">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Columnas kanban con cards de ticket</span>
+          <code class="sc-card-class">.htk-kanban > .htk-col > .htk-cards > .htk-card</code>
+        </div>
+        <div class="sc-card-body p-0">
+          <div class="helpdesk-tickets-page">
+            <div class="htk-kanban" style="max-height:420px;">
+
+              <!-- Columna Abierto -->
+              <div class="htk-col">
+                <div class="htk-col-h">
+                  <div class="nm"><span class="d" style="background:#2563eb;"></span>Abiertos</div>
+                  <span class="c">38</span>
+                </div>
+                <div class="htk-cards">
+                  <div class="htk-card active">
+                    <div class="row1"><span class="id">#TK-1042</span><span class="htk-sla warn">1h 10m</span></div>
+                    <div class="ts">Problema con entrega del pedido #87234</div>
+                    <div class="row2"><span class="from">Juan López</span><span class="htk-tag-ch wa" style="font-size:9px;padding:1px 5px;"><i class="fab fa-whatsapp"></i></span></div>
+                  </div>
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1038</span><span class="htk-sla ok">4h</span></div>
+                    <div class="ts">Cambio de dirección de envío</div>
+                    <div class="row2"><span class="from">Ana Lima</span><span class="htk-tag-ch email" style="font-size:9px;padding:1px 5px;"><i class="fas fa-envelope"></i></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna En progreso -->
+              <div class="htk-col">
+                <div class="htk-col-h">
+                  <div class="nm"><span class="d" style="background:#7c3aed;"></span>En progreso</div>
+                  <span class="c">19</span>
+                </div>
+                <div class="htk-cards">
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1039</span><span class="htk-sla ok">4h 30m</span></div>
+                    <div class="ts">Factura incorrecta en compra de noviembre</div>
+                    <div class="row2"><span class="from">María Álvarez</span><span class="htk-tag-ch email" style="font-size:9px;padding:1px 5px;"><i class="fas fa-envelope"></i></span></div>
+                  </div>
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1036</span><span class="htk-sla warn">50m</span></div>
+                    <div class="ts">Consulta sobre política de garantías</div>
+                    <div class="row2"><span class="from">Carlos Mendoza</span><span class="htk-tag-ch widget" style="font-size:9px;padding:1px 5px;"><i class="fas fa-globe"></i></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna Pendiente -->
+              <div class="htk-col">
+                <div class="htk-col-h">
+                  <div class="nm"><span class="d" style="background:#d97706;"></span>Pendientes</div>
+                  <span class="c">24</span>
+                </div>
+                <div class="htk-cards">
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1035</span><span class="htk-sla breach">Vencido</span></div>
+                    <div class="ts">Devolución — producto llegó dañado</div>
+                    <div class="row2"><span class="from">Sofía Castro</span><span class="htk-tag-ch ig" style="font-size:9px;padding:1px 5px;"><i class="fab fa-instagram"></i></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna Resuelto -->
+              <div class="htk-col">
+                <div class="htk-col-h">
+                  <div class="nm"><span class="d" style="background:#16a34a;"></span>Resueltos</div>
+                  <span class="c">61</span>
+                </div>
+                <div class="htk-cards">
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1031</span><span class="htk-sla ok">OK</span></div>
+                    <div class="ts">Contraseña olvidada — reset solicitado</div>
+                    <div class="row2"><span class="from">Roberto Pérez</span><span class="htk-tag-ch fb" style="font-size:9px;padding:1px 5px;"><i class="fab fa-facebook-f"></i></span></div>
+                  </div>
+                  <div class="htk-card">
+                    <div class="row1"><span class="id">#TK-1028</span><span class="htk-sla ok">OK</span></div>
+                    <div class="ts">Consulta precio mayorista productos</div>
+                    <div class="row2"><span class="from">Laura García</span><span class="htk-tag-ch wa" style="font-size:9px;padding:1px 5px;"><i class="fab fa-whatsapp"></i></span></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ PANEL DETALLE ═════════════════════════════════════════════════════ -->
+  <section class="sc-section" id="detail">
+    <div class="sc-section-title">Panel detalle lateral — .htk-detail · .htk-d-head · .htk-d-side</div>
+    <div class="sc-grid sc-grid-1">
+      <div class="sc-card">
+        <div class="sc-card-head">
+          <span class="sc-card-name">Detail panel con thread de mensajes y sidebar de datos</span>
+          <code class="sc-card-class">.htk-detail · .htk-d-body · .htk-msg .bubble</code>
+        </div>
+        <div class="sc-card-body p-0 light-bg">
+          <div class="htk-detail" style="height: 480px;">
+            <!-- Head -->
+            <div class="htk-d-head">
+              <div class="ico"><i class="fas fa-ticket"></i></div>
+              <div class="body">
+                <div class="row1">
+                  <span>#TK-1042</span>
+                  <span class="sep">·</span>
+                  <span>Soporte general</span>
+                  <span class="sep">·</span>
+                  <span>hace 5m</span>
+                </div>
+                <div class="ts">Problema con entrega del pedido #87234</div>
+                <div class="row3">
+                  <span class="htk-badge open">Abierto</span>
+                  <span class="htk-prio urgent" style="font-size:11px;"><span class="d"></span>Urgente</span>
+                  <span class="htk-sla warn"><i class="far fa-clock"></i>1h 10m</span>
+                  <span class="htk-tag-ch wa"><i class="fab fa-whatsapp"></i> WhatsApp</span>
+                </div>
+              </div>
+              <div class="acts">
+                <button class="htk-btn htk-btn-outline htk-btn-sm"><i class="fas fa-user-plus"></i> Asignar</button>
+                <button class="htk-btn htk-btn-success htk-btn-sm"><i class="fas fa-circle-check"></i> Resolver</button>
+                <button class="htk-btn htk-btn-icon htk-btn-sm"><i class="fas fa-xmark"></i></button>
+              </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="htk-d-tabs">
+              <button class="htk-d-tab on"><i class="fas fa-comment" style="font-size:11px;"></i>Mensajes <span class="c">4</span></button>
+              <button class="htk-d-tab"><i class="fas fa-clock-rotate-left" style="font-size:11px;"></i>Historial</button>
+              <button class="htk-d-tab"><i class="fas fa-paperclip" style="font-size:11px;"></i>Adjuntos <span class="c">1</span></button>
+            </div>
+
+            <!-- Body -->
+            <div class="htk-d-body">
+              <!-- Thread -->
+              <div class="htk-d-main">
+                <div class="htk-event"><b>Ticket creado</b> · hace 2h por sistema</div>
+
+                <div class="htk-msg">
+                  <div class="htk-av c2" style="width:28px;height:28px;font-size:9px;">JL</div>
+                  <div class="body">
+                    <div class="meta-mini">Juan López · hace 2h</div>
+                    <div class="bubble in">Hola, llevo 3 días esperando mi pedido #87234 y no llega. ¿Qué está pasando?</div>
+                  </div>
+                </div>
+
+                <div class="htk-msg out">
+                  <div class="htk-av c3" style="width:28px;height:28px;font-size:9px;">AG</div>
+                  <div class="body">
+                    <div class="meta-mini">Andrea García · hace 1h 30m</div>
+                    <div class="bubble out">Buenos días Juan, estamos revisando el estado de su pedido con la transportista.</div>
+                  </div>
+                </div>
+
+                <div class="htk-event"><b>Asignado</b> a Andrea García por sistema</div>
+
+                <div class="htk-msg">
+                  <div class="htk-av c2" style="width:28px;height:28px;font-size:9px;">JL</div>
+                  <div class="body">
+                    <div class="meta-mini">Juan López · hace 30m</div>
+                    <div class="bubble in">¿Cuánto más debo esperar? Necesito este pedido urgente.</div>
+                  </div>
+                </div>
+
+                <div class="htk-msg out">
+                  <div class="body">
+                    <div class="bubble note"><i class="fas fa-lock" style="font-size:9px;margin-right:4px;"></i>Nota interna — Cliente prioritario, historial de compras alto. Escalar si no hay respuesta.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sidebar -->
+              <div class="htk-d-side">
+                <div class="htk-d-side-block">
+                  <div class="lbl">Asignado a</div>
+                  <div class="htk-d-side-row">
+                    <div class="htk-av c3" style="width:22px;height:22px;font-size:8px;">AG</div>
+                    <span class="nm">Andrea García</span>
+                    <i class="fas fa-chevron-down" style="font-size:9px;color:#a1a1aa;"></i>
+                  </div>
+                </div>
+                <div class="htk-d-side-block">
+                  <div class="lbl">Estado</div>
+                  <div class="htk-d-side-row">
+                    <span class="htk-badge open">Abierto</span>
+                    <i class="fas fa-chevron-down" style="font-size:9px;color:#a1a1aa;margin-left:auto;"></i>
+                  </div>
+                </div>
+                <div class="htk-d-side-block">
+                  <div class="lbl">Prioridad</div>
+                  <div class="htk-d-side-row">
+                    <span class="htk-prio urgent" style="font-size:11px;"><span class="d"></span>Urgente</span>
+                    <i class="fas fa-chevron-down" style="font-size:9px;color:#a1a1aa;margin-left:auto;"></i>
+                  </div>
+                </div>
+                <div class="htk-d-side-block">
+                  <div class="lbl">Detalles</div>
+                  <div class="htk-d-meta-row"><span class="l">ID</span><span class="v">#TK-1042</span></div>
+                  <div class="htk-d-meta-row"><span class="l">Canal</span><span class="v" style="font-family:inherit;font-size:11.5px;">WhatsApp</span></div>
+                  <div class="htk-d-meta-row"><span class="l">SLA</span><span class="v">1h 10m</span></div>
+                  <div class="htk-d-meta-row"><span class="l">Creado</span><span class="v">hoy 09:12</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

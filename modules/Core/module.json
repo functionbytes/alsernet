@@ -1,9 +1,0 @@
-{
-    "name": "Core",
-    "alias": "core",
-    "description": "Core module for generic dashboard, settings, and user management",
-    "keywords": ["dashboard", "core", "generic"],
-    "priority": 1,
-    "providers": ["Modules\\Core\\Providers\\CoreServiceProvider"],
-    "files": []
-}

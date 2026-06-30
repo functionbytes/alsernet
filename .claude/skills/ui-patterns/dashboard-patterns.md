@@ -174,7 +174,7 @@ $(document).ready(function () {
                     argumentField: 'date',
                     name: 'Total',
                     type: 'bar',
-                    color: '#b10100'
+                    color: '#90bb13'
                 }],
                 tooltip: { enabled: true },
                 legend: { visible: false }
@@ -255,7 +255,7 @@ $('#chart').dxChart({
         valueField: 'total',
         argumentField: 'date',
         type: 'bar',
-        color: '#b10100'  // Primary color del proyecto
+        color: '#90bb13'  // Primary color del proyecto
     }]
 });
 ```
@@ -280,15 +280,15 @@ $('#chart').dxChart({
         valueField: 'total',
         argumentField: 'date',
         type: 'line',
-        color: '#b10100'
+        color: '#90bb13'
     }]
 });
 ```
 
 ## Paleta de Colores del Proyecto
 
-- **Primary**: `#b10100` (casi todos los modulos)
-- **Analytics**: paleta roja `#b10100`, `#333333`, `#7b0000` (SOLO Analytics)
+- **Primary**: `#90bb13` (casi todos los modulos)
+- **Analytics**: paleta roja `#90bb13`, `#333333`, `#7b0000` (SOLO Analytics)
 - **Success**: `#13C672`
 - **Danger**: `#FA896B`
 - **Warning**: `#FEC90F`

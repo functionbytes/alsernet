@@ -8,7 +8,7 @@ Activate frontend development mode. Apply rules from the frontend agent strictly
 - **CSS**: Bootstrap 5.3 classes. NO Tailwind. NO custom CSS when Bootstrap class exists.
 - **Widgets**: DevExpress jQuery for data grids, charts, complex UI.
 - **Notifications**: toastr for success/error messages.
-- **Colors**: Primary `#b10100`, Success `#13C672`, Danger `#FA896B`, Warning `#FEC90F`
+- **Colors**: Primary `#90bb13`, Success `#13C672`, Danger `#FA896B`, Warning `#FEC90F`
 - **Titles**: Capitalize only first word
 
 ## Workflow

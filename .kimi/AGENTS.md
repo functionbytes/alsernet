@@ -93,7 +93,7 @@ When delegating via the `Agent` tool, pass the relevant `.kimi/agents/*.md` file
 - **NEVER**: Use Tabler Icons (`ti ti-*`) - they are NOT loaded in this project
 
 ### Colors
-- Primary: `#b10100`
+- Primary: `#90bb13`
 - Success: `#13C672`
 - Danger: `#FA896B`
 - Warning: `#FEC90F`
@@ -570,7 +570,7 @@ If conversation context was compacted, re-inject critical rules:
 - Form Requests for validation
 - Font Awesome 6 only (not Tabler)
 - jQuery+AJAX (not Livewire)
-- Primary color `#b10100`
+- Primary color `#90bb13`
 - Section titles: capitalize first word only
 - Run `vendor/bin/pint --dirty` after PHP changes
 - Simplify code: early returns, no nested ternaries

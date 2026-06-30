@@ -33,7 +33,7 @@ Views live in `modules/ModuleName/resources/views/`, NOT in `resources/views/`.
 
 ## Design Standards
 - Template: Bootstrap Modernize
-- Primary: `#b10100`, Success: `#13C672`, Danger: `#FA896B`, Warning: `#FEC90F`
+- Primary: `#90bb13`, Success: `#13C672`, Danger: `#FA896B`, Warning: `#FEC90F`
 - Use `gap-*` utilities for spacing in flex/grid (not margins)
 - Icons only when they add meaning (actions, status, navigation)
 

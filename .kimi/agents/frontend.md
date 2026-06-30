@@ -76,7 +76,7 @@ For delete confirmation, the modal is already in the layout. Just wire the trigg
 ## Design System
 
 - **Template**: Bootstrap Modernize (vertical sidebar, boxed layout)
-- **Primary**: `#b10100` | **Success**: `#13C672` | **Danger**: `#FA896B` | **Warning**: `#FEC90F`
+- **Primary**: `#90bb13` | **Success**: `#13C672` | **Danger**: `#FA896B` | **Warning**: `#FEC90F`
 - **Badges for status**: `bg-{color}-subtle text-{color}` pattern
   - Success: `bg-success-subtle text-success`
   - Danger: `bg-danger-subtle text-danger`

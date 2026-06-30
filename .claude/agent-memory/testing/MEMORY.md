@@ -35,3 +35,4 @@ See `patterns.md` for detailed notes.
 - `CookieConsentLog` has no factory; create records directly via `CookieConsentLog::create([...])` with fields: session_id (max 64), ip_hash (sha256), action, accepted_categories (array), user_agent, version
 - Cookie module TestCase at `modules/Cookie/tests/TestCase.php` — uses `Permission::firstOrCreate()` pattern and has `beforeRefreshingDatabase()` for helpdesk connection fix
 - `StreamedResponse` CSV: use `$response->streamedContent()` to get the body in tests
+- [HelpdeskErp test infra](project_helpdeskErp_infra.md) — Use DatabaseTransactions (not RefreshDatabase), stub Pulse::class, set helpdeskErp.manager_url config, and add helpdesk_data_access_logs to test DB

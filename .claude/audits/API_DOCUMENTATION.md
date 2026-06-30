@@ -428,7 +428,7 @@ Response:
 {
     "success": true,
     "data": [
-        { "id": 1, "name": "Hardware", "slug": "hardware", "description": "...", "icon": "fas fa-desktop", "color": "#b10100" }
+        { "id": 1, "name": "Hardware", "slug": "hardware", "description": "...", "icon": "fas fa-desktop", "color": "#90bb13" }
     ]
 }
 ```
@@ -674,7 +674,7 @@ curl -X POST \
 
 All social webhooks are **public** (no auth required — Meta enforces HMAC-SHA256 signature verification internally). CSRF excluded via `webhooks/*`.
 
-### GET /webhooks/helpdesk/whatsapp
+### GET /webhooks/whatsapp
 
 WhatsApp webhook verification (Meta hub challenge). Returns the `hub.challenge` value.
 
@@ -685,7 +685,7 @@ Query params (sent by Meta):
 
 Response (200): Plain text challenge value.
 
-### POST /webhooks/helpdesk/whatsapp
+### POST /webhooks/whatsapp
 
 Receive WhatsApp Business messages. Validates `X-Hub-Signature-256` header.
 
@@ -699,16 +699,16 @@ curl -X POST \
   -H "X-Hub-Signature-256: sha256=HMAC_VALUE" \
   -H "Content-Type: application/json" \
   -d @whatsapp_payload.json \
-  https://system.test/webhooks/helpdesk/whatsapp
+  https://system.test/webhooks/whatsapp
 ```
 
-### GET /webhooks/helpdesk/facebook
-### POST /webhooks/helpdesk/facebook
+### GET /webhooks/facebook
+### POST /webhooks/facebook
 
 Same pattern as WhatsApp — Facebook Messenger verification + inbound messages.
 
-### GET /webhooks/helpdesk/instagram
-### POST /webhooks/helpdesk/instagram
+### GET /webhooks/instagram
+### POST /webhooks/instagram
 
 Same pattern as WhatsApp — Instagram DMs verification + inbound messages.
 

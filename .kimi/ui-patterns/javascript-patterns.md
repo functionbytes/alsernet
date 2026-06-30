@@ -275,7 +275,7 @@ const chart = new ApexCharts(document.querySelector('#chart'), {
         zoom: { enabled: false },
         fontFamily: 'inherit'
     },
-    colors: ['#b10100'],
+    colors: ['#90bb13'],
     stroke: { curve: 'smooth', width: 2 },
     fill: {
         type: 'gradient',
@@ -305,7 +305,7 @@ const chart = new ApexCharts(document.querySelector('#donut-chart'), {
     series: dataValues,
     labels: dataLabels,
     chart: { type: 'donut', height: 200, fontFamily: 'inherit' },
-    colors: ['#b10100', '#13C672', '#FEC90F', '#FA896B', '#333333'],
+    colors: ['#90bb13', '#13C672', '#FEC90F', '#FA896B', '#333333'],
     legend: { show: false },
     dataLabels: { enabled: false },
     tooltip: { y: { formatter: v => new Intl.NumberFormat('es-ES').format(v) } },
@@ -327,7 +327,7 @@ new ApexCharts(document.querySelector('#spark'), {
         animations: { enabled: false },
         fontFamily: 'inherit'
     },
-    colors: ['#b10100'],
+    colors: ['#90bb13'],
     stroke: { curve: 'smooth', width: 2 },
     fill: {
         type: 'gradient',
@@ -357,7 +357,7 @@ new ApexCharts(document.querySelector('#bar-chart'), {
         fontFamily: 'inherit',
         stacked: true
     },
-    colors: ['#13C672', '#b10100'],
+    colors: ['#13C672', '#90bb13'],
     plotOptions: { bar: { borderRadius: 2, columnWidth: '70%' } },
     xaxis: {
         categories: labels,

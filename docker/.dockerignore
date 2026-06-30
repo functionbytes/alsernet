@@ -1,0 +1,61 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+tests
+.phpunit.result.cache
+
+# Node
+node_modules
+npm-debug.log
+package-lock.json
+
+# Environment
+.env.local
+.env.testing
+
+# Logs
+storage/logs
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Deployment
+deployment
+
+# Docker
+docker-compose.yml
+docker-compose-*.yml
+Dockerfile
+.dockerignore
+
+# Documentation
+docs
+README.md
+CHANGELOG.md
+
+# Temporary
+tmp
+temp
+*.tmp
+
+# Node modules
+node_modules
+package-lock.json
+
+# Build files
+dist
+build
+*.min.js
+*.min.css

@@ -174,7 +174,7 @@
     "PostCompact": [
       {
         "type": "command",
-        "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"REMINDER after compaction: Use modules/ structure (not app/). Model::query() over DB::. Form Requests for validation. Font Awesome 6 only (not Tabler). jQuery+AJAX (not Livewire). Primary color #b10100. Section titles: capitalize first word only. Run vendor/bin/pint --dirty after PHP changes. Simplify code: early returns, no nested ternaries.\"}}'"
+        "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"REMINDER after compaction: Use modules/ structure (not app/). Model::query() over DB::. Form Requests for validation. Font Awesome 6 only (not Tabler). jQuery+AJAX (not Livewire). Primary color #90bb13. Section titles: capitalize first word only. Run vendor/bin/pint --dirty after PHP changes. Simplify code: early returns, no nested ternaries.\"}}'"
       }
     ],
     "Notification": [
