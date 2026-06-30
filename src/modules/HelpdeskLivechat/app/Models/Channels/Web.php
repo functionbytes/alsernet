@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Setting;
+use Modules\Helpdesk\Services\AgentPresenceService;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 
 class Web extends Model
@@ -347,7 +348,7 @@ class Web extends Model
                 'enforce_identity_verification' => (bool) ($this->enforce_identity_verification ?? false),
 
                 // Availability
-                'is_open' => $this->isWithinBusinessHours(),
+                'is_open' => $this->isOpen(),
 
                 // Live assistance
                 'enable_live_view' => (bool) ($this->enable_live_view ?? false),
@@ -390,6 +391,30 @@ class Web extends Model
         $current = $now->format('H:i');
 
         return $current >= $start && $current <= $end;
+    }
+
+    /**
+     * Whether the channel is currently open for incoming chats.
+     * Combines business-hours check with real-time agent presence so the
+     * widget shows "Online" only when at least one agent is actually available,
+     * not just because the clock is within working hours.
+     *
+     * Falls back to hours-only when no inbox exists (edge case / misconfiguration)
+     * so the widget is never permanently stuck in "Offline".
+     */
+    public function isOpen(): bool
+    {
+        if (! $this->isWithinBusinessHours()) {
+            return false;
+        }
+
+        $inbox = $this->inbox;
+
+        if (! $inbox) {
+            return true;
+        }
+
+        return app(AgentPresenceService::class)->hasAvailableAgentsForInbox($inbox->id);
     }
 
     /**

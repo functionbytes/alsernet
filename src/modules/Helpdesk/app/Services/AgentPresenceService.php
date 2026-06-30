@@ -40,6 +40,8 @@ class AgentPresenceService
         if ($state !== AgentSettings::PRESENCE_OFFLINE) {
             $this->heartbeat($userId);
         }
+
+        $this->clearWidgetConfigCache($userId);
     }
 
     public function getState(int $userId): string
@@ -111,6 +113,58 @@ class AgentPresenceService
         }
 
         return $count;
+    }
+
+    /**
+     * Returns true when at least one agent with an active Redis heartbeat is
+     * assigned to the given inbox and is in an available or busy state.
+     * Used by the livechat widget to show real-time agent availability.
+     */
+    public function hasAvailableAgentsForInbox(int $inboxId): bool
+    {
+        $onlineIds = $this->getOnlineAgents();
+
+        if (empty($onlineIds)) {
+            return false;
+        }
+
+        return AgentSettings::query()
+            ->whereIn('user_id', $onlineIds)
+            ->whereIn('presence_state', [AgentSettings::PRESENCE_AVAILABLE, AgentSettings::PRESENCE_BUSY])
+            ->whereExists(fn ($q) => $q
+                ->selectRaw('1')
+                ->from('helpdesk_agent_inbox_capacity')
+                ->whereColumn('helpdesk_agent_inbox_capacity.user_id', 'helpdesk_agent_settings.user_id')
+                ->where('helpdesk_agent_inbox_capacity.inbox_id', $inboxId))
+            ->exists();
+    }
+
+    /**
+     * Forget the livechat widget config cache for every Web channel whose inbox
+     * the given agent belongs to, so the next widget load reflects the new
+     * presence state without waiting for the full 5-minute TTL.
+     */
+    private function clearWidgetConfigCache(int $userId): void
+    {
+        $inboxIds = \DB::connection('helpdesk')
+            ->table('helpdesk_agent_inbox_capacity')
+            ->where('user_id', $userId)
+            ->pluck('inbox_id');
+
+        if ($inboxIds->isEmpty()) {
+            return;
+        }
+
+        $channelIds = \DB::connection('helpdesk')
+            ->table('helpdesk_channel_webs')
+            ->join('helpdesk_inboxes', 'helpdesk_inboxes.channel_id', '=', 'helpdesk_channel_webs.id')
+            ->where('helpdesk_inboxes.channel_type', 'Modules\\HelpdeskLivechat\\Models\\Channels\\Web')
+            ->whereIn('helpdesk_inboxes.id', $inboxIds)
+            ->pluck('helpdesk_channel_webs.id');
+
+        foreach ($channelIds as $channelId) {
+            \Cache::forget("widget_config_{$channelId}");
+        }
     }
 
     public function getAgentsList(?int $inboxId = null): array
