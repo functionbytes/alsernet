@@ -3,6 +3,17 @@
 return [
     'name' => 'HelpdeskAgents',
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI Runtime Master Switch
+    |--------------------------------------------------------------------------
+    | Gates whether the AI agent runtime is wired into the Helpdesk conversation
+    | flow (StartAiAgentSessionJob dispatched on inbound customer messages).
+    | MUST default to FALSE: the infrastructure is wired but AI never runs in
+    | production unless explicitly enabled per deploy ("do no harm").
+    */
+    'enabled' => env('HELPDESKAGENTS_ENABLED', false),
+
     'llm_rate_limits' => [
         'per_user_per_minute' => 10,
         'per_session_per_5min' => 30,

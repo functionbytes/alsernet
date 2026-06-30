@@ -2,9 +2,12 @@
 
 namespace Modules\HelpdeskAgents\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Helpdesk\Events\MessageReceived;
+use Modules\HelpdeskAgents\Listeners\StartAiAgentSessionOnIncomingMessage;
 use Modules\HelpdeskAgents\Models\AgentShift;
 use Modules\HelpdeskAgents\Models\AgentVacation;
 use Modules\HelpdeskAgents\Models\AiAgent;
@@ -41,6 +44,7 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->registerPolicies();
         $this->registerObservers();
+        $this->registerListeners();
         $this->registerConfig();
         $this->registerViews();
         $this->registerTranslations();
@@ -81,6 +85,17 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
     {
         AiAgent::observe(AiAgentObserver::class);
         AiAgentKnowledgeBase::observe(AiAgentKnowledgeBaseObserver::class);
+    }
+
+    /**
+     * Wire the AI runtime into the Helpdesk conversation flow. The listener is
+     * always registered, but it is internally gated by the config('helpdeskagents.enabled')
+     * feature flag (OFF by default), so the AI never runs in production unless
+     * explicitly enabled per deploy.
+     */
+    protected function registerListeners(): void
+    {
+        Event::listen(MessageReceived::class, StartAiAgentSessionOnIncomingMessage::class);
     }
 
     protected function registerConfig(): void
