@@ -3,13 +3,14 @@
 namespace Modules\HelpdeskChatFlow\Services;
 
 use Illuminate\Support\Str;
+use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
 
 class ChatFlowTestSimulator
 {
-    use EvaluatesBusinessHours, FormatsNumberedOptions, ValidatesUserInput;
+    use EvaluatesBranchConditions, EvaluatesBusinessHours, FormatsNumberedOptions, ValidatesUserInput;
 
     private const WAIT_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat'];
 
@@ -706,34 +707,16 @@ class ChatFlowTestSimulator
                 continue;
             }
 
-            if ($this->evaluateConditions($item['data']['conditions'] ?? [], $session['context'])) {
+            if ($this->evaluateConditions(
+                $item['data']['conditions'] ?? [],
+                strtolower((string) ($item['data']['match'] ?? 'all')),
+                fn (string $variable): mixed => $session['context'][$variable] ?? null,
+            )) {
                 return $this->firstChildId($session, $item['id']);
             }
         }
 
         return $elseItem ? $this->firstChildId($session, $elseItem['id']) : null;
-    }
-
-    private function evaluateConditions(array $conditions, array $context): bool
-    {
-        foreach ($conditions as $cond) {
-            $actual = (string) ($context[$cond['variable'] ?? ''] ?? '');
-            $value = (string) ($cond['value'] ?? '');
-            $matches = match ($cond['operator'] ?? '=') {
-                '=' => $actual === $value,
-                '!=' => $actual !== $value,
-                '>' => (float) $actual > (float) $value,
-                '<' => (float) $actual < (float) $value,
-                'contains' => str_contains($actual, $value),
-                default => false,
-            };
-
-            if (! $matches) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private function getElseBranchNextId(array $session, string $nodeId): ?string
