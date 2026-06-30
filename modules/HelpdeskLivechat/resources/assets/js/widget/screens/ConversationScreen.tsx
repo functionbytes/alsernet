@@ -24,6 +24,7 @@ export function ConversationScreen() {
     const showPostChat = useWidgetStore(state => state.showPostChat);
     const setShowPostChat = useWidgetStore(state => state.setShowPostChat);
     const recommendations = useWidgetStore(state => state.recommendations);
+    const quickReplies = settings.quick_replies ?? [];
     const navigate = useNavigate();
     const t = useTranslation();
 
@@ -424,6 +425,21 @@ export function ConversationScreen() {
                 onOpenLightbox={openLightbox}
                 onLoadMore={loadMoreMessages}
             />
+
+            {!conversationId && quickReplies.length > 0 && (
+                <div className="wgt-quick-replies" role="group" aria-label="Respuestas rápidas">
+                    {quickReplies.map((reply, i) => (
+                        <button
+                            key={i}
+                            className="wgt-quick-reply-chip"
+                            style={{ borderColor: settings.primary_color, color: settings.primary_color }}
+                            onClick={() => setInputValue(reply)}
+                        >
+                            {reply}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             <MessageComposer
                 inputValue={inputValue}

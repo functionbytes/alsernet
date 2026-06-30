@@ -40,6 +40,7 @@ interface LiveChatSettings {
     input_placeholder?: string;
     offline_message?: string;
     queue_message?: string;
+    quick_replies?: string[];
 
     // Widget - Launcher
     position?: string;
@@ -241,6 +242,7 @@ function settingsFromApiData(data: Record<string, any>): LiveChatSettings {
         welcome_message: data?.greeting?.message ?? defaultSettings.welcome_message,
         input_placeholder: data?.greeting?.input_placeholder ?? defaultSettings.input_placeholder,
         queue_message: data?.greeting?.queue_message,
+        quick_replies: Array.isArray(data?.greeting?.quick_replies) ? data.greeting.quick_replies : [],
         // Launcher
         side_spacing: data?.launcher?.side_spacing ?? defaultSettings.side_spacing,
         bottom_spacing: data?.launcher?.bottom_spacing ?? defaultSettings.bottom_spacing,

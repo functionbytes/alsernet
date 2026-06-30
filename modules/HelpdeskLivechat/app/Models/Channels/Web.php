@@ -62,6 +62,7 @@ class Web extends Model
         'welcome_message',
         'input_placeholder',
         'queue_message',
+        'quick_replies',
 
         // Launcher
         'side_spacing',
@@ -157,6 +158,7 @@ class Web extends Model
 
             // Branding
             'team_avatars' => 'array',
+            'quick_replies' => 'array',
 
             // Feature flags
             'show_timestamps' => 'boolean',
@@ -315,6 +317,7 @@ class Web extends Model
                 'welcome_message' => $this->welcome_message ?? 'Hola! ¿Cómo podemos ayudarte?',
                 'input_placeholder' => $this->input_placeholder ?? 'Escribe tu mensaje...',
                 'queue_message' => $this->queue_message,
+                'quick_replies' => $this->quick_replies ?? [],
                 'offline_message' => $this->offline_message,
 
                 // Additional feature flags
