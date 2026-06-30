@@ -4,12 +4,15 @@ namespace Modules\HelpdeskDocument\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Modules\Document\Entities\Document;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
+use Modules\HelpdeskDocument\Http\Requests\Managers\ImportChatDocumentsRequest;
+use Modules\HelpdeskDocument\Http\Requests\Managers\ImportDeviceDocumentsRequest;
 
 class ChatGalleryDocumentController extends Controller
 {
@@ -23,7 +26,7 @@ class ChatGalleryDocumentController extends Controller
      * Otherwise the import is recorded on the conversation metadata and returned so the
      * agent still gets feedback (documented as pending real Document creation).
      */
-    public function importFromChat(Conversation $conversation, Request $request): JsonResponse
+    public function importFromChat(Conversation $conversation, ImportChatDocumentsRequest $request): JsonResponse
     {
         $customer = $conversation->customer;
 
@@ -31,14 +34,7 @@ class ChatGalleryDocumentController extends Controller
             $this->authorize('view', $customer);
         }
 
-        $validated = $request->validate([
-            'file_ids' => ['required', 'array', 'min:1'],
-            'file_ids.*' => ['required', 'string'],
-            'category' => ['nullable', 'string', 'max:120'],
-        ], [
-            'file_ids.required' => 'Selecciona al menos un archivo.',
-            'file_ids.min' => 'Selecciona al menos un archivo.',
-        ]);
+        $validated = $request->validated();
 
         $category = $validated['category'] ?? 'other';
         $selected = array_values(array_unique($validated['file_ids']));
@@ -96,6 +92,101 @@ class ChatGalleryDocumentController extends Controller
     }
 
     /**
+     * Import files uploaded directly from the agent's device.
+     *
+     * Mirrors importFromChat but receives real multipart uploads (files[]) instead
+     * of chat attachment URLs. When the conversation is linked to a Document the
+     * files are attached to its `additional_attachments` collection; otherwise the
+     * files are stored on the public disk and recorded on the conversation metadata.
+     */
+    public function importFromDevice(Conversation $conversation, ImportDeviceDocumentsRequest $request): JsonResponse
+    {
+        $customer = $conversation->customer;
+
+        if ($customer) {
+            $this->authorize('view', $customer);
+        }
+
+        $validated = $request->validated();
+        $category = $validated['category'] ?? 'other';
+
+        /** @var array<int, UploadedFile> $files */
+        $files = $request->file('files', []);
+
+        $document = $this->resolveLinkedDocument($conversation);
+
+        $imported = DB::transaction(function () use ($conversation, $document, $files, $category): array {
+            $items = [];
+
+            foreach ($files as $file) {
+                $name = $file->getClientOriginalName() ?: 'archivo';
+                $items[] = $this->storeDeviceFile($conversation, $document, $file, $name, $category);
+            }
+
+            if ($document) {
+                $document->syncAdditionalAttachmentsJson();
+            }
+
+            $this->recordImportOnConversation($conversation, $items);
+
+            return $items;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => $document
+                ? count($imported).' archivo(s) subidos al expediente.'
+                : count($imported).' archivo(s) subidos (sin expediente vinculado).',
+            'linkedDocument' => $document !== null,
+            'documentId' => $document?->id,
+            'importedCount' => count($imported),
+            'items' => $imported,
+            'importedAt' => now()->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * Persist a single device upload, attaching it to the linked Document when
+     * present or storing it on the public disk otherwise.
+     *
+     * @return array<string, mixed>
+     */
+    private function storeDeviceFile(
+        Conversation $conversation,
+        ?Document $document,
+        UploadedFile $file,
+        string $name,
+        string $category
+    ): array {
+        if ($document) {
+            $media = $document->addMedia($file)
+                ->usingFileName($this->sanitizeFileName($name))
+                ->withCustomProperties([
+                    'upload_type' => $category,
+                    'source' => 'device_upload',
+                    'conversation_id' => $conversation->id,
+                ])
+                ->toMediaCollection('additional_attachments');
+
+            return [
+                'url' => $media->getUrl(),
+                'name' => $name,
+                'category' => $category,
+                'mediaId' => $media->id,
+            ];
+        }
+
+        $path = $file->store('chat-imports/'.$conversation->id, 'public');
+
+        return [
+            'url' => Storage::disk('public')->url($path),
+            'name' => $name,
+            'category' => $category,
+            'mediaId' => null,
+        ];
+    }
+
+    /**
      * All distinct attachment URLs shared across this conversation's items.
      *
      * Each attachment is stored either as a plain URL string or as an object
@@ -140,9 +231,19 @@ class ChatGalleryDocumentController extends Controller
 
         $localPath = $this->localStoragePath($url);
 
-        $adder = $localPath !== null
-            ? $document->addMedia($localPath)->preservingOriginal()
-            : $document->addMediaFromUrl($url);
+        if ($localPath !== null) {
+            $adder = $document->addMedia($localPath)->preservingOriginal();
+        } else {
+            // SSRF guard: only download genuinely external URLs that resolve to a
+            // public host (blocks loopback, private ranges and the cloud metadata IP).
+            abort_unless(
+                OutboundUrlGuard::isSafe($url),
+                422,
+                'La URL del archivo no es válida o apunta a un destino no permitido.'
+            );
+
+            $adder = $document->addMediaFromUrl($url);
+        }
 
         return $adder
             ->usingFileName($this->sanitizeFileName($name))

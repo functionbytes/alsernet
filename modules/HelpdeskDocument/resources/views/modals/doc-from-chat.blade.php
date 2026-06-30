@@ -159,15 +159,23 @@
                 return;
             }
 
-            var html = files.map(function (m, i) {
-                var icon = /\.(png|jpe?g|gif|webp)$/i.test(m.url) ? 'fa-regular fa-image' : 'fa-regular fa-file';
-                return '<button type="button" class="docs-cg-pick" data-cg-key="' + i + '" data-url="' + (m.url || '') + '">' +
-                    '<i class="' + icon + ' preview"></i>' +
-                    '<span class="check"><i class="fa-solid fa-check"></i></span>' +
-                    '<span class="lbl">' + (m.name || m.url.split('/').pop() || 'Archivo') + '</span>' +
-                '</button>';
-            }).join('');
-            $m.find('.docs-cg-gallery').html('<div class="docs-cg-grid">' + html + '</div>');
+            var $grid = $('<div class="docs-cg-grid"></div>');
+            files.forEach(function (m, i) {
+                var url  = String(m.url || '');
+                var name = m.name || url.split('/').pop() || 'Archivo';
+                var icon = /\.(png|jpe?g|gif|webp)$/i.test(url) ? 'fa-regular fa-image' : 'fa-regular fa-file';
+
+                // Build via DOM APIs so the file name/URL are safely escaped (no DOM XSS).
+                var $btn = $('<button type="button" class="docs-cg-pick"></button>')
+                    .attr('data-cg-key', i)
+                    .attr('data-url', url)
+                    .append($('<i></i>').addClass(icon + ' preview'))
+                    .append($('<span class="check"><i class="fa-solid fa-check"></i></span>'))
+                    .append($('<span class="lbl"></span>').text(name));
+
+                $grid.append($btn);
+            });
+            $m.find('.docs-cg-gallery').empty().append($grid);
         }).fail(function () {
             $m.find('.docs-cg-gallery').html('<div class="docs-vd-empty"><i class="fas fa-triangle-exclamation"></i> No se pudo cargar la galería</div>');
         });
@@ -209,7 +217,7 @@
             var msg = (xhr.responseJSON && (xhr.responseJSON.message || Object.values(xhr.responseJSON.errors || {}).flat().join(' '))) || 'Error al importar.';
             if (window.toastr) { toastr.error(msg); }
         }).always(function () {
-            $btn.prop('disabled', false).text('Selecciona archivos');
+            updateImportBtn($m.find('.docs-cg-pick.on').length);
         });
     });
 
@@ -238,7 +246,7 @@
         fd.append('notify_customer', $m.find('.docs-cg-notify').is(':checked') ? '1' : '0');
 
         $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/documents/import-from-chat',
+            url: '/panel/helpdesk/conversations/' + convId + '/documents/import-from-device',
             method: 'POST', data: fd,
             processData: false, contentType: false,
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }

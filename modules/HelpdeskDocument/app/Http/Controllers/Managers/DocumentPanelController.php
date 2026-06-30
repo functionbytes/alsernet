@@ -5,6 +5,7 @@ namespace Modules\HelpdeskDocument\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Modules\Document\Entities\Document;
+use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskDocument\Services\DocumentPanelPresenter;
 
@@ -36,6 +37,24 @@ class DocumentPanelController extends Controller
         return view('helpdeskdocument::inbox-slots._document-detail', [
             'rpDocument' => $presenter->present($document),
             'rpConvo' => $conversation,
+            'rpAssignees' => $this->validatorAssignees(),
         ]);
+    }
+
+    /**
+     * Flat list of users across all validator groups, for the "assign" dropdown.
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function validatorAssignees(): array
+    {
+        try {
+            return DocumentValidatorGroup::with('users')->get()
+                ->pluck('users')->flatten()->unique('id')
+                ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name ?? $u->full_name ?? ('Usuario #'.$u->id)])
+                ->values()->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 }
