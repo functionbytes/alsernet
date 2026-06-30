@@ -5,8 +5,6 @@
     "autoload": {
         "psr-4": {
             "Modules\\HelpdeskDocument\\": "app/",
-            "Modules\\HelpdeskDocument\\Database\\Factories\\": "database/factories/",
-            "Modules\\HelpdeskDocument\\Database\\Seeders\\": "database/seeders/",
             "Modules\\HelpdeskDocument\\Tests\\": "tests/"
         }
     },
