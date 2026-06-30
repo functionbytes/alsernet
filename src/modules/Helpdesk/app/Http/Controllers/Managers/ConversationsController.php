@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -261,16 +262,26 @@ class ConversationsController extends Controller
             }
         );
 
-        // Counters reales para el sidebar (cacheados 60s, por usuario para aislar agentes)
-        $sidebarCounters = cache()->remember(
+        // Counters reales para el sidebar. Cache::flexible (SWR de Laravel 12)
+        // evita el stampede: sirve el valor "stale" mientras recalcula en background.
+        // Por usuario para aislar el conteo "mine" entre agentes.
+        $sidebarCounters = Cache::flexible(
             'helpdesk:inbox:counters:'.($userId ?? 'guest'),
-            60,
+            [45, 120],
             function () use ($userId, $userInboxIds) {
                 $base = Conversation::query()
                     ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
 
                 // Inbox counters exclude conversations the bot is still handling.
                 $inbox = (clone $base)->withoutActiveBot();
+
+                // Un único GROUP BY para los 5 contadores por canal (antes 5 COUNT).
+                $channelCounts = (clone $inbox)
+                    ->whereNotNull('channel')
+                    ->where('channel', '!=', '')
+                    ->selectRaw('channel, COUNT(*) as cnt')
+                    ->groupBy('channel')
+                    ->pluck('cnt', 'channel');
 
                 return [
                     // Sin leer: abiertas y sin asignar (heurística sin read receipts)
@@ -284,11 +295,11 @@ class ConversationsController extends Controller
                         ->whereHas('status', fn ($q) => $q->where('name', 'Esperando'))
                         ->count(),
                     'archived' => (clone $inbox)->where('is_archived', true)->count(),
-                    'whatsapp' => (clone $inbox)->where('channel', 'whatsapp')->count(),
-                    'facebook' => (clone $inbox)->where('channel', 'facebook')->count(),
-                    'instagram' => (clone $inbox)->where('channel', 'instagram')->count(),
-                    'email' => (clone $inbox)->where('channel', 'email')->count(),
-                    'web' => (clone $inbox)->whereIn('channel', ['web'])->count(),
+                    'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
+                    'facebook' => (int) ($channelCounts['facebook'] ?? 0),
+                    'instagram' => (int) ($channelCounts['instagram'] ?? 0),
+                    'email' => (int) ($channelCounts['email'] ?? 0),
+                    'web' => (int) ($channelCounts['web'] ?? 0),
                     'vip' => (clone $inbox)
                         ->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5))
                         ->count(),
@@ -327,12 +338,27 @@ class ConversationsController extends Controller
 
         $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
 
+        // Solo cargamos los últimos ~50 items del hilo (los más recientes). El
+        // resto se pagina por AJAX vía olderItems(). customer.externalIds se
+        // eager-loadea aquí para que el right-panel no dispare una carga lazy.
         $selectedConversation = $selectedId
             ? Conversation::query()
-                ->with(['customer', 'status', 'assignee', 'conversationTags', 'items' => fn ($q) => $q->orderBy('created_at')])
+                ->with([
+                    'customer.externalIds', 'status', 'assignee', 'conversationTags',
+                    'items' => fn ($q) => $q->latest('id')->limit(50),
+                ])
                 ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
                 ->find($selectedId)
             : null;
+
+        // La vista renderiza los items en orden ascendente; reinvertimos la
+        // subconsulta latest()->limit(50) para conservar ese orden.
+        if ($selectedConversation) {
+            $selectedConversation->setRelation(
+                'items',
+                $selectedConversation->items->sortBy('id')->values()
+            );
+        }
 
         $inboxGroups = $conversations->getCollection()
             ->groupBy(function (Conversation $c): string {
@@ -358,15 +384,27 @@ class ConversationsController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
+        // Conteo de conversaciones abiertas por agente: un único GROUP BY
+        // cacheado (antes era una subconsulta correlacionada por fila de users).
+        $openCounts = Cache::remember(
+            'helpdesk:inbox:agent-open-counts',
+            30,
+            fn (): array => Conversation::query()
+                ->whereNull('closed_at')
+                ->whereNotNull('assignee_id')
+                ->selectRaw('assignee_id, COUNT(*) as cnt')
+                ->groupBy('assignee_id')
+                ->pluck('cnt', 'assignee_id')
+                ->all()
+        );
+
         $agents = User::query()
-            ->select([
-                'id', 'firstname', 'lastname', 'email', 'role', 'helpdesk_status',
-                DB::raw('(SELECT COUNT(*) FROM helpdesk_conversations hc WHERE hc.assignee_id = users.id AND hc.closed_at IS NULL AND hc.deleted_at IS NULL) as open_count'),
-            ])
+            ->select(['id', 'firstname', 'lastname', 'email', 'role', 'helpdesk_status'])
             ->whereNull('deleted_at')
-            ->orderBy('open_count')
-            ->orderBy('firstname')
-            ->get();
+            ->get()
+            ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))
+            ->sortBy([['open_count', 'asc'], ['firstname', 'asc']])
+            ->values();
 
         return view('helpdesk::helpdesk.inbox.index', [
             'conversations' => $conversations,
@@ -497,32 +535,51 @@ class ConversationsController extends Controller
             })
             ->map(fn ($items) => $items->map(fn ($c) => $c->toInboxArray($selectedId))->values()->all());
 
-        $baseCount = Conversation::query()
-            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
-            ->withoutActiveBot();
+        // Los contadores del poll dependen solo del inbox del usuario (no de los
+        // filtros de la petición), así que se cachean por usuario con TTL corto
+        // para no recalcular ~5 COUNT en cada poll. Clave namespaced distinta a
+        // la del sidebar (helpdesk:inbox:counters) para no colisionar de shape.
+        $cachedCounts = Cache::remember(
+            'helpdesk:inbox:list-counters:'.($userId ?? 'guest'),
+            30,
+            function () use ($userInboxIds, $userId): array {
+                $baseCount = Conversation::query()
+                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                    ->withoutActiveBot();
+
+                return [
+                    'base_total' => (int) (clone $baseCount)->count(),
+                    'unread' => (int) (clone $baseCount)
+                        ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
+                        ->count(),
+                    'mine' => (int) (clone $baseCount)
+                        ->where('assignee_id', $userId)
+                        ->count(),
+                    'urgent' => (int) (clone $baseCount)
+                        ->where('priority', 'urgent')
+                        ->count(),
+                    'channels' => (clone $baseCount)
+                        ->selectRaw('channel, COUNT(*) as cnt')
+                        ->groupBy('channel')
+                        ->pluck('cnt', 'channel')
+                        ->toArray(),
+                ];
+            }
+        );
 
         $html = view('helpdesk::helpdesk.inbox.partials.list', [
             'inboxGroups' => $inboxGroups,
-            'totalConversations' => (clone $baseCount)->count(),
+            'totalConversations' => $cachedCounts['base_total'],
             'selectedConversationId' => $selectedId,
         ])->render();
 
         $counts = [
+            // total respeta los filtros de la petición, no se cachea.
             'total' => $conversations->total(),
-            'unread' => (int) (clone $baseCount)
-                ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
-                ->count(),
-            'mine' => (int) (clone $baseCount)
-                ->where('assignee_id', $userId)
-                ->count(),
-            'urgent' => (int) (clone $baseCount)
-                ->where('priority', 'urgent')
-                ->count(),
-            'channels' => (clone $baseCount)
-                ->selectRaw('channel, COUNT(*) as cnt')
-                ->groupBy('channel')
-                ->pluck('cnt', 'channel')
-                ->toArray(),
+            'unread' => $cachedCounts['unread'],
+            'mine' => $cachedCounts['mine'],
+            'urgent' => $cachedCounts['urgent'],
+            'channels' => $cachedCounts['channels'],
         ];
 
         return response()->json([
@@ -2544,6 +2601,59 @@ class ConversationsController extends Controller
             'related_customer_name' => $relatedCustomerName,
             'related_document_status' => $relatedDocStatus,
             'related_document_status_code' => $relatedDocStatusCode,
+        ]);
+    }
+
+    /**
+     * Paginación "cargar anteriores" del hilo. Devuelve los ~50 items
+     * inmediatamente anteriores a {before} (id) en orden ascendente para que el
+     * frontend los pueda prepend directamente. El hilo principal solo carga los
+     * últimos 50 (ver index()), por lo que este endpoint sirve el histórico.
+     */
+    public function olderItems(Request $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('view', $conversation);
+
+        $conversation->loadMissing('customer');
+        $beforeId = $request->integer('before');
+
+        // Pedimos 51 para saber si quedan más anteriores sin un COUNT extra.
+        $batch = ConversationItem::query()
+            ->where('conversation_id', $conversation->id)
+            ->where('type', '!=', 'email_sent')
+            ->when($beforeId > 0, fn ($q) => $q->where('id', '<', $beforeId))
+            ->with(['user:id,firstname,lastname'])
+            ->latest('id')
+            ->limit(51)
+            ->get();
+
+        $hasMore = $batch->count() > 50;
+
+        $customerName = $conversation->customer?->name ?? 'Cliente';
+
+        $items = $batch->take(50)
+            ->sortBy('id')
+            ->values()
+            ->map(fn (ConversationItem $item): array => [
+                'id' => $item->id,
+                'type' => $item->type,
+                'body' => $item->body,
+                'body_html' => $item->body_html,
+                'is_internal' => (bool) $item->is_internal,
+                'is_outgoing' => (bool) $item->user_id,
+                'author' => $item->user_id
+                    ? (trim(($item->user?->firstname ?? '').' '.($item->user?->lastname ?? '')) ?: 'Agente')
+                    : $customerName,
+                'time' => $item->created_at?->format('H:i'),
+                'created_at' => $item->created_at?->toIso8601String(),
+                'attachment_urls' => $item->attachment_urls ?? [],
+                'metadata' => $item->metadata ?? [],
+            ])
+            ->all();
+
+        return response()->json([
+            'items' => $items,
+            'has_more' => $hasMore,
         ]);
     }
 
