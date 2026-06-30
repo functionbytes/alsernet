@@ -815,11 +815,6 @@ class ChatFlowNodeExecutor
 
     private function getFirstChildId(array $node, ChatFlowSession $session): ?string
     {
-        $child = collect($session->chatFlow->runtimeNodes())
-            ->filter(fn ($n) => ($n['parentId'] ?? null) === $node['id']
-                && ($n['type'] ?? '') !== 'branchItem')
-            ->first();
-
-        return $child['id'] ?? null;
+        return $session->chatFlow->childrenByParent()[$node['id']][0]['id'] ?? null;
     }
 }

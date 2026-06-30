@@ -22,7 +22,7 @@ class ExecuteChatFlowNodeJob implements ShouldQueue
         private readonly int $sessionId,
         private readonly string $message
     ) {
-        $this->onQueue('helpdesk-events');
+        $this->onQueue('chatflow');
     }
 
     public function handle(ChatFlowEngine $engine): void

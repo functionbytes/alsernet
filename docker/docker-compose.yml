@@ -124,7 +124,7 @@ services:
     container_name: system-worker
     restart: unless-stopped
     working_dir: /tmp
-    command: php /var/www/artisan queue:work redis --queue=helpdesk-webhooks,webhooks,notifications-high,helpdesk-events,helpdesk,emails,notifications,broadcasts,exports,sync,drip,high,default,low --sleep=3 --tries=3 --timeout=960 --max-jobs=500
+    command: php /var/www/artisan queue:work redis --queue=helpdesk-webhooks,webhooks,notifications-high,helpdesk-events,helpdesk,chatflow,emails,notifications,broadcasts,exports,sync,drip,high,default,low --sleep=3 --tries=3 --timeout=960 --max-jobs=500
     volumes:
       - ../src:/var/www
       - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
