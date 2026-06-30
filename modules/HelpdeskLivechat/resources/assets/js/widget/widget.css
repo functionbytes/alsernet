@@ -2953,6 +2953,17 @@
     flex-shrink: 0;
 }
 
+/* Queue position banner — shown while visitor is waiting for agent assignment */
+.wgt-queue-banner {
+    padding: 6px 16px;
+    background: #e8f4e8;
+    border-bottom: 1px solid #90bb13;
+    color: #3a5200;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
 /* Offline dot on the launcher bubble */
 .wgt-launcher-offline-dot {
     position: absolute;

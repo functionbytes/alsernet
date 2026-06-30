@@ -61,6 +61,7 @@ Route::middleware('throttle:30,1')->group(function () {
 Route::middleware('throttle:60,1')->group(function () {
     Route::get('/conversation/{id}', [WidgetConversationController::class, 'show'])->name('conversation.show');
     Route::get('/conversation/{id}/messages', [WidgetConversationController::class, 'getMessages'])->name('conversation.messages.index');
+    Route::get('/conversation/{id}/queue-position', [WidgetConversationController::class, 'queuePosition'])->name('conversation.queue-position');
     Route::post('/conversation/{id}/read', [WidgetConversationController::class, 'markAsRead'])->name('conversation.read');
     Route::post('/conversation/{id}/close', [WidgetConversationController::class, 'close'])->name('conversation.close');
 });

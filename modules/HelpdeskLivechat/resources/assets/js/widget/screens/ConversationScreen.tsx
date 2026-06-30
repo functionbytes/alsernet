@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
 import { apiUrl, conversationAuthHeaders, setConversationToken, clearConversationToken } from '../api';
 import { ImageLightbox } from '../components/ImageLightbox';
 import { getVisitorIdentity } from '../widget-identity';
 import { isScreenShareAvailable } from '../webrtc';
+import { useTranslation } from '../i18n/useLanguage';
 
 import { useVisitorIdentity } from '../hooks/useVisitorIdentity';
 import { useConversationMessages } from '../hooks/useConversationMessages';
@@ -24,6 +25,7 @@ export function ConversationScreen() {
     const setShowPostChat = useWidgetStore(state => state.setShowPostChat);
     const recommendations = useWidgetStore(state => state.recommendations);
     const navigate = useNavigate();
+    const t = useTranslation();
 
     // Navigate to post-chat when triggered externally
     useEffect(() => {
@@ -110,6 +112,37 @@ export function ConversationScreen() {
         const idx = lightboxImages.findIndex(i => i.url === url);
         if (idx >= 0) setLightboxIndex(idx);
     };
+
+    // Queue position — poll every 30s while the conversation is unassigned
+    const [queuePosition, setQueuePosition] = useState<number | null>(null);
+    const fetchQueuePosition = useCallback(async (convId: string) => {
+        try {
+            const res = await fetch(apiUrl(`/hd/api/conversation/${convId}/queue-position`), {
+                headers: { 'Accept': 'application/json', ...conversationAuthHeaders() },
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json?.success) {
+                setQueuePosition(json.data.is_assigned ? null : (json.data.position ?? null));
+            }
+        } catch {
+            // network error — ignore, will retry on next interval
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!conversationId) return;
+        fetchQueuePosition(conversationId);
+        const interval = setInterval(() => fetchQueuePosition(conversationId), 30_000);
+        return () => clearInterval(interval);
+    }, [conversationId, fetchQueuePosition]);
+
+    // Clear queue banner once the conversation gets assigned (new message from agent)
+    useEffect(() => {
+        if (messages.some(m => m.author === 'agent')) {
+            setQueuePosition(null);
+        }
+    }, [messages]);
 
     // Livestream
     const { liveViewConsent, handleToggleLiveViewConsent } = useLivestreamRecorder({
@@ -357,6 +390,12 @@ export function ConversationScreen() {
                         <path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
                     </svg>
                     <span>Reconectando…</span>
+                </div>
+            )}
+
+            {queuePosition !== null && queuePosition > 0 && (
+                <div className="wgt-queue-banner" role="status" aria-live="polite">
+                    {t('queue_message', { number: String(queuePosition) })}
                 </div>
             )}
 
