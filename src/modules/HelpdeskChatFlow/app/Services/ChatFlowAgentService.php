@@ -2,18 +2,27 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Services\AI\AiClient;
+use Modules\Helpdesk\Services\AI\PromptSanitizer;
 
 /**
  * An autonomous AI agent (function/tool calling): given the customer message and
  * context, the LLM decides which tool to call — look up an order, search the help
  * center, answer, or escalate — and we run it, feeding results back until the
  * agent answers or escalates. The "agentic" pattern competitors ship in 2026.
+ *
+ * OpenAI traffic goes through the core {@see AiClient} gateway, and untrusted
+ * text (the customer message + KB chunks fed back as tool results) is fenced
+ * with the shared {@see PromptSanitizer} before reaching the model (CFM-S4/S5).
  */
 class ChatFlowAgentService
 {
     private const MAX_STEPS = 4;
+
+    private readonly ?AiClient $aiClient;
+
+    private readonly ?PromptSanitizer $sanitizer;
 
     /**
      * @param  object|null  $embeddings  HelpdeskHelpcenter EmbeddingsService (optional)
@@ -21,7 +30,12 @@ class ChatFlowAgentService
     public function __construct(
         private readonly ChatFlowOrderLookup $orderLookup,
         private readonly ?object $embeddings = null,
-    ) {}
+        ?AiClient $aiClient = null,
+        ?PromptSanitizer $sanitizer = null,
+    ) {
+        $this->aiClient = $aiClient ?? (class_exists(AiClient::class) ? new AiClient : null);
+        $this->sanitizer = $sanitizer ?? (class_exists(PromptSanitizer::class) ? new PromptSanitizer : null);
+    }
 
     /**
      * @param  array<string,mixed>  $context  Session context (customer_*, etc.)
@@ -42,14 +56,20 @@ class ChatFlowAgentService
             $system .= " Responde SIEMPRE en el idioma del cliente (ISO: {$lang}).";
         }
 
+        // Prompt-injection hardening: reaffirm the data/instructions boundary in
+        // the system prompt and fence the untrusted customer text (CFM-S4).
+        if ($this->sanitizer !== null) {
+            $system .= ' '.$this->sanitizer->systemGuard();
+        }
+
         $messages = [
             ['role' => 'system', 'content' => $system],
-            ['role' => 'user', 'content' => $question],
+            ['role' => 'user', 'content' => $this->wrapCustomerText($question)],
         ];
         $usedTools = [];
 
         for ($step = 0; $step < self::MAX_STEPS; $step++) {
-            $message = $this->callLlm($apiKey, $messages, $tools, $data);
+            $message = $this->callLlm($messages, $tools, $data);
 
             if ($message === null) {
                 return ['action' => 'escalate', 'text' => $data['fallback_message'] ?? 'Te paso con un agente.', 'used_tools' => $usedTools];
@@ -92,31 +112,16 @@ class ChatFlowAgentService
      * @param  array<string,mixed>  $data
      * @return array<string,mixed>|null
      */
-    private function callLlm(string $apiKey, array $messages, array $tools, array $data): ?array
+    private function callLlm(array $messages, array $tools, array $data): ?array
     {
-        try {
-            $response = Http::withToken($apiKey)
-                ->timeout(40)
-                ->retry(1, 400, throw: false)
-                ->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => $data['model'] ?? config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
-                    'temperature' => 0.3,
-                    'messages' => $messages,
-                    'tools' => $tools,
-                ]);
-
-            if ($response->failed()) {
-                Log::warning('ChatFlowAgentService: LLM call failed', ['status' => $response->status()]);
-
-                return null;
-            }
-
-            return $response->json('choices.0.message');
-        } catch (\Throwable $e) {
-            Log::warning('ChatFlowAgentService: exception', ['error' => $e->getMessage()]);
-
-            return null;
-        }
+        return $this->aiClient?->chatCompletion($messages, [
+            'model' => $data['model'] ?? config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
+            'temperature' => 0.3,
+            'tools' => $tools,
+            'timeout' => 40,
+            'retries' => 1,
+            'retry_delay' => 400,
+        ]);
     }
 
     /**
@@ -172,7 +177,11 @@ class ChatFlowAgentService
 
             if ($name === 'search_help' && $this->embeddings !== null) {
                 $results = $this->embeddings->search($args['query'] ?? '', 3);
-                $chunks = collect($results)->map(fn ($r) => $r['chunk_text'] ?? '')->filter()->take(3)->implode("\n---\n");
+                $chunks = collect($results)
+                    ->map(fn ($r) => $this->sanitize((string) ($r['chunk_text'] ?? '')))
+                    ->filter()
+                    ->take(3)
+                    ->implode("\n---\n");
 
                 return $chunks !== '' ? $chunks : 'No se encontró información relevante en el centro de ayuda.';
             }
@@ -183,5 +192,23 @@ class ChatFlowAgentService
         }
 
         return 'Herramienta desconocida.';
+    }
+
+    /**
+     * Fence untrusted customer text inside a clearly labelled data block so the
+     * model treats it as data, never as instructions. Falls back to the raw text
+     * when the shared sanitizer is unavailable.
+     */
+    private function wrapCustomerText(string $text): string
+    {
+        return $this->sanitizer?->wrap($text, 'MENSAJE_CLIENTE') ?? $text;
+    }
+
+    /**
+     * Neutralize untrusted KB text fed back to the model as a tool result.
+     */
+    private function sanitize(string $text): string
+    {
+        return $this->sanitizer?->sanitize($text) ?? $text;
     }
 }

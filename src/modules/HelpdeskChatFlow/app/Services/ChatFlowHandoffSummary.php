@@ -2,18 +2,26 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Services\AI\AiClient;
 
 /**
  * Generates an AI summary of the bot conversation when it is handed off to a
  * human agent, so the agent has instant context (what the customer wanted, what
  * the bot did, data collected). Posted as an internal note. Competitors like
  * Intercom and Zendesk ship this as "conversation summary".
+ *
+ * OpenAI traffic goes through the core {@see AiClient} gateway (CFM-S5).
  */
 class ChatFlowHandoffSummary
 {
+    private readonly ?AiClient $aiClient;
+
+    public function __construct(?AiClient $aiClient = null)
+    {
+        $this->aiClient = $aiClient ?? (class_exists(AiClient::class) ? new AiClient : null);
+    }
+
     /**
      * Build the summary and post it as an internal note on the conversation.
      */
@@ -49,32 +57,25 @@ class ChatFlowHandoffSummary
             .'Sé breve y usa viñetas con: qué quería el cliente, qué hizo el bot, datos recogidos y qué queda pendiente. '
             .'Responde en español.';
 
-        try {
-            $response = Http::withToken($apiKey)
-                ->timeout(30)
-                ->retry(1, 400, throw: false)
-                ->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
-                    'temperature' => 0.2,
-                    'max_tokens' => 300,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $system],
-                        ['role' => 'user', 'content' => $transcript],
-                    ],
-                ]);
+        $message = $this->aiClient?->chatCompletion([
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => $transcript],
+        ], [
+            'model' => config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
+            'temperature' => 0.2,
+            'max_tokens' => 300,
+            'timeout' => 30,
+            'retries' => 1,
+            'retry_delay' => 400,
+        ]);
 
-            if ($response->failed()) {
-                return null;
-            }
-
-            $summary = trim((string) $response->json('choices.0.message.content'));
-
-            return $summary !== '' ? $summary : null;
-        } catch (\Throwable $e) {
-            Log::warning('ChatFlowHandoffSummary: failed', ['error' => $e->getMessage()]);
-
+        if (! is_array($message)) {
             return null;
         }
+
+        $summary = trim((string) ($message['content'] ?? ''));
+
+        return $summary !== '' ? $summary : null;
     }
 
     private function transcript(Conversation $conversation): string
