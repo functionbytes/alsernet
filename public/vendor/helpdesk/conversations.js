@@ -869,10 +869,16 @@
         // ─── Atrás / adelante del navegador ──────────────────────────
         window.addEventListener('popstate', function () {
             const sel = parseInt(new URLSearchParams(window.location.search).get('selected') || '0', 10);
-            if (!sel) { return; }
+            // When going back to the base state (no ?selected) fall back to the
+            // first conversation, mirroring the server default, so URL and content stay in sync.
+            const targetId = sel || parseInt($('.bv-conv').first().data('bv-conv-id') || '0', 10);
+            if (!targetId) { return; }
             $('.bv-conv').removeClass('on');
-            $('.bv-conv[data-bv-conv-id="' + sel + '"]').addClass('on');
-            loadConversationPane(sel, '/panel/helpdesk/conversations?selected=' + sel, { push: false });
+            $('.bv-conv[data-bv-conv-id="' + targetId + '"]').addClass('on');
+            const url = sel
+                ? '/panel/helpdesk/conversations?selected=' + targetId
+                : '/panel/helpdesk/conversations';
+            loadConversationPane(targetId, url, { push: false });
         });
 
         // ─── Mobile bottom tabs ───────────────────────────────────────
