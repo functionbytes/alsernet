@@ -25,6 +25,7 @@ modules/*/node_modules/
 .env.*
 !.env.example
 *.bak
+*.zip
 auth.json
 
 # Caches de herramientas
