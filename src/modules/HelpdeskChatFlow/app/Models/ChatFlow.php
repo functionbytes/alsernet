@@ -28,6 +28,7 @@ class ChatFlow extends Model
         'trigger_type',
         'trigger_conditions',
         'nodes',
+        'published_nodes',
         'status',
         'priority',
         'created_by',
@@ -39,6 +40,7 @@ class ChatFlow extends Model
         return [
             'trigger_conditions' => 'array',
             'nodes' => 'array',
+            'published_nodes' => 'array',
             'published_at' => 'datetime',
         ];
     }
@@ -132,9 +134,36 @@ class ChatFlow extends Model
         return $this->status === 'draft';
     }
 
+    /**
+     * Node tree the runtime engine must execute: always the last PUBLISHED
+     * snapshot so editing a live flow's draft (`nodes`) never changes what
+     * customers are running mid-conversation. Falls back to the draft only for
+     * flows that predate the published snapshot (backfilled by migration), so
+     * existing flows keep executing without interruption.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function runtimeNodes(): array
+    {
+        return $this->published_nodes ?? $this->nodes ?? [];
+    }
+
+    /**
+     * Whether the working draft differs from the published snapshot — i.e. there
+     * are edits not yet live for customers.
+     */
+    public function hasUnpublishedChanges(): bool
+    {
+        if ($this->published_nodes === null) {
+            return false;
+        }
+
+        return $this->nodes !== $this->published_nodes;
+    }
+
     public function getStartNode(): ?array
     {
-        $nodes = collect($this->nodes ?? []);
+        $nodes = collect($this->runtimeNodes());
 
         return $nodes->firstWhere('type', 'start')
             ?? $nodes->first(fn ($n) => ($n['parentId'] ?? null) === null);
@@ -142,12 +171,12 @@ class ChatFlow extends Model
 
     public function getNodeById(string $nodeId): ?array
     {
-        return collect($this->nodes ?? [])->firstWhere('id', $nodeId);
+        return collect($this->runtimeNodes())->firstWhere('id', $nodeId);
     }
 
     public function getChildren(string $parentId): array
     {
-        return collect($this->nodes ?? [])
+        return collect($this->runtimeNodes())
             ->filter(fn ($n) => ($n['parentId'] ?? null) === $parentId
                 && ($n['type'] ?? '') !== 'branchItem')
             ->values()
@@ -156,7 +185,7 @@ class ChatFlow extends Model
 
     public function getBranchItems(string $branchesNodeId): array
     {
-        return collect($this->nodes ?? [])
+        return collect($this->runtimeNodes())
             ->filter(fn ($n) => ($n['parentId'] ?? null) === $branchesNodeId
                 && ($n['type'] ?? '') === 'branchItem')
             ->values()
