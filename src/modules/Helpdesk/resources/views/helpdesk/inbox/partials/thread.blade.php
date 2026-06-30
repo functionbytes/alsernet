@@ -60,54 +60,55 @@
             </button>
             @endif
             @if(helpdesk_feature_enabled('search'))
-            <button class="bv-th-action" id="bv-th-search-btn" data-bv-tip="Buscar en la conversación">
-                <i class="fas fa-magnifying-glass"></i>
+            <button class="bv-th-action" id="bv-th-search-btn" data-bv-tip="Buscar en la conversación" aria-label="Buscar en la conversación">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('email'))
-            <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Enviar email">
-                <i class="far fa-envelope"></i>
+            <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Enviar email" aria-label="Enviar email">
+                <i class="far fa-envelope" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_tickets_enabled() && helpdesk_feature_enabled('tickets'))
-            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket">
-                <i class="fas fa-ticket"></i>
+            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket" aria-label="Crear ticket">
+                <i class="fas fa-ticket" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('schedule'))
-            <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar">
-                <i class="far fa-calendar-plus"></i>
+            <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar" aria-label="Agendar cita">
+                <i class="far fa-calendar-plus" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('snooze'))
-            <button class="bv-th-action" data-bv-modal="snooze" data-bv-tip="Posponer">
-                <i class="far fa-clock"></i>
+            <button class="bv-th-action" data-bv-modal="snooze" data-bv-tip="Posponer" aria-label="Posponer conversación">
+                <i class="far fa-clock" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('assign'))
-            <button class="bv-th-action" data-bv-modal="assign" data-bv-tip="Asignar">
-                <i class="fas fa-user-plus"></i>
+            <button class="bv-th-action" data-bv-modal="assign" data-bv-tip="Asignar" aria-label="Asignar conversación">
+                <i class="fas fa-user-plus" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('tags'))
-            <button class="bv-th-action" data-bv-modal="tags" data-bv-tip="Etiquetar">
-                <i class="fas fa-tag"></i>
+            <button class="bv-th-action" data-bv-modal="tags" data-bv-tip="Etiquetar" aria-label="Etiquetar conversación">
+                <i class="fas fa-tag" aria-hidden="true"></i>
             </button>
             @endif
             @if($convo?->closed_at)
                 <button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen" data-bv-tip="Reabrir conversación"
+                        aria-label="Reabrir conversación"
                         data-reopen-url="{{ route('manager.helpdesk.conversations.reopen', $convo) }}">
-                    <i class="fas fa-rotate-left"></i>
+                    <i class="fas fa-rotate-left" aria-hidden="true"></i>
                 </button>
             @elseif($convo)
-                <button class="bv-th-action" data-bv-modal="close-conv" data-bv-tip="Cerrar conversación">
-                    <i class="fas fa-check"></i>
+                <button class="bv-th-action" data-bv-modal="close-conv" data-bv-tip="Cerrar conversación" aria-label="Cerrar conversación">
+                    <i class="fas fa-check" aria-hidden="true"></i>
                 </button>
             @endif
             {{-- Botón "más" con dropdown --}}
             <div class="bv-th-more-wrap">
-                <button class="bv-th-action" id="bv-btn-more" data-bv-tip="Más">
-                    <i class="fas fa-ellipsis-vertical"></i>
+                <button class="bv-th-action" id="bv-btn-more" data-bv-tip="Más" aria-label="Más opciones">
+                    <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
                 </button>
                 <div class="bv-more-menu" id="bv-more-menu">
                     @if(helpdesk_feature_enabled('merge'))
@@ -164,9 +165,9 @@
         <i class="fas fa-magnifying-glass bv-th-search-icon"></i>
         <input type="text" id="bv-th-search-input" class="bv-th-search-input" placeholder="Buscar en la conversación…" autocomplete="off">
         <span class="bv-th-search-count" id="bv-th-search-count"></span>
-        <button class="bv-th-search-nav" id="bv-th-search-prev" data-bv-tip="Anterior" disabled><i class="fas fa-chevron-up"></i></button>
-        <button class="bv-th-search-nav" id="bv-th-search-next" data-bv-tip="Siguiente" disabled><i class="fas fa-chevron-down"></i></button>
-        <button class="bv-th-search-close" id="bv-th-search-close" data-bv-tip="Cerrar"><i class="fas fa-xmark"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-prev" data-bv-tip="Anterior" aria-label="Resultado anterior" disabled><i class="fas fa-chevron-up" aria-hidden="true"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-next" data-bv-tip="Siguiente" aria-label="Resultado siguiente" disabled><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+        <button class="bv-th-search-close" id="bv-th-search-close" data-bv-tip="Cerrar" aria-label="Cerrar búsqueda"><i class="fas fa-xmark" aria-hidden="true"></i></button>
     </div>
 
     {{-- Cuerpo del hilo --}}
@@ -376,7 +377,7 @@
                                             <button type="button" class="bv-audio-play" aria-label="Reproducir">
                                                 <i class="fas fa-play"></i>
                                             </button>
-                                            <div class="bv-audio-wave" role="slider" tabindex="0" aria-label="Progreso del audio">
+                                            <div class="bv-audio-wave" role="slider" tabindex="0" aria-label="Progreso del audio" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                 @foreach($bars as $h)
                                                     <span class="bv-audio-bar" style="--bv-audio-bar-h:{{ $h }}%"></span>
                                                 @endforeach
@@ -541,13 +542,13 @@
 
         {{-- Área de texto --}}
         <div class="bv-composer-box" id="bv-composer-box">
-            <textarea class="bv-composer-input" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" rows="2"></textarea>
+            <textarea class="bv-composer-input" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" rows="2" aria-label="Escribe tu respuesta"></textarea>
             <div class="bv-composer-toolbar">
                 {{-- Adjuntar con menú --}}
                 @if(helpdesk_feature_enabled('composer_attach'))
                 <div class="bv-attach-wrap">
-                    <button class="btn-ico" id="bv-btn-attach" data-bv-tip="Adjuntar">
-                        <i class="fas fa-paperclip"></i>
+                    <button class="btn-ico" id="bv-btn-attach" data-bv-tip="Adjuntar" aria-label="Adjuntar archivo">
+                        <i class="fas fa-paperclip" aria-hidden="true"></i>
                     </button>
                     <div class="bv-attach-menu" id="bv-attach-menu">
                         <button class="bv-attach-row" data-bv-attach-type="document">
@@ -615,15 +616,15 @@
                 @endif
                 {{-- Voice recorder (shown when audio attach chosen and user clicks record) --}}
                 <div class="bv-voice-recorder bv-hidden" id="bv-voice-recorder">
-                    <button class="bv-voice-btn" id="bv-voice-record" data-bv-tip="Grabar">
-                        <i class="fas fa-microphone"></i>
+                    <button class="bv-voice-btn" id="bv-voice-record" data-bv-tip="Grabar" aria-label="Iniciar grabación">
+                        <i class="fas fa-microphone" aria-hidden="true"></i>
                     </button>
                     <span class="bv-voice-time" id="bv-voice-time">0:00</span>
-                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" data-bv-tip="Detener">
-                        <i class="fas fa-stop"></i>
+                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" data-bv-tip="Detener" aria-label="Detener grabación">
+                        <i class="fas fa-stop" aria-hidden="true"></i>
                     </button>
-                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" data-bv-tip="Cancelar">
-                        <i class="fas fa-xmark"></i>
+                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" data-bv-tip="Cancelar" aria-label="Cancelar grabación">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
                 {{-- Upload progress bar --}}
@@ -641,19 +642,19 @@
                 </button>
                 @endif
                 @if(helpdesk_feature_enabled('composer_canned'))
-                <button class="btn-ico" data-bv-tip="Respuesta rápida" onclick="openCannedModal()">
-                    <i class="fas fa-bolt"></i>
+                <button class="btn-ico" data-bv-tip="Respuesta rápida" aria-label="Respuesta rápida" onclick="openCannedModal()">
+                    <i class="fas fa-bolt" aria-hidden="true"></i>
                 </button>
                 @endif
                 @stack('hd-composer-toolbar-buttons')
                 @if(helpdesk_feature_enabled('composer_record'))
-                <button class="btn-ico" id="bv-btn-record" data-bv-tip="Grabar audio" data-bv-attach-type="record">
-                    <i class="fas fa-microphone"></i>
+                <button class="btn-ico" id="bv-btn-record" data-bv-tip="Grabar audio" aria-label="Grabar audio" data-bv-attach-type="record">
+                    <i class="fas fa-microphone" aria-hidden="true"></i>
                 </button>
                 @endif
                 @if(helpdesk_feature_enabled('composer_ai'))
-                <button class="btn-ico" data-bv-tip="Sugerencia IA">
-                    <i class="fas fa-sparkles"></i>
+                <button class="btn-ico" data-bv-tip="Sugerencia IA" aria-label="Sugerencia de IA">
+                    <i class="fas fa-sparkles" aria-hidden="true"></i>
                 </button>
                 @endif
                 <div class="bv-send-group">

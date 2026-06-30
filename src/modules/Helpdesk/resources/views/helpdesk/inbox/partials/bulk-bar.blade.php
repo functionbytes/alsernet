@@ -2,8 +2,8 @@
 <div class="bv-bulk-bar bv-hidden" id="bv-bulk-bar">
     <div class="bv-bulk-bar-info">
         <span id="bv-bulk-count">0</span> seleccionadas
-        <button class="bv-bulk-deselect" id="bv-bulk-deselect" title="Cancelar selección">
-            <i class="fas fa-xmark"></i>
+        <button class="bv-bulk-deselect" id="bv-bulk-deselect" title="Cancelar selección" aria-label="Cancelar selección">
+            <i class="fas fa-xmark" aria-hidden="true"></i>
         </button>
     </div>
     <div class="bv-bulk-bar-actions">

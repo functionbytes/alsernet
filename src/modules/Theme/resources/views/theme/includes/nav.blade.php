@@ -23,7 +23,7 @@
 <aside class="app-menubar-tabs{{ !$panelIsOpen ? ' no-sidebar-open' : '' }}" id="appMenubar">
 
     <div class="app-navbar-tabs" data-simplebar="">
-        <ul class="nav" id="appMenubarTabs" role="tablist" aria-orientation="vertical">
+        <ul class="nav" id="appMenubarTabs" role="list" aria-orientation="vertical">
 
             @foreach($mainSidebars as $sidebarId => $sidebar)
                 @php
@@ -40,19 +40,18 @@
                         $isActive = $activeSidebarId === $sidebarId;
                     }
                 @endphp
-                <li class="nav-item" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
+                <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
                     @if($allItems->count() === 1)
-                        <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}">
-                            <i class="{{ $iconClass }}"></i>
+                        <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}">
+                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
                         </a>
                     @else
                         <a class="menu-link{{ $isActive ? ' active' : '' }}"
                            href="#tab-{{ $sidebarId }}"
-                           role="tab"
                            aria-controls="tab-{{ $sidebarId }}"
-                           aria-selected="{{ $isActive ? 'true' : 'false' }}"
+                           aria-label="{{ $label }}"
                            data-bs-toggle="tab">
-                            <i class="{{ $iconClass }}"></i>
+                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
                         </a>
                     @endif
                 </li>
@@ -65,15 +64,14 @@
                     $settingsLabel    = $settingsMiniItem['tooltip'] ?? 'Configuración';
                     $settingsActive   = $activeSidebarId === 'settings';
                 @endphp
-                <li class="nav-item-hr"></li>
-                <li class="nav-item" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $settingsLabel }}">
+                <li class="nav-item-hr" role="presentation"></li>
+                <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $settingsLabel }}">
                     <a class="menu-link{{ $settingsActive ? ' active' : '' }}"
                        href="#tab-settings"
-                       role="tab"
                        aria-controls="tab-settings"
-                       aria-selected="{{ $settingsActive ? 'true' : 'false' }}"
+                       aria-label="{{ $settingsLabel }}"
                        data-bs-toggle="tab">
-                        <i class="{{ $settingsIcon }}"></i>
+                        <i class="{{ $settingsIcon }}" aria-hidden="true"></i>
                     </a>
                 </li>
             @endif
