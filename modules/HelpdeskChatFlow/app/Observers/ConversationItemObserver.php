@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskChatFlow\Jobs\DeliverBotMessageJob;
+use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
 
 class ConversationItemObserver
@@ -32,6 +33,13 @@ class ConversationItemObserver
 
         // Only inbound customer messages (user_id null = not from agent)
         if ($item->user_id !== null) {
+            return;
+        }
+
+        // Cheap gate: this observer is global to the whole helpdesk. When no chat
+        // flow is active there can be neither a running session nor a trigger, so
+        // bail out before spending 2-3 queries per inbound message of every inbox.
+        if (! ChatFlow::hasActiveFlowsCached()) {
             return;
         }
 

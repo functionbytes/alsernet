@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskChatFlow\Database\Factories\ChatFlowFactory;
 
@@ -47,6 +48,34 @@ class ChatFlow extends Model
     const STATUSES = ['draft', 'active', 'archived'];
 
     const NODE_TYPES = ['start', 'message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'branches', 'branchItem', 'action', 'delay', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'rich_message', 'send_file', 'document_link', 'csat', 'business_hours', 'add_tag', 'set_attribute', 'go_to_step', 'transfer', 'close', 'end'];
+
+    /**
+     * Cache key for the cheap "any active flows?" gate used by the global
+     * ConversationItem observer to skip per-message queries when no bot exists.
+     */
+    public const ACTIVE_FLOWS_CACHE_KEY = 'chatflow:has_active_flows';
+
+    protected static function booted(): void
+    {
+        $forget = static fn () => Cache::forget(self::ACTIVE_FLOWS_CACHE_KEY);
+        static::saved($forget);
+        static::deleted($forget);
+    }
+
+    /**
+     * Whether at least one chat flow is currently active. Cached short-term so the
+     * helpdesk-wide ConversationItem observer can bail out before running 2-3
+     * queries on every inbound message when no chatbot is configured. The cache is
+     * busted whenever any flow is saved/deleted, so activation takes effect at once.
+     */
+    public static function hasActiveFlowsCached(): bool
+    {
+        return Cache::remember(
+            self::ACTIVE_FLOWS_CACHE_KEY,
+            now()->addSeconds(60),
+            static fn () => static::query()->where('status', 'active')->exists(),
+        );
+    }
 
     // ==================== Factory ====================
 
