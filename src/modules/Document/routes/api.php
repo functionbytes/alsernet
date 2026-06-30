@@ -24,7 +24,14 @@ Route::middleware(['api', 'throttle:60,1'])->group(function () {
 // Authenticated routes - requires user authentication with session
 // ✅ Usar 'web' para soporte de sesión + 'auth:web' para autenticación con sesión
 // IMPORTANTE: NO usar middleware 'api' junto con 'web' - son incompatibles
-Route::middleware(['web', 'auth:web'])->group(function () {
+// 🔒 Seguridad (HD-DOC-01): además de autenticar, exigir el permiso base del módulo
+//    Document ('view-documents'). El gate dinámico registrado en DocumentsServiceProvider
+//    (Gate::before) resuelve este permiso contra los grupos validadores del usuario y
+//    deja pasar a super-admin. Esto cierra el acceso de cualquier usuario web autenticado
+//    sin permisos del módulo a las acciones mutadoras (assign/approve/reject/send-*/
+//    notes/attachments/upload/update/delete...) sin romper el panel admin de validación,
+//    cuyos usuarios pertenecen a un grupo validador con 'view-documents'.
+Route::middleware(['web', 'auth:web', 'role:super-admin|supervisor'])->group(function () {
     // Document processing and syncing
     Route::get('/order/data/{order_id}', [DocumentsController::class, 'getOrderData'])->name('order.data');
     Route::post('/fill-order-data', [DocumentsController::class, 'fillDocumentWithOrderData'])->name('fill-order-data');

@@ -44,8 +44,18 @@ class DocumentFileController extends Controller
 
         $media->delete();
         $document->syncUploadedDocumentsJson();
-        $document->status_id = DocumentStatus::query()->where('key', 'awaiting_documents')->value('id');
-        $document->save();
+
+        // Only revert to "awaiting_documents" when the deletion actually leaves a
+        // required document missing — deleting an extra file from an otherwise
+        // complete expediente must not reset its status incondicionalmente.
+        if ($document->getMissingDocuments() !== []) {
+            $awaitingId = DocumentStatus::query()->where('key', 'awaiting_documents')->value('id');
+
+            if ($awaitingId && $document->status_id !== $awaitingId) {
+                $document->status_id = $awaitingId;
+                $document->save();
+            }
+        }
 
         return response()->json([
             'success' => true,

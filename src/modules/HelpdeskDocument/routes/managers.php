@@ -21,6 +21,11 @@ Route::post('/conversations/{conversation}/documents/import-from-chat', [ChatGal
     ->middleware(['throttle:30,1', 'can:helpdesk.conversations.view'])
     ->name('manager.helpdesk.conversations.documents.import-from-chat');
 
+// Subir documentos desde el equipo del agente (multipart files[])
+Route::post('/conversations/{conversation}/documents/import-from-device', [ChatGalleryDocumentController::class, 'importFromDevice'])
+    ->middleware(['throttle:30,1', 'can:helpdesk.conversations.view'])
+    ->name('manager.helpdesk.conversations.documents.import-from-device');
+
 // Acciones mutadoras del expediente — proxies helpdesk-scoped que reemplazan las
 // rutas api.documents.* (solo auth:web). Cada una verifica el permiso helpdesk y
 // el ownership cliente/email antes de delegar en el módulo Document. No cambian la

@@ -37,13 +37,8 @@
 
     $canValidate = in_array($validationStatus, ['pending', 'in_validation'], true);
 
-    $assignees = [];
-    try {
-        $assignees = \Modules\Document\Entities\DocumentValidatorGroup::with('users')->get()
-            ->pluck('users')->flatten()->unique('id')
-            ->map(fn ($u) => ['id' => $u->id, 'name' => $u->name ?? $u->full_name ?? ('Usuario #'.$u->id)])
-            ->values()->all();
-    } catch (\Throwable $e) {}
+    // Assignees are resolved in DocumentPanelController (no DB queries in the view).
+    $assignees = $rpAssignees ?? [];
 @endphp
 
 @if($docId)

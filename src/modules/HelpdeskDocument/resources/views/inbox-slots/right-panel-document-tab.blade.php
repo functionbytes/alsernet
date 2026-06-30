@@ -33,7 +33,7 @@
                 <div class="docs-head-label" id="docsDetailPanelLabel">Dashboard · Documentos</div>
                 <div class="docs-head-title" id="docsDetailPanelTitle">
                     Expediente
-                    <span class="docs-breadcrumb" id="docsDetailPanelCrumb" style="display:none">
+                    <span class="docs-breadcrumb d-none" id="docsDetailPanelCrumb">
                         Dashboard · Documentos <i class="fa-solid fa-chevron-right"></i>
                         <span id="docsDetailPanelCrumbText"></span>
                     </span>
@@ -316,7 +316,7 @@
                 $('#docsDetailPanelLabel').text(ref || 'Dashboard · Documentos');
                 $('#docsDetailPanelTitle').contents().first()[0].nodeValue = title + ' ';
                 $('#docsDetailPanelCrumbText').text(title);
-                $('#docsDetailPanelCrumb').show();
+                $('#docsDetailPanelCrumb').removeClass('d-none');
             }
         }).fail(function () {
             notify('error', 'No se pudo cargar el expediente.');

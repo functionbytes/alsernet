@@ -37,6 +37,12 @@ class ConversationDocumentLinker
     ];
 
     /**
+     * Hard cap on the number of expedientes loaded for a single conversation,
+     * so a customer with a long document history never floods the inbox panel.
+     */
+    private const MAX_DOCUMENTS = 100;
+
+    /**
      * Resolve the document linked to a conversation, auto-linking the best
      * candidate the first time when none is set yet.
      *
@@ -74,20 +80,22 @@ class ConversationDocumentLinker
             return collect();
         }
 
+        $priority = self::STATUS_PRIORITY;
+        $placeholders = implode(',', array_fill(0, count($priority), '?'));
+
+        // Order by inbox relevance (status rank, unknown statuses last) and then
+        // most recent first — entirely in SQL — and limit the result set so the
+        // ranking and pagination never happen over an unbounded PHP collection.
         return Document::query()
-            ->with(['status', 'documentType'])
-            ->whereRaw('LOWER(customer_email) = ?', [mb_strtolower($email)])
-            ->get()
-            ->sort(function (Document $a, Document $b): int {
-                $rank = $this->statusRank($a->status?->key) <=> $this->statusRank($b->status?->key);
-
-                if ($rank !== 0) {
-                    return $rank;
-                }
-
-                return ($b->created_at?->getTimestamp() ?? 0) <=> ($a->created_at?->getTimestamp() ?? 0);
-            })
-            ->values();
+            ->select('documents.*')
+            ->with(['status', 'documentType', 'media'])
+            ->leftJoin('document_statuses', 'document_statuses.id', '=', 'documents.status_id')
+            ->whereRaw('LOWER(documents.customer_email) = ?', [mb_strtolower($email)])
+            ->orderByRaw("FIELD(document_statuses.`key`, {$placeholders}) = 0", $priority)
+            ->orderByRaw("FIELD(document_statuses.`key`, {$placeholders})", $priority)
+            ->orderByDesc('documents.created_at')
+            ->limit(self::MAX_DOCUMENTS)
+            ->get();
     }
 
     /**
@@ -119,15 +127,5 @@ class ConversationDocumentLinker
         $metadata['document_link_source'] = 'auto:email';
 
         $conversation->forceFill(['metadata' => $metadata])->save();
-    }
-
-    /**
-     * Position of a status key within the relevance ranking; unknown last.
-     */
-    private function statusRank(?string $key): int
-    {
-        $rank = array_search($key, self::STATUS_PRIORITY, true);
-
-        return $rank === false ? count(self::STATUS_PRIORITY) : $rank;
     }
 }
