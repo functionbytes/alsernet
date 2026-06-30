@@ -30,7 +30,7 @@ class StoreTicketRequest extends BaseTicketRequest
             'customer_id' => 'nullable|integer|exists:helpdesk_customers,id',
             'status_id' => 'nullable|integer|exists:helpdesk_ticket_statuses,id',
             'sla_policy_id' => 'nullable|integer|exists:helpdesk_ticket_sla_policies,id',
-            'assignee_id' => 'nullable|integer',
+            'assignee_id' => 'nullable|integer|exists:users,id',
             'group_id' => 'nullable|integer|exists:helpdesk_groups,id',
             'attachments' => 'nullable|array|max:10',
             'attachments.*' => [

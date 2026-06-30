@@ -41,7 +41,12 @@ class TicketCategoryValidationBuilder
                 'phone' => $fieldRules[] = 'regex:/^\+?[\d\s\-\(\)\.]+$/',
                 'number' => $fieldRules[] = 'numeric',
                 'date' => $fieldRules[] = 'date',
-                'file' => array_push($fieldRules, 'file', 'max:10240'),
+                'file' => array_push(
+                    $fieldRules,
+                    'file',
+                    'max:'.config('helpdesk.attachments.max_size', 10240),
+                    'mimes:'.implode(',', config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'])),
+                ),
                 'select', 'radio' => $field->options
                     ? $fieldRules[] = 'in:'.implode(',', array_column($field->options, 'value'))
                     : null,

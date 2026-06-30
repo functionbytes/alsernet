@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\Customer;
@@ -180,15 +181,8 @@ class FetchTicketEmailsJob implements ShouldQueue
             }
         }
 
-        // Try to find by ticket number in subject (e.g., "Re: Ticket #TCK-2025-00123")
-        if (preg_match('/#(TCK-\d{4}-\d{5})/', $parsed['subject'], $matches)) {
-            $ticket = Ticket::where('ticket_number', $matches[1])->first();
-            if ($ticket) {
-                return $ticket;
-            }
-        }
-
-        // Try to find customer by email
+        // Resolve the sender address up front: it is required both for ticket
+        // threading verification and for customer lookup/creation.
         $rawFrom = $parsed['from'];
         if (empty($rawFrom)) {
             Log::warning('FetchTicketEmailsJob: email without From header, skipping', ['subject' => $parsed['subject']]);
@@ -196,6 +190,23 @@ class FetchTicketEmailsJob implements ShouldQueue
             return null;
         }
         $fromEmail = $this->extractEmailAddress($rawFrom);
+
+        // Try to find by ticket number in subject (e.g., "Re: Ticket #TCK-2025-00123").
+        // Only thread into the ticket when the sender matches the ticket customer,
+        // otherwise a third party could inject messages into someone else's ticket.
+        if (preg_match('/#(TCK-\d{4}-\d{5})/', $parsed['subject'], $matches)) {
+            $ticket = Ticket::with('customer:id,email')->where('ticket_number', $matches[1])->first();
+            if ($ticket && $this->senderMatchesTicket($ticket, $fromEmail)) {
+                return $ticket;
+            }
+
+            if ($ticket) {
+                Log::warning('FetchTicketEmailsJob: sender does not match ticket customer, creating new ticket', [
+                    'ticket_number' => $matches[1],
+                    'from' => $fromEmail,
+                ]);
+            }
+        }
         $customer = Customer::where('email', $fromEmail)->first();
 
         if (! $customer) {
@@ -208,19 +219,34 @@ class FetchTicketEmailsJob implements ShouldQueue
             Log::info("Created new customer: {$fromEmail}");
         }
 
-        // Create new ticket
-        $ticket = Ticket::create([
+        // Create new ticket inside a transaction so the lockForUpdate in
+        // generateTicketNumber() is effective and numbers never collide.
+        $ticket = DB::transaction(fn () => Ticket::create([
             'customer_id' => $customer->id,
             'subject' => $parsed['subject'],
             'description' => $parsed['body_text'] ?? $parsed['body_html'],
             'source' => 'email',
             'status_id' => TicketStatus::where('is_default', true)->first()?->id ?? 1,
             'priority' => $this->detectPriority($parsed['subject']),
-        ]);
+        ]));
 
         Log::info("Created new ticket #{$ticket->ticket_number} from email");
 
         return $ticket;
+    }
+
+    /**
+     * Determine whether the sender address belongs to the ticket customer.
+     */
+    protected function senderMatchesTicket(Ticket $ticket, string $fromEmail): bool
+    {
+        $customerEmail = $ticket->customer?->email;
+
+        if (! $customerEmail) {
+            return false;
+        }
+
+        return strcasecmp(trim($customerEmail), trim($fromEmail)) === 0;
     }
 
     /**
@@ -271,6 +297,18 @@ class FetchTicketEmailsJob implements ShouldQueue
     {
         try {
             $filename = $attachment->name ?? time().'_'.random_int(1000, 9999);
+
+            $allowedExtensions = config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip']);
+            $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+
+            if ($extension === '' || ! in_array($extension, $allowedExtensions, true)) {
+                Log::warning('FetchTicketEmailsJob: skipped attachment with disallowed extension', [
+                    'filename' => $filename,
+                ]);
+
+                return null;
+            }
+
             $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
             $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
 

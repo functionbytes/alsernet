@@ -43,16 +43,14 @@ class BulkTicketsController extends Controller
                     ]),
                     'close' => Ticket::whereIn('id', $ids)
                         ->whereNull('closed_at')
-                        ->update([
-                            'closed_at' => now(),
-                            'updated_at' => now(),
-                        ]),
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->close())
+                        ->count(),
                     'reopen' => Ticket::whereIn('id', $ids)
                         ->whereNotNull('closed_at')
-                        ->update([
-                            'closed_at' => null,
-                            'updated_at' => now(),
-                        ]),
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->reopen())
+                        ->count(),
                     'change_status' => Ticket::whereIn('id', $ids)->update([
                         'status_id' => $validated['status_id'],
                         'updated_at' => now(),
