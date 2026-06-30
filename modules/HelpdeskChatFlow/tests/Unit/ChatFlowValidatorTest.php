@@ -116,4 +116,59 @@ class ChatFlowValidatorTest extends TestCase
 
         $this->assertStringContainsString('else', implode(' ', $result['warnings']));
     }
+
+    public function test_detects_broken_go_to_step_target(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('jump', 'go_to_step', 'start', ['target_node_id' => 'ghost']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringContainsString('apunta a un paso que no existe', implode(' ', $result['errors']));
+    }
+
+    public function test_warns_about_unreachable_node(): void
+    {
+        // `a` and `b` reference each other as parents but neither hangs off `start`,
+        // so the whole component is unreachable from the flow's entry point.
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('a', 'message', 'b', ['text' => 'A']),
+            $this->node('b', 'message', 'a', ['text' => 'B']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertEmpty($result['errors']);
+        $this->assertStringContainsString('no es alcanzable', implode(' ', $result['warnings']));
+    }
+
+    public function test_warns_about_undefined_variable_reference(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('msg', 'message', 'start', ['text' => 'Hola {{nombre_cliente}}']),
+            $this->node('end', 'end', 'msg', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringContainsString('nombre_cliente', implode(' ', $result['warnings']));
+    }
+
+    public function test_does_not_warn_when_variable_is_defined_upstream(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('ask', 'collect_input', 'start', ['question' => '¿Edad?', 'variable_name' => 'edad']),
+            $this->node('msg', 'message', 'ask', ['text' => 'Tienes {{edad}} años']),
+            $this->node('end', 'end', 'msg', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringNotContainsString('{{edad}}', implode(' ', $result['warnings']));
+    }
 }
