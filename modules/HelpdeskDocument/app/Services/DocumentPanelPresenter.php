@@ -25,16 +25,49 @@ class DocumentPanelPresenter
      */
     public function list(Collection $documents): array
     {
-        return $documents->map(fn (Document $doc): array => [
-            'id' => (int) $doc->id,
-            'uid' => $doc->uid,
-            'order_reference' => $doc->order_reference ?: '—',
-            'type_label' => $doc->documentType?->label ?? 'Documento',
-            'status_key' => $doc->status?->key ?? 'pending',
-            'status_label' => $doc->status?->label ?? 'Pendiente',
-            'file_count' => $doc->getMedia('documents')->count(),
-            'created_human' => $doc->created_at?->format('d/m/Y') ?? '—',
-        ])->all();
+        return $documents->map(function (Document $doc): array {
+            $statusKey = $doc->status?->key ?? 'pending';
+
+            $group = match ($statusKey) {
+                'approved', 'completed' => 'approved',
+                'rejected', 'cancelled' => 'rejected',
+                default => 'pending',
+            };
+
+            $required = collect((array) ($doc->required_documents ?? []));
+            $fileTotal = $required->count();
+            $fileUploaded = $doc->getMedia('documents')->count();
+            $progressPct = $fileTotal > 0
+                ? (int) round(($fileUploaded / $fileTotal) * 100)
+                : ($fileUploaded > 0 ? 100 : 0);
+
+            $progressAccent = match ($group) {
+                'approved' => '#90bb13',
+                'rejected' => '#FA896B',
+                default => '#FEC90F',
+            };
+
+            $customerName = trim(($doc->customer_firstname ?? '') . ' ' . ($doc->customer_lastname ?? ''));
+
+            return [
+                'id' => (int) $doc->id,
+                'uid' => $doc->uid,
+                'order_reference' => $doc->order_reference ?: '—',
+                'type_label' => $doc->documentType?->label ?? 'Documento',
+                'customer_name' => $customerName ?: '',
+                'status_key' => $statusKey,
+                'status_label' => $doc->status?->label ?? 'Pendiente',
+                'file_count' => $fileUploaded,
+                'created_human' => $doc->created_at?->format('d/m/Y') ?? '—',
+                'ago_human' => $doc->created_at?->diffForHumans(short: true) ?? '—',
+                'group' => $group,
+                'description' => $doc->documentType?->description ?? '',
+                'file_total' => max($fileTotal, $fileUploaded),
+                'file_uploaded' => $fileUploaded,
+                'progress_pct' => $progressPct,
+                'progress_accent' => $progressAccent,
+            ];
+        })->all();
     }
 
     /**
@@ -166,8 +199,8 @@ class DocumentPanelPresenter
             'updated_human' => $document->updated_at?->format('d/m/Y H:i') ?? '—',
             'products' => $document->products->map(fn ($p) => [
                 'name' => $p->product_name ?? '—',
-                'sku'  => $p->product_reference ?? '—',
-                'qty'  => ($p->quantity ?? 1).'ud',
+                'sku' => $p->product_reference ?? '—',
+                'qty' => ($p->quantity ?? 1).'ud',
             ])->all(),
             'actions' => $actions,
             'files' => $files,

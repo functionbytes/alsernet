@@ -44,8 +44,19 @@
         <div class="docs-body pad-0" id="docsDetailPanelBody">
             {{-- Relleno via AJAX al abrir --}}
         </div>
-        <div class="docs-foot">
-            <button type="button" class="btn btn-outline-secondary w-100 docs-close">Cerrar</button>
+        <div class="docs-foot" style="flex-direction:row;gap:8px;padding:10px 14px">
+            <button type="button" class="btn btn-sm btn-outline-secondary docs-chat-import-btn"
+                    onclick="window.openDocFromChat && window.openDocFromChat()"
+                    title="Cargar desde galería del chat">
+                <i class="fas fa-images me-1"></i> Desde chat
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-docs-download-zip
+                    title="Descargar todos los documentos como ZIP">
+                <i class="fas fa-file-zipper me-1"></i> ZIP
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary docs-close ms-auto">
+                <i class="fas fa-xmark me-1"></i> Cerrar
+            </button>
         </div>
     </div>
 
@@ -66,6 +77,14 @@
                         {{ $pendCount }} pendiente{{ $pendCount === 1 ? '' : 's' }}
                         @if($apprCount > 0) · {{ $apprCount }} aprobado{{ $apprCount === 1 ? '' : 's' }} @endif
                     </span>
+                </div>
+            </div>
+
+            <div class="tk-search-row">
+                <div class="tk-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass tk-search-icon"></i>
+                    <input type="text" class="tk-search-input docs-list-search"
+                           placeholder="Buscar por ref. o tipo…">
                 </div>
             </div>
 
@@ -90,6 +109,40 @@
                 @endif
             </div>
 
+            <div class="sort-row">
+                <span class="sort-lbl">Ordenar por</span>
+                <div class="sort-dd">
+                    <button type="button" class="sort-trigger docs-sort-trigger">
+                        <i class="fa-solid fa-arrow-down-short-wide lead"></i>
+                        <span class="docs-sort-label">Más reciente</span>
+                        <i class="fa-solid fa-chevron-down chev"></i>
+                    </button>
+                </div>
+                <div class="sort-backdrop docs-sort-backdrop"></div>
+                <div class="sort-menu docs-sort-menu">
+                    <button type="button" class="sort-item sel" data-sort="date-desc">
+                        <span class="ico"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                        <span class="sort-item-lbl">Más reciente</span>
+                        <span class="ck"><i class="fa-solid fa-check"></i></span>
+                    </button>
+                    <button type="button" class="sort-item" data-sort="date-asc">
+                        <span class="ico"><i class="fa-solid fa-clock"></i></span>
+                        <span class="sort-item-lbl">Más antiguo</span>
+                        <span class="ck"></span>
+                    </button>
+                    <button type="button" class="sort-item" data-sort="name">
+                        <span class="ico"><i class="fa-solid fa-font"></i></span>
+                        <span class="sort-item-lbl">Por tipo</span>
+                        <span class="ck"></span>
+                    </button>
+                    <button type="button" class="sort-item" data-sort="status">
+                        <span class="ico"><i class="fa-solid fa-tag"></i></span>
+                        <span class="sort-item-lbl">Por estado</span>
+                        <span class="ck"></span>
+                    </button>
+                </div>
+            </div>
+
             <div class="tk-list" data-docs-list>
                 @foreach($docList as $d)
                     @php
@@ -98,18 +151,52 @@
                             ? route('manager.helpdesk.conversations.documents.panel', [$rpConvo->id, $d['id']])
                             : '#';
                     @endphp
+                    @php
+                        $fileUploaded = $d['file_uploaded'] ?? $d['file_count'] ?? 0;
+                        $fileTotal    = $d['file_total']    ?? $d['file_count'] ?? 0;
+                        $progressPct  = $d['progress_pct'] ?? ($fileTotal > 0 ? (int) round(($fileUploaded / max($fileTotal, 1)) * 100) : 0);
+                        $progressAccent = $d['progress_accent'] ?? ($grp === 'approved' ? '#90bb13' : ($grp === 'rejected' ? '#FA896B' : '#FEC90F'));
+                        $agoHuman     = $d['ago_human'] ?? $d['created_human'] ?? '—';
+                    @endphp
                     <button type="button" class="tk-card docs-list-card"
+                            style="border-left:1px solid var(--bv-border,#e4e4e7); gap:7px; padding:11px 13px"
                             data-docs-open="{{ $panelUrl }}"
-                            data-doc-tags="all {{ $grp }}">
-                        <div class="head">
-                            <i class="fa-regular fa-folder-open" style="font-size:10px;color:var(--bv-text-muted,#71717a)"></i>
-                            <span class="id">#{{ $d['order_reference'] }}</span>
+                            data-doc-tags="all {{ $grp }}"
+                            data-doc-status="{{ $grp }}"
+                            data-doc-name="{{ strtolower($d['type_label']) }}"
+                            data-doc-ref="{{ strtolower($d['order_reference']) }}"
+                            data-doc-date="{{ $d['created_human'] ?? '' }}">
+                        <div class="docs-card-header">
+                            <div class="docs-card-info">
+                                <span class="title">{{ $d['customer_name'] ?: $d['type_label'] }}</span>
+                                <span class="id">#{{ $d['order_reference'] }} · {{ $d['type_label'] }}</span>
+                            </div>
                             <span class="docs-status {{ $grp }}">{{ $d['status_label'] }}</span>
                         </div>
-                        <div class="title">{{ \Illuminate\Support\Str::limit($d['type_label'], 60) }}</div>
+                        @php $desc = !empty($d['description']) ? __($d['description']) : ''; @endphp
+                        @if($desc && $desc !== $d['description'])
+                            <div class="docs-card-desc">{{ $desc }}</div>
+                        @endif
+                        @if($fileTotal > 0)
+                            <div class="docs-card-prog">
+                                <div class="docs-card-prog-track">
+                                    <div class="docs-card-prog-fill" style="width:{{ $progressPct }}%; background:{{ $progressAccent }}"></div>
+                                </div>
+                                <span class="docs-card-docs-lbl">{{ $fileTotal }} docs</span>
+                            </div>
+                        @endif
                         <div class="foot">
-                            <span class="seg"><i class="fa-regular fa-file"></i> {{ $d['file_count'] }} archivo{{ $d['file_count'] === 1 ? '' : 's' }}</span>
-                            <span class="seg" style="margin-left:auto"><i class="fa-regular fa-clock"></i> {{ $d['created_human'] }}</span>
+                            <span class="seg">
+                                <i class="fa-regular fa-file"></i>
+                                @if($fileTotal > 0)
+                                    {{ $fileUploaded }}/{{ $fileTotal }}
+                                @else
+                                    {{ $fileUploaded }} archivo{{ $fileUploaded !== 1 ? 's' : '' }}
+                                @endif
+                            </span>
+                            <span class="seg docs-card-time">
+                                <i class="fa-regular fa-clock"></i> {{ $agoHuman }}
+                            </span>
                         </div>
                     </button>
                 @endforeach
@@ -727,6 +814,96 @@
         }).fail(function (xhr) {
             notify('error', (xhr.responseJSON && xhr.responseJSON.message) || 'Error al eliminar el archivo.');
             $btn.prop('disabled', false);
+        });
+    });
+
+    // ── Búsqueda en tiempo real ──────────────────────────────────
+    $(document).on('input', '.docs-list-search', function () {
+        var q = $(this).val().trim().toLowerCase();
+        var activeFilter = $(this).closest('.docs-list-view').find('.docs-list-filter.on').data('filter') || 'all';
+
+        $(this).closest('.docs-list-view').find('.docs-list-card').each(function () {
+            var ref  = ($(this).data('doc-ref')  || '').toLowerCase();
+            var name = ($(this).data('doc-name') || '').toLowerCase();
+            var matchQ = !q || ref.indexOf(q) !== -1 || name.indexOf(q) !== -1;
+            var tags   = ' ' + ($(this).data('doc-tags') || '') + ' ';
+            var matchF = activeFilter === 'all' || tags.indexOf(' ' + activeFilter + ' ') !== -1;
+            $(this).toggle(matchQ && matchF);
+        });
+    });
+
+    // ── Ordenación ───────────────────────────────────────────────
+    function sortDocCards($listView, sortBy) {
+        var $list  = $listView.find('[data-docs-list]');
+        var $cards = $list.children('.docs-list-card').detach().toArray();
+        $cards.sort(function (a, b) {
+            if (sortBy === 'name') {
+                return ($(a).data('doc-name') || '').localeCompare($(b).data('doc-name') || '');
+            }
+            if (sortBy === 'status') {
+                var order = { pending: 0, rejected: 1, approved: 2 };
+                return (order[$(a).data('doc-status')] || 0) - (order[$(b).data('doc-status')] || 0);
+            }
+            if (sortBy === 'date-asc') {
+                return ($(a).data('doc-date') || '').localeCompare($(b).data('doc-date') || '');
+            }
+            return ($(b).data('doc-date') || '').localeCompare($(a).data('doc-date') || '');
+        });
+        $list.append($cards);
+    }
+
+    function closeSortMenu($listView) {
+        var $row = $listView.find('.sort-row');
+        $row.find('.docs-sort-trigger').removeClass('open');
+        $row.find('.docs-sort-menu').hide();
+        $row.find('.docs-sort-backdrop').hide();
+    }
+
+    $(document).on('click', '.docs-sort-trigger', function () {
+        var $t    = $(this);
+        var $row  = $t.closest('.sort-row');
+        var $menu = $row.find('.docs-sort-menu');
+        var open  = $t.hasClass('open');
+        $t.toggleClass('open', !open);
+        $menu.toggle(!open);
+        $row.find('.docs-sort-backdrop').toggle(!open);
+    });
+
+    $(document).on('click', '.docs-sort-backdrop', function () {
+        closeSortMenu($(this).closest('[data-docs-list-view]'));
+    });
+
+    $(document).on('click', '.docs-sort-menu .sort-item', function () {
+        var $item     = $(this);
+        var $listView = $item.closest('[data-docs-list-view]');
+        var sort      = $item.data('sort');
+        $item.siblings().removeClass('sel').find('.ck').empty();
+        $item.addClass('sel').find('.ck').html('<i class="fa-solid fa-check"></i>');
+        $listView.find('.docs-sort-label').text($item.find('.sort-item-lbl').text().trim());
+        closeSortMenu($listView);
+        sortDocCards($listView, sort);
+    });
+
+    // ── Tabs de la columna lateral del workspace ─────────────────
+    $(document).on('click', '.docs-ws-tab', function () {
+        var $tab  = $(this);
+        var pane  = $tab.data('ws-tab');
+        var $side = $tab.closest('.docs-vd-side');
+        $side.find('.docs-ws-tab').removeClass('on');
+        $side.find('.docs-ws-pane').removeClass('on');
+        $tab.addClass('on');
+        $side.find('[data-ws-pane="' + pane + '"]').addClass('on');
+    });
+
+    // ── Filtros de galería de documentos ─────────────────────────
+    $(document).on('click', '[data-gallery-filter]', function () {
+        var filter  = $(this).data('gallery-filter');
+        var $parent = $(this).closest('.docs-vd-card');
+        $parent.find('[data-gallery-filter]').removeClass('on');
+        $(this).addClass('on');
+        $parent.find('.doc-card').each(function () {
+            var tag = $(this).data('gallery-tag') || 'uploaded';
+            $(this).toggle(filter === 'all' || tag === filter);
         });
     });
 
