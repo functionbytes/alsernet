@@ -1,8 +1,8 @@
 {{-- HelpdeskHelpcenter — injects article search into Helpdesk thread --}}
 
 @push('hd-composer-toolbar-buttons')
-<button class="btn-ico" type="button" data-bv-tip="Buscar artículo de ayuda" onclick="openArticleModal()">
-    <i class="fas fa-book-open"></i>
+<button class="btn-ico" type="button" data-bv-tip="Buscar artículo de ayuda" aria-label="Buscar artículo de ayuda" onclick="openArticleModal()">
+    <i class="fas fa-book-open" aria-hidden="true"></i>
 </button>
 @endpush
 

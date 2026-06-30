@@ -3,16 +3,16 @@
     <div class="bv-list-head">
         <div class="bv-list-search">
             <i class="fas fa-magnifying-glass bv-list-search-icon"></i>
-            <input type="text" id="bv-search-input" placeholder="Buscar conversaciones…" autocomplete="off">
+            <input type="text" id="bv-search-input" placeholder="Buscar conversaciones…" aria-label="Buscar conversaciones" autocomplete="off">
             <kbd class="bv-list-search-kbd">F</kbd>
         </div>
         <div class="bv-list-actions">
-            <button class="btn-ico" data-bv-modal="filter" title="Filtros">
-                <i class="fas fa-filter"></i>
+            <button class="btn-ico" data-bv-modal="filter" title="Filtros" aria-label="Filtrar conversaciones">
+                <i class="fas fa-filter" aria-hidden="true"></i>
             </button>
             <div class="bv-sort-wrap">
-                <button class="btn-ico" id="bv-btn-sort" title="Ordenar">
-                    <i class="fas fa-arrow-up-arrow-down"></i>
+                <button class="btn-ico" id="bv-btn-sort" title="Ordenar" aria-label="Ordenar conversaciones" aria-expanded="false" aria-haspopup="menu">
+                    <i class="fas fa-arrow-up-arrow-down" aria-hidden="true"></i>
                 </button>
                 <div class="bv-sort-menu" id="bv-sort-menu">
                     <div class="bv-sort-menu-head">Ordenar por</div>
@@ -44,8 +44,8 @@
                     </button>
                 </div>
             </div>
-            <button class="btn-ico" title="Más">
-                <i class="fas fa-ellipsis"></i>
+            <button class="btn-ico" title="Más opciones" aria-label="Más opciones">
+                <i class="fas fa-ellipsis" aria-hidden="true"></i>
             </button>
         </div>
     </div>

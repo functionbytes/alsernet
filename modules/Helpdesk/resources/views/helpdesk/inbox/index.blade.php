@@ -34,6 +34,12 @@
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-commerce.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-commerce.css')) }}"/>
     {{-- Dark mode overrides --}}
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-dark.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-dark.css')) }}"/>
+    {{-- a11y: color contrast fixes — darken muted grays from #71717a (4.39:1) to #636369 (4.64:1) on #f4f4f5 --}}
+    <style>
+    .bv-day-sep span,
+    .bv-conv .preview,
+    .r-tag.r-tag-muted { color: #636369; }
+    </style>
 @endpush
 
 @section('content_full_width', true)
@@ -105,8 +111,8 @@
                        aria-label="Vista kanban">
                         <i class="fas fa-table-columns"></i>
                     </a>
-                    <a href="#" class="bv-nav-label-add" id="bv-save-view-btn" title="Guardar vista actual">
-                        <i class="fas fa-plus"></i>
+                    <a href="#" class="bv-nav-label-add" id="bv-save-view-btn" title="Guardar vista actual" aria-label="Guardar vista actual">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
                     </a>
                 </span>
             </div>

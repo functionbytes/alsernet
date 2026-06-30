@@ -11,7 +11,7 @@
      draggable="true"
      data-bv-conv-id="{{ $conv['id'] }}"
      data-bv-conv-url="{{ route('manager.helpdesk.conversations.index', $convUrlParams) }}">
-    <input type="checkbox" data-bv-bulk-select onclick="event.stopPropagation()">
+    <input type="checkbox" data-bv-bulk-select aria-label="Seleccionar conversación" onclick="event.stopPropagation()">
     <div class="bv-av {{ $conv['color'] }}">
         {{ $conv['initials'] }}
         @if(!empty($conv['channel']))
@@ -44,21 +44,21 @@
     </div>
     {{-- Acciones rápidas al hover --}}
     <div class="bv-conv-hactions">
-        <button title="Fijar"
+        <button title="Fijar" aria-label="Fijar conversación"
                 data-bv-action="pin"
                 data-bv-url="{{ route('manager.helpdesk.conversations.pin', $conv['id']) }}">
-            <i class="fas fa-thumbtack"></i>
+            <i class="fas fa-thumbtack" aria-hidden="true"></i>
         </button>
-        <button title="Silenciar"
+        <button title="Silenciar" aria-label="Silenciar conversación"
                 data-bv-action="mute"
                 data-bv-url="{{ route('manager.helpdesk.conversations.mute', $conv['id']) }}">
-            <i class="far fa-bell-slash"></i>
+            <i class="far fa-bell-slash" aria-hidden="true"></i>
         </button>
-        <button title="Archivar"
+        <button title="Archivar" aria-label="Archivar conversación"
                 data-bv-action="archive"
                 data-bv-url="{{ route('manager.helpdesk.conversations.archive', $conv['id']) }}">
-            <i class="fas fa-archive"></i>
+            <i class="fas fa-archive" aria-hidden="true"></i>
         </button>
-        <button title="Snooze" data-bv-modal="snooze"><i class="far fa-clock"></i></button>
+        <button title="Posponer" aria-label="Posponer conversación" data-bv-modal="snooze"><i class="far fa-clock" aria-hidden="true"></i></button>
     </div>
 </div>

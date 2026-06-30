@@ -342,78 +342,78 @@
 
     {{-- Tabs --}}
     <div class="rsp-tabs">
-        <button type="button" class="tab bv-right-tab on" data-bv-tab="general" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="General">
-            <i class="fa-solid fa-circle-info"></i>
+        <button type="button" class="tab bv-right-tab on" data-bv-tab="general" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="General" aria-label="General">
+            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         </button>
         {{-- Tab "Pedidos" genérico eliminado: PrestaShop → tab "Tienda", ERP → tab "Gestión" --}}
         @if($rpCust && helpdesk_prestashop_enabled())
-        <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Carritos">
-            <i class="fa-solid fa-cart-shopping"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Carritos" aria-label="Carritos">
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
         </button>
         @endif
-        <button type="button" class="tab bv-right-tab" data-bv-tab="files" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Archivos">
-            <i class="fa-regular fa-folder"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="files" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Archivos" aria-label="Archivos">
+            <i class="fa-regular fa-folder" aria-hidden="true"></i>
         </button>
         @if($rpTicketsEnabled)
-        <button type="button" class="tab bv-right-tab" data-bv-tab="tickets" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tickets">
-            <i class="fa-solid fa-ticket"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="tickets" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tickets" aria-label="Tickets">
+            <i class="fa-solid fa-ticket" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpHasDocument)
-        <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Documentacion">
-            <i class="fa-regular fa-folder-open"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Documentacion" aria-label="Documentación">
+            <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
         </button>
         @endif
-        <button type="button" class="tab bv-right-tab" data-bv-tab="previous" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Anteriores">
-            <i class="fa-solid fa-clock-rotate-left"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="previous" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Anteriores" aria-label="Conversaciones anteriores">
+            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
         </button>
-        <button type="button" class="tab bv-right-tab" data-bv-tab="activity" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Actividad">
-            <i class="fa-solid fa-bolt"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="activity" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Actividad" aria-label="Actividad">
+            <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
-        <button type="button" class="tab bv-right-tab" data-bv-tab="emails" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Emails">
-            <i class="fa-regular fa-envelope-open"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="emails" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Emails" aria-label="Emails">
+            <i class="fa-regular fa-envelope-open" aria-hidden="true"></i>
         </button>
         @if($rpHasWidgetData)
-        <button type="button" class="tab bv-right-tab" data-bv-tab="technology" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tecnología">
-            <i class="fa-regular fa-window-maximize"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="technology" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tecnología" aria-label="Tecnología">
+            <i class="fa-regular fa-window-maximize" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpShowAssistTab ?? false)
-        <button type="button" class="tab bv-right-tab" data-bv-tab="assist" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Pantalla">
-            <i class="fa-regular fa-eye"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="assist" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Pantalla" aria-label="Pantalla compartida">
+            <i class="fa-regular fa-eye" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpCust)
-        <button type="button" class="tab bv-right-tab" data-bv-tab="customer-360" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cliente 360">
-            <i class="fa-solid fa-chart-pie"></i>
+        <button type="button" class="tab bv-right-tab" data-bv-tab="customer-360" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cliente 360" aria-label="Cliente 360">
+            <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpHasPs || $rpHasErp)
             <span class="rsp-tabs-sep"></span>
         @endif
         @if($rpHasPs)
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tienda">
-                <i class="fa-solid fa-store"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tienda" aria-label="Pedidos de tienda">
+                <i class="fa-solid fa-store" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-returns" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Devoluciones">
-                <i class="fa-solid fa-rotate-left"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-returns" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Devoluciones" aria-label="Devoluciones">
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-vouchers" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cupones">
-                <i class="fa-solid fa-tag"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-vouchers" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cupones" aria-label="Cupones">
+                <i class="fa-solid fa-tag" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-addresses" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Direcciones">
-                <i class="fa-solid fa-location-dot"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-addresses" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Direcciones" aria-label="Direcciones">
+                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
             </button>
         @endif
         @if($rpHasErp)
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Gestión">
-                <i class="fa-solid fa-clipboard-list"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Gestión" aria-label="Pedidos de gestión">
+                <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-finance" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Finanzas">
-                <i class="fa-solid fa-coins"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-finance" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Finanzas" aria-label="Finanzas">
+                <i class="fa-solid fa-coins" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-loyalty" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Fidelización">
-                <i class="fa-solid fa-star"></i>
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-loyalty" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Fidelización" aria-label="Fidelización">
+                <i class="fa-solid fa-star" aria-hidden="true"></i>
             </button>
         @endif
     </div>
@@ -502,8 +502,8 @@
                             <i class="fa-solid fa-chevron-down"></i>
                         </button>
                         @if($rpConvo?->assignee)
-                            <button type="button" class="r-tag r-tag-btn bv-ap-trigger" data-bv-modal="agent-profile" data-agent-id="{{ $rpConvo->assignee->id }}" title="Ver perfil del agente">
-                                <i class="fa-solid fa-headset"></i>
+                            <button type="button" class="r-tag r-tag-btn bv-ap-trigger" data-bv-modal="agent-profile" data-agent-id="{{ $rpConvo->assignee->id }}" title="Ver perfil del agente" aria-label="Ver perfil del agente">
+                                <i class="fa-solid fa-headset" aria-hidden="true"></i>
                             </button>
                         @endif
                     </span>
@@ -522,7 +522,7 @@
             <div class="rsp-section">
                 <div class="lbl">
                     <i class="fa-solid fa-tag"></i> Etiquetas
-                    <i class="fa-solid fa-plus add" role="button" data-bv-modal="tags" title="Añadir etiqueta"></i>
+                    <i class="fa-solid fa-plus add" role="button" data-bv-modal="tags" title="Añadir etiqueta" aria-label="Añadir etiqueta" aria-hidden="false"></i>
                 </div>
                 @if($rpConvo?->conversationTags?->isNotEmpty())
                     <div class="rsp-tag-wrap">
@@ -603,16 +603,18 @@
                         <button type="button" class="btn btn-sm btn-link p-0 ms-auto bv-sync-commerce"
                                 data-conv-id="{{ $rpConvo->id }}"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                data-bs-title="Re-sincronizar PrestaShop / gestión">
-                            <i class="fa-solid fa-arrows-rotate"></i>
+                                data-bs-title="Re-sincronizar PrestaShop / gestión"
+                                aria-label="Re-sincronizar PrestaShop y gestión">
+                            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                         </button>
                     @endif
                     @if($rpCust)
                         <button type="button" class="btn btn-sm btn-link p-0 @if(! $rpConvo?->id) ms-auto @endif bv-integrations-trigger"
                                 data-bv-modal="customer-integrations"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                data-bs-title="Ver integraciones del cliente">
-                            <i class="fa-solid fa-up-right-from-square"></i>
+                                data-bs-title="Ver integraciones del cliente"
+                                aria-label="Ver integraciones del cliente">
+                            <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
                         </button>
                     @endif
                     @if(! empty($rpIntegrationsList))

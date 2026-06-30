@@ -27,7 +27,7 @@
     <title>@hasSection('title')@yield('title') · {{ getSiteName() }}@else{{ getSiteTitle() }}@endif</title>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
     <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, shrink-to-fit=no"/>
     <link rel="icon" type="image/x-icon" href="/favicon.ico"/>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="csrf-token" content="{{ csrf_token() }}">
