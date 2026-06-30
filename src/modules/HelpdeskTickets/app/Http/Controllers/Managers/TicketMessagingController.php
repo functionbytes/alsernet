@@ -139,6 +139,8 @@ class TicketMessagingController extends Controller
 
     public function smartReplies(Ticket $ticket, TicketAiService $ai): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         return response()->json(['suggestions' => $ai->smartReplySuggestions($ticket)]);
     }
 }

@@ -19,6 +19,8 @@ class EscalateTicketsJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 60;
+
     public function __construct()
     {
         $this->queue = 'helpdesk-scheduled';

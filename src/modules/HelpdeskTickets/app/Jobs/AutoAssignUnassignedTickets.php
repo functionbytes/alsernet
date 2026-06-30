@@ -23,6 +23,8 @@ class AutoAssignUnassignedTickets implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 60;
+
     public string $queue = 'helpdesk-scheduled';
 
     public function middleware(): array

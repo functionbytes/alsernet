@@ -239,7 +239,7 @@
                                     <td style="border: none; vertical-align: middle;">
                                         <div class="d-flex align-items-center gap-2">
                                             @if($category->icon)
-                                                <i class="ti {{ $category->icon }}" style="color: {{ $category->color }}; font-size: 20px;"></i>
+                                                <i class="{{ $category->icon }} fs-5" style="color: {{ $category->color }}"></i>
                                             @else
                                                 <div style="width: 24px; height: 24px; background: var(--primary); border-radius: 6px;"></div>
                                             @endif

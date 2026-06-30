@@ -35,7 +35,7 @@ class UpdateTicketRequest extends BaseTicketRequest
             'status_id' => 'sometimes|integer|exists:helpdesk_ticket_statuses,id',
             'category_id' => 'sometimes|nullable|integer|exists:helpdesk_ticket_categories,id',
             'priority' => 'sometimes|string|in:low,normal,high,urgent',
-            'assignee_id' => 'sometimes|nullable|integer',
+            'assignee_id' => 'sometimes|nullable|integer|exists:users,id',
             'group_id' => 'sometimes|nullable|integer|exists:helpdesk_groups,id',
             'sla_policy_id' => 'sometimes|nullable|integer|exists:helpdesk_ticket_sla_policies,id',
             'tags' => 'sometimes|nullable|array',

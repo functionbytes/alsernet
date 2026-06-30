@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\Ticket;
 
@@ -14,6 +15,14 @@ class TicketUpdateService
      * @return array<string> Fields that were actually changed
      */
     public function applyChanges(Ticket $ticket, array $data, User $actor): array
+    {
+        return DB::transaction(fn () => $this->applyChangesWithinTransaction($ticket, $data, $actor));
+    }
+
+    /**
+     * @return array<string>
+     */
+    private function applyChangesWithinTransaction(Ticket $ticket, array $data, User $actor): array
     {
         $changed = [];
 

@@ -6,11 +6,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Http\Requests\Portal\PortalLoginRequest;
+use Modules\HelpdeskTickets\Http\Requests\Portal\RateTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Portal\ReplyTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Portal\StoreTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Portal\UpdateAccountRequest;
 use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
@@ -37,9 +43,11 @@ class CustomerPortalController extends Controller
     }
 
     /** POST /portal/login — send magic link */
-    public function login(Request $request): RedirectResponse
+    public function login(PortalLoginRequest $request): RedirectResponse
     {
-        $throttleKey = 'portal-login:'.md5($request->input('email', '')).':'.$request->ip();
+        $validated = $request->validated();
+
+        $throttleKey = 'portal-login:'.md5($validated['email']).':'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
@@ -48,8 +56,6 @@ class CustomerPortalController extends Controller
         }
 
         RateLimiter::hit($throttleKey, 300);
-
-        $validated = $request->validate(['email' => ['required', 'email']]);
 
         $customer = Customer::where('email', $validated['email'])->first();
 
@@ -151,7 +157,7 @@ class CustomerPortalController extends Controller
     }
 
     /** POST /portal/tickets/{ticketNumber}/reply */
-    public function replyToTicket(Request $request, string $ticketNumber): RedirectResponse
+    public function replyToTicket(ReplyTicketRequest $request, string $ticketNumber): RedirectResponse
     {
         $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
 
@@ -161,10 +167,7 @@ class CustomerPortalController extends Controller
 
         $customer = $customerOrRedirect;
 
-        $validated = $request->validate([
-            'message' => ['required', 'string', 'max:5000'],
-            'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'],
-        ]);
+        $validated = $request->validated();
 
         $ticket = Ticket::where('ticket_number', $ticketNumber)
             ->where('customer_id', $customer->id)
@@ -205,7 +208,7 @@ class CustomerPortalController extends Controller
     }
 
     /** POST /portal/tickets */
-    public function storeTicket(Request $request): RedirectResponse
+    public function storeTicket(StoreTicketRequest $request): RedirectResponse
     {
         $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
 
@@ -215,31 +218,31 @@ class CustomerPortalController extends Controller
 
         $customer = $customerOrRedirect;
 
-        $validated = $request->validate([
-            'subject' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string', 'max:5000'],
-            'category_id' => ['nullable', 'integer'],
-            'priority' => ['nullable', 'string'],
-            'attachments.*' => ['nullable', 'file', 'max:5120', 'mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'],
-        ]);
+        $validated = $request->validated();
 
         $defaultStatus = TicketStatus::where('is_default', true)->first();
 
-        $ticket = Ticket::create([
-            'subject' => $validated['subject'],
-            'description' => $validated['description'],
-            'customer_id' => $customer->id,
-            'customer_name' => $customer->name,
-            'customer_email' => $customer->email,
-            'category_id' => $validated['category_id'] ?? null,
-            'priority' => $validated['priority'] ?? 'normal',
-            'status_id' => $defaultStatus?->id ?? 1,
-            'source' => 'portal',
-        ]);
+        // Wrap creation in a transaction so the lockForUpdate in
+        // generateTicketNumber() is effective and numbers never collide.
+        $ticket = DB::transaction(function () use ($validated, $customer, $defaultStatus, $request) {
+            $ticket = Ticket::create([
+                'subject' => $validated['subject'],
+                'description' => $validated['description'],
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'category_id' => $validated['category_id'] ?? null,
+                'priority' => $validated['priority'] ?? 'normal',
+                'status_id' => $defaultStatus?->id ?? 1,
+                'source' => 'portal',
+            ]);
 
-        if ($request->hasFile('attachments')) {
-            $this->storeAttachments($request->file('attachments'), $ticket->id, $customer);
-        }
+            if ($request->hasFile('attachments')) {
+                $this->storeAttachments($request->file('attachments'), $ticket->id, $customer);
+            }
+
+            return $ticket;
+        });
 
         return redirect()->route('portal.tickets.show', $ticket->ticket_number)
             ->with('status', 'Your ticket has been created.');
@@ -258,7 +261,7 @@ class CustomerPortalController extends Controller
     }
 
     /** PUT /portal/account — update name and phone */
-    public function updateAccount(Request $request): RedirectResponse
+    public function updateAccount(UpdateAccountRequest $request): RedirectResponse
     {
         $customer = $this->getAuthenticatedCustomerOrFail();
 
@@ -266,18 +269,13 @@ class CustomerPortalController extends Controller
             return $customer;
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
-        ]);
-
-        $customer->update($validated);
+        $customer->update($request->validated());
 
         return back()->with('success', 'Account updated successfully.');
     }
 
     /** POST /portal/tickets/{ticketNumber}/rate */
-    public function rateTicket(Request $request, string $ticketNumber): RedirectResponse
+    public function rateTicket(RateTicketRequest $request, string $ticketNumber): RedirectResponse
     {
         $customerOrRedirect = $this->getAuthenticatedCustomerOrFail();
 
@@ -293,10 +291,7 @@ class CustomerPortalController extends Controller
             ->whereNull('rated_at')
             ->firstOrFail();
 
-        $validated = $request->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'rating_comment' => ['nullable', 'string', 'max:500'],
-        ]);
+        $validated = $request->validated();
 
         $ticket->update([
             'rating' => $validated['rating'],

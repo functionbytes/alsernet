@@ -183,10 +183,15 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
         });
 
         $topAgents = Cache::remember('helpdesk:dashboard:agent_stats', 300, function () {
+            // User lives on the default connection while helpdesk_tickets may live
+            // in a separate helpdesk database, so the joined table is fully
+            // qualified to keep the aggregate working when the schemas differ.
+            $ticketsTable = (new Ticket)->getConnection()->getDatabaseName().'.helpdesk_tickets';
+
             return User::select(['users.id', 'users.firstname', 'users.lastname'])
                 ->selectRaw('COUNT(t.id) as open_tickets')
                 ->selectRaw('SUM(CASE WHEN DATE(t.closed_at) = CURDATE() THEN 1 ELSE 0 END) as closed_today')
-                ->join('helpdesk_tickets as t', 't.assignee_id', '=', 'users.id')
+                ->join("{$ticketsTable} as t", 't.assignee_id', '=', 'users.id')
                 ->whereNull('t.closed_at')
                 ->groupBy('users.id', 'users.firstname', 'users.lastname')
                 ->orderByDesc('open_tickets')
