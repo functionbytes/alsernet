@@ -30,7 +30,6 @@ use Modules\Helpdesk\Http\Requests\BulkApplyMacroRequest;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
 use Modules\Helpdesk\Http\Requests\ForwardAttachmentRequest;
 use Modules\Helpdesk\Http\Requests\MarkSpamRequest;
-use Modules\Helpdesk\Http\Requests\RequestAiSuggestionsRequest;
 use Modules\Helpdesk\Http\Requests\SaveDraftRequest;
 use Modules\Helpdesk\Http\Requests\SendEmailFromConversationRequest;
 use Modules\Helpdesk\Http\Requests\SendHsmRequest;
@@ -78,7 +77,7 @@ class ConversationsController extends Controller
             'edit', 'update', 'close', 'reopen', 'archive', 'unarchive',
             'storeMessage', 'snooze', 'togglePin', 'toggleMute',
             'sendEmail', 'sendHsm', 'merge', 'mergeCandidates',
-            'saveDraft', 'storeScheduledMessage', 'aiSuggestions',
+            'saveDraft', 'storeScheduledMessage',
             'uploadAttachments', 'storeContact', 'storeLocation', 'createTicket',
         ]);
         $this->middleware('can:helpdesk.conversations.delete')->only(['destroy', 'restore', 'forceDelete', 'blockContact']);
@@ -1819,38 +1818,6 @@ class ConversationsController extends Controller
                 'scheduled_at_formatted' => $scheduledAt->format('d/m/Y H:i'),
             ],
         ], 201);
-    }
-
-    /**
-     * Return AI-generated reply suggestions for a conversation.
-     * TODO: integrar OpenAI/Claude API
-     */
-    public function aiSuggestions(RequestAiSuggestionsRequest $request, Conversation $conversation): JsonResponse
-    {
-        $this->authorize('update', $conversation);
-
-        $suggestions = [
-            [
-                'id' => 1,
-                'type' => 'greeting',
-                'text' => '¡Hola! Gracias por contactarnos. Estoy aquí para ayudarte. ¿En qué puedo asistirte hoy?',
-            ],
-            [
-                'id' => 2,
-                'type' => 'clarification',
-                'text' => 'Para poder ayudarte mejor, ¿podrías darme más detalles sobre tu consulta? Cualquier información adicional nos permitirá resolverlo más rápido.',
-            ],
-            [
-                'id' => 3,
-                'type' => 'closing',
-                'text' => 'Ha sido un placer atenderte. Si tienes alguna otra duda, no dudes en escribirnos. ¡Que tengas un excelente día!',
-            ],
-        ];
-
-        return response()->json([
-            'success' => true,
-            'suggestions' => $suggestions,
-        ]);
     }
 
     /**

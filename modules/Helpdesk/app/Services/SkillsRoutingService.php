@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Services;
 
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Skill;
 
@@ -39,6 +40,17 @@ class SkillsRoutingService
             return null;
         }
 
+        // Only route to agents who are actually available right now: respect
+        // availability/shifts/vacation/capacity/presence configured in AgentSettings
+        // (mirrors Group::getNextAgent). Agents without a settings row keep the
+        // previous default behaviour (treated as available) so existing setups that
+        // never configured availability do not regress to "no agent found".
+        $agentsWithAllSkills = $this->filterAvailableAgents($agentsWithAllSkills);
+
+        if (empty($agentsWithAllSkills)) {
+            return null;
+        }
+
         // Among qualified agents, pick the one with fewest open conversations
         $openCountByAgent = DB::connection('helpdesk')
             ->table('helpdesk_conversations')
@@ -59,6 +71,40 @@ class SkillsRoutingService
         });
 
         return $agentsWithAllSkills[0] ?? null;
+    }
+
+    /**
+     * Keep only agents that can receive an assignment right now according to their
+     * AgentSettings (availability, working hours, vacation, capacity and presence).
+     * Agents without a settings row are kept as available to avoid regressing setups
+     * that never configured availability.
+     *
+     * @param  array<int, int>  $userIds
+     * @return array<int, int>
+     */
+    protected function filterAvailableAgents(array $userIds): array
+    {
+        if (empty($userIds)) {
+            return [];
+        }
+
+        $settings = AgentSettings::query()
+            ->whereIn('user_id', $userIds)
+            ->get()
+            ->keyBy('user_id');
+
+        return array_values(array_filter($userIds, function ($userId) use ($settings) {
+            $agentSettings = $settings->get($userId);
+
+            if ($agentSettings === null) {
+                return true;
+            }
+
+            return $agentSettings->canReceiveAssignment()
+                && $agentSettings->acceptsConversationsNow()
+                && ! $agentSettings->hasReachedLimit()
+                && ($agentSettings->presence_state ?? 'online') !== 'offline';
+        }));
     }
 
     /**

@@ -9,6 +9,7 @@ use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Events\MentionDetected;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Jobs\SendOutboundMessageJob;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 
@@ -67,38 +68,33 @@ class ConversationMessageService
         }
 
         if (empty($data['is_internal']) && $this->outbound->supports($conversation)) {
-            // Envío externo: limpiamos los @handles para que el cliente no vea identificadores internos
+            // Envío externo encolado: las llamadas Graph/WhatsApp (timeout 15s +
+            // reintentos) bloquearían el worker FPM. Resolvemos aquí el body
+            // (limpiando @handles internos) y las URL absolutas, y delegamos la I/O
+            // al job, que correlaciona el id externo en metadata al volver.
             $externalBody = $this->mentionParser->stripForExternal(strip_tags($data['body'] ?? ''));
-            $externalMessageId = filled($externalBody)
-                ? $this->outbound->sendReply($conversation, $externalBody)
-                : null;
 
-            // Enviar cada attachment como mensaje independiente al canal (Meta
-            // exige uno por petición). Convertimos URL relativa a absoluta con
-            // dominio público para que Meta pueda fetcharla.
+            $outboundAttachments = [];
             foreach ($attachmentUrls as $att) {
                 $absUrl = $this->absoluteUrl((string) ($att['url'] ?? ''));
                 if (blank($absUrl)) {
                     continue;
                 }
 
-                $attMessageId = $this->outbound->sendAttachment(
-                    $conversation,
-                    (string) ($att['type'] ?? 'file'),
-                    $absUrl,
-                    null,
-                    $att['name'] ?? null,
-                );
-
-                $externalMessageId = $externalMessageId ?: $attMessageId;
+                $outboundAttachments[] = [
+                    'type' => (string) ($att['type'] ?? 'file'),
+                    'url' => $absUrl,
+                    'name' => $att['name'] ?? null,
+                ];
             }
 
-            if ($externalMessageId) {
-                $item->update(['metadata' => array_merge($item->metadata ?? [], [
-                    'outbound_message_id' => $externalMessageId,
-                    'sent_via' => $conversation->channel,
-                ])]);
-            }
+            SendOutboundMessageJob::dispatch(
+                $conversation->id,
+                $item->id,
+                filled($externalBody) ? $externalBody : null,
+                $outboundAttachments,
+                'metadata',
+            );
         }
 
         // Disparar evento por cada usuario único mencionado (excluyendo al autor)

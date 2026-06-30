@@ -201,7 +201,6 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/mute', [HelpdeskConversationsController::class, 'toggleMute'])->name('manager.helpdesk.conversations.mute');
     Route::post('/conversations/{conversation}/block-contact', [HelpdeskConversationsController::class, 'blockContact'])->name('manager.helpdesk.conversations.block-contact');
     Route::post('/conversations/{conversation}/mark-spam', [HelpdeskConversationsController::class, 'markSpam'])->name('manager.helpdesk.conversations.mark-spam');
-    Route::post('/conversations/{conversation}/ai-suggestions', [HelpdeskConversationsController::class, 'aiSuggestions'])->name('manager.helpdesk.conversations.ai-suggestions')->middleware('throttle:30,1');
     Route::put('/conversations/{conversation}/draft', [HelpdeskConversationsController::class, 'saveDraft'])->name('manager.helpdesk.conversations.draft.save');
     Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
     Route::post('/conversations/{conversation}/send-csat', [HelpdeskConversationsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.conversations.send-csat')->middleware('throttle:10,1');

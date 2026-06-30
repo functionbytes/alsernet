@@ -3,11 +3,14 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Http\Requests\BulkConversationsRequest;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Services\CsatService;
 
 class BulkConversationsController extends Controller
 {
@@ -42,7 +45,7 @@ class BulkConversationsController extends Controller
         }
 
         try {
-            $affected = DB::transaction(function () use ($action, $ids, $payload, $request): int {
+            $affected = DB::transaction(function () use ($action, $ids, $payload, $request, $conversations): int {
                 return match ($action) {
                     'archive' => Conversation::whereIn('id', $ids)
                         ->update(['is_archived' => true, 'updated_at' => now()]),
@@ -50,20 +53,11 @@ class BulkConversationsController extends Controller
                     'unarchive' => Conversation::whereIn('id', $ids)
                         ->update(['is_archived' => false, 'updated_at' => now()]),
 
-                    'close' => Conversation::whereIn('id', $ids)
-                        ->whereNull('closed_at')
-                        ->update(['closed_at' => now(), 'updated_at' => now()]),
+                    'close' => $this->bulkClose($conversations, $request),
 
-                    'reopen' => Conversation::whereIn('id', $ids)
-                        ->whereNotNull('closed_at')
-                        ->update(['closed_at' => null, 'updated_at' => now()]),
+                    'reopen' => $this->bulkReopen($conversations),
 
-                    'assign' => Conversation::whereIn('id', $ids)
-                        ->update([
-                            'assignee_id' => $payload['assignee_id'] ?? null,
-                            'assigned_at' => isset($payload['assignee_id']) ? now() : null,
-                            'updated_at' => now(),
-                        ]),
+                    'assign' => $this->bulkAssign($conversations, $payload['assignee_id'] ?? null),
 
                     'tag' => $this->bulkTag($ids, $payload['tag_ids'] ?? []),
 
@@ -90,6 +84,79 @@ class BulkConversationsController extends Controller
                 'message' => 'No se pudo completar la operación. Por favor intenta de nuevo.',
             ], 500);
         }
+    }
+
+    /**
+     * Close each open conversation via the unit close() logic so status_id is set,
+     * then fire the close event + CSAT survey for parity with the individual action.
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkClose(Collection $conversations, BulkConversationsRequest $request): int
+    {
+        $count = 0;
+        $skipCsat = $request->boolean('skip_csat');
+
+        foreach ($conversations as $conversation) {
+            if ($conversation->closed_at !== null) {
+                continue;
+            }
+
+            $conversation->close();
+            ConversationClosed::dispatch($conversation);
+
+            if (! $skipCsat) {
+                try {
+                    app(CsatService::class)->dispatchForConversation($conversation);
+                } catch (\Throwable $e) {
+                    Log::warning('CSAT dispatch failed on bulk close', [
+                        'conversation_id' => $conversation->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Reopen each closed conversation via the unit reopen() logic so status_id is
+     * restored to an open status (not just closed_at cleared).
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkReopen(Collection $conversations): int
+    {
+        $count = 0;
+
+        foreach ($conversations as $conversation) {
+            if ($conversation->closed_at === null) {
+                continue;
+            }
+
+            $conversation->reopen();
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Assign each conversation via the unit assignTo() logic so the
+     * ConversationAssigned event/notification fires for parity with the individual action.
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkAssign(Collection $conversations, ?int $assigneeId): int
+    {
+        foreach ($conversations as $conversation) {
+            $conversation->assignTo($assigneeId);
+        }
+
+        return $conversations->count();
     }
 
     private function bulkTag(array $ids, array $tagIds): int
