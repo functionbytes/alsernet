@@ -30,7 +30,7 @@ class UpdateChatFlowRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
             'inbox_id' => ['nullable', 'exists:helpdesk_inboxes,id'],
-            'trigger_type' => ['sometimes', 'required', 'in:conversation_start,keyword,manual,no_agent'],
+            'trigger_type' => ['sometimes', 'required', 'in:conversation_start,keyword,manual,no_agent,intent'],
             'trigger_conditions' => ['nullable', 'array'],
             'trigger_conditions.keywords' => ['sometimes', 'array'],
             'trigger_conditions.keywords.*' => ['string', 'max:100'],
