@@ -120,98 +120,6 @@ class Ticket extends Model
     }
 
     /**
-     * Boot the model.
-     */
-    protected static function booted(): void
-    {
-        // Auto-generate ticket number
-        static::creating(function ($ticket) {
-            if (! $ticket->ticket_number) {
-                $ticket->ticket_number = static::generateTicketNumber();
-            }
-
-            // Set default status if not provided
-            if (! $ticket->status_id) {
-                $defaultStatus = Cache::remember('helpdesk:default-status', 3600, fn () => TicketStatus::where('is_default', true)->first());
-                if ($defaultStatus) {
-                    $ticket->status_id = $defaultStatus->id;
-                }
-            }
-        });
-
-        // Create TicketHistory on creation
-        static::created(function ($ticket) {
-            if ($ticket->sla_policy_id) {
-                $ticket->calculateSlaDueDates();
-            }
-
-            // Log initial creation
-            TicketHistory::logTicketCreated($ticket, auth()->user());
-        });
-
-        // Invalidate report cache on any ticket change
-        static::saved(function () {
-            Cache::forget('helpdesk:reports');
-        });
-
-        static::deleted(function () {
-            Cache::forget('helpdesk:reports');
-        });
-
-        // Track field changes and create TicketHistory records
-        static::updated(function ($ticket) {
-            $changes = $ticket->getDirty();
-
-            foreach ($changes as $field => $newValue) {
-                // Skip timestamp fields
-                if (in_array($field, ['updated_at', 'created_at', 'deleted_at'])) {
-                    continue;
-                }
-
-                $oldValue = $ticket->getOriginal($field);
-
-                // Handle status changes specially
-                if ($field === 'status_id' && $oldValue !== $newValue) {
-                    $statusIds = array_filter([$oldValue, $newValue]);
-                    $statuses = TicketStatus::whereIn('id', $statusIds)->get()->keyBy('id');
-                    $oldStatus = $statuses[$oldValue] ?? null;
-                    $newStatus = $statuses[$newValue] ?? null;
-
-                    if ($oldStatus && $newStatus) {
-                        TicketHistory::logStatusChange(
-                            $ticket,
-                            $oldStatus,
-                            $newStatus,
-                            auth()->user()
-                        );
-                    }
-                } elseif ($field === 'assignee_id') {
-                    // Handle assignment changes
-                    if ($newValue && ! $oldValue) {
-                        $ticket->loadMissing('assignee');
-                        TicketHistory::logAssigned(
-                            $ticket,
-                            auth()->user(),
-                            $ticket->assignee
-                        );
-                    } elseif (! $newValue && $oldValue) {
-                        TicketHistory::logUnassigned($ticket, auth()->user());
-                    }
-                } else {
-                    // Log generic field changes
-                    TicketHistory::logFieldChange(
-                        $ticket,
-                        $field,
-                        $oldValue,
-                        $newValue,
-                        auth()->user()
-                    );
-                }
-            }
-        });
-    }
-
-    /**
      * Generate unique ticket number (TCK-YYYY-#####)
      */
     public static function generateTicketNumber(): string
@@ -245,38 +153,12 @@ class Ticket extends Model
         return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
-    public function getCategoryAttribute($value)
-    {
-        if (! empty($this->attributes['category_id'])) {
-            if (! $this->relationLoaded('category')) {
-                $this->load('category');
-            }
-
-            return $this->getRelation('category');
-        }
-
-        return $value;
-    }
-
     /**
      * Get the status of this ticket
      */
     public function status(): BelongsTo
     {
         return $this->belongsTo(TicketStatus::class, 'status_id');
-    }
-
-    public function getStatusAttribute($value)
-    {
-        if (! empty($this->attributes['status_id'])) {
-            if (! $this->relationLoaded('status')) {
-                $this->load('status');
-            }
-
-            return $this->getRelation('status');
-        }
-
-        return $value;
     }
 
     /**
