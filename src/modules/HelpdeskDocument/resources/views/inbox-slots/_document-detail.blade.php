@@ -206,21 +206,21 @@
          data-doc-uid="{{ $docUid }}"
          data-url-panel="{{ route('manager.helpdesk.conversations.documents.panel', [$rpConvo, $docId]) }}"
          data-url-delete-file="{{ rtrim(route('manager.helpdesk.conversations.documents.files.destroy', [$rpConvo, $docId, '_TYPE_']), '/_TYPE_') }}"
-         data-url-upload="{{ route('api.documents.upload', $docUid) }}"
-         data-url-assign="{{ route('api.documents.assign', $docUid) }}"
-         data-url-approve="{{ route('api.documents.approve-stage', $docUid) }}"
-         data-url-reject="{{ route('api.documents.reject-stage', $docUid) }}"
-         data-url-send-notify="{{ route('api.documents.send-notification', $docUid) }}"
-         data-url-send-reminder="{{ route('api.documents.send-reminder', $docUid) }}"
-         data-url-send-upload-confirm="{{ route('api.documents.send-upload-confirmation', $docUid) }}"
-         data-url-send-approval="{{ route('api.documents.send-approval', $docUid) }}"
-         data-url-send-missing="{{ route('api.documents.send-missing', $docUid) }}"
-         data-url-send-rej-email="{{ route('api.documents.send-rejection', $docUid) }}"
-         data-url-send-custom="{{ route('api.documents.send-custom-email', $docUid) }}"
-         data-url-notes="{{ route('api.documents.notes.add', $docUid) }}"
-         data-url-upload-attach="{{ route('api.documents.upload-attachment', $docUid) }}"
-         data-url-delete-attach="{{ url('api/documents/'.$docUid.'/delete-attachment') }}"
-         data-url-update="{{ route('api.documents.update') }}"
+         data-url-upload="{{ route('manager.helpdesk.conversations.documents.upload', [$rpConvo, $docId]) }}"
+         data-url-assign="{{ route('manager.helpdesk.conversations.documents.assign', [$rpConvo, $docId]) }}"
+         data-url-approve="{{ route('manager.helpdesk.conversations.documents.approve-stage', [$rpConvo, $docId]) }}"
+         data-url-reject="{{ route('manager.helpdesk.conversations.documents.reject-stage', [$rpConvo, $docId]) }}"
+         data-url-send-notify="{{ route('manager.helpdesk.conversations.documents.send-notification', [$rpConvo, $docId]) }}"
+         data-url-send-reminder="{{ route('manager.helpdesk.conversations.documents.send-reminder', [$rpConvo, $docId]) }}"
+         data-url-send-upload-confirm="{{ route('manager.helpdesk.conversations.documents.send-upload-confirmation', [$rpConvo, $docId]) }}"
+         data-url-send-approval="{{ route('manager.helpdesk.conversations.documents.send-approval', [$rpConvo, $docId]) }}"
+         data-url-send-missing="{{ route('manager.helpdesk.conversations.documents.send-missing', [$rpConvo, $docId]) }}"
+         data-url-send-rej-email="{{ route('manager.helpdesk.conversations.documents.send-rejection', [$rpConvo, $docId]) }}"
+         data-url-send-custom="{{ route('manager.helpdesk.conversations.documents.send-custom-email', [$rpConvo, $docId]) }}"
+         data-url-notes="{{ route('manager.helpdesk.conversations.documents.notes.add', [$rpConvo, $docId]) }}"
+         data-url-upload-attach="{{ route('manager.helpdesk.conversations.documents.upload-attachment', [$rpConvo, $docId]) }}"
+         data-url-delete-attach="{{ rtrim(route('manager.helpdesk.conversations.documents.delete-attachment', [$rpConvo, $docId, '_MID_']), '/_MID_') }}"
+         data-url-update="{{ route('manager.helpdesk.conversations.documents.update', [$rpConvo, $docId]) }}"
          data-url-action-history="{{ route('api.documents.action-history', $docUid) }}"
          data-url-download-zip="{{ route('api.documents.download-zip', $docUid) }}">
 
@@ -452,7 +452,7 @@
                                         <a href="{{ $a['url'] }}" target="_blank" rel="noopener" class="docs-attach-link">{{ $a['name'] }}</a>
                                         <span class="docs-attach-meta">{{ $a['size_human'] }}</span>
                                         <button type="button" class="btn-icon docs-attach-del"
-                                                data-url="{{ url('api/documents/'.$docUid.'/delete-attachment/'.$a['id']) }}">
+                                                data-url="{{ route('manager.helpdesk.conversations.documents.delete-attachment', [$rpConvo, $docId, $a['id']]) }}">
                                             <i class="fas fa-xmark"></i>
                                         </button>
                                     </div>
@@ -570,7 +570,7 @@
                                     <div class="docs-note-header">
                                         <span class="docs-note-ts">{{ $n['ts'] }}</span>
                                         <button type="button" class="btn-icon docs-note-del"
-                                                data-url="{{ url('api/documents/'.$docUid.'/notes/'.$n['id']) }}">
+                                                data-url="{{ route('manager.helpdesk.conversations.documents.notes.delete', [$rpConvo, $docId, $n['id']]) }}">
                                             <i class="fas fa-xmark"></i>
                                         </button>
                                     </div>
