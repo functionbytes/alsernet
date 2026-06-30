@@ -25,6 +25,14 @@
                 <h5 class="fw-bold mb-1">{{ $chatFlow->name }}</h5>
                 <p class="small text-muted mb-0">Rendimiento del flow y puntos de abandono</p>
             </div>
+            <form method="GET" id="analytics-range-form" class="d-flex align-items-center gap-2 mb-0">
+                <label for="analytics-range" class="small text-muted mb-0">Periodo</label>
+                <select name="days" id="analytics-range" class="form-select form-select-sm w-auto">
+                    @foreach($range['options'] as $value => $label)
+                        <option value="{{ $value }}" @selected($range['days'] === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </form>
             <a href="{{ route('chatflow.sessions', $chatFlow) }}" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-list me-1"></i> Ver sesiones
             </a>
@@ -73,6 +81,76 @@
             </div>
         </div>
     </div>
+
+    {{-- A/B comparison --}}
+    @if($comparison)
+        @php
+            $a = $comparison['variants'][0];
+            $b = $comparison['variants'][1];
+            $abMetrics = [
+                ['label' => 'Sesiones', 'a' => $a['summary']['total'], 'b' => $b['summary']['total'], 'suffix' => '', 'higher_better' => true],
+                ['label' => 'Tasa de resolución', 'a' => $a['summary']['resolution_rate'], 'b' => $b['summary']['resolution_rate'], 'suffix' => '%', 'higher_better' => true],
+                ['label' => 'CSAT media', 'a' => $a['csat']['average'], 'b' => $b['csat']['average'], 'suffix' => '/' . $a['csat']['max'], 'higher_better' => true],
+                ['label' => '% Satisfacción', 'a' => $a['csat']['rate'], 'b' => $b['csat']['rate'], 'suffix' => '%', 'higher_better' => true],
+                ['label' => 'Autoservicio IA', 'a' => $a['ai']['rate'], 'b' => $b['ai']['rate'], 'suffix' => '%', 'higher_better' => true],
+                ['label' => 'Tasa de abandono', 'a' => $a['summary']['total'] > 0 ? round(($a['summary']['abandoned'] + $a['summary']['failed']) / $a['summary']['total'] * 100, 1) : 0.0, 'b' => $b['summary']['total'] > 0 ? round(($b['summary']['abandoned'] + $b['summary']['failed']) / $b['summary']['total'] * 100, 1) : 0.0, 'suffix' => '%', 'higher_better' => false],
+            ];
+        @endphp
+        <div class="card mb-3">
+            <div class="card-header p-4 border-bottom border-light">
+                <h6 class="mb-1 fw-bold"><i class="fas fa-flask me-2 text-primary"></i>Comparación A/B</h6>
+                <p class="small mb-0 text-muted">Variante A (este flow) frente a la variante B configurada · división {{ $comparison['split'] }}% al iniciar la conversación</p>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Métrica</th>
+                                <th class="text-end">
+                                    <span class="badge bg-primary me-1">A</span>{{ $a['flow']->name }}
+                                </th>
+                                <th class="text-end">
+                                    <span class="badge bg-secondary me-1">B</span>
+                                    <a href="{{ route('chatflow.analytics', [$b['flow'], 'days' => $range['days']]) }}">{{ $b['flow']->name }}</a>
+                                </th>
+                                <th class="text-end">Ganadora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($abMetrics as $metric)
+                                @php
+                                    if ($metric['a'] == $metric['b']) {
+                                        $winner = 'empate';
+                                    } elseif ($metric['higher_better']) {
+                                        $winner = $metric['a'] > $metric['b'] ? 'A' : 'B';
+                                    } else {
+                                        $winner = $metric['a'] < $metric['b'] ? 'A' : 'B';
+                                    }
+                                @endphp
+                                <tr>
+                                    <td class="fw-semibold">{{ $metric['label'] }}</td>
+                                    <td class="text-end {{ $winner === 'A' ? 'fw-bold text-success' : '' }}">{{ $metric['a'] }}{{ $metric['suffix'] }}</td>
+                                    <td class="text-end {{ $winner === 'B' ? 'fw-bold text-success' : '' }}">{{ $metric['b'] }}{{ $metric['suffix'] }}</td>
+                                    <td class="text-end">
+                                        @if($winner === 'empate')
+                                            <span class="badge bg-light text-dark border">Empate</span>
+                                        @else
+                                            <span class="badge bg-success">{{ $winner }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-0 mt-3">
+                    <i class="fas fa-circle-info me-1"></i>
+                    El abandono prioriza la variante con menor tasa; el resto, la de mayor valor. Las métricas respetan el periodo seleccionado.
+                </p>
+            </div>
+        </div>
+    @endif
 
     {{-- AI resolution --}}
     @if(($aiMetrics['used'] ?? 0) > 0)
@@ -205,6 +283,11 @@ $(document).ready(function () {
     // Width of each drop-off bar from data-rate (avoids inline styles)
     $('.progress-bar[data-rate]').each(function () {
         $(this).css('width', $(this).data('rate') + '%');
+    });
+
+    // Reload analytics for the selected period
+    $('#analytics-range').on('change', function () {
+        $('#analytics-range-form').trigger('submit');
     });
 });
 </script>

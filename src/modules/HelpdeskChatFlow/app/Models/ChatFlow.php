@@ -45,7 +45,7 @@ class ChatFlow extends Model
         ];
     }
 
-    const TRIGGER_TYPES = ['conversation_start', 'keyword', 'manual', 'no_agent'];
+    const TRIGGER_TYPES = ['conversation_start', 'keyword', 'manual', 'no_agent', 'intent'];
 
     const STATUSES = ['draft', 'active', 'archived'];
 
