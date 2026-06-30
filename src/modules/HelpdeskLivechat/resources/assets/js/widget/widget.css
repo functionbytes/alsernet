@@ -2953,6 +2953,31 @@
     flex-shrink: 0;
 }
 
+/* Quick reply chips — shown before the first message is sent */
+.wgt-quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px 4px;
+}
+
+.wgt-quick-reply-chip {
+    padding: 6px 14px;
+    border: 1.5px solid;
+    border-radius: 20px;
+    background: transparent;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.wgt-quick-reply-chip:hover {
+    background: currentColor;
+    color: #fff !important;
+    opacity: 0.85;
+}
+
 /* Queue position banner — shown while visitor is waiting for agent assignment */
 .wgt-queue-banner {
     padding: 6px 16px;

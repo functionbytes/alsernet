@@ -100,6 +100,7 @@ class WidgetController extends Controller
                     'message' => $config['welcome_message'],
                     'input_placeholder' => $config['input_placeholder'],
                     'queue_message' => $config['queue_message'],
+                    'quick_replies' => $config['quick_replies'] ?? [],
                 ],
 
                 // Launcher
