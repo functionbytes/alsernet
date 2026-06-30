@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\AI\AiClient;
+use Modules\Helpdesk\Services\AI\PromptSanitizer;
 use Modules\Helpdesk\Services\AI\SentimentService;
 use Modules\Helpdesk\Services\WhatsAppHsmService;
 use Modules\HelpdeskChatFlow\Console\Commands\ExpireInactiveSessionsCommand;
@@ -103,7 +104,15 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 ? $app->make(EmbeddingsService::class)
                 : null;
 
-            return new ChatFlowAiResponder($embeddings);
+            $aiClient = class_exists(AiClient::class)
+                ? $app->make(AiClient::class)
+                : null;
+
+            $sanitizer = class_exists(PromptSanitizer::class)
+                ? $app->make(PromptSanitizer::class)
+                : null;
+
+            return new ChatFlowAiResponder($embeddings, $aiClient, $sanitizer);
         });
 
         $this->app->bind(ChatFlowOrderLookup::class, function ($app) {
@@ -123,7 +132,15 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 ? $app->make(EmbeddingsService::class)
                 : null;
 
-            return new ChatFlowAgentService($app->make(ChatFlowOrderLookup::class), $embeddings);
+            $aiClient = class_exists(AiClient::class)
+                ? $app->make(AiClient::class)
+                : null;
+
+            $sanitizer = class_exists(PromptSanitizer::class)
+                ? $app->make(PromptSanitizer::class)
+                : null;
+
+            return new ChatFlowAgentService($app->make(ChatFlowOrderLookup::class), $embeddings, $aiClient, $sanitizer);
         });
 
         $this->app->bind(ChatFlowSentiment::class, function ($app) {

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskChatFlow\Jobs\DeliverBotMessageJob;
+use Modules\HelpdeskChatFlow\Jobs\ExecuteChatFlowNodeJob;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
 
@@ -50,29 +51,21 @@ class ConversationItemObserver
                 return;
             }
 
-            $session = $this->engine->getActiveSession($conversation);
+            // Offload the (potentially long-running: OpenAI, ERP/PS, http_request)
+            // flow work to the queue so the channel webhook returns immediately
+            // instead of blocking for tens of seconds. WithoutOverlapping on the job
+            // (keyed by conversation_id) preserves FIFO order between workers.
+            //
+            // The mode is a hint re-resolved at execution time: an active session
+            // means "process this reply", otherwise "trigger the start flow". The
+            // job self-corrects if the session state changed before it runs.
+            $mode = $this->engine->getActiveSession($conversation)
+                ? ExecuteChatFlowNodeJob::MODE_PROCESS
+                : ExecuteChatFlowNodeJob::MODE_TRIGGER;
 
-            if ($session) {
-                $attachments = $item->attachment_urls ?? [];
-                $this->engine->processMessage($session, $item->body ?? '', $attachments);
-
-                return;
-            }
-
-            $hasPriorCustomerMessage = ConversationItem::on('helpdesk')
-                ->where('conversation_id', $item->conversation_id)
-                ->where('type', 'message')
-                ->where('is_internal', false)
-                ->whereNull('user_id')
-                ->where('id', '<', $item->id)
-                ->whereJsonDoesntContain('metadata->sent_by_chatflow', true)
-                ->exists();
-
-            if (! $hasPriorCustomerMessage) {
-                $this->engine->triggerFor($conversation, 'conversation_start');
-            }
+            ExecuteChatFlowNodeJob::dispatch($item->conversation_id, $item->id, $mode);
         } catch (\Throwable $e) {
-            Log::error('ConversationItemObserver chatflow error', [
+            Log::error('ConversationItemObserver chatflow dispatch error', [
                 'item_id' => $item->id,
                 'error' => $e->getMessage(),
             ]);

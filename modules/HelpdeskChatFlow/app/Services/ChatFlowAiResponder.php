@@ -2,22 +2,37 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Services\AI\AiClient;
+use Modules\Helpdesk\Services\AI\PromptSanitizer;
 
 /**
  * Generates an AI answer for a chat flow node, optionally grounded on the
  * help center knowledge base (RAG). Reuses HelpdeskHelpcenter's
  * EmbeddingsService when the module is installed.
+ *
+ * All OpenAI traffic goes through the core {@see AiClient} gateway (single point
+ * for timeout/retry/observability), and untrusted text (customer message + KB
+ * chunks) is neutralized with the shared {@see PromptSanitizer} before it
+ * reaches the prompt.
  */
 class ChatFlowAiResponder
 {
+    private readonly ?AiClient $aiClient;
+
+    private readonly ?PromptSanitizer $sanitizer;
+
     /**
      * @param  object|null  $embeddings  HelpdeskHelpcenter EmbeddingsService (optional)
      */
     public function __construct(
         private readonly ?object $embeddings = null,
-    ) {}
+        ?AiClient $aiClient = null,
+        ?PromptSanitizer $sanitizer = null,
+    ) {
+        $this->aiClient = $aiClient ?? (class_exists(AiClient::class) ? new AiClient : null);
+        $this->sanitizer = $sanitizer ?? (class_exists(PromptSanitizer::class) ? new PromptSanitizer : null);
+    }
 
     /**
      * @param  array<string,mixed>  $data  Node data (instructions, use_knowledge_base, ...)
@@ -77,7 +92,7 @@ class ChatFlowAiResponder
         }
 
         $context = collect($relevant)
-            ->map(fn ($r) => '- '.trim($r['chunk_text'] ?? ''))
+            ->map(fn ($r) => '- '.$this->sanitize(trim($r['chunk_text'] ?? '')))
             ->implode("\n");
 
         $sources = array_map(fn ($r) => [
@@ -113,42 +128,37 @@ class ChatFlowAiResponder
         if ($context !== '') {
             $instructions .= "\n\nUtiliza ÚNICAMENTE la siguiente información del centro de ayuda para responder. "
                 ."Si la respuesta no está en esta información, dilo honestamente y ofrece pasar con un agente.\n\n"
-                ."=== Información del centro de ayuda ===\n{$context}";
+                ."=== Información del centro de ayuda ===\n{$context}\n=== Fin de la información ===";
+        }
+
+        // Reaffirm that everything coming from the customer/KB is data, never
+        // instructions (prompt-injection hardening, CFM-S4).
+        if ($this->sanitizer !== null) {
+            $instructions .= "\n\n".$this->sanitizer->systemGuard();
         }
 
         $model = $data['model'] ?? config('helpdeskchatflow.ai.model', 'gpt-4o-mini');
         $temperature = (float) ($data['temperature'] ?? config('helpdeskchatflow.ai.temperature', 0.3));
         $maxTokens = (int) config('helpdeskchatflow.ai.max_tokens', 500);
 
+        $userContent = $question !== '' ? $this->sanitize($question) : 'Hola';
+
         $messages = array_merge(
             [['role' => 'system', 'content' => $instructions]],
             $this->sanitizeHistory($history),
-            [['role' => 'user', 'content' => $question !== '' ? $question : 'Hola']],
+            [['role' => 'user', 'content' => $userContent]],
         );
 
-        try {
-            $response = Http::withToken($apiKey)
-                ->timeout(30)
-                ->retry(2, 500, throw: false)
-                ->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => $model,
-                    'temperature' => $temperature,
-                    'max_tokens' => $maxTokens,
-                    'messages' => $messages,
-                ]);
+        $message = $this->aiClient?->chatCompletion($messages, [
+            'model' => $model,
+            'temperature' => $temperature,
+            'max_tokens' => $maxTokens,
+            'timeout' => 30,
+            'retries' => 2,
+            'retry_delay' => 500,
+        ]);
 
-            if ($response->failed()) {
-                Log::warning('ChatFlowAiResponder: OpenAI call failed', ['status' => $response->status()]);
-
-                return null;
-            }
-
-            return $response->json('choices.0.message.content');
-        } catch (\Throwable $e) {
-            Log::warning('ChatFlowAiResponder: exception calling OpenAI', ['error' => $e->getMessage()]);
-
-            return null;
-        }
+        return is_array($message) ? ($message['content'] ?? null) : null;
     }
 
     /**
@@ -177,33 +187,36 @@ class ChatFlowAiResponder
             .'El usuario escribió un mensaje libre. Devuelve SOLO el número de la opción que mejor '
             ."coincide con su intención, o 0 si ninguna coincide con claridad.\n\nOpciones:\n{$list}";
 
-        try {
-            $response = Http::withToken($apiKey)
-                ->timeout(15)
-                ->retry(1, 300, throw: false)
-                ->post('https://api.openai.com/v1/chat/completions', [
-                    'model' => config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
-                    'temperature' => 0,
-                    'max_tokens' => 5,
-                    'messages' => [
-                        ['role' => 'system', 'content' => $system],
-                        ['role' => 'user', 'content' => $message],
-                    ],
-                ]);
+        $response = $this->aiClient?->chatCompletion([
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => $this->sanitize($message)],
+        ], [
+            'model' => config('helpdeskchatflow.ai.model', 'gpt-4o-mini'),
+            'temperature' => 0,
+            'max_tokens' => 5,
+            'timeout' => 15,
+            'retries' => 1,
+            'retry_delay' => 300,
+        ]);
 
-            if ($response->failed()) {
-                return null;
-            }
-
-            preg_match('/\d+/', (string) $response->json('choices.0.message.content'), $m);
-            $num = isset($m[0]) ? (int) $m[0] : 0;
-
-            return ($num >= 1 && $num <= count($options)) ? $num : null;
-        } catch (\Throwable $e) {
-            Log::warning('ChatFlowAiResponder: classifyIntent failed', ['error' => $e->getMessage()]);
-
+        if (! is_array($response)) {
             return null;
         }
+
+        preg_match('/\d+/', (string) ($response['content'] ?? ''), $m);
+        $num = isset($m[0]) ? (int) $m[0] : 0;
+
+        return ($num >= 1 && $num <= count($options)) ? $num : null;
+    }
+
+    /**
+     * Neutralize untrusted text (customer message / KB chunk) against prompt
+     * injection before it is embedded into the prompt. No-op when the shared
+     * sanitizer is unavailable, so behaviour degrades gracefully.
+     */
+    private function sanitize(string $text): string
+    {
+        return $this->sanitizer?->sanitize($text) ?? $text;
     }
 
     /**
