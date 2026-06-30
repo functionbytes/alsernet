@@ -323,11 +323,6 @@
         });
 
         // ─── Tabs panel derecho ──────────────────────────────────────
-        // Inicializar tooltips Bootstrap en los tabs del panel derecho
-        document.querySelectorAll('.bv-right-tab[data-bs-toggle="tooltip"]').forEach(el => {
-            new bootstrap.Tooltip(el, { trigger: 'hover' });
-        });
-
         // Ocultar tabs que solo tienen estado vacío (sin contenido real)
         function syncRightTabVisibility() {
             document.querySelectorAll('.bv-right-tab-content[data-bv-tab-content]').forEach(function (content) {
@@ -352,7 +347,6 @@
             const erpHidden = $('.bv-right-tab[data-bv-tab^="erp-"]').toArray().every(b => b.style.display === 'none');
             $sep.toggle(!(psHidden && erpHidden));
         }
-        syncRightTabVisibility();
 
         // Helpers rtab URL
         function setRtabUrl(tab) {
@@ -379,13 +373,26 @@
             setRtabUrl(target);
         }, true);
 
-        // Restaurar tab activo desde URL al cargar
-        (function () {
+        // Inicializa/re-inicializa los tabs del panel derecho: tooltips, visibilidad
+        // y restauración del tab activo (rtab). Se ejecuta al cargar la página y de
+        // nuevo tras cada swap de pane (SPA) porque ese markup se inyecta sin scripts.
+        function initRightPanelTabs() {
+            document.querySelectorAll('.bv-right-tab[data-bs-toggle="tooltip"]').forEach(function (el) {
+                try {
+                    if (!bootstrap.Tooltip.getInstance(el)) {
+                        new bootstrap.Tooltip(el, { trigger: 'hover' });
+                    }
+                } catch (_) {}
+            });
+            syncRightTabVisibility();
             const rtab = getRtabFromUrl();
-            if (!rtab) { return; }
-            const $target = $(`[data-bv-tab="${rtab}"]`);
-            if ($target.length) { $target[0].click(); }
-        })();
+            if (rtab) {
+                const $target = $(`[data-bv-tab="${rtab}"]`);
+                if ($target.length) { $target[0].click(); }
+            }
+        }
+        window.bvInitRightPanelTabs = initRightPanelTabs;
+        initRightPanelTabs();
 
         // ─── Tabs composer ───────────────────────────────────────────
         $(document).on('click', '.bv-composer-tab', function () {
@@ -742,6 +749,96 @@
             refreshInboxList(next, { force: true });
         });
 
+        // ─── Apertura SPA de la conversación (sin recargar la página) ────
+        // Carga el pane (thread + right-panel) por AJAX y lo intercambia en su
+        // sitio. Si algo falla cae al comportamiento anterior (full reload) para
+        // no dejar nunca la bandeja en un estado roto.
+        let bvPaneToken = 0;
+
+        function loadConversationPane(convId, fallbackUrl, opts) {
+            convId = parseInt(convId, 10);
+            opts = opts || {};
+            const pushHistory = opts.push !== false;
+
+            if (!convId) {
+                if (fallbackUrl) { window.location.href = fallbackUrl; }
+                return;
+            }
+
+            const token = ++bvPaneToken;
+            const paneUrl = '/panel/helpdesk/conversations/' + convId + '/pane';
+            $('.bv-thread').addClass('bv-pane-loading');
+
+            $.ajax({
+                url: paneUrl,
+                method: 'GET',
+                dataType: 'html',
+                timeout: 15000,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            }).done(function (html) {
+                // Un click posterior ya disparó otra carga: descartar esta respuesta.
+                if (token !== bvPaneToken) { return; }
+                try {
+                    // parseHTML elimina los <script>, así que la inyección nunca
+                    // re-ejecuta handlers ni duplica listeners de document.
+                    const $resp = $('<div>').append($.parseHTML(html, document, false));
+                    const $newThread = $resp.find('.bv-thread').first();
+                    const $newRight = $resp.find('.bv-right').first();
+                    const $newOverlay = $resp.find('#hdCannedOverlay').first();
+
+                    if (!$newThread.length || !$newRight.length) {
+                        throw new Error('pane markup incompleto');
+                    }
+
+                    $('.bv-thread').replaceWith($newThread);
+
+                    // El overlay de respuestas rápidas es hermano del thread.
+                    $('#hdCannedOverlay').remove();
+                    if ($newOverlay.length) { $newThread.after($newOverlay); }
+
+                    $('.bv-right').replaceWith($newRight);
+
+                    // Re-init de los tabs del panel derecho (tooltips/visibilidad/rtab).
+                    if (typeof initRightPanelTabs === 'function') { initRightPanelTabs(); }
+
+                    // Re-suscripción Reverb + typing + borrador + mark-read del hilo.
+                    if (typeof window.bvBindConversation === 'function') {
+                        window.bvBindConversation(convId);
+                    }
+
+                    if (pushHistory) {
+                        try {
+                            const u = new URL(window.location.href);
+                            u.searchParams.set('selected', convId);
+                            history.pushState({ bvSelected: convId }, '', u.toString());
+                        } catch (_) {}
+                    }
+
+                    scrollThreadToBottom(false);
+
+                    // Permite a otros scripts re-inicializar slots inyectados.
+                    const ev = { conversationId: convId };
+                    document.dispatchEvent(new CustomEvent('pane:loaded', { detail: ev }));
+                    window.dispatchEvent(new CustomEvent('pane:loaded', { detail: ev }));
+                } catch (err) {
+                    console.error('[Inbox] pane swap failed, full reload fallback:', err);
+                    if (fallbackUrl) { window.location.href = fallbackUrl; }
+                }
+            }).fail(function (xhr) {
+                if (token !== bvPaneToken) { return; }
+                console.warn('[Inbox] pane load failed, full reload fallback:', xhr && xhr.status);
+                if (fallbackUrl) { window.location.href = fallbackUrl; }
+                else { window.location.reload(); }
+            }).always(function () {
+                $('.bv-thread').removeClass('bv-pane-loading');
+            });
+        }
+        window.bvLoadConversationPane = loadConversationPane;
+
         // ─── Click en item de la lista ───────────────────────────────
         $(document).on('click', '.bv-conv', function (e) {
             // Ignorar clicks en checkbox o botones de acciones rápidas
@@ -749,20 +846,33 @@
 
             const $conv = $(this);
             const url = $conv.data('bv-conv-url');
+            const convId = $conv.data('bv-conv-id');
 
-            $conv.siblings('.bv-conv').removeClass('on');
+            // Solo uno activo en toda la lista (los items están agrupados).
+            $('.bv-conv').removeClass('on');
             $conv.addClass('on').removeClass('unread');
 
             // Auto-switch to thread tab on mobile/tablet
-            if (window.innerWidth < 1024 && url) {
+            if (window.innerWidth < 1024) {
                 $('.conversations').attr('data-bv-mobile-tab', 'thread');
                 $('.bv-mobile-tab').removeClass('on');
                 $('[data-bv-mobile-tab="thread"]').addClass('on');
             }
 
-            if (url) {
+            if (convId) {
+                loadConversationPane(convId, url);
+            } else if (url) {
                 window.location.href = url;
             }
+        });
+
+        // ─── Atrás / adelante del navegador ──────────────────────────
+        window.addEventListener('popstate', function () {
+            const sel = parseInt(new URLSearchParams(window.location.search).get('selected') || '0', 10);
+            if (!sel) { return; }
+            $('.bv-conv').removeClass('on');
+            $('.bv-conv[data-bv-conv-id="' + sel + '"]').addClass('on');
+            loadConversationPane(sel, '/panel/helpdesk/conversations?selected=' + sel, { push: false });
         });
 
         // ─── Mobile bottom tabs ───────────────────────────────────────

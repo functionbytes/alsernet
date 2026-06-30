@@ -71,7 +71,7 @@ class ConversationsController extends Controller
 {
     public function __construct(private ConversationTagService $tagService)
     {
-        $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'listJson', 'kanban', 'emailLogIndex', 'emailLogShow']);
+        $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'pane', 'listJson', 'kanban', 'emailLogIndex', 'emailLogShow']);
         $this->middleware('can:helpdesk.conversations.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.conversations.update')->only([
             'edit', 'update', 'close', 'reopen', 'archive', 'unarchive',
@@ -337,27 +337,11 @@ class ConversationsController extends Controller
 
         $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
 
-        // Solo cargamos los últimos ~50 items del hilo (los más recientes). El
-        // resto se pagina por AJAX vía olderItems(). customer.externalIds se
-        // eager-loadea aquí para que el right-panel no dispare una carga lazy.
-        $selectedConversation = $selectedId
-            ? Conversation::query()
-                ->with([
-                    'customer.externalIds', 'status', 'assignee', 'conversationTags',
-                    'items' => fn ($q) => $q->latest('id')->limit(50),
-                ])
-                ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
-                ->find($selectedId)
-            : null;
-
-        // La vista renderiza los items en orden ascendente; reinvertimos la
-        // subconsulta latest()->limit(50) para conservar ese orden.
-        if ($selectedConversation) {
-            $selectedConversation->setRelation(
-                'items',
-                $selectedConversation->items->sortBy('id')->values()
-            );
-        }
+        // Carga del hilo seleccionado + borrador del composer. Compartido con el
+        // endpoint pane() para que el cambio de conversación vía SPA renderice
+        // exactamente lo mismo que una carga de página completa.
+        $pane = $this->buildConversationPaneData($selectedId, $userInboxIds);
+        $selectedConversation = $pane['selectedConversation'];
 
         $inboxGroups = $conversations->getCollection()
             ->groupBy(function (Conversation $c): string {
@@ -379,9 +363,7 @@ class ConversationsController extends Controller
             })
             ->map(fn ($items) => $items->map(fn ($c) => $c->toInboxArray($selectedId))->values()->all());
 
-        $composerDraft = $selectedConversation?->drafts()
-            ->where('user_id', auth()->id())
-            ->first();
+        $composerDraft = $pane['composerDraft'];
 
         // Conteo de conversaciones abiertas por agente: un único GROUP BY
         // cacheado (antes era una subconsulta correlacionada por fila de users).
@@ -422,6 +404,76 @@ class ConversationsController extends Controller
             'selectedConversationId' => $selectedId,
             'selectedConversation' => $selectedConversation,
             'composerDraft' => $composerDraft,
+        ]);
+    }
+
+    /**
+     * Build the data that the thread + right-panel partials need for a selected
+     * conversation. Shared by index() (full page) and pane() (SPA swap) so both
+     * render identically.
+     *
+     * Only the latest ~50 thread items are eager-loaded (older items paginate via
+     * olderItems()); customer.externalIds is eager-loaded so the right panel does
+     * not trigger a lazy load. Items are re-sorted ascending because the view
+     * renders them oldest-first.
+     *
+     * @param  int[]|null  $userInboxIds  null = unrestricted (helpdesk.manage)
+     * @return array{selectedConversation: ?Conversation, composerDraft: mixed}
+     */
+    private function buildConversationPaneData(?int $selectedId, ?array $userInboxIds): array
+    {
+        $selectedConversation = $selectedId
+            ? Conversation::query()
+                ->with([
+                    'customer.externalIds', 'status', 'assignee', 'conversationTags',
+                    'items' => fn ($q) => $q->latest('id')->limit(50),
+                ])
+                ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+                ->find($selectedId)
+            : null;
+
+        if ($selectedConversation) {
+            $selectedConversation->setRelation(
+                'items',
+                $selectedConversation->items->sortBy('id')->values()
+            );
+        }
+
+        $composerDraft = $selectedConversation?->drafts()
+            ->where('user_id', auth()->id())
+            ->first();
+
+        return [
+            'selectedConversation' => $selectedConversation,
+            'composerDraft' => $composerDraft,
+        ];
+    }
+
+    /**
+     * Render the thread + right-panel HTML for a single conversation. Consumed by
+     * the inbox SPA navigation: the frontend swaps these two columns in place
+     * (no full page reload) when the agent opens or switches conversations.
+     *
+     * Falls back gracefully on the client — if this request fails the inbox
+     * reverts to a full navigation to ?selected={id}.
+     */
+    public function pane(Conversation $conversation): View
+    {
+        $this->authorize('view', $conversation);
+
+        $userInboxIds = $this->getUserInboxIds();
+
+        abort_if(
+            $userInboxIds !== null && ! in_array($conversation->inbox_id, $userInboxIds, true),
+            403
+        );
+
+        $pane = $this->buildConversationPaneData($conversation->id, $userInboxIds);
+
+        return view('helpdesk::helpdesk.inbox.partials.pane', [
+            'selectedConversation' => $pane['selectedConversation'],
+            'selectedConversationId' => $conversation->id,
+            'composerDraft' => $pane['composerDraft'],
         ]);
     }
 

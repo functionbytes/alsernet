@@ -14062,3 +14062,31 @@ textarea.bv-form-input { resize: vertical; }
 .bv-rv-opt__radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bv-border, #e4e4e7); flex-shrink: 0; transition: border-color .12s, background .12s; }
 .bv-rv-opt.on .bv-rv-opt__radio { border-color: var(--bv-primary, #90bb13); background: var(--bv-primary, #90bb13); box-shadow: inset 0 0 0 3px #fff; }
 
+/* ── SPA pane loading state (cambio de conversación sin recargar) ───── */
+.bv-thread.bv-pane-loading {
+    position: relative;
+    pointer-events: none;
+}
+.bv-thread.bv-pane-loading > * {
+    opacity: .45;
+    transition: opacity .12s ease;
+}
+.bv-thread.bv-pane-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+    border: 3px solid var(--bv-border, #e4e4e7);
+    border-top-color: var(--bv-primary, #90bb13);
+    border-radius: 50%;
+    opacity: 1;
+    animation: bv-pane-spin .7s linear infinite;
+    z-index: 5;
+}
+@keyframes bv-pane-spin {
+    to { transform: rotate(360deg); }
+}
+
