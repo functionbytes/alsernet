@@ -228,6 +228,34 @@ class WidgetConversationController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function queuePosition(Request $request, string $id): JsonResponse
+    {
+        $conversation = $this->authorizeConversation($request, $id);
+
+        if (! $conversation) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        if ($conversation->assignee_id !== null) {
+            return response()->json([
+                'success' => true,
+                'data' => ['position' => 0, 'is_assigned' => true],
+            ]);
+        }
+
+        $position = Conversation::query()
+            ->where('inbox_id', $conversation->inbox_id)
+            ->whereNull('assignee_id')
+            ->whereHas('status', fn ($q) => $q->where('is_open', true))
+            ->where('id', '<', $conversation->id)
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => ['position' => $position + 1, 'is_assigned' => false],
+        ]);
+    }
+
     public function markAsRead(MarkAsReadRequest $request, string $id): JsonResponse
     {
         $conversation = $this->authorizeConversation($request, $id);
