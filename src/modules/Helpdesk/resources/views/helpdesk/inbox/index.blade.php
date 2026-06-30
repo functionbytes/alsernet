@@ -580,153 +580,27 @@
     })();
     </script>
 
-    @if($selectedConversationId ?? false)
+    {{-- Suscripción Reverb + typing + borrador por conversación. Antes vivía
+         acoplada a la conversación inicial; ahora se expone como
+         window.bvBindConversation(convId) para que conversations.js la vuelva a
+         enlazar tras cada cambio de conversación SPA (sin recargar la página).
+         Los handlers de document van namespaced con .bvconv y se reenganchan en
+         cada bind para no duplicarse; los canales Echo anteriores se abandonan. --}}
     <script>
-    $(document).ready(function () {
-        if (typeof window.Echo === 'undefined') {
-            return;
-        }
-
-        var convId = {{ (int) $selectedConversationId }};
-        var myId = parseInt(document.querySelector('meta[name="user-id"]')?.content || '0', 10);
-        var channel = window.Echo.private('helpdesk.conversation.' + convId);
-
-        // Mark conversation as read on the server (creates read records, sends
-        // "seen" receipt to FB/IG, broadcasts message_read to other agents) and
-        // clear the unread badge in the sidebar locally.
-        (function markConversationReadOnOpen() {
-            $.ajax({
-                url: "{{ url('/panel/helpdesk/conversations') }}/" + convId + "/mark-read",
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                },
-            }).done(function () {
-                // Clear unread badge in sidebar for this conversation
-                const $item = $('.bv-conv[data-bv-conv-id="' + convId + '"]');
-                $item.removeClass('unread');
-                $item.find('.bv-conv-unread').remove();
-            }).fail(function (xhr) {
-                console.warn('[Inbox] mark-read failed:', xhr.status);
-            });
-        })();
-
-        channel.listen('.item.created', function (e) {
-            // El payload viene envuelto en { message: {...} } desde broadcastWith()
-            const msg = e.message || e;
-
-            // Si el mensaje lo envió el propio agente, ya está pintado por la UI optimista
-            if (msg.user_id && parseInt(msg.user_id, 10) === myId) return;
-
-            const isCustomerMessage = !msg.user_id && msg.author_id;
-            const item = {
-                id: msg.id,
-                body: msg.body,
-                attachment_urls: msg.attachment_urls || [],
-                attachments: msg.attachments || [],
-                metadata: msg.metadata || {},
-                is_internal: !!msg.is_internal,
-                is_incoming: !!isCustomerMessage,
-                author: msg.sender_name || (isCustomerMessage ? 'Cliente' : 'Tú'),
-                time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                avatar: msg.sender_avatar,
-            };
-
-            if (typeof window.appendBubbleToThread === 'function') {
-                window.appendBubbleToThread(item, !!msg.is_internal);
-            }
-
-            // UI-05: anunciar el mensaje entrante en la live-region oculta.
-            if (typeof window.bvAnnounce === 'function') {
-                window.bvAnnounce('Nuevo mensaje de ' + (item.author || 'cliente'));
-            }
-
-            // Same broadcast also carries delivery/read updates for outbound
-            // messages: when the customer reads our reply, we get an updated
-            // item with metadata.customer_read_at filled.
-            const meta = msg.metadata || {};
-            if (msg.user_id && (meta.customer_read_at || meta.customer_delivered_at)) {
-                const $bubble = $('.bv-bubble[data-bv-item-id="' + msg.id + '"]');
-                if ($bubble.length) {
-                    const $chk = $bubble.find('.bv-chk-read, .chk');
-                    if (meta.customer_read_at) {
-                        $chk.removeClass('chk-delivered').addClass('chk-read').addClass('text-primary');
-                    } else if (meta.customer_delivered_at) {
-                        $chk.addClass('chk-delivered');
-                    }
-                }
-            }
-
-            // Render customer reactions (e.g. ❤️) on agent-sent bubbles.
-            if (msg.user_id && Array.isArray(meta.customer_reactions) && meta.customer_reactions.length) {
-                const $bubble = $('.bv-bubble[data-bv-item-id="' + msg.id + '"]');
-                if ($bubble.length) {
-                    const emoji = meta.customer_reactions[0].emoji || '❤️';
-                    let $r = $bubble.find('.bv-bubble-reaction');
-                    if (!$r.length) {
-                        $r = $('<span class="bv-bubble-reaction"></span>');
-                        $bubble.append($r);
-                    }
-                    $r.text(emoji);
-                }
-            }
-
-            window.dispatchEvent(new CustomEvent('inbox:incoming-message', { detail: msg }));
-
-            // Push notification for per-conversation listener (agent on page, tab hidden)
-            if (isCustomerMessage && document.visibilityState === 'hidden') {
-                const conv = e.conversation || {};
-                const customerName = conv.customer_name || 'Nuevo mensaje';
-                const preview = (msg.body || '').slice(0, 100);
-                if (typeof window.showInboxPushNotif === 'function') {
-                    window.showInboxPushNotif(convId, customerName, preview, msg.sender_avatar || null);
-                }
-            }
-        });
-
-        // ─── Typing indicator: peer (Echo whisper) + customer (Meta API) ────
+    (function () {
+        var currentConvId = null;
+        var convChannel = null;
         var typingTimeout = null;
+        var typingHideTimer = null;
         var lastTypingPing = 0;
         var lastTypingState = false;
 
-        function postTypingState(isTyping) {
-            if (lastTypingState === isTyping) return;
-            lastTypingState = isTyping;
-            $.ajax({
-                url: "{{ url('/panel/helpdesk/conversations') }}/" + convId + "/typing",
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content },
-                data: { is_typing: isTyping ? 1 : 0 },
-            });
+        function csrf() {
+            return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         }
-
-        $(document).on('input', '.bv-composer-input', function () {
-            var now = Date.now();
-            // Throttle network/whisper traffic: max 1 ping every 2s while typing.
-            if (now - lastTypingPing >= 2000) {
-                lastTypingPing = now;
-                if (channel && channel.whisper) {
-                    channel.whisper('typing', { user_id: myId, is_typing: true });
-                }
-                postTypingState(true);
-            }
-
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(function () {
-                if (channel && channel.whisper) {
-                    channel.whisper('typing', { user_id: myId, is_typing: false });
-                }
-                postTypingState(false);
-            }, 3000);
-        });
-
-        // Stop typing the moment the message is sent.
-        $(document).on('bv:message:sent', function () {
-            clearTimeout(typingTimeout);
-            postTypingState(false);
-        });
-
-        var typingHideTimer = null;
+        function myId() {
+            return parseInt(document.querySelector('meta[name="user-id"]')?.content || '0', 10);
+        }
 
         function showTypingIndicator() {
             var $ind = $('#bv-typing-ind');
@@ -740,44 +614,201 @@
             typingHideTimer = setTimeout(function () { $ind.hide(); }, 4000);
         }
 
-        // Typing entre agentes (whisper)
-        channel.listenForWhisper('typing', function (e) {
-            if (!e || parseInt(e.user_id, 10) === myId) return;
-            if (e.is_typing) {
-                showTypingIndicator();
-            } else {
-                clearTimeout(typingHideTimer);
-                $('#bv-typing-ind').hide();
-            }
-        });
+        function postTypingState(isTyping) {
+            if (!currentConvId || lastTypingState === isTyping) return;
+            lastTypingState = isTyping;
+            $.ajax({
+                url: '/panel/helpdesk/conversations/' + currentConvId + '/typing',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf() },
+                data: { is_typing: isTyping ? 1 : 0 },
+            });
+        }
 
-        // Typing del cliente desde el widget
-        window.Echo.private('helpdesk.conversation.' + convId + '.typing')
-            .listen('.typing', function () {
-                showTypingIndicator();
+        // Abandona los canales y handlers de la conversación previa.
+        window.bvUnbindConversation = function () {
+            if (typeof window.Echo !== 'undefined' && window.Echo && currentConvId) {
+                try { window.Echo.leave('helpdesk.conversation.' + currentConvId); } catch (_) {}
+                try { window.Echo.leave('helpdesk.conversation.' + currentConvId + '.typing'); } catch (_) {}
+            }
+            $(document).off('.bvconv');
+            clearTimeout(typingTimeout);
+            clearTimeout(typingHideTimer);
+            $('#bv-typing-ind').hide();
+            lastTypingState = false;
+            lastTypingPing = 0;
+            convChannel = null;
+            currentConvId = null;
+        };
+
+        window.bvBindConversation = function (convId) {
+            convId = parseInt(convId, 10);
+            if (!convId) return;
+
+            window.bvUnbindConversation();
+            currentConvId = convId;
+
+            if (typeof window.Echo === 'undefined' || !window.Echo) return;
+
+            // Marcar como leída + limpiar el badge en la lista.
+            $.ajax({
+                url: '/panel/helpdesk/conversations/' + convId + '/mark-read',
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrf() },
+            }).done(function () {
+                var $item = $('.bv-conv[data-bv-conv-id="' + convId + '"]');
+                $item.removeClass('unread');
+                $item.find('.bv-conv-unread').remove();
+            }).fail(function (xhr) {
+                console.warn('[Inbox] mark-read failed:', xhr.status);
             });
 
-        // ─── Autosave borrador del composer en localStorage ──────────
-        var draftKey = 'bv:draft:' + convId;
-        var $composer = $('.bv-composer-input');
-        var saved = localStorage.getItem(draftKey);
-        if (saved && !$composer.val()) {
-            $composer.val(saved);
-            $composer[0]?.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        $(document).on('input', '.bv-composer-input', function () {
-            var val = $(this).val();
-            if (val && val.trim()) localStorage.setItem(draftKey, val);
-            else localStorage.removeItem(draftKey);
+            convChannel = window.Echo.private('helpdesk.conversation.' + convId);
+
+            convChannel.listen('.item.created', function (e) {
+                // El payload viene envuelto en { message: {...} } desde broadcastWith()
+                const msg = e.message || e;
+
+                // Si el mensaje lo envió el propio agente, ya está pintado por la UI optimista
+                if (msg.user_id && parseInt(msg.user_id, 10) === myId()) return;
+
+                const isCustomerMessage = !msg.user_id && msg.author_id;
+                const item = {
+                    id: msg.id,
+                    body: msg.body,
+                    attachment_urls: msg.attachment_urls || [],
+                    attachments: msg.attachments || [],
+                    metadata: msg.metadata || {},
+                    is_internal: !!msg.is_internal,
+                    is_incoming: !!isCustomerMessage,
+                    author: msg.sender_name || (isCustomerMessage ? 'Cliente' : 'Tú'),
+                    time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    avatar: msg.sender_avatar,
+                };
+
+                if (typeof window.appendBubbleToThread === 'function') {
+                    window.appendBubbleToThread(item, !!msg.is_internal);
+                }
+
+                // UI-05: anunciar el mensaje entrante en la live-region oculta.
+                if (typeof window.bvAnnounce === 'function') {
+                    window.bvAnnounce('Nuevo mensaje de ' + (item.author || 'cliente'));
+                }
+
+                // Same broadcast also carries delivery/read updates for outbound
+                // messages: when the customer reads our reply, we get an updated
+                // item with metadata.customer_read_at filled.
+                const meta = msg.metadata || {};
+                if (msg.user_id && (meta.customer_read_at || meta.customer_delivered_at)) {
+                    const $bubble = $('.bv-bubble[data-bv-item-id="' + msg.id + '"]');
+                    if ($bubble.length) {
+                        const $chk = $bubble.find('.bv-chk-read, .chk');
+                        if (meta.customer_read_at) {
+                            $chk.removeClass('chk-delivered').addClass('chk-read').addClass('text-primary');
+                        } else if (meta.customer_delivered_at) {
+                            $chk.addClass('chk-delivered');
+                        }
+                    }
+                }
+
+                // Render customer reactions (e.g. ❤️) on agent-sent bubbles.
+                if (msg.user_id && Array.isArray(meta.customer_reactions) && meta.customer_reactions.length) {
+                    const $bubble = $('.bv-bubble[data-bv-item-id="' + msg.id + '"]');
+                    if ($bubble.length) {
+                        const emoji = meta.customer_reactions[0].emoji || '❤️';
+                        let $r = $bubble.find('.bv-bubble-reaction');
+                        if (!$r.length) {
+                            $r = $('<span class="bv-bubble-reaction"></span>');
+                            $bubble.append($r);
+                        }
+                        $r.text(emoji);
+                    }
+                }
+
+                window.dispatchEvent(new CustomEvent('inbox:incoming-message', { detail: msg }));
+
+                // Push notification for per-conversation listener (agent on page, tab hidden)
+                if (isCustomerMessage && document.visibilityState === 'hidden') {
+                    const conv = e.conversation || {};
+                    const customerName = conv.customer_name || 'Nuevo mensaje';
+                    const preview = (msg.body || '').slice(0, 100);
+                    if (typeof window.showInboxPushNotif === 'function') {
+                        window.showInboxPushNotif(convId, customerName, preview, msg.sender_avatar || null);
+                    }
+                }
+            });
+
+            // ─── Typing indicator: peer (Echo whisper) + customer (Meta API) ────
+            $(document).on('input.bvconv', '.bv-composer-input', function () {
+                var now = Date.now();
+                // Throttle network/whisper traffic: max 1 ping every 2s while typing.
+                if (now - lastTypingPing >= 2000) {
+                    lastTypingPing = now;
+                    if (convChannel && convChannel.whisper) {
+                        convChannel.whisper('typing', { user_id: myId(), is_typing: true });
+                    }
+                    postTypingState(true);
+                }
+
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(function () {
+                    if (convChannel && convChannel.whisper) {
+                        convChannel.whisper('typing', { user_id: myId(), is_typing: false });
+                    }
+                    postTypingState(false);
+                }, 3000);
+            });
+
+            // Stop typing the moment the message is sent.
+            $(document).on('bv:message:sent.bvconv', function () {
+                clearTimeout(typingTimeout);
+                postTypingState(false);
+            });
+
+            // Typing entre agentes (whisper)
+            convChannel.listenForWhisper('typing', function (e) {
+                if (!e || parseInt(e.user_id, 10) === myId()) return;
+                if (e.is_typing) {
+                    showTypingIndicator();
+                } else {
+                    clearTimeout(typingHideTimer);
+                    $('#bv-typing-ind').hide();
+                }
+            });
+
+            // Typing del cliente desde el widget
+            window.Echo.private('helpdesk.conversation.' + convId + '.typing')
+                .listen('.typing', function () {
+                    showTypingIndicator();
+                });
+
+            // ─── Autosave borrador del composer en localStorage ──────────
+            var draftKey = 'bv:draft:' + convId;
+            var $composer = $('.bv-composer-input');
+            var saved = localStorage.getItem(draftKey);
+            if (saved && !$composer.val()) {
+                $composer.val(saved);
+                $composer[0]?.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            $(document).on('input.bvconv', '.bv-composer-input', function () {
+                var val = $(this).val();
+                if (val && val.trim()) localStorage.setItem(draftKey, val);
+                else localStorage.removeItem(draftKey);
+            });
+            // Limpiar borrador tras envío exitoso
+            $(document).on('bv:message:sent.bvconv', function () {
+                localStorage.removeItem(draftKey);
+                $('.bv-composer-input').val('');
+            });
+        };
+
+        $(document).ready(function () {
+            @if($selectedConversationId ?? false)
+            window.bvBindConversation({{ (int) $selectedConversationId }});
+            @endif
         });
-        // Limpiar borrador tras envío exitoso
-        $(document).on('bv:message:sent', function () {
-            localStorage.removeItem(draftKey);
-            $composer.val('');
-        });
-    });
+    })();
     </script>
-    @endif
 
     {{-- Supervisor toma el control de una conversación que atiende el bot --}}
     <script>
