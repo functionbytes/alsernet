@@ -1007,3 +1007,245 @@
 }
 .docs-mail-subject { font-size: 12px; font-weight: 500; color: var(--docs-text); }
 .docs-mail-ts { font-size: 10.5px; color: var(--docs-text-muted); }
+
+/* ── Búsqueda y orden en la lista de expedientes ─────────────── */
+.tk-search-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px 4px;
+}
+.tk-search-wrap {
+    flex: 1;
+    position: relative;
+}
+.tk-search-icon {
+    position: absolute;
+    left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    pointer-events: none;
+}
+.tk-search-input {
+    width: 100%;
+    padding: 8px 28px 8px 30px;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--docs-text);
+    background: #fafafa;
+    outline: none;
+    font-family: inherit;
+}
+.tk-search-input:focus {
+    border-color: var(--docs-primary);
+    box-shadow: 0 0 0 3px rgba(144,187,19,.14);
+}
+
+/* ── Barra de progreso en tarjeta de expediente ──────────────── */
+.docs-list-progress {
+    height: 3px;
+    background: var(--docs-bg-subtle);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 2px 0;
+}
+.docs-list-progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .3s ease;
+}
+
+/* ── Footer del modal en fila ────────────────────────────────── */
+.docs-foot[style*="flex-direction:row"] {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+}
+.docs-foot[style*="flex-direction:row"] .btn {
+    width: auto;
+    white-space: nowrap;
+}
+
+/* ── Workspace side panel tabs ───────────────────────────────── */
+.docs-ws-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--docs-bg-subtle);
+    border-bottom: 1px solid var(--docs-border);
+    padding: 6px 6px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.docs-ws-tabs::-webkit-scrollbar { display: none; }
+.docs-ws-tab {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    border: none;
+    background: transparent;
+    color: var(--docs-text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0;
+    border-bottom: 2px solid transparent;
+    transition: color .12s, border-color .12s;
+    line-height: 1;
+}
+.docs-ws-tab:hover { color: var(--docs-text); }
+.docs-ws-tab.on {
+    color: var(--docs-text);
+    border-bottom-color: var(--docs-primary);
+    background: #fff;
+}
+.docs-ws-pane {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    padding: 12px;
+}
+.docs-ws-pane.on { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.docs-ws-pane-scroll { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+
+/* ── Gallery toolbar (filtros + acciones) ────────────────────── */
+.docs-gallery-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.docs-gallery-filters { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.docs-gallery-actions { display: flex; gap: 4px; }
+
+/* ── Side panel: tab pane overflow para el flex container ────── */
+.docs-vd-side {
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden;
+}
+
+/* ── Lista de expedientes: contenedor con posición relativa ───── */
+.docs-list-view { position: relative; }
+
+/* ── Tarjeta de expediente ────────────────────────────────────── */
+.docs-list-card {
+    border-left-width: 1px !important;
+    gap: 7px;
+    padding: 11px 13px;
+}
+.docs-card-header { display: flex; align-items: flex-start; gap: 8px; }
+.docs-card-info   { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.docs-card-desc   {
+    font-size: 11.5px;
+    color: var(--bv-text-soft, #3f3f46);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.docs-card-prog       { display: flex; align-items: center; gap: 8px; margin-top: 1px; }
+.docs-card-prog-track { flex: 1; height: 5px; border-radius: 99px; background: var(--bv-bg-subtle, #f4f4f5); overflow: hidden; }
+.docs-card-prog-fill  { height: 100%; border-radius: 99px; }
+.docs-card-docs-lbl   { font-size: 10px; color: var(--bv-text-muted, #71717a); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.docs-list-card .foot { border-top: 1px solid var(--bv-border, #e4e4e7); padding-top: 7px; margin-top: 1px; }
+.docs-list-card .title { font-size: 13px; }
+.docs-list-card .id { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.docs-card-time { margin-left: auto; }
+
+/* ── Sort dropdown del listado ────────────────────────────────── */
+.sort-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 10px;
+}
+.sort-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--docs-text-muted);
+    letter-spacing: .01em;
+}
+.sort-dd {
+    position: relative;
+    margin-left: auto;
+}
+.sort-trigger {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--docs-text);
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: border-color .12s, box-shadow .12s;
+}
+.sort-trigger:hover { border-color: #cdd3da; }
+.sort-trigger.open {
+    border-color: var(--docs-primary);
+    box-shadow: 0 0 0 3px rgba(144,187,19,.14);
+}
+.sort-trigger i.lead { font-size: 10.5px; color: var(--docs-primary); }
+.sort-trigger i.chev {
+    font-size: 9px;
+    color: var(--docs-text-muted);
+    transition: transform .15s;
+    margin-left: 1px;
+}
+.sort-trigger.open i.chev { transform: rotate(180deg); }
+.sort-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+}
+.sort-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px -8px rgba(16,24,40,.22), 0 2px 6px rgba(16,24,40,.06);
+    padding: 5px;
+    animation: sort-pop .13s ease;
+}
+@keyframes sort-pop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+.sort-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--docs-text);
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 9px;
+    cursor: pointer;
+    text-align: left;
+}
+.sort-item:hover { background: var(--docs-bg-subtle); }
+.sort-item.sel { color: #4f6e0c; font-weight: 600; }
+.sort-item .ck { width: 14px; display: flex; justify-content: center; font-size: 10px; color: var(--docs-primary); }
+.sort-item .ico { width: 15px; display: flex; justify-content: center; font-size: 11px; color: var(--docs-text-muted); }
+.sort-item.sel .ico { color: var(--docs-primary); }
+.sort-item-lbl { flex: 1; }

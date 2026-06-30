@@ -206,7 +206,8 @@
             "Modules\\Seo\\Tests\\": "Modules/Seo/tests/",
             "Modules\\Captcha\\Tests\\": "modules/Captcha/tests/",
             "Modules\\HelpdeskErp\\Tests\\": "modules/HelpdeskErp/tests/",
-            "Modules\\Erp\\Tests\\": "modules/Erp/tests/"
+            "Modules\\Erp\\Tests\\": "modules/Erp/tests/",
+            "Modules\\HelpdeskDocument\\Tests\\": "modules/HelpdeskDocument/tests/"
         },
         "files": [
             "modules/Core/app/Helpers/Helper.php"
