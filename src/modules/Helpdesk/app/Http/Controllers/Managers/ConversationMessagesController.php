@@ -4,7 +4,6 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationMessageRead;
@@ -12,6 +11,7 @@ use Modules\Helpdesk\Events\ConversationUserTyping;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Http\Requests\BroadcastTypingRequest;
 use Modules\Helpdesk\Http\Requests\StoreConversationMessageRequest;
+use Modules\Helpdesk\Jobs\SendOutboundMessageJob;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
@@ -100,43 +100,27 @@ class ConversationMessagesController extends Controller
             $conversation->update(['first_response_at' => now()]);
         }
 
-        // Send to the customer via the channel API (Facebook/Instagram/WhatsApp).
+        // Send to the customer via the channel API (Facebook/Instagram/WhatsApp)
+        // off the request thread: the Graph/WhatsApp clients use 15s timeouts with
+        // retries and would otherwise hold a PHP-FPM worker for the whole call.
         // Text first, then each attachment as a separate API call (Meta requires
-        // one attachment per message).
+        // one attachment per message). The external id is correlated back onto the
+        // item inside the job once it returns.
         if (! $item->is_internal && $this->outbound->supports($conversation)) {
-            try {
-                $bodyText = (string) $item->body;
-                $externalId = null;
+            $outboundAttachments = array_map(fn ($att) => [
+                'type' => $att['type'] ?? 'file',
+                'url' => $this->absoluteUrl((string) $att['url']),
+                'name' => $att['name'] ?? null,
+            ], $attachmentUrls);
 
-                if (filled($bodyText)) {
-                    $externalId = $this->outbound->sendReply($conversation, $bodyText);
-                }
+            $bodyText = (string) $item->body;
 
-                foreach ($attachmentUrls as $att) {
-                    $absUrl = $this->absoluteUrl((string) $att['url']);
-                    $attExternalId = $this->outbound->sendAttachment(
-                        $conversation,
-                        $att['type'] ?? 'file',
-                        $absUrl,
-                        null,
-                        $att['name'] ?? null,
-                    );
-                    // Use the first available external id so we can correlate later.
-                    $externalId = $externalId ?: $attExternalId;
-                }
-
-                if ($externalId) {
-                    $item->external_id = $externalId;
-                    $item->save();
-                }
-            } catch (\Throwable $e) {
-                Log::error('Outbound send threw exception', [
-                    'conversation_id' => $conversation->id,
-                    'channel' => $conversation->channel,
-                    'item_id' => $item->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            SendOutboundMessageJob::dispatch(
+                $conversation->id,
+                $item->id,
+                filled($bodyText) ? $bodyText : null,
+                $outboundAttachments,
+            );
         }
 
         // Single broadcast reaches both the open thread channel and the global
