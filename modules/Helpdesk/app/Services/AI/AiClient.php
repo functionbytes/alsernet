@@ -49,6 +49,72 @@ class AiClient
         }
     }
 
+    /**
+     * Low-level chat completion for callers that need full control over the
+     * request payload (temperature, max_tokens, tool definitions) and that gate
+     * the API key themselves. Returns the decoded `choices.0.message` array (so
+     * tool_calls survive for agent loops) or null on failure. Centralizes the
+     * OpenAI transport + observability for the ChatFlow AI services (gateway,
+     * ARCH-02), preserving each caller's existing model/temperature/timeout.
+     *
+     * Reads the canonical `services.openai.key` (falling back to the legacy
+     * `services.openai.api_key`) so existing, working callers are not regressed.
+     *
+     * @param  array<int, array<string,mixed>>  $messages
+     * @param  array{model?: string, temperature?: float|int, max_tokens?: int, tools?: array<int, array<string,mixed>>, timeout?: int, retries?: int, retry_delay?: int}  $options
+     * @return array<string,mixed>|null
+     */
+    public function chatCompletion(array $messages, array $options = []): ?array
+    {
+        $apiKey = config('services.openai.key') ?: config('services.openai.api_key');
+
+        if (empty($apiKey)) {
+            return null;
+        }
+
+        $payload = [
+            'model' => $options['model'] ?? config('services.openai.chat_model', 'gpt-4o-mini'),
+            'messages' => $messages,
+        ];
+
+        if (array_key_exists('temperature', $options)) {
+            $payload['temperature'] = $options['temperature'];
+        }
+
+        if (array_key_exists('max_tokens', $options)) {
+            $payload['max_tokens'] = $options['max_tokens'];
+        }
+
+        if (! empty($options['tools'])) {
+            $payload['tools'] = $options['tools'];
+        }
+
+        try {
+            $request = Http::withToken($apiKey)->timeout((int) ($options['timeout'] ?? 30));
+
+            $retries = (int) ($options['retries'] ?? 0);
+            if ($retries > 0) {
+                $request = $request->retry($retries, (int) ($options['retry_delay'] ?? 0), throw: false);
+            }
+
+            $response = $request->post(self::API_URL, $payload);
+
+            if ($response->failed()) {
+                Log::warning('AiClient: chatCompletion failed', ['status' => $response->status()]);
+
+                return null;
+            }
+
+            $message = $response->json('choices.0.message');
+
+            return is_array($message) ? $message : null;
+        } catch (\Throwable $e) {
+            Log::warning('AiClient: chatCompletion exception', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
     public function transcribe(string $absolutePath): ?string
     {
         if (! $this->isEnabled()) {
