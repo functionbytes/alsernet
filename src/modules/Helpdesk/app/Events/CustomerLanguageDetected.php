@@ -2,16 +2,16 @@
 
 namespace Modules\Helpdesk\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Modules\Helpdesk\Concerns\BroadcastsToWidgetConversation;
 use Modules\Helpdesk\Models\Conversation;
 
 class CustomerLanguageDetected implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public readonly Conversation $conversation,
@@ -20,9 +20,9 @@ class CustomerLanguageDetected implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [
-            new Channel('helpdesk-widget-conversation.'.$this->conversation->id),
-        ];
+        return array_values(array_filter([
+            $this->widgetConversationChannel($this->conversation),
+        ]));
     }
 
     public function broadcastAs(): string

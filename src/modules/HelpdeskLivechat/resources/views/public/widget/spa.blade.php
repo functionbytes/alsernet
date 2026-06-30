@@ -33,19 +33,9 @@
     </style>
 </head>
 <body>
-    @php
-        $widgetConfig = array_merge($config ?? [], [
-            'reverbKey' => config('broadcasting.connections.reverb.key', 'local-key'),
-            'reverbHost' => config('broadcasting.connections.reverb.options.host', request()->getHost()),
-            'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
-            'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', request()->isSecure() ? 'https' : 'http'),
-            'channelPrefix' => 'helpdesk-widget-conversation',
-            'eventName' => '.message.received',
-            'baseUrl' => url('/'),
-        ]);
-    @endphp
     {{-- Always inject config: even in preview (without token) the widget needs reverbHost/Port and baseUrl. --}}
-    <script>window.HELPDESK_WIDGET_CONFIG = {!! json_encode($widgetConfig) !!};</script>
+    {{-- $widgetConfig is built server-side in WidgetController::index (connectable Reverb host). --}}
+    <script>window.HELPDESK_WIDGET_CONFIG = {!! json_encode($widgetConfig ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!};</script>
 
     <div id="widget-root" data-launcher="false" data-preview="{{ ($isPreview ?? false) ? 'true' : 'false' }}" data-inline="{{ ($isPreview ?? false) ? 'false' : 'true' }}"></div>
 

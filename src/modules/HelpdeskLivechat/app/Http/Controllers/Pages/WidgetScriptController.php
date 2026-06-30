@@ -7,10 +7,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
+use Modules\HelpdeskLivechat\Concerns\ResolvesReverbHost;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 
 class WidgetScriptController extends Controller
 {
+    use ResolvesReverbHost;
+
     /**
      * Serve the embed loader JS, prepending window.HELPDESK_WIDGET_CONFIG.
      * GET /widget/helpdesk/script/{websiteToken}
@@ -77,21 +80,5 @@ class WidgetScriptController extends Controller
                 'eventName' => '.message.received',
             ]
         );
-    }
-
-    /**
-     * The configured Reverb host is the *bind* address (commonly 0.0.0.0 / ::),
-     * which a browser cannot connect to. Fall back to the request host so the
-     * widget's WebSocket targets a reachable hostname instead of failing.
-     */
-    private function connectableReverbHost(): string
-    {
-        $host = (string) config('broadcasting.connections.reverb.options.host', '');
-
-        if ($host === '' || in_array($host, ['0.0.0.0', '::', '[::]'], true)) {
-            return request()->getHost();
-        }
-
-        return $host;
     }
 }

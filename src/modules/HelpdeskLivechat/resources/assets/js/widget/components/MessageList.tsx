@@ -15,6 +15,7 @@ interface MessageListProps {
     showAvatars?: boolean;
     primaryColor?: string;
     avatarInitial?: string;
+    agentTyping?: boolean;
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     onOpenLightbox: (url: string) => void;
     onLoadMore: () => void;
@@ -31,6 +32,7 @@ export function MessageList({
     showAvatars,
     primaryColor,
     avatarInitial,
+    agentTyping,
     messagesEndRef,
     onOpenLightbox,
     onLoadMore,
@@ -99,6 +101,27 @@ export function MessageList({
             {recommendations.length > 0 && (
                 <div className="wgt-message-row wgt-fade-in">
                     <RecommendationsCard products={recommendations} primaryColor={primaryColor} />
+                </div>
+            )}
+
+            {agentTyping && (
+                <div className="wgt-message-row wgt-fade-in" role="status" aria-live="polite">
+                    {showAvatars && (
+                        <div
+                            className="wgt-avatar wgt-fw-semibold wgt-text-sm"
+                            style={{ backgroundColor: primaryColor }}
+                            aria-hidden="true"
+                        >
+                            {avatarInitial}
+                        </div>
+                    )}
+                    <div className="wgt-bubble-wrap is-agent">
+                        <div className="wgt-bubble is-agent wgt-typing-bubble" aria-label="El agente está escribiendo">
+                            <span className="wgt-typing-dot" />
+                            <span className="wgt-typing-dot" />
+                            <span className="wgt-typing-dot" />
+                        </div>
+                    </div>
                 </div>
             )}
 

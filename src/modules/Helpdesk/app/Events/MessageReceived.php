@@ -8,12 +8,13 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Modules\Helpdesk\Concerns\BroadcastsToWidgetConversation;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 
 class MessageReceived implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $conversation;
 
@@ -38,16 +39,16 @@ class MessageReceived implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        return [
-            // Public channel for the Helpdesk widget (no auth required)
-            new Channel('helpdesk-widget-conversation.'.$this->conversation->id),
-
-            // Backwards-compatible public channel
-            new Channel('conversation.'.$this->conversation->id),
+        return array_values(array_filter([
+            // Token-guarded public channel for the Helpdesk widget (no auth endpoint required).
+            // Replaces the former token-less `helpdesk-widget-conversation.{id}` and the
+            // equally public `conversation.{id}` channel, both of which leaked agent replies
+            // to anyone enumerating sequential conversation ids (SEC-LC-01).
+            $this->widgetConversationChannel($this->conversation),
 
             // Private channel for helpdesk agents (auth required)
             new PrivateChannel('helpdesk.conversations'),
-        ];
+        ]));
     }
 
     /**

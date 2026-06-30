@@ -85,6 +85,8 @@ export function ConversationScreen() {
         hasMoreMessages,
         isLoadingMore,
         isReconnecting,
+        agentTyping,
+        connectionStatus,
         messagesEndRef,
         loadMoreMessages,
         scheduleMarkAsRead,
@@ -333,6 +335,7 @@ export function ConversationScreen() {
             <ConversationHeader
                 title={settings.header_title}
                 primaryColor={settings.primary_color}
+                connectionStatus={connectionStatus}
                 showMenu={showMenu}
                 onToggleMenu={() => setShowMenu(s => !s)}
                 onCloseConversation={handleCloseConversation}
@@ -377,6 +380,7 @@ export function ConversationScreen() {
                 showAvatars={settings.show_avatars}
                 primaryColor={settings.primary_color}
                 avatarInitial={settings.header_title?.charAt(0) || 'A'}
+                agentTyping={agentTyping}
                 messagesEndRef={messagesEndRef}
                 onOpenLightbox={openLightbox}
                 onLoadMore={loadMoreMessages}

@@ -1,9 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import type { ConnectionStatus } from '../hooks/useConversationMessages';
+
+const CONNECTION_LABELS: Record<ConnectionStatus, string> = {
+    online: 'En línea',
+    connecting: 'Conectando…',
+    reconnecting: 'Reconectando…',
+    offline: 'Sin conexión',
+};
 
 interface ConversationHeaderProps {
     title?: string;
     primaryColor?: string;
+    connectionStatus?: ConnectionStatus;
     showMenu: boolean;
     onToggleMenu: () => void;
     onCloseConversation: () => void;
@@ -21,6 +30,7 @@ interface ConversationHeaderProps {
 export function ConversationHeader({
     title,
     primaryColor,
+    connectionStatus = 'online',
     showMenu,
     onToggleMenu,
     onCloseConversation,
@@ -54,8 +64,8 @@ export function ConversationHeader({
                         {title || 'Support Team'}
                     </div>
                     <div className="wgt-row-center wgt-gap-1 wgt-text-xs wgt-text-muted">
-                        <span className="wgt-online-dot" />
-                        <span>Online</span>
+                        <span className={`wgt-online-dot is-${connectionStatus}`} />
+                        <span>{CONNECTION_LABELS[connectionStatus]}</span>
                     </div>
                 </div>
             </div>
