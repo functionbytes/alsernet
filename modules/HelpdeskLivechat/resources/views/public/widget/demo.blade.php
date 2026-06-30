@@ -26,7 +26,7 @@
             overflow: hidden;
         }
         .demo-header {
-            background: linear-gradient(135deg, {{ $config['widgetColor'] ?? '#90bb13' }} 0%, {{ $config['widgetColor'] ?? '#90bb13' }}dd 100%);
+            background: linear-gradient(135deg, {{ $config['primary_color'] ?? '#90bb13' }} 0%, {{ $config['primary_color'] ?? '#90bb13' }}dd 100%);
             color: white;
             padding: 40px;
             text-align: center;
@@ -47,7 +47,7 @@
             background: #f7fafc;
             padding: 18px;
             border-radius: 8px;
-            border-left: 4px solid {{ $config['widgetColor'] ?? '#90bb13' }};
+            border-left: 4px solid {{ $config['primary_color'] ?? '#90bb13' }};
         }
         .config-item h3 {
             font-size: 0.85rem;
@@ -105,11 +105,11 @@
                         </div>
                         <div class="config-item">
                             <h3>Color</h3>
-                            <p style="color: {{ $config['widgetColor'] ?? '#90bb13' }}">{{ $config['widgetColor'] ?? '#90bb13' }}</p>
+                            <p style="color: {{ $config['primary_color'] ?? '#90bb13' }}">{{ $config['primary_color'] ?? '#90bb13' }}</p>
                         </div>
                         <div class="config-item">
                             <h3>Pre-chat form</h3>
-                            <p>{{ ($config['preChatFormEnabled'] ?? false) ? 'Enabled' : 'Disabled' }}</p>
+                            <p>{{ ($config['pre_chat_form_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}</p>
                         </div>
                     </div>
                 </div>

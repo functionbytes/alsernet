@@ -1,6 +1,40 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { echo, onWsStateChange } from '../echo';
-import { apiUrl, conversationAuthHeaders } from '../api';
+import { echo, onWsStateChange, getWsState, type WsConnectionState } from '../echo';
+import { apiUrl, conversationAuthHeaders, getConversationToken } from '../api';
+
+export type ConnectionStatus = 'online' | 'connecting' | 'reconnecting' | 'offline';
+
+/** Map a raw pusher-js connection state to a user-facing widget status. */
+function toConnectionStatus(state: WsConnectionState): ConnectionStatus {
+    switch (state) {
+        case 'connected':
+            return 'online';
+        case 'disconnected':
+        case 'unavailable':
+            return 'reconnecting';
+        case 'failed':
+            return 'offline';
+        default:
+            return 'connecting';
+    }
+}
+
+/**
+ * Build the token-guarded realtime channel name for a conversation.
+ *
+ * The channel name embeds the conversation's `widget_pubsub_token` so it is
+ * cryptographically unguessable even though the conversation id is sequential
+ * (closes the websocket IDOR — see routes/channels.php). Falls back to the
+ * legacy token-less name only when no token is stored yet (no active
+ * conversation, hence no data to leak).
+ */
+function widgetChannelName(conversationId: string): string {
+    const token = getConversationToken();
+
+    return token
+        ? `helpdesk-widget-conversation.${conversationId}.${token}`
+        : `helpdesk-widget-conversation.${conversationId}`;
+}
 
 export interface MessageAttachment {
     url: string;
@@ -78,6 +112,8 @@ interface UseConversationMessagesReturn {
     hasMoreMessages: boolean;
     isLoadingMore: boolean;
     isReconnecting: boolean;
+    agentTyping: boolean;
+    connectionStatus: ConnectionStatus;
     messagesEndRef: React.RefObject<HTMLDivElement | null>;
     loadMoreMessages: () => Promise<void>;
     scheduleMarkAsRead: (messageId: string) => void;
@@ -108,9 +144,14 @@ export function useConversationMessages({
     const [nextCursor, setNextCursor] = useState<number | null>(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [isReconnecting, setIsReconnecting] = useState(false);
+    const [agentTyping, setAgentTyping] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(
+        () => toConnectionStatus(getWsState())
+    );
 
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const agentTypingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const readBatchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastReadMessageIdRef = useRef<string | null>(null);
 
@@ -167,9 +208,10 @@ export function useConversationMessages({
     useEffect(() => {
         if (!conversationId) return;
 
-        echo.leaveChannel(`helpdesk-widget-conversation.${conversationId}`);
+        const channelName = widgetChannelName(conversationId);
+        echo.leaveChannel(channelName);
 
-        const channel = echo.channel(`helpdesk-widget-conversation.${conversationId}`)
+        const channel = echo.channel(channelName)
             .listen('.message.received', (event: any) => {
                 if (event?.sender?.type && /Customer/i.test(event.sender.type)) return;
 
@@ -224,6 +266,9 @@ export function useConversationMessages({
 
                 if (!isUpdateOnly) {
                     playNotificationSound();
+                    // An incoming agent message ends the typing indicator.
+                    if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
+                    setAgentTyping(false);
                 }
 
                 if (conversationId && event.created_at) {
@@ -242,10 +287,24 @@ export function useConversationMessages({
                 if (lang && typeof lang === 'string') {
                     document.body.setAttribute('data-lang', lang);
                 }
+            })
+            .listen('.UserTyping', (event: any) => {
+                if (!typingIndicatorEnabled) return;
+
+                const isTyping = event?.is_typing !== false;
+                if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
+                setAgentTyping(isTyping);
+
+                // Auto-clear in case no follow-up "stopped"/message event arrives.
+                if (isTyping) {
+                    agentTypingTimerRef.current = setTimeout(() => setAgentTyping(false), 5000);
+                }
             });
 
         return () => {
-            echo.leaveChannel(`helpdesk-widget-conversation.${conversationId}`);
+            if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
+            setAgentTyping(false);
+            echo.leaveChannel(channelName);
         };
     // scheduleMarkAsRead is stable (useCallback with stable deps)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,7 +365,11 @@ export function useConversationMessages({
     }, [customerId, customerEmail]);
 
     useEffect(() => {
+        setConnectionStatus(toConnectionStatus(getWsState()));
+
         const unsubscribe = onWsStateChange((current, previous) => {
+            setConnectionStatus(toConnectionStatus(current));
+
             const wasDown = previous === 'disconnected' || previous === 'unavailable';
             if (current === 'connected') {
                 setIsReconnecting(false);
@@ -350,6 +413,7 @@ export function useConversationMessages({
     useEffect(() => {
         return () => {
             if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+            if (agentTypingTimerRef.current) clearTimeout(agentTypingTimerRef.current);
             if (readBatchTimerRef.current) clearTimeout(readBatchTimerRef.current);
         };
     }, []);
@@ -390,6 +454,8 @@ export function useConversationMessages({
         hasMoreMessages,
         isLoadingMore,
         isReconnecting,
+        agentTyping,
+        connectionStatus,
         messagesEndRef,
         loadMoreMessages,
         scheduleMarkAsRead,

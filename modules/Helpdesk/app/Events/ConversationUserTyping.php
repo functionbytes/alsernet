@@ -3,17 +3,17 @@
 namespace Modules\Helpdesk\Events;
 
 use App\Models\User;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Modules\Helpdesk\Concerns\BroadcastsToWidgetConversation;
 use Modules\Helpdesk\Models\Conversation;
 
 class ConversationUserTyping implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use BroadcastsToWidgetConversation, Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public Conversation $conversation,
@@ -23,10 +23,10 @@ class ConversationUserTyping implements ShouldBroadcast
 
     public function broadcastOn(): array
     {
-        return [
+        return array_values(array_filter([
             new PrivateChannel('conversations.'.$this->conversation->id),
-            new Channel('helpdesk-widget-conversation.'.$this->conversation->id),
-        ];
+            $this->widgetConversationChannel($this->conversation),
+        ]));
     }
 
     public function broadcastWith(): array

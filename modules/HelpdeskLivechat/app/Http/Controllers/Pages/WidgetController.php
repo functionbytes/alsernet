@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskLivechat\Concerns\ResolvesReverbHost;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 
 class WidgetController extends Controller
 {
+    use ResolvesReverbHost;
+
     /**
      * Render the SPA widget mountpoint.
      * Routes: /hd/widget and /hd/widget/{any}
@@ -28,11 +31,24 @@ class WidgetController extends Controller
             }
         }
 
+        // Reverb settings resolved server-side so the widget always receives a
+        // browser-connectable host (the configured value may be a bind address).
+        $widgetConfig = array_merge($config, [
+            'reverbKey' => config('broadcasting.connections.reverb.key', 'local-key'),
+            'reverbHost' => $this->connectableReverbHost(),
+            'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
+            'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', $request->isSecure() ? 'https' : 'http'),
+            'channelPrefix' => 'helpdesk-widget-conversation',
+            'eventName' => '.message.received',
+            'baseUrl' => url('/'),
+        ]);
+
         return view('helpdesklivechat::public.widget.spa', [
             'isPreview' => $isPreview,
             'websiteToken' => $websiteToken,
             'webWidget' => $webWidget,
             'config' => $config,
+            'widgetConfig' => $widgetConfig,
         ]);
     }
 
@@ -113,7 +129,7 @@ class WidgetController extends Controller
                     'helpcenter' => $config['show_help_center'],
                     'pre_chat_form' => $config['pre_chat_form_enabled'],
                     'post_chat_form' => $config['post_chat_form_enabled'],
-                    'offline_message' => $config['offlineMessageEnabled'],
+                    'offline_message' => $config['offline_message_enabled'],
                     'show_timestamps' => $config['show_timestamps'],
                     'typing_indicator' => $config['typing_indicator'],
                     'sound_notifications' => $config['sound_notifications'],
@@ -122,7 +138,7 @@ class WidgetController extends Controller
 
                 // Offline
                 'offline' => [
-                    'enabled' => $config['offlineMessageEnabled'],
+                    'enabled' => $config['offline_message_enabled'],
                     'message' => $config['offline_message'],
                 ],
 
@@ -130,7 +146,7 @@ class WidgetController extends Controller
                 'forms' => [
                     'pre_chat_enabled' => $config['pre_chat_form_enabled'],
                     'pre_chat_info' => $config['pre_chat_info'],
-                    'pre_chat_options' => $config['preChatFormOptions'],
+                    'pre_chat_options' => $config['pre_chat_form_options'],
                     'post_chat_enabled' => $config['post_chat_form_enabled'],
                     'post_chat_info' => $config['post_chat_info'],
                 ],
@@ -147,11 +163,11 @@ class WidgetController extends Controller
 
                 // Business hours
                 'business_hours' => [
-                    'enabled' => ! empty($config['businessHours']),
-                    'schedule' => $config['businessHours'],
+                    'enabled' => ! empty($config['business_hours']),
+                    'schedule' => $config['business_hours'],
                 ],
 
-                'reply_time' => $config['replyTime'],
+                'reply_time' => $config['reply_time'],
             ],
         ]);
     }

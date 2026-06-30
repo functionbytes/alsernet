@@ -64,6 +64,11 @@ export function onWsStateChange(
     return () => conn.unbind('state_change', wrappedHandler);
 }
 
+/** Current WebSocket connection state (read synchronously). */
+export function getWsState(): WsConnectionState {
+    return echo.connector.pusher.connection.state as WsConnectionState;
+}
+
 echo.connector.pusher.connection.bind('connected', () => {
     if (import.meta.env.DEV) {
         console.log(`✅ Connected to Reverb @ ${reverbScheme}://${reverbHost}:${reverbPort}`);

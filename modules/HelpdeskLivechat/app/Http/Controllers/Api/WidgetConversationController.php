@@ -182,6 +182,7 @@ class WidgetConversationController extends Controller
 
         $conversation = Conversation::with([
             'customer',
+            'inbox.channel',
             'items' => fn ($q) => $q->with(['user:id,firstname,lastname', 'author:id,name,email'])
                 ->where('is_internal', false)
                 ->orderBy('created_at'),
@@ -192,9 +193,7 @@ class WidgetConversationController extends Controller
         }
 
         // Verify that email transcripts are enabled for this inbox's Web channel.
-        $web = Web::query()
-            ->whereHas('inbox', fn ($q) => $q->where('id', $conversation->inbox_id))
-            ->first();
+        $web = $this->resolveWebForConversation($conversation);
 
         if (! $web?->enable_email_transcripts) {
             return response()->json(['error' => 'Email transcripts are not enabled'], 403);
@@ -299,12 +298,24 @@ class WidgetConversationController extends Controller
      */
     private function fileUploadEnabled(Conversation $conversation): bool
     {
-        $web = Web::query()
-            ->whereHas('inbox', fn ($q) => $q->where('id', $conversation->inbox_id))
-            ->first();
+        $web = $this->resolveWebForConversation($conversation);
 
         // Default to allowed when no channel row is found (legacy/edge), but
         // deny explicitly when the admin has turned the flag off.
         return ! $web || (bool) $web->enable_file_upload;
+    }
+
+    /**
+     * Resolve the Web channel that owns the conversation's inbox.
+     *
+     * Uses the conversation's own `inbox.channel` relationship — authoritative
+     * for that conversation — instead of an extra `whereHas('inbox')` lookup.
+     * Eager-load `inbox.channel` on the conversation to avoid extra queries.
+     */
+    private function resolveWebForConversation(Conversation $conversation): ?Web
+    {
+        $channel = $conversation->inbox?->channel;
+
+        return $channel instanceof Web ? $channel : null;
     }
 }
