@@ -946,13 +946,11 @@ class ChatFlowEngine
     {
         if (in_array($node['type'], ['quick_replies', 'rich_message'], true)) {
             // Match option label to a child node's label; fall back to first child
-            $matchingChild = collect($session->chatFlow->runtimeNodes())
-                ->filter(fn ($n) => ($n['parentId'] ?? null) === $node['id']
-                    && ($n['type'] ?? '') !== 'branchItem'
-                    && ($n['label'] ?? '') === $message)
-                ->first();
-
-            return $matchingChild['id'] ?? $this->getFirstChildId($session, $node['id']);
+            foreach ($session->chatFlow->childrenByParent()[$node['id']] ?? [] as $child) {
+                if (($child['label'] ?? '') === $message) {
+                    return $child['id'];
+                }
+            }
         }
 
         return $this->getFirstChildId($session, $node['id']);
@@ -960,11 +958,6 @@ class ChatFlowEngine
 
     private function getFirstChildId(ChatFlowSession $session, string $parentId): ?string
     {
-        $child = collect($session->chatFlow->runtimeNodes())
-            ->filter(fn ($n) => ($n['parentId'] ?? null) === $parentId
-                && ($n['type'] ?? '') !== 'branchItem')
-            ->first();
-
-        return $child['id'] ?? null;
+        return $session->chatFlow->childrenByParent()[$parentId][0]['id'] ?? null;
     }
 }

@@ -42,6 +42,7 @@ class ChatFlowTestCasesController extends Controller
     public function destroy(ChatFlow $chatFlow, ChatFlowTestCase $testCase): RedirectResponse
     {
         $this->authorize('update', $chatFlow);
+        abort_unless($testCase->chat_flow_id === $chatFlow->id, 404);
 
         $testCase->delete();
 
@@ -51,6 +52,7 @@ class ChatFlowTestCasesController extends Controller
     public function run(ChatFlow $chatFlow, ChatFlowTestCase $testCase): JsonResponse
     {
         $this->authorize('view', $chatFlow);
+        abort_unless($testCase->chat_flow_id === $chatFlow->id, 404);
 
         $result = $this->runner->run($chatFlow, $testCase->steps ?? []);
 

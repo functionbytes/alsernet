@@ -149,6 +149,36 @@ class ChatFlow extends Model
     }
 
     /**
+     * @var array<string, array<int, array<string, mixed>>>|null
+     */
+    private ?array $childrenIndex = null;
+
+    /**
+     * Runtime children grouped by parentId (branchItem children excluded), built
+     * once per model instance so per-node lookups during a flow run are O(1)
+     * instead of scanning the whole node array on every helper call.
+     *
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public function childrenByParent(): array
+    {
+        if ($this->childrenIndex !== null) {
+            return $this->childrenIndex;
+        }
+
+        $index = [];
+        foreach ($this->runtimeNodes() as $node) {
+            $parentId = $node['parentId'] ?? null;
+            if ($parentId === null || ($node['type'] ?? '') === 'branchItem') {
+                continue;
+            }
+            $index[$parentId][] = $node;
+        }
+
+        return $this->childrenIndex = $index;
+    }
+
+    /**
      * Whether the working draft differs from the published snapshot — i.e. there
      * are edits not yet live for customers.
      */
