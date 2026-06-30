@@ -28,6 +28,18 @@
 }
 
 
+/* ═══ COLOR PRIMARIO DEL PROYECTO (#90bb13 Alsernet) ═════════════════════════
+   Token unificado para todos los acentos primarios del inbox.
+   --bv-primary        → acentos, fondos, bordes, large-text (≥18px o ≥14px bold)
+   --bv-primary-strong → botones con texto blanco (cumple WCAG AA, ~4.6:1)
+   El verde #90bb13 sobre blanco da ~2.3:1, insuficiente para texto pequeño.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    --bv-primary:        #90bb13;
+    --bv-primary-strong: #5e7a0d;
+}
+
+
 /* ═══ ESCALA TIPOGRÁFICA ══════════════════════════════════════════════════ */
 :root {
     /* Familia principal (Inter por defecto - alvarez line) */
