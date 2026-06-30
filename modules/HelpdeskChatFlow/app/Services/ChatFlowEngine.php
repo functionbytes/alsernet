@@ -702,7 +702,7 @@ class ChatFlowEngine
 
         // Index the node tree once: the loop resolves the next node O(1) instead of
         // re-scanning the JSON array (and re-querying via refresh()) on every hop.
-        $nodesById = collect($session->chatFlow->nodes ?? [])->keyBy('id');
+        $nodesById = collect($session->chatFlow->runtimeNodes())->keyBy('id');
 
         while ($node && $depth < $maxDepth) {
             $session->update(['current_node_id' => $node['id']]);
@@ -946,7 +946,7 @@ class ChatFlowEngine
     {
         if (in_array($node['type'], ['quick_replies', 'rich_message'], true)) {
             // Match option label to a child node's label; fall back to first child
-            $matchingChild = collect($session->chatFlow->nodes ?? [])
+            $matchingChild = collect($session->chatFlow->runtimeNodes())
                 ->filter(fn ($n) => ($n['parentId'] ?? null) === $node['id']
                     && ($n['type'] ?? '') !== 'branchItem'
                     && ($n['label'] ?? '') === $message)
@@ -960,7 +960,7 @@ class ChatFlowEngine
 
     private function getFirstChildId(ChatFlowSession $session, string $parentId): ?string
     {
-        $child = collect($session->chatFlow->nodes ?? [])
+        $child = collect($session->chatFlow->runtimeNodes())
             ->filter(fn ($n) => ($n['parentId'] ?? null) === $parentId
                 && ($n['type'] ?? '') !== 'branchItem')
             ->first();

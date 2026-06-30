@@ -186,7 +186,14 @@ class ChatFlowsController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        $chatFlow->update(['status' => 'active', 'published_at' => now()]);
+        // Promote the working draft to the published snapshot: the runtime engine
+        // executes `published_nodes`, so the bot only switches to the new graph at
+        // publish time — never while the designer is still editing the draft.
+        $chatFlow->update([
+            'status' => 'active',
+            'published_nodes' => $chatFlow->nodes,
+            'published_at' => now(),
+        ]);
 
         $message = 'Flow publicado y activo.';
         if (! empty($result['warnings'])) {
@@ -298,11 +305,12 @@ class ChatFlowsController extends Controller
     {
         $this->authorize('create', ChatFlow::class);
 
-        $new = $chatFlow->replicate(['uid', 'published_at']);
+        $new = $chatFlow->replicate(['uid', 'published_at', 'published_nodes']);
         $new->uid = Str::uuid();
         $new->name = $chatFlow->name.' (copia)';
         $new->status = 'draft';
         $new->published_at = null;
+        $new->published_nodes = null;
         $new->created_by = auth()->id();
         $new->save();
 
