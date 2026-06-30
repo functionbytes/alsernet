@@ -212,12 +212,41 @@
         });
 
         // ─── Modales ─────────────────────────────────────────────────
+        // UI-04: foco que se restaura al cerrar el modal.
+        let lastFocusedBeforeModal = null;
+
+        const MODAL_FOCUSABLE = 'a[href], button:not([disabled]), textarea:not([disabled]), '
+            + 'input:not([disabled]):not([type=hidden]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+        // UI-04: añade semántica ARIA de diálogo sin alterar el flujo de apertura.
+        function applyModalA11y($modal, name) {
+            const $dialog = $modal.find('.bv-modal-dialog').first();
+            const $d = $dialog.length ? $dialog : $modal;
+            $modal.attr('role', 'presentation');
+            $d.attr('role', 'dialog').attr('aria-modal', 'true');
+            const $title = $d.find('.bv-modal-title').first();
+            if ($title.length) {
+                let titleId = $title.attr('id');
+                if (!titleId) {
+                    titleId = 'bv-modal-title-' + name;
+                    $title.attr('id', titleId);
+                }
+                $d.attr('aria-labelledby', titleId);
+            }
+            return $d;
+        }
+
         function openModal(name) {
             const $modal = $(`[data-bv-modal-name="${name}"]`);
             if ($modal.length) {
+                lastFocusedBeforeModal = document.activeElement;
+                const $dialog = applyModalA11y($modal, name);
                 $modal.addClass('on');
                 $('body').css('overflow', 'hidden');
                 $(document).trigger('bv:modal:open', [name]);
+                // UI-04: mover el foco dentro del diálogo (focus-trap).
+                if (!$dialog.attr('tabindex')) { $dialog.attr('tabindex', '-1'); }
+                $dialog.trigger('focus');
             }
         }
 
@@ -233,8 +262,34 @@
             }
             if ($('.bv-modal.on').length === 0) {
                 $('body').css('overflow', '');
+                // UI-04: restaurar el foco al elemento que abrió el modal.
+                if (lastFocusedBeforeModal && document.contains(lastFocusedBeforeModal)) {
+                    try { lastFocusedBeforeModal.focus(); } catch (err) { /* noop */ }
+                }
+                lastFocusedBeforeModal = null;
             }
         }
+
+        // UI-04: focus-trap — Tab cicla dentro del modal abierto.
+        $(document).on('keydown', function (e) {
+            if (e.key !== 'Tab') { return; }
+            const $open = $('.bv-modal.on').last();
+            if (!$open.length) { return; }
+            const $dialog = $open.find('.bv-modal-dialog').first();
+            const $scope = $dialog.length ? $dialog : $open;
+            const $focusable = $scope.find(MODAL_FOCUSABLE).filter(':visible');
+            if (!$focusable.length) { return; }
+            const first = $focusable.first()[0];
+            const last = $focusable.last()[0];
+            const active = document.activeElement;
+            if (e.shiftKey && (active === first || active === $scope[0])) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && active === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        });
 
         // Abrir modal por click en data-bv-modal
         $(document).on('click', '[data-bv-modal]', function (e) {
@@ -987,18 +1042,17 @@
         });
 
         // ─── Btn enviar (AJAX al endpoint storeMessage) ──────────────
-        $(document).on('click', '.btn-send', function () {
-            const $btn = $(this);
-            const $composer = $btn.closest('.bv-composer');
-            const $textarea = $composer.find('.bv-composer-input');
-            const text = $textarea.val().trim();
-            const url = $composer.data('bv-send-url');
-            if (!text || !url || $btn.prop('disabled')) return;
-
-            const isInternal = $composer.find('.bv-composer-tab.on').data('bv-tab') === 'note';
-
+        // UX-02: envío optimista. Pinta la burbuja al instante (bv-bubble--pending),
+        // mantiene el textarea habilitado/enfocado, reconcilia en .done y ofrece
+        // "Reintentar" en .fail. El eco por WebSocket de los mensajes propios ya se
+        // descarta en index.blade.php (user_id === myId), por lo que la burbuja
+        // optimista no se duplica; aun así reconcilePendingBubble protege por id.
+        function sendMessage(opts) {
+            const { text, isInternal, url, $btn, $pending } = opts;
+            const $icon = $btn.find('i').first();
+            const iconCls = $icon.attr('class');
             $btn.prop('disabled', true);
-            $textarea.prop('disabled', true);
+            if (iconCls) { $icon.attr('class', 'fas fa-spinner fa-spin'); }
 
             $.ajax({
                 url: url,
@@ -1015,8 +1069,7 @@
                 },
             })
                 .done(function (resp) {
-                    appendBubbleToThread(resp?.item, isInternal);
-                    $textarea.val('').css('height', 'auto').focus();
+                    reconcilePendingBubble($pending, resp?.item, isInternal);
                     $(document).trigger('bv:message:sent', resp?.item);
                     // Sin toast: el bubble que aparece en el thread es la confirmación visual
                 })
@@ -1024,6 +1077,7 @@
                     const msg = xhr?.responseJSON?.errors?.body?.[0]
                         || xhr?.responseJSON?.message
                         || 'No se pudo enviar el mensaje';
+                    markPendingBubbleFailed($pending, { text, isInternal, url });
                     if (window.toastr) {
                         toastr.error(msg);
                     } else {
@@ -1032,8 +1086,48 @@
                 })
                 .always(function () {
                     $btn.prop('disabled', false);
-                    $textarea.prop('disabled', false);
+                    if (iconCls) { $icon.attr('class', iconCls); }
                 });
+        }
+
+        $(document).on('click', '.btn-send', function () {
+            const $btn = $(this);
+            const $composer = $btn.closest('.bv-composer');
+            const $textarea = $composer.find('.bv-composer-input');
+            const text = $textarea.val().trim();
+            const url = $composer.data('bv-send-url');
+            if (!text || !url || $btn.prop('disabled')) return;
+
+            const isInternal = $composer.find('.bv-composer-tab.on').data('bv-tab') === 'note';
+
+            // UX-02: burbuja optimista + textarea vacío pero activo y enfocado.
+            const $pending = appendPendingBubble(text, isInternal);
+            $textarea.val('').css('height', 'auto').focus();
+
+            sendMessage({ text, isInternal, url, $btn, $pending });
+        });
+
+        // UX-02: reintentar el envío de una burbuja fallida.
+        $(document).on('click', '.bv-bubble-retry', function (e) {
+            e.preventDefault();
+            const $retry = $(this);
+            const opts = $retry.data('retry');
+            if (!opts) return;
+            const $pending = $retry.closest('.bv-msg');
+            const $bubble = $pending.find('.bv-bubble');
+            $bubble.removeClass('bv-bubble--failed').addClass('bv-bubble--pending opacity-50');
+            $retry.remove();
+            $bubble.find('.meta span').first().text('Tú · Enviando…');
+            if (!$bubble.find('.bv-pending-spin').length) {
+                $bubble.find('.meta').append('<i class="fas fa-circle-notch fa-spin bv-pending-spin ms-1"></i>');
+            }
+            sendMessage({
+                text: opts.text,
+                isInternal: opts.isInternal,
+                url: opts.url,
+                $btn: $('.bv-composer .btn-send').first(),
+                $pending,
+            });
         });
 
         const escape = function (s) {
@@ -1323,6 +1417,59 @@
             scrollThreadToBottom(true);
         }
         window.appendBubbleToThread = appendBubbleToThread;
+
+        // ─── UX-02: burbujas optimistas (pending / reconciliación / fallo) ───
+        function appendPendingBubble(text, isInternal) {
+            const $inner = $('.bv-th-inner');
+            if (!$inner.length) return $();
+            const tempId = 'bv-pending-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+            const $msg = renderBubbleEl({
+                id: tempId,
+                body: text,
+                author: 'Tú',
+                time: 'Enviando…',
+                is_incoming: false,
+            }, isInternal);
+            if (!$msg || !$msg.length) return $();
+            $msg.find('.bv-bubble').addClass('bv-bubble--pending opacity-50').attr('data-bv-pending', '1');
+            $msg.find('.bv-chk-read, .chk').remove();
+            $msg.find('.meta').append('<i class="fas fa-circle-notch fa-spin bv-pending-spin ms-1"></i>');
+            $inner.append($msg);
+            scrollThreadToBottom(true);
+            return $msg;
+        }
+
+        function reconcilePendingBubble($pending, item, isInternal) {
+            if (!$pending || !$pending.length) {
+                if (item) appendBubbleToThread(item, isInternal);
+                return;
+            }
+            if (!item) { $pending.remove(); return; }
+            const realId = (item.id == null ? '' : String(item.id));
+            // Si el mensaje real ya llegó (p.ej. por WebSocket), descartar el placeholder.
+            const $already = $('.bv-th-inner .bv-bubble[data-bv-item-id="' + escape(realId) + '"]').not('[data-bv-pending]');
+            if (realId && $already.length) {
+                $pending.remove();
+                return;
+            }
+            const $real = renderBubbleEl(item, isInternal);
+            if ($real && $real.length) { $pending.replaceWith($real); }
+            else { $pending.remove(); }
+        }
+
+        function markPendingBubbleFailed($pending, retryOpts) {
+            if (!$pending || !$pending.length) return;
+            const $bubble = $pending.find('.bv-bubble');
+            $bubble.removeClass('opacity-50 bv-bubble--pending').addClass('bv-bubble--failed');
+            $bubble.find('.bv-pending-spin').remove();
+            const $meta = $bubble.find('.meta');
+            $meta.find('span').first().text('No se pudo enviar');
+            if (!$meta.find('.bv-bubble-retry').length) {
+                const $retry = $('<button type="button" class="bv-bubble-retry btn btn-sm btn-link p-0 ms-1 text-danger"><i class="fas fa-rotate-right me-1"></i>Reintentar</button>');
+                $retry.data('retry', retryOpts);
+                $meta.append($retry);
+            }
+        }
 
         // ─── perf-04: cargar mensajes anteriores (paginación hacia arriba) ───
         function loadOlderItems($btn) {

@@ -344,6 +344,18 @@
     {{-- Listener global de la bandeja: nuevas conversaciones / nuevos mensajes --}}
     <script>
     (function () {
+        // UI-05: live-region oculta para anunciar eventos dinámicos a lectores de pantalla.
+        window.bvAnnounce = window.bvAnnounce || function (message) {
+            var $live = $('#bv-sr-live');
+            if (!$live.length) {
+                $live = $('<div id="bv-sr-live" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>');
+                $('body').append($live);
+            }
+            // Vaciar y re-escribir fuerza el re-anuncio aunque el texto se repita.
+            $live.text('');
+            window.setTimeout(function () { $live.text(message); }, 50);
+        };
+
         function setupInboxListener() {
             if (typeof window.Echo === 'undefined') {
                 console.warn('[Inbox] Echo not ready, retrying in 500ms');
@@ -624,6 +636,11 @@
                 window.appendBubbleToThread(item, !!msg.is_internal);
             }
 
+            // UI-05: anunciar el mensaje entrante en la live-region oculta.
+            if (typeof window.bvAnnounce === 'function') {
+                window.bvAnnounce('Nuevo mensaje de ' + (item.author || 'cliente'));
+            }
+
             // Same broadcast also carries delivery/read updates for outbound
             // messages: when the customer reads our reply, we get an updated
             // item with metadata.customer_read_at filled.
@@ -714,7 +731,8 @@
         function showTypingIndicator() {
             var $ind = $('#bv-typing-ind');
             if (!$ind.length) {
-                $ind = $('<div id="bv-typing-ind" class="bv-typing-ind"><span class="bv-typing-dots"><span></span><span></span><span></span></span><span class="bv-typing-text">Escribiendo…</span></div>');
+                // UI-05: role=status + aria-live anuncian "escribiendo…" a lectores de pantalla.
+                $ind = $('<div id="bv-typing-ind" class="bv-typing-ind" role="status" aria-live="polite"><span class="bv-typing-dots" aria-hidden="true"><span></span><span></span><span></span></span><span class="bv-typing-text">Escribiendo…</span></div>');
                 $('.bv-th-body').append($ind);
             }
             $ind.show();
