@@ -14,8 +14,8 @@ class SimulatorUploadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_key' => ['required', 'string'],
-            'doc_key' => ['required', 'string'],
+            'session_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'doc_key' => ['required', 'string', 'max:191', 'regex:/^[A-Za-z0-9_-]+$/'],
             'file' => ['required', 'file', 'max:20480'],
         ];
     }
@@ -24,7 +24,9 @@ class SimulatorUploadRequest extends FormRequest
     {
         return [
             'session_key.required' => 'Falta la sesión de prueba.',
+            'session_key.regex' => 'La sesión de prueba no es válida.',
             'doc_key.required' => 'Falta el documento a subir.',
+            'doc_key.regex' => 'El identificador del documento no es válido.',
             'file.required' => 'Adjunta un archivo.',
             'file.max' => 'El archivo no puede superar los 20 MB.',
         ];

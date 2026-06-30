@@ -259,6 +259,25 @@ class ChatFlowsController extends Controller
             return back()->with('error', 'El flow importado no tiene nodo de inicio.');
         }
 
+        // Reject arbitrary JSON: every node must be a well-formed object with a
+        // string id and a recognised node type before we trust the payload.
+        $hasInvalidNode = collect($data['nodes'])->contains(fn ($n) => ! is_array($n)
+            || ! is_string($n['id'] ?? null)
+            || ! in_array($n['type'] ?? null, ChatFlow::NODE_TYPES, true));
+
+        if ($hasInvalidNode) {
+            return back()->with('error', 'El archivo contiene nodos con un formato no reconocido.');
+        }
+
+        // Run the same validator used on publish so we never import a flow that
+        // would break at runtime (broken go_to_step, missing start, etc.).
+        $candidate = new ChatFlow(['nodes' => $data['nodes']]);
+        $validation = $this->validator->validate($candidate);
+
+        if (! empty($validation['errors'])) {
+            return back()->with('error', 'El flow importado no es válido: '.implode(' ', $validation['errors']));
+        }
+
         $flow = ChatFlow::create([
             'uid' => Str::uuid(),
             'name' => ($data['name'] ?? 'Flow importado').' (importado)',

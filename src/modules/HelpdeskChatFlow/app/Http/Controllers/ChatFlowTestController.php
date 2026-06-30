@@ -53,13 +53,18 @@ class ChatFlowTestController extends Controller
 
         $validated = $request->validated();
 
+        // Defense in depth: the request already whitelists these to [A-Za-z0-9_-],
+        // but strip any path component before they touch the filesystem.
+        $sessionKey = basename($validated['session_key']);
+        $docKey = basename($validated['doc_key']);
+
         $file = $request->file('file');
-        $fileName = $validated['doc_key'].'_'.time().'.'.$file->getClientOriginalExtension();
-        $file->storeAs('chatflow-test/'.$validated['session_key'], $fileName);
+        $fileName = $docKey.'_'.time().'.'.$file->getClientOriginalExtension();
+        $file->storeAs('chatflow-test/'.$sessionKey, $fileName);
 
         $result = $this->simulator->replyWithFile(
-            $validated['session_key'],
-            $validated['doc_key'],
+            $sessionKey,
+            $docKey,
             $file->getClientOriginalName(),
             $request->user()?->id
         );
