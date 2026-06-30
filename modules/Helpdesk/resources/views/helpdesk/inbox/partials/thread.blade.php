@@ -177,6 +177,17 @@
                 $currentDay = null;
             @endphp
 
+            {{-- perf-04: cargar mensajes anteriores (paginación hacia arriba). Degrada sin romper si el endpoint no existe. --}}
+            @if($convo && $items->count() >= 50)
+                <div class="bv-load-older text-center my-2" id="bv-load-older">
+                    <button type="button" class="bv-load-older-btn btn btn-sm btn-light"
+                            data-url="{{ url('panel/helpdesk/conversations/'.$convo->id.'/items') }}"
+                            data-oldest-id="{{ $items->first()?->id }}">
+                        <i class="fas fa-arrow-up"></i> Cargar anteriores
+                    </button>
+                </div>
+            @endif
+
             @forelse($items as $item)
                 @if($item->type === 'email_sent') @continue @endif
                 @php
@@ -340,7 +351,7 @@
                                            data-bv-preview-src="{{ $url }}"
                                            data-bv-preview-type="image"
                                            data-bv-name="{{ $fileName }}">
-                                            <img src="{{ $url }}" alt="{{ $fileName }}" loading="lazy" width="200">
+                                            <img src="{{ $url }}" alt="{{ $fileName }}" loading="lazy" width="200" height="200">
                                         </a>
                                     @elseif($attachType === 'video')
                                         <div class="bv-video-bubble">

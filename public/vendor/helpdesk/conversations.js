@@ -1091,7 +1091,7 @@
 
             if (type === 'image') {
                 return '<a href="' + safeUrl + '" class="bv-attach-thumb" data-bv-modal="file-preview" data-bv-preview-src="' + safeUrl + '" data-bv-preview-type="image">' +
-                    '<img src="' + safeUrl + '" alt="' + escapeHtml(fileName) + '" loading="lazy" width="200">' +
+                    '<img src="' + safeUrl + '" alt="' + escapeHtml(fileName) + '" loading="lazy" width="200" height="200">' +
                 '</a>';
             }
             if (type === 'video') {
@@ -1127,11 +1127,9 @@
             '</a>';
         }
 
-        function appendBubbleToThread(item, isInternal) {
-            if (!item) return;
-            if (item.type === 'email_sent') return;
-            const $inner = $('.bv-th-inner');
-            if (!$inner.length) return;
+        function renderBubbleEl(item, isInternal) {
+            if (!item) return null;
+            if (item.type === 'email_sent') return null;
 
             const isIncoming = !!item.is_incoming;
             const noteBadge = isInternal
@@ -1307,6 +1305,14 @@
                     '</div>' +
                 '</div>'
             );
+            return $bubble;
+        }
+
+        function appendBubbleToThread(item, isInternal) {
+            const $inner = $('.bv-th-inner');
+            if (!$inner.length) return;
+            const $bubble = renderBubbleEl(item, isInternal);
+            if (!$bubble) return;
             // If bubble already exists (re-broadcast after media download), replace it
             const $existing = $inner.find('.bv-bubble[data-bv-item-id="' + escape(item.id || '') + '"]').closest('.bv-msg');
             if ($existing.length) {
@@ -1317,6 +1323,67 @@
             scrollThreadToBottom(true);
         }
         window.appendBubbleToThread = appendBubbleToThread;
+
+        // ─── perf-04: cargar mensajes anteriores (paginación hacia arriba) ───
+        function loadOlderItems($btn) {
+            if ($btn.data('loading')) { return; }
+            const url = $btn.data('url');
+            const before = $btn.data('oldest-id');
+            if (!url || !before) { return; }
+
+            $btn.data('loading', true);
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Cargando…');
+
+            const $body = $('.bv-th-body');
+            const prevHeight = $body.length ? $body[0].scrollHeight : 0;
+            const prevTop = $body.length ? $body[0].scrollTop : 0;
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                data: { before: before },
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            }).done(function (resp) {
+                const items = (resp && resp.items) || [];
+                const $wrap = $btn.closest('.bv-load-older');
+
+                if (!items.length) {
+                    $wrap.remove();
+                    return;
+                }
+
+                // Los items llegan en orden ascendente (el primero es el más antiguo).
+                const els = [];
+                items.forEach(function (it) {
+                    const $b = renderBubbleEl(it, !!it.is_internal);
+                    if ($b) { els.push($b[0]); }
+                });
+                if (items[0] && items[0].id) { $btn.data('oldest-id', items[0].id); }
+                $wrap.after(els);
+
+                // Mantener la posición de scroll tras el prepend.
+                if ($body.length) {
+                    $body[0].scrollTop = prevTop + ($body[0].scrollHeight - prevHeight);
+                }
+
+                if (!resp.has_more) { $wrap.remove(); }
+            }).fail(function (xhr) {
+                // Endpoint aún no disponible o sin acceso → degradar sin romper.
+                if (xhr.status === 404 || xhr.status === 405) {
+                    $btn.closest('.bv-load-older').remove();
+                    return;
+                }
+                if (window.toastr) { toastr.error('No se pudieron cargar los mensajes anteriores'); }
+            }).always(function () {
+                $btn.data('loading', false).prop('disabled', false).html(originalHtml);
+            });
+        }
+
+        $(document).on('click', '#bv-load-older .bv-load-older-btn', function () {
+            loadOlderItems($(this));
+        });
 
         // Click en bubble citado → scroll al original con flash highlight
         $(document).on('click', '.bv-quoted-msg', function () {
@@ -6652,10 +6719,31 @@
             });
         }
 
+        function echoIsConnected() {
+            try {
+                var connector = window.Echo && window.Echo.connector;
+                var conn = connector && connector.pusher && connector.pusher.connection;
+                return !!(conn && conn.state === 'connected');
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // FE-06: el polling solo actúa como red de seguridad. Si Echo/Reverb está
+        // conectado (realtime activo) espaciamos a 60s para no duplicar eventos;
+        // si no hay conexión disponible mantenemos el fallback cada 15s.
+        function scheduleNextPoll() {
+            var delay = echoIsConnected() ? 60000 : 15000;
+            setTimeout(function () {
+                poll();
+                scheduleNextPoll();
+            }, delay);
+        }
+
         $(function () {
             pageLoadTs = new Date();
             poll();
-            setInterval(poll, 15000);
+            scheduleNextPoll();
         });
     })();
 

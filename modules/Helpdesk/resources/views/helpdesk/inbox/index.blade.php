@@ -23,9 +23,11 @@
 @push('css')
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    {{-- FE-10: cargar la fuente sin bloquear el render (media=print + onload); fallback sin JS --}}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/></noscript>
     {{-- Identidad visual (tokens: colores, fonts, radius, shadows) --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}"/>
+    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-identity.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-identity.css')) }}"/>
     {{-- Componentes y layout --}}
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
     {{-- Pedidos y carritos (commerce) --}}

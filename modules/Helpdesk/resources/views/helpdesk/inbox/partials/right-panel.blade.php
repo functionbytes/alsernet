@@ -52,16 +52,18 @@
         $rpCust   = $selectedConversation?->customer;
         $rpConvo  = $selectedConversation;
 
-        // Auto-deteccion y guardado del vinculo de e-commerce (PrestaShop + gestion)
-        // al abrir la conversacion. Idempotente: si ya esta enlazado, no hace nada.
-        if ($rpCust && $rpCust->email) {
-            try {
-                app(\Modules\Helpdesk\Services\CustomerCommerceSyncService::class)->sync($rpCust);
-                $rpCust->load('externalIds');
-            } catch (\Throwable $e) {
-                // best-effort: no rompemos el render si PrestaShop no responde
-            }
+        // Auto-deteccion y guardado del vinculo de e-commerce (PrestaShop + gestion).
+        // Se saca del camino critico del render: en lugar de llamar a la API externa
+        // sincronamente en cada repintado, se despacha un job en cola protegido por un
+        // guard de cache para que el sync real corra ~1 vez/hora por cliente.
+        if ($rpCust && $rpCust->email
+            && \Illuminate\Support\Facades\Cache::add('hd:commerce-sync:'.$rpCust->id, true, 3600)) {
+            \Modules\Helpdesk\Jobs\SyncCustomerCommerceJob::dispatch($rpCust);
         }
+
+        // Vinculos ya persistidos (consulta local barata): el panel los muestra de
+        // inmediato; el job de arriba refresca en background para la proxima apertura.
+        $rpCust?->load('externalIds');
 
         $rpName   = $rpCust?->name ?? 'Sin nombre';
         $rpInitials = mb_strtoupper(collect(preg_split('/\s+/', trim($rpName)))->take(2)->map(fn($w) => mb_substr($w,0,1))->implode(''));

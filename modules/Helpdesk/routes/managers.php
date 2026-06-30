@@ -185,6 +185,9 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/{conversation}/viewer-items', [HelpdeskConversationsController::class, 'conversationViewerItems'])
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:60,1'])
         ->name('manager.helpdesk.conversations.viewer-items');
+    Route::get('/conversations/{conversation}/items', [HelpdeskConversationsController::class, 'olderItems'])
+        ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:120,1'])
+        ->name('manager.helpdesk.conversations.items.older');
     Route::get('/conversations/{conversation}/audit-log', [HelpdeskConversationsController::class, 'auditLog'])
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1'])
         ->name('manager.helpdesk.conversations.audit-log');
