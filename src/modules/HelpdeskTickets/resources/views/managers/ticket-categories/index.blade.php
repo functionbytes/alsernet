@@ -220,7 +220,7 @@
                         <table class="table table-hover table-sm mb-0" id="categoriesTable" style="border-collapse: separate; border-spacing: 0;">
                             <thead style="background: #f8f9fa;">
                             <tr>
-                                <th width="5%" style="border: none;"></th>
+                                <th width="5%" class="border-0"></th>
                                 <th width="25%" style="border: none; font-weight: 700; color: #333;">Nombre</th>
                                 <th width="15%" style="border: none; font-weight: 700; color: #333;">Slug</th>
                                 <th width="15%" style="border: none; font-weight: 700; color: #333;">Política SLA</th>
@@ -233,10 +233,10 @@
                             <tbody id="categoriesList">
                             @foreach($categories as $category)
                                 <tr data-id="{{ $category->id }}" class="sortable-row" style="border-bottom: 1px solid #e0e0e0; transition: all 0.2s ease;">
-                                    <td class="drag-handle text-center align-middle" style="border: none;">
+                                    <td class="drag-handle text-center align-middle border-0">
                                         <i class="fas fa-grip-vertical text-muted" style="cursor: grab; font-size: 0.9rem;"></i>
                                     </td>
-                                    <td style="border: none; vertical-align: middle;">
+                                    <td class="border-0 align-middle">
                                         <div class="d-flex align-items-center gap-2">
                                             @if($category->icon)
                                                 <i class="{{ $category->icon }} fs-5" style="color: {{ $category->color }}"></i>
@@ -251,27 +251,27 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="border: none; vertical-align: middle;">
+                                    <td class="border-0 align-middle">
                                         <code style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.85rem; color: #666;">{{ $category->slug }}</code>
                                     </td>
-                                    <td style="border: none; vertical-align: middle;">
+                                    <td class="border-0 align-middle">
                                         @if($category->default_sla_policy)
                                             <span style="background: rgba(93, 173, 226, 0.2); color: #5DADE2; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{{ $category->default_sla_policy }}</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td style="border: none; vertical-align: middle;">
+                                    <td class="border-0 align-middle">
                                         @if($category->groups && count($category->groups) > 0)
                                             <span style="background: #f0f0f0; color: #333; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{{ count($category->groups) }} grupo(s)</span>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td style="border: none; vertical-align: middle;">
+                                    <td class="border-0 align-middle">
                                         <small class="text-muted">{{ $category->description ? Str::limit($category->description, 40) : '-' }}</small>
                                     </td>
-                                    <td class="text-center" style="border: none; vertical-align: middle;">
+                                    <td class="text-center border-0 align-middle">
                                         <form method="POST" action="{{ route('manager.helpdesk.settings.ticket-categories.toggle', $category->id) }}" class="toggle-form">
                                             @csrf
                                             @method('PATCH')
@@ -282,7 +282,7 @@
                                             </div>
                                         </form>
                                     </td>
-                                    <td class="text-center" style="border: none; vertical-align: middle;">
+                                    <td class="text-center border-0 align-middle">
                                         <div class="dropdown">
                                             <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="fas fa-ellipsis-vertical"></i>
