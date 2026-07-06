@@ -1,92 +1,44 @@
 {{-- Modal: Búsqueda global / command palette (#55 ve-command-palette · ⌘K) --}}
-{{-- Nota: Este modal no usa el sistema bv-modal estándar. Se activa con Ctrl+K / Cmd+K. --}}
-<div id="bv-cmd-palette" class="bv-cmd-overlay" aria-hidden="true" role="dialog" aria-label="Búsqueda global">
+{{-- Nota: No usa el sistema bv-modal estándar. Se abre con Ctrl+K / Cmd+K (handler
+     en conversations.js) o window.openCommandPalette(). Estilos en conversations.css. --}}
+<div id="bv-cmd-palette" class="bv-cmd-overlay" aria-hidden="true" role="dialog" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.command_palette_aria_label') }}">
     <div class="bv-cmd-modal" role="search">
         <div class="bv-cmd-input-wrap">
             <i class="fas fa-magnifying-glass bv-cmd-icon"></i>
             <input id="bvCmdInput" type="text" class="bv-cmd-input"
-                   placeholder="Buscar conversaciones, contactos, tickets…"
+                   placeholder="{{ __('helpdesk::helpdesk.inbox.modals.command_palette_search_placeholder') }}"
                    autocomplete="off" spellcheck="false">
             <kbd class="bv-cmd-esc" id="bvCmdEsc">ESC</kbd>
         </div>
         <div id="bvCmdBody" class="bv-cmd-body">
-            {{-- Empty state --}}
             <div class="bv-cmd-empty">
                 <i class="fas fa-magnifying-glass"></i>
-                <span>Escribe para buscar conversaciones, contactos o tickets…</span>
+                <span>{{ __('helpdesk::helpdesk.inbox.modals.command_palette_empty_hint') }}</span>
             </div>
+        </div>
+        <div class="bv-cmd-foot">
+            <span class="bv-cmd-foot-k"><kbd class="bv-cmd-kbd">↑↓</kbd> {{ __('helpdesk::helpdesk.inbox.modals.command_palette_nav_up_down') }}</span>
+            <span class="bv-cmd-foot-k"><kbd class="bv-cmd-kbd">⏎</kbd> {{ __('helpdesk::helpdesk.inbox.modals.command_palette_nav_open') }}</span>
+            <span class="bv-cmd-foot-k"><kbd class="bv-cmd-kbd">esc</kbd> {{ __('helpdesk::helpdesk.inbox.modals.command_palette_nav_close') }}</span>
+            <span class="bv-cmd-foot-count" id="bvCmdCount"></span>
         </div>
     </div>
 </div>
 
 @once
-@push('styles')
-<style>
-.bv-cmd-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
-    display: flex; align-items: flex-start; justify-content: center;
-    padding-top: 80px; opacity: 0; pointer-events: none; transition: opacity .15s;
-}
-.bv-cmd-overlay.on { opacity: 1; pointer-events: auto; }
-.bv-cmd-modal {
-    width: 560px; max-width: calc(100vw - 32px);
-    background: var(--bv-bg, #fff); border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.22); overflow: hidden;
-}
-.bv-cmd-input-wrap {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px; border-bottom: 1px solid var(--bv-border, #e5e7eb);
-}
-.bv-cmd-icon { color: var(--bv-text-muted, #6b7280); font-size: 15px; }
-.bv-cmd-input {
-    flex: 1; border: none; outline: none; font-size: 14px;
-    background: transparent; color: var(--bv-text, #111827);
-}
-.bv-cmd-esc {
-    font-size: 10px; padding: 2px 5px; border-radius: 4px;
-    background: var(--bv-bg-subtle, #f3f4f6); color: var(--bv-text-muted, #6b7280);
-    border: 1px solid var(--bv-border, #e5e7eb); cursor: pointer;
-}
-.bv-cmd-body { max-height: 400px; overflow-y: auto; }
-.bv-cmd-section {
-    padding: 6px 12px; font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .05em;
-    color: var(--bv-text-muted, #6b7280);
-    background: var(--bv-bg-subtle, #f9fafb);
-    border-bottom: 1px solid var(--bv-border, #e5e7eb);
-}
-.bv-cmd-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 14px; width: 100%; border: none; background: none;
-    cursor: pointer; text-align: left; transition: background .1s;
-}
-.bv-cmd-item:hover, .bv-cmd-item.on { background: var(--bv-hover, #f0fdf4); }
-.bv-cmd-item__ico {
-    width: 28px; height: 28px; border-radius: 6px;
-    background: var(--bv-bg-subtle, #f3f4f6); display: grid; place-items: center;
-    font-size: 12px; color: var(--bv-text-muted, #6b7280); flex-shrink: 0;
-}
-.bv-cmd-item__t { font-size: 13px; font-weight: 500; color: var(--bv-text, #111827); }
-.bv-cmd-item__s { font-size: 11px; color: var(--bv-text-muted, #6b7280); }
-.bv-cmd-empty { padding: 32px 16px; text-align: center; color: var(--bv-text-muted, #6b7280); font-size: 13px; }
-.bv-cmd-empty i { font-size: 24px; display: block; margin-bottom: 8px; opacity: .4; }
-.bv-cmd-loading { padding: 24px; text-align: center; color: var(--bv-text-muted, #6b7280); }
-</style>
-@endpush
-
 @push('scripts')
 <script>
+window.HD_TICKETS_ENABLED = @json(function_exists('helpdesk_tickets_enabled') && helpdesk_tickets_enabled());
 (function ($) {
     'use strict';
 
-    var _timer    = null;
-    var _cursor   = -1;
-    var _results  = [];
+    var _timer   = null;
+    var _cursor  = -1;
+    var _results = [];
 
     function open() {
         $('#bv-cmd-palette').addClass('on').attr('aria-hidden', 'false');
-        $('#bvCmdInput').val('').focus();
+        $('#bvCmdInput').val('').trigger('focus');
         renderEmpty();
         _cursor = -1;
         $('body').css('overflow', 'hidden');
@@ -94,13 +46,23 @@
 
     function close() {
         $('#bv-cmd-palette').removeClass('on').attr('aria-hidden', 'true');
-        $('body').css('overflow', '');
+        if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
+    }
+
+    function setCount(n) {
+        $('#bvCmdCount').text(n > 0 ? (n + (n === 1 ? ' resultado' : ' resultados')) : '');
     }
 
     function renderEmpty() {
-        $('#bvCmdBody').html('<div class="bv-cmd-empty"><i class="fas fa-magnifying-glass"></i><span>Escribe para buscar…</span></div>');
+        $('#bvCmdBody').html(
+            '<div class="bv-cmd-empty"><i class="fas fa-magnifying-glass"></i>' +
+            '<span>Escribe para buscar conversaciones, contactos o tickets…</span></div>'
+        );
         _results = [];
+        setCount(0);
     }
+
+    function esc(s) { return $('<span>').text(s == null ? '' : String(s)).html(); }
 
     function channelIcon(ch) {
         var map = {
@@ -111,16 +73,21 @@
         return map[ch] || 'far fa-comment-dots';
     }
 
-    function renderResults(data) {
+    function itemHtml(idx, iconHtml, title, sub, extra) {
+        return '<button class="bv-cmd-item" data-result-idx="' + idx + '">' +
+            '<div class="bv-cmd-item__ico">' + iconHtml + '</div>' +
+            '<div class="bv-cmd-item__main">' +
+                '<div class="bv-cmd-item__t">' + esc(title) + '</div>' +
+                (sub ? '<div class="bv-cmd-item__s">' + esc(sub) + '</div>' : '') +
+            '</div>' + (extra || '') + '</button>';
+    }
+
+    function renderResults(data, query) {
         var customers     = data.customers || [];
         var conversations = data.conversations || [];
+        var tickets       = data.tickets || [];
         var tags          = data.tags || [];
-
-        if (!customers.length && !conversations.length && !tags.length) {
-            $('#bvCmdBody').html('<div class="bv-cmd-empty"><i class="fas fa-inbox"></i><span>Sin resultados</span></div>');
-            _results = [];
-            return;
-        }
+        var found         = customers.length + conversations.length + tickets.length + tags.length;
 
         _results = [];
         var html = '';
@@ -129,12 +96,10 @@
             html += '<div class="bv-cmd-section">Conversaciones</div>';
             conversations.forEach(function (c) {
                 _results.push({ url: c.url, type: 'conversation' });
-                html += '<button class="bv-cmd-item" data-result-idx="' + (_results.length - 1) + '" data-url="' + (c.url || '') + '">' +
-                    '<div class="bv-cmd-item__ico"><i class="' + channelIcon(c.channel) + '"></i></div>' +
-                    '<div style="flex:1;min-width:0">' +
-                        '<div class="bv-cmd-item__t">' + (c.customer_name || '') + ' · ' + (c.subject || ('#' + c.id)) + '</div>' +
-                        '<div class="bv-cmd-item__s">#' + c.id + '</div>' +
-                    '</div></button>';
+                html += itemHtml(_results.length - 1,
+                    '<i class="' + channelIcon(c.channel) + '"></i>',
+                    (c.customer_name ? c.customer_name + ' · ' : '') + (c.subject || ('#' + c.id)),
+                    '#' + c.id);
             });
         }
 
@@ -142,12 +107,19 @@
             html += '<div class="bv-cmd-section">Contactos</div>';
             customers.forEach(function (c) {
                 _results.push({ url: c.url, type: 'customer' });
-                html += '<button class="bv-cmd-item" data-result-idx="' + (_results.length - 1) + '" data-url="' + (c.url || '') + '">' +
-                    '<div class="bv-cmd-item__ico"><i class="far fa-user"></i></div>' +
-                    '<div style="flex:1;min-width:0">' +
-                        '<div class="bv-cmd-item__t">' + (c.name || '') + '</div>' +
-                        '<div class="bv-cmd-item__s">' + (c.email || c.phone || '') + '</div>' +
-                    '</div></button>';
+                html += itemHtml(_results.length - 1,
+                    '<i class="far fa-user"></i>', c.name || '', c.email || c.phone || '');
+            });
+        }
+
+        if (tickets.length) {
+            html += '<div class="bv-cmd-section">Tickets</div>';
+            tickets.forEach(function (t) {
+                _results.push({ url: t.url, type: 'ticket' });
+                html += itemHtml(_results.length - 1,
+                    '<i class="fas fa-ticket"></i>',
+                    (t.ticket_number ? t.ticket_number + ' · ' : '') + (t.subject || ''),
+                    t.customer_name || 'Sin asignar');
             });
         }
 
@@ -155,14 +127,35 @@
             html += '<div class="bv-cmd-section">Etiquetas</div>';
             tags.forEach(function (t) {
                 _results.push({ url: '/panel/helpdesk/conversations?tag=' + t.id, type: 'tag' });
-                html += '<button class="bv-cmd-item" data-result-idx="' + (_results.length - 1) + '" data-url="/panel/helpdesk/conversations?tag=' + t.id + '">' +
-                    '<div class="bv-cmd-item__ico"><i class="fas fa-tag" style="color:' + (t.color || '#90bb13') + '"></i></div>' +
-                    '<div style="flex:1;min-width:0"><div class="bv-cmd-item__t">' + t.name + '</div></div></button>';
+                html += itemHtml(_results.length - 1,
+                    '<i class="fas fa-tag"></i>', t.name, null);
             });
         }
 
+        // Sección Acciones — contextual al término buscado
+        html += '<div class="bv-cmd-section">Acciones</div>';
+        _results.push({ action: 'newconv', query: query });
+        html += itemHtml(_results.length - 1,
+            '<i class="fas fa-pen-to-square"></i>', 'Nueva conversación con «' + query + '»', null,
+            '<kbd class="bv-cmd-kbd">⌘N</kbd>');
+
+        if (window.HD_TICKETS_ENABLED) {
+            _results.push({ action: 'create-ticket', query: query });
+            html += itemHtml(_results.length - 1,
+                '<i class="fas fa-ticket"></i>', 'Crear ticket para «' + query + '»', null);
+        }
+
+        if (!found) {
+            html = '<div class="bv-cmd-empty"><i class="fas fa-inbox"></i>' +
+                   '<span>Sin resultados para «' + esc(query) + '»</span></div>' + html;
+        }
+
         $('#bvCmdBody').html(html);
-        _cursor = -1;
+
+        // Auto-seleccionar el primer resultado (UX estilo Spotlight/Raycast).
+        var $first = $('#bvCmdBody .bv-cmd-item').first();
+        if ($first.length) { $first.addClass('on'); _cursor = 0; } else { _cursor = -1; }
+        setCount(found);
     }
 
     function search(q) {
@@ -176,9 +169,10 @@
             data: { q: q },
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
         }).done(function (resp) {
-            renderResults(resp);
+            renderResults(resp, q);
         }).fail(function () {
             $('#bvCmdBody').html('<div class="bv-cmd-empty"><i class="fas fa-triangle-exclamation"></i><span>Error al buscar</span></div>');
+            setCount(0);
         });
     }
 
@@ -190,51 +184,76 @@
         $items.eq(_cursor).addClass('on')[0].scrollIntoView({ block: 'nearest' });
     }
 
-    function goToSelected() {
-        var $item = $('#bvCmdBody .bv-cmd-item.on');
-        var url = $item.data('url') || ($item.length ? _results[parseInt($item.data('result-idx'), 10)]?.url : null);
-        if (url) { close(); window.location.href = url; }
+    function openBvByName(name) {
+        $('[data-bv-modal-name="' + name + '"]').addClass('on');
+        $('body').css('overflow', 'hidden');
+        $(document).trigger('bv:modal:open', [name]);
     }
 
-    // Keyboard shortcut: Ctrl+K / Cmd+K
-    $(document).on('keydown', function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-            e.preventDefault();
-            if ($('#bv-cmd-palette').hasClass('on')) { close(); } else { open(); }
+    function runItem($item) {
+        if (!$item || !$item.length) { return; }
+        var idx = parseInt($item.data('result-idx'), 10);
+        var r = _results[idx];
+        if (!r) { return; }
+        close();
+        if (r.action === 'newconv') {
+            openBvByName('newconv');
+        } else if (r.action === 'create-ticket') {
+            openBvByName('create-ticket');
+        } else if (r.url) {
+            window.location.href = r.url;
         }
+    }
+
+    function goToSelected() {
+        var $item = $('#bvCmdBody .bv-cmd-item.on').first();
+        if (!$item.length) { $item = $('#bvCmdBody .bv-cmd-item').first(); }
+        runItem($item);
+    }
+
+    // Cerrar / navegar cuando el palette está abierto (el ⌘K de apertura vive en
+    // conversations.js para evitar dobles bindings y conflictos con otros modales).
+    $(document).on('keydown', function (e) {
         if (!$('#bv-cmd-palette').hasClass('on')) { return; }
-        if (e.key === 'Escape') { close(); }
+        if (e.key === 'Escape')    { e.preventDefault(); close(); }
         if (e.key === 'ArrowDown') { e.preventDefault(); navigate(1); }
         if (e.key === 'ArrowUp')   { e.preventDefault(); navigate(-1); }
         if (e.key === 'Enter')     { e.preventDefault(); goToSelected(); }
     });
 
-    // Input
     $('#bvCmdInput').on('input', function () {
         clearTimeout(_timer);
         var q = $(this).val().trim();
         _timer = setTimeout(function () { search(q); }, 220);
     });
 
-    // Click on result
     $(document).on('click', '#bvCmdBody .bv-cmd-item', function () {
-        var url = $(this).data('url');
-        if (url) { close(); window.location.href = url; }
+        runItem($(this));
     });
 
-    // Click on ESC badge / backdrop
-    $('#bvCmdEsc').on('click', function () { close(); });
+    $('#bvCmdEsc').on('click', close);
     $('#bv-cmd-palette').on('click', function (e) {
         if ($(e.target).is('#bv-cmd-palette')) { close(); }
     });
 
-    // Also allow opening from bv-modal trigger
     $(document).on('bv:modal:open', function (e, name) {
         if (name === 'command-palette') { open(); }
     });
 
-    // Expose globally
+    // ⌘K / Ctrl+K — apertura del command palette. Se registra en fase de CAPTURA
+    // y detiene la propagación para ganar al buscador global del sistema
+    // (#gs-dialog, Theme/header) que escucha ⌘K en bubbling. Dentro del inbox el
+    // command palette del helpdesk es el único que responde a ⌘K.
+    document.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if ($('#bv-cmd-palette').hasClass('on')) { close(); } else { open(); }
+        }
+    }, true);
+
     window.openCommandPalette = open;
+    window.closeCommandPalette = close;
 
 }(window.jQuery));
 </script>

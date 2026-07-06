@@ -4,60 +4,40 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-list-check"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · SELECCIÓN MÚLTIPLE</span>
-                <div class="bv-modal-title">Acciones masivas <span class="bv-chip-id" id="bulkActionsCount">0</span></div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_title') }} <span class="bv-chip-id" id="bulkActionsCount">0</span></div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
-            <div class="bv-warn-box bv-warn-box--info" style="margin-bottom:12px">
+            <div class="bv-warn-box bv-warn-box--info bv-x21">
                 <div class="bv-warn-box__body">
-                    La acción se aplicará a <strong id="bulkActionsCountText">0 conversaciones</strong> seleccionadas.
+                    {{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_notice_1') }} <strong id="bulkActionsCountText">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_default_count') }}</strong> {{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_notice_2') }}
                 </div>
             </div>
 
-            <div class="bv-form-label">Acciones disponibles</div>
+            <div class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_available_label') }}</div>
             <div class="bv-bulk-grid">
                 <button class="bv-bulk-act" data-bulk-action="assign">
                     <i class="fas fa-user-check"></i>
-                    <span>Asignar agente</span>
-                </button>
-                <button class="bv-bulk-act" data-bulk-action="team">
-                    <i class="fas fa-people-group"></i>
-                    <span>Mover a equipo</span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_assign') }}</span>
                 </button>
                 <button class="bv-bulk-act" data-bulk-action="priority">
                     <i class="fas fa-flag"></i>
-                    <span>Prioridad</span>
-                </button>
-                <button class="bv-bulk-act" data-bulk-action="tag">
-                    <i class="fas fa-tag"></i>
-                    <span>Etiquetar</span>
-                </button>
-                <button class="bv-bulk-act" data-bulk-action="snooze">
-                    <i class="far fa-clock"></i>
-                    <span>Posponer</span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_priority') }}</span>
                 </button>
                 <button class="bv-bulk-act" data-bulk-action="resolve">
                     <i class="fas fa-check"></i>
-                    <span>Resolver</span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_resolve') }}</span>
                 </button>
                 <button class="bv-bulk-act" data-bulk-action="close">
                     <i class="fas fa-xmark"></i>
-                    <span>Cerrar</span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_close') }}</span>
                 </button>
                 <button class="bv-bulk-act" data-bulk-action="archive">
                     <i class="fas fa-box-archive"></i>
-                    <span>Archivar</span>
-                </button>
-                <button class="bv-bulk-act" data-bulk-action="macro">
-                    <i class="fas fa-wand-magic-sparkles"></i>
-                    <span>Aplicar macro</span>
-                </button>
-                <button class="bv-bulk-act danger" data-bulk-action="delete">
-                    <i class="fas fa-trash"></i>
-                    <span>Eliminar</span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_archive') }}</span>
                 </button>
             </div>
 
@@ -68,7 +48,7 @@
                 <div id="bulkSubAssign" class="bv-bulk-sub" style="display:none">
                     <div class="bv-modal-search">
                         <i class="fas fa-magnifying-glass"></i>
-                        <input id="bulkAssignSearch" type="text" placeholder="Buscar agente…">
+                        <input id="bulkAssignSearch" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_assign_search_placeholder') }}">
                     </div>
                     <div id="bulkAssignList" class="asgn-list">
                         <div class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
@@ -78,10 +58,10 @@
                 {{-- Priority sub-panel --}}
                 <div id="bulkSubPriority" class="bv-bulk-sub" style="display:none">
                     <div class="bv-opt-list">
-                        <button class="bv-opt" data-bv-value="low"><div class="bv-opt__ic"><i class="fas fa-chevron-down"></i></div><div class="bv-opt__body"><span class="bv-opt__t">Baja</span></div></button>
-                        <button class="bv-opt on" data-bv-value="normal"><div class="bv-opt__ic"><i class="fas fa-minus"></i></div><div class="bv-opt__body"><span class="bv-opt__t">Normal</span></div></button>
-                        <button class="bv-opt" data-bv-value="high"><div class="bv-opt__ic"><i class="fas fa-chevron-up"></i></div><div class="bv-opt__body"><span class="bv-opt__t">Alta</span></div></button>
-                        <button class="bv-opt" data-bv-value="urgent"><div class="bv-opt__ic"><i class="fas fa-angles-up"></i></div><div class="bv-opt__body"><span class="bv-opt__t">Urgente</span></div></button>
+                        <button class="bv-opt" data-bv-value="low"><div class="bv-opt__ic"><i class="fas fa-chevron-down"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_low') }}</span></div></button>
+                        <button class="bv-opt on" data-bv-value="normal"><div class="bv-opt__ic"><i class="fas fa-minus"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_normal') }}</span></div></button>
+                        <button class="bv-opt" data-bv-value="high"><div class="bv-opt__ic"><i class="fas fa-chevron-up"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_high') }}</span></div></button>
+                        <button class="bv-opt" data-bv-value="urgent"><div class="bv-opt__ic"><i class="fas fa-angles-up"></i></div><div class="bv-opt__body"><span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_priority_urgent') }}</span></div></button>
                     </div>
                 </div>
 
@@ -89,7 +69,7 @@
                 <div id="bulkSubDelete" class="bv-bulk-sub" style="display:none">
                     <div class="bv-warn-box">
                         <div class="bv-warn-box__body">
-                            <strong>¿Eliminar definitivamente?</strong> Esta acción no se puede deshacer.
+                            <strong>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_strong') }}</strong> {{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_text') }}
                         </div>
                     </div>
                 </div>
@@ -98,8 +78,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-bulk-apply" disabled>Aplicar acción</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-bulk-apply" disabled>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_apply') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -120,8 +100,8 @@
 
     function getSelectedIds() {
         var ids = [];
-        $('.bv-conv.bv-conv--selected, .bv-conv[data-selected="true"]').each(function () {
-            var id = $(this).data('bv-conv-id') || $(this).data('conv-id');
+        $('[data-bv-bulk-select]:checked').each(function () {
+            var id = $(this).closest('.bv-conv').data('bv-conv-id');
             if (id) { ids.push(id); }
         });
         return ids;
@@ -222,7 +202,9 @@
             return;
         }
 
-        var payload = Object.assign({ action: _bulkAction, ids: ids }, _bulkPayload);
+        // "Resolver" se traduce a la acción "close" del endpoint bulk.
+        var action = _bulkAction === 'resolve' ? 'close' : _bulkAction;
+        var payload = { action: action, ids: ids, payload: _bulkPayload };
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Procesando…');
 
         $.ajax({
@@ -236,6 +218,8 @@
             var msg = resp.message || 'Acción aplicada a ' + ids.length + ' conversación/es';
             if (window.toastr) { toastr.success(msg); }
             $(document).trigger('bv:bulk:done', [_bulkAction, ids]);
+            ids.forEach(function (id) { $('.bv-conv[data-bv-conv-id="' + id + '"] [data-bv-bulk-select]').prop('checked', false); });
+            $(document).trigger('bv:selection-changed');
         }).fail(function (xhr) {
             var msg = xhr?.responseJSON?.message || 'Error al aplicar acción masiva';
             if (window.toastr) { toastr.error(msg); }
