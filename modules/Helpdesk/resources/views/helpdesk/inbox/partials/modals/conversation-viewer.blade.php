@@ -4,8 +4,8 @@
         <div class="bv-modal-head">
             <div class="bv-modal-icon-box"><i class="far fa-comments"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label"><span class="bv-cv-label-chat">CHAT</span> · HISTORIAL</span>
-                <div class="bv-modal-title" id="cvModalTitle">Visualizar conversación</div>
+                <span class="bv-modal-label"><span class="bv-cv-label-chat">{{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_label_chat') }}</span> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_label_suffix') }}</span>
+                <div class="bv-modal-title" id="cvModalTitle">{{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,7 +13,7 @@
         <div class="bv-cv-wrap" id="cvWrap">
             {{-- Loading --}}
             <div class="bv-cv-loading-msg" id="cvLoading">
-                <i class="fas fa-spinner fa-spin"></i> Cargando conversación…
+                <i class="fas fa-spinner fa-spin"></i> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_loading') }}
             </div>
 
             {{-- Context bar --}}
@@ -32,12 +32,12 @@
 
         <div class="bv-modal-foot">
             <button class="btn-primary" id="cvBtnOpen">
-                <i class="fas fa-arrow-up-right-from-square"></i> Abrir conversación
+                <i class="fas fa-arrow-up-right-from-square"></i> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_open') }}
             </button>
             <button class="btn-secondary" id="cvBtnBack" data-bv-close data-bv-open="history">
-                <i class="fas fa-arrow-left"></i> Volver al historial
+                <i class="fas fa-arrow-left"></i> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_back_to_history') }}
             </button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_close') }}</button>
         </div>
     </div>
 </div>

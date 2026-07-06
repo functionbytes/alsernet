@@ -4,30 +4,30 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-language"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">IA · DETECCIÓN</span>
-                <div class="bv-modal-title">Idioma diferente detectado</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
-            <p id="dlDetectedText" style="font-size:12px;line-height:1.55;margin:0 0 10px"></p>
+            <p class="bv-x22" id="dlDetectedText"></p>
 
             <div class="bv-quote-block" id="dlSampleQuote" style="display:none"></div>
 
             <div class="bv-ai-sparkle">
                 <div class="bv-ai-sparkle__ic"><i class="fas fa-wand-magic-sparkles"></i></div>
                 <div>
-                    <div class="bv-ai-sparkle__lbl">SUGERENCIA IA</div>
-                    Activar traducción automática bidireccional para esta conversación
+                    <div class="bv-ai-sparkle__lbl">{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_suggestion_label') }}</div>
+                    {{ __('helpdesk::helpdesk.inbox.modals.detect_lang_suggestion_text') }}
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-dl-activate">Activar traducción</button>
-            <button class="btn-secondary" id="bv-dl-incoming-only">Solo entrantes</button>
-            <button class="btn-secondary" data-bv-close>No, gracias</button>
+            <button class="btn-primary" id="bv-dl-activate">{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_activate') }}</button>
+            <button class="btn-secondary" id="bv-dl-incoming-only">{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_incoming_only') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.detect_lang_decline') }}</button>
         </div>
     </div>
 </div>
