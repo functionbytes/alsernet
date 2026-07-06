@@ -8,9 +8,7 @@ class UpdateConversationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.conversations.update')
-            ?? $this->user()?->can('helpdesk.conversations.update')
-            ?? true;
+        return $this->user()?->can('helpdesk.conversations.update') ?? false;
     }
 
     public function rules(): array

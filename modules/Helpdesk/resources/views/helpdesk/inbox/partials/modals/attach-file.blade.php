@@ -48,7 +48,8 @@
 </div>
 
 @once
-@push('styles')
+{{-- <style> inline (NO @push): @push('styles') es un stack fantasma en el inbox
+     (el layout usa @stack('css'), no 'styles') → estos estilos no se cargaban. --}}
 <style>
 .bv-dropzone {
     border: 2px dashed var(--bv-border, #e4e4e7);
@@ -86,7 +87,6 @@
 }
 .bv-attach-file-item__remove:hover { background: var(--bv-bg-subtle, #f4f4f5); color: var(--bv-text, #18181b); }
 </style>
-@endpush
 
 @push('scripts')
 <script>

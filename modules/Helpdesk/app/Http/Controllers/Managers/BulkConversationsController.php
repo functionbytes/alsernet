@@ -3,12 +3,14 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Http\Requests\BulkConversationsRequest;
+use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Services\CsatService;
 
@@ -47,11 +49,9 @@ class BulkConversationsController extends Controller
         try {
             $affected = DB::transaction(function () use ($action, $ids, $payload, $request, $conversations): int {
                 return match ($action) {
-                    'archive' => Conversation::whereIn('id', $ids)
-                        ->update(['is_archived' => true, 'updated_at' => now()]),
+                    'archive' => $this->bulkArchive($conversations),
 
-                    'unarchive' => Conversation::whereIn('id', $ids)
-                        ->update(['is_archived' => false, 'updated_at' => now()]),
+                    'unarchive' => $this->bulkUnarchive($conversations),
 
                     'close' => $this->bulkClose($conversations, $request),
 
@@ -64,6 +64,9 @@ class BulkConversationsController extends Controller
                     'mark_read' => $this->bulkMarkRead($ids, $request->user()->id),
 
                     'mark_unread' => $this->bulkMarkUnread($ids, $request->user()->id),
+
+                    'priority' => Conversation::whereIn('id', $ids)
+                        ->update(['priority' => $payload['priority'] ?? 'normal', 'updated_at' => now()]),
                 };
             });
 
@@ -145,18 +148,74 @@ class BulkConversationsController extends Controller
     }
 
     /**
+     * Archive each conversation via the unit archive() logic and broadcast the
+     * inbox change (a mass ->update() bypasses model methods and events).
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkArchive(Collection $conversations): int
+    {
+        foreach ($conversations as $conversation) {
+            $conversation->archive();
+            $conversation->broadcastInboxChanged('archived');
+        }
+
+        return $conversations->count();
+    }
+
+    /**
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkUnarchive(Collection $conversations): int
+    {
+        foreach ($conversations as $conversation) {
+            $conversation->unarchive();
+            $conversation->broadcastInboxChanged('unarchived');
+        }
+
+        return $conversations->count();
+    }
+
+    /**
      * Assign each conversation via the unit assignTo() logic so the
      * ConversationAssigned event/notification fires for parity with the individual action.
+     * Skips (and logs) conversations whose inbox the assignee has no capacity
+     * for, unless the assignee holds the broader manage permission.
      *
      * @param  Collection<int, Conversation>  $conversations
      */
     private function bulkAssign(Collection $conversations, ?int $assigneeId): int
     {
+        $assignee = $assigneeId ? User::find($assigneeId) : null;
+        $count = 0;
+
         foreach ($conversations as $conversation) {
+            if ($assignee && ! $this->assigneeCanAccessInbox($assignee, $conversation->inbox_id)) {
+                Log::warning('Bulk assign skipped: assignee lacks inbox capacity', [
+                    'conversation_id' => $conversation->id,
+                    'assignee_id' => $assignee->id,
+                    'inbox_id' => $conversation->inbox_id,
+                ]);
+
+                continue;
+            }
+
             $conversation->assignTo($assigneeId);
+            $count++;
         }
 
-        return $conversations->count();
+        return $count;
+    }
+
+    private function assigneeCanAccessInbox(User $assignee, ?int $inboxId): bool
+    {
+        if ($assignee->hasPermissionTo('helpdesk.manage')) {
+            return true;
+        }
+
+        return AgentInboxCapacity::where('user_id', $assignee->id)
+            ->where('inbox_id', $inboxId)
+            ->exists();
     }
 
     private function bulkTag(array $ids, array $tagIds): int

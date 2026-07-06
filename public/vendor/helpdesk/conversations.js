@@ -390,6 +390,12 @@
                 const $target = $(`[data-bv-tab="${rtab}"]`);
                 if ($target.length) { $target[0].click(); }
             }
+            // Si ningún tab quedó activo (p.ej. "General" deshabilitado en
+            // Settings > Funcionalidades), activar el primero visible.
+            if (!$('.bv-right-tab.on:visible').length) {
+                const $firstTab = $('.bv-right-tab:visible').first();
+                if ($firstTab.length) { $firstTab[0].click(); }
+            }
         }
         window.bvInitRightPanelTabs = initRightPanelTabs;
         initRightPanelTabs();
@@ -588,8 +594,19 @@
         });
 
         function closeAllMenus() {
-            $('#bv-more-menu, #bv-attach-menu, #bv-sort-menu').removeClass('on');
+            $('#bv-more-menu, #bv-attach-menu, #bv-sort-menu, .rsp-more-menu').removeClass('on');
         }
+
+        // ─── Panel cliente: menú "Más" ────────────────────────────────
+        $(document).on('click', '.rsp-more-toggle', function (e) {
+            e.stopPropagation();
+            const $menu = $(this).siblings('.rsp-more-menu');
+            const wasOpen = $menu.hasClass('on');
+            closeAllMenus();
+            if (!wasOpen) {
+                $menu.addClass('on');
+            }
+        });
 
         // ─── Filter apply via event (from filter modal) ───────────────
         $(document).on('bv:filter:apply', function (e, params) {
@@ -700,6 +717,13 @@
                             $('.bv-conv-list').html($newConvList.html());
                         }
                     }
+                    if (resp.counts) {
+                        ['total', 'unread', 'mine', 'urgent'].forEach(k => {
+                            if (resp.counts[k] !== undefined) {
+                                $('[data-counter="' + k + '"]').text(resp.counts[k]);
+                            }
+                        });
+                    }
                 })
                 .fail(() => { if (window.toastr) toastr.error('No se pudo refrescar la lista'); });
         }
@@ -712,7 +736,25 @@
                 }
             });
             refreshInboxList(next, { force: true });
+            updateFilterBadge();
         }
+
+        // Badge de filtros activos sobre el botón de filtro de la barra
+        function updateFilterBadge() {
+            const u = new URL(window.location.href);
+            const keys = ['channel', 'status', 'priority', 'tag', 'mine', 'unread', 'urgent', 'vip', 'assignee', 'group', 'archived'];
+            let n = 0;
+            keys.forEach(k => {
+                const v = u.searchParams.get(k);
+                if (v !== null && v !== '' && v !== '0') {
+                    n += String(v).split(',').filter(Boolean).length;
+                }
+            });
+            const $b = $('#bvFilterBadge');
+            if (n > 0) { $b.text(n).prop('hidden', false); }
+            else { $b.text('').prop('hidden', true); }
+        }
+        updateFilterBadge();
 
         // Expose so inline scripts (e.g. filter modal) can call it
         window.applyInboxFilters = applyInboxFilters;
@@ -950,6 +992,8 @@
                 },
             })
                 .done(function (resp) {
+                    toastr && toastr.success((resp && resp.message) || 'Conversación archivada');
+                    $('.bv-conv.on').fadeOut(180, function () { $(this).remove(); });
                 })
                 .fail(function (xhr) {
                     const msg = xhr?.responseJSON?.message || 'No se pudo archivar';
@@ -992,12 +1036,6 @@
                 return;
             }
 
-            // ⌘K — buscar cliente
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
-                openModal('search-customer');
-                return;
-            }
 
             // Ignorar otros modificadores
             if (e.metaKey || e.ctrlKey) return;
@@ -1068,6 +1106,7 @@
                     else if (key === 's') openModal('status');
                     else if (key === 'p') openModal('priority');
                     else if (key === 'f') openModal('filter');
+                    else if (key === 'm') openModal('macro');
                     else if (key === 'n') $('.bv-composer-tab[data-bv-tab="note"]').click();
                     else if (key === 'r') $('.bv-composer-tab[data-bv-tab="reply"]').click();
             }
@@ -1744,8 +1783,43 @@
                 });
         });
 
+        // Restaurar conversación desde la papelera (view=deleted)
+        $(document).on('click', '[data-bv-action="restore"]', function (e) {
+            e.stopPropagation();
+            const $btn = $(this);
+            const url = $btn.data('bv-url');
+            const $conv = $btn.closest('.bv-conv');
+
+            if (!url || $btn.prop('disabled')) return;
+
+            $btn.prop('disabled', true);
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                dataType: 'json',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json',
+                },
+            })
+                .done(function (resp) {
+                    if (window.toastr) toastr.success((resp && resp.message) || 'Conversación restaurada');
+                    $conv.fadeOut(300, function () { $(this).remove(); });
+                })
+                .fail(function (xhr) {
+                    const msg = xhr?.responseJSON?.message || 'No se pudo restaurar la conversación';
+                    if (window.toastr) toastr.error(msg);
+                    $btn.prop('disabled', false);
+                });
+        });
+
         // ─── Status / Priority modal: apply button ───────────────────
-        $(document).on('click', '[data-bv-apply]', function () {
+        // Nota: estado y prioridad tienen sus propios handlers específicos
+        // ([data-bv-apply="status"|"priority"] más abajo); se excluyen aquí para
+        // no dispararse dos veces sobre el mismo botón (el genérico busca .bv-opt.on,
+        // que esos modales no usan → falso "Selecciona una opción primero").
+        $(document).on('click', '[data-bv-apply]:not([data-bv-apply="status"]):not([data-bv-apply="priority"])', function () {
             const type = $(this).data('bv-apply');
             const $modal = $(this).closest('.bv-modal');
             const $selected = $modal.find('.bv-opt.on');
@@ -2321,6 +2395,25 @@
         });
 
         // Cambio de estado
+        // Sincroniza el botón del panel derecho (.bv-right) tras cambiar estado/prioridad.
+        function setRightPanelPill(type, label, color) {
+            const $btn = $('.bv-right .r-tag-btn[data-bv-modal="' + type + '"]');
+            if (!$btn.length) { return; }
+            let replaced = false;
+            $btn.contents().each(function () {
+                if (this.nodeType === 3 && this.textContent.trim() && !replaced) {
+                    this.textContent = label || '';
+                    replaced = true;
+                }
+            });
+            if (type === 'status') {
+                $btn.find('.dot').css('background', color || '#6c757d');
+            } else if (type === 'priority') {
+                $btn.removeClass('r-tag-muted r-tag-info r-tag-warning r-tag-danger r-tag-success');
+                if (color) { $btn.addClass('r-tag-' + color); }
+            }
+        }
+
         $(document).on('click', '[data-bv-apply="status"]', function () {
             const $sel = $('[data-bv-modal-name="status"] [data-bv-value].on').first();
             const id = $sel.data('bv-value');
@@ -2336,6 +2429,7 @@
                 $pill.find('.dot').attr('class', 'dot').css('background', color || '#6c757d');
                 const txt = ' ' + (label || '') + ' ';
                 $pill.contents().filter(function () { return this.nodeType === 3; }).first().replaceWith(txt);
+                setRightPanelPill('status', label, color);
             });
         });
 
@@ -2356,6 +2450,7 @@
                 const txt = ' ' + (label || '') + ' ';
                 $pill.contents().filter(function () { return this.nodeType === 3; }).first().replaceWith(txt);
                 $pill.attr('data-bv-value', value);
+                setRightPanelPill('priority', label, color);
             });
         });
 
@@ -5302,48 +5397,28 @@
         // ═══════════════════════════════════════════════════════════════
         // FEATURE: Acceso rápido (atajos) + Cambiar color blanco/negro
         // ═══════════════════════════════════════════════════════════════
+        // Modo oscuro retirado: el inbox se muestra siempre en claro. Se conserva
+        // el botón de acceso rápido a los atajos de teclado.
         var BvTheme = (function () {
-            var STORAGE_KEY = 'bv:theme:dark';
-
-            function isDark() {
-                return localStorage.getItem(STORAGE_KEY) === '1';
-            }
-
-            function setDark(on) {
-                localStorage.setItem(STORAGE_KEY, on ? '1' : '0');
-            }
-
-            function applyTheme(on) {
-                $('.conversations').first().attr('data-theme', on ? 'dark' : 'light');
-                $('#bv-color-toggle').attr('title', on ? 'Cambiar a blanco' : 'Cambiar a negro');
-            }
-
             function init() {
+                localStorage.removeItem('bv:theme:dark');
+                document.documentElement.removeAttribute('data-bv-dark');
+                $('.conversations').first().attr('data-theme', 'light');
+
                 var $sb = $('.bv-statusbar .spacer').first();
                 if ($sb.length) {
                     $sb.before(
                         '<button id="bv-quick-access" class="bv-sb-btn" title="Acceso rápido — Atajos de teclado" aria-label="Acceso rápido">' +
-                        '<i class="fas fa-keyboard"></i></button><span class="sep">│</span>' +
-                        '<button id="bv-color-toggle" class="bv-sb-btn" title="Cambiar a negro" aria-label="Cambiar color">' +
-                        '<i class="fas fa-circle-half-stroke"></i></button><span class="sep">│</span>'
+                        '<i class="fas fa-keyboard"></i></button><span class="sep">│</span>'
                     );
                 }
-
-                applyTheme(isDark());
-                document.documentElement.removeAttribute('data-bv-dark');
-
-                $(document).on('click', '#bv-color-toggle', function () {
-                    var nowDark = !isDark();
-                    setDark(nowDark);
-                    applyTheme(nowDark);
-                });
 
                 $(document).on('click', '#bv-quick-access', function () {
                     openModal('shortcuts');
                 });
             }
 
-            return { init: init, isDark: isDark };
+            return { init: init };
         })();
         BvTheme.init();
 
@@ -5677,7 +5752,10 @@
             },
             success: function (res) {
                 if (window.toastr) toastr.success(res.message || 'Ticket creado correctamente.');
-                closeModal($('[data-bv-modal-name="create-ticket"]'));
+                // closeModal() lives in a different IIFE in this bundle and isn't
+                // reachable from here; replicate its non-lightbox behavior inline.
+                $('[data-bv-modal-name="create-ticket"]').removeClass('on');
+                if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
                 if (res.ticket_url) {
                     window.open(res.ticket_url, '_blank');
                 }
@@ -5750,13 +5828,13 @@
         }
     });
 
-    // ─── Cargar datos de Remarketing en pestaña Pedidos ───────────────────────
+    // ─── Cargar datos de Remarketing en pestaña Carritos ───────────────────────
     var remarketingOrdersLoaded = {};
     document.addEventListener('click', function (e) {
-        if (!$(e.target).closest('.bv-right-tab[data-bv-tab="orders"]').length) { return; }
+        if (!$(e.target).closest('.bv-right-tab[data-bv-tab="carts"]').length) { return; }
         var customerId = $('.bv-right').data('customer-id');
         if (!customerId || remarketingOrdersLoaded[customerId]) return;
-        var $tab = $('[data-bv-tab-content="orders"]');
+        var $tab = $('[data-bv-tab-content="carts"]');
         var $container = $tab.find('.rp3-scroll');
         if (!$container.length) {
             $container = $('<div class="rp3-scroll"></div>').appendTo($tab);

@@ -9,6 +9,7 @@
         <div class="bv-list-actions">
             <button class="btn-ico" data-bv-modal="filter" title="Filtros" aria-label="Filtrar conversaciones">
                 <i class="fas fa-filter" aria-hidden="true"></i>
+                <span class="bv-filter-badge" id="bvFilterBadge" hidden></span>
             </button>
             <div class="bv-sort-wrap">
                 <button class="btn-ico" id="bv-btn-sort" title="Ordenar" aria-label="Ordenar conversaciones" aria-expanded="false" aria-haspopup="menu">

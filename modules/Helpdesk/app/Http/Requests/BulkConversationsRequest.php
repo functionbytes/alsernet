@@ -14,13 +14,14 @@ class BulkConversationsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'action' => ['required', 'string', 'in:archive,unarchive,close,reopen,assign,tag,mark_read,mark_unread'],
+            'action' => ['required', 'string', 'in:archive,unarchive,close,reopen,assign,tag,mark_read,mark_unread,priority'],
             'ids' => ['required', 'array', 'min:1', 'max:100'],
             'ids.*' => ['integer', 'exists:helpdesk.helpdesk_conversations,id'],
             'payload' => ['nullable', 'array'],
             'payload.assignee_id' => ['nullable', 'integer', 'exists:users,id'],
             'payload.tag_ids' => ['nullable', 'array'],
             'payload.tag_ids.*' => ['integer', 'exists:helpdesk.helpdesk_conversation_tags,id'],
+            'payload.priority' => ['nullable', 'string', 'in:low,normal,high,urgent'],
         ];
     }
 
