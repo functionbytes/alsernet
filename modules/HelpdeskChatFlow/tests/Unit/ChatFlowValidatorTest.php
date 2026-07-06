@@ -171,4 +171,61 @@ class ChatFlowValidatorTest extends TestCase
 
         $this->assertStringNotContainsString('{{edad}}', implode(' ', $result['warnings']));
     }
+
+    public function test_warns_when_order_lookup_exposed_without_otp(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('id', 'identify_customer', 'start', ['require_otp' => false]),
+            $this->node('lookup', 'order_lookup', 'id'),
+            $this->node('end', 'end', 'lookup', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringContainsString('OTP', implode(' ', $result['warnings']));
+    }
+
+    public function test_warns_when_ai_agent_order_tool_without_otp(): void
+    {
+        // tool_order_lookup default es true → el agente expone pedidos.
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('id', 'identify_customer', 'start', ['require_otp' => false]),
+            $this->node('agent', 'ai_agent', 'id'),
+            $this->node('end', 'end', 'agent', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringContainsString('OTP', implode(' ', $result['warnings']));
+    }
+
+    public function test_no_otp_warning_when_otp_enabled(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('id', 'identify_customer', 'start', ['require_otp' => true]),
+            $this->node('lookup', 'order_lookup', 'id'),
+            $this->node('end', 'end', 'lookup', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringNotContainsString('OTP', implode(' ', $result['warnings']));
+    }
+
+    public function test_no_otp_warning_when_orders_not_exposed(): void
+    {
+        $flow = $this->flow([
+            $this->node('start', 'start', null),
+            $this->node('id', 'identify_customer', 'start', ['require_otp' => false]),
+            $this->node('msg', 'message', 'id', ['text' => 'Hola']),
+            $this->node('end', 'end', 'msg', ['action' => 'close']),
+        ]);
+
+        $result = $this->validator->validate($flow);
+
+        $this->assertStringNotContainsString('OTP', implode(' ', $result['warnings']));
+    }
 }

@@ -121,6 +121,18 @@ class ChatFlowValidator
             $warnings[] = "La variable «{{{$var}}}» se usa pero no se define en ningún paso anterior.";
         }
 
+        // Seguridad: si el flow expone datos de pedidos (nodo order_lookup o un
+        // ai_agent con su tool de pedidos activa) y a la vez desactiva el OTP en la
+        // identificación (require_otp=false), un visitante podría consultar pedidos
+        // ajenos con solo un email/teléfono adivinable.
+        $exposesOrders = (bool) array_filter($nodes, fn ($n) => ($n['type'] ?? '') === 'order_lookup'
+            || (($n['type'] ?? '') === 'ai_agent' && filter_var($n['data']['tool_order_lookup'] ?? true, FILTER_VALIDATE_BOOLEAN)));
+        $otpDisabled = (bool) array_filter($nodes, fn ($n) => ($n['type'] ?? '') === 'identify_customer'
+            && ! filter_var($n['data']['require_otp'] ?? true, FILTER_VALIDATE_BOOLEAN));
+        if ($exposesOrders && $otpDisabled) {
+            $warnings[] = 'El flow expone datos de pedidos con la verificación OTP desactivada (require_otp=false) en la identificación: un visitante podría consultar pedidos ajenos con un email o teléfono adivinable. Reactiva el OTP salvo que sea un flujo de bajo riesgo.';
+        }
+
         return ['errors' => array_values($errors), 'warnings' => array_values(array_unique($warnings))];
     }
 
