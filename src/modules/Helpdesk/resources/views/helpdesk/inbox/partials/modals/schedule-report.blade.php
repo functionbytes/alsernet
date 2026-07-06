@@ -4,71 +4,71 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-chart-line"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">REPORTES · RECURRENTE</span>
-                <div class="bv-modal-title">Programar reporte</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Tipo de reporte</label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_type') }}</label>
                 <select id="srType" class="bv-form-input">
-                    <option value="agent_activity">Resumen de actividad de agentes</option>
-                    <option value="sla_compliance">SLA · cumplimiento por canal</option>
-                    <option value="csat_weekly">CSAT semanal</option>
-                    <option value="tickets_resolved">Tickets resueltos vs creados</option>
+                    <option value="agent_activity">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_type_agent_activity') }}</option>
+                    <option value="sla_compliance">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_type_sla_compliance') }}</option>
+                    <option value="csat_weekly">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_type_csat_weekly') }}</option>
+                    <option value="tickets_resolved">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_type_tickets_resolved') }}</option>
                 </select>
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Frecuencia</label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_frequency') }}</label>
                 <div class="bv-report-freq" id="srFreqBar">
-                    <button type="button" class="bv-report-freq__btn" data-freq="daily">Diario</button>
-                    <button type="button" class="bv-report-freq__btn on" data-freq="weekly">Semanal</button>
-                    <button type="button" class="bv-report-freq__btn" data-freq="monthly">Mensual</button>
-                    <button type="button" class="bv-report-freq__btn" data-freq="quarterly">Trimestral</button>
+                    <button type="button" class="bv-report-freq__btn" data-freq="daily">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_freq_daily') }}</button>
+                    <button type="button" class="bv-report-freq__btn on" data-freq="weekly">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_freq_weekly') }}</button>
+                    <button type="button" class="bv-report-freq__btn" data-freq="monthly">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_freq_monthly') }}</button>
+                    <button type="button" class="bv-report-freq__btn" data-freq="quarterly">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_freq_quarterly') }}</button>
                 </div>
             </div>
 
             <div class="bv-frow">
                 <div class="bv-form-field" id="srDayField">
-                    <label class="bv-form-label">Día</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_day') }}</label>
                     <select id="srDay" class="bv-form-input">
-                        <option value="1">Lunes</option>
-                        <option value="2">Martes</option>
-                        <option value="3">Miércoles</option>
-                        <option value="4">Jueves</option>
-                        <option value="5">Viernes</option>
-                        <option value="6">Sábado</option>
-                        <option value="0">Domingo</option>
+                        <option value="1">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_monday') }}</option>
+                        <option value="2">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_tuesday') }}</option>
+                        <option value="3">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_wednesday') }}</option>
+                        <option value="4">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_thursday') }}</option>
+                        <option value="5">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_friday') }}</option>
+                        <option value="6">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_saturday') }}</option>
+                        <option value="0">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_day_sunday') }}</option>
                     </select>
                 </div>
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Hora</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_time') }}</label>
                     <input id="srTime" type="time" class="bv-form-input" value="09:00">
                 </div>
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Enviar a <span class="bv-form-hint">separados por coma</span></label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_recipients') }} <span class="bv-form-hint">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_recipients_hint') }}</span></label>
                 <input id="srRecipients" type="text" class="bv-form-input" placeholder="correo@empresa.com, otro@empresa.com">
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Formato</label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_field_format') }}</label>
                 <select id="srFormat" class="bv-form-input">
-                    <option value="pdf_link">PDF + enlace al dashboard</option>
-                    <option value="csv">CSV adjunto</option>
-                    <option value="xlsx">Excel adjunto</option>
+                    <option value="pdf_link">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_format_pdf_link') }}</option>
+                    <option value="csv">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_format_csv') }}</option>
+                    <option value="xlsx">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_format_xlsx') }}</option>
                 </select>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-sr-save">Programar reporte</button>
-            <button class="btn-secondary" id="bv-sr-test">Enviar prueba ahora</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-sr-save">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_submit') }}</button>
+            <button class="btn-secondary" id="bv-sr-test">{{ __('helpdesk::helpdesk.inbox.modals.schedule_report_test') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

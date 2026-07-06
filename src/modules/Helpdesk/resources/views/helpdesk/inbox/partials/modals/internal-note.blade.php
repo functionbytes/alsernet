@@ -4,55 +4,55 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-note-sticky"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · NOTA INTERNA</span>
-                <div class="bv-modal-title">Crear nota para el equipo</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Mencionar a <span class="bv-form-hint">@ para agentes</span></label>
-                <input id="internalNoteMentions" type="text" class="bv-form-input" placeholder="@nombre.agente" autocomplete="off">
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_mention_label') }} <span class="bv-form-hint">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_mention_hint') }}</span></label>
+                <input id="internalNoteMentions" type="text" class="bv-form-input" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.internal_note_mention_placeholder') }}" autocomplete="off">
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Nota <span class="bv-req">*</span></label>
-                <textarea id="internalNoteText" class="bv-form-input" rows="4" placeholder="Escribe la nota…"></textarea>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_text_label') }} <span class="bv-req">*</span></label>
+                <textarea id="internalNoteText" class="bv-form-input" rows="4" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.internal_note_text_placeholder') }}"></textarea>
             </div>
 
             <div class="bv-frow">
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Prioridad</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_priority_label') }}</label>
                     <select id="internalNotePriority" class="bv-form-input">
-                        <option value="info">Informativa</option>
-                        <option value="important" selected>Importante</option>
-                        <option value="critical">Crítica</option>
+                        <option value="info">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_priority_info') }}</option>
+                        <option value="important" selected>{{ __('helpdesk::helpdesk.inbox.modals.internal_note_priority_important') }}</option>
+                        <option value="critical">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_priority_critical') }}</option>
                     </select>
                 </div>
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Caduca</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_expiry_label') }}</label>
                     <select id="internalNoteExpiry" class="bv-form-input">
-                        <option value="">No caduca</option>
-                        <option value="7" selected>En 7 días</option>
-                        <option value="30">En 30 días</option>
+                        <option value="">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_expiry_never') }}</option>
+                        <option value="7" selected>{{ __('helpdesk::helpdesk.inbox.modals.internal_note_expiry_7_days') }}</option>
+                        <option value="30">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_expiry_30_days') }}</option>
                     </select>
                 </div>
             </div>
 
             <label class="bv-check">
                 <input type="checkbox" id="internalNotePinned" checked>
-                Anclar en la parte superior del thread
+                {{ __('helpdesk::helpdesk.inbox.modals.internal_note_pin_label') }}
             </label>
             <label class="bv-check">
                 <input type="checkbox" id="internalNotePush">
-                Enviar notificación push al equipo
+                {{ __('helpdesk::helpdesk.inbox.modals.internal_note_push_label') }}
             </label>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-internal-note-save">Guardar nota</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-internal-note-save">{{ __('helpdesk::helpdesk.inbox.modals.internal_note_save') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

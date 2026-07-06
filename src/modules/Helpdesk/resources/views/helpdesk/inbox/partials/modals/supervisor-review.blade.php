@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-user-shield"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">FLUJO · APROBACIÓN</span>
-                <div class="bv-modal-title">Solicitar revisión</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_header_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,47 +13,47 @@
 
             <div class="bv-info-table" id="supRevInfoTable">
                 <div class="bv-info-table__row">
-                    <span class="bv-info-table__k">Conversación</span>
+                    <span class="bv-info-table__k">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_info_conversation') }}</span>
                     <span class="bv-info-table__v" id="supRevConvRef">—</span>
                 </div>
                 <div class="bv-info-table__row">
-                    <span class="bv-info-table__k">Tu rol</span>
+                    <span class="bv-info-table__k">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_info_role') }}</span>
                     <span class="bv-info-table__v" id="supRevUserRole">—</span>
                 </div>
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Tipo de revisión <span class="bv-req">*</span></label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_field_type') }} <span class="bv-req">*</span></label>
                 <div class="bv-opt-list" id="supRevTypeList">
                     <button type="button" class="bv-opt on" data-rev-type="approve_response">
                         <div class="bv-opt__ic"><i class="far fa-circle-check"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">Aprobar respuesta</span>
-                            <span class="bv-opt__s">Antes de enviar el mensaje al cliente</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_approve_response') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_approve_response_desc') }}</span>
                         </div>
                         <div class="bv-opt__radio"></div>
                     </button>
                     <button type="button" class="bv-opt" data-rev-type="approve_discount">
                         <div class="bv-opt__ic"><i class="fas fa-euro-sign"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">Aprobar descuento / nota crédito</span>
-                            <span class="bv-opt__s">Cualquier ajuste financiero</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_approve_discount') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_approve_discount_desc') }}</span>
                         </div>
                         <div class="bv-opt__radio"></div>
                     </button>
                     <button type="button" class="bv-opt" data-rev-type="reopen_case">
                         <div class="bv-opt__ic"><i class="fas fa-undo"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">Reabrir caso cerrado</span>
-                            <span class="bv-opt__s">Conversación ya finalizada</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_reopen_case') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_reopen_case_desc') }}</span>
                         </div>
                         <div class="bv-opt__radio"></div>
                     </button>
                     <button type="button" class="bv-opt" data-rev-type="change_policy">
                         <div class="bv-opt__ic"><i class="fas fa-rotate-right"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">Cambiar política aplicada</span>
-                            <span class="bv-opt__s">Excepción al SLA o garantía</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_change_policy') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_type_change_policy_desc') }}</span>
                         </div>
                         <div class="bv-opt__radio"></div>
                     </button>
@@ -61,14 +61,14 @@
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Comentario para el supervisor</label>
-                <textarea id="supRevComment" class="bv-form-input" rows="3" placeholder="Explica el contexto…"></textarea>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_field_comment') }}</label>
+                <textarea id="supRevComment" class="bv-form-input" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_placeholder_comment') }}"></textarea>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-sup-rev-submit">Enviar solicitud</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-sup-rev-submit">{{ __('helpdesk::helpdesk.inbox.modals.supervisor_review_btn_submit') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

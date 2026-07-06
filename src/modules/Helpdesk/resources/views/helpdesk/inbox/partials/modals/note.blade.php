@@ -2,7 +2,7 @@
 <div class="bv-modal" data-bv-modal-name="note">
     <div class="bv-modal-dialog">
         <div class="bv-modal-head">
-            <div class="bv-modal-title"><i class="fas fa-note-sticky bv-modal-title-icon bv-modal-title-icon--warning"></i> Notas internas</div>
+            <div class="bv-modal-title"><i class="fas fa-note-sticky bv-modal-title-icon bv-modal-title-icon--warning"></i> {{ __('helpdesk::helpdesk.inbox.modals.note_title') }}</div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
@@ -11,32 +11,32 @@
             <div class="mv4-note-compose">
                 <div class="head">
                     <div class="av c1">ML</div>
-                    <span>Como <b>María López</b></span>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.note_compose_as') }} <b>María López</b></span>
                     <span class="bv-flex-spacer"></span>
                     <label class="pin">
-                        <input type="checkbox" id="notePin"> <i class="fas fa-thumbtack"></i> Fijar
+                        <input type="checkbox" id="notePin"> <i class="fas fa-thumbtack"></i> {{ __('helpdesk::helpdesk.inbox.modals.note_pin_label') }}
                     </label>
                 </div>
-                <textarea id="noteBody" rows="3" placeholder="Escribe una nota interna… usa @ para mencionar al equipo"></textarea>
+                <textarea id="noteBody" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.note_body_placeholder') }}"></textarea>
                 <div class="tools">
-                    <button class="tt" data-tt="Mencionar"><i class="fas fa-at"></i></button>
-                    <button class="tt" data-tt="Etiqueta"><i class="fas fa-tag"></i></button>
-                    <button class="tt" data-tt="Adjuntar"><i class="fas fa-paperclip"></i></button>
-                    <button class="tt" data-tt="Enlace"><i class="fas fa-link"></i></button>
-                    <span class="bv-note-team-tag">Solo visible para el equipo</span>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_mention_tooltip') }}"><i class="fas fa-at"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_tag_tooltip') }}"><i class="fas fa-tag"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_attach_tooltip') }}"><i class="fas fa-paperclip"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_link_tooltip') }}"><i class="fas fa-link"></i></button>
+                    <span class="bv-note-team-tag">{{ __('helpdesk::helpdesk.inbox.modals.note_team_only_tag') }}</span>
                 </div>
             </div>
 
             {{-- Notas existentes --}}
-            <div class="mv4-sec-title bv-mt-18 bv-step-hidden" id="noteListTitle">Notas existentes</div>
+            <div class="mv4-sec-title bv-mt-18 bv-step-hidden" id="noteListTitle">{{ __('helpdesk::helpdesk.inbox.modals.note_existing_notes_title') }}</div>
             <div class="mv4-notes-list" id="noteList">
-                <div class="bv-list-state">Cargando…</div>
+                <div class="bv-list-state">{{ __('helpdesk::helpdesk.inbox.modals.note_loading') }}</div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="noteBtnSave">Añadir nota</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="noteBtnSave">{{ __('helpdesk::helpdesk.inbox.modals.note_add') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.note_close') }}</button>
         </div>
     </div>
 </div>

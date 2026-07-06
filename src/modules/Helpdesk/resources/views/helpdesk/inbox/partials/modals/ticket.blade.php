@@ -17,18 +17,18 @@
             </div>
 
             <div class="bv-tk-section">
-                <div class="mv4-sec-title">Descripción</div>
+                <div class="mv4-sec-title">{{ __('helpdesk::helpdesk.inbox.modals.ticket_description') }}</div>
                 <div class="bv-tk-text" id="bv-ticket-modal-desc">—</div>
             </div>
 
             <div class="bv-tk-section">
-                <div class="mv4-sec-title">Conversaciones vinculadas</div>
+                <div class="mv4-sec-title">{{ __('helpdesk::helpdesk.inbox.modals.ticket_linked_conversations') }}</div>
                 <div class="bv-tk-link-row">
                     <span class="bv-tk-link-ico">
                         <i class="fas fa-comment-dots"></i>
                     </span>
                     <div class="bv-tk-link-body">
-                        <b>Widget · <span id="bv-ticket-modal-cust-name">—</span></b>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.ticket_channel_widget') }} · <span id="bv-ticket-modal-cust-name">—</span></b>
                         <span id="bv-ticket-modal-convo-meta">—</span>
                     </div>
                     <button class="bv-btn bv-btn-ghost bv-btn-sm" type="button"><i class="fas fa-arrow-right"></i></button>
@@ -36,7 +36,7 @@
             </div>
 
             <div class="bv-tk-section">
-                <div class="mv4-sec-title">Cliente</div>
+                <div class="mv4-sec-title">{{ __('helpdesk::helpdesk.inbox.modals.ticket_customer') }}</div>
                 <div class="bv-tk-cust">
                     <div class="bv-tk-cust-av" id="bv-ticket-modal-avatar">??</div>
                     <div class="bv-tk-cust-body">
@@ -47,35 +47,35 @@
             </div>
 
             <div class="bv-tk-section">
-                <div class="mv4-sec-title">Detalles</div>
+                <div class="mv4-sec-title">{{ __('helpdesk::helpdesk.inbox.modals.ticket_details') }}</div>
                 <div class="info-table">
-                    <div class="lbl">Pedido</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_order') }}</div>
                     <div class="val" id="bv-ticket-modal-related-order">—</div>
-                    <div class="lbl">Asignado</div>
-                    <div class="val" id="bv-ticket-modal-assignee">Sin asignar</div>
-                    <div class="lbl">Equipo</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_assigned') }}</div>
+                    <div class="val" id="bv-ticket-modal-assignee">{{ __('helpdesk::helpdesk.inbox.modals.ticket_unassigned') }}</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_team') }}</div>
                     <div class="val" id="bv-ticket-modal-group">—</div>
-                    <div class="lbl">Creado</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_created') }}</div>
                     <div class="val" id="bv-ticket-modal-created">—</div>
-                    <div class="lbl">Última act.</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_last_update') }}</div>
                     <div class="val" id="bv-ticket-modal-updated">—</div>
-                    <div class="lbl">Origen</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_origin') }}</div>
                     <div class="val" id="bv-ticket-modal-origin">—</div>
-                    <div class="lbl">Prioridad</div>
+                    <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_priority') }}</div>
                     <div class="val" id="bv-ticket-modal-priority">—</div>
                 </div>
             </div>
 
             <div class="bv-tk-section">
-                <div class="mv4-sec-title">Actividad</div>
+                <div class="mv4-sec-title">{{ __('helpdesk::helpdesk.inbox.modals.ticket_activity') }}</div>
                 <div class="mv4-tl" id="bv-ticket-modal-activity">
                     {{-- Timeline inyectado vía JS (mv4-tl-item) --}}
                 </div>
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-ticket-modal-resolve"><i class="fas fa-check"></i> Resolver ticket</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-ticket-modal-resolve"><i class="fas fa-check"></i> {{ __('helpdesk::helpdesk.inbox.modals.ticket_resolve') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.ticket_close') }}</button>
         </div>
     </div>
 </div>

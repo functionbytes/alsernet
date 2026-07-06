@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-envelope"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · COMPOSE</span>
-                <div class="bv-modal-title">Enviar email</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.email_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.email_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -14,28 +14,28 @@
 
                 {{-- Para --}}
                 <div class="row">
-                    <span class="lbl">Para</span>
-                    <input type="email" id="emailTo" placeholder="Añadir destinatario…" value="{{ $selectedConversation?->customer?->email ?? '' }}">
+                    <span class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.email_to_label') }}</span>
+                    <input type="email" id="emailTo" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.email_to_placeholder') }}" value="{{ $selectedConversation?->customer?->email ?? '' }}">
                 </div>
 
                 {{-- CC (toggle) --}}
                 <div class="row bv-hidden" id="emailCcRow">
-                    <span class="lbl">CC</span>
-                    <input type="email" id="emailCc" placeholder="Añadir en copia…">
+                    <span class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.email_cc_label') }}</span>
+                    <input type="email" id="emailCc" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.email_cc_placeholder') }}">
                 </div>
 
                 {{-- Asunto --}}
                 <div class="row">
-                    <span class="lbl">Asunto</span>
-                    <input type="text" id="emailSubject" name="subject" placeholder="Asunto del correo…">
+                    <span class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.email_subject_label') }}</span>
+                    <input type="text" id="emailSubject" name="subject" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.email_subject_placeholder') }}">
                 </div>
 
                 {{-- Plantilla --}}
                 <div class="row">
-                    <span class="lbl">Plantilla</span>
+                    <span class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.email_template_label') }}</span>
                     <div class="bv-email-tpl-wrap">
                         <select id="emailTemplate">
-                            <option value="">— Sin plantilla —</option>
+                            <option value="">{{ __('helpdesk::helpdesk.inbox.modals.email_template_none') }}</option>
                         </select>
                         <span id="emailTemplateLoading" class="bv-hidden bv-email-tpl-loading">
                             <i class="fas fa-spinner fa-spin"></i>
@@ -47,36 +47,36 @@
 
             {{-- Toggle CC --}}
             <button id="emailToggleCc" class="bv-email-ccbcc">
-                <i class="fas fa-plus bv-icon-xs"></i> CC / BCC
+                <i class="fas fa-plus bv-icon-xs"></i> {{ __('helpdesk::helpdesk.inbox.modals.email_toggle_cc') }}
             </button>
 
             {{-- Barra de formato simple --}}
             <div class="bv-email-toolbar">
-                <button class="tt bv-fmt-btn bv-fmt-btn-bold" data-tt="Negrita">B</button>
-                <button class="tt bv-fmt-btn bv-fmt-btn-italic" data-tt="Itálica"><i>I</i></button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-bold" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_bold_tooltip') }}">B</button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-italic" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_italic_tooltip') }}"><i>I</i></button>
                 <div class="bv-toolbar-sep"></div>
-                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="Insertar enlace"><i class="fas fa-link bv-icon-sm"></i></button>
-                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="Lista"><i class="fas fa-list bv-icon-sm"></i></button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_link_tooltip') }}"><i class="fas fa-link bv-icon-sm"></i></button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_list_tooltip') }}"><i class="fas fa-list bv-icon-sm"></i></button>
                 <div class="bv-spacer"></div>
-                <button id="emailScheduleToggle" class="bv-schedule-btn" data-tt="Programar envío">
-                    <i class="fas fa-clock"></i> Programar
+                <button id="emailScheduleToggle" class="bv-schedule-btn" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_schedule_tooltip') }}">
+                    <i class="fas fa-clock"></i> {{ __('helpdesk::helpdesk.inbox.modals.email_schedule_button') }}
                 </button>
             </div>
 
             {{-- Programar envío --}}
             <div id="emailScheduleRow" class="bv-email-schedule bv-hidden">
-                <label class="bv-email-schedule-label">Enviar el</label>
+                <label class="bv-email-schedule-label">{{ __('helpdesk::helpdesk.inbox.modals.email_schedule_label') }}</label>
                 <input type="datetime-local" value="{{ date('Y-m-d') }}T10:00" class="bv-datetime-input">
             </div>
 
             {{-- Body --}}
-            <textarea id="emailBody" rows="8" class="bv-email-body" placeholder="Escribe el mensaje o selecciona una plantilla…"></textarea>
+            <textarea id="emailBody" rows="8" class="bv-email-body" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.email_body_placeholder') }}"></textarea>
 
             {{-- Preview HTML (cuando se usa plantilla) --}}
             <div id="emailHtmlPreviewWrap" class="bv-hidden bv-email-preview-wrap">
                 <div class="bv-email-preview-head">
-                    <span class="bv-email-preview-label">Vista previa HTML de la plantilla</span>
-                    <button type="button" id="emailTogglePreview" class="bv-email-toggle-btn">Ocultar</button>
+                    <span class="bv-email-preview-label">{{ __('helpdesk::helpdesk.inbox.modals.email_preview_label') }}</span>
+                    <button type="button" id="emailTogglePreview" class="bv-email-toggle-btn">{{ __('helpdesk::helpdesk.inbox.modals.email_preview_hide') }}</button>
                 </div>
                 <iframe id="emailHtmlPreview" sandbox="allow-same-origin" class="bv-email-preview-frame"></iframe>
             </div>
@@ -85,10 +85,10 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-email-send">Enviar</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
-            <button class="btn-secondary">Adjuntar</button>
-            <button class="btn-secondary">Borrador</button>
+            <button class="btn-primary" id="bv-email-send">{{ __('helpdesk::helpdesk.inbox.modals.email_send') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
+            <button class="btn-secondary">{{ __('helpdesk::helpdesk.inbox.modals.email_attach') }}</button>
+            <button class="btn-secondary">{{ __('helpdesk::helpdesk.inbox.modals.email_draft') }}</button>
         </div>
     </div>
 </div>

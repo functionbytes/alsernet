@@ -7,7 +7,7 @@
      data-update-url="{{ $ecCust ? route('manager.helpdesk.customers.update', $ecCust) : '' }}">
     <div class="bv-modal-dialog">
         <div class="bv-modal-head">
-            <div class="bv-modal-title"><i class="fas fa-user-pen bv-modal-title-icon"></i> Editar contacto</div>
+            <div class="bv-modal-title"><i class="fas fa-user-pen bv-modal-title-icon"></i> {{ __('helpdesk::helpdesk.inbox.modals.edit_contact_title') }}</div>
             <button class="bv-modal-close" data-bv-close>
                 <i class="fas fa-xmark"></i>
             </button>
@@ -15,20 +15,20 @@
         <div class="bv-modal-body">
             <div class="bv-contact-form">
                 <div>
-                    <label class="bv-field-label">Nombre <span class="bv-required-star">*</span></label>
+                    <label class="bv-field-label">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_field_name') }} <span class="bv-required-star">*</span></label>
                     <input type="text" id="ec-name" class="bv-field-input"
                            value="{{ $ecCust?->name ?? '' }}"
-                           placeholder="Nombre completo">
+                           placeholder="{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_placeholder_name') }}">
                 </div>
                 <div class="bv-contact-grid-2">
                     <div>
                         <label class="bv-field-label">Email <span class="bv-required-star">*</span></label>
                         <input type="email" id="ec-email" class="bv-field-input"
                                value="{{ $ecCust?->email ?? '' }}"
-                               placeholder="correo@ejemplo.com">
+                               placeholder="{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_placeholder_email') }}">
                     </div>
                     <div>
-                        <label class="bv-field-label">Teléfono</label>
+                        <label class="bv-field-label">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_field_phone') }}</label>
                         <input type="tel" id="ec-phone" class="bv-field-input"
                                value="{{ $ecCust?->phone ?? '' }}"
                                placeholder="+34 600 000 000">
@@ -36,9 +36,9 @@
                 </div>
                 <div class="bv-contact-grid-2">
                     <div>
-                        <label class="bv-field-label">Idioma</label>
+                        <label class="bv-field-label">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_field_language') }}</label>
                         <select id="ec-language" class="bv-field-input">
-                            <option value="">Sin especificar</option>
+                            <option value="">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_unspecified') }}</option>
                             <option value="es" {{ ($ecCust?->language ?? '') === 'es' ? 'selected' : '' }}>Español</option>
                             <option value="en" {{ ($ecCust?->language ?? '') === 'en' ? 'selected' : '' }}>English</option>
                             <option value="fr" {{ ($ecCust?->language ?? '') === 'fr' ? 'selected' : '' }}>Français</option>
@@ -48,9 +48,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="bv-field-label">Zona horaria</label>
+                        <label class="bv-field-label">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_field_timezone') }}</label>
                         <select id="ec-timezone" class="bv-field-input">
-                            <option value="">Sin especificar</option>
+                            <option value="">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_unspecified') }}</option>
                             <option value="Europe/Madrid" {{ ($ecCust?->timezone ?? '') === 'Europe/Madrid' ? 'selected' : '' }}>Europe/Madrid</option>
                             <option value="America/Mexico_City" {{ ($ecCust?->timezone ?? '') === 'America/Mexico_City' ? 'selected' : '' }}>America/Mexico_City</option>
                             <option value="America/Bogota" {{ ($ecCust?->timezone ?? '') === 'America/Bogota' ? 'selected' : '' }}>America/Bogota</option>
@@ -61,17 +61,17 @@
                     </div>
                 </div>
                 <div>
-                    <label class="bv-field-label">Notas internas</label>
+                    <label class="bv-field-label">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_field_notes') }}</label>
                     <textarea id="ec-notes" rows="3"
                               class="bv-field-input bv-textarea-resizable"
-                              placeholder="Notas privadas sobre este contacto…">{{ $ecCust?->internal_notes ?? '' }}</textarea>
+                              placeholder="{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_placeholder_notes') }}">{{ $ecCust?->internal_notes ?? '' }}</textarea>
                 </div>
                 <div id="ec-errors" class="bv-step-hidden bv-form-error"></div>
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="ec-save-btn">Guardar cambios</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="ec-save-btn">{{ __('helpdesk::helpdesk.inbox.modals.edit_contact_btn_save') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

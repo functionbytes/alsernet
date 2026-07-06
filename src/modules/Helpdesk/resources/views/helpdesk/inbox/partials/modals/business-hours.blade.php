@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-calendar"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CONFIG · HORARIO</span>
-                <div class="bv-modal-title">Horario de atención</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_header_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,7 +13,7 @@
 
             <div class="bv-frow">
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Zona horaria</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_field_timezone') }}</label>
                     <select id="bhTimezone" class="bv-form-input">
                         <option value="Europe/Madrid">Europe/Madrid (UTC+1)</option>
                         <option value="America/Mexico_City">America/Mexico_City</option>
@@ -24,36 +24,36 @@
                     </select>
                 </div>
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Aplicar a</label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_field_apply_to') }}</label>
                     <select id="bhApplyTo" class="bv-form-input">
-                        <option value="all">Todos los canales</option>
-                        <option value="whatsapp">Solo WhatsApp</option>
-                        <option value="email">Solo Email</option>
-                        <option value="webchat">Solo Chat web</option>
+                        <option value="all">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_apply_all') }}</option>
+                        <option value="whatsapp">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_apply_whatsapp') }}</option>
+                        <option value="email">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_apply_email') }}</option>
+                        <option value="webchat">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_apply_webchat') }}</option>
                     </select>
                 </div>
             </div>
 
             <div class="bv-cal-grid" id="bhCalGrid">
                 <div class="bv-cal-grid__h"></div>
-                <div class="bv-cal-grid__h">L</div>
-                <div class="bv-cal-grid__h">M</div>
-                <div class="bv-cal-grid__h">X</div>
-                <div class="bv-cal-grid__h">J</div>
-                <div class="bv-cal-grid__h">V</div>
-                <div class="bv-cal-grid__h">S</div>
-                <div class="bv-cal-grid__h">D</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_mon') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_tue') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_wed') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_thu') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_fri') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_sat') }}</div>
+                <div class="bv-cal-grid__h">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_day_sun') }}</div>
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Mensaje fuera de horario</label>
-                <textarea id="bhOffMessage" class="bv-form-input" rows="2" placeholder="Estamos fuera de horario. Te responderemos en cuanto abramos."></textarea>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_field_off_message') }}</label>
+                <textarea id="bhOffMessage" class="bv-form-input" rows="2" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.business_hours_placeholder_off_message') }}"></textarea>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-bh-save">Guardar horario</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-bh-save">{{ __('helpdesk::helpdesk.inbox.modals.business_hours_btn_save') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
