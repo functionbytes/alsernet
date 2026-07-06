@@ -89,8 +89,13 @@ class Discount extends Model
         }
 
         return match ($this->type) {
-            DiscountType::FIXED => min($this->value, $orderTotal),
-            DiscountType::PERCENTAGE => $orderTotal * ($this->value / 100),
+            // El importe de un descuento es dinero: redondear a 2 decimales (el
+            // porcentaje producía céntimos fraccionarios, p.ej. 99.99×33% =
+            // 32.9967, que se propagaban a total/factura/pago) y topar al total
+            // del pedido (un porcentaje >100% mal configurado descontaba más que
+            // el total → total negativo; FIXED ya estaba topado con min()).
+            DiscountType::FIXED => round(min((float) $this->value, $orderTotal), 2),
+            DiscountType::PERCENTAGE => round(min($orderTotal, $orderTotal * ((float) $this->value / 100)), 2),
             DiscountType::FREE_SHIPPING => 0,
             default => 0,
         };
