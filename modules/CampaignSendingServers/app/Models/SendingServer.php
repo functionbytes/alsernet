@@ -105,6 +105,7 @@ class SendingServer extends Model
         'domain',
         'api_key',
         'api_secret_key',
+        'webhook_signing_secret',
         'quota_value',
         'quota_base',
         'quota_unit',
@@ -121,6 +122,7 @@ class SendingServer extends Model
         'aws_secret_access_key' => 'encrypted',
         'api_key' => 'encrypted',
         'api_secret_key' => 'encrypted',
+        'webhook_signing_secret' => 'encrypted',
         'options' => 'array',
     ];
 
@@ -184,7 +186,7 @@ class SendingServer extends Model
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->logExcept(['smtp_password', 'aws_secret_access_key', 'api_key', 'api_secret_key'])
+            ->logExcept(['smtp_password', 'aws_secret_access_key', 'api_key', 'api_secret_key', 'webhook_signing_secret'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $event) => "sending_server:{$event}");
