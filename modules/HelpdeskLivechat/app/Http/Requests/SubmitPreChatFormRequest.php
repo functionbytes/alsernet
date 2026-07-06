@@ -14,10 +14,11 @@ class SubmitPreChatFormRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // La propiedad de la conversación se verifica con el token del widget
+            // (X-Conversation-Token) en el controller, no con customer_id/email del
+            // body (eran adivinables → IDOR), que por eso ya no se aceptan aquí.
             'conversation_id' => ['required', 'integer'],
             'data' => ['required', 'array'],
-            'customer_id' => ['nullable', 'integer'],
-            'customer_email' => ['nullable', 'email', 'max:255'],
         ];
     }
 
