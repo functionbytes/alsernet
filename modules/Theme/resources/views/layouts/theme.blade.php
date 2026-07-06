@@ -77,6 +77,9 @@
     <link rel="stylesheet" href="{{ url('core/tooltipster/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-light.min.css') }}">
 
     @stack('css')
+    {{-- Alias legacy: muchas vistas del admin usan @push('styles') en vez de
+         @push('css'); sin este stack su CSS era fantasma (nunca se renderizaba). --}}
+    @stack('styles')
     @stack('scripts-head')
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])

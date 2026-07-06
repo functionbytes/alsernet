@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{{ themeAsset('css/auth.css') }}">
 
     @stack('css')
+    @stack('styles')
 
 </head>
 
