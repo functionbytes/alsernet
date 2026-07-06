@@ -4,6 +4,7 @@ namespace Modules\HelpdeskContacts\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Pulse\Pulse;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
@@ -153,6 +154,24 @@ class ContactTabsControllerTest extends TestCase
     }
 
     // ── Resumen ────────────────────────────────────────────────────────────
+
+    public function test_resumen_tab_is_served_from_cache(): void
+    {
+        // Primera carga → puebla la caché corta del resumen.
+        $this->actingAs($this->user)->getJson($this->tabUrl('resumen'))->assertOk();
+
+        $key = 'helpdeskcontacts:resumen:'.$this->customer->id.':'.$this->customer->updated_at?->timestamp;
+        $this->assertTrue(Cache::has($key), 'El resumen debe quedar cacheado tras la primera carga.');
+
+        // Sobrescribimos con un centinela: si la segunda carga lo devuelve, prueba
+        // que se sirve desde caché en vez de recalcular las ~10 consultas.
+        Cache::put($key, ['available' => true, 'name' => 'DESDE-CACHE'], now()->addMinute());
+
+        $this->actingAs($this->user)
+            ->getJson($this->tabUrl('resumen'))
+            ->assertOk()
+            ->assertJsonPath('data.name', 'DESDE-CACHE');
+    }
 
     public function test_resumen_tab_returns_success_envelope_with_contract_keys(): void
     {
