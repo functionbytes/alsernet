@@ -66,13 +66,20 @@ class AtRiskCustomersReportController extends Controller
 
         $lastNegativeById = $rows->keyBy('customer_id');
 
+        $customerIds = $rows->pluck('customer_id')->all();
+
         $customers = Customer::query()
-            ->whereIn('id', $rows->pluck('customer_id')->all())
+            ->whereIn('id', $customerIds)
             ->get(['id', 'name', 'email'])
             ->keyBy('id');
 
+        // Puntuaciones de salud en lote: antes se llamaba a healthScore() por
+        // cliente dentro del map (~4 consultas × N clientes → N+1); ahora resuelve
+        // los mismos agregados en O(1) consultas.
+        $healthScores = $this->insights->healthScoresFor($customerIds);
+
         $ranked = $rows
-            ->map(function ($row) use ($customers, $lastNegativeById): ?array {
+            ->map(function ($row) use ($customers, $lastNegativeById, $healthScores): ?array {
                 $customer = $customers->get($row->customer_id);
 
                 if (! $customer) {
@@ -86,7 +93,7 @@ class AtRiskCustomersReportController extends Controller
                     'name' => $customer->name ?? 'Sin nombre',
                     'email' => $customer->email,
                     'negativeCount' => (int) $row->negative_count,
-                    'healthScore' => $this->insights->healthScore($customer),
+                    'healthScore' => $healthScores[$customer->id] ?? 50,
                     'lastNegativeAt' => $lastNegativeAt
                         ? now()->parse($lastNegativeAt)->toIso8601String()
                         : null,
