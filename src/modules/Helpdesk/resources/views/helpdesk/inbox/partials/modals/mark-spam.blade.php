@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box danger"><i class="far fa-circle-xmark"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · ACCIÓN IRREVERSIBLE</span>
-                <div class="bv-modal-title">Marcar como spam</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -15,15 +15,15 @@
 
             <div class="bv-warn-box">
                 <div class="bv-warn-box__body">
-                    <strong class="bv-warn-box__title">Se archivará la conversación y bloqueará al contacto.</strong>
-                    <span class="bv-warn-box__desc">El cliente no podrá enviar nuevos mensajes desde ningún canal. Puedes desbloquearlo desde su ficha más adelante.</span>
+                    <strong class="bv-warn-box__title">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_warning_title') }}</strong>
+                    <span class="bv-warn-box__desc">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_warning_desc') }}</span>
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger-solid" id="bv-mark-spam-confirm">Marcar como spam</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-danger-solid" id="bv-mark-spam-confirm">{{ __('helpdesk::helpdesk.inbox.modals.mark_spam_confirm') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

@@ -5,10 +5,10 @@
             <div class="bv-tk-panel-head">
                 <span class="bv-tk-num" id="emPanelCount">0</span>
                 <div class="bv-tk-meta">
-                    <span class="bv-tk-lbl">Emails</span>
+                    <span class="bv-tk-lbl">{{ __('helpdesk::helpdesk.inbox.modals.emails_panel_label') }}</span>
                     <span class="bv-tk-sub" id="emPanelSub">—</span>
                 </div>
-                <button class="bv-tk-add-btn tt" title="Nuevo email" data-tt="Nuevo email"
+                <button class="bv-tk-add-btn tt" title="{{ __('helpdesk::helpdesk.inbox.modals.emails_panel_new_email') }}" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.emails_panel_new_email') }}"
                         data-bv-close data-bv-open="email">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -20,27 +20,27 @@
             {{-- Filter pills --}}
             <div class="bv-em-filter-row">
                 <span class="bv-media-pill bv-em-pill on" data-em-filter="all">
-                    Todos <span class="c" id="emCountAll">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.modals.emails_panel_filter_all') }} <span class="c" id="emCountAll">0</span>
                 </span>
                 <span class="bv-media-pill bv-em-pill" data-em-filter="sent">
-                    Enviados <span class="c" id="emCountSent">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.modals.emails_panel_filter_sent') }} <span class="c" id="emCountSent">0</span>
                 </span>
                 <span class="bv-media-pill bv-em-pill" data-em-filter="failed">
-                    Fallidos <span class="c" id="emCountFailed">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.modals.emails_panel_filter_failed') }} <span class="c" id="emCountFailed">0</span>
                 </span>
             </div>
 
             {{-- List --}}
             <div class="bv-em-list" id="emList">
                 <div class="bv-em-loading">
-                    <i class="fas fa-spinner fa-spin"></i> Cargando…
+                    <i class="fas fa-spinner fa-spin"></i> {{ __('helpdesk::helpdesk.inbox.modals.emails_panel_loading') }}
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" data-bv-close data-bv-open="email">Nuevo email</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" data-bv-close data-bv-open="email">{{ __('helpdesk::helpdesk.inbox.modals.emails_panel_new_email_footer') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.emails_panel_close') }}</button>
         </div>
     </div>
 </div>
