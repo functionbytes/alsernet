@@ -7,15 +7,35 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\CampaignSendingServers\Events\BounceDetected;
 use Modules\CampaignSendingServers\Events\FeedbackLoopDetected;
+use Modules\CampaignSendingServers\Models\SendingServer;
 
 class ProviderWebhookController extends Controller
 {
+    /**
+     * El {serverUid} es el UUID (no enumerable) del sending server, configurado
+     * en la URL del webhook del proveedor y que NUNCA viaja en el email. Exigir
+     * que corresponda a un servidor existente convierte el endpoint de
+     * "cualquiera puede forjar bounces/quejas conociendo un message_id" a
+     * "hay que conocer además el UUID secreto del servidor". No sustituye a la
+     * verificación de firma HMAC/SNS por proveedor (pendiente: requiere almacenar
+     * el signing secret de cada proveedor), pero cierra el acceso anónimo.
+     */
+    private function assertKnownServer(string $serverUid): void
+    {
+        abort_unless(
+            SendingServer::query()->where('uid', $serverUid)->exists(),
+            404
+        );
+    }
+
     /**
      * SendGrid Event Webhook
      * POST /campaign/webhooks/sendgrid/{serverUid}
      */
     public function sendgrid(Request $request, string $serverUid): JsonResponse
     {
+        $this->assertKnownServer($serverUid);
+
         foreach ($request->all() as $event) {
             $eventType = $event['event'] ?? null;
             $messageId = $event['sg_message_id'] ?? null;
@@ -44,6 +64,8 @@ class ProviderWebhookController extends Controller
      */
     public function mailgun(Request $request, string $serverUid): JsonResponse
     {
+        $this->assertKnownServer($serverUid);
+
         $eventData = $request->input('event-data', []);
         $eventType = $eventData['event'] ?? null;
         $messageId = $eventData['message']['headers']['message-id'] ?? null;
@@ -72,6 +94,8 @@ class ProviderWebhookController extends Controller
      */
     public function ses(Request $request, string $serverUid): JsonResponse
     {
+        $this->assertKnownServer($serverUid);
+
         $payload = $request->all();
 
         // SNS SubscriptionConfirmation
@@ -108,6 +132,8 @@ class ProviderWebhookController extends Controller
      */
     public function postmark(Request $request, string $serverUid): JsonResponse
     {
+        $this->assertKnownServer($serverUid);
+
         $eventType = $request->input('Type') ?? $request->input('RecordType') ?? null;
         $messageId = $request->input('MessageID') ?? $request->input('MessageId') ?? null;
         $email = $request->input('Recipient') ?? $request->input('Email') ?? null;
