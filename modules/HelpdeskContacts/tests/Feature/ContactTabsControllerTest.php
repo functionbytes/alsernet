@@ -6,8 +6,12 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
 use Laravel\Pulse\Pulse;
+use Modules\Helpdesk\Models\AgentInboxCapacity;
+use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskContacts\Database\Seeders\HelpdeskContactsPermissionsSeeder;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -62,10 +66,17 @@ class ContactTabsControllerTest extends TestCase
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
         $this->seed(HelpdeskContactsPermissionsSeeder::class);
+        // forAgent() consulta ambos permisos; deben EXISTIR o hasPermissionTo() lanza.
+        Permission::findOrCreate('helpdesk.manage', 'web');
+        Permission::findOrCreate('helpdesk.customers.manage', 'web');
 
+        // Happy-path: manager (helpdesk.manage) → forAgent() ve todos los contactos.
+        // El aislamiento por bandeja de agentes restringidos se cubre en el test
+        // de regresión de abajo (test_restricted_agent_cannot_read_foreign_customer_tab).
         $this->user = User::factory()->create();
         $this->user->givePermissionTo('contacts.view');
         $this->user->givePermissionTo('contacts.update');
+        $this->user->givePermissionTo('helpdesk.manage');
 
         $this->customer = Customer::factory()->create();
     }
@@ -92,6 +103,56 @@ class ContactTabsControllerTest extends TestCase
                 ->getJson($this->tabUrl($tab))
                 ->assertForbidden();
         }
+    }
+
+    /**
+     * Regresión IDOR: tener contacts.view NO basta: un agente restringido a sus
+     * bandejas no puede leer los tabs (ERP/PS/tickets/actividad) de un cliente
+     * que no está en ninguna de sus bandejas iterando el id de la ruta.
+     */
+    public function test_restricted_agent_cannot_read_foreign_customer_tab(): void
+    {
+        $inboxMine = Inbox::create(['name' => 'Inbox propia', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
+
+        $agent = User::factory()->create();
+        $agent->givePermissionTo('contacts.view');
+        AgentInboxCapacity::create(['user_id' => $agent->id, 'inbox_id' => $inboxMine->id, 'max_concurrent' => 5, 'accepts_new' => true]);
+
+        // Cliente de OTRA bandeja, sin relación con el agente.
+        $foreign = Customer::factory()->create();
+        Conversation::factory()->create(['customer_id' => $foreign->id, 'inbox_id' => Inbox::create([
+            'name' => 'Inbox ajena', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true,
+        ])->id]);
+
+        foreach (['resumen', 'erp', 'prestashop', 'tienda', 'actividad', 'tickets'] as $tab) {
+            $this->actingAs($agent)
+                ->getJson('/panel/contacts/'.$foreign->id.'/tab/'.$tab)
+                ->assertForbidden();
+        }
+    }
+
+    /**
+     * Regresión IDOR: el carrito asistido (mostrar/generar pedido) también aísla
+     * por bandeja — assertVisible() corta antes de tocar el servicio PrestaShop,
+     * así que un agente restringido no puede operar el carrito de un cliente ajeno
+     * ni con el mismo dato que le daría un 422 de "no disponible".
+     */
+    public function test_restricted_agent_cannot_access_foreign_customer_cart(): void
+    {
+        $inboxMine = Inbox::create(['name' => 'Inbox propia', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
+
+        $agent = User::factory()->create();
+        $agent->givePermissionTo('contacts.view');
+        AgentInboxCapacity::create(['user_id' => $agent->id, 'inbox_id' => $inboxMine->id, 'max_concurrent' => 5, 'accepts_new' => true]);
+
+        $foreign = Customer::factory()->create();
+        Conversation::factory()->create(['customer_id' => $foreign->id, 'inbox_id' => Inbox::create([
+            'name' => 'Inbox ajena', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true,
+        ])->id]);
+
+        $this->actingAs($agent)
+            ->getJson('/panel/contacts/'.$foreign->id.'/cart')
+            ->assertForbidden();
     }
 
     // ── Resumen ────────────────────────────────────────────────────────────

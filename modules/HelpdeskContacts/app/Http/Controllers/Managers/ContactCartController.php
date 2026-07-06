@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskContacts\Http\Requests\Managers\ApplyContactCartDiscountRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\GenerateContactOrderRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\StoreContactCartItemRequest;
 use Nwidart\Modules\Facades\Module;
 use RuntimeException;
 use Throwable;
@@ -34,6 +37,8 @@ class ContactCartController extends Controller
      */
     public function show(Request $request, Customer $customer): JsonResponse
     {
+        $this->assertVisible($customer);
+
         return $this->withService(function (object $service) use ($request, $customer): JsonResponse {
             $cart = $service->getOrCreateCart(
                 $customer,
@@ -45,12 +50,11 @@ class ContactCartController extends Controller
         });
     }
 
-    public function addItem(Request $request, Customer $customer): JsonResponse
+    public function addItem(StoreContactCartItemRequest $request, Customer $customer): JsonResponse
     {
-        $validated = $request->validate([
-            'product_id' => ['required', 'integer'],
-            'quantity' => ['nullable', 'integer', 'min:1'],
-        ]);
+        $this->assertVisible($customer);
+
+        $validated = $request->validated();
 
         return $this->withService(function (object $service) use ($request, $customer, $validated): JsonResponse {
             $cart = $service->getOrCreateCart($customer, null, $request->user()->id);
@@ -67,6 +71,8 @@ class ContactCartController extends Controller
 
     public function removeItem(Request $request, Customer $customer, int $item): JsonResponse
     {
+        $this->assertVisible($customer);
+
         return $this->withService(function (object $service) use ($request, $customer, $item): JsonResponse {
             $cart = $service->getOrCreateCart($customer, null, $request->user()->id);
 
@@ -92,9 +98,9 @@ class ContactCartController extends Controller
         });
     }
 
-    public function applyDiscount(Request $request, Customer $customer): JsonResponse
+    public function applyDiscount(ApplyContactCartDiscountRequest $request, Customer $customer): JsonResponse
     {
-        $request->validate(['code' => ['nullable', 'string', 'max:191']]);
+        $this->assertVisible($customer);
 
         return $this->withService(function (object $service) use ($request, $customer): JsonResponse {
             $cart = $service->getOrCreateCart($customer, null, $request->user()->id);
@@ -113,9 +119,11 @@ class ContactCartController extends Controller
         });
     }
 
-    public function generateOrder(Request $request, Customer $customer): JsonResponse
+    public function generateOrder(GenerateContactOrderRequest $request, Customer $customer): JsonResponse
     {
-        $validated = $this->validateCustomerData($request);
+        $this->assertVisible($customer);
+
+        $validated = $request->validated();
 
         return $this->withService(function (object $service) use ($customer, $validated): JsonResponse {
             $cart = $service->getOrCreateCart($customer);
@@ -139,9 +147,11 @@ class ContactCartController extends Controller
         });
     }
 
-    public function sendPaymentLink(Request $request, Customer $customer): JsonResponse
+    public function sendPaymentLink(GenerateContactOrderRequest $request, Customer $customer): JsonResponse
     {
-        $validated = $this->validateCustomerData($request);
+        $this->assertVisible($customer);
+
+        $validated = $request->validated();
 
         return $this->withService(function (object $service) use ($customer, $validated): JsonResponse {
             $cart = $service->getOrCreateCart($customer);
@@ -162,20 +172,18 @@ class ContactCartController extends Controller
     }
 
     /**
-     * @return array<string, mixed>
+     * Aislamiento de bandeja: este controller re-gatea en contacts.* en vez del
+     * CustomerPolicy (helpdesk.customers.*), así que DEBE verificar aparte que el
+     * agente tenga acceso a este cliente. Sin esto, un agente podía generar
+     * pedidos y enviar links de pago sobre clientes de otras bandejas.
      */
-    private function validateCustomerData(Request $request): array
+    private function assertVisible(Customer $customer): void
     {
-        return $request->validate([
-            'name' => ['nullable', 'string', 'max:191'],
-            'email' => ['nullable', 'email', 'max:191'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:191'],
-            'state' => ['nullable', 'string', 'max:191'],
-            'country' => ['nullable', 'string', 'max:2'],
-            'zip_code' => ['nullable', 'string', 'max:20'],
-        ]);
+        abort_unless(
+            Customer::query()->whereKey($customer->getKey())->forAgent(request()->user())->exists(),
+            403,
+            'Sin autorización sobre este contacto.'
+        );
     }
 
     private function cartResponse(object $service, object $cart): JsonResponse
