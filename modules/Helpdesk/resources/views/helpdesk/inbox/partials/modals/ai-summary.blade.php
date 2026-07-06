@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-wand-magic-sparkles"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">IA · RESUMEN</span>
-                <div class="bv-modal-title">Resumen de la conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -19,23 +19,23 @@
                 <div class="bv-ai-sparkle">
                     <div class="bv-ai-sparkle__ic"><i class="fas fa-wand-magic-sparkles"></i></div>
                     <div>
-                        <div class="bv-ai-sparkle__lbl">GENERADO POR IA</div>
-                        <span id="aiSummaryMeta">Resumen generado</span>
+                        <div class="bv-ai-sparkle__lbl">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_generated_by') }}</div>
+                        <span id="aiSummaryMeta">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_generated_meta') }}</span>
                     </div>
                 </div>
 
                 <div class="bv-ai-section">
-                    <div class="bv-ai-section__label">Problema</div>
+                    <div class="bv-ai-section__label">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_problem') }}</div>
                     <p id="aiSummaryProblem" class="bv-ai-section__text"></p>
                 </div>
 
                 <div class="bv-ai-section">
-                    <div class="bv-ai-section__label">Acciones realizadas</div>
+                    <div class="bv-ai-section__label">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_actions') }}</div>
                     <ul id="aiSummaryActions" class="bv-ai-section__list"></ul>
                 </div>
 
                 <div class="bv-ai-section">
-                    <div class="bv-ai-section__label">Próximo paso sugerido</div>
+                    <div class="bv-ai-section__label">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_next_step') }}</div>
                     <p id="aiSummaryNext" class="bv-ai-section__text"></p>
                 </div>
             </div>
@@ -46,9 +46,9 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-ai-summary-paste" disabled>Pegar en notas internas</button>
-            <button class="btn-secondary" id="bv-ai-summary-regen">Regenerar resumen</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-ai-summary-paste" disabled>{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_paste') }}</button>
+            <button class="btn-secondary" id="bv-ai-summary-regen">{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_regenerate') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.ai_summary_close') }}</button>
         </div>
     </div>
 </div>

@@ -4,9 +4,9 @@
         <div class="bv-modal-head">
             <div class="bv-modal-icon-box"><i class="fas fa-clock-rotate-left"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">SEGURIDAD · AUDITORÍA</span>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_label') }}</span>
                 <div class="bv-modal-title">
-                    Actividad de la conversación
+                    {{ __('helpdesk::helpdesk.inbox.modals.audit_log_title') }}
                     <span class="bv-audit-chip" id="alConvChip"></span>
                 </div>
             </div>
@@ -16,17 +16,17 @@
         <div class="bv-modal-body">
             {{-- Loading --}}
             <div class="bv-al-loading" id="alLoading">
-                <i class="fas fa-spinner fa-spin"></i> Cargando actividad…
+                <i class="fas fa-spinner fa-spin"></i> {{ __('helpdesk::helpdesk.inbox.modals.audit_log_loading') }}
             </div>
 
             {{-- Filter pills --}}
             <div class="bv-al-pills bv-hidden" id="alPills">
-                <span class="media-pill on" data-al-cat="all">Todo <span class="c" id="alCntAll">0</span></span>
-                <span class="media-pill" data-al-cat="assign">Asignaciones <span class="c" id="alCntAssign">0</span></span>
-                <span class="media-pill" data-al-cat="state">Estados <span class="c" id="alCntState">0</span></span>
-                <span class="media-pill" data-al-cat="message">Mensajes <span class="c" id="alCntMessage">0</span></span>
-                <span class="media-pill" data-al-cat="tag">Etiquetas <span class="c" id="alCntTag">0</span></span>
-                <span class="media-pill" data-al-cat="update">Cambios <span class="c" id="alCntUpdate">0</span></span>
+                <span class="media-pill on" data-al-cat="all">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_all') }} <span class="c" id="alCntAll">0</span></span>
+                <span class="media-pill" data-al-cat="assign">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_assign') }} <span class="c" id="alCntAssign">0</span></span>
+                <span class="media-pill" data-al-cat="state">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_state') }} <span class="c" id="alCntState">0</span></span>
+                <span class="media-pill" data-al-cat="message">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_message') }} <span class="c" id="alCntMessage">0</span></span>
+                <span class="media-pill" data-al-cat="tag">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_tag') }} <span class="c" id="alCntTag">0</span></span>
+                <span class="media-pill" data-al-cat="update">{{ __('helpdesk::helpdesk.inbox.modals.audit_log_filter_update') }} <span class="c" id="alCntUpdate">0</span></span>
             </div>
 
             {{-- Audit rows --}}
@@ -34,8 +34,8 @@
         </div>
 
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="alBtnExport"><i class="fas fa-file-arrow-down"></i> Exportar log completo</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="alBtnExport"><i class="fas fa-file-arrow-down"></i> {{ __('helpdesk::helpdesk.inbox.modals.audit_log_export') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.audit_log_close') }}</button>
         </div>
     </div>
 </div>

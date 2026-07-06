@@ -4,20 +4,20 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-tag"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BIBLIOTECA · ETIQUETAS</span>
-                <div class="bv-modal-title">Nueva etiqueta</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.tag_create_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.tag_create_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Nombre <span class="bv-req">*</span></label>
-                <input id="tagCreateName" type="text" class="bv-form-input" placeholder="Ej: facturación-recurrente" autocomplete="off">
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.tag_create_name') }} <span class="bv-req">*</span></label>
+                <input id="tagCreateName" type="text" class="bv-form-input" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.tag_create_name_placeholder') }}" autocomplete="off">
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Color</label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.tag_create_color') }}</label>
                 <div class="bv-color-picker" id="tagColorPicker">
                     @foreach([
                         '#dc2626','#ea580c','#d97706','#65a30d','#16a34a',
@@ -35,8 +35,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-tag-create-confirm">Crear etiqueta</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-tag-create-confirm">{{ __('helpdesk::helpdesk.inbox.modals.tag_create_confirm') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

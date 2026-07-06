@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-right-left"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · CONVERSACIÓN</span>
-                <div class="bv-modal-title">Transferir conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.transfer_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.transfer_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -14,7 +14,7 @@
             {{-- Agente actual --}}
             <div class="bv-tf-current" id="tfCurrentAgentBanner" style="display:none">
                 <div class="bv-tf-current__inner">
-                    <span class="bv-tf-current__label">Actualmente asignado a</span>
+                    <span class="bv-tf-current__label">{{ __('helpdesk::helpdesk.inbox.modals.transfer_currently_assigned') }}</span>
                     <span class="bv-tf-current__name" id="tfCurrentAgentName"></span>
                     <i class="fas fa-arrow-right bv-tf-current__arrow"></i>
                 </div>
@@ -23,7 +23,7 @@
             {{-- Búsqueda --}}
             <div class="bv-modal-search">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="transferSearch" type="text" placeholder="Buscar agente…" autocomplete="off">
+                <input id="transferSearch" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.transfer_search_placeholder') }}" autocomplete="off">
             </div>
 
             {{-- Lista de agentes --}}
@@ -32,8 +32,8 @@
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-transfer-confirm" disabled>Transferir</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-transfer-confirm" disabled>{{ __('helpdesk::helpdesk.inbox.modals.transfer_confirm') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

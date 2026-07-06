@@ -42,10 +42,10 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-keyboard"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">Ayuda</span>
-                <div class="bv-modal-title">Atajos de teclado</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_title') }}</div>
             </div>
-            <button class="bv-modal-close" data-bv-close aria-label="Cerrar">
+            <button class="bv-modal-close" data-bv-close aria-label="{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_close_aria') }}"
                 <i class="fas fa-xmark"></i>
             </button>
         </div>
@@ -69,8 +69,8 @@
             </div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-sc-print">Imprimir atajos</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-sc-print">{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_print') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_close') }}</button>
         </div>
     </div>
 </div>

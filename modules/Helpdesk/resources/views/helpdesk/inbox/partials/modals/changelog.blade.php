@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-bullhorn"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">PRODUCTO · CHANGELOG</span>
-                <div class="bv-modal-title">Qué hay de nuevo</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.changelog_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.changelog_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
