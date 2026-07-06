@@ -14,8 +14,8 @@
         <div class="modal-head">
             <div class="modal-icon"><i class="fa-solid fa-circle-half-stroke"></i></div>
             <div class="modal-title-wrap">
-                <div class="modal-label">CHAT · BANDEJA</div>
-                <div class="modal-title">Cambiar estado</div>
+                <div class="modal-label">{{ __('helpdesk::helpdesk.inbox.modals.status_eyebrow') }}</div>
+                <div class="modal-title">{{ __('helpdesk::helpdesk.inbox.modals.status_title') }}</div>
             </div>
             <button class="modal-close" data-bv-close><i class="fa-solid fa-xmark"></i></button>
         </div>
@@ -45,8 +45,8 @@
             </div>
         </div>
         <div class="modal-foot">
-            <button class="btn btn-primary" data-bv-apply="status">Guardar cambios</button>
-            <button class="btn btn-outline" data-bv-close>Cancelar</button>
+            <button class="btn btn-primary" data-bv-apply="status">{{ __('helpdesk::helpdesk.inbox.modals.status_save') }}</button>
+            <button class="btn btn-outline" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

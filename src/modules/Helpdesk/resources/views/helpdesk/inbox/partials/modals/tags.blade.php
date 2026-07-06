@@ -4,9 +4,9 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-tags"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · ETIQUETADO</span>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.tags_eyebrow') }}</span>
                 <div class="bv-modal-title">
-                    Etiquetar conversación
+                    {{ __('helpdesk::helpdesk.inbox.modals.tags_title') }}
                     @if(!empty($selectedConversation))<span class="bv-chip-id">#{{ $selectedConversation->id }}</span>@endif
                 </div>
             </div>
@@ -17,26 +17,26 @@
             {{-- Search / create --}}
             <div class="bv-modal-search bv-mb-10">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="tags-search" type="text" placeholder="Buscar o crear etiqueta…" autocomplete="off">
+                <input id="tags-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.tags_search_placeholder') }}" autocomplete="off">
             </div>
 
             {{-- Applied section --}}
             <div class="bv-tags-section">
-                <div class="bv-tags-section-label">Aplicadas</div>
+                <div class="bv-tags-section-label">{{ __('helpdesk::helpdesk.inbox.modals.tags_applied_label') }}</div>
                 <div id="tags-applied" class="bv-tags-chip-wrap">
                     @forelse($selectedConversation?->conversationTags ?? [] as $tag)
                         <span class="bv-rtag bv-rtag--on" data-tag-id="{{ $tag->id }}">
                             {{ $tag->name }}<i class="fas fa-xmark bv-rtag-x tags-remove-chip"></i>
                         </span>
                     @empty
-                        <em class="bv-tags-empty" id="tags-applied-empty">Ninguna aplicada</em>
+                        <em class="bv-tags-empty" id="tags-applied-empty">{{ __('helpdesk::helpdesk.inbox.modals.tags_none_applied') }}</em>
                     @endforelse
                 </div>
             </div>
 
             {{-- Available tags --}}
             <div class="bv-tags-section">
-                <div class="bv-tags-section-label">Disponibles</div>
+                <div class="bv-tags-section-label">{{ __('helpdesk::helpdesk.inbox.modals.tags_available_label') }}</div>
                 <div class="bv-tags-chip-wrap" id="tags-list">
                     @if(!empty($inboxTags) && $inboxTags->isNotEmpty())
                         @foreach($inboxTags as $tag)
@@ -44,11 +44,11 @@
                                   data-tag-id="{{ $tag->id }}">{{ $tag->name }}</span>
                         @endforeach
                     @else
-                        <em class="bv-tags-empty">Sin etiquetas disponibles</em>
+                        <em class="bv-tags-empty">{{ __('helpdesk::helpdesk.inbox.modals.tags_none_available') }}</em>
                     @endif
                     <span class="bv-rtag bv-rtag--add" id="tags-create-chip">
-                        <i class="fas fa-plus" style="font-size:8px"></i>
-                        <span id="tags-create-text">Crear nueva</span>
+                        <i class="fas fa-plus bv-x42"></i>
+                        <span id="tags-create-text">{{ __('helpdesk::helpdesk.inbox.modals.tags_create_new') }}</span>
                     </span>
                 </div>
             </div>
@@ -56,10 +56,10 @@
         </div>
         <div class="bv-modal-foot">
             <div class="bv-tags-foot-hint">
-                <span class="bv-kbd">⏎</span> Crear nueva · <span class="bv-kbd">⌫</span> Quitar última
+                <span class="bv-kbd">⏎</span> {{ __('helpdesk::helpdesk.inbox.modals.tags_create_new') }} · <span class="bv-kbd">⌫</span> {{ __('helpdesk::helpdesk.inbox.modals.tags_remove_last') }}
             </div>
-            <button class="btn-primary" id="bv-tags-apply">Guardar etiquetas</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-tags-apply">{{ __('helpdesk::helpdesk.inbox.modals.tags_save') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

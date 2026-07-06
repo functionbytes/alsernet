@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box primary"><i class="far fa-clock"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">HELPDESK · BANDEJA</span>
-                <div class="bv-modal-title">Posponer conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.snooze_eyebrow') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.snooze_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,54 +13,54 @@
 
             @include('helpdesk::helpdesk.inbox.partials.modals._context-card')
 
-            <p class="snz-hint">Vuelve a la bandeja cuando…</p>
+            <p class="snz-hint">{{ __('helpdesk::helpdesk.inbox.modals.snooze_hint') }}</p>
 
             <div class="snz-list">
                 <button class="snz-opt on" data-snz="1h">
                     <i class="fa-solid fa-stopwatch snz-ic"></i>
                     <div class="snz-body">
-                        <b>En 1 hora</b>
-                        <span id="snzTime1h">Reaparece a las --:--</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_1h') }}</b>
+                        <span id="snzTime1h">{{ __('helpdesk::helpdesk.inbox.modals.snooze_reappears_placeholder') }}</span>
                     </div>
                     <span class="snz-t" id="snzBadge1h">--:--</span>
                 </button>
                 <button class="snz-opt" data-snz="4h">
                     <i class="fa-regular fa-clock snz-ic"></i>
                     <div class="snz-body">
-                        <b>En 4 horas</b>
-                        <span id="snzTime4h">Reaparece a las --:--</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_4h') }}</b>
+                        <span id="snzTime4h">{{ __('helpdesk::helpdesk.inbox.modals.snooze_reappears_placeholder') }}</span>
                     </div>
                     <span class="snz-t" id="snzBadge4h">--:--</span>
                 </button>
                 <button class="snz-opt" data-snz="tom">
                     <i class="fa-solid fa-sun snz-ic"></i>
                     <div class="snz-body">
-                        <b>Mañana por la mañana</b>
-                        <span id="snzTimeTom">Mañana 09:00</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_tomorrow') }}</b>
+                        <span id="snzTimeTom">{{ __('helpdesk::helpdesk.inbox.modals.snooze_tomorrow_placeholder') }}</span>
                     </div>
                     <span class="snz-t" id="snzBadgeTom">09:00</span>
                 </button>
                 <button class="snz-opt" data-snz="week">
                     <i class="fa-solid fa-calendar-week snz-ic"></i>
                     <div class="snz-body">
-                        <b>Esta semana</b>
-                        <span id="snzTimeWeek">Lunes próximo 09:00</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_week') }}</b>
+                        <span id="snzTimeWeek">{{ __('helpdesk::helpdesk.inbox.modals.snooze_week_placeholder') }}</span>
                     </div>
                     <span class="snz-t" id="snzBadgeWeek">--</span>
                 </button>
                 <button class="snz-opt" data-snz="nextweek">
                     <i class="fa-solid fa-calendar-days snz-ic"></i>
                     <div class="snz-body">
-                        <b>La próxima semana</b>
-                        <span id="snzTimeNextWeek">Lunes siguiente 09:00</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_next_week') }}</b>
+                        <span id="snzTimeNextWeek">{{ __('helpdesk::helpdesk.inbox.modals.snooze_next_week_placeholder') }}</span>
                     </div>
                     <span class="snz-t" id="snzBadgeNextWeek">--</span>
                 </button>
                 <button class="snz-opt" data-snz="custom">
                     <i class="fa-solid fa-calendar-plus snz-ic"></i>
                     <div class="snz-body">
-                        <b>Personalizar</b>
-                        <span>Elige fecha y hora exacta</span>
+                        <b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_custom') }}</b>
+                        <span>{{ __('helpdesk::helpdesk.inbox.modals.snooze_custom_desc') }}</span>
                     </div>
                 </button>
             </div>
@@ -68,11 +68,11 @@
             <div id="snzCustomForm" class="snz-custom">
                 <div class="snz-custom-row">
                     <label>
-                        <span>Fecha</span>
+                        <span>{{ __('helpdesk::helpdesk.inbox.modals.date') }}</span>
                         <input type="date" id="snzCustomDate" class="bv-finput" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                     </label>
                     <label>
-                        <span>Hora</span>
+                        <span>{{ __('helpdesk::helpdesk.inbox.modals.snooze_time_label') }}</span>
                         <input type="time" id="snzCustomTime" class="bv-finput" value="09:00">
                     </label>
                 </div>
@@ -81,13 +81,13 @@
             <div class="bv-modal-divider bv-modal-divider--my-14"></div>
             <label class="bv-modal-check">
                 <input type="checkbox" id="snzReopenOnReply" checked>
-                <span>Reabrir automáticamente si el cliente responde antes</span>
+                <span>{{ __('helpdesk::helpdesk.inbox.modals.snooze_reopen_on_reply') }}</span>
             </label>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="snzBtnApply">Posponer conversación</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="snzBtnApply">{{ __('helpdesk::helpdesk.inbox.modals.snooze_title') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
