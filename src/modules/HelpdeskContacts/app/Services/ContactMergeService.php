@@ -70,10 +70,13 @@ class ContactMergeService
     /**
      * Copy integration IDs from the loser to the winner when the winner does
      * not already have a value for that field.
+     *
+     * ERP/PrestaShop no van aqui: no son columnas directas de Customer, se
+     * vinculan via la relacion externalIds (transferida mas abajo).
      */
     private function copyMissingIntegrationIds(Customer $winner, Customer $loser): void
     {
-        $fields = ['erp_customer_id', 'facebook_psid', 'instagram_id', 'whatsapp_phone'];
+        $fields = ['facebook_psid', 'instagram_id', 'whatsapp_phone'];
 
         $updates = [];
         foreach ($fields as $field) {
@@ -86,12 +89,21 @@ class ContactMergeService
             $winner->update($updates);
         }
 
-        // Transfer external ID links not already present on the winner.
+        // Re-apunta el link del perdedor al ganador (no lo re-crea): el
+        // unique constraint de helpdesk_customer_external_ids es global por
+        // (platform, external_id), no por customer_id — crear una fila nueva
+        // con el mismo external_id para otro customer_id siempre violaba esa
+        // restriccion y tumbaba la transaccion completa de la fusion.
+        $winnerPlatforms = $winner->externalIds->pluck('platform');
+
         foreach ($loser->externalIds as $link) {
-            $winner->externalIds()->firstOrCreate(
-                ['platform' => $link->platform],
-                ['external_id' => $link->external_id, 'metadata' => $link->metadata]
-            );
+            if ($winnerPlatforms->contains($link->platform)) {
+                $link->delete();
+
+                continue;
+            }
+
+            $link->update(['customer_id' => $winner->id]);
         }
     }
 
