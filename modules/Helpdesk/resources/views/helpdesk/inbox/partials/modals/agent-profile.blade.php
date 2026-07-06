@@ -4,20 +4,20 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box primary"><i class="fas fa-headset"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">EQUIPO · AGENTE</span>
-                <div class="bv-modal-title"><span id="apTitle">Perfil del agente</span></div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.agent_profile_label') }}</span>
+                <div class="bv-modal-title"><span id="apTitle">{{ __('helpdesk::helpdesk.inbox.modals.agent_profile_title') }}</span></div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
 
         <div class="bv-modal-body" id="apBody">
-            <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
+            <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> {{ __('helpdesk::helpdesk.inbox.modals.agent_profile_loading') }}</div>
         </div>
 
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="apTransfer" type="button">Transferir a este agente</button>
-            <button class="btn-secondary" id="apMessage" type="button">Enviar mensaje interno</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="apTransfer" type="button">{{ __('helpdesk::helpdesk.inbox.modals.agent_profile_transfer') }}</button>
+            <button class="btn-secondary" id="apMessage" type="button">{{ __('helpdesk::helpdesk.inbox.modals.agent_profile_send_internal_message') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.agent_profile_close') }}</button>
         </div>
     </div>
 </div>
