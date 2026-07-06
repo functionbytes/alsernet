@@ -4,9 +4,11 @@ namespace Modules\HelpdeskErp\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Pulse\Pulse;
 use Modules\HelpdeskErp\Database\Seeders\HelpdeskErpPermissionsSeeder;
+use Modules\HelpdeskErp\Services\ErpContextService;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -47,6 +49,7 @@ class ErpOrderDetailTest extends TestCase
         $this->user = User::factory()->create();
         $this->user->givePermissionTo('helpdeskerp.view');
         $this->user->givePermissionTo('helpdeskerp.orders.detail.view');
+        $this->user->givePermissionTo('helpdeskerp.prospect.view');
     }
 
     // ── Authorization ──────────────────────────────────────────────────────
@@ -89,6 +92,23 @@ class ErpOrderDetailTest extends TestCase
             ->assertJsonPath('data.id', 99)
             ->assertJsonPath('data.number', '2024/001')
             ->assertJsonStructure(['success', 'data']);
+    }
+
+    public function test_get_order_detail_is_cached_after_first_call(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            '*/erp/customer/7/orders/555*' => Http::response(['data' => ['id' => 555]]),
+        ]);
+
+        $service = app(ErpContextService::class);
+        $first = $service->getOrderDetail(7, 555);
+        $second = $service->getOrderDetail(7, 555);
+
+        $this->assertSame(['id' => 555], $first);
+        $this->assertSame($first, $second);
+        Http::assertSentCount(1); // la segunda lectura sale de caché
     }
 
     // ── Error / not found ──────────────────────────────────────────────────

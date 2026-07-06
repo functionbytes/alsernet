@@ -45,6 +45,31 @@ class ErpContextTest extends TestCase
         $this->user->givePermissionTo('helpdeskerp.refresh');
         $this->user->givePermissionTo('helpdeskerp.health.view');
         $this->user->givePermissionTo('helpdeskerp.orders.detail.view');
+        // Rol de confianza: puede consultar prospectos (emails/ids sin cliente
+        // local). El gating de este permiso se prueba aparte más abajo.
+        $this->user->givePermissionTo('helpdeskerp.prospect.view');
+    }
+
+    public function test_prospect_lookup_requires_dedicated_permission(): void
+    {
+        // Usuario con el permiso base pero SIN el de prospecto.
+        $agent = User::factory()->create();
+        $agent->givePermissionTo('helpdeskerp.view');
+
+        // Email sin cliente local (prospecto) → 403 sin llegar al bridge.
+        $this->actingAs($agent, 'sanctum')
+            ->getJson('/api/helpdeskErp/customers/desconocido@example.com/context')
+            ->assertForbidden();
+    }
+
+    public function test_erp_search_requires_prospect_permission(): void
+    {
+        $agent = User::factory()->create();
+        $agent->givePermissionTo('helpdeskerp.view');
+
+        $this->actingAs($agent, 'sanctum')
+            ->getJson('/api/helpdeskErp/customers/search?q=algo&type=email')
+            ->assertForbidden();
     }
 
     /* ── Customer context ─────────────────────────────────────────────────── */
