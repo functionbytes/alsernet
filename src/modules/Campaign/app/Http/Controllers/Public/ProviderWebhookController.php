@@ -5,6 +5,7 @@ namespace Modules\Campaign\Http\Controllers\Public;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Campaign\Support\MailgunWebhookSignature;
 use Modules\CampaignSendingServers\Events\BounceDetected;
 use Modules\CampaignSendingServers\Events\FeedbackLoopDetected;
 use Modules\CampaignSendingServers\Models\SendingServer;
@@ -64,7 +65,16 @@ class ProviderWebhookController extends Controller
      */
     public function mailgun(Request $request, string $serverUid): JsonResponse
     {
-        $this->assertKnownServer($serverUid);
+        $server = SendingServer::query()->where('uid', $serverUid)->first();
+        abort_unless($server !== null, 404);
+
+        // Firma HMAC-SHA256 de Mailgun (timestamp+token). Fail-open: si el
+        // servidor no tiene webhook_signing_secret configurado se mantiene solo el
+        // gate del serverUid; al configurarlo, la firma pasa a ser obligatoria.
+        abort_unless(
+            MailgunWebhookSignature::valid($server->webhook_signing_secret, (array) $request->input('signature', [])),
+            403,
+        );
 
         $eventData = $request->input('event-data', []);
         $eventType = $eventData['event'] ?? null;
