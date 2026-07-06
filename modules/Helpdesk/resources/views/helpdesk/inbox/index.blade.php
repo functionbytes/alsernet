@@ -56,26 +56,26 @@
         {{-- Header del nav --}}
         <div class="bv-nav-head">
             <div>
-                <div class="bv-nav-head-title">Conversaciones</div>
-                <div class="bv-nav-head-sub">Bandeja de equipo</div>
+                <div class="bv-nav-head-title">{{ __('helpdesk::helpdesk.inbox.title') }}</div>
+                <div class="bv-nav-head-sub">{{ __('helpdesk::helpdesk.inbox.team_inbox') }}</div>
             </div>
             <button type="button"
                     class="bv-nav-head-btn"
                     data-bv-modal="newconv"
-                    title="Nueva conversación"
-                    aria-label="Nueva conversación">
+                    title="{{ __('helpdesk::helpdesk.inbox.new_conversation') }}"
+                    aria-label="{{ __('helpdesk::helpdesk.inbox.new_conversation') }}">
                 <i class="fas fa-plus"></i>
             </button>
         </div>
 
         {{-- Tarjeta del usuario activo — abre el modal de disponibilidad (#60 away-mode) --}}
         <div class="bv-nav-user-card" data-bv-modal="away-mode" role="button" tabindex="0"
-             title="Cambiar disponibilidad" aria-label="Cambiar disponibilidad">
+             title="{{ __('helpdesk::helpdesk.inbox.change_availability') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.change_availability') }}">
             <div class="bv-nav-user-av">{{ $userInitials ?: 'U' }}</div>
             <div class="bv-nav-user-body">
                 <div class="bv-nav-user-name">{{ $userName }}</div>
                 <div class="bv-nav-user-status">
-                    <span class="bv-nav-user-dot is-available"></span>En línea · {{ $activeCount }} activas
+                    <span class="bv-nav-user-dot is-available"></span>{{ __('helpdesk::helpdesk.inbox.online_active', ['count' => $activeCount]) }}
                 </div>
             </div>
             <i class="fas fa-chevron-down bv-nav-user-chevron"></i>
@@ -84,54 +84,53 @@
         <div class="bv-nav-scroll">
         <div class="bv-nav-section">
             <div class="bv-nav-label">
-                Vistas
-                <span style="display:flex;gap:4px;align-items:center">
-                    <a href="{{ route('manager.helpdesk.conversations.kanban') }}"
-                       title="Vista kanban"
-                       style="color:inherit;opacity:.6;font-size:11px;text-decoration:none"
-                       aria-label="Vista kanban">
+                {{ __('helpdesk::helpdesk.inbox.views') }}
+                <span class="bv-x1">
+                    <a class="bv-x2" href="{{ route('manager.helpdesk.conversations.kanban') }}"
+                       title="{{ __('helpdesk::helpdesk.inbox.kanban_view') }}"
+                       aria-label="{{ __('helpdesk::helpdesk.inbox.kanban_view') }}">
                         <i class="fas fa-table-columns"></i>
                     </a>
-                    <a href="#" class="bv-nav-label-add" id="bv-save-view-btn" title="Guardar vista actual" aria-label="Guardar vista actual">
+                    <a href="#" class="bv-nav-label-add" id="bv-save-view-btn" title="{{ __('helpdesk::helpdesk.inbox.save_current_view') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.save_current_view') }}">
                         <i class="fas fa-plus" aria-hidden="true"></i>
                     </a>
                 </span>
             </div>
             <a href="{{ route('manager.helpdesk.conversations.index', ['unread' => 1]) }}"
                class="bv-nav-item {{ $isUnread ? 'on' : '' }}">
-                <i class="far fa-envelope bv-vi-unread"></i> Sin leer
+                <i class="far fa-envelope bv-vi-unread"></i> {{ __('helpdesk::helpdesk.inbox.unread') }}
                 <span class="c" data-counter="unread">{{ $sidebarCounters['unread'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index') }}"
                class="bv-nav-item {{ $isAll ? 'on' : '' }}">
-                <i class="fas fa-inbox bv-vi-all"></i> Todas
+                <i class="fas fa-inbox bv-vi-all"></i> {{ __('helpdesk::helpdesk.inbox.all') }}
                 <span class="c" data-counter="total">{{ $totalConversations ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['mine' => 1]) }}"
                class="bv-nav-item {{ $isMine ? 'on' : '' }}">
-                <i class="fas fa-user bv-vi-mine"></i> Mías
+                <i class="fas fa-user bv-vi-mine"></i> {{ __('helpdesk::helpdesk.inbox.mine') }}
                 <span class="c" data-counter="mine">{{ $sidebarCounters['mine'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['urgent' => 1]) }}"
                class="bv-nav-item {{ $isUrgent ? 'on' : '' }}">
-                <i class="fas fa-fire bv-vi-urgent"></i> Urgentes
+                <i class="fas fa-fire bv-vi-urgent"></i> {{ __('helpdesk::helpdesk.inbox.urgent') }}
                 <span class="c" data-counter="urgent">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
             </a>
             @if($isBot || ($sidebarCounters['bot'] ?? 0) > 0)
             <a href="{{ route('manager.helpdesk.conversations.index', ['bot' => 1]) }}"
-               class="bv-nav-item {{ $isBot ? 'on' : '' }}" title="Conversaciones que el chatbot está atendiendo">
-                <i class="fas fa-robot bv-vi-bot"></i> En bot
+               class="bv-nav-item {{ $isBot ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.in_bot_title') }}">
+                <i class="fas fa-robot bv-vi-bot"></i> {{ __('helpdesk::helpdesk.inbox.in_bot') }}
                 <span class="c">{{ $sidebarCounters['bot'] ?? 0 }}</span>
             </a>
             @endif
             <a href="{{ route('manager.helpdesk.conversations.index', ['status' => 'pending']) }}"
                class="bv-nav-item {{ $isPending ? 'on' : '' }}">
-                <i class="far fa-clock bv-vi-pending"></i> En espera
+                <i class="far fa-clock bv-vi-pending"></i> {{ __('helpdesk::helpdesk.inbox.pending') }}
                 <span class="c">{{ $sidebarCounters['pending'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['archived' => 1]) }}"
                class="bv-nav-item {{ $isArchived ? 'on' : '' }}">
-                <i class="fas fa-circle-check bv-vi-closed"></i> Cerradas
+                <i class="fas fa-circle-check bv-vi-closed"></i> {{ __('helpdesk::helpdesk.inbox.closed') }}
                 <span class="c">{{ $sidebarCounters['archived'] ?? 0 }}</span>
             </a>
             @php
@@ -140,18 +139,18 @@
                 $isDeleted = request('view') === 'deleted';
             @endphp
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'blocked']) }}"
-               class="bv-nav-item {{ $isBlocked ? 'on' : '' }}" title="Contactos bloqueados">
-                <i class="fas fa-ban bv-vi-blocked"></i> Bloqueados
+               class="bv-nav-item {{ $isBlocked ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.blocked_title') }}">
+                <i class="fas fa-ban bv-vi-blocked"></i> {{ __('helpdesk::helpdesk.inbox.blocked') }}
                 <span class="c">{{ $sidebarCounters['blocked'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'spam']) }}"
-               class="bv-nav-item {{ $isSpam ? 'on' : '' }}" title="Marcadas como spam">
-                <i class="fas fa-shield-halved bv-vi-spam"></i> Spam
+               class="bv-nav-item {{ $isSpam ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.spam_title') }}">
+                <i class="fas fa-shield-halved bv-vi-spam"></i> {{ __('helpdesk::helpdesk.inbox.spam') }}
                 <span class="c">{{ $sidebarCounters['spam'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'deleted']) }}"
-               class="bv-nav-item {{ $isDeleted ? 'on' : '' }}" title="Conversaciones eliminadas (papelera)">
-                <i class="fas fa-trash-can bv-vi-deleted"></i> Eliminadas
+               class="bv-nav-item {{ $isDeleted ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.deleted_title') }}">
+                <i class="fas fa-trash-can bv-vi-deleted"></i> {{ __('helpdesk::helpdesk.inbox.deleted') }}
                 <span class="c">{{ $sidebarCounters['deleted'] ?? 0 }}</span>
             </a>
         </div>
@@ -179,7 +178,7 @@
             ];
         @endphp
         <div class="bv-nav-section">
-            <div class="bv-nav-label">Bandejas</div>
+            <div class="bv-nav-label">{{ __('helpdesk::helpdesk.inbox.inboxes') }}</div>
             @foreach($sidebarInboxes as $sbInbox)
                 @php
                     $iconClass  = $sbInbox->icon ?: ($channelIconMap[$sbInbox->channel_type] ?? 'fas fa-inbox');
@@ -198,7 +197,7 @@
         @endif
 
         <div class="bv-nav-section">
-            <div class="bv-nav-label">Equipos</div>
+            <div class="bv-nav-label">{{ __('helpdesk::helpdesk.inbox.teams') }}</div>
             @forelse(($groups ?? collect()) as $group)
                 <a href="{{ route('manager.helpdesk.conversations.index', ['group' => $group->id]) }}"
                    class="bv-nav-item {{ request('group') == $group->id ? 'on' : '' }}"
@@ -208,14 +207,14 @@
                     <span class="c">{{ $group->conversations_count ?? '' }}</span>
                 </a>
             @empty
-                <span class="bv-nav-empty">Sin equipos</span>
+                <span class="bv-nav-empty">{{ __('helpdesk::helpdesk.inbox.no_teams') }}</span>
             @endforelse
         </div>
 
         <div class="bv-nav-section">
             <div class="bv-nav-label">
-                Etiquetas
-                <a href="#" class="bv-nav-label-add" data-bv-modal="tags" title="Gestionar etiquetas">
+                {{ __('helpdesk::helpdesk.inbox.tags') }}
+                <a href="#" class="bv-nav-label-add" data-bv-modal="tags" title="{{ __('helpdesk::helpdesk.inbox.manage_tags') }}">
                     <i class="fas fa-plus"></i>
                 </a>
             </div>
@@ -229,7 +228,7 @@
                     <span class="c">{{ $tag->conversations_count ?? 0 }}</span>
                 </a>
             @empty
-                <span class="bv-nav-empty">Sin etiquetas</span>
+                <span class="bv-nav-empty">{{ __('helpdesk::helpdesk.inbox.no_tags') }}</span>
             @endforelse
         </div>
 
@@ -239,24 +238,22 @@
         @endphp
         @if ($savedViews->isNotEmpty())
         <div class="bv-nav-section" data-section="saved-views">
-            <div class="bv-nav-label">Mis vistas</div>
+            <div class="bv-nav-label">{{ __('helpdesk::helpdesk.inbox.my_views') }}</div>
             @foreach ($savedViews as $sv)
                 @php
                     $svFilters = $sv->filters ?? [];
                     $svHref = route('manager.helpdesk.conversations.index', $svFilters);
                 @endphp
                 <a href="{{ $svHref }}"
-                   class="bv-nav-item bv-nav-saved-view"
-                   data-view-id="{{ $sv->id }}"
-                   style="display:flex;align-items:center;gap:4px">
-                    <i class="fas fa-star" style="font-size:9px;opacity:.65"></i>
-                    <span class="bv-nav-view-name" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $sv->name }}</span>
+                   class="bv-nav-item bv-nav-saved-view bv-x3"
+                   data-view-id="{{ $sv->id }}">
+                    <i class="fas fa-star bv-x4"></i>
+                    <span class="bv-nav-view-name bv-x5">{{ $sv->name }}</span>
                     <button type="button"
-                            class="bv-nav-view-del"
+                            class="bv-nav-view-del bv-x6"
                             data-view-id="{{ $sv->id }}"
-                            title="Eliminar vista"
-                            aria-label="Eliminar vista"
-                            style="background:none;border:none;cursor:pointer;color:var(--bv-text-muted);padding:0 2px;line-height:1;font-size:13px">×</button>
+                            title="{{ __('helpdesk::helpdesk.inbox.delete_view') }}"
+                            aria-label="{{ __('helpdesk::helpdesk.inbox.delete_view') }}">×</button>
                 </a>
             @endforeach
         </div>
@@ -310,8 +307,8 @@
         <button type="button"
                 id="bv-notif-toggle"
                 class="bv-sb-btn"
-                title="Notificaciones de escritorio"
-                aria-label="Notificaciones de escritorio">
+                title="{{ __('helpdesk::helpdesk.inbox.desktop_notifications') }}"
+                aria-label="{{ __('helpdesk::helpdesk.inbox.desktop_notifications') }}">
             <i class="fas fa-bell"></i>
         </button>
     </div>
