@@ -7,13 +7,17 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkDeleteEmailLogsRequest;
+use Modules\HelpdeskEmailLog\Http\Requests\BulkResendEmailLogsRequest;
+use Modules\HelpdeskEmailLog\Http\Requests\ResendEmailLogRequest;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmailLogController extends Controller
@@ -31,6 +35,8 @@ class EmailLogController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('viewAny', EmailLog::class);
+
+        abort_if(! helpdesk_emaillog_enabled(), 404);
 
         $perPage = $this->resolvePerPage($request);
         [$sortCol, $sortDir] = $this->resolveSort($request);
@@ -53,9 +59,23 @@ class EmailLogController extends Controller
             fn () => EmailLog::query()->whereNotNull('module')->distinct()->orderBy('module')->pluck('module')->all(),
         );
 
+        $trend = Cache::remember(
+            'helpdeskemaillog:trend',
+            now()->addSeconds(300),
+            fn () => $this->computeTrend(),
+        );
+
+        $staleHours = (int) Setting::get('helpdeskemaillog.stale_queued_hours', config('helpdeskemaillog.stale_queued_hours', 24));
+        $staleCount = $staleHours > 0
+            ? (int) Cache::remember('helpdeskemaillog:stale', now()->addSeconds(120), fn () => EmailLog::query()->staleQueued($staleHours)->count())
+            : 0;
+
         return view('helpdeskemaillog::emails.index', [
             'logs' => $logs,
             'stats' => $stats,
+            'trend' => $trend,
+            'staleCount' => $staleCount,
+            'staleHours' => $staleHours,
             'modules' => $modules,
             'statuses' => EmailStatus::options(),
             'perPage' => $perPage,
@@ -73,22 +93,124 @@ class EmailLogController extends Controller
 
         $this->logActivity('viewed', $emailLog);
 
-        return view('helpdeskemaillog::emails.preview', ['log' => $emailLog]);
+        return view('helpdeskemaillog::emails.preview', [
+            'log' => $emailLog,
+            'related' => $this->relatedEmails($emailLog),
+        ]);
     }
 
-    public function resend(EmailLog $emailLog): RedirectResponse
+    /**
+     * Other emails linked to the same entity or sent to the same primary
+     * recipient, most recent first (excludes the current record).
+     *
+     * @return Collection<int, EmailLog>
+     */
+    private function relatedEmails(EmailLog $emailLog): Collection
     {
-        $this->authorize('resend', $emailLog);
+        $primary = $emailLog->to_addresses[0] ?? null;
+        $hasEntity = $emailLog->entity_type && $emailLog->entity_id;
 
-        if (empty($emailLog->to_addresses)) {
+        if (! $primary && ! $hasEntity) {
+            return collect();
+        }
+
+        return EmailLog::query()
+            ->select(['uid', 'subject', 'status', 'sent_at', 'failed_at', 'created_at', 'to_addresses'])
+            ->where('id', '!=', $emailLog->id)
+            ->where(function (Builder $q) use ($emailLog, $primary, $hasEntity) {
+                if ($hasEntity) {
+                    $q->orWhere(fn (Builder $e) => $e
+                        ->where('entity_type', $emailLog->entity_type)
+                        ->where('entity_id', $emailLog->entity_id));
+                }
+
+                if ($primary) {
+                    // Coincidencia exacta del destinatario (evita el over-match por
+                    // substring de un LIKE '%...%', p.ej. ana@x.com en diana@x.com).
+                    $q->orWhereJsonContains('to_addresses', $primary);
+                }
+            })
+            ->orderByDesc('created_at')
+            ->limit(8)
+            ->get();
+    }
+
+    public function purgeBody(EmailLog $emailLog): RedirectResponse
+    {
+        $this->authorize('delete', $emailLog);
+
+        $metadata = $emailLog->metadata ?? [];
+        $metadata['redacted'] = true;
+        $metadata['redacted_at'] = now()->toIso8601String();
+
+        $emailLog->update([
+            'body_html' => null,
+            'body_text' => null,
+            'metadata' => $metadata,
+        ]);
+
+        $this->logActivity('body_purged', $emailLog);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.purge.done'));
+    }
+
+    public function resend(ResendEmailLogRequest $request, EmailLog $emailLog): RedirectResponse
+    {
+        $override = $request->validated()['to'] ?? null;
+
+        if (empty($override) && empty($emailLog->to_addresses)) {
             return back()->with('error', __('helpdeskemaillog::emaillog.resend.no_recipients'));
         }
 
-        ResendEmailLogJob::dispatch($emailLog->id);
+        ResendEmailLogJob::dispatch($emailLog->id, $override);
 
-        $this->logActivity('resent', $emailLog);
+        $this->logActivity('resent', $emailLog, $override ? ['to' => $override] : []);
 
-        return back()->with('success', __('helpdeskemaillog::emaillog.resend.queued'));
+        return back()->with('success', $override
+            ? __('helpdeskemaillog::emaillog.resend.queued_to', ['email' => $override])
+            : __('helpdeskemaillog::emaillog.resend.queued'));
+    }
+
+    public function bulkResend(BulkResendEmailLogsRequest $request): RedirectResponse
+    {
+        $logs = EmailLog::query()
+            ->select(['id', 'uid', 'to_addresses'])
+            ->whereIn('uid', $request->validated('uids'))
+            ->get();
+
+        $queued = 0;
+
+        foreach ($logs as $log) {
+            if (empty($log->to_addresses)) {
+                continue;
+            }
+
+            ResendEmailLogJob::dispatch($log->id);
+            $queued++;
+        }
+
+        $this->logActivity('bulk_resent', null, ['count' => $queued]);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.resend.bulk_queued', ['count' => $queued]));
+    }
+
+    public function download(EmailLog $emailLog): Response
+    {
+        $this->authorize('view', $emailLog);
+
+        $body = $emailLog->body_html
+            ?: ($emailLog->body_text ? '<pre>'.e($emailLog->body_text).'</pre>' : null);
+
+        abort_if($body === null, 404);
+
+        $this->logActivity('downloaded', $emailLog);
+
+        $filename = 'email-'.substr($emailLog->uid, 0, 8).'.html';
+
+        return response($body, 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function destroy(EmailLog $emailLog): RedirectResponse
@@ -105,6 +227,10 @@ class EmailLogController extends Controller
 
     public function bulkDestroy(BulkDeleteEmailLogsRequest $request): RedirectResponse
     {
+        // Consistencia con destroy() (que sí llama authorize('delete')): la
+        // policy deleteAny() ya existía pero no se invocaba desde el controller.
+        $this->authorize('deleteAny', EmailLog::class);
+
         $deleted = EmailLog::query()->whereIn('uid', $request->validated('uids'))->delete();
 
         if ($deleted > 0) {
@@ -138,7 +264,10 @@ class EmailLogController extends Controller
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['UID', 'Fecha', 'Enviado', 'Estado', 'Asunto', 'De', 'Para', 'CC', 'Modulo', 'Entidad', 'Mailable', 'Error']);
+            fputcsv($out, array_map(
+                fn (string $key): string => __("helpdeskemaillog::emaillog.csv.{$key}"),
+                ['uid', 'date', 'sent_at', 'status', 'subject', 'from', 'to', 'cc', 'module', 'entity', 'mailable', 'error']
+            ));
 
             foreach ($rows as $log) {
                 fputcsv($out, [
@@ -181,6 +310,39 @@ class EmailLogController extends Controller
             'queued' => (int) ($aggregate->queued ?? 0),
             'today' => (int) ($aggregate->today ?? 0),
         ];
+    }
+
+    /**
+     * Daily counts per status for the last N days (for the trend chart).
+     *
+     * @return array{labels: list<string>, sent: list<int>, failed: list<int>, queued: list<int>}
+     */
+    private function computeTrend(int $days = 14): array
+    {
+        $since = today()->subDays($days - 1);
+
+        $rows = EmailLog::query()
+            ->where('created_at', '>=', $since)
+            ->selectRaw('DATE(created_at) AS d')
+            ->selectRaw("SUM(status = 'sent') AS sent")
+            ->selectRaw("SUM(status = 'failed') AS failed")
+            ->selectRaw("SUM(status = 'queued') AS queued")
+            ->groupByRaw('DATE(created_at)')
+            ->get()
+            ->keyBy('d');
+
+        $labels = $sent = $failed = $queued = [];
+
+        for ($i = 0; $i < $days; $i++) {
+            $date = $since->copy()->addDays($i);
+            $row = $rows->get($date->toDateString());
+            $labels[] = $date->format('d/m');
+            $sent[] = (int) ($row->sent ?? 0);
+            $failed[] = (int) ($row->failed ?? 0);
+            $queued[] = (int) ($row->queued ?? 0);
+        }
+
+        return compact('labels', 'sent', 'failed', 'queued');
     }
 
     private function applyFilters(Builder $query, Request $request): Builder

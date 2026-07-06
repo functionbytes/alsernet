@@ -37,7 +37,7 @@ class EmailLogSettingsController extends Controller
     public function update(UpdateEmailLogSettingsRequest $request): RedirectResponse
     {
         DB::transaction(function () use ($request): void {
-            Setting::set(self::PREFIX.'store_body', $request->has('store_body') ? '1' : '0');
+            Setting::set(self::PREFIX.'store_body', $request->validated()['store_body']);
             Setting::set(self::PREFIX.'max_body_bytes', (int) $request->validated()['max_body_bytes'] * 1024);
             Setting::set(self::PREFIX.'retention_days', $request->validated()['retention_days']);
             Setting::set(self::PREFIX.'stale_queued_hours', $request->validated()['stale_queued_hours']);

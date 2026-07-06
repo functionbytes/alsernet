@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
@@ -14,7 +14,9 @@ use Tests\TestCase;
 
 class EmailTrackingTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     public function test_sent_listener_is_queued_off_the_request(): void
     {

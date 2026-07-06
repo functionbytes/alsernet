@@ -98,7 +98,7 @@ trait InspectsMailMessage
 
     /**
      * @param  array<string, mixed>  $data
-     * @return array{mailable_class: ?string, module: ?string, entity_type: ?string, entity_id: ?int}
+     * @return array{mailable_class: ?string, module: ?string, entity_type: ?string, entity_id: ?int, external_id: ?string}
      */
     protected function contextOf(Email $message, array $data): array
     {
@@ -117,6 +117,7 @@ trait InspectsMailMessage
             'module' => $header('X-Email-Module') ?: $this->detectModuleFromClass($mailableClass),
             'entity_type' => $header('X-Entity-Type') ?: null,
             'entity_id' => is_numeric($entityId) ? (int) $entityId : null,
+            'external_id' => $header('X-External-Id') ?: null,
         ];
     }
 

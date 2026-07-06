@@ -3,14 +3,16 @@
 namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Database\Seeders\HelpdeskEmailLogPermissionsSeeder;
 use Tests\TestCase;
 
 class EmailLogSettingsControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {
@@ -80,16 +82,23 @@ class EmailLogSettingsControllerTest extends TestCase
         $this->assertSame('50', Setting::get('helpdeskemaillog.per_page'));
     }
 
-    public function test_update_store_body_off_when_checkbox_absent(): void
+    public function test_update_store_body_off_when_select_is_zero(): void
     {
-        $payload = $this->validPayload();
-        unset($payload['store_body']); // simulate unchecked checkbox
-
         $this->actingAs($this->editor())
-            ->patch(route('settings.helpdeskemaillog.update'), $payload)
+            ->patch(route('settings.helpdeskemaillog.update'), $this->validPayload(['store_body' => '0']))
             ->assertRedirect();
 
         $this->assertSame('0', Setting::get('helpdeskemaillog.store_body'));
+    }
+
+    public function test_update_requires_store_body(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['store_body']);
+
+        $this->actingAs($this->editor())
+            ->patch(route('settings.helpdeskemaillog.update'), $payload)
+            ->assertSessionHasErrors('store_body');
     }
 
     public function test_update_validates_required_fields(): void

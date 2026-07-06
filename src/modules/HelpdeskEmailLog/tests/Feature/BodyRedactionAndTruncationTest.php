@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskEmailLog\Tests\Fixtures\RedactedTestMail;
@@ -11,7 +11,9 @@ use Tests\TestCase;
 
 class BodyRedactionAndTruncationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     public function test_body_is_redacted_for_mailables_marked_as_sensitive(): void
     {

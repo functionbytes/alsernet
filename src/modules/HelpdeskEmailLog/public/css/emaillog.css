@@ -1,5 +1,8 @@
 /* HelpdeskEmailLog — styles for index + preview views */
 
+/* ============================================================
+   Índice / filtros
+   ============================================================ */
 .email-log-filter-search {
     min-width: 200px;
 }
@@ -28,68 +31,1071 @@
     z-index: 1050;
 }
 
-.email-log-preview-text {
-    white-space: pre-wrap;
-    word-break: break-word;
+/* ============================================================
+   Email viewer (estilo plantilla Alvarez · modal #12)
+   Vista de detalle de un email registrado. Paleta neutra de
+   la plantilla + primario del sistema (#90bb13).
+   ============================================================ */
+.emaillog-viewer {
+    --evx-panel: #fff;
+    --evx-subtle: #f4f4f5;
+    --evx-bg-soft: #fafafa;
+    --evx-border: #e8e8e8;
+    --evx-border-strong: #d4d4d8;
+    --evx-text: #18181b;
+    --evx-text-soft: #52525b;
+    --evx-text-muted: #a1a1aa;
+    --evx-primary: #90bb13;
+    --evx-primary-dark: #7ba110;
+    --evx-danger: #dc2626;
+
+    max-width: 1120px;
+    margin: 0 auto;
+    font-size: 13px;
+    color: var(--evx-text);
 }
 
-.email-log-preview-wrapper {
+.evx-card {
+    background: var(--evx-panel);
+    border: 1px solid var(--evx-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(24, 24, 27, .05), 0 12px 32px -14px rgba(24, 24, 27, .18);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Cabecera ── */
+.evx-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--evx-subtle);
+    display: grid;
+    place-items: center;
+    color: var(--evx-text);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.evx-title-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.evx-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.evx-title .evx-subject {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-chip {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 6px;
+    background: var(--evx-text);
+    color: #fff;
+    border-radius: 4px;
+    letter-spacing: 0;
+    flex-shrink: 0;
+}
+
+.evx-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    color: var(--evx-text-muted);
+    text-decoration: none;
+    transition: .12s;
+    flex-shrink: 0;
+}
+
+.evx-close:hover {
+    background: var(--evx-subtle);
+    color: var(--evx-text);
+}
+
+/* ── Cuerpo (2 columnas) ── */
+.evx-body {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    min-height: 0;
+}
+
+/* Panel izquierdo: vista previa */
+.evx-preview {
+    background: var(--evx-subtle);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--evx-border);
+    min-width: 0;
+}
+
+.evx-preview-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    border-bottom: 1px solid var(--evx-border);
+    background: var(--evx-panel);
+}
+
+.evx-device-toggle {
+    display: inline-flex;
+    gap: 2px;
+    background: var(--evx-subtle);
+    border-radius: 7px;
+    padding: 2px;
+}
+
+.evx-device-toggle button {
+    width: 28px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    color: var(--evx-text-muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    transition: .12s;
+}
+
+.evx-device-toggle button.on {
+    background: var(--evx-primary);
+    color: #fff;
+}
+
+.evx-preview-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    width: 100%;
-    padding: 24px;
-    background: #f8f9fa;
-    min-height: 480px;
 }
 
-.email-log-preview-frame {
+.evx-frame {
     width: 100%;
     max-width: 100%;
-    min-height: 70vh;
+    min-height: 62vh;
     border: 0;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
-    transition: max-width .3s ease, width .3s ease;
+    box-shadow: 0 4px 20px rgba(24, 24, 27, .10);
+    transition: max-width .3s ease;
 }
 
-.email-log-preview-frame.is-mobile {
-    max-width: 375px;
+.evx-frame.is-mobile {
+    max-width: 390px;
 }
 
-.email-log-toggle-group .btn.active {
-    background-color: var(--bs-primary, #90bb13) !important;
-    border-color: var(--bs-primary, #90bb13) !important;
-    color: #fff !important;
+.evx-preview-text {
+    width: 100%;
+    margin: 0;
+    background: #fff;
+    border-radius: 8px;
+    padding: 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-shadow: 0 4px 20px rgba(24, 24, 27, .10);
+    font-size: 12.5px;
+    line-height: 1.55;
 }
 
+.evx-empty {
+    width: 100%;
+    padding: 40px 18px;
+    text-align: center;
+    color: var(--evx-text-muted);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(24, 24, 27, .06);
+}
+
+.evx-empty i {
+    font-size: 26px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Panel derecho: detalle */
+.evx-detail {
+    padding: 14px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--evx-panel);
+}
+
+.evx-section {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.evx-hdr {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    border-bottom: 1px solid var(--evx-border);
+    padding-bottom: 7px;
+}
+
+.evx-hdr .t {
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.evx-hdr .s {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+.evx-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-field .k {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.evx-field .v {
+    font-size: 12px;
+    color: var(--evx-text);
+    word-break: break-word;
+}
+
+.evx-field .v.mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+}
+
+.evx-field .v .muted {
+    color: var(--evx-text-muted);
+}
+
+.evx-field .v a {
+    color: var(--evx-primary-dark);
+    text-decoration: none;
+}
+
+.evx-field .v a:hover {
+    text-decoration: underline;
+}
+
+/* Pill de estado */
+.evx-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+
+.evx-status i {
+    font-size: 9px;
+}
+
+.evx-status.sent {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.evx-status.failed {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.evx-status.queued {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+/* Tag neutro (módulo, mailable) */
+.evx-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: var(--evx-subtle);
+    color: var(--evx-text);
+}
+
+.evx-tag.mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--evx-text-soft);
+}
+
+/* Acciones */
+.evx-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.evx-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: .12s;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    line-height: 1.2;
+}
+
+.evx-btn i {
+    font-size: 11px;
+}
+
+.evx-btn-primary {
+    background: var(--evx-primary);
+    color: #fff;
+}
+
+.evx-btn-primary:hover {
+    background: var(--evx-primary-dark);
+    color: #fff;
+}
+
+.evx-btn-outline {
+    background: #fff;
+    color: var(--evx-text);
+    border-color: var(--evx-border-strong);
+}
+
+.evx-btn-outline:hover {
+    border-color: var(--evx-text);
+    color: var(--evx-text);
+}
+
+.evx-btn-danger {
+    background: #fff;
+    color: var(--evx-danger);
+    border-color: var(--evx-border);
+}
+
+.evx-btn-danger:hover {
+    background: #fef2f2;
+    border-color: var(--evx-danger);
+}
+
+/* Aviso de error */
+.evx-alert {
+    font-size: 11.5px;
+    padding: 9px 11px;
+    border-radius: 7px;
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    word-break: break-word;
+    line-height: 1.5;
+}
+
+/* Adjuntos */
+.evx-attachments {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.evx-attachments li {
+    font-size: 11.5px;
+    color: var(--evx-text-soft);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.evx-attachments li i {
+    color: var(--evx-text-muted);
+}
+
+/* Lista de emails relacionados */
+.evx-related {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    border: 1px solid var(--evx-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--evx-text);
+    transition: .12s;
+}
+
+.evx-related:hover {
+    border-color: var(--evx-border-strong);
+    background: var(--evx-subtle);
+}
+
+.evx-related-subject {
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-related-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.evx-related-date {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Nota inferior */
+.evx-bottom-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border-top: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+    font-size: 11px;
+    color: var(--evx-text-muted);
+}
+
+.evx-bottom-note i {
+    font-size: 11px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 991px) {
+    .evx-body {
+        grid-template-columns: 1fr;
+    }
+
+    .evx-preview {
+        border-right: 0;
+        border-bottom: 1px solid var(--evx-border);
+    }
+
+    .evx-frame {
+        min-height: 55vh;
+    }
+}
+
+/* ── Impresión: solo el contenido del email ── */
 @media print {
-    .email-log-print-hide,
-    .email-log-toggle-group,
-    .card-header,
-    .card-footer,
-    button,
-    .btn {
+
+    .evx-head .evx-close,
+    .evx-device-toggle,
+    .evx-detail,
+    .evx-bottom-note {
         display: none !important;
     }
 
-    .email-log-preview-wrapper {
-        background: #fff !important;
-        padding: 0 !important;
-        min-height: auto !important;
+    .emaillog-viewer {
+        max-width: none;
     }
 
-    .email-log-preview-frame {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        min-height: auto !important;
+    .evx-card {
+        border: 0;
+        box-shadow: none;
+    }
+
+    .evx-body {
+        grid-template-columns: 1fr;
+    }
+
+    .evx-preview {
+        background: #fff;
+        border: 0;
+    }
+
+    .evx-preview-body {
+        padding: 0;
+    }
+
+    .evx-frame {
+        box-shadow: none;
+        min-height: auto;
     }
 }
 
+/* ============================================================
+   Email log — índice + settings (estilo plantilla Alvarez)
+   ============================================================ */
+.emaillog-index,
+.emaillog-settings,
+.evx-bulk-toolbar {
+    --evx-panel: #fff;
+    --evx-subtle: #f4f4f5;
+    --evx-bg-soft: #fafafa;
+    --evx-border: #e8e8e8;
+    --evx-border-strong: #d4d4d8;
+    --evx-text: #18181b;
+    --evx-text-soft: #52525b;
+    --evx-text-muted: #a1a1aa;
+    --evx-primary: #90bb13;
+    --evx-primary-dark: #7ba110;
+    --evx-danger: #dc2626;
+}
+
+.emaillog-index {
+    font-size: 13px;
+    color: var(--evx-text);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Aviso de emails atascados en cola */
+.evx-stale-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: .12s;
+}
+
+.evx-stale-banner:hover {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.evx-stale-banner i {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.evx-stale-cta {
+    margin-left: auto;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Tarjetas de estadísticas */
+.evx-stats {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+.evx-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: var(--evx-panel);
+    border: 1px solid var(--evx-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: var(--evx-text);
+    transition: .14s;
+}
+
+.evx-stat:not(.is-static):hover {
+    border-color: var(--evx-border-strong);
+    box-shadow: 0 4px 14px -6px rgba(24, 24, 27, .18);
+    transform: translateY(-1px);
+}
+
+.evx-stat.is-active {
+    border-color: var(--evx-primary);
+    box-shadow: 0 0 0 1px var(--evx-primary);
+}
+
+.evx-stat.is-static {
+    cursor: default;
+}
+
+.evx-stat-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.evx-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+}
+
+.evx-stat-hint {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+.evx-stat.accent-success .evx-stat-value {
+    color: #16a34a;
+}
+
+.evx-stat.accent-danger .evx-stat-value {
+    color: var(--evx-danger);
+}
+
+.evx-stat.accent-warning .evx-stat-value {
+    color: #d97706;
+}
+
+/* Bloques (tarjetas grandes) */
+.evx-block {
+    background: var(--evx-panel);
+    border: 1px solid var(--evx-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(24, 24, 27, .04);
+}
+
+.evx-block-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-block-head .t {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.evx-block-head .s {
+    display: block;
+    font-size: 11px;
+    color: var(--evx-text-muted);
+}
+
+.evx-block-body {
+    padding: 14px 16px;
+}
+
+/* Filtros */
+.evx-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.evx-search {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    min-width: 220px;
+    background: var(--evx-subtle);
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 8px 11px;
+    transition: .12s;
+}
+
+.evx-search:focus-within {
+    border-color: var(--evx-border-strong);
+    background: #fff;
+}
+
+.evx-search i {
+    font-size: 12px;
+    color: var(--evx-text-muted);
+}
+
+.evx-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 12.5px;
+    padding: 0;
+    outline: none;
+    color: var(--evx-text);
+}
+
+.evx-select,
+.evx-input {
+    padding: 8px 11px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 7px;
+    font-size: 12.5px;
+    color: var(--evx-text);
+    min-width: 150px;
+    cursor: pointer;
+}
+
+.evx-select:focus,
+.evx-input:focus {
+    outline: none;
+    border-color: var(--evx-text);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .05);
+}
+
+.evx-input {
+    cursor: text;
+    min-width: 180px;
+}
+
+.evx-select-sm {
+    min-width: 110px;
+}
+
+/* Botones inline (el .evx-btn base es full-width para el visor) */
+.evx-btn-inline {
+    width: auto;
+}
+
+/* Tabla */
+.evx-table-wrap {
+    overflow-x: auto;
+}
+
+.evx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.evx-table thead th {
+    text-align: left;
+    padding: 11px 14px;
+    background: var(--evx-bg-soft);
+    border-bottom: 1px solid var(--evx-border);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.evx-table tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--evx-border);
+    vertical-align: middle;
+}
+
+.evx-table tbody tr:hover {
+    background: var(--evx-bg-soft);
+}
+
+.evx-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.evx-th-check,
+.evx-th-actions {
+    width: 1%;
+}
+
+.evx-th-actions,
+.evx-td-actions {
+    text-align: center;
+}
+
+.evx-sort {
+    color: var(--evx-text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.evx-sort:hover {
+    color: var(--evx-text);
+}
+
+.evx-sort-idle {
+    opacity: .4;
+    font-size: 10px;
+}
+
+.evx-sort-active {
+    color: var(--evx-primary);
+    font-size: 11px;
+}
+
+.evx-subject-link {
+    color: var(--evx-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.evx-subject-link:hover {
+    color: var(--evx-primary-dark);
+}
+
+.evx-subject-sub {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    margin-top: 2px;
+}
+
+.evx-clip {
+    color: var(--evx-text-muted);
+    font-size: 10px;
+    margin-left: 5px;
+}
+
+.evx-recipient {
+    font-size: 11.5px;
+    color: var(--evx-text-soft);
+}
+
+.evx-muted {
+    color: var(--evx-text-muted);
+}
+
+.evx-date {
+    white-space: nowrap;
+    color: var(--evx-text-soft);
+}
+
+.evx-actions-toggle {
+    color: var(--evx-text-muted);
+    font-size: 14px;
+    padding: 4px 8px;
+    display: inline-block;
+}
+
+.evx-actions-toggle:hover {
+    color: var(--evx-text);
+}
+
+.evx-empty-row {
+    text-align: center;
+    padding: 48px 16px !important;
+    color: var(--evx-text-muted);
+}
+
+.evx-empty-row i {
+    font-size: 30px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.evx-empty-row p {
+    margin: 0;
+}
+
+/* Paginación */
+.evx-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--evx-border);
+}
+
+.evx-pagination .pagination {
+    margin: 0;
+}
+
+/* Toolbar flotante de acciones masivas */
+.evx-bulk-toolbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 1050;
+    background: var(--evx-panel);
+    border: 1px solid var(--evx-border-strong);
+    border-radius: 12px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 30px -8px rgba(24, 24, 27, .35);
+}
+
+.evx-bulk-count {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--evx-text);
+}
+
+/* Copiar (Message-ID) en el visor */
+.evx-copy-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+}
+
+.evx-copy-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.evx-copy-btn {
+    border: none;
+    background: transparent;
+    color: var(--evx-text-muted, #a1a1aa);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.evx-copy-btn:hover {
+    background: var(--evx-subtle, #f4f4f5);
+    color: var(--evx-text, #18181b);
+}
+
+/* ── Settings ── */
+.emaillog-settings {
+    max-width: 860px;
+    margin: 0 auto;
+    font-size: 13px;
+    color: var(--evx-text);
+}
+
+.emaillog-settings .evx-section-block {
+    padding: 18px 18px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.emaillog-settings .evx-section-block:last-of-type {
+    border-bottom: 0;
+}
+
+.emaillog-settings .evx-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 0 2px;
+}
+
+.emaillog-settings .evx-section-desc {
+    font-size: 11.5px;
+    color: var(--evx-text-muted);
+    margin: 0 0 14px;
+}
+
+.emaillog-settings .evx-field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.emaillog-settings .evx-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.emaillog-settings .evx-form-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+}
+
+.emaillog-settings .evx-form-hint {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    line-height: 1.5;
+}
+
+.emaillog-settings .evx-select,
+.emaillog-settings .evx-input {
+    width: 100%;
+    min-width: 0;
+}
+
+.emaillog-settings .evx-input.is-invalid,
+.emaillog-settings .evx-select.is-invalid {
+    border-color: var(--evx-danger);
+}
+
+.emaillog-settings .evx-invalid {
+    font-size: 10.5px;
+    color: var(--evx-danger);
+}
+
+.emaillog-settings .evx-foot {
+    display: flex;
+    justify-content: flex-end;
+    padding: 14px 18px;
+    background: var(--evx-bg-soft);
+    border-top: 1px solid var(--evx-border);
+}
+
+/* Responsive */
 @media (max-width: 991px) {
-    .email-log-preview-wrapper {
-        padding: 12px !important;
-        min-height: auto !important;
+    .evx-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .emaillog-settings .evx-field-grid {
+        grid-template-columns: 1fr;
     }
 }

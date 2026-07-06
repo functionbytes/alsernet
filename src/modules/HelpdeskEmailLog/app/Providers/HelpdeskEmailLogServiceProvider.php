@@ -127,6 +127,10 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Email',
             'items' => [

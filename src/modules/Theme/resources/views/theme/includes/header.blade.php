@@ -173,10 +173,6 @@
                             <i class="far fa-bell"></i> Notificaciones
                         </a>
                         <div class="dock-divider"></div>
-                        <button class="dock-item" type="button" id="btn-toggle-theme">
-                            <i class="fas fa-circle-half-stroke"></i> Cambiar tema
-                        </button>
-                        <div class="dock-divider"></div>
                         <form method="POST" action="{{ route('auth.logout') }}">
                             @csrf
                             <button type="submit" class="dock-item danger">

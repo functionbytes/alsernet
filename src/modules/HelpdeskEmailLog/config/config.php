@@ -51,6 +51,17 @@ return [
     ],
 
     /*
+    | Mapa entity_type => etiqueta legible para mostrar en la vista previa en
+    | lugar del nombre de clase FQCN. Si no hay entrada, se usa el basename de
+    | la clase en formato legible (p.ej. "Customer").
+    */
+    'entity_labels' => [
+        'Modules\\Helpdesk\\Models\\Customer' => 'Cliente',
+        'Modules\\HelpdeskTickets\\Models\\Ticket' => 'Ticket',
+        'Modules\\Helpdesk\\Models\\Conversation' => 'Conversación',
+    ],
+
+    /*
     | Cabeceras MIME internas que se leen para enriquecer el log y que se
     | eliminan del mensaje antes de enviarlo (no deben llegar al destinatario).
     */
@@ -58,6 +69,7 @@ return [
         'X-Email-Module',
         'X-Entity-Type',
         'X-Entity-Id',
+        'X-External-Id',
         'X-Mailable-Class',
     ],
 

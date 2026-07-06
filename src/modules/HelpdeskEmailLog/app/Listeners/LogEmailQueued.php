@@ -39,6 +39,10 @@ class LogEmailQueued
         $from = $this->fromAddressOf($message);
         $this->stripInternalHeaders($message);
 
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
         try {
             EmailLog::create([
                 ...$context,

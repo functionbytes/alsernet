@@ -1,102 +1,89 @@
-{{-- Modal: Atajos de teclado --}}
+{{-- Modal: Atajos de teclado (#56 ve-shortcuts · ?) --}}
+@php
+    $shortcutCols = [
+        ['Navegación', [
+            ['Buscar global', ['⌘', 'K']],
+            ['Siguiente conversación', ['J']],
+            ['Conversación anterior', ['K']],
+            ['Ir al hilo', ['Tab']],
+            ['Ir al panel derecho', ['⇧', 'Tab']],
+            ['Mostrar atajos', ['?']],
+        ]],
+        ['Conversación', [
+            ['Responder', ['R']],
+            ['Nota interna', ['N']],
+            ['Asignar agente', ['A']],
+            ['Etiquetar', ['T']],
+            ['Cambiar estado', ['S']],
+            ['Cambiar prioridad', ['P']],
+            ['Aplicar macro', ['M']],
+            ['Cerrar conversación', ['#']],
+        ]],
+        ['Composer', [
+            ['Enviar mensaje', ['⌘', '⏎']],
+            ['Nueva línea', ['⇧', '⏎']],
+            ['Respuestas guardadas', ['/']],
+            ['Mencionar agente', ['@']],
+        ]],
+        ['Bandeja y sistema', [
+            ['No leídas', ['G', 'U']],
+            ['Mías', ['G', 'M']],
+            ['Todas', ['G', 'A']],
+            ['Urgentes', ['G', 'R']],
+            ['Filtrar', ['F']],
+            ['Archivar', ['⌘', 'E']],
+            ['Cerrar (directo)', ['⌘', '⇧', 'D']],
+            ['Abrir/cerrar atajos', ['⌘', '/']],
+        ]],
+    ];
+@endphp
 <div class="bv-modal" data-bv-modal-name="shortcuts">
-    <div class="bv-modal-dialog bv-modal-dialog--wide">
-        <div class="bv-modal-head">
-            <div class="bv-modal-title"><i class="fas fa-keyboard bv-modal-title-icon"></i> Atajos de teclado</div>
-            <button class="bv-modal-close" data-bv-close>
+    <div class="bv-modal-dialog lg">
+        <div class="bv-modal-head bv-modal-head--with-icon">
+            <div class="bv-modal-icon-box"><i class="fas fa-keyboard"></i></div>
+            <div class="bv-modal-title-wrap">
+                <span class="bv-modal-label">Ayuda</span>
+                <div class="bv-modal-title">Atajos de teclado</div>
+            </div>
+            <button class="bv-modal-close" data-bv-close aria-label="Cerrar">
                 <i class="fas fa-xmark"></i>
             </button>
         </div>
         <div class="bv-modal-body">
-            <div class="bv-shortcuts-wrap">
-                <div>
-                    <div class="bv-right-section-title bv-rst-mb8">Navegacion</div>
-                    <div class="bv-sc-group">
-                        @foreach([
-                            ['J / ↓', 'Siguiente conversacion'],
-                            ['K / ↑', 'Conversacion anterior'],
-                            ['/', 'Buscar conversaciones'],
-                            ['⌘K', 'Buscar cliente'],
-                            ['?', 'Mostrar atajos'],
-                            ['Tab', 'Saltar al hilo (desde lista)'],
-                            ['Shift+Tab', 'Saltar al panel derecho'],
-                        ] as $sc)
-                            <div class="bv-sc-row">
-                                <span>{{ $sc[1] }}</span>
-                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
+            <div class="bv-cheat-grid">
+                @foreach($shortcutCols as [$title, $rows])
+                    <div class="bv-cheat-col">
+                        <div class="bv-cheat-h">{{ $title }}</div>
+                        @foreach($rows as [$label, $keys])
+                            <div class="bv-cheat-row">
+                                <span class="bv-cheat-lbl">{{ $label }}</span>
+                                <span class="bv-cheat-keys">
+                                    @foreach($keys as $key)
+                                        <kbd class="bv-cheat-kbd">{{ $key }}</kbd>
+                                    @endforeach
+                                </span>
                             </div>
                         @endforeach
                     </div>
-                </div>
-                <div>
-                    <div class="bv-right-section-title bv-rst-mb8">Acciones sobre conversacion</div>
-                    <div class="bv-sc-group">
-                        @foreach([
-                            ['R', 'Responder (enfocar compositor)'],
-                            ['N', 'Nota interna'],
-                            ['A', 'Asignar'],
-                            ['T', 'Etiquetar'],
-                            ['S', 'Cambiar estado'],
-                            ['P', 'Cambiar prioridad'],
-                            ['F', 'Filtrar'],
-                            ['#', 'Cerrar conversacion (modal)'],
-                            ['⌘E', 'Archivar conversacion'],
-                            ['⌘⇧D', 'Cerrar conversacion (directo)'],
-                            ['⌘/', 'Abrir/cerrar atajos'],
-                            ['Esc', 'Cerrar modal / salir de modo concentracion'],
-                        ] as $sc)
-                            <div class="bv-sc-row">
-                                <span>{{ $sc[1] }}</span>
-                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div>
-                    <div class="bv-right-section-title bv-rst-mb8">Ir a (G + tecla)</div>
-                    <div class="bv-sc-group">
-                        @foreach([
-                            ['G → U', 'No leidas'],
-                            ['G → M', 'Mis conversaciones'],
-                            ['G → A', 'Todas'],
-                            ['G → R', 'Urgentes'],
-                        ] as $sc)
-                            <div class="bv-sc-row">
-                                <span>{{ $sc[1] }}</span>
-                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div>
-                    <div class="bv-right-section-title bv-rst-mb8">Productividad</div>
-                    <div class="bv-sc-group">
-                        @foreach([
-                            ['Icono expandir', 'Modo concentracion (oculta paneles laterales)'],
-                            ['Icono volumen', 'Activar/silenciar sonido de notificacion'],
-                        ] as $sc)
-                            <div class="bv-sc-row">
-                                <span>{{ $sc[1] }}</span>
-                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-                <div>
-                    <div class="bv-right-section-title bv-rst-mb8">Composer</div>
-                    <div class="bv-sc-group">
-                        @foreach([
-                            ['⌘↵', 'Enviar mensaje'],
-                            ['/', 'Insertar respuesta guardada'],
-                        ] as $sc)
-                            <div class="bv-sc-row">
-                                <span>{{ $sc[1] }}</span>
-                                <kbd class="bv-sc-kbd">{{ $sc[0] }}</kbd>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                @endforeach
             </div>
+        </div>
+        <div class="bv-modal-foot">
+            <button class="btn-primary" id="bv-sc-print">Imprimir atajos</button>
+            <button class="btn-secondary" data-bv-close>Cerrar</button>
         </div>
     </div>
 </div>
+
+@once
+@push('scripts')
+<script>
+(function ($) {
+    'use strict';
+    $(document).on('click', '#bv-sc-print', function () {
+        window.print();
+    });
+}(window.jQuery));
+</script>
+@endpush
+@endonce

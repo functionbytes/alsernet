@@ -19,8 +19,15 @@ class ResendEmailLogJob implements ShouldQueue
 
     public int $backoff = 10;
 
-    public function __construct(public readonly int $emailLogId)
-    {
+    /**
+     * @param  ?string  $overrideTo  Optional alternative recipient; when set, the
+     *                               email is sent only to this address instead of
+     *                               the original recipients (cc/reply-to omitted).
+     */
+    public function __construct(
+        public readonly int $emailLogId,
+        public readonly ?string $overrideTo = null,
+    ) {
         $this->onQueue('emails');
     }
 
@@ -28,7 +35,9 @@ class ResendEmailLogJob implements ShouldQueue
     {
         $emailLog = EmailLog::query()->find($this->emailLogId);
 
-        if (! $emailLog || empty($emailLog->to_addresses)) {
+        $recipients = $this->overrideTo ? [$this->overrideTo] : $emailLog?->to_addresses;
+
+        if (! $emailLog || empty($recipients)) {
             return;
         }
 
@@ -37,20 +46,33 @@ class ResendEmailLogJob implements ShouldQueue
                 ? nl2br(e($emailLog->body_text))
                 : '<p>(sin contenido)</p>');
 
-        Mail::html($html, function ($message) use ($emailLog) {
-            $message->to($emailLog->to_addresses)->subject($emailLog->subject);
+        Mail::html($html, function ($message) use ($emailLog, $recipients) {
+            $message->to($recipients)->subject($emailLog->subject);
 
             if ($emailLog->from_address) {
                 $message->from($emailLog->from_address, $emailLog->from_name);
             }
 
-            if ($emailLog->cc_addresses) {
+            // Al reenviar a una dirección alternativa se omiten los CC y el
+            // reply-to originales, para no exponer el mensaje a los destinatarios
+            // reales ni desviar las respuestas al hilo original.
+            if (! $this->overrideTo && $emailLog->cc_addresses) {
                 $message->cc($emailLog->cc_addresses);
             }
 
-            if ($emailLog->reply_to) {
+            if (! $this->overrideTo && $emailLog->reply_to) {
                 $message->replyTo($emailLog->reply_to);
             }
+
+            // Atribuye la fila de EmailLog que LogEmailQueued crea para este envío
+            // al log original, de modo que el reenvío sea trazable (módulo +
+            // entity + external_id 'resend:<id>'). El listener lee estas cabeceras
+            // X-* y las elimina antes de que salga el correo.
+            $headers = $message->getSymfonyMessage()->getHeaders();
+            $headers->addTextHeader('X-Email-Module', 'HelpdeskEmailLog');
+            $headers->addTextHeader('X-Entity-Type', EmailLog::class);
+            $headers->addTextHeader('X-Entity-Id', (string) $emailLog->id);
+            $headers->addTextHeader('X-External-Id', 'resend:'.$emailLog->id);
         });
     }
 

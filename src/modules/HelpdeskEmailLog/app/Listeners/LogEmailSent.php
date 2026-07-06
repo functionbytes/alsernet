@@ -39,6 +39,10 @@ class LogEmailSent implements ShouldQueue
 
     public function handle(MessageSent $event): void
     {
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
         try {
             /** @var Email $message */
             $message = $event->message;

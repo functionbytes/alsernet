@@ -17,9 +17,21 @@ Route::middleware('auth')
 
         Route::get('/{emailLog}', [EmailLogController::class, 'show'])->name('show')->whereUuid('emailLog');
 
+        Route::get('/{emailLog}/download', [EmailLogController::class, 'download'])
+            ->name('download')
+            ->whereUuid('emailLog');
+
         Route::middleware('throttle:12,1')
             ->post('/{emailLog}/resend', [EmailLogController::class, 'resend'])
             ->name('resend')
+            ->whereUuid('emailLog');
+
+        Route::middleware('throttle:6,1')
+            ->post('/bulk-resend', [EmailLogController::class, 'bulkResend'])
+            ->name('bulk-resend');
+
+        Route::post('/{emailLog}/purge-body', [EmailLogController::class, 'purgeBody'])
+            ->name('purge-body')
             ->whereUuid('emailLog');
 
         Route::delete('/bulk', [EmailLogController::class, 'bulkDestroy'])->name('bulk-destroy');
