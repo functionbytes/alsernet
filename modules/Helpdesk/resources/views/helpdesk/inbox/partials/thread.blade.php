@@ -1,5 +1,7 @@
 {{-- Hilo de chat — Refined v4 --}}
-@includeIf('helpdeskhelpcenter::partials.thread-extension')
+@if(helpdesk_helpcenter_enabled())
+    @includeIf('helpdeskhelpcenter::partials.thread-extension')
+@endif
 @php
     $convo = $selectedConversation ?? null;
     $cust = $convo?->customer;
@@ -10,8 +12,8 @@
         <div class="bv-thread-empty-icon">
             <i class="far fa-comments"></i>
         </div>
-        <div class="bv-thread-empty-title">Selecciona una conversación</div>
-        <div class="bv-thread-empty-sub">Elige una conversación del panel izquierdo para ver el hilo y responder</div>
+        <div class="bv-thread-empty-title">{{ __('helpdesk::helpdesk.inbox.thread.empty_title') }}</div>
+        <div class="bv-thread-empty-sub">{{ __('helpdesk::helpdesk.inbox.thread.empty_subtitle') }}</div>
     </div>
 @else
     @php
@@ -56,103 +58,108 @@
             <button class="bv-th-action bv-th-action--takeover" id="bv-btn-takeover"
                     data-takeover-url="{{ route('chatflow.takeover', $convo->id) }}"
                     data-bv-tip="El bot está atendiendo · Toma el control">
-                <i class="fas fa-robot"></i> Tomar control
+                <i class="fas fa-robot"></i> {{ __('helpdesk::helpdesk.inbox.thread.take_over') }}
             </button>
             @endif
             @if(helpdesk_feature_enabled('search'))
-            <button class="bv-th-action" id="bv-th-search-btn" data-bv-tip="Buscar en la conversación" aria-label="Buscar en la conversación">
+            <button class="bv-th-action" id="bv-th-search-btn" data-bv-tip="Buscar en la conversación" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.search_conversation') }}">
                 <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('email'))
-            <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Enviar email" aria-label="Enviar email">
+            <button class="bv-th-action" data-bv-modal="email" data-bv-tip="Enviar email" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.send_email') }}">
                 <i class="far fa-envelope" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_tickets_enabled() && helpdesk_feature_enabled('tickets'))
-            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket" aria-label="Crear ticket">
+            <button class="bv-th-action" data-bv-modal="create-ticket" data-bv-tip="Crear ticket" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.create_ticket') }}">
                 <i class="fas fa-ticket" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('schedule'))
-            <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar" aria-label="Agendar cita">
+            <button class="bv-th-action" data-bv-modal="schedule" data-bv-tip="Agendar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.schedule_appointment') }}">
                 <i class="far fa-calendar-plus" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('snooze'))
-            <button class="bv-th-action" data-bv-modal="snooze" data-bv-tip="Posponer" aria-label="Posponer conversación">
+            <button class="bv-th-action" data-bv-modal="snooze" data-bv-tip="Posponer" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.snooze_conversation') }}">
                 <i class="far fa-clock" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('assign'))
-            <button class="bv-th-action" data-bv-modal="assign" data-bv-tip="Asignar" aria-label="Asignar conversación">
+            <button class="bv-th-action" data-bv-modal="assign" data-bv-tip="Asignar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.assign_conversation') }}">
                 <i class="fas fa-user-plus" aria-hidden="true"></i>
             </button>
             @endif
             @if(helpdesk_feature_enabled('tags'))
-            <button class="bv-th-action" data-bv-modal="tags" data-bv-tip="Etiquetar" aria-label="Etiquetar conversación">
+            <button class="bv-th-action" data-bv-modal="tags" data-bv-tip="Etiquetar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.tag_conversation') }}">
                 <i class="fas fa-tag" aria-hidden="true"></i>
             </button>
             @endif
             @if($convo?->closed_at)
                 <button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen" data-bv-tip="Reabrir conversación"
-                        aria-label="Reabrir conversación"
+                        aria-label="{{ __('helpdesk::helpdesk.inbox.thread.reopen_conversation') }}"
                         data-reopen-url="{{ route('manager.helpdesk.conversations.reopen', $convo) }}">
                     <i class="fas fa-rotate-left" aria-hidden="true"></i>
                 </button>
             @elseif($convo)
-                <button class="bv-th-action" data-bv-modal="close-conv" data-bv-tip="Cerrar conversación" aria-label="Cerrar conversación">
+                <button class="bv-th-action" data-bv-modal="close-conv" data-bv-tip="Cerrar conversación" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.close_conversation') }}">
                     <i class="fas fa-check" aria-hidden="true"></i>
                 </button>
             @endif
             {{-- Botón "más" con dropdown --}}
             <div class="bv-th-more-wrap">
-                <button class="bv-th-action" id="bv-btn-more" data-bv-tip="Más" aria-label="Más opciones">
+                <button class="bv-th-action" id="bv-btn-more" data-bv-tip="Más" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.more_options') }}">
                     <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
                 </button>
                 <div class="bv-more-menu" id="bv-more-menu">
                     @if(helpdesk_feature_enabled('merge'))
-                    <button data-bv-modal="merge"><i class="fas fa-code-merge"></i>Fusionar conversación</button>
+                    <button data-bv-modal="merge"><i class="fas fa-code-merge"></i>{{ __('helpdesk::helpdesk.inbox.thread.merge_conversation') }}</button>
                     @endif
                     @if(helpdesk_feature_enabled('move_team'))
-                    <button data-bv-modal="move-to-team"><i class="fas fa-arrow-right-arrow-left"></i>Mover a equipo</button>
+                    <button data-bv-modal="move-to-team"><i class="fas fa-arrow-right-arrow-left"></i>{{ __('helpdesk::helpdesk.inbox.thread.move_to_team') }}</button>
                     @endif
                     @if(helpdesk_feature_enabled('forward'))
-                    <button id="bv-btn-forward-conv"><i class="fas fa-share"></i>Reenviar</button>
+                    <button id="bv-btn-forward-conv"><i class="fas fa-share"></i>{{ __('helpdesk::helpdesk.inbox.thread.forward') }}</button>
                     @endif
                     <div class="sep"></div>
                     @if(helpdesk_feature_enabled('preview_conv'))
-                    <button data-bv-modal="history"><i class="fas fa-clock-rotate-left"></i>Conversaciones anteriores</button>
+                    <button data-bv-modal="history"><i class="fas fa-clock-rotate-left"></i>{{ __('helpdesk::helpdesk.inbox.thread.previous_conversations') }}</button>
                     @endif
                     @if(helpdesk_feature_enabled('note'))
-                    <button data-bv-modal="note"><i class="far fa-note-sticky"></i>Añadir nota</button>
+                    <button data-bv-modal="note"><i class="far fa-note-sticky"></i>{{ __('helpdesk::helpdesk.inbox.thread.add_note') }}</button>
                     @endif
                     @if(helpdesk_feature_enabled('csat'))
                     <button id="bv-btn-send-csat"
                             data-csat-url="{{ $convo ? route('manager.helpdesk.conversations.send-csat', $convo) : '' }}">
-                        <i class="far fa-star"></i>Enviar encuesta CSAT
+                        <i class="far fa-star"></i>{{ __('helpdesk::helpdesk.inbox.thread.send_csat_survey') }}
                     </button>
                     @endif
 
-                    <button data-bv-modal="audit-log"><i class="fas fa-clock-rotate-left"></i>Actividad de la conversación</button>
-                    <button data-bv-modal="help-center"><i class="far fa-circle-question"></i>Centro de ayuda</button>
+                    <button data-bv-modal="audit-log"><i class="fas fa-clock-rotate-left"></i>{{ __('helpdesk::helpdesk.inbox.thread.conversation_activity') }}</button>
+                    @can('helpdesk.manage')
+                        <button data-bv-modal="auto-assign"><i class="fas fa-shuffle"></i>{{ __('helpdesk::helpdesk.inbox.thread.auto_assignment') }}</button>
+                    @endcan
+                    @if(helpdesk_helpcenter_enabled())
+                        <button data-bv-modal="help-center"><i class="far fa-circle-question"></i>{{ __('helpdesk::helpdesk.inbox.thread.help_center') }}</button>
+                    @endif
                     <div class="sep"></div>
                     @if(helpdesk_feature_enabled('spam'))
                     <button  id="bv-btn-mark-spam"
                             data-spam-url="{{ $convo ? route('manager.helpdesk.conversations.mark-spam', $convo) : '' }}">
-                        <i class="fas fa-ban"></i>Spam
+                        <i class="fas fa-ban"></i>{{ __('helpdesk::helpdesk.inbox.thread.spam') }}
                     </button>
                     @endif
                     @if(helpdesk_feature_enabled('block_contact'))
                     <button  id="bv-btn-block-contact"
                             data-block-url="{{ $convo ? route('manager.helpdesk.conversations.block-contact', $convo) : '' }}">
-                        <i class="fas fa-user-slash"></i>Bloquear contacto
+                        <i class="fas fa-user-slash"></i>{{ __('helpdesk::helpdesk.inbox.thread.block_contact') }}
                     </button>
                     @endif
                     @if(helpdesk_feature_enabled('delete_conv'))
                     <button  id="bv-btn-delete-conv"
                             data-delete-url="{{ $convo ? route('manager.helpdesk.conversations.destroy', $convo) : '' }}">
-                        <i class="far fa-trash-can"></i>Eliminar
+                        <i class="far fa-trash-can"></i>{{ __('helpdesk::helpdesk.inbox.thread.delete_conversation') }}
                     </button>
                     @endif
                 </div>
@@ -163,11 +170,11 @@
     {{-- Barra de búsqueda en el thread --}}
     <div class="bv-th-search bv-hidden" id="bv-th-search">
         <i class="fas fa-magnifying-glass bv-th-search-icon"></i>
-        <input type="text" id="bv-th-search-input" class="bv-th-search-input" placeholder="Buscar en la conversación…" autocomplete="off">
+        <input type="text" id="bv-th-search-input" class="bv-th-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.search_placeholder') }}" autocomplete="off">
         <span class="bv-th-search-count" id="bv-th-search-count"></span>
-        <button class="bv-th-search-nav" id="bv-th-search-prev" data-bv-tip="Anterior" aria-label="Resultado anterior" disabled><i class="fas fa-chevron-up" aria-hidden="true"></i></button>
-        <button class="bv-th-search-nav" id="bv-th-search-next" data-bv-tip="Siguiente" aria-label="Resultado siguiente" disabled><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
-        <button class="bv-th-search-close" id="bv-th-search-close" data-bv-tip="Cerrar" aria-label="Cerrar búsqueda"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-prev" data-bv-tip="Anterior" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.previous_result') }}" disabled><i class="fas fa-chevron-up" aria-hidden="true"></i></button>
+        <button class="bv-th-search-nav" id="bv-th-search-next" data-bv-tip="Siguiente" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.next_result') }}" disabled><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+        <button class="bv-th-search-close" id="bv-th-search-close" data-bv-tip="Cerrar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.close_search') }}"><i class="fas fa-xmark" aria-hidden="true"></i></button>
     </div>
 
     {{-- Cuerpo del hilo --}}
@@ -184,7 +191,7 @@
                     <button type="button" class="bv-load-older-btn btn btn-sm btn-light"
                             data-url="{{ url('panel/helpdesk/conversations/'.$convo->id.'/items') }}"
                             data-oldest-id="{{ $items->first()?->id }}">
-                        <i class="fas fa-arrow-up"></i> Cargar anteriores
+                        <i class="fas fa-arrow-up"></i> {{ __('helpdesk::helpdesk.inbox.thread.load_older') }}
                     </button>
                 </div>
             @endif
@@ -225,7 +232,7 @@
                          data-bv-body="{{ $item->body }}"
                          data-bv-body-preview="{{ \Illuminate\Support\Str::limit($item->body ?? '', 80) }}">
                         @if($isInternal)
-                            <div class="note-badge"><i class="fas fa-lock"></i> Nota interna</div>
+                            <div class="note-badge"><i class="fas fa-lock"></i> {{ __('helpdesk::helpdesk.inbox.thread.internal_note') }}</div>
                         @endif
                         @php
                             $replyToId = $item->metadata['reply_to_id'] ?? null;
@@ -264,7 +271,7 @@
                                  data-bv-original="{{ $item->body }}"
                                  data-bv-translated="{{ $item->translated_body }}">
                                 <span class="bv-bubble-translation-lbl">&#8627; </span>{{ $item->translated_body }}
-                                <button type="button" class="bv-bubble-translation-toggle" title="Ver original">
+                                <button type="button" class="bv-bubble-translation-toggle" title="{{ __('helpdesk::helpdesk.inbox.thread.view_original') }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                 </button>
                             </div>
@@ -275,13 +282,13 @@
                                  data-bv-original="{{ $item->body }}"
                                  data-bv-translated="{{ $item->outgoing_translated_body }}">
                                 <span class="bv-bubble-translation-lbl">&#8627; </span>{{ $item->outgoing_translated_body }}
-                                <button type="button" class="bv-bubble-translation-toggle" title="Ver original">
+                                <button type="button" class="bv-bubble-translation-toggle" title="{{ __('helpdesk::helpdesk.inbox.thread.view_original') }}">
                                     <i class="fas fa-arrows-rotate"></i>
                                 </button>
                             </div>
                         @endif
 
-                        @if(! $isOut && ! $isInternal && empty($item->translated_body) && \Nwidart\Modules\Facades\Module::find('HelpdeskTranslate')?->isEnabled() && auth()->user()?->can('helpdesk-translate.use'))
+                        @if(! $isOut && ! $isInternal && empty($item->translated_body) && helpdesk_translate_enabled() && auth()->user()?->can('helpdesk-translate.use'))
                             <button type="button"
                                     class="bv-translate-item-btn btn btn-sm btn-link text-muted px-0 py-0"
                                     data-item-id="{{ $item->id }}"
@@ -358,7 +365,7 @@
                                         <div class="bv-video-bubble">
                                             <video controls preload="metadata" class="bv-video-player">
                                                 <source src="{{ $url }}">
-                                                Tu navegador no soporta video.
+                                                {{ __('helpdesk::helpdesk.inbox.thread.video_not_supported') }}
                                             </video>
                                         </div>
                                     @elseif($attachType === 'audio')
@@ -374,17 +381,17 @@
                                         @endphp
                                         <div class="bv-audio-msg" data-bv-audio-src="{{ $url }}">
                                             <div class="bv-audio-avatar bv-th-av-c{{ $colorIdx }}">{{ $audioInitials }}<span class="bv-audio-mic"><i class="fas fa-microphone"></i></span></div>
-                                            <button type="button" class="bv-audio-play" aria-label="Reproducir">
+                                            <button type="button" class="bv-audio-play" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.play') }}">
                                                 <i class="fas fa-play"></i>
                                             </button>
-                                            <div class="bv-audio-wave" role="slider" tabindex="0" aria-label="Progreso del audio" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <div class="bv-audio-wave" role="slider" tabindex="0" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.audio_progress') }}" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                                                 @foreach($bars as $h)
                                                     <span class="bv-audio-bar" style="--bv-audio-bar-h:{{ $h }}%"></span>
                                                 @endforeach
                                                 <span class="bv-audio-progress-dot"></span>
                                             </div>
                                             <span class="bv-audio-time">0:00</span>
-                                            <button type="button" class="bv-audio-speed" data-bv-speed="1" title="Velocidad">1x</button>
+                                            <button type="button" class="bv-audio-speed" data-bv-speed="1" title="{{ __('helpdesk::helpdesk.inbox.thread.playback_speed') }}">1x</button>
                                             <audio preload="metadata" class="bv-audio-el">
                                                 <source src="{{ $url }}">
                                             </audio>
@@ -429,7 +436,7 @@
                             @endphp
                             <div class="bv-location-bubble">
                                 <a href="{{ $mapUrl }}" target="_blank" rel="noopener" class="bv-location-map-link">
-                                    <img src="{{ $mapImg }}" alt="Mapa" loading="lazy" class="bv-location-map-img" width="280" height="140">
+                                    <img src="{{ $mapImg }}" alt="{{ __('helpdesk::helpdesk.inbox.thread.map_alt') }}" loading="lazy" class="bv-location-map-img" width="280" height="140">
                                 </a>
                                 <div class="bv-location-address">
                                     <i class="fas fa-location-dot"></i>
@@ -463,7 +470,7 @@
             @empty
                 <div class="bv-th-no-msgs">
                     <i class="far fa-comment-dots"></i>
-                    Sin mensajes en esta conversación
+                    {{ __('helpdesk::helpdesk.inbox.thread.no_messages') }}
                 </div>
             @endforelse
         </div>
@@ -485,145 +492,149 @@
         <div class="bv-hsm-picker" id="bv-hsm-picker">
             <div class="bv-panel-head">
                 <i class="fab fa-whatsapp bv-hsm-wa-icon"></i>
-                <span>Plantillas HSM</span>
+                <span>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}</span>
                 <button id="bv-hsm-close"><i class="fas fa-xmark"></i></button>
             </div>
             <div class="bv-hsm-body">
                 <div class="bv-hsm-list" id="bv-hsm-list">
                     <div class="bv-panel-search">
                         <i class="fas fa-magnifying-glass"></i>
-                        <input type="text" id="bv-hsm-search" placeholder="Buscar plantilla…">
+                        <input type="text" id="bv-hsm-search" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.search_template_placeholder') }}">
                     </div>
                     {{-- Templates cargados dinámicamente vía JS --}}
                 </div>
                 <div class="bv-hsm-detail">
-                    <div class="bv-hsm-preview-label">Vista previa</div>
+                    <div class="bv-hsm-preview-label">{{ __('helpdesk::helpdesk.inbox.thread.preview_label') }}</div>
                     <div class="bv-hsm-chat" id="bv-hsm-preview">
                         <div class="bv-hsm-chat-bubble" id="bv-hsm-preview-bubble">
-                            <span id="bv-hsm-preview-text">Selecciona una plantilla…</span>
+                            <span id="bv-hsm-preview-text">{{ __('helpdesk::helpdesk.inbox.thread.select_template_placeholder') }}</span>
                             <div class="bv-hsm-chat-time">09:42 ✓✓</div>
                         </div>
                     </div>
                     <div class="bv-hsm-vars" id="bv-hsm-vars">
-                        <div class="bv-hsm-vars-title">Variables</div>
+                        <div class="bv-hsm-vars-title">{{ __('helpdesk::helpdesk.inbox.thread.variables_label') }}</div>
                         <div id="bv-hsm-vars-list">
                             {{-- Variables cargadas dinámicamente --}}
                         </div>
                     </div>
                     <div class="bv-hsm-foot">
-                        <button class="bv-panel-btn bv-panel-btn-cancel" id="bv-hsm-close-2"><i class="fas fa-xmark"></i> Cancelar</button>
-                        <button class="bv-panel-btn bv-panel-btn-confirm" id="bv-hsm-insert"><i class="fas fa-check"></i> Insertar plantilla</button>
+                        <button class="bv-panel-btn bv-panel-btn-cancel" id="bv-hsm-close-2"><i class="fas fa-xmark"></i> {{ __('helpdesk::helpdesk.inbox.thread.cancel') }}</button>
+                        <button class="bv-panel-btn bv-panel-btn-confirm" id="bv-hsm-insert"><i class="fas fa-check"></i> {{ __('helpdesk::helpdesk.inbox.thread.insert_template') }}</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Panel Traducción — provided by HelpdeskTranslate module (no-op when disabled) --}}
-        @includeIf('helpdesktranslate::partials.translate-panel')
+        {{-- Panel Traducción — provided by HelpdeskTranslate module --}}
+        @if(helpdesk_translate_enabled())
+            @includeIf('helpdesktranslate::partials.translate-panel')
+        @endif
 
         {{-- Tabs del composer --}}
         <div class="bv-composer-tabs">
             <button class="bv-composer-tab on" data-bv-tab="reply">
-                <i class="fas fa-reply bv-tab-icon"></i>Respuesta
+                <i class="fas fa-reply bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.reply_tab') }}
             </button>
             @if(helpdesk_feature_enabled('composer_note'))
             <button class="bv-composer-tab note" data-bv-tab="note">
-                <i class="fas fa-lock bv-tab-icon"></i>Nota interna
+                <i class="fas fa-lock bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.internal_note') }}
             </button>
             @endif
             @if(helpdesk_feature_enabled('composer_hsm'))
             <button class="bv-composer-tab" data-bv-tab="hsm">
-                <i class="fab fa-whatsapp bv-tab-icon"></i>Plantillas HSM
+                <i class="fab fa-whatsapp bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}
             </button>
             @endif
             {{-- Pestaña Traducir — provided by HelpdeskTranslate module --}}
-            @includeIf('helpdesktranslate::partials.composer-tab')
+            @if(helpdesk_translate_enabled())
+                @includeIf('helpdesktranslate::partials.composer-tab')
+            @endif
         </div>
 
         {{-- Área de texto --}}
         <div class="bv-composer-box" id="bv-composer-box">
-            <textarea class="bv-composer-input" placeholder="Escribe tu respuesta… (/ para respuestas rápidas, @ para mencionar)" rows="2" aria-label="Escribe tu respuesta"></textarea>
+            <textarea class="bv-composer-input" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.composer_placeholder') }}" rows="2" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.composer_aria_label') }}"></textarea>
             <div class="bv-composer-toolbar">
                 {{-- Adjuntar con menú --}}
                 @if(helpdesk_feature_enabled('composer_attach'))
                 <div class="bv-attach-wrap">
-                    <button class="btn-ico" id="bv-btn-attach" data-bv-tip="Adjuntar" aria-label="Adjuntar archivo">
+                    <button class="btn-ico" id="bv-btn-attach" data-bv-tip="Adjuntar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.attach_file') }}">
                         <i class="fas fa-paperclip" aria-hidden="true"></i>
                     </button>
                     <div class="bv-attach-menu" id="bv-attach-menu">
                         <button class="bv-attach-row" data-bv-attach-type="document">
                             <div class="ico"><i class="far fa-file"></i></div>
                             <div class="body">
-                                <div class="t">Documento</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_document') }}</div>
                                 <div class="s">PDF, Word, Excel, PPT</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="image">
                             <div class="ico bv-attach-ico-blue"><i class="far fa-image"></i></div>
                             <div class="body">
-                                <div class="t">Imagen</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_image') }}</div>
                                 <div class="s">JPG, PNG, WEBP, GIF</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="audio">
                             <div class="ico bv-attach-ico-purple"><i class="fas fa-music"></i></div>
                             <div class="body">
-                                <div class="t">Subir audio</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_upload_audio') }}</div>
                                 <div class="s">MP3, OGG, WAV, M4A</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="record">
                             <div class="ico bv-attach-ico-purple"><i class="fas fa-microphone"></i></div>
                             <div class="body">
-                                <div class="t">Grabar audio</div>
-                                <div class="s">Mensaje de voz</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.record_audio') }}</div>
+                                <div class="s">{{ __('helpdesk::helpdesk.inbox.thread.voice_message') }}</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="video">
                             <div class="ico bv-attach-ico-red"><i class="fas fa-video"></i></div>
                             <div class="body">
-                                <div class="t">Video</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_video') }}</div>
                                 <div class="s">MP4, MOV</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="store" data-bv-modal="store-picker">
                             <div class="ico bv-attach-ico-green"><i class="fas fa-store"></i></div>
                             <div class="body">
-                                <div class="t">Tienda</div>
-                                <div class="s">Compartir tienda de la empresa</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_store') }}</div>
+                                <div class="s">{{ __('helpdesk::helpdesk.inbox.thread.share_company_store') }}</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="contact" data-bv-modal="attach-contact">
                             <div class="ico bv-attach-ico-blue"><i class="fas fa-address-card"></i></div>
                             <div class="body">
-                                <div class="t">Contacto</div>
-                                <div class="s">Enviar tarjeta vCard</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_contact') }}</div>
+                                <div class="s">{{ __('helpdesk::helpdesk.inbox.thread.send_vcard') }}</div>
                             </div>
                         </button>
                         <button class="bv-attach-row" data-bv-attach-type="location" data-bv-modal="attach-location">
                             <div class="ico bv-attach-ico-amber"><i class="fas fa-location-dot"></i></div>
                             <div class="body">
-                                <div class="t">Ubicación</div>
-                                <div class="s">Compartir mapa</div>
+                                <div class="t">{{ __('helpdesk::helpdesk.inbox.thread.attach_location') }}</div>
+                                <div class="s">{{ __('helpdesk::helpdesk.inbox.thread.share_map') }}</div>
                             </div>
                         </button>
                         <div class="bv-attach-limit">
                             <i class="fas fa-circle-info"></i>
-                            Máximo 16 MB por archivo
+                            {{ __('helpdesk::helpdesk.inbox.thread.attach_max_size') }}
                         </div>
                     </div>
                 </div>
                 @endif
                 {{-- Voice recorder (shown when audio attach chosen and user clicks record) --}}
                 <div class="bv-voice-recorder bv-hidden" id="bv-voice-recorder">
-                    <button class="bv-voice-btn" id="bv-voice-record" data-bv-tip="Grabar" aria-label="Iniciar grabación">
+                    <button class="bv-voice-btn" id="bv-voice-record" data-bv-tip="Grabar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.start_recording') }}">
                         <i class="fas fa-microphone" aria-hidden="true"></i>
                     </button>
                     <span class="bv-voice-time" id="bv-voice-time">0:00</span>
-                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" data-bv-tip="Detener" aria-label="Detener grabación">
+                    <button class="bv-voice-btn bv-voice-btn-stop bv-hidden" id="bv-voice-stop" data-bv-tip="Detener" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.stop_recording') }}">
                         <i class="fas fa-stop" aria-hidden="true"></i>
                     </button>
-                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" data-bv-tip="Cancelar" aria-label="Cancelar grabación">
+                    <button class="bv-voice-btn bv-voice-btn-cancel bv-hidden" id="bv-voice-cancel" data-bv-tip="Cancelar" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.cancel_recording') }}">
                         <i class="fas fa-xmark" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -632,54 +643,54 @@
                     <div class="bv-upload-bar" id="bv-upload-bar"></div>
                 </div>
                 @if(helpdesk_feature_enabled('composer_emoji'))
-                <button class="btn-ico" id="bv-btn-emoji" type="button" data-bv-tip="Emoji" aria-label="Emoji">
+                <button class="btn-ico" id="bv-btn-emoji" type="button" data-bv-tip="Emoji" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.emoji') }}">
                     <i class="far fa-face-smile"></i>
                 </button>
                 @endif
                 @if(helpdesk_feature_enabled('composer_mention'))
-                <button class="btn-ico" id="bv-btn-mention" type="button" data-bv-modal="mention" data-bv-tip="Mencionar agente" aria-label="Mencionar agente">
+                <button class="btn-ico" id="bv-btn-mention" type="button" data-bv-modal="mention" data-bv-tip="Mencionar agente" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.mention_agent') }}">
                     <i class="fas fa-at"></i>
                 </button>
                 @endif
                 @if(helpdesk_feature_enabled('composer_canned'))
-                <button class="btn-ico" data-bv-tip="Respuesta rápida" aria-label="Respuesta rápida" onclick="openCannedModal()">
+                <button class="btn-ico" data-bv-tip="Respuesta rápida" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.quick_reply') }}" onclick="openCannedModal()">
                     <i class="fas fa-bolt" aria-hidden="true"></i>
                 </button>
                 @endif
                 @stack('hd-composer-toolbar-buttons')
                 @if(helpdesk_feature_enabled('composer_record'))
-                <button class="btn-ico" id="bv-btn-record" data-bv-tip="Grabar audio" aria-label="Grabar audio" data-bv-attach-type="record">
+                <button class="btn-ico" id="bv-btn-record" data-bv-tip="Grabar audio" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.record_audio') }}" data-bv-attach-type="record">
                     <i class="fas fa-microphone" aria-hidden="true"></i>
                 </button>
                 @endif
                 @if(helpdesk_feature_enabled('composer_ai'))
-                <button class="btn-ico" data-bv-tip="Sugerencia IA" aria-label="Sugerencia de IA">
+                <button class="btn-ico" data-bv-tip="Sugerencia IA" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.ai_suggestion') }}">
                     <i class="fas fa-sparkles" aria-hidden="true"></i>
                 </button>
                 @endif
                 <div class="bv-send-group">
                     <button class="btn-send" type="button">
-                        <i class="far fa-paper-plane"></i>Enviar
+                        <i class="far fa-paper-plane"></i>{{ __('helpdesk::helpdesk.inbox.thread.send') }}
                         <kbd class="bv-kbd-send" id="bv-kbd-send">⌘↵</kbd>
                     </button>
-                    <button class="btn-send-config" type="button" id="bv-send-config" data-bv-tip="Atajo de envío" aria-label="Configurar atajo de envío" aria-haspopup="menu" aria-expanded="false">
+                    <button class="btn-send-config" type="button" id="bv-send-config" data-bv-tip="Atajo de envío" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.configure_send_shortcut') }}" aria-haspopup="menu" aria-expanded="false">
                         <i class="fas fa-chevron-up"></i>
                     </button>
                 </div>
                 <div class="bv-send-menu bv-hidden" id="bv-send-menu" role="menu">
-                    <div class="bv-send-menu-head">Atajo para enviar</div>
+                    <div class="bv-send-menu-head">{{ __('helpdesk::helpdesk.inbox.thread.send_shortcut_title') }}</div>
                     <button class="bv-send-menu-opt" type="button" role="menuitemradio" data-bv-send-shortcut="ctrl-enter">
                         <i class="fas fa-check bv-send-menu-check"></i>
                         <div class="bv-send-menu-text">
-                            <div class="bv-send-menu-title">⌘ / Ctrl + Enter <span class="bv-send-menu-default">(predeterminado)</span></div>
-                            <div class="bv-send-menu-sub">Enter inserta salto de línea</div>
+                            <div class="bv-send-menu-title">⌘ / Ctrl + Enter <span class="bv-send-menu-default">({{ __('helpdesk::helpdesk.inbox.thread.default_label') }})</span></div>
+                            <div class="bv-send-menu-sub">{{ __('helpdesk::helpdesk.inbox.thread.enter_inserts_newline') }}</div>
                         </div>
                     </button>
                     <button class="bv-send-menu-opt" type="button" role="menuitemradio" data-bv-send-shortcut="enter">
                         <i class="fas fa-check bv-send-menu-check"></i>
                         <div class="bv-send-menu-text">
                             <div class="bv-send-menu-title">Enter</div>
-                            <div class="bv-send-menu-sub">Shift + Enter inserta salto de línea</div>
+                            <div class="bv-send-menu-sub">{{ __('helpdesk::helpdesk.inbox.thread.shift_enter_inserts_newline') }}</div>
                         </div>
                     </button>
                 </div>
@@ -696,33 +707,33 @@
         <div class="modal-head">
             <div class="modal-icon"><i class="fas fa-bolt"></i></div>
             <div class="modal-title-wrap">
-                <span class="modal-label">HELPDESK · PLANTILLAS</span>
-                <span class="modal-title">Respuesta rápida</span>
+                <span class="modal-label">{{ __('helpdesk::helpdesk.inbox.thread.canned_modal_label') }}</span>
+                <span class="modal-title">{{ __('helpdesk::helpdesk.inbox.thread.quick_reply') }}</span>
             </div>
             <button class="modal-close" onclick="closeCannedModal()"><i class="fas fa-xmark"></i></button>
         </div>
         <div class="modal-body">
             <div class="search-field">
                 <i class="fas fa-magnifying-glass sf-ic"></i>
-                <input class="finput" id="hdCannedSearch" placeholder="Buscar plantilla… (escribe / para atajos)" autocomplete="off">
+                <input class="finput" id="hdCannedSearch" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.canned_search_placeholder') }}" autocomplete="off">
             </div>
             <div class="hd-canned-pills" id="hdCannedSeg">
-                <span class="media-pill on" data-cat="" onclick="hdCannedFilter('')">Todas <span class="c" id="hdCannedCount">0</span></span>
+                <span class="media-pill on" data-cat="" onclick="hdCannedFilter('')">{{ __('helpdesk::helpdesk.inbox.thread.all_label') }} <span class="c" id="hdCannedCount">0</span></span>
             </div>
             <div class="hd-canned-list" id="hdCannedList">
-                <div class="bv-list-state">Cargando…</div>
+                <div class="bv-list-state">{{ __('helpdesk::helpdesk.inbox.thread.loading') }}</div>
             </div>
             <div class="field">
-                <label class="flabel">Vista previa <span class="hint">Editable antes de enviar</span></label>
-                <textarea class="finput" id="hdCannedPreview" rows="3" placeholder="Selecciona una plantilla…"></textarea>
+                <label class="flabel">{{ __('helpdesk::helpdesk.inbox.thread.preview_label') }} <span class="hint">{{ __('helpdesk::helpdesk.inbox.thread.editable_before_send') }}</span></label>
+                <textarea class="finput" id="hdCannedPreview" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.select_template_placeholder') }}"></textarea>
             </div>
         </div>
         <div class="modal-foot modal-foot--stack">
             <div class="foot-hint">
-                <span class="kbd">↑↓</span> navegar &nbsp; <span class="kbd">↵</span> insertar
+                <span class="kbd">↑↓</span> {{ __('helpdesk::helpdesk.inbox.thread.navigate_hint') }} &nbsp; <span class="kbd">↵</span> {{ __('helpdesk::helpdesk.inbox.thread.insert_hint') }}
             </div>
-            <button class="btn btn-primary w-100" onclick="hdInsertCanned()">Insertar plantilla</button>
-            <button class="btn btn-secondary w-100" onclick="closeCannedModal()">Cancelar</button>
+            <button class="btn btn-primary w-100" onclick="hdInsertCanned()">{{ __('helpdesk::helpdesk.inbox.thread.insert_template') }}</button>
+            <button class="btn btn-secondary w-100" onclick="closeCannedModal()">{{ __('helpdesk::helpdesk.inbox.thread.cancel') }}</button>
         </div>
     </div>
 </div>

@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-right-left"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · CONVERSACIÓN</span>
-                <div class="bv-modal-title">Mover a equipo</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.label_conversation') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.move_team_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -16,7 +16,7 @@
             {{-- Search --}}
             <div class="bv-modal-search bv-mb-12">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="move-team-search" type="text" placeholder="Buscar equipo…" autocomplete="off">
+                <input id="move-team-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.move_team_search_placeholder') }}" autocomplete="off">
             </div>
 
             {{-- Group list --}}
@@ -32,14 +32,14 @@
                         <i class="fas fa-check check"></i>
                     </button>
                 @empty
-                    <div class="bv-empty-msg">No hay equipos disponibles.</div>
+                    <div class="bv-empty-msg">{{ __('helpdesk::helpdesk.inbox.modals.move_team_empty') }}</div>
                 @endforelse
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="move-team-btn">Mover conversación</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="move-team-btn">{{ __('helpdesk::helpdesk.inbox.modals.move_team_apply') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

@@ -44,8 +44,8 @@
         <div class="bv-right-empty-icon">
             <i class="far fa-id-card"></i>
         </div>
-        <div class="bv-right-empty-title">Sin contacto</div>
-        <div class="bv-right-empty-sub">La información del contacto aparecerá aquí</div>
+        <div class="bv-right-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_contact') }}</div>
+        <div class="bv-right-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_contact_hint') }}</div>
     </div>
 @else
     @php
@@ -293,43 +293,43 @@
     </div>
     <div class="rsp-head">
         @if($rpCust)
-            <button type="button" class="nm bv-cp-name-btn" data-bv-modal="profile-customer" title="Ver perfil del cliente">{{ $rpName }}</button>
+            <button type="button" class="nm bv-cp-name-btn" data-bv-modal="profile-customer" title="{{ __('helpdesk::helpdesk.inbox.right.view_customer_profile') }}">{{ $rpName }}</button>
         @else
             <div class="nm">{{ $rpName }}</div>
         @endif
-        <div class="since">@if($rpTotal >= 5)VIP · @endif Cliente desde {{ $rpSince }}</div>
+        <div class="since">@if($rpTotal >= 5){{ __('helpdesk::helpdesk.inbox.right.vip_prefix') }} @endif{{ __('helpdesk::helpdesk.inbox.right.customer_since', ['year' => $rpSince]) }}</div>
     </div>
 
     {{-- Acciones rápidas --}}
     <div class="rsp-actions">
         @if(helpdesk_feature_enabled('rp_email'))
         <button type="button" data-bv-modal="email">
-            <i class="fa-regular fa-envelope"></i> Email
+            <i class="fa-regular fa-envelope"></i> {{ __('helpdesk::helpdesk.inbox.right.action_email') }}
         </button>
         @endif
         @if(helpdesk_feature_enabled('rp_schedule'))
         <button type="button" data-bv-modal="schedule">
-            <i class="fa-regular fa-calendar"></i> Agendar
+            <i class="fa-regular fa-calendar"></i> {{ __('helpdesk::helpdesk.inbox.right.action_schedule') }}
         </button>
         @endif
         @if(helpdesk_feature_enabled('rp_note'))
         <button type="button" data-bv-modal="note">
-            <i class="fa-regular fa-pen-to-square"></i> Nota
+            <i class="fa-regular fa-pen-to-square"></i> {{ __('helpdesk::helpdesk.inbox.right.action_note') }}
         </button>
         @endif
         <div class="rsp-more">
-            <button type="button" class="rsp-more-toggle" aria-label="Más acciones" aria-haspopup="menu" aria-expanded="false">
-                <i class="fa-solid fa-ellipsis" aria-hidden="true"></i> Más
+            <button type="button" class="rsp-more-toggle" aria-label="{{ __('helpdesk::helpdesk.inbox.right.more_actions') }}" aria-haspopup="menu" aria-expanded="false">
+                <i class="fa-solid fa-ellipsis" aria-hidden="true"></i> {{ __('helpdesk::helpdesk.inbox.right.more_label') }}
             </button>
-            <div class="bv-more-menu rsp-more-menu" role="menu" aria-label="Más acciones">
-                <button type="button" role="menuitem" data-bv-modal="profile-customer"><i class="fa-regular fa-id-card" aria-hidden="true"></i>Ver perfil</button>
-                <button type="button" role="menuitem" data-bv-modal="edit-contact"><i class="fa-solid fa-pen" aria-hidden="true"></i>Editar contacto</button>
-                <button type="button" role="menuitem" data-bv-modal="history"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Conversaciones anteriores</button>
+            <div class="bv-more-menu rsp-more-menu" role="menu" aria-label="{{ __('helpdesk::helpdesk.inbox.right.more_actions') }}">
+                <button type="button" role="menuitem" data-bv-modal="profile-customer"><i class="fa-regular fa-id-card" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.view_profile') }}</button>
+                <button type="button" role="menuitem" data-bv-modal="edit-contact"><i class="fa-solid fa-pen" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.edit_contact') }}</button>
+                <button type="button" role="menuitem" data-bv-modal="history"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.previous_conversations') }}</button>
                 @if(helpdesk_feature_enabled('merge'))
-                <button type="button" role="menuitem" data-bv-modal="merge"><i class="fa-solid fa-code-merge" aria-hidden="true"></i>Fusionar conversación</button>
+                <button type="button" role="menuitem" data-bv-modal="merge"><i class="fa-solid fa-code-merge" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.merge_conversation') }}</button>
                 @endif
                 <div class="sep"></div>
-                <button type="button" role="menuitem" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban" aria-hidden="true"></i>Bloquear contacto</button>
+                <button type="button" role="menuitem" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.block_contact') }}</button>
             </div>
         </div>
     </div>
@@ -342,11 +342,11 @@
     <div class="rsp-stats">
         <div class="stat">
             <div class="v @if($rpTotal === 0) muted @endif">{{ $rpTotal }}</div>
-            <div class="k">Conversaciones</div>
+            <div class="k">{{ __('helpdesk::helpdesk.inbox.right.conversations_stat') }}</div>
         </div>
         <div class="stat">
             <div class="v @if(!$rpLastSeen) muted @endif">{{ $rpLastSeen ?? '—' }}</div>
-            <div class="k">Últ. visita</div>
+            <div class="k">{{ __('helpdesk::helpdesk.inbox.right.last_seen_stat') }}</div>
         </div>
     </div>
     @endif
@@ -357,58 +357,58 @@
     @endphp
     <div class="rsp-tabs">
         @if($rpTabGeneralOn)
-        <button type="button" class="tab bv-right-tab on" data-bv-tab="general" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="General" aria-label="General">
+        <button type="button" class="tab bv-right-tab on" data-bv-tab="general" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_general') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_general') }}">
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         </button>
         @endif
         {{-- Tab "Pedidos" genérico eliminado: PrestaShop → tab "Tienda", ERP → tab "Gestión" --}}
         @if($rpCust && helpdesk_prestashop_enabled() && helpdesk_feature_enabled('tab_carts'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Carritos" aria-label="Carritos">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_carts') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_carts') }}">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
         </button>
         @endif
         @if(helpdesk_feature_enabled('tab_files'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="files" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Archivos" aria-label="Archivos">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="files" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_files') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_files') }}">
             <i class="fa-regular fa-folder" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpTicketsEnabled && helpdesk_feature_enabled('tab_tickets'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="tickets" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tickets" aria-label="Tickets">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="tickets" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_tickets') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_tickets') }}">
             <i class="fa-solid fa-ticket" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpHasDocument && helpdesk_feature_enabled('tab_document'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Documentacion" aria-label="Documentación">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_document') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_document') }}">
             <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
         </button>
         @endif
         @if(helpdesk_feature_enabled('tab_previous'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="previous" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Anteriores" aria-label="Conversaciones anteriores">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="previous" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_previous') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.previous_conversations') }}">
             <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
         </button>
         @endif
         @if(helpdesk_feature_enabled('tab_activity'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="activity" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Actividad" aria-label="Actividad">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="activity" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_activity') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_activity') }}">
             <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
         @endif
         @if(helpdesk_feature_enabled('email'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="emails" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Emails" aria-label="Emails">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="emails" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_emails') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_emails') }}">
             <i class="fa-regular fa-envelope-open" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpHasWidgetData && helpdesk_feature_enabled('tab_technology'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="technology" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tecnología" aria-label="Tecnología">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="technology" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_technology') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_technology') }}">
             <i class="fa-regular fa-window-maximize" aria-hidden="true"></i>
         </button>
         @endif
         @if(($rpShowAssistTab ?? false) && helpdesk_feature_enabled('tab_assist'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="assist" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Pantalla" aria-label="Pantalla compartida">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="assist" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_screen') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.screen_share_label') }}">
             <i class="fa-regular fa-eye" aria-hidden="true"></i>
         </button>
         @endif
         @if($rpCust && helpdesk_feature_enabled('tab_customer360'))
-        <button type="button" class="tab bv-right-tab" data-bv-tab="customer-360" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cliente 360" aria-label="Cliente 360">
+        <button type="button" class="tab bv-right-tab" data-bv-tab="customer-360" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_customer360') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_customer360') }}">
             <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
         </button>
         @endif
@@ -416,27 +416,27 @@
             <span class="rsp-tabs-sep"></span>
         @endif
         @if($rpHasPs)
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tienda" aria-label="Pedidos de tienda">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_store') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.store_orders_label') }}">
                 <i class="fa-solid fa-store" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-returns" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Devoluciones" aria-label="Devoluciones">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-returns" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_returns') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_returns') }}">
                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-vouchers" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cupones" aria-label="Cupones">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-vouchers" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_vouchers') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_vouchers') }}">
                 <i class="fa-solid fa-tag" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-addresses" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Direcciones" aria-label="Direcciones">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="ps-addresses" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_addresses') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_addresses') }}">
                 <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
             </button>
         @endif
         @if($rpHasErp)
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Gestión" aria-label="Pedidos de gestión">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-orders" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_management') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.management_orders_label') }}">
                 <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-finance" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Finanzas" aria-label="Finanzas">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-finance" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_finance') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_finance') }}">
                 <i class="fa-solid fa-coins" aria-hidden="true"></i>
             </button>
-            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-loyalty" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Fidelización" aria-label="Fidelización">
+            <button type="button" class="tab bv-right-tab" data-bv-tab="erp-loyalty" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_loyalty') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_loyalty') }}">
                 <i class="fa-solid fa-star" aria-hidden="true"></i>
             </button>
         @endif
@@ -471,38 +471,38 @@
             @endphp
             <div class="rsp-section">
                 <div class="lbl">
-                    <i class="fa-regular fa-address-card"></i> Información de contacto
-                    <i class="fa-solid fa-pen add" role="button" data-bv-modal="edit-contact" title="Editar"></i>
+                    <i class="fa-regular fa-address-card"></i> {{ __('helpdesk::helpdesk.inbox.right.contact_info') }}
+                    <i class="fa-solid fa-pen add" role="button" data-bv-modal="edit-contact" title="{{ __('helpdesk::helpdesk.inbox.right.edit_title') }}"></i>
                 </div>
                 @if($rpCust?->email)
-                    <div class="rsp-kv"><span class="k">Email</span><span class="v mono" title="{{ $rpCust->email }}">{{ $rpCust->email }}</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.email_label') }}</span><span class="v mono" title="{{ $rpCust->email }}">{{ $rpCust->email }}</span></div>
                 @endif
                 @if($rpCust?->phone)
-                    <div class="rsp-kv"><span class="k">Teléfono</span><span class="v">{{ $rpCust->phone }}</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.phone_label') }}</span><span class="v">{{ $rpCust->phone }}</span></div>
                 @endif
                 @if($rpCompany)
-                    <div class="rsp-kv"><span class="k">Empresa</span><span class="v">{{ $rpCompany }}</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.company_label') }}</span><span class="v">{{ $rpCompany }}</span></div>
                 @endif
                 @if($rpLangCode)
-                    <div class="rsp-kv"><span class="k">Idioma</span><span class="v">{{ $rpFlag }} {{ $rpLangLabel }} ({{ strtoupper($rpCust->language) }})</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.language_label') }}</span><span class="v">{{ $rpFlag }} {{ $rpLangLabel }} ({{ strtoupper($rpCust->language) }})</span></div>
                 @endif
                 @if($rpCust?->timezone)
-                    <div class="rsp-kv"><span class="k">Zona horaria</span><span class="v">{{ $rpCust->timezone }}</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.timezone_label') }}</span><span class="v">{{ $rpCust->timezone }}</span></div>
                 @endif
                 @if($rpLocation)
-                    <div class="rsp-kv"><span class="k">Ubicación</span><span class="v">{{ $rpLocation }}</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.location_label') }}</span><span class="v">{{ $rpLocation }}</span></div>
                 @endif
                 @if(!$rpHasContactData)
-                    <div class="rsp-empty">Sin información de contacto registrada</div>
+                    <div class="rsp-empty">{{ __('helpdesk::helpdesk.inbox.right.no_contact_data') }}</div>
                 @endif
             </div>
 
             {{-- Estado de la conversación --}}
             @if(helpdesk_feature_enabled('rp_status'))
             <div class="rsp-section">
-                <div class="lbl"><i class="fa-solid fa-circle-info"></i> Estado de la conversación</div>
+                <div class="lbl"><i class="fa-solid fa-circle-info"></i> {{ __('helpdesk::helpdesk.inbox.right.conversation_state') }}</div>
                 <div class="rsp-kv rsp-kv-ctrl">
-                    <span class="k">Estado</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.status_label') }}</span>
                     <span class="v">
                         <button type="button" class="r-tag r-tag-btn" data-bv-modal="status">
                             <span class="dot" style="background:{{ $rpStatusColor }}"></span>{{ $rpStatusName }}
@@ -511,7 +511,7 @@
                     </span>
                 </div>
                 <div class="rsp-kv rsp-kv-ctrl">
-                    <span class="k">Prioridad</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.priority_label') }}</span>
                     <span class="v">
                         @php $rpPriorityMod = $priorityColors[$rpPriority] ?? ''; @endphp
                         <button type="button" class="r-tag r-tag-btn{{ $rpPriorityMod ? ' r-tag-'.$rpPriorityMod : '' }}" data-bv-modal="priority">
@@ -521,14 +521,14 @@
                     </span>
                 </div>
                 <div class="rsp-kv rsp-kv-ctrl">
-                    <span class="k">Agente</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.agent_label') }}</span>
                     <span class="v">
                         <button type="button" class="r-tag r-tag-btn @if(!$rpConvo?->assignee) r-tag-muted @endif" data-bv-modal="assign">
                             {{ $rpConvo?->assignee?->full_name ?? 'Sin asignar' }}
                             <i class="fa-solid fa-chevron-down"></i>
                         </button>
                         @if($rpConvo?->assignee)
-                            <button type="button" class="r-tag r-tag-btn bv-ap-trigger" data-bv-modal="agent-profile" data-agent-id="{{ $rpConvo->assignee->id }}" title="Ver perfil del agente" aria-label="Ver perfil del agente">
+                            <button type="button" class="r-tag r-tag-btn bv-ap-trigger" data-bv-modal="agent-profile" data-agent-id="{{ $rpConvo->assignee->id }}" title="{{ __('helpdesk::helpdesk.inbox.right.view_agent_profile') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.view_agent_profile') }}">
                                 <i class="fa-solid fa-headset" aria-hidden="true"></i>
                             </button>
                         @endif
@@ -536,7 +536,7 @@
                 </div>
                 @if($rpConvo?->group)
                 <div class="rsp-kv">
-                    <span class="k">Equipo</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.team_label') }}</span>
                     <span class="v">
                         <span class="r-tag"><i class="fa-regular fa-users"></i> {{ $rpConvo->group->name }}</span>
                     </span>
@@ -549,8 +549,8 @@
             @if(helpdesk_feature_enabled('rp_tags_section'))
             <div class="rsp-section">
                 <div class="lbl">
-                    <i class="fa-solid fa-tag"></i> Etiquetas
-                    <i class="fa-solid fa-plus add" role="button" data-bv-modal="tags" title="Añadir etiqueta" aria-label="Añadir etiqueta" aria-hidden="false"></i>
+                    <i class="fa-solid fa-tag"></i> {{ __('helpdesk::helpdesk.inbox.right.tags_heading') }}
+                    <i class="fa-solid fa-plus add" role="button" data-bv-modal="tags" title="{{ __('helpdesk::helpdesk.inbox.right.add_tag') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.add_tag') }}" aria-hidden="false"></i>
                 </div>
                 @if($rpConvo?->conversationTags?->isNotEmpty())
                     <div class="rsp-tag-wrap">
@@ -559,7 +559,7 @@
                         @endforeach
                     </div>
                 @else
-                    <div class="rsp-empty">Sin etiquetas asignadas</div>
+                    <div class="rsp-empty">{{ __('helpdesk::helpdesk.inbox.right.no_tags') }}</div>
                 @endif
             </div>
             @endif
@@ -677,15 +677,15 @@
             @if($rpIdentityVerified !== null)
             <div class="rsp-section">
                 <div class="lbl">
-                    <i class="fa-solid fa-shield-halved"></i> Identidad
+                    <i class="fa-solid fa-shield-halved"></i> {{ __('helpdesk::helpdesk.inbox.right.identity_heading') }}
                     @if($rpIdentityVerified)
                         <span class="r-tag" data-bs-toggle="tooltip" data-bs-placement="bottom"
                             data-bs-title="{{ $rpIdentitySummary['verified_by'] ?? 'Sistema' }} · {{ \Illuminate\Support\Carbon::parse($rpIdentitySummary['verified_at'])->diffForHumans() }}">
-                            <i class="fa-solid fa-circle-check"></i> Verificada
+                            <i class="fa-solid fa-circle-check"></i> {{ __('helpdesk::helpdesk.inbox.right.verified_label') }}
                         </span>
                     @else
                         <button type="button" class="r-tag r-tag-btn bv-identity-verify-trigger ms-auto" data-customer-id="{{ $rpCust->id }}">
-                            Verificar identidad
+                            {{ __('helpdesk::helpdesk.inbox.right.verify_identity') }}
                         </button>
                     @endif
                 </div>
@@ -694,13 +694,13 @@
             @if(helpdesk_feature_enabled('rp_integrations'))
             <div class="rsp-section">
                 <div class="lbl">
-                    <i class="fa-solid fa-plug"></i> Integraciones
+                    <i class="fa-solid fa-plug"></i> {{ __('helpdesk::helpdesk.inbox.right.integrations_heading') }}
                     @if($rpConvo?->id)
                         <button type="button" class="btn btn-sm btn-link p-0 ms-auto bv-sync-commerce"
                                 data-conv-id="{{ $rpConvo->id }}"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                data-bs-title="Re-sincronizar PrestaShop / gestión"
-                                aria-label="Re-sincronizar PrestaShop y gestión">
+                                data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.resync_title') }}"
+                                aria-label="{{ __('helpdesk::helpdesk.inbox.right.resync_aria') }}">
                             <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                         </button>
                     @endif
@@ -708,8 +708,8 @@
                         <button type="button" class="btn btn-sm btn-link p-0 @if(! $rpConvo?->id) ms-auto @endif bv-integrations-trigger"
                                 data-bv-modal="customer-integrations"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                data-bs-title="Ver integraciones del cliente"
-                                aria-label="Ver integraciones del cliente">
+                                data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.view_customer_integrations') }}"
+                                aria-label="{{ __('helpdesk::helpdesk.inbox.right.view_customer_integrations') }}">
                             <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
                         </button>
                     @endif
@@ -724,14 +724,14 @@
                                 <div class="ico"><i class="{{ $intg['icon'] }}"></i></div>
                                 <div class="meta">
                                     <span class="name">{{ $intg['name'] }}</span>
-                                    <span class="id">ID: {{ $intg['id'] }}</span>
+                                    <span class="id">{{ __('helpdesk::helpdesk.inbox.right.id_with_value', ['id' => $intg['id']]) }}</span>
                                 </div>
                                 <span class="status">{{ $intg['connected'] ? 'Conectado' : 'Desconectado' }}</span>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <div class="rsp-empty">Sin integraciones detectadas</div>
+                    <div class="rsp-empty">{{ __('helpdesk::helpdesk.inbox.right.no_integrations') }}</div>
                 @endif
             </div>
             @endif
@@ -773,7 +773,7 @@
             @if($rpHasPs || $rpHasErp)
             <div class="bv-source-actions bv-hidden" id="bv-orders-source-actions">
                 <button class="btn btn-sm btn-link bv-refresh-source" data-bv-refresh-source="carts">
-                    <i class="fas fa-arrows-rotate"></i> Actualizar
+                    <i class="fas fa-arrows-rotate"></i> {{ __('helpdesk::helpdesk.inbox.right.refresh_action') }}
                 </button>
                 <span class="bv-source-meta" data-bv-source-meta="carts"></span>
             </div>
@@ -781,15 +781,15 @@
             @if(!$allOrders && empty($cartData))
                 <div class="bv-tab-empty">
                     <i class="far fa-cart-shopping"></i>
-                    <div class="bv-tab-empty-title">Sin pedidos vinculados</div>
-                    <div class="bv-tab-empty-sub">No hay pedidos asociados a este cliente</div>
+                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_orders_title') }}</div>
+                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_orders_sub') }}</div>
                 </div>
             @else
                 <div class="rp3-scroll">
                     @if($allOrders)
                     <div class="rp3-section">
                         <div class="rp3-sec-head">
-                            Historial de pedidos
+                            {{ __('helpdesk::helpdesk.inbox.right.order_history') }}
                             <span class="count">· {{ $totalOrders }}</span>
                             <span class="spacer"></span>
                         </div>
@@ -914,10 +914,10 @@
                     @endphp
                     <div class="rp3-section">
                         <div class="rp3-sec-head">
-                            Carrito abandonado
+                            {{ __('helpdesk::helpdesk.inbox.right.abandoned_cart_heading') }}
                             @if($cartAdminUrl)
                                 <a href="{{ $cartAdminUrl }}" target="_blank" rel="noopener"
-                                   class="rp3-cart-ext-link" title="Ver carrito en PrestaShop">
+                                   class="rp3-cart-ext-link" title="{{ __('helpdesk::helpdesk.inbox.right.view_cart_prestashop_title') }}">
                                     <i class="fas fa-arrow-up-right-from-square"></i>
                                 </a>
                             @endif
@@ -1058,8 +1058,8 @@
             @if($rpFiles->isEmpty())
                 <div class="bv-tab-empty">
                     <i class="far fa-folder-open"></i>
-                    <div class="bv-tab-empty-title">Sin archivos compartidos</div>
-                    <div class="bv-tab-empty-sub">Los archivos enviados en las conversaciones aparecerán aquí</div>
+                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_files_title') }}</div>
+                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_files_sub') }}</div>
                 </div>
             @else
 
@@ -1101,7 +1101,7 @@
                 {{-- Filter + sort + view toolbar --}}
                 <div class="media-filter-row">
                     <span class="media-pill bv-files-filter on" data-bv-files-filter="all">
-                        Todos <span class="c">{{ $rpFileCounts['all'] }}</span>
+                        {{ __('helpdesk::helpdesk.inbox.right.all_label') }} <span class="c">{{ $rpFileCounts['all'] }}</span>
                     </span>
                     @if($rpFileCounts['image'] > 0)
                         <span class="media-pill bv-files-filter" data-bv-files-filter="image">
@@ -1126,19 +1126,19 @@
 
                     <span class="spacer"></span>
 
-                    <select class="fselect bv-files-sort" id="bv-files-sort" aria-label="Ordenar">
-                        <option value="recent">Recientes</option>
-                        <option value="oldest">Antiguos</option>
-                        <option value="size-desc">Mayor tamaño</option>
-                        <option value="size-asc">Menor tamaño</option>
-                        <option value="name">Nombre A-Z</option>
+                    <select class="fselect bv-files-sort" id="bv-files-sort" aria-label="{{ __('helpdesk::helpdesk.inbox.right.sort_aria_label') }}">
+                        <option value="recent">{{ __('helpdesk::helpdesk.inbox.right.sort_recent') }}</option>
+                        <option value="oldest">{{ __('helpdesk::helpdesk.inbox.right.sort_oldest') }}</option>
+                        <option value="size-desc">{{ __('helpdesk::helpdesk.inbox.right.sort_size_desc') }}</option>
+                        <option value="size-asc">{{ __('helpdesk::helpdesk.inbox.right.sort_size_asc') }}</option>
+                        <option value="name">{{ __('helpdesk::helpdesk.inbox.right.sort_name') }}</option>
                     </select>
 
                     <div class="media-view-toggle">
-                        <button class="bv-files-vt on" data-bv-view="grid" title="Cuadrícula">
+                        <button class="bv-files-vt on" data-bv-view="grid" title="{{ __('helpdesk::helpdesk.inbox.right.view_grid_title') }}">
                             <i class="fas fa-grip"></i>
                         </button>
-                        <button class="bv-files-vt" data-bv-view="list" title="Lista">
+                        <button class="bv-files-vt" data-bv-view="list" title="{{ __('helpdesk::helpdesk.inbox.right.view_list_title') }}">
                             <i class="fas fa-list"></i>
                         </button>
                     </div>
@@ -1207,10 +1207,10 @@
                 {{-- Footer: descarga y cierre (solo visible con selección activa) --}}
                 <div class="bv-files-footer" id="bv-files-footer" style="display:none;">
                     <button type="button" class="bv-files-dl-btn" id="bv-files-dl-btn">
-                        Descargar selección
+                        {{ __('helpdesk::helpdesk.inbox.right.download_selection') }}
                     </button>
                     <button type="button" class="bv-files-close-btn" id="bv-files-close-btn">
-                        Cancelar
+                        {{ __('helpdesk::helpdesk.inbox.right.cancel_button') }}
                     </button>
                 </div>
 
@@ -1257,14 +1257,14 @@
             @if($rpPrevious->isEmpty())
                 <div class="bv-tab-empty">
                     <i class="fas fa-clock-rotate-left"></i>
-                    <div class="bv-tab-empty-title">Sin conversaciones anteriores</div>
-                    <div class="bv-tab-empty-sub">Este es el primer contacto del cliente</div>
+                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_previous_title') }}</div>
+                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_previous_sub') }}</div>
                 </div>
             @else
                 {{-- Search --}}
                 <div class="bv-prev-search">
                     <i class="fas fa-magnifying-glass"></i>
-                    <input type="text" class="bv-prev-search-input" placeholder="Buscar en historial…">
+                    <input type="text" class="bv-prev-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.right.search_history_placeholder') }}">
                 </div>
 
                 {{-- Filter pills --}}
@@ -1275,13 +1275,13 @@
                 @endphp
                 <div class="bv-prev-filter-row">
                     <span class="bv-media-pill bv-prev-pill on" data-bv-prev-filter="all">
-                        Todas <span class="c">{{ $prevAll }}</span>
+                        {{ __('helpdesk::helpdesk.inbox.right.filter_all_fem') }} <span class="c">{{ $prevAll }}</span>
                     </span>
                     <span class="bv-media-pill bv-prev-pill" data-bv-prev-filter="open">
-                        Abiertas <span class="c">{{ $prevOpen }}</span>
+                        {{ __('helpdesk::helpdesk.inbox.right.filter_open') }} <span class="c">{{ $prevOpen }}</span>
                     </span>
                     <span class="bv-media-pill bv-prev-pill" data-bv-prev-filter="closed">
-                        Cerradas <span class="c">{{ $prevClosed }}</span>
+                        {{ __('helpdesk::helpdesk.inbox.right.filter_closed') }} <span class="c">{{ $prevClosed }}</span>
                     </span>
                 </div>
 
@@ -1349,12 +1349,12 @@
             @if($rpEvents->isEmpty())
                 <div class="bv-tab-empty">
                     <i class="fas fa-clock-rotate-left"></i>
-                    <div class="bv-tab-empty-title">Sin actividad registrada</div>
-                    <div class="bv-tab-empty-sub">Los eventos de esta conversación aparecerán aquí</div>
+                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_activity_title') }}</div>
+                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_activity_sub') }}</div>
                 </div>
             @else
                 <div class="rsp-section bv-x49">
-                    <div class="lbl"><i class="fas fa-bolt-lightning"></i> Timeline de actividad</div>
+                    <div class="lbl"><i class="fas fa-bolt-lightning"></i> {{ __('helpdesk::helpdesk.inbox.right.activity_timeline') }}</div>
                     <div class="rsp-timeline">
                         @foreach($rpEvents as $event)
                         <div class="rsp-tl-item">
@@ -1384,16 +1384,16 @@
                 {{-- Empty state — web channel but no session recorded yet --}}
                 <div class="bv-tab-empty">
                     <i class="fas fa-laptop"></i>
-                    <div class="bv-tab-empty-title">Sin datos de sesión</div>
+                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_session_title') }}</div>
                     <div class="bv-tab-empty-sub">
-                        Los datos del dispositivo (IP, navegador, sistema operativo) y las páginas visitadas aparecerán aquí cuando el visitante navegue por tu sitio con el widget cargado.
+                        {{ __('helpdesk::helpdesk.inbox.right.no_session_sub') }}
                     </div>
                 </div>
             @else
 
             {{-- Información del dispositivo --}}
             <div class="rsp-section bv-x76">
-                <div class="lbl"><i class="fas fa-display"></i> Información del dispositivo</div>
+                <div class="lbl"><i class="fas fa-display"></i> {{ __('helpdesk::helpdesk.inbox.right.device_info_heading') }}</div>
 
                 @php
                     $rpDevice = $rpWidgetSession?->device ?? [];
@@ -1412,58 +1412,58 @@
                     <span class="v mono">
                         {{ $rpWidgetSession->ip_address ?? '—' }}
                         @if($rpWidgetSession->ip_address)
-                            <span class="bv-x77">(anonimizada)</span>
+                            <span class="bv-x77">{{ __('helpdesk::helpdesk.inbox.right.anonymized_label') }}</span>
                         @endif
                     </span>
                 </div>
 
                 @if($rpWidgetSession->country_code)
                 <div class="rsp-kv">
-                    <span class="k">País</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.country_label') }}</span>
                     <span class="v">{{ $rpWidgetSession->country_code }}</span>
                 </div>
                 @endif
 
                 <div class="rsp-kv">
-                    <span class="k">Plataforma</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.platform_label') }}</span>
                     <span class="v">{{ $rpOs ?? 'Unknown' }}</span>
                 </div>
 
                 <div class="rsp-kv">
-                    <span class="k">Navegador</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.browser_label') }}</span>
                     <span class="v">{{ $rpBrowser ?? 'Unknown' }}</span>
                 </div>
 
                 <div class="rsp-kv">
-                    <span class="k">Dispositivo</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.device_label') }}</span>
                     <span class="v">
                         @if($rpDeviceType === 'mobile')
-                            <i class="fas fa-mobile-screen"></i> Móvil
+                            <i class="fas fa-mobile-screen"></i> {{ __('helpdesk::helpdesk.inbox.right.device_mobile') }}
                         @elseif($rpDeviceType === 'tablet')
-                            <i class="fas fa-tablet-screen-button"></i> Tablet
+                            <i class="fas fa-tablet-screen-button"></i> {{ __('helpdesk::helpdesk.inbox.right.device_tablet') }}
                         @else
-                            <i class="fas fa-desktop"></i> Desktop
+                            <i class="fas fa-desktop"></i> {{ __('helpdesk::helpdesk.inbox.right.device_desktop') }}
                         @endif
                     </span>
                 </div>
 
                 @if($rpWidgetSession->started_at)
                 <div class="rsp-kv">
-                    <span class="k">Sesión iniciada</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.session_started_label') }}</span>
                     <span class="v">{{ $rpWidgetSession->started_at->diffForHumans() }}</span>
                 </div>
                 @endif
 
                 @if($rpWidgetSession->last_activity_at)
                 <div class="rsp-kv">
-                    <span class="k">Últ. actividad</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.last_activity_label') }}</span>
                     <span class="v">{{ $rpWidgetSession->last_activity_at->diffForHumans() }}</span>
                 </div>
                 @endif
 
                 @if($rpWidgetSession->time_on_site ?? null)
                 <div class="rsp-kv">
-                    <span class="k">Tiempo en sitio</span>
+                    <span class="k">{{ __('helpdesk::helpdesk.inbox.right.time_on_site_label') }}</span>
                     <span class="v mono">{{ \Carbon\CarbonInterval::seconds($rpWidgetSession->time_on_site)->cascade()->forHumans(['short' => true]) }}</span>
                 </div>
                 @endif
@@ -1495,16 +1495,16 @@
             <div class="rsp-section bv-x78">
                 <div class="lbl">
                     <i class="fas fa-location-dot"></i>
-                    Página actual
+                    {{ __('helpdesk::helpdesk.inbox.right.current_page_heading') }}
                     @if($rpIsLive)
-                        <span class="bv-current-page-pulse bv-x69" title="Visitante activo ahora">
+                        <span class="bv-current-page-pulse bv-x69" title="{{ __('helpdesk::helpdesk.inbox.right.viewing_now_title') }}">
                             <span class="bv-pulse-dot"></span>
-                            Viendo ahora
+                            {{ __('helpdesk::helpdesk.inbox.right.viewing_now_label') }}
                         </span>
                     @endif
                 </div>
                 @if(!$rpIsLive && $rpLastActivity)
-                    <div class="bv-current-page-idle">Última vista {{ $rpLastActivity->diffForHumans() }}</div>
+                    <div class="bv-current-page-idle">{{ __('helpdesk::helpdesk.inbox.right.last_view', ['time' => $rpLastActivity->diffForHumans()]) }}</div>
                 @endif
 
                 <a href="{{ $rpCurrentUrl }}" target="_blank" rel="noopener noreferrer"
@@ -1555,7 +1555,7 @@
 
             <div class="rsp-section bv-x78">
                 <div class="lbl">
-                    <i class="fas fa-route"></i> Páginas visitadas
+                    <i class="fas fa-route"></i> {{ __('helpdesk::helpdesk.inbox.right.visited_pages_heading') }}
                     <span class="r-tag bv-x69">{{ $rpVisitedPages->count() }}</span>
                     @if($rpHostName)
                         <span class="bv-pages-host" title="{{ $rpHostName }}">
@@ -1566,7 +1566,7 @@
                     <button type="button"
                             class="bv-right-section-edit"
                             id="bv-pages-refresh"
-                            title="Refrescar páginas visitadas"
+                            title="{{ __('helpdesk::helpdesk.inbox.right.refresh_pages_title') }}"
                             data-conv-id="{{ $rpConvo->id }}">
                         <i class="fas fa-arrows-rotate"></i>
                     </button>
@@ -1575,7 +1575,7 @@
                 @if($rpVisitedPages->isEmpty())
                     <div class="bv-tab-empty bv-tab-empty-sm">
                         <i class="fas fa-route"></i>
-                        <div class="bv-tab-empty-sub">Sin páginas registradas</div>
+                        <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_pages_registered') }}</div>
                     </div>
                 @else
                     @php $rpPageTotal = $rpVisitedPages->count(); $rpPageIdx = 0; @endphp
@@ -1611,7 +1611,7 @@
                                                 </span>
                                             @endif
                                             @if($page->_duration_seconds !== null && $page->_duration_seconds > 0)
-                                                <span class="bv-page-duration" title="Tiempo en esta página">
+                                                <span class="bv-page-duration" title="{{ __('helpdesk::helpdesk.inbox.right.time_on_page_title') }}">
                                                     <i class="fas fa-stopwatch"></i>
                                                     @if($page->_duration_seconds < 60)
                                                         {{ $page->_duration_seconds }}s
@@ -1634,8 +1634,8 @@
                             <button type="button" class="bv-pages-show-more" id="bv-pages-show-more"
                                     data-shown="10" data-total="{{ $rpPageTotal }}">
                                 <i class="fas fa-chevron-down"></i>
-                                Mostrar <span id="bv-pages-show-more-count">{{ min(100, $rpPageTotal - 10) }}</span> más
-                                <span class="bv-pages-show-more-total">({{ $rpPageTotal - 10 }} restantes)</span>
+                                {{ __('helpdesk::helpdesk.inbox.right.show_more_prefix') }} <span id="bv-pages-show-more-count">{{ min(100, $rpPageTotal - 10) }}</span> {{ __('helpdesk::helpdesk.inbox.right.show_more_suffix') }}
+                                <span class="bv-pages-show-more-total">{{ __('helpdesk::helpdesk.inbox.right.remaining_count', ['count' => $rpPageTotal - 10]) }}</span>
                             </button>
                         @endif
                     </div>
@@ -1658,23 +1658,23 @@
             <div class="bv-right-section">
                 <div class="bv-right-section-head">
                     <span class="bv-right-section-title"><i class="fas fa-eye bv-section-icon"></i> Live view</span>
-                    <span class="bv-assist-status badge bg-secondary" id="hd-liveview-status-{{ $rpConvo->id }}">Esperando…</span>
+                    <span class="bv-assist-status badge bg-secondary" id="hd-liveview-status-{{ $rpConvo->id }}">{{ __('helpdesk::helpdesk.inbox.right.waiting_label') }}</span>
                 </div>
                 <div class="hd-liveview-frame">
                     <div id="hd-liveview-player-{{ $rpConvo->id }}" class="hd-liveview-player">
                         <div class="hd-liveview-empty text-muted small p-3 text-center">
-                            El visitante aún no ha aceptado compartir su actividad.
+                            {{ __('helpdesk::helpdesk.inbox.right.awaiting_screen_share') }}
                         </div>
                     </div>
                     <button type="button"
                             class="hd-liveview-expand"
                             id="hd-liveview-expand-{{ $rpConvo->id }}"
-                            title="Ver en pantalla completa">
+                            title="{{ __('helpdesk::helpdesk.inbox.right.fullscreen_title') }}">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
                 <div class="small text-muted mt-2">
-                    Las contraseñas y campos sensibles se enmascaran automáticamente.
+                    {{ __('helpdesk::helpdesk.inbox.right.passwords_masked_notice') }}
                 </div>
             </div>
             @endif
@@ -1682,17 +1682,17 @@
             @if($rpEnableScreenShare)
             <div class="bv-right-section">
                 <div class="bv-right-section-head">
-                    <span class="bv-right-section-title"><i class="fas fa-display bv-section-icon"></i> Pantalla compartida</span>
+                    <span class="bv-right-section-title"><i class="fas fa-display bv-section-icon"></i> {{ __('helpdesk::helpdesk.inbox.right.screen_share_label') }}</span>
                 </div>
                 <div class="hd-webrtc-wrap">
                     <video id="hd-webrtc-video-{{ $rpConvo->id }}" class="hd-webrtc-video" autoplay muted playsinline></video>
                     <div class="hd-webrtc-empty text-muted small p-3 text-center" id="hd-webrtc-empty-{{ $rpConvo->id }}">
-                        Esperando que el visitante comparta su pantalla.
+                        {{ __('helpdesk::helpdesk.inbox.right.waiting_screen_share') }}
                     </div>
                     <button type="button"
                             class="hd-liveview-expand"
                             id="hd-webrtc-expand-{{ $rpConvo->id }}"
-                            title="Ver pantalla completa">
+                            title="{{ __('helpdesk::helpdesk.inbox.right.fullscreen_title_screen') }}">
                         <i class="fas fa-expand"></i>
                     </button>
                 </div>
@@ -1701,13 +1701,13 @@
                             class="btn btn-sm btn-primary"
                             id="hd-webrtc-request-{{ $rpConvo->id }}"
                             data-request-url="{{ route('manager.helpdesk.conversations.webrtc.request', $rpConvo) }}">
-                        <i class="fas fa-hand-pointer me-1"></i> Solicitar pantalla
+                        <i class="fas fa-hand-pointer me-1"></i> {{ __('helpdesk::helpdesk.inbox.right.request_screen_button') }}
                     </button>
                     <button type="button"
                             class="btn btn-sm btn-outline-secondary"
                             id="hd-webrtc-end-{{ $rpConvo->id }}"
                             data-end-url="{{ route('manager.helpdesk.conversations.webrtc.end', $rpConvo) }}">
-                        <i class="fas fa-circle-stop me-1"></i> Finalizar pantalla
+                        <i class="fas fa-circle-stop me-1"></i> {{ __('helpdesk::helpdesk.inbox.right.end_screen_button') }}
                     </button>
                 </div>
             </div>
@@ -1742,10 +1742,10 @@
                 <div class="bv-tk-panel-head">
                     <span class="bv-tk-num" id="rpEmCount">—</span>
                     <div class="bv-tk-meta">
-                        <span class="bv-tk-lbl">Emails</span>
+                        <span class="bv-tk-lbl">{{ __('helpdesk::helpdesk.inbox.right.emails_label') }}</span>
                         <span class="bv-tk-sub" id="rpEmSub">—</span>
                     </div>
-                    <button class="bv-tk-add-btn tt" data-tt="Nuevo email" data-bv-modal="email">
+                    <button class="bv-tk-add-btn tt" data-tt="{{ __('helpdesk::helpdesk.inbox.right.new_email_tooltip') }}" data-bv-modal="email">
                         <i class="fas fa-plus"></i>
                     </button>
                 </div>
@@ -1754,13 +1754,13 @@
             {{-- Filter pills --}}
             <div class="bv-em-filter-row" id="rpEmFilterRow" style="display:none">
                 <span class="bv-media-pill bv-em-tab-pill on" data-rp-em-filter="all">
-                    Todos <span class="c" id="rpEmCountAll">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.right.all_label') }} <span class="c" id="rpEmCountAll">0</span>
                 </span>
                 <span class="bv-media-pill bv-em-tab-pill" data-rp-em-filter="sent">
-                    Enviados <span class="c" id="rpEmCountSent">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.right.emails_filter_sent') }} <span class="c" id="rpEmCountSent">0</span>
                 </span>
                 <span class="bv-media-pill bv-em-tab-pill" data-rp-em-filter="failed">
-                    Fallidos <span class="c" id="rpEmCountFailed">0</span>
+                    {{ __('helpdesk::helpdesk.inbox.right.emails_filter_failed') }} <span class="c" id="rpEmCountFailed">0</span>
                 </span>
             </div>
 
@@ -2093,10 +2093,10 @@
 <div class="hd-liveview-modal" id="hd-liveview-modal-{{ $rpConvo->id }}" role="dialog" aria-modal="true">
     <div class="hd-liveview-modal-head">
         <i class="fas fa-eye"></i>
-        <span class="title" id="hd-liveview-modal-title-{{ $rpConvo->id }}">Vista del visitante</span>
+        <span class="title" id="hd-liveview-modal-title-{{ $rpConvo->id }}">{{ __('helpdesk::helpdesk.inbox.right.visitor_view_label') }}</span>
         <span class="ml"></span>
-        <span class="bv-assist-status badge bg-secondary" id="hd-liveview-modal-status-{{ $rpConvo->id }}">Cargando…</span>
-        <button type="button" class="hd-liveview-modal-close" id="hd-liveview-modal-close-{{ $rpConvo->id }}" title="Cerrar">
+        <span class="bv-assist-status badge bg-secondary" id="hd-liveview-modal-status-{{ $rpConvo->id }}">{{ __('helpdesk::helpdesk.inbox.right.loading_label') }}</span>
+        <button type="button" class="hd-liveview-modal-close" id="hd-liveview-modal-close-{{ $rpConvo->id }}" title="{{ __('helpdesk::helpdesk.inbox.right.close_title') }}">
             <i class="fas fa-xmark"></i>
         </button>
     </div>

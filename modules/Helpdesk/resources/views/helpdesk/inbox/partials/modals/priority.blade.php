@@ -4,9 +4,9 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-flag"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · CONVERSACIÓN</span>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.label_conversation') }}</span>
                 <div class="bv-modal-title">
-                    Cambiar prioridad
+                    {{ __('helpdesk::helpdesk.inbox.modals.priority_title') }}
                     @if(!empty($selectedConversation))<span class="bv-chip-id">#{{ $selectedConversation->id }}</span>@endif
                 </div>
             </div>
@@ -19,40 +19,40 @@
                 <button class="prio-opt" data-bv-value="low" data-bv-label="Baja" data-bv-color="muted" data-prio-sla="24" data-prio-desc="Sin impacto operativo">
                     <div class="prio-ico prio-ico--low"><i class="fas fa-chevron-down"></i></div>
                     <div class="prio-body">
-                        <span class="prio-t">Baja</span>
-                        <span class="prio-s">Sin impacto operativo · SLA 24h</span>
+                        <span class="prio-t">{{ __('helpdesk::helpdesk.inbox.modals.priority_low') }}</span>
+                        <span class="prio-s">{{ __('helpdesk::helpdesk.inbox.modals.priority_low_desc') }}</span>
                     </div>
-                    <span class="prio-meta">SLA 24h</span>
+                    <span class="prio-meta">{{ __('helpdesk::helpdesk.inbox.modals.priority_low_sla') }}</span>
                     <div class="prio-radio"><i class="fas fa-check"></i></div>
                 </button>
 
                 <button class="prio-opt" data-bv-value="normal" data-bv-label="Normal" data-bv-color="info" data-prio-sla="8" data-prio-desc="Atención estándar">
                     <div class="prio-ico prio-ico--normal"><i class="fas fa-minus"></i></div>
                     <div class="prio-body">
-                        <span class="prio-t">Normal</span>
-                        <span class="prio-s">Atención estándar · SLA 8h</span>
+                        <span class="prio-t">{{ __('helpdesk::helpdesk.inbox.modals.priority_normal') }}</span>
+                        <span class="prio-s">{{ __('helpdesk::helpdesk.inbox.modals.priority_normal_desc') }}</span>
                     </div>
-                    <span class="prio-meta">SLA 8h</span>
+                    <span class="prio-meta">{{ __('helpdesk::helpdesk.inbox.modals.priority_normal_sla') }}</span>
                     <div class="prio-radio"><i class="fas fa-check"></i></div>
                 </button>
 
                 <button class="prio-opt" data-bv-value="high" data-bv-label="Alta" data-bv-color="warning" data-prio-sla="4" data-prio-desc="Impacto significativo">
                     <div class="prio-ico prio-ico--high"><i class="fas fa-chevron-up"></i></div>
                     <div class="prio-body">
-                        <span class="prio-t">Alta</span>
-                        <span class="prio-s">Impacto significativo · SLA 4h</span>
+                        <span class="prio-t">{{ __('helpdesk::helpdesk.inbox.modals.priority_high') }}</span>
+                        <span class="prio-s">{{ __('helpdesk::helpdesk.inbox.modals.priority_high_desc') }}</span>
                     </div>
-                    <span class="prio-meta">SLA 4h</span>
+                    <span class="prio-meta">{{ __('helpdesk::helpdesk.inbox.modals.priority_high_sla') }}</span>
                     <div class="prio-radio"><i class="fas fa-check"></i></div>
                 </button>
 
                 <button class="prio-opt" data-bv-value="urgent" data-bv-label="Urgente" data-bv-color="danger" data-prio-sla="1" data-prio-desc="Operaciones críticas">
                     <div class="prio-ico prio-ico--urgent"><i class="fas fa-angles-up"></i></div>
                     <div class="prio-body">
-                        <span class="prio-t">Urgente</span>
-                        <span class="prio-s">Operaciones críticas · SLA 1h</span>
+                        <span class="prio-t">{{ __('helpdesk::helpdesk.inbox.modals.priority_urgent') }}</span>
+                        <span class="prio-s">{{ __('helpdesk::helpdesk.inbox.modals.priority_urgent_desc') }}</span>
                     </div>
-                    <span class="prio-meta">SLA 1h</span>
+                    <span class="prio-meta">{{ __('helpdesk::helpdesk.inbox.modals.priority_urgent_sla') }}</span>
                     <div class="prio-radio"><i class="fas fa-check"></i></div>
                 </button>
 
@@ -64,14 +64,14 @@
             </div>
 
             <div class="prio-reason-wrap">
-                <label class="prio-reason-lbl">Razón del cambio <span class="prio-reason-opt">(opcional)</span></label>
-                <textarea id="prio-reason" class="bv-finput" rows="2" placeholder="Explica brevemente por qué cambias la prioridad…"></textarea>
+                <label class="prio-reason-lbl">{{ __('helpdesk::helpdesk.inbox.modals.priority_reason_label') }} <span class="prio-reason-opt">{{ __('helpdesk::helpdesk.inbox.modals.priority_reason_optional') }}</span></label>
+                <textarea id="prio-reason" class="bv-finput" rows="2" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.priority_reason_placeholder') }}"></textarea>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" data-bv-apply="priority">Aplicar prioridad</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" data-bv-apply="priority">{{ __('helpdesk::helpdesk.inbox.modals.priority_apply') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

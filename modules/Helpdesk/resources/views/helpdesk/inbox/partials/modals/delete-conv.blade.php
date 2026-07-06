@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box danger"><i class="fas fa-trash"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CONFIRMACIÓN</span>
-                <div class="bv-modal-title">Eliminar conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.confirmation') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -15,15 +15,15 @@
 
             <div class="bv-warn-box">
                 <div class="bv-warn-box__body">
-                    <strong class="bv-warn-box__title">¿Enviar esta conversación a la papelera?</strong>
-                    <span class="bv-warn-box__desc">Se moverá a «Eliminadas» con todos sus mensajes, adjuntos y notas. Podrás restaurarla desde la papelera.</span>
+                    <strong class="bv-warn-box__title">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_confirm_question') }}</strong>
+                    <span class="bv-warn-box__desc">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_confirm_desc') }}</span>
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger-solid" id="bv-delete-conv-confirm">Eliminar conversación</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-danger-solid" id="bv-delete-conv-confirm">{{ __('helpdesk::helpdesk.inbox.modals.delete_conv_title') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
