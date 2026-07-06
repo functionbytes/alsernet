@@ -13,6 +13,13 @@ class SendConversationSlaWarnings extends Command
 
     public function handle(ConversationSlaService $slaService): int
     {
+        // Respeta el kill-switch de la integración igual que
+        // CheckConversationSlaBreaches: sin esto, ejecutar el comando a mano o
+        // vía cron externo seguía enviando avisos con la integración desactivada.
+        if (! helpdesk_sla_enabled()) {
+            return self::SUCCESS;
+        }
+
         $count = $slaService->sendWarnings();
 
         $this->info("SLA warnings sent: {$count}.");

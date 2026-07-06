@@ -152,9 +152,11 @@ class HelpCenterPublicController extends Controller
 
     private function findBySlug(string $slug, string $locale): HelpCenterArticle
     {
-        // Try translation slug
+        // Try translation slug. La traducción debe estar publicada además del
+        // artículo padre: sin este filtro, una traducción borrador era legible
+        // públicamente conociendo/adivinando su slug.
         $byTranslation = HelpCenterArticle::query()
-            ->whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale))
+            ->whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale)->where('is_published', true))
             ->where('is_published', true)
             ->with('translations')
             ->first();
