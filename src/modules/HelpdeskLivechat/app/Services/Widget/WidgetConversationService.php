@@ -61,16 +61,17 @@ class WidgetConversationService
 
             $customer = null;
 
-            // If the widget already knows a customer_id, prefer it and update
-            // email/name when the visitor has logged in since the last message.
-            if (! empty($data['customer_id'])) {
-                $customer = Customer::find($data['customer_id']);
-                if ($customer && $email && $customer->email !== $email) {
-                    $customer->update([
-                        'email' => $email,
-                        'name' => $data['name'] ?? $customer->name,
-                    ]);
-                }
+            // La identidad se resuelve desde la sesión del widget del lado del
+            // SERVIDOR (WidgetSession.customer_id), NUNCA desde el customer_id
+            // que envía el cliente: confiar en ese id permitía a cualquier
+            // visitante adjuntar su chat a —y sobrescribir el email/nombre de—
+            // cualquier cliente por id (impersonación + toma de datos).
+            $session = ! empty($data['widget_session_token'])
+                ? WidgetSession::where('session_token', $data['widget_session_token'])->first()
+                : null;
+
+            if ($session && $session->customer_id) {
+                $customer = Customer::find($session->customer_id);
             }
 
             if (! $customer) {
@@ -78,6 +79,22 @@ class WidgetConversationService
                     ['email' => $email],
                     $customerDefaults
                 );
+            }
+
+            // Vincula el cliente a la sesión para dar continuidad segura en las
+            // siguientes conversaciones del mismo visitante (id en el servidor).
+            if ($session && (int) $session->customer_id !== (int) $customer->id) {
+                $session->update(['customer_id' => $customer->id]);
+            }
+
+            // Promociona el email placeholder de invitado al real cuando el
+            // visitante se identifica — solo sobre el cliente de SU sesión,
+            // nunca uno ajeno, y sin machacar un email ya real.
+            if (! empty($data['email']) && str_ends_with((string) $customer->email, '@anonymous.local')) {
+                $customer->update([
+                    'email' => $data['email'],
+                    'name' => $data['name'] ?? $customer->name,
+                ]);
             }
 
             // Persist visitor metadata (cart, orders, etc.) sent by the host site.

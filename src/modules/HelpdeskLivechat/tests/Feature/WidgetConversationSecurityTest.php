@@ -3,9 +3,14 @@
 namespace Modules\HelpdeskLivechat\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
+use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Tests\TestCase;
 
 /**
@@ -93,5 +98,37 @@ class WidgetConversationSecurityTest extends TestCase
             ->getJson(route('helpdesk-livechat.widget.conversation.messages.index', $this->conversation->id))
             ->assertOk()
             ->assertJsonPath('data.messages', []);
+    }
+
+    /**
+     * Regresión: el customer_id que envía el cliente al crear conversación NO
+     * debe usarse — antes permitía adjuntar el chat a cualquier cliente y
+     * sobrescribir su email/nombre. La identidad se resuelve server-side.
+     */
+    public function test_store_ignores_client_supplied_customer_id(): void
+    {
+        Event::fake([ConversationCreated::class, ConversationMessageCreated::class, MessageReceived::class]);
+
+        $victim = Customer::factory()->create(['email' => 'victima@example.com', 'name' => 'Victima']);
+        $web = WebFactory::new()->create();
+
+        $this->postJson(route('helpdesk-livechat.widget.conversation.store'), [
+            'website_token' => $web->website_token,
+            'customer_id' => $victim->id,        // intento de impersonación
+            'email' => 'atacante@example.com',   // intento de sobrescribir el email de la víctima
+            'name' => 'Atacante',
+            'message' => 'hola',
+        ])->assertOk();
+
+        // El email/nombre de la víctima no deben cambiar.
+        $victim->refresh();
+        $this->assertSame('victima@example.com', $victim->email, 'El email de la víctima no debe sobrescribirse.');
+        $this->assertSame('Victima', $victim->name);
+
+        // La conversación creada no debe pertenecer a la víctima.
+        $this->assertFalse(
+            Conversation::where('customer_id', $victim->id)->exists(),
+            'La conversación no debe adjuntarse al customer_id enviado por el cliente.'
+        );
     }
 }
