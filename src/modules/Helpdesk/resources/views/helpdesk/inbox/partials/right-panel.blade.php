@@ -104,9 +104,9 @@
                     $rpDocuments = app(\Modules\HelpdeskDocument\Services\DocumentPanelPresenter::class)->list($rpDocs);
                     $rpHasDocument = true;
 
-                    if (! ($rpConvo->metadata['document_id'] ?? null)) {
-                        $rpLinker->link($rpConvo, $rpDocs->first());
-                    }
+                    // Crea el vínculo si falta, lo re-apunta si quedó roto y
+                    // refresca el snapshot informativo si el estado cambió.
+                    $rpLinker->syncLink($rpConvo, $rpDocs);
                 }
             } catch (\Throwable $e) {
                 report($e);
@@ -306,30 +306,44 @@
 
     {{-- Acciones rápidas --}}
     <div class="rsp-actions">
+        @if(helpdesk_feature_enabled('rp_email'))
         <button type="button" data-bv-modal="email">
             <i class="fa-regular fa-envelope"></i> Email
         </button>
+        @endif
+        @if(helpdesk_feature_enabled('rp_schedule'))
         <button type="button" data-bv-modal="schedule">
             <i class="fa-regular fa-calendar"></i> Agendar
         </button>
+        @endif
+        @if(helpdesk_feature_enabled('rp_note'))
         <button type="button" data-bv-modal="note">
             <i class="fa-regular fa-pen-to-square"></i> Nota
         </button>
-        <button type="button">
-            <i class="fa-solid fa-ellipsis"></i> Más
-        </button>
+        @endif
+        <div class="rsp-more">
+            <button type="button" class="rsp-more-toggle" aria-label="Más acciones" aria-haspopup="true">
+                <i class="fa-solid fa-ellipsis"></i> Más
+            </button>
+            <div class="bv-more-menu rsp-more-menu">
+                <button type="button" data-bv-modal="profile-customer"><i class="fa-regular fa-id-card"></i>Ver perfil</button>
+                <button type="button" data-bv-modal="edit-contact"><i class="fa-solid fa-pen"></i>Editar contacto</button>
+                <button type="button" data-bv-modal="history"><i class="fa-solid fa-clock-rotate-left"></i>Conversaciones anteriores</button>
+                @if(helpdesk_feature_enabled('merge'))
+                <button type="button" data-bv-modal="merge"><i class="fa-solid fa-code-merge"></i>Fusionar conversación</button>
+                @endif
+                <div class="sep"></div>
+                <button type="button" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban"></i>Bloquear contacto</button>
+            </div>
+        </div>
     </div>
 
-    {{-- Stats LTV / Conversaciones / Última visita --}}
+    {{-- Stats: Conversaciones / Última visita --}}
     @php
         $rpLastSeen = $rpCust?->last_seen_at?->diffForHumans();
-        $rpLtv = $rpTotal * 175;
     @endphp
+    @if(helpdesk_feature_enabled('rp_stats'))
     <div class="rsp-stats">
-        <div class="stat">
-            <div class="v @if($rpLtv === 0) muted @endif">€{{ number_format($rpLtv, 0, ',', '.') }}</div>
-            <div class="k">LTV</div>
-        </div>
         <div class="stat">
             <div class="v @if($rpTotal === 0) muted @endif">{{ $rpTotal }}</div>
             <div class="k">Conversaciones</div>
@@ -339,51 +353,65 @@
             <div class="k">Últ. visita</div>
         </div>
     </div>
+    @endif
 
     {{-- Tabs --}}
+    @php
+        $rpTabGeneralOn = helpdesk_feature_enabled('tab_general');
+    @endphp
     <div class="rsp-tabs">
+        @if($rpTabGeneralOn)
         <button type="button" class="tab bv-right-tab on" data-bv-tab="general" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="General" aria-label="General">
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         </button>
+        @endif
         {{-- Tab "Pedidos" genérico eliminado: PrestaShop → tab "Tienda", ERP → tab "Gestión" --}}
-        @if($rpCust && helpdesk_prestashop_enabled())
+        @if($rpCust && helpdesk_prestashop_enabled() && helpdesk_feature_enabled('tab_carts'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Carritos" aria-label="Carritos">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
         </button>
         @endif
+        @if(helpdesk_feature_enabled('tab_files'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="files" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Archivos" aria-label="Archivos">
             <i class="fa-regular fa-folder" aria-hidden="true"></i>
         </button>
-        @if($rpTicketsEnabled)
+        @endif
+        @if($rpTicketsEnabled && helpdesk_feature_enabled('tab_tickets'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="tickets" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tickets" aria-label="Tickets">
             <i class="fa-solid fa-ticket" aria-hidden="true"></i>
         </button>
         @endif
-        @if($rpHasDocument)
+        @if($rpHasDocument && helpdesk_feature_enabled('tab_document'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Documentacion" aria-label="Documentación">
             <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
         </button>
         @endif
+        @if(helpdesk_feature_enabled('tab_previous'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="previous" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Anteriores" aria-label="Conversaciones anteriores">
             <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
         </button>
+        @endif
+        @if(helpdesk_feature_enabled('tab_activity'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="activity" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Actividad" aria-label="Actividad">
             <i class="fa-solid fa-bolt" aria-hidden="true"></i>
         </button>
+        @endif
+        @if(helpdesk_feature_enabled('email'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="emails" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Emails" aria-label="Emails">
             <i class="fa-regular fa-envelope-open" aria-hidden="true"></i>
         </button>
-        @if($rpHasWidgetData)
+        @endif
+        @if($rpHasWidgetData && helpdesk_feature_enabled('tab_technology'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="technology" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Tecnología" aria-label="Tecnología">
             <i class="fa-regular fa-window-maximize" aria-hidden="true"></i>
         </button>
         @endif
-        @if($rpShowAssistTab ?? false)
+        @if(($rpShowAssistTab ?? false) && helpdesk_feature_enabled('tab_assist'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="assist" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Pantalla" aria-label="Pantalla compartida">
             <i class="fa-regular fa-eye" aria-hidden="true"></i>
         </button>
         @endif
-        @if($rpCust)
+        @if($rpCust && helpdesk_feature_enabled('tab_customer360'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="customer-360" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="Cliente 360" aria-label="Cliente 360">
             <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
         </button>
@@ -421,6 +449,7 @@
     <div class="bv-right-body rsp-body">
 
         {{-- ── Tab: General ── --}}
+        @if($rpTabGeneralOn)
         <div class="bv-right-tab-content" data-bv-tab-content="general">
 
             {{-- Información de contacto --}}
@@ -473,9 +502,10 @@
             </div>
 
             {{-- Estado de la conversación --}}
+            @if(helpdesk_feature_enabled('rp_status'))
             <div class="rsp-section">
                 <div class="lbl"><i class="fa-solid fa-circle-info"></i> Estado de la conversación</div>
-                <div class="rsp-kv">
+                <div class="rsp-kv rsp-kv-ctrl">
                     <span class="k">Estado</span>
                     <span class="v">
                         <button type="button" class="r-tag r-tag-btn" data-bv-modal="status">
@@ -484,7 +514,7 @@
                         </button>
                     </span>
                 </div>
-                <div class="rsp-kv">
+                <div class="rsp-kv rsp-kv-ctrl">
                     <span class="k">Prioridad</span>
                     <span class="v">
                         @php $rpPriorityMod = $priorityColors[$rpPriority] ?? ''; @endphp
@@ -494,11 +524,11 @@
                         </button>
                     </span>
                 </div>
-                <div class="rsp-kv">
+                <div class="rsp-kv rsp-kv-ctrl">
                     <span class="k">Agente</span>
                     <span class="v">
                         <button type="button" class="r-tag r-tag-btn @if(!$rpConvo?->assignee) r-tag-muted @endif" data-bv-modal="assign">
-                            {{ $rpConvo?->assignee?->name ?? 'Sin asignar' }}
+                            {{ $rpConvo?->assignee?->full_name ?? 'Sin asignar' }}
                             <i class="fa-solid fa-chevron-down"></i>
                         </button>
                         @if($rpConvo?->assignee)
@@ -517,8 +547,10 @@
                 </div>
                 @endif
             </div>
+            @endif
 
             {{-- Etiquetas --}}
+            @if(helpdesk_feature_enabled('rp_tags_section'))
             <div class="rsp-section">
                 <div class="lbl">
                     <i class="fa-solid fa-tag"></i> Etiquetas
@@ -534,6 +566,7 @@
                     <div class="rsp-empty">Sin etiquetas asignadas</div>
                 @endif
             </div>
+            @endif
 
             {{-- Integraciones --}}
             @php
@@ -553,49 +586,116 @@
                     ];
                 }
 
-                // Para clientes de e-commerce mostramos SIEMPRE el estado de ambas
-                // integraciones (PrestaShop y Gestión/ERP), aunque alguna no esté
-                // vinculada, para ver de un vistazo en cuáles está el cliente.
-                $rpShowEcommerce = $rpHasPs || $rpHasErp;
+                if ($rpCust && helpdesk_integration_enabled()
+                    && class_exists(\Modules\HelpdeskIntegration\Models\IntegrationProvider::class)) {
+                    // Fuente única: el catálogo de proveedores + vínculos del
+                    // cliente (los mismos datos que el modal de integraciones),
+                    // en vez del mapa estático PS/ERP/Shopify que divergía del
+                    // catálogo dinámico.
+                    $rpCust->loadMissing('externalIds');
+                    $rpLinkedByPlatform = $rpCust->externalIds->keyBy('platform');
+                    $rpProviders = \Modules\HelpdeskIntegration\Models\IntegrationProvider::query()
+                        ->orderBy('sort_order')
+                        ->get();
 
-                if ($rpShowEcommerce) {
-                    $rpIntegrationsList[] = [
-                        'icon'  => 'fas fa-cart-shopping',
-                        'color' => '#df1d1d',
-                        'name'  => 'PrestaShop',
-                        'id'    => $rpExternalPsId ? 'PS-#'.$rpExternalPsId : 'sin vincular',
-                        'connected' => (bool) $rpExternalPsId,
-                    ];
+                    foreach ($rpProviders as $rpProvider) {
+                        $rpLink = $rpLinkedByPlatform->get($rpProvider->platform);
 
-                    $rpIntegrationsList[] = [
-                        'icon'  => 'fas fa-clipboard-list',
-                        'color' => '#f59e0b',
-                        'name'  => 'Gestión (ERP)',
-                        'id'    => $rpExternalErpId ? 'ERP-'.$rpExternalErpId : 'sin vincular',
-                        'connected' => (bool) $rpExternalErpId,
-                    ];
-                }
+                        if (! $rpLink && ! ($rpProvider->is_active && $rpProvider->is_linkable)) {
+                            continue;
+                        }
 
-                // Platform detectada por custom_attributes (Shopify, Woo, etc.)
-                $rpDetectedPlatform = $rpCust?->custom_attributes['platform'] ?? null;
-                $rpPlatformMap = [
-                    'shopify'    => ['name' => 'Shopify',    'icon' => 'fa-brands fa-shopify'],
-                    'woocommerce'=> ['name' => 'WooCommerce','icon' => 'fa-brands fa-wordpress'],
-                    'magento'    => ['name' => 'Magento',    'icon' => 'fa-solid fa-store'],
-                    'bigcommerce'=> ['name' => 'BigCommerce','icon' => 'fa-solid fa-store'],
-                ];
-                if ($rpDetectedPlatform && isset($rpPlatformMap[$rpDetectedPlatform])) {
-                    $rpPlat = $rpPlatformMap[$rpDetectedPlatform];
-                    $rpIntegrationsList[] = [
-                        'icon' => $rpPlat['icon'],
-                        'name' => $rpPlat['name'],
-                        'id'   => $rpCust?->custom_attributes['platform_id'] ?? 'conectado',
-                        'connected' => true,
+                        $rpIntegrationsList[] = [
+                            'icon'      => $rpProvider->icon ?: 'fas fa-plug',
+                            'color'     => $rpProvider->color,
+                            'name'      => $rpProvider->label ?: ucfirst($rpProvider->platform),
+                            'id'        => $rpLink?->external_id ?: 'sin vincular',
+                            'connected' => (bool) $rpLink,
+                        ];
+                    }
+
+                    // Vínculos legacy cuyo proveedor ya no está en el catálogo.
+                    foreach ($rpLinkedByPlatform as $rpPlatform => $rpLink) {
+                        if ($rpProviders->contains('platform', $rpPlatform)) {
+                            continue;
+                        }
+
+                        $rpIntegrationsList[] = [
+                            'icon'      => 'fas fa-plug',
+                            'name'      => ucfirst($rpPlatform),
+                            'id'        => (string) $rpLink->external_id,
+                            'connected' => true,
+                        ];
+                    }
+                } else {
+                    // Fallback sin el módulo HelpdeskIntegration: mapa estático
+                    // PS/ERP como antes.
+                    if ($rpHasPs || $rpHasErp) {
+                        $rpIntegrationsList[] = [
+                            'icon'  => 'fas fa-cart-shopping',
+                            'color' => '#df1d1d',
+                            'name'  => 'PrestaShop',
+                            'id'    => $rpExternalPsId ? 'PS-#'.$rpExternalPsId : 'sin vincular',
+                            'connected' => (bool) $rpExternalPsId,
+                        ];
+
+                        $rpIntegrationsList[] = [
+                            'icon'  => 'fas fa-clipboard-list',
+                            'color' => '#f59e0b',
+                            'name'  => 'Gestión (ERP)',
+                            'id'    => $rpExternalErpId ? 'ERP-'.$rpExternalErpId : 'sin vincular',
+                            'connected' => (bool) $rpExternalErpId,
+                        ];
+                    }
+
+                    $rpDetectedPlatform = $rpCust?->custom_attributes['platform'] ?? null;
+                    $rpPlatformMap = [
+                        'shopify'    => ['name' => 'Shopify',    'icon' => 'fa-brands fa-shopify'],
+                        'woocommerce'=> ['name' => 'WooCommerce','icon' => 'fa-brands fa-wordpress'],
+                        'magento'    => ['name' => 'Magento',    'icon' => 'fa-solid fa-store'],
+                        'bigcommerce'=> ['name' => 'BigCommerce','icon' => 'fa-solid fa-store'],
                     ];
+                    if ($rpDetectedPlatform && isset($rpPlatformMap[$rpDetectedPlatform])) {
+                        $rpPlat = $rpPlatformMap[$rpDetectedPlatform];
+                        $rpIntegrationsList[] = [
+                            'icon' => $rpPlat['icon'],
+                            'name' => $rpPlat['name'],
+                            'id'   => $rpCust?->custom_attributes['platform_id'] ?? 'conectado',
+                            'connected' => true,
+                        ];
+                    }
                 }
 
                 $rpConnectedCount = collect($rpIntegrationsList)->where('connected', true)->count();
+
+                // Identidad del cliente verificada (gate OTP) — vive en el
+                // modulo HelpdeskIntegration; se degrada con gracia (bloque
+                // oculto) si el modulo esta desactivado.
+                $rpIdentityVerified = null;
+                if ($rpCust && view()->exists('helpdeskintegration::modals.verify-customer-identity')) {
+                    $rpIdentityService = app(\Modules\HelpdeskIntegration\Services\CustomerIdentityVerificationService::class);
+                    $rpIdentityVerified = $rpIdentityService->isVerified($rpCust);
+                    $rpIdentitySummary = $rpIdentityVerified ? $rpIdentityService->summary($rpCust) : null;
+                }
             @endphp
+            @if($rpIdentityVerified !== null)
+            <div class="rsp-section">
+                <div class="lbl">
+                    <i class="fa-solid fa-shield-halved"></i> Identidad
+                    @if($rpIdentityVerified)
+                        <span class="r-tag" data-bs-toggle="tooltip" data-bs-placement="bottom"
+                            data-bs-title="{{ $rpIdentitySummary['verified_by'] ?? 'Sistema' }} · {{ \Illuminate\Support\Carbon::parse($rpIdentitySummary['verified_at'])->diffForHumans() }}">
+                            <i class="fa-solid fa-circle-check"></i> Verificada
+                        </span>
+                    @else
+                        <button type="button" class="r-tag r-tag-btn bv-identity-verify-trigger ms-auto" data-customer-id="{{ $rpCust->id }}">
+                            Verificar identidad
+                        </button>
+                    @endif
+                </div>
+            </div>
+            @endif
+            @if(helpdesk_feature_enabled('rp_integrations'))
             <div class="rsp-section">
                 <div class="lbl">
                     <i class="fa-solid fa-plug"></i> Integraciones
@@ -608,7 +708,7 @@
                             <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                         </button>
                     @endif
-                    @if($rpCust)
+                    @if($rpCust && helpdesk_integration_enabled() && view()->exists('helpdeskintegration::modals.customer-integrations'))
                         <button type="button" class="btn btn-sm btn-link p-0 @if(! $rpConvo?->id) ms-auto @endif bv-integrations-trigger"
                                 data-bv-modal="customer-integrations"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -625,7 +725,7 @@
                     <div class="rsp-integrations">
                         @foreach($rpIntegrationsList as $intg)
                             <div class="rsp-integration @if(!$intg['connected']) is-disconnected @endif">
-                                <div class="ico"><i class="{{ $intg['icon'] }}"@if(!empty($intg['color'])) style="color:{{ $intg['color'] }}"@endif></i></div>
+                                <div class="ico"><i class="{{ $intg['icon'] }}"></i></div>
                                 <div class="meta">
                                     <span class="name">{{ $intg['name'] }}</span>
                                     <span class="id">ID: {{ $intg['id'] }}</span>
@@ -638,10 +738,13 @@
                     <div class="rsp-empty">Sin integraciones detectadas</div>
                 @endif
             </div>
+            @endif
         </div>
+        @endif
 
-        {{-- ── Tab: Pedidos ── --}}
-        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="orders" id="bv-orders-tab">
+        {{-- ── Tab: Carritos ── --}}
+        @if($rpCust && helpdesk_prestashop_enabled() && helpdesk_feature_enabled('tab_carts'))
+        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="carts" id="bv-carts-tab">
             @php
                 $rawAttrs = $rpCust?->custom_attributes ?? [];
                 // Support nested custom_attributes (PrestaShop widget sends custom_attributes inside custom_attributes)
@@ -673,10 +776,10 @@
             @endphp
             @if($rpHasPs || $rpHasErp)
             <div class="bv-source-actions bv-hidden" id="bv-orders-source-actions">
-                <button class="btn btn-sm btn-link bv-refresh-source" data-bv-refresh-source="orders">
+                <button class="btn btn-sm btn-link bv-refresh-source" data-bv-refresh-source="carts">
                     <i class="fas fa-arrows-rotate"></i> Actualizar
                 </button>
-                <span class="bv-source-meta" data-bv-source-meta="orders"></span>
+                <span class="bv-source-meta" data-bv-source-meta="carts"></span>
             </div>
             @endif
             @if(!$allOrders && empty($cartData))
@@ -861,6 +964,7 @@
                 </div>
             @endif
         </div>
+        @endif
 
         {{-- ── Tab: Archivos ── --}}
         @php
@@ -952,6 +1056,7 @@
                 'document' => 'Docs',
             ];
         @endphp
+        @if(helpdesk_feature_enabled('tab_files'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="files">
 
             @if($rpFiles->isEmpty())
@@ -1115,9 +1220,10 @@
 
             @endif
         </div>
+        @endif
 
         {{-- ── Tab: Tickets (slot del módulo HelpdeskTickets) ── --}}
-        @if($rpTicketsEnabled)
+        @if($rpTicketsEnabled && helpdesk_feature_enabled('tab_tickets'))
             @include('helpdesktickets::inbox-slots.right-panel-tickets-tab', ['rpTickets' => $rpTickets])
         @endif
 
@@ -1130,6 +1236,7 @@
         @endif
 
         {{-- ── Tab: Anteriores ── --}}
+        @if(helpdesk_feature_enabled('tab_previous'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="previous">
             @php
                 $rpPrevious = collect();
@@ -1238,8 +1345,10 @@
                 </div>
             @endif
         </div>
+        @endif
 
         {{-- ── Tab: Actividad ── --}}
+        @if(helpdesk_feature_enabled('tab_activity'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="activity">
             @if($rpEvents->isEmpty())
                 <div class="bv-tab-empty">
@@ -1269,9 +1378,10 @@
                 </div>
             @endif
         </div>
+        @endif
 
         {{-- ── Tab: Tecnología ── --}}
-        @if($rpShowTechnologyTab)
+        @if($rpShowTechnologyTab && helpdesk_feature_enabled('tab_technology'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="technology">
 
             @if(! $rpWidgetSession)
@@ -1542,7 +1652,7 @@
         @endif
 
         {{-- ── Tab: Pantalla (live view + screen share) ── --}}
-        @if($rpShowAssistTab ?? false)
+        @if(($rpShowAssistTab ?? false) && helpdesk_feature_enabled('tab_assist'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="assist"
              data-conversation-id="{{ $rpConvo->id }}"
              data-enable-live-view="{{ $rpEnableLiveView ? '1' : '0' }}"
@@ -1610,7 +1720,7 @@
         @endif
 
         {{-- ── Tab: Cliente 360 ── --}}
-        @if($rpCust)
+        @if($rpCust && helpdesk_feature_enabled('tab_customer360'))
         <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="customer-360">
             @include('helpdesk::helpdesk.conversations.partials._customer-360', ['conversation' => $rpConvo])
         </div>
@@ -1768,7 +1878,7 @@
 }());
 </script>
 
-@if(($rpShowTechnologyTab ?? false) && $rpConvo)
+@if(($rpShowTechnologyTab ?? false) && helpdesk_feature_enabled('tab_technology') && $rpConvo)
 <script>
 (function () {
     var convId = {{ (int) $rpConvo->id }};
@@ -1852,7 +1962,7 @@
 </script>
 @endif
 
-@if(($rpShowAssistTab ?? false) && $rpConvo)
+@if(($rpShowAssistTab ?? false) && helpdesk_feature_enabled('tab_assist') && $rpConvo)
 <style>
 .hd-liveview-frame {
     position: relative;
@@ -2309,6 +2419,24 @@
 }());
 </script>
 @endif
+
+@once
+@push('scripts')
+<script>
+// Badge/boton de identidad del panel: abre el modal reutilizable de
+// verificacion (definido en HelpdeskIntegration) y recarga el panel al
+// validar, para reflejar el badge "Verificada" sin duplicar el render.
+$(document).on('click', '.bv-identity-verify-trigger', function () {
+    var customerId = $(this).data('customer-id');
+    if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
+
+    window.openCustomerIdentityVerification(customerId, function () {
+        window.location.reload();
+    });
+});
+</script>
+@endpush
+@endonce
 
 @once
 @push('scripts')

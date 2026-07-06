@@ -49,13 +49,12 @@ use Modules\Helpdesk\Models\Campaigns\WhatsAppTemplate;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
-use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\ConversationView;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
-use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Macro;
 use Modules\Helpdesk\Services\ConversationMessageService;
+use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CsatService;
 use Modules\Helpdesk\Services\LinkPreviewService;
@@ -69,8 +68,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ConversationsController extends Controller
 {
-    public function __construct(private ConversationTagService $tagService)
-    {
+    public function __construct(
+        private ConversationTagService $tagService,
+        private ConversationInboxMetricsService $inboxMetrics,
+    ) {
         $this->middleware('can:helpdesk.conversations.view')->only(['index', 'show', 'pane', 'listJson', 'kanban', 'emailLogIndex', 'emailLogShow']);
         $this->middleware('can:helpdesk.conversations.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.conversations.update')->only([
@@ -144,7 +145,9 @@ class ConversationsController extends Controller
             $currentView = $views->firstWhere('id', $request->viewId);
         }
 
-        if (! $currentView) {
+        // La papelera (view=deleted) muestra TODO lo eliminado: no debe heredar
+        // los filtros de la vista por defecto (is_open=true, etc.) que la vaciarían.
+        if (! $currentView && $request->input('view') !== 'deleted') {
             $currentView = $views->firstWhere('is_default', true) ?? $views->first();
         }
 
@@ -158,7 +161,8 @@ class ConversationsController extends Controller
                 'reads' => fn ($q) => $q->where('user_id', auth()->id()),
             ])
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
-            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
+            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+            ->when($request->input('view') === 'deleted', fn ($q) => $q->onlyTrashed());
 
         // Conversations the chatbot is handling stay out of the inbox until it
         // hands off to an agent. The "bot" view shows them (supervision) and a
@@ -214,126 +218,13 @@ class ConversationsController extends Controller
             ->withoutActiveBot()
             ->count();
 
-        $inboxTags = cache()->remember(
-            'helpdesk:inbox:tags',
-            60,
-            fn () => ConversationTag::query()
-                ->where('is_active', true)
-                ->withCount('conversations')
-                ->orderBy('name')
-                ->get()
-        );
-
-        $statusbarMetrics = cache()->remember(
-            'helpdesk:inbox:statusbar',
-            30,
-            function () {
-                $today = now()->startOfDay();
-
-                $activeChannels = (int) Conversation::query()
-                    ->whereNotNull('channel')
-                    ->where('channel', '!=', '')
-                    ->distinct()
-                    ->count('channel');
-
-                $resolvedToday = (int) Conversation::query()
-                    ->where('closed_at', '>=', $today)
-                    ->count();
-
-                $firstResponseAvg = (int) Conversation::query()
-                    ->whereNotNull('first_response_at')
-                    ->whereDate('first_response_at', $today)
-                    ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, first_response_at)) as avg_sec')
-                    ->value('avg_sec');
-
-                $agentsOnline = (int) DB::table('sessions')
-                    ->whereNotNull('user_id')
-                    ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)
-                    ->distinct('user_id')
-                    ->count('user_id');
-
-                return [
-                    'active_channels' => $activeChannels,
-                    'agents_online' => $agentsOnline,
-                    'sla_avg_seconds' => $firstResponseAvg,
-                    'resolved_today' => $resolvedToday,
-                ];
-            }
-        );
-
-        // Counters reales para el sidebar. Cache::flexible (SWR de Laravel 12)
-        // evita el stampede: sirve el valor "stale" mientras recalcula en background.
-        // Por usuario para aislar el conteo "mine" entre agentes.
-        $sidebarCounters = Cache::flexible(
-            'helpdesk:inbox:counters:'.($userId ?? 'guest'),
-            [45, 120],
-            function () use ($userId, $userInboxIds) {
-                $base = Conversation::query()
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
-
-                // Inbox counters exclude conversations the bot is still handling.
-                $inbox = (clone $base)->withoutActiveBot();
-
-                // Un único GROUP BY para los 5 contadores por canal (antes 5 COUNT).
-                $channelCounts = (clone $inbox)
-                    ->whereNotNull('channel')
-                    ->where('channel', '!=', '')
-                    ->selectRaw('channel, COUNT(*) as cnt')
-                    ->groupBy('channel')
-                    ->pluck('cnt', 'channel');
-
-                return [
-                    // Sin leer: abiertas y sin asignar (heurística sin read receipts)
-                    'unread' => (clone $inbox)
-                        ->whereHas('status', fn ($q) => $q->where('is_open', true))
-                        ->whereNull('assignee_id')
-                        ->count(),
-                    'mine' => $userId ? (clone $inbox)->where('assignee_id', $userId)->count() : 0,
-                    'urgent' => (clone $inbox)->where('priority', 'urgent')->count(),
-                    'pending' => (clone $inbox)
-                        ->whereHas('status', fn ($q) => $q->where('name', 'Esperando'))
-                        ->count(),
-                    'archived' => (clone $inbox)->where('is_archived', true)->count(),
-                    'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
-                    'facebook' => (int) ($channelCounts['facebook'] ?? 0),
-                    'instagram' => (int) ($channelCounts['instagram'] ?? 0),
-                    'email' => (int) ($channelCounts['email'] ?? 0),
-                    'web' => (int) ($channelCounts['web'] ?? 0),
-                    'vip' => (clone $inbox)
-                        ->whereHas('customer', fn ($c) => $c->where('total_conversations', '>=', 5))
-                        ->count(),
-                    // Conversaciones que el bot está atendiendo (supervisión).
-                    'bot' => (clone $base)->handledByBot()->count(),
-                ];
-            }
-        );
-
-        // Per-inbox sidebar entries filtered by agent's assigned inboxes.
-        // Managers (helpdesk.manage) see all inboxes; agents see only their own.
-        $inboxCacheKey = $userInboxIds === null
-            ? 'helpdesk:inbox:sidebar-list:all'
-            : 'helpdesk:inbox:sidebar-list:user:'.auth()->id();
-
-        $inboxes = cache()->remember(
-            $inboxCacheKey,
-            60,
-            function () use ($userInboxIds) {
-                return Inbox::query()
-                    ->where('is_active', true)
-                    ->when($userInboxIds !== null, fn ($q) => $q->whereIn('id', $userInboxIds))
-                    ->orderBy('name')
-                    ->get(['id', 'name', 'channel_type', 'color', 'icon'])
-                    ->map(function (Inbox $inbox) use ($userInboxIds) {
-                        $count = Conversation::query()
-                            ->where('inbox_id', $inbox->id)
-                            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
-                            ->count();
-                        $inbox->setAttribute('conversations_count', $count);
-
-                        return $inbox;
-                    });
-            }
-        );
+        // Metricas/contadores agregados y cacheados del sidebar+statusbar —
+        // ver ConversationInboxMetricsService (extraido de aqui: index()
+        // mezclaba filtrado de query con 5 bloques de cache independientes).
+        $inboxTags = $this->inboxMetrics->inboxTags();
+        $statusbarMetrics = $this->inboxMetrics->statusbarMetrics();
+        $sidebarCounters = $this->inboxMetrics->sidebarCounters($userId, $userInboxIds);
+        $inboxes = $this->inboxMetrics->sidebarInboxes($userId, $userInboxIds);
 
         $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
 
@@ -364,28 +255,7 @@ class ConversationsController extends Controller
             ->map(fn ($items) => $items->map(fn ($c) => $c->toInboxArray($selectedId))->values()->all());
 
         $composerDraft = $pane['composerDraft'];
-
-        // Conteo de conversaciones abiertas por agente: un único GROUP BY
-        // cacheado (antes era una subconsulta correlacionada por fila de users).
-        $openCounts = Cache::remember(
-            'helpdesk:inbox:agent-open-counts',
-            30,
-            fn (): array => Conversation::query()
-                ->whereNull('closed_at')
-                ->whereNotNull('assignee_id')
-                ->selectRaw('assignee_id, COUNT(*) as cnt')
-                ->groupBy('assignee_id')
-                ->pluck('cnt', 'assignee_id')
-                ->all()
-        );
-
-        $agents = User::query()
-            ->select(['id', 'firstname', 'lastname', 'email', 'role', 'helpdesk_status'])
-            ->whereNull('deleted_at')
-            ->get()
-            ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))
-            ->sortBy([['open_count', 'asc'], ['firstname', 'asc']])
-            ->values();
+        $agents = $this->inboxMetrics->agentWorkload();
 
         return view('helpdesk::helpdesk.inbox.index', [
             'conversations' => $conversations,
@@ -494,6 +364,12 @@ class ConversationsController extends Controller
             return;
         }
 
+        // La papelera muestra TODO lo eliminado, incluidas las que estaba
+        // atendiendo el bot; no aplicar el filtro withoutActiveBot ahí.
+        if ($request->input('view') === 'deleted') {
+            return;
+        }
+
         if (! $request->filled('search')) {
             $query->withoutActiveBot();
         }
@@ -511,7 +387,9 @@ class ConversationsController extends Controller
             $currentView = $views->firstWhere('id', $request->viewId);
         }
 
-        if (! $currentView) {
+        // La papelera (view=deleted) muestra TODO lo eliminado: no debe heredar
+        // los filtros de la vista por defecto (is_open=true, etc.) que la vaciarían.
+        if (! $currentView && $request->input('view') !== 'deleted') {
             $currentView = $views->firstWhere('is_default', true) ?? $views->first();
         }
 
@@ -523,7 +401,8 @@ class ConversationsController extends Controller
                 'reads' => fn ($q) => $q->where('user_id', auth()->id()),
             ])
             ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
-            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds));
+            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
+            ->when($request->input('view') === 'deleted', fn ($q) => $q->onlyTrashed());
 
         // Conversations the chatbot is handling stay out of the inbox until it
         // hands off to an agent. The "bot" view shows them (supervision) and a
@@ -557,6 +436,13 @@ class ConversationsController extends Controller
                 fn ($q) => $q->whereHas(
                     'customer',
                     fn ($c) => $c->where('total_conversations', '>=', 5)
+                )
+            )
+            ->when(
+                $request->filled('tag'),
+                fn ($q) => $q->whereHas(
+                    'conversationTags',
+                    fn ($t) => $t->where('helpdesk_conversation_tags.id', $request->integer('tag'))
                 )
             );
 
@@ -846,13 +732,16 @@ class ConversationsController extends Controller
             $bodyPlain = $validated['body'];
         }
 
-        $item = DB::transaction(function () use ($conversation, $validated, $cc, $bcc, $bodyHtml, $bodyPlain): ConversationItem {
+        $externalId = (string) Str::uuid();
+
+        $item = DB::transaction(function () use ($conversation, $validated, $cc, $bcc, $bodyHtml, $bodyPlain, $externalId): ConversationItem {
             return $conversation->items()->create([
                 'user_id' => auth()->id(),
                 'type' => 'email_sent',
                 'body' => $bodyPlain,
                 'html_body' => $bodyHtml,
                 'is_internal' => false,
+                'external_id' => $externalId,
                 'metadata' => [
                     'subject' => $validated['subject'],
                     'cc' => $cc,
@@ -872,6 +761,7 @@ class ConversationsController extends Controller
                 emailBodyPlain: $bodyPlain,
                 ccEmails: $cc,
                 bccEmails: $bcc,
+                externalId: $externalId,
             ));
 
         return response()->json([
@@ -1109,7 +999,7 @@ class ConversationsController extends Controller
 
         if ($request->has('group_id')) {
             $oldGroupId = $conversation->group_id;
-            $conversation->group_id = $request->input('group_id') ?: null;
+            $conversation->group_id = $request->validated()['group_id'] ?? null;
             $conversation->save();
 
             // Remove old group tag if group changed
@@ -1145,6 +1035,7 @@ class ConversationsController extends Controller
         $this->authorize('delete', $conversation);
 
         $conversation->delete();
+        $conversation->broadcastInboxChanged('deleted');
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -1160,12 +1051,20 @@ class ConversationsController extends Controller
     /**
      * Restore a soft-deleted conversation
      */
-    public function restore($id): RedirectResponse
+    public function restore(Request $request, $id): RedirectResponse|JsonResponse
     {
         $conversation = Conversation::onlyTrashed()->findOrFail($id);
         $this->authorize('restore', $conversation);
 
         $conversation->restore();
+        $conversation->broadcastInboxChanged('restored');
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('helpdesk::helpdesk.messages.conversation_restored'),
+            ]);
+        }
 
         return redirect()->route('manager.helpdesk.conversations.index')
             ->with('success', __('helpdesk::helpdesk.messages.conversation_restored'));
@@ -1201,7 +1100,7 @@ class ConversationsController extends Controller
             try {
                 app(CsatService::class)->dispatchForConversation($conversation);
             } catch (\Throwable $e) {
-                \Log::warning('CSAT dispatch failed on close', [
+                Log::channel('helpdesk')->warning('CSAT dispatch failed on close', [
                     'conversation_id' => $conversation->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -1247,6 +1146,7 @@ class ConversationsController extends Controller
         $this->authorize('update', $conversation);
 
         $conversation->archive();
+        $conversation->broadcastInboxChanged('archived');
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -1267,6 +1167,7 @@ class ConversationsController extends Controller
         $this->authorize('update', $conversation);
 
         $conversation->unarchive();
+        $conversation->broadcastInboxChanged('unarchived');
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -1317,13 +1218,18 @@ class ConversationsController extends Controller
         $targetId = (int) $request->input('target_id');
 
         if ($targetId === $conversation->id) {
-            return response()->json(['success' => false, 'message' => 'No puedes fusionar una conversación consigo misma.'], 422);
+            return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.merge_self')], 422);
         }
 
         $target = Conversation::findOrFail($targetId);
 
+        // La conversación destino recibe los mensajes: el agente debe poder
+        // actualizarla y tener acceso a su inbox (ConversationPolicy::update()
+        // incluye canAccessInbox()), no solo al inbox del origen.
+        $this->authorize('update', $target);
+
         if ($target->customer_id !== $conversation->customer_id) {
-            return response()->json(['success' => false, 'message' => 'Las conversaciones no pertenecen al mismo contacto.'], 422);
+            return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.merge_different_customer')], 422);
         }
 
         \DB::transaction(function () use ($conversation, $target): void {
@@ -1333,7 +1239,7 @@ class ConversationsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Conversaciones fusionadas correctamente.',
+            'message' => __('helpdesk::helpdesk.messages.merge_success'),
             'target_id' => $target->id,
         ]);
     }
@@ -1562,7 +1468,7 @@ class ConversationsController extends Controller
             try {
                 $externalId = $outbound->sendReply($targetConv, $body);
             } catch (\Throwable $e) {
-                \Log::error('forwardMessage: outbound send failed', [
+                Log::channel('helpdesk')->error('forwardMessage: outbound send failed', [
                     'conversation_id' => $targetConv->id,
                     'channel' => $targetConv->channel,
                     'error' => $e->getMessage(),
@@ -1586,7 +1492,7 @@ class ConversationsController extends Controller
                 );
                 $externalId ??= $sent;
             } catch (\Throwable $e) {
-                \Log::error('forwardMessage: outbound attachment send failed', [
+                Log::channel('helpdesk')->error('forwardMessage: outbound attachment send failed', [
                     'conversation_id' => $targetConv->id,
                     'channel' => $targetConv->channel,
                     'error' => $e->getMessage(),
@@ -1684,6 +1590,8 @@ class ConversationsController extends Controller
             'snoozed_until' => $until,
             'snoozed_by' => auth()->id(),
         ]);
+
+        $conversation->broadcastInboxChanged('snoozed');
 
         UnsnoozeConversationJob::dispatch($conversation)->delay($until);
 
@@ -1942,7 +1850,7 @@ class ConversationsController extends Controller
                         $externalIds[] = $externalId;
                     }
                 } catch (\Throwable $e) {
-                    \Log::error('uploadAttachments: outbound send failed', [
+                    Log::channel('helpdesk')->error('uploadAttachments: outbound send failed', [
                         'conversation_id' => $conversation->id,
                         'channel' => $conversation->channel,
                         'error' => $e->getMessage(),
@@ -2079,6 +1987,8 @@ class ConversationsController extends Controller
     {
         $this->authorize('update', $conversation);
 
+        $reason = $request->validated()['reason'] ?? null;
+
         DB::transaction(function () use ($conversation): void {
             $conversation->update([
                 'is_spam' => true,
@@ -2093,6 +2003,14 @@ class ConversationsController extends Controller
                 ]);
             }
         });
+
+        $conversation->broadcastInboxChanged('spam');
+
+        Log::channel('helpdesk')->info('Conversation marked as spam', [
+            'conversation_id' => $conversation->id,
+            'user_id' => auth()->id(),
+            'reason' => $reason,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -2466,13 +2384,23 @@ class ConversationsController extends Controller
             $query->orderBy('name');
         }
 
-        $macros = $query->get()->map(fn (Macro $macro): array => [
-            'id' => $macro->id,
-            'name' => $macro->name,
-            'usageCount' => (int) $macro->usage_count,
-            'usados' => (int) $macro->usage_count > 0,
-            'lastUsedAt' => $macro->last_used_at?->toIso8601String(),
-        ]);
+        $macros = $query->get()->map(function (Macro $macro): array {
+            $actions = collect($macro->actions ?? [])
+                ->map(fn (array $action): string => Macro::ACTION_TYPES[$action['type'] ?? ''] ?? ($action['type'] ?? 'Acción'))
+                ->values();
+
+            return [
+                'id' => $macro->id,
+                'name' => $macro->name,
+                'description' => $macro->description,
+                'usageCount' => (int) $macro->usage_count,
+                'usados' => (int) $macro->usage_count > 0,
+                'lastUsedAt' => $macro->last_used_at?->toIso8601String(),
+                'actions_count' => $actions->count(),
+                'actions_summary' => $actions->implode(' · '),
+                'actions' => $actions->map(fn (string $label): array => ['label' => $label])->all(),
+            ];
+        });
 
         return response()->json(['success' => true, 'macros' => $macros]);
     }
@@ -2562,7 +2490,7 @@ class ConversationsController extends Controller
         if (class_exists(EmailLog::class) && $item->external_id) {
             $log = EmailLog::query()
                 ->forEntity(Conversation::class, $conversation->id)
-                ->where('uid', $item->external_id)
+                ->where('external_id', $item->external_id)
                 ->first();
         }
 

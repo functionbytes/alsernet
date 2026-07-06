@@ -46,6 +46,12 @@ class ConversationAjaxActionRequest extends FormRequest
             ];
         }
 
+        if ($this->has('group_id')) {
+            return [
+                'group_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
+            ];
+        }
+
         return [];
     }
 
@@ -57,6 +63,7 @@ class ConversationAjaxActionRequest extends FormRequest
             'priority.required' => 'La prioridad es obligatoria.',
             'priority.in' => 'La prioridad debe ser baja, normal, alta o urgente.',
             'assignee_id.exists' => 'El usuario asignado no existe.',
+            'group_id.exists' => 'El equipo seleccionado no existe.',
         ];
     }
 
@@ -66,6 +73,7 @@ class ConversationAjaxActionRequest extends FormRequest
             'tag_id' => 'etiqueta',
             'priority' => 'prioridad',
             'assignee_id' => 'usuario asignado',
+            'group_id' => 'equipo',
         ];
     }
 }

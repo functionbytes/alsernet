@@ -2,24 +2,6 @@
 
 @section('title', 'Bandeja · Línea 2025')
 
-@push('scripts-head')
-    {{-- Dark mode: detectar preferencia antes del paint para evitar flash blanco --}}
-    <script>
-    (function () {
-        if (localStorage.getItem('bv:theme:dark') === '1') {
-            // Aplicar al documento como atributo; .conversations lo hereda via [data-theme="dark"] .conversations
-            document.documentElement.setAttribute('data-bv-dark', '1');
-        }
-    })();
-    </script>
-    <style>
-    /* FOUC prevention: mientras bv-dark está activo y .conversations aún no tiene data-theme */
-    html[data-bv-dark="1"] .conversations:not([data-theme="dark"]) {
-        background: #09090b;
-    }
-    </style>
-@endpush
-
 @push('css')
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -32,8 +14,6 @@
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.css')) }}"/>
     {{-- Pedidos y carritos (commerce) --}}
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-commerce.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-commerce.css')) }}"/>
-    {{-- Dark mode overrides --}}
-    <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations-dark.css') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations-dark.css')) }}"/>
     {{-- a11y: color contrast fixes — darken muted grays from #71717a (4.39:1) to #636369 (4.64:1) on #f4f4f5 --}}
     <style>
     .bv-day-sep span,
@@ -88,13 +68,14 @@
             </button>
         </div>
 
-        {{-- Tarjeta del usuario activo --}}
-        <div class="bv-nav-user-card">
+        {{-- Tarjeta del usuario activo — abre el modal de disponibilidad (#60 away-mode) --}}
+        <div class="bv-nav-user-card" data-bv-modal="away-mode" role="button" tabindex="0"
+             title="Cambiar disponibilidad" aria-label="Cambiar disponibilidad">
             <div class="bv-nav-user-av">{{ $userInitials ?: 'U' }}</div>
             <div class="bv-nav-user-body">
                 <div class="bv-nav-user-name">{{ $userName }}</div>
                 <div class="bv-nav-user-status">
-                    <span class="bv-nav-user-dot"></span>En línea · {{ $activeCount }} activas
+                    <span class="bv-nav-user-dot is-available"></span>En línea · {{ $activeCount }} activas
                 </div>
             </div>
             <i class="fas fa-chevron-down bv-nav-user-chevron"></i>
@@ -119,22 +100,22 @@
             <a href="{{ route('manager.helpdesk.conversations.index', ['unread' => 1]) }}"
                class="bv-nav-item {{ $isUnread ? 'on' : '' }}">
                 <i class="far fa-envelope bv-vi-unread"></i> Sin leer
-                <span class="c">{{ $sidebarCounters['unread'] ?? 0 }}</span>
+                <span class="c" data-counter="unread">{{ $sidebarCounters['unread'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index') }}"
                class="bv-nav-item {{ $isAll ? 'on' : '' }}">
                 <i class="fas fa-inbox bv-vi-all"></i> Todas
-                <span class="c">{{ $totalConversations ?? 0 }}</span>
+                <span class="c" data-counter="total">{{ $totalConversations ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['mine' => 1]) }}"
                class="bv-nav-item {{ $isMine ? 'on' : '' }}">
                 <i class="fas fa-user bv-vi-mine"></i> Mías
-                <span class="c">{{ $sidebarCounters['mine'] ?? 0 }}</span>
+                <span class="c" data-counter="mine">{{ $sidebarCounters['mine'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['urgent' => 1]) }}"
                class="bv-nav-item {{ $isUrgent ? 'on' : '' }}">
                 <i class="fas fa-fire bv-vi-urgent"></i> Urgentes
-                <span class="c">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
+                <span class="c" data-counter="urgent">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
             </a>
             @if($isBot || ($sidebarCounters['bot'] ?? 0) > 0)
             <a href="{{ route('manager.helpdesk.conversations.index', ['bot' => 1]) }}"

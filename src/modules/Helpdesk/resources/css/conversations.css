@@ -1776,7 +1776,8 @@ body:has(.conversations) .mc-content {
 .fl-pill .c { font-size: 10.5px; font-weight: 500; opacity: .55; }
 .fl-pill .d { width: 8px; height: 8px; border-radius: 50%; }
 
-.fl-range { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.fl-range { display: none; gap: 8px; align-items: center; margin-top: 8px; }
+.fl-range.on { display: flex; }
 .fl-range input {
     flex: 1; padding: 8px 10px; border: 1px solid var(--bv-border);
     border-radius: 8px; background: var(--bv-bg-panel);
@@ -4552,9 +4553,7 @@ body:has(.conversations) .mc-content {
 
 /* Grid 2x2 para secciones del filtro */
 .bv-filter-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    display: block;
 }
 
 /* Sección de fecha sin margen inferior */
@@ -4568,10 +4567,32 @@ body:has(.conversations) .mc-content {
 
 /* Contador de filtros activos */
 .bv-filter-count {
-    margin-left: 10px;
-    font-size: 11px;
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 10.5px;
     color: var(--bv-text-muted);
 }
+
+/* Badge de filtros activos sobre el botón de filtro de la barra */
+.btn-ico[data-bv-modal="filter"] { position: relative; }
+.bv-filter-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 8px;
+    background: var(--bv-primary, #90bb13);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 15px;
+    text-align: center;
+    pointer-events: none;
+}
+.bv-filter-badge[hidden] { display: none; }
 
 /* Acciones del footer del filtro */
 .bv-filter-foot-actions {
@@ -4584,8 +4605,8 @@ body:has(.conversations) .mc-content {
 .bv-fl-ico-danger  { color: var(--bv-danger); }
 .bv-fl-ico-warning { color: var(--bv-warning); }
 
-/* Dots de canales y prioridades en pills (ya existen vía fl-pill .d pero inline) */
-/* No se crean nuevas — los .fl-pill .d ya tienen background dinámico que es CSS variable */
+/* Chips sin punto de color, como el mockup (.flt-chip .d { display:none }) */
+[data-bv-modal-name="filter"] .fl-pill .d { display: none; }
 
 /* --- merge.blade.php --- */
 
@@ -5280,10 +5301,15 @@ body:has(.conversations) .mc-content {
         display: none;
     }
 
-    /* Tab "Lista": nav + list lado a lado */
-    .conversations[data-bv-mobile-tab="list"] .bv-nav,
+    /* Tab "Lista": nav + list lado a lado. Reasignar grid-area: la regla base
+       las deja en "content" (área inexistente en esta rejilla) → se solapaban. */
+    .conversations[data-bv-mobile-tab="list"] .bv-nav {
+        display: flex;
+        grid-area: nav;
+    }
     .conversations[data-bv-mobile-tab="list"] .bv-list {
         display: flex;
+        grid-area: list;
     }
 
     .conversations[data-bv-mobile-tab="list"] {
@@ -5377,10 +5403,17 @@ body:has(.conversations) .mc-content {
         display: none;
     }
 
-    /* Tab "Lista": show nav + list */
-    .conversations[data-bv-mobile-tab="list"] .bv-nav,
+    /* Tab "Lista": show nav + list.
+       Hay que reasignar la grid-area (la regla base las pone en "content",
+       que no existe en esta rejilla → ambas se auto-colocaban en la misma
+       celda y se solapaban). */
+    .conversations[data-bv-mobile-tab="list"] .bv-nav {
+        display: flex;
+        grid-area: nav;
+    }
     .conversations[data-bv-mobile-tab="list"] .bv-list {
         display: flex;
+        grid-area: list;
     }
 
     .conversations[data-bv-mobile-tab="list"] {
@@ -5758,6 +5791,13 @@ body:has(.conversations) .mc-content {
 .bv-status-open { background: #ecfdf5; color: var(--bv-success); }
 .bv-status-closed { background: #f4f4f5; color: var(--bv-text-muted); }
 .bv-status-pending { background: #fffbeb; color: var(--bv-warning); }
+
+/* Móvil pequeño: la nav de 200px deja la lista muy justa; estrecharla. */
+@media (max-width: 480px) {
+    .conversations[data-bv-mobile-tab="list"] {
+        grid-template-columns: 152px 1fr;
+    }
+}
 
 /* Priority badge */
 .bv-priority-urgent { background: #fef2f2; color: var(--bv-danger); }
@@ -8979,45 +9019,7 @@ mark.bv-search-hit.bv-search-current {
 .bv-source-actions .btn-link:hover { color: var(--bv-primary, #90bb13); }
 .bv-source-meta { font-size: 11px; }
 
-/* rp3-stats: key/value grid for balance data */
-.rp3-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 4px 0 8px;
-}
-.rp3-stat {
-    background: var(--bv-bg-subtle, #f5f6f8);
-    border-radius: 8px;
-    padding: 8px 10px;
-}
-.rp3-stat .lbl {
-    font-size: 11px;
-    color: var(--bv-text-muted, #8c929d);
-    margin-bottom: 2px;
-    text-transform: capitalize;
-}
-.rp3-stat .val { font-size: 13px; font-weight: 600; }
-
-/* rp3-points-card: loyalty points highlight */
-.rp3-points-card {
-    background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    margin: 4px 0 8px;
-}
-.rp3-points-val {
-    font-size: 28px;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1;
-}
-.rp3-points-lbl {
-    font-size: 12px;
-    color: rgba(255,255,255,.75);
-    margin-top: 4px;
-}
+/* rp3-stats/.rp3-stat/.rp3-points-* → movidos a HelpdeskErp (erp-inbox.css) */
 
 /* Expired voucher row */
 .rp3-order.is-expired { opacity: .55; }
@@ -12073,6 +12075,11 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     margin-bottom: 14px;
 }
 .bv-modal .minfo > i { margin-top: 1px; flex-shrink: 0; color: var(--bv-text, #18181b); }
+.bv-modal .minfo.danger {
+    background: #fef2f2;
+    color: #991b1b;
+}
+.bv-modal .minfo.danger > i { color: var(--bv-danger, #b91c1c); }
 
 /* ─── modal-list-label ─────────────────────────────────────────────────── */
 .bv-modal .bv-modal-list-label {
@@ -12308,7 +12315,8 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-right .rsp-banner .av {
     position: absolute;
     bottom: -20px;
-    left: 14px;
+    left: 50%;
+    transform: translateX(-50%);
     width: 42px;
     height: 42px;
     border-radius: 10px;
@@ -12326,6 +12334,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 /* Nombre y "Cliente desde" */
 .bv-right .rsp-head {
     padding: 26px 14px 12px;
+    text-align: center;
     border-bottom: 1px solid var(--bv-border, #e4e4e7);
     margin-bottom: 0;
 }
@@ -12372,11 +12381,20 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-right .rsp-actions button i {
     font-size: 13px;
 }
+/* Acción "Más" con menú desplegable (reusa estilos .bv-more-menu) */
+.bv-right .rsp-actions .rsp-more {
+    position: relative;
+    display: flex;
+}
+.bv-right .rsp-actions .rsp-more > .rsp-more-toggle {
+    flex: 1;
+}
 
-/* Stats (LTV/Conversaciones/Últ. visita) */
+/* Stats (Conversaciones/Últ. visita) */
 .bv-right .rsp-stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     border-top: 1px solid var(--bv-border, #e4e4e7);
     border-bottom: 1px solid var(--bv-border, #e4e4e7);
 }
@@ -12401,7 +12419,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-size: 9.5px;
     color: var(--bv-text-muted, #71717a);
     text-transform: uppercase;
-    letter-spacing: .08em;
+    letter-spacing: .03em;
     margin-top: 2px;
 }
 
@@ -12477,7 +12495,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     margin-bottom: 8px;
 }
 .bv-right .rsp-section .lbl > i:first-child {
-    font-size: 11px;
+    display: none;
 }
 .bv-right .rsp-section .lbl .add {
     margin-left: auto;
@@ -12587,6 +12605,36 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     color: var(--rsp-tag-color, #6c757d);
 }
 
+/* Filas de control (Estado / Prioridad / Agente) — selector uniforme */
+.bv-right .rsp-kv-ctrl {
+    padding: 7px 0;
+}
+.bv-right .rsp-kv-ctrl .v {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+.bv-right .rsp-kv-ctrl .r-tag-btn {
+    border: 1px solid var(--bv-border, #e4e4e7);
+    background: var(--bv-bg-panel, #fff);
+    padding: 6px 9px;
+}
+.bv-right .rsp-kv-ctrl .r-tag-btn:not(.bv-ap-trigger) {
+    justify-content: space-between;
+    min-width: 120px;
+}
+.bv-right .rsp-kv-ctrl .r-tag-btn i.fa-chevron-down {
+    margin-left: auto;
+}
+.bv-right .rsp-kv-ctrl .r-tag-btn:hover {
+    background: var(--bv-bg-subtle, #f4f4f5);
+    border-color: #c4c4c7;
+}
+
 /* Empty inline */
 .bv-right .rsp-empty {
     font-size: 11.5px;
@@ -12643,10 +12691,10 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     font-weight: 700;
     letter-spacing: .04em;
     text-transform: uppercase;
-    color: var(--bv-text, #18181b);
+    color: #15803d;
     padding: 2px 7px;
     border-radius: 3px;
-    background: var(--bv-bg-subtle, #f4f4f5);
+    background: #dcfce7;
     flex-shrink: 0;
 }
 .bv-right .rsp-integration.is-disconnected {
@@ -14061,4 +14109,305 @@ textarea.bv-form-input { resize: vertical; }
 .bv-rv-opt__s { display: block; font-size: 11.5px; color: var(--bv-text-muted); }
 .bv-rv-opt__radio { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--bv-border, #e4e4e7); flex-shrink: 0; transition: border-color .12s, background .12s; }
 .bv-rv-opt.on .bv-rv-opt__radio { border-color: var(--bv-primary, #90bb13); background: var(--bv-primary, #90bb13); box-shadow: inset 0 0 0 3px #fff; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Command palette · Buscar global (#55 ve-command-palette · ⌘K)
+   Mockup Alvarez: .cmd-modal / .cmd-input / .cmd-body / .cmd-item / .cmd-foot
+   Definido aquí (no inline en el blade) porque el modal se incluye al final del
+   <body> y su @push('styles') nunca alcanza el @stack('styles') del <head>.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bv-cmd-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(9, 9, 11, .45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 90px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+}
+.bv-cmd-overlay.on {
+    opacity: 1;
+    pointer-events: auto;
+}
+.bv-cmd-modal {
+    width: 100%;
+    max-width: 560px;
+    max-height: 520px;
+    margin: 0 16px;
+    background: var(--bv-bg-panel, #fff);
+    border: 1px solid var(--bv-border, #e4e4e7);
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(9, 9, 11, .28);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(-6px);
+    transition: transform .15s ease;
+}
+.bv-cmd-overlay.on .bv-cmd-modal {
+    transform: translateY(0);
+}
+.bv-cmd-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--bv-border, #e4e4e7);
+    flex-shrink: 0;
+}
+.bv-cmd-icon {
+    font-size: 14px;
+    color: var(--bv-text-muted, #71717a);
+    flex-shrink: 0;
+}
+.bv-cmd-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--bv-text, #18181b);
+}
+.bv-cmd-input::placeholder {
+    color: var(--bv-text-muted, #71717a);
+    font-weight: 400;
+}
+.bv-cmd-esc {
+    font-size: 9.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    color: var(--bv-text-muted, #71717a);
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.bv-cmd-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+}
+.bv-cmd-section {
+    padding: 7px 10px 4px;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--bv-text-muted, #71717a);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.bv-cmd-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12.5px;
+    color: var(--bv-text, #18181b);
+    transition: background .1s;
+}
+.bv-cmd-item:hover,
+.bv-cmd-item.on {
+    background: var(--bv-bg-subtle, #f4f4f5);
+}
+.bv-cmd-item__ico {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    color: var(--bv-text, #18181b);
+    flex-shrink: 0;
+}
+.bv-cmd-item.on .bv-cmd-item__ico {
+    background: var(--bv-accent, #18181b);
+    color: var(--bv-accent-fg, #fff);
+}
+.bv-cmd-item__main {
+    flex: 1;
+    min-width: 0;
+}
+.bv-cmd-item__t {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bv-cmd-item__s {
+    font-size: 10.5px;
+    color: var(--bv-text-muted, #71717a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.bv-cmd-kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 500;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    color: var(--bv-text-muted, #71717a);
+    border: 1px solid var(--bv-border, #e4e4e7);
+    letter-spacing: .02em;
+    flex-shrink: 0;
+}
+.bv-cmd-foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--bv-border, #e4e4e7);
+    background: var(--bv-bg-subtle, #f4f4f5);
+    font-size: 10.5px;
+    color: var(--bv-text-muted, #71717a);
+    flex-shrink: 0;
+}
+.bv-cmd-foot-k {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.bv-cmd-foot-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+}
+.bv-cmd-empty {
+    padding: 34px 16px;
+    text-align: center;
+    color: var(--bv-text-muted, #71717a);
+    font-size: 12.5px;
+}
+.bv-cmd-empty i {
+    display: block;
+    font-size: 22px;
+    margin-bottom: 8px;
+    opacity: .4;
+}
+.bv-cmd-loading {
+    padding: 28px;
+    text-align: center;
+    color: var(--bv-text-muted, #71717a);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Atajos de teclado · cheatsheet (#56 ve-shortcuts · ?)
+   Mockup Alvarez: .cheat-grid / .cheat-col / .cheat-row / .keys / .kbd
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bv-cheat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 26px;
+}
+.bv-cheat-col {
+    display: flex;
+    flex-direction: column;
+}
+.bv-cheat-h {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--bv-text-muted, #71717a);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 0 4px 6px;
+    border-bottom: 1px solid var(--bv-border, #e4e4e7);
+    margin-bottom: 4px;
+}
+.bv-cheat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    font-size: 11.5px;
+    border-radius: 5px;
+}
+.bv-cheat-row:hover {
+    background: var(--bv-bg-subtle, #f4f4f5);
+}
+.bv-cheat-lbl {
+    flex: 1;
+    color: var(--bv-text-soft, #3f3f46);
+}
+.bv-cheat-keys {
+    display: inline-flex;
+    gap: 3px;
+    flex-shrink: 0;
+}
+.bv-cheat-kbd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    min-width: 18px;
+    padding: 2px 6px;
+    text-align: center;
+    border-radius: 4px;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    color: var(--bv-text-soft, #3f3f46);
+    border: 1px solid var(--bv-border, #e4e4e7);
+    letter-spacing: .02em;
+}
+
+/* Impresión: al pulsar "Imprimir atajos" sólo se imprime la cheatsheet */
+@media print {
+    body * { visibility: hidden !important; }
+    .bv-modal[data-bv-modal-name="shortcuts"].on,
+    .bv-modal[data-bv-modal-name="shortcuts"].on * { visibility: visible !important; }
+    .bv-modal[data-bv-modal-name="shortcuts"].on {
+        position: fixed !important;
+        inset: 0 !important;
+        display: block !important;
+        background: #fff !important;
+        padding: 24px !important;
+        overflow: visible !important;
+    }
+    .bv-modal[data-bv-modal-name="shortcuts"].on .bv-modal-dialog {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .bv-modal[data-bv-modal-name="shortcuts"].on .bv-modal-close,
+    .bv-modal[data-bv-modal-name="shortcuts"].on .bv-modal-foot { display: none !important; }
+    .bv-cheat-row:hover { background: transparent !important; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Modo ausente / disponibilidad (#60 ve-away-mode)
+   Tarjeta de usuario del nav = trigger; dot refleja el estado de presencia.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.bv-nav-user-card { cursor: pointer; }
+.bv-nav-user-dot.is-available { background: #16a34a; box-shadow: 0 0 0 2px rgba(22, 163, 74, .18); }
+.bv-nav-user-dot.is-away,
+.bv-nav-user-dot.is-busy { background: #d97706; box-shadow: 0 0 0 2px rgba(217, 119, 6, .18); }
+.bv-nav-user-dot.is-offline { background: #9ca3af; box-shadow: 0 0 0 2px rgba(156, 163, 175, .18); }
+
+/* Iconos de estado dentro del picker de disponibilidad (sin inline styles) */
+.bv-modal .reason .ic .bv-st-available { color: #16a34a; font-size: 9px; }
+.bv-modal .reason .ic .bv-st-dnd { color: var(--bv-danger, #b91c1c); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive de modales (#55-61) — en móvil las rejillas de 2 columnas
+   (cheatsheet de atajos y filas de 2 campos) se apilan a 1 columna para evitar
+   labels wrapeados y selects truncados.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+    .bv-cheat-grid { grid-template-columns: 1fr; gap: 10px 0; }
+    .bv-modal .frow { grid-template-columns: 1fr; }
+    .bv-cmd-overlay { padding-top: 64px; }
+}
 

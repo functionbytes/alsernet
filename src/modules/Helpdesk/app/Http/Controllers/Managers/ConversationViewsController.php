@@ -4,17 +4,14 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Modules\Helpdesk\Http\Requests\StoreInboxViewRequest;
 use Modules\Helpdesk\Models\ConversationView;
 
 class ConversationViewsController extends Controller
 {
-    public function store(Request $request): JsonResponse
+    public function store(StoreInboxViewRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'filters' => ['nullable', 'array'],
-        ]);
+        $validated = $request->validated();
 
         $view = ConversationView::create([
             'name' => $validated['name'],
@@ -34,9 +31,7 @@ class ConversationViewsController extends Controller
 
     public function destroy(ConversationView $view): JsonResponse
     {
-        if ($view->user_id !== auth()->id() || ! $view->canDelete()) {
-            abort(403);
-        }
+        $this->authorize('delete', $view);
 
         $view->delete();
 

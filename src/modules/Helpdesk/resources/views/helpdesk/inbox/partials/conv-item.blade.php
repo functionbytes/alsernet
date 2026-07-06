@@ -44,21 +44,29 @@
     </div>
     {{-- Acciones rápidas al hover --}}
     <div class="bv-conv-hactions">
-        <button title="Fijar" aria-label="Fijar conversación"
-                data-bv-action="pin"
-                data-bv-url="{{ route('manager.helpdesk.conversations.pin', $conv['id']) }}">
-            <i class="fas fa-thumbtack" aria-hidden="true"></i>
-        </button>
-        <button title="Silenciar" aria-label="Silenciar conversación"
-                data-bv-action="mute"
-                data-bv-url="{{ route('manager.helpdesk.conversations.mute', $conv['id']) }}">
-            <i class="far fa-bell-slash" aria-hidden="true"></i>
-        </button>
-        <button title="Archivar" aria-label="Archivar conversación"
-                data-bv-action="archive"
-                data-bv-url="{{ route('manager.helpdesk.conversations.archive', $conv['id']) }}">
-            <i class="fas fa-archive" aria-hidden="true"></i>
-        </button>
-        <button title="Posponer" aria-label="Posponer conversación" data-bv-modal="snooze"><i class="far fa-clock" aria-hidden="true"></i></button>
+        @if(request('view') === 'deleted')
+            <button title="Restaurar" aria-label="Restaurar conversación"
+                    data-bv-action="restore"
+                    data-bv-url="{{ route('manager.helpdesk.conversations.restore', $conv['id']) }}">
+                <i class="fas fa-trash-arrow-up" aria-hidden="true"></i>
+            </button>
+        @else
+            <button title="Fijar" aria-label="Fijar conversación"
+                    data-bv-action="pin"
+                    data-bv-url="{{ route('manager.helpdesk.conversations.pin', $conv['id']) }}">
+                <i class="fas fa-thumbtack" aria-hidden="true"></i>
+            </button>
+            <button title="Silenciar" aria-label="Silenciar conversación"
+                    data-bv-action="mute"
+                    data-bv-url="{{ route('manager.helpdesk.conversations.mute', $conv['id']) }}">
+                <i class="far fa-bell-slash" aria-hidden="true"></i>
+            </button>
+            <button title="Archivar" aria-label="Archivar conversación"
+                    data-bv-action="archive"
+                    data-bv-url="{{ route('manager.helpdesk.conversations.archive', $conv['id']) }}">
+                <i class="fas fa-archive" aria-hidden="true"></i>
+            </button>
+            <button title="Posponer" aria-label="Posponer conversación" data-bv-modal="snooze"><i class="far fa-clock" aria-hidden="true"></i></button>
+        @endif
     </div>
 </div>

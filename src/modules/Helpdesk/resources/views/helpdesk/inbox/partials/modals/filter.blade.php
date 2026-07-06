@@ -1,8 +1,12 @@
 {{-- Modal: Filtrar conversaciones (mejorado) --}}
 <div class="bv-modal" data-bv-modal-name="filter">
     <div class="bv-modal-dialog lg">
-        <div class="bv-modal-head">
-            <div class="bv-modal-title"><i class="fas fa-filter bv-modal-title-icon"></i> Filtrar conversaciones</div>
+        <div class="bv-modal-head bv-modal-head--with-icon">
+            <div class="bv-modal-icon-box primary"><i class="fas fa-filter"></i></div>
+            <div class="bv-modal-title-wrap">
+                <span class="bv-modal-label">BANDEJA · VISTA</span>
+                <div class="bv-modal-title">Filtrar conversaciones</div>
+            </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
@@ -11,7 +15,7 @@
             <div class="fl-section">
                 <div class="fl-section-title">Accesos rápidos</div>
                 <div class="fl-saved" data-preset="urgent">
-                    <div class="ico bv-fl-ico-danger"><i class="fas fa-fire"></i></div>
+                    <div class="ico"><i class="fas fa-fire"></i></div>
                     <div class="body">
                         <div class="t">Urgentes sin asignar</div>
                         <div class="s">Prioridad urgente · sin agente</div>
@@ -19,7 +23,7 @@
                     <span class="c">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
                 </div>
                 <div class="fl-saved" data-preset="unread">
-                    <div class="ico bv-fl-ico-info"><i class="fas fa-envelope-open"></i></div>
+                    <div class="ico"><i class="fas fa-envelope-open"></i></div>
                     <div class="body">
                         <div class="t">Sin leer</div>
                         <div class="s">Abiertas sin asignar</div>
@@ -85,8 +89,7 @@
                     <div class="fl-section-title">Asignación</div>
                     <div class="fl-pills">
                         <button class="fl-pill" data-key="mine" data-val="1">Mías<span class="c">{{ $sidebarCounters['mine'] ?? 0 }}</span></button>
-                        <button class="fl-pill" data-key="assignee" data-val="unassigned">Sin asignar<span class="c">{{ $sidebarCounters['unread'] ?? 0 }}</span></button>
-                        <button class="fl-pill" data-key="urgent" data-val="1">Urgentes<span class="c">{{ $sidebarCounters['urgent'] ?? 0 }}</span></button>
+                        <button class="fl-pill" data-key="assignee" data-val="unassigned">Sin asignar<span class="c">{{ $sidebarCounters['unassigned'] ?? 0 }}</span></button>
                     </div>
                 </div>
 
@@ -127,9 +130,9 @@
 
         </div>
         <div class="bv-modal-foot">
+            <span id="flActiveCount" class="bv-filter-count">Sin filtros activos</span>
             <button class="btn-primary" id="flBtnApply">Aplicar filtros</button>
-            <button class="btn-secondary">Guardar vista</button>
-            <span id="flActiveCount" class="bv-filter-count">3 filtros activos</span>
+            <button class="btn-secondary" id="flBtnSaveView">Guardar vista</button>
             <button class="btn-secondary" id="flBtnClear">Limpiar</button>
         </div>
     </div>
@@ -139,32 +142,59 @@
 @push('scripts')
 <script>
 (function() {
+    var SEL = '[data-bv-modal-name="filter"]';
+
+    // El rango de fecha no cuenta como "filtro activo" del usuario
     function countActive() {
-        return $('[data-bv-modal-name="filter"] .fl-pill.on').length;
+        return $(SEL + ' .fl-pill.on:not([data-key="date"])').length;
     }
 
     function updateCount() {
         var n = countActive();
-        $('#flActiveCount').text(n + ' filtro' + (n !== 1 ? 's' : '') + ' activo' + (n !== 1 ? 's' : ''));
+        var txt = n === 0
+            ? 'Sin filtros activos'
+            : n + ' filtro' + (n !== 1 ? 's' : '') + ' activo' + (n !== 1 ? 's' : '');
+        $('#flActiveCount').text(txt);
     }
 
-    $(document).on('click', '[data-bv-modal-name="filter"] .fl-pill', function() {
+    // El rango Desde/Hasta solo se muestra cuando la fecha es "Personalizado"
+    function syncDateRange() {
+        var isCustom = $(SEL + ' .fl-pill[data-key="date"].on').data('val') === 'custom';
+        $(SEL + ' .fl-range').toggleClass('on', !!isCustom);
+    }
+
+    // Chips normales: selección múltiple
+    $(document).on('click', SEL + ' .fl-pill:not([data-key="date"])', function() {
         $(this).toggleClass('on');
         updateCount();
     });
 
+    // Chips de fecha: selección única + rango solo en "Personalizado"
+    $(document).on('click', SEL + ' .fl-pill[data-key="date"]', function() {
+        $(SEL + ' .fl-pill[data-key="date"]').removeClass('on');
+        $(this).addClass('on');
+        syncDateRange();
+        if ($(this).data('val') === 'custom') {
+            var range = $(SEL + ' .fl-range')[0];
+            if (range) {
+                range.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    });
+
     $(document).on('click', '#flBtnClear', function() {
-        $('[data-bv-modal-name="filter"] .fl-pill').removeClass('on');
+        $(SEL + ' .fl-pill').removeClass('on');
+        $(SEL + ' .fl-range').removeClass('on');
         updateCount();
     });
 
     $(document).on('click', '.fl-saved', function() {
         var preset = $(this).data('preset');
-        $('[data-bv-modal-name="filter"] .fl-pill').removeClass('on');
+        $(SEL + ' .fl-pill:not([data-key="date"])').removeClass('on');
         if (preset === 'urgent') {
-            $('[data-bv-modal-name="filter"] [data-val="urgent"][data-key="priority"],[data-bv-modal-name="filter"] [data-val="unassigned"]').addClass('on');
+            $(SEL + ' [data-val="urgent"][data-key="priority"],' + SEL + ' [data-val="unassigned"]').addClass('on');
         } else if (preset === 'unread') {
-            $('[data-bv-modal-name="filter"] [data-val="unassigned"]').addClass('on');
+            $(SEL + ' [data-val="unassigned"]').addClass('on');
         }
         updateCount();
     });
@@ -172,7 +202,7 @@
     $(document).on('click', '#flBtnApply', function() {
         var params = {};
 
-        $('[data-bv-modal-name="filter"] .fl-pill.on').each(function() {
+        $(SEL + ' .fl-pill.on').each(function() {
             var key = $(this).data('key');
             var val = $(this).data('val');
             if (!key || !val) return;
@@ -184,7 +214,7 @@
         });
 
         // Close modal
-        $('[data-bv-modal-name="filter"]').removeClass('on');
+        $(SEL).removeClass('on');
         if ($('.bv-modal.on').length === 0) {
             $('body').css('overflow', '');
         }
@@ -195,6 +225,40 @@
             $(document).trigger('bv:filter:apply', [params]);
         }
     });
+
+    // Refleja los filtros de la URL en los chips al abrir el modal
+    function syncFromUrl() {
+        var u = new URL(window.location.href);
+        $(SEL + ' .fl-pill').removeClass('on');
+        ['channel', 'status', 'priority', 'tag', 'mine', 'unread', 'urgent', 'vip', 'assignee', 'date'].forEach(function(param) {
+            var raw = u.searchParams.get(param);
+            if (!raw) { return; }
+            raw.split(',').forEach(function(val) {
+                $(SEL + ' .fl-pill[data-key="' + param + '"][data-val="' + val + '"]').addClass('on');
+            });
+        });
+        // Fecha por defecto (Hoy) si la URL no trae ninguna
+        if (!$(SEL + ' .fl-pill[data-key="date"].on').length) {
+            $(SEL + ' .fl-pill[data-key="date"][data-val="today"]').addClass('on');
+        }
+        syncDateRange();
+        updateCount();
+    }
+
+    $(document).on('click', '[data-bv-modal="filter"]', function() {
+        setTimeout(syncFromUrl, 0);
+    });
+
+    // Guardar vista: aplica la selección (actualiza la URL) y abre el modal de guardar vista
+    $(document).on('click', '#flBtnSaveView', function(e) {
+        e.preventDefault();
+        $('#flBtnApply').trigger('click');
+        $('#bv-save-view-btn').trigger('click');
+    });
+
+    // Estado inicial
+    syncDateRange();
+    updateCount();
 }());
 </script>
 @endpush

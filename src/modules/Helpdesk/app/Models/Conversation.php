@@ -475,8 +475,10 @@ class Conversation extends Model
 
     /**
      * Broadcast an inbox change to all relevant agents (assignee + auth user).
+     * Public so controllers can trigger it after actions that don't go through
+     * a model method (archive/unarchive, spam, snooze, delete, restore).
      */
-    protected function broadcastInboxChanged(string $changeType): void
+    public function broadcastInboxChanged(string $changeType): void
     {
         $userIds = array_filter(array_unique([
             $this->assignee_id,

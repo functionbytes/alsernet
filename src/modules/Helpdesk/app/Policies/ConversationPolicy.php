@@ -44,7 +44,8 @@ class ConversationPolicy
 
     public function restore(User $user, Conversation $conversation): bool
     {
-        return $user->hasPermissionTo('helpdesk.conversations.manage');
+        return $user->hasPermissionTo('helpdesk.conversations.manage')
+            && $this->canAccessInbox($user, $conversation);
     }
 
     public function forceDelete(User $user, Conversation $conversation): bool

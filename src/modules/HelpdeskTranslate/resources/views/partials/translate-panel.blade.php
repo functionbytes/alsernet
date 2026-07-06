@@ -6,9 +6,12 @@
 --}}
 @if(\Nwidart\Modules\Facades\Module::find('HelpdeskTranslate')?->isEnabled())
 @once
-@push('css')
+{{-- CSS inline (NO @push('css')): este panel se incluye dentro del hilo, que el
+     inbox inyecta por AJAX al cambiar de conversación. En ese render parcial
+     @push('css') no llega a ningún @stack (el <link> se perdía y el panel salía
+     sin estilos). Inline se re-aplica en cada carga del hilo; el navegador
+     cachea el fichero por el ?v=filemtime. --}}
 <link rel="stylesheet" href="{{ asset('vendor/helpdesktranslate/translate-panel.css') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/translate-panel.css')) }}">
-@endpush
 @push('scripts')
 <script>
 window.HelpdeskTranslateI18n = {

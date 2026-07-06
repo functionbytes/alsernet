@@ -15,8 +15,8 @@
 
             <div class="bv-warn-box">
                 <div class="bv-warn-box__body">
-                    <strong class="bv-warn-box__title">¿Eliminar esta conversación? Esta acción no se puede deshacer.</strong>
-                    <span class="bv-warn-box__desc">Todos los mensajes, adjuntos y notas internas se perderán permanentemente.</span>
+                    <strong class="bv-warn-box__title">¿Enviar esta conversación a la papelera?</strong>
+                    <span class="bv-warn-box__desc">Se moverá a «Eliminadas» con todos sus mensajes, adjuntos y notas. Podrás restaurarla desde la papelera.</span>
                 </div>
             </div>
 
@@ -51,7 +51,7 @@ $(document).on('click', '#bv-delete-conv-confirm', function () {
     .done(function () {
         $('[data-bv-modal-name="delete-conv"]').removeClass('on');
         if ($('.bv-modal.on').length === 0) $('body').css('overflow', '');
-        if (window.toastr) toastr.success('Conversación eliminada.');
+        if (window.toastr) toastr.success('Conversación movida a la papelera.');
         $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
     })
     .fail(function (xhr) {
