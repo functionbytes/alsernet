@@ -2,6 +2,8 @@
 
 return [
     'messages' => [
+        'message_from_support' => 'Message from support',
+
         // Tickets
         'ticket_created' => 'Ticket created successfully. Number: :number',
         'ticket_updated' => 'Ticket updated successfully.',
@@ -31,6 +33,11 @@ return [
         'conversation_unarchived' => 'Conversation unarchived',
         'conversation_message_sent' => 'Message sent successfully',
         'conversation_message_sent_and_closed' => 'Message sent and conversation closed',
+
+        // Merge
+        'merge_self' => 'You cannot merge a conversation with itself.',
+        'merge_different_customer' => 'The conversations do not belong to the same contact.',
+        'merge_success' => 'Conversations merged successfully.',
 
         // Tags
         'tag_added' => 'Tag added',
@@ -71,6 +78,68 @@ return [
 
         // Escalation
         'ticket_escalated' => 'Ticket escalated to :priority priority.',
+    ],
+
+    'labels' => [
+        'support_team' => 'Support Team',
+        'conversation_ref' => 'Conversation reference',
+    ],
+
+    'email' => [
+        'footer_note' => 'This email was sent by :app. If you have questions, just reply to this message.',
+    ],
+
+    // Inbox UI — Phase 1: left panel (sidebar + list toolbar).
+    'inbox' => [
+        'title' => 'Conversations',
+        'team_inbox' => 'Team inbox',
+        'online_active' => 'Online · :count active',
+        'new_conversation' => 'New conversation',
+        'change_availability' => 'Change availability',
+        'views' => 'Views',
+        'kanban_view' => 'Kanban view',
+        'save_current_view' => 'Save current view',
+
+        // Quick view navigation
+        'unread' => 'Unread',
+        'all' => 'All',
+        'mine' => 'Mine',
+        'urgent' => 'Urgent',
+        'in_bot' => 'In bot',
+        'in_bot_title' => 'Conversations the chatbot is handling',
+        'pending' => 'On hold',
+        'closed' => 'Closed',
+        'blocked' => 'Blocked',
+        'blocked_title' => 'Blocked contacts',
+        'spam' => 'Spam',
+        'spam_title' => 'Marked as spam',
+        'deleted' => 'Deleted',
+        'deleted_title' => 'Deleted conversations (trash)',
+
+        // Sidebar sections
+        'inboxes' => 'Inboxes',
+        'teams' => 'Teams',
+        'no_teams' => 'No teams',
+        'tags' => 'Tags',
+        'manage_tags' => 'Manage tags',
+        'no_tags' => 'No tags',
+        'my_views' => 'My views',
+        'delete_view' => 'Delete view',
+        'desktop_notifications' => 'Desktop notifications',
+
+        // List toolbar
+        'search_conversations' => 'Search conversations…',
+        'filter_conversations' => 'Filter conversations',
+        'sort_conversations' => 'Sort conversations',
+        'filters' => 'Filters',
+        'sort' => 'Sort',
+        'more_options' => 'More options',
+        'sort_by' => 'Sort by',
+        'sort_newest' => 'Newest',
+        'sort_oldest' => 'Oldest',
+        'sort_priority' => 'Priority',
+        'sort_unassigned' => 'Unassigned',
+        'sort_unread' => 'Unread',
     ],
 
 ];

@@ -3,49 +3,49 @@
     <div class="bv-list-head">
         <div class="bv-list-search">
             <i class="fas fa-magnifying-glass bv-list-search-icon"></i>
-            <input type="text" id="bv-search-input" placeholder="Buscar conversaciones…" aria-label="Buscar conversaciones" autocomplete="off">
+            <input type="text" id="bv-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.search_conversations') }}" autocomplete="off">
             <kbd class="bv-list-search-kbd">F</kbd>
         </div>
         <div class="bv-list-actions">
-            <button class="btn-ico" data-bv-modal="filter" title="Filtros" aria-label="Filtrar conversaciones">
+            <button class="btn-ico" data-bv-modal="filter" title="{{ __('helpdesk::helpdesk.inbox.filters') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.filter_conversations') }}">
                 <i class="fas fa-filter" aria-hidden="true"></i>
                 <span class="bv-filter-badge" id="bvFilterBadge" hidden></span>
             </button>
             <div class="bv-sort-wrap">
-                <button class="btn-ico" id="bv-btn-sort" title="Ordenar" aria-label="Ordenar conversaciones" aria-expanded="false" aria-haspopup="menu">
+                <button class="btn-ico" id="bv-btn-sort" title="{{ __('helpdesk::helpdesk.inbox.sort') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.sort_conversations') }}" aria-expanded="false" aria-haspopup="menu">
                     <i class="fas fa-arrow-up-arrow-down" aria-hidden="true"></i>
                 </button>
                 <div class="bv-sort-menu" id="bv-sort-menu" role="menu" aria-label="Ordenar conversaciones">
-                    <div class="bv-sort-menu-head">Ordenar por</div>
+                    <div class="bv-sort-menu-head">{{ __('helpdesk::helpdesk.inbox.sort_by') }}</div>
                     <button class="bv-sort-opt on" data-sort="newest" role="menuitemradio" aria-checked="true">
                         <i class="bv-sort-opt-ico fas fa-arrow-down-wide-short" aria-hidden="true"></i>
-                        <span class="bv-sort-opt-label">Más reciente</span>
+                        <span class="bv-sort-opt-label">{{ __('helpdesk::helpdesk.inbox.sort_newest') }}</span>
                         <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                     <button class="bv-sort-opt" data-sort="oldest" role="menuitemradio" aria-checked="false">
                         <i class="bv-sort-opt-ico fas fa-arrow-up-wide-short" aria-hidden="true"></i>
-                        <span class="bv-sort-opt-label">Más antiguo</span>
+                        <span class="bv-sort-opt-label">{{ __('helpdesk::helpdesk.inbox.sort_oldest') }}</span>
                         <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                     <button class="bv-sort-opt" data-sort="priority" role="menuitemradio" aria-checked="false">
                         <i class="bv-sort-opt-ico fas fa-fire" aria-hidden="true"></i>
-                        <span class="bv-sort-opt-label">Prioridad</span>
+                        <span class="bv-sort-opt-label">{{ __('helpdesk::helpdesk.inbox.sort_priority') }}</span>
                         <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                     <div class="bv-sort-menu-sep"></div>
                     <button class="bv-sort-opt" data-sort="unassigned" role="menuitemradio" aria-checked="false">
                         <i class="bv-sort-opt-ico fas fa-user-slash" aria-hidden="true"></i>
-                        <span class="bv-sort-opt-label">Sin asignar</span>
+                        <span class="bv-sort-opt-label">{{ __('helpdesk::helpdesk.inbox.sort_unassigned') }}</span>
                         <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                     <button class="bv-sort-opt" data-sort="unread" role="menuitemradio" aria-checked="false">
                         <i class="bv-sort-opt-ico far fa-envelope" aria-hidden="true"></i>
-                        <span class="bv-sort-opt-label">Sin leer</span>
+                        <span class="bv-sort-opt-label">{{ __('helpdesk::helpdesk.inbox.sort_unread') }}</span>
                         <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
-            <button class="btn-ico" title="Más opciones" aria-label="Más opciones">
+            <button class="btn-ico" title="{{ __('helpdesk::helpdesk.inbox.more_options') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.more_options') }}">
                 <i class="fas fa-ellipsis" aria-hidden="true"></i>
             </button>
         </div>
