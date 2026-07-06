@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-wand-magic-sparkles"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">IA · COMPOSER</span>
-                <div class="bv-modal-title">Sugerencias de respuesta</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -18,15 +18,15 @@
             <div id="aiSuggestContent" style="display:none">
                 <div class="bv-quote-block" id="aiSuggestOriginalMsg"></div>
 
-                <div class="bv-form-label" id="aiSuggestCountLabel" style="margin-bottom:8px"></div>
+                <div class="bv-form-label bv-x10" id="aiSuggestCountLabel"></div>
 
                 <div class="bv-ai-sug" id="aiSuggestList"></div>
 
                 <div class="bv-ai-sparkle">
                     <div class="bv-ai-sparkle__ic"><i class="fas fa-circle-info"></i></div>
                     <div>
-                        <div class="bv-ai-sparkle__lbl">CONTEXTO</div>
-                        Generado a partir del historial del cliente y la política de envíos.
+                        <div class="bv-ai-sparkle__lbl">{{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_context_label') }}</div>
+                        {{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_context_text') }}
                     </div>
                 </div>
             </div>
@@ -37,9 +37,9 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-ai-suggest-insert" disabled>Insertar y editar</button>
-            <button class="btn-secondary" id="bv-ai-suggest-regen">Regenerar opciones</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-ai-suggest-insert" disabled>{{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_insert') }}</button>
+            <button class="btn-secondary" id="bv-ai-suggest-regen">{{ __('helpdesk::helpdesk.inbox.modals.ai_suggest_regenerate') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

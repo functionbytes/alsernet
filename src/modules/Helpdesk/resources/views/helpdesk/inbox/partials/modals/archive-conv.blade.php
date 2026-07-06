@@ -4,31 +4,31 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box danger"><i class="fas fa-trash"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CONFIRMACIÓN</span>
-                <div class="bv-modal-title">Eliminar conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
-        <div class="bv-modal-body" style="text-align:center">
+        <div class="bv-modal-body bv-x11">
 
             <div class="bv-modal-danger-icon">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
             <p class="bv-modal-danger-text">
-                Esta acción <strong>no se puede deshacer</strong>. Se eliminarán todos los mensajes, adjuntos y registros de esta conversación.
+                {{ __('helpdesk::helpdesk.inbox.modals.archive_conv_warning_1') }} <strong>{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_warning_strong') }}</strong>. {{ __('helpdesk::helpdesk.inbox.modals.archive_conv_warning_2') }}
             </p>
-            <div class="bv-warn-box" style="text-align:left;margin-top:12px">
+            <div class="bv-warn-box bv-x12">
                 <div class="bv-warn-box__body">
-                    <i class="fas fa-lightbulb" style="color:var(--warning,#fec90f);margin-right:6px"></i>
-                    ¿Prefieres <strong>archivar</strong>? La conversación quedará oculta pero los datos se conservan.
+                    <i class="fas fa-lightbulb bv-x13"></i>
+                    {{ __('helpdesk::helpdesk.inbox.modals.archive_conv_hint_1') }} <strong>{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_hint_strong') }}</strong>? {{ __('helpdesk::helpdesk.inbox.modals.archive_conv_hint_2') }}
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-danger" id="bv-archive-conv-delete">Eliminar definitivamente</button>
-            <button class="btn-secondary" id="bv-archive-conv-archive">Archivar en su lugar</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-danger" id="bv-archive-conv-delete">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_delete_permanently') }}</button>
+            <button class="btn-secondary" id="bv-archive-conv-archive">{{ __('helpdesk::helpdesk.inbox.modals.archive_conv_archive_instead') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
