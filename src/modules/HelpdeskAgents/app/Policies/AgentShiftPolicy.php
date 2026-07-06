@@ -9,31 +9,31 @@ class AgentShiftPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.view');
+        return $user->hasPermissionTo('helpdesk.schedule.view');
     }
 
     public function view(User $user, AgentShift $agentShift): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.view');
+        return $user->hasPermissionTo('helpdesk.schedule.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.create');
+        return $user->hasPermissionTo('helpdesk.schedule.create');
     }
 
     public function update(User $user, AgentShift $agentShift): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.update');
+        return $user->hasPermissionTo('helpdesk.schedule.update');
     }
 
     public function delete(User $user, AgentShift $agentShift): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.delete');
+        return $user->hasPermissionTo('helpdesk.schedule.delete');
     }
 
     public function manage(User $user): bool
     {
-        return $user->hasPermissionTo('helpdesk.shifts.manage');
+        return $user->hasPermissionTo('helpdesk.schedule.manage');
     }
 }
