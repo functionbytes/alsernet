@@ -70,7 +70,10 @@ class ToolExecutionService
         $this->validateApiUrl($url);
 
         $method = strtoupper($authConfig['method'] ?? 'GET');
-        $client = Http::timeout($timeout)->acceptJson();
+        // Sin esto, validateApiUrl() solo protege la URL inicial: un host HTTPS
+        // externo podría responder 3xx hacia una IP interna (metadata/loopback)
+        // y Guzzle seguiría el redirect, bypaseando el guard SSRF.
+        $client = Http::timeout($timeout)->withoutRedirecting()->acceptJson();
 
         match ($authConfig['type'] ?? '') {
             'bearer' => $client = $client->withToken($authConfig['token'] ?? ''),
@@ -149,9 +152,43 @@ class ToolExecutionService
             throw new \RuntimeException('Only SELECT queries are allowed for database tools');
         }
 
+        // Bloquea multi-statement e inyección por comentarios que podrían
+        // esquivar la extracción de tablas de abajo.
+        if (str_contains($sql, ';') || str_contains($sql, '--') || str_contains($sql, '/*')) {
+            throw new \RuntimeException('Database tool queries may not contain multiple statements or comments');
+        }
+
+        // Allowlist de tablas (fail-closed): aunque los db-tools estén
+        // habilitados y quien crea la tool tenga el permiso, un SELECT solo
+        // puede leer tablas explícitamente permitidas — nunca `users`,
+        // `password_reset_tokens`, `information_schema`, etc.
+        $allowedTables = array_map('strtolower', (array) config('helpdeskagents.tools.allowed_tables', []));
+        $referenced = $this->extractReferencedTables($sql);
+
+        if ($referenced === []) {
+            throw new \RuntimeException('Could not determine the tables referenced by the database tool query');
+        }
+
+        $forbidden = array_values(array_diff($referenced, $allowedTables));
+        if ($forbidden !== []) {
+            throw new \RuntimeException('Database tool query references tables not in the allow-list: '.implode(', ', $forbidden));
+        }
+
         $rows = DB::select($sql, $arguments);
 
         return array_map(fn ($row) => (array) $row, $rows);
+    }
+
+    /**
+     * Nombres de tabla (minúsculas) referenciados tras FROM/JOIN.
+     *
+     * @return array<int, string>
+     */
+    private function extractReferencedTables(string $sql): array
+    {
+        preg_match_all('/\b(?:from|join)\s+`?([a-zA-Z_][a-zA-Z0-9_.]*)`?/i', $sql, $m);
+
+        return array_values(array_unique(array_map('strtolower', $m[1] ?? [])));
     }
 
     /**

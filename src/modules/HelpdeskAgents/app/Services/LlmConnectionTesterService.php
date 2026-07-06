@@ -73,7 +73,9 @@ class LlmConnectionTesterService
     {
         $baseUrl = $config['base_url'] ?? 'http://localhost:11434';
 
-        $response = Http::timeout(10)->get($baseUrl.'/api/tags');
+        $this->assertSafeLocalUrl($baseUrl);
+
+        $response = Http::timeout(10)->withoutRedirecting()->get($baseUrl.'/api/tags');
 
         if (! $response->ok()) {
             Log::warning('LlmConnectionTester: Ollama unreachable', [
@@ -89,6 +91,57 @@ class LlmConnectionTesterService
         if (! $modelExists) {
             throw new \RuntimeException('Modelo '.$config['model'].' no encontrado en Ollama');
         }
+    }
+
+    /**
+     * SSRF guard para el LLM local (Ollama). A diferencia del OutboundUrlGuard
+     * genérico, PERMITE loopback y RFC1918 porque un LLM self-hosted vive ahí
+     * (default http://localhost:11434); solo bloquea esquemas no http(s) y el
+     * rango link-local (169.254.0.0/16, fe80::/10) que incluye el endpoint de
+     * metadata cloud 169.254.169.254 — nunca un Ollama y objetivo típico de SSRF.
+     */
+    private function assertSafeLocalUrl(string $baseUrl): void
+    {
+        $parts = parse_url($baseUrl);
+        $scheme = strtolower($parts['scheme'] ?? '');
+
+        if (! in_array($scheme, ['http', 'https'], true) || empty($parts['host'])) {
+            throw new \RuntimeException('La URL del LLM local debe ser http(s) válida.');
+        }
+
+        foreach ($this->resolveHost($parts['host']) as $ip) {
+            if ($this->isLinkLocal($ip)) {
+                throw new \RuntimeException('La URL del LLM local apunta a una dirección no permitida.');
+            }
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveHost(string $host): array
+    {
+        $host = trim($host, '[]');
+
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return [$host];
+        }
+
+        return gethostbynamel($host) ?: [];
+    }
+
+    private function isLinkLocal(string $ip): bool
+    {
+        if (str_starts_with($ip, '169.254.')) {
+            return true;
+        }
+
+        $lower = strtolower($ip);
+
+        return str_starts_with($lower, 'fe8')
+            || str_starts_with($lower, 'fe9')
+            || str_starts_with($lower, 'fea')
+            || str_starts_with($lower, 'feb');
     }
 
     private function ensureOk(Response $response, string $provider, string $model): void
