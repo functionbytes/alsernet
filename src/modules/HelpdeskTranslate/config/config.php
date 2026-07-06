@@ -21,6 +21,12 @@ return [
      */
     'auto_translate_outgoing' => env('HELPDESK_TRANSLATE_AUTO_OUTGOING', false),
 
+    /*
+    | Cupo de caracteres traducidos por usuario y día. El throttle por minuto
+    | no acota el volumen total contra el provider (coste). 0 = sin límite.
+    */
+    'daily_char_limit' => (int) env('HELPDESK_TRANSLATE_DAILY_CHAR_LIMIT', 200000),
+
     'deepl' => [
         'key' => env('DEEPL_API_KEY', ''),
         'url' => env('DEEPL_API_URL', 'https://api-free.deepl.com'),

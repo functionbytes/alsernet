@@ -5,11 +5,14 @@ namespace Modules\HelpdeskTranslate\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\HelpdeskTranslate\Http\Concerns\EnforcesTranslationQuota;
 use Modules\HelpdeskTranslate\Http\Requests\TranslateItemRequest;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
 
 class TranslateItemController extends Controller
 {
+    use EnforcesTranslationQuota;
+
     public function __construct(
         private readonly CachedTranslator $translator,
     ) {}
@@ -28,6 +31,8 @@ class TranslateItemController extends Controller
                 422,
             );
         }
+
+        $this->enforceDailyCharacterQuota($request, mb_strlen($text));
 
         $target = $request->input('target', 'es');
         $translated = $this->translator->translate($text, $target);
