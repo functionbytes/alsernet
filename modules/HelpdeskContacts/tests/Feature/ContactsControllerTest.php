@@ -10,8 +10,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskContacts\Database\Seeders\HelpdeskContactsPermissionsSeeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
+use Tests\Concerns\SeedsCorePermissions;
 use Tests\TestCase;
 
 /**
@@ -27,6 +26,7 @@ use Tests\TestCase;
 class ContactsControllerTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsCorePermissions;
 
     /** Roll back writes on both the default and helpdesk connections. */
     protected $connectionsToTransact = [null, 'helpdesk'];
@@ -52,12 +52,7 @@ class ContactsControllerTest extends TestCase
             }
         });
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-        // scopeForAgent() consulta estos dos permisos del core (sembrados por el
-        // PermissionsSeeder del core en producción); deben existir aunque el
-        // usuario no los tenga, o hasPermissionTo() lanzaría PermissionDoesNotExist.
-        Permission::findOrCreate('helpdesk.manage', 'web');
-        Permission::findOrCreate('helpdesk.customers.manage', 'web');
+        $this->seedCorePermissions();
         $this->seed(HelpdeskContactsPermissionsSeeder::class);
 
         // Usuario happy-path: manager (helpdesk.manage) → ve todos los contactos.

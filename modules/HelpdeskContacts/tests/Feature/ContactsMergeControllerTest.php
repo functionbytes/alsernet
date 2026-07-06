@@ -6,8 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Database\Seeders\HelpdeskContactsPermissionsSeeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
+use Tests\Concerns\SeedsCorePermissions;
 use Tests\TestCase;
 
 /**
@@ -19,6 +18,7 @@ use Tests\TestCase;
 class ContactsMergeControllerTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsCorePermissions;
 
     protected $connectionsToTransact = [null, 'helpdesk'];
 
@@ -28,14 +28,8 @@ class ContactsMergeControllerTest extends TestCase
     {
         parent::setUp();
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->seedCorePermissions();
         $this->seed(HelpdeskContactsPermissionsSeeder::class);
-
-        // assertVisible()/scopeForAgent() consultan estos permisos del core con
-        // hasPermissionTo(), que LANZA si no existen; el seeder de Contactos solo
-        // crea contacts.* — hay que asegurarlos aunque el usuario no los tenga.
-        Permission::findOrCreate('helpdesk.manage', 'web');
-        Permission::findOrCreate('helpdesk.customers.manage', 'web');
 
         // helpdesk.manage → scopeForAgent trata al usuario como manager (ve todos
         // los contactos); sin él, assertVisible lo restringe a los de su bandeja y

@@ -11,8 +11,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskContacts\Database\Seeders\HelpdeskContactsPermissionsSeeder;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\PermissionRegistrar;
+use Tests\Concerns\SeedsCorePermissions;
 use Tests\TestCase;
 
 /**
@@ -32,6 +31,7 @@ use Tests\TestCase;
 class ContactTabsControllerTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsCorePermissions;
 
     /** Roll back writes on both the default and helpdesk connections. */
     protected $connectionsToTransact = [null, 'helpdesk'];
@@ -64,11 +64,8 @@ class ContactTabsControllerTest extends TestCase
 
         config(['helpdeskErp.manager_url' => 'http://manager.test']);
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        $this->seedCorePermissions();
         $this->seed(HelpdeskContactsPermissionsSeeder::class);
-        // forAgent() consulta ambos permisos; deben EXISTIR o hasPermissionTo() lanza.
-        Permission::findOrCreate('helpdesk.manage', 'web');
-        Permission::findOrCreate('helpdesk.customers.manage', 'web');
 
         // Happy-path: manager (helpdesk.manage) → forAgent() ve todos los contactos.
         // El aislamiento por bandeja de agentes restringidos se cubre en el test
