@@ -9,11 +9,12 @@ use Modules\Helpdesk\Models\Customer;
 use Tests\TestCase;
 
 /**
- * Regression tests for IDOR in PreChatFormApiController::submit.
+ * Regresión IDOR en PreChatFormApiController::submit.
  *
- * Verifies that a requester cannot submit a pre-chat form on behalf of a
- * conversation they do not own, either by supplying a mismatched customer_id
- * or a mismatched customer_email.
+ * La propiedad de la conversación se verifica con el token del widget
+ * (X-Conversation-Token contra metadata.widget_pubsub_token, hash_equals), NO con
+ * customer_id/customer_email — que son secuenciales/conocibles y permitían a un
+ * visitante sobrescribir el pre-chat y el email de conversaciones ajenas.
  */
 class PreChatFormOwnershipTest extends TestCase
 {
@@ -23,9 +24,9 @@ class PreChatFormOwnershipTest extends TestCase
 
     private Customer $owner;
 
-    private Customer $attacker;
-
     private Conversation $conversation;
+
+    private string $token = 'valid-widget-token-abc123';
 
     protected function setUp(): void
     {
@@ -37,94 +38,87 @@ class PreChatFormOwnershipTest extends TestCase
         );
 
         $this->owner = Customer::factory()->create(['email' => 'owner@example.com']);
-        $this->attacker = Customer::factory()->create(['email' => 'attacker@example.com']);
 
         $this->conversation = Conversation::factory()->create([
             'customer_id' => $this->owner->id,
+            'metadata' => ['widget_pubsub_token' => $this->token],
         ]);
     }
 
-    // -----------------------------------------------------------------------
-    // Failure paths: IDOR attempts
-    // -----------------------------------------------------------------------
+    // ── Failure paths: IDOR / token inválido ────────────────────────────────
 
-    public function test_submit_with_wrong_customer_id_returns_403(): void
+    public function test_submit_without_token_returns_403(): void
     {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
+        $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
             'conversation_id' => $this->conversation->id,
             'data' => ['name' => 'Attacker', 'email' => 'attacker@example.com'],
-            'customer_id' => $this->attacker->id,
-        ]);
-
-        $response->assertForbidden()
+        ])
+            ->assertForbidden()
             ->assertJsonPath('error', 'Forbidden');
     }
 
-    public function test_submit_with_wrong_customer_email_returns_403(): void
+    public function test_submit_with_wrong_token_returns_403(): void
     {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
+        $this->withHeader('X-Conversation-Token', 'not-the-real-token')
+            ->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
+                'conversation_id' => $this->conversation->id,
+                'data' => ['name' => 'Attacker'],
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('error', 'Forbidden');
+    }
+
+    public function test_supplying_customer_id_does_not_bypass_token(): void
+    {
+        // Aunque el atacante conozca el customer_id del dueño, sin el token no entra.
+        $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
             'conversation_id' => $this->conversation->id,
             'data' => ['name' => 'Attacker'],
-            'customer_email' => 'attacker@example.com',
-        ]);
-
-        $response->assertForbidden()
-            ->assertJsonPath('error', 'Forbidden');
-    }
-
-    public function test_submit_with_no_identity_returns_403(): void
-    {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
-            'conversation_id' => $this->conversation->id,
-            'data' => ['name' => 'Anonymous'],
-            // no customer_id, no customer_email
-        ]);
-
-        $response->assertForbidden()
+            'customer_id' => $this->owner->id,
+            'customer_email' => 'owner@example.com',
+        ])
+            ->assertForbidden()
             ->assertJsonPath('error', 'Forbidden');
     }
 
     public function test_idor_does_not_mutate_metadata_when_forbidden(): void
     {
-        $originalMetadata = $this->conversation->getRawOriginal('metadata');
-
         $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
             'conversation_id' => $this->conversation->id,
             'data' => ['name' => 'Attacker', 'email' => 'attacker@example.com'],
-            'customer_id' => $this->attacker->id,
-        ]);
+        ])->assertForbidden();
 
         $this->conversation->refresh();
-        $this->assertSame($originalMetadata, $this->conversation->getRawOriginal('metadata'));
+        $metadata = json_decode((string) $this->conversation->getRawOriginal('metadata'), true) ?: [];
+        $this->assertArrayNotHasKey('pre_chat', $metadata);
     }
 
     public function test_idor_does_not_mutate_customer_when_forbidden(): void
     {
-        $originalEmail = $this->attacker->email;
+        $anonymous = Customer::factory()->create(['email' => 'visitor@anonymous.local']);
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $anonymous->id,
+            'metadata' => ['widget_pubsub_token' => 'a-different-token'],
+        ]);
 
         $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
-            'conversation_id' => $this->conversation->id,
+            'conversation_id' => $conversation->id,
             'data' => ['email' => 'injected@example.com'],
-            'customer_id' => $this->attacker->id,
-        ]);
+        ])->assertForbidden();
 
-        $this->attacker->refresh();
-        $this->assertSame($originalEmail, $this->attacker->email);
+        $this->assertSame('visitor@anonymous.local', $anonymous->refresh()->email);
     }
 
-    // -----------------------------------------------------------------------
-    // Happy path: owner submits successfully
-    // -----------------------------------------------------------------------
+    // ── Happy path: token correcto ──────────────────────────────────────────
 
-    public function test_submit_with_correct_customer_id_persists_metadata(): void
+    public function test_submit_with_valid_token_header_persists_metadata(): void
     {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
-            'conversation_id' => $this->conversation->id,
-            'data' => ['name' => 'Owner Name', 'phone' => '+34600000000'],
-            'customer_id' => $this->owner->id,
-        ]);
-
-        $response->assertOk()
+        $this->withHeader('X-Conversation-Token', $this->token)
+            ->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
+                'conversation_id' => $this->conversation->id,
+                'data' => ['name' => 'Owner Name', 'phone' => '+34600000000'],
+            ])
+            ->assertOk()
             ->assertJsonPath('success', true);
 
         $this->conversation->refresh();
@@ -132,31 +126,19 @@ class PreChatFormOwnershipTest extends TestCase
         $this->assertSame('Owner Name', $metadata['pre_chat']['name'] ?? null);
     }
 
-    public function test_submit_with_correct_customer_email_persists_metadata(): void
+    public function test_submit_with_valid_token_via_body_field_persists_metadata(): void
     {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
+        // El trait acepta también el token por el campo conversation_token del body.
+        $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
             'conversation_id' => $this->conversation->id,
-            'data' => ['name' => 'Via Email'],
-            'customer_email' => 'owner@example.com',
-        ]);
-
-        $response->assertOk()
+            'conversation_token' => $this->token,
+            'data' => ['name' => 'Via Body'],
+        ])
+            ->assertOk()
             ->assertJsonPath('success', true);
 
         $this->conversation->refresh();
         $metadata = json_decode((string) $this->conversation->getRawOriginal('metadata'), true);
-        $this->assertSame('Via Email', $metadata['pre_chat']['name'] ?? null);
-    }
-
-    public function test_submit_email_matching_is_case_insensitive(): void
-    {
-        $response = $this->postJson(route('helpdesklivechat.pre-chat-form.submit'), [
-            'conversation_id' => $this->conversation->id,
-            'data' => ['name' => 'Case Test'],
-            'customer_email' => 'OWNER@EXAMPLE.COM',
-        ]);
-
-        $response->assertOk()
-            ->assertJsonPath('success', true);
+        $this->assertSame('Via Body', $metadata['pre_chat']['name'] ?? null);
     }
 }

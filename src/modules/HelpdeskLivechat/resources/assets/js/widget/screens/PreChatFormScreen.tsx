@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
-import { apiUrl } from '../api';
+import { apiUrl, conversationAuthHeaders } from '../api';
 import { setVisitorIdentity } from '../widget-identity';
 
 type PreChatOption = string | { value: string; label: string };
@@ -137,7 +137,7 @@ export function PreChatFormScreen() {
             try {
                 await fetch(apiUrl('/api/v1/helpdesk-livechat/pre-chat-form'), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...conversationAuthHeaders() },
                     body: JSON.stringify({
                         conversation_id: parseInt(conversationId, 10),
                         data: pendingPreChat,

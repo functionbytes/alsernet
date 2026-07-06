@@ -7,11 +7,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\HelpdeskLivechat\Concerns\VerifiesConversationToken;
 use Modules\HelpdeskLivechat\Http\Requests\SubmitPreChatFormRequest;
 use Modules\HelpdeskLivechat\Models\PreChatForm;
 
 class PreChatFormApiController extends Controller
 {
+    use VerifiesConversationToken;
+
     public function show(Request $request): JsonResponse
     {
         $inboxId = $request->query('inbox_id') ? (int) $request->query('inbox_id') : null;
@@ -39,7 +42,11 @@ class PreChatFormApiController extends Controller
     {
         $conversation = Conversation::with('customer')->findOrFail($request->conversation_id);
 
-        if (! $this->ownsConversation($request, $conversation)) {
+        // Autorización por el token de conversación del widget (widget_pubsub_token,
+        // comparado con hash_equals), NO por customer_id/customer_email — que son
+        // secuenciales/adivinables y permitían a un visitante sobrescribir el
+        // pre-chat y el email de conversaciones ajenas iterando el id.
+        if (! $this->conversationTokenValid($conversation, $request)) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
@@ -88,30 +95,5 @@ class PreChatFormApiController extends Controller
                 'phone' => $customer->phone,
             ] : null,
         ]);
-    }
-
-    /**
-     * Verify that the requester owns the conversation via customer_id or customer_email.
-     * At least one must match; if neither is provided or both fail → false.
-     */
-    private function ownsConversation(SubmitPreChatFormRequest $request, Conversation $conversation): bool
-    {
-        $customer = $conversation->customer;
-
-        if (! $customer) {
-            return false;
-        }
-
-        $requestedId = $request->integer('customer_id') ?: null;
-        if ($requestedId && $customer->id === $requestedId) {
-            return true;
-        }
-
-        $requestedEmail = $request->input('customer_email');
-        if ($requestedEmail && strcasecmp((string) $customer->email, $requestedEmail) === 0) {
-            return true;
-        }
-
-        return false;
     }
 }
