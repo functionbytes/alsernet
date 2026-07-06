@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskContacts\Services;
 
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Modules\Helpdesk\Models\Company;
@@ -61,6 +62,21 @@ class ContactAggregatorService
      * @return array<string, mixed>
      */
     public function resumen(Customer $customer): array
+    {
+        // Caché corta del panel Resumen: reúne ~10 consultas (métricas, health,
+        // sentiment, integraciones, pedidos, tickets). La clave incluye el
+        // updated_at del cliente, así que cualquier edición/ban lo invalida al
+        // instante; el TTL acota a 60s la frescura de los datos externos
+        // (pedidos/sentiment) que no tocan la fila del cliente.
+        $key = "helpdeskcontacts:resumen:{$customer->id}:".($customer->updated_at?->timestamp ?? 0);
+
+        return Cache::remember($key, now()->addSeconds(60), fn (): array => $this->buildResumen($customer));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildResumen(Customer $customer): array
     {
         $lifetime = $this->insights->lifetimeMetrics($customer);
         $healthScore = $this->insights->healthScore($customer);
