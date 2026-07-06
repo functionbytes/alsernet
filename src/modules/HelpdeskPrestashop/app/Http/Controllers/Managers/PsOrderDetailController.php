@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
+use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
@@ -15,6 +16,8 @@ use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
  */
 class PsOrderDetailController extends Controller
 {
+    use ScopesCustomerByInbox;
+
     public function __construct(
         private readonly PrestashopContextService $service
     ) {}
@@ -25,11 +28,24 @@ class PsOrderDetailController extends Controller
             return response()->json(['success' => false], 403);
         }
 
-        // The email scopes ownership validation in getOrderDetail(), so it MUST be
-        // part of the cache key — otherwise the first email's result is served to
-        // any other email querying the same order id (data leak / cache poisoning).
-        $customerEmail = $request->query('email');
-        $cacheKey = 'ps_order_detail:'.$order.':'.md5((string) $customerEmail);
+        // El email es OBLIGATORIO y acota la propiedad del pedido en el bridge:
+        // sin él, cualquier agente con helpdeskprestashop.orders.view podía leer
+        // el detalle completo de CUALQUIER pedido por id (IDOR). Además se exige
+        // que el agente comparta inbox con ese cliente (aislamiento por inbox).
+        $customerEmail = trim((string) $request->query('email'));
+
+        if ($customerEmail === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Falta el email del cliente para verificar la propiedad del pedido.',
+            ], 422);
+        }
+
+        $this->assertScopedToCustomerEmail($customerEmail);
+
+        // El email forma parte de la clave de caché: si no, el resultado del
+        // primer email se serviría a otro email sobre el mismo order id.
+        $cacheKey = 'ps_order_detail:'.$order.':'.md5($customerEmail);
 
         $data = Cache::remember($cacheKey, 600, function () use ($order, $customerEmail) {
             try {
