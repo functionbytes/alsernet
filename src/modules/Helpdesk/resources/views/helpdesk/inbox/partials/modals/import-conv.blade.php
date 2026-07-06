@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-file-import"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">DATOS · IMPORTAR</span>
-                <div class="bv-modal-title">Importar conversaciones</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,8 +13,8 @@
 
             <div class="bv-dropzone" id="importConvDropzone">
                 <i class="fas fa-cloud-arrow-up bv-dropzone__ico"></i>
-                <div class="bv-dropzone__title">Arrastra archivos CSV o XLSX aquí</div>
-                <div class="bv-dropzone__hint">o <span class="bv-dropzone__link" id="importConvBrowse">selecciona</span> · máx 25 MB</div>
+                <div class="bv-dropzone__title">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_title') }}</div>
+                <div class="bv-dropzone__hint">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_hint_or') }} <span class="bv-dropzone__link" id="importConvBrowse">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_browse') }}</span> {{ __('helpdesk::helpdesk.inbox.modals.import_conv_dropzone_max_size') }}</div>
                 <input type="file" id="importConvFile" accept=".csv,.xlsx" style="display:none">
             </div>
 
@@ -25,39 +25,39 @@
             </div>
 
             <div id="importConvMapping" style="display:none">
-                <div class="bv-form-label" style="text-transform:uppercase;font-size:9.5px;letter-spacing:.06em;margin-top:12px;margin-bottom:6px">Mapeo de columnas</div>
+                <div class="bv-form-label bv-x29">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_field_mapping') }}</div>
                 <div class="bv-lp-row">
                     <span class="bv-lp-row__k">email_cliente →</span>
-                    <select class="bv-form-input" style="width:160px"><option>Email contacto</option></select>
+                    <select class="bv-form-input bv-x30"><option>{{ __('helpdesk::helpdesk.inbox.modals.import_conv_map_email_contact') }}</option></select>
                 </div>
                 <div class="bv-lp-row">
                     <span class="bv-lp-row__k">canal →</span>
-                    <select class="bv-form-input" style="width:160px"><option>Canal</option></select>
+                    <select class="bv-form-input bv-x30"><option>{{ __('helpdesk::helpdesk.inbox.modals.import_conv_map_channel') }}</option></select>
                 </div>
                 <div class="bv-lp-row">
                     <span class="bv-lp-row__k">fecha →</span>
-                    <select class="bv-form-input" style="width:160px"><option>Created at</option></select>
+                    <select class="bv-form-input bv-x30"><option>Created at</option></select>
                 </div>
                 <div class="bv-lp-row">
                     <span class="bv-lp-row__k">mensaje →</span>
-                    <select class="bv-form-input" style="width:160px"><option>Cuerpo</option></select>
+                    <select class="bv-form-input bv-x30"><option>{{ __('helpdesk::helpdesk.inbox.modals.import_conv_map_body') }}</option></select>
                 </div>
             </div>
 
-            <label class="bv-check" style="margin-top:12px">
+            <label class="bv-check bv-x31">
                 <input type="checkbox" id="importConvCreateContacts" checked>
-                Crear contactos nuevos si no existen
+                {{ __('helpdesk::helpdesk.inbox.modals.import_conv_create_contacts') }}
             </label>
             <label class="bv-check">
                 <input type="checkbox" id="importConvAssignAgent">
-                Asignar a un agente por defecto
+                {{ __('helpdesk::helpdesk.inbox.modals.import_conv_assign_default_agent') }}
             </label>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-import-conv-submit" disabled>Importar</button>
-            <button class="btn-secondary" id="bv-import-conv-template">Descargar plantilla CSV</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-import-conv-submit" disabled>{{ __('helpdesk::helpdesk.inbox.modals.import_conv_submit') }}</button>
+            <button class="btn-secondary" id="bv-import-conv-template">{{ __('helpdesk::helpdesk.inbox.modals.import_conv_download_template') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

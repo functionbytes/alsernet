@@ -4,37 +4,37 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-file-export"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · EXPORTAR</span>
-                <div class="bv-modal-title">Exportar conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Formato</label>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_field_format') }}</label>
                 <div class="bv-opt-list" id="exportFormatList">
                     <button type="button" class="bv-opt on" data-bv-value="pdf">
-                        <div class="bv-opt__ic"><i class="far fa-file-pdf" style="color:#dc2626"></i></div>
+                        <div class="bv-opt__ic"><i class="far fa-file-pdf bv-x23"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">PDF</span>
-                            <span class="bv-opt__s">Documento listo para imprimir</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_pdf_title') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_pdf_desc') }}</span>
                         </div>
                         <span class="bv-opt__badge">.PDF</span>
                     </button>
                     <button type="button" class="bv-opt" data-bv-value="csv">
-                        <div class="bv-opt__ic"><i class="far fa-file-lines" style="color:#16a34a"></i></div>
+                        <div class="bv-opt__ic"><i class="far fa-file-lines bv-x24"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">CSV</span>
-                            <span class="bv-opt__s">Hoja de cálculo · 1 fila por mensaje</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_csv_title') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_csv_desc') }}</span>
                         </div>
                         <span class="bv-opt__badge">.CSV</span>
                     </button>
                     <button type="button" class="bv-opt" data-bv-value="json">
-                        <div class="bv-opt__ic"><i class="fas fa-code" style="color:#7c3aed"></i></div>
+                        <div class="bv-opt__ic"><i class="fas fa-code bv-x25"></i></div>
                         <div class="bv-opt__body">
-                            <span class="bv-opt__t">JSON</span>
-                            <span class="bv-opt__s">Datos estructurados con metadatos</span>
+                            <span class="bv-opt__t">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_json_title') }}</span>
+                            <span class="bv-opt__s">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_format_json_desc') }}</span>
                         </div>
                         <span class="bv-opt__badge">.JSON</span>
                     </button>
@@ -42,19 +42,19 @@
             </div>
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Opciones</label>
-                <div style="display:flex;flex-direction:column;gap:6px">
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.export_conv_field_options') }}</label>
+                <div class="bv-x26">
                     <label class="bv-check">
                         <input type="checkbox" id="exportNotes" checked>
-                        Incluir notas internas
+                        {{ __('helpdesk::helpdesk.inbox.modals.export_conv_option_notes') }}
                     </label>
                     <label class="bv-check">
                         <input type="checkbox" id="exportMeta">
-                        Incluir metadatos (IPs, tiempos de respuesta)
+                        {{ __('helpdesk::helpdesk.inbox.modals.export_conv_option_meta') }}
                     </label>
                     <label class="bv-check">
                         <input type="checkbox" id="exportAttachments">
-                        Incluir lista de adjuntos
+                        {{ __('helpdesk::helpdesk.inbox.modals.export_conv_option_attachments') }}
                     </label>
                 </div>
             </div>
@@ -62,9 +62,9 @@
         </div>
         <div class="bv-modal-foot">
             <button class="btn-primary" id="bv-export-conv-go">
-                <i class="fas fa-download me-1"></i> Exportar
+                <i class="fas fa-download me-1"></i> {{ __('helpdesk::helpdesk.inbox.modals.export_conv_submit') }}
             </button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -103,7 +103,7 @@
             include_meta:    $('#exportMeta').is(':checked') ? '1' : '0',
             include_attachments: $('#exportAttachments').is(':checked') ? '1' : '0',
         });
-        window.location.href = '/panel/helpdesk/exports/conversations?' + params.toString();
+        window.location.href = '/panel/helpdesk/exports/conversation-transcript?' + params.toString();
         closeBvModal('export-conv');
     });
 

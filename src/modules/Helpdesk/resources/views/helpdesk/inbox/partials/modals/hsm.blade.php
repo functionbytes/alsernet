@@ -2,7 +2,7 @@
 <div class="bv-modal" data-bv-modal-name="hsm">
     <div class="bv-modal-dialog lg">
         <div class="bv-modal-head">
-            <div class="bv-modal-title"><i class="fab fa-whatsapp bv-modal-title-icon bv-modal-title-icon--whatsapp"></i> Plantillas WhatsApp (HSM)</div>
+            <div class="bv-modal-title"><i class="fab fa-whatsapp bv-modal-title-icon bv-modal-title-icon--whatsapp"></i> {{ __('helpdesk::helpdesk.inbox.modals.hsm_title') }}</div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
@@ -13,15 +13,15 @@
                 <div>
                     <div class="bv-modal-search bv-modal-search-mb10">
                         <i class="fas fa-magnifying-glass"></i>
-                        <input id="hsm-search" type="text" placeholder="Buscar plantilla…" autocomplete="off">
+                        <input id="hsm-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.hsm_search_placeholder') }}" autocomplete="off">
                     </div>
 
                     {{-- Category pills --}}
                     <div class="bv-hsm-cats">
-                        <button class="bv-chip on" data-cat="">Todas</button>
-                        <button class="bv-chip" data-cat="Utilidad">Utilidad</button>
-                        <button class="bv-chip" data-cat="Marketing">Marketing</button>
-                        <button class="bv-chip" data-cat="Autenticación">Autenticación</button>
+                        <button class="bv-chip on" data-cat="">{{ __('helpdesk::helpdesk.inbox.modals.hsm_cat_all') }}</button>
+                        <button class="bv-chip" data-cat="Utilidad">{{ __('helpdesk::helpdesk.inbox.modals.hsm_cat_utility') }}</button>
+                        <button class="bv-chip" data-cat="Marketing">{{ __('helpdesk::helpdesk.inbox.modals.hsm_cat_marketing') }}</button>
+                        <button class="bv-chip" data-cat="Autenticación">{{ __('helpdesk::helpdesk.inbox.modals.hsm_cat_auth') }}</button>
                     </div>
 
                     {{-- Template list --}}
@@ -106,13 +106,13 @@
                 {{-- Right: preview + variables --}}
                 <div>
                     <div class="bv-hsm-preview-head">
-                        <span>Vista previa</span>
-                        <span id="hsm-status-badge" class="bv-hsm-status-badge bv-tpl-badge-approved">Aprobada</span>
+                        <span>{{ __('helpdesk::helpdesk.inbox.modals.hsm_preview_label') }}</span>
+                        <span id="hsm-status-badge" class="bv-hsm-status-badge bv-tpl-badge-approved">{{ __('helpdesk::helpdesk.inbox.modals.hsm_status_approved') }}</span>
                     </div>
 
                     {{-- WhatsApp chat bubble --}}
                     <div class="bv-hsm-preview-bg">
-                        <div class="bv-hsm-date-label">Hoy</div>
+                        <div class="bv-hsm-date-label">{{ __('helpdesk::helpdesk.inbox.modals.hsm_date_today') }}</div>
                         <div class="bv-hsm-bubble-wrap">
                             @verbatim
                             <div class="bv-bubble bv-hsm-preview-bubble" id="hsm-preview-bubble">
@@ -123,7 +123,7 @@
                     </div>
 
                     {{-- Variables form --}}
-                    <div class="bv-right-section-title bv-rst-mb8">Variables</div>
+                    <div class="bv-right-section-title bv-rst-mb8">{{ __('helpdesk::helpdesk.inbox.modals.hsm_field_variables') }}</div>
                     @verbatim
                     <div id="hsm-vars-form" class="bv-hsm-vars">
                         <div class="bv-hsm-var-row">
@@ -145,8 +145,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-hsm-send">Enviar plantilla</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-hsm-send">{{ __('helpdesk::helpdesk.inbox.modals.hsm_submit') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -216,7 +216,7 @@
                 + '<input type="text" placeholder="' + placeholder + '" data-var="' + v + '" class="bv-var-input">'
                 + '</div>';
         });
-        $('#hsm-vars-form').html(form || '<p class="bv-text-muted" style="font-size:13px;margin:0">Esta plantilla no tiene variables.</p>');
+        $('#hsm-vars-form').html(form || '<p class="bv-text-muted bv-x28">Esta plantilla no tiene variables.</p>');
     });
 
     $(document).on('click', '[data-bv-modal-name="hsm"] .bv-chip', function () {
