@@ -64,17 +64,17 @@ class PostsExport implements FromCollection, WithHeadings, WithMapping, WithStyl
     {
         return [
             $post->id,
-            $post->socialAccount?->name ?? 'N/A',
-            $post->campaign?->name ?? 'Sin campaña',
+            $this->csvSafe($post->socialAccount?->name ?? 'N/A'),
+            $this->csvSafe($post->campaign?->name ?? 'Sin campaña'),
             $post->status->value,
-            substr($post->content, 0, 100).'...',
+            $this->csvSafe(substr((string) $post->content, 0, 100).'...'),
             $post->scheduled_at?->format('Y-m-d H:i') ?? 'N/A',
             $post->published_at?->format('Y-m-d H:i') ?? 'N/A',
             $post->likes_count,
             $post->comments_count,
             $post->shares_count,
             $post->getTotalEngagement(),
-            $post->creator?->name ?? 'N/A',
+            $this->csvSafe($post->creator?->name ?? 'N/A'),
             $post->created_at->format('Y-m-d H:i'),
         ];
     }
@@ -84,5 +84,17 @@ class PostsExport implements FromCollection, WithHeadings, WithMapping, WithStyl
         return [
             1 => ['font' => ['bold' => true]],
         ];
+    }
+
+    /**
+     * Prefija con comilla los valores que empiezan por =,+,-,@ para que Excel/
+     * Sheets no ejecute como fórmula el contenido/nombres editables del post
+     * (CSV formula injection).
+     */
+    private function csvSafe(?string $value): string
+    {
+        $value = (string) $value;
+
+        return preg_match('/^[=+\-@]/', $value) ? "'".$value : $value;
     }
 }
