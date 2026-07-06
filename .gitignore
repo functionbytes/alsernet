@@ -48,3 +48,13 @@ CLAUDE.local.md
 *.bak
 /.phpunit.cache/
 *.zip
+
+# Claude Code worktrees (SIN punto — el agente crea los worktrees en /claude/,
+# distinto de /.claude/worktrees/ de arriba)
+/claude/
+
+# Runtime / scratch a nivel de raiz (nunca versionar)
+/storage/framework/
+/storage/logs/
+/system_test_clean/
+/snapshot_*.txt
