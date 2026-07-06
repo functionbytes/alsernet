@@ -229,7 +229,9 @@ class ContactsController extends Controller
 
         match ($data['action']) {
             'ban' => Customer::whereIn('id', $ids)->update(['banned_at' => now()]),
-            'unban' => Customer::whereIn('id', $ids)->update(['banned_at' => null]),
+            // Limpia también ban_reason (igual que Customer::unban()); sin esto el
+            // motivo del baneo previo quedaba obsoleto tras reactivar en lote.
+            'unban' => Customer::whereIn('id', $ids)->update(['banned_at' => null, 'ban_reason' => null]),
             'delete' => Customer::whereIn('id', $ids)->delete(),
         };
 

@@ -188,6 +188,25 @@ class ContactsControllerTest extends TestCase
         $this->assertNotNull($customer->fresh()->banned_at, 'La acción ban debe marcar banned_at.');
     }
 
+    public function test_bulk_action_unban_clears_ban_reason(): void
+    {
+        $editor = User::factory()->create();
+        $editor->givePermissionTo(['contacts.view', 'contacts.update', 'helpdesk.manage']);
+        $customer = Customer::factory()->create([
+            'banned_at' => now(),
+            'ban_reason' => 'spam',
+        ]);
+
+        $this->actingAs($editor)
+            ->postJson(route('contacts.bulk-action'), ['action' => 'unban', 'ids' => [$customer->id]])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $fresh = $customer->fresh();
+        $this->assertNull($fresh->banned_at, 'La acción unban debe limpiar banned_at.');
+        $this->assertNull($fresh->ban_reason, 'La acción unban debe limpiar también ban_reason.');
+    }
+
     // ── Aislamiento por inbox (regresión de seguridad) ───────────────────────
 
     public function test_restricted_agent_only_sees_contacts_in_assigned_inboxes(): void
