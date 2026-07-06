@@ -9,6 +9,7 @@ return [
 
     'errors' => [
         'service_unavailable' => 'El servicio de traducción no está disponible.',
+        'daily_quota_exceeded' => 'Has alcanzado el límite diario de caracteres traducidos. Inténtalo de nuevo mañana.',
         'item_empty' => 'El item no tiene texto para traducir.',
         'no_api_key' => 'No hay API key configurada.',
         'deepl_status' => 'DeepL respondió con código :status.',

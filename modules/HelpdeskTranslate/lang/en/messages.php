@@ -9,6 +9,7 @@ return [
 
     'errors' => [
         'service_unavailable' => 'Translation service is unavailable.',
+        'daily_quota_exceeded' => 'You have reached the daily translated-character limit. Please try again tomorrow.',
         'item_empty' => 'Item has no text to translate.',
         'no_api_key' => 'No API key configured.',
         'deepl_status' => 'DeepL responded with code :status.',
