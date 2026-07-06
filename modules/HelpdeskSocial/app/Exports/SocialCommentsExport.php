@@ -42,16 +42,28 @@ class SocialCommentsExport implements FromCollection, WithHeadings, WithMapping
         return [
             $row->id,
             $row->platform,
-            $row->author_name,
-            $row->body,
+            $this->csvSafe($row->author_name),
+            $this->csvSafe($row->body),
             $row->intent,
             $row->urgency,
             $row->status,
             $row->is_mention ? 'Sí' : 'No',
-            $row->reply_body ? mb_substr($row->reply_body, 0, 100) : '',
+            $this->csvSafe($row->reply_body ? mb_substr($row->reply_body, 0, 100) : ''),
             $row->auto_replied ? 'Sí' : 'No',
             $row->created_at?->format('Y-m-d H:i'),
             $row->posted_at?->format('Y-m-d H:i'),
         ];
+    }
+
+    /**
+     * Neutraliza inyección de fórmulas: autor/cuerpo/respuesta provienen de
+     * comentarios de RRSS (no confiables). Si abren el CSV en Excel, un valor que
+     * empieza por =,+,-,@ se ejecutaría como fórmula/macro.
+     */
+    private function csvSafe(?string $value): string
+    {
+        $value = (string) $value;
+
+        return preg_match('/^[=+\-@]/', $value) ? "'".$value : $value;
     }
 }
