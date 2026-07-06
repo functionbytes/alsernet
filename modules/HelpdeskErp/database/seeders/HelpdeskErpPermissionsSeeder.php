@@ -18,6 +18,10 @@ class HelpdeskErpPermissionsSeeder extends Seeder
             'helpdeskerp.refresh',
             'helpdeskerp.health.view',
             'helpdeskerp.orders.detail.view',
+            // Consulta de NO-clientes (prospectos) en el ERP: expone datos reales
+            // (balance/crédito/pedidos) de cualquier email/id, así que se reserva
+            // a roles de confianza (admins) y NO se da al rol de agente.
+            'helpdeskerp.prospect.view',
         ];
 
         foreach ($permissions as $permission) {

@@ -46,7 +46,7 @@ class ErpTimelineTest extends TestCase
         $this->seed(HelpdeskErpPermissionsSeeder::class);
 
         $this->user = User::factory()->create();
-        $this->user->givePermissionTo('helpdeskerp.view');
+        $this->user->givePermissionTo(['helpdeskerp.view', 'helpdeskerp.prospect.view']);
     }
 
     // ── Authorization ──────────────────────────────────────────────────────

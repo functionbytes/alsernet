@@ -5,6 +5,7 @@ namespace Modules\HelpdeskErp\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskErp\Http\Requests\CustomerContextRequest;
 use Modules\HelpdeskErp\Http\Requests\RefreshCustomerContextRequest;
 use Modules\HelpdeskErp\Http\Resources\CustomerContextResource;
@@ -14,6 +15,8 @@ use Modules\HelpdeskErp\Services\ErpContextService;
 
 class ErpContextController extends Controller
 {
+    use ScopesCustomerByInbox;
+
     public function __construct(
         private readonly ErpContextService $service,
         private readonly CustomerTimelineService $timelineService,
@@ -57,6 +60,8 @@ class ErpContextController extends Controller
      */
     public function show(CustomerContextRequest $request, string $email): JsonResponse
     {
+        $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
+
         $phone = $request->query('phone') ? (string) $request->query('phone') : null;
         $customerId = $request->query('customer_id') ? (int) $request->query('customer_id') : null;
 
@@ -98,6 +103,8 @@ class ErpContextController extends Controller
      */
     public function refresh(RefreshCustomerContextRequest $request, string $email): JsonResponse
     {
+        $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
+
         $this->service->forgetCache($email);
         $data = $this->service->getCustomerContext($email);
 
@@ -140,6 +147,8 @@ class ErpContextController extends Controller
             return response()->json(['success' => false, 'message' => 'Sin autorización.'], 403);
         }
 
+        $this->assertScopedToExternalId('erp', $customer, 'helpdeskerp.prospect.view');
+
         $detail = $this->service->getOrderDetail($customer, $order);
 
         if ($detail === null) {
@@ -160,6 +169,8 @@ class ErpContextController extends Controller
      */
     public function timeline(CustomerContextRequest $request, string $email): JsonResponse
     {
+        $this->assertScopedToCustomerEmail($email, 'helpdeskerp.prospect.view');
+
         $limit = (int) $request->query('limit', 50);
         $timeline = $this->timelineService->getTimeline($email, min(100, max(10, $limit)));
 
@@ -169,12 +180,13 @@ class ErpContextController extends Controller
     /**
      * GET /api/helpdeskErp/customers/search
      *
-     * Searches customers by email, phone, or NIF.
-     * Requires permission: helpdeskerp.view
+     * Searches customers by email, phone, or NIF. Es una búsqueda libre sobre
+     * TODA la base ERP (enumeración de no-clientes), así que exige el permiso
+     * dedicado de prospecto, no el permiso base del módulo.
      */
     public function search(Request $request): JsonResponse
     {
-        if (! $request->user()?->can('helpdeskerp.view')) {
+        if (! $request->user()?->can('helpdeskerp.prospect.view')) {
             return response()->json(['message' => 'Sin autorización.'], 403);
         }
 
@@ -200,8 +212,11 @@ class ErpContextController extends Controller
             return response()->json(['message' => 'Sin autorización.'], 403);
         }
 
-        $emails = array_filter((array) $request->input('emails', []), 'is_string');
-        $emails = array_slice($emails, 0, 50);
+        $emails = array_filter(
+            (array) $request->input('emails', []),
+            fn ($e): bool => is_string($e) && filter_var($e, FILTER_VALIDATE_EMAIL) !== false
+        );
+        $emails = array_slice(array_values($emails), 0, 50);
 
         if (empty($emails)) {
             return response()->json(['ok' => true, 'queued' => 0]);
