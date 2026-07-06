@@ -54,7 +54,12 @@ Route::name('contacts.')
             ->group(function () {
                 Route::get('/search', [ContactsMergeController::class, 'search'])->name('merge.search');
                 Route::get('/preview', [ContactsMergeController::class, 'preview'])->name('merge.preview');
-                Route::post('/', [ContactsMergeController::class, 'execute'])->name('merge.execute');
+                // Merge es destructivo sobre PII (soft-delete + reasignación):
+                // queda trazado en el log de auditoría igual que las acciones
+                // sensibles de HelpdeskErp.
+                Route::post('/', [ContactsMergeController::class, 'execute'])
+                    ->middleware('audit.access:contacts,merge')
+                    ->name('merge.execute');
             });
 
         Route::get('/{customer}', [ContactsController::class, 'show'])
@@ -116,9 +121,12 @@ Route::name('contacts.')
                     ->middleware('can:contacts.update')->name('items.destroy');
                 Route::post('/discount', [ContactCartController::class, 'applyDiscount'])
                     ->middleware('can:contacts.update')->name('discount');
+                // Acciones de comercio reales (crear pedido / enviar link de pago):
+                // exigen el permiso dedicado contacts.commerce, no el genérico
+                // contacts.update de editar contactos/carrito.
                 Route::post('/generate-order', [ContactCartController::class, 'generateOrder'])
-                    ->middleware('can:contacts.update')->name('generate-order');
+                    ->middleware('can:contacts.commerce')->name('generate-order');
                 Route::post('/send-payment-link', [ContactCartController::class, 'sendPaymentLink'])
-                    ->middleware('can:contacts.update')->name('send-payment-link');
+                    ->middleware('can:contacts.commerce')->name('send-payment-link');
             });
     });
