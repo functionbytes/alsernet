@@ -15,33 +15,33 @@
                 <button class="btn-ico" id="bv-btn-sort" title="Ordenar" aria-label="Ordenar conversaciones" aria-expanded="false" aria-haspopup="menu">
                     <i class="fas fa-arrow-up-arrow-down" aria-hidden="true"></i>
                 </button>
-                <div class="bv-sort-menu" id="bv-sort-menu">
+                <div class="bv-sort-menu" id="bv-sort-menu" role="menu" aria-label="Ordenar conversaciones">
                     <div class="bv-sort-menu-head">Ordenar por</div>
-                    <button class="bv-sort-opt on" data-sort="newest">
-                        <i class="bv-sort-opt-ico fas fa-arrow-down-wide-short"></i>
+                    <button class="bv-sort-opt on" data-sort="newest" role="menuitemradio" aria-checked="true">
+                        <i class="bv-sort-opt-ico fas fa-arrow-down-wide-short" aria-hidden="true"></i>
                         <span class="bv-sort-opt-label">Más reciente</span>
-                        <i class="bv-sort-opt-check fas fa-check"></i>
+                        <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
-                    <button class="bv-sort-opt" data-sort="oldest">
-                        <i class="bv-sort-opt-ico fas fa-arrow-up-wide-short"></i>
+                    <button class="bv-sort-opt" data-sort="oldest" role="menuitemradio" aria-checked="false">
+                        <i class="bv-sort-opt-ico fas fa-arrow-up-wide-short" aria-hidden="true"></i>
                         <span class="bv-sort-opt-label">Más antiguo</span>
-                        <i class="bv-sort-opt-check fas fa-check"></i>
+                        <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
-                    <button class="bv-sort-opt" data-sort="priority">
-                        <i class="bv-sort-opt-ico fas fa-fire"></i>
+                    <button class="bv-sort-opt" data-sort="priority" role="menuitemradio" aria-checked="false">
+                        <i class="bv-sort-opt-ico fas fa-fire" aria-hidden="true"></i>
                         <span class="bv-sort-opt-label">Prioridad</span>
-                        <i class="bv-sort-opt-check fas fa-check"></i>
+                        <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                     <div class="bv-sort-menu-sep"></div>
-                    <button class="bv-sort-opt" data-sort="unassigned">
-                        <i class="bv-sort-opt-ico fas fa-user-slash"></i>
+                    <button class="bv-sort-opt" data-sort="unassigned" role="menuitemradio" aria-checked="false">
+                        <i class="bv-sort-opt-ico fas fa-user-slash" aria-hidden="true"></i>
                         <span class="bv-sort-opt-label">Sin asignar</span>
-                        <i class="bv-sort-opt-check fas fa-check"></i>
+                        <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
-                    <button class="bv-sort-opt" data-sort="unread">
-                        <i class="bv-sort-opt-ico far fa-envelope"></i>
+                    <button class="bv-sort-opt" data-sort="unread" role="menuitemradio" aria-checked="false">
+                        <i class="bv-sort-opt-ico far fa-envelope" aria-hidden="true"></i>
                         <span class="bv-sort-opt-label">Sin leer</span>
-                        <i class="bv-sort-opt-check fas fa-check"></i>
+                        <i class="bv-sort-opt-check fas fa-check" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>

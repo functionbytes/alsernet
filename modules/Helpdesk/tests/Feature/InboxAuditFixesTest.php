@@ -198,4 +198,25 @@ class InboxAuditFixesTest extends TestCase
 
         $this->assertDatabaseMissing('helpdesk_conversation_views', ['id' => $view->id], 'helpdesk');
     }
+
+    // ── markSpam exige helpdesk.conversations.update (no basta con ver) ───────
+
+    public function test_mark_spam_requires_update_permission(): void
+    {
+        $conversation = $this->createConversation();
+
+        // Puede acceder al panel (pasa el middleware del grupo) pero no tiene
+        // el permiso que exige MarkSpamRequest::authorize().
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk.view');
+
+        $this->actingAs($user)
+            ->postJson(route('manager.helpdesk.conversations.mark-spam', $conversation))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $conversation->id,
+            'is_spam' => false,
+        ], 'helpdesk');
+    }
 }

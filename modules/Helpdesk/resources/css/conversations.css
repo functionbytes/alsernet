@@ -634,6 +634,37 @@ body:has(.conversations) .mc-content {
     flex-direction: column;
     overflow: hidden;
 }
+/* Feedback de carga al cambiar de conversación: barra indeterminada superior.
+   El JS añade .bv-pane-loading a .bv-thread durante el swap AJAX del hilo y la
+   retira en .always(). Sin esto el cambio de conversación no daba feedback. */
+.bv-thread.bv-pane-loading {
+    position: relative;
+    pointer-events: none;
+}
+.bv-thread.bv-pane-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 30;
+    background: linear-gradient(90deg, transparent 0%, var(--bv-primary, #90bb13) 50%, transparent 100%);
+    background-size: 35% 100%;
+    background-repeat: no-repeat;
+    animation: bv-pane-bar 0.9s linear infinite;
+}
+@keyframes bv-pane-bar {
+    0%   { background-position: -35% 0; }
+    100% { background-position: 135% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bv-thread.bv-pane-loading::after {
+        animation: none;
+        background-position: 50% 0;
+        opacity: .85;
+    }
+}
 .bv-th-head {
     background: var(--bv-bg-panel);
     padding: 14px 24px;
@@ -14411,3 +14442,90 @@ textarea.bv-form-input { resize: vertical; }
     .bv-cmd-overlay { padding-top: 64px; }
 }
 
+
+/* ============================================================
+   Utilidades del inbox — reemplazan los antiguos style="" inline
+   (una clase por valor único, CSS exacto → render idéntico).
+   Generado; no editar a mano. Ver reference_helpdesk_module_css_separation.
+   ============================================================ */
+.bv-x1 { display:flex; gap:4px; align-items:center; }
+.bv-x2 { color:inherit; opacity:.6; font-size:11px; text-decoration:none; }
+.bv-x3 { display:flex; align-items:center; gap:4px; }
+.bv-x4 { font-size:9px; opacity:.65; }
+.bv-x5 { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bv-x6 { background:none; border:none; cursor:pointer; color:var(--bv-text-muted); padding:0 2px; line-height:1; font-size:13px; }
+.bv-x7 { color:#90bb13; }
+.bv-x8 { min-width:0; }
+.bv-x9 { width:38px; height:38px; font-size:14px; }
+.bv-x10 { margin-bottom:8px; }
+.bv-x11 { text-align:center; }
+.bv-x12 { text-align:left; margin-top:12px; }
+.bv-x13 { color:var(--warning,#fec90f); margin-right:6px; }
+.bv-x14 { margin-bottom:10px; }
+.bv-x15 { display:flex; flex-direction:column; gap:5px; margin-top:6px; }
+.bv-x16 { display:flex; flex-direction:column; gap:5px; margin-top:6px; max-height:320px; overflow-y:auto; }
+.bv-x17 { font-family:monospace; }
+.bv-x18 { font-size:11px; }
+.bv-x19 { display:flex; gap:6px; margin-top:12px; }
+.bv-x20 { flex:1; font-size:12px; }
+.bv-x21 { margin-bottom:12px; }
+.bv-x22 { font-size:12px; line-height:1.55; margin:0 0 10px; }
+.bv-x23 { color:#dc2626; }
+.bv-x24 { color:#16a34a; }
+.bv-x25 { color:#7c3aed; }
+.bv-x26 { display:flex; flex-direction:column; gap:6px; }
+.bv-x27 { margin-left:8px; border:none; background:none; cursor:pointer; font-size:10px; color:var(--text-muted); }
+.bv-x28 { font-size:13px; margin:0; }
+.bv-x29 { text-transform:uppercase; font-size:9.5px; letter-spacing:.06em; margin-top:12px; margin-bottom:6px; }
+.bv-x30 { width:160px; }
+.bv-x31 { margin-top:12px; }
+.bv-x32 { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.bv-x33 { flex:1; }
+.bv-x34 { width:auto; font-size:11.5px; padding:5px 26px 5px 10px; }
+.bv-x35 { grid-column:1/-1; }
+.bv-x36 { font-size:10px; }
+.bv-x37 { font-size:11.5px; line-height:1.55; margin:0 0 6px; }
+.bv-x38 { text-transform:uppercase; font-size:9.5px; letter-spacing:.06em; }
+.bv-x39 { text-transform:uppercase; font-size:10px; letter-spacing:.06em; margin-bottom:8px; }
+.bv-x40 { display:flex; flex-direction:column; gap:3px; margin-top:5px; max-height:180px; overflow-y:auto; }
+.bv-x41 { background:var(--bv-bg-subtle,#f4f4f5); border-radius:7px; padding:10px 12px; font-size:12px; line-height:1.55; }
+.bv-x42 { font-size:8px; }
+.bv-x43 { font-family:monospace; font-size:10.5px; }
+.bv-x44 { max-height:620px; display:flex; flex-direction:column; }
+.bv-x45 { padding:0; flex:1; overflow-y:auto; }
+.bv-x46 { padding:24px; }
+.bv-x47 { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
+.bv-x48 { display:flex; flex-direction:column; gap:2px; max-height:260px; overflow-y:auto; border:1px solid var(--bv-border,#e5e7eb); border-radius:6px; }
+.bv-x49 { padding:16px; }
+.bv-x50 { display:flex; align-items:center; gap:8px; padding:8px 10px; background:none; border:none; cursor:pointer; width:100%; text-align:left; }
+.bv-x51 { flex:1; min-width:0; }
+.bv-x52 { font-size:12.5px; font-weight:600; color:var(--bv-text,#111827); }
+.bv-x53 { font-size:11px; color:var(--bv-text-muted,#6b7280); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bv-x54 { font-family:monospace; font-size:11px; }
+.bv-x55 { resize:vertical; }
+.bv-x56 { display:flex; gap:10px; }
+.bv-x57 { margin-bottom:6px; }
+.bv-x58 { display:flex; flex-direction:column; gap:5px; }
+.bv-x59 { padding:10px; }
+.bv-x60 { font-size:12px; color:var(--bv-text-muted,#6b7280); }
+.bv-x61 { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; background:var(--bv-bg-subtle,#f9fafb); border-radius:5px; font-size:11.5px; }
+.bv-x62 { font-weight:600; color:var(--bv-text,#111827); }
+.bv-x63 { color:var(--bv-text-muted,#6b7280); }
+.bv-x64 { background:none; border:none; cursor:pointer; color:var(--bv-text-muted,#6b7280); font-size:11px; }
+.bv-x65 { width:50%; }
+.bv-x66 { width:100px; text-align:center; font-family:monospace; }
+.bv-x67 { padding:14px; }
+.bv-x68 { font-size:10px; color:var(--bv-text-muted); }
+.bv-x69 { margin-left:auto; }
+.bv-x70 { display:flex; align-items:flex-end; padding-bottom:4px; }
+.bv-x71 { padding:5px 8px; }
+.bv-x72 { font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--bv-text-muted,#6b7280); margin-bottom:5px; }
+.bv-x73 { font-size:13px; color:var(--bv-text,#111827); white-space:pre-wrap; }
+.bv-x74 { display:flex; gap:6px; margin-top:8px; }
+.bv-x75 { font-size:11px; padding:3px 8px; }
+.bv-x76 { padding:16px 16px 0; }
+.bv-x77 { color:var(--bv-text-muted,#71717a); font-family:inherit; }
+.bv-x78 { padding:14px 16px 0; }
+.bv-x79 { font-size:11px; color:var(--bv-text-muted); }
+.bv-x80 { width:7px; height:7px; border-radius:50%; background:currentColor; display:inline-block; opacity:.7; }
+.bv-x81 { font-size:10px; color:var(--bv-text-muted,#71717a); }

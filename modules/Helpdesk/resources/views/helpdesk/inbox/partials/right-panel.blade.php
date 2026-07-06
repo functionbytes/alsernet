@@ -322,18 +322,18 @@
         </button>
         @endif
         <div class="rsp-more">
-            <button type="button" class="rsp-more-toggle" aria-label="Más acciones" aria-haspopup="true">
-                <i class="fa-solid fa-ellipsis"></i> Más
+            <button type="button" class="rsp-more-toggle" aria-label="Más acciones" aria-haspopup="menu" aria-expanded="false">
+                <i class="fa-solid fa-ellipsis" aria-hidden="true"></i> Más
             </button>
-            <div class="bv-more-menu rsp-more-menu">
-                <button type="button" data-bv-modal="profile-customer"><i class="fa-regular fa-id-card"></i>Ver perfil</button>
-                <button type="button" data-bv-modal="edit-contact"><i class="fa-solid fa-pen"></i>Editar contacto</button>
-                <button type="button" data-bv-modal="history"><i class="fa-solid fa-clock-rotate-left"></i>Conversaciones anteriores</button>
+            <div class="bv-more-menu rsp-more-menu" role="menu" aria-label="Más acciones">
+                <button type="button" role="menuitem" data-bv-modal="profile-customer"><i class="fa-regular fa-id-card" aria-hidden="true"></i>Ver perfil</button>
+                <button type="button" role="menuitem" data-bv-modal="edit-contact"><i class="fa-solid fa-pen" aria-hidden="true"></i>Editar contacto</button>
+                <button type="button" role="menuitem" data-bv-modal="history"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>Conversaciones anteriores</button>
                 @if(helpdesk_feature_enabled('merge'))
-                <button type="button" data-bv-modal="merge"><i class="fa-solid fa-code-merge"></i>Fusionar conversación</button>
+                <button type="button" role="menuitem" data-bv-modal="merge"><i class="fa-solid fa-code-merge" aria-hidden="true"></i>Fusionar conversación</button>
                 @endif
                 <div class="sep"></div>
-                <button type="button" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban"></i>Bloquear contacto</button>
+                <button type="button" role="menuitem" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban" aria-hidden="true"></i>Bloquear contacto</button>
             </div>
         </div>
     </div>
@@ -1180,7 +1180,7 @@
                                 @elseif($f->type === 'video')
                                     <div class="play"><i class="fas fa-play"></i></div>
                                 @elseif($f->type === 'audio')
-                                    <div class="bv-file-icon-wrap" style="color:#7c3aed;">
+                                    <div class="bv-file-icon-wrap bv-x25">
                                         <i class="fas fa-volume-high"></i>
                                     </div>
                                     <span class="bv-file-overlay"><i class="fas fa-play"></i></span>
@@ -1357,7 +1357,7 @@
                     <div class="bv-tab-empty-sub">Los eventos de esta conversación aparecerán aquí</div>
                 </div>
             @else
-                <div class="rsp-section" style="padding: 16px;">
+                <div class="rsp-section bv-x49">
                     <div class="lbl"><i class="fas fa-bolt-lightning"></i> Timeline de actividad</div>
                     <div class="rsp-timeline">
                         @foreach($rpEvents as $event)
@@ -1396,7 +1396,7 @@
             @else
 
             {{-- Información del dispositivo --}}
-            <div class="rsp-section" style="padding: 16px 16px 0;">
+            <div class="rsp-section bv-x76">
                 <div class="lbl"><i class="fas fa-display"></i> Información del dispositivo</div>
 
                 @php
@@ -1416,7 +1416,7 @@
                     <span class="v mono">
                         {{ $rpWidgetSession->ip_address ?? '—' }}
                         @if($rpWidgetSession->ip_address)
-                            <span style="color:var(--bv-text-muted,#71717a);font-family:inherit">(anonimizada)</span>
+                            <span class="bv-x77">(anonimizada)</span>
                         @endif
                     </span>
                 </div>
@@ -1475,7 +1475,7 @@
                 @if($rpWidgetSession->referrer)
                 <div class="rsp-kv">
                     <span class="k">Referrer</span>
-                    <span class="v mono" title="{{ $rpWidgetSession->referrer }}" style="font-size:10px">
+                    <span class="v mono bv-x36" title="{{ $rpWidgetSession->referrer }}">
                         {{ \Illuminate\Support\Str::limit($rpWidgetSession->referrer, 40) }}
                     </span>
                 </div>
@@ -1496,12 +1496,12 @@
                 }
             @endphp
             @if($rpCurrentUrl)
-            <div class="rsp-section" style="padding: 14px 16px 0;">
+            <div class="rsp-section bv-x78">
                 <div class="lbl">
                     <i class="fas fa-location-dot"></i>
                     Página actual
                     @if($rpIsLive)
-                        <span class="bv-current-page-pulse" title="Visitante activo ahora" style="margin-left:auto">
+                        <span class="bv-current-page-pulse bv-x69" title="Visitante activo ahora">
                             <span class="bv-pulse-dot"></span>
                             Viendo ahora
                         </span>
@@ -1557,10 +1557,10 @@
                     : null;
             @endphp
 
-            <div class="rsp-section" style="padding: 14px 16px 0;">
+            <div class="rsp-section bv-x78">
                 <div class="lbl">
                     <i class="fas fa-route"></i> Páginas visitadas
-                    <span class="r-tag" style="margin-left:auto">{{ $rpVisitedPages->count() }}</span>
+                    <span class="r-tag bv-x69">{{ $rpVisitedPages->count() }}</span>
                     @if($rpHostName)
                         <span class="bv-pages-host" title="{{ $rpHostName }}">
                             <img src="https://www.google.com/s2/favicons?domain={{ $rpHostName }}&sz=32" alt="" width="14" height="14" loading="lazy">
@@ -2505,7 +2505,7 @@ $(document).on('click', '.bv-sync-commerce', function () {
                 : '';
             return '<button class="bv-em-card" data-em-uid="' + e.uid + '">' +
                 '<div class="bv-em-head">' +
-                '<i class="far fa-envelope-open" style="font-size:11px;color:var(--bv-text-muted)"></i>' +
+                '<i class="far fa-envelope-open bv-x79"></i>' +
                 '<span class="bv-em-to">' + $('<span>').text(e.to).html() + '</span>' +
                 '<span class="bv-em-status ' + sc + '">' + $('<span>').text(sl).html() + '</span>' +
                 '</div>' +
