@@ -275,14 +275,10 @@
         // Ticket priority / status helpers
         $rpTicketPriorityColors = ['low' => 'muted', 'normal' => 'info', 'high' => 'warning', 'urgent' => 'danger'];
 
-        // Platform integrations (Engagement module)
-        $rpIntegrations = collect();
-        if ($rpConvo && class_exists(\Modules\Engagement\Models\PlatformIntegration::class)) {
-            $rpIntegrations = \Modules\Engagement\Models\PlatformIntegration::query()
-                ->where('inbox_id', $rpConvo->inbox_id)
-                ->where('is_active', true)
-                ->get(['id', 'platform']);
-        }
+        // Platform integrations (Engagement module) — reutiliza la consulta ya
+        // hecha en la cabecera del panel ($_rpIntegrations): mismo inbox, mismo
+        // is_active, y trae un superset de columnas (id, platform, store_url).
+        $rpIntegrations = $_rpIntegrations ?? collect();
         $rpExternalEmail = $rpCust?->email;
         $rpExternalPsId  = $rpCust?->externalIdFor('prestashop') ?? null;
         $rpExternalErpId = $rpCust?->externalIdFor('erp') ?? null;
