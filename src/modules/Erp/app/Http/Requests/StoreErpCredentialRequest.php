@@ -8,14 +8,16 @@ class StoreErpCredentialRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('erp.endpoints.manage') ?? false;
     }
 
     public function rules(): array
     {
         return [
             'auth_type' => 'required|in:none,basic,bearer,api_key,custom',
-            'name' => 'nullable|string|max:255',
+            // La columna es NOT NULL: sin regla `required` una credencial sin
+            // nombre reventaba con 500 en el insert en vez de un 422 limpio.
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'username' => 'required_if:auth_type,basic|nullable|string|max:255',
             'password' => 'required_if:auth_type,basic|nullable|string|max:500',
@@ -33,6 +35,7 @@ class StoreErpCredentialRequest extends FormRequest
     {
         return [
             'auth_type.required' => 'El tipo de autenticación es requerido',
+            'name.required' => 'El nombre de la credencial es requerido',
             'username.required_if' => 'El usuario es requerido para autenticación básica',
             'password.required_if' => 'La contraseña es requerida para autenticación básica',
             'token.required_if' => 'El token es requerido para autenticación bearer',
