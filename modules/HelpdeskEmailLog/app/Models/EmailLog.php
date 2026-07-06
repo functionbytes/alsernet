@@ -3,11 +3,13 @@
 namespace Modules\HelpdeskEmailLog\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Modules\HelpdeskEmailLog\Database\Factories\EmailLogFactory;
@@ -51,9 +53,9 @@ class EmailLog extends Model
      * @var list<string>
      */
     public const LIST_COLUMNS = [
-        'id', 'uid', 'mailable_class', 'module', 'entity_type', 'entity_id',
+        'id', 'uid', 'mailable_class', 'module', 'entity_type', 'entity_id', 'external_id',
         'from_address', 'from_name', 'to_addresses', 'subject', 'status',
-        'error_message', 'sent_at', 'failed_at', 'created_at',
+        'error_message', 'attachments', 'sent_at', 'failed_at', 'created_at',
     ];
 
     protected $fillable = [
@@ -62,6 +64,7 @@ class EmailLog extends Model
         'module',
         'entity_type',
         'entity_id',
+        'external_id',
         'causer_id',
         'causer_type',
         'from_address',
@@ -120,6 +123,8 @@ class EmailLog extends Model
 
         $invalidateCaches = function (self $model): void {
             Cache::forget('helpdeskemaillog:stats');
+            Cache::forget('helpdeskemaillog:trend');
+            Cache::forget('helpdeskemaillog:stale');
 
             if ($model->wasChanged('module') || $model->wasRecentlyCreated || ! $model->exists) {
                 Cache::forget('helpdeskemaillog:modules');
@@ -190,40 +195,75 @@ class EmailLog extends Model
         return $query->where('entity_type', $type)->where('entity_id', $id);
     }
 
-    public function getStatusColorAttribute(): string
+    protected function statusColor(): Attribute
     {
-        return $this->status?->color() ?? 'warning';
+        return Attribute::make(get: fn (): string => $this->status?->color() ?? 'warning');
     }
 
-    public function getStatusLabelAttribute(): string
+    protected function statusLabel(): Attribute
     {
-        return $this->status?->label() ?? (string) ($this->attributes['status'] ?? '');
+        return Attribute::make(
+            get: fn (): string => $this->status?->label() ?? (string) ($this->attributes['status'] ?? '')
+        );
     }
 
-    public function getDisplayDateAttribute(): Carbon
+    protected function displayDate(): Attribute
     {
-        return $this->sent_at ?? $this->failed_at ?? $this->created_at ?? now();
+        return Attribute::make(
+            get: fn (): Carbon => $this->sent_at ?? $this->failed_at ?? $this->created_at ?? now()
+        );
+    }
+
+    protected function hasAttachments(): Attribute
+    {
+        return Attribute::make(get: fn (): bool => ! empty($this->attachments));
+    }
+
+    /**
+     * Human-readable label for the related entity type (e.g. "Cliente" instead
+     * of the raw FQCN). Falls back to the class basename in a readable format.
+     */
+    protected function entityLabel(): Attribute
+    {
+        return Attribute::make(get: function (): ?string {
+            if (! $this->entity_type) {
+                return null;
+            }
+
+            $labels = config('helpdeskemaillog.entity_labels', []);
+
+            return $labels[$this->entity_type] ?? Str::headline(class_basename($this->entity_type));
+        });
     }
 
     /**
      * Best-effort URL to the related entity, or null if there is no safe mapping.
      */
-    public function getEntityUrlAttribute(): ?string
+    protected function entityUrl(): Attribute
     {
-        if (! $this->entity_type || ! $this->entity_id) {
-            return null;
-        }
+        return Attribute::make(get: function (): ?string {
+            if (! $this->entity_type || ! $this->entity_id) {
+                return null;
+            }
 
-        $route = config('helpdeskemaillog.entity_routes.'.$this->entity_type);
+            $route = config('helpdeskemaillog.entity_routes.'.$this->entity_type);
 
-        if (! $route || ! Route::has($route)) {
-            return null;
-        }
+            if (! $route || ! Route::has($route)) {
+                return null;
+            }
 
-        try {
-            return route($route, $this->entity_id);
-        } catch (\Throwable) {
-            return null;
-        }
+            try {
+                return route($route, $this->entity_id);
+            } catch (\Throwable $e) {
+                Log::warning('HelpdeskEmailLog: no se pudo generar entity_url.', [
+                    'entity_type' => $this->entity_type,
+                    'entity_id' => $this->entity_id,
+                    'route' => $route,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return null;
+            }
+        });
     }
 }

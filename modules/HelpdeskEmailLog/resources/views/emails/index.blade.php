@@ -11,6 +11,9 @@
     $canManage = auth()->user()?->can('helpdeskemaillog.manage') ?? false;
     $columnCount = $canManage ? 7 : 6;
 
+    $deliveryRate = $stats['total'] > 0 ? round($stats['sent'] / $stats['total'] * 100) : 0;
+    $today = now()->toDateString();
+
     // Helper to generate a sort URL for a column key, toggling direction if already active.
     $sortUrl = function (string $key) use ($sortBy, $sortDir): string {
         $nextDir = ($sortBy === $key && $sortDir === 'desc') ? 'asc' : 'desc';
@@ -20,203 +23,258 @@
     // Icon class for a sortable header: active column gets an up/down arrow, others get a neutral icon.
     $sortIcon = function (string $key) use ($sortBy, $sortDir): string {
         if ($sortBy !== $key) {
-            return 'fas fa-sort text-muted ms-1 small';
+            return 'fas fa-sort evx-sort-idle';
         }
-        return ($sortDir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down').' ms-1 small';
+        return ($sortDir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down').' evx-sort-active';
     };
+
+    // aria-sort value for a sortable column header (accessibility).
+    $ariaSort = function (string $key) use ($sortBy, $sortDir): string {
+        if ($sortBy !== $key) {
+            return 'none';
+        }
+        return $sortDir === 'asc' ? 'ascending' : 'descending';
+    };
+
+    // Active status filter (to highlight the matching stat card).
+    $activeStatus = request('status');
+    $isToday = request('date_from') === $today && request('date_to') === $today;
 @endphp
 
-@push('styles')
+@push('css')
     <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog.css') }}">
 @endpush
 
 @section('content')
 
-    {{-- Stats --}}
-    <div class="row g-3 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-2">{{ __('helpdeskemaillog::emaillog.stats.total') }}</h6>
-                    <h2 class="mb-0">{{ number_format($stats['total']) }}</h2>
-                    <small class="text-muted">{{ __('helpdeskemaillog::emaillog.stats.total_hint') }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-2 text-success">{{ __('helpdeskemaillog::emaillog.stats.sent') }}</h6>
-                    <h2 class="mb-0">{{ number_format($stats['sent']) }}</h2>
-                    <small class="text-muted">{{ __('helpdeskemaillog::emaillog.stats.sent_hint') }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-2 text-danger">{{ __('helpdeskemaillog::emaillog.stats.failed') }}</h6>
-                    <h2 class="mb-0">{{ number_format($stats['failed']) }}</h2>
-                    <small class="text-muted">{{ __('helpdeskemaillog::emaillog.stats.failed_hint') }}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h6 class="card-title mb-2">{{ __('helpdeskemaillog::emaillog.stats.today') }}</h6>
-                    <h2 class="mb-0">{{ number_format($stats['today']) }}</h2>
-                    <small class="text-muted">{{ __('helpdeskemaillog::emaillog.stats.today_hint') }}</small>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="emaillog-index">
 
-    {{-- Filtros --}}
-    <div class="card">
-        <div class="card-header p-4 border-bottom border-light d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <div>
-                <h6 class="mb-1 fw-bold">{{ __('helpdeskemaillog::emaillog.filters.heading') }}</h6>
-                <p class="small mb-0 text-muted">{{ __('helpdeskemaillog::emaillog.filters.description') }}</p>
-            </div>
-            <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="btn btn-outline-secondary">
-                <i class="fas fa-file-csv me-1"></i> {{ __('helpdeskemaillog::emaillog.actions.export') }}
+        @if($staleCount > 0)
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}" class="evx-stale-banner" role="alert">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>{{ __('helpdeskemaillog::emaillog.stale.warning', ['count' => $staleCount, 'hours' => $staleHours]) }}</span>
+                <span class="evx-stale-cta">{{ __('helpdeskemaillog::emaillog.stale.view') }}</span>
             </a>
+        @endif
+
+        {{-- Tarjetas de estadísticas (clicables → filtran) --}}
+        <div class="evx-stats">
+            <a href="{{ route('helpdeskemaillog.index') }}"
+               class="evx-stat {{ ! $hasFilters ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.total') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['total']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.total_hint') }}</span>
+            </a>
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'sent']) }}"
+               class="evx-stat accent-success {{ $activeStatus === 'sent' ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.sent') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['sent']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.sent_hint') }}</span>
+            </a>
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'failed']) }}"
+               class="evx-stat accent-danger {{ $activeStatus === 'failed' ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.failed') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['failed']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.failed_hint') }}</span>
+            </a>
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}"
+               class="evx-stat accent-warning {{ $activeStatus === 'queued' ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.queued') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['queued']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.queued_hint') }}</span>
+            </a>
+            <a href="{{ route('helpdeskemaillog.index', ['date_from' => $today, 'date_to' => $today]) }}"
+               class="evx-stat {{ $isToday ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.today') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['today']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.today_hint') }}</span>
+            </a>
+            <div class="evx-stat is-static">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.delivery_rate') }}</span>
+                <span class="evx-stat-value">{{ $deliveryRate }}%</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.delivery_rate_hint') }}</span>
+            </div>
         </div>
-        <div class="card-body">
-            <form action="{{ route('helpdeskemaillog.index') }}" method="GET">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <input type="search" name="search" class="form-control flex-grow-1 email-log-filter-search"
-                           value="{{ request('search') }}"
-                           placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
 
-                    <select name="module" class="form-select email-log-filter-module">
-                        <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_modules') }}</option>
-                        @foreach($modules as $mod)
-                            <option value="{{ $mod }}" @selected(request('module') === $mod)>{{ $mod }}</option>
-                        @endforeach
-                    </select>
+        {{-- Gráfico de tendencia --}}
+        <div class="evx-card evx-block">
+            <div class="evx-block-head">
+                <div>
+                    <span class="t">{{ __('helpdeskemaillog::emaillog.trend.title') }}</span>
+                    <span class="s">{{ __('helpdeskemaillog::emaillog.trend.hint') }}</span>
+                </div>
+            </div>
+            <div class="evx-block-body">
+                @php
+                    $trendSent = array_sum($trend['sent']);
+                    $trendFailed = array_sum($trend['failed']);
+                    $trendQueued = array_sum($trend['queued']);
+                @endphp
+                <canvas id="emaillog-trend" height="80" role="img"
+                        aria-label="{{ __('helpdeskemaillog::emaillog.trend.title') }}: {{ $trendSent }} {{ __('helpdeskemaillog::emaillog.trend.sent') }}, {{ $trendFailed }} {{ __('helpdeskemaillog::emaillog.trend.failed') }}, {{ $trendQueued }} {{ __('helpdeskemaillog::emaillog.trend.queued') }}."></canvas>
+            </div>
+        </div>
 
-                    <select name="status" class="form-select email-log-filter-status">
-                        <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_statuses') }}</option>
-                        @foreach($statuses as $value => $label)
-                            <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+        {{-- Filtros --}}
+        <div class="evx-card evx-block">
+            <div class="evx-block-head">
+                <div>
+                    <span class="t">{{ __('helpdeskemaillog::emaillog.filters.heading') }}</span>
+                    <span class="s">{{ __('helpdeskemaillog::emaillog.filters.description') }}</span>
+                </div>
+                <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="evx-btn evx-btn-outline evx-btn-inline">
+                    {{ __('helpdeskemaillog::emaillog.actions.export') }}
+                </a>
+            </div>
+            <div class="evx-block-body">
+                <form action="{{ route('helpdeskemaillog.index') }}" method="GET">
+                    <div class="evx-filters">
+                        <div class="evx-search">
+                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                            <input type="search" name="search" value="{{ request('search') }}"
+                                   aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
+                                   placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
+                        </div>
 
-                    <input type="text" class="form-control daterange email-log-filter-daterange" autocomplete="off"
-                           placeholder="{{ __('helpdeskemaillog::emaillog.filters.date_range') }}"
-                           value="{{ (request('date_from') && request('date_to')) ? request('date_from') . ' - ' . request('date_to') : '' }}">
-                    <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
-                    <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
-                    @if(request('sort_by'))
-                        <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
-                        <input type="hidden" name="sort_dir" value="{{ request('sort_dir', 'desc') }}">
-                    @endif
+                        <select name="module" class="evx-select">
+                            <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_modules') }}</option>
+                            @foreach($modules as $mod)
+                                <option value="{{ $mod }}" @selected(request('module') === $mod)>{{ $mod }}</option>
+                            @endforeach
+                        </select>
 
-                    <select name="per_page" id="per-page" class="form-select email-log-filter-perpage"
-                            title="{{ __('helpdeskemaillog::emaillog.filters.per_page') }}">
-                        @foreach($perPageOptions as $opt)
-                            <option value="{{ $opt }}" @selected((int) $perPage === (int) $opt)>{{ __('helpdeskemaillog::emaillog.filters.per_page_option', ['n' => $opt]) }}</option>
-                        @endforeach
-                    </select>
+                        <select name="status" class="evx-select">
+                            <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_statuses') }}</option>
+                            @foreach($statuses as $value => $label)
+                                <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
+                            @endforeach
+                        </select>
 
-                    <div class="d-flex gap-1 flex-shrink-0">
-                        <button type="submit" class="btn btn-primary" title="{{ __('helpdeskemaillog::emaillog.filters.search') }}">
-                            <i class="fas fa-magnifying-glass"></i>
+                        <input type="text" class="evx-input daterange" autocomplete="off"
+                               placeholder="{{ __('helpdeskemaillog::emaillog.filters.date_range') }}"
+                               value="{{ (request('date_from') && request('date_to')) ? request('date_from') . ' - ' . request('date_to') : '' }}">
+                        <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
+                        <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
+                        @if(request('sort_by'))
+                            <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                            <input type="hidden" name="sort_dir" value="{{ request('sort_dir', 'desc') }}">
+                        @endif
+
+                        <select name="per_page" id="per-page" class="evx-select evx-select-sm"
+                                title="{{ __('helpdeskemaillog::emaillog.filters.per_page') }}">
+                            @foreach($perPageOptions as $opt)
+                                <option value="{{ $opt }}" @selected((int) $perPage === (int) $opt)>{{ __('helpdeskemaillog::emaillog.filters.per_page_option', ['n' => $opt]) }}</option>
+                            @endforeach
+                        </select>
+
+                        <button type="submit" class="evx-btn evx-btn-primary evx-btn-inline"
+                                aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
+                                title="{{ __('helpdeskemaillog::emaillog.filters.search') }}">
+                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
                         </button>
                         @if($hasFilters)
-                            <a href="{{ route('helpdeskemaillog.index') }}" class="btn btn-outline-secondary" title="{{ __('helpdeskemaillog::emaillog.filters.clear') }}">
-                                <i class="fas fa-xmark"></i>
+                            <a href="{{ route('helpdeskemaillog.index') }}" class="evx-btn evx-btn-outline evx-btn-inline"
+                               aria-label="{{ __('helpdeskemaillog::emaillog.filters.clear') }}"
+                               title="{{ __('helpdeskemaillog::emaillog.filters.clear') }}">
+                                <i class="fas fa-xmark" aria-hidden="true"></i>
                             </a>
                         @endif
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
-    </div>
 
-    {{-- Tabla --}}
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle text-nowrap">
-                    <thead class="table-light">
+        {{-- Tabla --}}
+        <div class="evx-card evx-block">
+            <div class="evx-table-wrap">
+                <table class="evx-table">
+                    <thead>
                         <tr>
-                            @can('helpdeskemaillog.manage')
-                                <th width="3%">
-                                    <input type="checkbox" id="select-all" class="form-check-input" title="{{ __('helpdeskemaillog::emaillog.table.select_all') }}">
+                            @if($canManage)
+                                <th class="evx-th-check">
+                                    <input type="checkbox" id="select-all"
+                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.select_all') }}"
+                                           title="{{ __('helpdeskemaillog::emaillog.table.select_all') }}">
                                 </th>
-                            @endcan
-                            <th>
-                                <a href="{{ $sortUrl('subject') }}" class="text-body text-decoration-none">
+                            @endif
+                            <th aria-sort="{{ $ariaSort('subject') }}">
+                                <a href="{{ $sortUrl('subject') }}" class="evx-sort">
                                     {{ __('helpdeskemaillog::emaillog.table.subject') }}
-                                    <i class="{{ $sortIcon('subject') }}"></i>
+                                    <i class="{{ $sortIcon('subject') }}" aria-hidden="true"></i>
                                 </a>
                             </th>
                             <th>{{ __('helpdeskemaillog::emaillog.table.recipient') }}</th>
-                            <th>
-                                <a href="{{ $sortUrl('module') }}" class="text-body text-decoration-none">
+                            <th aria-sort="{{ $ariaSort('module') }}">
+                                <a href="{{ $sortUrl('module') }}" class="evx-sort">
                                     {{ __('helpdeskemaillog::emaillog.table.module') }}
-                                    <i class="{{ $sortIcon('module') }}"></i>
+                                    <i class="{{ $sortIcon('module') }}" aria-hidden="true"></i>
                                 </a>
                             </th>
-                            <th>
-                                <a href="{{ $sortUrl('status') }}" class="text-body text-decoration-none">
+                            <th aria-sort="{{ $ariaSort('status') }}">
+                                <a href="{{ $sortUrl('status') }}" class="evx-sort">
                                     {{ __('helpdeskemaillog::emaillog.table.status') }}
-                                    <i class="{{ $sortIcon('status') }}"></i>
+                                    <i class="{{ $sortIcon('status') }}" aria-hidden="true"></i>
                                 </a>
                             </th>
-                            <th>
-                                <a href="{{ $sortUrl('date') }}" class="text-body text-decoration-none">
+                            <th aria-sort="{{ $ariaSort('date') }}">
+                                <a href="{{ $sortUrl('date') }}" class="evx-sort">
                                     {{ __('helpdeskemaillog::emaillog.table.date') }}
-                                    <i class="{{ $sortIcon('date') }}"></i>
+                                    <i class="{{ $sortIcon('date') }}" aria-hidden="true"></i>
                                 </a>
                             </th>
-                            <th class="text-center">{{ __('helpdeskemaillog::emaillog.table.actions') }}</th>
+                            <th class="evx-th-actions">{{ __('helpdeskemaillog::emaillog.table.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($logs as $log)
+                            @php $statusVal = $log->status?->value; @endphp
                             <tr>
-                                @can('helpdeskemaillog.manage')
+                                @if($canManage)
                                     <td>
-                                        <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $log->uid }}">
+                                        <input type="checkbox" class="bulk-checkbox" value="{{ $log->uid }}"
+                                               aria-label="{{ $log->subject ?: __('helpdeskemaillog::emaillog.table.subject') }}">
                                     </td>
-                                @endcan
+                                @endif
                                 <td>
-                                    <a href="{{ route('helpdeskemaillog.show', $log->uid) }}" class="fw-semibold text-body">
+                                    <a href="{{ route('helpdeskemaillog.show', $log->uid) }}" class="evx-subject-link">
                                         {{ Str::limit($log->subject, 60) ?: '—' }}
                                     </a>
+                                    @if($log->has_attachments)
+                                        <i class="fas fa-paperclip evx-clip" role="img"
+                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"
+                                           title="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"></i>
+                                    @endif
                                     @if($log->mailable_class)
-                                        <br><small class="text-muted">{{ class_basename($log->mailable_class) }}</small>
+                                        <div class="evx-subject-sub">{{ class_basename($log->mailable_class) }}</div>
                                     @endif
                                 </td>
                                 <td>
                                     @foreach($log->to_addresses ?? [] as $addr)
-                                        <div class="small">{{ $addr }}</div>
+                                        <div class="evx-recipient">{{ $addr }}</div>
                                     @endforeach
                                 </td>
                                 <td>
                                     @if($log->module)
-                                        <span class="badge bg-info-subtle text-info">{{ $log->module }}</span>
+                                        <span class="evx-tag">{{ $log->module }}</span>
                                     @else
-                                        <span class="text-muted">—</span>
+                                        <span class="evx-muted">—</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ $log->status_color }}-subtle text-{{ $log->status_color }}"
+                                    <span class="evx-status {{ $statusVal }}"
                                           @if($log->error_message) title="{{ Str::limit($log->error_message, 120) }}" @endif>
-                                        {{ $log->status_label }}
+                                        <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $log->status_label }}
                                     </span>
                                 </td>
-                                <td title="{{ $log->display_date->diffForHumans() }}">
+                                <td class="evx-date" title="{{ $log->display_date->diffForHumans() }}">
                                     {{ $log->display_date->format('d/m/Y H:i') }}
                                 </td>
-                                <td class="text-center">
+                                <td class="evx-td-actions">
                                     <div class="dropdown">
-                                        <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-vertical"></i>
+                                        <a href="#" class="evx-actions-toggle" data-bs-toggle="dropdown"
+                                           role="button" aria-expanded="false"
+                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.actions') }}">
+                                            <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
@@ -244,48 +302,45 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $columnCount }}" class="text-center py-5">
-                                    <div class="text-muted">
-                                        <i class="fas fa-inbox fa-3x mb-3"></i>
-                                        <p class="mb-0">{{ __('helpdeskemaillog::emaillog.table.empty') }}</p>
-                                    </div>
+                                <td colspan="{{ $columnCount }}" class="evx-empty-row">
+                                    <i class="fas fa-inbox" aria-hidden="true"></i>
+                                    <p>{{ __('helpdeskemaillog::emaillog.table.empty') }}</p>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+
+            @if($logs->hasPages())
+                <div class="evx-pagination">
+                    <span class="evx-muted">
+                        {{ __('helpdeskemaillog::emaillog.pagination.showing', ['first' => $logs->firstItem(), 'last' => $logs->lastItem(), 'total' => $logs->total()]) }}
+                    </span>
+                    {{ $logs->links() }}
+                </div>
+            @endif
         </div>
     </div>
 
-    @if($logs->hasPages())
-        <div class="card card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <small class="text-muted">
-                    {{ __('helpdeskemaillog::emaillog.pagination.showing', ['first' => $logs->firstItem(), 'last' => $logs->lastItem(), 'total' => $logs->total()]) }}
-                </small>
-                {{ $logs->links() }}
-            </div>
-        </div>
-    @endif
-
     @can('helpdeskemaillog.manage')
         {{-- Toolbar flotante de acciones masivas --}}
-        <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none email-log-bulk-toolbar">
-            <div class="card shadow-lg">
-                <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
-                    <span class="fw-semibold"><span data-bulk-count>0</span> {{ __('helpdeskemaillog::emaillog.bulk.label') }}</span>
-                    <button type="button" class="btn btn-sm btn-danger" id="bulk-delete"
-                            data-url="{{ route('helpdeskemaillog.bulk-destroy') }}">
-                        <i class="fas fa-trash me-1"></i>{{ __('helpdeskemaillog::emaillog.actions.bulk_delete') }}
-                    </button>
-                </div>
-            </div>
+        <div id="bulk-toolbar" class="evx-bulk-toolbar d-none">
+            <span class="evx-bulk-count"><span data-bulk-count>0</span> {{ __('helpdeskemaillog::emaillog.bulk.label') }}</span>
+            <button type="button" class="evx-btn evx-btn-primary evx-btn-inline" id="bulk-resend"
+                    data-url="{{ route('helpdeskemaillog.bulk-resend') }}">
+                {{ __('helpdeskemaillog::emaillog.actions.bulk_resend') }}
+            </button>
+            <button type="button" class="evx-btn evx-btn-danger evx-btn-inline" id="bulk-delete"
+                    data-url="{{ route('helpdeskemaillog.bulk-destroy') }}">
+                {{ __('helpdeskemaillog::emaillog.actions.bulk_delete') }}
+            </button>
         </div>
     @endcan
 
     {{-- Modal de confirmación reutilizable --}}
-    <div class="modal fade" id="emaillog-confirm-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="emaillog-confirm-modal" tabindex="-1"
+         aria-labelledby="emaillog-confirm-title" aria-describedby="emaillog-confirm-message" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -310,6 +365,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{{ asset('core/js/bulk.js') }}"></script>
 <script>
 $(function () {
@@ -334,6 +390,32 @@ $(function () {
         confirmModal.hide();
         if (typeof fn === 'function') fn();
     });
+
+    // Gráfico de tendencia
+    const trendEl = document.getElementById('emaillog-trend');
+    if (trendEl && window.Chart) {
+        const trend = @json($trend);
+        new Chart(trendEl, {
+            type: 'bar',
+            data: {
+                labels: trend.labels,
+                datasets: [
+                    { label: @json(__('helpdeskemaillog::emaillog.trend.sent')), data: trend.sent, backgroundColor: '#90bb13', stack: 's', borderRadius: 3 },
+                    { label: @json(__('helpdeskemaillog::emaillog.trend.failed')), data: trend.failed, backgroundColor: '#dc2626', stack: 's', borderRadius: 3 },
+                    { label: @json(__('helpdeskemaillog::emaillog.trend.queued')), data: trend.queued, backgroundColor: '#d97706', stack: 's', borderRadius: 3 },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
+                    y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+                },
+            },
+        });
+    }
 
     // Cambiar registros por página → reenviar el formulario de filtros
     $('#per-page').on('change', function () { this.form.submit(); });
@@ -365,7 +447,7 @@ $(function () {
         $(this).val(''); $('#date_from').val(''); $('#date_to').val('');
     });
 
-    // Reenviar
+    // Reenviar individual
     $(document).on('click', '.js-resend', function () {
         const url = $(this).data('url');
         askConfirm({
@@ -395,17 +477,36 @@ $(function () {
 
     @can('helpdeskemaillog.manage')
     // Acciones masivas
-    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox', selectAll: '#select-all', toolbar: '#bulk-toolbar' });
+    window.BulkActions.init({ checkbox: '.bulk-checkbox', selectAll: '#select-all', toolbar: '#bulk-toolbar' });
+
+    function selectedUids() {
+        return $('.bulk-checkbox:checked').map(function () { return this.value; }).get();
+    }
+
+    $('#bulk-resend').on('click', function () {
+        const uids = selectedUids();
+        if (!uids.length) { toastr.warning(@json(__('helpdeskemaillog::emaillog.bulk.none_selected'))); return; }
+        const url = $(this).data('url');
+        askConfirm({
+            title: @json(__('helpdeskemaillog::emaillog.bulk.resend_title')),
+            message: @json(__('helpdeskemaillog::emaillog.bulk.resend_confirm')).replace(':count', uids.length),
+            onAccept: () => {
+                $.ajax({ url, method: 'POST', data: { uids }, headers: { 'X-CSRF-TOKEN': csrf } })
+                    .done(() => location.reload())
+                    .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+            },
+        });
+    });
 
     $('#bulk-delete').on('click', function () {
-        const uids = $('.bulk-checkbox:checked').map(function () { return this.value; }).get();
+        const uids = selectedUids();
         if (!uids.length) { toastr.warning(@json(__('helpdeskemaillog::emaillog.bulk.none_selected'))); return; }
         const url = $(this).data('url');
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.confirm.delete_title')),
             message: @json(__('helpdeskemaillog::emaillog.bulk.confirm')).replace(':count', uids.length),
             onAccept: () => {
-                $.ajax({ url, method: 'DELETE', data: { uids: uids }, headers: { 'X-CSRF-TOKEN': csrf } })
+                $.ajax({ url, method: 'DELETE', data: { uids }, headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
                     .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
             },

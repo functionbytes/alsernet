@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\HelpdeskEmailLog\Database\Seeders\HelpdeskEmailLogPermissionsSeeder;
@@ -14,7 +14,9 @@ use Tests\TestCase;
 
 class EmailLogControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {
@@ -193,6 +195,35 @@ class EmailLogControllerTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    /**
+     * El reenvío se envía con `Mail::html` crudo (sin Mailable), así que su fila
+     * de EmailLog —creada por LogEmailQueued— no llevaba atribución. Ahora el job
+     * añade cabeceras X-* que enlazan la nueva fila con el log original, para que
+     * el reenvío sea trazable (módulo + entity + external_id 'resend:<id>').
+     */
+    public function test_resend_creates_a_log_row_traceable_to_the_original(): void
+    {
+        $original = EmailLog::factory()->create([
+            'subject' => 'Recibo #42',
+            'to_addresses' => ['cliente@example.com'],
+            'body_html' => '<p>Su recibo</p>',
+            'from_address' => 'ventas@example.com',
+        ]);
+
+        (new ResendEmailLogJob($original->id))->handle();
+
+        $resend = EmailLog::query()
+            ->where('id', '!=', $original->id)
+            ->where('external_id', 'resend:'.$original->id)
+            ->first();
+
+        $this->assertNotNull($resend, 'El reenvío debe crear una fila de log trazable al original.');
+        $this->assertSame('HelpdeskEmailLog', $resend->module);
+        $this->assertSame(EmailLog::class, $resend->entity_type);
+        $this->assertSame($original->id, (int) $resend->entity_id);
+        $this->assertSame('Recibo #42', $resend->subject);
+    }
+
     public function test_bulk_destroy_rejects_non_uuid_values(): void
     {
         EmailLog::factory()->create();
@@ -225,5 +256,149 @@ class EmailLogControllerTest extends TestCase
             ->assertOk()
             ->assertSee('Welcome aboard')
             ->assertDontSee('Other message');
+    }
+
+    public function test_resend_to_alternative_address_dispatches_job_with_override(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create(['to_addresses' => ['orig@example.test']]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resend', $log->uid), ['to' => 'alt@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Queue::assertPushed(
+            ResendEmailLogJob::class,
+            fn (ResendEmailLogJob $job) => $job->emailLogId === $log->id && $job->overrideTo === 'alt@example.test',
+        );
+    }
+
+    public function test_resend_rejects_invalid_alternative_address(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create(['to_addresses' => ['orig@example.test']]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resend', $log->uid), ['to' => 'not-an-email'])
+            ->assertSessionHasErrors('to');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_manager_can_bulk_resend_logs(): void
+    {
+        Queue::fake();
+
+        $logs = EmailLog::factory()->count(3)->create(['to_addresses' => ['dest@example.test']]);
+        $noRecipient = EmailLog::factory()->create(['to_addresses' => []]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.bulk-resend'), [
+                'uids' => $logs->push($noRecipient)->pluck('uid')->all(),
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        // Solo los que tienen destinatario se encolan (3, no el de lista vacía).
+        Queue::assertPushed(ResendEmailLogJob::class, 3);
+    }
+
+    public function test_bulk_resend_requires_manage_permission(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create(['to_addresses' => ['dest@example.test']]);
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.bulk-resend'), ['uids' => [$log->uid]])
+            ->assertForbidden();
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_download_returns_html_attachment(): void
+    {
+        $log = EmailLog::factory()->create([
+            'body_html' => '<h1>Recibo de compra</h1>',
+        ]);
+
+        $response = $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.download', $log->uid));
+
+        $response->assertOk();
+        $this->assertStringContainsString('text/html', $response->headers->get('content-type'));
+        $this->assertStringContainsString('attachment', $response->headers->get('content-disposition'));
+        $this->assertStringContainsString('Recibo de compra', $response->getContent());
+    }
+
+    public function test_download_returns_404_without_body(): void
+    {
+        $log = EmailLog::factory()->create(['body_html' => null, 'body_text' => null]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.download', $log->uid))
+            ->assertNotFound();
+    }
+
+    public function test_download_requires_view_permission(): void
+    {
+        $log = EmailLog::factory()->create(['body_html' => '<p>hi</p>']);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('helpdeskemaillog.download', $log->uid))
+            ->assertForbidden();
+    }
+
+    public function test_manager_can_purge_body(): void
+    {
+        $log = EmailLog::factory()->create([
+            'body_html' => '<p>Contenido sensible</p>',
+            'body_text' => 'Contenido sensible',
+        ]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.purge-body', $log->uid))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $log->refresh();
+        $this->assertNull($log->body_html);
+        $this->assertNull($log->body_text);
+        $this->assertTrue($log->metadata['redacted'] ?? false);
+    }
+
+    public function test_purge_body_requires_manage_permission(): void
+    {
+        $log = EmailLog::factory()->create(['body_html' => '<p>x</p>']);
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.purge-body', $log->uid))
+            ->assertForbidden();
+
+        $this->assertNotNull($log->fresh()->body_html);
+    }
+
+    public function test_show_includes_related_emails_by_recipient(): void
+    {
+        $log = EmailLog::factory()->create(['to_addresses' => ['same@example.test'], 'subject' => 'Primary']);
+        EmailLog::factory()->create(['to_addresses' => ['same@example.test'], 'subject' => 'Related one']);
+        EmailLog::factory()->create(['to_addresses' => ['other@example.test'], 'subject' => 'Unrelated']);
+        // Contiene 'same@example.test' como substring: NO debe considerarse relacionado.
+        EmailLog::factory()->create(['to_addresses' => ['notsame@example.test'], 'subject' => 'Substring trap']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertViewHas('related', function ($related) {
+                $subjects = $related->pluck('subject');
+
+                return $subjects->contains('Related one')
+                    && ! $subjects->contains('Unrelated')
+                    && ! $subjects->contains('Substring trap')
+                    && ! $subjects->contains('Primary');
+            });
     }
 }

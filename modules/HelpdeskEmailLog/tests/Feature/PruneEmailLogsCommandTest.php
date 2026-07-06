@@ -2,14 +2,16 @@
 
 namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Tests\TestCase;
 
 class PruneEmailLogsCommandTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     public function test_old_entries_are_deleted_after_retention_window(): void
     {

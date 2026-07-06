@@ -15,6 +15,21 @@ return [
         'queued_hint' => 'Pendientes de confirmación',
         'today' => 'Hoy',
         'today_hint' => 'Registrados hoy',
+        'delivery_rate' => 'Tasa de entrega',
+        'delivery_rate_hint' => 'Enviados sobre el total',
+    ],
+
+    'trend' => [
+        'title' => 'Actividad de los últimos 14 días',
+        'hint' => 'Emails registrados por día y estado',
+        'sent' => 'Enviados',
+        'failed' => 'Fallidos',
+        'queued' => 'En cola',
+    ],
+
+    'stale' => [
+        'warning' => ':count email(s) llevan más de :hours h en cola sin confirmarse.',
+        'view' => 'Ver en cola',
     ],
 
     'filters' => [
@@ -39,6 +54,7 @@ return [
         'actions' => 'Acciones',
         'empty' => 'No se encontraron emails registrados',
         'select_all' => 'Seleccionar todo',
+        'has_attachments' => 'Con adjuntos',
     ],
 
     'actions' => [
@@ -49,6 +65,17 @@ return [
         'bulk_delete' => 'Eliminar seleccionados',
         'back_to_list' => 'Volver al listado',
         'print' => 'Imprimir',
+        'bulk_resend' => 'Reenviar seleccionados',
+        'download' => 'Descargar',
+        'copy_id' => 'Copiar Message-ID',
+        'resend_to' => 'Reenviar a otra dirección',
+        'purge' => 'Purgar contenido',
+    ],
+
+    'purge' => [
+        'confirm_title' => 'Purgar contenido del email',
+        'confirm' => 'Se eliminará el cuerpo (HTML/texto) de este email de forma permanente. Los metadatos (asunto, destinatarios, estado) se conservan. ¿Continuar?',
+        'done' => 'Contenido del email purgado.',
     ],
 
     'pagination' => [
@@ -59,6 +86,12 @@ return [
         'label' => 'seleccionados',
         'confirm' => '¿Eliminar :count registros? Esta acción no se puede deshacer.',
         'none_selected' => 'Selecciona al menos un registro.',
+        'resend_confirm' => '¿Reenviar :count emails a sus destinatarios originales?',
+        'resend_title' => 'Confirmar reenvío masivo',
+    ],
+
+    'copy' => [
+        'message_id_copied' => 'Message-ID copiado al portapapeles.',
     ],
 
     'confirm' => [
@@ -94,6 +127,7 @@ return [
             'from' => 'De',
             'to' => 'Para',
             'cc' => 'CC',
+            'bcc' => 'CCO',
             'reply_to' => 'Responder a',
             'status' => 'Estado',
             'module' => 'Módulo',
@@ -107,19 +141,47 @@ return [
         ],
         'quick_actions' => 'Acciones rápidas',
         'quick_actions_hint' => 'Opciones disponibles',
+        'related_entity' => 'Entidad relacionada',
+        'related_entity_hint' => 'Registro vinculado a este email',
+        'related_emails' => 'Emails relacionados',
+        'related_emails_hint' => 'Mismo destinatario o entidad',
+        'no_related' => 'Sin emails relacionados.',
+        'purged_note' => 'El contenido de este email fue purgado; solo se conservan los metadatos.',
     ],
 
     'resend' => [
         'success' => 'Email reenviado correctamente.',
         'queued' => 'Reenvío encolado. El email se enviará en segundo plano.',
+        'queued_to' => 'Reenvío a :email encolado.',
+        'bulk_queued' => ':count emails encolados para reenvío.',
         'failed' => 'No se pudo reenviar el email: :error',
         'no_recipients' => 'Este registro no tiene destinatarios.',
         'confirm_title' => 'Confirmar reenvío',
         'confirm' => '¿Reenviar este email a sus destinatarios originales?',
+        'to_title' => 'Reenviar a otra dirección',
+        'to_label' => 'Dirección de correo alternativa',
+        'to_placeholder' => 'nombre@ejemplo.com',
+        'to_hint' => 'El email se enviará solo a esta dirección (sin CC).',
+        'to_send' => 'Enviar',
     ],
 
     'settings' => [
         'title' => 'Log de emails — Configuración',
         'saved' => 'Configuración del log de emails actualizada.',
+    ],
+
+    'csv' => [
+        'uid' => 'UID',
+        'date' => 'Fecha',
+        'sent_at' => 'Enviado',
+        'status' => 'Estado',
+        'subject' => 'Asunto',
+        'from' => 'De',
+        'to' => 'Para',
+        'cc' => 'CC',
+        'module' => 'Módulo',
+        'entity' => 'Entidad',
+        'mailable' => 'Mailable',
+        'error' => 'Error',
     ],
 ];

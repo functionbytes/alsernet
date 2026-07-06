@@ -8,7 +8,10 @@ use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
 /**
  * Add this trait to any Mailable to attach tracking context to its email log
  * entry. When the Mailable also implements {@see TracksEmailLog}, the module,
- * entity type and entity id are exposed too.
+ * entity type and entity id are exposed too. When the Mailable defines a
+ * `getEmailLogExternalId(): ?string` method, its return value is exposed as
+ * well, letting the caller correlate this specific send with its own record
+ * (e.g. a ConversationItem) instead of just the shared entity.
  *
  * The headers are read by the LogEmailQueued listener and then stripped from
  * the outgoing message, so they never reach the recipient.
@@ -25,6 +28,10 @@ trait AddsEmailLogHeaders
             $text['X-Email-Module'] = $this->getEmailLogModule();
             $text['X-Entity-Type'] = $this->getEmailLogEntityType();
             $text['X-Entity-Id'] = (string) $this->getEmailLogEntityId();
+        }
+
+        if (method_exists($this, 'getEmailLogExternalId') && ($externalId = $this->getEmailLogExternalId()) !== null) {
+            $text['X-External-Id'] = $externalId;
         }
 
         return new Headers(text: $text);

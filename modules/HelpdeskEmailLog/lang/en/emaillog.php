@@ -15,6 +15,21 @@ return [
         'queued_hint' => 'Awaiting confirmation',
         'today' => 'Today',
         'today_hint' => 'Recorded today',
+        'delivery_rate' => 'Delivery rate',
+        'delivery_rate_hint' => 'Delivered over total',
+    ],
+
+    'trend' => [
+        'title' => 'Activity over the last 14 days',
+        'hint' => 'Emails recorded per day and status',
+        'sent' => 'Sent',
+        'failed' => 'Failed',
+        'queued' => 'Queued',
+    ],
+
+    'stale' => [
+        'warning' => ':count email(s) have been queued for more than :hours h without confirmation.',
+        'view' => 'View queued',
     ],
 
     'filters' => [
@@ -39,6 +54,7 @@ return [
         'actions' => 'Actions',
         'empty' => 'No emails recorded yet',
         'select_all' => 'Select all',
+        'has_attachments' => 'With attachments',
     ],
 
     'actions' => [
@@ -49,6 +65,17 @@ return [
         'bulk_delete' => 'Delete selected',
         'back_to_list' => 'Back to list',
         'print' => 'Print',
+        'bulk_resend' => 'Resend selected',
+        'download' => 'Download',
+        'copy_id' => 'Copy Message-ID',
+        'resend_to' => 'Resend to another address',
+        'purge' => 'Purge content',
+    ],
+
+    'purge' => [
+        'confirm_title' => 'Purge email content',
+        'confirm' => 'The email body (HTML/text) will be permanently removed. Metadata (subject, recipients, status) is kept. Continue?',
+        'done' => 'Email content purged.',
     ],
 
     'pagination' => [
@@ -59,6 +86,12 @@ return [
         'label' => 'selected',
         'confirm' => 'Delete :count entries? This action cannot be undone.',
         'none_selected' => 'Select at least one entry.',
+        'resend_confirm' => 'Resend :count emails to their original recipients?',
+        'resend_title' => 'Confirm bulk resend',
+    ],
+
+    'copy' => [
+        'message_id_copied' => 'Message-ID copied to clipboard.',
     ],
 
     'confirm' => [
@@ -94,6 +127,7 @@ return [
             'from' => 'From',
             'to' => 'To',
             'cc' => 'CC',
+            'bcc' => 'BCC',
             'reply_to' => 'Reply-To',
             'status' => 'Status',
             'module' => 'Module',
@@ -107,19 +141,47 @@ return [
         ],
         'quick_actions' => 'Quick actions',
         'quick_actions_hint' => 'Available options',
+        'related_entity' => 'Related entity',
+        'related_entity_hint' => 'Record linked to this email',
+        'related_emails' => 'Related emails',
+        'related_emails_hint' => 'Same recipient or entity',
+        'no_related' => 'No related emails.',
+        'purged_note' => 'This email\'s content was purged; only metadata is kept.',
     ],
 
     'resend' => [
         'success' => 'Email resent successfully.',
         'queued' => 'Resend queued. The email will be sent in the background.',
+        'queued_to' => 'Resend to :email queued.',
+        'bulk_queued' => ':count emails queued for resend.',
         'failed' => 'Could not resend the email: :error',
         'no_recipients' => 'This entry has no recipients.',
         'confirm_title' => 'Confirm resend',
         'confirm' => 'Resend this email to its original recipients?',
+        'to_title' => 'Resend to another address',
+        'to_label' => 'Alternative email address',
+        'to_placeholder' => 'name@example.com',
+        'to_hint' => 'The email will be sent only to this address (no CC).',
+        'to_send' => 'Send',
     ],
 
     'settings' => [
         'title' => 'Email log — Settings',
         'saved' => 'Email log settings updated.',
+    ],
+
+    'csv' => [
+        'uid' => 'UID',
+        'date' => 'Date',
+        'sent_at' => 'Sent',
+        'status' => 'Status',
+        'subject' => 'Subject',
+        'from' => 'From',
+        'to' => 'To',
+        'cc' => 'CC',
+        'module' => 'Module',
+        'entity' => 'Entity',
+        'mailable' => 'Mailable',
+        'error' => 'Error',
     ],
 ];

@@ -14,7 +14,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'store_body' => ['nullable', 'in:1'],
+            'store_body' => ['required', 'in:0,1'],
             'max_body_bytes' => ['required', 'integer', 'min:1', 'max:10240'],
             'retention_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'stale_queued_hours' => ['required', 'integer', 'min:0', 'max:8760'],

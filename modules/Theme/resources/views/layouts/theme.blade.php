@@ -4,14 +4,15 @@
       data-color-scheme="default">
 <head>
 
-    {{-- ─── FOUC: dark mode pre-paint ────────────────────────── --}}
+    {{-- ─── Tema: modo oscuro deshabilitado (siempre claro) ──────
+         Se persiste 'light' en mc-theme para que Theme.js (que por
+         defecto usa 'system' y seguiría el prefers-color-scheme del SO)
+         también se mantenga en claro. --}}
     <script>
     (function(){
-        var t = localStorage.getItem('mc-theme');
-        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
-        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
-        // Bootstrap compatibility
-        document.documentElement.setAttribute('data-bs-theme', (t === 'dark') ? 'dark' : 'light');
+        try { localStorage.setItem('mc-theme', 'light'); } catch (e) {}
+        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.setAttribute('data-bs-theme', 'light');
     })();
     </script>
 
