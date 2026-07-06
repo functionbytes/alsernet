@@ -294,13 +294,22 @@ class ContactAggregatorService
             ->get()
             ->map(fn ($cart): array => $this->mapAbandonedCart($cart));
 
+        // Estadísticas sobre TODOS los pedidos del cliente, no sobre los 10
+        // que se muestran arriba: calcularlas desde la colección ya limitada
+        // sub-reportaba conteo y gasto total de clientes con más de 10 pedidos.
+        // Mismo agregado que lifetimeOrders().
+        $stats = $orderModel->newQuery()
+            ->whereIn('customer_id', $customerIds)
+            ->selectRaw('COUNT(*) as orders_count, SUM(total) as total_spent')
+            ->first();
+
         return [
             'available' => true,
             'orders' => $orders->all(),
             'carts' => $carts->all(),
             'stats' => [
-                'ordersCount' => $orders->count(),
-                'totalSpent' => (float) $orders->sum('total'),
+                'ordersCount' => (int) ($stats->orders_count ?? 0),
+                'totalSpent' => (float) ($stats->total_spent ?? 0.0),
             ],
         ];
     }
@@ -620,17 +629,44 @@ class ContactAggregatorService
     /**
      * Lifetime order metrics sourced from the Remarketing mirror (guarded).
      *
+     * El tab "Resumen" (por defecto al abrir un contacto) solo necesita el
+     * conteo/total/moneda — antes llamaba a tienda() completo, que hace
+     * with('items') sobre hasta 10 pedidos + hasta 5 carritos abandonados
+     * solo para descartar casi todo el resultado.
+     *
      * @return array{ordersCount: int, totalSpent: float, currency: string}
      */
     private function lifetimeOrders(Customer $customer): array
     {
-        $tienda = $this->tienda($customer);
-        $orders = $tienda['orders'] ?? [];
+        if (! $customer->email || ! $this->remarketingAvailable()) {
+            return ['ordersCount' => 0, 'totalSpent' => 0.0, 'currency' => 'EUR'];
+        }
+
+        $remarketingCustomer = app(self::REMARKETING_CUSTOMER);
+        $orderModel = app(self::REMARKETING_ORDER);
+
+        $customerIds = $remarketingCustomer->newQuery()
+            ->where('email', strtolower($customer->email))
+            ->pluck('id');
+
+        if ($customerIds->isEmpty()) {
+            return ['ordersCount' => 0, 'totalSpent' => 0.0, 'currency' => 'EUR'];
+        }
+
+        $stats = $orderModel->newQuery()
+            ->whereIn('customer_id', $customerIds)
+            ->selectRaw('COUNT(*) as orders_count, SUM(total) as total_spent')
+            ->first();
+
+        $latestCurrency = $orderModel->newQuery()
+            ->whereIn('customer_id', $customerIds)
+            ->latest('placed_at')
+            ->value('currency');
 
         return [
-            'ordersCount' => $tienda['stats']['ordersCount'] ?? 0,
-            'totalSpent' => $tienda['stats']['totalSpent'] ?? 0.0,
-            'currency' => $orders[0]['currency'] ?? 'EUR',
+            'ordersCount' => (int) ($stats->orders_count ?? 0),
+            'totalSpent' => (float) ($stats->total_spent ?? 0.0),
+            'currency' => $latestCurrency ?? 'EUR',
         ];
     }
 
@@ -729,8 +765,14 @@ class ContactAggregatorService
         $email = strtolower($customer->email);
         $model = app(self::EMAIL_LOG);
 
+        // MATCH AGAINST usa el indice FULLTEXT de recipients_index (ver
+        // EmailLogController::index()); el LIKE '%...%' puro forzaba un full
+        // table scan en cada carga del tab Actividad. Se mantiene el LIKE
+        // como fallback para el mismo caso (tokens cortos/parciales).
         return $model->newQuery()
-            ->where('recipients_index', 'like', '%'.$email.'%')
+            ->where(fn ($q) => $q
+                ->whereRaw('MATCH(recipients_index) AGAINST (?)', [$email])
+                ->orWhere('recipients_index', 'like', '%'.$email.'%'))
             ->latest('created_at')
             ->limit(20)
             ->get()

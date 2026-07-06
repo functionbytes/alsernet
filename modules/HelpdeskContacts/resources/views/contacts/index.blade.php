@@ -16,15 +16,23 @@
 @section('content')
 
 @php
-    function sortUrl(string $col, string $currentSort, string $currentDir): string {
-        $newDir = ($currentSort === $col && $currentDir === 'desc') ? 'asc' : 'desc';
-        return request()->fullUrlWithQuery(['sort' => $col, 'direction' => $newDir, 'page' => null]);
+    // function_exists(): esta vista se recompila igual en cada request, pero
+    // dentro del mismo proceso PHP (ej. PHPUnit corriendo varios tests que
+    // renderizan esta pagina) un segundo include() del archivo compilado
+    // intentaba redeclarar estas funciones y tumbaba el proceso entero.
+    if (! function_exists('sortUrl')) {
+        function sortUrl(string $col, string $currentSort, string $currentDir): string {
+            $newDir = ($currentSort === $col && $currentDir === 'desc') ? 'asc' : 'desc';
+            return request()->fullUrlWithQuery(['sort' => $col, 'direction' => $newDir, 'page' => null]);
+        }
     }
-    function sortIcon(string $col, string $currentSort, string $currentDir): string {
-        if ($currentSort !== $col) { return '<i class="fas fa-sort text-muted"></i>'; }
-        return $currentDir === 'asc'
-            ? '<i class="fas fa-sort-up"></i>'
-            : '<i class="fas fa-sort-down"></i>';
+    if (! function_exists('sortIcon')) {
+        function sortIcon(string $col, string $currentSort, string $currentDir): string {
+            if ($currentSort !== $col) { return '<i class="fas fa-sort text-muted"></i>'; }
+            return $currentDir === 'asc'
+                ? '<i class="fas fa-sort-up"></i>'
+                : '<i class="fas fa-sort-down"></i>';
+        }
     }
 @endphp
 

@@ -51,6 +51,10 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! helpdesk_contacts_enabled()) {
+            return;
+        }
+
         NavService::registerMiniItem('contacts', [
             'icon' => 'fas fa-address-book',
             'tooltip' => 'Contactos',
