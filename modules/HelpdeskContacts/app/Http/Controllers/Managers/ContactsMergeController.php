@@ -31,6 +31,7 @@ class ContactsMergeController extends Controller
         }
 
         $customers = Customer::query()
+            ->forAgent($request->user())
             ->search($term)
             ->when($excludeId > 0, fn ($q) => $q->where('id', '!=', $excludeId))
             ->latest('last_seen_at')
@@ -54,6 +55,8 @@ class ContactsMergeController extends Controller
      */
     public function preview(Customer $customer, Request $request): JsonResponse
     {
+        $this->assertVisible($customer);
+
         $loserId = $request->integer('loser_id');
 
         if (! $loserId) {
@@ -65,6 +68,8 @@ class ContactsMergeController extends Controller
         if (! $loser) {
             return response()->json(['success' => false, 'message' => 'El contacto seleccionado no existe.'], 404);
         }
+
+        $this->assertVisible($loser);
 
         return response()->json([
             'success' => true,
@@ -80,6 +85,8 @@ class ContactsMergeController extends Controller
      */
     public function execute(Customer $customer, ExecuteMergeRequest $request): JsonResponse
     {
+        $this->assertVisible($customer);
+
         $loserId = $request->integer('loser_id');
 
         if ($loserId === $customer->id) {
@@ -97,6 +104,8 @@ class ContactsMergeController extends Controller
                 'message' => 'El contacto duplicado no existe.',
             ], 404);
         }
+
+        $this->assertVisible($loser);
 
         try {
             $this->mergeService->merge($customer, $loser);
@@ -120,6 +129,19 @@ class ContactsMergeController extends Controller
     }
 
     /**
+     * Abort with 403 unless the given customer is within the agent's
+     * inbox-isolation scope, so merges cannot touch cross-inbox contacts.
+     */
+    private function assertVisible(Customer $customer): void
+    {
+        abort_unless(
+            Customer::query()->whereKey($customer->getKey())->forAgent(request()->user())->exists(),
+            403,
+            'Sin autorización sobre este contacto.'
+        );
+    }
+
+    /**
      * Build a summary array for the preview response.
      *
      * @return array<string, mixed>
@@ -135,7 +157,7 @@ class ContactsMergeController extends Controller
             'phone' => $customer->phone,
             'total_conversations' => $customer->total_conversations ?? 0,
             'integrations' => [
-                'erp_customer_id' => $customer->erp_customer_id,
+                'erp_customer_id' => $customer->externalIdFor('erp'),
                 'whatsapp_phone' => $customer->whatsapp_phone,
                 'facebook_psid' => $customer->facebook_psid,
                 'instagram_id' => $customer->instagram_id,

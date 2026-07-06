@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskContacts\Http\Requests\Managers\BulkContactActionRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ImportContactsRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\UpdateContactRequest;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -22,18 +22,20 @@ class ContactsController extends Controller
      */
     public function index(Request $request): View
     {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
         $allowedSorts = ['name', 'last_seen_at', 'total_conversations', 'created_at'];
         $sort = in_array($request->input('sort'), $allowedSorts) ? $request->input('sort') : 'last_seen_at';
         $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
         $perPage = in_array((int) $request->input('per_page'), [15, 25, 50, 100]) ? (int) $request->input('per_page') : 25;
 
-        $customers = $this->applyFilters(Customer::query(), $request)
+        $customers = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
             ->orderBy($sort, $direction)
             ->paginate($perPage)
             ->appends($request->query());
 
         $selected = $request->filled('selected')
-            ? Customer::find($request->integer('selected'))
+            ? Customer::query()->forAgent($request->user())->whereKey($request->integer('selected'))->first()
             : null;
 
         return view('contacts::contacts.index', [
@@ -53,6 +55,10 @@ class ContactsController extends Controller
      */
     public function show(Customer $customer): View
     {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
+        $this->assertVisible($customer);
+
         return view('contacts::contacts.show', [
             'customer' => $customer,
         ]);
@@ -63,6 +69,8 @@ class ContactsController extends Controller
      */
     public function update(Customer $customer, UpdateContactRequest $request): JsonResponse
     {
+        $this->assertVisible($customer);
+
         $customer->update($request->validated());
 
         return response()->json([
@@ -142,9 +150,11 @@ class ContactsController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
         $filename = 'contactos-'.now()->format('Y-m-d').'.csv';
 
-        $query = $this->applyFilters(Customer::query(), $request)
+        $query = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
             ->latest('last_seen_at')
             ->limit(5000);
 
@@ -160,16 +170,16 @@ class ContactsController extends Controller
                 foreach ($customers as $customer) {
                     fputcsv($handle, [
                         $customer->id,
-                        $customer->name,
-                        $customer->email ?? '',
-                        $customer->phone ?? '',
-                        $customer->whatsapp_phone ?? '',
-                        $customer->country ?? '',
+                        $this->csvSafe($customer->name),
+                        $this->csvSafe($customer->email ?? ''),
+                        $this->csvSafe($customer->phone ?? ''),
+                        $this->csvSafe($customer->whatsapp_phone ?? ''),
+                        $this->csvSafe($customer->country ?? ''),
                         $customer->last_seen_at?->toIso8601String() ?? '',
                         $customer->total_conversations ?? 0,
                         $customer->email_verified_at ? 'Sí' : 'No',
                         $customer->banned_at ? 'Sí' : 'No',
-                        $this->channelList($customer),
+                        $this->csvSafe($this->channelList($customer)),
                     ]);
                 }
             });
@@ -183,6 +193,8 @@ class ContactsController extends Controller
      */
     public function ban(Customer $customer): JsonResponse
     {
+        $this->assertVisible($customer);
+
         $customer->ban();
 
         return response()->json(['success' => true, 'message' => 'Contacto suspendido']);
@@ -193,6 +205,8 @@ class ContactsController extends Controller
      */
     public function unban(Customer $customer): JsonResponse
     {
+        $this->assertVisible($customer);
+
         $customer->unban();
 
         return response()->json(['success' => true, 'message' => 'Contacto reactivado']);
@@ -201,21 +215,17 @@ class ContactsController extends Controller
     /**
      * Apply a bulk action (ban, unban, delete) to a set of customer IDs.
      */
-    public function bulkAction(Request $request): JsonResponse
+    public function bulkAction(BulkContactActionRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'action' => ['required', 'string', 'in:ban,unban,delete'],
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', Rule::exists('helpdesk_customers', 'id')],
-        ], [
-            'action.required' => 'La acción es obligatoria.',
-            'action.in' => 'La acción debe ser ban, unban o delete.',
-            'ids.required' => 'Debes seleccionar al menos un contacto.',
-            'ids.min' => 'Debes seleccionar al menos un contacto.',
-            'ids.*.exists' => 'Uno o más contactos seleccionados no existen.',
-        ]);
+        $data = $request->validated();
 
-        $ids = $data['ids'];
+        // Restringe la acción masiva a los contactos que el agente puede ver
+        // (aislamiento por inbox); ignora silenciosamente los IDs fuera de alcance.
+        $ids = Customer::query()
+            ->forAgent($request->user())
+            ->whereIn('id', $data['ids'])
+            ->pluck('id')
+            ->all();
 
         match ($data['action']) {
             'ban' => Customer::whereIn('id', $ids)->update(['banned_at' => now()]),
@@ -233,9 +243,13 @@ class ContactsController extends Controller
     /**
      * At-risk dashboard with key contact health stats.
      */
-    public function reports(): View
+    public function reports(Request $request): View
     {
-        $atRisk = Customer::query()
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
+        $scoped = fn (): Builder => Customer::query()->forAgent($request->user());
+
+        $atRisk = $scoped()
             ->where(fn (Builder $q) => $q
                 ->where('last_seen_at', '<', now()->subDays(30))
                 ->orWhereNull('last_seen_at')
@@ -244,22 +258,22 @@ class ContactsController extends Controller
             ->limit(50)
             ->get();
 
-        $topActive = Customer::query()
+        $topActive = $scoped()
             ->where('total_conversations', '>', 0)
             ->orderByDesc('total_conversations')
             ->limit(10)
             ->get();
 
         $stats = [
-            'total' => Customer::query()->whereNull('banned_at')->count(),
-            'banned' => Customer::query()->whereNotNull('banned_at')->count(),
-            'inactive' => Customer::query()
+            'total' => $scoped()->whereNull('banned_at')->count(),
+            'banned' => $scoped()->whereNotNull('banned_at')->count(),
+            'inactive' => $scoped()
                 ->where(fn (Builder $q) => $q
                     ->where('last_seen_at', '<', now()->subDays(30))
                     ->orWhereNull('last_seen_at')
                 )
                 ->count(),
-            'verified' => Customer::query()->whereNotNull('email_verified_at')->count(),
+            'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
         ];
 
         return view('contacts::contacts.reports', compact('atRisk', 'topActive', 'stats'));
@@ -308,6 +322,30 @@ class ContactsController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * Abort with 403 unless the given customer is within the agent's
+     * inbox-isolation scope (same rule as the list queries).
+     */
+    private function assertVisible(Customer $customer): void
+    {
+        abort_unless(
+            Customer::query()->whereKey($customer->getKey())->forAgent(request()->user())->exists(),
+            403,
+            'Sin autorización sobre este contacto.'
+        );
+    }
+
+    /**
+     * Neutralize CSV formula injection: prefix values starting with a
+     * formula trigger (= + - @ tab CR) with a single quote before export.
+     */
+    private function csvSafe(mixed $value): string
+    {
+        $value = (string) $value;
+
+        return preg_match('/^[=+\-@\t\r]/', $value) === 1 ? "'".$value : $value;
     }
 
     /**
