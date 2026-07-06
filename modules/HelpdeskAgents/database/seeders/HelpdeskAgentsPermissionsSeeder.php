@@ -18,6 +18,15 @@ class HelpdeskAgentsPermissionsSeeder extends Seeder
             ['helpdesk.aiagents.update', 'Actualizar agentes IA'],
             ['helpdesk.aiagents.delete', 'Eliminar agentes IA'],
             ['helpdesk.aiagents.manage', 'Gestionar agentes IA completamente'],
+
+            // Turnos/vacaciones/guardias (ScheduleController) — el gate real
+            // `can:helpdesk.schedule.*` y las policies AgentShift/OncallRotation
+            // consultaban estos permisos, que nunca se sembraban.
+            ['helpdesk.schedule.view', 'Ver turnos y guardias'],
+            ['helpdesk.schedule.create', 'Crear turnos y guardias'],
+            ['helpdesk.schedule.update', 'Actualizar turnos y guardias'],
+            ['helpdesk.schedule.delete', 'Eliminar turnos y guardias'],
+            ['helpdesk.schedule.manage', 'Gestionar turnos y guardias completamente'],
         ];
 
         foreach ($permissions as [$name, $description]) {
