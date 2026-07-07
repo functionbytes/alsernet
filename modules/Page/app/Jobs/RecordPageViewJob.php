@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Page\Models\PageView;
 
 class RecordPageViewJob implements ShouldQueue
@@ -46,6 +47,14 @@ class RecordPageViewJob implements ShouldQueue
             'country_code' => null,
             'viewed_date' => $now->toDateString(),
             'viewed_at' => $now,
+        ]);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('RecordPageViewJob failed', [
+            'page_id' => $this->pageId,
+            'error' => $exception->getMessage(),
         ]);
     }
 }

@@ -102,4 +102,16 @@ class CheckBrokenLinksJob implements ShouldQueue
 
         Log::info("CheckBrokenLinksJob completed: {$checked} checked, ".count($broken).' broken.');
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CheckBrokenLinksJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
+
+        // Sin esto, un fallo (p.ej. timeout de 3600s agotado) dejaba el
+        // progreso cacheado en 'running' para siempre — cualquier UI que lo
+        // consulte se queda mostrando una barra de progreso colgada.
+        Cache::put('seo.broken_links.progress', ['status' => 'failed'], 3600);
+    }
 }

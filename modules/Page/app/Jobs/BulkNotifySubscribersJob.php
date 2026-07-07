@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Mailrelay\Entities\Subscriber;
 use Modules\Page\Mail\PagePublishedMail;
@@ -19,6 +20,8 @@ class BulkNotifySubscribersJob implements ShouldQueue
     public int $tries = 3;
 
     public int $timeout = 300;
+
+    public int $backoff = 30;
 
     public function __construct(
         public readonly Page $page,
@@ -49,5 +52,13 @@ class BulkNotifySubscribersJob implements ShouldQueue
                         ->queue(new PagePublishedMail($this->page, $subscriber));
                 }
             });
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('BulkNotifySubscribersJob failed', [
+            'page_id' => $this->page->id,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

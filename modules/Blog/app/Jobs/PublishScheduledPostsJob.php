@@ -19,6 +19,8 @@ class PublishScheduledPostsJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 30;
+
     public function handle(): void
     {
         $published = 0;
@@ -50,5 +52,12 @@ class PublishScheduledPostsJob implements ShouldQueue
             });
 
         Log::info("PublishScheduledPostsJob: finalizado. Posts publicados: {$published}.");
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('PublishScheduledPostsJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

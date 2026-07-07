@@ -22,6 +22,8 @@ class TranslateBlogPostJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 15;
+
     public function __construct(
         private readonly int $postId,
         private readonly ?string $targetLocale = null,
@@ -65,5 +67,13 @@ class TranslateBlogPostJob implements ShouldQueue
 
         // Broadcast event for real-time UI update
         event(new TranslationCompleted($post, $results, $translations));
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('TranslateBlogPostJob failed', [
+            'post_id' => $this->postId,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }
