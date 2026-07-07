@@ -19,6 +19,8 @@ class CleanupOld404Logs implements ShouldQueue
 
     public int $timeout = 300;
 
+    public int $backoff = 60;
+
     public function __construct()
     {
         $this->onQueue('seo-scheduled');
@@ -51,5 +53,12 @@ class CleanupOld404Logs implements ShouldQueue
             ->delete();
 
         Log::info("SEO cleanup: deleted {$deleted} old 404 log records.");
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CleanupOld404Logs failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

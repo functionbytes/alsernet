@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Seo\Mail\SeoWeeklyReportMail;
 use Modules\Seo\Models\Seo404Log;
@@ -21,6 +22,8 @@ class SendSeoWeeklyReport implements ShouldQueue
     public int $tries = 2;
 
     public int $timeout = 120;
+
+    public int $backoff = 60;
 
     public function __construct()
     {
@@ -79,5 +82,12 @@ class SendSeoWeeklyReport implements ShouldQueue
         ");
 
         return (int) ($rows[0]->total ?? 0);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('SendSeoWeeklyReport failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

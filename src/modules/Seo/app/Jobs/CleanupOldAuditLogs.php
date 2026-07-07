@@ -19,6 +19,8 @@ class CleanupOldAuditLogs implements ShouldQueue
 
     public int $timeout = 300;
 
+    public int $backoff = 60;
+
     public function __construct()
     {
         $this->onQueue('seo-scheduled');
@@ -81,5 +83,12 @@ class CleanupOldAuditLogs implements ShouldQueue
             });
 
         return $deleted;
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CleanupOldAuditLogs failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

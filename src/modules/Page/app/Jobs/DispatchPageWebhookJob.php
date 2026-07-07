@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Modules\Page\Models\PageWebhook;
 use Modules\Page\Services\WebhookUrlValidator;
 
@@ -80,5 +81,14 @@ class DispatchPageWebhookJob implements ShouldQueue
             $webhook->update(['last_triggered_at' => now()]);
             throw $e;
         }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('DispatchPageWebhookJob failed permanently', [
+            'webhook_id' => $this->webhookId,
+            'event' => $this->event,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

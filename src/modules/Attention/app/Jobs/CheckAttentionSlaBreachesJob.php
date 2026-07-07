@@ -24,6 +24,8 @@ class CheckAttentionSlaBreachesJob implements ShouldQueue
 
     public $timeout = 300;
 
+    public $backoff = 30;
+
     /**
      * Create a new job instance.
      */
@@ -281,5 +283,12 @@ class CheckAttentionSlaBreachesJob implements ShouldQueue
                 Log::error("Failed to send SLA escalation email: {$e->getMessage()}");
             }
         }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CheckAttentionSlaBreachesJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }
