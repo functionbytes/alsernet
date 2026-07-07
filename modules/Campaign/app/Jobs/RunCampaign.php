@@ -61,4 +61,12 @@ class RunCampaign implements ShouldQueue
             throw $e;
         }
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('RunCampaign failed permanently', [
+            'campaign_uid' => $this->campaign->uid,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }
