@@ -79,4 +79,11 @@ class FetchRssFeedJob implements ShouldQueue
             throw $e;
         }
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        \Log::error("RSS Feed {$this->rssFeed->id} fetch failed permanently", [
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

@@ -27,20 +27,24 @@ class TranslatePostJob implements ShouldQueue
 
     public function handle(TranslationService $translator): void
     {
-        try {
-            $translator->translatePost($this->post, $this->languages);
-        } catch (\Exception $e) {
-            \Log::error('Translation failed for post '.$this->post->id, [
-                'error' => $e->getMessage(),
-                'languages' => $this->languages,
-            ]);
-
-            $this->fail($e);
-        }
+        $translator->translatePost($this->post, $this->languages);
     }
 
     public function tags(): array
     {
         return ['translation', 'post:'.$this->post->id];
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        // translatePost() es idempotente (updateOrCreate por idioma), así que
+        // antes el catch-and-fail() inmediato anulaba por completo el
+        // tries=3/backoff configurados: cualquier error (incl. uno transitorio
+        // de la API de traducción) se marcaba fallido en el primer intento sin
+        // reintentar nunca.
+        \Log::error('TranslatePostJob failed permanently for post '.$this->post->id, [
+            'error' => $exception->getMessage(),
+            'languages' => $this->languages,
+        ]);
     }
 }
