@@ -115,4 +115,13 @@ class ProcessInstagramWebhookJob implements ShouldQueue
 
         // TODO: Update media stats
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessInstagramWebhookJob failed permanently', [
+            'social_account_id' => $this->socialAccount->id,
+            'field' => $this->field,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }
