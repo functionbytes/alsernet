@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Reviews\Models\ReviewWebhookSubscription;
 use Modules\Reviews\Services\OutboundWebhookService;
 
@@ -15,6 +16,8 @@ class OutboundWebhookJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
+
+    public int $timeout = 30;
 
     public array $backoff = [30, 60, 120];
 
@@ -29,5 +32,14 @@ class OutboundWebhookJob implements ShouldQueue
     public function handle(OutboundWebhookService $service): void
     {
         $service->send($this->subscription, $this->event, $this->payload);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('OutboundWebhookJob failed permanently', [
+            'subscription_id' => $this->subscription->id,
+            'event' => $this->event,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

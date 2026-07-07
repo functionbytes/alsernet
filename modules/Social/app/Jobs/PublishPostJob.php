@@ -22,6 +22,8 @@ class PublishPostJob implements ShouldQueue
 
     public $tries = 3;
 
+    public $timeout = 60;
+
     public $backoff = [60, 300, 900];
 
     public function __construct(
@@ -129,8 +131,12 @@ class PublishPostJob implements ShouldQueue
         return false;
     }
 
-    public function failed(Exception $exception): void
+    public function failed(\Throwable $exception): void
     {
+        // \Throwable (no Exception): un \Error (p.ej. TypeError) en handle()
+        // llegaría aquí y, con el tipo estrecho anterior, PHP fatal-eaba por
+        // incompatibilidad de tipo — enmascarando el fallo real y sin marcar
+        // el post como FAILED.
         Log::error("PublishPostJob permanently failed for post {$this->post->id}", [
             'exception' => $exception,
             'post_id' => $this->post->id,
