@@ -28,30 +28,32 @@ class ApplyWatermarkJob implements ShouldQueue
 
     public function handle(MediaProcessingService $processor): void
     {
-        try {
-            $watermarked = $processor->applyWatermark(
-                $this->imagePath,
-                null,
-                $this->position
-            );
+        $processor->applyWatermark(
+            $this->imagePath,
+            null,
+            $this->position
+        );
 
-            // The image is modified in place, so just log success
-            \Log::info('Watermark applied successfully', [
-                'post_id' => $this->post->id,
-                'image' => $this->imagePath,
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Watermark application failed for post '.$this->post->id, [
-                'error' => $e->getMessage(),
-                'image' => $this->imagePath,
-            ]);
-
-            $this->fail($e);
-        }
+        // The image is modified in place, so just log success
+        \Log::info('Watermark applied successfully', [
+            'post_id' => $this->post->id,
+            'image' => $this->imagePath,
+        ]);
     }
 
     public function tags(): array
     {
         return ['watermark', 'post:'.$this->post->id];
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        // El catch-and-fail() inmediato anterior anulaba tries=3/backoff:
+        // cualquier error (incl. uno transitorio de E/S) fallaba en el primer
+        // intento sin reintentar.
+        \Log::error('ApplyWatermarkJob failed permanently for post '.$this->post->id, [
+            'error' => $exception->getMessage(),
+            'image' => $this->imagePath,
+        ]);
     }
 }

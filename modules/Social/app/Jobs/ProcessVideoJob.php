@@ -58,4 +58,18 @@ class ProcessVideoJob implements ShouldQueue
     {
         return ['video-processing', 'post:'.$this->post->id, 'network:'.$this->network];
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        // Se mantiene el fail() inmediato dentro de handle() (no retry): a
+        // diferencia de Translate/Watermark, addMedia() de Spatie es aditivo,
+        // no upsert — reintentar tras un fallo parcial (p.ej. la miniatura)
+        // duplicaría el vídeo ya adjuntado al post. $this->fail() ya invoca
+        // este método; se deja para que quede registrado el log terminal.
+        \Log::error('ProcessVideoJob failed permanently for post '.$this->post->id, [
+            'error' => $exception->getMessage(),
+            'video' => $this->videoPath,
+            'network' => $this->network,
+        ]);
+    }
 }

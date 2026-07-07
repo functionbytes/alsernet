@@ -66,4 +66,15 @@ class ProcessBulkImportJob implements ShouldQueue
             $this->bulkImport->markAsFailed($e->getMessage());
         }
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        // Cubre el caso que el catch interno no puede: si el worker muere a
+        // mitad de proceso (OOM, kill del supervisor), Laravel marca el job
+        // fallido sin pasar por el catch de handle() — sin esto el import
+        // quedaba atascado en 'processing' para siempre.
+        if ($this->bulkImport->status === 'processing') {
+            $this->bulkImport->markAsFailed($exception->getMessage());
+        }
+    }
 }
