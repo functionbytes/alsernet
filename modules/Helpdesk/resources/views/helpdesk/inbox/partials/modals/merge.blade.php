@@ -4,9 +4,9 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box danger"><i class="fas fa-code-fork"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · ACCIÓN IRREVERSIBLE</span>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.close_conv_label') }}</span>
                 <div class="bv-modal-title">
-                    Fusionar conversación
+                    {{ __('helpdesk::helpdesk.inbox.modals.merge_title') }}
                     @if(!empty($selectedConversation))<span class="bv-chip-id">#{{ $selectedConversation->id }}</span>@endif
                 </div>
             </div>
@@ -19,17 +19,17 @@
             {{-- Warning --}}
             <div class="alert warning">
                 <i class="fas fa-triangle-exclamation lead"></i>
-                <div>Esta acción <b>no se puede deshacer</b>. La conversación secundaria se archivará y sus mensajes aparecerán en la principal ordenados cronológicamente.</div>
+                <div>{{ __('helpdesk::helpdesk.inbox.modals.merge_warning_pre') }} <b>{{ __('helpdesk::helpdesk.inbox.modals.merge_warning_bold') }}</b>. {{ __('helpdesk::helpdesk.inbox.modals.merge_warning_post') }}</div>
             </div>
 
             {{-- Search --}}
             <div class="bv-modal-search bv-mb-12">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="merge-search" type="text" placeholder="Buscar conversación destino…" autocomplete="off">
+                <input id="merge-search" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.merge_search_placeholder') }}" autocomplete="off">
             </div>
 
             {{-- Conversation list --}}
-            <div class="bv-right-section-title bv-mb-8">Conversaciones del mismo contacto</div>
+            <div class="bv-right-section-title bv-mb-8">{{ __('helpdesk::helpdesk.inbox.modals.merge_same_contact') }}</div>
             <div class="bv-opt-list" id="merge-list">
                 <div class="bv-opt on" data-conv-id="7801">
                     <div class="bv-av c5 bv-av-rounded bv-merge-av"><i class="fab fa-facebook-messenger"></i></div>
@@ -58,26 +58,26 @@
             </div>
 
             {{-- Merge preview --}}
-            <div class="bv-right-section-title bv-mt-16 bv-mb-8">Vista previa de fusión</div>
+            <div class="bv-right-section-title bv-mt-16 bv-mb-8">{{ __('helpdesk::helpdesk.inbox.modals.merge_preview_title') }}</div>
             <div class="bv-merge-preview-grid">
                 <div class="bv-merge-conv-panel">
-                    <div class="bv-merge-panel-label">Conversación actual</div>
-                    <div class="bv-bubble bv-merge-bubble">¡Hola! ¿Me podéis ayudar con mi pedido #1234?</div>
-                    <div class="bv-bubble bv-merge-bubble">Hola Carmen, claro que sí. ¿Qué ha pasado?</div>
-                    <div class="bv-bubble bv-merge-bubble-last">El tracking dice entregado pero no lo tengo.</div>
+                    <div class="bv-merge-panel-label">{{ __('helpdesk::helpdesk.inbox.modals.merge_current_conversation') }}</div>
+                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_1') }}</div>
+                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_2') }}</div>
+                    <div class="bv-bubble bv-merge-bubble-last">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_current_3') }}</div>
                 </div>
                 <div class="bv-merge-conv-panel">
-                    <div class="bv-merge-panel-label">Conversación destino</div>
-                    <div class="bv-bubble bv-merge-bubble">Hola, quería saber si llegó ya mi pedido…</div>
-                    <div class="bv-bubble bv-merge-bubble">Estamos revisando, te confirmamos en breve.</div>
-                    <div class="bv-bubble bv-merge-bubble-last">Perfecto, muchas gracias.</div>
+                    <div class="bv-merge-panel-label">{{ __('helpdesk::helpdesk.inbox.modals.merge_target_conversation') }}</div>
+                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_1') }}</div>
+                    <div class="bv-bubble bv-merge-bubble">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_2') }}</div>
+                    <div class="bv-bubble bv-merge-bubble-last">{{ __('helpdesk::helpdesk.inbox.modals.merge_sample_target_3') }}</div>
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-merge-apply">Fusionar conversaciones</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-merge-apply">{{ __('helpdesk::helpdesk.inbox.modals.merge_apply') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -115,15 +115,17 @@ $(document).on('click', '[data-bv-modal="merge"]', function () {
                 : c.channel === 'facebook' ? 'fab fa-facebook-messenger'
                 : c.channel === 'instagram' ? 'fab fa-instagram'
                 : 'far fa-comment';
-            var html = '<div class="bv-opt' + (i === 0 ? ' on' : '') + '" data-conv-id="' + c.id + '">' +
-                '<div class="bv-av c' + ((c.id % 8) + 1) + ' bv-av-rounded bv-merge-av"><i class="' + icon + '"></i></div>' +
-                '<div class="body">' +
-                    '<div class="name">#' + c.id + ' · ' + (c.subject || 'Sin asunto') + '</div>' +
-                    '<div class="sub">' + (c.preview || '—') + ' · ' + (c.time || '') + '</div>' +
-                '</div>' +
-                '<span class="bv-modal-radio-dot flex-shrink-0"></span>' +
-            '</div>';
-            $list.append(html);
+            // El subject/preview vienen del email entrante del cliente (no
+            // confiable) — escapar antes de insertar como HTML.
+            var $opt = $('<div>', { class: 'bv-opt' + (i === 0 ? ' on' : ''), 'data-conv-id': c.id }).append(
+                $('<div>', { class: 'bv-av c' + ((c.id % 8) + 1) + ' bv-av-rounded bv-merge-av' }).append($('<i>', { class: icon })),
+                $('<div>', { class: 'body' }).append(
+                    $('<div>', { class: 'name' }).text('#' + c.id + ' · ' + (c.subject || 'Sin asunto')),
+                    $('<div>', { class: 'sub' }).text((c.preview || '—') + ' · ' + (c.time || ''))
+                ),
+                $('<span>', { class: 'bv-modal-radio-dot flex-shrink-0' })
+            );
+            $list.append($opt);
         });
     });
 });

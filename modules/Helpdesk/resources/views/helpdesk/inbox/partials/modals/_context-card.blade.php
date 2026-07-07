@@ -13,17 +13,22 @@
         $ccChLabel  = $ccChLabels[$ccConv->channel ?? 'widget'] ?? ucfirst($ccConv->channel ?? 'Widget');
 
         $ccPrio       = $ccConv->priority ?? 'normal';
-        $ccPrioLabels = ['low' => 'Baja', 'normal' => 'Normal', 'high' => 'Alta', 'urgent' => 'Urgente'];
+        $ccPrioLabels = [
+            'low' => __('helpdesk::helpdesk.inbox.modals.priority_low'),
+            'normal' => __('helpdesk::helpdesk.inbox.modals.priority_normal'),
+            'high' => __('helpdesk::helpdesk.inbox.modals.priority_high'),
+            'urgent' => __('helpdesk::helpdesk.inbox.modals.priority_urgent'),
+        ];
     @endphp
     <div class="info-table">
-        <div class="lbl">Cliente</div>
+        <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.context_card_customer') }}</div>
         <div class="val">
             @if(!$ccIsGuest){{ $ccName }}@if($ccEmail) ·&nbsp;@endif@endif
-            @if($ccEmail){{ $ccEmail }}@else Sin nombre @endif
+            @if($ccEmail){{ $ccEmail }}@else {{ __('helpdesk::helpdesk.inbox.modals.context_card_no_name') }} @endif
         </div>
-        <div class="lbl">Canal</div>
+        <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.context_card_channel') }}</div>
         <div class="val">{{ $ccChLabel }}</div>
-        <div class="lbl">Prioridad</div>
-        <div class="val">{{ $ccPrioLabels[$ccPrio] ?? 'Normal' }}</div>
+        <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.priority_label') }}</div>
+        <div class="val">{{ $ccPrioLabels[$ccPrio] ?? __('helpdesk::helpdesk.inbox.modals.priority_normal') }}</div>
     </div>
 @endif

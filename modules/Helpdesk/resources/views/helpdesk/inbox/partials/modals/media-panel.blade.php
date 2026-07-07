@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-folder-open"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CHAT · RECURSOS</span>
-                <div class="bv-modal-title">Archivos compartidos</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.media_panel_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.media_panel_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,23 +13,23 @@
 
             {{-- Filtros --}}
             <div class="bv-hist-pills bv-media-pills" id="mediaPanelFilter">
-                <button class="bv-hist-pill on" data-mpf="all">Todos <span class="bv-pill-count" id="mpCountAll">0</span></button>
+                <button class="bv-hist-pill on" data-mpf="all">{{ __('helpdesk::helpdesk.inbox.modals.all_label') }} <span class="bv-pill-count" id="mpCountAll">0</span></button>
                 <button class="bv-hist-pill" data-mpf="image"><i class="far fa-image"></i> <span class="bv-pill-count" id="mpCountImage">0</span></button>
                 <button class="bv-hist-pill" data-mpf="video"><i class="fas fa-video"></i> <span class="bv-pill-count" id="mpCountVideo">0</span></button>
                 <button class="bv-hist-pill" data-mpf="document"><i class="far fa-file-lines"></i> <span class="bv-pill-count" id="mpCountDocument">0</span></button>
             </div>
 
             {{-- Vista toggle --}}
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+            <div class="bv-x32">
                 <div class="bv-media-view-toggle" id="mpViewToggle">
-                    <button type="button" class="on" data-mpv="grid" title="Cuadrícula"><i class="fas fa-grip"></i></button>
-                    <button type="button" data-mpv="list" title="Lista"><i class="fas fa-list"></i></button>
+                    <button type="button" class="on" data-mpv="grid" title="{{ __('helpdesk::helpdesk.inbox.right.view_grid_title') }}"><i class="fas fa-grip"></i></button>
+                    <button type="button" data-mpv="list" title="{{ __('helpdesk::helpdesk.inbox.right.view_list_title') }}"><i class="fas fa-list"></i></button>
                 </div>
-                <div style="flex:1"></div>
-                <select id="mpSort" class="bv-form-input" style="width:auto;font-size:11.5px;padding:5px 26px 5px 10px">
-                    <option value="recent">Recientes</option>
-                    <option value="oldest">Más antiguos</option>
-                    <option value="size">Por tamaño</option>
+                <div class="bv-x33"></div>
+                <select id="mpSort" class="bv-form-input bv-x34">
+                    <option value="recent">{{ __('helpdesk::helpdesk.inbox.right.sort_recent') }}</option>
+                    <option value="oldest">{{ __('helpdesk::helpdesk.inbox.modals.media_panel_sort_oldest') }}</option>
+                    <option value="size">{{ __('helpdesk::helpdesk.inbox.modals.media_panel_sort_size') }}</option>
                 </select>
             </div>
 
@@ -38,8 +38,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-media-download" disabled>Descargar selección</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-media-download" disabled>{{ __('helpdesk::helpdesk.inbox.right.download_selection') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.media_panel_close') }}</button>
         </div>
     </div>
 </div>
@@ -81,7 +81,7 @@
     function renderGrid() {
         var list = filtered();
         if (!list.length) {
-            $('#mediaPanelGrid').html('<div class="bv-cv-loading-msg" style="grid-column:1/-1"><i class="fas fa-inbox"></i></div>').show();
+            $('#mediaPanelGrid').html('<div class="bv-cv-loading-msg bv-x35"><i class="fas fa-inbox"></i></div>').show();
             return;
         }
         var isGrid = _mpView === 'grid';
