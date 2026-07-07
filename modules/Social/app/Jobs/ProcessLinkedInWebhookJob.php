@@ -113,4 +113,13 @@ class ProcessLinkedInWebhookJob implements ShouldQueue
 
         // TODO: Update like count
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessLinkedInWebhookJob failed permanently', [
+            'social_account_id' => $this->socialAccount->id,
+            'event_type' => $this->eventType,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

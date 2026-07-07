@@ -117,4 +117,13 @@ class ProcessFacebookWebhookJob implements ShouldQueue
 
         // TODO: Store message, create conversation
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessFacebookWebhookJob failed permanently', [
+            'social_account_id' => $this->socialAccount->id,
+            'field' => $this->field,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

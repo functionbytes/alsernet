@@ -114,4 +114,13 @@ class ProcessTwitterWebhookJob implements ShouldQueue
 
         // TODO: Update post status to deleted
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessTwitterWebhookJob failed permanently', [
+            'social_account_id' => $this->socialAccount->id,
+            'event_type' => $this->eventType,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }
