@@ -202,4 +202,16 @@ class ImportSubscribersJob implements ShouldQueue
 
         return $out;
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        \Log::error('ImportSubscribersJob failed', [
+            'mail_list_id' => $this->mailListId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        // tries=1: sin reintento, así que limpiar aquí evita dejar el CSV
+        // temporal huérfano en disco (unlink() antes solo corría al éxito).
+        @unlink($this->csvPath);
+    }
 }

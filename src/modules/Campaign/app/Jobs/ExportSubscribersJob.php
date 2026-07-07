@@ -88,4 +88,12 @@ class ExportSubscribersJob implements ShouldQueue
 
         \Log::info("ExportSubscribersJob: lista {$list->uid} exportada a {$path}");
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        \Log::error('ExportSubscribersJob failed', [
+            'mail_list_id' => $this->mailListId,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

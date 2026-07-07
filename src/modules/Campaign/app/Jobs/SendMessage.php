@@ -218,4 +218,18 @@ class SendMessage implements ShouldQueue
             }
         }
     }
+
+    public function failed(Throwable $exception): void
+    {
+        // La mayoría de fallos ya se registran dentro de send() (rate limit,
+        // sin crédito, error genérico con reintento); esto cubre el caso
+        // terminal que no pasaba por ningún log: retryUntil() agotado (12h) o
+        // una excepción relanzada con stopOnError=true.
+        Log::error('SendMessage failed permanently', [
+            'campaign_uid' => $this->campaign->uid ?? null,
+            'subscriber_uid' => $this->subscriber->uid ?? null,
+            'server_uid' => $this->server->uid ?? null,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

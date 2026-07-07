@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Modules\Campaign\Models\CampaignSubscriber;
 use Modules\CampaignSendingServers\Library\Everification\EmailVerifierContract;
 use Modules\CampaignSendingServers\Library\Everification\NeverBounceVerifier;
@@ -33,6 +34,8 @@ class VerifySubscriberEmail implements ShouldQueue
     public int $tries = 3;
 
     public int $timeout = 30;
+
+    public int $backoff = 10;
 
     public function __construct(protected int $subscriberId) {}
 
@@ -79,5 +82,13 @@ class VerifySubscriberEmail implements ShouldQueue
             'zerobounce' => new ZeroBounceVerifier($key),
             default => null,
         };
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('VerifySubscriberEmail failed', [
+            'subscriber_id' => $this->subscriberId,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

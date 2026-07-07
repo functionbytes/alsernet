@@ -61,4 +61,12 @@ class LoadCampaign implements ShouldQueue
             $this->batch()->add($deliveryJob);
         }, $loadLimit);
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('LoadCampaign failed permanently', [
+            'campaign_uid' => $this->campaign->uid,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }
