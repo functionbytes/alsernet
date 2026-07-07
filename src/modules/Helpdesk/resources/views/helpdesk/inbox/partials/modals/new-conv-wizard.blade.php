@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-comment-dots"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">BANDEJA · NUEVA</span>
-                <div class="bv-modal-title">Nueva conversación</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.new_conv_wizard_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.newconv_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,55 +13,55 @@
 
             {{-- Stepper --}}
             <div class="bv-wiz-steps">
-                <div class="bv-wiz-step on" id="ncwStep1Dot"><span class="bv-wiz-step__num">1</span><span class="bv-wiz-step__lbl">Canal</span></div>
+                <div class="bv-wiz-step on" id="ncwStep1Dot"><span class="bv-wiz-step__num">1</span><span class="bv-wiz-step__lbl">{{ __('helpdesk::helpdesk.inbox.modals.newconv_step_channel') }}</span></div>
                 <div class="bv-wiz-line" id="ncwLine"></div>
-                <div class="bv-wiz-step" id="ncwStep2Dot"><span class="bv-wiz-step__num">2</span><span class="bv-wiz-step__lbl">Destinatario</span></div>
+                <div class="bv-wiz-step" id="ncwStep2Dot"><span class="bv-wiz-step__num">2</span><span class="bv-wiz-step__lbl">{{ __('helpdesk::helpdesk.inbox.modals.newconv_step_recipient') }}</span></div>
             </div>
 
             {{-- Paso 1: Canal --}}
             <div id="ncwStep1">
-                <div class="bv-form-label" style="text-transform:uppercase;font-size:10px;letter-spacing:.06em;margin-bottom:8px">Elige un canal</div>
+                <div class="bv-form-label bv-x39">{{ __('helpdesk::helpdesk.inbox.modals.newconv_choose_channel') }}</div>
                 <div class="bv-ch-pick-grid" id="ncwChannelGrid">
                     <button type="button" class="bv-ch-pick on" data-channel="whatsapp">
                         <div class="bv-ch-pick__ic"><i class="fab fa-whatsapp"></i></div>
                         <div class="bv-ch-pick__body">
                             <span class="bv-ch-pick__nm">WhatsApp</span>
-                            <span class="bv-ch-pick__ds">Plantilla HSM requerida</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.newconv_channel_whatsapp_desc') }}</span>
                         </div>
                     </button>
                     <button type="button" class="bv-ch-pick" data-channel="messenger">
                         <div class="bv-ch-pick__ic"><i class="fab fa-facebook-messenger"></i></div>
                         <div class="bv-ch-pick__body">
                             <span class="bv-ch-pick__nm">Messenger</span>
-                            <span class="bv-ch-pick__ds">Ventana de 24h</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.newconv_channel_messenger_desc') }}</span>
                         </div>
                     </button>
                     <button type="button" class="bv-ch-pick" data-channel="instagram">
                         <div class="bv-ch-pick__ic"><i class="fab fa-instagram"></i></div>
                         <div class="bv-ch-pick__body">
                             <span class="bv-ch-pick__nm">Instagram</span>
-                            <span class="bv-ch-pick__ds">DM directo</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.newconv_channel_instagram_desc') }}</span>
                         </div>
                     </button>
                     <button type="button" class="bv-ch-pick" data-channel="webchat">
                         <div class="bv-ch-pick__ic"><i class="far fa-comment"></i></div>
                         <div class="bv-ch-pick__body">
-                            <span class="bv-ch-pick__nm">Chat web</span>
-                            <span class="bv-ch-pick__ds">Widget integrado</span>
+                            <span class="bv-ch-pick__nm">{{ __('helpdesk::helpdesk.inbox.modals.filter_channel_web') }}</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.newconv_channel_web_desc') }}</span>
                         </div>
                     </button>
                     <button type="button" class="bv-ch-pick" data-channel="email">
                         <div class="bv-ch-pick__ic"><i class="far fa-envelope"></i></div>
                         <div class="bv-ch-pick__body">
                             <span class="bv-ch-pick__nm">Email</span>
-                            <span class="bv-ch-pick__ds">Bandeja SMTP</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.newconv_channel_email_desc') }}</span>
                         </div>
                     </button>
                     <button type="button" class="bv-ch-pick" data-channel="sms">
                         <div class="bv-ch-pick__ic"><i class="fas fa-mobile-screen-button"></i></div>
                         <div class="bv-ch-pick__body">
                             <span class="bv-ch-pick__nm">SMS</span>
-                            <span class="bv-ch-pick__ds">Proveedor configurado</span>
+                            <span class="bv-ch-pick__ds">{{ __('helpdesk::helpdesk.inbox.modals.new_conv_wizard_sms_desc') }}</span>
                         </div>
                     </button>
                 </div>
@@ -76,44 +76,44 @@
             <div id="ncwStep2" style="display:none">
                 <div class="bv-info-table">
                     <div class="bv-info-table__row">
-                        <span class="bv-info-table__k">Canal</span>
+                        <span class="bv-info-table__k">{{ __('helpdesk::helpdesk.inbox.modals.context_card_channel') }}</span>
                         <span class="bv-info-table__v" id="ncwSelectedChannel"></span>
                     </div>
                 </div>
 
                 <div class="bv-form-field">
-                    <label class="bv-form-label">Buscar contacto <span class="bv-req">*</span></label>
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.new_conv_wizard_search_contact') }} <span class="bv-req">*</span></label>
                     <div class="bv-modal-search">
                         <i class="fas fa-magnifying-glass"></i>
-                        <input id="ncwContactSearch" type="text" placeholder="Nombre, teléfono o email…" autocomplete="off">
+                        <input id="ncwContactSearch" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.newconv_contact_search_placeholder') }}" autocomplete="off">
                     </div>
-                    <div id="ncwContactResults" style="display:flex;flex-direction:column;gap:3px;margin-top:5px;max-height:180px;overflow-y:auto"></div>
+                    <div class="bv-x40" id="ncwContactResults"></div>
                 </div>
 
                 <div id="ncwHsmSection" style="display:none">
                     <div class="bv-form-field">
-                        <label class="bv-form-label">Plantilla aprobada (HSM) <span class="bv-req">*</span> <span class="bv-form-hint">obligatoria fuera de ventana 24h</span></label>
+                        <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_template_label') }} <span class="bv-req">*</span> <span class="bv-form-hint">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_required_hint') }}</span></label>
                         <select id="ncwHsmTemplate" class="bv-form-input">
-                            <option value="">Selecciona una plantilla…</option>
+                            <option value="">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_no_template') }}</option>
                         </select>
                     </div>
                     <div class="bv-form-field" id="ncwHsmPreview" style="display:none">
-                        <label class="bv-form-label">Vista previa</label>
-                        <div id="ncwHsmPreviewText" style="background:var(--bv-bg-subtle,#f4f4f5);border-radius:7px;padding:10px 12px;font-size:12px;line-height:1.55"></div>
+                        <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.newconv_hsm_preview_label') }}</label>
+                        <div class="bv-x41" id="ncwHsmPreviewText"></div>
                     </div>
                 </div>
 
                 <label class="bv-check">
                     <input type="checkbox" id="ncwAssignSelf" checked>
-                    Asignar conversación al agente actual
+                    {{ __('helpdesk::helpdesk.inbox.modals.new_conv_wizard_assign_self') }}
                 </label>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-ncw-next">Continuar</button>
-            <button class="btn-secondary" id="bv-ncw-back" style="display:none">Atrás</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-ncw-next">{{ __('helpdesk::helpdesk.inbox.modals.newconv_continue') }}</button>
+            <button class="btn-secondary" id="bv-ncw-back" style="display:none">{{ __('helpdesk::helpdesk.inbox.modals.newconv_back') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -160,7 +160,7 @@
         $('#bv-ncw-back').toggle(step === 2);
 
         $('#ncwStep1Dot').toggleClass('on', step === 1).toggleClass('done', step > 1);
-        $('#ncwStep1Dot .bv-wiz-step__num').html(step > 1 ? '<i class="fas fa-check" style="font-size:8px"></i>' : '1');
+        $('#ncwStep1Dot .bv-wiz-step__num').html(step > 1 ? '<i class="fas fa-check bv-x42"></i>' : '1');
         $('#ncwLine').toggleClass('on', step > 1);
         $('#ncwStep2Dot').toggleClass('on', step === 2);
 
@@ -231,7 +231,7 @@
                         '<div class="bv-av bv-av--sm">' + escHtml((c.name || '?').slice(0, 2).toUpperCase()) + '</div>' +
                         '<div class="bv-list-item__body">' +
                             '<span class="bv-list-item__t">' + escHtml(c.name) + '</span>' +
-                            '<span class="bv-list-item__s" style="font-family:monospace;font-size:10.5px">' + escHtml(c.phone || c.email || '') + '</span>' +
+                            '<span class="bv-list-item__s bv-x43">' + escHtml(c.phone || c.email || '') + '</span>' +
                         '</div>' +
                         '</button>';
                 }).join('');
