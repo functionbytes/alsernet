@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-bolt"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">HELPDESK · PLANTILLAS</span>
-                <div class="bv-modal-title">Respuesta rápida</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.snooze_eyebrow') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.quick_reply_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -13,17 +13,17 @@
 
             <div class="bv-modal-search bv-modal-search--hint">
                 <i class="fas fa-magnifying-glass"></i>
-                <input id="qrSearch" type="text" placeholder="Buscar plantilla… (o escribe /atajo)" autocomplete="off">
+                <input id="qrSearch" type="text" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.quick_reply_search_placeholder') }}" autocomplete="off">
                 <span class="bv-kbd">↑↓</span>
             </div>
 
             {{-- Category pills --}}
-            <div class="bv-media-pills" id="qrCategoryPills" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
-                <span class="bv-media-pill on" data-qr-cat="">Todas</span>
+            <div class="bv-media-pills bv-x47" id="qrCategoryPills">
+                <span class="bv-media-pill on" data-qr-cat="">{{ __('helpdesk::helpdesk.inbox.thread.all_label') }}</span>
             </div>
 
             {{-- List --}}
-            <div id="qrList" style="display:flex;flex-direction:column;gap:2px;max-height:260px;overflow-y:auto;border:1px solid var(--bv-border,#e5e7eb);border-radius:6px">
+            <div class="bv-x48" id="qrList">
                 <div class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
             </div>
 
@@ -32,8 +32,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-qr-insert" disabled>Insertar plantilla</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-qr-insert" disabled>{{ __('helpdesk::helpdesk.inbox.thread.insert_template') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.order_close') }}</button>
         </div>
     </div>
 </div>
@@ -61,14 +61,14 @@
         $('#qrPreview').hide();
 
         if (!replies.length) {
-            $('#qrList').html('<div class="bv-cv-loading-msg" style="padding:16px"><i class="fas fa-inbox"></i> Sin plantillas</div>');
+            $('#qrList').html('<div class="bv-cv-loading-msg bv-x49"><i class="fas fa-inbox"></i> Sin plantillas</div>');
             return;
         }
         var html = replies.map(function (r) {
-            return '<button class="bv-qr-item" style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:none;border:none;cursor:pointer;width:100%;text-align:left" data-id="' + r.id + '" data-content="' + encodeURIComponent(r.content || '') + '">' +
-                '<div style="flex:1;min-width:0">' +
-                    '<div style="font-size:12.5px;font-weight:600;color:var(--bv-text,#111827)">' + (r.name || r.title || '') + '</div>' +
-                    '<div style="font-size:11px;color:var(--bv-text-muted,#6b7280);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.content || '').slice(0, 90) + '</div>' +
+            return '<button class="bv-qr-item bv-x50" data-id="' + r.id + '" data-content="' + encodeURIComponent(r.content || '') + '">' +
+                '<div class="bv-x51">' +
+                    '<div class="bv-x52">' + (r.name || r.title || '') + '</div>' +
+                    '<div class="bv-x53">' + (r.content || '').slice(0, 90) + '</div>' +
                 '</div>' +
                 (r.shortcut ? '<span class="bv-kbd">' + r.shortcut + '</span>' : '') +
                 '</button>';
@@ -77,7 +77,7 @@
     }
 
     function loadReplies(q) {
-        $('#qrList').html('<div class="bv-cv-loading-msg" style="padding:16px"><i class="fas fa-spinner fa-spin"></i></div>');
+        $('#qrList').html('<div class="bv-cv-loading-msg bv-x49"><i class="fas fa-spinner fa-spin"></i></div>');
         $.ajax({
             url: '/panel/helpdesk/canned-replies/search',
             method: 'GET',
@@ -96,7 +96,7 @@
             });
             $('#qrCategoryPills').html(pillsHtml);
         }).fail(function () {
-            $('#qrList').html('<div class="bv-cv-loading-msg" style="padding:16px"><i class="fas fa-triangle-exclamation"></i> Error al cargar</div>');
+            $('#qrList').html('<div class="bv-cv-loading-msg bv-x49"><i class="fas fa-triangle-exclamation"></i> Error al cargar</div>');
         });
     }
 

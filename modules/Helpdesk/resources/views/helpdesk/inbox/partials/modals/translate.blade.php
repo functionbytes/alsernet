@@ -4,76 +4,76 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-language"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">COMPOSER · TRADUCCIÓN</span>
-                <div class="bv-modal-title">Traducir mensaje</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.translate_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.translate_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Texto a traducir</label>
-                <textarea id="translateInput" class="bv-form-input" rows="3" placeholder="Escribe o pega el texto a traducir…" style="resize:vertical"></textarea>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.translate_text_label') }}</label>
+                <textarea id="translateInput" class="bv-form-input bv-x55" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.translate_text_placeholder') }}"></textarea>
             </div>
 
-            <div class="bv-frow" style="display:flex;gap:10px">
-                <div class="bv-form-field" style="flex:1">
-                    <label class="bv-form-label">Idioma origen</label>
+            <div class="bv-frow bv-x56">
+                <div class="bv-form-field bv-x33">
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.translate_from') }}</label>
                     <select id="translateFrom" class="bv-form-input">
-                        <option value="auto">Detectar automáticamente</option>
-                        <option value="es">Español</option>
-                        <option value="en">Inglés</option>
-                        <option value="fr">Francés</option>
-                        <option value="de">Alemán</option>
-                        <option value="it">Italiano</option>
-                        <option value="pt">Portugués</option>
-                        <option value="nl">Neerlandés</option>
-                        <option value="ru">Ruso</option>
-                        <option value="zh">Chino</option>
-                        <option value="ar">Árabe</option>
-                        <option value="ja">Japonés</option>
+                        <option value="auto">{{ __('helpdesk::helpdesk.inbox.modals.translate_auto_detect') }}</option>
+                        <option value="es">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_es') }}</option>
+                        <option value="en">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_en') }}</option>
+                        <option value="fr">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_fr') }}</option>
+                        <option value="de">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_de') }}</option>
+                        <option value="it">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_it') }}</option>
+                        <option value="pt">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_pt') }}</option>
+                        <option value="nl">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_nl') }}</option>
+                        <option value="ru">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ru') }}</option>
+                        <option value="zh">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_zh') }}</option>
+                        <option value="ar">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ar') }}</option>
+                        <option value="ja">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ja') }}</option>
                     </select>
                 </div>
-                <div style="display:flex;align-items:flex-end;padding-bottom:4px">
-                    <button type="button" id="translateSwapLangs" class="btn-secondary" style="padding:5px 8px" title="Intercambiar idiomas">
+                <div class="bv-x70">
+                    <button type="button" id="translateSwapLangs" class="btn-secondary bv-x71" title="{{ __('helpdesk::helpdesk.inbox.modals.translate_swap') }}">
                         <i class="fas fa-right-left"></i>
                     </button>
                 </div>
-                <div class="bv-form-field" style="flex:1">
-                    <label class="bv-form-label">Idioma destino</label>
+                <div class="bv-form-field bv-x33">
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.translate_to') }}</label>
                     <select id="translateTo" class="bv-form-input">
-                        <option value="es" selected>Español</option>
-                        <option value="en">Inglés</option>
-                        <option value="fr">Francés</option>
-                        <option value="de">Alemán</option>
-                        <option value="it">Italiano</option>
-                        <option value="pt">Portugués</option>
-                        <option value="nl">Neerlandés</option>
-                        <option value="ru">Ruso</option>
-                        <option value="zh">Chino</option>
-                        <option value="ar">Árabe</option>
-                        <option value="ja">Japonés</option>
+                        <option value="es" selected>{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_es') }}</option>
+                        <option value="en">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_en') }}</option>
+                        <option value="fr">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_fr') }}</option>
+                        <option value="de">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_de') }}</option>
+                        <option value="it">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_it') }}</option>
+                        <option value="pt">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_pt') }}</option>
+                        <option value="nl">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_nl') }}</option>
+                        <option value="ru">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ru') }}</option>
+                        <option value="zh">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_zh') }}</option>
+                        <option value="ar">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ar') }}</option>
+                        <option value="ja">{{ __('helpdesk::helpdesk.inbox.modals.translate_lang_ja') }}</option>
                     </select>
                 </div>
             </div>
 
             <div id="translateResult" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bv-bg-subtle,#f9fafb);border-radius:6px">
-                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--bv-text-muted,#6b7280);margin-bottom:5px">Traducción</div>
-                <div id="translateResultText" style="font-size:13px;color:var(--bv-text,#111827);white-space:pre-wrap"></div>
-                <div style="display:flex;gap:6px;margin-top:8px">
-                    <button type="button" id="bv-translate-copy" class="btn-secondary" style="font-size:11px;padding:3px 8px">
-                        <i class="far fa-copy me-1"></i> Copiar
+                <div class="bv-x72">{{ __('helpdesk::helpdesk.inbox.modals.translate_result_label') }}</div>
+                <div class="bv-x73" id="translateResultText"></div>
+                <div class="bv-x74">
+                    <button type="button" id="bv-translate-copy" class="btn-secondary bv-x75">
+                        <i class="far fa-copy me-1"></i> {{ __('helpdesk::helpdesk.inbox.modals.translate_copy') }}
                     </button>
-                    <button type="button" id="bv-translate-insert" class="btn-secondary" style="font-size:11px;padding:3px 8px">
-                        <i class="fas fa-arrow-down-to-line me-1"></i> Insertar en compositor
+                    <button type="button" id="bv-translate-insert" class="btn-secondary bv-x75">
+                        <i class="fas fa-arrow-down-to-line me-1"></i> {{ __('helpdesk::helpdesk.inbox.modals.translate_insert_composer') }}
                     </button>
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-translate-go">Traducir</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-translate-go">{{ __('helpdesk::helpdesk.inbox.modals.translate_go') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.order_close') }}</button>
         </div>
     </div>
 </div>

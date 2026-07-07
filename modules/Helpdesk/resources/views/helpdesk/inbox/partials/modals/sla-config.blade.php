@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-clock"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CONFIG · SLA</span>
-                <div class="bv-modal-title">Tiempos de respuesta por canal</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.sla_config_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.sla_config_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -16,20 +16,20 @@
             <div id="slaConfigContent" style="display:none">
                 <div class="bv-sla-rows" id="slaConfigRows"></div>
 
-                <label class="bv-check" style="margin-top:12px">
+                <label class="bv-check bv-x31">
                     <input type="checkbox" id="slaPauseOffHours" checked>
-                    Pausar SLA fuera de horario de atención
+                    {{ __('helpdesk::helpdesk.inbox.modals.sla_config_pause_off_hours') }}
                 </label>
                 <label class="bv-check">
                     <input type="checkbox" id="slaNotifySupervisor" checked>
-                    Notificar al supervisor al 80% del tiempo
+                    {{ __('helpdesk::helpdesk.inbox.modals.sla_config_notify_supervisor') }}
                 </label>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-sla-save" disabled>Guardar cambios</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-sla-save" disabled>{{ __('helpdesk::helpdesk.inbox.modals.status_save') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -67,7 +67,7 @@
             var html = _slaData.map(function (row, i) {
                 return '<div class="bv-lp-row">' +
                     '<span class="bv-lp-row__k">' + escHtml(row.label) + '</span>' +
-                    '<input type="text" class="bv-form-input bv-sla-input" data-sla-idx="' + i + '" value="' + escHtml(row.value) + '" style="width:100px;text-align:center;font-family:monospace">' +
+                    '<input type="text" class="bv-form-input bv-sla-input bv-x66" data-sla-idx="' + i + '" value="' + escHtml(row.value) + '">' +
                     '</div>';
             }).join('');
             $('#slaConfigRows').html(html);

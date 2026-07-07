@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="fas fa-shield-halved"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CONFIG · ROLES</span>
-                <div class="bv-modal-title">Permisos del rol <span class="bv-chip" id="rolePermsRoleName"></span></div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_title') }} <span class="bv-chip" id="rolePermsRoleName"></span></div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -17,27 +17,27 @@
                 <table class="bv-perm-matrix" id="rolePermsTable">
                     <thead>
                         <tr>
-                            <th>Módulo</th>
-                            <th class="bv-perm-matrix__c">Ver</th>
-                            <th class="bv-perm-matrix__c">Crear</th>
-                            <th class="bv-perm-matrix__c">Editar</th>
-                            <th class="bv-perm-matrix__c">Eliminar</th>
+                            <th scope="col">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_module') }}</th>
+                            <th scope="col" class="bv-perm-matrix__c">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_view') }}</th>
+                            <th scope="col" class="bv-perm-matrix__c">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_create') }}</th>
+                            <th scope="col" class="bv-perm-matrix__c">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_edit') }}</th>
+                            <th scope="col" class="bv-perm-matrix__c">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_delete') }}</th>
                         </tr>
                     </thead>
                     <tbody id="rolePermsBody"></tbody>
                 </table>
 
-                <label class="bv-check" style="margin-top:12px">
+                <label class="bv-check bv-x31">
                     <input type="checkbox" id="rolePermsApplyAll" checked>
-                    Aplicar cambios a todos los agentes con este rol
+                    {{ __('helpdesk::helpdesk.inbox.modals.role_perms_apply_all') }}
                 </label>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-role-perms-save" disabled>Guardar permisos</button>
-            <button class="btn-secondary" id="bv-role-perms-reset">Restablecer por defecto</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-role-perms-save" disabled>{{ __('helpdesk::helpdesk.inbox.modals.role_perms_save') }}</button>
+            <button class="btn-secondary" id="bv-role-perms-reset">{{ __('helpdesk::helpdesk.inbox.modals.role_perms_reset') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

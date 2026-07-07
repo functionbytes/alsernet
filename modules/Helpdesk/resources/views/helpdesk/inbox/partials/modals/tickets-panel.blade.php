@@ -1,23 +1,23 @@
 {{-- Modal: Lista de tickets del cliente (#21 ve-tickets-panel) --}}
 <div class="bv-modal" data-bv-modal-name="tickets-panel">
     <div class="bv-modal-dialog sm">
-        <div class="bv-modal-head" style="padding:14px">
+        <div class="bv-modal-head bv-x67">
             <div class="bv-tk-panel-head">
                 <span class="bv-tk-panel-head__count" id="tpCount">0</span>
                 <div class="bv-tk-panel-head__meta">
-                    <span class="bv-tk-panel-head__lbl">Tickets</span>
+                    <span class="bv-tk-panel-head__lbl">{{ __('helpdesk::helpdesk.inbox.modals.ticket_tickets_panel_label') }}</span>
                     <span class="bv-tk-panel-head__sub" id="tpSubtitle">—</span>
                 </div>
-                <button type="button" class="bv-tk-panel-head__add" id="bv-tp-new" title="Nuevo ticket"><i class="fas fa-plus"></i></button>
+                <button type="button" class="bv-tk-panel-head__add" id="bv-tp-new" title="{{ __('helpdesk::helpdesk.inbox.modals.ticket_tickets_panel_new') }}"><i class="fas fa-plus"></i></button>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-hist-pills" id="ticketsPanelFilter">
-                <button class="bv-hist-pill on" data-tpf="all">Todos <span class="bv-pill-count" id="tpCountAll">0</span></button>
-                <button class="bv-hist-pill" data-tpf="open">Abiertos <span class="bv-pill-count" id="tpCountOpen">0</span></button>
-                <button class="bv-hist-pill" data-tpf="closed">Cerrados <span class="bv-pill-count" id="tpCountClosed">0</span></button>
+                <button class="bv-hist-pill on" data-tpf="all">{{ __('helpdesk::helpdesk.inbox.modals.all_label') }} <span class="bv-pill-count" id="tpCountAll">0</span></button>
+                <button class="bv-hist-pill" data-tpf="open">{{ __('helpdesk::helpdesk.inbox.modals.ticket_tickets_panel_open') }} <span class="bv-pill-count" id="tpCountOpen">0</span></button>
+                <button class="bv-hist-pill" data-tpf="closed">{{ __('helpdesk::helpdesk.inbox.modals.ticket_tickets_panel_closed') }} <span class="bv-pill-count" id="tpCountClosed">0</span></button>
             </div>
 
             <div id="ticketsPanelLoading" class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
@@ -25,8 +25,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-tp-new-btn">Nuevo ticket</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-tp-new-btn">{{ __('helpdesk::helpdesk.inbox.modals.ticket_tickets_panel_new') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.order_close') }}</button>
         </div>
     </div>
 </div>
@@ -66,7 +66,7 @@
             var number = t.number || t.id;
             return '<button type="button" class="bv-tk-card" data-tk-id="' + t.id + '">' +
                 '<div class="bv-tk-card__head">' +
-                    '<i class="fas fa-bars" style="font-size:10px;color:var(--bv-text-muted)"></i>' +
+                    '<i class="fas fa-bars bv-x68"></i>' +
                     '<span class="bv-tk-card__id">#' + escHtml(number) + '</span>' +
                     '<span class="bv-tk-card__status">' + escHtml(t.status_label || t.status || '') + '</span>' +
                 '</div>' +
@@ -74,7 +74,7 @@
                 '<div class="bv-tk-card__foot">' +
                     (t.assignee_name ? '<span>' + escHtml(t.assignee_name) + '</span>' : '<span class="bv-tk-card__unassigned">Sin asignar</span>') +
                     (t.category_name ? '<span><i class="far fa-folder"></i> ' + escHtml(t.category_name) + '</span>' : '') +
-                    (t.updated_at_human ? '<span style="margin-left:auto"><i class="far fa-clock"></i> ' + escHtml(t.updated_at_human) + '</span>' : '') +
+                    (t.updated_at_human ? '<span class="bv-x69"><i class="far fa-clock"></i> ' + escHtml(t.updated_at_human) + '</span>' : '') +
                 '</div>' +
                 '</button>';
         }).join('');
