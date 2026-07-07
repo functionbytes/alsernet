@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\Engagement\Models\Segment;
 use Modules\Engagement\Models\VisitorScore;
 use Modules\Engagement\Services\SegmentEvaluator;
@@ -20,6 +21,10 @@ class EvaluateSegmentsJob implements ShouldQueue
     use SerializesModels;
 
     public int $tries = 2;
+
+    public int $timeout = 120;
+
+    public int $backoff = 30;
 
     public function __construct(
         private readonly int $inboxId,
@@ -39,7 +44,7 @@ class EvaluateSegmentsJob implements ShouldQueue
         $scores = VisitorScore::query()
             ->where('inbox_id', $this->inboxId)
             ->where('updated_at', '>=', now()->subHours(24))
-            ->get(['session_token', 'inbox_id']);
+            ->get(['session_token', 'inbox_id', 'customer_id']);
 
         foreach ($scores as $score) {
             foreach ($segments as $segment) {
@@ -57,5 +62,13 @@ class EvaluateSegmentsJob implements ShouldQueue
                 }
             }
         }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('EvaluateSegmentsJob failed', [
+            'inbox_id' => $this->inboxId,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }
