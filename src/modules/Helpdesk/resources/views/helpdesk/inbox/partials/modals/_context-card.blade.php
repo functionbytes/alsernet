@@ -28,7 +28,7 @@
         </div>
         <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.context_card_channel') }}</div>
         <div class="val">{{ $ccChLabel }}</div>
-        <div class="lbl">{{ __('helpdesk::helpdesk.inbox.modals.priority_label') }}</div>
+        <div class="lbl">{{ __('helpdesk::helpdesk.inbox.right.priority_label') }}</div>
         <div class="val">{{ $ccPrioLabels[$ccPrio] ?? __('helpdesk::helpdesk.inbox.modals.priority_normal') }}</div>
     </div>
 @endif

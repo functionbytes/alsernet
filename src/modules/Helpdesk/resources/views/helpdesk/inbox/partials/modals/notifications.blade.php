@@ -1,20 +1,20 @@
 {{-- Modal: Panel de notificaciones (#26 ve-notifications) --}}
 <div class="bv-modal" data-bv-modal-name="notifications">
-    <div class="bv-modal-dialog sm" style="max-height:620px;display:flex;flex-direction:column">
+    <div class="bv-modal-dialog sm bv-x44">
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-bell"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">CUENTA</span>
-                <div class="bv-modal-title">Notificaciones <span class="bv-chip-id" id="notifCount" style="display:none"></span></div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.notifications_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.notifications_title') }} <span class="bv-chip-id" id="notifCount" style="display:none"></span></div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
-        <div class="bv-modal-body" style="padding:0;flex:1;overflow-y:auto" id="notifList">
+        <div class="bv-modal-body bv-x45" id="notifList">
             <div class="bv-cv-loading-msg"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-secondary" id="bv-notif-mark-all">Marcar todas como leídas</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-secondary" id="bv-notif-mark-all">{{ __('helpdesk::helpdesk.inbox.modals.notifications_mark_all') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.notifications_close') }}</button>
         </div>
     </div>
 </div>
@@ -40,7 +40,7 @@
 
     function renderNotifications(notifs) {
         if (!notifs.length) {
-            $('#notifList').html('<div class="bv-cv-loading-msg" style="padding:24px"><i class="fas fa-bell-slash"></i> Sin notificaciones</div>');
+            $('#notifList').html('<div class="bv-cv-loading-msg bv-x46"><i class="fas fa-bell-slash"></i> Sin notificaciones</div>');
             return;
         }
 

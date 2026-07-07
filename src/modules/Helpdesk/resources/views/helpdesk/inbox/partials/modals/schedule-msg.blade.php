@@ -4,46 +4,46 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-paper-plane"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">COMPOSER · PROGRAMAR</span>
-                <div class="bv-modal-title">Programar envío</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
 
             <div class="bv-form-field">
-                <label class="bv-form-label">Mensaje <span class="bv-req">*</span></label>
-                <textarea id="scheduleMsgText" class="bv-form-input" rows="3" placeholder="Escribe el mensaje a programar…" style="resize:vertical"></textarea>
+                <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_field_message') }} <span class="bv-req">*</span></label>
+                <textarea id="scheduleMsgText" class="bv-form-input bv-x55" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_placeholder') }}"></textarea>
             </div>
 
-            <div class="bv-frow" style="display:flex;gap:10px">
-                <div class="bv-form-field" style="flex:1">
-                    <label class="bv-form-label">Fecha <span class="bv-req">*</span></label>
+            <div class="bv-frow bv-x56">
+                <div class="bv-form-field bv-x33">
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.date') }} <span class="bv-req">*</span></label>
                     <input id="scheduleMsgDate" type="date" class="bv-form-input">
                 </div>
-                <div class="bv-form-field" style="flex:1">
-                    <label class="bv-form-label">Hora <span class="bv-req">*</span></label>
+                <div class="bv-form-field bv-x33">
+                    <label class="bv-form-label">{{ __('helpdesk::helpdesk.inbox.modals.snooze_time_label') }} <span class="bv-req">*</span></label>
                     <input id="scheduleMsgTime" type="time" class="bv-form-input" value="09:00">
                 </div>
             </div>
 
-            <label class="bv-check" style="margin-bottom:10px">
+            <label class="bv-check bv-x14">
                 <input type="checkbox" id="scheduleMsgRepeat">
-                Repetir envío automáticamente
+                {{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_repeat') }}
             </label>
 
             {{-- Mensajes programados --}}
             <div class="bv-form-field">
-                <div class="bv-form-label" style="margin-bottom:6px">Programados pendientes <span class="bv-chip-id" id="scheduledCount" style="display:none"></span></div>
-                <div id="scheduledList" style="display:flex;flex-direction:column;gap:5px">
-                    <div class="bv-cv-loading-msg" style="padding:10px"><i class="fas fa-spinner fa-spin"></i></div>
+                <div class="bv-form-label bv-x57">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_pending') }} <span class="bv-chip-id" id="scheduledCount" style="display:none"></span></div>
+                <div class="bv-x58" id="scheduledList">
+                    <div class="bv-cv-loading-msg bv-x59"><i class="fas fa-spinner fa-spin"></i></div>
                 </div>
             </div>
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-schedule-msg-go">Programar envío</button>
-            <button class="btn-secondary" data-bv-close>Cancelar</button>
+            <button class="btn-primary" id="bv-schedule-msg-go">{{ __('helpdesk::helpdesk.inbox.modals.schedule_msg_go') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>
@@ -74,10 +74,10 @@
 
     function loadScheduled(convId) {
         if (!convId) {
-            $('#scheduledList').html('<div style="font-size:12px;color:var(--bv-text-muted,#6b7280)">Selecciona una conversación para ver mensajes programados.</div>');
+            $('#scheduledList').html('<div class="bv-x60">Selecciona una conversación para ver mensajes programados.</div>');
             return;
         }
-        $('#scheduledList').html('<div class="bv-cv-loading-msg" style="padding:10px"><i class="fas fa-spinner fa-spin"></i></div>');
+        $('#scheduledList').html('<div class="bv-cv-loading-msg bv-x59"><i class="fas fa-spinner fa-spin"></i></div>');
         $.ajax({
             url: '/panel/helpdesk/conversations/' + convId + '/messages/scheduled',
             method: 'GET',
@@ -86,22 +86,22 @@
             var items = resp.data || resp.messages || resp || [];
             if (!items.length) {
                 $('#scheduledCount').hide();
-                $('#scheduledList').html('<div style="font-size:12px;color:var(--bv-text-muted,#6b7280)">Sin mensajes programados pendientes.</div>');
+                $('#scheduledList').html('<div class="bv-x60">Sin mensajes programados pendientes.</div>');
                 return;
             }
             $('#scheduledCount').text(items.length).show();
             var html = items.map(function (m) {
                 var preview = (m.content || m.body || '').slice(0, 60) + (m.content && m.content.length > 60 ? '…' : '');
-                return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:var(--bv-bg-subtle,#f9fafb);border-radius:5px;font-size:11.5px">' +
-                    '<div><span style="font-weight:600;color:var(--bv-text,#111827)">' + (m.scheduled_at || m.send_at || '') + '</span>' +
-                    ' <span style="color:var(--bv-text-muted,#6b7280)">·</span>' +
-                    ' <span style="color:var(--bv-text-muted,#6b7280)">' + preview + '</span></div>' +
-                    '<button class="bv-sched-cancel" data-sched-id="' + m.id + '" style="background:none;border:none;cursor:pointer;color:var(--bv-text-muted,#6b7280);font-size:11px"><i class="fas fa-xmark"></i></button>' +
+                return '<div class="bv-x61">' +
+                    '<div><span class="bv-x62">' + (m.scheduled_at || m.send_at || '') + '</span>' +
+                    ' <span class="bv-x63">·</span>' +
+                    ' <span class="bv-x63">' + preview + '</span></div>' +
+                    '<button class="bv-sched-cancel bv-x64" data-sched-id="' + m.id + '"><i class="fas fa-xmark"></i></button>' +
                     '</div>';
             }).join('');
             $('#scheduledList').html(html);
         }).fail(function () {
-            $('#scheduledList').html('<div style="font-size:12px;color:var(--bv-text-muted,#6b7280)">Error al cargar.</div>');
+            $('#scheduledList').html('<div class="bv-x60">Error al cargar.</div>');
         });
     }
 

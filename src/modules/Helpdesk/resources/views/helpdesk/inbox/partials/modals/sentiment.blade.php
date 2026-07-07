@@ -4,8 +4,8 @@
         <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-face-smile"></i></div>
             <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">IA · ANÁLISIS</span>
-                <div class="bv-modal-title">Sentimiento del cliente</div>
+                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.sentiment_label') }}</span>
+                <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.sentiment_title') }}</div>
             </div>
             <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
         </div>
@@ -18,7 +18,7 @@
                 <div class="bv-sent-bar">
                     <i class="far fa-face-frown bv-sent-bar__icon-neg"></i>
                     <div class="bv-sent-bar__track">
-                        <div class="bv-sent-bar__fill" id="sentFill" style="width:50%"></div>
+                        <div class="bv-sent-bar__fill bv-x65" id="sentFill"></div>
                     </div>
                     <i class="far fa-face-smile bv-sent-bar__icon-pos"></i>
                     <span class="bv-sent-bar__score" id="sentScore"></span>
@@ -26,7 +26,7 @@
 
                 <p class="bv-sent-desc" id="sentDescription"></p>
 
-                <div class="bv-form-label" style="margin-bottom:8px">Timeline de sentimiento</div>
+                <div class="bv-form-label bv-x10">{{ __('helpdesk::helpdesk.inbox.modals.sentiment_timeline') }}</div>
                 <div id="sentTimeline" class="bv-sent-timeline"></div>
 
             </div>
@@ -37,8 +37,8 @@
 
         </div>
         <div class="bv-modal-foot">
-            <button class="btn-primary" id="bv-sentiment-coaching" disabled>Marcar para coaching</button>
-            <button class="btn-secondary" data-bv-close>Cerrar</button>
+            <button class="btn-primary" id="bv-sentiment-coaching" disabled>{{ __('helpdesk::helpdesk.inbox.modals.sentiment_mark_coaching') }}</button>
+            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.order_close') }}</button>
         </div>
     </div>
 </div>
