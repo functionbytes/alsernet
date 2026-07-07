@@ -14,6 +14,12 @@ class CheckSlaBreachesJob implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public int $timeout = 120;
+
+    public int $backoff = 30;
+
     public function __construct()
     {
         $this->onQueue('default');
@@ -193,6 +199,13 @@ class CheckSlaBreachesJob implements ShouldQueue
 
             Log::warning("SLA breach detected for document {$document->id}: approval");
         }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CheckSlaBreachesJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     private function escalateBreach(

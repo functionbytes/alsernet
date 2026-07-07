@@ -29,6 +29,10 @@ class ImportSubscribersCsv implements ShouldQueue
 
     public $timeout = 300;
 
+    public int $tries = 3;
+
+    public int $backoff = 30;
+
     public function __construct(
         public readonly int $maillistId,
         public readonly string $filePath,
@@ -114,5 +118,18 @@ class ImportSubscribersCsv implements ShouldQueue
         }
 
         return $row[$key] ?? null;
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ImportSubscribersCsv failed', [
+            'maillist_id' => $this->maillistId,
+            'error' => $exception->getMessage(),
+        ]);
+
+        // Solo se llega aquí tras agotar los reintentos (el fichero sigue
+        // existiendo porque unlink() solo corre al completar con éxito):
+        // limpiar para no dejar temporales huérfanos en disco.
+        @unlink($this->filePath);
     }
 }
