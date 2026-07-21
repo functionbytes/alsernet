@@ -5,7 +5,6 @@ namespace Modules\HelpdeskTranslate\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\HelpdeskTranslate\Concerns\TranslatesMessage;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
@@ -17,6 +16,10 @@ use Throwable;
  * When an agent writes in their configured language and the customer's
  * language differs, the translated version is stored in `outgoing_translated_body`
  * so the widget can display the translation instead of the original.
+ *
+ * Escucha MessageReceived a pesar del nombre: ese evento es el "conversation
+ * item creado" genérico del Helpdesk (no existe un evento outbound dedicado)
+ * y transporta también respuestas de agente; ver nota en TranslatesMessage.
  */
 class TranslateOutgoingMessage implements ShouldQueue
 {
@@ -35,28 +38,20 @@ class TranslateOutgoingMessage implements ShouldQueue
 
     public function handle(MessageReceived $event): void
     {
-        if (! $this->settingValue('helpdesktranslate.auto_translate_outgoing')) {
+        if (! $this->passesCommonGuards($event, 'helpdesktranslate.auto_translate_outgoing', ['outgoing_translated_body', 'outgoing_target_locale'])) {
             return;
         }
 
-        if (! $this->columnsExist()) {
-            return;
-        }
-
-        $item = $event->message ?? null;
-        $conversation = $event->conversation ?? null;
-
-        if (! $item || ! $conversation) {
-            return;
-        }
+        $item = $event->message;
+        $conversation = $event->conversation;
 
         // Only translate agent (outbound) messages, not customer messages or internal notes.
         if ($item->user_id === null || $item->is_internal) {
             return;
         }
 
-        $body = trim((string) ($item->body ?? ''));
-        if ($body === '' || mb_strlen($body) < 3) {
+        $body = $this->translatableBody($item);
+        if ($body === null) {
             return;
         }
 
@@ -93,17 +88,5 @@ class TranslateOutgoingMessage implements ShouldQueue
             'conversation_id' => $event->conversation?->id,
             'error' => $exception->getMessage(),
         ]);
-    }
-
-    private static ?bool $columnsExist = null;
-
-    private function columnsExist(): bool
-    {
-        if (self::$columnsExist === null) {
-            self::$columnsExist = Schema::connection('helpdesk')->hasColumn('helpdesk_conversation_items', 'outgoing_translated_body')
-                && Schema::connection('helpdesk')->hasColumn('helpdesk_conversation_items', 'outgoing_target_locale');
-        }
-
-        return self::$columnsExist;
     }
 }

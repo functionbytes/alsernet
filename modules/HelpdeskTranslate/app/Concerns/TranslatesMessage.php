@@ -2,16 +2,94 @@
 
 namespace Modules\HelpdeskTranslate\Concerns;
 
+use Illuminate\Support\Facades\Schema;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Setting;
 
 /**
  * Shared helpers for the auto-translation listeners.
  *
- * Centralises the comparison/setting lookups that are otherwise duplicated
- * across TranslateIncomingMessage and TranslateOutgoingMessage.
+ * Centralises the comparison/setting lookups and the guard clauses that are
+ * otherwise duplicated across TranslateIncomingMessage and
+ * TranslateOutgoingMessage.
+ *
+ * Nota sobre el evento: ambos listeners escuchan MessageReceived porque en
+ * este proyecto ese evento es en la práctica "conversation item creado"
+ * (broadcast `message.received` hacia el widget) y transporta tanto mensajes
+ * del cliente como respuestas del agente — no existe un evento MessageSent
+ * de salida en Modules\Helpdesk\Events. La dirección se distingue por
+ * `$item->user_id` (null = cliente entrante, con valor = agente saliente).
  */
 trait TranslatesMessage
 {
+    /**
+     * Per-class memoization of the schema check (one entry per listener so a
+     * trait-level cache can't leak the incoming columns' result to the
+     * outgoing listener or vice versa).
+     *
+     * @var array<class-string, bool>
+     */
+    private static array $columnsExistCache = [];
+
+    /**
+     * Common guard clauses both listeners run before doing any work:
+     * feature enabled, per-direction toggle on, translation columns migrated,
+     * and the event actually carrying a message + conversation.
+     *
+     * @param  array<int, string>  $requiredColumns  columns on helpdesk_conversation_items
+     */
+    protected function passesCommonGuards(MessageReceived $event, string $toggleKey, array $requiredColumns): bool
+    {
+        if (! helpdesk_translate_enabled()) {
+            return false;
+        }
+
+        if (! $this->settingValue($toggleKey)) {
+            return false;
+        }
+
+        if (! $this->columnsExist($requiredColumns)) {
+            return false;
+        }
+
+        return ($event->message ?? null) !== null && ($event->conversation ?? null) !== null;
+    }
+
+    /**
+     * Trimmed message body, or null when it is too short to be worth
+     * translating (same `< 3 chars` heuristic both listeners used).
+     */
+    protected function translatableBody(object $item): ?string
+    {
+        $body = trim((string) ($item->body ?? ''));
+
+        return ($body === '' || mb_strlen($body) < 3) ? null : $body;
+    }
+
+    /**
+     * Whether the listener's translation columns exist on
+     * helpdesk_conversation_items. Memoized per listener class per process.
+     *
+     * @param  array<int, string>  $columns
+     */
+    protected function columnsExist(array $columns): bool
+    {
+        if (! array_key_exists(static::class, self::$columnsExistCache)) {
+            $schema = Schema::connection('helpdesk');
+
+            $exists = true;
+            foreach ($columns as $column) {
+                if (! $schema->hasColumn('helpdesk_conversation_items', $column)) {
+                    $exists = false;
+                    break;
+                }
+            }
+
+            self::$columnsExistCache[static::class] = $exists;
+        }
+
+        return self::$columnsExistCache[static::class];
+    }
     /**
      * Per-job memoization of Setting::get() results.
      *

@@ -2,12 +2,18 @@
 
 namespace Modules\HelpdeskTranslate\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Modules\Helpdesk\Models\Setting;
 
 class TranslationService
 {
+    /** Reintentos por fallo de conexión (no por respuestas 4xx/5xx). */
+    private const RETRY_TIMES = 2;
+
+    private const RETRY_SLEEP_MS = 200;
+
     private string $endpoint;
 
     private string $apiKey;
@@ -50,7 +56,11 @@ class TranslationService
                     $payload['api_key'] = $this->apiKey;
                 }
 
-                $resp = Http::timeout(5)->asForm()->post("{$base}/detect", $payload)->json();
+                $resp = Http::timeout(5)
+                    ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
+                    ->asForm()
+                    ->post("{$base}/detect", $payload)
+                    ->json();
 
                 return $resp[0]['language'] ?? null;
             });
@@ -98,7 +108,9 @@ class TranslationService
         }
 
         try {
-            $response = Http::timeout(10)->post($this->endpoint, $payload);
+            $response = Http::timeout(10)
+                ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
+                ->post($this->endpoint, $payload);
             $resp = $response->json();
 
             if ($response->failed() || ! isset($resp['translatedText'])) {

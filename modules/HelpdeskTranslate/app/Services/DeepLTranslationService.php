@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTranslate\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -9,6 +10,11 @@ use Modules\Helpdesk\Models\Setting;
 
 class DeepLTranslationService
 {
+    /** Reintentos por fallo de conexión (no por respuestas 4xx/5xx). */
+    private const RETRY_TIMES = 2;
+
+    private const RETRY_SLEEP_MS = 200;
+
     /** Memoized API key for the duration of this container instance. */
     private ?string $apiKey = null;
 
@@ -54,6 +60,7 @@ class DeepLTranslationService
             try {
                 $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
                     ->timeout(15)
+                    ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                     ->post("{$this->resolveBaseUrl()}/v2/translate", [
                         'text' => [$text],
                         'target_lang' => strtoupper($targetLang),
@@ -127,6 +134,7 @@ class DeepLTranslationService
         try {
             $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
                 ->timeout(15)
+                ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                 ->post("{$baseUrl}/v2/translate", $payload);
 
             if ($response->failed()) {
