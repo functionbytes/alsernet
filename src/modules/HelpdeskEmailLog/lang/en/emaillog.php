@@ -156,6 +156,8 @@ return [
         'bulk_queued' => ':count emails queued for resend.',
         'failed' => 'Could not resend the email: :error',
         'no_recipients' => 'This entry has no recipients.',
+        'blocked' => 'Cannot resend: the stored content of this email is redacted or truncated.',
+        'bulk_skipped' => ':count skipped (no recipients or redacted/truncated content).',
         'confirm_title' => 'Confirm resend',
         'confirm' => 'Resend this email to its original recipients?',
         'to_title' => 'Resend to another address',

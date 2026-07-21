@@ -156,6 +156,8 @@ return [
         'bulk_queued' => ':count emails encolados para reenvío.',
         'failed' => 'No se pudo reenviar el email: :error',
         'no_recipients' => 'Este registro no tiene destinatarios.',
+        'blocked' => 'No se puede reenviar: el contenido almacenado de este email está redactado o truncado.',
+        'bulk_skipped' => ':count omitidos (sin destinatarios o con contenido redactado/truncado).',
         'confirm_title' => 'Confirmar reenvío',
         'confirm' => '¿Reenviar este email a sus destinatarios originales?',
         'to_title' => 'Reenviar a otra dirección',

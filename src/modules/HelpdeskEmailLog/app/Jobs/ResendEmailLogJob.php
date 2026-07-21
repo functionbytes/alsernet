@@ -41,6 +41,16 @@ class ResendEmailLogJob implements ShouldQueue
             return;
         }
 
+        // Guardia final (el controller ya filtra): nunca reenviar un cuerpo
+        // redactado o truncado — se enviaría una copia vacía o incompleta.
+        if (! $emailLog->isResendable()) {
+            Log::warning('ResendEmailLogJob: resend blocked, stored body is redacted or truncated', [
+                'email_log_id' => $this->emailLogId,
+            ]);
+
+            return;
+        }
+
         $html = $emailLog->body_html
             ?: ($emailLog->body_text
                 ? nl2br(e($emailLog->body_text))

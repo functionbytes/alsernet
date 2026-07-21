@@ -48,6 +48,13 @@ class EmailLog extends Model
     protected $table = 'email_logs';
 
     /**
+     * Appended to a stored body when it was cut at max_body_bytes (see
+     * InspectsMailMessage::bodyOf()). Kept here so both the write path and
+     * the resend guards share the same marker.
+     */
+    public const TRUNCATION_MARKER = "\n<!-- [helpdeskemaillog] contenido truncado -->";
+
+    /**
      * Columns safe to load for list views (excludes the heavy body columns).
      *
      * @var list<string>
@@ -158,6 +165,40 @@ class EmailLog extends Model
             'error_message' => Str::limit($error, 2000),
             'failed_at' => now(),
         ]);
+    }
+
+    /**
+     * The stored body was redacted (sensitive mailable or purged manually),
+     * so it no longer represents what was originally sent.
+     */
+    public function isBodyRedacted(): bool
+    {
+        return (bool) ($this->metadata['redacted'] ?? false);
+    }
+
+    /**
+     * The stored body was cut at max_body_bytes. Checks the metadata flag and,
+     * for rows created before the flag existed, the truncation marker comment.
+     */
+    public function isBodyTruncated(): bool
+    {
+        if ($this->metadata['truncated'] ?? false) {
+            return true;
+        }
+
+        $marker = trim(self::TRUNCATION_MARKER);
+
+        return ($this->body_html && str_contains($this->body_html, $marker))
+            || ($this->body_text && str_contains($this->body_text, $marker));
+    }
+
+    /**
+     * A resend replays the stored body verbatim, so it is blocked when that
+     * body is redacted or truncated (it would leak an incomplete/empty copy).
+     */
+    public function isResendable(): bool
+    {
+        return ! $this->isBodyRedacted() && ! $this->isBodyTruncated();
     }
 
     public function scopeStatus(Builder $query, EmailStatus|string $status): Builder

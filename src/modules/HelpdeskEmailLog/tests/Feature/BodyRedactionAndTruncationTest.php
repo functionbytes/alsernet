@@ -76,4 +76,65 @@ class BodyRedactionAndTruncationTest extends TestCase
         $this->assertStringContainsString('contenido truncado', $fresh->body_text);
         $this->assertNotNull($log->refresh()); // sanity: factory created row still exists
     }
+
+    public function test_truncation_does_not_split_multibyte_characters(): void
+    {
+        // 63 bytes de límite sobre un cuerpo de 'é' (2 bytes cada uno): un
+        // substr() binario cortaría el carácter nº 32 por la mitad dejando
+        // UTF-8 inválido; mb_strcut debe retroceder al límite del carácter.
+        config()->set('helpdeskemaillog.max_body_bytes', 63);
+
+        Mail::raw(str_repeat('é', 40), function ($m) {
+            $m->to('user@example.test')->subject('Multibyte body');
+        });
+
+        $log = EmailLog::query()->latest('id')->first();
+
+        $this->assertNotNull($log->body_text);
+
+        $stored = str_replace(EmailLog::TRUNCATION_MARKER, '', $log->body_text);
+
+        $this->assertLessThanOrEqual(63, strlen($stored));
+        $this->assertTrue(
+            mb_check_encoding($stored, 'UTF-8'),
+            'El cuerpo truncado no debe contener secuencias UTF-8 rotas.',
+        );
+        $this->assertSame(str_repeat('é', 31), $stored);
+    }
+
+    public function test_truncated_body_sets_metadata_flag_and_blocks_resend(): void
+    {
+        config()->set('helpdeskemaillog.max_body_bytes', 64);
+
+        Mail::raw(str_repeat('B', 300), function ($m) {
+            $m->to('user@example.test')->subject('Big body');
+        });
+
+        $log = EmailLog::query()->latest('id')->first();
+
+        $this->assertTrue($log->metadata['truncated'] ?? false);
+        $this->assertTrue($log->isBodyTruncated());
+        $this->assertFalse($log->isResendable());
+    }
+
+    public function test_legacy_truncated_body_is_detected_by_marker(): void
+    {
+        // Filas anteriores al flag metadata.truncated: solo llevan el marcador.
+        $log = EmailLog::factory()->create([
+            'body_html' => '<p>parcial</p>'.EmailLog::TRUNCATION_MARKER,
+        ]);
+
+        $this->assertTrue($log->isBodyTruncated());
+        $this->assertFalse($log->isResendable());
+    }
+
+    public function test_redacted_log_is_not_resendable(): void
+    {
+        Mail::to('user@example.test')->send(new RedactedTestMail);
+
+        $log = EmailLog::query()->latest('id')->first();
+
+        $this->assertTrue($log->isBodyRedacted());
+        $this->assertFalse($log->isResendable());
+    }
 }
