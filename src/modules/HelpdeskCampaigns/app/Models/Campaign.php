@@ -7,10 +7,56 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\HelpdeskCampaigns\Database\Factories\CampaignFactory;
+use Modules\HelpdeskCampaigns\Events\CampaignEnded;
+use Modules\HelpdeskCampaigns\Events\CampaignPaused;
+use Modules\HelpdeskCampaigns\Events\CampaignPublished;
+use Modules\HelpdeskCampaigns\Events\CampaignResumed;
 
 class Campaign extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PENDING_APPROVAL = 'pending_approval';
+
+    public const STATUS_SCHEDULED = 'scheduled';
+
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_PAUSED = 'paused';
+
+    public const STATUS_ENDED = 'ended';
+
+    /**
+     * Máquina de estados del ciclo de vida. Cada clave es un estado origen y
+     * el valor los estados destino permitidos. `ended` es terminal: una
+     * campaña finalizada no puede reanudarse ni republicarse (los endpoints
+     * de la API devolvían 200 y la reactivaban silenciosamente).
+     *
+     *   draft → pending_approval | scheduled | active
+     *   pending_approval → draft (reject) | scheduled | active (approve)
+     *   scheduled → active | ended (cancelación anticipada)
+     *   active ⇄ paused, y ambos → ended
+     *   ended → ∅
+     */
+    public const STATUS_TRANSITIONS = [
+        self::STATUS_DRAFT => [self::STATUS_PENDING_APPROVAL, self::STATUS_SCHEDULED, self::STATUS_ACTIVE],
+        self::STATUS_PENDING_APPROVAL => [self::STATUS_DRAFT, self::STATUS_SCHEDULED, self::STATUS_ACTIVE],
+        self::STATUS_SCHEDULED => [self::STATUS_ACTIVE, self::STATUS_ENDED],
+        self::STATUS_ACTIVE => [self::STATUS_PAUSED, self::STATUS_ENDED],
+        self::STATUS_PAUSED => [self::STATUS_ACTIVE, self::STATUS_ENDED],
+        self::STATUS_ENDED => [],
+    ];
+
+    /**
+     * Whether the campaign may move from its current status to $status.
+     * Unknown current statuses (legacy data) allow nothing — fail closed.
+     */
+    public function canTransitionTo(string $status): bool
+    {
+        return in_array($status, self::STATUS_TRANSITIONS[$this->status] ?? [], true);
+    }
 
     protected static function newFactory(): CampaignFactory
     {
@@ -227,25 +273,49 @@ class Campaign extends Model
     // ==================== Methods ====================
 
     /**
-     * Publish the campaign
+     * Publish the campaign.
+     *
+     * Lifecycle events are dispatched here (the single source of truth) so every
+     * caller — panel, API and scheduler — fires them consistently. Previously the
+     * panel called these methods without dispatching, so activity logging,
+     * notifications and webhooks never ran for panel-initiated changes.
      */
-    public function publish()
+    public function publish(): static
     {
+        // No publicar una campaña que aún requiere aprobación: la ruta manual
+        // de publish (panel/API) solo exige el permiso `update`, así que sin
+        // este guard un usuario podía activar el envío masivo saltándose la
+        // revisión que sí respeta el scheduler.
+        if ($this->requiresPendingApproval()) {
+            throw new \RuntimeException('La campaña requiere aprobación antes de publicarse.');
+        }
+
         $this->update([
             'status' => 'active',
             'published_at' => now(),
         ]);
 
+        CampaignPublished::dispatch($this);
+
         return $this;
+    }
+
+    /**
+     * Whether the campaign still needs approval before it can go live.
+     */
+    public function requiresPendingApproval(): bool
+    {
+        return (bool) $this->approval_required && $this->approved_at === null;
     }
 
     /**
      * Pause the campaign
      */
-    public function pause()
+    public function pause(): static
     {
         if ($this->is_active) {
             $this->update(['status' => 'paused']);
+            CampaignPaused::dispatch($this);
         }
 
         return $this;
@@ -254,10 +324,11 @@ class Campaign extends Model
     /**
      * Resume the campaign
      */
-    public function resume()
+    public function resume(): static
     {
         if ($this->status === 'paused') {
             $this->update(['status' => 'active']);
+            CampaignResumed::dispatch($this);
         }
 
         return $this;
@@ -266,12 +337,14 @@ class Campaign extends Model
     /**
      * End the campaign
      */
-    public function end()
+    public function end(): static
     {
         $this->update([
             'status' => 'ended',
             'ends_at' => now(),
         ]);
+
+        CampaignEnded::dispatch($this);
 
         return $this;
     }
