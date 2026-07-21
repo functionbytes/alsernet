@@ -17,6 +17,7 @@ use Modules\HelpdeskCampaigns\Jobs\PublishScheduledCampaignsJob;
 use Modules\HelpdeskCampaigns\Jobs\RecordImpressionJob;
 use Modules\HelpdeskCampaigns\Models\Campaign;
 use Modules\HelpdeskCampaigns\Models\CampaignImpression;
+use Modules\HelpdeskCampaigns\Models\CampaignVariant;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -373,6 +374,30 @@ class CampaignsFeatureTest extends TestCase
     // Group 5: Bulk actions
     // =========================================================================
 
+    public function test_duplicate_clones_variants_and_resets_counters(): void
+    {
+        $campaign = Campaign::factory()->active()->create(['impressions_count' => 50, 'clicks_count' => 10]);
+        CampaignVariant::factory()
+            ->count(2)
+            ->create(['campaign_id' => $campaign->id]);
+        // Ensure the source variants carry stats so the reset is observable.
+        $campaign->variants()->update(['impressions_count' => 99, 'clicks_count' => 33]);
+
+        $this->actingAs($this->editor)
+            ->post(route('helpdesk.campaigns.duplicate', $campaign))
+            ->assertRedirect();
+
+        $copy = Campaign::query()->where('name', $campaign->name.' (Copia)')->first();
+
+        $this->assertNotNull($copy, 'La copia debe existir.');
+        $this->assertSame('draft', $copy->status);
+        $this->assertSame(0, (int) $copy->impressions_count, 'La copia arranca sin impresiones.');
+        $this->assertSame(0, (int) $copy->clicks_count, 'La copia arranca sin clics.');
+        $this->assertSame(2, $copy->variants()->count(), 'Las variantes A/B deben clonarse.');
+        $this->assertSame(0, (int) $copy->variants()->sum('impressions_count'), 'Las variantes clonadas arrancan a cero.');
+        $this->assertSame(0, (int) $copy->variants()->sum('clicks_count'));
+    }
+
     public function test_bulk_pause_campaigns(): void
     {
         Event::fake();
@@ -558,6 +583,101 @@ class CampaignsFeatureTest extends TestCase
     }
 
     // =========================================================================
+    // Group 7b: API state machine (Sanctum::actingAs — no token table needed)
+    // =========================================================================
+
+    public function test_api_resume_of_ended_campaign_returns_422(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->create(['status' => 'ended']);
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/resume")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+
+        $this->assertDatabaseHas('helpdesk_campaigns', [
+            'id' => $campaign->id,
+            'status' => 'ended',
+        ], 'helpdesk');
+    }
+
+    public function test_api_publish_of_ended_campaign_returns_422(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->create(['status' => 'ended']);
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/publish")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+
+        $this->assertDatabaseHas('helpdesk_campaigns', [
+            'id' => $campaign->id,
+            'status' => 'ended',
+        ], 'helpdesk');
+    }
+
+    public function test_api_pause_of_draft_campaign_returns_422(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->draft()->create();
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/pause")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+    }
+
+    public function test_api_end_of_ended_campaign_returns_422(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->create(['status' => 'ended']);
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/end")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+    }
+
+    public function test_api_resume_of_draft_campaign_returns_422(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->draft()->create();
+
+        // draft → active existe en el mapa, pero via publish; resume solo
+        // tiene sentido desde paused.
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/resume")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'INVALID_STATUS_TRANSITION');
+    }
+
+    public function test_api_valid_lifecycle_transitions_still_work(): void
+    {
+        Event::fake();
+        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        $campaign = Campaign::factory()->active()->create();
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/pause")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/resume")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/end")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('helpdesk_campaigns', [
+            'id' => $campaign->id,
+            'status' => 'ended',
+        ], 'helpdesk');
+    }
+
+    // =========================================================================
     // Group 8: Public tracking endpoints
     // =========================================================================
 
@@ -600,6 +720,51 @@ class CampaignsFeatureTest extends TestCase
             'device_type' => 'desktop',
         ])
             ->assertStatus(404);
+    }
+
+    public function test_record_view_rejects_metadata_with_too_many_keys(): void
+    {
+        $campaign = Campaign::factory()->active()->create();
+
+        $metadata = [];
+        for ($i = 0; $i < 25; $i++) {
+            $metadata["key_{$i}"] = 'value';
+        }
+
+        $this->postJson('/helpdesk/campaigns/track/view', [
+            'campaign_id' => $campaign->id,
+            'metadata' => $metadata,
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('metadata');
+    }
+
+    public function test_record_view_rejects_oversized_metadata(): void
+    {
+        $campaign = Campaign::factory()->active()->create();
+
+        $this->postJson('/helpdesk/campaigns/track/view', [
+            'campaign_id' => $campaign->id,
+            'metadata' => ['blob' => str_repeat('x', 3000)],
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('metadata');
+    }
+
+    public function test_record_view_accepts_reasonable_metadata(): void
+    {
+        Queue::fake();
+        $campaign = Campaign::factory()->active()->create();
+
+        $this->postJson('/helpdesk/campaigns/track/view', [
+            'campaign_id' => $campaign->id,
+            'page_url' => 'https://example.com/',
+            'device_type' => 'desktop',
+            'metadata' => ['source' => 'homepage', 'ab_bucket' => 'b'],
+        ])
+            ->assertOk();
+
+        Queue::assertPushed(RecordImpressionJob::class);
     }
 
     public function test_record_click_updates_clicked_at(): void

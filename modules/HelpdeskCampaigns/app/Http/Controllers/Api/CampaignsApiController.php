@@ -96,6 +96,20 @@ class CampaignsApiController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        // Máquina de estados (Campaign::STATUS_TRANSITIONS): antes estos
+        // endpoints aceptaban cualquier estado origen — p.ej. publish/resume
+        // sobre una campaña `ended` la reactivaba silenciosamente.
+        if (! $campaign->canTransitionTo(Campaign::STATUS_ACTIVE)) {
+            return $this->invalidTransition($campaign, Campaign::STATUS_ACTIVE);
+        }
+
+        if ($campaign->requiresPendingApproval()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La campaña requiere aprobación antes de publicarse.',
+            ], 422);
+        }
+
         $campaign->update([
             'status' => 'active',
             'published_at' => $campaign->published_at ?? now(),
@@ -114,6 +128,10 @@ class CampaignsApiController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        if (! $campaign->canTransitionTo(Campaign::STATUS_PAUSED)) {
+            return $this->invalidTransition($campaign, Campaign::STATUS_PAUSED);
+        }
+
         $campaign->update(['status' => 'paused']);
         CampaignPaused::dispatch($campaign);
 
@@ -127,6 +145,12 @@ class CampaignsApiController extends Controller
     public function resume(Campaign $campaign): JsonResponse
     {
         $this->authorize('update', $campaign);
+
+        // resume solo tiene sentido desde `paused` (draft/scheduled → active
+        // es territorio de publish, aunque el mapa lo permita como transición).
+        if ($campaign->status !== Campaign::STATUS_PAUSED || ! $campaign->canTransitionTo(Campaign::STATUS_ACTIVE)) {
+            return $this->invalidTransition($campaign, Campaign::STATUS_ACTIVE);
+        }
 
         $campaign->update(['status' => 'active']);
         CampaignResumed::dispatch($campaign);
@@ -142,6 +166,10 @@ class CampaignsApiController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        if (! $campaign->canTransitionTo(Campaign::STATUS_ENDED)) {
+            return $this->invalidTransition($campaign, Campaign::STATUS_ENDED);
+        }
+
         $campaign->update([
             'status' => 'ended',
             'ends_at' => now(),
@@ -154,5 +182,19 @@ class CampaignsApiController extends Controller
             'message' => __('helpdeskcampaigns::helpdeskcampaigns.messages.campaign_sent'),
             'data' => new CampaignResource($campaign->fresh()),
         ]);
+    }
+
+    /**
+     * 422 uniforme para transiciones de estado no permitidas.
+     */
+    private function invalidTransition(Campaign $campaign, string $target): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => "Transición de estado no permitida: '{$campaign->status}' → '{$target}'.",
+            'code' => 'INVALID_STATUS_TRANSITION',
+            'current_status' => $campaign->status,
+            'allowed_transitions' => Campaign::STATUS_TRANSITIONS[$campaign->status] ?? [],
+        ], 422);
     }
 }
