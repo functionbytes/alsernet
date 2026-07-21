@@ -16,7 +16,10 @@ class MergeTicketRequest extends FormRequest
         $ticket = $this->route('ticket');
 
         return [
-            'merge_into_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id', 'different:'.$ticket->id],
+            // not_in: la regla anterior era different:{id}, que compara contra
+            // OTRO CAMPO del request llamado "{id}" (inexistente), con lo que
+            // fusionar un ticket consigo mismo pasaba la validación.
+            'merge_into_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_tickets,id', 'not_in:'.$ticket->id],
         ];
     }
 

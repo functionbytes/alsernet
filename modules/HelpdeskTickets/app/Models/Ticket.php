@@ -23,6 +23,19 @@ class Ticket extends Model
     /** @use HasFactory<TicketFactory> */
     use HasCustomAttributes, HasFactory, HasMessageThread, LogsActivity, SoftDeletes;
 
+    /**
+     * Bootstrap contextual color per priority slug (single source of truth for
+     * badges in views/JSON payloads).
+     *
+     * @var array<string, string>
+     */
+    public const PRIORITY_COLORS = [
+        'urgent' => 'danger',
+        'high' => 'warning',
+        'normal' => 'info',
+        'low' => 'secondary',
+    ];
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_tickets';
@@ -46,6 +59,7 @@ class Ticket extends Model
         'resolved_at',
         'first_response_at',
         'last_message_at',
+        'last_activity_at',
         'sla_first_response_due_at',
         'sla_next_response_due_at',
         'sla_resolution_due_at',
@@ -75,6 +89,7 @@ class Ticket extends Model
             'resolved_at' => 'datetime',
             'first_response_at' => 'datetime',
             'last_message_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'sla_first_response_due_at' => 'datetime',
             'sla_next_response_due_at' => 'datetime',
             'sla_resolution_due_at' => 'datetime',
@@ -117,6 +132,20 @@ class Ticket extends Model
                 };
             })
             ->dontSubmitEmptyLogs();
+    }
+
+    /**
+     * Autogenera el número de ticket al crear si el caller no lo fijó, para que
+     * cualquier vía de creación (TicketService, ingesta de emails, tests) obtenga
+     * uno válido sin depender de un default en BD.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $ticket): void {
+            if (empty($ticket->ticket_number)) {
+                $ticket->ticket_number = self::generateTicketNumber();
+            }
+        });
     }
 
     /**
@@ -238,6 +267,14 @@ class Ticket extends Model
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TicketTimeEntry::class);
+    }
+
+    /**
+     * Bootstrap contextual color for the ticket priority badge.
+     */
+    public function getPriorityColorAttribute(): string
+    {
+        return self::PRIORITY_COLORS[$this->priority] ?? 'secondary';
     }
 
     /**
@@ -858,5 +895,16 @@ class Ticket extends Model
         }
 
         return 'ok';
+    }
+
+    /**
+     * Laravel no puede adivinar la ruta de la factory a partir del namespace
+     * del modulo (Modules\X\Models\Y no encaja con la convencion App\Models\Y
+     * que usa la resolucion por defecto de HasFactory) — sin este override,
+     * Ticket::factory() lanzaba "Class ...\Models\TicketFactory not found".
+     */
+    protected static function newFactory(): TicketFactory
+    {
+        return new TicketFactory;
     }
 }

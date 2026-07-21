@@ -2,11 +2,11 @@
 
 namespace Modules\HelpdeskTickets\Observers;
 
-use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Support\ReportsCache;
 
 class TicketObserver
 {
@@ -35,16 +35,18 @@ class TicketObserver
 
     public function saved(Ticket $ticket): void
     {
-        Cache::forget('helpdesk:reports');
+        ReportsCache::bump();
     }
 
     public function deleted(Ticket $ticket): void
     {
-        Cache::forget('helpdesk:reports');
+        ReportsCache::bump();
     }
 
     public function updated(Ticket $ticket): void
     {
+        $changes = [];
+
         foreach ($ticket->getDirty() as $field => $newValue) {
             if (in_array($field, ['updated_at', 'created_at', 'deleted_at'], true)) {
                 continue;
@@ -64,14 +66,11 @@ class TicketObserver
                 continue;
             }
 
-            TicketHistory::logFieldChange(
-                $ticket,
-                $field,
-                $oldValue,
-                $newValue,
-                auth()->user()
-            );
+            $changes[] = ['field' => $field, 'old' => $oldValue, 'new' => $newValue];
         }
+
+        // Single batch INSERT instead of one query per dirty field.
+        TicketHistory::insertFieldChanges($ticket, $changes, auth()->user());
     }
 
     private function logStatusChange(Ticket $ticket, mixed $oldValue, mixed $newValue): void

@@ -8,7 +8,10 @@ class BulkReplyTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.tickets.update') ?? false;
+        // La autorización real es por ticket en el controlador: viewAny +
+        // policy update('Ticket') para cada ticket seleccionado (cubre tanto
+        // el permiso global helpdesk.tickets.update como el caso assignee).
+        return $this->user() !== null;
     }
 
     public function rules(): array

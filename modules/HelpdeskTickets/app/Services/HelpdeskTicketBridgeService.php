@@ -11,6 +11,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Support\ReportsCache;
 
 /**
  * Concrete implementation of the Helpdesk → Tickets bridge.
@@ -160,7 +161,7 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
 
     public function getDashboardData(): array
     {
-        $stats = Cache::remember('helpdesk:dashboard:ticket_stats', 300, function () {
+        $stats = Cache::remember(ReportsCache::dashboardKey('ticket_stats'), 300, function () {
             $row = Ticket::query()
                 ->selectRaw('
                     SUM(CASE WHEN closed_at IS NULL THEN 1 ELSE 0 END) as open,
@@ -182,7 +183,7 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
             ];
         });
 
-        $topAgents = Cache::remember('helpdesk:dashboard:agent_stats', 300, function () {
+        $topAgents = Cache::remember(ReportsCache::dashboardKey('agent_stats'), 300, function () {
             // User lives on the default connection while helpdesk_tickets may live
             // in a separate helpdesk database, so the joined table is fully
             // qualified to keep the aggregate working when the schemas differ.
@@ -199,7 +200,7 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
                 ->get();
         });
 
-        $recentBreaches = Cache::remember('helpdesk:dashboard:recent_breaches', 60, function () {
+        $recentBreaches = Cache::remember(ReportsCache::dashboardKey('recent_breaches'), 60, function () {
             return Ticket::query()
                 ->where('sla_resolution_breached', true)
                 ->whereNull('closed_at')
@@ -209,7 +210,7 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
                 ->get();
         });
 
-        $recentTickets = Cache::remember('helpdesk:dashboard:recent_tickets', 60, function () {
+        $recentTickets = Cache::remember(ReportsCache::dashboardKey('recent_tickets'), 60, function () {
             return Ticket::query()
                 ->with(['customer:id,name', 'status:id,name,color', 'assignee:id,firstname,lastname'])
                 ->orderByDesc('created_at')

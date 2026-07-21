@@ -3,15 +3,19 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TicketWatchTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $agent;
 
@@ -25,7 +29,14 @@ class TicketWatchTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
+        Permission::firstOrCreate(['name' => 'helpdesk.tickets.view', 'guard_name' => 'web']);
+        Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']);
+
+        // Rol para pasar el middleware role:super-admin|super-settings de las
+        // rutas de manager + permiso de vista que exige la policy watch().
         $this->agent = User::factory()->create();
+        $this->agent->assignRole('super-admin');
+        $this->agent->givePermissionTo('helpdesk.tickets.view');
 
         $this->status = TicketStatus::firstOrCreate(
             ['slug' => 'open'],

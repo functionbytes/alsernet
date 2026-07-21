@@ -16,7 +16,6 @@ use Modules\HelpdeskTickets\Http\Requests\Managers\StoreTicketMessageRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Services\MentionService;
-use Modules\HelpdeskTickets\Services\TicketAiService;
 
 class TicketMessagingController extends Controller
 {
@@ -40,32 +39,12 @@ class TicketMessagingController extends Controller
             }
         }
 
-        $item = $ticket->items()->create([
-            'type' => 'message',
-            'user_id' => auth()->id(),
-            'body' => $validated['body'],
-            'attachment_urls' => $attachmentPaths,
-            'is_internal' => $request->boolean('is_internal', false),
-        ]);
-
-        $data = ['last_message_at' => now()];
-        if (! $ticket->first_response_at) {
-            $data['first_response_at'] = now();
-        }
-        $ticket->update($data);
-
-        $this->mentionService->notifyMentions($request->body, $ticket);
-
-        MessageAdded::dispatch($item);
-
-        broadcast(new TicketMessageReceived($ticket, $item));
-        NewTicketMessage::dispatch($ticket, [
-            'id' => $item->id,
-            'content' => $item->body,
-            'author' => auth()->user()->name,
-            'created_at' => $item->created_at->toIso8601String(),
-            'type' => 'agent',
-        ]);
+        $item = $this->createMessageItem(
+            $ticket,
+            $validated['body'],
+            $request->boolean('is_internal', false),
+            $attachmentPaths
+        );
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -80,46 +59,48 @@ class TicketMessagingController extends Controller
             ->with('success', __('helpdesktickets::helpdesktickets.messages.message_sent'));
     }
 
+    /**
+     * Responde a varios tickets a la vez.
+     *
+     * Cada mensaje se crea por la misma vía que storeMessage (modelo + eventos
+     * + menciones + broadcast) en lugar de un TicketItem::insert() crudo, y la
+     * autorización se comprueba ticket a ticket con la policy: los tickets que
+     * el usuario no puede actualizar se omiten y se reportan en la respuesta.
+     */
     public function bulkReply(BulkReplyTicketRequest $request): JsonResponse
     {
         $this->authorize('viewAny', Ticket::class);
 
         $validated = $request->validated();
+        $isInternal = $request->boolean('is_internal');
 
-        $isInternal = (bool) ($validated['is_internal'] ?? false);
-        $count = count($validated['ticket_ids']);
-        $ids = $validated['ticket_ids'];
-        $now = now();
+        $tickets = Ticket::whereIn('id', $validated['ticket_ids'])->get();
 
-        DB::transaction(function () use ($ids, $validated, $isInternal, $now): void {
-            $validIds = Ticket::whereIn('id', $ids)->pluck('id')->all();
+        [$authorized, $skipped] = $tickets->partition(
+            fn (Ticket $ticket) => $request->user()->can('update', $ticket)
+        );
 
-            if (empty($validIds)) {
-                return;
+        if ($authorized->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para responder los tickets seleccionados.',
+                'skipped_ticket_ids' => $skipped->pluck('id')->values(),
+            ], 403);
+        }
+
+        DB::transaction(function () use ($authorized, $validated, $isInternal): void {
+            foreach ($authorized as $ticket) {
+                $this->createMessageItem($ticket, $validated['body'], $isInternal);
             }
-
-            $items = array_map(fn ($id) => [
-                'ticket_id' => $id,
-                'type' => 'message',
-                'user_id' => auth()->id(),
-                'body' => $validated['body'],
-                'is_internal' => $isInternal,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], $validIds);
-
-            TicketItem::insert($items);
-
-            Ticket::whereIn('id', $validIds)->update(['last_message_at' => $now]);
-
-            Ticket::whereIn('id', $validIds)
-                ->whereNull('first_response_at')
-                ->update(['first_response_at' => $now]);
         });
+
+        $count = $authorized->count();
 
         return response()->json([
             'success' => true,
             'message' => "Respuesta enviada a {$count} ".($count === 1 ? 'ticket' : 'tickets').'.',
+            'replied_ticket_ids' => $authorized->pluck('id')->values(),
+            'skipped_ticket_ids' => $skipped->pluck('id')->values(),
         ]);
     }
 
@@ -137,10 +118,43 @@ class TicketMessagingController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function smartReplies(Ticket $ticket, TicketAiService $ai): JsonResponse
+    /**
+     * Vía única de creación de mensajes de agente: crea el TicketItem por el
+     * modelo (observers incluidos), actualiza los timestamps del ticket,
+     * notifica menciones y dispara los mismos eventos/broadcasts que una
+     * respuesta individual.
+     *
+     * @param  array<int, string>  $attachmentPaths
+     */
+    private function createMessageItem(Ticket $ticket, string $body, bool $isInternal, array $attachmentPaths = []): TicketItem
     {
-        $this->authorize('view', $ticket);
+        $item = $ticket->items()->create([
+            'type' => 'message',
+            'user_id' => auth()->id(),
+            'body' => $body,
+            'attachment_urls' => $attachmentPaths,
+            'is_internal' => $isInternal,
+        ]);
 
-        return response()->json(['suggestions' => $ai->smartReplySuggestions($ticket)]);
+        $data = ['last_message_at' => now()];
+        if (! $ticket->first_response_at) {
+            $data['first_response_at'] = now();
+        }
+        $ticket->update($data);
+
+        $this->mentionService->notifyMentions($body, $ticket);
+
+        MessageAdded::dispatch($item);
+
+        broadcast(new TicketMessageReceived($ticket, $item));
+        NewTicketMessage::dispatch($ticket, [
+            'id' => $item->id,
+            'content' => $item->body,
+            'author' => auth()->user()->name,
+            'created_at' => $item->created_at->toIso8601String(),
+            'type' => 'agent',
+        ]);
+
+        return $item;
     }
 }

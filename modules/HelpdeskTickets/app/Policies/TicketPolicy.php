@@ -54,4 +54,29 @@ class TicketPolicy
         return $user->hasPermissionTo('helpdesk.tickets.update')
             || $ticket->assignee_id === $user->id;
     }
+
+    public function resolve(User $user, Ticket $ticket): bool
+    {
+        return $this->close($user, $ticket);
+    }
+
+    public function reopen(User $user, Ticket $ticket): bool
+    {
+        return $this->close($user, $ticket);
+    }
+
+    public function archive(User $user, Ticket $ticket): bool
+    {
+        return $this->close($user, $ticket);
+    }
+
+    public function merge(User $user, Ticket $ticket): bool
+    {
+        return $user->hasPermissionTo('helpdesk.tickets.update');
+    }
+
+    public function watch(User $user, Ticket $ticket): bool
+    {
+        return $this->view($user, $ticket);
+    }
 }

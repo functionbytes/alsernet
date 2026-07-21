@@ -5,14 +5,11 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskTickets\Http\Requests\Api\StoreWidgetTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketMessage;
 use Modules\HelpdeskTickets\Services\TicketService;
 
 class WidgetTicketsController extends Controller
@@ -60,8 +57,10 @@ class WidgetTicketsController extends Controller
     /**
      * GET /hd/api/tickets?email=...&website_token=...
      *
-     * List tickets for a customer identified by email. Returns an empty list
-     * when the customer does not exist to avoid revealing email enumeration.
+     * Sin prueba de propiedad del email (este endpoint es publico, sin auth),
+     * NO se puede devolver el contenido de los tickets — solo un resumen +
+     * un enlace al portal seguro (magic-link) donde el cliente sí demuestra
+     * ser el dueño del email antes de ver ningun detalle.
      */
     public function index(Request $request): JsonResponse
     {
@@ -86,27 +85,19 @@ class WidgetTicketsController extends Controller
         $customer = Customer::where('email', $email)->first();
 
         if (! $customer) {
-            return response()->json(['success' => true, 'data' => []]);
+            return response()->json(['success' => true, 'has_tickets' => false, 'open_count' => 0]);
         }
 
-        $tickets = Ticket::where('customer_id', $customer->id)
-            ->with(['status:id,name,color,is_open', 'category:id,name,icon,color'])
-            ->orderByDesc('created_at')
-            ->limit(20)
-            ->get(['id', 'ticket_number', 'subject', 'priority', 'source', 'status_id', 'category_id', 'created_at', 'closed_at']);
+        $openCount = Ticket::where('customer_id', $customer->id)
+            ->whereHas('status', fn ($q) => $q->where('is_open', true))
+            ->count();
 
-        $data = $tickets->map(fn ($t) => [
-            'id' => $t->id,
-            'ticket_number' => $t->ticket_number,
-            'subject' => $t->subject,
-            'priority' => $t->priority,
-            'created_at' => $t->created_at->toIso8601String(),
-            'closed_at' => $t->closed_at?->toIso8601String(),
-            'status' => $t->status ? ['name' => $t->status->name, 'color' => $t->status->color, 'is_open' => $t->status->is_open] : null,
-            'category' => $t->category ? ['name' => $t->category->name, 'icon' => $t->category->icon] : null,
+        return response()->json([
+            'success' => true,
+            'has_tickets' => $openCount > 0,
+            'open_count' => $openCount,
+            'login_url' => route('portal.login'),
         ]);
-
-        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -135,7 +126,7 @@ class WidgetTicketsController extends Controller
         ]);
 
         if ($request->hasFile('attachments')) {
-            $this->storeAttachments($request->file('attachments'), $ticket->id);
+            $this->ticketService->storeAttachments($request->file('attachments'), $ticket->id);
         }
 
         return response()->json([
@@ -147,36 +138,5 @@ class WidgetTicketsController extends Controller
                 'subject' => $ticket->subject,
             ],
         ], 201);
-    }
-
-    /**
-     * @param  array<int, UploadedFile>  $files
-     */
-    private function storeAttachments(array $files, int $ticketId): void
-    {
-        $message = TicketMessage::create([
-            'ticket_id' => $ticketId,
-            'is_internal' => false,
-        ]);
-
-        $disk = config('helpdesk.attachments.disk', 'local');
-        $path = config('helpdesk.attachments.path', 'helpdesk/attachments');
-
-        foreach ($files as $file) {
-            if (! $file->isValid()) {
-                continue;
-            }
-
-            $stored = $file->store($path, $disk);
-
-            TicketAttachment::create([
-                'ticket_message_id' => $message->id,
-                'filename' => $file->getClientOriginalName(),
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'path' => $stored,
-            ]);
-        }
     }
 }

@@ -51,7 +51,6 @@ use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Services\AutomationEngine;
 use Modules\HelpdeskTickets\Services\EscalationService;
 use Modules\HelpdeskTickets\Services\SlaService;
-use Modules\HelpdeskTickets\Services\TicketNotificationService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Modules\Theme\Services\NavService;
@@ -84,6 +83,10 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
+        if (! helpdesk_tickets_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Tickets',
             'items' => [
@@ -119,7 +122,6 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->app->singleton(AssignmentService::class);
         $this->app->singleton(EscalationService::class);
         $this->app->singleton(AutomationEngine::class);
-        $this->app->singleton(TicketNotificationService::class);
     }
 
     protected function registerPolicies(): void
@@ -172,18 +174,19 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
+            $enabled = fn () => helpdesk_tickets_enabled();
 
-            $schedule->command('imap:emailticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground();
-            $schedule->command('ticket:autoclose')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground();
-            $schedule->command('ticket:autooverdue')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground();
-            $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground();
-            $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground();
+            $schedule->command('imap:emailticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('ticket:autoclose')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('ticket:autooverdue')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
 
-            $schedule->job(new ProcessRecurringTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer();
-            $schedule->job(new CheckSlaBreaches)->everyFifteenMinutes()->withoutOverlapping()->onOneServer();
-            $schedule->job(new SendSlaWarnings)->everyThirtyMinutes()->withoutOverlapping()->onOneServer();
-            $schedule->job(new CleanupOldTickets)->daily()->at('02:00')->onOneServer();
-            $schedule->job(new EscalateTicketsJob)->hourly()->withoutOverlapping()->onOneServer();
+            $schedule->job(new ProcessRecurringTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
+            $schedule->job(new CheckSlaBreaches)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
+            $schedule->job(new SendSlaWarnings)->everyThirtyMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
+            $schedule->job(new CleanupOldTickets)->daily()->at('02:00')->onOneServer()->when($enabled);
+            $schedule->job(new EscalateTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
         });
     }
 
@@ -241,7 +244,8 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->loadPortalRoutes();
         $this->loadPublicRoutes();
 
-        if (app()->environment('local')) {
+        // Herramientas de desarrollo: nunca en producción (404).
+        if (app()->environment(['local', 'testing'])) {
             $this->loadDevRoutes();
         }
     }

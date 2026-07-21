@@ -16,7 +16,8 @@
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
 
-                    <form method="POST" action="{{ route('helpdesk.feedback.submit', $ticket->ticket_number) }}">
+                    {{-- $submitUrl es una URL firmada (la ruta submit exige middleware signed) --}}
+                    <form method="POST" action="{{ $submitUrl }}">
                         @csrf
                         <div class="mb-4">
                             @for($i = 1; $i <= 5; $i++)

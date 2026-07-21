@@ -4,21 +4,17 @@ namespace Modules\HelpdeskTickets\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
-use Modules\HelpdeskTickets\Models\TicketAttachment;
+use Modules\HelpdeskTickets\Http\Requests\SubmitPublicTicketRequest;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketMessage;
-use Modules\HelpdeskTickets\Services\TicketCategoryValidationBuilder;
 use Modules\HelpdeskTickets\Services\TicketService;
 
 class PublicTicketFormController extends Controller
 {
     public function __construct(
         private readonly TicketService $ticketService,
-        private readonly TicketCategoryValidationBuilder $validationBuilder,
     ) {}
 
     public function show(string $slug): JsonResponse
@@ -56,15 +52,14 @@ class PublicTicketFormController extends Controller
         ]);
     }
 
-    public function submit(Request $request, string $slug): JsonResponse
+    public function submit(SubmitPublicTicketRequest $request, string $slug): JsonResponse
     {
         $category = TicketCategory::where('slug', $slug)
             ->where('active', true)
             ->with(['fields' => fn ($q) => $q->where('is_visible', true)->ordered()])
             ->firstOrFail();
 
-        $built = $this->validationBuilder->buildForSubmission($category);
-        $validated = $request->validate($built['rules'], [], $built['attributes']);
+        $validated = $request->validated();
 
         if ($request->filled('website_token')) {
             $web = Web::where('website_token', $validated['website_token'])->first();
@@ -110,7 +105,7 @@ class PublicTicketFormController extends Controller
             ->all();
 
         if (! empty($uploadedFiles)) {
-            $this->storeAttachments($uploadedFiles, $ticket->id);
+            $this->ticketService->storeAttachments($uploadedFiles, $ticket->id, ['message' => '']);
         }
 
         return response()->json([
@@ -120,33 +115,5 @@ class PublicTicketFormController extends Controller
                 'ticket_number' => $ticket->ticket_number,
             ],
         ], 201);
-    }
-
-    /**
-     * @param  array<int, UploadedFile>  $files
-     */
-    private function storeAttachments(array $files, int $ticketId): void
-    {
-        $message = TicketMessage::create([
-            'ticket_id' => $ticketId,
-            'is_internal' => false,
-            'message' => '',
-        ]);
-
-        $disk = config('helpdesk.attachments.disk', 'local');
-        $path = config('helpdesk.attachments.path', 'helpdesk/attachments');
-
-        foreach ($files as $file) {
-            $stored = $file->store($path, $disk);
-
-            TicketAttachment::create([
-                'ticket_message_id' => $message->id,
-                'filename' => $file->getClientOriginalName(),
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'path' => $stored,
-            ]);
-        }
     }
 }
