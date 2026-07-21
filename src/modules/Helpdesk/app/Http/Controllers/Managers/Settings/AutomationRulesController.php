@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\AutomationRule;
+use Modules\Helpdesk\Services\Automation\ConditionEvaluator;
 
 class AutomationRulesController extends Controller
 {
@@ -65,6 +66,11 @@ class AutomationRulesController extends Controller
 
         $validated['conditions'] = $this->parseJson($request->input('conditions_json')) ?? [];
         $validated['actions'] = $this->parseJson($request->input('actions_json')) ?? [];
+
+        if ($error = $this->invalidRegexError($validated['conditions'])) {
+            return back()->withInput()->withErrors(['conditions_json' => $error]);
+        }
+
         $validated['is_active'] = $request->boolean('is_active');
         $validated['user_id'] = auth()->id();
         $validated['trigger_event'] = $request->input('event_name');
@@ -94,6 +100,11 @@ class AutomationRulesController extends Controller
 
         $validated['conditions'] = $this->parseJson($request->input('conditions_json')) ?? [];
         $validated['actions'] = $this->parseJson($request->input('actions_json')) ?? [];
+
+        if ($error = $this->invalidRegexError($validated['conditions'])) {
+            return back()->withInput()->withErrors(['conditions_json' => $error]);
+        }
+
         $validated['is_active'] = $request->boolean('is_active');
         $validated['trigger_event'] = $request->input('event_name');
         unset($validated['event_name']);
@@ -152,6 +163,28 @@ class AutomationRulesController extends Controller
             'event_name.required' => 'El evento de disparo es obligatorio.',
             'event_name.in' => 'El evento seleccionado no es valido.',
         ];
+    }
+
+    /**
+     * Rechaza en el guardado los patrones regex inválidos o demasiado largos
+     * (anti-ReDoS): la misma validación que ConditionEvaluator aplicará al
+     * evaluar la condición contra cuerpos de mensaje.
+     *
+     * @param  array<string, mixed>  $conditions
+     */
+    private function invalidRegexError(array $conditions): ?string
+    {
+        $invalid = ConditionEvaluator::firstInvalidRegexPattern($conditions);
+
+        if ($invalid === null) {
+            return null;
+        }
+
+        return sprintf(
+            'La expresión regular "%s" no es válida o supera los %d caracteres.',
+            mb_substr($invalid, 0, 80),
+            ConditionEvaluator::MAX_REGEX_PATTERN_LENGTH
+        );
     }
 
     /**

@@ -2,8 +2,8 @@
 
 namespace Modules\Helpdesk\Services\Automation\Actions;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Jobs\DispatchDirectWebhookJob;
 use Modules\Helpdesk\Jobs\DispatchWebhookJob;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Webhook;
@@ -59,7 +59,10 @@ class SendWebhookAction implements AutomationAction
             return;
         }
 
-        DispatchWebhookJob::dispatch($webhook->id, $payload['event'] ?? 'automation.triggered', $payload);
+        // afterCommit: si la automatización corre dentro de una transacción
+        // (AutomationEngine/MacroExecutorService) y esta se revierte, el
+        // webhook no se llega a encolar. Sin transacción activa es un no-op.
+        DispatchWebhookJob::dispatch($webhook->id, $payload['event'] ?? 'automation.triggered', $payload)->afterCommit();
     }
 
     /** @param  array<string, mixed>  $payload */
@@ -71,11 +74,12 @@ class SendWebhookAction implements AutomationAction
             return;
         }
 
-        try {
-            Http::timeout(10)->post($url, $payload);
-        } catch (\Throwable $e) {
-            Log::warning('SendWebhookAction: direct POST failed', ['url' => $url, 'error' => $e->getMessage()]);
-        }
+        // Unificado con la rama webhook_id: la entrega va por cola (el job
+        // revalida la URL justo antes del POST) en vez de un POST síncrono
+        // que bloqueaba el request/listener que disparó la automatización.
+        // afterCommit: no se encola si la transacción de la automatización
+        // termina en rollback (no-op sin transacción activa).
+        DispatchDirectWebhookJob::dispatch($url, $payload)->afterCommit();
     }
 
     /**

@@ -4,7 +4,9 @@ namespace Modules\Helpdesk\Http\Requests\Managers\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 use Modules\Helpdesk\Models\AutomationRule;
+use Modules\Helpdesk\Services\Automation\ConditionEvaluator;
 
 class StoreAutomationRuleRequest extends FormRequest
 {
@@ -47,5 +49,30 @@ class StoreAutomationRuleRequest extends FormRequest
             'actions_json' => 'acciones',
             'is_active' => 'activo',
         ];
+    }
+
+    /**
+     * Anti-ReDoS: valida en el guardado los patrones de condiciones `regex`
+     * con la misma lógica que usará ConditionEvaluator al evaluar.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $conditions = json_decode((string) $this->input('conditions_json'), true);
+
+            if (! is_array($conditions)) {
+                return;
+            }
+
+            $invalid = ConditionEvaluator::firstInvalidRegexPattern($conditions);
+
+            if ($invalid !== null) {
+                $validator->errors()->add('conditions_json', sprintf(
+                    'La expresión regular "%s" no es válida o supera los %d caracteres.',
+                    mb_substr($invalid, 0, 80),
+                    ConditionEvaluator::MAX_REGEX_PATTERN_LENGTH
+                ));
+            }
+        });
     }
 }
