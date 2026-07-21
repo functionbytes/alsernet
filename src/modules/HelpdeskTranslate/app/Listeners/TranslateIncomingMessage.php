@@ -5,7 +5,6 @@ namespace Modules\HelpdeskTranslate\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Modules\Helpdesk\Events\CustomerLanguageDetected;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\HelpdeskTranslate\Concerns\TranslatesMessage;
@@ -38,27 +37,19 @@ class TranslateIncomingMessage implements ShouldQueue
 
     public function handle(MessageReceived $event): void
     {
-        if (! $this->settingValue('helpdesktranslate.auto_translate_incoming')) {
+        if (! $this->passesCommonGuards($event, 'helpdesktranslate.auto_translate_incoming', ['translated_body', 'source_locale'])) {
             return;
         }
 
-        if (! $this->columnsExist()) {
-            return;
-        }
-
-        $item = $event->message ?? null;
-        $conversation = $event->conversation ?? null;
-
-        if (! $item || ! $conversation) {
-            return;
-        }
+        $item = $event->message;
+        $conversation = $event->conversation;
 
         if ($item->user_id !== null) {
             return; // Outbound (agent) messages skip auto-translation.
         }
 
-        $body = trim((string) ($item->body ?? ''));
-        if ($body === '' || mb_strlen($body) < 3) {
+        $body = $this->translatableBody($item);
+        if ($body === null) {
             return;
         }
 
@@ -120,17 +111,5 @@ class TranslateIncomingMessage implements ShouldQueue
         }
 
         return $detected;
-    }
-
-    private static ?bool $columnsExist = null;
-
-    private function columnsExist(): bool
-    {
-        if (self::$columnsExist === null) {
-            self::$columnsExist = Schema::connection('helpdesk')->hasColumn('helpdesk_conversation_items', 'translated_body')
-                && Schema::connection('helpdesk')->hasColumn('helpdesk_conversation_items', 'source_locale');
-        }
-
-        return self::$columnsExist;
     }
 }
