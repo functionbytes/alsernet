@@ -8,7 +8,7 @@ class UpdateSocialCompetitorRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.analytics.view') ?? false;
+        return $this->user()?->can('helpdesksocial.analytics.view') ?? false;
     }
 
     public function rules(): array

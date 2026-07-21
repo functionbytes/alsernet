@@ -13,7 +13,7 @@ class SocialCompetitorsController extends Controller
 {
     public function index(): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $competitors = SocialCompetitor::with('latestMetrics')
             ->orderBy('name')
@@ -41,7 +41,7 @@ class SocialCompetitorsController extends Controller
 
     public function show(SocialCompetitor $competitor): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         return response()->json([
             'data' => new SocialCompetitorResource($competitor->load('latestMetrics')),
@@ -59,7 +59,7 @@ class SocialCompetitorsController extends Controller
 
     public function destroy(SocialCompetitor $competitor): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $competitor->delete();
 

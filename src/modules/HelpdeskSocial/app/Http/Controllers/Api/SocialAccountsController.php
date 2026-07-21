@@ -18,7 +18,7 @@ class SocialAccountsController extends Controller
 
     public function index(): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
         $accounts = SocialAccount::orderBy('name')->paginate(20);
 
         return response()->json([
@@ -34,7 +34,7 @@ class SocialAccountsController extends Controller
 
     public function store(StoreSocialAccountRequest $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
         $validated = $request->validated();
         $validated['connected_by_user_id'] = auth()->id();
 
@@ -48,7 +48,7 @@ class SocialAccountsController extends Controller
 
     public function show(SocialAccount $account): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         return response()->json([
             'data' => new SocialAccountResource($account),
@@ -57,7 +57,7 @@ class SocialAccountsController extends Controller
 
     public function update(UpdateSocialAccountRequest $request, SocialAccount $account): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
         $oldValues = $account->toArray();
         $account->update($request->validated());
         $this->auditLog->log('update', $account, $oldValues, $account->toArray());
@@ -69,7 +69,7 @@ class SocialAccountsController extends Controller
 
     public function destroy(SocialAccount $account): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
         $oldValues = $account->toArray();
         $account->delete();
         $this->auditLog->log('delete', $account, $oldValues);
@@ -79,7 +79,7 @@ class SocialAccountsController extends Controller
 
     public function toggleActive(SocialAccount $account): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
         $oldValues = ['is_active' => $account->is_active];
         $account->update(['is_active' => ! $account->is_active]);
         $this->auditLog->log('update', $account, $oldValues, ['is_active' => $account->is_active]);

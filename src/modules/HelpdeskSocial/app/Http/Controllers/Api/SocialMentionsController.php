@@ -5,6 +5,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\HelpdeskSocial\Http\Requests\UpdateSocialMentionRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialMentionResource;
 use Modules\HelpdeskSocial\Models\SocialMention;
 
@@ -12,7 +13,7 @@ class SocialMentionsController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $query = SocialMention::query()
             ->when($request->get('platform'), fn ($q, $platform) => $q->where('platform', $platform))
@@ -36,22 +37,16 @@ class SocialMentionsController extends Controller
 
     public function show(SocialMention $mention): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         return response()->json([
             'data' => new SocialMentionResource($mention),
         ]);
     }
 
-    public function update(Request $request, SocialMention $mention): JsonResponse
+    public function update(UpdateSocialMentionRequest $request, SocialMention $mention): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
-
-        $validated = $request->validate([
-            'status' => 'required|string|in:new,reviewed,archived,dismissed',
-        ]);
-
-        $mention->update($validated);
+        $mention->update($request->validated());
 
         return response()->json([
             'data' => new SocialMentionResource($mention),
@@ -60,7 +55,7 @@ class SocialMentionsController extends Controller
 
     public function destroy(SocialMention $mention): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.mentions.update'), 403);
 
         $mention->delete();
 

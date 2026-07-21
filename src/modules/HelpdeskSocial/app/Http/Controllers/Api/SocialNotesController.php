@@ -14,7 +14,7 @@ class SocialNotesController extends Controller
 {
     public function index(Request $request, SocialComment $comment): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $notes = SocialCommentNote::with('user')
             ->where('social_comment_id', $comment->id)
@@ -47,7 +47,7 @@ class SocialNotesController extends Controller
 
     public function destroy(SocialCommentNote $note): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
 
         $note->delete();
 

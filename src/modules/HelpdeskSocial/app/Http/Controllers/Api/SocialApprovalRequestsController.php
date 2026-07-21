@@ -19,7 +19,7 @@ class SocialApprovalRequestsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $query = SocialApprovalRequest::with(['requester', 'approver', 'comment']);
 
@@ -55,7 +55,7 @@ class SocialApprovalRequestsController extends Controller
 
     public function show(SocialApprovalRequest $approvalRequest): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         return response()->json([
             'data' => new SocialApprovalRequestResource($approvalRequest->load(['requester', 'approver', 'comment'])),

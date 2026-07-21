@@ -8,7 +8,7 @@ class StoreSocialAssignmentRuleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.rules.manage') ?? false;
+        return $this->user()?->can('helpdesksocial.rules.manage') ?? false;
     }
 
     public function rules(): array
