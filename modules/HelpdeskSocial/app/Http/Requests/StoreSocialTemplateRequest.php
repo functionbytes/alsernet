@@ -8,7 +8,7 @@ class StoreSocialTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.templates.manage') ?? false;
+        return $this->user()?->can('helpdesksocial.templates.manage') ?? false;
     }
 
     public function rules(): array

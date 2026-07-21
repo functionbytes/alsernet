@@ -8,7 +8,7 @@ class BulkSocialCommentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.view') ?? false;
+        return $this->user()?->can('helpdesksocial.manage') ?? false;
     }
 
     public function rules(): array

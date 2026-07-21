@@ -8,7 +8,7 @@ class RespondSocialApprovalRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.approver') ?? false;
+        return $this->user()?->can('helpdesksocial.approver') ?? false;
     }
 
     public function rules(): array

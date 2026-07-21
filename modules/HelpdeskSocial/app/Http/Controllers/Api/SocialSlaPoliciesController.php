@@ -18,7 +18,7 @@ class SocialSlaPoliciesController extends Controller
 
     public function index(): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $policies = SocialSlaPolicy::orderBy('name')->paginate(20);
 
         return response()->json([
@@ -34,7 +34,7 @@ class SocialSlaPoliciesController extends Controller
 
     public function store(StoreSocialSlaPolicyRequest $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $policy = SocialSlaPolicy::create($request->validated());
         $this->auditLog->log('create', $policy, null, $policy->toArray());
 
@@ -45,7 +45,7 @@ class SocialSlaPoliciesController extends Controller
 
     public function show(SocialSlaPolicy $policy): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         return response()->json([
             'data' => new SocialSlaPolicyResource($policy),
@@ -54,7 +54,7 @@ class SocialSlaPoliciesController extends Controller
 
     public function update(UpdateSocialSlaPolicyRequest $request, SocialSlaPolicy $policy): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $oldValues = $policy->toArray();
         $policy->update($request->validated());
         $this->auditLog->log('update', $policy, $oldValues, $policy->toArray());
@@ -66,7 +66,7 @@ class SocialSlaPoliciesController extends Controller
 
     public function destroy(SocialSlaPolicy $policy): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $oldValues = $policy->toArray();
         $policy->delete();
         $this->auditLog->log('delete', $policy, $oldValues);

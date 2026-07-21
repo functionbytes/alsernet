@@ -8,7 +8,7 @@ class StoreSocialAccountRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->hasPermissionTo('helpdesksocial.accounts.manage') ?? false;
+        return $this->user()?->can('helpdesksocial.accounts.manage') ?? false;
     }
 
     public function rules(): array

@@ -57,6 +57,8 @@ class SocialTagsController extends Controller
 
     public function destroy(SocialTag $tag): JsonResponse
     {
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
+
         $tag->delete();
 
         return response()->json(['message' => 'Etiqueta eliminada correctamente']);

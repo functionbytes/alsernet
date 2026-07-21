@@ -24,7 +24,7 @@ class SocialInboxController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
         $query = SocialComment::with(['socialAccount', 'intent', 'assignedUser'])
             ->notSpam()
             ->when($request->get('platform'), fn ($q, $platform) => $q->where('platform', $platform))
@@ -66,7 +66,7 @@ class SocialInboxController extends Controller
 
     public function show(SocialComment $comment): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         return response()->json([
             'data' => new SocialCommentResource($comment->load(['socialAccount', 'intent', 'conversation', 'assignedUser'])),
@@ -75,7 +75,7 @@ class SocialInboxController extends Controller
 
     public function reply(ReplySocialCommentRequest $request, SocialComment $comment): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $validated = $request->validated();
 
         if ($comment->status === 'replied') {
@@ -105,7 +105,7 @@ class SocialInboxController extends Controller
 
     public function markAsSpam(SocialComment $comment): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $oldValues = ['is_spam' => $comment->is_spam, 'status' => $comment->status];
         $comment->markAsSpam();
         $this->auditLog->log('update', $comment, $oldValues, ['is_spam' => true, 'status' => 'spam']);
@@ -117,7 +117,7 @@ class SocialInboxController extends Controller
 
     public function markAsEscalated(SocialComment $comment): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $oldValues = ['status' => $comment->status, 'assigned_to_user_id' => $comment->assigned_to_user_id];
         $comment->markAsEscalated();
         $this->auditLog->log('escalate', $comment, $oldValues, ['status' => 'escalated']);
@@ -129,6 +129,10 @@ class SocialInboxController extends Controller
 
     public function assign(AssignSocialCommentRequest $request, SocialComment $comment): JsonResponse
     {
+        // Defensa en profundidad + consistencia con los métodos hermanos:
+        // AssignSocialCommentRequest::authorize() ya exige el permiso, pero el
+        // resto de acciones del controller repiten este abort_if explícito.
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $validated = $request->validated();
         $oldValues = ['assigned_to_user_id' => $comment->assigned_to_user_id];
         $comment->assignTo($validated['user_id']);
@@ -141,7 +145,7 @@ class SocialInboxController extends Controller
 
     public function bulk(BulkSocialCommentRequest $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
         $validated = $request->validated();
         $ids = $validated['ids'];
         $action = $validated['action'];
@@ -177,7 +181,7 @@ class SocialInboxController extends Controller
 
     public function stats(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
         $query = SocialComment::query();
 
         if ($request->get('platform')) {

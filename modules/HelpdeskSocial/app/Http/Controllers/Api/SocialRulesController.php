@@ -19,7 +19,7 @@ class SocialRulesController extends Controller
 
     public function index(): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $rules = SocialRule::query()
             ->ordered()
             ->paginate(20);
@@ -37,7 +37,7 @@ class SocialRulesController extends Controller
 
     public function store(StoreSocialRuleRequest $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $validated = $request->validated();
         $validated['created_by_user_id'] = auth()->id();
         $validated['is_active'] = true;
@@ -52,7 +52,7 @@ class SocialRulesController extends Controller
 
     public function show(SocialRule $rule): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         return response()->json([
             'data' => new SocialRuleResource($rule),
@@ -61,7 +61,7 @@ class SocialRulesController extends Controller
 
     public function update(UpdateSocialRuleRequest $request, SocialRule $rule): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $oldValues = $rule->toArray();
         $rule->update($request->validated());
         $this->auditLog->log('update', $rule, $oldValues, $rule->toArray());
@@ -73,7 +73,7 @@ class SocialRulesController extends Controller
 
     public function destroy(SocialRule $rule): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $oldValues = $rule->toArray();
         $rule->delete();
         $this->auditLog->log('delete', $rule, $oldValues);
@@ -83,7 +83,7 @@ class SocialRulesController extends Controller
 
     public function toggleActive(SocialRule $rule): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $oldValues = ['is_active' => $rule->is_active];
         $rule->update(['is_active' => ! $rule->is_active]);
         $this->auditLog->log('update', $rule, $oldValues, ['is_active' => $rule->is_active]);
@@ -95,7 +95,7 @@ class SocialRulesController extends Controller
 
     public function simulate(): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
         $validated = request()->validate([
             'body' => 'required|string',
             'platform' => 'required|string|in:facebook,instagram',
