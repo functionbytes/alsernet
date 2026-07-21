@@ -11,11 +11,19 @@ use Modules\Remarketing\Models\Order;
 
 class CustomerEcommerceController extends Controller
 {
+    /**
+     * Plataformas de CustomerExternalId consideradas e-commerce: su external_id
+     * corresponde al id del cliente en la tienda que alimenta Remarketing.
+     */
+    private const ECOMMERCE_PLATFORMS = ['prestashop', 'ecommerce', 'shopify', 'woocommerce'];
+
     public function show(Customer $customer): JsonResponse
     {
         $this->authorize('view', $customer);
 
-        if (! $customer->email) {
+        $remarketingCustomers = $this->resolveRemarketingCustomerIds($customer);
+
+        if ($remarketingCustomers->isEmpty()) {
             return response()->json([
                 'success' => true,
                 'orders' => [],
@@ -23,10 +31,6 @@ class CustomerEcommerceController extends Controller
                 'stats' => null,
             ]);
         }
-
-        $remarketingCustomers = RemarketingCustomer::query()
-            ->where('email', strtolower($customer->email))
-            ->pluck('id');
 
         $orders = Order::query()
             ->whereIn('customer_id', $remarketingCustomers)
@@ -84,5 +88,40 @@ class CustomerEcommerceController extends Controller
             'carts' => $carts,
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Cruce con Remarketing: criterio preferente el external_id del cliente en
+     * la plataforma e-commerce (CustomerExternalId, exacto y estable frente a
+     * cambios/reutilización de email); fallback el email en minúsculas, que era
+     * el único criterio anterior.
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    private function resolveRemarketingCustomerIds(Customer $customer): \Illuminate\Support\Collection
+    {
+        $externalIds = $customer->externalIds()
+            ->whereIn('platform', self::ECOMMERCE_PLATFORMS)
+            ->pluck('external_id')
+            ->filter()
+            ->map(fn ($id) => (string) $id);
+
+        if ($externalIds->isNotEmpty()) {
+            $ids = RemarketingCustomer::query()
+                ->whereIn('external_id', $externalIds->all())
+                ->pluck('id');
+
+            if ($ids->isNotEmpty()) {
+                return $ids;
+            }
+        }
+
+        if (! $customer->email) {
+            return collect();
+        }
+
+        return RemarketingCustomer::query()
+            ->where('email', strtolower($customer->email))
+            ->pluck('id');
     }
 }

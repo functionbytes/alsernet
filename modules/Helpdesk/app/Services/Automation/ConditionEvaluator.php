@@ -11,6 +11,20 @@ use Illuminate\Support\Facades\Log;
  */
 class ConditionEvaluator
 {
+    /** Longitud máxima (chars) permitida para un patrón regex de condición. */
+    public const MAX_REGEX_PATTERN_LENGTH = 500;
+
+    /** Bytes máximos del sujeto evaluado contra la regex (cuerpos de mensaje pueden ser enormes). */
+    public const MAX_REGEX_SUBJECT_BYTES = 10240;
+
+    /**
+     * Límite local de backtracking de PCRE durante la evaluación. El default
+     * (1M) permite que un patrón catastrófico (p.ej. (a+)+$) queme CPU durante
+     * segundos; con 100k el motor aborta casi de inmediato y preg_match
+     * devuelve false.
+     */
+    private const REGEX_BACKTRACK_LIMIT = '100000';
+
     /**
      * Evaluate the full conditions block against the given context.
      *
@@ -203,17 +217,95 @@ class ConditionEvaluator
             return false;
         }
 
-        // Wrap bare patterns (no delimiters) to be safe
-        if (! preg_match('/^[\/~!@#%\^&*\-+=|:;\.,\?]/', $pattern)) {
-            $pattern = '/'.$pattern.'/i';
-        }
-
-        try {
-            return (bool) preg_match($pattern, $actual);
-        } catch (\Throwable $e) {
-            Log::warning('AutomationEngine: invalid regex in condition', ['pattern' => $pattern, 'error' => $e->getMessage()]);
+        // Endurecido (ReDoS): el patrón viene del admin pero se evalúa contra
+        // texto controlado por el cliente (cuerpos de mensaje). Se valida
+        // longitud + compilación, se acota el sujeto y se baja temporalmente
+        // el backtrack_limit para que un patrón catastrófico no bloquee el worker.
+        if (! self::isValidRegexPattern($pattern)) {
+            Log::warning('AutomationEngine: invalid or oversized regex in condition', [
+                'pattern' => mb_substr($pattern, 0, 100),
+            ]);
 
             return false;
         }
+
+        $normalized = self::normalizeRegexPattern($pattern);
+        $subject = substr($actual, 0, self::MAX_REGEX_SUBJECT_BYTES);
+
+        $originalLimit = (string) ini_get('pcre.backtrack_limit');
+        ini_set('pcre.backtrack_limit', self::REGEX_BACKTRACK_LIMIT);
+
+        try {
+            $result = @preg_match($normalized, $subject);
+        } catch (\Throwable $e) {
+            Log::warning('AutomationEngine: regex evaluation failed', ['pattern' => mb_substr($pattern, 0, 100), 'error' => $e->getMessage()]);
+
+            return false;
+        } finally {
+            ini_set('pcre.backtrack_limit', $originalLimit);
+        }
+
+        if ($result === false) {
+            // Patrón inválido o límite de backtracking excedido → condición no cumplida.
+            Log::warning('AutomationEngine: regex aborted (invalid pattern or backtrack limit exceeded)', [
+                'pattern' => mb_substr($pattern, 0, 100),
+                'pcre_error' => preg_last_error_msg(),
+            ]);
+
+            return false;
+        }
+
+        return (bool) $result;
+    }
+
+    /**
+     * Envuelve patrones "pelados" (sin delimitador) en /.../i — misma
+     * normalización que aplica la evaluación, expuesta para poder validar
+     * en el guardado exactamente lo que se ejecutará después.
+     */
+    public static function normalizeRegexPattern(string $pattern): string
+    {
+        if (! preg_match('/^[\/~!@#%\^&*\-+=|:;\.,\?]/', $pattern)) {
+            return '/'.$pattern.'/i';
+        }
+
+        return $pattern;
+    }
+
+    /**
+     * ¿Es un patrón aceptable? Límite de longitud + compila contra sujeto vacío.
+     * Usado tanto al guardar la regla (controller/FormRequest) como al evaluar.
+     */
+    public static function isValidRegexPattern(string $pattern): bool
+    {
+        if ($pattern === '' || mb_strlen($pattern) > self::MAX_REGEX_PATTERN_LENGTH) {
+            return false;
+        }
+
+        return @preg_match(self::normalizeRegexPattern($pattern), '') !== false;
+    }
+
+    /**
+     * Devuelve el primer patrón regex inválido dentro de un bloque de
+     * condiciones { operator, rules: [...] }, o null si todos son válidos.
+     * Pensado para validar en el guardado de reglas de automatización.
+     *
+     * @param  array<string, mixed>  $conditions
+     */
+    public static function firstInvalidRegexPattern(array $conditions): ?string
+    {
+        foreach (($conditions['rules'] ?? []) as $rule) {
+            if (! is_array($rule) || ($rule['operator'] ?? null) !== 'regex') {
+                continue;
+            }
+
+            $pattern = (string) ($rule['value'] ?? '');
+
+            if (! self::isValidRegexPattern($pattern)) {
+                return $pattern;
+            }
+        }
+
+        return null;
     }
 }

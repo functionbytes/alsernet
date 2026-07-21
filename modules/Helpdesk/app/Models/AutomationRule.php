@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class AutomationRule extends Model
 {
@@ -26,6 +27,9 @@ class AutomationRule extends Model
         'order',
         'run_count',
         'last_run_at',
+        // Sin esto en fillable, el update de AutomationEngine al fallar una
+        // acción se descartaba en silencio y last_error nunca se persistía.
+        'last_error',
         'user_id',
     ];
 
@@ -89,7 +93,10 @@ class AutomationRule extends Model
 
     public function incrementRun(): void
     {
-        $this->increment('run_count');
-        $this->update(['last_run_at' => now()]);
+        // Un único UPDATE en vez de increment + update (dos escrituras).
+        $this->update([
+            'run_count' => DB::raw('run_count + 1'),
+            'last_run_at' => now(),
+        ]);
     }
 }

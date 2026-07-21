@@ -12,8 +12,12 @@ class LookupController extends Controller
 {
     public function agents(): JsonResponse
     {
+        // Roles configurables (config/helpdesk.php → agent_lookup_roles) en vez
+        // de la lista en duro; el default replica los valores anteriores.
+        $roles = (array) config('helpdesk.agent_lookup_roles', ['support', 'manager', 'admin', 'callcenter']);
+
         $agents = User::query()
-            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['support', 'manager', 'admin', 'callcenter']))
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', $roles))
             ->select('id', 'firstname', 'lastname', 'email')
             ->orderBy('firstname')
             ->limit(200)

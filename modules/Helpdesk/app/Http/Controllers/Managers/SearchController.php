@@ -3,7 +3,6 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Services\Search\GlobalSearchService;
@@ -26,6 +25,7 @@ class SearchController extends Controller
         $tooShort = mb_strlen($term) > 0 && mb_strlen($term) < GlobalSearchService::MIN_QUERY_LENGTH;
         $hasQuery = mb_strlen($term) >= GlobalSearchService::MIN_QUERY_LENGTH;
 
+        /** @var \Illuminate\Contracts\Pagination\LengthAwarePaginator|null $results Tipado solo para autocompletado del IDE en las vistas */
         $results = null;
 
         if ($hasQuery) {
@@ -57,11 +57,5 @@ class SearchController extends Controller
             'contacts' => $this->search->paginateCustomers($term, 1)->total(),
             'messages' => $this->search->paginateMessages($term, 1)->total(),
         ];
-    }
-
-    /** @return LengthAwarePaginator|null Returned only for IDE autocomplete in views */
-    public function ___noop(): ?LengthAwarePaginator
-    {
-        return null;
     }
 }

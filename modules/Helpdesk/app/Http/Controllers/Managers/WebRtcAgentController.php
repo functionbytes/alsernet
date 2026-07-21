@@ -14,6 +14,13 @@ class WebRtcAgentController extends Controller
 {
     public function answer(WebRtcAnswerRequest $request, Conversation $conversation): JsonResponse
     {
+        // Misma autorización que end()/request(): el FormRequest ya la exige,
+        // pero se repite aquí para que ningún refactor del request la pierda.
+        // La existencia de la conversación la garantiza el route-model binding.
+        if (! $this->user()?->can('helpdesk.conversations.view')) {
+            return response()->json(['success' => false], 403);
+        }
+
         WebRtcSignal::dispatch(
             $conversation->id,
             'answer',
@@ -26,6 +33,10 @@ class WebRtcAgentController extends Controller
 
     public function ice(WebRtcAgentIceRequest $request, Conversation $conversation): JsonResponse
     {
+        if (! $this->user()?->can('helpdesk.conversations.view')) {
+            return response()->json(['success' => false], 403);
+        }
+
         WebRtcSignal::dispatch(
             $conversation->id,
             'ice',

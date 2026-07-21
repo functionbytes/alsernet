@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services\Macros;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Macro;
@@ -48,42 +49,58 @@ class MacroExecutorService
 
         $executed = [];
         $failed = [];
+        $currentType = null;
 
-        foreach ($macro->actions ?? [] as $action) {
-            $type = $action['type'] ?? null;
-            $params = $action['params'] ?? [];
+        // Ejecución atómica: todas las mutaciones de las acciones van en una
+        // transacción sobre la conexión helpdesk. Si una acción falla a mitad,
+        // se revierte TODO (nada de estado parcial); los tipos desconocidos no
+        // mutan nada, así que solo se reportan y no abortan el macro. Los side
+        // effects encolados (webhooks/mensajes salientes) usan afterCommit()
+        // en las acciones, por lo que el rollback también cancela su dispatch.
+        try {
+            DB::connection('helpdesk')->transaction(function () use ($macro, $conversation, $context, &$executed, &$failed, &$currentType): void {
+                foreach ($macro->actions ?? [] as $action) {
+                    $type = $action['type'] ?? null;
+                    $params = $action['params'] ?? [];
 
-            $automationType = self::TYPE_MAP[$type] ?? null;
-            if (! $automationType) {
-                $failed[] = ['type' => $type, 'reason' => 'unknown action type'];
+                    $automationType = self::TYPE_MAP[$type] ?? null;
+                    if (! $automationType) {
+                        $failed[] = ['type' => $type, 'reason' => 'unknown action type'];
 
-                continue;
-            }
+                        continue;
+                    }
 
-            $params = $this->renderTextParams($params, $conversation);
+                    $params = $this->renderTextParams($params, $conversation);
 
-            if ($type === 'resolve_conversation') {
-                $params['status'] = 'resolved';
-            } elseif ($type === 'close_conversation') {
-                $params['status'] = 'closed';
-            }
+                    if ($type === 'resolve_conversation') {
+                        $params['status'] = 'resolved';
+                    } elseif ($type === 'close_conversation') {
+                        $params['status'] = 'closed';
+                    }
 
-            try {
-                $impl = $this->registry->resolve($automationType);
-                $impl->execute($params, $context);
-                $executed[] = $type;
-            } catch (\Throwable $e) {
-                Log::error('Macro action failed', [
-                    'macro_id' => $macro->id,
-                    'action_type' => $type,
-                    'error' => $e->getMessage(),
-                ]);
-                $failed[] = ['type' => $type, 'reason' => $e->getMessage()];
-            }
+                    $currentType = $type;
+                    $impl = $this->registry->resolve($automationType);
+                    $impl->execute($params, $context);
+                    $executed[] = $type;
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Macro action failed', [
+                'macro_id' => $macro->id,
+                'action_type' => $currentType,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Rollback: lo marcado como ejecutado dentro de la transacción no persistió.
+            $executed = [];
+            $failed[] = ['type' => $currentType, 'reason' => $e->getMessage()];
         }
 
-        $macro->increment('usage_count');
-        $macro->update(['last_used_at' => now()]);
+        // Un único UPDATE en vez de increment + update (dos escrituras).
+        $macro->update([
+            'usage_count' => DB::raw('usage_count + 1'),
+            'last_used_at' => now(),
+        ]);
 
         return ['executed' => $executed, 'failed' => $failed];
     }

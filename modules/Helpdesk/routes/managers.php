@@ -1,17 +1,18 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Helpdesk\Http\Controllers\Api\TagsAutocompleteController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentPerformanceController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentPresenceController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentProfileController;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
-use Modules\Helpdesk\Http\Controllers\Managers\AiController;
+use Modules\Helpdesk\Http\Controllers\Managers\AiSuggestionsController;
 use Modules\Helpdesk\Http\Controllers\Managers\AtRiskCustomersReportController;
+use Modules\Helpdesk\Http\Controllers\Managers\AutoAssignmentController;
 use Modules\Helpdesk\Http\Controllers\Managers\BulkConversationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CannedRepliesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Compliance\GdprController;
 use Modules\Helpdesk\Http\Controllers\Managers\Compliance\TwoFactorController;
+use Modules\Helpdesk\Http\Controllers\Managers\ConversationExportController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationItemsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationMessagesController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController as HelpdeskConversationsController;
@@ -19,7 +20,6 @@ use Modules\Helpdesk\Http\Controllers\Managers\ConversationViewsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CsatReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomerEcommerceController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomerInsightsController;
-use Modules\Helpdesk\Http\Controllers\Managers\CustomerIntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomerProfileController;
 use Modules\Helpdesk\Http\Controllers\Managers\CustomersController as HelpdeskCustomersController;
 use Modules\Helpdesk\Http\Controllers\Managers\DashboardController;
@@ -27,20 +27,15 @@ use Modules\Helpdesk\Http\Controllers\Managers\ExportController;
 use Modules\Helpdesk\Http\Controllers\Managers\GlobalSearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\HeatmapReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\HelpdeskSimulatorController;
-use Modules\Helpdesk\Http\Controllers\Managers\HsmTemplatesController;
 use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
+use Modules\Helpdesk\Http\Controllers\Managers\RemindersController;
 use Modules\Helpdesk\Http\Controllers\Managers\SearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\SlaBreachesReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\WebRtcAgentController;
 
 Route::group(['prefix' => ''], function () {
-
-    // Tags autocomplete (web, throttled, authenticated)
-    Route::get('/api/tags-autocomplete', TagsAutocompleteController::class)
-        ->middleware('throttle:60,1')
-        ->name('manager.helpdesk.api.tags.autocomplete');
 
     // Canned replies search (slash-menu in inbox composer)
     Route::get('/canned-replies/search', [CannedRepliesController::class, 'search'])
@@ -65,7 +60,8 @@ Route::group(['prefix' => ''], function () {
     // Agent presence state (heartbeat + manual state change)
     Route::prefix('presence')->name('manager.helpdesk.presence.')->group(function () {
         Route::post('heartbeat', [AgentPresenceController::class, 'heartbeat'])->name('heartbeat')->middleware('throttle:120,1');
-        Route::post('state', [AgentPresenceController::class, 'setState'])->name('state');
+        Route::post('state', [AgentPresenceController::class, 'setState'])->name('state')->middleware('throttle:60,1');
+        Route::get('me', [AgentPresenceController::class, 'me'])->name('me')->middleware('throttle:60,1');
         Route::get('agents', [AgentPresenceController::class, 'list'])->name('agents')->middleware('throttle:30,1');
     });
 
@@ -89,7 +85,6 @@ Route::group(['prefix' => ''], function () {
     Route::put('/customers/{customer}', [HelpdeskCustomersController::class, 'update'])->name('manager.helpdesk.customers.update');
     Route::delete('/customers/{customer}', [HelpdeskCustomersController::class, 'destroy'])->name('manager.helpdesk.customers.destroy');
     Route::post('/customers/{customer}/restore', [HelpdeskCustomersController::class, 'restore'])->name('manager.helpdesk.customers.restore');
-    Route::delete('/customers/{customer}/force-delete', [HelpdeskCustomersController::class, 'forceDelete'])->name('manager.helpdesk.customers.forceDelete');
     Route::post('/customers/{customer}/ban', [HelpdeskCustomersController::class, 'ban'])->name('manager.helpdesk.customers.ban');
     Route::post('/customers/{customer}/unban', [HelpdeskCustomersController::class, 'unban'])->name('manager.helpdesk.customers.unban');
     Route::get('/customers/{customer}/conversations', [HelpdeskCustomersController::class, 'conversations'])->name('manager.helpdesk.customers.conversations')->middleware('throttle:30,1');
@@ -123,17 +118,28 @@ Route::group(['prefix' => ''], function () {
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.macros-picker');
     Route::get('/conversations/{conversation}', [HelpdeskConversationsController::class, 'show'])->name('manager.helpdesk.conversations.show');
-    Route::get('/conversations/{conversation}/edit', [HelpdeskConversationsController::class, 'edit'])->name('manager.helpdesk.conversations.edit');
     Route::put('/conversations/{conversation}', [HelpdeskConversationsController::class, 'update'])->name('manager.helpdesk.conversations.update');
     Route::delete('/conversations/{conversation}', [HelpdeskConversationsController::class, 'destroy'])->name('manager.helpdesk.conversations.destroy');
     Route::post('/conversations/{conversation}/restore', [HelpdeskConversationsController::class, 'restore'])->name('manager.helpdesk.conversations.restore');
-    Route::delete('/conversations/{conversation}/force-delete', [HelpdeskConversationsController::class, 'forceDelete'])->name('manager.helpdesk.conversations.forceDelete');
     Route::post('/conversations/{conversation}/close', [HelpdeskConversationsController::class, 'close'])->name('manager.helpdesk.conversations.close');
     Route::post('/conversations/{conversation}/reopen', [HelpdeskConversationsController::class, 'reopen'])->name('manager.helpdesk.conversations.reopen');
     Route::post('/conversations/{conversation}/archive', [HelpdeskConversationsController::class, 'archive'])->name('manager.helpdesk.conversations.archive');
     Route::post('/conversations/{conversation}/unarchive', [HelpdeskConversationsController::class, 'unarchive'])->name('manager.helpdesk.conversations.unarchive');
     Route::post('/conversations/{conversation}/messages', [HelpdeskConversationsController::class, 'storeMessage'])->name('manager.helpdesk.conversations.messages.store');
     Route::post('/conversations/{conversation}/sync-commerce', [HelpdeskSimulatorController::class, 'resyncConversation'])->middleware('throttle:30,1')->name('manager.helpdesk.conversations.sync-commerce');
+
+    // Recordatorios personales del agente (#59 ve-reminder)
+    Route::post('/reminders', [RemindersController::class, 'store'])->name('manager.helpdesk.reminders.store');
+    Route::post('/conversations/{conversation}/reminders', [RemindersController::class, 'store'])->name('manager.helpdesk.conversations.reminders.store');
+
+    // Exportar el transcript de UNA conversación (#57 ve-export) — distinto del
+    // /exports/conversations (plural) que exporta la lista completa.
+    Route::get('/exports/conversation-transcript', [ConversationExportController::class, 'export'])->middleware('throttle:20,1')->name('manager.helpdesk.exports.conversation-transcript');
+    Route::post('/exports/conversation-transcript/email', [ConversationExportController::class, 'sendByEmail'])->middleware('throttle:10,1')->name('manager.helpdesk.exports.conversation-transcript.email');
+
+    // Estrategia global de auto-asignación (#78 ve-auto-assign)
+    Route::get('/auto-assignment', [AutoAssignmentController::class, 'show'])->name('manager.helpdesk.auto-assignment.show');
+    Route::put('/auto-assignment', [AutoAssignmentController::class, 'update'])->name('manager.helpdesk.auto-assignment.update');
 
     // Banco de pruebas omnicanal (simulador de canales + contexto PrestaShop/gestion)
     Route::get('/simulator', [HelpdeskSimulatorController::class, 'index'])->name('manager.helpdesk.simulator.index');
@@ -159,10 +165,11 @@ Route::group(['prefix' => ''], function () {
         ->middleware('throttle:30,1')
         ->name('manager.helpdesk.conversations.livestream.history');
 
-    // AI assistant endpoint (sugerir respuesta) — translate moved to HelpdeskTranslate module
-    Route::post('/conversations/{conversation}/ai/suggest-replies', [AiController::class, 'suggestReplies'])
-        ->middleware('throttle:30,1')
-        ->name('manager.helpdesk.conversations.ai.suggest-replies');
+    // AI reply suggestions for the inbox "ai-suggest" modal
+    Route::post('/conversations/{conversation}/ai/suggestions', AiSuggestionsController::class)
+        ->middleware(['can:helpdesk.conversations.update', 'throttle:30,1'])
+        ->name('manager.helpdesk.conversations.ai.suggestions');
+
     Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
     Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');
     Route::post('/conversations/{conversation}/contact', [HelpdeskConversationsController::class, 'storeContact'])->name('manager.helpdesk.conversations.contact.store');
@@ -200,12 +207,14 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.conversations.send-hsm');
     Route::get('/conversations/{conversation}/merge-candidates', [HelpdeskConversationsController::class, 'mergeCandidates'])->name('manager.helpdesk.conversations.merge-candidates')->middleware('throttle:30,1');
     Route::post('/conversations/{conversation}/merge', [HelpdeskConversationsController::class, 'merge'])->name('manager.helpdesk.conversations.merge')->middleware('throttle:10,1');
+    Route::post('/conversations/{conversation}/link-customer', [HelpdeskConversationsController::class, 'linkCustomer'])
+        ->middleware(['can:helpdesk.conversations.link-customer', 'throttle:10,1'])
+        ->name('manager.helpdesk.conversations.link-customer');
     Route::post('/conversations/{conversation}/snooze', [HelpdeskConversationsController::class, 'snooze'])->name('manager.helpdesk.conversations.snooze');
     Route::post('/conversations/{conversation}/pin', [HelpdeskConversationsController::class, 'togglePin'])->name('manager.helpdesk.conversations.pin');
     Route::post('/conversations/{conversation}/mute', [HelpdeskConversationsController::class, 'toggleMute'])->name('manager.helpdesk.conversations.mute');
     Route::post('/conversations/{conversation}/block-contact', [HelpdeskConversationsController::class, 'blockContact'])->name('manager.helpdesk.conversations.block-contact');
     Route::post('/conversations/{conversation}/mark-spam', [HelpdeskConversationsController::class, 'markSpam'])->name('manager.helpdesk.conversations.mark-spam');
-    Route::put('/conversations/{conversation}/draft', [HelpdeskConversationsController::class, 'saveDraft'])->name('manager.helpdesk.conversations.draft.save');
     Route::post('/conversations/{conversation}/messages/scheduled', [HelpdeskConversationsController::class, 'storeScheduledMessage'])->name('manager.helpdesk.conversations.messages.scheduled');
     Route::post('/conversations/{conversation}/send-csat', [HelpdeskConversationsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.conversations.send-csat')->middleware('throttle:10,1');
     Route::post('/conversations/{conversation}/macros/{macro}', [HelpdeskConversationsController::class, 'applyMacro'])->name('manager.helpdesk.conversations.macros.apply');
@@ -218,7 +227,6 @@ Route::group(['prefix' => ''], function () {
     // so Helpdesk does not depend on HelpdeskTickets at the routing layer.
     Route::get('/conversations/{conversation}/notes', [HelpdeskConversationsController::class, 'internalNotes'])->name('manager.helpdesk.conversations.notes');
     Route::get('/hsm-templates', [HelpdeskConversationsController::class, 'hsmTemplates'])->name('manager.helpdesk.hsm-templates');
-    Route::get('/api/hsm-templates', [HsmTemplatesController::class, 'index'])->name('manager.helpdesk.hsm-templates.index');
 
     // Bubble context-menu actions: react / forward / info — agent-only, light load.
     // Use named throttler so they don't share the global counter that the
@@ -236,6 +244,9 @@ Route::group(['prefix' => ''], function () {
     // Conversation items
     Route::post('/conversation-items/{item}/react', [ConversationItemsController::class, 'react'])
         ->name('manager.helpdesk.conversation-items.react')
+        ->middleware('throttle:30,1');
+    Route::post('/conversation-items/{item}/retry-send', [ConversationItemsController::class, 'retrySend'])
+        ->name('manager.helpdesk.conversation-items.retry-send')
         ->middleware('throttle:30,1');
     Route::delete('/conversation-items/{item}', [ConversationItemsController::class, 'destroy'])
         ->name('manager.helpdesk.conversation-items.destroy')
@@ -266,8 +277,10 @@ Route::group(['prefix' => ''], function () {
         Route::get('sla-breaches/data', [SlaBreachesReportController::class, 'data'])->name('sla-breaches.data');
     });
 
-    // CSV exports
-    Route::prefix('exports')->name('manager.helpdesk.exports.')->middleware('throttle:helpdesk-export')->group(function () {
+    // CSV exports — PII: además del authorize() de cada Form Request
+    // (helpdesk.exports.create), el permiso se exige como middleware para
+    // cortar en el router y no depender solo del request.
+    Route::prefix('exports')->name('manager.helpdesk.exports.')->middleware(['can:helpdesk.exports.create', 'throttle:helpdesk-export'])->group(function () {
         Route::get('conversations', [ExportController::class, 'conversations'])->name('conversations');
         Route::get('customers', [ExportController::class, 'customers'])->name('customers');
         Route::get('csat', [ExportController::class, 'csat'])->name('csat');
@@ -283,21 +296,7 @@ Route::group(['prefix' => ''], function () {
     Route::get('/customers/{customer}/profile-data', [CustomerProfileController::class, 'show'])
         ->name('manager.helpdesk.customers.profile-data');
 
-    // Integraciones del cliente (PrestaShop, ERP, etc.) — listar y sincronizar (modal #50)
-    Route::get('/customers/{customer}/integrations', [CustomerIntegrationsController::class, 'show'])
-        ->name('manager.helpdesk.customers.integrations.show');
-    Route::post('/customers/{customer}/integrations/sync', [CustomerIntegrationsController::class, 'sync'])
-        ->middleware('throttle:20,1')
-        ->name('manager.helpdesk.customers.integrations.sync');
-    Route::get('/customers/{customer}/integrations/search', [CustomerIntegrationsController::class, 'search'])
-        ->middleware('throttle:30,1')
-        ->name('manager.helpdesk.customers.integrations.search');
-    Route::post('/customers/{customer}/integrations/link', [CustomerIntegrationsController::class, 'link'])
-        ->middleware('throttle:10,1')
-        ->name('manager.helpdesk.customers.integrations.link');
-    Route::post('/customers/{customer}/integrations/unlink', [CustomerIntegrationsController::class, 'unlink'])
-        ->middleware('throttle:10,1')
-        ->name('manager.helpdesk.customers.integrations.unlink');
+    // Integraciones del cliente (PrestaShop, ERP, etc.) — movidas a HelpdeskIntegration/routes/managers.php
 
     // Settings routes moved to routes/settings.php (Patrón A: panel/settings/helpdesk/*)
 

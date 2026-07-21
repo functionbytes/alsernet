@@ -6,7 +6,10 @@ return [
      * los resuelva siempre — incluso con config:cache (env() devuelve null cacheado).
      */
     'ai' => [
-        'enabled' => env('HELPDESK_AI_ENABLED', true),
+        // Fail-closed: la IA solo se activa si HELPDESK_AI_ENABLED=true está
+        // presente en el entorno (consistente con el resto de flags). En un
+        // despliegue nuevo la IA queda OFF hasta habilitarla explícitamente.
+        'enabled' => env('HELPDESK_AI_ENABLED', false),
         'agent_enabled' => env('HELPDESK_AI_AGENT_ENABLED', false),
     ],
 
@@ -93,6 +96,12 @@ return [
         ],
     ],
 
+    /*
+     * Roles cuyos usuarios aparecen como "agentes" en los lookups del panel
+     * (LookupController@agents: selectores de asignación, filtros, etc.).
+     */
+    'agent_lookup_roles' => ['support', 'manager', 'admin', 'callcenter'],
+
     'ticket_number_format' => 'TKT-{year}-{sequence}',
     'ticket_number_padding' => 5,
 
@@ -133,6 +142,8 @@ return [
         ],
         'disk' => env('HELPDESK_ATTACHMENTS_DISK', 'public'),
         'path' => 'helpdesk/attachments',
+        // Tope de tamaño al descargar media entrante (anti-OOM del worker). 25 MB.
+        'max_download_bytes' => (int) env('HELPDESK_ATTACHMENTS_MAX_DOWNLOAD_BYTES', 26214400),
     ],
 
     'cleanup' => [
@@ -209,6 +220,9 @@ return [
     ],
 
     'integrations' => [
+        // Límite global de envíos salientes a Meta por minuto (rate-limit de la cola).
+        'outbound_rate_per_minute' => (int) env('HELPDESK_META_OUTBOUND_RATE_PER_MINUTE', 600),
+
         'whatsapp' => [
             'enabled' => env('WHATSAPP_ENABLED', false),
             'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),

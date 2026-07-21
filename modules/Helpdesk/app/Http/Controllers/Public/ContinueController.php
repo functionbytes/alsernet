@@ -36,6 +36,12 @@ class ContinueController extends Controller
 
         $redirectUrl = $this->buildRedirectUrl($conversation);
 
+        // Nota de seguridad: estas cookies (incluido el email en
+        // hd_continue_email) viajan CIFRADAS. La app usa
+        // Modules\Core\Http\Middleware\EncryptCookies (bootstrap/app.php) con
+        // $except vacío, así que ninguna está excluida del cifrado; además son
+        // HttpOnly por defecto. El SDK las reenvía al servidor, que las
+        // descifra — no deben añadirse a la lista de excepciones.
         return redirect($redirectUrl)
             ->cookie('hd_continue_conversation', (string) $conversation->id, 60 * 24)
             ->cookie('hd_continue_email', $continuation->email, 60 * 24);

@@ -5,10 +5,8 @@ namespace Modules\Helpdesk\Services;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Modules\Helpdesk\Events\ConversationClosed;
-use Modules\Helpdesk\Events\ConversationItemCreated;
-use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Events\MentionDetected;
-use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Jobs\BroadcastOutboundMessageJob;
 use Modules\Helpdesk\Jobs\SendOutboundMessageJob;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
@@ -35,7 +33,13 @@ class ConversationMessageService
             $metadata['reply_to_id'] = (int) $data['reply_to_id'];
         }
 
-        $authorId = auth()->id();
+        // Callers running outside an HTTP request (automation rules, scheduled
+        // jobs) have no authenticated agent — they pass 'user_id' explicitly so
+        // the item is still attributed to a real agent instead of landing with
+        // user_id=null, which the UI renders identically to a CUSTOMER message
+        // (isFromCustomer() checks author_id, but the thread/list templates only
+        // check "is there a user_id?" — no user_id reads as incoming either way).
+        $authorId = $data['user_id'] ?? auth()->id();
 
         // Resolver menciones en el body antes de crear el item
         $mentions = $this->mentionParser->resolve($data['body'] ?? '', $authorId, $conversation);
@@ -88,13 +92,17 @@ class ConversationMessageService
                 ];
             }
 
+            // afterCommit: cuando el mensaje se crea dentro de una transacción
+            // (p.ej. acciones de automatización/macro), el job solo se encola
+            // si esta confirma — si hay rollback el item no existirá. Fuera de
+            // una transacción se despacha inmediatamente (no-op).
             SendOutboundMessageJob::dispatch(
                 $conversation->id,
                 $item->id,
                 filled($externalBody) ? $externalBody : null,
                 $outboundAttachments,
                 'metadata',
-            );
+            )->afterCommit();
         }
 
         // Disparar evento por cada usuario único mencionado (excluyendo al autor)
@@ -104,13 +112,10 @@ class ConversationMessageService
             event(new MentionDetected($conversation, $item, $mentionedUser, $authorName));
         }
 
-        event(new ConversationItemCreated($item));
-
-        if (! $item->is_internal) {
-            broadcast(new MessageReceived($conversation, $item));
-        }
-
-        $this->dispatchInboxChanged($conversation, 'message_added');
+        // Broadcasting is off the request thread: the sending agent already
+        // sees their own message via optimistic UI, so making them wait on two
+        // Reverb round-trips before confirming "sent" only slowed them down.
+        BroadcastOutboundMessageJob::dispatch($conversation->id, $item->id)->afterCommit();
 
         $this->updateConversationTimestamps($conversation);
 
@@ -189,22 +194,6 @@ class ConversationMessageService
         $base = rtrim(config('helpdesk.public_url') ?? config('app.url'), '/');
 
         return $base.'/'.ltrim($url, '/');
-    }
-
-    /**
-     * Notify all agents subscribed to helpdesk.user.{id} that the inbox changed.
-     * Broadcasts to the assignee (if any) and to the authenticated user.
-     */
-    private function dispatchInboxChanged(Conversation $conversation, string $changeType): void
-    {
-        $userIds = array_filter(array_unique([
-            $conversation->assignee_id,
-            auth()->id(),
-        ]));
-
-        foreach ($userIds as $userId) {
-            event(new InboxItemChanged($conversation->id, $userId, $changeType));
-        }
     }
 
     private function updateConversationTimestamps(Conversation $conversation): void

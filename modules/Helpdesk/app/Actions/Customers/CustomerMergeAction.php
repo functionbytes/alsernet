@@ -39,9 +39,33 @@ class CustomerMergeAction
 
     private function mergeExternalIds(): void
     {
-        // Re-assign external IDs that don't conflict on (platform, external_id)
-        DB::connection('helpdesk')
-            ->table('helpdesk_customer_external_ids')
+        $conn = DB::connection('helpdesk');
+
+        // Re-assign external IDs that don't conflict on (platform, external_id):
+        // los pares que el base ya tiene se BORRAN del mergee en vez de
+        // re-asignarse, para no violar el índice único
+        // helpdesk_cust_ext_platform_id_unique y tumbar la transacción entera
+        // del merge. (Mismo patrón que ContactMergeService en HelpdeskContacts.)
+        $basePairs = $conn->table('helpdesk_customer_external_ids')
+            ->where('customer_id', $this->base->id)
+            ->get(['platform', 'external_id'])
+            ->map(fn ($row) => $row->platform.'|'.$row->external_id)
+            ->all();
+
+        $duplicateIds = $conn->table('helpdesk_customer_external_ids')
+            ->where('customer_id', $this->mergee->id)
+            ->get(['id', 'platform', 'external_id'])
+            ->filter(fn ($row) => in_array($row->platform.'|'.$row->external_id, $basePairs, true))
+            ->pluck('id')
+            ->all();
+
+        if ($duplicateIds !== []) {
+            $conn->table('helpdesk_customer_external_ids')
+                ->whereIn('id', $duplicateIds)
+                ->delete();
+        }
+
+        $conn->table('helpdesk_customer_external_ids')
             ->where('customer_id', $this->mergee->id)
             ->update(['customer_id' => $this->base->id]);
     }
@@ -96,8 +120,18 @@ class CustomerMergeAction
             $updates['custom_attributes'] = $merged;
         }
 
-        // Accumulate conversation and page visit counts from both contacts
-        $updates['total_conversations'] = (int) $this->base->total_conversations + (int) $this->mergee->total_conversations;
+        // total_conversations: tras mergeConversations() todas las conversaciones
+        // del mergee ya apuntan al base, así que se recalcula con un COUNT real
+        // (mismo criterio que ContactMergeService::refreshConversationCount) en
+        // vez de sumar contadores desnormalizados que pueden estar desfasados.
+        $updates['total_conversations'] = DB::connection('helpdesk')
+            ->table('helpdesk_conversations')
+            ->where('customer_id', $this->base->id)
+            ->whereNull('deleted_at')
+            ->count();
+
+        // total_page_visits: las visitas no se re-asignan en el merge, así que
+        // la suma de ambos contadores sigue siendo la mejor aproximación.
         $updates['total_page_visits'] = (int) $this->base->total_page_visits + (int) $this->mergee->total_page_visits;
 
         if (! empty($updates)) {
