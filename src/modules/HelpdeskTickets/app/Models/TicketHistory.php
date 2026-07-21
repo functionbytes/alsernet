@@ -125,6 +125,33 @@ class TicketHistory extends Model
     }
 
     /**
+     * Insert multiple field-change rows in a single query (same row shape as
+     * logFieldChange, timestamps included).
+     *
+     * @param  array<int, array{field: string, old: mixed, new: mixed}>  $changes
+     */
+    public static function insertFieldChanges(Ticket $ticket, array $changes, ?User $user = null): void
+    {
+        if ($changes === []) {
+            return;
+        }
+
+        $now = now();
+
+        static::insert(array_map(fn (array $change) => [
+            'ticket_id' => $ticket->id,
+            'user_id' => $user?->id,
+            'field_name' => $change['field'],
+            'old_value' => self::serializeValue($change['old']),
+            'new_value' => self::serializeValue($change['new']),
+            'action_type' => 'updated',
+            'metadata' => null,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $changes));
+    }
+
+    /**
      * Log an action (for non-field changes)
      */
     public static function logAction(
@@ -209,6 +236,7 @@ class TicketHistory extends Model
             'unassigned' => 'Sin asignar',
             'status_change' => 'Estado cambiado',
             'priority_change' => 'Prioridad cambiada',
+            'escalated' => 'Escalado',
             'category_change' => 'Categoría cambiada',
             'custom_field_change' => 'Campo personalizado actualizado',
             'note_added' => 'Nota agregada',
@@ -231,6 +259,7 @@ class TicketHistory extends Model
             'unassigned' => 'warning',
             'status_change' => 'primary',
             'priority_change' => 'warning',
+            'escalated' => 'danger',
             'category_change' => 'secondary',
             'custom_field_change' => 'info',
             'note_added' => 'light',
@@ -253,6 +282,7 @@ class TicketHistory extends Model
             'category_change' => "Categoría cambió a {$this->new_value}",
             'assigned' => 'Asignado a '.($this->metadata['assignee_name'] ?? 'N/A'),
             'unassigned' => 'Ticket sin asignar',
+            'escalated' => 'Prioridad escalada de '.($this->metadata['old_priority'] ?? 'N/A').' a '.($this->metadata['new_priority'] ?? 'N/A'),
             default => $this->getActionLabelAttribute(),
         };
     }

@@ -6,7 +6,6 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\ConversationTicketBridgeCo
 use Modules\HelpdeskTickets\Http\Controllers\Managers\HelpdeskReportsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\MacroApplyController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\RecurringTicketsController;
-use Modules\HelpdeskTickets\Http\Controllers\Managers\ReportsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\AutomationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\MacrosController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketCannedRepliesController;
@@ -25,14 +24,10 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketMessagingController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketNotesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketsCrudController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSearchController;
-use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSlaController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTemplatesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 
 Route::group(['prefix' => ''], function () {
-
-    // Reports
-    Route::get('reports', [ReportsController::class, 'index'])->name('manager.helpdesk.reports');
 
     // Advanced search
     Route::get('search', [TicketSearchController::class, 'index'])->name('manager.helpdesk.search');
@@ -43,7 +38,6 @@ Route::group(['prefix' => ''], function () {
 
     // Tickets bulk action
     Route::post('/tickets/bulk', [BulkTicketsController::class, 'handle'])->name('manager.helpdesk.tickets.bulk');
-    Route::post('/tickets/bulk-reply', [TicketMessagingController::class, 'bulkReply'])->name('manager.helpdesk.tickets.bulk-reply');
 
     // Tickets export
     Route::get('/tickets/export/{format}', [TicketExportController::class, 'export'])->name('manager.helpdesk.tickets.export');
@@ -72,13 +66,9 @@ Route::group(['prefix' => ''], function () {
     Route::delete('/tickets/{ticket}/link/{linkId}', [TicketLifecycleController::class, 'unlinkTicket'])->name('manager.helpdesk.tickets.unlink');
 
     // Ticket messaging
+    Route::post('/tickets/bulk-reply', [TicketMessagingController::class, 'bulkReply'])->name('manager.helpdesk.tickets.bulk-reply');
     Route::post('/tickets/{ticket}/messages', [TicketMessagingController::class, 'storeMessage'])->name('manager.helpdesk.tickets.messages.store');
     Route::post('/tickets/{ticket}/typing', [TicketMessagingController::class, 'typing'])->name('manager.helpdesk.tickets.typing');
-    Route::get('/tickets/{ticket}/smart-replies', [TicketMessagingController::class, 'smartReplies'])->name('manager.helpdesk.tickets.smart-replies');
-
-    // Ticket SLA
-    Route::post('/tickets/{ticket}/sla/pause', [TicketSlaController::class, 'pauseSla'])->name('manager.helpdesk.tickets.sla.pause');
-    Route::post('/tickets/{ticket}/sla/resume', [TicketSlaController::class, 'resumeSla'])->name('manager.helpdesk.tickets.sla.resume');
 
     // Attachment download (private disk — authorised agents only)
     Route::get('/tickets/{ticket}/attachments/{item}/{index}', [TicketAttachmentDownloadController::class, 'download'])
@@ -99,25 +89,21 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/comments/{comment}/restore', [TicketCommentsController::class, 'restore'])->name('manager.helpdesk.tickets.comments.restore');
 
     // Ticket notes
-    Route::get('/tickets/{ticket}/notes', [TicketNotesController::class, 'index'])->name('manager.helpdesk.tickets.notes.index');
     Route::post('/tickets/{ticket}/notes', [TicketNotesController::class, 'store'])->name('manager.helpdesk.tickets.notes.store');
     Route::get('/tickets/{ticket}/notes/{note}', [TicketNotesController::class, 'show'])->name('manager.helpdesk.tickets.notes.show');
-    Route::put('/tickets/{ticket}/notes/{note}', [TicketNotesController::class, 'update'])->name('manager.helpdesk.tickets.notes.update');
     Route::delete('/tickets/{ticket}/notes/{note}', [TicketNotesController::class, 'destroy'])->name('manager.helpdesk.tickets.notes.destroy');
     Route::post('/tickets/{ticket}/notes/{note}/pin', [TicketNotesController::class, 'pin'])->name('manager.helpdesk.tickets.notes.pin');
     Route::post('/tickets/{ticket}/notes/{note}/color', [TicketNotesController::class, 'changeColor'])->name('manager.helpdesk.tickets.notes.color');
-    Route::post('/tickets/{ticket}/notes/{note}/restore', [TicketNotesController::class, 'restore'])->name('manager.helpdesk.tickets.notes.restore');
 
     // Ticket templates
     Route::resource('ticket-templates', TicketTemplatesController::class)->names([
         'index' => 'manager.helpdesk.ticket-templates.index',
         'create' => 'manager.helpdesk.ticket-templates.create',
         'store' => 'manager.helpdesk.ticket-templates.store',
-        'show' => 'manager.helpdesk.ticket-templates.show',
         'edit' => 'manager.helpdesk.ticket-templates.edit',
         'update' => 'manager.helpdesk.ticket-templates.update',
         'destroy' => 'manager.helpdesk.ticket-templates.destroy',
-    ]);
+    ])->except(['show']);
 
     // Recurring tickets
     Route::resource('recurring-tickets', RecurringTicketsController::class)->names([
@@ -254,5 +240,4 @@ Route::get('/conversations/{conversation}/ticket-detail/{ticket}', [Conversation
 Route::prefix('reports')->name('manager.helpdesk.reports.')->group(function () {
     Route::get('/', [HelpdeskReportsController::class, 'index'])->name('index');
     Route::get('/export', [HelpdeskReportsController::class, 'export'])->name('export')->middleware('throttle:helpdesk-export');
-    Route::get('/trend', [HelpdeskReportsController::class, 'trend'])->name('trend');
 });

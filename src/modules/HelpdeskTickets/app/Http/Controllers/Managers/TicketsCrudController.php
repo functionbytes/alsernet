@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +31,8 @@ class TicketsCrudController extends Controller
     {
         $this->authorize('viewAny', Ticket::class);
 
+        abort_if(! helpdesk_tickets_enabled(), 404);
+
         $userId = auth()->id();
 
         $views = TicketView::forUser($userId)->ordered()->limit(100)->get();
@@ -49,6 +50,10 @@ class TicketsCrudController extends Controller
 
         $query = Ticket::query()
             ->with(['customer', 'status', 'category', 'assignee'])
+            ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
+                'reads',
+                fn ($q2) => $q2->where('user_id', $userId)
+            )])
             ->latest();
 
         if ($currentView && ! empty($currentView->filters)) {
@@ -61,11 +66,7 @@ class TicketsCrudController extends Controller
         $statuses = CatalogCacheService::statuses();
         $categories = CatalogCacheService::categories();
         $groups = CatalogCacheService::groups();
-        $agents = User::select(['id', 'firstname', 'lastname'])
-            ->where('available', true)
-            ->where('verified', true)
-            ->orderBy('firstname')
-            ->get();
+        $agents = CatalogCacheService::agents();
 
         return view('helpdesktickets::managers.tickets.index', [
             'tickets' => $tickets,
@@ -94,11 +95,7 @@ class TicketsCrudController extends Controller
         $defaultStatus = $statuses->firstWhere('is_default', true) ?? $statuses->first();
         $slaPolicies = TicketSlaPolicy::active()->get();
         $groups = CatalogCacheService::groups();
-        $agents = User::select(['id', 'firstname', 'lastname'])
-            ->where('available', true)
-            ->where('verified', true)
-            ->orderBy('firstname')
-            ->get();
+        $agents = CatalogCacheService::agents();
 
         return view('helpdesktickets::managers.tickets.create', [
             'customer' => $customer,
@@ -114,6 +111,11 @@ class TicketsCrudController extends Controller
 
     public function store(StoreTicketRequest $request): RedirectResponse
     {
+        // Defensa en profundidad + consistencia con create()/show()/update():
+        // StoreTicketRequest::authorize() ya exige el permiso, pero el resto
+        // del CRUD llama $this->authorize() explícitamente.
+        $this->authorize('create', Ticket::class);
+
         DB::transaction(function () use ($request, &$ticket) {
             $data = $request->validated();
 
@@ -207,12 +209,8 @@ class TicketsCrudController extends Controller
             }
         }
 
-        $mentionableUsers = User::select(['id', 'firstname', 'lastname', 'email'])
-            ->where('available', true)
-            ->where('verified', true)
-            ->orderBy('firstname')
+        $mentionableUsers = CatalogCacheService::agents()
             ->take(50)
-            ->get()
             ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => trim($u->firstname.' '.$u->lastname),
@@ -247,11 +245,7 @@ class TicketsCrudController extends Controller
         $statuses = CatalogCacheService::statuses();
         $slaPolicies = TicketSlaPolicy::active()->get();
         $groups = CatalogCacheService::groups();
-        $agents = User::select(['id', 'firstname', 'lastname'])
-            ->where('available', true)
-            ->where('verified', true)
-            ->orderBy('firstname')
-            ->get();
+        $agents = CatalogCacheService::agents();
 
         return view('helpdesktickets::managers.tickets.edit', [
             'ticket' => $ticket,

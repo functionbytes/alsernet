@@ -377,11 +377,7 @@
 
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Prioridad</small>
-                    @php
-                        $priorityColors = ['urgent' => 'danger', 'high' => 'warning', 'normal' => 'info', 'low' => 'secondary'];
-                        $priorityColor = $priorityColors[$ticket->priority] ?? 'secondary';
-                    @endphp
-                    <span class="badge bg-{{ $priorityColor }}">{{ ucfirst($ticket->priority) }}</span>
+                    <span class="badge bg-{{ $ticket->priority_color }}">{{ ucfirst($ticket->priority) }}</span>
                 </div>
 
                 <div class="mb-3">
@@ -396,9 +392,9 @@
                     @if($ticket->assignee)
                         <div class="d-flex align-items-center gap-2">
                             <div class="avatar-xs rounded-circle bg-success text-white d-flex align-items-center justify-content-center">
-                                {{ strtoupper(substr($ticket->assignee?->name ?? "Sin asignar", 0, 1)) }}
+                                {{ strtoupper(substr($ticket->assignee?->full_name ?? "Sin asignar", 0, 1)) }}
                             </div>
-                            <span>{{ $ticket->assignee?->name ?? "Sin asignar" }}</span>
+                            <span>{{ $ticket->assignee?->full_name ?? "Sin asignar" }}</span>
                         </div>
                     @else
                         <span class="text-muted"><i class="fas fa-user-times me-1"></i> Sin asignar</span>

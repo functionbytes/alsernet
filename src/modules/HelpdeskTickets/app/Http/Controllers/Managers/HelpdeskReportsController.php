@@ -6,20 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\CsatRating;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketDailyReport;
+use Modules\HelpdeskTickets\Support\ReportsCache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Helpdesk reports dashboard at /panel/helpdesk/reports — owned by HelpdeskTickets
- * since the data is 100% ticket-based. Renamed from "ReportsController" to
- * avoid clashing with HelpdeskTickets\\...\\ReportsController which serves the
- * existing /panel/helpdesk/reports route (named "manager.helpdesk.reports").
+ * since the data is 100% ticket-based.
  */
 class HelpdeskReportsController extends Controller
 {
@@ -32,7 +29,7 @@ class HelpdeskReportsController extends Controller
 
         [$from, $to] = $this->resolveDateRange($request);
 
-        $cacheKey = 'helpdesk:reports:index:'.$from->format('Y-m-d').':'.$to->format('Y-m-d');
+        $cacheKey = ReportsCache::key('index:'.$from->format('Y-m-d').':'.$to->format('Y-m-d'));
 
         $viewData = Cache::remember($cacheKey, 300, function () use ($from, $to) {
             $statsRow = Ticket::whereBetween('created_at', [$from, $to])
@@ -194,67 +191,38 @@ class HelpdeskReportsController extends Controller
     }
 
     /**
-     * Return daily trend data as JSON.
-     */
-    public function trend(Request $request): JsonResponse
-    {
-        $this->authorize('helpdesk.metrics.view');
-
-        [$from, $to] = $this->resolveDateRange($request);
-
-        $cacheKey = 'helpdesk:reports:trend:'.$from->format('Y-m-d').':'.$to->format('Y-m-d');
-
-        $data = Cache::remember($cacheKey, 300, function () use ($from, $to) {
-            $reports = TicketDailyReport::whereBetween('report_date', [$from->toDateString(), $to->toDateString()])
-                ->orderBy('report_date')
-                ->get(['report_date', 'total_created', 'total_closed', 'total_resolved', 'sla_breached_count']);
-
-            if ($reports->isNotEmpty()) {
-                return $reports;
-            }
-
-            // Fallback: raw query grouped by date
-            $created = Ticket::query()
-                ->select(DB::connection('helpdesk')->raw('DATE(created_at) as report_date'), DB::connection('helpdesk')->raw('COUNT(*) as total_created'))
-                ->whereBetween('created_at', [$from, $to])
-                ->groupBy(DB::connection('helpdesk')->raw('DATE(created_at)'))
-                ->pluck('total_created', 'report_date');
-
-            $closed = Ticket::query()
-                ->select(DB::connection('helpdesk')->raw('DATE(closed_at) as report_date'), DB::connection('helpdesk')->raw('COUNT(*) as total_closed'))
-                ->whereBetween('closed_at', [$from, $to])
-                ->groupBy(DB::connection('helpdesk')->raw('DATE(closed_at)'))
-                ->pluck('total_closed', 'report_date');
-
-            $dates = collect($created->keys()->merge($closed->keys())->unique()->sort());
-
-            return $dates->map(fn ($date) => [
-                'report_date' => $date,
-                'total_created' => $created[$date] ?? 0,
-                'total_closed' => $closed[$date] ?? 0,
-                'total_resolved' => 0,
-                'sla_breached_count' => 0,
-            ])->values();
-        });
-
-        return response()->json($data);
-    }
-
-    /**
      * Resolve from/to dates from request, defaulting to last 30 days.
+     * Malformed or inverted input falls back to the default range instead of
+     * bubbling a Carbon parse exception (500).
      *
      * @return array{0: Carbon, 1: Carbon}
      */
     private function resolveDateRange(Request $request): array
     {
-        $from = $request->filled('from')
-            ? Carbon::parse($request->from)->startOfDay()
-            : now()->subDays(30)->startOfDay();
+        $from = $this->parseDateInput($request->input('from')) ?? now()->subDays(30);
+        $to = $this->parseDateInput($request->input('to')) ?? now();
 
-        $to = $request->filled('to')
-            ? Carbon::parse($request->to)->endOfDay()
-            : now()->endOfDay();
+        if ($from->greaterThan($to)) {
+            $from = now()->subDays(30);
+            $to = now();
+        }
 
-        return [$from, $to];
+        return [$from->startOfDay(), $to->endOfDay()];
+    }
+
+    /**
+     * Parse a request date value, returning null when missing or invalid.
+     */
+    private function parseDateInput(mixed $value): ?Carbon
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

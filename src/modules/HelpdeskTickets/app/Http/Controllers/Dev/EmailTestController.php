@@ -16,6 +16,13 @@ use Throwable;
 
 class EmailTestController extends Controller
 {
+    public function __construct()
+    {
+        // Herramienta exclusiva de desarrollo: 404 fuera de local/testing
+        // aunque las rutas llegaran a registrarse en otro entorno.
+        abort_unless(app()->environment(['local', 'testing']), 404);
+    }
+
     public function index(): View
     {
         return view('helpdesktickets::dev.email-test');

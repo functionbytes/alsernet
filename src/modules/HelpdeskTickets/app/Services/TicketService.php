@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\MessageAdded;
@@ -11,6 +12,7 @@ use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Models\SlaPolicy; // TODO: migrate to TicketSlaPolicy
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketMessage;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -18,8 +20,7 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 class TicketService
 {
     public function __construct(
-        private SlaService $slaService,
-        private TicketNotificationService $notificationService
+        private SlaService $slaService
     ) {}
 
     /**
@@ -146,8 +147,8 @@ class TicketService
                 $ticket->update(['last_activity_at' => now()]);
 
                 event(new MessageAdded($message));
-
-                $this->notificationService->notifyNewMessage($message);
+                // El email al cliente lo envía el listener SendCustomerReplyNotification
+                // suscrito a MessageAdded — no duplicar aquí.
 
                 Log::info('Message added to ticket', [
                     'ticket_id' => $ticket->id,
@@ -194,8 +195,8 @@ class TicketService
                 );
 
                 event(new TicketClosed($ticket));
-
-                $this->notificationService->notifyTicketClosed($ticket);
+                // La notificación de cierre la maneja el listener UpdateTicketOnClose
+                // suscrito a TicketClosed — no duplicar aquí.
 
                 Log::info('Ticket closed', [
                     'ticket_id' => $ticket->id,
@@ -289,6 +290,52 @@ class TicketService
 
             return 'TKT-'.now()->year.'-'.uniqid();
         }
+    }
+
+    /**
+     * Store uploaded files as TicketAttachments linked to a new public
+     * TicketMessage. Shared by the widget, public form and portal controllers.
+     *
+     * @param  array<int, UploadedFile>  $files
+     * @param  array<string, mixed>  $messageAttributes  Extra attributes for the TicketMessage.
+     * @param  int|null  $maxFileSize  Optional per-file size cap in bytes (oversized files are skipped).
+     */
+    public function storeAttachments(
+        array $files,
+        int $ticketId,
+        array $messageAttributes = [],
+        ?int $maxFileSize = null
+    ): TicketMessage {
+        $message = TicketMessage::create(array_merge([
+            'ticket_id' => $ticketId,
+            'is_internal' => false,
+        ], $messageAttributes));
+
+        $disk = config('helpdesk.attachments.disk', 'local');
+        $path = config('helpdesk.attachments.path', 'helpdesk/attachments');
+
+        foreach ($files as $file) {
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+
+            if ($maxFileSize !== null && $file->getSize() > $maxFileSize) {
+                continue;
+            }
+
+            $stored = $file->store($path, $disk);
+
+            TicketAttachment::create([
+                'ticket_message_id' => $message->id,
+                'filename' => $file->getClientOriginalName(),
+                'original_filename' => $file->getClientOriginalName(),
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+                'path' => $stored,
+            ]);
+        }
+
+        return $message;
     }
 
     /**

@@ -19,16 +19,19 @@ use Modules\HelpdeskTickets\Http\Requests\Portal\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\UpdateAccountRequest;
 use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketMessage;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\TicketService;
+use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 class CustomerPortalController extends Controller
 {
     /** GET /portal — redirect to login or tickets */
     public function index(): RedirectResponse
     {
+        abort_if(! helpdesk_tickets_enabled(), 404);
+
         if ($this->getAuthenticatedCustomer()) {
             return redirect()->route('portal.tickets');
         }
@@ -39,7 +42,7 @@ class CustomerPortalController extends Controller
     /** GET /portal/login */
     public function showLogin(): View
     {
-        return view('helpdesk::portal.login');
+        return view('helpdesktickets::portal.login');
     }
 
     /** POST /portal/login — send magic link */
@@ -61,7 +64,15 @@ class CustomerPortalController extends Controller
 
         if ($customer) {
             $token = $customer->generatePortalToken();
-            Mail::to($customer->email)->queue(new PortalMagicLinkMail($customer, $token));
+            [$subject, $content] = TicketMailRenderer::render(
+                'helpdesk_tickets.portal_magic_link',
+                [
+                    'CUSTOMER_NAME' => e($customer->name),
+                    'PORTAL_URL' => url('/portal/auth/'.$token),
+                ],
+                'Your portal login link',
+            );
+            Mail::to($customer->email)->queue(new PortalMagicLinkMail($customer, $subject, $content));
         }
 
         return back()->with('status', 'If this email is registered, a login link has been sent.');
@@ -181,7 +192,7 @@ class CustomerPortalController extends Controller
         ]);
 
         if ($request->hasFile('attachments')) {
-            $this->storeAttachments($request->file('attachments'), $ticket->id, $customer, $item->id);
+            $this->storeAttachments($request->file('attachments'), $ticket->id);
         }
 
         $ticket->updated_at = now();
@@ -238,7 +249,7 @@ class CustomerPortalController extends Controller
             ]);
 
             if ($request->hasFile('attachments')) {
-                $this->storeAttachments($request->file('attachments'), $ticket->id, $customer);
+                $this->storeAttachments($request->file('attachments'), $ticket->id);
             }
 
             return $ticket;
@@ -257,7 +268,7 @@ class CustomerPortalController extends Controller
             return $customer;
         }
 
-        return view('helpdesk::portal.account', compact('customer'));
+        return view('helpdesktickets::portal.account', compact('customer'));
     }
 
     /** PUT /portal/account — update name and phone */
@@ -325,35 +336,14 @@ class CustomerPortalController extends Controller
 
     /**
      * Store uploaded files as TicketAttachments linked via a TicketMessage.
+     * Delegates to the shared TicketService implementation keeping the 5 MB
+     * per-file cap the portal always applied.
      *
      * @param  UploadedFile[]  $files
      */
-    private function storeAttachments(array $files, int $ticketId, Customer $customer, ?int $ticketItemId = null): void
+    private function storeAttachments(array $files, int $ticketId): void
     {
-        $message = TicketMessage::create([
-            'ticket_id' => $ticketId,
-            'is_internal' => false,
-        ]);
-
-        foreach ($files as $file) {
-            if (! $file->isValid() || $file->getSize() > 5 * 1024 * 1024) {
-                continue;
-            }
-
-            $path = $file->store(
-                config('helpdesk.attachments.path', 'helpdesk/attachments'),
-                config('helpdesk.attachments.disk', 'local')
-            );
-
-            TicketAttachment::create([
-                'ticket_message_id' => $message->id,
-                'filename' => $file->getClientOriginalName(),
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'path' => $path,
-            ]);
-        }
+        app(TicketService::class)->storeAttachments($files, $ticketId, [], 5 * 1024 * 1024);
     }
 
     private function getAuthenticatedCustomer(): ?Customer

@@ -6,10 +6,12 @@ use Modules\HelpdeskTickets\Http\Controllers\PublicTicketFormController;
 
 /*
  * Public feedback URLs. Loaded by HelpdeskTicketsServiceProvider (no auth).
- * URLs and route names match the previous Helpdesk-owned ones so that links
- * already sent in customer emails keep working without any redirect.
+ * URLs and route names match the previous Helpdesk-owned ones. Since the
+ * ticket number is sequential, both routes now require a valid signature
+ * (URL::signedRoute) — unsigned legacy links get a 403 instead of exposing
+ * other customers' tickets.
  */
-Route::middleware(['web', 'throttle:helpdesk-feedback'])
+Route::middleware(['web', 'throttle:helpdesk-feedback', 'signed'])
     ->prefix('helpdesk/feedback')
     ->name('helpdesk.feedback.')
     ->group(function () {
