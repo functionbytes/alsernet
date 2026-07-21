@@ -21,6 +21,7 @@ class AiAgentKnowledgeBase extends Model
         return [
             'metadata' => 'array',
             'tags' => 'array',
+            'vector_norm' => 'float',
             'is_active' => 'boolean',
             'last_used_at' => 'datetime',
             'created_at' => 'datetime',
@@ -39,6 +40,10 @@ class AiAgentKnowledgeBase extends Model
         'source_id',
         'embedding',
         'embedding_model',
+        // Sin esto en fillable, el update(['vector_norm' => ...]) de
+        // GenerateEmbeddingJob se descartaba silenciosamente y la norma
+        // precalculada nunca llegaba a persistirse.
+        'vector_norm',
         'metadata',
         'tags',
         'summary',
