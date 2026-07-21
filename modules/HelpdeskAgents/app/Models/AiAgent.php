@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskAgents\Models;
 
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -55,6 +56,9 @@ class AiAgent extends Model
 
     // ==================== Relationships ====================
 
+    /**
+     * @return HasMany<AiAgentFlow, $this>
+     */
     public function flows(): HasMany
     {
         return $this->hasMany(AiAgentFlow::class);
@@ -190,7 +194,17 @@ class AiAgent extends Model
      */
     public function getApiKey(): ?string
     {
-        return $this->api_key_encrypted
+        try {
+            $key = $this->api_key_encrypted;
+        } catch (DecryptException) {
+            // Filas legacy guardadas en claro antes de añadir el cast
+            // 'encrypted': el descifrado falla, así que se usa el valor crudo
+            // para no romper agentes existentes. La clave queda cifrada en
+            // cuanto se vuelva a guardar (setApiKey / settings form).
+            $key = $this->getRawOriginal('api_key_encrypted');
+        }
+
+        return $key
             ?? $this->parameters['api_key']
             ?? $this->backups['api_key']
             ?? null;

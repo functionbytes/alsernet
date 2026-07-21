@@ -58,16 +58,40 @@ class ToolExecutionService
             throw new \RuntimeException('API tools are disabled by configuration');
         }
 
-        $url = $tool->implementation ?? '';
+        $template = $tool->implementation ?? '';
         $authConfig = $tool->auth_config ?? [];
         $timeout = (int) config('helpdeskagents.tools.api_timeout', 15);
 
-        // Replace {key} and {{key}} template placeholders with argument values
+        // Esquema/host/puerto de la plantilla deben ser estáticos: los
+        // placeholders (controlados por el LLM) solo pueden aparecer en
+        // path/query, nunca decidir a qué host se conecta la tool.
+        $templateParts = parse_url($template) ?: [];
+        $templateHost = strtolower($templateParts['host'] ?? '');
+
+        if ($templateHost === '' || str_contains($templateHost, '{')) {
+            throw new \RuntimeException('API tool URL template must have a static host (placeholders are not allowed in the host)');
+        }
+
+        // Replace {key} and {{key}} template placeholders with argument values.
+        // Los valores van SIEMPRE URL-encoded: un argumento del LLM no puede
+        // introducir '/', '@', '?', '#' ni saltar a otro host/esquema.
+        $url = $template;
         foreach ($arguments as $key => $value) {
-            $url = str_replace(["{{{$key}}}", "{{$key}}"], [(string) $value, (string) $value], $url);
+            $encoded = rawurlencode((string) $value);
+            $url = str_replace(["{{{$key}}}", "{{$key}}"], [$encoded, $encoded], $url);
         }
 
         $this->validateApiUrl($url);
+
+        // Defensa en profundidad: la URL final debe conservar exactamente el
+        // esquema/host/puerto de la plantilla validada.
+        $finalParts = parse_url($url) ?: [];
+
+        if (strtolower($finalParts['scheme'] ?? '') !== strtolower($templateParts['scheme'] ?? '')
+            || strtolower($finalParts['host'] ?? '') !== $templateHost
+            || ($finalParts['port'] ?? null) !== ($templateParts['port'] ?? null)) {
+            throw new \RuntimeException('API tool arguments may not change the URL scheme, host or port');
+        }
 
         $method = strtoupper($authConfig['method'] ?? 'GET');
         // Sin esto, validateApiUrl() solo protege la URL inicial: un host HTTPS
@@ -152,10 +176,19 @@ class ToolExecutionService
             throw new \RuntimeException('Only SELECT queries are allowed for database tools');
         }
 
-        // Bloquea multi-statement e inyección por comentarios que podrían
-        // esquivar la extracción de tablas de abajo.
-        if (str_contains($sql, ';') || str_contains($sql, '--') || str_contains($sql, '/*')) {
+        // Bloquea multi-statement e inyección por comentarios (incl. `#` de
+        // MySQL) que podrían esquivar la extracción de tablas de abajo.
+        if (str_contains($sql, ';') || str_contains($sql, '--') || str_contains($sql, '/*') || str_contains($sql, '#')) {
             throw new \RuntimeException('Database tool queries may not contain multiple statements or comments');
+        }
+
+        // RIESGO: aun siendo "solo SELECT", MySQL permite escribir/leer
+        // ficheros del servidor desde un SELECT — `SELECT ... INTO OUTFILE`
+        // (webshell/RCE) y `LOAD_FILE()` (lectura arbitraria de ficheros).
+        // Se rechazan explícitamente; la allowlist de tablas de abajo no
+        // protege contra esto porque no cambia las tablas referenciadas.
+        if (preg_match('/\binto\s+(?:outfile|dumpfile)\b|\bload_file\s*\(/i', $sql)) {
+            throw new \RuntimeException('Database tool queries may not use INTO OUTFILE/DUMPFILE or LOAD_FILE');
         }
 
         // Allowlist de tablas (fail-closed): aunque los db-tools estén
