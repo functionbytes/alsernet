@@ -19,6 +19,7 @@ use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class EmailLogController extends Controller
 {
@@ -162,6 +163,12 @@ class EmailLogController extends Controller
             return back()->with('error', __('helpdeskemaillog::emaillog.resend.no_recipients'));
         }
 
+        // El reenvío reproduce el cuerpo almacenado tal cual: si fue redactado
+        // o truncado, se enviaría una copia vacía/incompleta al destinatario.
+        if (! $emailLog->isResendable()) {
+            return back()->with('error', __('helpdeskemaillog::emaillog.resend.blocked'));
+        }
+
         ResendEmailLogJob::dispatch($emailLog->id, $override);
 
         $this->logActivity('resent', $emailLog, $override ? ['to' => $override] : []);
@@ -173,15 +180,24 @@ class EmailLogController extends Controller
 
     public function bulkResend(BulkResendEmailLogsRequest $request): RedirectResponse
     {
+        // No se cargan las columnas de cuerpo (pesadas) para hasta 200 filas:
+        // aquí se filtra por los flags de metadata y el job vuelve a comprobar
+        // isResendable() sobre la fila completa (cubre filas antiguas cuyo
+        // truncado solo es detectable por el marcador en el cuerpo).
         $logs = EmailLog::query()
-            ->select(['id', 'uid', 'to_addresses'])
+            ->select(['id', 'uid', 'to_addresses', 'metadata'])
             ->whereIn('uid', $request->validated('uids'))
             ->get();
 
         $queued = 0;
+        $skipped = 0;
 
         foreach ($logs as $log) {
-            if (empty($log->to_addresses)) {
+            // Se omiten registros sin destinatarios y aquellos cuyo cuerpo
+            // almacenado está redactado o truncado (véase resend()).
+            if (empty($log->to_addresses) || ! $log->isResendable()) {
+                $skipped++;
+
                 continue;
             }
 
@@ -189,9 +205,15 @@ class EmailLogController extends Controller
             $queued++;
         }
 
-        $this->logActivity('bulk_resent', null, ['count' => $queued]);
+        $this->logActivity('bulk_resent', null, ['count' => $queued, 'skipped' => $skipped]);
 
-        return back()->with('success', __('helpdeskemaillog::emaillog.resend.bulk_queued', ['count' => $queued]));
+        $message = __('helpdeskemaillog::emaillog.resend.bulk_queued', ['count' => $queued]);
+
+        if ($skipped > 0) {
+            $message .= ' '.__('helpdeskemaillog::emaillog.resend.bulk_skipped', ['count' => $skipped]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function download(EmailLog $emailLog): Response
@@ -368,15 +390,33 @@ class EmailLogController extends Controller
             });
         }
 
-        if ($request->filled('date_from')) {
-            $query->where('created_at', '>=', Carbon::parse((string) $request->input('date_from'))->startOfDay());
+        if ($from = $this->parseDateFilter($request->input('date_from'))) {
+            $query->where('created_at', '>=', $from->startOfDay());
         }
 
-        if ($request->filled('date_to')) {
-            $query->where('created_at', '<=', Carbon::parse((string) $request->input('date_to'))->endOfDay());
+        if ($to = $this->parseDateFilter($request->input('date_to'))) {
+            $query->where('created_at', '<=', $to->endOfDay());
         }
 
         return $query;
+    }
+
+    /**
+     * Parse a user-supplied date filter defensively: a malformed value (or a
+     * non-string, e.g. ?date_from[]=x) must not turn into a 500 — the filter
+     * is simply ignored.
+     */
+    private function parseDateFilter(mixed $value): ?Carbon
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse(trim($value));
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     /** @return array{string, string} [column, direction] */

@@ -38,7 +38,12 @@
 
     // Active status filter (to highlight the matching stat card).
     $activeStatus = request('status');
-    $isToday = request('date_from') === $today && request('date_to') === $today;
+
+    // Los filtros de fecha vienen del usuario: solo se reutilizan si son
+    // strings (?date_from[]=x llegaría como array y rompería el render).
+    $dateFrom = is_string(request('date_from')) ? request('date_from') : '';
+    $dateTo = is_string(request('date_to')) ? request('date_to') : '';
+    $isToday = $dateFrom === $today && $dateTo === $today;
 @endphp
 
 @push('css')
@@ -152,9 +157,9 @@
 
                         <input type="text" class="evx-input daterange" autocomplete="off"
                                placeholder="{{ __('helpdeskemaillog::emaillog.filters.date_range') }}"
-                               value="{{ (request('date_from') && request('date_to')) ? request('date_from') . ' - ' . request('date_to') : '' }}">
-                        <input type="hidden" name="date_from" id="date_from" value="{{ request('date_from') }}">
-                        <input type="hidden" name="date_to" id="date_to" value="{{ request('date_to') }}">
+                               value="{{ ($dateFrom && $dateTo) ? $dateFrom . ' - ' . $dateTo : '' }}">
+                        <input type="hidden" name="date_from" id="date_from" value="{{ $dateFrom }}">
+                        <input type="hidden" name="date_to" id="date_to" value="{{ $dateTo }}">
                         @if(request('sort_by'))
                             <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
                             <input type="hidden" name="sort_dir" value="{{ request('sort_dir', 'desc') }}">

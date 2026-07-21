@@ -181,6 +181,113 @@ class EmailLogControllerTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    public function test_index_ignores_invalid_date_filters(): void
+    {
+        EmailLog::factory()->create(['subject' => 'Visible with bad dates']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['date_from' => 'not-a-date', 'date_to' => '9999-99-99']))
+            ->assertOk()
+            ->assertSee('Visible with bad dates');
+    }
+
+    public function test_index_ignores_array_date_filters(): void
+    {
+        // ?date_from[]=x llega como array: no debe provocar un 500.
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index').'?date_from[]=2026-01-01&date_to[]=x')
+            ->assertOk();
+    }
+
+    public function test_index_applies_valid_date_filters(): void
+    {
+        EmailLog::factory()->create([
+            'subject' => 'Old email entry',
+            'created_at' => now()->subYears(30),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['date_from' => now()->subDay()->toDateString()]))
+            ->assertOk()
+            ->assertDontSee('Old email entry');
+    }
+
+    public function test_resend_is_blocked_when_body_is_redacted(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create([
+            'to_addresses' => ['client@example.test'],
+            'body_html' => null,
+            'body_text' => null,
+            'metadata' => ['redacted' => true],
+        ]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resend', $log->uid))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_resend_is_blocked_when_body_is_truncated(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create([
+            'to_addresses' => ['client@example.test'],
+            'body_html' => '<p>parcial</p>'.EmailLog::TRUNCATION_MARKER,
+        ]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resend', $log->uid))
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_bulk_resend_skips_redacted_and_truncated_logs(): void
+    {
+        Queue::fake();
+
+        $ok = EmailLog::factory()->create(['to_addresses' => ['a@example.test']]);
+        $redacted = EmailLog::factory()->create([
+            'to_addresses' => ['b@example.test'],
+            'metadata' => ['redacted' => true],
+        ]);
+        $truncated = EmailLog::factory()->create([
+            'to_addresses' => ['c@example.test'],
+            'metadata' => ['truncated' => true],
+        ]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.bulk-resend'), [
+                'uids' => [$ok->uid, $redacted->uid, $truncated->uid],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Queue::assertPushed(ResendEmailLogJob::class, 1);
+        Queue::assertPushed(ResendEmailLogJob::class, fn (ResendEmailLogJob $job) => $job->emailLogId === $ok->id);
+    }
+
+    public function test_resend_job_refuses_to_send_redacted_body(): void
+    {
+        $log = EmailLog::factory()->create([
+            'to_addresses' => ['client@example.test'],
+            'metadata' => ['redacted' => true],
+        ]);
+
+        $before = EmailLog::query()->count();
+
+        (new ResendEmailLogJob($log->id))->handle();
+
+        // No se envía nada: no aparece ninguna fila nueva de log del reenvío.
+        $this->assertSame($before, EmailLog::query()->count());
+    }
+
     public function test_resend_returns_error_when_no_recipients(): void
     {
         Queue::fake();

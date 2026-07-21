@@ -109,8 +109,16 @@ class LogEmailSent implements ShouldQueue
             return null;
         }
 
-        // Build fallback query matching subject + all recipients within the last 5 min.
-        // Only transition if exactly one candidate exists to avoid marking the wrong row.
+        // Fallback heuristic when the Message-ID header is unavailable: match
+        // subject + ALL recipients within the last 5 min, restricted to rows
+        // that never got a message_id assigned. Only transition if exactly one
+        // candidate exists to avoid marking the wrong row.
+        //
+        // Known limitation: the email_logs schema stores no other send-side
+        // discriminator (mailer/transport are not persisted), so two identical
+        // sends (same subject + recipients) queued within the window are
+        // ambiguous on purpose — both rows stay "queued" rather than risking a
+        // wrong "sent" transition, and the stale-queued pruning handles them.
         $query = EmailLog::queued()
             ->where('subject', (string) ($message->getSubject() ?? ''))
             ->where('created_at', '>=', now()->subMinutes(5))

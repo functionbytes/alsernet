@@ -5,6 +5,7 @@ namespace Modules\HelpdeskEmailLog\Listeners\Concerns;
 use Illuminate\Support\Facades\Auth;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Contracts\RedactsEmailLogBody;
+use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\DataPart;
@@ -49,13 +50,21 @@ trait InspectsMailMessage
             return null;
         }
 
-        $max = (int) Setting::get('helpdeskemaillog.max_body_bytes', config('helpdeskemaillog.max_body_bytes'));
+        $max = $this->maxBodyBytes();
 
         if ($max && strlen($body) > $max) {
-            return substr($body, 0, $max)."\n<!-- [helpdeskemaillog] contenido truncado -->";
+            // mb_strcut respeta el límite en BYTES sin partir un carácter
+            // multibyte por la mitad (substr puede dejar una secuencia UTF-8
+            // inválida al final, corrompiendo el HTML almacenado).
+            return mb_strcut($body, 0, $max, 'UTF-8').EmailLog::TRUNCATION_MARKER;
         }
 
         return $body;
+    }
+
+    protected function maxBodyBytes(): int
+    {
+        return (int) Setting::get('helpdeskemaillog.max_body_bytes', config('helpdeskemaillog.max_body_bytes'));
     }
 
     /**
@@ -138,9 +147,29 @@ trait InspectsMailMessage
 
         if ($this->shouldRedactBody($context)) {
             $meta['redacted'] = true;
+        } elseif ($this->isBodyOverLimit($message)) {
+            // El cuerpo almacenado quedó truncado a max_body_bytes; el flag
+            // permite p.ej. bloquear reenvíos de contenido incompleto.
+            $meta['truncated'] = true;
         }
 
         return $meta;
+    }
+
+    private function isBodyOverLimit(Email $message): bool
+    {
+        $storeBody = (bool) Setting::get('helpdeskemaillog.store_body', config('helpdeskemaillog.store_body', true));
+        $max = $this->maxBodyBytes();
+
+        if (! $storeBody || ! $max) {
+            return false;
+        }
+
+        $html = $message->getHtmlBody();
+        $text = $message->getTextBody();
+
+        return ($html !== null && strlen($html) > $max)
+            || ($text !== null && strlen($text) > $max);
     }
 
     /**
