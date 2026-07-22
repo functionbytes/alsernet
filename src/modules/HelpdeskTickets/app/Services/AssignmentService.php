@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Models\AgentSettings;
+use Modules\Helpdesk\Models\Setting;
 use Modules\Helpdesk\Services\SkillsRoutingService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketUnassigned;
@@ -151,7 +153,10 @@ class AssignmentService
     public function autoAssignByRoundRobin(Ticket $ticket): ?TicketAssignment
     {
         try {
-            $agents = $this->getAvailableAgents($ticket->category_id);
+            $agents = $this->preferLanguageSpeakers(
+                $this->getAvailableAgents($ticket->category_id),
+                $ticket
+            );
 
             if ($agents->isEmpty()) {
                 Log::warning('No available agents for round-robin assignment', [
@@ -204,7 +209,10 @@ class AssignmentService
     public function autoAssignByWorkload(Ticket $ticket): ?TicketAssignment
     {
         try {
-            $agents = $this->getAvailableAgents($ticket->category_id);
+            $agents = $this->preferLanguageSpeakers(
+                $this->getAvailableAgents($ticket->category_id),
+                $ticket
+            );
 
             if ($agents->isEmpty()) {
                 Log::warning('No available agents for workload assignment', [
@@ -274,6 +282,71 @@ class AssignmentService
         $agents = $query->orderBy('firstname')->get();
 
         return $this->filterByAvailability($agents);
+    }
+
+    /**
+     * Language routing (#detected_language): when enabled and the ticket has a
+     * detected language, prefer available agents that speak it
+     * (AgentSettings.languages). If NO eligible agent speaks the language, the
+     * FULL pool is returned — language can narrow the choice but never leave a
+     * ticket unassigned. Any failure degrades to the unfiltered pool.
+     */
+    private function preferLanguageSpeakers(Collection $agents, Ticket $ticket): Collection
+    {
+        if ($agents->isEmpty()
+            || ! $this->languageRoutingEnabled()
+            || ! class_exists(AgentSettings::class)) {
+            return $agents;
+        }
+
+        $language = AgentSettings::normalizeLanguage((string) ($ticket->detected_language ?? ''));
+
+        if ($language === '') {
+            return $agents;
+        }
+
+        try {
+            $speakerIds = AgentSettings::query()
+                ->whereIn('user_id', $agents->pluck('id'))
+                ->whereNotNull('languages')
+                ->get()
+                ->filter(fn (AgentSettings $settings) => $settings->speaksLanguage($language))
+                ->pluck('user_id')
+                ->all();
+        } catch (\Throwable $e) {
+            Log::warning('AssignmentService: language routing failed, keeping all agents', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $agents;
+        }
+
+        $speakers = $agents->whereIn('id', $speakerIds)->values();
+
+        return $speakers->isEmpty() ? $agents : $speakers;
+    }
+
+    /**
+     * Toggle del ruteo por idioma: setting runtime (editable) con fallback al
+     * fichero de config, igual que el interruptor global de auto-asignación.
+     * Off por defecto → comportamiento actual intacto.
+     */
+    private function languageRoutingEnabled(): bool
+    {
+        try {
+            if (class_exists(Setting::class)) {
+                $stored = Setting::get('auto_assign.language_routing');
+
+                if ($stored !== null) {
+                    return filter_var($stored, FILTER_VALIDATE_BOOL);
+                }
+            }
+        } catch (\Throwable) {
+            // Sin capa de settings disponible: usa el fichero de config.
+        }
+
+        return (bool) config('helpdesk.auto_assignment.language_routing', false);
     }
 
     /**

@@ -129,6 +129,12 @@
                     @if(helpdesk_feature_enabled('note'))
                     <button data-bv-modal="note"><i class="far fa-note-sticky"></i>{{ __('helpdesk::helpdesk.inbox.thread.add_note') }}</button>
                     @endif
+                    @if(helpdesk_feature_enabled('export_conv'))
+                    <button data-bv-modal="export-conv"><i class="fas fa-file-export"></i>{{ __('helpdesk::helpdesk.inbox.thread.export_conversation') }}</button>
+                    @endif
+                    @if(helpdesk_feature_enabled('reminder'))
+                    <button data-bv-modal="reminder"><i class="far fa-bell"></i>{{ __('helpdesk::helpdesk.inbox.thread.create_reminder') }}</button>
+                    @endif
                     @if(helpdesk_feature_enabled('csat'))
                     <button id="bv-btn-send-csat"
                             data-csat-url="{{ $convo ? route('manager.helpdesk.conversations.send-csat', $convo) : '' }}">
@@ -167,6 +173,16 @@
         </div>
     </div>
 
+    @if($convo && ! $convo->isWhatsAppWindowOpen())
+        <div class="bv-wa-strip">
+            <div class="bv-wa-window-closed bv-wa-pill alert fade show w-100" role="alert">
+                <i class="fab fa-whatsapp"></i>
+                <span>{{ __('helpdesk::helpdesk.inbox.thread.wa_window_closed_banner') }}</span>
+                <button type="button" class="bv-wa-pill-close" data-bs-dismiss="alert" aria-label="{{ __('helpdesk::helpdesk.inbox.thread.close_banner') }}"><i class="fas fa-xmark"></i></button>
+            </div>
+        </div>
+    @endif
+
     {{-- Barra de búsqueda en el thread --}}
     <div class="bv-th-search bv-hidden" id="bv-th-search">
         <i class="fas fa-magnifying-glass bv-th-search-icon"></i>
@@ -179,7 +195,7 @@
 
     {{-- Cuerpo del hilo --}}
     <div class="bv-th-body">
-        <div class="bv-th-inner">
+        <div class="bv-th-inner" role="log" aria-live="polite" aria-relevant="additions">
             @php
                 $items = $convo?->items ?? collect();
                 $currentDay = null;
@@ -236,11 +252,10 @@
                         @endif
                         @php
                             $replyToId = $item->metadata['reply_to_id'] ?? null;
-                            $replyTo = null;
-                            if ($replyToId) {
-                                $replyTo = $items->firstWhere('id', $replyToId)
-                                    ?? \Modules\Helpdesk\Models\ConversationItem::find($replyToId);
-                            }
+                            // Solo se resuelve dentro de los ítems de esta conversación:
+                            // nunca un find() global (evita mostrar contenido de otra
+                            // conversación/inbox aunque hubiera un reply_to_id heredado).
+                            $replyTo = $replyToId ? $items->firstWhere('id', $replyToId) : null;
                         @endphp
                         @if($replyTo)
                             <div class="bv-quoted-msg" data-bv-jump-to="{{ $replyTo->id }}">
@@ -461,7 +476,17 @@
                         <div class="meta">
                             <span>{{ $isOut ? $authorLabel.' · ' : '' }}{{ $time }}</span>
                             @if($isOut && ! $isInternal)
-                                <span class="chk read bv-chk-read">✓✓</span>
+                                @if(! empty($item->metadata['send_failed']))
+                                    <span class="bv-send-failed text-danger" data-bv-item-id="{{ $item->id }}">
+                                        <i class="fas fa-triangle-exclamation"></i> {{ __('helpdesk::helpdesk.inbox.thread.not_delivered') }}
+                                        <button type="button" class="btn btn-link btn-sm p-0 align-baseline bv-retry-send"
+                                                data-bv-retry-url="{{ route('manager.helpdesk.conversation-items.retry-send', $item) }}">
+                                            {{ __('helpdesk::helpdesk.inbox.thread.retry_send') }}
+                                        </button>
+                                    </span>
+                                @else
+                                    <span class="chk read bv-chk-read">✓✓</span>
+                                @endif
                             @endif
                         </div>
                     </div>
@@ -479,6 +504,7 @@
     {{-- Composer --}}
     <div class="bv-composer"
          data-bv-conversation-id="{{ $convo?->id }}"
+         data-bv-wa-window-closed="{{ $convo && ! $convo->isWhatsAppWindowOpen() ? '1' : '0' }}"
          data-bv-send-url="{{ $convo ? route('manager.helpdesk.conversations.messages.store', $convo) : '' }}"
          data-bv-update-url="{{ $convo ? route('manager.helpdesk.conversations.update', $convo) : '' }}"
          data-bv-reopen-url="{{ $convo ? route('manager.helpdesk.conversations.reopen', $convo) : '' }}"
@@ -486,6 +512,7 @@
          data-bv-send-hsm-url="{{ $convo ? route('manager.helpdesk.conversations.send-hsm', $convo) : '' }}"
          data-bv-attach-url="{{ $convo ? route('manager.helpdesk.conversations.attachments.store', $convo) : '' }}"
          data-bv-contact-url="{{ $convo ? route('manager.helpdesk.conversations.contact.store', $convo) : '' }}"
+         data-bv-link-customer-url="{{ $convo ? route('manager.helpdesk.conversations.link-customer', $convo) : '' }}"
          data-bv-location-url="{{ $convo ? route('manager.helpdesk.conversations.location.store', $convo) : '' }}">
 
         {{-- Panel HSM (se muestra/oculta con el tab) --}}
@@ -529,6 +556,9 @@
         @if(helpdesk_translate_enabled())
             @includeIf('helpdesktranslate::partials.translate-panel')
         @endif
+
+        {{-- Panel de artículos sugeridos (knowledge base / helpcenter) --}}
+        @include('helpdesk::helpdesk.inbox.partials.kb-suggestions')
 
         {{-- Tabs del composer --}}
         <div class="bv-composer-tabs">
@@ -718,7 +748,7 @@
                 <input class="finput" id="hdCannedSearch" placeholder="{{ __('helpdesk::helpdesk.inbox.thread.canned_search_placeholder') }}" autocomplete="off">
             </div>
             <div class="hd-canned-pills" id="hdCannedSeg">
-                <span class="media-pill on" data-cat="" onclick="hdCannedFilter('')">{{ __('helpdesk::helpdesk.inbox.thread.all_label') }} <span class="c" id="hdCannedCount">0</span></span>
+                <span class="media-pill on" data-cat="" role="button" tabindex="0" onclick="hdCannedFilter('')">{{ __('helpdesk::helpdesk.inbox.thread.all_label') }} <span class="c" id="hdCannedCount">0</span></span>
             </div>
             <div class="hd-canned-list" id="hdCannedList">
                 <div class="bv-list-state">{{ __('helpdesk::helpdesk.inbox.thread.loading') }}</div>
@@ -774,6 +804,14 @@
         if (e.target === this) closeCannedModal();
     });
 
+    // Los .media-pill son <span role="button"> (filtros de categoría): activar con Enter/Espacio.
+    document.getElementById('hdCannedOverlay').addEventListener('keydown', function(e) {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('media-pill')) {
+            e.preventDefault();
+            e.target.click();
+        }
+    });
+
     // ── CANNED REPLIES ─────────────────────────────────────
     var hdCannedAll = [], hdCannedFiltered = [], hdCannedActive = -1, hdCannedSelId = null, hdCannedTimer = null, hdCannedCat = '';
 
@@ -809,12 +847,12 @@
         var cats = [];
         hdCannedAll.forEach(function(r) { if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category); });
         var seg = document.getElementById('hdCannedSeg');
-        var html = '<span class="media-pill ' + (!hdCannedCat ? 'on' : '') + '" data-cat="" onclick="hdCannedFilter(\'\')">'
+        var html = '<span class="media-pill ' + (!hdCannedCat ? 'on' : '') + '" data-cat="" role="button" tabindex="0" onclick="hdCannedFilter(\'\')">'
             + 'Todas <span class="c">' + hdCannedAll.length + '</span></span>';
         cats.forEach(function(cat) {
             var cnt = hdCannedAll.filter(function(r){ return r.category === cat; }).length;
             html += '<span class="media-pill ' + (hdCannedCat === cat ? 'on' : '') + '" data-cat="' + hdEscape(cat)
-                + '" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
+                + '" role="button" tabindex="0" onclick="hdCannedFilter(\'' + cat.replace(/'/g,"\\'") + '\')">'
                 + hdEscape(cat) + ' <span class="c">' + cnt + '</span></span>';
         });
         seg.innerHTML = html;

@@ -19,6 +19,8 @@ class UpdateAgentSettingsRequest extends FormRequest
             'auto_assign' => ['boolean'],
             'vacation_until' => ['nullable', 'date', 'after:now'],
             'accepts_conversations' => ['required', 'in:yes,no,working_hours'],
+            // CSV de códigos ISO-639 ("es, en-GB"); se normaliza en el controller.
+            'languages' => ['nullable', 'string', 'max:120', 'regex:/^[a-zA-Z]{2,3}([-_][a-zA-Z]{2,4})?(\s*,\s*[a-zA-Z]{2,3}([-_][a-zA-Z]{2,4})?)*$/'],
             'skills' => ['nullable', 'array'],
             'skills.*' => ['integer', 'exists:helpdesk.helpdesk_skills,id'],
         ];
@@ -34,6 +36,8 @@ class UpdateAgentSettingsRequest extends FormRequest
             'max_concurrent_conversations.max' => 'El limite de conversaciones no puede superar 100.',
             'vacation_until.date' => 'La fecha de vacaciones no tiene un formato valido.',
             'vacation_until.after' => 'La fecha de vacaciones debe ser posterior a la fecha actual.',
+            'languages.regex' => 'Los idiomas deben ser codigos separados por comas (ej. "es, en").',
+            'languages.max' => 'La lista de idiomas es demasiado larga.',
             'skills.*.exists' => 'Una o mas habilidades seleccionadas no existen.',
         ];
     }
@@ -46,6 +50,7 @@ class UpdateAgentSettingsRequest extends FormRequest
             'auto_assign' => 'asignacion automatica',
             'vacation_until' => 'vacaciones hasta',
             'accepts_conversations' => 'acepta conversaciones',
+            'languages' => 'idiomas',
             'skills' => 'habilidades',
         ];
     }

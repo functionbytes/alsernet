@@ -29,7 +29,6 @@ class AgentSettings extends Model
 
     protected $fillable = [
         'user_id',
-        'assignment_limit',
         'accepts_conversations',
         'working_hours',
         'is_available',
@@ -38,6 +37,7 @@ class AgentSettings extends Model
         'vacation_until',
         'current_open_count',
         'preferences',
+        'languages',
         'presence_state',
         'presence_changed_at',
         'last_heartbeat_at',
@@ -46,11 +46,11 @@ class AgentSettings extends Model
     protected function casts(): array
     {
         return [
-            'assignment_limit' => 'integer',
             'max_concurrent_conversations' => 'integer',
             'current_open_count' => 'integer',
             'working_hours' => 'array',
             'preferences' => 'array',
+            'languages' => 'array',
             'is_available' => 'boolean',
             'auto_assign' => 'boolean',
             'vacation_until' => 'datetime',
@@ -67,7 +67,6 @@ class AgentSettings extends Model
     public static function newFromDefault(): self
     {
         return new self([
-            'assignment_limit' => 0,
             'accepts_conversations' => 'yes',
             'is_available' => true,
             'max_concurrent_conversations' => 10,
@@ -109,6 +108,37 @@ class AgentSettings extends Model
         return true;
     }
 
+    /**
+     * Whether the agent speaks the given language. Comparison is on the
+     * primary ISO-639 subtag, so "es" matches "es-ES"/"es_MX" and vice versa.
+     */
+    public function speaksLanguage(string $language): bool
+    {
+        $language = self::normalizeLanguage($language);
+
+        if ($language === '') {
+            return false;
+        }
+
+        foreach ((array) ($this->languages ?? []) as $spoken) {
+            if (is_string($spoken) && self::normalizeLanguage($spoken) === $language) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Lowercase primary subtag of a language tag ("es-ES" → "es", "" → "").
+     */
+    public static function normalizeLanguage(string $language): string
+    {
+        $primary = preg_split('/[-_]/', strtolower(trim($language)))[0] ?? '';
+
+        return preg_match('/^[a-z]{2,3}$/', $primary) === 1 ? $primary : '';
+    }
+
     public function acceptsConversationsNow(): bool
     {
         if ($this->accepts_conversations === 'no') {
@@ -144,7 +174,7 @@ class AgentSettings extends Model
 
     public function hasReachedLimit(): bool
     {
-        $limit = $this->max_concurrent_conversations ?? $this->assignment_limit ?? 0;
+        $limit = $this->max_concurrent_conversations ?? 0;
 
         if ($limit === 0) {
             return false;
