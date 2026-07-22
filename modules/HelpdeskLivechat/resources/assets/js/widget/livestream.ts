@@ -116,6 +116,13 @@ export async function startLivestream(
                 void flush();
             }
         },
+        // GDPR/privacy guarantee — do NOT weaken these options:
+        // `maskAllInputs: true` masks the value of EVERY input/textarea/select
+        // (passwords, card numbers, emails…) before it leaves the visitor's
+        // browser; `maskTextSelector` additionally masks the text content of
+        // any element the host site marks with data-private. Changes to this
+        // file require rebuilding the widget bundle from the module root:
+        // `npm run widget:build` → public/build-helpdesklivechat/.
         maskAllInputs: true,
         maskTextSelector: '[data-private]',
         recordCanvas: false,

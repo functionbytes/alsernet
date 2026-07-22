@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Conversation;
@@ -17,9 +18,9 @@ use Modules\HelpdeskChatFlow\Http\Requests\ImportChatFlowRequest;
 use Modules\HelpdeskChatFlow\Http\Requests\StoreChatFlowRequest;
 use Modules\HelpdeskChatFlow\Http\Requests\UpdateChatFlowRequest;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
-use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
+use Modules\HelpdeskChatFlow\Services\ChatFlowAnalyticsService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowReplayService;
 use Modules\HelpdeskChatFlow\Services\ChatFlowTemplateLibrary;
 use Modules\HelpdeskChatFlow\Services\ChatFlowValidator;
@@ -89,13 +90,28 @@ class ChatFlowsController extends Controller
             ->with('success', "Flow «{$built['name']}» creado desde plantilla. Revísalo y publícalo.");
     }
 
-    public function create(): View
+    public function create(): RedirectResponse
     {
         $this->authorize('create', ChatFlow::class);
 
-        $inboxes = Inbox::query()->orderBy('name')->get();
+        // El editor React es solo-edición (hace axios.put a saveUrl), así que no
+        // puede renderizarse sin un flow persistido. Crear "Nuevo flow" genera un
+        // borrador en blanco con nodo inicio/fin y abre su editor, alineado con el
+        // store()→edit ya existente.
+        $flow = ChatFlow::create([
+            'uid' => Str::uuid(),
+            'name' => 'Nuevo flow',
+            'nodes' => [
+                ['id' => 'n1', 'type' => 'start', 'config' => []],
+                ['id' => 'n2', 'type' => 'end', 'config' => []],
+            ],
+            'edges' => [
+                ['source' => 'n1', 'target' => 'n2'],
+            ],
+            'created_by' => auth()->id(),
+        ]);
 
-        return view('chatflow::editor', compact('inboxes'));
+        return redirect()->route('chatflow.edit', $flow);
     }
 
     public function store(StoreChatFlowRequest $request): RedirectResponse
@@ -252,33 +268,13 @@ class ChatFlowsController extends Controller
 
     public function import(ImportChatFlowRequest $request): RedirectResponse
     {
-        $raw = $request->hasFile('file')
-            ? file_get_contents($request->file('file')->getRealPath())
-            : (string) $request->input('json');
+        // Structural validation (JSON shape, node/edge caps, node types, start
+        // node, trigger_type and trigger_conditions shape) lives in
+        // ImportChatFlowRequest. Here only the runtime graph validation runs —
+        // the same validator used on publish, so we never import a flow that
+        // would break at runtime (broken go_to_step, unreachable nodes, etc.).
+        $data = $request->flowData();
 
-        $data = json_decode($raw, true);
-
-        if (! is_array($data) || empty($data['nodes']) || ! is_array($data['nodes'])) {
-            return back()->with('error', 'El archivo no es un flow válido (falta «nodes»).');
-        }
-
-        $hasStart = collect($data['nodes'])->contains(fn ($n) => ($n['type'] ?? '') === 'start');
-        if (! $hasStart) {
-            return back()->with('error', 'El flow importado no tiene nodo de inicio.');
-        }
-
-        // Reject arbitrary JSON: every node must be a well-formed object with a
-        // string id and a recognised node type before we trust the payload.
-        $hasInvalidNode = collect($data['nodes'])->contains(fn ($n) => ! is_array($n)
-            || ! is_string($n['id'] ?? null)
-            || ! in_array($n['type'] ?? null, ChatFlow::NODE_TYPES, true));
-
-        if ($hasInvalidNode) {
-            return back()->with('error', 'El archivo contiene nodos con un formato no reconocido.');
-        }
-
-        // Run the same validator used on publish so we never import a flow that
-        // would break at runtime (broken go_to_step, missing start, etc.).
         $candidate = new ChatFlow(['nodes' => $data['nodes']]);
         $validation = $this->validator->validate($candidate);
 
@@ -342,26 +338,50 @@ class ChatFlowsController extends Controller
         return view('chatflow::replay', compact('chatFlow', 'session', 'result'));
     }
 
-    public function analytics(Request $request, ChatFlow $chatFlow): View
+    /** Selectable analytics windows (days); 0 = all-time. Shared with cache invalidation. */
+    public const ANALYTICS_DAY_KEYS = [7, 30, 90, 365, 0];
+
+    public static function analyticsCacheKey(int $flowId, int $days): string
+    {
+        return "helpdeskchatflow:analytics:{$flowId}:{$days}";
+    }
+
+    public function analytics(Request $request, ChatFlow $chatFlow, ChatFlowAnalyticsService $analytics): View
     {
         $this->authorize('view', $chatFlow);
 
         $range = $this->resolveAnalyticsRange($request);
-        $from = $range['from'];
 
-        $summary = $this->buildSummary($chatFlow, $from);
-        $dropOff = $this->buildDropOff($chatFlow, $from);
-        $aiMetrics = $this->buildAiMetrics($chatFlow, $from);
-        $csat = $this->buildCsatMetrics($chatFlow, $from);
+        // The metric blocks scan the flow's whole session history; cache them per
+        // (flow, days). Invalidated by InvalidateFlowAnalyticsCache when a session
+        // of this flow completes, so the numbers stay fresh without re-querying on
+        // every dashboard open. TTL is a safety net for other mutations.
+        $metrics = Cache::remember(
+            self::analyticsCacheKey($chatFlow->id, $range['days']),
+            now()->addMinutes(15),
+            function () use ($chatFlow, $range, $analytics): array {
+                $from = $range['from'];
+                $summary = $analytics->buildSummary($chatFlow, $from);
+                $csat = $analytics->buildCsatMetrics($chatFlow, $from);
+                $aiMetrics = $analytics->buildAiMetrics($chatFlow, $from);
 
-        $comparison = $this->buildAbComparison($chatFlow, $from, [
-            'summary' => $summary,
-            'csat' => $csat,
-            'ai' => $aiMetrics,
-        ]);
+                return [
+                    'summary' => $summary,
+                    'dropOff' => $analytics->buildDropOff($chatFlow, $from),
+                    'aiMetrics' => $aiMetrics,
+                    'csat' => $csat,
+                    'comparison' => $analytics->buildAbComparison($chatFlow, $from, [
+                        'summary' => $summary,
+                        'csat' => $csat,
+                        'ai' => $aiMetrics,
+                    ]),
+                ];
+            }
+        );
 
-        return view('chatflow::analytics', compact(
-            'chatFlow', 'summary', 'dropOff', 'aiMetrics', 'csat', 'comparison', 'range'
+        return view('chatflow::analytics', array_merge(
+            ['chatFlow' => $chatFlow, 'range' => $range],
+            $metrics
         ));
     }
 
@@ -394,230 +414,4 @@ class ChatFlowsController extends Controller
         ];
     }
 
-    /**
-     * Status breakdown + resolution rate for a flow's sessions within the window.
-     *
-     * @return array{total: int, completed: int, transferred: int, abandoned: int, failed: int, active: int, resolution_rate: float}
-     */
-    private function buildSummary(ChatFlow $chatFlow, ?Carbon $from): array
-    {
-        $byStatus = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
-
-        $totalSessions = (int) $byStatus->sum();
-        $completed = (int) ($byStatus['completed'] ?? 0);
-        $transferred = (int) ($byStatus['transferred'] ?? 0);
-
-        return [
-            'total' => $totalSessions,
-            'completed' => $completed,
-            'transferred' => $transferred,
-            'abandoned' => (int) ($byStatus['abandoned'] ?? 0),
-            'failed' => (int) ($byStatus['failed'] ?? 0),
-            'active' => (int) ($byStatus['active'] ?? 0),
-            'resolution_rate' => $totalSessions > 0
-                ? round(($completed + $transferred) / $totalSessions * 100, 1)
-                : 0.0,
-        ];
-    }
-
-    /**
-     * A/B comparison: when the flow has a configured variant (`ab_variant_id`),
-     * compute the same headline metrics for both arms so resolution, CSAT and
-     * abandonment can be read side by side. Returns null when no variant is
-     * configured (or it no longer exists), so the section stays hidden.
-     *
-     * The data model carries a single variant id per flow, so this compares the
-     * binary A (this flow) vs B (the variant); true multivariant would need a
-     * variant list on `trigger_conditions` first.
-     *
-     * @param  array{summary: array<string, mixed>, csat: array<string, mixed>, ai: array<string, mixed>}  $self
-     * @return array{split: int, variants: array<int, array{key: string, flow: ChatFlow, summary: array<string, mixed>, csat: array<string, mixed>, ai: array<string, mixed>}>}|null
-     */
-    private function buildAbComparison(ChatFlow $chatFlow, ?Carbon $from, array $self): ?array
-    {
-        $variantId = $chatFlow->trigger_conditions['ab_variant_id'] ?? null;
-
-        if (! $variantId) {
-            return null;
-        }
-
-        $variant = ChatFlow::query()->whereKey($variantId)->first();
-
-        if (! $variant || $variant->id === $chatFlow->id) {
-            return null;
-        }
-
-        return [
-            'split' => (int) ($chatFlow->trigger_conditions['ab_split'] ?? 50),
-            'variants' => [
-                [
-                    'key' => 'A',
-                    'flow' => $chatFlow,
-                    'summary' => $self['summary'],
-                    'csat' => $self['csat'],
-                    'ai' => $self['ai'],
-                ],
-                [
-                    'key' => 'B',
-                    'flow' => $variant,
-                    'summary' => $this->buildSummary($variant, $from),
-                    'csat' => $this->buildCsatMetrics($variant, $from),
-                    'ai' => $this->buildAiMetrics($variant, $from),
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Resolution metrics for the AI node: of the sessions that hit an `ai_response`
-     * node, how many the bot resolved vs. escalated to an agent.
-     *
-     * @return array{used: int, resolved: int, escalated: int, rate: float}
-     */
-    private function buildAiMetrics(ChatFlow $chatFlow, ?Carbon $from = null): array
-    {
-        $empty = ['used' => 0, 'resolved' => 0, 'escalated' => 0, 'rate' => 0.0];
-        $sessionIds = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->pluck('id');
-
-        if ($sessionIds->isEmpty()) {
-            return $empty;
-        }
-
-        $aiSessionIds = ChatFlowExecution::query()
-            ->whereIn('session_id', $sessionIds)
-            ->where('node_type', 'ai_response')
-            ->distinct()
-            ->pluck('session_id');
-
-        if ($aiSessionIds->isEmpty()) {
-            return $empty;
-        }
-
-        $statusCounts = $chatFlow->sessions()
-            ->whereIn('id', $aiSessionIds)
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
-
-        $resolved = (int) ($statusCounts['completed'] ?? 0);
-        $escalated = (int) ($statusCounts['transferred'] ?? 0);
-        $used = $aiSessionIds->count();
-
-        return [
-            'used' => $used,
-            'resolved' => $resolved,
-            'escalated' => $escalated,
-            'rate' => $used > 0 ? round($resolved / $used * 100, 1) : 0.0,
-        ];
-    }
-
-    /**
-     * CSAT metrics: of the sessions that answered a satisfaction survey, the
-     * average score and the share of satisfied customers. The scale (1-5, 1-10,
-     * thumbs) is read from the flow's first csat node so the threshold matches.
-     *
-     * @return array{answered: int, average: float, satisfied: int, rate: float, max: int}
-     */
-    private function buildCsatMetrics(ChatFlow $chatFlow, ?Carbon $from = null): array
-    {
-        $empty = ['answered' => 0, 'average' => 0.0, 'satisfied' => 0, 'rate' => 0.0, 'max' => 5];
-
-        $csatNode = collect($chatFlow->nodes ?? [])->firstWhere('type', 'csat');
-        $scale = $csatNode['data']['scale'] ?? '1-5';
-
-        [$max, $threshold, $thumbs] = match ($scale) {
-            'thumbs' => [2, 1, true],
-            '1-10' => [10, 8, false],
-            default => [5, 4, false],
-        };
-
-        // Project only the score out of the JSON context (instead of pulling the
-        // whole context blob into PHP) and bound it to the window. The score may
-        // be stored as a free-text answer when the customer didn't reply with a
-        // number, so the numeric guard stays in PHP.
-        $scores = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->whereNotNull('context->csat_score')
-            ->selectRaw("JSON_UNQUOTE(JSON_EXTRACT(context, '$.csat_score')) as csat_value")
-            ->pluck('csat_value')
-            ->filter(fn ($v) => is_numeric($v))
-            ->map(fn ($v) => (int) $v)
-            ->filter(fn ($v) => $v > 0);
-
-        if ($scores->isEmpty()) {
-            return $empty;
-        }
-
-        $satisfied = $thumbs
-            ? $scores->filter(fn ($v) => $v === 1)->count()
-            : $scores->filter(fn ($v) => $v >= $threshold)->count();
-
-        return [
-            'answered' => $scores->count(),
-            'average' => round($scores->avg(), 1),
-            'satisfied' => $satisfied,
-            'rate' => round($satisfied / $scores->count() * 100, 1),
-            'max' => $max,
-        ];
-    }
-
-    /**
-     * Drop-off per node: how many sessions reached each node, and how many got
-     * stuck/abandoned there (their last node) without completing the flow.
-     *
-     * @return array<int, array{node_id: string, label: string, type: string, reached: int, dropped: int, rate: float}>
-     */
-    private function buildDropOff(ChatFlow $chatFlow, ?Carbon $from = null): array
-    {
-        $sessionIds = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->pluck('id');
-
-        if ($sessionIds->isEmpty()) {
-            return [];
-        }
-
-        // How many distinct sessions executed each node.
-        $reached = ChatFlowExecution::query()
-            ->whereIn('session_id', $sessionIds)
-            ->selectRaw('node_id, count(distinct session_id) as total')
-            ->groupBy('node_id')
-            ->pluck('total', 'node_id');
-
-        // Sessions that ended without completing — where did they stop?
-        $dropped = $chatFlow->sessions()
-            ->when($from, fn ($q) => $q->where('started_at', '>=', $from))
-            ->whereIn('status', ['abandoned', 'failed'])
-            ->whereNotNull('current_node_id')
-            ->selectRaw('current_node_id, count(*) as total')
-            ->groupBy('current_node_id')
-            ->pluck('total', 'current_node_id');
-
-        $nodes = collect($chatFlow->nodes ?? [])
-            ->filter(fn ($n) => ($n['type'] ?? '') !== 'branchItem');
-
-        return $nodes->map(function ($node) use ($reached, $dropped) {
-            $reachedCount = (int) ($reached[$node['id']] ?? 0);
-            $droppedCount = (int) ($dropped[$node['id']] ?? 0);
-
-            return [
-                'node_id' => $node['id'],
-                'label' => $node['label'] ?? $node['type'],
-                'type' => $node['type'],
-                'reached' => $reachedCount,
-                'dropped' => $droppedCount,
-                'rate' => $reachedCount > 0 ? round($droppedCount / $reachedCount * 100, 1) : 0.0,
-            ];
-        })
-            ->filter(fn ($row) => $row['reached'] > 0 || $row['dropped'] > 0)
-            ->sortByDesc('dropped')
-            ->values()
-            ->all();
-    }
 }
