@@ -60,6 +60,17 @@ class TicketCategory extends Model
     }
 
     /**
+     * Structured custom form fields for this category (builder-managed).
+     *
+     * Used by TicketCategoryFieldsController, PublicTicketFormController and
+     * TicketCategoryValidationBuilder.
+     */
+    public function fields(): HasMany
+    {
+        return $this->hasMany(TicketCategoryField::class, 'ticket_category_id');
+    }
+
+    /**
      * Get the default SLA policy for this category
      */
     public function defaultSlaPolicy(): BelongsTo

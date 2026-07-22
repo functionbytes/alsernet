@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Helpdesk\Models\Customer;
 
 class TicketComment extends Model
 {
@@ -58,12 +59,12 @@ class TicketComment extends Model
     /**
      * Get the agent who wrote this comment (cross-database relationship)
      */
-    public function user(): ?BelongsTo
+    public function user(): BelongsTo
     {
-        if (! $this->user_id) {
-            return null;
-        }
-
+        // OJO: una relación NUNCA debe devolver null — with('user') hace
+        // ->addEagerConstraints() sobre el retorno y revienta con
+        // "Call to a member function on null" si el primer modelo de la
+        // colección tiene user_id NULL. Eloquent ya maneja FKs nulos.
         $user = new User;
         $user->setConnection('mysql');
 
@@ -87,12 +88,9 @@ class TicketComment extends Model
     /**
      * Get the agent who edited this comment (cross-database relationship)
      */
-    public function editor(): ?BelongsTo
+    public function editor(): BelongsTo
     {
-        if (! $this->edited_by) {
-            return null;
-        }
-
+        // Igual que user(): sin null-check — ver comentario arriba.
         $user = new User;
         $user->setConnection('mysql');
 

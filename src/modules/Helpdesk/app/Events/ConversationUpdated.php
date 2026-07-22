@@ -16,7 +16,10 @@ class ConversationUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Conversation $conversation) {}
+    public function __construct(
+        public Conversation $conversation,
+        public readonly ?int $byUserId = null,
+    ) {}
 
     /**
      * Get the channels the event should broadcast on.
@@ -37,11 +40,11 @@ class ConversationUpdated implements ShouldBroadcast
             'conversation_id' => $this->conversation->id,
             'subject' => $this->conversation->subject,
             'priority' => $this->conversation->priority,
-            'status' => [
+            'status' => $this->conversation->status ? [
                 'id' => $this->conversation->status->id,
                 'name' => $this->conversation->status->name,
-            ],
-            'updated_at' => $this->conversation->updated_at->toIso8601String(),
+            ] : null,
+            'updated_at' => $this->conversation->updated_at?->toIso8601String(),
         ];
     }
 
