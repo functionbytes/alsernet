@@ -6,6 +6,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Jobs\ReattemptAutoAssignJob;
+use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Services\AutoAssignmentService;
 use Modules\Helpdesk\Services\RoutingRuleService;
 use Modules\Helpdesk\Services\SkillsRoutingService;
 
@@ -30,11 +33,12 @@ class AutoAssignNewConversation implements ShouldQueue
     public function __construct(
         private readonly RoutingRuleService $routingRuleService,
         private readonly SkillsRoutingService $skillsRoutingService,
+        private readonly AutoAssignmentService $autoAssignmentService,
     ) {}
 
     public function handle(ConversationCreated $event): void
     {
-        if (! config('helpdesk.auto_assignment.enabled')) {
+        if (! $this->autoAssignmentService->isEnabled()) {
             return;
         }
 
@@ -62,19 +66,43 @@ class AutoAssignNewConversation implements ShouldQueue
         }
 
         try {
+            // Detect skills first so the "skills" strategy has data to route on.
             $this->skillsRoutingService->detectAndAttachSkills($conversation, (string) $firstItem->body);
 
-            $userId = $this->skillsRoutingService->routeBySkills($conversation);
+            $userId = $this->autoAssignmentService->resolveAgent($conversation);
 
             if ($userId) {
                 $conversation->assignTo($userId);
+
+                return;
             }
+
+            // No agent available now: retry after the configured delay, else fallback.
+            $this->handleNoAgent($conversation);
         } catch (\Throwable $e) {
-            Log::warning('AutoAssignNewConversation: skills routing stage failed', [
+            Log::warning('AutoAssignNewConversation: strategy stage failed', [
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function handleNoAgent(Conversation $conversation): void
+    {
+        $config = $this->autoAssignmentService->config();
+
+        // "Manual" deja la conversación sin asignar: ni reintento ni fallback.
+        if ($config['strategy'] === 'manual') {
+            return;
+        }
+
+        if ($config['retry'] !== 'off') {
+            ReattemptAutoAssignJob::dispatch($conversation->id)->delay(now()->addMinutes((int) $config['retry']));
+
+            return;
+        }
+
+        $this->autoAssignmentService->applyFallback($conversation);
     }
 
     public function failed(ConversationCreated $event, \Throwable $exception): void

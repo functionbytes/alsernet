@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Services\AutoAssignmentService;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 
@@ -25,7 +26,12 @@ class AutoAssignUnassignedTickets implements ShouldQueue
 
     public int $backoff = 60;
 
-    public string $queue = 'helpdesk-scheduled';
+    public function __construct()
+    {
+        // Nota: no declarar `public string $queue` — colisiona (tipado) con la
+        // propiedad sin tipo del trait Queueable y produce un fatal al componer.
+        $this->onQueue('helpdesk-scheduled');
+    }
 
     public function middleware(): array
     {
@@ -48,13 +54,13 @@ class AutoAssignUnassignedTickets implements ShouldQueue
         try {
             Log::info('AutoAssignUnassignedTickets job started at '.now());
 
-            if (! config('helpdesk.auto_assignment.enabled', false)) {
+            [$enabled, $strategy] = $this->globalConfig();
+
+            if (! $enabled) {
                 Log::info('Auto-assignment is disabled. Skipping job.');
 
                 return;
             }
-
-            $strategy = config('helpdesk.auto_assignment.strategy', 'round_robin');
 
             $unassignedTickets = Ticket::query()
                 ->whereNull('assignee_id')
@@ -70,7 +76,7 @@ class AutoAssignUnassignedTickets implements ShouldQueue
 
                     if ($strategy === 'round_robin') {
                         $assignedAgent = $assignmentService->autoAssignByRoundRobin($ticket);
-                    } elseif ($strategy === 'workload') {
+                    } elseif ($strategy === 'workload' || $strategy === 'least_load') {
                         $assignedAgent = $assignmentService->autoAssignByWorkload($ticket);
                     } else {
                         Log::warning("Unknown auto-assignment strategy: {$strategy}");
@@ -80,10 +86,10 @@ class AutoAssignUnassignedTickets implements ShouldQueue
 
                     if ($assignedAgent) {
                         // TicketAssigned event is already fired inside AssignmentService
-                        Log::info("Auto-assigned ticket #{$ticket->id} to agent #{$assignedAgent->agent_id}", [
+                        Log::info("Auto-assigned ticket #{$ticket->id} to agent #{$assignedAgent->assigned_to}", [
                             'ticket_id' => $ticket->id,
                             'ticket_subject' => $ticket->subject,
-                            'agent_id' => $assignedAgent->agent_id,
+                            'agent_id' => $assignedAgent->assigned_to,
                             'strategy' => $strategy,
                             'assigned_at' => now(),
                         ]);
@@ -115,6 +121,26 @@ class AutoAssignUnassignedTickets implements ShouldQueue
             ]);
 
             throw $e;
+        }
+    }
+
+    /**
+     * Toggle + estrategia globales (#78): setting editable en runtime del módulo
+     * Helpdesk, con fallback al fichero de config si no está disponible.
+     *
+     * @return array{0: bool, 1: string}
+     */
+    private function globalConfig(): array
+    {
+        try {
+            $core = app(AutoAssignmentService::class);
+
+            return [$core->isEnabled(), $core->config()['strategy']];
+        } catch (\Throwable) {
+            return [
+                (bool) config('helpdesk.auto_assignment.enabled', false),
+                (string) config('helpdesk.auto_assignment.strategy', 'round_robin'),
+            ];
         }
     }
 }
