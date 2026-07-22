@@ -3,17 +3,21 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class ManagersTicketsCrudTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    use SeedsHelpdeskRoles;
+    // mariadb y helpdesk apuntan a la misma BD: PDO compartido evita
+    // auto-interbloqueos de FK y garantiza rollback de AMBAS conexiones
+    // (antes solo se transaccionaba mariadb y los tickets se filtraban).
+    use SharesHelpdeskPdo;
 
     private User $manager;
 
@@ -27,7 +31,12 @@ class ManagersTicketsCrudTest extends TestCase
     {
         parent::setUp();
 
+        // La BD de test arranca sin roles; las rutas manager llevan role: middleware.
+        $this->seedHelpdeskRoles();
+        $this->seed(HelpdeskTicketsPermissionsSeeder::class);
+
         $this->manager = User::factory()->create();
+        $this->manager->assignRole('super-settings');
 
         $this->manager->givePermissionTo([
             'helpdesk.tickets.view',
@@ -159,6 +168,36 @@ class ManagersTicketsCrudTest extends TestCase
         $this->actingAs($this->manager)
             ->get(route('manager.helpdesk.tickets.show', $ticket))
             ->assertOk();
+    }
+
+    public function test_index_shows_correct_unread_count_per_ticket(): void
+    {
+        $ticket = $this->createTicket();
+
+        $readItem = $ticket->items()->create([
+            'type' => 'message',
+            'author_id' => $this->customer->id,
+            'body' => 'Read message',
+        ]);
+
+        $ticket->items()->create([
+            'type' => 'message',
+            'author_id' => $this->customer->id,
+            'body' => 'Unread message',
+        ]);
+
+        $readItem->markAsRead($this->manager->id);
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.tickets.index'));
+
+        $response->assertOk();
+
+        preg_match('/data-tickets="(.*?)"\s+data-statuses/s', $response->getContent(), $matches);
+        $tickets = json_decode(html_entity_decode($matches[1]), true);
+        $payload = collect($tickets)->firstWhere('id', $ticket->id);
+
+        $this->assertSame(1, $payload['unread_count']);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

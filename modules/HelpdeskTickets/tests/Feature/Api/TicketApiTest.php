@@ -3,8 +3,9 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -12,7 +13,9 @@ use Tests\TestCase;
 
 class TicketApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $agent;
 
@@ -28,7 +31,16 @@ class TicketApiTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
+        // La API autoriza por permiso ('helpdesk.tickets.view'/create/update):
+        // sembrar los permisos del módulo y concedérselos al agente.
+        $this->seed(HelpdeskTicketsPermissionsSeeder::class);
+
         $this->agent = User::factory()->create();
+        $this->agent->givePermissionTo([
+            'helpdesk.tickets.view',
+            'helpdesk.tickets.create',
+            'helpdesk.tickets.update',
+        ]);
 
         // Seed the minimum helpdesk data needed for tests
         $this->status = TicketStatus::firstOrCreate(
@@ -56,14 +68,15 @@ class TicketApiTest extends TestCase
         $this->createTicket(['subject' => 'Second ticket']);
 
         $response = $this->actingAs($this->agent)
-            ->getJson('/api/helpdesk/tickets');
+            ->getJson('/api/v1/helpdesk/tickets');
 
+        // La API envuelve en ApiResponse {success, message, data}; al anidar la
+        // ResourceCollection en 'data' se serializa como lista de tickets.
         $response->assertOk()
             ->assertJsonStructure([
-                'data' => [['id', 'ticket_number', 'subject', 'priority']],
-                'current_page',
-                'per_page',
-                'total',
+                'success',
+                'message',
+                'data' => [['id', 'ticketNumber', 'subject', 'priority']],
             ]);
     }
 
@@ -73,7 +86,7 @@ class TicketApiTest extends TestCase
         $this->createTicket(['subject' => 'Low ticket', 'priority' => 'low']);
 
         $response = $this->actingAs($this->agent)
-            ->getJson('/api/helpdesk/tickets?priority=urgent');
+            ->getJson('/api/v1/helpdesk/tickets?priority=urgent');
 
         $response->assertOk();
 
@@ -90,7 +103,7 @@ class TicketApiTest extends TestCase
         $this->createTicket(['subject' => 'Payment issue']);
 
         $response = $this->actingAs($this->agent)
-            ->getJson('/api/helpdesk/tickets?search=Login');
+            ->getJson('/api/v1/helpdesk/tickets?search=Login');
 
         $response->assertOk();
 
@@ -103,7 +116,7 @@ class TicketApiTest extends TestCase
     public function test_store_creates_ticket_with_valid_data(): void
     {
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'New ticket from API',
                 'description' => 'Detailed description of the issue.',
                 'category_id' => $this->category->id,
@@ -112,17 +125,18 @@ class TicketApiTest extends TestCase
                 'customer_name' => 'Test Customer',
             ]);
 
+        // Envelope ApiResponse: el recurso creado viene bajo 'data'.
         $response->assertCreated()
             ->assertJsonFragment(['subject' => 'New ticket from API'])
-            ->assertJsonStructure(['id', 'ticket_number', 'subject', 'priority', 'source']);
+            ->assertJsonStructure(['data' => ['id', 'ticketNumber', 'subject', 'priority', 'source']]);
 
-        $this->assertEquals('api', $response->json('source'));
+        $this->assertEquals('api', $response->json('data.source'));
     }
 
     public function test_store_returns_422_when_subject_missing(): void
     {
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'description' => 'Missing subject here.',
                 'category_id' => $this->category->id,
             ]);
@@ -134,7 +148,7 @@ class TicketApiTest extends TestCase
     public function test_store_returns_422_when_description_missing(): void
     {
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'Subject present',
                 'category_id' => $this->category->id,
             ]);
@@ -146,7 +160,7 @@ class TicketApiTest extends TestCase
     public function test_store_returns_422_when_category_id_missing(): void
     {
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'Subject present',
                 'description' => 'Description present.',
             ]);
@@ -158,7 +172,7 @@ class TicketApiTest extends TestCase
     public function test_store_returns_422_on_invalid_priority(): void
     {
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'Priority test',
                 'description' => 'Testing invalid priority.',
                 'category_id' => $this->category->id,
@@ -173,7 +187,7 @@ class TicketApiTest extends TestCase
     {
         // First creation — customer is auto-created
         $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'First contact',
                 'description' => 'First ticket for this customer.',
                 'category_id' => $this->category->id,
@@ -182,7 +196,7 @@ class TicketApiTest extends TestCase
 
         // Second creation with same email — reuses same customer
         $response = $this->actingAs($this->agent)
-            ->postJson('/api/helpdesk/tickets', [
+            ->postJson('/api/v1/helpdesk/tickets', [
                 'subject' => 'Second contact',
                 'description' => 'Second ticket for the same customer.',
                 'category_id' => $this->category->id,
@@ -203,11 +217,11 @@ class TicketApiTest extends TestCase
         $ticket = $this->createTicket(['subject' => 'Show me this ticket']);
 
         $response = $this->actingAs($this->agent)
-            ->getJson("/api/helpdesk/tickets/{$ticket->ticket_number}");
+            ->getJson("/api/v1/helpdesk/tickets/{$ticket->ticket_number}");
 
         $response->assertOk()
             ->assertJsonFragment([
-                'ticket_number' => $ticket->ticket_number,
+                'ticketNumber' => $ticket->ticket_number,
                 'subject' => 'Show me this ticket',
             ]);
     }
@@ -215,7 +229,7 @@ class TicketApiTest extends TestCase
     public function test_show_returns_404_for_unknown_ticket_number(): void
     {
         $response = $this->actingAs($this->agent)
-            ->getJson('/api/helpdesk/tickets/TCK-9999-99999');
+            ->getJson('/api/v1/helpdesk/tickets/TCK-9999-99999');
 
         $response->assertNotFound();
     }
@@ -227,7 +241,7 @@ class TicketApiTest extends TestCase
         $ticket = $this->createTicket(['subject' => 'Original subject', 'priority' => 'normal']);
 
         $response = $this->actingAs($this->agent)
-            ->putJson("/api/helpdesk/tickets/{$ticket->ticket_number}", [
+            ->putJson("/api/v1/helpdesk/tickets/{$ticket->ticket_number}", [
                 'subject' => 'Updated subject',
                 'priority' => 'high',
             ]);
@@ -244,7 +258,7 @@ class TicketApiTest extends TestCase
         $ticket = $this->createTicket();
 
         $response = $this->actingAs($this->agent)
-            ->putJson("/api/helpdesk/tickets/{$ticket->ticket_number}", [
+            ->putJson("/api/v1/helpdesk/tickets/{$ticket->ticket_number}", [
                 'priority' => 'extreme',
             ]);
 
@@ -255,7 +269,7 @@ class TicketApiTest extends TestCase
     public function test_update_returns_404_for_unknown_ticket(): void
     {
         $response = $this->actingAs($this->agent)
-            ->putJson('/api/helpdesk/tickets/TCK-0000-00000', [
+            ->putJson('/api/v1/helpdesk/tickets/TCK-0000-00000', [
                 'subject' => 'Ghost update',
             ]);
 

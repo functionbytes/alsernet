@@ -2,11 +2,12 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Contracts\TicketServiceContract;
+use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
 use Tests\TestCase;
 
@@ -24,7 +25,7 @@ use Tests\TestCase;
  */
 class HelpdeskTicketBridgeServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -118,6 +119,36 @@ class HelpdeskTicketBridgeServiceTest extends TestCase
         $resolved = $this->app->make(TicketServiceContract::class);
 
         $this->assertInstanceOf(HelpdeskTicketBridgeService::class, $resolved);
+    }
+
+    public function test_create_from_conversation_links_the_ticket_to_its_origin(): void
+    {
+        $this->skipUnlessHelpdeskDbAvailable();
+
+        $conversation = Conversation::factory()->create();
+
+        $result = $this->bridge->createFromConversation($conversation, ['subject' => 'Prueba vínculo']);
+
+        $this->assertNotNull($result);
+        $this->assertDatabaseHas('helpdesk_tickets', [
+            'id' => $result['id'],
+            'conversation_id' => $conversation->id,
+            'source' => 'conversation',
+        ], 'helpdesk');
+
+        // Navegación inversa: la conversación recupera su(s) ticket(s).
+        $linked = $this->bridge->getConversationTickets($conversation);
+        $this->assertInstanceOf(Collection::class, $linked);
+        $this->assertTrue($linked->contains('id', $result['id']));
+    }
+
+    public function test_get_conversation_tickets_empty_for_conversation_without_tickets(): void
+    {
+        $this->skipUnlessHelpdeskDbAvailable();
+
+        $conversation = Conversation::factory()->create();
+
+        $this->assertTrue($this->bridge->getConversationTickets($conversation)->isEmpty());
     }
 
     /**

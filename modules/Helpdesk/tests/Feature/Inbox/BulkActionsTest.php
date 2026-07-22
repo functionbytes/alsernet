@@ -30,6 +30,10 @@ class BulkActionsTest extends InboxTestCase
     public function test_bulk_assign_assigns_to_user(): void
     {
         $agent = User::factory()->create();
+        // El asignatario debe poder acceder al inbox: bulkAssign() salta a los
+        // agentes sin capacidad salvo que tengan helpdesk.manage (gate de seguridad).
+        $agent->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('helpdesk.manage', 'web'));
+
         $conversations = collect(range(1, 3))->map(fn () => $this->createConversation());
 
         $this->actingAs($this->manager)

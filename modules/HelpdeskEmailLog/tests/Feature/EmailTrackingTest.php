@@ -80,9 +80,12 @@ class EmailTrackingTest extends TestCase
 
     public function test_only_one_log_row_is_kept_per_email(): void
     {
+        // Delta y no total global: robusto a filas residuales en la BD compartida.
+        $before = EmailLog::query()->count();
+
         Mail::to('person@example.test')->send(new TrackedTestMail);
 
-        $this->assertDatabaseCount('email_logs', 1);
+        $this->assertSame($before + 1, EmailLog::query()->count());
     }
 
     public function test_body_is_not_stored_when_disabled(): void

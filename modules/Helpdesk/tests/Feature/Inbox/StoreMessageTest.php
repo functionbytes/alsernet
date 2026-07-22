@@ -5,7 +5,7 @@ namespace Modules\Helpdesk\Tests\Feature\Inbox;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
-use Modules\Helpdesk\Events\ConversationItemCreated;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 
 class StoreMessageTest extends InboxTestCase
 {
@@ -92,7 +92,7 @@ class StoreMessageTest extends InboxTestCase
 
     public function test_store_message_dispatches_conversation_item_created_event(): void
     {
-        Event::fake([ConversationItemCreated::class]);
+        Event::fake([ConversationMessageCreated::class]);
 
         $conversation = $this->createConversation();
 
@@ -102,6 +102,6 @@ class StoreMessageTest extends InboxTestCase
             ])
             ->assertCreated();
 
-        Event::assertDispatched(ConversationItemCreated::class);
+        Event::assertDispatched(ConversationMessageCreated::class);
     }
 }

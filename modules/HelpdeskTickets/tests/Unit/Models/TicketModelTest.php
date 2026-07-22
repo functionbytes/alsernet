@@ -30,9 +30,11 @@ class TicketModelTest extends TestCase
         $this->assertNotEmpty($model->getFillable());
     }
 
-    public function test_title_in_fillable(): void
+    public function test_subject_in_fillable(): void
     {
+        // The tickets table stores the title in the `subject` column; the model
+        // never had a `title` column (see helpdesk_tickets schema).
         $model = new Ticket;
-        $this->assertContains('title', $model->getFillable());
+        $this->assertContains('subject', $model->getFillable());
     }
 }

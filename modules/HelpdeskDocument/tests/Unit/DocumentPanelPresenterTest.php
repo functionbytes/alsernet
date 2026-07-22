@@ -119,7 +119,7 @@ class DocumentPanelPresenterTest extends TestCase
             'id', 'uid', 'order_reference', 'type_label',
             'status_key', 'status_label', 'file_count', 'created_human',
             'ago_human', 'group', 'description', 'file_total',
-            'file_uploaded', 'progress_pct', 'progress_accent',
+            'file_uploaded', 'progress_pct',
         ];
 
         foreach ($expectedKeys as $key) {
@@ -190,25 +190,15 @@ class DocumentPanelPresenterTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Progress accent colour
+    // Progress accent — el color ya no viaja en el view-model: la vista aplica
+    // la clase CSS `docs-card-prog-fill {group}` a partir de `group`.
     // -------------------------------------------------------------------------
 
-    public function test_progress_accent_is_green_for_approved_group(): void
+    public function test_list_does_not_expose_hardcoded_accent_colors(): void
     {
         $item = $this->listOne(['status_key' => 'approved']);
-        $this->assertSame('#90bb13', $item['progress_accent']);
-    }
-
-    public function test_progress_accent_is_red_for_rejected_group(): void
-    {
-        $item = $this->listOne(['status_key' => 'rejected']);
-        $this->assertSame('#FA896B', $item['progress_accent']);
-    }
-
-    public function test_progress_accent_is_amber_for_pending_group(): void
-    {
-        $item = $this->listOne(['status_key' => 'pending']);
-        $this->assertSame('#FEC90F', $item['progress_accent']);
+        $this->assertArrayNotHasKey('progress_accent', $item);
+        $this->assertSame('approved', $item['group']);
     }
 
     // -------------------------------------------------------------------------

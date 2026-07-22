@@ -19,7 +19,30 @@ class SocialInboxApiTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
-        $this->user->givePermissionTo('helpdesksocial.view');
+        // Las acciones de escritura (reply/spam/escalate/assign/bulk) exigen
+        // `manage`; la lectura sigue con `view`. El usuario de estas pruebas es
+        // un agente completo, así que recibe ambos.
+        $this->user->givePermissionTo(['helpdesksocial.view', 'helpdesksocial.manage']);
+    }
+
+    public function test_view_only_user_cannot_write(): void
+    {
+        $viewer = User::factory()->create();
+        $viewer->givePermissionTo('helpdesksocial.view');
+
+        $account = SocialAccount::factory()->create();
+        $comment = SocialComment::factory()->create(['social_account_id' => $account->id]);
+
+        // Puede leer…
+        $this->actingAs($viewer)->getJson('/api/helpdesk/social/inbox')->assertOk();
+
+        // …pero no marcar spam, escalar ni asignar (antes bastaba `view`).
+        $this->actingAs($viewer)
+            ->postJson("/api/helpdesk/social/inbox/{$comment->id}/spam")
+            ->assertForbidden();
+        $this->actingAs($viewer)
+            ->postJson("/api/helpdesk/social/inbox/{$comment->id}/escalate")
+            ->assertForbidden();
     }
 
     public function test_can_list_inbox_comments(): void

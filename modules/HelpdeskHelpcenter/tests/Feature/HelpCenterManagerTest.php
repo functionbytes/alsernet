@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskHelpcenter\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterCategory;
@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class HelpCenterManagerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -44,7 +44,13 @@ class HelpCenterManagerTest extends TestCase
             'helpdesk.helpcenter.categories.delete',
         ]);
 
+        // Sin permisos de manage/categorias a proposito (ver
+        // test_regular_agent_cannot_view_helpcenter_index y los tests de
+        // "sin permiso de manage"): representa un agente que solo puede
+        // buscar articulos (ej. para adjuntarlos a una respuesta), no
+        // administrar el Centro de Ayuda.
         $this->agent = User::factory()->create();
+        $this->agent->givePermissionTo('helpdesk.helpcenter.articles.view');
     }
 
     // ─── index ────────────────────────────────────────────────────────────────

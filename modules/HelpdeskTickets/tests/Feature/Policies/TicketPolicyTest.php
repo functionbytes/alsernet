@@ -3,15 +3,16 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Policies;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Tests\TestCase;
 
 class TicketPolicyTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -22,6 +23,10 @@ class TicketPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // TicketPolicy usa hasPermissionTo(), que LANZA PermissionDoesNotExist
+        // si el permiso no está en BD — la BD de test arranca sin permisos.
+        $this->seed(HelpdeskTicketsPermissionsSeeder::class);
 
         $this->openStatus = TicketStatus::firstOrCreate(
             ['slug' => 'open'],

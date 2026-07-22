@@ -23,6 +23,8 @@ class ConversationFactory extends Factory
             'closed_at' => null,
             'first_response_at' => null,
             'last_message_at' => fake()->dateTimeBetween('-7 days', 'now'),
+            // Ventana de servicio de WhatsApp abierta por defecto en los tests.
+            'last_customer_message_at' => now(),
             'tags' => null,
         ];
     }

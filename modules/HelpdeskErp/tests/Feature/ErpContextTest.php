@@ -190,6 +190,15 @@ class ErpContextTest extends TestCase
             ->assertJsonPath('data.oracle_reachable', false);
     }
 
+    public function test_health_returns_403_without_permission(): void
+    {
+        $noPermUser = User::factory()->create();
+
+        $this->actingAs($noPermUser, 'sanctum')
+            ->getJson('/api/helpdeskErp/health')
+            ->assertForbidden();
+    }
+
     /* ── Orders loading flag ──────────────────────────────────────────────── */
 
     public function test_orders_loading_true_when_meta_loading_is_true(): void

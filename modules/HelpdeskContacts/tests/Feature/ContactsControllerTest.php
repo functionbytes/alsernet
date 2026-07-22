@@ -146,6 +146,19 @@ class ContactsControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_show_falls_back_to_whatsapp_phone_when_phone_is_missing(): void
+    {
+        $customer = Customer::factory()->create([
+            'phone' => null,
+            'whatsapp_phone' => '34600111222',
+        ]);
+
+        $this->actingAs($this->user)
+            ->get('/panel/contacts/'.$customer->id)
+            ->assertOk()
+            ->assertSee('34600111222');
+    }
+
     // ── bulkAction (validación movida a BulkContactActionRequest) ────────────
 
     public function test_bulk_action_forbidden_without_update_permission(): void

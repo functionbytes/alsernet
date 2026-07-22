@@ -2,14 +2,14 @@
 
 namespace Modules\HelpdeskHelpcenter\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterCategory;
 use Tests\TestCase;
 
 class HelpCenterPublicTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature\Jobs;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\HelpdeskTickets\Jobs\ProcessRecurringTicketsJob;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -10,7 +10,7 @@ use Tests\TestCase;
 
 class ProcessRecurringTicketsJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

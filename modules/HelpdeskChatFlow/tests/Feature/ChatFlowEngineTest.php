@@ -4,6 +4,8 @@ namespace Modules\HelpdeskChatFlow\Tests\Feature;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Mockery;
 use Mockery\MockInterface;
 use Modules\Helpdesk\Models\Conversation;
@@ -14,6 +16,7 @@ use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\ChatFlowAiResponder;
 use Modules\HelpdeskChatFlow\Services\ChatFlowEngine;
 use Modules\HelpdeskChatFlow\Services\ChatFlowHandoffSummary;
+use Modules\HelpdeskChatFlow\Services\ChatFlowIdentityOtp;
 use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowNodeExecutor;
 use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
@@ -50,6 +53,7 @@ class ChatFlowEngineTest extends TestCase
             new ChatFlowSentiment(null),
             new ChatFlowLocalizer(null),
             Mockery::mock(ChatFlowHandoffSummary::class),
+            new ChatFlowIdentityOtp,
         );
     }
 
@@ -104,6 +108,34 @@ class ChatFlowEngineTest extends TestCase
         $flow->trigger_conditions = ['ab_variant_id' => 999999, 'ab_split' => 0];
 
         $this->assertSame($flow, $this->makeEngine()->pickAbVariant($flow));
+    }
+
+    /**
+     * Regresión: antes el brazo A/B se re-tiraba con random_int() en cada
+     * evaluación, así que una misma conversación podía ver base y luego variante
+     * (contaminando la estadística). Ahora el bucket es determinista por
+     * conversación: repetir la evaluación devuelve siempre el mismo brazo.
+     */
+    public function test_pick_ab_variant_is_deterministic_per_conversation(): void
+    {
+        $flow = new ChatFlow;
+        $flow->id = 1;
+        $flow->trigger_conditions = ['ab_variant_id' => 999999, 'ab_split' => 50];
+
+        // Elegir una conversación cuyo bucket caiga en el brazo base (> split)
+        // para no tocar la BD (ChatFlow::find del variante) y mantener el test unitario.
+        $conversation = new Conversation;
+        $conversation->id = 1;
+        while (((crc32($flow->id.':'.$conversation->id) % 100) + 1) <= 50) {
+            $conversation->id++;
+        }
+
+        $engine = $this->makeEngine();
+
+        // Con random_int() esto fallaría ~1-0.5^40 de las veces; ahora es estable.
+        for ($i = 0; $i < 40; $i++) {
+            $this->assertSame($flow, $engine->pickAbVariant($flow, $conversation));
+        }
     }
 
     // ─── processMessage ────────────────────────────────────────────────────────
@@ -210,8 +242,36 @@ class ChatFlowEngineTest extends TestCase
         Event::assertDispatched(ChatFlowCompleted::class);
     }
 
-    public function test_identification_sets_customer_context_values_on_success(): void
+    public function test_identification_sets_customer_context_values_when_otp_disabled(): void
     {
+        // require_otp=false: flujo puramente informativo, sin verificación.
+        $customerData = ['name' => 'Juan Lopez', 'email' => 'juan@test.com'];
+
+        $identityResolver = Mockery::mock(CustomerIdentityResolver::class);
+        $identityResolver->shouldReceive('resolve')->once()->andReturn($customerData);
+
+        $engine = $this->makeEngine(identityResolver: $identityResolver);
+
+        $flow = new ChatFlow;
+        $flow->nodes = [
+            ['id' => 'id_node', 'type' => 'identify_customer', 'data' => ['require_otp' => false]],
+        ];
+
+        $session = $this->makeSessionStub($flow, ['current_node_id' => 'id_node']);
+
+        $engine->processMessage($session, 'juan@test.com');
+
+        $ctx = $session->getContextStore();
+        $this->assertSame('Juan Lopez', $ctx['customer_name']);
+        $this->assertTrue($ctx['customer_identified']);
+        $this->assertSame('juan@test.com', $ctx['customer_email']);
+    }
+
+    public function test_identification_requires_otp_by_default_before_marking_identified(): void
+    {
+        // Por defecto (require_otp implícito): resolver al cliente NO lo marca
+        // identificado; se envía un código y se espera a que lo introduzca.
+        Mail::fake();
         $customerData = ['name' => 'Juan Lopez', 'email' => 'juan@test.com'];
 
         $identityResolver = Mockery::mock(CustomerIdentityResolver::class);
@@ -223,15 +283,66 @@ class ChatFlowEngineTest extends TestCase
         $flow->nodes = [
             ['id' => 'id_node', 'type' => 'identify_customer', 'data' => []],
         ];
+        /** @var MockInterface&HasMany $hasManyMock */
+        $hasManyMock = Mockery::mock(HasMany::class);
+        $hasManyMock->shouldReceive('create')->andReturn(null);
+        $conversation = Mockery::mock(Conversation::class)->makePartial();
+        $conversation->shouldReceive('items')->andReturn($hasManyMock);
 
-        $session = $this->makeSessionStub($flow, ['current_node_id' => 'id_node']);
+        $session = $this->makeSessionStub($flow, [
+            'current_node_id' => 'id_node',
+            'conversation' => $conversation,
+        ]);
 
         $engine->processMessage($session, 'juan@test.com');
 
         $ctx = $session->getContextStore();
-        $this->assertSame('Juan Lopez', $ctx['customer_name']);
-        $this->assertTrue($ctx['customer_identified']);
+        // Aún NO identificado: hay un OTP pendiente y el código se envió fuera
+        // de banda (al email), nunca por el chat.
+        $this->assertArrayNotHasKey('customer_identified', $ctx);
+        $this->assertTrue($ctx['_otp_pending'] ?? false);
+        $this->assertNotEmpty($ctx['_otp_hash'] ?? null);
+    }
+
+    public function test_identification_marks_identified_after_correct_otp(): void
+    {
+        Mail::fake();
+        $customerData = ['name' => 'Juan Lopez', 'email' => 'juan@test.com'];
+
+        $identityResolver = Mockery::mock(CustomerIdentityResolver::class);
+        $identityResolver->shouldReceive('resolve')->once()->andReturn($customerData);
+
+        $engine = $this->makeEngine(identityResolver: $identityResolver);
+
+        $flow = new ChatFlow;
+        $flow->nodes = [
+            ['id' => 'id_node', 'type' => 'identify_customer', 'data' => []],
+        ];
+        /** @var MockInterface&HasMany $hasManyMock */
+        $hasManyMock = Mockery::mock(HasMany::class);
+        $hasManyMock->shouldReceive('create')->andReturn(null);
+        $conversation = Mockery::mock(Conversation::class)->makePartial();
+        $conversation->shouldReceive('items')->andReturn($hasManyMock);
+
+        $session = $this->makeSessionStub($flow, [
+            'current_node_id' => 'id_node',
+            'conversation' => $conversation,
+        ]);
+
+        // 1) Identificación → envía OTP.
+        $engine->processMessage($session, 'juan@test.com');
+
+        // Recuperar el código real desdel hash es imposible; en su lugar se
+        // fuerza un hash conocido en el contexto y se verifica la mecánica.
+        $session->setContextValue('_otp_hash', Hash::make('123456'));
+
+        // 2) Cliente introduce el código correcto → identificado.
+        $engine->processMessage($session, '123456');
+
+        $ctx = $session->getContextStore();
+        $this->assertTrue($ctx['customer_identified'] ?? false);
         $this->assertSame('juan@test.com', $ctx['customer_email']);
+        $this->assertNull($ctx['_otp_pending']);
     }
 
     // ─── node timeout ───────────────────────────────────────────────────────────

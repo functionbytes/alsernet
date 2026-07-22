@@ -3,16 +3,20 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Models\TicketTimeEntry;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class TimeTrackingTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $agent;
 
@@ -28,7 +32,10 @@ class TimeTrackingTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
+        // Las rutas manager.* llevan middleware role:super-admin|super-settings.
+        $this->seedHelpdeskRoles();
         $this->agent = User::factory()->create();
+        $this->agent->assignRole('super-settings');
 
         $this->status = TicketStatus::firstOrCreate(
             ['slug' => 'open'],

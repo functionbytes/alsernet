@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskTickets\Tests\Unit;
 
 use Carbon\Carbon;
-use Modules\Helpdesk\Services\NotificationService;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\SlaService;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +11,8 @@ class SlaServiceTest extends TestCase
 {
     private function makeSlaService(): SlaService
     {
-        $notificationService = $this->createMock(NotificationService::class);
 
-        return new SlaService($notificationService);
+        return new SlaService;
     }
 
     /**

@@ -10,11 +10,13 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Setting;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\SeedsCorePermissions;
 use Tests\TestCase;
 
 class TranslateItemControllerTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsCorePermissions;
 
     /** @var string[] */
     protected $connectionsToTransact = ['helpdesk'];
@@ -26,7 +28,10 @@ class TranslateItemControllerTest extends TestCase
         Http::preventStrayRequests();
 
         Permission::firstOrCreate(['name' => 'helpdesk-translate.use', 'guard_name' => 'web']);
-        Permission::firstOrCreate(['name' => 'helpdesk.conversations.view', 'guard_name' => 'web']);
+
+        // ConversationPolicy consulta hasPermissionTo('helpdesk.manage') etc.,
+        // que LANZA si el permiso no existe — sembrar el mínimo core.
+        $this->seedCorePermissions();
 
         // Use LibreTranslate so we can fake HTTP; avoid needing a DeepL key.
         Setting::set('helpdesktranslate.provider', 'libretranslate', 'helpdesktranslate');
@@ -75,6 +80,10 @@ class TranslateItemControllerTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('helpdesk-translate.use');
         $user->givePermissionTo('helpdesk.conversations.view');
+        // ConversationPolicy::canAccessInbox exige helpdesk.manage o una fila
+        // AgentInboxCapacity del inbox del ítem; aquí se prueba el flujo de
+        // traducción, no el scoping de inboxes.
+        $user->givePermissionTo('helpdesk.manage');
 
         $item = $this->createConversationItem();
 
@@ -91,6 +100,10 @@ class TranslateItemControllerTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('helpdesk-translate.use');
         $user->givePermissionTo('helpdesk.conversations.view');
+        // ConversationPolicy::canAccessInbox exige helpdesk.manage o una fila
+        // AgentInboxCapacity del inbox del ítem; aquí se prueba el flujo de
+        // traducción, no el scoping de inboxes.
+        $user->givePermissionTo('helpdesk.manage');
 
         $item = $this->createConversationItem('Hello, I need help with my order.');
 
@@ -120,6 +133,10 @@ class TranslateItemControllerTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('helpdesk-translate.use');
         $user->givePermissionTo('helpdesk.conversations.view');
+        // ConversationPolicy::canAccessInbox exige helpdesk.manage o una fila
+        // AgentInboxCapacity del inbox del ítem; aquí se prueba el flujo de
+        // traducción, no el scoping de inboxes.
+        $user->givePermissionTo('helpdesk.manage');
 
         $item = $this->createConversationItem('Bonjour, j\'ai besoin d\'aide.');
 
@@ -155,6 +172,10 @@ class TranslateItemControllerTest extends TestCase
         $user = User::factory()->create();
         $user->givePermissionTo('helpdesk-translate.use');
         $user->givePermissionTo('helpdesk.conversations.view');
+        // ConversationPolicy::canAccessInbox exige helpdesk.manage o una fila
+        // AgentInboxCapacity del inbox del ítem; aquí se prueba el flujo de
+        // traducción, no el scoping de inboxes.
+        $user->givePermissionTo('helpdesk.manage');
 
         // Create an item with an explicitly empty body.
         $status = $this->ensureOpenStatus();

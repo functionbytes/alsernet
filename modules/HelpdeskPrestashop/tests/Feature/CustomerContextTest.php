@@ -216,7 +216,7 @@ class CustomerContextTest extends TestCase
         $user = $this->userWithPermission('helpdeskprestashop.orders.view');
 
         $response = $this->actingAs($user)
-            ->getJson('/api/helpdeskprestashop/orders/999/detail');
+            ->getJson('/api/helpdeskprestashop/orders/999/detail?customer_email=juan@example.com');
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -244,6 +244,7 @@ class CustomerContextTest extends TestCase
 
         $response = $this->actingAs($user)
             ->postJson('/api/helpdeskprestashop/orders/999/start-return', [
+                'customer_email' => 'juan@example.com',
                 'items' => [
                     ['order_detail_id' => 101, 'quantity' => 1, 'reason' => 'Producto defectuoso'],
                 ],
@@ -306,6 +307,7 @@ class CustomerContextTest extends TestCase
         $this->actingAs($user)
             ->withHeader('Idempotency-Key', $clientKey)
             ->postJson('/api/helpdeskprestashop/orders/999/start-return', [
+                'customer_email' => 'juan@example.com',
                 'items' => [
                     ['order_detail_id' => 101, 'quantity' => 1],
                 ],
@@ -333,6 +335,7 @@ class CustomerContextTest extends TestCase
         $user = $this->userWithPermission('helpdeskprestashop.orders.return');
 
         $payload = [
+            'customer_email' => 'juan@example.com',
             'items' => [
                 ['order_detail_id' => 101, 'quantity' => 1, 'reason' => 'X'],
             ],

@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Listeners\SendCustomerReplyNotification;
@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class SendCustomerReplyNotificationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

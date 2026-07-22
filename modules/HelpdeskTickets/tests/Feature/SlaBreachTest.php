@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use Carbon\Carbon;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
@@ -15,7 +15,9 @@ use Tests\TestCase;
 
 class SlaBreachTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private Customer $customer;
 

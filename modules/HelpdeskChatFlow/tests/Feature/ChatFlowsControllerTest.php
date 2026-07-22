@@ -25,7 +25,13 @@ class ChatFlowsControllerTest extends TestCase
 
         $this->seed(ChatFlowPermissionsSeeder::class);
 
-        $superAdmin = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
+        // edit() consulta User::role(['administrative','manager','settings','super-settings'])
+        // para poblar el selector de agentes; el scope role() de Spatie revienta si
+        // alguno no existe, así que sembramos los cuatro (en producción ya existen).
+        foreach (['administrative', 'manager', 'settings', 'super-settings'] as $roleName) {
+            Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+        }
+        $superAdmin = Role::findByName('super-settings', 'web');
 
         $this->user = User::factory()->create();
         $this->user->assignRole($superAdmin);
@@ -78,12 +84,18 @@ class ChatFlowsControllerTest extends TestCase
 
     // ─── create ────────────────────────────────────────────────────────────────
 
-    public function test_create_returns_ok_for_authorized_user(): void
+    public function test_create_generates_draft_and_redirects_to_editor(): void
     {
         $this->requireHelpdeskDb();
         $this->actingAs($this->user)
             ->get(route('chatflow.create'))
-            ->assertOk();
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('helpdesk_chat_flows', [
+            'name' => 'Nuevo flow',
+            'status' => 'draft',
+            'created_by' => $this->user->id,
+        ], 'helpdesk');
     }
 
     public function test_create_requires_authentication(): void
@@ -102,6 +114,13 @@ class ChatFlowsControllerTest extends TestCase
             'name' => 'Flow de bienvenida',
             'trigger_type' => 'conversation_start',
             'status' => 'draft',
+            'nodes' => [
+                ['id' => 'n1', 'type' => 'start', 'config' => []],
+                ['id' => 'n2', 'type' => 'end', 'config' => []],
+            ],
+            'edges' => [
+                ['source' => 'n1', 'target' => 'n2'],
+            ],
         ];
 
         $response = $this->actingAs($this->user)

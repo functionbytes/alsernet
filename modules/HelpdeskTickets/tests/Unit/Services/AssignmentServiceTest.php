@@ -5,7 +5,6 @@ namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
-use Modules\Helpdesk\Services\NotificationService;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Tests\TestCase;
@@ -20,9 +19,8 @@ class AssignmentServiceTest extends TestCase
 {
     private function makeService(): AssignmentService
     {
-        $notificationService = $this->createMock(NotificationService::class);
 
-        return new AssignmentService($notificationService);
+        return new AssignmentService;
     }
 
     // ─── autoAssignByRoundRobin ────────────────────────────────────────────────

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Tests\Unit\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -61,10 +62,13 @@ class RecordTicketHistoryListenerTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
+        $customer = Customer::factory()->create();
+
         // Insert a minimal ticket directly
         $ticketId = DB::connection('helpdesk')->table('helpdesk_tickets')->insertGetId([
             'ticket_number' => 'TKT-HIST-'.uniqid(),
             'subject' => 'History listener test',
+            'customer_id' => $customer->id,
             'priority' => 'normal',
             'source' => 'web',
             'created_at' => now()->toDateTimeString(),
@@ -98,16 +102,17 @@ class RecordTicketHistoryListenerTest extends TestCase
         $history = DB::connection('helpdesk')
             ->table('helpdesk_ticket_histories')
             ->where('ticket_id', $ticketId)
-            ->where('action', 'ticket_created')
+            ->where('action_type', 'ticket_created')
             ->first();
 
         $this->assertNotNull($history);
-        $this->assertEquals('ticket_created', $history->action);
-        $this->assertEquals('Ticket creado', $history->description);
+        $this->assertEquals('ticket_created', $history->action_type);
+        $this->assertEquals('Ticket creado', json_decode($history->metadata, true)['description']);
 
         // Cleanup
         DB::connection('helpdesk')->table('helpdesk_ticket_histories')->where('ticket_id', $ticketId)->delete();
         DB::connection('helpdesk')->table('helpdesk_tickets')->where('id', $ticketId)->delete();
+        $customer->forceDelete();
     }
 
     public function test_listener_ignores_unknown_event_types(): void

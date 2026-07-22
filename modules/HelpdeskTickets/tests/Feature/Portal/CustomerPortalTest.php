@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature\Portal;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Modules\Helpdesk\Models\Customer;
@@ -13,7 +13,9 @@ use Tests\TestCase;
 
 class CustomerPortalTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private TicketStatus $status;
 

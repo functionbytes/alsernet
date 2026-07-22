@@ -6,12 +6,13 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Models\ConversationStatus;
-use Spatie\Permission\Models\Role;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 abstract class HelpdeskTestCase extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -25,7 +26,7 @@ abstract class HelpdeskTestCase extends TestCase
 
         $this->seed(PermissionsSeeder::class);
 
-        Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
+        $this->seedHelpdeskRoles();
 
         $this->openStatus = ConversationStatus::firstOrCreate(
             ['slug' => 'open'],

@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Jobs;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -12,7 +12,6 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\SlaService;
-use Modules\HelpdeskTickets\Services\TicketNotificationService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Tests\TestCase;
 
@@ -64,7 +63,7 @@ class TestableFetchTicketEmailsJob extends FetchTicketEmailsJob
 
 class FetchTicketEmailsJobTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -94,10 +93,9 @@ class FetchTicketEmailsJobTest extends TestCase
 
     private function makeTicketService(): TicketService
     {
-        $notificationService = $this->createMock(TicketNotificationService::class);
-        $slaService = new SlaService($notificationService);
+        $slaService = new SlaService;
 
-        return new TicketService($slaService, $notificationService);
+        return new TicketService($slaService);
     }
 
     private function makeJob(): TestableFetchTicketEmailsJob
@@ -228,7 +226,7 @@ class FetchTicketEmailsJobTest extends TestCase
 
     public function test_detect_priority_urgent_keyword(): void
     {
-        $this->assertSame('high', $this->makeJob()->callDetectPriority('URGENT: Help needed'));
+        $this->assertSame('urgent', $this->makeJob()->callDetectPriority('URGENT: Help needed'));
     }
 
     public function test_detect_priority_low_keyword(): void

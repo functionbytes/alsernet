@@ -3,9 +3,10 @@
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Modules\Helpdesk\Services\NotificationService;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Models\SlaPolicy;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -20,6 +21,10 @@ use Tests\TestCase;
  */
 class SlaServiceTest extends TestCase
 {
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+
     private function helpdeskConnectionAvailable(): bool
     {
         try {
@@ -33,9 +38,8 @@ class SlaServiceTest extends TestCase
 
     private function makeService(): SlaService
     {
-        $notificationService = $this->createMock(NotificationService::class);
 
-        return new SlaService($notificationService);
+        return new SlaService;
     }
 
     /**
@@ -151,11 +155,11 @@ class SlaServiceTest extends TestCase
 
         Event::fake([SlaBreached::class]);
 
-        $notificationService = $this->createMock(NotificationService::class);
-        $service = new SlaService($notificationService);
+        $service = new SlaService;
 
         // Create a ticket with a past due date that has not been marked breached
         DB::connection('helpdesk')->table('helpdesk_tickets')->insert([
+            'customer_id' => Customer::factory()->create()->id,
             'ticket_number' => 'TKT-TEST-BREACH-'.uniqid(),
             'subject' => 'SLA breach test',
             'priority' => 'high',
@@ -171,12 +175,6 @@ class SlaServiceTest extends TestCase
 
         $this->assertGreaterThanOrEqual(1, $breached->count());
         Event::assertDispatched(SlaBreached::class);
-
-        // Cleanup
-        DB::connection('helpdesk')
-            ->table('helpdesk_tickets')
-            ->where('subject', 'SLA breach test')
-            ->delete();
     }
 
     public function test_check_sla_breach_skips_paused_tickets(): void
@@ -213,6 +211,7 @@ class SlaServiceTest extends TestCase
 
         // Insert a minimal ticket directly
         $id = DB::connection('helpdesk')->table('helpdesk_tickets')->insertGetId([
+            'customer_id' => Customer::factory()->create()->id,
             'ticket_number' => 'TKT-PAUSE-'.uniqid(),
             'subject' => 'Pause SLA test',
             'priority' => 'normal',
@@ -227,8 +226,5 @@ class SlaServiceTest extends TestCase
         $service->pauseSla($ticket);
 
         $this->assertNotNull($ticket->fresh()->sla_paused_at);
-
-        // Cleanup
-        DB::connection('helpdesk')->table('helpdesk_tickets')->where('id', $id)->delete();
     }
 }

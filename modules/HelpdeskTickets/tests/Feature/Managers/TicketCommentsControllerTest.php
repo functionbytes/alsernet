@@ -3,20 +3,24 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\Queue;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class TicketCommentsControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    use SeedsHelpdeskRoles;
+    // mariadb y helpdesk apuntan a la misma BD: PDO compartido evita
+    // auto-interbloqueos de FK y garantiza rollback de AMBAS conexiones
+    // (antes solo se transaccionaba mariadb y los tickets se filtraban).
+    use SharesHelpdeskPdo;
 
     private User $agent;
 
@@ -28,7 +32,12 @@ class TicketCommentsControllerTest extends TestCase
     {
         parent::setUp();
 
+        // La BD de test arranca sin roles; las rutas manager llevan role: middleware.
+        $this->seedHelpdeskRoles();
+        $this->seed(HelpdeskTicketsPermissionsSeeder::class);
+
         $this->agent = User::factory()->create();
+        $this->agent->assignRole('super-settings');
 
         $this->agent->givePermissionTo(['helpdesk.tickets.view', 'helpdesk.tickets.update']);
 
@@ -47,10 +56,8 @@ class TicketCommentsControllerTest extends TestCase
     {
         Queue::fake();
 
-        $ticket = $this->createTicket(['customer_id' => null]);
-
-        // Provide a customer_id to trigger email
-        $ticket->update(['customer_id' => 1]);
+        // Real customer with an email so the reply notification resolves a recipient.
+        $ticket = $this->createTicket();
 
         $this->actingAs($this->agent)
             ->postJson(route('manager.helpdesk.tickets.comments.store', $ticket), [
@@ -73,7 +80,8 @@ class TicketCommentsControllerTest extends TestCase
     {
         Queue::fake();
 
-        $ticket = $this->createTicket(['customer_id' => 1]);
+        // Cliente real del setUp — un id hardcodeado rompe el FK en una BD limpia.
+        $ticket = $this->createTicket(['customer_id' => $this->customer->id]);
 
         $this->actingAs($this->agent)
             ->postJson(route('manager.helpdesk.tickets.comments.store', $ticket), [
