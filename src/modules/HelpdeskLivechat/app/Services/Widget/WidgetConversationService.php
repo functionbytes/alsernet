@@ -38,7 +38,7 @@ class WidgetConversationService
             throw new \RuntimeException('Invalid widget token');
         }
 
-        return DB::connection('helpdesk')->transaction(function () use ($web, $data) {
+        $result = DB::connection('helpdesk')->transaction(function () use ($web, $data) {
             $inbox = Inbox::firstOrCreate(
                 ['channel_type' => 'web', 'channel_id' => $web->id],
                 [
@@ -176,21 +176,12 @@ class WidgetConversationService
             }
             // Track widget session token so the agent panel can show technology
             // (IP, browser, OS, country) and visited pages for this conversation.
-            // Also link the WidgetSession to the customer so analytics works.
+            // The heartbeat that guarantees the session row exists (and the
+            // customer link that depends on it) runs AFTER the transaction —
+            // see below — so a synchronous session upsert doesn't extend the
+            // lifetime of this write transaction.
             if (! empty($data['widget_session_token'])) {
-                $sessionToken = (string) $data['widget_session_token'];
-                $metadata['widget_session_token'] = $sessionToken;
-
-                $req = request();
-                $referer = $req->header('Referer') ?? $req->header('Origin') ?? 'https://unknown';
-
-                // Guarantee the session exists (heartbeat may lose the race with conversation creation).
-                $this->sessionService->heartbeat($sessionToken, $referer, null, $req);
-
-                WidgetSession::query()
-                    ->where('session_token', $sessionToken)
-                    ->whereNull('customer_id')
-                    ->update(['customer_id' => $customer->id]);
+                $metadata['widget_session_token'] = (string) $data['widget_session_token'];
             }
 
             $conversation = Conversation::create([
@@ -238,6 +229,27 @@ class WidgetConversationService
                 'reused' => false,
             ];
         });
+
+        // Post-commit work: guarantee the WidgetSession row exists (the widget
+        // heartbeat may lose the race with conversation creation) and link it
+        // to the resolved customer so analytics and the agent panel work.
+        // Kept OUT of the transaction above: heartbeat() is a synchronous
+        // upsert (plus optional geo job dispatch) that used to run inside the
+        // write transaction and needlessly extended its lock lifetime.
+        if (! $result['reused'] && ! empty($data['widget_session_token'])) {
+            $sessionToken = (string) $data['widget_session_token'];
+            $req = request();
+            $referer = $req->header('Referer') ?? $req->header('Origin') ?? 'https://unknown';
+
+            $this->sessionService->heartbeat($sessionToken, $referer, null, $req);
+
+            WidgetSession::query()
+                ->where('session_token', $sessionToken)
+                ->whereNull('customer_id')
+                ->update(['customer_id' => $result['customer_id']]);
+        }
+
+        return $result;
     }
 
     /**
@@ -370,7 +382,11 @@ class WidgetConversationService
     public function getConversation(int $conversationId, int $customerId): array
     {
         $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
-        $conversation->load('customer', 'status');
+        $conversation->load('customer', 'status', 'assignee');
+
+        // Only non-sensitive assignee data crosses to the (public) widget:
+        // display name and avatar, never email/phone/roles.
+        $assignee = $conversation->assignee;
 
         return [
             'id' => $conversation->id,
@@ -387,7 +403,11 @@ class WidgetConversationService
                 'name' => $conversation->customer->name,
                 'email' => $conversation->customer->email,
             ] : null,
-            'agent' => null,
+            'agent' => $assignee ? [
+                'id' => $assignee->id,
+                'name' => trim(($assignee->firstname ?? '').' '.($assignee->lastname ?? '')) ?: 'Agente',
+                'avatar' => method_exists($assignee, 'getAvatarUrl') ? $assignee->getAvatarUrl() : null,
+            ] : null,
         ];
     }
 

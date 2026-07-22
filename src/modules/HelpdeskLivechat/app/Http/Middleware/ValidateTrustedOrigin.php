@@ -12,6 +12,17 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Validate that the widget request originates from a trusted domain.
  *
+ * SECURITY NOTE — this is NOT an authentication control. The Origin/Referer
+ * headers it inspects are set freely by non-browser clients (curl, scripts),
+ * so a forged header passes this check trivially; and when no trusted_domains
+ * are configured the middleware allows every origin (permissive mode, kept
+ * for retro-compatibility). Treat it purely as a browser-side abuse dampener
+ * (blocks casual embedding of a store's widget on foreign sites). Actual
+ * abuse control on the public widget endpoints relies on the per-IP
+ * `throttle:` middleware plus the per-website_token quota enforced by
+ * ThrottleByWebsiteToken; per-conversation access relies on the conversation
+ * token (VerifiesConversationToken) and widget HMAC (VerifyWidgetHmac).
+ *
  * Per-inbox trusted_domains (stored on helpdesk_channel_webs) take precedence.
  * Falls back to the global livechat.trusted_domains setting.
  * When no domains are configured the middleware is permissive for retro-compatibility.

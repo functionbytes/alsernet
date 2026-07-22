@@ -3,17 +3,24 @@
 namespace Modules\HelpdeskChatFlow\Services\Concerns;
 
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 
 /**
  * SSRF protection shared by services that fetch attacker-influenced URLs (the
- * http_request node and the inbound voice-note download). Validates the host
- * against private/reserved IP ranges and pins the connection to the resolved IP
- * so a DNS-rebinding response can't steer the request to an internal address.
+ * http_request node and the inbound voice-note download).
+ *
+ * Host/IP validation is delegated to the core guard
+ * (Modules\Helpdesk\Support\OutboundUrlGuard::publicIps), which resolves ALL
+ * A and AAAA records and rejects the URL if any of them is private/reserved —
+ * stronger than the previous single-gethostbyname lookup here. On top of that,
+ * this trait keeps its own hardening: the connection is pinned to the
+ * validated IPs via CURLOPT_RESOLVE so a DNS-rebinding response between the
+ * check and the request can't steer it to an internal address.
  */
 trait GuardsAgainstSsrf
 {
     /**
-     * Returns curl options that pin the request to the validated IP, an empty
+     * Returns curl options that pin the request to the validated IPs, an empty
      * array when private-host blocking is disabled, or null when the URL must be
      * rejected (bad scheme/host or private/reserved target).
      *
@@ -31,17 +38,24 @@ trait GuardsAgainstSsrf
             return [];
         }
 
-        $host = $parts['host'];
-        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+        $ips = OutboundUrlGuard::publicIps($url);
 
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            Log::warning('Blocked private/reserved host in outbound request', ['host' => $host, 'ip' => $ip]);
+        if ($ips === []) {
+            Log::warning('Blocked private/reserved host in outbound request', ['host' => $parts['host']]);
 
             return null;
         }
 
+        $host = $parts['host'];
         $port = $parts['port'] ?? ($parts['scheme'] === 'https' ? 443 : 80);
 
-        return [CURLOPT_RESOLVE => ["{$host}:{$port}:{$ip}"]];
+        // libcurl accepts multiple pinned addresses (comma separated); IPv6
+        // literals go in brackets so the colons don't break the entry format.
+        $pinned = implode(',', array_map(
+            fn (string $ip): string => str_contains($ip, ':') ? '['.$ip.']' : $ip,
+            $ips
+        ));
+
+        return [CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"]];
     }
 }

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskHelpcenter\Http\Controllers\Api\HelpcenterWidgetController;
+use Modules\HelpdeskLivechat\Http\Middleware\ThrottleByWebsiteToken;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\LivestreamController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WebRtcSignalingController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetConversationController;
@@ -26,18 +27,32 @@ use Modules\HelpdeskTickets\Http\Controllers\Api\WidgetTicketsController;
 
 Route::get('/settings', [WidgetPageController::class, 'settings'])->name('settings');
 
-Route::get('/helpcenter', [HelpcenterWidgetController::class, 'apiWidget'])->name('helpcenter');
-Route::get('/helpcenter/search', [HelpcenterWidgetController::class, 'apiSearch'])->name('helpcenter.search');
-Route::get('/helpcenter/articles/{id}', [HelpcenterWidgetController::class, 'apiArticle'])->name('helpcenter.article');
-Route::post('/helpcenter/articles/{id}/feedback', [HelpcenterWidgetController::class, 'apiArticleFeedback'])->name('helpcenter.article.feedback');
+// Helpcenter widget — sin throttle propio antes (unico grupo del archivo sin
+// limite), a diferencia de todos sus vecinos. search() corre FULLTEXT+LIKE
+// por request; feedback() incrementa contadores sin dedup (a diferencia de
+// ArticleVoteController::vote, que sí tiene dedup por cookie+IP).
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/helpcenter', [HelpcenterWidgetController::class, 'apiWidget'])->name('helpcenter');
+    Route::get('/helpcenter/articles/{id}', [HelpcenterWidgetController::class, 'apiArticle'])->name('helpcenter.article');
+});
 
-// Create conversation — most restrictive: 10 per minute
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/helpcenter/search', [HelpcenterWidgetController::class, 'apiSearch'])->name('helpcenter.search');
+});
+
 Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/helpcenter/articles/{id}/feedback', [HelpcenterWidgetController::class, 'apiArticleFeedback'])->name('helpcenter.article.feedback');
+});
+
+// Create conversation — most restrictive: 10 per minute per IP, plus a
+// per-website_token quota (distributed abuse against a single store cannot
+// be stopped by IP throttling alone; Origin/Referer are spoofable).
+Route::middleware(['throttle:10,1', ThrottleByWebsiteToken::class.':conversations'])->group(function () {
     Route::post('/conversation', [WidgetConversationController::class, 'store'])->name('conversation.store');
 });
 
-// Public ticket creation from widget — 5 per minute (anti-spam)
-Route::middleware('throttle:5,1')->group(function () {
+// Public ticket creation from widget — 5 per minute per IP + per-token quota
+Route::middleware(['throttle:5,1', ThrottleByWebsiteToken::class.':tickets'])->group(function () {
     Route::post('/tickets', [WidgetTicketsController::class, 'store'])->name('tickets.store');
 });
 
@@ -51,8 +66,8 @@ Route::middleware('throttle:60,1')->group(function () {
     Route::get('/tickets/categories', [WidgetTicketsController::class, 'categories'])->name('tickets.categories');
 });
 
-// Send message + typing — 30 per minute
-Route::middleware('throttle:30,1')->group(function () {
+// Send message + typing — 30 per minute per IP + per-token quota on messages
+Route::middleware(['throttle:30,1', ThrottleByWebsiteToken::class.':messages'])->group(function () {
     Route::post('/conversation/{id}/messages', [WidgetConversationController::class, 'sendMessage'])->name('conversation.messages.send');
     Route::post('/conversation/{id}/typing', [WidgetConversationController::class, 'typing'])->name('conversation.typing');
 });

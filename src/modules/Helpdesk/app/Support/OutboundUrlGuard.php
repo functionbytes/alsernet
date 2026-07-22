@@ -18,33 +18,47 @@ class OutboundUrlGuard
 {
     public static function isSafe(?string $url): bool
     {
+        return self::publicIps($url) !== [];
+    }
+
+    /**
+     * Resolve the URL's host and return its IPs only when EVERY resolved
+     * address (A + AAAA) is public; otherwise an empty array. Exposed so
+     * callers that pin the connection to the validated IPs (DNS-rebinding
+     * defence via CURLOPT_RESOLVE — e.g. HelpdeskChatFlow's GuardsAgainstSsrf)
+     * can reuse this resolution instead of duplicating it.
+     *
+     * @return array<int, string> Validated public IPs, or [] when the URL is unsafe.
+     */
+    public static function publicIps(?string $url): array
+    {
         if (! is_string($url) || $url === '') {
-            return false;
+            return [];
         }
 
         $parts = parse_url($url);
 
         if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
-            return false;
+            return [];
         }
 
         if (! in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
-            return false;
+            return [];
         }
 
         $ips = self::resolve($parts['host']);
 
         if ($ips === []) {
-            return false;
+            return [];
         }
 
         foreach ($ips as $ip) {
             if (! self::isPublicIp($ip)) {
-                return false;
+                return [];
             }
         }
 
-        return true;
+        return $ips;
     }
 
     /**
