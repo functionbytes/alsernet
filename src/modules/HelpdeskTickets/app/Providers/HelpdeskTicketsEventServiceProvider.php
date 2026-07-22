@@ -14,14 +14,18 @@ use Modules\HelpdeskTickets\Events\TicketSlaBreached;
 use Modules\HelpdeskTickets\Events\TicketSlaNearBreach;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
+use Modules\HelpdeskTickets\Listeners\AutoAssignNewTicket;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentOfAssignment;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentsOnNewTicket;
 use Modules\HelpdeskTickets\Listeners\RecalculateSlaPolicy;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Listeners\RunAiAutoClassify;
 use Modules\HelpdeskTickets\Listeners\RunAiSentimentAnalysis;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketAssigned;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketClosed;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketCreated;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketStatusChanged;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketUpdated;
 use Modules\HelpdeskTickets\Listeners\SendCustomerConfirmation;
 use Modules\HelpdeskTickets\Listeners\SendCustomerReopenNotification;
 use Modules\HelpdeskTickets\Listeners\SendCustomerReplyNotification;
@@ -43,13 +47,17 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
             RecordTicketHistory::class,
             RunAutomationsOnTicketCreated::class,
             RunAiAutoClassify::class,
+            // Auto-asignación global (#78): inerte salvo toggle on.
+            AutoAssignNewTicket::class,
         ],
         TicketUpdated::class => [
             RecordTicketHistory::class,
+            RunAutomationsOnTicketUpdated::class,
         ],
         TicketClosed::class => [
             UpdateTicketOnClose::class,
             RecordTicketHistory::class,
+            RunAutomationsOnTicketClosed::class,
         ],
         TicketReopened::class => [
             RecordTicketHistory::class,
@@ -58,6 +66,7 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
         TicketAssigned::class => [
             RecordTicketHistory::class,
             NotifyAgentOfAssignment::class,
+            RunAutomationsOnTicketAssigned::class,
         ],
         TicketStatusChanged::class => [
             SendCustomerStatusNotification::class,
@@ -89,5 +98,18 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
     public function shouldDiscoverEvents(): bool
     {
         return false;
+    }
+
+    /**
+     * Gate listener registration on the HelpdeskTickets integration toggle.
+     *
+     * Note: Laravel's base EventServiceProvider registers listeners from
+     * `listens()` inside `register()` (via a `booting` callback), not
+     * inside `boot()` (which is a no-op). Overriding `boot()` alone would
+     * NOT prevent registration, so the guard must live here.
+     */
+    public function listens(): array
+    {
+        return helpdesk_tickets_enabled() ? $this->listen : [];
     }
 }

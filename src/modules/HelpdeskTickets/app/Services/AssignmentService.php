@@ -6,18 +6,15 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Events\TicketUnassigned;
+use Modules\Helpdesk\Services\SkillsRoutingService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketUnassigned;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAssignment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 
 class AssignmentService
 {
-    public function __construct(
-        private TicketNotificationService $notificationService
-    ) {}
-
     /**
      * Assign a ticket to an agent
      */
@@ -37,10 +34,11 @@ class AssignmentService
 
                 $assignment = TicketAssignment::create([
                     'ticket_id' => $ticket->id,
-                    'agent_id' => $agentId,
+                    'assigned_to' => $agentId,
+                    // null cuando asigna el sistema (auto-asignación en cola).
                     'assigned_by' => auth()->id(),
                     'assigned_at' => now(),
-                    'notes' => $reason,
+                    'reason' => $reason,
                 ]);
 
                 $ticket->update([
@@ -50,9 +48,9 @@ class AssignmentService
 
                 TicketHistory::logAssigned($ticket, auth()->user(), $agent);
 
+                // El email al agente lo envía el listener NotifyAgentOfAssignment
+                // (TicketAssignedMail) suscrito a este evento — no duplicar aquí.
                 event(new TicketAssigned($ticket, $agent));
-
-                $this->notificationService->notifyTicketAssigned($ticket, $agent);
 
                 Log::info('Ticket assigned', [
                     'ticket_id' => $ticket->id,
@@ -85,11 +83,11 @@ class AssignmentService
             DB::transaction(function () use ($ticket, $reason) {
                 TicketAssignment::create([
                     'ticket_id' => $ticket->id,
-                    'agent_id' => $ticket->assignee_id,
+                    'assigned_to' => $ticket->assignee_id,
                     'assigned_by' => auth()->id(),
-                    'assigned_at' => $ticket->assigned_at,
+                    'assigned_at' => $ticket->assigned_at ?? now(),
                     'unassigned_at' => now(),
-                    'notes' => $reason,
+                    'reason' => $reason,
                 ]);
 
                 $oldAgentId = $ticket->assignee_id;
@@ -176,12 +174,12 @@ class AssignmentService
             $minWorkload = $agentWorkloads->first()['workload'];
             $candidateAgents = $agentWorkloads->where('workload', $minWorkload);
 
-            $lastAssignment = TicketAssignment::whereIn('agent_id', $candidateAgents->pluck('agent_id'))
+            $lastAssignment = TicketAssignment::whereIn('assigned_to', $candidateAgents->pluck('agent_id'))
                 ->orderByDesc('assigned_at')
                 ->first();
 
             if ($lastAssignment) {
-                $lastAgentId = $lastAssignment->agent_id;
+                $lastAgentId = $lastAssignment->assigned_to;
                 $nextAgent = $candidateAgents->where('agent_id', '>', $lastAgentId)->first()
                     ?? $candidateAgents->first();
                 $selectedAgentId = $nextAgent['agent_id'];
@@ -218,13 +216,16 @@ class AssignmentService
 
             $openTickets = Ticket::whereIn('assignee_id', $agents->pluck('id'))
                 ->whereNull('closed_at')
-                ->with('priority')
                 ->get()
                 ->groupBy('assignee_id');
 
-            $agentWorkloads = $agents->map(function ($agent) use ($openTickets) {
+            // `priority` es un slug (urgent/high/normal/low), no una relación:
+            // pondera la carga abierta según el peso de cada prioridad.
+            $weights = ['urgent' => 4, 'high' => 3, 'normal' => 2, 'low' => 1];
+
+            $agentWorkloads = $agents->map(function ($agent) use ($openTickets, $weights) {
                 $tickets = $openTickets[$agent->id] ?? collect();
-                $totalWorkload = $tickets->sum(fn ($ticket) => $ticket->priority->resolution_time_hours ?? 24);
+                $totalWorkload = $tickets->sum(fn ($ticket) => $weights[$ticket->priority] ?? 2);
 
                 return [
                     'agent_id' => $agent->id,
@@ -262,7 +263,7 @@ class AssignmentService
     {
         $query = User::whereHas('roles', function ($q) {
             $q->where('name', 'helpdesk-agent');
-        })->where('is_active', true);
+        })->where('available', true);
 
         if ($categoryId) {
             $query->whereHas('agentCategories', function ($q) use ($categoryId) {
@@ -270,6 +271,34 @@ class AssignmentService
             });
         }
 
-        return $query->orderBy('firstname')->get();
+        $agents = $query->orderBy('firstname')->get();
+
+        return $this->filterByAvailability($agents);
+    }
+
+    /**
+     * Keep only agents that can receive automatic work right now according to
+     * their helpdesk AgentSettings (availability, vacation, capacity, presence).
+     * Agents without a settings row are kept (non-regressing default), and any
+     * failure in the availability layer degrades to "everyone available".
+     */
+    private function filterByAvailability(Collection $agents): Collection
+    {
+        if ($agents->isEmpty() || ! class_exists(SkillsRoutingService::class)) {
+            return $agents;
+        }
+
+        try {
+            $availableIds = app(SkillsRoutingService::class)
+                ->filterAvailableAgents($agents->pluck('id')->all());
+
+            return $agents->whereIn('id', $availableIds)->values();
+        } catch (\Throwable $e) {
+            Log::warning('AssignmentService: availability filter failed, keeping all agents', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return $agents;
+        }
     }
 }

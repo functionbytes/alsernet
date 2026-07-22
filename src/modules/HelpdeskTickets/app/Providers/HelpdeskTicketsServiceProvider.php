@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Helpdesk\Contracts\GdprExportContributor;
 use Modules\HelpdeskTickets\Console\Commands\AutoCloseTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\AutoResponseTicketCommand;
 use Modules\HelpdeskTickets\Console\Commands\CleanupTrashedTicketsCommand;
@@ -13,6 +14,7 @@ use Modules\HelpdeskTickets\Console\Commands\FetchEmailTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
 use Modules\HelpdeskTickets\Http\Controllers\Dev\EmailTestController;
+use Modules\HelpdeskTickets\Jobs\AutoAssignUnassignedTickets;
 use Modules\HelpdeskTickets\Jobs\CheckSlaBreaches;
 use Modules\HelpdeskTickets\Jobs\CleanupOldTickets;
 use Modules\HelpdeskTickets\Jobs\EscalateTicketsJob;
@@ -49,6 +51,7 @@ use Modules\HelpdeskTickets\Policies\TicketViewPolicy;
 use Modules\HelpdeskTickets\Policies\TimeEntryPolicy;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Services\AutomationEngine;
+use Modules\HelpdeskTickets\Services\Compliance\TicketGdprExportContributor;
 use Modules\HelpdeskTickets\Services\EscalationService;
 use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketService;
@@ -77,6 +80,11 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerMenus();
+
+        // Seccion 'tickets' del export GDPR (derecho de acceso). Igual que la
+        // cascada de borrado, NO se ata al toggle de integracion: es una
+        // obligacion legal mientras el modulo (y sus datos) esten instalados.
+        $this->app->tag([TicketGdprExportContributor::class], GdprExportContributor::TAG);
 
         Ticket::observe(TicketObserver::class);
     }
@@ -187,6 +195,9 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $schedule->job(new SendSlaWarnings)->everyThirtyMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
             $schedule->job(new CleanupOldTickets)->daily()->at('02:00')->onOneServer()->when($enabled);
             $schedule->job(new EscalateTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
+            // Barrido de tickets sin asignar (#78): el propio job es inerte si el
+            // toggle global de auto-asignación está apagado (default off).
+            $schedule->job(new AutoAssignUnassignedTickets)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
         });
     }
 

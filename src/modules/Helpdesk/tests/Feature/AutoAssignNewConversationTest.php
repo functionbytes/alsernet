@@ -10,6 +10,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\RoutingRule;
+use Modules\Helpdesk\Services\AutoAssignmentService;
 use Modules\Helpdesk\Services\RoutingRuleService;
 use Modules\Helpdesk\Services\SkillsRoutingService;
 use Tests\TestCase;
@@ -57,6 +58,7 @@ class AutoAssignNewConversationTest extends TestCase
         return new AutoAssignNewConversation(
             app(RoutingRuleService::class),
             app(SkillsRoutingService::class),
+            app(AutoAssignmentService::class),
         );
     }
 

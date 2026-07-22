@@ -3,17 +3,18 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
+use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class AutoAssignmentTest extends TestCase
 {
-    use RefreshDatabase;
+    use SharesHelpdeskPdo;
 
     private TicketStatus $openStatus;
 
@@ -26,6 +27,11 @@ class AutoAssignmentTest extends TestCase
         if (! $this->helpdeskConnectionAvailable()) {
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
+
+        // No dependas del seeding de la BD de tests: crea el rol on-the-fly.
+        // Limpia antes la cache de Spatie (roles de tests anteriores revertidos).
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        Role::findOrCreate('helpdesk-agent', 'web');
 
         $this->openStatus = TicketStatus::firstOrCreate(
             ['slug' => 'open'],
@@ -78,7 +84,7 @@ class AutoAssignmentTest extends TestCase
 
         // Should be assigned to agent B (workload=0)
         $this->assertNotNull($assignment);
-        $this->assertEquals($agentB->id, $assignment->agent_id);
+        $this->assertEquals($agentB->id, $assignment->assigned_to);
     }
 
     public function test_auto_assign_returns_null_when_no_agents_available(): void
@@ -118,7 +124,7 @@ class AutoAssignmentTest extends TestCase
         $assignment = $service->assignTicket($ticket, $agent->id);
 
         $this->assertNotNull($assignment);
-        $this->assertEquals($agent->id, $assignment->agent_id);
+        $this->assertEquals($agent->id, $assignment->assigned_to);
 
         $ticket->refresh();
         $this->assertEquals($agent->id, $ticket->assignee_id);
@@ -129,16 +135,12 @@ class AutoAssignmentTest extends TestCase
     private function createAgent(string $name, string $email): User
     {
         $user = User::factory()->create([
-            'name' => $name,
+            'firstname' => $name,
+            'lastname' => 'Agent',
             'email' => $email,
         ]);
 
-        // Give the user the helpdesk-agent role via Spatie (if available)
-        try {
-            $user->assignRole('helpdesk-agent');
-        } catch (\Throwable) {
-            // Role may not exist in test env — skip role assignment
-        }
+        $user->assignRole('helpdesk-agent');
 
         return $user;
     }
