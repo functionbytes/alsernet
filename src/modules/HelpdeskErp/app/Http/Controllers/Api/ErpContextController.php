@@ -3,11 +3,13 @@
 namespace Modules\HelpdeskErp\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskErp\Http\Requests\CustomerContextRequest;
+use Modules\HelpdeskErp\Http\Requests\ErpHealthRequest;
 use Modules\HelpdeskErp\Http\Requests\RefreshCustomerContextRequest;
+use Modules\HelpdeskErp\Http\Requests\SearchErpCustomersRequest;
+use Modules\HelpdeskErp\Http\Requests\WarmErpCacheRequest;
 use Modules\HelpdeskErp\Http\Resources\CustomerContextResource;
 use Modules\HelpdeskErp\Jobs\WarmErpCacheJob;
 use Modules\HelpdeskErp\Services\CustomerTimelineService;
@@ -121,12 +123,8 @@ class ErpContextController extends Controller
      * Returns the health status of the ERP manager connection.
      * Requires permission: helpdeskerp.health.view
      */
-    public function health(): JsonResponse
+    public function health(ErpHealthRequest $request): JsonResponse
     {
-        if (! auth()->user()?->can('helpdeskerp.health.view')) {
-            return response()->json(['success' => false, 'message' => 'Sin autorización.'], 403);
-        }
-
         $result = $this->service->healthCheck();
 
         return response()->json([
@@ -184,12 +182,8 @@ class ErpContextController extends Controller
      * TODA la base ERP (enumeración de no-clientes), así que exige el permiso
      * dedicado de prospecto, no el permiso base del módulo.
      */
-    public function search(Request $request): JsonResponse
+    public function search(SearchErpCustomersRequest $request): JsonResponse
     {
-        if (! $request->user()?->can('helpdeskerp.prospect.view')) {
-            return response()->json(['message' => 'Sin autorización.'], 403);
-        }
-
         $q = trim((string) $request->query('q', ''));
         $type = $request->query('type', 'email');
 
@@ -197,7 +191,18 @@ class ErpContextController extends Controller
             return response()->json(['data' => []]);
         }
 
-        return response()->json(['data' => $this->service->searchCustomers($q, $type)]);
+        try {
+            $results = $this->service->searchCustomers($q, $type);
+        } catch (\Throwable $e) {
+            // El service propaga una excepción cuando el manager responde
+            // no-2xx o no es alcanzable (URL mal configurada, caída, etc.).
+            // Para el endpoint HTTP el contrato es 200 + data vacía: el panel
+            // trata "sin resultados" y "error de plataforma" igual en la UI de
+            // búsqueda, y el flag error permite distinguirlo si hace falta.
+            return response()->json(['data' => [], 'error' => true]);
+        }
+
+        return response()->json(['data' => $results]);
     }
 
     /**
@@ -206,12 +211,8 @@ class ErpContextController extends Controller
      * Dispatches bulk cache warming for the given email list (max 50).
      * Requires permission: helpdeskerp.refresh
      */
-    public function warmCache(Request $request): JsonResponse
+    public function warmCache(WarmErpCacheRequest $request): JsonResponse
     {
-        if (! $request->user()?->can('helpdeskerp.refresh')) {
-            return response()->json(['message' => 'Sin autorización.'], 403);
-        }
-
         $emails = array_filter(
             (array) $request->input('emails', []),
             fn ($e): bool => is_string($e) && filter_var($e, FILTER_VALIDATE_EMAIL) !== false
