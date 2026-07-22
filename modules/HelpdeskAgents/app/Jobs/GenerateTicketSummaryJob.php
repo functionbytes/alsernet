@@ -77,7 +77,7 @@ class GenerateTicketSummaryJob implements ShouldQueue
                 'role' => 'user',
                 'content' => "Resume este ticket:\n\n".$context,
             ],
-        ], ['temperature' => 0.2, 'max_tokens' => 300]);
+        ], ['temperature' => 0.2, 'max_tokens' => 300, 'feature' => 'summary']);
 
         if ($summary === null) {
             Log::info('GenerateTicketSummaryJob: no summary produced (LLM unavailable or unconfigured)', [

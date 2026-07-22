@@ -123,6 +123,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | AI usage ledger + daily spend cap (observabilidad de coste)
+    |--------------------------------------------------------------------------
+    | Cada llamada LLM (AgentLlmService: summary/classification; flujo
+    | conversacional: chatflow) se registra en helpdesk_ai_usage — proveedor,
+    | modelo, tokens in/out, duración y éxito/fallo. Consulta con
+    | `php artisan helpdesk:ai-usage`.
+    |
+    | daily_max_calls / daily_max_tokens: presupuesto diario para las
+    | completions en background de AgentLlmService. 0 = sin límite. Al
+    | superarlo el servicio devuelve null con log (fail-silent, coherente con
+    | su filosofía): las features de IA se degradan, los tickets nunca.
+    */
+    'ai_usage' => [
+        'enabled' => env('HELPDESKAGENTS_AI_USAGE_TRACKING', true),
+        'daily_max_calls' => (int) env('HELPDESKAGENTS_AI_DAILY_MAX_CALLS', 0),
+        'daily_max_tokens' => (int) env('HELPDESKAGENTS_AI_DAILY_MAX_TOKENS', 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Embeddings
     |--------------------------------------------------------------------------
     */

@@ -143,7 +143,7 @@ class ClassifyTicketJob implements ShouldQueue
                 'role' => 'user',
                 'content' => "Categorías disponibles (id: nombre):\n{$categoryList}\n\nTicket:\n{$context}",
             ],
-        ], ['temperature' => 0.0, 'max_tokens' => 150]);
+        ], ['temperature' => 0.0, 'max_tokens' => 150, 'feature' => 'classification']);
 
         if ($raw === null || ! preg_match('/\{.*\}/s', $raw, $matches)) {
             return null;

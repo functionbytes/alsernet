@@ -25,6 +25,7 @@ use Modules\HelpdeskAgents\Policies\AiAgentFlowPolicy;
 use Modules\HelpdeskAgents\Policies\AiAgentPolicy;
 use Modules\HelpdeskAgents\Policies\OncallRotationPolicy;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
+use Modules\HelpdeskAgents\Services\AiUsageRecorder;
 use Modules\HelpdeskAgents\Services\EmbeddingService;
 use Modules\HelpdeskAgents\Services\KnowledgeRetrievalService;
 use Modules\HelpdeskAgents\Services\LlmConnectionTesterService;
@@ -59,17 +60,25 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PromptSanitizer::class);
+        $this->app->singleton(AiUsageRecorder::class);
         $this->app->singleton(AgentLlmService::class);
         $this->app->singleton(LlmConnectionTesterService::class);
         $this->app->singleton(EmbeddingService::class);
         $this->app->singleton(KnowledgeRetrievalService::class);
         $this->app->singleton(ToolExecutionService::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Modules\HelpdeskAgents\Console\Commands\AiUsageReportCommand::class,
+            ]);
+        }
     }
 
     public function provides(): array
     {
         return [
             PromptSanitizer::class,
+            AiUsageRecorder::class,
             AgentLlmService::class,
             LlmConnectionTesterService::class,
             EmbeddingService::class,
