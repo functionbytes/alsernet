@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskSla\Console\Commands\CheckConversationSlaBreaches;
+use Modules\HelpdeskSla\Console\Commands\PruneResolvedSlaBreaches;
 use Modules\HelpdeskSla\Console\Commands\SendConversationSlaWarnings;
 use Modules\HelpdeskSla\Listeners\MarkConversationFirstResponse;
 use Modules\HelpdeskSla\Models\ConversationSlaBreach;
@@ -70,6 +71,10 @@ class HelpdeskSlaServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! helpdesk_sla_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('settings', [
             'title' => 'Helpdesk — SLA',
             'items' => [
@@ -87,17 +92,36 @@ class HelpdeskSlaServiceProvider extends ServiceProvider
         $this->commands([
             CheckConversationSlaBreaches::class,
             SendConversationSlaWarnings::class,
+            PruneResolvedSlaBreaches::class,
         ]);
 
         $checkInterval = (int) config('helpdesksla.check_interval_minutes', 5);
         $warningInterval = (int) config('helpdesksla.warning_interval_minutes', 15);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) use ($checkInterval, $warningInterval): void {
-            $check = $schedule->command('helpdesksla:check-breaches');
+            // withoutOverlapping()+onOneServer(): ambos iteran conversaciones
+            // abiertas y en multi-servidor duplicarían alertas/registros.
+            // Gate ->when(helpdesk_sla_enabled()) alineado en los tres comandos:
+            // el propio comando también lo comprueba, pero así el scheduler ni
+            // siquiera lo lanza cuando la integración está apagada.
+            $check = $schedule->command('helpdesksla:check-breaches')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_sla_enabled());
             $checkInterval <= 1 ? $check->everyMinute() : $check->cron("*/{$checkInterval} * * * *");
 
-            $warn = $schedule->command('helpdesksla:send-warnings');
+            $warn = $schedule->command('helpdesksla:send-warnings')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_sla_enabled());
             $warningInterval <= 1 ? $warn->everyMinute() : $warn->cron("*/{$warningInterval} * * * *");
+
+            $schedule->command('helpdesksla:prune-breaches')
+                ->daily()
+                ->at('03:40')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_sla_enabled());
         });
     }
 }

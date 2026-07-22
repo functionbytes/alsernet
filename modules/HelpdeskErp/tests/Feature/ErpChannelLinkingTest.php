@@ -140,10 +140,15 @@ class ErpChannelLinkingTest extends TestCase
         $email = $this->uniqueEmail();
         $calls = 0;
 
-        Http::fake(function () use (&$calls, $id) {
+        Http::fake(function ($request) use (&$calls, $id) {
             $calls++;
             if ($calls === 1) {
                 throw new ConnectionException('down');
+            }
+
+            // 3ª llamada: verificación del teléfono contra la ficha del candidato.
+            if (! str_contains($request->url(), 'customer/search')) {
+                return Http::response(['data' => ['phones' => [['number' => '666987654']]]]);
             }
 
             return Http::response([
@@ -184,6 +189,8 @@ class ErpChannelLinkingTest extends TestCase
                     ['id' => $id, 'label' => 'Carlos', 'surnames' => 'Martín', 'email' => '', 'cif' => ''],
                 ],
             ]),
+            // Verificación: la ficha del candidato contiene el teléfono buscado.
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '666123456']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -202,8 +209,9 @@ class ErpChannelLinkingTest extends TestCase
             'external_id' => (string) $id,
         ], 'helpdesk');
 
-        // La búsqueda debe hacerse con dígitos puros (sin prefijo de país)
-        Http::assertSentCount(1);
+        // La búsqueda debe hacerse con dígitos puros (sin prefijo de país);
+        // la 2ª llamada es la verificación de teléfono contra la ficha.
+        Http::assertSentCount(2);
         $sentUrl = Http::recorded()[0][0]->url();
         $this->assertStringContainsString('666123456', $sentUrl);
     }
@@ -216,6 +224,7 @@ class ErpChannelLinkingTest extends TestCase
             '*/erp/customer/search*' => Http::response([
                 'data' => [['id' => $id, 'label' => 'Diana', 'surnames' => '', 'email' => '', 'cif' => '']],
             ]),
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '600000001']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -377,6 +386,7 @@ class ErpChannelLinkingTest extends TestCase
             '*/erp/customer/search*' => Http::response([
                 'data' => [['id' => $id, 'label' => 'Hugo', 'surnames' => '', 'email' => '', 'cif' => '']],
             ]),
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '622000000']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -506,6 +516,8 @@ class ErpChannelLinkingTest extends TestCase
             '*/erp/customer/search*' => Http::sequence()
                 ->push(['data' => []])                                                                   // búsqueda por email → sin resultados
                 ->push(['data' => [['id' => $id, 'label' => 'Luis', 'surnames' => '', 'email' => '', 'cif' => '']]]), // por teléfono → encontrado
+            // Verificación del candidato de teléfono contra su ficha.
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '655000000']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -518,7 +530,8 @@ class ErpChannelLinkingTest extends TestCase
         $erpId = app(ErpCustomerLinkerService::class)->linkCustomer($customer);
 
         $this->assertSame($id, $erpId);
-        Http::assertSentCount(2);
+        // email search + phone search + verificación de ficha
+        Http::assertSentCount(3);
     }
 
     /* ── Listener y Job ───────────────────────────────────────────────────── */

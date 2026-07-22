@@ -5,6 +5,7 @@ namespace Modules\HelpdeskErp\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
 use Modules\HelpdeskErp\Services\CustomerTimelineService;
@@ -12,6 +13,11 @@ use Modules\HelpdeskErp\Services\ErpContextService;
 
 class WebhookController extends Controller
 {
+    /** Ventana de validez del timestamp firmado (segundos). */
+    private const TIMESTAMP_TOLERANCE_SECONDS = 300;
+
+    private const REPLAY_CACHE_PREFIX = 'helpdeskerp:webhook:nonce:';
+
     public function __construct(
         private readonly ErpContextService $service,
         private readonly CustomerTimelineService $timelineService,
@@ -64,7 +70,7 @@ class WebhookController extends Controller
 
         $timestamp = (int) $request->header('X-Erp-Timestamp', 0);
 
-        if ($timestamp === 0 || abs(time() - $timestamp) > 300) {
+        if ($timestamp === 0 || abs(time() - $timestamp) > self::TIMESTAMP_TOLERANCE_SECONDS) {
             return response()->json(['ok' => false, 'error' => 'invalid timestamp'], 401);
         }
 
@@ -78,6 +84,28 @@ class WebhookController extends Controller
             ]);
 
             return response()->json(['ok' => false, 'error' => 'invalid signature'], 401);
+        }
+
+        // Anti-replay (mismo patrón que VerifyAlsernetHmac en HelpdeskPrestashop):
+        // una petición firmada solo puede aceptarse una vez dentro de la ventana
+        // del timestamp. El hash de la firma actúa como nonce — cubre
+        // timestamp+body, es única por petición y no falsificable sin el
+        // secreto. Cache::add() es atómico: si la clave ya existe, es un replay.
+        // TTL = ventana de tolerancia: cuando el nonce expira, la firma ya no
+        // pasa el check de timestamp.
+        $nonceKey = self::REPLAY_CACHE_PREFIX.hash('sha256', $signature);
+
+        if (! Cache::add($nonceKey, 1, self::TIMESTAMP_TOLERANCE_SECONDS)) {
+            Log::warning('HelpdeskErp webhook: replay rejected.', [
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json(['ok' => false, 'error' => 'replay detected'], 401);
+        }
+
+        if (! helpdesk_erp_enabled()) {
+            // Integration disabled: acknowledge with 204 so the sender does not retry indefinitely.
+            return response()->json(null, 204);
         }
 
         $email = trim((string) $request->input('email', ''));
