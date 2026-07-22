@@ -16,6 +16,7 @@ class UpdateSlaPolicyRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'channel' => ['nullable', 'string', 'max:50'],
             'first_response_time' => ['required', 'integer', 'min:1'],
             'next_response_time' => ['nullable', 'integer', 'min:1'],
             'resolution_time' => ['required', 'integer', 'min:1'],

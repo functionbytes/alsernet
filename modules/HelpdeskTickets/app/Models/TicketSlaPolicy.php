@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Helpdesk\Database\Factories\TicketSlaPolicyFactory;
+use Modules\HelpdeskTickets\Database\Factories\TicketSlaPolicyFactory;
 
 class TicketSlaPolicy extends Model
 {
@@ -24,6 +24,7 @@ class TicketSlaPolicy extends Model
     protected $fillable = [
         'name',
         'description',
+        'channel',
         'first_response_time',
         'next_response_time',
         'resolution_time',
@@ -106,6 +107,44 @@ class TicketSlaPolicy extends Model
     public static function getDefault(): ?self
     {
         return static::where('is_default', true)->first();
+    }
+
+    /**
+     * Resuelve la política SLA para un canal de origen (tickets.source).
+     *
+     * Modelo de selección real de este motor (documentado — difiere del legacy
+     * helpdesk_sla_policies por prioridad/categoría que usa el @deprecated
+     * SlaService::getApplicablePolicy):
+     *
+     *  1. sla_policy_id explícito en el payload (UI de manager) o el
+     *     default_sla_policy_id de la categoría (TicketsCrudController) — ambos
+     *     se asignan ANTES de crear el ticket, así que este resolver ni se
+     *     ejecuta (TicketObserver solo lo invoca cuando sla_policy_id es null).
+     *  2. Política activa con channel coincidente (este método).
+     *  3. Fallback a la genérica: la política activa marcada is_default y sin
+     *     canal. NULL si no hay ninguna (los canales sin política siguen sin
+     *     SLA, comportamiento histórico).
+     */
+    public static function resolveForChannel(?string $channel): ?self
+    {
+        if ($channel !== null && $channel !== '') {
+            $policy = static::query()
+                ->active()
+                ->where('channel', $channel)
+                ->orderByDesc('is_default')
+                ->orderBy('id')
+                ->first();
+
+            if ($policy) {
+                return $policy;
+            }
+        }
+
+        return static::query()
+            ->active()
+            ->whereNull('channel')
+            ->where('is_default', true)
+            ->first();
     }
 
     /**

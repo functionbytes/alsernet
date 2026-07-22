@@ -30,6 +30,50 @@ return [
 
         // Roles que reciben la notificación de escalado.
         'notify_roles' => ['manager'],
+
+        // Evaluar los umbrales de antigüedad (thresholds por prioridad) en
+        // horas HÁBILES usando el calendario helpdesk_business_hours de
+        // HelpdeskSla (BusinessHoursCalculator). OFF por defecto = horas
+        // naturales, comportamiento histórico. Dependencia blanda: si el
+        // módulo HelpdeskSla no está presente se ignora y se usan horas
+        // naturales aunque esté activado.
+        'business_hours' => env('HELPDESK_ESCALATION_BUSINESS_HOURS', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Informes programados por email (helpdesk:send-scheduled-reports)
+    |--------------------------------------------------------------------------
+    | OFF por defecto. Con el toggle activo, el scheduler envía un informe HTML
+    | del periodo (semanal: lunes / mensual: día 1) con el resumen de tickets,
+    | CSAT y salud operativa (OpsHealthService), reutilizando las mismas
+    | queries del dashboard de reports (TicketReportsService) y el exporter CSV
+    | compartido para el adjunto opcional.
+    */
+    'reports' => [
+        'scheduled' => [
+            'enabled' => env('HELPDESK_SCHEDULED_REPORTS_ENABLED', false),
+
+            // 'weekly' (periodo: últimos 7 días) o 'monthly' (últimos 30 días).
+            'frequency' => env('HELPDESK_SCHEDULED_REPORTS_FREQUENCY', 'weekly'),
+
+            // Lista de emails separados por coma. Vacía = usuarios con permiso
+            // de reports (helpdesk.metrics.view).
+            'recipients' => env('HELPDESK_SCHEDULED_REPORTS_RECIPIENTS', ''),
+
+            // Secciones incluidas en el informe.
+            'sections' => [
+                'tickets' => env('HELPDESK_SCHEDULED_REPORTS_TICKETS', true),
+                'csat' => env('HELPDESK_SCHEDULED_REPORTS_CSAT', true),
+                'ops' => env('HELPDESK_SCHEDULED_REPORTS_OPS', true),
+            ],
+
+            // Adjuntar el CSV de tickets del periodo (TicketsExporter).
+            'attach_csv' => env('HELPDESK_SCHEDULED_REPORTS_ATTACH_CSV', true),
+
+            // Límite de filas del CSV adjunto (el mail no es un export masivo).
+            'csv_max_rows' => (int) env('HELPDESK_SCHEDULED_REPORTS_CSV_MAX_ROWS', 5000),
+        ],
     ],
 
     /*

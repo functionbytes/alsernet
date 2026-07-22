@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Observers;
 
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketHistory;
+use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
 use Modules\HelpdeskTickets\Support\ReportsCache;
@@ -21,6 +22,14 @@ class TicketObserver
             if ($default) {
                 $ticket->status_id = $default->id;
             }
+        }
+
+        // SLA por canal: si nadie fijó una política (UI de manager / default de
+        // la categoría), se resuelve por el canal de origen del ticket con
+        // fallback a la genérica (is_default). Sin políticas configuradas es un
+        // no-op y el ticket queda sin SLA, como siempre.
+        if (! $ticket->sla_policy_id) {
+            $ticket->sla_policy_id = TicketSlaPolicy::resolveForChannel($ticket->source)?->id;
         }
     }
 
