@@ -168,9 +168,10 @@ class AiAgentFlowEngineTest extends TestCase
 
     public function test_http_timeout_and_retry_applied(): void
     {
+        // callOpenAi uses retry(2, ...) — i.e. 2 attempts in total (1 retry).
+        // A first 500 followed by a 200 proves the retry actually fires.
         Http::fake([
             'https://api.openai.com/*' => Http::sequence()
-                ->push(['error' => 'server error'], 500)
                 ->push(['error' => 'server error'], 500)
                 ->push(['choices' => [['message' => ['content' => 'Final response']]]], 200),
         ]);
@@ -184,7 +185,7 @@ class AiAgentFlowEngineTest extends TestCase
         ], 0.7, 100);
 
         $this->assertSame('Final response', $result);
-        Http::assertSentCount(3);
+        Http::assertSentCount(2);
     }
 
     // ==================== processMessage (needs helpdesk DB) ====================
@@ -207,10 +208,14 @@ class AiAgentFlowEngineTest extends TestCase
 
         $conversation = ConversationFactory::new()->create();
 
+        // flow_id is nullable and now FK-constrained to helpdesk_ai_agent_flows
+        // (cascade on delete), so a dangling id like 99999 can no longer exist.
+        // A session whose flow was deleted ends up with flow_id = null — the
+        // realistic "flow not found" scenario processMessage() must survive.
         $session = AiAgentSession::create([
             'ai_agent_id' => $agent->id,
             'conversation_id' => $conversation->id,
-            'flow_id' => 99999,
+            'flow_id' => null,
             'status' => 'active',
             'started_at' => now(),
         ]);

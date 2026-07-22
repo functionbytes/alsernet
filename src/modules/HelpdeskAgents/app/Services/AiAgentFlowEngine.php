@@ -176,10 +176,7 @@ class AiAgentFlowEngine
     {
         $systemPrompt = $nodeData['system_prompt'] ?? '';
 
-        $history = $session->messages()->orderBy('id')->limit(100)->get()->map(fn (AiAgentSessionMessage $msg) => [
-            'role' => $msg->role,
-            'content' => $msg->content,
-        ])->toArray();
+        $history = $this->buildHistoryWindow($session);
 
         $messages = [];
 
@@ -196,6 +193,31 @@ class AiAgentFlowEngine
         $agent = $session->agent;
 
         return $this->callAiProvider($agent, $messages, $session);
+    }
+
+    /**
+     * Sliding window of session history for the LLM: the N most-recent messages
+     * (not the first N), re-sorted chronologically. Using `orderBy('id')` +
+     * `limit` returned the OLDEST messages, so long sessions silently dropped
+     * all recent context once they passed the window size.
+     *
+     * @return array<int, array{role: string, content: string}>
+     */
+    private function buildHistoryWindow(AiAgentSession $session): array
+    {
+        $windowSize = (int) config('helpdeskagents.history_window', 100);
+
+        return $session->messages()
+            ->orderByDesc('id')
+            ->limit($windowSize)
+            ->get()
+            ->sortBy('id')
+            ->values()
+            ->map(fn (AiAgentSessionMessage $msg) => [
+                'role' => $msg->role,
+                'content' => $msg->content,
+            ])
+            ->toArray();
     }
 
     /**
@@ -281,7 +303,7 @@ class AiAgentFlowEngine
             $ticket = $session->conversation->tickets()->latest()->first();
 
             if (! $ticket) {
-                return 'No ticket found for this conversation';
+                return __('helpdeskagents::helpdeskagents.flow_results.ticket_not_found');
             }
 
             return match ($actionType) {
@@ -298,7 +320,7 @@ class AiAgentFlowEngine
                 'error' => $e->getMessage(),
             ]);
 
-            return 'Action could not be completed';
+            return __('helpdeskagents::helpdeskagents.flow_results.action_failed');
         }
     }
 
@@ -408,6 +430,7 @@ class AiAgentFlowEngine
                 'status' => $response->status(),
                 'duration_ms' => $durationMs,
             ]);
+            $this->recordUsage('openai', $model, null, null, $durationMs, false, $response->status());
             throw new \RuntimeException("OpenAI call failed with status {$response->status()}.");
         }
 
@@ -421,6 +444,15 @@ class AiAgentFlowEngine
             'duration_ms' => $durationMs,
             'tokens_used' => $tokensUsed,
         ]);
+
+        $this->recordUsage(
+            'openai',
+            $model,
+            $response->json('usage.prompt_tokens'),
+            $response->json('usage.completion_tokens'),
+            $durationMs,
+            true
+        );
 
         return $response->json('choices.0.message.content', '');
     }
@@ -476,6 +508,7 @@ class AiAgentFlowEngine
                 'status' => $response->status(),
                 'duration_ms' => $durationMs,
             ]);
+            $this->recordUsage('anthropic', $model, null, null, $durationMs, false, $response->status());
             throw new \RuntimeException("Anthropic call failed with status {$response->status()}.");
         }
 
@@ -489,6 +522,15 @@ class AiAgentFlowEngine
             'duration_ms' => $durationMs,
             'tokens_used' => $tokensUsed ?: null,
         ]);
+
+        $this->recordUsage(
+            'anthropic',
+            $model,
+            $response->json('usage.input_tokens'),
+            $response->json('usage.output_tokens'),
+            $durationMs,
+            true
+        );
 
         return $response->json('content.0.text', '');
     }
@@ -511,10 +553,13 @@ class AiAgentFlowEngine
 
         $startedAt = hrtime(true);
 
+        // La key va por cabecera (no en el query string) para que no acabe en
+        // logs de acceso/proxies; mismo criterio que LlmConnectionTesterService.
         $response = Http::timeout(30)
             ->retry(2, 500, throw: false)
+            ->withHeader('x-goog-api-key', (string) $apiKey)
             ->post(
-                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
                 [
                     'contents' => array_values($contents),
                     'generationConfig' => ['maxOutputTokens' => $maxTokens],
@@ -531,6 +576,7 @@ class AiAgentFlowEngine
                 'status' => $response->status(),
                 'duration_ms' => $durationMs,
             ]);
+            $this->recordUsage('gemini', $model, null, null, $durationMs, false, $response->status());
             throw new \RuntimeException("Gemini call failed with status {$response->status()}.");
         }
 
@@ -543,7 +589,46 @@ class AiAgentFlowEngine
             'tokens_used' => null, // Gemini v1beta does not expose token usage in this endpoint
         ]);
 
+        $this->recordUsage(
+            'gemini',
+            $model,
+            $response->json('usageMetadata.promptTokenCount'),
+            $response->json('usageMetadata.candidatesTokenCount'),
+            $durationMs,
+            true
+        );
+
         return $response->json('candidates.0.content.parts.0.text', '');
+    }
+
+    /**
+     * Observabilidad de coste: cada llamada del runtime conversacional queda
+     * en helpdesk_ai_usage con feature "chatflow". Fail-silent — el ledger
+     * jamás rompe una conversación.
+     */
+    private function recordUsage(
+        string $provider,
+        string $model,
+        mixed $tokensIn,
+        mixed $tokensOut,
+        int $durationMs,
+        bool $success,
+        ?int $statusCode = null
+    ): void {
+        try {
+            app(AiUsageRecorder::class)->record(
+                $provider,
+                $model,
+                'chatflow',
+                is_numeric($tokensIn) ? (int) $tokensIn : null,
+                is_numeric($tokensOut) ? (int) $tokensOut : null,
+                $durationMs,
+                $success,
+                $statusCode
+            );
+        } catch (\Throwable) {
+            // never let usage accounting break the conversation
+        }
     }
 
     /**
@@ -567,41 +652,48 @@ class AiAgentFlowEngine
     private function assignTicket(Ticket $ticket, array $nodeData): string
     {
         if (! isset($nodeData['agent_id'])) {
-            return 'Action skipped: no agent_id configured';
+            return __('helpdeskagents::helpdeskagents.flow_results.skipped_no_agent');
         }
 
         $ticket->update(['assignee_id' => $nodeData['agent_id']]);
 
-        return 'Ticket assigned to agent';
+        return __('helpdeskagents::helpdeskagents.flow_results.ticket_assigned');
     }
 
     private function changeTicketStatus(Ticket $ticket, array $nodeData): string
     {
         if (! isset($nodeData['status_id'])) {
-            return 'Action skipped: no status_id configured';
+            return __('helpdeskagents::helpdeskagents.flow_results.skipped_no_status');
         }
 
         $ticket->update(['status_id' => $nodeData['status_id']]);
 
-        return 'Ticket status updated';
+        return __('helpdeskagents::helpdeskagents.flow_results.ticket_status_updated');
     }
 
     private function addTicketTag(Ticket $ticket, array $nodeData): string
     {
         $tag = $nodeData['tag'] ?? '';
 
+        // `tags` es una columna JSON (cast array), no una relación: hay que
+        // añadir al array, no invocar un método de relación inexistente
+        // (`$ticket->tags()` daría "Call to undefined method").
         if ($tag !== '') {
-            $ticket->tags()->syncWithoutDetaching([$tag]);
+            $tags = $ticket->tags ?? [];
+            if (! in_array($tag, $tags, true)) {
+                $tags[] = $tag;
+                $ticket->update(['tags' => $tags]);
+            }
         }
 
-        return 'Tag added to ticket';
+        return __('helpdeskagents::helpdeskagents.flow_results.tag_added');
     }
 
     private function closeTicket(Ticket $ticket): string
     {
         $ticket->update(['closed_at' => now()]);
 
-        return 'Ticket closed';
+        return __('helpdeskagents::helpdeskagents.flow_results.ticket_closed');
     }
 
     private function resolveSecurityChannel(): string
