@@ -4,7 +4,6 @@ namespace Modules\Helpdesk\Services\Webhooks;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Conversation;
@@ -61,7 +60,6 @@ class InstagramMessageProcessor
             $conversation->update(['last_message_at' => now()]);
 
             broadcast(new ConversationMessageCreated($item));
-            event(new ConversationItemCreated($item));
 
             if ($conversation->assignee_id) {
                 event(new InboxItemChanged($conversation->id, $conversation->assignee_id, 'message_added'));

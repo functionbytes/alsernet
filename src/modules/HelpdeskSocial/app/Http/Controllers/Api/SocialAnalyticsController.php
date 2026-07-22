@@ -3,10 +3,11 @@
 namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Modules\HelpdeskSocial\Models\SocialAgentWorkload;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Models\SocialCompetitor;
@@ -18,7 +19,7 @@ class SocialAnalyticsController extends Controller
 {
     public function overview(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
@@ -97,7 +98,7 @@ class SocialAnalyticsController extends Controller
 
     public function metrics(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
@@ -125,84 +126,68 @@ class SocialAnalyticsController extends Controller
 
     public function agentsPerformance(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
 
-        $assignedComments = SocialComment::query()
-            ->whereNotNull('assigned_to_user_id')
-            ->whereBetween('replied_at', [$since->startOfDay(), $until->endOfDay()])
-            ->with('assignedTo')
-            ->get()
-            ->groupBy('assigned_to_user_id');
+        $agents = $this->agentsAggregateQuery($since, $until)->get();
 
         return response()->json([
             'period' => ['since' => $since->toDateString(), 'until' => $until->toDateString()],
-            'agents' => $assignedComments->map(function ($items) {
-                $first = $items->first();
-
-                return [
-                    'user_id' => $first->assigned_to_user_id,
-                    'user_name' => $first->assignedTo?->name ?? 'Desconocido',
-                    'comments_assigned' => $items->count(),
-                    'comments_replied' => $items->whereNotNull('replied_at')->count(),
-                    'avg_response_time_min' => $this->avgResponseTime($items),
-                ];
-            })->sortByDesc('comments_replied')->values(),
+            'agents' => $agents->map(fn ($item) => $this->mapAgentAggregate($item))
+                ->sortByDesc('comments_replied')
+                ->values(),
         ]);
     }
 
     public function agentPerformance(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
 
-        $assignedComments = SocialComment::query()
-            ->whereNotNull('assigned_to_user_id')
-            ->whereBetween('replied_at', [$since->startOfDay(), $until->endOfDay()])
-            ->with('assignedTo')
-            ->get()
-            ->groupBy('assigned_to_user_id');
+        $agents = $this->agentsAggregateQuery($since, $until)->get();
 
-        $workloads = SocialAgentWorkload::with('user')->get()->keyBy('user_id');
+        $workloads = SocialAgentWorkload::query()
+            ->select('user_id', 'active_assigned_count')
+            ->get()
+            ->keyBy(fn ($workload) => (int) $workload->user_id);
 
         return response()->json([
             'period' => ['since' => $since->toDateString(), 'until' => $until->toDateString()],
-            'agents' => $assignedComments->map(function ($items) use ($workloads) {
-                $first = $items->first();
-                $workload = $workloads->get($first->assigned_to_user_id);
+            'agents' => $agents->map(function ($item) use ($workloads) {
+                $agent = $this->mapAgentAggregate($item);
+                $agent['active_workload'] = $workloads->get($agent['user_id'])?->active_assigned_count ?? 0;
 
-                return [
-                    'user_id' => $first->assigned_to_user_id,
-                    'user_name' => $first->assignedTo?->name ?? 'Desconocido',
-                    'comments_assigned' => $items->count(),
-                    'comments_replied' => $items->whereNotNull('replied_at')->count(),
-                    'avg_response_time_min' => $this->avgResponseTime($items),
-                    'active_workload' => $workload?->active_assigned_count ?? 0,
-                ];
+                return $agent;
             })->sortByDesc('comments_replied')->values(),
         ]);
     }
 
     public function slaOverview(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
 
-        $comments = SocialComment::query()
-            ->whereBetween('posted_at', [$since->startOfDay(), $until->endOfDay()])
-            ->whereNotNull('replied_at')
-            ->get();
-
-        $avgResponse = $this->avgResponseTime($comments);
-        $total = $comments->count();
         $slaPolicies = SocialSlaPolicy::active()->get();
         $defaultTarget = $slaPolicies->first()?->response_time_minutes ?? 60;
+
+        $summary = SocialComment::query()
+            ->whereBetween('posted_at', [$since->startOfDay(), $until->endOfDay()])
+            ->whereNotNull('replied_at')
+            ->selectRaw('
+                COUNT(*) as total,
+                AVG(TIMESTAMPDIFF(MINUTE, posted_at, replied_at)) as avg_response_time_min,
+                SUM(CASE WHEN TIMESTAMPDIFF(MINUTE, posted_at, replied_at) <= ? THEN 1 ELSE 0 END) as within_sla
+            ', [$defaultTarget])
+            ->first();
+
+        $total = (int) ($summary->total ?? 0);
+        $avgResponse = $summary?->avg_response_time_min !== null ? round((float) $summary->avg_response_time_min, 1) : null;
 
         return response()->json([
             'period' => ['since' => $since->toDateString(), 'until' => $until->toDateString()],
@@ -210,7 +195,7 @@ class SocialAnalyticsController extends Controller
             'avg_response_time_min' => $avgResponse,
             'default_sla_target_min' => $defaultTarget,
             'sla_compliance_rate' => $total > 0 && $avgResponse !== null
-                ? round($comments->filter(fn ($c) => $c->posted_at->diffInMinutes($c->replied_at) <= $defaultTarget)->count() / $total * 100, 1)
+                ? round((int) $summary->within_sla / $total * 100, 1)
                 : null,
             'policies' => $slaPolicies->map(fn ($p) => [
                 'id' => $p->id,
@@ -223,39 +208,58 @@ class SocialAnalyticsController extends Controller
 
     public function sentimentBreakdown(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $since = now()->parse($request->get('since', now()->subDays(30)->toDateString()));
         $until = now()->parse($request->get('until', now()->toDateString()));
 
-        $mentions = SocialMention::query()
+        $summary = SocialMention::query()
             ->whereBetween('discovered_at', [$since->startOfDay(), $until->endOfDay()])
-            ->get();
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(COALESCE(sentiment_score, 0)) / COUNT(*) as avg_score,
+                SUM(sentiment = "positive") as positive,
+                SUM(sentiment = "neutral") as neutral,
+                SUM(sentiment = "negative") as negative
+            ')
+            ->first();
 
-        $bySentiment = $mentions->groupBy('sentiment');
-        $total = $mentions->count();
+        $total = (int) ($summary->total ?? 0);
+
+        $byPlatform = SocialMention::query()
+            ->whereBetween('discovered_at', [$since->startOfDay(), $until->endOfDay()])
+            ->selectRaw('
+                platform,
+                COUNT(*) as total,
+                SUM(sentiment = "positive") as positive,
+                SUM(sentiment = "neutral") as neutral,
+                SUM(sentiment = "negative") as negative
+            ')
+            ->groupBy('platform')
+            ->get()
+            ->keyBy('platform');
 
         return response()->json([
             'period' => ['since' => $since->toDateString(), 'until' => $until->toDateString()],
             'total_mentions' => $total,
             'breakdown' => [
-                'positive' => $bySentiment->get('positive', collect())->count(),
-                'neutral' => $bySentiment->get('neutral', collect())->count(),
-                'negative' => $bySentiment->get('negative', collect())->count(),
+                'positive' => (int) ($summary->positive ?? 0),
+                'neutral' => (int) ($summary->neutral ?? 0),
+                'negative' => (int) ($summary->negative ?? 0),
             ],
-            'average_score' => $total > 0 ? round($mentions->avg('sentiment_score'), 3) : null,
-            'by_platform' => $mentions->groupBy('platform')->map(fn ($items) => [
-                'total' => $items->count(),
-                'positive' => $items->where('sentiment', 'positive')->count(),
-                'neutral' => $items->where('sentiment', 'neutral')->count(),
-                'negative' => $items->where('sentiment', 'negative')->count(),
+            'average_score' => $total > 0 ? round((float) $summary->avg_score, 3) : null,
+            'by_platform' => $byPlatform->map(fn ($item) => [
+                'total' => (int) $item->total,
+                'positive' => (int) $item->positive,
+                'neutral' => (int) $item->neutral,
+                'negative' => (int) $item->negative,
             ]),
         ]);
     }
 
     public function competitorComparison(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $competitors = SocialCompetitor::with('latestMetrics')
             ->where('is_active', true)
@@ -276,14 +280,38 @@ class SocialAnalyticsController extends Controller
     }
 
     /**
-     * @param  Collection<int, SocialComment>  $comments
+     * Consulta base agregada en SQL: comentarios asignados y respondidos dentro del rango,
+     * agrupados por agente (una fila por agente en vez de cargar cada comentario a memoria).
      */
-    private function avgResponseTime(Collection $comments): ?float
+    private function agentsAggregateQuery(Carbon $since, Carbon $until): Builder
     {
-        $times = $comments->filter(fn ($c) => $c->posted_at && $c->replied_at)
-            ->map(fn ($c) => $c->posted_at->diffInMinutes($c->replied_at));
+        return SocialComment::query()
+            ->whereNotNull('assigned_to_user_id')
+            ->whereBetween('replied_at', [$since->startOfDay(), $until->endOfDay()])
+            ->selectRaw('
+                assigned_to_user_id,
+                COUNT(*) as comments_assigned,
+                COUNT(replied_at) as comments_replied,
+                AVG(TIMESTAMPDIFF(MINUTE, posted_at, replied_at)) as avg_response_time_min
+            ')
+            ->groupBy('assigned_to_user_id')
+            ->with('assignedTo');
+    }
 
-        return $times->count() > 0 ? round($times->avg(), 1) : null;
+    /**
+     * @return array{user_id: int, user_name: string, comments_assigned: int, comments_replied: int, avg_response_time_min: ?float}
+     */
+    private function mapAgentAggregate(SocialComment $item): array
+    {
+        return [
+            'user_id' => (int) $item->assigned_to_user_id,
+            'user_name' => $item->assignedTo?->name ?? 'Desconocido',
+            'comments_assigned' => (int) $item->comments_assigned,
+            'comments_replied' => (int) $item->comments_replied,
+            'avg_response_time_min' => $item->avg_response_time_min !== null
+                ? round((float) $item->avg_response_time_min, 1)
+                : null,
+        ];
     }
 
     private function sentimentScore(?array $breakdown): ?float

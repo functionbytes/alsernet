@@ -2,39 +2,25 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Webhooks;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Http\Requests\Webhooks\FacebookWebhookRequest;
 use Modules\Helpdesk\Jobs\ProcessSocialWebhookJob;
 use Modules\Helpdesk\Services\FacebookMessengerService;
 
-class FacebookWebhookController extends Controller
+class FacebookWebhookController extends MetaWebhookController
 {
     public function __construct(
         private readonly FacebookMessengerService $service
     ) {}
 
-    /**
-     * Handle Meta webhook verification challenge (GET).
-     */
-    public function verify(Request $request): Response
+    protected function verifyChallenge(string $mode, string $challenge, string $token): string|false
     {
-        $challenge = $this->service->verifyWebhook(
-            $request->query('hub_mode', ''),
-            $request->query('hub_challenge', ''),
-            $request->query('hub_verify_token', ''),
-        );
+        return $this->service->verifyWebhook($mode, $challenge, $token);
+    }
 
-        if ($challenge === false) {
-            Log::warning('Facebook webhook verify failed — bad token', ['ip' => $request->ip()]);
-
-            return response('Forbidden', 403);
-        }
-
-        return response($challenge, 200);
+    protected function channelLabel(): string
+    {
+        return 'Facebook';
     }
 
     /**
@@ -42,14 +28,14 @@ class FacebookWebhookController extends Controller
      */
     public function handle(FacebookWebhookRequest $request): JsonResponse
     {
-        $events = $this->service->parseWebhookPayload($request->all());
+        return $this->safelyHandle(function () use ($request): void {
+            $events = $this->service->parseWebhookPayload($request->all());
 
-        foreach ($events as $event) {
-            if (in_array($event['type'], ['message', 'postback'], true)) {
-                ProcessSocialWebhookJob::dispatch('facebook', $event['type'], $event);
+            foreach ($events as $event) {
+                if (in_array($event['type'] ?? null, ['message', 'postback', 'reaction'], true)) {
+                    ProcessSocialWebhookJob::dispatch('facebook', $event['type'], $event);
+                }
             }
-        }
-
-        return response()->json(['status' => 'ok']);
+        });
     }
 }

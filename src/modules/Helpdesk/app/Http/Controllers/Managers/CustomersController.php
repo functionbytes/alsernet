@@ -189,14 +189,14 @@ class CustomersController extends Controller
             ->when($q, fn ($query) => $query->search($q))
             ->latest('last_seen_at')
             ->limit(10)
-            ->get(['id', 'name', 'email', 'phone', 'avatar_url', 'total_conversations']);
+            ->get(['id', 'name', 'email', 'phone', 'whatsapp_phone', 'avatar_url', 'total_conversations']);
 
         return response()->json(
             $customers->map(fn (Customer $c) => [
                 'id' => $c->id,
                 'name' => $c->name,
                 'email' => $c->email,
-                'phone' => $c->phone,
+                'phone' => $c->phone ?: $c->whatsapp_phone,
                 'avatar_url' => $c->getAvatarUrl(),
                 'total_conversations' => (int) $c->total_conversations,
             ])
@@ -231,22 +231,6 @@ class CustomersController extends Controller
         return redirect()
             ->route('manager.helpdesk.customers.show', $customer)
             ->with('success', 'Customer restored successfully.');
-    }
-
-    /**
-     * Permanently delete a customer.
-     */
-    public function forceDelete($id)
-    {
-        $customer = Customer::withTrashed()->findOrFail($id);
-        $this->authorize('forceDelete', $customer);
-
-        $name = $customer->name;
-        $customer->forceDelete();
-
-        return redirect()
-            ->route('manager.helpdesk.customers.index')
-            ->with('success', "Customer '{$name}' permanently deleted.");
     }
 
     /**
@@ -367,6 +351,12 @@ class CustomersController extends Controller
     {
         $base = Customer::findOrFail($request->integer('base_customer_id'));
         $mergee = Customer::findOrFail($request->integer('mergee_customer_id'));
+
+        // Ambos contactos deben ser accesibles por el agente (aislamiento por inbox),
+        // consistente con show/update/delete: el gate de ruta solo valida el permiso
+        // plano helpdesk.customers.merge, no la pertenencia (CustomerPolicy::view).
+        $this->authorize('view', $base);
+        $this->authorize('view', $mergee);
 
         $merged = (new CustomerMergeAction($base, $mergee))->execute();
 

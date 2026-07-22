@@ -7,22 +7,23 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Models\Customer;
-use Modules\HelpdeskSocial\Contracts\AutoReplyEngineInterface;
 use Modules\HelpdeskSocial\Events\SocialCommentReceived;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Services\ConversationThreadingService;
-use Modules\HelpdeskSocial\Services\CrisisModeService;
-use Modules\HelpdeskSocial\Services\IntentClassificationService;
-use Modules\HelpdeskSocial\Services\SentimentAnalysisService;
 use Modules\HelpdeskSocial\Services\SlaTrackingService;
 use Modules\HelpdeskSocial\Services\SmartAssignmentService;
 use Modules\HelpdeskSocial\Services\SocialListeningService;
 
+/**
+ * Camino rapido de ingesta de un comentario social: solo operaciones de base de
+ * datos (dedupe, threading, SLA, auto-asignacion, listening) y el broadcast en
+ * tiempo real al agente. La clasificacion de intencion, el analisis de sentimiento
+ * y el auto-reply requieren llamadas HTTP externas (OpenAI/Meta) y se despachan
+ * como jobs encolados aparte para no bloquear este job con timeout=60s.
+ */
 class ProcessSocialCommentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -41,19 +42,26 @@ class ProcessSocialCommentJob implements ShouldQueue
     }
 
     public function handle(
-        IntentClassificationService $classificationService,
-        AutoReplyEngineInterface $responder,
         ConversationThreadingService $threadingService,
-        SentimentAnalysisService $sentimentService,
         SlaTrackingService $slaService,
         SmartAssignmentService $assignmentService,
         SocialListeningService $listeningService,
-        CrisisModeService $crisisService,
     ): void {
-        $platform = $this->event['platform'];
-        $commentId = $this->event['external_comment_id'];
+        if (! helpdesk_social_enabled()) {
+            Log::info('ProcessSocialCommentJob: Skipped - HelpdeskSocial integration disabled', [
+                'platform' => $this->event['platform'] ?? null,
+                'external_comment_id' => $this->event['external_comment_id'] ?? null,
+            ]);
 
-        // Prevent duplicate processing
+            return;
+        }
+
+        $platform = $this->event['platform'];
+        $commentId = $this->resolveDedupeId($platform);
+
+        // Prevent duplicate processing. Sin una clave estable, las menciones
+        // FB/IG (que llegan con external_comment_id null) comparaban NULL = NULL
+        // en SQL —nunca casa— y una reentrega del webhook creaba un duplicado.
         $existing = SocialComment::where('platform', $platform)
             ->where('external_comment_id', $commentId)
             ->first();
@@ -101,9 +109,6 @@ class ProcessSocialCommentJob implements ShouldQueue
         // Link to existing conversation or create a new one
         $threadingService->threadComment($comment);
 
-        // Analyze sentiment
-        $sentimentService->analyze($comment);
-
         // Apply SLA policy
         $slaService->applyPolicyToComment($comment);
 
@@ -115,33 +120,38 @@ class ProcessSocialCommentJob implements ShouldQueue
         // Check for keyword matches via social listening
         $listeningService->scanComment($comment);
 
-        // Broadcast new comment in real-time
+        // Broadcast new comment in real-time so the agent sees it without delay
         SocialCommentReceived::dispatch($comment);
 
-        // Classify intent
-        $classificationService->classify($comment);
+        // Intent classification (OpenAI) gates the auto-reply rules (they read
+        // $comment->intent), so both run chained, in order, on the AI queue.
+        Bus::chain([
+            new ClassifyIntentJob($comment->id),
+            new EvaluateAutoReplyJob($comment->id),
+        ])->onQueue(config('helpdesksocial.queues.ai', 'helpdesk-social-ai'))->dispatch();
+    }
 
-        // Skip auto-reply if account is in crisis mode
-        if ($crisisService->isInCrisisMode($account)) {
-            Log::info('ProcessSocialCommentJob: Skipping auto-reply due to crisis mode', [
-                'comment_id' => $comment->id,
-                'account_id' => $account->id,
-            ]);
+    /**
+     * External id usado para deduplicar. Los comentarios traen comment_id; las
+     * menciones FB/IG suelen llegar sin él, así que se deriva una clave estable
+     * del evento (post + autor + fecha + cuerpo) para que una reentrega del
+     * mismo webhook no cree un SocialComment duplicado.
+     */
+    private function resolveDedupeId(string $platform): string
+    {
+        $commentId = $this->event['external_comment_id'] ?? null;
 
-            return;
+        if (is_string($commentId) && $commentId !== '') {
+            return $commentId;
         }
 
-        // Evaluate auto-responder rules
-        $result = $responder->evaluate($comment);
-
-        if ($result && ($result['stop_processing'] ?? false)) {
-            return;
-        }
-
-        // If not auto-replied and not spam, keep as pending for human review
-        if ($comment->status === 'pending' && ! $comment->is_spam) {
-            $this->createConversationFromComment($comment);
-        }
+        return 'derived:'.hash('sha256', implode('|', [
+            $platform,
+            (string) ($this->event['external_post_id'] ?? ''),
+            (string) ($this->event['external_user_id'] ?? ''),
+            (string) ($this->event['created_at'] ?? ''),
+            (string) ($this->event['body'] ?? ''),
+        ]));
     }
 
     public function failed(\Throwable $exception): void
@@ -150,48 +160,5 @@ class ProcessSocialCommentJob implements ShouldQueue
             'event' => $this->event,
             'error' => $exception->getMessage(),
         ]);
-    }
-
-    private function createConversationFromComment(SocialComment $comment): void
-    {
-        try {
-            $safeEmail = 'social_'.md5($comment->external_user_id).'@social.local';
-            $customer = Customer::firstOrCreate(
-                ['email' => $safeEmail],
-                [
-                    'name' => $comment->author_name,
-                    'facebook_psid' => $comment->platform === 'facebook' ? $comment->external_user_id : null,
-                    'instagram_id' => $comment->platform === 'instagram' ? $comment->external_user_id : null,
-                ]
-            );
-
-            $conversation = Conversation::create([
-                'customer_id' => $customer->id,
-                'channel' => $comment->platform,
-                'external_sender_id' => $comment->external_user_id,
-                'subject' => "Comentario en publicación {$comment->external_post_id}",
-                'source' => 'social_comment',
-            ]);
-
-            ConversationItem::create([
-                'conversation_id' => $conversation->id,
-                'author_id' => $customer->id,
-                'type' => 'message',
-                'body' => $comment->body,
-                'external_id' => $comment->external_comment_id,
-                'metadata' => [
-                    'social_comment_id' => $comment->id,
-                    'post_id' => $comment->external_post_id,
-                    'platform' => $comment->platform,
-                ],
-            ]);
-
-            $comment->update(['helpdesk_conversation_id' => $conversation->id]);
-        } catch (\Throwable $e) {
-            Log::warning('ProcessSocialCommentJob: Failed to create conversation', [
-                'comment_id' => $comment->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 }

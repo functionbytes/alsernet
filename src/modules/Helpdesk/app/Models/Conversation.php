@@ -35,6 +35,7 @@ class Conversation extends Model
     protected $fillable = [
         'customer_id',
         'inbox_id',
+        'brand_id',
         'assignee_id',
         'status_id',
         'subject',
@@ -47,6 +48,7 @@ class Conversation extends Model
         'closed_at',
         'first_response_at',
         'last_message_at',
+        'last_customer_message_at',
         'tags',
         'is_spam',
         'is_archived',
@@ -71,6 +73,7 @@ class Conversation extends Model
             'closed_at' => 'datetime',
             'first_response_at' => 'datetime',
             'last_message_at' => 'datetime',
+            'last_customer_message_at' => 'datetime',
             'sla_warned_at' => 'datetime',
             'sla_first_response_due_at' => 'datetime',
             'sla_resolution_due_at' => 'datetime',
@@ -92,7 +95,7 @@ class Conversation extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status_id', 'priority', 'assignee_id', 'closed_at', 'snoozed_until'])
+            ->logOnly(['status_id', 'priority', 'assignee_id', 'closed_at', 'snoozed_until', 'customer_id'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->useLogName('helpdesk');
@@ -133,6 +136,8 @@ class Conversation extends Model
 
     /**
      * Get all messages/items in this conversation
+     *
+     * @return HasMany<ConversationItem, $this>
      */
     public function items(): HasMany
     {
@@ -267,6 +272,21 @@ class Conversation extends Model
     }
 
     /**
+     * ¿Sigue abierta la ventana de servicio de 24h de WhatsApp? Solo aplica al
+     * canal whatsapp: fuera de ella Meta rechaza el texto libre y exige una
+     * plantilla (HSM). Otros canales devuelven true (no tienen esta restricción).
+     */
+    public function isWhatsAppWindowOpen(): bool
+    {
+        if ($this->channel !== 'whatsapp') {
+            return true;
+        }
+
+        return $this->last_customer_message_at !== null
+            && $this->last_customer_message_at->greaterThan(now()->subHours(24));
+    }
+
+    /**
      * Scope: Get snoozed conversations (snoozed_until is set and in the future)
      */
     public function scopeSnoozed(Builder $query): Builder
@@ -310,10 +330,19 @@ class Conversation extends Model
     /**
      * Scope: Exclude conversations currently handled by a chatbot (they stay in
      * history but out of the agent inbox until the bot hands off to an agent).
+     *
+     * `metadata` is null on any conversation that was never touched by
+     * chatbot/bot-handoff logic (the common case). `NOT JSON_CONTAINS(NULL, ...)`
+     * evaluates to NULL in SQL — not true — so a plain whereJsonDoesntContain()
+     * silently dropped every conversation with null metadata from the inbox.
+     * The explicit whereNull() branch keeps them included.
      */
     public function scopeWithoutActiveBot($query)
     {
-        return $query->whereJsonDoesntContain('metadata->handled_by_bot', true);
+        return $query->where(
+            fn ($q) => $q->whereNull('metadata')
+                ->orWhereJsonDoesntContain('metadata->handled_by_bot', true)
+        );
     }
 
     /**
@@ -406,7 +435,7 @@ class Conversation extends Model
         $this->broadcastInboxChanged('assigned');
 
         if ($userId && $assignee = User::find($userId)) {
-            ConversationAssigned::dispatch($this, $assignee);
+            ConversationAssigned::dispatch($this, $assignee, auth()->id());
         }
 
         return $this;
@@ -741,6 +770,8 @@ class Conversation extends Model
 
     protected static function newFactory(): ConversationFactory
     {
-        return new ConversationFactory;
+        // ::new() (y no `new ConversationFactory`) para que se aplique configure()
+        // — el afterCreating que asigna el status abierto por defecto en tests.
+        return ConversationFactory::new();
     }
 }

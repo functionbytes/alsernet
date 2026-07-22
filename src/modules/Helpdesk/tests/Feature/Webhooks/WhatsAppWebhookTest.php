@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Tests\Feature\Webhooks;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -13,13 +14,9 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
-use Modules\Helpdesk\Services\BusinessHoursService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
-use Modules\Helpdesk\Services\OutboundMessageService;
-use Modules\Helpdesk\Services\RoutingRuleService;
-use Modules\Helpdesk\Services\WhatsAppBusinessService;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
-use Spatie\Permission\Models\Role;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 /**
@@ -32,6 +29,7 @@ use Tests\TestCase;
 class WhatsAppWebhookTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     /** Wrap both connections so each test is fully isolated. */
     protected $connectionsToTransact = [null, 'helpdesk'];
@@ -74,7 +72,7 @@ class WhatsAppWebhookTest extends TestCase
         ]);
 
         // Required by SendNewConversationNotification listener (runs sync in tests).
-        Role::firstOrCreate(['name' => 'helpdesk-agent', 'guard_name' => 'web']);
+        $this->seedHelpdeskRoles();
 
         // Ensure an open status exists for findOrCreateConversation.
         ConversationStatus::firstOrCreate(
@@ -150,6 +148,36 @@ class WhatsAppWebhookTest extends TestCase
         });
     }
 
+    public function test_webhook_with_malformed_message_payload_returns_200_not_500(): void
+    {
+        Queue::fake();
+
+        // Mensaje sin 'from'/'id'/'type' (shape que Meta puede enviar en casos
+        // borde): antes reventaba con "Undefined array key" → 500 → Meta reintenta
+        // el mismo evento indefinidamente. Ahora se descarta y responde 200.
+        $payload = [
+            'object' => 'whatsapp_business_account',
+            'entry' => [[
+                'id' => '123456789',
+                'changes' => [[
+                    'value' => [
+                        'messaging_product' => 'whatsapp',
+                        'metadata' => ['phone_number_id' => '12345678'],
+                        'messages' => [['text' => ['body' => 'huérfano sin from/id/type']]],
+                    ],
+                    'field' => 'messages',
+                ]],
+            ]],
+        ];
+        $signature = $this->signPayload($payload);
+
+        $this->postJson(
+            route('webhooks.whatsapp.handle'),
+            $payload,
+            ['X-Hub-Signature-256' => $signature]
+        )->assertOk()->assertJson(['status' => 'ok']);
+    }
+
     public function test_webhook_post_without_signature_returns_403_when_secret_configured(): void
     {
         $payload = $this->buildMessagePayload('521234567890', 'wamid.test002', 'Hola');
@@ -219,6 +247,84 @@ class WhatsAppWebhookTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    // ─── Group 1b: Delivery/read receipts ─────────────────────────────────────
+
+    public function test_whatsapp_delivered_status_dispatches_delivery_receipt_job(): void
+    {
+        Queue::fake();
+
+        $payload = $this->buildStatusPayload('wamid.receipt001', '521234567890', 'delivered');
+        $signature = $this->signPayload($payload);
+
+        $this->postJson(
+            route('webhooks.whatsapp.handle'),
+            $payload,
+            ['X-Hub-Signature-256' => $signature]
+        )->assertOk();
+
+        Queue::assertPushed(ProcessSocialWebhookJob::class, function ($job) {
+            return $job->channel === 'whatsapp'
+                && $job->eventType === 'delivery'
+                && ($job->event['message_id'] ?? null) === 'wamid.receipt001';
+        });
+    }
+
+    public function test_whatsapp_sent_status_dispatches_no_job(): void
+    {
+        Queue::fake();
+
+        // 'sent' no tiene reflejo en la UI de recibos → no se despacha job.
+        $payload = $this->buildStatusPayload('wamid.receipt002', '521234567890', 'sent');
+        $signature = $this->signPayload($payload);
+
+        $this->postJson(
+            route('webhooks.whatsapp.handle'),
+            $payload,
+            ['X-Hub-Signature-256' => $signature]
+        )->assertOk();
+
+        Queue::assertNotPushed(ProcessSocialWebhookJob::class);
+    }
+
+    public function test_whatsapp_read_status_marks_outbound_item_as_read(): void
+    {
+        $phone = '521'.fake()->numberBetween(1000000000, 9999999999);
+        $messageId = 'wamid.'.Str::random(20);
+
+        $customer = Customer::factory()->create(['whatsapp_phone' => $phone]);
+        $openStatus = ConversationStatus::where('is_open', true)->first();
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $customer->id,
+            'channel' => 'whatsapp',
+            'external_sender_id' => $phone,
+            'status_id' => $openStatus->id,
+        ]);
+
+        $agent = User::factory()->create();
+        $item = ConversationItem::factory()->fromAgent($agent->id)->create([
+            'conversation_id' => $conversation->id,
+            'external_id' => $messageId,
+            'body' => 'Respuesta del agente',
+        ]);
+
+        $event = [
+            'type' => 'status',
+            'message_id' => $messageId,
+            'status' => 'read',
+            'recipient_id' => $phone,
+            'timestamp' => time(),
+            'errors' => [],
+        ];
+
+        (new ProcessSocialWebhookJob('whatsapp', 'read', $event))->handle(
+            $this->app->make(FacebookMessengerService::class),
+        );
+
+        $item->refresh();
+
+        $this->assertNotNull($item->metadata['customer_read_at'] ?? null);
+    }
+
     // ─── Group 2: Customer creation ───────────────────────────────────────────
 
     public function test_new_whatsapp_message_creates_customer_if_phone_not_exists(): void
@@ -228,15 +334,12 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, 'wamid.new001', 'Hola por primera vez');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         $this->assertDatabaseHas('helpdesk_customers', [
             'whatsapp_phone' => $phone,
+            'phone' => $phone,
         ], 'helpdesk');
     }
 
@@ -250,11 +353,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent('521000111222', 'wamid.existing001', 'Mensaje repetido');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         // No duplicate customer should be created.
@@ -272,11 +371,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, 'wamid.conv001', 'Primera consulta');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         $this->assertDatabaseHas('helpdesk_conversations', [
@@ -299,11 +394,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent('521999888777', 'wamid.reuse001', 'Seguimiento');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         // Only the original conversation should exist for this phone.
@@ -332,11 +423,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent('521777666555', 'wamid.reopen001', 'Nuevo contacto');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         // A new (open) conversation should have been created.
@@ -357,11 +444,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, $messageId, 'Cuerpo del mensaje de prueba');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         $this->assertDatabaseHas('helpdesk_conversation_items', [
@@ -378,11 +461,7 @@ class WhatsAppWebhookTest extends TestCase
 
         $job = new ProcessSocialWebhookJob('whatsapp', 'message', $event);
         $services = [
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         ];
 
         // Process the same message twice.
@@ -405,11 +484,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, 'wamid.event001', 'Nuevo cliente');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         Event::assertDispatched(ConversationCreated::class);
@@ -431,11 +506,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent('521111222333', 'wamid.noevent001', 'Respuesta del cliente');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         Event::assertNotDispatched(ConversationCreated::class);
@@ -449,11 +520,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, 'wamid.erp001', 'Cliente nuevo para ERP');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         Queue::assertPushed(LinkCustomerToErpJob::class);
@@ -469,11 +536,7 @@ class WhatsAppWebhookTest extends TestCase
         $event = $this->buildParsedEvent($phone, 'wamid.erp002', 'Cliente no en ERP');
 
         (new ProcessSocialWebhookJob('whatsapp', 'message', $event))->handle(
-            $this->app->make(WhatsAppBusinessService::class),
             $this->app->make(FacebookMessengerService::class),
-            $this->app->make(OutboundMessageService::class),
-            $this->app->make(BusinessHoursService::class),
-            $this->app->make(RoutingRuleService::class),
         );
 
         // The ERP link job must always be dispatched for new conversations,

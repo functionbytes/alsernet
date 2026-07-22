@@ -57,6 +57,10 @@ class MetaWebhookController extends Controller
             return response()->json(['status' => 'unauthorized'], 401);
         }
 
+        if (! helpdesk_social_enabled()) {
+            return response()->json(['status' => 'disabled'], 200);
+        }
+
         $payload = $request->all();
 
         if (! $this->parser->supports($payload)) {

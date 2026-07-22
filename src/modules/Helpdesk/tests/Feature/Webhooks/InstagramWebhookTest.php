@@ -5,11 +5,13 @@ namespace Modules\Helpdesk\Tests\Feature\Webhooks;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Modules\Helpdesk\Jobs\ProcessSocialWebhookJob;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class InstagramWebhookTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -21,6 +23,9 @@ class InstagramWebhookTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Los listeners de inbound consultan User::role('helpdesk-agent').
+        $this->seedHelpdeskRoles();
 
         config([
             'helpdesk.integrations.facebook.app_secret' => $this->appSecret,
