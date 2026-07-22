@@ -32,6 +32,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\RemindersController;
 use Modules\Helpdesk\Http\Controllers\Managers\SearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\SlaBreachesReportController;
+use Modules\Helpdesk\Http\Controllers\Managers\SuggestedArticlesController;
 use Modules\Helpdesk\Http\Controllers\Managers\TrendsReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\WebRtcAgentController;
 
@@ -169,6 +170,11 @@ Route::group(['prefix' => ''], function () {
     Route::post('/conversations/{conversation}/ai/suggestions', AiSuggestionsController::class)
         ->middleware(['can:helpdesk.conversations.update', 'throttle:30,1'])
         ->name('manager.helpdesk.conversations.ai.suggestions');
+
+    // Knowledge/helpcenter article suggestions for the inbox composer panel
+    Route::get('/conversations/{conversation}/suggested-articles', SuggestedArticlesController::class)
+        ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1'])
+        ->name('manager.helpdesk.conversations.suggested-articles');
 
     Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');
     Route::post('/conversations/{conversation}/attachments/forward', [HelpdeskConversationsController::class, 'forwardAttachment'])->name('manager.helpdesk.conversations.attachments.forward');

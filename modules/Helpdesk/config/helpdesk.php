@@ -108,6 +108,10 @@ return [
     'auto_assignment' => [
         'enabled' => false,
         'strategy' => 'round_robin',
+        // Ruteo por idioma (solo tickets): si el ticket tiene detected_language,
+        // prefiere agentes que hablen ese idioma (AgentSettings.languages) y cae
+        // al pool completo si nadie lo habla. Off por defecto.
+        'language_routing' => false,
     ],
 
     'sla' => [

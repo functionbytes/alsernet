@@ -118,6 +118,7 @@ class AgentSettingsController extends Controller
                     'max_concurrent_conversations' => $validated['max_concurrent_conversations'] ?? 0,
                     'auto_assign' => $request->boolean('auto_assign'),
                     'vacation_until' => $validated['vacation_until'] ?? null,
+                    'languages' => $this->parseLanguages($validated['languages'] ?? null),
                 ]
             );
 
@@ -138,6 +139,22 @@ class AgentSettingsController extends Controller
         return redirect()
             ->route('settings.helpdesk.agent-settings.index')
             ->with('success', "Configuracion de {$user->name} actualizada correctamente");
+    }
+
+    /**
+     * CSV "es, en-GB" → ["es", "en-gb"] (null si queda vacío). Los códigos se
+     * comparan por subtag primario en AgentSettings::speaksLanguage().
+     *
+     * @return list<string>|null
+     */
+    private function parseLanguages(?string $languages): ?array
+    {
+        $parsed = array_values(array_unique(array_filter(array_map(
+            fn (string $code): string => strtolower(trim($code)),
+            explode(',', (string) $languages)
+        ))));
+
+        return $parsed === [] ? null : $parsed;
     }
 
     /**

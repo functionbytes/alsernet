@@ -95,6 +95,19 @@
         @enderror
     </div>
 
+    {{-- Idiomas que habla (ruteo por idioma de tickets) --}}
+    <div class="col-12 col-md-6">
+        <label class="form-label">Idiomas que habla</label>
+        <input type="text" name="languages"
+            class="form-control @error('languages') is-invalid @enderror"
+            value="{{ old('languages', implode(', ', $agentSettings->languages ?? [])) }}"
+            placeholder="es, en, fr">
+        <div class="form-text">Codigos de idioma separados por comas (ISO-639, ej. "es, en"). Usado por el ruteo por idioma en la asignacion automatica de tickets</div>
+        @error('languages')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
     {{-- Seccion: Habilidades --}}
     @if($skills->count() > 0)
         <div class="col-12 mt-2">
