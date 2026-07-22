@@ -6,14 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskCampaigns\Http\Requests\Managers\BulkActionCampaignRequest;
 use Modules\HelpdeskCampaigns\Http\Requests\Managers\RejectCampaignRequest;
 use Modules\HelpdeskCampaigns\Http\Requests\Managers\StoreCampaignRequest;
 use Modules\HelpdeskCampaigns\Http\Requests\Managers\UpdateCampaignRequest;
 use Modules\HelpdeskCampaigns\Models\Campaign;
 use Modules\HelpdeskCampaigns\Models\CampaignTemplate;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CampaignsController extends Controller
 {
@@ -24,12 +25,10 @@ class CampaignsController extends Controller
     {
         $this->authorize('viewAny', Campaign::class);
 
-        $query = Campaign::query()
-            ->withCount([
-                'impressions',
-                'impressions as clicks_count' => fn ($q) => $q->whereNotNull('clicked_at'),
-            ])
-            ->orderBy('created_at', 'desc');
+        // impressions_count / clicks_count are denormalized columns kept in sync
+        // by UpdateCampaignImpressionCounters, so the listing reads them directly
+        // instead of running two correlated COUNT subqueries per row (withCount).
+        $query = Campaign::query()->orderBy('created_at', 'desc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -165,6 +164,10 @@ class CampaignsController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        if ($campaign->requiresPendingApproval()) {
+            return back()->with('error', 'La campaña requiere aprobación antes de publicarse.');
+        }
+
         $campaign->publish();
 
         Cache::forget("campaign_stats_{$campaign->id}");
@@ -254,14 +257,23 @@ class CampaignsController extends Controller
     {
         $this->authorize('view', $campaign);
 
+        // show.blade.php pide `?days=30` y consume {labels, impressions, clicks}
+        // para Chart.js — devolver solo `timeline` dejaba el gráfico vacío.
+        $days = max(1, min(365, (int) request('days', 30)));
+
         $rows = $campaign->impressions()
             ->selectRaw('DATE(viewed_at) as date, COUNT(*) as impressions, SUM(clicked_at IS NOT NULL) as clicks')
+            ->where('viewed_at', '>=', now()->subDays($days)->startOfDay())
             ->groupByRaw('DATE(viewed_at)')
             ->orderBy('date')
             ->get();
 
         return response()->json([
             'campaign_id' => $campaign->id,
+            'labels' => $rows->pluck('date')->all(),
+            'impressions' => $rows->pluck('impressions')->map(fn ($v) => (int) $v)->all(),
+            'clicks' => $rows->pluck('clicks')->map(fn ($v) => (int) $v)->all(),
+            // Forma anterior, por si algún consumidor externo la usaba.
             'timeline' => $rows,
         ]);
     }
@@ -287,35 +299,48 @@ class CampaignsController extends Controller
     /**
      * Export impression statistics as CSV
      */
-    public function exportStatistics(Campaign $campaign): Response
+    public function exportStatistics(Campaign $campaign): StreamedResponse
     {
         $this->authorize('view', $campaign);
 
-        $impressions = $campaign->impressions()
-            ->orderByDesc('viewed_at')
-            ->get(['impression_id', 'device_type', 'browser', 'country', 'page_url', 'viewed_at', 'clicked_at']);
+        // Antes cargaba TODAS las impresiones en memoria y concatenaba el CSV
+        // completo en un string PHP — una campaña popular con cientos de
+        // miles de filas podia agotar memoria o generar timeouts. Mismo
+        // patron cursor()+streamDownload() ya usado en HelpdeskReportsController::export().
+        // page_url y browser vienen del endpoint público de tracking (sin
+        // auth), así que se neutraliza el CSV formula injection: un valor que
+        // empiece por =,+,-,@ se activaría como fórmula al abrir el CSV en Excel.
+        $csvSafe = function ($value): string {
+            $value = (string) $value;
 
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"campaign-{$campaign->id}-stats.csv\"",
-        ];
+            return preg_match('/^[=+\-@]/', $value) ? "'".$value : $value;
+        };
 
-        $rows = $impressions->map(fn ($i) => [
-            $i->impression_id,
-            $i->device_type,
-            $i->browser,
-            $i->country,
-            $i->page_url,
-            $i->viewed_at,
-            $i->clicked_at,
+        return response()->streamDownload(function () use ($campaign, $csvSafe) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['impression_id', 'device_type', 'browser', 'country', 'page_url', 'viewed_at', 'clicked_at']);
+
+            $campaign->impressions()
+                ->orderByDesc('viewed_at')
+                ->select(['impression_id', 'device_type', 'browser', 'country', 'page_url', 'viewed_at', 'clicked_at'])
+                ->cursor()
+                ->each(function ($impression) use ($handle, $csvSafe) {
+                    fputcsv($handle, [
+                        $impression->impression_id,
+                        $csvSafe($impression->device_type),
+                        $csvSafe($impression->browser),
+                        $csvSafe($impression->country),
+                        $csvSafe($impression->page_url),
+                        $impression->viewed_at,
+                        $impression->clicked_at,
+                    ]);
+                });
+
+            fclose($handle);
+        }, "campaign-{$campaign->id}-stats.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
-
-        $csv = "impression_id,device_type,browser,country,page_url,viewed_at,clicked_at\n";
-        foreach ($rows as $row) {
-            $csv .= implode(',', array_map(fn ($v) => '"'.str_replace('"', '""', (string) $v).'"', $row))."\n";
-        }
-
-        return response($csv, 200, $headers);
     }
 
     /**
@@ -418,12 +443,28 @@ class CampaignsController extends Controller
     {
         $this->authorize('create', Campaign::class);
 
-        $newCampaign = $campaign->replicate();
-        $newCampaign->name = $campaign->name.' (Copia)';
-        $newCampaign->status = 'draft';
-        $newCampaign->published_at = null;
-        $newCampaign->ends_at = null;
-        $newCampaign->save();
+        $newCampaign = DB::connection('helpdesk')->transaction(function () use ($campaign): Campaign {
+            $copy = $campaign->replicate();
+            $copy->name = $campaign->name.' (Copia)';
+            $copy->status = 'draft';
+            $copy->published_at = null;
+            $copy->ends_at = null;
+            // La copia arranca sin estadísticas — replicate() arrastraría las del original.
+            $copy->impressions_count = 0;
+            $copy->clicks_count = 0;
+            $copy->save();
+
+            // Clonar las variantes A/B (se perdían al duplicar), con contadores a cero.
+            foreach ($campaign->variants as $variant) {
+                $variantCopy = $variant->replicate();
+                $variantCopy->campaign_id = $copy->id;
+                $variantCopy->impressions_count = 0;
+                $variantCopy->clicks_count = 0;
+                $variantCopy->save();
+            }
+
+            return $copy;
+        });
 
         return redirect()
             ->route('helpdesk.campaigns.edit', $newCampaign)

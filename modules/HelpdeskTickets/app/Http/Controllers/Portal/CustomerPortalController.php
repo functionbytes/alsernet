@@ -89,9 +89,10 @@ class CustomerPortalController extends Controller
 
         RateLimiter::hit($throttleKey, 600);
 
-        $customer = Customer::where('portal_token', $token)
-            ->where('portal_token_expires_at', '>', now())
-            ->first();
+        // generatePortalToken() guarda el HASH sha256 del token (nunca el
+        // cleartext); findByPortalToken() hace el hash antes de comparar.
+        // Comparar el cleartext contra la columna nunca autenticaría a nadie.
+        $customer = Customer::findByPortalToken($token);
 
         if (! $customer) {
             Log::warning('Portal: invalid or expired token attempt', [
@@ -156,13 +157,21 @@ class CustomerPortalController extends Controller
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
+        // El stream del portal son TicketItems tipo "message" (sin notas
+        // internas). Los adjuntos viven aparte: TicketService::storeAttachments
+        // crea TicketMessage + TicketAttachment (FK ticket_message_id), así que
+        // se cargan desde ahí y no como relación del item.
         $messages = $ticket->messages()
-            ->with(['user:id,name', 'attachments'])
+            ->where('is_internal', false)
+            ->with(['user:id,firstname,lastname'])
             ->orderBy('created_at')
             ->limit(200)
             ->get();
 
-        $attachments = $messages->flatMap(fn (TicketMessage $msg) => $msg->attachments);
+        $attachments = TicketMessage::where('ticket_id', $ticket->id)
+            ->with('attachments')
+            ->get()
+            ->flatMap(fn (TicketMessage $msg) => $msg->attachments);
 
         return view('helpdesktickets::portal.tickets.show', compact('customer', 'ticket', 'messages', 'attachments'));
     }

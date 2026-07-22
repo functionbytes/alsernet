@@ -90,15 +90,19 @@ trait TranslatesMessage
 
         return self::$columnsExistCache[static::class];
     }
+
     /**
      * Per-job memoization of Setting::get() results.
      *
-     * Static so both listeners reuse the same lookup within the same process
-     * slot. Reset between jobs by Horizon's forked worker model.
+     * Per-INSTANCE (sin static): los listeners se instancian una vez por job,
+     * así que una propiedad de instancia ya evita SELECTs repetidos dentro del
+     * mismo job. Un static aquí se filtraba entre jobs en `queue:work` daemon
+     * (el proceso no se recicla por job) y entre tests: un toggle memoizado
+     * como false hacía que cambios posteriores del setting nunca se releyeran.
      *
      * @var array<string, mixed>
      */
-    private static array $settingCache = [];
+    private array $settingCache = [];
 
     /**
      * Compare two locale strings using their first two characters, so values
@@ -119,11 +123,11 @@ trait TranslatesMessage
      */
     protected function settingValue(string $key, mixed $default = null): mixed
     {
-        if (! array_key_exists($key, self::$settingCache)) {
-            self::$settingCache[$key] = Setting::get($key);
+        if (! array_key_exists($key, $this->settingCache)) {
+            $this->settingCache[$key] = Setting::get($key);
         }
 
-        $value = self::$settingCache[$key];
+        $value = $this->settingCache[$key];
 
         return ($value === null || $value === '') ? $default : $value;
     }

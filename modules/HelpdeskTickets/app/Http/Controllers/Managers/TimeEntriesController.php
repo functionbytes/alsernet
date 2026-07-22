@@ -4,7 +4,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Managers\StoreTimeEntryRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketTimeEntry;
 
@@ -16,7 +16,7 @@ class TimeEntriesController extends Controller
     public function index(Ticket $ticket): JsonResponse
     {
         $entries = $ticket->timeEntries()
-            ->with('user:id,name')
+            ->with('user:id,firstname,lastname')
             ->orderBy('logged_at', 'desc')
             ->limit(200)
             ->get()
@@ -34,13 +34,9 @@ class TimeEntriesController extends Controller
     /**
      * Log a new time entry for a ticket.
      */
-    public function store(Request $request, Ticket $ticket): JsonResponse
+    public function store(StoreTimeEntryRequest $request, Ticket $ticket): JsonResponse
     {
-        $validated = $request->validate([
-            'description' => ['nullable', 'string', 'max:500'],
-            'minutes' => ['required', 'integer', 'min:1', 'max:480'],
-            'logged_at' => ['nullable', 'date'],
-        ]);
+        $validated = $request->validated();
 
         $entry = TicketTimeEntry::create([
             'ticket_id' => $ticket->id,
@@ -50,7 +46,7 @@ class TimeEntriesController extends Controller
             'logged_at' => $validated['logged_at'] ?? now(),
         ]);
 
-        $entry->load('user:id,name');
+        $entry->load('user:id,firstname,lastname');
 
         return response()->json(
             array_merge($entry->toArray(), ['formatted_duration' => $entry->formatted_duration]),

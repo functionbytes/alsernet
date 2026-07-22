@@ -5,7 +5,9 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Agents;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Http\Requests\Agents\StoreMessageRequest;
+use Modules\HelpdeskTickets\Http\Requests\Agents\UpdateMessageRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
 
@@ -14,21 +16,18 @@ class MessagesController extends Controller
     public function index(Ticket $ticket): JsonResponse
     {
         $messages = $ticket->messages()
-            ->with(['user:id,name', 'author:id,name,email'])
+            ->with(['user:id,firstname,lastname', 'author:id,name,email'])
             ->latest()
             ->paginate(50);
 
         return response()->json($messages);
     }
 
-    public function store(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
+    public function store(StoreMessageRequest $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $ticket);
 
-        $validated = $request->validate([
-            'body' => 'required|string|max:65535',
-            'is_internal' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $item = $ticket->items()->create([
             'type' => 'message',
@@ -45,20 +44,25 @@ class MessagesController extends Controller
             $ticket->update(['first_response_at' => now()]);
         }
 
+        // Mismo evento que el flujo de managers (TicketMessagingController):
+        // sin él, las respuestas de agente no notificaban al cliente ni
+        // registraban historial (listeners de MessageAdded).
+        MessageAdded::dispatch($item);
+
         if ($request->expectsJson()) {
-            return response()->json($item->load('user:id,name'), 201);
+            // users no tiene columna `name` (es firstname/lastname + accessor
+            // full_name en HasUserAttributes) — seleccionar `name` revienta.
+            return response()->json($item->load('user:id,firstname,lastname'), 201);
         }
 
         return back()->with('success', __('helpdesk::helpdesk.messages.message_sent'));
     }
 
-    public function update(Request $request, Ticket $ticket, TicketItem $message): JsonResponse|RedirectResponse
+    public function update(UpdateMessageRequest $request, Ticket $ticket, TicketItem $message): JsonResponse|RedirectResponse
     {
         $this->authorize('update', $message);
 
-        $validated = $request->validate([
-            'body' => 'required|string|max:65535',
-        ]);
+        $validated = $request->validated();
 
         $message->update([
             'body' => strip_tags($validated['body']),

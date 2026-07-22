@@ -20,7 +20,7 @@ class MessagesController extends Controller
         $ticket = Ticket::where('ticket_number', $ticketNumber)->firstOrFail();
 
         $messages = $ticket->items()
-            ->with(['user:id,name'])
+            ->with(['user:id,firstname,lastname'])
             ->latest()
             ->paginate($request->input('per_page', 15));
 
@@ -49,7 +49,7 @@ class MessagesController extends Controller
             return $item;
         });
 
-        $item->load('user:id,name');
+        $item->load('user:id,firstname,lastname');
 
         return ApiResponse::created(new MessageResource($item), 'Mensaje enviado correctamente.');
     }
