@@ -3,8 +3,12 @@
 namespace Modules\HelpdeskContacts\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\Helpdesk\Events\CustomerMerged;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskContacts\Services\ContactMergeService;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -159,5 +163,102 @@ class ContactMergeServiceTest extends TestCase
 
         $this->assertSoftDeleted('helpdesk_customers', ['id' => $loser->id], connection: 'helpdesk');
         $this->assertDatabaseHas('helpdesk_customers', ['id' => $winner->id, 'deleted_at' => null], 'helpdesk');
+    }
+
+    /* ── Paridad con CustomerMergeAction (fusión unificada) ──────────────── */
+
+    /**
+     * Paridad con CustomerMergeAction: la fusión desde Contactos migraba
+     * conversaciones/tickets/chats pero dejaba huérfanas las filas de
+     * helpdesk_customer_inboxes del perdedor (soft-deleted). Tras delegar en
+     * CustomerMergeAction deben re-apuntarse al ganador, deduplicando por el
+     * unique (customer_id, inbox_id).
+     */
+    public function test_merge_migrates_customer_inboxes_to_winner_without_duplicates(): void
+    {
+        $winner = Customer::factory()->create();
+        $loser = Customer::factory()->create();
+
+        $sharedInbox = Inbox::create(['name' => 'Merge Shared '.uniqid(), 'channel_type' => Inbox::CHANNEL_WEB]);
+        $loserOnlyInbox = Inbox::create(['name' => 'Merge Loser '.uniqid(), 'channel_type' => Inbox::CHANNEL_WEB]);
+
+        $now = now();
+        DB::connection('helpdesk')->table('helpdesk_customer_inboxes')->insert([
+            ['customer_id' => $winner->id, 'inbox_id' => $sharedInbox->id, 'created_at' => $now, 'updated_at' => $now],
+            ['customer_id' => $loser->id, 'inbox_id' => $sharedInbox->id, 'created_at' => $now, 'updated_at' => $now],
+            ['customer_id' => $loser->id, 'inbox_id' => $loserOnlyInbox->id, 'created_at' => $now, 'updated_at' => $now],
+        ]);
+
+        app(ContactMergeService::class)->merge($winner, $loser);
+
+        $this->assertDatabaseMissing('helpdesk_customer_inboxes', ['customer_id' => $loser->id], 'helpdesk');
+        $this->assertDatabaseHas('helpdesk_customer_inboxes', [
+            'customer_id' => $winner->id,
+            'inbox_id' => $loserOnlyInbox->id,
+        ], 'helpdesk');
+        $this->assertSame(1, DB::connection('helpdesk')
+            ->table('helpdesk_customer_inboxes')
+            ->where('customer_id', $winner->id)
+            ->where('inbox_id', $sharedInbox->id)
+            ->count());
+    }
+
+    /**
+     * Paridad: las sesiones (helpdesk_customer_sessions) del perdedor deben
+     * migrar al ganador — antes quedaban colgando de un customer soft-deleted.
+     */
+    public function test_merge_migrates_customer_sessions_to_winner(): void
+    {
+        $winner = Customer::factory()->create();
+        $loser = Customer::factory()->create();
+
+        $sessionId = 'merge-session-'.uniqid();
+        DB::connection('helpdesk')->table('helpdesk_customer_sessions')->insert([
+            'customer_id' => $loser->id,
+            'session_id' => $sessionId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        app(ContactMergeService::class)->merge($winner, $loser);
+
+        $this->assertDatabaseHas('helpdesk_customer_sessions', [
+            'session_id' => $sessionId,
+            'customer_id' => $winner->id,
+        ], 'helpdesk');
+        $this->assertDatabaseMissing('helpdesk_customer_sessions', ['customer_id' => $loser->id], 'helpdesk');
+    }
+
+    /**
+     * Paridad: la fusión desde Contactos ahora emite CustomerMerged, igual
+     * que la fusión del core, para que los módulos suscritos reaccionen a
+     * ambas rutas.
+     */
+    public function test_merge_dispatches_customer_merged_event(): void
+    {
+        Event::fake([CustomerMerged::class]);
+
+        $winner = Customer::factory()->create();
+        $loser = Customer::factory()->create();
+
+        app(ContactMergeService::class)->merge($winner, $loser);
+
+        Event::assertDispatched(CustomerMerged::class, function (CustomerMerged $event) use ($winner, $loser): bool {
+            return $event->base->id === $winner->id && $event->mergee->id === $loser->id;
+        });
+    }
+
+    /**
+     * Paridad: los atributos básicos vacíos del ganador se rellenan desde el
+     * perdedor (antes la fusión de Contactos solo copiaba los IDs sociales).
+     */
+    public function test_merge_backfills_missing_basic_attributes_from_loser(): void
+    {
+        $winner = Customer::factory()->create(['phone' => null]);
+        $loser = Customer::factory()->create(['phone' => '+34911222333']);
+
+        app(ContactMergeService::class)->merge($winner, $loser);
+
+        $this->assertSame('+34911222333', $winner->refresh()->phone);
     }
 }

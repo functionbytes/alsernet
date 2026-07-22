@@ -79,7 +79,17 @@ class ErpCustomerLinkerService
 
     private function searchByEmail(string $email): ?int
     {
-        $results = $this->erp->searchCustomers($email, 'email');
+        // searchCustomers() propaga las caídas del manager (conexión o status
+        // no-2xx) como excepción; aquí las tratamos como "sin coincidencia" para
+        // que linkCustomer() siga probando las demás estrategias en vez de
+        // abortar el job entero por un fallo transitorio del ERP.
+        try {
+            $results = $this->erp->searchCustomers($email, 'email');
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskErp: linkCustomer no pudo buscar por email.', ['error' => $e->getMessage()]);
+
+            return null;
+        }
 
         foreach ($results as $r) {
             if (isset($r['email']) && strtolower($r['email']) === strtolower($email)) {
@@ -90,10 +100,49 @@ class ErpCustomerLinkerService
         return null;
     }
 
+    /**
+     * Mismo criterio que searchByEmail(): la búsqueda por dígitos del manager
+     * es fuzzy (IDCLIENTE / IDTARJETA / CODIGO_INTERNET además de teléfono),
+     * así que nunca se vincula results[0] a ciegas. Con varios candidatos el
+     * match es ambiguo → no vincular y log; con uno solo, se verifica contra
+     * su ficha que el teléfono normalizado realmente coincide.
+     */
     private function searchByPhone(string $digits): ?int
     {
-        $results = $this->erp->searchCustomers($digits, 'phone');
+        try {
+            $results = $this->erp->searchCustomers($digits, 'phone');
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskErp: linkCustomer no pudo buscar por teléfono.', ['error' => $e->getMessage()]);
 
-        return isset($results[0]['id']) ? (int) $results[0]['id'] : null;
+            return null;
+        }
+
+        if (! is_array($results) || $results === []) {
+            return null;
+        }
+
+        if (count($results) > 1) {
+            Log::info('HelpdeskErp: linkCustomer — búsqueda por teléfono ambigua, no se vincula.', [
+                'candidates' => count($results),
+            ]);
+
+            return null;
+        }
+
+        $erpId = isset($results[0]['id']) && is_numeric($results[0]['id']) ? (int) $results[0]['id'] : null;
+
+        if ($erpId === null) {
+            return null;
+        }
+
+        if ($this->erp->customerHasPhone($erpId, $digits) !== true) {
+            Log::info('HelpdeskErp: linkCustomer — el candidato no tiene el teléfono buscado, no se vincula.', [
+                'erp_id' => $erpId,
+            ]);
+
+            return null;
+        }
+
+        return $erpId;
     }
 }

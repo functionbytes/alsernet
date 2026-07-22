@@ -122,8 +122,9 @@ class CustomerMergeAction
 
         // total_conversations: tras mergeConversations() todas las conversaciones
         // del mergee ya apuntan al base, así que se recalcula con un COUNT real
-        // (mismo criterio que ContactMergeService::refreshConversationCount) en
-        // vez de sumar contadores desnormalizados que pueden estar desfasados.
+        // en vez de sumar contadores desnormalizados que pueden estar desfasados.
+        // (ContactMergeService de HelpdeskContacts delega aquí, así que este
+        // recálculo cubre también las fusiones lanzadas desde Contactos.)
         $updates['total_conversations'] = DB::connection('helpdesk')
             ->table('helpdesk_conversations')
             ->where('customer_id', $this->base->id)

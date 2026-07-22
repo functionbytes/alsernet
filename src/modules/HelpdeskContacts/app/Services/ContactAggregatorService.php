@@ -197,7 +197,7 @@ class ContactAggregatorService
     public function conversaciones(Customer $customer): array
     {
         $conversations = $customer->conversations()
-            ->with(['status', 'inbox'])
+            ->with(['status', 'inbox', 'lastMessage'])
             ->latest('last_message_at')
             ->limit(50)
             ->get();
@@ -206,7 +206,10 @@ class ContactAggregatorService
             'conversations' => $conversations->map(function (Conversation $conversation): array {
                 $channelInfo = $conversation->channel_info;
                 $status = $conversation->status;
-                $latest = $conversation->getLatestMessage();
+                // Relación precargada arriba con with(['lastMessage']) — acceso
+                // directo (sin getLatestMessage()) para que sea explícito que
+                // no hay una query por fila.
+                $latest = $conversation->lastMessage;
                 $preview = trim(strip_tags((string) ($latest?->body ?? $conversation->subject ?? '')));
 
                 return [

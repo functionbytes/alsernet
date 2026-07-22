@@ -163,6 +163,43 @@ class ErpWebhookTest extends TestCase
             ->assertStatus(401);
     }
 
+    // ── Anti-replay ────────────────────────────────────────────────────────
+
+    public function test_replayed_request_with_same_signature_returns_401(): void
+    {
+        Event::fake([ErpOrdersReady::class]);
+
+        ['body' => $body, 'headers' => $headers] = $this->signedRequest([
+            'email' => 'replay@example.com',
+        ]);
+
+        // Primera entrega: aceptada.
+        $this->call('POST', self::URL, [], [], [], $this->serverHeaders($headers), $body)
+            ->assertOk()
+            ->assertJson(['ok' => true]);
+
+        // Replay exacto (misma firma + timestamp aún válido): rechazado.
+        $this->call('POST', self::URL, [], [], [], $this->serverHeaders($headers), $body)
+            ->assertStatus(401)
+            ->assertJson(['ok' => false, 'error' => 'replay detected']);
+
+        // El evento solo se emitió una vez (la entrega original).
+        Event::assertDispatchedTimes(ErpOrdersReady::class, 1);
+    }
+
+    public function test_distinct_signed_requests_are_not_treated_as_replays(): void
+    {
+        Event::fake([ErpOrdersReady::class]);
+
+        ['body' => $bodyA, 'headers' => $headersA] = $this->signedRequest(['email' => 'a-'.uniqid().'@example.com']);
+        ['body' => $bodyB, 'headers' => $headersB] = $this->signedRequest(['email' => 'b-'.uniqid().'@example.com']);
+
+        $this->call('POST', self::URL, [], [], [], $this->serverHeaders($headersA), $bodyA)->assertOk();
+        $this->call('POST', self::URL, [], [], [], $this->serverHeaders($headersB), $bodyB)->assertOk();
+
+        Event::assertDispatchedTimes(ErpOrdersReady::class, 2);
+    }
+
     // ── Validation failures ────────────────────────────────────────────────
 
     public function test_invalid_email_in_body_returns_422(): void

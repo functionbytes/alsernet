@@ -11,12 +11,15 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Laravel\Pulse\Pulse;
 use Modules\Erp\Services\ErpCustomerDataService;
+use Modules\Helpdesk\Concerns\HasCircuitBreaker;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskErp\Jobs\RefreshErpContextJob;
 
 class ErpContextService
 {
+    use HasCircuitBreaker;
+
     /**
      * Obtiene el contexto ERP del cliente buscando primero por email y,
      * si no se encuentra, por teléfono (fallback).
@@ -66,6 +69,10 @@ class ErpContextService
             return [];
         }
 
+        if ($this->isCircuitOpen()) {
+            return [];
+        }
+
         // Para búsqueda por teléfono, normalizar a dígitos puros para que el manager
         // Oracle detecte correctamente la búsqueda vía heurística ctype_digit().
         if ($type === 'phone') {
@@ -76,18 +83,53 @@ class ErpContextService
 
         try {
             $resp = $this->http()->get($this->url('erp/customer/search'), $params);
+        } catch (\Throwable $e) {
+            $this->recordFailure();
 
-            if (! $resp->successful()) {
-                return [];
-            }
+            Log::warning('HelpdeskErp: searchCustomers falló contra el manager.', [
+                'type' => $type,
+                'error' => $e->getMessage(),
+            ]);
 
-            return $resp->json('data') ?? [];
-        } catch (\Throwable) {
-            return [];
+            // Igual que la respuesta no-2xx de abajo: un fallo de conexión tampoco
+            // es "sin resultados" — se propaga para que el driver reporte
+            // platform_error=true en vez de dar a entender que el cliente no existe.
+            throw new \RuntimeException('ERP searchCustomers no pudo conectar con el manager.', previous: $e);
         }
+
+        // Una respuesta no exitosa (401/404/5xx, p. ej. por una URL de manager
+        // mal configurada) NO es "sin resultados": se propaga como excepcion
+        // para que el driver (ErpIntegrationDriver::search()) la distinga y
+        // reporte platform_error=true en vez de una lista vacia silenciosa.
+        if (! $resp->successful()) {
+            $this->recordFailure();
+
+            Log::warning('HelpdeskErp: searchCustomers recibió una respuesta no exitosa del manager.', [
+                'type' => $type,
+                'status' => $resp->status(),
+            ]);
+
+            throw new \RuntimeException("ERP searchCustomers respondió con status {$resp->status()}.");
+        }
+
+        $this->recordSuccess();
+
+        return $resp->json('data') ?? [];
     }
 
     public function getOrderDetail(int $customerId, int $orderId): ?array
+    {
+        // Short cache: order detail is re-read on every panel/tab render but barely
+        // changes within a session. Cache::remember does not persist null, so failed
+        // lookups are naturally retried on the next call instead of being cached.
+        return Cache::remember(
+            "helpdeskerp:order_detail:{$customerId}:{$orderId}",
+            now()->addSeconds(60),
+            fn (): ?array => $this->fetchOrderDetail($customerId, $orderId)
+        );
+    }
+
+    private function fetchOrderDetail(int $customerId, int $orderId): ?array
     {
         if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')) {
             try {
@@ -107,8 +149,18 @@ class ErpContextService
             return null;
         }
 
+        if ($this->isCircuitOpen()) {
+            return null;
+        }
+
         try {
-            $resp = $this->http()->get($this->url("erp/customer/{$customerId}/orders/{$orderId}"));
+            // Retry transient blips (connection reset, 5xx) with a small backoff;
+            // throw:false keeps the existing successful() check in control.
+            $resp = $this->http()
+                ->retry(2, 200, throw: false)
+                ->get($this->url("erp/customer/{$customerId}/orders/{$orderId}"));
+
+            $this->recordSuccess();
 
             if (! $resp->successful()) {
                 return null;
@@ -116,6 +168,8 @@ class ErpContextService
 
             return $resp->json('data') ?? null;
         } catch (\Throwable $e) {
+            $this->recordFailure();
+
             Log::warning('HelpdeskErp: error al obtener detalle de pedido.', [
                 'customer_id' => $customerId,
                 'order_id' => $orderId,
@@ -187,6 +241,10 @@ class ErpContextService
             return $this->emptyContext('not_configured', 'ERP no configurado');
         }
 
+        if ($this->isCircuitOpen()) {
+            return $this->emptyContext('circuit_open', 'ERP temporalmente no disponible');
+        }
+
         try {
             $customer = $this->searchCustomer($email);
 
@@ -198,12 +256,18 @@ class ErpContextService
                 }
             }
 
+            // Llegar aquí sin excepción significa que el manager respondió: cerrar
+            // el breaker aunque el cliente no exista (una no-coincidencia no es caída).
+            $this->recordSuccess();
+
             if (! $customer) {
                 return $this->emptyContext();
             }
 
             return $this->fetchCustomerData($customer, $email);
         } catch (ConnectionException $e) {
+            $this->recordFailure();
+
             Log::warning('HelpdeskErp: error de conexión al manager API.', [
                 'email' => PiiMasker::email($email),
                 'error' => $e->getMessage(),
@@ -211,6 +275,8 @@ class ErpContextService
 
             return $this->emptyContext('connection', 'No se pudo conectar al ERP');
         } catch (\Throwable $e) {
+            $this->recordFailure();
+
             Log::warning('HelpdeskErp: error al consultar manager API.', [
                 'email' => PiiMasker::email($email),
                 'error' => $e->getMessage(),
@@ -480,6 +546,12 @@ class ErpContextService
     /**
      * Busca cliente en el ERP por teléfono (dígitos puros, ≥6 caracteres).
      * El manager Oracle detecta que es búsqueda por teléfono cuando q es todo dígitos.
+     *
+     * Mismo criterio que la búsqueda por email (searchCustomer): nunca tomar
+     * results[0] a ciegas. La búsqueda por dígitos del manager es fuzzy
+     * (IDCLIENTE / IDTARJETA / CODIGO_INTERNET además de teléfono), así que:
+     * con varios candidatos el match es ambiguo y no se atribuye; con uno solo
+     * se verifica que su teléfono real coincida (normalizados) antes de usarlo.
      */
     private function searchCustomerByPhone(string $phoneDigits): ?array
     {
@@ -492,8 +564,75 @@ class ErpContextService
 
             $results = $resp->json('data') ?? [];
 
-            return is_array($results) && ! empty($results) ? $results[0] : null;
+            if (! is_array($results) || $results === []) {
+                return null;
+            }
+
+            if (count($results) > 1) {
+                Log::info('HelpdeskErp: búsqueda por teléfono ambigua — no se atribuye el contexto.', [
+                    'candidates' => count($results),
+                ]);
+
+                return null;
+            }
+
+            $candidate = $results[0];
+            $candidateId = isset($candidate['id']) && is_numeric($candidate['id']) ? (int) $candidate['id'] : null;
+
+            if ($candidateId === null || $this->customerHasPhone($candidateId, $phoneDigits) !== true) {
+                Log::info('HelpdeskErp: el candidato de la búsqueda por teléfono no tiene ese número — no se atribuye.', [
+                    'erp_id' => $candidateId,
+                ]);
+
+                return null;
+            }
+
+            return $candidate;
         } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Verifica contra la ficha del cliente (erp/customer/{id}) que alguno de
+     * sus teléfonos coincide con los dígitos buscados, comparando ambos
+     * normalizados (PhoneNormalizerService::similar()).
+     *
+     * @return bool|null true = coincide, false = no coincide, null = no verificable
+     */
+    public function customerHasPhone(int $erpCustomerId, string $phoneDigits): ?bool
+    {
+        try {
+            $resp = $this->http()->get($this->url("erp/customer/{$erpCustomerId}"));
+
+            if (! $resp->successful()) {
+                return null;
+            }
+
+            $phones = $resp->json('data.phones') ?? [];
+
+            if (! is_array($phones)) {
+                return null;
+            }
+
+            $normalizer = app(PhoneNormalizerService::class);
+
+            foreach ($phones as $phone) {
+                $number = is_array($phone) ? ($phone['number'] ?? null) : $phone;
+
+                if ((is_string($number) || is_numeric($number))
+                    && $normalizer->similar((string) $number, $phoneDigits)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (\Throwable $e) {
+            Log::warning('HelpdeskErp: no se pudo verificar el teléfono del candidato ERP.', [
+                'erp_id' => $erpCustomerId,
+                'error' => $e->getMessage(),
+            ]);
+
             return null;
         }
     }
@@ -589,6 +728,19 @@ class ErpContextService
             'found' => $found,
         ], JSON_THROW_ON_ERROR));
     }
+
+    /* ── Circuit breaker ──────────────────────────────────────────────────── */
+
+    /**
+     * Clave del contador de fallos consecutivos del manager ERP. Cuando el
+     * manager está caído cada request cuelga hasta http_timeout (15s); el
+     * breaker corta las llamadas tras N fallos para no arrastrar el inbox
+     * durante toda la caída. El estado se comparte entre búsqueda, contexto y
+     * detalle de pedido (misma clave).
+     */
+    private const CIRCUIT_KEY = 'helpdeskerp:circuit_failures';
+
+    private const CIRCUIT_CONFIG_PREFIX = 'helpdeskErp';
 
     /* ── Empty context ────────────────────────────────────────────────────── */
 

@@ -62,6 +62,8 @@ class ErpWhatsAppIntegrationTest extends TestCase
                     ['id' => $id, 'label' => 'Ana', 'surnames' => 'García', 'email' => '', 'cif' => ''],
                 ],
             ]),
+            // Verificación del candidato: su ficha debe contener el teléfono buscado.
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '+34 666 123 456']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -73,7 +75,8 @@ class ErpWhatsAppIntegrationTest extends TestCase
 
         app(ErpCustomerLinkerService::class)->linkCustomer($customer);
 
-        Http::assertSentCount(1);
+        // 1ª llamada: búsqueda; 2ª: verificación de teléfono contra la ficha.
+        Http::assertSentCount(2);
         $sentUrl = Http::recorded()[0][0]->url();
         $this->assertStringContainsString('666123456', $sentUrl);
         $this->assertStringNotContainsString('+34', $sentUrl);
@@ -89,6 +92,7 @@ class ErpWhatsAppIntegrationTest extends TestCase
                     ['id' => $id, 'label' => 'Bea', 'surnames' => 'Ruiz', 'email' => '', 'cif' => ''],
                 ],
             ]),
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '666123456']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -100,7 +104,7 @@ class ErpWhatsAppIntegrationTest extends TestCase
 
         app(ErpCustomerLinkerService::class)->linkCustomer($customer);
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         $sentUrl = Http::recorded()[0][0]->url();
         $this->assertStringContainsString('666123456', $sentUrl);
     }
@@ -117,6 +121,7 @@ class ErpWhatsAppIntegrationTest extends TestCase
                     ['id' => $id, 'label' => 'Carlos', 'surnames' => 'Martín', 'email' => '', 'cif' => ''],
                 ],
             ]),
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '666123456']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -146,6 +151,7 @@ class ErpWhatsAppIntegrationTest extends TestCase
                     ['id' => $id, 'label' => 'Diana', 'surnames' => '', 'email' => '', 'cif' => ''],
                 ],
             ]),
+            '*/erp/customer/*' => Http::response(['data' => ['phones' => [['number' => '677000001']]]]),
         ]);
 
         $customer = Customer::factory()->create([
@@ -178,7 +184,7 @@ class ErpWhatsAppIntegrationTest extends TestCase
                     ['id' => $id, 'label' => 'Eva', 'surnames' => 'López', 'email' => '', 'cif' => ''],
                 ],
             ]),
-            "*/erp/customer/{$id}" => Http::response(['data' => ['phones' => [], 'addresses' => [], 'payment_method_id' => null]]),
+            "*/erp/customer/{$id}" => Http::response(['data' => ['phones' => [['number' => '666123456']], 'addresses' => [], 'payment_method_id' => null]]),
             "*/erp/customer/{$id}/balance" => Http::response(['data' => []]),
             "*/erp/customer/{$id}/orders*" => Http::response(['data' => [], 'meta' => ['loading' => false]]),
             "*/erp/customer/{$id}/invoices*" => Http::response(['data' => []]),

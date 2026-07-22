@@ -10,8 +10,23 @@ use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Mail\TicketEscalatedMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketHistory;
+use Modules\HelpdeskTickets\Models\TicketSlaBreach;
 use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
+/**
+ * Frontera entre los dos motores SLA del producto:
+ *
+ * - CONVERSACIONES → Modules\HelpdeskSla\Services\ConversationSlaService:
+ *   registra incumplimientos en helpdesk_conversation_sla_breaches y avisa;
+ *   NO escala prioridades.
+ * - TICKETS → este servicio (HelpdeskTickets): escala prioridades por edad o
+ *   por SLA vencido y, cuando la escalada es por SLA ya incumplido, registra
+ *   también el incumplimiento en helpdesk_ticket_sla_breaches para que
+ *   Tickets tenga su propia auditoría.
+ *
+ * Los motores NO se unifican a propósito (ver docs/helpdesk-sla-boundary.md):
+ * cada uno es dueño de su entidad y de su tabla de breaches.
+ */
 class EscalationService
 {
     public const REASON_NO_RESPONSE = 'no_response';
@@ -177,6 +192,10 @@ class EscalationService
             'level' => $ticket->escalation_count,
         ]);
 
+        if ($reason === self::REASON_SLA) {
+            $this->recordSlaBreachAudit($ticket);
+        }
+
         Log::info("Ticket #{$ticket->id} escalated from {$oldPriority} to {$nextPriority}", [
             'ticket_id' => $ticket->id,
             'escalation_count' => $ticket->escalation_count,
@@ -190,6 +209,52 @@ class EscalationService
             'new_priority' => $nextPriority,
             'reason' => $reason,
         ];
+    }
+
+    /**
+     * Registra el incumplimiento de resolución en helpdesk_ticket_sla_breaches
+     * cuando la escalada es por SLA y el SLA está realmente vencido (no cuando
+     * solo está "próximo a vencer"). Idempotente: si el ticket ya tiene un
+     * breach de resolución sin resolver no crea otro. Best-effort: un fallo al
+     * auditar nunca aborta la escalada ya aplicada.
+     */
+    private function recordSlaBreachAudit(Ticket $ticket): void
+    {
+        $dueAt = $ticket->sla_resolution_due_at;
+        $actuallyBreached = (bool) $ticket->sla_resolution_breached
+            || ($dueAt !== null && $dueAt->isPast());
+
+        if (! $actuallyBreached) {
+            return;
+        }
+
+        try {
+            $alreadyRecorded = TicketSlaBreach::query()
+                ->where('ticket_id', $ticket->id)
+                ->where('breach_type', 'resolution')
+                ->unresolved()
+                ->exists();
+
+            if ($alreadyRecorded) {
+                return;
+            }
+
+            TicketSlaBreach::create([
+                'ticket_id' => $ticket->id,
+                'breach_type' => 'resolution',
+                'due_at' => $dueAt,
+                'breached_at' => now(),
+                'breach_duration_minutes' => $dueAt !== null ? (int) round(abs($dueAt->diffInMinutes(now()))) : null,
+                'metadata' => [
+                    'recorded_by' => 'escalation',
+                    'escalation_level' => $ticket->escalation_count,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning("Failed to record SLA breach audit for ticket #{$ticket->id}: {$e->getMessage()}", [
+                'ticket_id' => $ticket->id,
+            ]);
+        }
     }
 
     /**
