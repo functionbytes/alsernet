@@ -95,6 +95,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Ticket AI enrichment (summaries / classification / language routing)
+    |--------------------------------------------------------------------------
+    | Background AI features hooked into HelpdeskTickets events. All of them
+    | run in queued jobs and fail silently — a broken/unconfigured LLM never
+    | affects ticket flows.
+    |
+    | - summaries_enabled: AI summary as internal note on assign/escalate.
+    |   Effectively inert until a default AiAgent with API key is configured.
+    | - auto_classification: MUST default to FALSE ("do no harm") — the LLM
+    |   suggests category (closed list from DB) + priority and only applies
+    |   them above classification_min_confidence, logging it in the history.
+    | - language_detection: stamps helpdesk_tickets.detected_language using
+    |   HelpdeskTranslate's detector; a no-op if LibreTranslate is not set up.
+    | - context_*: cost caps for the text sent to the LLM.
+    */
+    'ticket_ai' => [
+        'summaries_enabled' => env('HELPDESKAGENTS_TICKET_SUMMARIES', true),
+        'summary_cooldown_minutes' => 10,
+        'auto_classification' => env('HELPDESKAGENTS_TICKET_AUTO_CLASSIFICATION', false),
+        'classification_min_confidence' => 0.75,
+        'language_detection' => env('HELPDESKAGENTS_TICKET_LANGUAGE_DETECTION', true),
+        'context_max_items' => 10,
+        'context_max_bytes' => 8192,
+        'context_max_item_chars' => 1500,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Embeddings
     |--------------------------------------------------------------------------
     */

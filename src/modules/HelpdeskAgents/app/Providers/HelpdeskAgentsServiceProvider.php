@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\HelpdeskAgents\Listeners\QueueTicketAiOnTicketCreated;
+use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnAssigned;
+use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnEscalation;
 use Modules\HelpdeskAgents\Listeners\StartAiAgentSessionOnIncomingMessage;
 use Modules\HelpdeskAgents\Models\AgentShift;
 use Modules\HelpdeskAgents\Models\AgentVacation;
@@ -21,6 +24,7 @@ use Modules\HelpdeskAgents\Policies\AgentVacationPolicy;
 use Modules\HelpdeskAgents\Policies\AiAgentFlowPolicy;
 use Modules\HelpdeskAgents\Policies\AiAgentPolicy;
 use Modules\HelpdeskAgents\Policies\OncallRotationPolicy;
+use Modules\HelpdeskAgents\Services\AgentLlmService;
 use Modules\HelpdeskAgents\Services\EmbeddingService;
 use Modules\HelpdeskAgents\Services\KnowledgeRetrievalService;
 use Modules\HelpdeskAgents\Services\LlmConnectionTesterService;
@@ -55,6 +59,7 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PromptSanitizer::class);
+        $this->app->singleton(AgentLlmService::class);
         $this->app->singleton(LlmConnectionTesterService::class);
         $this->app->singleton(EmbeddingService::class);
         $this->app->singleton(KnowledgeRetrievalService::class);
@@ -65,6 +70,7 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
     {
         return [
             PromptSanitizer::class,
+            AgentLlmService::class,
             LlmConnectionTesterService::class,
             EmbeddingService::class,
             KnowledgeRetrievalService::class,
@@ -96,6 +102,23 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
     protected function registerListeners(): void
     {
         Event::listen(MessageReceived::class, StartAiAgentSessionOnIncomingMessage::class);
+
+        // Ticket-side AI enrichment (summaries, classification, language
+        // routing). Registered here — not in HelpdeskTickets — so the ticket
+        // module stays untouched; each queued job re-checks its own feature
+        // flag, and a broken LLM can never affect ticket flows.
+        if (class_exists(\Modules\HelpdeskTickets\Events\TicketCreated::class)) {
+            Event::listen(\Modules\HelpdeskTickets\Events\TicketCreated::class, QueueTicketAiOnTicketCreated::class);
+            Event::listen(\Modules\HelpdeskTickets\Events\TicketAssigned::class, QueueTicketSummaryOnAssigned::class);
+
+            // El motor de escalado no emite evento propio: su rastro estable es
+            // la fila `escalated` en el historial, así que escuchamos el evento
+            // Eloquent de creación de TicketHistory.
+            Event::listen(
+                'eloquent.created: '.\Modules\HelpdeskTickets\Models\TicketHistory::class,
+                QueueTicketSummaryOnEscalation::class
+            );
+        }
     }
 
     protected function registerConfig(): void
@@ -149,6 +172,10 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
+        if (! helpdesk_agents_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Agentes IA',
             'items' => [
