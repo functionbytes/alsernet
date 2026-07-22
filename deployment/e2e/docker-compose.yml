@@ -1,0 +1,87 @@
+# ===========================================================================
+# E2E staging — tienda PrestaShop (stub del bridge) -> panel helpdesk Laravel
+#
+# Servicios:
+#   db          MariaDB 11 con dos esquemas: `bridge` (stub PS + fixtures) y
+#               `panel` (Laravel, se migra desde run-contract-e2e.sh)
+#   bridge      PHP 7.4 + Apache sirviendo SOLO los endpoints del módulo
+#               alsernetbridge sobre un stub mínimo de PrestaShop
+#   panel       imagen `system` (la misma de docker/docker-compose.yml)
+#   panel-nginx nginx -> panel:9000
+#
+# Puertos host: 8093 (bridge), 8094 (panel). 8090/8091 quedan libres para los
+# entornos de desarrollo existentes.
+#
+# Uso: ./run-contract-e2e.sh   (ver README-e2e.md)
+# ===========================================================================
+
+name: alsernet-e2e
+
+services:
+
+  db:
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: e2e-root-secret
+      MYSQL_DATABASE: bridge
+    volumes:
+      - ./fixtures:/docker-entrypoint-initdb.d:ro
+    # Sin volumen persistente: cada `up` tras un `down` parte de fixtures limpias.
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  bridge:
+    build: ./bridge
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8093:80"
+    environment:
+      ALSERNET_STUB_DB_HOST: db
+      ALSERNET_STUB_DB_NAME: bridge
+      ALSERNET_STUB_DB_USER: root
+      ALSERNET_STUB_DB_PASS: e2e-root-secret
+      ALSERNET_STUB_DB_PREFIX: aalv_
+      BRIDGE_BASE_URL: http://bridge/
+      BRIDGE_DOMAIN: bridge
+    volumes:
+      # Módulo real, solo lectura — LÍMITE: nunca se modifica desde aquí
+      - ${ALVAREZ_MODULE_DIR:-../../../alvarez/src/modules/alsernetbridge}:/var/www/html/modules/alsernetbridge:ro
+      - ./bridge/ps-stub/config:/var/www/html/config:ro
+      - ./scripts:/e2e:ro
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(strpos((string) @file_get_contents('http://127.0.0.1/modules/alsernetbridge/health.php'), '\"status\"') !== false ? 0 : 1);"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  panel:
+    # Reutiliza la imagen `system` de docker/docker-compose.yml; si no existe,
+    # se construye con el mismo Dockerfile y contexto que el entorno de dev.
+    image: system
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    platform: linux/amd64
+    working_dir: /var/www
+    env_file:
+      - ./panel.env
+    volumes:
+      - ../../src:/var/www
+    depends_on:
+      db:
+        condition: service_healthy
+
+  panel-nginx:
+    image: nginx:alpine
+    ports:
+      - "8094:80"
+    volumes:
+      - ../../src:/var/www
+      - ./panel-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - panel
