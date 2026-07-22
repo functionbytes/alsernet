@@ -20,5 +20,8 @@ return [
     'cascade_modules' => [
         'HelpdeskTickets',
         'HelpdeskChatFlow',
+        // Expedientes KYC vinculados por email/teléfono (los datos viven en el
+        // módulo Document; el guard del job comprueba ese módulo, no el puente).
+        'HelpdeskDocument',
     ],
 ];

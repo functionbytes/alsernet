@@ -33,9 +33,19 @@ class GdprDeletionService
         // erasure to related records even after a hard delete removes them.
         $conversationIds = $customer->conversations()->withTrashed()->pluck('id')->all();
 
+        // Capture the matching keys (email/phones) BEFORE deletion too: records in
+        // other modules (e.g. HelpdeskDocument expedientes) are linked to the
+        // customer by email / normalized phone, and by the time the event fires
+        // the soft delete has nulled those fields (hard delete removed the row).
+        $customerEmail = trim((string) $customer->email) ?: null;
+        $customerPhones = array_values(array_filter([
+            (string) $customer->phone,
+            (string) $customer->whatsapp_phone,
+        ]));
+
         $result = $hard ? $this->hardDelete($customer) : $this->softDelete($customer);
 
-        CustomerGdprDeleted::dispatch($customer, $hard, $conversationIds, $result);
+        CustomerGdprDeleted::dispatch($customer, $hard, $conversationIds, $result, $customerEmail, $customerPhones);
 
         return $result;
     }

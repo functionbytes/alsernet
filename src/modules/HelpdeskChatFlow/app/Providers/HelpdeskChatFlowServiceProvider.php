@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Helpdesk\Contracts\GdprExportContributor;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\AI\AiClient;
 use Modules\Helpdesk\Services\AI\PromptSanitizer;
@@ -15,6 +16,9 @@ use Modules\Helpdesk\Services\WhatsAppHsmService;
 use Modules\HelpdeskChatFlow\Console\Commands\ExpireInactiveSessionsCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\LaunchOutboundFlowCommand;
 use Modules\HelpdeskChatFlow\Console\Commands\PollAbandonedCartsCommand;
+use Modules\HelpdeskChatFlow\Console\Commands\PruneEndedSessionsCommand;
+use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
+use Modules\HelpdeskChatFlow\Listeners\InvalidateFlowAnalyticsCache;
 use Modules\HelpdeskChatFlow\Listeners\LaunchOutboundFlowOnBusinessEvent;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Observers\ConversationItemObserver;
@@ -27,6 +31,7 @@ use Modules\HelpdeskChatFlow\Services\ChatFlowLocalizer;
 use Modules\HelpdeskChatFlow\Services\ChatFlowOrderLookup;
 use Modules\HelpdeskChatFlow\Services\ChatFlowSentiment;
 use Modules\HelpdeskChatFlow\Services\ChatFlowVoiceTranscriber;
+use Modules\HelpdeskChatFlow\Services\Compliance\ChatflowGdprExportContributor;
 use Modules\HelpdeskChatFlow\Services\CustomerIdentityResolver;
 use Modules\HelpdeskDocument\Services\ConversationDocumentLinker;
 use Modules\HelpdeskErp\Events\ErpOrdersReady;
@@ -59,6 +64,10 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
         $this->registerListeners();
         $this->registerMenus();
         $this->registerCommands();
+
+        // Seccion 'chatflow_sessions' del export GDPR (derecho de acceso); no
+        // atado al toggle de integracion, igual que la cascada de borrado.
+        $this->app->tag([ChatflowGdprExportContributor::class], GdprExportContributor::TAG);
     }
 
     protected function registerCommands(): void
@@ -68,17 +77,28 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
                 ExpireInactiveSessionsCommand::class,
                 LaunchOutboundFlowCommand::class,
                 PollAbandonedCartsCommand::class,
+                PruneEndedSessionsCommand::class,
             ]);
         }
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->command('chatflow:expire-sessions --minutes=30')
                 ->everyFiveMinutes()
-                ->withoutOverlapping();
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_chatflow_enabled());
             // Fallback for abandoned-cart outbound when PrestaShop webhooks aren't set up.
             $schedule->command('chatflow:poll-abandoned-carts --minutes=20')
                 ->everyFifteenMinutes()
-                ->withoutOverlapping();
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_chatflow_enabled());
+            $schedule->command('chatflow:prune-sessions')
+                ->daily()
+                ->at('03:45')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_chatflow_enabled());
         });
     }
 
@@ -227,6 +247,9 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
         // MessageReceived for every item, so a registered listener would double-fire.
         ConversationItem::observe(ConversationItemObserver::class);
 
+        // Invalidate the flow's cached analytics when one of its sessions finishes.
+        Event::listen(ChatFlowCompleted::class, InvalidateFlowAnalyticsCache::class);
+
         // Proactive outbound: launch a chat flow on PrestaShop/ERP business events
         // (only when those modules are installed).
         $businessEvents = [
@@ -244,6 +267,10 @@ class HelpdeskChatFlowServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
+        if (! helpdesk_chatflow_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Chat Flows',
             'items' => [

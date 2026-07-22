@@ -2,7 +2,6 @@
 
 namespace Modules\HelpdeskCompliance\Services\Handlers;
 
-use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -10,6 +9,10 @@ use Modules\HelpdeskTickets\Models\Ticket;
  * description, clears custom fields and soft-deletes; hard delete force-removes
  * the tickets. Invoked only when HelpdeskTickets is enabled (guarded by the
  * listener), so the Ticket reference is always resolvable at call time.
+ *
+ * Recibe el customer_id (no el modelo Customer): la cascada corre en cola y,
+ * en modo hard, el Customer ya fue borrado por completo antes de encolarse —
+ * intentar rehidratar el modelo fallaria.
  */
 class TicketComplianceHandler
 {
@@ -17,13 +20,13 @@ class TicketComplianceHandler
      * @param  array<int, int>  $conversationIds
      * @return array{module: string, tickets: int, mode: string}
      */
-    public function handle(Customer $customer, bool $hard, array $conversationIds): array
+    public function handle(int $customerId, bool $hard, array $conversationIds): array
     {
         $count = 0;
 
         Ticket::query()
             ->withTrashed()
-            ->where('customer_id', $customer->id)
+            ->where('customer_id', $customerId)
             ->chunkById(200, function ($tickets) use (&$count, $hard): void {
                 foreach ($tickets as $ticket) {
                     if ($hard) {
