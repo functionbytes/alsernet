@@ -6,16 +6,17 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Events\LivestreamBatchReceived;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 class LivestreamIngestTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -23,10 +24,7 @@ class LivestreamIngestTest extends TestCase
 
     private function createWebContext(bool $enableLiveView = true): array
     {
-        $status = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $status = $this->seedOpenConversationStatus();
 
         $web = WebFactory::new()->create(['enable_live_view' => $enableLiveView]);
 

@@ -3,9 +3,9 @@
 namespace Modules\HelpdeskLivechat\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\WidgetSession;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -18,6 +18,7 @@ use Tests\TestCase;
 class HeartbeatWebsiteTokenTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -25,10 +26,7 @@ class HeartbeatWebsiteTokenTest extends TestCase
     {
         parent::setUp();
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
     }
 
     // -----------------------------------------------------------------------

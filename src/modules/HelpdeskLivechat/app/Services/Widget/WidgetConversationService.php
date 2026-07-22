@@ -21,6 +21,13 @@ use Modules\HelpdeskLivechat\Services\WidgetSessionService;
 
 class WidgetConversationService
 {
+    /**
+     * Ids de estados "abiertos" cacheados para la reutilización de
+     * conversaciones del widget. Se invalida al crear/editar/borrar
+     * ConversationStatus (ver HelpdeskLivechatServiceProvider).
+     */
+    public const OPEN_STATUS_IDS_CACHE_KEY = 'helpdesklivechat:open_status_ids';
+
     public function __construct(
         private readonly WidgetSessionService $sessionService
     ) {}
@@ -106,7 +113,7 @@ class WidgetConversationService
             }
 
             $openStatusIds = Cache::remember(
-                'helpdesklivechat:open_status_ids',
+                self::OPEN_STATUS_IDS_CACHE_KEY,
                 now()->addMinutes(30),
                 fn (): array => ConversationStatus::query()->where('is_open', true)->pluck('id')->all()
             );
@@ -255,13 +262,16 @@ class WidgetConversationService
     /**
      * Cursor-based pagination for conversation messages.
      *
+     * Recibe la Conversation YA resuelta y autorizada por el controller
+     * (authorizeConversation + X-Conversation-Token) para no recargarla aquí.
+     *
      * @param  int|null  $beforeId  Fetch messages older than this id (for "load more")
      * @param  int  $limit  Page size, clamped to [1, 200]
      * @return array{conversation_id: int, messages: array<int, array<string, mixed>>, has_more: bool, next_cursor: int|null}
      */
-    public function getMessages(int $conversationId, int $customerId, ?int $beforeId = null, int $limit = 100): array
+    public function getMessages(Conversation $conversation, int $customerId, ?int $beforeId = null, int $limit = 100): array
     {
-        $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
+        $this->assertOwnedByCustomer($conversation, $customerId);
 
         $limit = max(1, min(200, $limit));
 
@@ -301,9 +311,9 @@ class WidgetConversationService
      * @param  array<string, mixed>  $data  May include 'content', 'attachments' (array<UploadedFile>).
      * @return array{message_id: int, created_at: string, attachments: array<int, array<string, mixed>>}
      */
-    public function sendMessage(int $conversationId, int $customerId, array $data): array
+    public function sendMessage(Conversation $conversation, int $customerId, array $data): array
     {
-        $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
+        $this->assertOwnedByCustomer($conversation, $customerId);
 
         // If the visitor has identified themselves (logged in) since the
         // conversation started, update the customer record so the agent sees
@@ -332,7 +342,7 @@ class WidgetConversationService
             }
         }
 
-        $attachments = $this->storeAttachments($conversationId, $data['attachments'] ?? []);
+        $attachments = $this->storeAttachments($conversation->id, $data['attachments'] ?? []);
 
         // Sanitize visitor-supplied body before persisting. Only applied to web
         // channel messages (widget visitors). Agent messages are NOT sanitized here
@@ -379,9 +389,9 @@ class WidgetConversationService
     /**
      * @return array<string, mixed>
      */
-    public function getConversation(int $conversationId, int $customerId): array
+    public function getConversation(Conversation $conversation, int $customerId): array
     {
-        $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
+        $this->assertOwnedByCustomer($conversation, $customerId);
         $conversation->load('customer', 'status', 'assignee');
 
         // Only non-sensitive assignee data crosses to the (public) widget:
@@ -411,9 +421,9 @@ class WidgetConversationService
         ];
     }
 
-    public function closeConversation(int $conversationId, int $customerId): void
+    public function closeConversation(Conversation $conversation, int $customerId): void
     {
-        $conversation = $this->resolveOwnedConversation($conversationId, $customerId);
+        $this->assertOwnedByCustomer($conversation, $customerId);
 
         $closedStatus = ConversationStatus::where('key', 'closed')
             ->orWhere('is_closed', true)
@@ -537,17 +547,17 @@ class WidgetConversationService
         return optional($item->author)->name ?? 'Visitor';
     }
 
-    private function resolveOwnedConversation(int $conversationId, int $customerId): Conversation
+    /**
+     * Defensa en profundidad: el controller ya resolvió y autorizó la
+     * conversación (token secreto por cabecera). Aquí solo se re-valida la
+     * propiedad sobre la instancia recibida, sin recargarla de la BD (antes se
+     * hacía un Conversation::find duplicado en cada request del widget).
+     */
+    private function assertOwnedByCustomer(Conversation $conversation, int $customerId): void
     {
-        $conversation = Conversation::find($conversationId);
-        if (! $conversation) {
-            throw new \RuntimeException('Conversation not found');
-        }
-        if ((int) $conversation->customer_id !== (int) $customerId) {
+        if ((int) $conversation->customer_id !== $customerId) {
             throw new \RuntimeException('Unauthorized access to conversation');
         }
-
-        return $conversation;
     }
 
     private function syncCustomerInbox(Customer $customer, Inbox $inbox): void

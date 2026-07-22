@@ -6,11 +6,11 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Jobs\StoreLivestreamBatchJob;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -23,6 +23,7 @@ use Tests\TestCase;
 class LivestreamPayloadSizeTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -36,10 +37,7 @@ class LivestreamPayloadSizeTest extends TestCase
     {
         parent::setUp();
 
-        $status = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $status = $this->seedOpenConversationStatus();
 
         $web = WebFactory::new()->create(['enable_live_view' => true]);
 

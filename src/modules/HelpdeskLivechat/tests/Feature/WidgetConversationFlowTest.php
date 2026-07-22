@@ -14,11 +14,13 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 class WidgetConversationFlowTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -30,10 +32,7 @@ class WidgetConversationFlowTest extends TestCase
     {
         parent::setUp();
 
-        $this->openStatus = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->openStatus = $this->seedOpenConversationStatus();
 
         $this->web = WebFactory::new()->create();
     }
@@ -160,12 +159,12 @@ class WidgetConversationFlowTest extends TestCase
         // Presupuesto CONSTANTE de queries en la conexión helpdesk (guarda contra
         // regresiones N+1, que con 3 items dispararía el conteo por encima):
         //   1 helpdesk_settings (middleware ValidateTrustedOrigin)
-        //   2 conversación (concern VerifiesConversationToken)
-        //   3 conversación (resolveOwnedConversation del servicio)
-        //   4 items (una sola query paginada)
-        //   5 eager load de authors (helpdesk_customers)
+        //   2 conversación (authorizeConversation del controller; el servicio
+        //     reutiliza la instancia ya autorizada y NO la recarga)
+        //   3 items (una sola query paginada)
+        //   4 eager load de authors (helpdesk_customers)
         // (el eager load de users va por la conexión por defecto y no se loguea aquí)
-        $this->assertLessThanOrEqual(5, count($queries), 'Too many queries — possible N+1 detected');
+        $this->assertLessThanOrEqual(4, count($queries), 'Too many queries — possible N+1 detected');
 
         DB::connection('helpdesk')->disableQueryLog();
     }

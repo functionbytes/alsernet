@@ -31,6 +31,12 @@ class WidgetConversationController extends Controller
 
     public function store(StoreWidgetConversationRequest $request): JsonResponse
     {
+        if (! helpdesk_livechat_enabled()) {
+            return response()->json([
+                'error' => 'Live chat is currently unavailable',
+            ], 503);
+        }
+
         try {
             $data = $this->service->createConversation(
                 $request->validated('website_token'),
@@ -59,7 +65,7 @@ class WidgetConversationController extends Controller
         }
 
         try {
-            $data = $this->service->getConversation($conversation->id, (int) $conversation->customer_id);
+            $data = $this->service->getConversation($conversation, (int) $conversation->customer_id);
 
             return response()->json(['success' => true, 'data' => $data]);
         } catch (\RuntimeException $e) {
@@ -81,7 +87,7 @@ class WidgetConversationController extends Controller
             $beforeId = $request->filled('before_id') ? (int) $request->input('before_id') : null;
             $limit = (int) $request->input('limit', 100);
 
-            $data = $this->service->getMessages($conversation->id, (int) $conversation->customer_id, $beforeId, $limit);
+            $data = $this->service->getMessages($conversation, (int) $conversation->customer_id, $beforeId, $limit);
 
             return response()->json(['success' => true, 'data' => $data]);
         } catch (\RuntimeException $e) {
@@ -116,7 +122,7 @@ class WidgetConversationController extends Controller
                 ], 403);
             }
 
-            $data = $this->service->sendMessage($conversation->id, (int) $conversation->customer_id, $payload);
+            $data = $this->service->sendMessage($conversation, (int) $conversation->customer_id, $payload);
 
             return response()->json([
                 'success' => true,
@@ -139,7 +145,7 @@ class WidgetConversationController extends Controller
         }
 
         try {
-            $this->service->closeConversation($conversation->id, (int) $conversation->customer_id);
+            $this->service->closeConversation($conversation, (int) $conversation->customer_id);
 
             $this->saveCsatRating($request, $conversation->id, (int) $conversation->customer_id);
 
@@ -199,11 +205,13 @@ class WidgetConversationController extends Controller
             return response()->json(['error' => 'Email transcripts are not enabled'], 403);
         }
 
-        // Ensure the destination email matches the conversation owner.
+        // Ensure the destination email matches the conversation owner. Trim both
+        // sides: surrounding whitespace on either value made an otherwise valid
+        // match fail (403) even for the conversation's own email.
         $customer = $conversation->customer;
-        $destinationEmail = $request->validated('email');
+        $destinationEmail = trim((string) $request->validated('email'));
 
-        if (! $customer || strcasecmp((string) $customer->email, $destinationEmail) !== 0) {
+        if (! $customer || strcasecmp(trim((string) $customer->email), $destinationEmail) !== 0) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
@@ -243,11 +251,32 @@ class WidgetConversationController extends Controller
             ]);
         }
 
+        // Real queue order: higher priority first, then arrival time (created_at),
+        // not raw id — ids don't reflect priority and a re-inserted/older row would
+        // otherwise get a wrong position.
+        $priorities = ['urgent', 'high', 'normal', 'low'];
+        $myRank = array_search($conversation->priority, $priorities, true);
+        $higherPriorities = $myRank === false ? $priorities : array_slice($priorities, 0, $myRank);
+
         $position = Conversation::query()
             ->where('inbox_id', $conversation->inbox_id)
             ->whereNull('assignee_id')
             ->whereHas('status', fn ($q) => $q->where('is_open', true))
-            ->where('id', '<', $conversation->id)
+            ->where('id', '!=', $conversation->id)
+            ->where(function ($q) use ($conversation, $higherPriorities) {
+                if ($higherPriorities !== []) {
+                    $q->whereIn('priority', $higherPriorities);
+                }
+
+                // Same priority but arrived earlier (id breaks created_at ties).
+                $q->orWhere(fn ($same) => $same
+                    ->where('priority', $conversation->priority)
+                    ->where(fn ($earlier) => $earlier
+                        ->where('created_at', '<', $conversation->created_at)
+                        ->orWhere(fn ($tie) => $tie
+                            ->where('created_at', $conversation->created_at)
+                            ->where('id', '<', $conversation->id))));
+            })
             ->count();
 
         return response()->json([

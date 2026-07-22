@@ -5,8 +5,8 @@ namespace Modules\HelpdeskLivechat\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -16,6 +16,7 @@ use Tests\TestCase;
 class WidgetConversationAgentInfoTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -29,10 +30,7 @@ class WidgetConversationAgentInfoTest extends TestCase
     {
         parent::setUp();
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
 
         $this->customer = Customer::factory()->create();
 

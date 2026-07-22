@@ -6,9 +6,9 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Helpdesk\Events\ConversationCreated;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -20,6 +20,7 @@ use Tests\TestCase;
 class WebsiteTokenRateLimitTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -31,10 +32,7 @@ class WebsiteTokenRateLimitTest extends TestCase
 
         Event::fake([ConversationCreated::class]);
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
 
         $this->web = WebFactory::new()->create();
 

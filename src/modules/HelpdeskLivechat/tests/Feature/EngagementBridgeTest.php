@@ -20,6 +20,7 @@ use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Nwidart\Modules\Facades\Module;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -33,6 +34,7 @@ use Tests\TestCase;
 class EngagementBridgeTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -44,10 +46,7 @@ class EngagementBridgeTest extends TestCase
     {
         parent::setUp();
 
-        $this->openStatus = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->openStatus = $this->seedOpenConversationStatus();
 
         $this->web = WebFactory::new()->create();
     }

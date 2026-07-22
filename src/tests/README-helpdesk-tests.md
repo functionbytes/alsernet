@@ -42,6 +42,16 @@ step separado para que un fatal en uno no oculte el resto.
   transacciona solo `mariadb`). Ojo: con ese trait el código bajo test NO debe
   abrir transacciones explícitas sobre `helpdesk` (haría commit implícito de la
   transacción compartida).
+- **Si el código bajo test SÍ abre transacciones explícitas sobre `helpdesk`**
+  (p. ej. `WidgetConversationService::createConversation()` en Livechat usa
+  `DB::connection('helpdesk')->transaction(...)`), NO uses `SharesHelpdeskPdo`:
+  el `BEGIN` real sobre el PDO compartido commitearía implícitamente la
+  transacción del test y filtraría datos a la BD compartida. En su lugar:
+  transacciona ambas conexiones (`['mariadb', 'helpdesk']`) y pasa la conexión
+  a los asserts de BD — `$this->assertDatabaseHas('tabla', [...], 'helpdesk')` —
+  porque la conexión por defecto (`mariadb`) no ve las filas sin commitear de la
+  transacción de `helpdesk`. Es la convención de todo HelpdeskLivechat (ver
+  `modules/HelpdeskLivechat/tests/Concerns/SeedsOpenConversationStatus.php`).
 - **Roles**: la tabla `roles` del snapshot está vacía. Usa
   `Tests\Concerns\SeedsHelpdeskRoles` (`$this->seedHelpdeskRoles()` en `setUp()`)
   en vez de `Role::firstOrCreate` ad-hoc. `Modules\Helpdesk\Tests\HelpdeskTestCase`

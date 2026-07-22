@@ -6,12 +6,12 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Mail\ConversationTranscriptMail;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -25,6 +25,7 @@ use Tests\TestCase;
 class EmailTranscriptSecurityTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -39,10 +40,7 @@ class EmailTranscriptSecurityTest extends TestCase
     {
         parent::setUp();
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
 
         $this->customer = Customer::factory()->create(['email' => 'customer@example.com']);
     }
