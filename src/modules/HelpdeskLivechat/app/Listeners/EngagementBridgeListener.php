@@ -206,7 +206,10 @@ class EngagementBridgeListener implements ShouldQueue
         }
 
         try {
-            $service = app($ingestServiceClass);
+            // Sin la barra inicial: el contenedor no normaliza '\Foo' a 'Foo',
+            // así que con ella se ignoraría cualquier binding registrado para
+            // TrackingIngestService::class (p. ej. singletons o swaps en tests).
+            $service = app(ltrim($ingestServiceClass, '\\'));
 
             $service->ingest(
                 [['name' => $eventName, 'ts' => now()->toIso8601String(), 'properties' => $properties]],

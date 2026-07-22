@@ -122,7 +122,7 @@ class ConversationOwnershipTest extends TestCase
         $this->assertDatabaseMissing('helpdesk_conversation_reads', [
             'conversation_id' => $this->conversation->id,
             'user_id' => 0,
-        ]);
+        ], 'helpdesk');
     }
 
     public function test_read_with_wrong_token_returns_401_even_with_owner_customer_id(): void
@@ -135,7 +135,7 @@ class ConversationOwnershipTest extends TestCase
         $this->assertDatabaseMissing('helpdesk_conversation_reads', [
             'conversation_id' => $this->conversation->id,
             'user_id' => 0,
-        ]);
+        ], 'helpdesk');
     }
 
     // -----------------------------------------------------------------------
@@ -150,9 +150,11 @@ class ConversationOwnershipTest extends TestCase
         )->assertOk()
             ->assertJsonPath('success', true);
 
+        // Conexión 'helpdesk': ConversationRead escribe por esa conexión y, con
+        // ambas transaccionadas, la conexión por defecto no ve la fila sin commitear.
         $this->assertDatabaseHas('helpdesk_conversation_reads', [
             'conversation_id' => $this->conversation->id,
             'user_id' => 0,
-        ]);
+        ], 'helpdesk');
     }
 }

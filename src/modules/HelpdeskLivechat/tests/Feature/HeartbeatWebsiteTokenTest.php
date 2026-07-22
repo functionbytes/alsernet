@@ -62,7 +62,7 @@ class HeartbeatWebsiteTokenTest extends TestCase
 
         $this->assertDatabaseMissing('helpdesk_widget_sessions', [
             'session_token' => 'sess_should_not_exist',
-        ]);
+        ], 'helpdesk');
     }
 
     // -----------------------------------------------------------------------
@@ -83,9 +83,11 @@ class HeartbeatWebsiteTokenTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonStructure(['session_id']);
 
+        // Conexión 'helpdesk': WidgetSession escribe por esa conexión y, con ambas
+        // transaccionadas, la conexión por defecto no ve sus filas sin commitear.
         $this->assertDatabaseHas('helpdesk_widget_sessions', [
             'session_token' => $sessionToken,
-        ]);
+        ], 'helpdesk');
     }
 
     public function test_valid_website_token_with_missing_required_fields_returns_422(): void
