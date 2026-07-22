@@ -53,6 +53,25 @@ class TranslateControllerTest extends TestCase
             ->assertJsonValidationErrors(['text']);
     }
 
+    /**
+     * El endpoint manual queda tras el toggle de integración; con la
+     * integración desactivada devuelve 404 aunque el usuario tenga permiso
+     * (antes solo los listeners automáticos respetaban el toggle).
+     */
+    public function test_returns_404_when_translate_integration_disabled(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk-translate.use');
+
+        Setting::set('translate.integration_enabled', '0', 'integrations');
+
+        $this->actingAs($user)
+            ->postJson(self::ENDPOINT, ['text' => 'Hello', 'to' => 'es'])
+            ->assertNotFound();
+
+        Setting::set('translate.integration_enabled', '1', 'integrations');
+    }
+
     public function test_missing_target_language_returns_422(): void
     {
         $user = User::factory()->create();

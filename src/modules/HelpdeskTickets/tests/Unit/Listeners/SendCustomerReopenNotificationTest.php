@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Unit\Listeners;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -17,7 +17,7 @@ use Tests\TestCase;
 
 class SendCustomerReopenNotificationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

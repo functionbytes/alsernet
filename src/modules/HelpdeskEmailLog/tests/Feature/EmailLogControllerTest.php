@@ -49,6 +49,11 @@ class EmailLogControllerTest extends TestCase
 
     public function test_index_renders_with_logs_and_stats(): void
     {
+        // Delta sobre lo preexistente: la BD de test es compartida y puede
+        // arrastrar filas residuales de otros runs.
+        $baseTotal = EmailLog::query()->count();
+        $baseFailed = EmailLog::query()->where('status', 'failed')->count();
+
         EmailLog::factory()->count(3)->create();
         EmailLog::factory()->failed()->create();
 
@@ -56,7 +61,7 @@ class EmailLogControllerTest extends TestCase
             ->get(route('helpdeskemaillog.index'))
             ->assertOk()
             ->assertViewIs('helpdeskemaillog::emails.index')
-            ->assertViewHas('stats', fn ($stats) => $stats['total'] === 4 && $stats['failed'] === 1);
+            ->assertViewHas('stats', fn ($stats) => $stats['total'] === $baseTotal + 4 && $stats['failed'] === $baseFailed + 1);
     }
 
     public function test_index_filters_by_status_and_module(): void
@@ -128,7 +133,11 @@ class EmailLogControllerTest extends TestCase
             ->assertRedirect()
             ->assertSessionHas('success');
 
-        $this->assertDatabaseCount('email_logs', 1);
+        // Robusto a filas residuales en la BD compartida: se asserta el efecto
+        // sobre las filas creadas por ESTE test, no el total global.
+        foreach ($logs as $deleted) {
+            $this->assertDatabaseMissing('email_logs', ['id' => $deleted->id]);
+        }
         $this->assertDatabaseHas('email_logs', ['id' => $keep->id]);
     }
 

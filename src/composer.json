@@ -13,7 +13,7 @@
         "aerni/cloudflared": "^1.1",
         "darkaonline/l5-swagger": "^11.0",
         "doctrine/annotations": "^2.0",
-        "guzzlehttp/psr7": "2.7",
+        "guzzlehttp/psr7": "^2.7",
         "keepsuit/liquid": "^0.9.1",
         "knuckleswtf/scribe": "^5.9",
         "laravel/framework": "^12.0",
@@ -144,6 +144,9 @@
             "Modules\\HelpdeskHelpcenter\\": "modules/HelpdeskHelpcenter/app/",
             "Modules\\HelpdeskHelpcenter\\Database\\Factories\\": "modules/HelpdeskHelpcenter/database/factories/",
             "Modules\\HelpdeskHelpcenter\\Database\\Seeders\\": "modules/HelpdeskHelpcenter/database/seeders/",
+            "Modules\\HelpdeskIntegration\\": "modules/HelpdeskIntegration/app/",
+            "Modules\\HelpdeskIntegration\\Database\\Factories\\": "modules/HelpdeskIntegration/database/factories/",
+            "Modules\\HelpdeskIntegration\\Database\\Seeders\\": "modules/HelpdeskIntegration/database/seeders/",
             "Modules\\Engagement\\": "modules/Engagement/app/",
             "Modules\\Engagement\\Database\\Factories\\": "modules/Engagement/database/factories/",
             "Modules\\Engagement\\Database\\Seeders\\": "modules/Engagement/database/seeders/",
@@ -175,6 +178,8 @@
         },
         "files": [
             "app/helpers.php",
+            "modules/Helpdesk/app/Helpers/helpers.php",
+            "modules/Modules/app/Helpers/helpers.php",
             "modules/Page/helpers/helpers.php",
             "modules/System/app/Helpers/SettingsHelper.php",
             "modules/System/app/Helpers/EnvironmentHelper.php",
@@ -207,7 +212,8 @@
             "Modules\\Captcha\\Tests\\": "modules/Captcha/tests/",
             "Modules\\HelpdeskErp\\Tests\\": "modules/HelpdeskErp/tests/",
             "Modules\\Erp\\Tests\\": "modules/Erp/tests/",
-            "Modules\\HelpdeskDocument\\Tests\\": "modules/HelpdeskDocument/tests/"
+            "Modules\\HelpdeskDocument\\Tests\\": "modules/HelpdeskDocument/tests/",
+            "Modules\\HelpdeskIntegration\\Tests\\": "modules/HelpdeskIntegration/tests/"
         },
         "files": [
             "modules/Core/app/Helpers/Helper.php"
@@ -231,6 +237,7 @@
             "@php artisan config:clear --ansi",
             "@php artisan test"
         ],
+        "test:helpdesk": "bash scripts/run-helpdesk-tests.sh",
         "docs": [
             "@php artisan docs:generate-commands"
         ],

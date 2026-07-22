@@ -166,6 +166,58 @@ class TranslateSettingsControllerTest extends TestCase
             ->assertJsonValidationErrors(['provider']);
     }
 
+    /**
+     * Sin este guard, un titular de settings.update podia apuntar el
+     * endpoint de LibreTranslate a una IP interna o al endpoint de metadata
+     * de la nube — se dispara en cada mensaje entrante/saliente via el
+     * listener de traduccion automatica.
+     */
+    public function test_update_rejects_libretranslate_endpoint_pointing_to_internal_ip(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk-translate.settings.update');
+
+        $this->actingAs($user)
+            ->putJson(self::INDEX_URL, [
+                'provider' => 'libretranslate',
+                'default_target' => 'en',
+                'libretranslate_endpoint' => 'http://127.0.0.1:8000/translate',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['libretranslate_endpoint']);
+    }
+
+    public function test_update_rejects_libretranslate_endpoint_pointing_to_cloud_metadata(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk-translate.settings.update');
+
+        $this->actingAs($user)
+            ->putJson(self::INDEX_URL, [
+                'provider' => 'libretranslate',
+                'default_target' => 'en',
+                'libretranslate_endpoint' => 'http://169.254.169.254/latest/meta-data/',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['libretranslate_endpoint']);
+    }
+
+    public function test_update_accepts_public_libretranslate_endpoint(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk-translate.settings.update');
+
+        $this->actingAs($user)
+            ->put(self::INDEX_URL, [
+                'provider' => 'libretranslate',
+                'default_target' => 'en',
+                'libretranslate_endpoint' => 'https://libretranslate.com/translate',
+            ])
+            ->assertRedirect();
+
+        $this->assertSame('https://libretranslate.com/translate', Setting::get('helpdesktranslate.libretranslate.endpoint'));
+    }
+
     // ─── test connection endpoint ─────────────────────────────────────────────
 
     public function test_test_endpoint_without_update_permission_receives_403(): void

@@ -3,18 +3,22 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class TicketNotesControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    use SeedsHelpdeskRoles;
+    // mariadb y helpdesk apuntan a la misma BD: PDO compartido evita
+    // auto-interbloqueos de FK y garantiza rollback de AMBAS conexiones
+    // (antes solo se transaccionaba mariadb y los tickets se filtraban).
+    use SharesHelpdeskPdo;
 
     private User $agent;
 
@@ -26,7 +30,12 @@ class TicketNotesControllerTest extends TestCase
     {
         parent::setUp();
 
+        // La BD de test arranca sin roles; las rutas manager llevan role: middleware.
+        $this->seedHelpdeskRoles();
+        $this->seed(HelpdeskTicketsPermissionsSeeder::class);
+
         $this->agent = User::factory()->create();
+        $this->agent->assignRole('super-settings');
 
         $this->agent->givePermissionTo(['helpdesk.tickets.view', 'helpdesk.tickets.update']);
 

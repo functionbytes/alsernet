@@ -5,6 +5,7 @@ namespace Modules\HelpdeskChatFlow\Tests\Unit;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Modules\Helpdesk\Contracts\TicketServiceContract;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
@@ -213,6 +214,44 @@ class ChatFlowNodeExecutorTest extends TestCase
         ]];
 
         $this->invoke('executeSendFile', [$node, $session, $conversation]);
+    }
+
+    public function test_create_ticket_does_not_call_contract_when_already_created(): void
+    {
+        // Idempotencia: si el contexto ya trae un ticket, no se crea otro.
+        $contract = Mockery::mock(TicketServiceContract::class);
+        $contract->shouldNotReceive('createFromConversation');
+        $this->app->instance(TicketServiceContract::class, $contract);
+
+        $session = new ChatFlowSession;
+        $session->setRawAttributes(['context' => json_encode(['created_ticket_number' => 'TCK-2026-00001'])]);
+        $session->setRelation('chatFlow', tap(new ChatFlow, fn ($f) => $f->setRawAttributes(['nodes' => json_encode([])])));
+
+        $conversation = $this->conversationExpectingItem(fn () => true, expectCreate: false);
+
+        $node = ['id' => 'ct', 'type' => 'create_ticket', 'data' => []];
+
+        $this->assertNull($this->invoke('executeCreateTicket', [$node, $session, $conversation]));
+    }
+
+    public function test_create_ticket_degrades_cleanly_when_tickets_unavailable(): void
+    {
+        // Si HelpdeskTickets está off el contrato devuelve null; el flujo no rompe
+        // ni confirma ningún número al cliente, y continúa al siguiente nodo.
+        $contract = Mockery::mock(TicketServiceContract::class);
+        $contract->shouldReceive('createFromConversation')->once()->andReturn(null);
+        $this->app->instance(TicketServiceContract::class, $contract);
+
+        $session = new ChatFlowSession;
+        $session->setRawAttributes(['context' => json_encode([])]);
+        $session->setRelation('chatFlow', tap(new ChatFlow, fn ($f) => $f->setRawAttributes(['nodes' => json_encode([])])));
+
+        $conversation = $this->conversationExpectingItem(fn () => true, expectCreate: false);
+        $conversation->shouldReceive('getAttribute')->with('id')->andReturn(1);
+
+        $node = ['id' => 'ct', 'type' => 'create_ticket', 'data' => []];
+
+        $this->assertNull($this->invoke('executeCreateTicket', [$node, $session, $conversation]));
     }
 
     public function test_quick_replies_renders_numbered_prompt(): void

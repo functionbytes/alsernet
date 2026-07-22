@@ -3,13 +3,15 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Settings;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class SettingsResourcesTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -23,6 +25,10 @@ class SettingsResourcesTest extends TestCase
 
         $this->admin = User::factory()->create();
         $this->admin->givePermissionTo('helpdesk.tickets.settings');
+
+        // Las rutas de settings llevan middleware role:super-admin|super-settings.
+        $this->seedHelpdeskRoles();
+        $this->admin->assignRole('super-settings');
     }
 
     // ─── Statuses ─────────────────────────────────────────────────────────────
@@ -161,7 +167,9 @@ class SettingsResourcesTest extends TestCase
             ])
             ->assertRedirect();
 
-        $this->assertDatabaseHas('helpdesk_sla_policies', [
+        // El store de ticket-sla-policies escribe en helpdesk_ticket_sla_policies
+        // (modelo TicketSlaPolicy), no en la tabla core helpdesk_sla_policies.
+        $this->assertDatabaseHas('helpdesk_ticket_sla_policies', [
             'name' => 'SLA Estandar',
             'first_response_time' => 60,
         ], 'helpdesk');

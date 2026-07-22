@@ -85,4 +85,22 @@ class AnalyticsAggregatorTest extends TestCase
             $segments['healthy'] + $segments['neutral'] + $segments['at_risk']
         );
     }
+
+    /**
+     * Regresión: antes se capaba a 500 clientes en silencio y se reportaban esos
+     * conteos como el total. Ahora el array expone 'sampled' para que el panel no
+     * confunda una muestra con la población completa.
+     */
+    public function test_customer_segments_expose_sampling_flag(): void
+    {
+        $customer = Customer::factory()->create();
+        Conversation::factory()->create(['customer_id' => $customer->id]);
+
+        $segments = app(AnalyticsAggregatorService::class)
+            ->customerSegments(now()->startOfMonth(), now()->endOfMonth());
+
+        $this->assertArrayHasKey('sampled', $segments);
+        $this->assertFalse($segments['sampled'], 'Un rango normal (<5000 clientes) no debe marcarse como muestra.');
+        $this->assertGreaterThanOrEqual(1, $segments['total']);
+    }
 }

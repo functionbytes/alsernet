@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskCampaigns\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use Modules\HelpdeskCampaigns\Models\CampaignImpression;
 
 class CampaignImpressionFactory extends Factory
@@ -12,6 +13,7 @@ class CampaignImpressionFactory extends Factory
     public function definition(): array
     {
         return [
+            'impression_id' => (string) Str::uuid(),
             'campaign_id' => null,
             'customer_id' => null,
             'customer_session_id' => null,

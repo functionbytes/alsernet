@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Agents;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\MessageAdded;
@@ -11,11 +11,13 @@ use Modules\HelpdeskTickets\Events\TicketStatusChanged;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Spatie\Permission\Models\Permission;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class AgentTicketsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -41,6 +43,11 @@ class AgentTicketsTest extends TestCase
             'helpdesk.tickets.update',
             'helpdesk.tickets.create',
         ]);
+
+        // Las rutas agent.* llevan middleware role:helpdesk-agent|super-admin|
+        // super-settings|manager — el permiso solo no basta.
+        $this->seedHelpdeskRoles();
+        $this->agent->assignRole('helpdesk-agent');
 
         $this->openStatus = TicketStatus::firstOrCreate(
             ['slug' => 'open'],

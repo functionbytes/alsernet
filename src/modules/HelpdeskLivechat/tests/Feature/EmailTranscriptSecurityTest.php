@@ -183,4 +183,28 @@ class EmailTranscriptSecurityTest extends TestCase
 
         Mail::assertQueued(ConversationTranscriptMail::class);
     }
+
+    /**
+     * Regresión: si el email del cliente quedó guardado con espacios sobrantes,
+     * la comparación fallaba (403) aunque el destino fuera el mismo. Ahora se
+     * hace trim() a ambos lados.
+     */
+    public function test_transcript_matches_despite_whitespace_in_stored_email(): void
+    {
+        Mail::fake();
+        $this->buildConversationWithWeb(enableTranscripts: true);
+
+        // Email del cliente persistido con espacios (el destino ya lo limpia TrimStrings).
+        $this->customer->forceFill(['email' => '  '.$this->customer->email.'  '])->save();
+
+        $this->postJson(
+            route('helpdesk-livechat.widget.conversation.email-transcript', $this->conversation->id),
+            [
+                'email' => trim($this->customer->email),
+                'customer_id' => $this->customer->id,
+            ]
+        )->assertOk();
+
+        Mail::assertQueued(ConversationTranscriptMail::class);
+    }
 }

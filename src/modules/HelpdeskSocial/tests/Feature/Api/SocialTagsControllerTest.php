@@ -134,4 +134,16 @@ class SocialTagsControllerTest extends TestCase
 
         $this->assertDatabaseMissing('helpdesk_social_tags', ['id' => $tag->id]);
     }
+
+    public function test_destroy_forbidden_without_permission(): void
+    {
+        $tag = SocialTag::factory()->create();
+        $otherUser = User::factory()->create();
+
+        $response = $this->actingAs($otherUser, 'sanctum')
+            ->deleteJson("/api/helpdesk/social/tags/{$tag->id}");
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('helpdesk_social_tags', ['id' => $tag->id]);
+    }
 }

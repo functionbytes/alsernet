@@ -2,10 +2,17 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature\Portal;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Events\NewTicketMessage;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Events\TicketMessageReceived;
+use Modules\HelpdeskTickets\Events\TicketReopened;
+use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketItem;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -13,7 +20,7 @@ use Tests\TestCase;
 
 class PortalTicketFlowTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -28,7 +35,19 @@ class PortalTicketFlowTest extends TestCase
         parent::setUp();
 
         Mail::fake();
-        Event::fake();
+        // OJO: Event::fake() sin argumentos intercepta también los eventos de
+        // modelo de Eloquent ("eloquent.creating: ...") y el booted() de Ticket
+        // nunca genera ticket_number → 1364 en el INSERT. Se fakean solo los
+        // eventos de dominio del módulo para silenciar listeners/broadcasts.
+        Event::fake([
+            TicketCreated::class,
+            TicketUpdated::class,
+            TicketClosed::class,
+            TicketReopened::class,
+            MessageAdded::class,
+            NewTicketMessage::class,
+            TicketMessageReceived::class,
+        ]);
 
         $this->openStatus = TicketStatus::firstOrCreate(
             ['slug' => 'open'],

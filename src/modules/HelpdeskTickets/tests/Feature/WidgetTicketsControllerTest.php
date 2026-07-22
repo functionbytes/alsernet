@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 class WidgetTicketsControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -78,16 +78,28 @@ class WidgetTicketsControllerTest extends TestCase
 
     public function test_categories_includes_custom_form_fields(): void
     {
-        $category = TicketCategory::factory()->withCustomFields()->create(['active' => true]);
+        // El endpoint ya no expone el JSON legacy custom_form_fields: sirve los
+        // campos estructurados de helpdesk_ticket_category_fields (relación
+        // fields() gestionada por el builder de TicketCategoryFieldsController).
+        $category = TicketCategory::factory()->create(['active' => true, 'required_fields' => ['serial_number']]);
+        $category->fields()->create([
+            'type' => 'text',
+            'key' => 'serial_number',
+            'label' => 'Número de serie',
+            'is_required' => true,
+            'is_visible' => true,
+            'sort_order' => 1,
+        ]);
 
         $response = $this->getJson('/hd/api/tickets/categories');
 
         $response->assertOk();
 
-        $data = $response->json('data.0');
-        $this->assertArrayHasKey('custom_form_fields', $data);
-        $this->assertNotNull($data['custom_form_fields']);
-        $this->assertEquals($category->id, $data['id']);
+        $data = collect($response->json('data'))->firstWhere('id', $category->id);
+        $this->assertNotNull($data);
+        $this->assertArrayHasKey('fields', $data);
+        $this->assertSame('serial_number', $data['fields'][0]['key']);
+        $this->assertSame(['serial_number'], $data['required_fields']);
     }
 
     // -------------------------------------------------------------------------
@@ -205,7 +217,10 @@ class WidgetTicketsControllerTest extends TestCase
     // GET /hd/api/tickets?email=...&website_token=...
     // -------------------------------------------------------------------------
 
-    public function test_index_returns_tickets_for_known_email(): void
+    // Respuesta neutra: para no ser un oráculo de enumeración de clientes, el
+    // endpoint devuelve lo MISMO exista o no el email/tickets (sin has_tickets
+    // ni open_count). El detalle real se ve tras autenticarse en el portal.
+    public function test_index_returns_neutral_response_for_known_email(): void
     {
         $web = Web::factory()->create();
         $customer = Customer::factory()->create(['email' => 'known@example.com']);
@@ -219,20 +234,47 @@ class WidgetTicketsControllerTest extends TestCase
         $response = $this->getJson('/hd/api/tickets?email=known@example.com&website_token='.$web->website_token);
 
         $response->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->assertNotEmpty($response->json('data'));
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure(['login_url', 'message']);
+        $this->assertArrayNotHasKey('open_count', $response->json());
+        $this->assertArrayNotHasKey('has_tickets', $response->json());
     }
 
-    public function test_index_returns_empty_for_unknown_email(): void
+    public function test_index_response_is_identical_for_known_and_unknown_email(): void
     {
         $web = Web::factory()->create();
+        $customer = Customer::factory()->create(['email' => 'known@example.com']);
+        $status = TicketStatus::where('slug', 'new')->first();
+        Ticket::factory()->create(['customer_id' => $customer->id, 'status_id' => $status->id]);
 
-        $response = $this->getJson('/hd/api/tickets?email=nobody@example.com&website_token='.$web->website_token);
+        $known = $this->getJson('/hd/api/tickets?email=known@example.com&website_token='.$web->website_token)->json();
+        $unknown = $this->getJson('/hd/api/tickets?email=nobody@example.com&website_token='.$web->website_token)->json();
 
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonCount(0, 'data');
+        // Sin oráculo: idéntica respuesta para email registrado y no registrado.
+        $this->assertSame($known, $unknown);
+    }
+
+    /**
+     * Endpoint publico sin prueba de propiedad del email — no debe filtrar
+     * ningun contenido de ticket (subject/prioridad/estado), solo un conteo.
+     */
+    public function test_index_does_not_leak_ticket_contents(): void
+    {
+        $web = Web::factory()->create();
+        $customer = Customer::factory()->create(['email' => 'known@example.com']);
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+            'subject' => 'Very confidential subject',
+        ]);
+
+        $response = $this->getJson('/hd/api/tickets?email=known@example.com&website_token='.$web->website_token);
+
+        $response->assertOk();
+        $this->assertArrayNotHasKey('data', $response->json());
+        $response->assertDontSee('Very confidential subject');
     }
 
     public function test_index_requires_valid_website_token(): void

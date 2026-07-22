@@ -2,7 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 class MacroExecutorTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

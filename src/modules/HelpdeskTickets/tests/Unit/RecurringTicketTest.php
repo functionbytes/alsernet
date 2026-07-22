@@ -83,17 +83,24 @@ class RecurringTicketTest extends TestCase
 
     public function test_cron_expression_hourly_parsed_correctly(): void
     {
-        $recurring = $this->makeRecurringTicket([
-            'frequency' => 'custom',
-            'cron_expression' => '0 * * * *',
-            'last_run_at' => null,
-        ]);
+        // Congelar el reloj: el siguiente tick de '0 * * * *' está a 0-60 min
+        // del "ahora" real, así que asserts relativos fallan según el minuto
+        // en que corra la suite.
+        \Illuminate\Support\Carbon::setTestNow('2026-01-15 08:30:00');
 
-        $next = $recurring->calculateNextRun();
+        try {
+            $recurring = $this->makeRecurringTicket([
+                'frequency' => 'custom',
+                'cron_expression' => '0 * * * *',
+                'last_run_at' => null,
+            ]);
 
-        // Hourly cron: next run should be approximately 1 hour from now
-        $this->assertGreaterThan(now()->addMinutes(50), $next);
-        $this->assertLessThan(now()->addMinutes(70), $next);
+            $next = $recurring->calculateNextRun();
+
+            $this->assertSame('2026-01-15 09:00:00', $next->format('Y-m-d H:i:s'));
+        } finally {
+            \Illuminate\Support\Carbon::setTestNow();
+        }
     }
 
     public function test_cron_expression_daily_parsed_correctly(): void

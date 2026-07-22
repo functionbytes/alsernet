@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskErp\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -127,6 +128,46 @@ class ErpChannelLinkingTest extends TestCase
         $this->assertDatabaseMissing('helpdesk_customer_external_ids', [
             'customer_id' => $customer->id,
             'platform' => 'erp',
+        ], 'helpdesk');
+    }
+
+    public function test_manager_connection_failure_does_not_abort_the_fallback_chain(): void
+    {
+        // La búsqueda por email falla (manager caído/timeout); linkCustomer()
+        // debe seguir probando la estrategia de teléfono en vez de abortar todo
+        // el job — searchCustomers() ahora propaga los fallos de conexión.
+        $id = $this->uniqueErpId();
+        $email = $this->uniqueEmail();
+        $calls = 0;
+
+        Http::fake(function () use (&$calls, $id) {
+            $calls++;
+            if ($calls === 1) {
+                throw new ConnectionException('down');
+            }
+
+            return Http::response([
+                'data' => [
+                    ['id' => $id, 'label' => 'Dana', 'surnames' => 'Ortiz', 'email' => '', 'cif' => ''],
+                ],
+            ]);
+        });
+
+        $customer = Customer::factory()->create([
+            'email' => $email,
+            'phone' => null,
+            'whatsapp_phone' => '+34 666 987 654',
+        ]);
+        $customer->load('externalIds');
+
+        $erpId = app(ErpCustomerLinkerService::class)->linkCustomer($customer);
+
+        $this->assertSame($id, $erpId);
+        $this->assertDatabaseHas('helpdesk_customer_external_ids', [
+            'customer_id' => $customer->id,
+            'platform' => 'erp',
+            'external_id' => (string) $id,
+            'metadata->linked_via' => 'phone',
         ], 'helpdesk');
     }
 

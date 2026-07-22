@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskHelpcenter\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\HelpdeskHelpcenter\Database\Seeders\HelpdeskHelpcenterPermissionsSeeder;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class HelpCenterTranslationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

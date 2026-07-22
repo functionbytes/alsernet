@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskAgents\Tests\Feature;
 
 use Illuminate\Support\Facades\Route;
-use Modules\HelpdeskAgents\Http\Controllers\Managers\AiAgentSettingsController;
+use Modules\HelpdeskAgents\Http\Controllers\Managers\Settings\AgentSettingsController;
 use Modules\HelpdeskAgents\Models\AiAgentTool;
 use Tests\TestCase;
 
@@ -11,7 +11,7 @@ class AiToolsControllerTest extends TestCase
 {
     public function test_controller_class_exists(): void
     {
-        $this->assertTrue(class_exists(AiAgentSettingsController::class));
+        $this->assertTrue(class_exists(AgentSettingsController::class));
     }
 
     public function test_model_class_exists(): void

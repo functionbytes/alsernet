@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskChatFlow\Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use Modules\HelpdeskChatFlow\Models\ChatFlow;
@@ -28,7 +29,9 @@ class ChatFlowFactory extends Factory
             ],
             'status' => 'draft',
             'priority' => 0,
-            'created_by' => null,
+            // La columna created_by es NOT NULL; sin un autor la inserción
+            // revienta con integrity constraint violation.
+            'created_by' => User::factory(),
         ];
     }
 

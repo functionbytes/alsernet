@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskTickets\Tests\Unit;
 
 use Carbon\Carbon;
-use Modules\Helpdesk\Services\NotificationService;
 use Modules\HelpdeskTickets\Services\SlaService;
 use PHPUnit\Framework\TestCase;
 
@@ -13,9 +12,8 @@ class SlaBusinessHoursTest extends TestCase
 
     private function makeSlaService(): SlaService
     {
-        $notificationService = $this->createMock(NotificationService::class);
 
-        return new SlaService($notificationService);
+        return new SlaService;
     }
 
     private function callAddBusinessHours(Carbon $start, int $hours): Carbon

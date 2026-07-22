@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\Sanctum;
 use Modules\HelpdeskCampaigns\Database\Seeders\HelpdeskCampaignsPermissionsSeeder;
 use Modules\HelpdeskCampaigns\Jobs\CleanupOldImpressionsJob;
 use Modules\HelpdeskCampaigns\Jobs\EndExpiredCampaignsJob;
@@ -20,6 +21,7 @@ use Modules\HelpdeskCampaigns\Models\CampaignImpression;
 use Modules\HelpdeskCampaigns\Models\CampaignVariant;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Tests\Concerns\EnsuresSanctumTable;
 use Tests\TestCase;
 
 /**
@@ -40,6 +42,7 @@ use Tests\TestCase;
 class CampaignsFeatureTest extends TestCase
 {
     use DatabaseTransactions;
+    use EnsuresSanctumTable;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -95,10 +98,13 @@ class CampaignsFeatureTest extends TestCase
             ->assertRedirect(route('auth.login'));
     }
 
-    public function test_user_without_permission_gets_403_on_index(): void
+    public function test_user_without_required_role_gets_403_on_index(): void
     {
+        // Nota: no se puede testear "super-admin sin permiso → 403": el
+        // Gate::before del módulo Document concede TODO a super-admin (y el de
+        // Auth a super-settings), y esos son justo los roles que exige el
+        // middleware de la ruta. La granularidad real de acceso es el rol.
         $user = User::factory()->create();
-        $user->assignRole(Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'web']));
 
         $this->actingAs($user)
             ->get(route('helpdesk.campaigns.index'))
@@ -435,9 +441,16 @@ class CampaignsFeatureTest extends TestCase
         }
     }
 
-    public function test_bulk_action_requires_manage_permission(): void
+    public function test_bulk_action_requires_authorized_role(): void
     {
-        $this->actingAs($this->editor)
+        // El editor tiene super-admin y el Gate::before de Document le concede
+        // helpdesk.campaigns.manage, así que "editor sin manage → 403" es
+        // imposible por diseño (ver nota en el test de index). Se asserta la
+        // barrera efectiva: un usuario sin rol autorizado recibe 403 del
+        // middleware role: antes de llegar a validación.
+        $outsider = User::factory()->create();
+
+        $this->actingAs($outsider)
             ->postJson(route('helpdesk.campaigns.bulk-action'), [
                 'action' => 'delete',
                 'ids' => [1],
@@ -457,7 +470,12 @@ class CampaignsFeatureTest extends TestCase
                 'ids' => [$live->id, $deleted->id],
             ])
             ->assertOk()
-            ->assertJsonPath('count', 1);
+            ->assertJsonPath('success', true);
+
+        // Solo la campaña viva se pausa; la soft-deleted queda fuera del scope
+        // (la respuesta JSON no expone un contador — se asserta el efecto en BD).
+        $this->assertSame('paused', $live->fresh()->status);
+        $this->assertSoftDeleted('helpdesk_campaigns', ['id' => $deleted->id], 'helpdesk');
     }
 
     // =========================================================================
@@ -589,7 +607,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_resume_of_ended_campaign_returns_422(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->create(['status' => 'ended']);
 
         $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/resume")
@@ -605,7 +623,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_publish_of_ended_campaign_returns_422(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->create(['status' => 'ended']);
 
         $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/publish")
@@ -621,7 +639,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_pause_of_draft_campaign_returns_422(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->draft()->create();
 
         $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/pause")
@@ -632,7 +650,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_end_of_ended_campaign_returns_422(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->create(['status' => 'ended']);
 
         $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/end")
@@ -643,7 +661,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_resume_of_draft_campaign_returns_422(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->draft()->create();
 
         // draft → active existe en el mapa, pero via publish; resume solo
@@ -656,7 +674,7 @@ class CampaignsFeatureTest extends TestCase
     public function test_api_valid_lifecycle_transitions_still_work(): void
     {
         Event::fake();
-        \Laravel\Sanctum\Sanctum::actingAs($this->editor);
+        Sanctum::actingAs($this->editor);
         $campaign = Campaign::factory()->active()->create();
 
         $this->postJson("/api/v1/helpdesk/campaigns/{$campaign->id}/pause")
@@ -940,6 +958,10 @@ class CampaignsFeatureTest extends TestCase
         // system_test_pristine was set up before permissions were added, so
         // permissions table is absent; roles lacks name/guard_name columns.
         $this->ensurePermissionTables();
+
+        // Sanctum's personal_access_tokens table is also missing from the
+        // pristine DB snapshot; the test_api_* group calls createToken().
+        $this->ensurePersonalAccessTokensTable();
 
         if (self::$schemaReady) {
             return;

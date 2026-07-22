@@ -3,15 +3,19 @@
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class BulkTicketOperationsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private User $manager;
 
@@ -25,7 +29,13 @@ class BulkTicketOperationsTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
+        // La ruta bulk exige role:super-admin|super-settings + can:helpdesk.tickets.manage
+        Permission::firstOrCreate(['name' => 'helpdesk.tickets.manage', 'guard_name' => 'web']);
+        $role = Role::firstOrCreate(['name' => 'super-settings', 'guard_name' => 'web']);
+
         $this->manager = User::factory()->create();
+        $this->manager->assignRole($role);
+        $this->manager->givePermissionTo('helpdesk.tickets.manage');
 
         $this->status = TicketStatus::firstOrCreate(
             ['slug' => 'open'],
@@ -77,8 +87,8 @@ class BulkTicketOperationsTest extends TestCase
                 'agent_id' => $agent->id,
             ])->assertRedirect(route('manager.helpdesk.tickets.index'));
 
-        $this->assertEquals($agent->id, Ticket::find($ticketA->id)->assigned_to);
-        $this->assertEquals($agent->id, Ticket::find($ticketB->id)->assigned_to);
+        $this->assertEquals($agent->id, Ticket::find($ticketA->id)->assignee_id);
+        $this->assertEquals($agent->id, Ticket::find($ticketB->id)->assignee_id);
     }
 
     public function test_bulk_delete_soft_deletes_tickets(): void

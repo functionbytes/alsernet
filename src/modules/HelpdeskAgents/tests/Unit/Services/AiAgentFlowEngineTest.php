@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Http;
 use Modules\Helpdesk\Database\Factories\ConversationFactory;
 use Modules\HelpdeskAgents\Exceptions\LlmRateLimitException;
 use Modules\HelpdeskAgents\Models\AiAgent;
+use Modules\HelpdeskAgents\Models\AiAgentFlow;
 use Modules\HelpdeskAgents\Models\AiAgentSession;
+use Modules\HelpdeskAgents\Models\AiAgentSessionMessage;
 use Modules\HelpdeskAgents\Services\AiAgentFlowEngine;
 use Modules\HelpdeskAgents\Services\PromptSanitizer;
 use Tests\TestCase;
@@ -218,5 +220,88 @@ class AiAgentFlowEngineTest extends TestCase
         $this->assertNull($result);
         $session->refresh();
         $this->assertSame('failed', $session->status);
+    }
+
+    // ==================== sliding history window (needs helpdesk DB) ====================
+
+    /**
+     * @return array<int, array{role: string, content: string}>
+     */
+    private function invokeHistoryWindow(AiAgentSession $session): array
+    {
+        $engine = $this->makeEngine();
+        $method = (new \ReflectionClass($engine))->getMethod('buildHistoryWindow');
+        $method->setAccessible(true);
+
+        return $method->invoke($engine, $session);
+    }
+
+    private function seedSession(int $messageCount): AiAgentSession
+    {
+        $agent = AiAgent::create([
+            'name' => 'Window Agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o',
+            'status' => 'active',
+            'enabled_at' => now(),
+        ]);
+
+        $conversation = ConversationFactory::new()->create();
+
+        $flow = AiAgentFlow::create([
+            'ai_agent_id' => $agent->id,
+            'name' => 'Window Flow',
+            'trigger' => 'conversation_start',
+        ]);
+
+        $session = AiAgentSession::create([
+            'ai_agent_id' => $agent->id,
+            'conversation_id' => $conversation->id,
+            'flow_id' => $flow->id,
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+
+        for ($i = 0; $i < $messageCount; $i++) {
+            AiAgentSessionMessage::create([
+                'session_id' => $session->id,
+                'role' => $i % 2 === 0 ? 'user' : 'assistant',
+                'content' => (string) $i,
+            ]);
+        }
+
+        return $session;
+    }
+
+    public function test_history_window_keeps_most_recent_messages_in_chronological_order(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        config(['helpdeskagents.history_window' => 5]);
+
+        $session = $this->seedSession(12);
+
+        $history = $this->invokeHistoryWindow($session);
+
+        // Most recent 5 (contents 7..11), NOT the oldest 5 (0..4), in order.
+        $this->assertCount(5, $history);
+        $this->assertSame(['7', '8', '9', '10', '11'], array_column($history, 'content'));
+    }
+
+    public function test_history_window_returns_all_when_under_limit(): void
+    {
+        if (! $this->helpdeskConnectionAvailable()) {
+            $this->markTestSkipped('Helpdesk database connection is not available.');
+        }
+
+        config(['helpdeskagents.history_window' => 100]);
+
+        $session = $this->seedSession(3);
+
+        $history = $this->invokeHistoryWindow($session);
+
+        $this->assertSame(['0', '1', '2'], array_column($history, 'content'));
     }
 }

@@ -94,3 +94,104 @@ jobs:
 
       - name: Run HelpdeskPrestashop tests
         run: php artisan test --compact modules/HelpdeskPrestashop/tests/
+
+  helpdesk-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: system_testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, fileinfo, mysql, redis, gd, pdo_mysql, bcmath, intl, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
+
+      - name: Copy environment
+        run: |
+          cp .env.example .env || true
+          php artisan key:generate --no-interaction
+
+      - name: Configure environment
+        run: |
+          echo "DB_CONNECTION=mariadb" >> .env
+          echo "DB_HOST=127.0.0.1" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=system_testing" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=root" >> .env
+          echo "REDIS_HOST=127.0.0.1" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          echo "CACHE_DRIVER=array" >> .env
+          echo "SESSION_DRIVER=array" >> .env
+          echo "QUEUE_CONNECTION=sync" >> .env
+          echo "MAIL_MAILER=array" >> .env
+
+      - name: Run migrations
+        run: php artisan migrate --force --no-interaction
+
+      # Una suite por módulo Helpdesk: aísla fallos por módulo y evita que un
+      # error fatal en uno oculte los resultados del resto.
+      - name: Run Helpdesk (core) tests
+        run: php artisan test --compact modules/Helpdesk/tests/
+
+      - name: Run HelpdeskTickets tests
+        if: ${{ always() }}
+        run: php artisan test --compact modules/HelpdeskTickets/tests/
+
+      - name: Run HelpdeskCampaigns tests
+        if: ${{ always() }}
+        run: php artisan test --compact modules/HelpdeskCampaigns/tests/
+
+      - name: Run HelpdeskEmailLog tests
+        if: ${{ always() }}
+        run: php artisan test --compact modules/HelpdeskEmailLog/tests/
+
+      - name: Run HelpdeskTranslate tests
+        if: ${{ always() }}
+        run: php artisan test --compact modules/HelpdeskTranslate/tests/
+
+      - name: Run HelpdeskAgents tests
+        if: ${{ always() }}
+        run: php artisan test --compact modules/HelpdeskAgents/tests/

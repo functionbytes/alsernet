@@ -2,9 +2,10 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Modules\Helpdesk\Services\NotificationService;
+use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
@@ -17,6 +18,10 @@ use Tests\TestCase;
 
 class TicketServiceTest extends TestCase
 {
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+
     private function helpdeskConnectionAvailable(): bool
     {
         try {
@@ -33,9 +38,12 @@ class TicketServiceTest extends TestCase
         $slaService = $this->createMock(SlaService::class);
         $slaService->method('calculateDueDate')->willReturn(null);
 
-        $notificationService = $this->createMock(NotificationService::class);
+        return new TicketService($slaService);
+    }
 
-        return new TicketService($slaService, $notificationService);
+    private function ticketData(array $overrides = []): array
+    {
+        return array_merge(['customer_id' => Customer::factory()->create()->id], $overrides);
     }
 
     private function ensureStatusExists(string $slug): TicketStatus
@@ -69,12 +77,12 @@ class TicketServiceTest extends TestCase
 
         $service = $this->makeService();
 
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'Test ticket subject',
             'description' => 'Test description',
             'priority' => 'normal',
             'source' => 'email',
-        ]);
+        ]));
 
         $this->assertStringStartsWith('TKT-'.now()->year.'-', $ticket->ticket_number);
         $this->assertEquals($status->id, $ticket->status_id);
@@ -91,11 +99,11 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('new');
 
         $service = $this->makeService();
-        $service->createTicket([
+        $service->createTicket($this->ticketData([
             'subject' => 'Event dispatch test',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         Event::assertDispatched(TicketCreated::class);
     }
@@ -111,8 +119,8 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('new');
         $service = $this->makeService();
 
-        $first = $service->createTicket(['subject' => 'First', 'priority' => 'normal', 'source' => 'web']);
-        $second = $service->createTicket(['subject' => 'Second', 'priority' => 'normal', 'source' => 'web']);
+        $first = $service->createTicket($this->ticketData(['subject' => 'First', 'priority' => 'normal', 'source' => 'web']));
+        $second = $service->createTicket($this->ticketData(['subject' => 'Second', 'priority' => 'normal', 'source' => 'web']));
 
         $firstNumber = (int) substr($first->ticket_number, -5);
         $secondNumber = (int) substr($second->ticket_number, -5);
@@ -133,11 +141,11 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('new');
         $service = $this->makeService();
 
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'Original subject',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         Event::fake([TicketUpdated::class]);
 
@@ -160,12 +168,12 @@ class TicketServiceTest extends TestCase
         $newStatus = $this->ensureStatusExists('in-progress');
 
         $service = $this->makeService();
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'History test',
             'status_id' => $originalStatus->id,
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         $service->updateTicket($ticket, ['status_id' => $newStatus->id]);
 
@@ -191,11 +199,11 @@ class TicketServiceTest extends TestCase
         $closedStatus = $this->ensureStatusExists('closed');
 
         $service = $this->makeService();
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'To be closed',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         Event::fake([TicketClosed::class]);
         $closed = $service->closeTicket($ticket);
@@ -217,11 +225,11 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('closed');
 
         $service = $this->makeService();
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'Already closed test',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         $service->closeTicket($ticket);
         $ticket->refresh();
@@ -246,11 +254,11 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('closed');
 
         $service = $this->makeService();
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'To be reopened',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         $service->closeTicket($ticket);
         $ticket->refresh();
@@ -273,11 +281,11 @@ class TicketServiceTest extends TestCase
         $this->ensureStatusExists('new');
 
         $service = $this->makeService();
-        $ticket = $service->createTicket([
+        $ticket = $service->createTicket($this->ticketData([
             'subject' => 'Not closed test',
             'priority' => 'normal',
             'source' => 'web',
-        ]);
+        ]));
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Ticket is not closed');

@@ -2,9 +2,10 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
@@ -14,7 +15,9 @@ use Tests\TestCase;
 
 class TicketSatisfactionSurveyTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     private TicketStatus $closedStatus;
 
@@ -99,7 +102,7 @@ class TicketSatisfactionSurveyTest extends TestCase
             'closed_at' => now(),
         ]);
 
-        $this->get(route('portal.tickets.rate.email', [
+        $this->get(URL::signedRoute('portal.tickets.rate.email', [
             'ticketNumber' => $ticket->ticket_number,
             'rating' => 4,
         ]))->assertRedirect(route('portal.login'));
@@ -121,7 +124,7 @@ class TicketSatisfactionSurveyTest extends TestCase
             'closed_at' => now(),
         ]);
 
-        $this->get(route('portal.tickets.rate.email', [
+        $this->get(URL::signedRoute('portal.tickets.rate.email', [
             'ticketNumber' => $ticket->ticket_number,
             'rating' => 99,
         ]))->assertRedirect(route('portal.login'));
