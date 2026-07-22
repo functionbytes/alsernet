@@ -14,6 +14,7 @@ use Modules\HelpdeskTickets\Console\Commands\CollectOpsMetricsCommand;
 use Modules\HelpdeskTickets\Console\Commands\FetchEmailTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
 use Modules\HelpdeskTickets\Http\Controllers\Dev\EmailTestController;
 use Modules\HelpdeskTickets\Jobs\AutoAssignUnassignedTickets;
@@ -175,6 +176,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             class_exists(SendSlaWarningsCommand::class) ? SendSlaWarningsCommand::class : null,
             class_exists(CollectOpsMetricsCommand::class) ? CollectOpsMetricsCommand::class : null,
             class_exists(SendDueTicketFollowupsCommand::class) ? SendDueTicketFollowupsCommand::class : null,
+            class_exists(SendScheduledReportsCommand::class) ? SendScheduledReportsCommand::class : null,
         ]));
 
         if ($commands) {
@@ -198,6 +200,27 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             // Observabilidad operativa: snapshot de colas/webhooks/SLA en cache
             // + evaluación de alertas (mail a managers, OFF por defecto).
             $schedule->command('helpdesk:ops-metrics')->everyFiveMinutes()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+
+            // Informes programados por email (OFF por defecto). La cadencia la
+            // decide la frecuencia configurada: semanal (lunes 07:00) o mensual
+            // (día 1 a las 07:00). El comando además re-verifica el toggle.
+            $reportsEnabled = fn () => helpdesk_tickets_enabled()
+                && (bool) config('helpdesktickets.reports.scheduled.enabled', false);
+            $reportsFrequency = fn () => (string) config('helpdesktickets.reports.scheduled.frequency', 'weekly');
+
+            $schedule->command('helpdesk:send-scheduled-reports')
+                ->weeklyOn(1, '07:00')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->when(fn () => $reportsEnabled() && $reportsFrequency() !== 'monthly');
+
+            $schedule->command('helpdesk:send-scheduled-reports')
+                ->monthlyOn(1, '07:00')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->when(fn () => $reportsEnabled() && $reportsFrequency() === 'monthly');
 
             $schedule->job(new ProcessRecurringTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
             $schedule->job(new CheckSlaBreaches)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);

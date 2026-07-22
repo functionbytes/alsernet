@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Mail\TicketEscalatedMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketHistory;
@@ -77,15 +78,24 @@ class EscalationService
         $count = 0;
         $notifications = [];
         $escalatedIds = [];
+        $businessHours = $this->businessHoursCalculator();
 
         // Pass 1: age-based (too long without escalation for its priority).
         foreach ($this->thresholds() as $prioritySlug => $hours) {
+            // El filtro SQL sigue siendo en horas naturales: N horas hábiles
+            // transcurridas implican al menos N horas naturales, así que este
+            // WHERE es un superconjunto seguro de los candidatos en modo
+            // business-hours; el refinamiento se hace por ticket en PHP.
             $tickets = $this->eligibleQuery()
                 ->where('priority', $prioritySlug)
                 ->where('created_at', '<=', now()->subHours($hours))
                 ->cursor();
 
             foreach ($tickets as $ticket) {
+                if ($businessHours !== null && ! $this->ageThresholdReachedInBusinessHours($businessHours, $ticket, $hours)) {
+                    continue;
+                }
+
                 $notification = $this->tryEscalate($ticket, self::REASON_NO_RESPONSE);
 
                 if ($notification) {
@@ -128,6 +138,62 @@ class EscalationService
         }
 
         return $count;
+    }
+
+    /**
+     * Calculadora de horas hábiles de HelpdeskSla, solo cuando el modo
+     * business-hours del escalado está activo (helpdesktickets.escalation.
+     * business_hours, OFF por defecto) Y el módulo HelpdeskSla está presente.
+     * Dependencia blanda a propósito: sin el módulo (o con el toggle apagado)
+     * los umbrales se evalúan en horas naturales, exactamente como antes.
+     */
+    private function businessHoursCalculator(): ?object
+    {
+        if (! config('helpdesktickets.escalation.business_hours', false)) {
+            return null;
+        }
+
+        $class = BusinessHoursCalculator::class;
+
+        if (! class_exists($class)) {
+            return null;
+        }
+
+        try {
+            return app($class);
+        } catch (\Throwable $e) {
+            Log::warning('Escalation business-hours mode: calculator unavailable, falling back to natural hours.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * ¿El ticket ya acumula $hours horas HÁBILES de antigüedad? Se reutiliza el
+     * único algoritmo del producto (BusinessHoursCalculator, calendario
+     * helpdesk_business_hours): el umbral se alcanza cuando created_at + N
+     * horas hábiles ya quedó en el pasado. Best-effort: ante cualquier fallo
+     * del cálculo se mantiene el comportamiento por horas naturales (el WHERE
+     * de SQL ya lo garantizó).
+     */
+    private function ageThresholdReachedInBusinessHours(object $calculator, Ticket $ticket, int $hours): bool
+    {
+        if ($ticket->created_at === null) {
+            return true;
+        }
+
+        try {
+            return $calculator->addBusinessHours($ticket->created_at, $hours)->lessThanOrEqualTo(now());
+        } catch (\Throwable $e) {
+            Log::warning("Escalation business-hours check failed for ticket #{$ticket->id}, using natural hours.", [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return true;
+        }
     }
 
     /**

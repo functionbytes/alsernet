@@ -5,8 +5,8 @@ namespace Modules\HelpdeskSla\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\SlaBreached;
-use Modules\Helpdesk\Models\BusinessHour;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\SlaPolicy;
 use Modules\HelpdeskSla\Events\SlaWarningThreshold;
@@ -15,15 +15,29 @@ use Modules\HelpdeskSla\Models\ConversationSlaBreach;
 /**
  * Central SLA engine for Helpdesk conversations.
  *
+ * Frontera entre los dos motores SLA del producto:
+ *
+ * - CONVERSACIONES → este servicio (HelpdeskSla): registra incumplimientos en
+ *   helpdesk_conversation_sla_breaches y emite avisos/broadcasts; NO escala
+ *   prioridades.
+ * - TICKETS → Modules\HelpdeskTickets\Services\EscalationService (+ SlaService):
+ *   escala prioridades y registra sus incumplimientos en
+ *   helpdesk_ticket_sla_breaches.
+ *
+ * Los motores NO se unifican a propósito (ver docs/helpdesk-sla-boundary.md):
+ * cada uno es dueño de su entidad y de su tabla de breaches.
+ *
  * Reuses the canonical Modules\Helpdesk\Models\SlaPolicy (hours-based, routed by
  * priority/category) and the real helpdesk_business_hours calendar. Replaces the
  * legacy hardcoded 15-minute command and the broken core listener.
  */
 class ConversationSlaService
 {
-    private const BH_CACHE_KEY = 'helpdesksla:business_hours_schedule';
-
     private const PRIORITY_CACHE_KEY = 'helpdesksla:priority_slug_map';
+
+    public function __construct(
+        private readonly BusinessHoursCalculator $businessHours,
+    ) {}
 
     /**
      * Conversation.priority is stored in English (low/normal/high/urgent) while
@@ -131,12 +145,17 @@ class ConversationSlaService
             ->whereNull('sla_paused_at')
             ->cursor()
             ->each(function (Conversation $conversation) use (&$count): void {
-                $this->recordBreach($conversation, ConversationSlaBreach::TYPE_FIRST_RESPONSE, $conversation->sla_first_response_due_at);
+                // Breach record + conversation flag must be atomic: a half-write
+                // (record without flag) would be re-detected next run and produce
+                // duplicate breach records.
+                DB::connection('helpdesk')->transaction(function () use ($conversation): void {
+                    $this->recordBreach($conversation, ConversationSlaBreach::TYPE_FIRST_RESPONSE, $conversation->sla_first_response_due_at);
 
-                $conversation->updateQuietly([
-                    'sla_first_response_breached' => true,
-                    'sla_warned_at' => $conversation->sla_warned_at ?? now(),
-                ]);
+                    $conversation->updateQuietly([
+                        'sla_first_response_breached' => true,
+                        'sla_warned_at' => $conversation->sla_warned_at ?? now(),
+                    ]);
+                });
 
                 SlaBreached::dispatch($conversation);
                 $count++;
@@ -150,13 +169,19 @@ class ConversationSlaService
             ->whereNull('sla_paused_at')
             ->cursor()
             ->each(function (Conversation $conversation) use (&$count): void {
-                $this->recordBreach($conversation, ConversationSlaBreach::TYPE_RESOLUTION, $conversation->sla_resolution_due_at);
+                DB::connection('helpdesk')->transaction(function () use ($conversation): void {
+                    $this->recordBreach($conversation, ConversationSlaBreach::TYPE_RESOLUTION, $conversation->sla_resolution_due_at);
 
-                $conversation->updateQuietly(['sla_resolution_breached' => true]);
+                    $conversation->updateQuietly(['sla_resolution_breached' => true]);
+                });
 
                 SlaBreached::dispatch($conversation);
                 $count++;
             });
+
+        if ($count > 0) {
+            Log::info('HelpdeskSla: check de incumplimientos completado.', ['breaches' => $count]);
+        }
 
         return $count;
     }
@@ -208,6 +233,10 @@ class ConversationSlaService
                 SlaWarningThreshold::dispatch($conversation, $type, $percent);
                 $count++;
             });
+
+        if ($count > 0) {
+            Log::info('HelpdeskSla: avisos de SLA enviados.', ['warnings' => $count]);
+        }
 
         return $count;
     }
@@ -397,89 +426,11 @@ class ConversationSlaService
 
     /**
      * Add a number of hours to a start date, optionally honouring the configured
-     * business-hours calendar (helpdesk_business_hours, with a config fallback).
+     * business-hours calendar. El algoritmo vive en BusinessHoursCalculator
+     * (compartido con el escalado de tickets); aquí solo se delega.
      */
     private function addBusinessHours(Carbon|string $start, int $hours, bool $businessHoursOnly): Carbon
     {
-        $start = $start instanceof Carbon ? $start->copy() : Carbon::parse($start);
-
-        if (! $businessHoursOnly || $hours <= 0) {
-            return $start->copy()->addHours($hours);
-        }
-
-        $timezone = (string) config('helpdesksla.default_business_hours.timezone', 'Europe/Madrid');
-        $schedule = $this->businessHoursSchedule();
-        $cursor = $start->copy()->setTimezone($timezone);
-        $remaining = $hours * 60;
-        $guard = 0;
-
-        while ($remaining > 0 && $guard++ < 1000) {
-            $day = $schedule[$cursor->dayOfWeek] ?? null;
-
-            if ($day === null) {
-                $cursor = $cursor->addDay()->startOfDay();
-
-                continue;
-            }
-
-            [$openHour, $openMinute] = array_map('intval', explode(':', $day['open']));
-            [$closeHour, $closeMinute] = array_map('intval', explode(':', $day['close']));
-
-            $open = $cursor->copy()->setTime($openHour, $openMinute);
-            $close = $cursor->copy()->setTime($closeHour, $closeMinute);
-
-            if ($cursor->lessThan($open)) {
-                $cursor = $open->copy();
-            }
-
-            if ($cursor->greaterThanOrEqualTo($close)) {
-                $cursor = $cursor->addDay()->startOfDay();
-
-                continue;
-            }
-
-            $available = (int) round(abs($cursor->diffInMinutes($close)));
-
-            if ($remaining <= $available) {
-                $cursor = $cursor->addMinutes($remaining);
-                $remaining = 0;
-            } else {
-                $remaining -= $available;
-                $cursor = $cursor->addDay()->startOfDay();
-            }
-        }
-
-        return $cursor->setTimezone($start->getTimezone());
-    }
-
-    /**
-     * Business-hours calendar keyed by Carbon dayOfWeek (0=Sunday..6=Saturday).
-     *
-     * @return array<int, array{open: string, close: string}>
-     */
-    private function businessHoursSchedule(): array
-    {
-        return Cache::remember(self::BH_CACHE_KEY, 300, function (): array {
-            $rows = BusinessHour::query()->where('is_open', true)->get();
-
-            if ($rows->isEmpty()) {
-                return config('helpdesksla.default_business_hours.days', []);
-            }
-
-            $map = [];
-
-            foreach ($rows as $row) {
-                if (! $row->opens_at || ! $row->closes_at) {
-                    continue;
-                }
-
-                $map[(int) $row->day_of_week] = [
-                    'open' => substr((string) $row->opens_at, 0, 5),
-                    'close' => substr((string) $row->closes_at, 0, 5),
-                ];
-            }
-
-            return $map;
-        });
+        return $this->businessHours->addBusinessHours($start, $hours, $businessHoursOnly);
     }
 }

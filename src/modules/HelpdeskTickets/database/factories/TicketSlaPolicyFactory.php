@@ -14,6 +14,7 @@ class TicketSlaPolicyFactory extends Factory
         return [
             'name' => fake()->randomElement(['Básico', 'Estándar', 'Premium', 'Enterprise']).' '.fake()->numberBetween(1, 9),
             'description' => fake()->optional()->sentence(),
+            'channel' => null,
             'first_response_time' => fake()->randomElement([30, 60, 120, 240, 480]),
             'next_response_time' => fake()->randomElement([60, 120, 240, 480, 1440]),
             'resolution_time' => fake()->randomElement([480, 1440, 2880, 4320, 10080]),
@@ -65,5 +66,13 @@ class TicketSlaPolicyFactory extends Factory
     public function inactive(): static
     {
         return $this->state(['active' => false]);
+    }
+
+    /**
+     * Policy scoped to a ticket source channel (widget, email, web_form...).
+     */
+    public function channel(string $channel): static
+    {
+        return $this->state(['channel' => $channel]);
     }
 }
