@@ -3,11 +3,14 @@
 namespace Modules\HelpdeskContacts\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Http\Requests\Managers\BulkContactActionRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ImportContactsRequest;
@@ -80,19 +83,36 @@ class ContactsController extends Controller
     }
 
     /**
+     * Rows per transaction when importing a CSV: keeps each write burst short
+     * (no long single transaction over a 5 MB file) while remaining atomic per
+     * chunk if a row fails midway.
+     */
+    private const IMPORT_CHUNK_SIZE = 250;
+
+    /**
      * Show the CSV import form.
      */
     public function importForm(): View
     {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
         return view('contacts::contacts.import');
     }
 
     /**
      * Process an uploaded CSV and upsert contacts.
-     * Matches on email; creates new records when no match is found.
+     *
+     * Matches on email DENTRO del alcance del agente (forAgent): un email que
+     * pertenece a un contacto de otra bandeja no se toca (se cuenta como
+     * omitido) — mismo aislamiento por inbox que index/update/bulkAction.
+     * Los contactos nuevos se asocian a las bandejas asignadas del agente vía
+     * el pivot helpdesk_customer_inboxes para que queden visibles (antes se
+     * creaban sin asociación y un agente restringido no podía verlos).
      */
     public function importProcess(ImportContactsRequest $request): RedirectResponse
     {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
         $handle = fopen($request->file('file')->getPathname(), 'r');
 
         // Skip UTF-8 BOM if present
@@ -112,36 +132,112 @@ class ContactsController extends Controller
             return back()->withErrors(['file' => 'El CSV debe tener al menos la columna "name" o "email".']);
         }
 
-        $created = 0;
-        $updated = 0;
-        $skipped = 0;
+        $agent = $request->user();
+        $agentInboxIds = AgentInboxCapacity::query()
+            ->where('user_id', $agent->id)
+            ->pluck('inbox_id')
+            ->all();
+
+        $counters = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'invalid_email' => 0];
+
+        $chunk = [];
 
         while (($row = fgetcsv($handle)) !== false) {
-            $name = ($nameCol !== false && isset($row[$nameCol])) ? trim($row[$nameCol]) : null;
-            $email = ($emailCol !== false && isset($row[$emailCol])) ? trim($row[$emailCol]) : null;
-            $phone = ($phoneCol !== false && isset($row[$phoneCol])) ? trim($row[$phoneCol]) : null;
+            $chunk[] = $row;
 
-            if (! $name && ! $email) {
-                $skipped++;
-
-                continue;
+            if (count($chunk) >= self::IMPORT_CHUNK_SIZE) {
+                $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, $counters);
+                $chunk = [];
             }
+        }
 
-            $existing = $email ? Customer::where('email', $email)->first() : null;
-
-            if ($existing) {
-                $existing->update(array_filter(compact('name', 'phone'), fn ($v) => $v !== null && $v !== ''));
-                $updated++;
-            } else {
-                Customer::create(array_filter(compact('name', 'email', 'phone'), fn ($v) => $v !== null && $v !== ''));
-                $created++;
-            }
+        if ($chunk !== []) {
+            $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, $counters);
         }
 
         fclose($handle);
 
-        return redirect()->route('contacts.index')
-            ->with('success', "Importación completada: {$created} creados, {$updated} actualizados, {$skipped} omitidos.");
+        $summary = "Importación completada: {$counters['created']} creados, "
+            ."{$counters['updated']} actualizados, {$counters['skipped']} omitidos";
+
+        if ($counters['invalid_email'] > 0) {
+            $summary .= " ({$counters['invalid_email']} con email inválido)";
+        }
+
+        return redirect()->route('contacts.index')->with('success', $summary.'.');
+    }
+
+    /**
+     * Import a batch of CSV rows inside a single transaction.
+     *
+     * @param  array<int, array<int, string|null>>  $rows
+     * @param  int|false  $nameCol
+     * @param  int|false  $emailCol
+     * @param  int|false  $phoneCol
+     * @param  array<int, int>  $agentInboxIds
+     * @param  array{created: int, updated: int, skipped: int, invalid_email: int}  $counters
+     */
+    private function importChunk(
+        array $rows,
+        $nameCol,
+        $emailCol,
+        $phoneCol,
+        User $agent,
+        array $agentInboxIds,
+        array &$counters
+    ): void {
+        DB::connection('helpdesk')->transaction(function () use ($rows, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, &$counters): void {
+            foreach ($rows as $row) {
+                $name = ($nameCol !== false && isset($row[$nameCol])) ? trim((string) $row[$nameCol]) : null;
+                $email = ($emailCol !== false && isset($row[$emailCol])) ? trim((string) $row[$emailCol]) : null;
+                $phone = ($phoneCol !== false && isset($row[$phoneCol])) ? trim((string) $row[$phoneCol]) : null;
+
+                if (! $name && ! $email) {
+                    $counters['skipped']++;
+
+                    continue;
+                }
+
+                if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                    $counters['skipped']++;
+                    $counters['invalid_email']++;
+
+                    continue;
+                }
+
+                // Match SOLO dentro del alcance del agente (aislamiento por inbox).
+                $existing = $email
+                    ? Customer::query()->forAgent($agent)->where('email', $email)->first()
+                    : null;
+
+                if ($existing) {
+                    $existing->update(array_filter(compact('name', 'phone'), fn ($v) => $v !== null && $v !== ''));
+                    $counters['updated']++;
+
+                    continue;
+                }
+
+                // El email existe pero pertenece a un contacto fuera del alcance
+                // del agente: no se modifica ni se duplica — se omite.
+                if ($email && Customer::query()->where('email', $email)->exists()) {
+                    $counters['skipped']++;
+
+                    continue;
+                }
+
+                $customer = Customer::create(array_filter(compact('name', 'email', 'phone'), fn ($v) => $v !== null && $v !== ''));
+
+                // Asocia el contacto nuevo a las bandejas asignadas del agente
+                // (mismo pivot que usa el alta vía livechat) para que quede
+                // visible bajo el aislamiento por inbox. Un gestor sin bandejas
+                // asignadas no necesita asociación: ve todos los contactos.
+                if ($agentInboxIds !== []) {
+                    $customer->inboxes()->syncWithoutDetaching($agentInboxIds);
+                }
+
+                $counters['created']++;
+            }
+        });
     }
 
     /**

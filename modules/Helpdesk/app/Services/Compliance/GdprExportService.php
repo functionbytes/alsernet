@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Services\Compliance;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Modules\Helpdesk\Contracts\GdprExportContributor;
 use Modules\Helpdesk\Models\AuditLog;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Services\AuditLogService;
@@ -57,7 +58,7 @@ class GdprExportService
             ->get()
             ->toArray();
 
-        return [
+        $data = [
             'exported_at' => now()->toIso8601String(),
             'customer' => $this->extractPii($customer),
             'conversations' => $conversations->map(fn ($conv) => [
@@ -81,6 +82,17 @@ class GdprExportService
             'audit_logs' => $auditLogs,
             'tags' => $tags,
         ];
+
+        // Secciones aportadas por los módulos satélite (tickets, sesiones de
+        // chatbot, expedientes...). Sin try/catch a propósito: omitir en
+        // silencio la sección de un módulo produciría un export "completo" que
+        // en realidad está incompleto — un fallo debe abortar y quedar visible,
+        // no degradar el derecho de acceso.
+        foreach (app()->tagged(GdprExportContributor::TAG) as $contributor) {
+            $data[$contributor->sectionKey()] = $contributor->export($customer);
+        }
+
+        return $data;
     }
 
     /**
@@ -91,8 +103,11 @@ class GdprExportService
     {
         $data = $this->exportCustomer($customer);
 
-        $tmpDir = sys_get_temp_dir().'/gdpr_export_'.$customer->id.'_'.time();
-        mkdir($tmpDir, 0755, true);
+        // Nombre aleatorio + permisos restrictivos: el export lleva PII completa y
+        // vive en /tmp (compartido en host/contenedor) hasta enviarse y borrarse.
+        $suffix = bin2hex(random_bytes(8));
+        $tmpDir = sys_get_temp_dir().'/gdpr_export_'.$customer->id.'_'.$suffix;
+        mkdir($tmpDir, 0700, true);
 
         file_put_contents(
             $tmpDir.'/customer_data.json',
@@ -110,7 +125,7 @@ class GdprExportService
 
                     if ($path && Storage::disk('public')->exists($path)) {
                         if (! $hasAttachments) {
-                            mkdir($attachmentDir, 0755, true);
+                            mkdir($attachmentDir, 0700, true);
                             $hasAttachments = true;
                         }
 
@@ -122,7 +137,7 @@ class GdprExportService
             }
         }
 
-        $zipPath = sys_get_temp_dir().'/gdpr_customer_'.$customer->id.'.zip';
+        $zipPath = sys_get_temp_dir().'/gdpr_customer_'.$customer->id.'_'.$suffix.'.zip';
 
         $zip = new ZipArchive;
         $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
@@ -136,6 +151,10 @@ class GdprExportService
         }
 
         $zip->close();
+
+        // El ZIP con toda la PII queda en /tmp hasta enviarse y borrarse: restringe
+        // su lectura a solo el propietario mientras existe.
+        @chmod($zipPath, 0600);
 
         // Clean up temp directory
         $this->rmdirRecursive($tmpDir);

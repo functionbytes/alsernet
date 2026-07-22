@@ -28,6 +28,10 @@ class Customer extends Model
         'name',
         'email',
         'phone',
+        'company_id',
+        'erp_customer_id',
+        'erp_synced_at',
+        'is_blocked',
         'avatar_url',
         'country',
         'state',
@@ -64,6 +68,8 @@ class Customer extends Model
             'last_seen_at' => 'datetime',
             'custom_attributes' => 'array',
             'portal_token_expires_at' => 'datetime',
+            'erp_synced_at' => 'datetime',
+            'is_blocked' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
@@ -206,7 +212,8 @@ class Customer extends Model
         return $query->where(function ($q) use ($term) {
             $q->where('name', 'like', "%{$term}%")
                 ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('phone', 'like', "%{$term}%");
+                ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhere('whatsapp_phone', 'like', "%{$term}%");
         });
     }
 
@@ -215,7 +222,9 @@ class Customer extends Model
      *
      * Reuses the inbox-isolation mechanism of CustomerPolicy::sharesInboxWith():
      * managers (helpdesk.manage / helpdesk.customers.manage) see everyone; agents
-     * only see customers with at least one conversation in an assigned inbox.
+     * only see customers with at least one conversation in an assigned inbox, or
+     * associated to one of those inboxes via the helpdesk_customer_inboxes pivot
+     * (contactos creados/importados sin conversación todavía).
      * A restricted agent with no assigned inboxes sees nothing (fail-closed).
      */
     public function scopeForAgent(Builder $query, User $user): Builder
@@ -228,7 +237,10 @@ class Customer extends Model
             ->where('user_id', $user->id)
             ->pluck('inbox_id');
 
-        return $query->whereHas('conversations', fn (Builder $q) => $q->whereIn('inbox_id', $inboxIds));
+        return $query->where(fn (Builder $q) => $q
+            ->whereHas('conversations', fn (Builder $c) => $c->whereIn('inbox_id', $inboxIds))
+            ->orWhereHas('inboxes', fn (Builder $i) => $i->whereIn('helpdesk_customer_inboxes.inbox_id', $inboxIds))
+        );
     }
 
     /**

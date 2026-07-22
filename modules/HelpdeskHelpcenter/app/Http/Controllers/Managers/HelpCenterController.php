@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\HelpdeskHelpcenter\Concerns\BuildsFulltextSearch;
+use Modules\HelpdeskHelpcenter\Http\Controllers\SitemapController;
 use Modules\HelpdeskHelpcenter\Http\Requests\StoreHelpCenterArticleRequest;
 use Modules\HelpdeskHelpcenter\Http\Requests\StoreHelpCenterCategoryRequest;
 use Modules\HelpdeskHelpcenter\Http\Requests\StoreHelpCenterSectionRequest;
@@ -19,6 +20,7 @@ use Modules\HelpdeskHelpcenter\Http\Requests\UpdateHelpCenterSectionRequest;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterCategory;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterTag;
+use Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService;
 use Spatie\Permission\Models\Role;
 
 class HelpCenterController extends Controller
@@ -28,6 +30,8 @@ class HelpCenterController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('viewAny', HelpCenterCategory::class);
+
+        abort_if(! helpdesk_helpcenter_enabled(), 404);
 
         $query = HelpCenterCategory::query()
             ->whereNull('parent_id')
@@ -441,6 +445,10 @@ class HelpCenterController extends Controller
 
     public function searchArticles(Request $request): JsonResponse
     {
+        if (! helpdesk_helpcenter_enabled()) {
+            return response()->json(['data' => []]);
+        }
+
         $this->authorize('viewAny', HelpCenterArticle::class);
 
         $q = $request->get('q', '');
@@ -573,7 +581,15 @@ class HelpCenterController extends Controller
 
     private function clearWidgetCache(): void
     {
-        Cache::increment('helpdesk:widget:version');
+        // La clave que realmente lee HelpcenterWidgetService::getWidgetData()
+        // (antes se incrementaba una versión 'helpdesk:widget:version' que nadie
+        // leía, y el widget servía el payload cacheado hasta 1h después de un
+        // cambio en categorías/artículos).
+        Cache::forget(HelpcenterWidgetService::WIDGET_CACHE_KEY);
+
+        // El sitemap público cachea la misma fuente (artículos publicados) con
+        // el mismo TTL de 1h; invalidarlo aquí mantiene ambos en sync.
+        Cache::forget(SitemapController::CACHE_KEY);
     }
 
     private function uniqueSlug(string $name): string

@@ -2,7 +2,6 @@
 
 namespace Modules\HelpdeskCompliance\Services\Handlers;
 
-use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 
@@ -19,7 +18,7 @@ class ChatflowComplianceHandler
      * @param  array<int, int>  $conversationIds
      * @return array{module: string, sessions: int, mode: string}
      */
-    public function handle(Customer $customer, bool $hard, array $conversationIds): array
+    public function handle(int $customerId, bool $hard, array $conversationIds): array
     {
         if ($conversationIds === []) {
             return ['module' => 'HelpdeskChatFlow', 'sessions' => 0, 'mode' => 'skipped'];

@@ -2,61 +2,42 @@
 
 namespace Modules\HelpdeskCompliance\Listeners;
 
-use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Events\CustomerGdprDeleted;
-use Modules\Helpdesk\Services\AuditLogService;
-use Modules\HelpdeskCompliance\Models\ComplianceRequest;
-use Modules\HelpdeskCompliance\Services\Handlers\ChatflowComplianceHandler;
-use Modules\HelpdeskCompliance\Services\Handlers\TicketComplianceHandler;
-use Nwidart\Modules\Facades\Module;
+use Modules\HelpdeskCompliance\Jobs\ProcessComplianceCascadeJob;
 
 /**
- * Runs synchronously after a core GDPR deletion to cascade the erasure to the
- * modules the core does not cover, recording a trazable ComplianceRequest.
+ * Encola la cascada hacia los modulos que el core no cubre (Tickets/ChatFlow)
+ * en vez de ejecutarla de forma sincrona dentro de la request HTTP del admin
+ * que dispara el borrado. Antes, un cliente con muchos tickets/conversaciones
+ * podia agotar el timeout de PHP-FPM a medio camino: el borrado core (ya
+ * irreversible) quedaba aplicado pero la cascada nunca terminaba, sin
+ * ComplianceRequest ni reintento.
  *
- * Each handler is gated by Module::isEnabled() + class_exists() so the cascade
- * degrades gracefully when an optional module is absent or disabled.
+ * Solo se captura aqui lo que hace falta como datos planos (customer_id, no
+ * el modelo) — en modo hard el Customer ya fue borrado por completo antes de
+ * que este listener corra, y el job encolado no puede rehidratarlo.
  */
 class RunComplianceCascade
 {
     public function handle(CustomerGdprDeleted $event): void
     {
-        $customer = $event->customer;
-        $summaries = [];
+        // The core GDPR deletion (Modules\Helpdesk\Services\Compliance\GdprDeletionService)
+        // has already run by the time this listener fires — that base erasure is
+        // never skipped. Only the additional Helpdesk-module cascade below
+        // (Tickets/ChatFlow anonymization + ComplianceRequest tracking) is gated
+        // behind the admin toggle in Settings → Integraciones.
+        if (! helpdesk_compliance_enabled()) {
+            return;
+        }
 
-        DB::connection('helpdesk')->transaction(function () use ($event, $customer, &$summaries): void {
-            if ($this->moduleReady('HelpdeskTickets', 'Modules\\HelpdeskTickets\\Models\\Ticket')) {
-                $summaries[] = app(TicketComplianceHandler::class)
-                    ->handle($customer, $event->hard, $event->conversationIds);
-            }
-
-            if ($this->moduleReady('HelpdeskChatFlow', 'Modules\\HelpdeskChatFlow\\Models\\ChatFlowSession')) {
-                $summaries[] = app(ChatflowComplianceHandler::class)
-                    ->handle($customer, $event->hard, $event->conversationIds);
-            }
-        });
-
-        $request = ComplianceRequest::create([
-            'customer_id' => $customer->id,
-            'type' => $event->hard ? ComplianceRequest::TYPE_DELETE_HARD : ComplianceRequest::TYPE_DELETE_SOFT,
-            'status' => 'completed',
-            'requested_by' => auth()->id(),
-            'modules_affected' => array_values(array_map(fn (array $s): string => $s['module'], $summaries)),
-            'result_summary' => [
-                'core' => $event->result,
-                'handlers' => $summaries,
-            ],
-            'completed_at' => now(),
-        ]);
-
-        AuditLogService::record('gdpr.cascade.completed', $request, [], [
-            'mode' => $event->hard ? 'hard' : 'soft',
-            'handlers' => $summaries,
-        ]);
-    }
-
-    private function moduleReady(string $module, string $fqcn): bool
-    {
-        return (Module::find($module)?->isEnabled() ?? false) && class_exists($fqcn);
+        ProcessComplianceCascadeJob::dispatch(
+            $event->customer->id,
+            $event->hard,
+            $event->conversationIds,
+            $event->result,
+            auth()->id(),
+            $event->customerEmail,
+            $event->customerPhones,
+        );
     }
 }
