@@ -53,9 +53,13 @@ class WidgetConversationFlowTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonStructure(['data' => ['conversation_id', 'customer_id', 'reused']]);
 
+        // Filtra por el id devuelto (la BD compartida entre runs puede tener
+        // conversaciones 'web' residuales) y usa la conexión 'helpdesk', que es
+        // la que ve las filas sin commitear del test.
         $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $response->json('data.conversation_id'),
             'channel' => 'web',
-        ]);
+        ], 'helpdesk');
 
         Event::assertDispatched(ConversationCreated::class);
     }
@@ -114,10 +118,12 @@ class WidgetConversationFlowTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonStructure(['data' => ['message_id', 'created_at']]);
 
+        // Conexión 'helpdesk': el widget escribe por esa conexión y, con ambas
+        // transaccionadas, la conexión por defecto no ve las filas sin commitear.
         $this->assertDatabaseHas('helpdesk_conversation_items', [
             'conversation_id' => $conversation->id,
             'type' => 'message',
-        ]);
+        ], 'helpdesk');
     }
 
     public function test_get_messages_eager_loads_relations(): void
@@ -151,8 +157,15 @@ class WidgetConversationFlowTest extends TestCase
 
         $queries = DB::connection('helpdesk')->getQueryLog();
 
-        // Should use at most 3 queries: 1 to resolve customer, 1 to fetch conversation, 1 to fetch items
-        $this->assertLessThanOrEqual(3, count($queries), 'Too many queries — possible N+1 detected');
+        // Presupuesto CONSTANTE de queries en la conexión helpdesk (guarda contra
+        // regresiones N+1, que con 3 items dispararía el conteo por encima):
+        //   1 helpdesk_settings (middleware ValidateTrustedOrigin)
+        //   2 conversación (concern VerifiesConversationToken)
+        //   3 conversación (resolveOwnedConversation del servicio)
+        //   4 items (una sola query paginada)
+        //   5 eager load de authors (helpdesk_customers)
+        // (el eager load de users va por la conexión por defecto y no se loguea aquí)
+        $this->assertLessThanOrEqual(5, count($queries), 'Too many queries — possible N+1 detected');
 
         DB::connection('helpdesk')->disableQueryLog();
     }

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Modules\Helpdesk\Http\Requests\Settings\StoreInboxRequest;
@@ -223,7 +224,7 @@ class InboxesController extends Controller
         $creds = $request->input('credentials', []);
 
         match ($inbox->channel_type) {
-            Inbox::CHANNEL_WEB => $this->syncWebChannel($inbox, $creds),
+            Inbox::CHANNEL_WEB => $this->syncWebChannel($inbox, $creds, (array) $request->input('widget', [])),
             Inbox::CHANNEL_WHATSAPP => $this->syncWhatsappChannel($inbox, $creds, $request->input('wa_provider', 'whatsapp_cloud')),
             Inbox::CHANNEL_FACEBOOK => $this->syncFacebookChannel($inbox, $creds),
             Inbox::CHANNEL_INSTAGRAM => $this->syncInstagramChannel($inbox, $creds),
@@ -232,7 +233,10 @@ class InboxesController extends Controller
         };
     }
 
-    private function syncWebChannel(Inbox $inbox, array $creds): void
+    /**
+     * @param  array<string, mixed>  $widget  Payload del tab "Widget" del formulario (widget[...]).
+     */
+    private function syncWebChannel(Inbox $inbox, array $creds, array $widget = []): void
     {
         $isNew = ! $inbox->channel_id;
         $channel = $isNew
@@ -244,6 +248,28 @@ class InboxesController extends Controller
             'website_url' => $creds['site_url'] ?? null,
             'widget_color' => $creds['primary_color'] ?? $inbox->color ?? '#90bb13',
         ]);
+
+        // El tab "Widget" del formulario de bandejas envía la configuración del
+        // canal Web como widget[...] (cms_type, platform_integration_id, flags
+        // de asistencia en vivo, textos, colores…). Antes este payload se
+        // descartaba silenciosamente y solo se persistían site_url/primary_color.
+        if ($widget !== []) {
+            // Un cms_type desconocido se ignora en lugar de persistirse.
+            if (isset($widget['cms_type']) && ! array_key_exists((string) $widget['cms_type'], Web::CMS_TYPES)) {
+                unset($widget['cms_type']);
+            }
+
+            $channel->fill(Arr::only(
+                $widget,
+                array_diff($channel->getFillable(), ['account_id', 'website_token', 'hmac_token', 'website_url'])
+            ));
+
+            // Volver a "custom" desvincula la integración de plataforma (Engagement).
+            if (($channel->cms_type ?? 'custom') === 'custom') {
+                $channel->platform_integration_id = null;
+            }
+        }
+
         $channel->save();
 
         if ($isNew) {

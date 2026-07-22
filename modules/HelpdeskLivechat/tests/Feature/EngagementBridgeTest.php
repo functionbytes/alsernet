@@ -95,12 +95,20 @@ class EngagementBridgeTest extends TestCase
     private function mockEngagementEnabled(bool $enabled): void
     {
         if ($enabled) {
-            $moduleMock = \Mockery::mock();
+            // El facade mockeado conserva el return type ?Nwidart\Modules\Module
+            // de find(); un mock anónimo provoca TypeError al devolverse.
+            $moduleMock = \Mockery::mock(\Nwidart\Modules\Module::class);
             $moduleMock->shouldReceive('isEnabled')->andReturn(true);
             Module::shouldReceive('find')->with('Engagement')->andReturn($moduleMock);
         } else {
             Module::shouldReceive('find')->with('Engagement')->andReturn(null);
         }
+
+        // Catch-all: otros observers del ecosistema (p. ej. ConversationSlaObserver
+        // vía helpdesk_module_enabled()) consultan Module::find('HelpdeskSla') al
+        // crear conversaciones; sin esta expectativa el mock del facade lanza
+        // NoMatchingExpectationException. null => módulo tratado como deshabilitado.
+        Module::shouldReceive('find')->withAnyArgs()->andReturn(null);
     }
 
     // -----------------------------------------------------------------------
@@ -251,10 +259,11 @@ class EngagementBridgeTest extends TestCase
         $conversation->update(['closed_at' => now()]);
         $conversation->refresh();
 
-        // Seed a CSAT rating.
+        // Seed a CSAT rating. survey_token es NOT NULL + unique en el esquema.
         CsatRating::create([
             'conversation_id' => $conversation->id,
             'customer_id' => $conversation->customer_id,
+            'survey_token' => 'csat_'.Str::random(32),
             'rating' => 5,
             'answered_at' => now(),
         ]);

@@ -10,17 +10,23 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class WidgetSecurityTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Los listeners de ConversationCreated consultan el rol `helpdesk-agent`;
+        // la tabla roles del snapshot está vacía y sin esto el store devuelve 500.
+        $this->seedHelpdeskRoles();
 
         ConversationStatus::firstOrCreate(
             ['slug' => 'open'],
@@ -106,11 +112,13 @@ class WidgetSecurityTest extends TestCase
 
         $response->assertOk();
 
-        // Verify the stored body does not contain <script> tags
+        // Verify the stored body does not contain <script> tags.
+        // Conexión 'helpdesk': las escrituras del widget van por esa conexión y,
+        // con ambas transaccionadas, la conexión por defecto no las ve.
         $this->assertDatabaseMissing('helpdesk_conversation_items', [
             'conversation_id' => $conversationId,
             'body' => $xssPayload,
-        ]);
+        ], 'helpdesk');
 
         $item = ConversationItem::where('conversation_id', $conversationId)
             ->where('type', 'message')

@@ -107,10 +107,14 @@ class TrustedOriginNoHeaderTest extends TestCase
             ['website_token' => $web->website_token, 'message' => 'permissive']
         );
 
-        // Must not be blocked with "Origin required"
-        if ($response->status() === 403) {
-            $this->assertNotEquals('Origin required', $response->json('error'));
-        }
+        // Must not be blocked with "Origin required". Se asserta siempre (no solo
+        // en el caso 403) para que el test nunca quede "risky" sin aserciones:
+        // si el status no es 403, json('error') no será 'Origin required'.
+        $this->assertNotEquals(
+            [403, 'Origin required'],
+            [$response->status(), $response->json('error')],
+            'Request without Origin must not be blocked when no trusted domains are configured'
+        );
     }
 
     // -----------------------------------------------------------------------
