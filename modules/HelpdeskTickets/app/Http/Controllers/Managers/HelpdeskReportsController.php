@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\CsatRating;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Services\OpsHealthService;
 use Modules\HelpdeskTickets\Support\ReportsCache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -132,6 +133,10 @@ class HelpdeskReportsController extends Controller
         return view('helpdesk::helpdesk.reports.index', array_merge($viewData, [
             'from' => $from,
             'to' => $to,
+            // Salud operativa "ahora" (colas, dead-letters, webhooks, SLA, IA):
+            // fuera del cache por rango de fechas — la refresca el comando
+            // programado helpdesk:ops-metrics y aquí solo se lee.
+            'opsHealth' => app(OpsHealthService::class)->cached(),
         ]));
     }
 
