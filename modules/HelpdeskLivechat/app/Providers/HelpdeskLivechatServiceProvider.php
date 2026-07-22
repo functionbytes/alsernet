@@ -3,18 +3,21 @@
 namespace Modules\HelpdeskLivechat\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\HelpdeskLivechat\Console\Commands\CheckIntegrationHealthCommand;
 use Modules\HelpdeskLivechat\Console\Commands\ProcessAutoActionsCommand;
 use Modules\HelpdeskLivechat\Http\Middleware\ValidateTrustedOrigin;
 use Modules\HelpdeskLivechat\Http\Middleware\VerifyWidgetHmac;
 use Modules\HelpdeskLivechat\Jobs\PruneLivestreamEventsJob;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
+use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskLivechatServiceProvider extends ServiceProvider
@@ -38,16 +41,19 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerEngagementBridge();
         $this->registerEngagementBridgeListeners();
+        $this->registerOpenStatusCacheInvalidation();
         $this->commands([CheckIntegrationHealthCommand::class, ProcessAutoActionsCommand::class]);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('helpdesk-livechat:check-health')
                 ->dailyAt('06:00')
-                ->onOneServer();
+                ->onOneServer()
+                ->when(fn () => helpdesk_livechat_enabled());
 
             $schedule->job(new PruneLivestreamEventsJob)
                 ->dailyAt('03:30')
-                ->onOneServer();
+                ->onOneServer()
+                ->when(fn () => helpdesk_livechat_enabled());
 
             // Apply per-channel auto-transfer / auto-inactive / auto-close to
             // idle widget conversations. Frequent, but skips when nothing is
@@ -55,7 +61,8 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
             $schedule->command('helpdesk-livechat:process-auto-actions')
                 ->everyFiveMinutes()
                 ->withoutOverlapping()
-                ->onOneServer();
+                ->onOneServer()
+                ->when(fn () => helpdesk_livechat_enabled());
         });
     }
 
@@ -72,9 +79,28 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
      */
     protected function registerEngagementBridgeListeners(): void
     {
+        if (! helpdesk_livechat_enabled()) {
+            return;
+        }
+
         Event::listen(ConversationCreated::class, [EngagementBridgeListener::class, 'handleConversationCreated']);
         Event::listen(ConversationMessageCreated::class, [EngagementBridgeListener::class, 'handleMessageCreated']);
         Event::listen(ConversationClosed::class, [EngagementBridgeListener::class, 'handleConversationClosed']);
+    }
+
+    /**
+     * La reutilización de conversaciones del widget cachea 30 min los ids de
+     * estados con is_open=true (WidgetConversationService). Sin invalidación,
+     * un alta/edición/borrado de ConversationStatus tardaba hasta media hora
+     * en reflejarse en el widget. El modelo es del core Helpdesk, así que la
+     * invalidación se registra aquí (el dueño de la caché es este módulo).
+     */
+    protected function registerOpenStatusCacheInvalidation(): void
+    {
+        $forget = fn () => Cache::forget(WidgetConversationService::OPEN_STATUS_IDS_CACHE_KEY);
+
+        ConversationStatus::saved($forget);
+        ConversationStatus::deleted($forget);
     }
 
     protected function registerEngagementBridge(): void

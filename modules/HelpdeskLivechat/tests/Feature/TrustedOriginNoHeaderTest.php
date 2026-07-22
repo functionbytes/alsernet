@@ -3,9 +3,9 @@
 namespace Modules\HelpdeskLivechat\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -23,6 +23,7 @@ use Tests\TestCase;
 class TrustedOriginNoHeaderTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -30,10 +31,7 @@ class TrustedOriginNoHeaderTest extends TestCase
     {
         parent::setUp();
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
     }
 
     // -----------------------------------------------------------------------

@@ -12,11 +12,13 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 class AutoActionsCommandTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -30,10 +32,7 @@ class AutoActionsCommandTest extends TestCase
 
         Cache::forget('helpdesk:conv-closed-status');
 
-        $this->open = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->open = $this->seedOpenConversationStatus();
         $this->closed = ConversationStatus::firstOrCreate(
             ['slug' => 'closed'],
             ['name' => 'Closed', 'color' => '#999999', 'is_open' => false, 'order' => 9]

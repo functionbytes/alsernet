@@ -6,16 +6,17 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Tests\Concerns\SeedsHelpdeskRoles;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 class WidgetSecurityTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
     use SeedsHelpdeskRoles;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
@@ -28,10 +29,7 @@ class WidgetSecurityTest extends TestCase
         // la tabla roles del snapshot está vacía y sin esto el store devuelve 500.
         $this->seedHelpdeskRoles();
 
-        ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1]
-        );
+        $this->seedOpenConversationStatus();
     }
 
     public function test_invalid_origin_is_blocked_when_trusted_domains_set(): void

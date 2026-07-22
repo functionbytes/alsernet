@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Setting;
@@ -17,6 +16,7 @@ use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Providers\HelpdeskLivechatServiceProvider;
 use ReflectionMethod;
+use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\TestCase;
 
 /**
@@ -31,6 +31,7 @@ use Tests\TestCase;
 class LivechatIntegrationToggleGatesListenersTest extends TestCase
 {
     use DatabaseTransactions;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 
@@ -84,10 +85,7 @@ class LivechatIntegrationToggleGatesListenersTest extends TestCase
 
     private function createWebConversation(): Conversation
     {
-        $status = ConversationStatus::firstOrCreate(
-            ['slug' => 'open'],
-            ['name' => 'Open', 'color' => '#13C672', 'is_open' => true, 'is_default' => true, 'order' => 1],
-        );
+        $status = $this->seedOpenConversationStatus();
 
         $web = WebFactory::new()->create();
 
