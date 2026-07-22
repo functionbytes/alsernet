@@ -97,6 +97,66 @@
             </div>
         </div>
 
+        {{-- Salud operativa (snapshot "ahora" de helpdesk:ops-metrics, no depende del rango) --}}
+        @isset($opsHealth)
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent border-0 pb-0 d-flex align-items-center justify-content-between">
+                            <h6 class="fw-semibold mb-0">
+                                <i class="fas fa-heartbeat me-1 text-primary"></i>
+                                Salud operativa
+                            </h6>
+                            <small class="text-muted">{{ \Illuminate\Support\Carbon::parse($opsHealth['generated_at'])->diffForHumans() }}</small>
+                        </div>
+                        <div class="card-body pt-3">
+                            <div class="row g-3 text-center">
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['queue_total'] ?? 0) > 0 ? '' : 'text-muted' }}">{{ number_format($opsHealth['queue_total'] ?? 0) }}</h4>
+                                    <small class="text-muted">Jobs en cola</small>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['failed_jobs'] ?? 0) > 0 ? 'text-danger' : 'text-muted' }}">{{ $opsHealth['failed_jobs'] !== null ? number_format($opsHealth['failed_jobs']) : 'n/d' }}</h4>
+                                    <small class="text-muted">Dead-letters</small>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['webhook_failed_deliveries_last_hour'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}">{{ $opsHealth['webhook_failed_deliveries_last_hour'] !== null ? number_format($opsHealth['webhook_failed_deliveries_last_hour']) : 'n/d' }}</h4>
+                                    <small class="text-muted">Webhooks fallidos (1h)</small>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['sla_breaches_last_hour'] ?? 0) > 0 ? 'text-danger' : 'text-muted' }}">{{ $opsHealth['sla_breaches_last_hour'] !== null ? number_format($opsHealth['sla_breaches_last_hour']) : 'n/d' }}</h4>
+                                    <small class="text-muted">Breaches SLA (1h)</small>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 {{ ($opsHealth['unassigned_sla_warning'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}">{{ number_format($opsHealth['unassigned_sla_warning'] ?? 0) }}</h4>
+                                    <small class="text-muted">Sin asignar, SLA próximo</small>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <h4 class="fw-bold mb-0 text-muted">
+                                        @if(($opsHealth['ai_today'] ?? null) !== null)
+                                            {{ number_format($opsHealth['ai_today']['calls']) }}<small class="fs-6"> / {{ number_format($opsHealth['ai_today']['tokens']) }} tok</small>
+                                        @else
+                                            n/d
+                                        @endif
+                                    </h4>
+                                    <small class="text-muted">Llamadas IA hoy</small>
+                                </div>
+                            </div>
+                            @if(!empty($opsHealth['queues']))
+                                <div class="mt-3 pt-2 border-top">
+                                    @foreach($opsHealth['queues'] as $queueName => $depth)
+                                        <span class="badge rounded-pill {{ $depth > 0 ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted' }} me-1">
+                                            {{ $queueName }}: {{ number_format($depth) }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endisset
+
         {{-- By Status & By Category --}}
         <div class="row g-3 mb-4">
             <div class="col-md-6">
@@ -331,8 +391,8 @@
                         <table class="table table-sm table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Agente</th>
-                                    <th class="text-center">Tickets cerrados</th>
+                                    <th scope="col">Agente</th>
+                                    <th scope="col" class="text-center">Tickets cerrados</th>
                                 </tr>
                             </thead>
                             <tbody>
