@@ -4,17 +4,26 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Managers;
 
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Redirect;
 use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
 use Modules\HelpdeskSocial\Http\Requests\AssignSocialCommentRequest;
+use Modules\HelpdeskSocial\Http\Requests\Managers\StoreSocialAssignmentRuleRequest;
+use Modules\HelpdeskSocial\Http\Requests\Managers\StoreSocialCompetitorRequest;
+use Modules\HelpdeskSocial\Http\Requests\Managers\UpdateSocialAssignmentRuleRequest;
+use Modules\HelpdeskSocial\Http\Requests\Managers\UpdateSocialCompetitorRequest;
 use Modules\HelpdeskSocial\Http\Requests\ReplySocialCommentRequest;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialRuleRequest;
+use Modules\HelpdeskSocial\Http\Requests\StoreSocialSlaPolicyRequest;
+use Modules\HelpdeskSocial\Http\Requests\StoreSocialTagRequest;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialTemplateRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialRuleRequest;
+use Modules\HelpdeskSocial\Http\Requests\UpdateSocialSlaPolicyRequest;
+use Modules\HelpdeskSocial\Http\Requests\UpdateSocialTagRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialTemplateRequest;
 use Modules\HelpdeskSocial\Models\SocialAccount;
 use Modules\HelpdeskSocial\Models\SocialApprovalRequest;
@@ -36,7 +45,7 @@ class SocialSettingsController extends Controller
 
     public function accounts(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         $accounts = SocialAccount::orderBy('name')->paginate(20);
 
@@ -45,14 +54,14 @@ class SocialSettingsController extends Controller
 
     public function createAccount(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         return view('helpdesksocial::managers.social-accounts.create');
     }
 
     public function storeAccount(StoreSocialAccountRequest $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         $validated = $request->validated();
         $validated['connected_by_user_id'] = auth()->id();
@@ -64,14 +73,14 @@ class SocialSettingsController extends Controller
 
     public function editAccount(Request $request, SocialAccount $account)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         return view('helpdesksocial::managers.social-accounts.edit', compact('account'));
     }
 
     public function updateAccount(UpdateSocialAccountRequest $request, SocialAccount $account)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         $account->update($request->validated());
 
@@ -81,7 +90,7 @@ class SocialSettingsController extends Controller
 
     public function destroyAccount(SocialAccount $account)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.accounts.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.accounts.manage'), 403);
 
         $account->delete();
 
@@ -91,7 +100,7 @@ class SocialSettingsController extends Controller
 
     public function inbox(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $comments = SocialComment::with('socialAccount')
             ->notSpam()
@@ -110,7 +119,7 @@ class SocialSettingsController extends Controller
 
     public function showComment(Request $request, SocialComment $comment)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $comment->load(['socialAccount', 'intent', 'conversation']);
 
@@ -149,7 +158,7 @@ class SocialSettingsController extends Controller
 
     public function markCommentAsSpam(SocialComment $comment)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
 
         $comment->markAsSpam();
 
@@ -159,7 +168,7 @@ class SocialSettingsController extends Controller
 
     public function escalateComment(SocialComment $comment)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.manage'), 403);
 
         $comment->markAsEscalated();
 
@@ -169,7 +178,7 @@ class SocialSettingsController extends Controller
 
     public function rules(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $rules = SocialRule::ordered()->paginate(20);
 
@@ -178,7 +187,7 @@ class SocialSettingsController extends Controller
 
     public function createRule(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $templates = SocialTemplate::active()->get();
 
@@ -187,7 +196,7 @@ class SocialSettingsController extends Controller
 
     public function storeRule(StoreSocialRuleRequest $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $validated = $request->validated();
         $validated['created_by_user_id'] = auth()->id();
@@ -200,7 +209,7 @@ class SocialSettingsController extends Controller
 
     public function editRule(Request $request, SocialRule $rule)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $templates = SocialTemplate::active()->get();
 
@@ -209,7 +218,7 @@ class SocialSettingsController extends Controller
 
     public function updateRule(UpdateSocialRuleRequest $request, SocialRule $rule)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $rule->update($request->validated());
 
@@ -219,7 +228,7 @@ class SocialSettingsController extends Controller
 
     public function destroyRule(SocialRule $rule)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.rules.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
         $rule->delete();
 
@@ -229,7 +238,7 @@ class SocialSettingsController extends Controller
 
     public function templates(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         $templates = SocialTemplate::orderBy('name')->paginate(20);
 
@@ -238,14 +247,14 @@ class SocialSettingsController extends Controller
 
     public function createTemplate(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         return view('helpdesksocial::managers.social-templates.create');
     }
 
     public function storeTemplate(StoreSocialTemplateRequest $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         $validated = $request->validated();
         $validated['created_by_user_id'] = auth()->id();
@@ -258,14 +267,14 @@ class SocialSettingsController extends Controller
 
     public function editTemplate(Request $request, SocialTemplate $template)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         return view('helpdesksocial::managers.social-templates.edit', compact('template'));
     }
 
     public function updateTemplate(UpdateSocialTemplateRequest $request, SocialTemplate $template)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         $template->update($request->validated());
 
@@ -275,7 +284,7 @@ class SocialSettingsController extends Controller
 
     public function destroyTemplate(SocialTemplate $template)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.templates.manage'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
         $template->delete();
 
@@ -285,7 +294,7 @@ class SocialSettingsController extends Controller
 
     public function analytics(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $days = $request->get('days', 30);
         $from = now()->subDays($days)->startOfDay();
@@ -309,25 +318,89 @@ class SocialSettingsController extends Controller
 
     public function tags(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $tags = SocialTag::orderBy('name')->paginate(20);
 
         return view('helpdesksocial::managers.social-tags.index', compact('tags'));
     }
 
+    public function storeTag(StoreSocialTagRequest $request): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        SocialTag::create($data);
+
+        return Redirect::route('helpdesksocial.tags.index')
+            ->with('success', 'Etiqueta creada correctamente.');
+    }
+
+    public function updateTag(UpdateSocialTagRequest $request, SocialTag $tag): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        $tag->update($data);
+
+        return Redirect::route('helpdesksocial.tags.index')
+            ->with('success', 'Etiqueta actualizada correctamente.');
+    }
+
+    public function destroyTag(SocialTag $tag): RedirectResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
+
+        $tag->delete();
+
+        return Redirect::route('helpdesksocial.tags.index')
+            ->with('success', 'Etiqueta eliminada correctamente.');
+    }
+
     public function slaPolicies(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $policies = SocialSlaPolicy::orderBy('name')->paginate(20);
 
         return view('helpdesksocial::managers.social-sla.index', compact('policies'));
     }
 
+    public function storeSlaPolicy(StoreSocialSlaPolicyRequest $request): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        SocialSlaPolicy::create($data);
+
+        return Redirect::route('helpdesksocial.sla-policies.index')
+            ->with('success', 'Política SLA creada correctamente.');
+    }
+
+    public function updateSlaPolicy(UpdateSocialSlaPolicyRequest $request, SocialSlaPolicy $policy): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        $policy->update($data);
+
+        return Redirect::route('helpdesksocial.sla-policies.index')
+            ->with('success', 'Política SLA actualizada correctamente.');
+    }
+
+    public function destroySlaPolicy(SocialSlaPolicy $policy): RedirectResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
+
+        $policy->delete();
+
+        return Redirect::route('helpdesksocial.sla-policies.index')
+            ->with('success', 'Política SLA eliminada correctamente.');
+    }
+
     public function conversations(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $conversations = SocialConversation::with('account')
             ->orderByDesc('last_message_at')
@@ -338,7 +411,7 @@ class SocialSettingsController extends Controller
 
     public function assignmentRules(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $rules = SocialAssignmentRule::with('assignee')
             ->ordered()
@@ -347,9 +420,42 @@ class SocialSettingsController extends Controller
         return view('helpdesksocial::managers.social-rules.assignment', compact('rules'));
     }
 
+    public function storeAssignmentRule(StoreSocialAssignmentRuleRequest $request): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['conditions'] = $data['conditions'] ?? [];
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        SocialAssignmentRule::create($data);
+
+        return Redirect::route('helpdesksocial.assignment-rules.index')
+            ->with('success', 'Regla de asignación creada correctamente.');
+    }
+
+    public function updateAssignmentRule(UpdateSocialAssignmentRuleRequest $request, SocialAssignmentRule $rule): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        $rule->update($data);
+
+        return Redirect::route('helpdesksocial.assignment-rules.index')
+            ->with('success', 'Regla de asignación actualizada correctamente.');
+    }
+
+    public function destroyAssignmentRule(SocialAssignmentRule $rule): RedirectResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
+
+        $rule->delete();
+
+        return Redirect::route('helpdesksocial.assignment-rules.index')
+            ->with('success', 'Regla de asignación eliminada correctamente.');
+    }
+
     public function mentions(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $query = SocialMention::query()->latest('discovered_at');
 
@@ -373,7 +479,7 @@ class SocialSettingsController extends Controller
 
     public function approvalRequests(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $requests = SocialApprovalRequest::with(['comment.socialAccount', 'requester', 'approver'])
             ->latest('created_at')
@@ -384,7 +490,7 @@ class SocialSettingsController extends Controller
 
     public function competitors(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $competitors = SocialCompetitor::with(['account', 'metrics'])
             ->orderBy('name')
@@ -393,9 +499,41 @@ class SocialSettingsController extends Controller
         return view('helpdesksocial::managers.social-competitors.index', compact('competitors'));
     }
 
+    public function storeCompetitor(StoreSocialCompetitorRequest $request): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        SocialCompetitor::create($data);
+
+        return Redirect::route('helpdesksocial.competitors.index')
+            ->with('success', 'Competidor creado correctamente.');
+    }
+
+    public function updateCompetitor(UpdateSocialCompetitorRequest $request, SocialCompetitor $competitor): RedirectResponse
+    {
+        $data = $request->safe()->all();
+        $data['is_active'] = $request->has('is_active') ? '1' : '0';
+
+        $competitor->update($data);
+
+        return Redirect::route('helpdesksocial.competitors.index')
+            ->with('success', 'Competidor actualizado correctamente.');
+    }
+
+    public function destroyCompetitor(SocialCompetitor $competitor): RedirectResponse
+    {
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
+
+        $competitor->delete();
+
+        return Redirect::route('helpdesksocial.competitors.index')
+            ->with('success', 'Competidor eliminado correctamente.');
+    }
+
     public function agentPerformance(Request $request)
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.analytics.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
         $days = $request->get('days', 30);
         $from = now()->subDays($days)->startOfDay();
@@ -430,7 +568,7 @@ class SocialSettingsController extends Controller
 
     public function savedReplies(Request $request): JsonResponse
     {
-        abort_if(! auth()->user()?->hasPermissionTo('helpdesksocial.view'), 403);
+        abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
         $templates = SocialTemplate::active()
             ->forPlatform($request->get('platform'))

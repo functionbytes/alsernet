@@ -2,42 +2,28 @@
 
 namespace Modules\Helpdesk\Http\Controllers\Webhooks;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Http\Requests\Webhooks\InstagramWebhookRequest;
 use Modules\Helpdesk\Jobs\ProcessSocialWebhookJob;
 use Modules\Helpdesk\Services\FacebookMessengerService;
 use Modules\Helpdesk\Services\InstagramService;
 
-class InstagramWebhookController extends Controller
+class InstagramWebhookController extends MetaWebhookController
 {
     public function __construct(
         private readonly InstagramService $instagramService,
         private readonly FacebookMessengerService $facebookService,
     ) {}
 
-    /**
-     * Handle Meta webhook verification challenge (GET).
-     * Instagram uses the same verification flow as Facebook.
-     */
-    public function verify(Request $request): Response
+    // Instagram usa el mismo flujo de verificación que Facebook (misma app Meta).
+    protected function verifyChallenge(string $mode, string $challenge, string $token): string|false
     {
-        $challenge = $this->facebookService->verifyWebhook(
-            $request->query('hub_mode', ''),
-            $request->query('hub_challenge', ''),
-            $request->query('hub_verify_token', ''),
-        );
+        return $this->facebookService->verifyWebhook($mode, $challenge, $token);
+    }
 
-        if ($challenge === false) {
-            Log::warning('Instagram webhook verify failed — bad token', ['ip' => $request->ip()]);
-
-            return response('Forbidden', 403);
-        }
-
-        return response($challenge, 200);
+    protected function channelLabel(): string
+    {
+        return 'Instagram';
     }
 
     /**
@@ -45,14 +31,14 @@ class InstagramWebhookController extends Controller
      */
     public function handle(InstagramWebhookRequest $request): JsonResponse
     {
-        $events = $this->instagramService->parseWebhookPayload($request->all());
+        return $this->safelyHandle(function () use ($request): void {
+            $events = $this->instagramService->parseWebhookPayload($request->all());
 
-        foreach ($events as $event) {
-            if (in_array($event['type'], ['message', 'story_reply'], true)) {
-                ProcessSocialWebhookJob::dispatch('instagram', $event['type'], $event);
+            foreach ($events as $event) {
+                if (in_array($event['type'] ?? null, ['message', 'story_reply'], true)) {
+                    ProcessSocialWebhookJob::dispatch('instagram', $event['type'], $event);
+                }
             }
-        }
-
-        return response()->json(['status' => 'ok']);
+        });
     }
 }

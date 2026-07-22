@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 /**
  * Downloads media (image/audio/video/document) from a remote URL into the
@@ -105,8 +106,21 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
      */
     private function downloadOne(string $url, string $mediaType): ?array
     {
+        if (! OutboundMediaUrlGuard::isAllowed($url)) {
+            Log::warning('DownloadConversationAttachmentsJob: URL de media bloqueada por guard SSRF', [
+                'platform' => $this->platform,
+                'url' => substr($url, 0, 100),
+            ]);
+
+            return null;
+        }
+
+        $maxBytes = (int) config('helpdesk.attachments.max_download_bytes', 26214400);
+
         try {
-            $request = Http::timeout(45);
+            // stream => true: no cargamos el fichero entero en memoria de golpe;
+            // lo leemos por trozos y cortamos si supera el máximo (anti-OOM).
+            $request = Http::timeout(45)->withOptions(['stream' => true]);
 
             $token = $this->resolveBearerToken();
             if (filled($token)) {
@@ -125,7 +139,34 @@ class DownloadConversationAttachmentsJob implements ShouldQueue
                 return null;
             }
 
-            $body = $response->body();
+            // Rechazo temprano si el servidor declara un tamaño mayor al permitido.
+            $declared = (int) $response->header('Content-Length');
+            if ($declared > $maxBytes) {
+                Log::warning('DownloadConversationAttachmentsJob: media excede el tamaño máximo (Content-Length)', [
+                    'platform' => $this->platform,
+                    'declared_bytes' => $declared,
+                    'max_bytes' => $maxBytes,
+                ]);
+
+                return null;
+            }
+
+            // Lectura acotada: si el stream supera el máximo, abortamos.
+            $stream = $response->toPsrResponse()->getBody();
+            $body = '';
+            while (! $stream->eof()) {
+                $body .= $stream->read(8192);
+
+                if (strlen($body) > $maxBytes) {
+                    Log::warning('DownloadConversationAttachmentsJob: media excede el tamaño máximo (stream)', [
+                        'platform' => $this->platform,
+                        'max_bytes' => $maxBytes,
+                    ]);
+
+                    return null;
+                }
+            }
+
             $mime = $response->header('Content-Type') ?: null;
             $extension = $this->extensionFromMime($mime, $mediaType);
             $name = $this->platform.'_'.$mediaType.'_'.date('Ymd_His').'.'.$extension;

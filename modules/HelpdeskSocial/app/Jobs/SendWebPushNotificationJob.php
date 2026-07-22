@@ -15,6 +15,8 @@ class SendWebPushNotificationJob implements ShouldQueue
 
     public int $timeout = 30;
 
+    public int $backoff = 10;
+
     /**
      * @param  array<string, mixed>  $subscription
      * @param  array<string, mixed>  $payload

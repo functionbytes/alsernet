@@ -42,6 +42,10 @@ class SyncSocialCommentsJob implements ShouldQueue
 
     public function handle(SocialApiClientInterface $apiClient): void
     {
+        if (! helpdesk_social_enabled()) {
+            return;
+        }
+
         $account = SocialAccount::find($this->accountId);
 
         if (! $account || ! $account->is_active || ! $account->comments_enabled) {
@@ -51,6 +55,8 @@ class SyncSocialCommentsJob implements ShouldQueue
         try {
             if ($this->postId) {
                 $this->syncPostComments($account, $this->postId, $apiClient);
+            } else {
+                $this->syncKnownPosts($account, $apiClient);
             }
 
             $account->recordSuccess();
@@ -104,6 +110,26 @@ class SyncSocialCommentsJob implements ShouldQueue
             ]);
 
             SocialCommentReceived::dispatch($comment);
+        }
+    }
+
+    /**
+     * Fallback de polling: re-sincroniza los posts que ya conocemos de la cuenta
+     * para recuperar comentarios cuyo webhook no se haya entregado. No descubre
+     * posts sin actividad previa — para eso está el webhook en tiempo real.
+     */
+    private function syncKnownPosts(SocialAccount $account, SocialApiClientInterface $apiClient): void
+    {
+        $postIds = SocialComment::query()
+            ->where('social_account_id', $account->id)
+            ->whereNotNull('external_post_id')
+            ->groupBy('external_post_id')
+            ->orderByRaw('MAX(posted_at) DESC')
+            ->limit((int) config('helpdesksocial.comments.max_posts_per_sync', 20))
+            ->pluck('external_post_id');
+
+        foreach ($postIds as $postId) {
+            $this->syncPostComments($account, $postId, $apiClient);
         }
     }
 }

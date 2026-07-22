@@ -38,6 +38,10 @@ class CustomersControllerTest extends HelpdeskTestCase
 
     public function test_manager_can_search_customers(): void
     {
+        // forAgent() es fail-closed: sin el permiso plano helpdesk.manage (o un
+        // inbox asignado) el listado sale vacío — mismo patrón que el test AJAX.
+        $this->manager->givePermissionTo('helpdesk.manage');
+
         $customer = Customer::factory()->create(['name' => 'John Searchable']);
         Customer::factory()->create(['name' => 'Jane Other']);
 
@@ -45,6 +49,28 @@ class CustomersControllerTest extends HelpdeskTestCase
             ->get(route('manager.helpdesk.customers.index', ['search' => 'Searchable']))
             ->assertOk()
             ->assertSee('John Searchable');
+    }
+
+    // ─── search (AJAX, usado por los modales de nueva conversación/vincular) ───
+
+    public function test_ajax_search_falls_back_to_whatsapp_phone_when_phone_is_missing(): void
+    {
+        // forAgent() gates on the raw Spatie permission (not the role name), y
+        // PermissionsSeeder solo crea los permisos sin asignarlos a ningún rol
+        // — hay que otorgarlo explícitamente para ejercitar la rama "manager".
+        $this->manager->givePermissionTo('helpdesk.manage');
+
+        $customer = Customer::factory()->create([
+            'name' => 'Solo WhatsApp '.uniqid(),
+            'email' => null,
+            'phone' => null,
+            'whatsapp_phone' => '34600111222',
+        ]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.customers.search', ['q' => $customer->whatsapp_phone]))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $customer->id, 'phone' => '34600111222']);
     }
 
     // ─── store ────────────────────────────────────────────────────────────────

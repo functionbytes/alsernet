@@ -21,6 +21,8 @@ class SyncSocialMentionsJob implements ShouldQueue
 
     public int $timeout = 120;
 
+    public int $backoff = 10;
+
     public function __construct(
         public readonly ?string $platform = null,
     ) {

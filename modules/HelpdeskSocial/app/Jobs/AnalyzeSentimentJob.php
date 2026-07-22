@@ -19,6 +19,8 @@ class AnalyzeSentimentJob implements ShouldQueue
 
     public int $timeout = 60;
 
+    public int $backoff = 10;
+
     public function __construct(
         public readonly int $commentId,
     ) {

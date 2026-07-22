@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,8 +30,8 @@ use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\BulkApplyMacroRequest;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
 use Modules\Helpdesk\Http\Requests\ForwardAttachmentRequest;
+use Modules\Helpdesk\Http\Requests\Managers\LinkConversationCustomerRequest;
 use Modules\Helpdesk\Http\Requests\MarkSpamRequest;
-use Modules\Helpdesk\Http\Requests\SaveDraftRequest;
 use Modules\Helpdesk\Http\Requests\SendEmailFromConversationRequest;
 use Modules\Helpdesk\Http\Requests\SendHsmRequest;
 use Modules\Helpdesk\Http\Requests\SnoozeConversationRequest;
@@ -68,6 +69,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ConversationsController extends Controller
 {
+    /**
+     * Mailer template keys reserved for internal/staff notifications (never selectable to email a customer).
+     */
+    private const INTERNAL_ONLY_TEMPLATE_KEYS = [
+        'helpdesk.new_ticket_agent',
+        'helpdesk.sla_escalation',
+    ];
+
     public function __construct(
         private ConversationTagService $tagService,
         private ConversationInboxMetricsService $inboxMetrics,
@@ -137,77 +146,11 @@ class ConversationsController extends Controller
         $this->authorize('viewAny', Conversation::class);
 
         $userId = auth()->id();
-
-        $views = ConversationView::forUser($userId)->ordered()->get();
-
-        $currentView = null;
-        if ($request->has('viewId')) {
-            $currentView = $views->firstWhere('id', $request->viewId);
-        }
-
-        // La papelera (view=deleted) muestra TODO lo eliminado: no debe heredar
-        // los filtros de la vista por defecto (is_open=true, etc.) que la vaciarían.
-        if (! $currentView && $request->input('view') !== 'deleted') {
-            $currentView = $views->firstWhere('is_default', true) ?? $views->first();
-        }
-
-        $filter = new ConversationFilter($request);
-
         $userInboxIds = $this->getUserInboxIds();
 
-        $query = Conversation::query()
-            ->with([
-                'customer', 'status', 'assignee', 'inbox', 'lastMessage',
-                'reads' => fn ($q) => $q->where('user_id', auth()->id()),
-            ])
-            ->withCount(['items as incoming_messages_count' => fn ($q) => $q->where('type', 'message')->whereNull('user_id')])
-            ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
-            ->when($request->input('view') === 'deleted', fn ($q) => $q->onlyTrashed());
+        [$views, $currentView] = $this->resolveCurrentView($request, $userId);
 
-        // Conversations the chatbot is handling stay out of the inbox until it
-        // hands off to an agent. The "bot" view shows them (supervision) and a
-        // search still finds them (history).
-        $this->applyBotVisibility($query, $request);
-
-        if ($currentView && ! empty($currentView->filters)) {
-            $filter->applyViewFilters($query, $currentView->filters);
-        }
-
-        $filter->apply($query);
-
-        // Quick-filter chips (unread / mine / urgent / vip)
-        $query
-            ->when(
-                $request->boolean('unread'),
-                fn ($q) => $q->whereDoesntHave(
-                    'reads',
-                    fn ($r) => $r->where('user_id', $userId)
-                )
-            )
-            ->when(
-                $request->boolean('mine'),
-                fn ($q) => $q->where('assignee_id', $userId)
-            )
-            ->when(
-                $request->boolean('urgent'),
-                fn ($q) => $q->where('priority', 'urgent')
-            )
-            ->when(
-                $request->boolean('vip'),
-                fn ($q) => $q->whereHas(
-                    'customer',
-                    fn ($c) => $c->where('total_conversations', '>=', 5)
-                )
-            )
-            ->when(
-                $request->filled('tag'),
-                fn ($q) => $q->whereHas(
-                    'conversationTags',
-                    fn ($t) => $t->where('helpdesk_conversation_tags.id', $request->integer('tag'))
-                )
-            );
-
-        $this->applySortOrder($query, $request->input('sort', 'newest'), $userId);
+        $query = $this->buildFilteredConversationsQuery($request, $userInboxIds, $currentView);
 
         $conversations = $query->paginate(50)->appends($request->query());
         $statuses = ConversationStatus::active()->ordered()->get();
@@ -234,25 +177,7 @@ class ConversationsController extends Controller
         $pane = $this->buildConversationPaneData($selectedId, $userInboxIds);
         $selectedConversation = $pane['selectedConversation'];
 
-        $inboxGroups = $conversations->getCollection()
-            ->groupBy(function (Conversation $c): string {
-                $at = $c->last_message_at ?? $c->updated_at ?? $c->created_at;
-
-                if (! $at) {
-                    return 'older';
-                }
-
-                if ($at->isToday()) {
-                    return 'today';
-                }
-
-                if ($at->isYesterday()) {
-                    return 'yesterday';
-                }
-
-                return $at->isAfter(now()->subDays(7)) ? 'week' : 'older';
-            })
-            ->map(fn ($items) => $items->map(fn ($c) => $c->toInboxArray($selectedId))->values()->all());
+        $inboxGroups = $this->groupConversationsForInbox($conversations->getCollection(), $selectedId);
 
         $composerDraft = $pane['composerDraft'];
         $agents = $this->inboxMetrics->agentWorkload();
@@ -297,6 +222,10 @@ class ConversationsController extends Controller
                 ->with([
                     'customer.externalIds', 'status', 'assignee', 'conversationTags',
                     'items' => fn ($q) => $q->latest('id')->limit(50),
+                    // Evita el N+1 de $item->user/$item->author al renderizar el hilo
+                    // (thread.blade.php accede a ambos por cada uno de los 50 ítems).
+                    'items.user:id,firstname,lastname',
+                    'items.author:id,name',
                 ])
                 ->when($userInboxIds !== null, fn ($q) => $q->whereIn('inbox_id', $userInboxIds))
                 ->find($selectedId)
@@ -375,11 +304,16 @@ class ConversationsController extends Controller
         }
     }
 
-    public function listJson(Request $request): JsonResponse
+    /**
+     * Resolve the ConversationView the inbox filters should apply: the one
+     * requested via ?viewId=, or the user's default/first view. The trash
+     * (?view=deleted) never falls back to a default view — it must show
+     * everything without inheriting is_open-style filters.
+     *
+     * @return array{0: Collection<int, ConversationView>, 1: ?ConversationView}
+     */
+    private function resolveCurrentView(Request $request, int $userId): array
     {
-        $userId = auth()->id();
-        $userInboxIds = $this->getUserInboxIds();
-
         $views = ConversationView::forUser($userId)->ordered()->get();
 
         $currentView = null;
@@ -387,12 +321,23 @@ class ConversationsController extends Controller
             $currentView = $views->firstWhere('id', $request->viewId);
         }
 
-        // La papelera (view=deleted) muestra TODO lo eliminado: no debe heredar
-        // los filtros de la vista por defecto (is_open=true, etc.) que la vaciarían.
         if (! $currentView && $request->input('view') !== 'deleted') {
             $currentView = $views->firstWhere('is_default', true) ?? $views->first();
         }
 
+        return [$views, $currentView];
+    }
+
+    /**
+     * Build the filtered + sorted conversations query shared by index() (full
+     * page) and listJson() (AJAX refresh): eager loads, inbox restriction, bot
+     * visibility, saved view filters, quick-filter chips and sort order.
+     *
+     * @param  int[]|null  $userInboxIds  null = unrestricted (helpdesk.manage)
+     */
+    private function buildFilteredConversationsQuery(Request $request, ?array $userInboxIds, ?ConversationView $currentView): Builder
+    {
+        $userId = auth()->id();
         $filter = new ConversationFilter($request);
 
         $query = Conversation::query()
@@ -415,6 +360,7 @@ class ConversationsController extends Controller
 
         $filter->apply($query);
 
+        // Quick-filter chips (unread / mine / urgent / vip)
         $query
             ->when(
                 $request->boolean('unread'),
@@ -448,11 +394,19 @@ class ConversationsController extends Controller
 
         $this->applySortOrder($query, $request->input('sort', 'newest'), $userId);
 
-        $conversations = $query->paginate(50)->appends($request->query());
+        return $query;
+    }
 
-        $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
-
-        $inboxGroups = $conversations->getCollection()
+    /**
+     * Group a conversations collection into today/yesterday/week/older buckets
+     * for the inbox list partial, converting each row via toInboxArray().
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     * @return Collection<string, array<int, array<string, mixed>>>
+     */
+    private function groupConversationsForInbox(Collection $conversations, ?int $selectedId): Collection
+    {
+        return $conversations
             ->groupBy(function (Conversation $c): string {
                 $at = $c->last_message_at ?? $c->updated_at ?? $c->created_at;
 
@@ -471,6 +425,25 @@ class ConversationsController extends Controller
                 return $at->isAfter(now()->subDays(7)) ? 'week' : 'older';
             })
             ->map(fn ($items) => $items->map(fn ($c) => $c->toInboxArray($selectedId))->values()->all());
+    }
+
+    public function listJson(Request $request): JsonResponse
+    {
+        $userId = auth()->id();
+        $userInboxIds = $this->getUserInboxIds();
+
+        // $views is unused here (unlike index(), listJson() never returns it to
+        // the client) but resolveCurrentView() is still called so the same
+        // ConversationView query executes as before this refactor.
+        [, $currentView] = $this->resolveCurrentView($request, $userId);
+
+        $query = $this->buildFilteredConversationsQuery($request, $userInboxIds, $currentView);
+
+        $conversations = $query->paginate(50)->appends($request->query());
+
+        $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
+
+        $inboxGroups = $this->groupConversationsForInbox($conversations->getCollection(), $selectedId);
 
         // Los contadores del poll dependen solo del inbox del usuario (no de los
         // filtros de la petición), así que se cachean por usuario con TTL corto
@@ -511,8 +484,13 @@ class ConversationsController extends Controller
         ])->render();
 
         $counts = [
-            // total respeta los filtros de la petición, no se cachea.
-            'total' => $conversations->total(),
+            // 'total' feeds the sidebar's "Todas" badge (data-counter="total")
+            // via JS polling — it must be the GLOBAL count, not the current
+            // request's filtered count. It used to be $conversations->total(),
+            // so navigating into e.g. "Sin leer" (?unread=1) overwrote "Todas"
+            // with however many conversations were unread, and it stayed wrong
+            // until a full page reload recomputed $totalConversations correctly.
+            'total' => $cachedCounts['base_total'],
             'unread' => $cachedCounts['unread'],
             'mine' => $cachedCounts['mine'],
             'urgent' => $cachedCounts['urgent'],
@@ -586,6 +564,7 @@ class ConversationsController extends Controller
         $templates = MailerTemplate::query()
             ->module('helpdesk')
             ->enabled()
+            ->whereNotIn('key', self::INTERNAL_ONLY_TEMPLATE_KEYS)
             ->with('translations')
             ->orderBy('name')
             ->get()
@@ -607,7 +586,10 @@ class ConversationsController extends Controller
         $this->authorize('view', $conversation);
 
         $templateId = (int) $request->input('template_id');
-        $template = MailerTemplate::module('helpdesk')->enabled()->with(['translations', 'layout'])->find($templateId);
+        $template = MailerTemplate::module('helpdesk')->enabled()
+            ->whereNotIn('key', self::INTERNAL_ONLY_TEMPLATE_KEYS)
+            ->with(['translations', 'layout'])
+            ->find($templateId);
 
         if (! $template) {
             return response()->json(['success' => false, 'message' => 'Plantilla no encontrada.'], 404);
@@ -620,6 +602,8 @@ class ConversationsController extends Controller
             'CUSTOMER_NAME' => $conversation->customer?->name ?? 'Cliente',
             'CUSTOMER_EMAIL' => $conversation->customer?->email ?? '',
             'CONVERSATION_ID' => $conversation->id,
+            'TICKET_NUMBER' => (string) $conversation->id,
+            'SUBJECT' => $conversation->subject ?: ('Consulta #'.$conversation->id),
             'AGENT_NAME' => trim(($agent?->firstname ?? '').' '.($agent?->lastname ?? '')) ?: ($agent?->email ?? ''),
             'INBOX_NAME' => $conversation->inbox?->name ?? '',
             'COMPANY_NAME' => config('app.name'),
@@ -705,6 +689,7 @@ class ConversationsController extends Controller
         // Si se eligió una plantilla del módulo Mailer, renderizar como HTML.
         if (! empty($validated['template_id'])) {
             $template = MailerTemplate::module('helpdesk')->enabled()
+                ->whereNotIn('key', self::INTERNAL_ONLY_TEMPLATE_KEYS)
                 ->with(['translations', 'layout'])
                 ->find((int) $validated['template_id']);
 
@@ -715,7 +700,7 @@ class ConversationsController extends Controller
                     'CUSTOMER_EMAIL' => $customer->email ?? '',
                     'CONVERSATION_ID' => $conversation->id,
                     'TICKET_NUMBER' => (string) $conversation->id,
-                    'SUBJECT' => $validated['subject'] ?? '',
+                    'SUBJECT' => $conversation->subject ?: ('Consulta #'.$conversation->id),
                     'AGENT_NAME' => trim(($agent?->firstname ?? '').' '.($agent?->lastname ?? '')) ?: ($agent?->email ?? ''),
                     'INBOX_NAME' => $conversation->inbox?->name ?? '',
                     'COMPANY_NAME' => config('app.name'),
@@ -855,19 +840,6 @@ class ConversationsController extends Controller
     }
 
     /**
-     * Legacy /conversations/{conversation}/edit URL — redirects to the inbox
-     * with the conversation pre-selected (editing is done in-place via modals).
-     */
-    public function edit(Conversation $conversation): RedirectResponse
-    {
-        $this->authorize('update', $conversation);
-
-        return redirect()->route('manager.helpdesk.conversations.index', [
-            'selected' => $conversation->id,
-        ]);
-    }
-
-    /**
      * Update the specified conversation
      */
     public function update(Request $request, Conversation $conversation): RedirectResponse|JsonResponse
@@ -945,7 +917,7 @@ class ConversationsController extends Controller
             $conversation->load('conversationTags');
 
             foreach ($conversation->conversationTags->whereIn('id', $newIds) as $tag) {
-                ConversationTagAdded::dispatch($conversation, $tag);
+                ConversationTagAdded::dispatch($conversation, $tag, auth()->id());
             }
 
             return response()->json([
@@ -1071,20 +1043,6 @@ class ConversationsController extends Controller
     }
 
     /**
-     * Permanently delete a conversation
-     */
-    public function forceDelete($id): RedirectResponse
-    {
-        $conversation = Conversation::withTrashed()->findOrFail($id);
-        $this->authorize('forceDelete', $conversation);
-
-        $conversation->forceDelete();
-
-        return redirect()->route('manager.helpdesk.conversations.index')
-            ->with('success', __('helpdesk::helpdesk.messages.conversation_force_deleted'));
-    }
-
-    /**
      * Close a conversation
      */
     public function close(Request $request, Conversation $conversation): RedirectResponse|JsonResponse
@@ -1191,7 +1149,7 @@ class ConversationsController extends Controller
             ->where('customer_id', $conversation->customer_id)
             ->where('id', '!=', $conversation->id)
             ->whereNull('deleted_at')
-            ->with(['customer', 'status'])
+            ->with(['customer', 'status', 'lastMessage'])
             ->latest('last_message_at')
             ->limit(10)
             ->get()
@@ -1245,6 +1203,38 @@ class ConversationsController extends Controller
     }
 
     /**
+     * Re-link a conversation to a different, already existing customer. Used
+     * when the automatic match failed (e.g. a WhatsApp-created customer with
+     * no email that doesn't match the real contact record).
+     */
+    public function linkCustomer(LinkConversationCustomerRequest $request, Conversation $conversation): JsonResponse
+    {
+        $this->authorize('update', $conversation);
+
+        $newCustomer = Customer::findOrFail($request->validated('customer_id'));
+
+        if ($newCustomer->id === $conversation->customer_id) {
+            return response()->json(['success' => false, 'message' => __('helpdesk::helpdesk.messages.link_customer_same')], 422);
+        }
+
+        DB::transaction(function () use ($conversation, $newCustomer): void {
+            $conversation->update(['customer_id' => $newCustomer->id]);
+            $newCustomer->incrementConversationCount();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => __('helpdesk::helpdesk.messages.link_customer_success'),
+            'customer' => [
+                'id' => $newCustomer->id,
+                'name' => $newCustomer->name,
+                'email' => $newCustomer->email,
+                'phone' => $newCustomer->phone ?: $newCustomer->whatsapp_phone,
+            ],
+        ]);
+    }
+
+    /**
      * Store a new message in a conversation
      */
     public function storeMessage(StoreConversationMessageRequest $request, Conversation $conversation): JsonResponse|RedirectResponse
@@ -1253,28 +1243,44 @@ class ConversationsController extends Controller
 
         $validated = $request->validated();
 
+        // WhatsApp: fuera de la ventana de servicio de 24h Meta solo admite
+        // plantillas (HSM), no texto libre. Se rechaza aquí para no gastar un
+        // envío que Meta rechazaría y para darle el motivo al agente.
+        $hasContent = filled($validated['body'] ?? null) || $request->hasFile('attachments');
+        if ($hasContent && ! $request->boolean('is_internal') && ! $conversation->isWhatsAppWindowOpen()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('helpdesk::helpdesk.inbox.thread.wa_window_closed'),
+                'wa_window_closed' => true,
+            ], 422);
+        }
+
+        // Solo se acepta el ítem citado si pertenece A ESTA conversación (defensa
+        // en profundidad junto a la regla exists() del Form Request): evita
+        // persistir/filtrar un reply_to_id de otra conversación o inbox (IDOR).
+        $replyItem = ! empty($validated['reply_to_id'])
+            ? $conversation->items()->find($validated['reply_to_id'])
+            : null;
+
         [$item, $successMessage] = app(ConversationMessageService::class)->store($conversation, [
             'body' => $validated['body'] ?? '',
             'is_internal' => $request->boolean('is_internal'),
             'attachments' => $request->file('attachments', []),
             'action' => $request->input('action'),
-            'reply_to_id' => $validated['reply_to_id'] ?? null,
+            'reply_to_id' => $replyItem?->id,
         ]);
 
         $replyMeta = null;
-        if (! empty($validated['reply_to_id'])) {
-            $replyItem = ConversationItem::find($validated['reply_to_id']);
-            if ($replyItem) {
-                $replyAuthor = $replyItem->user?->name
-                    ?? $replyItem->author?->name
-                    ?? $conversation->customer?->name
-                    ?? 'Cliente';
-                $replyMeta = [
-                    'id' => $replyItem->id,
-                    'author' => $replyAuthor,
-                    'body' => Str::limit($replyItem->body, 80),
-                ];
-            }
+        if ($replyItem) {
+            $replyAuthor = $replyItem->user?->name
+                ?? $replyItem->author?->name
+                ?? $conversation->customer?->name
+                ?? 'Cliente';
+            $replyMeta = [
+                'id' => $replyItem->id,
+                'author' => $replyAuthor,
+                'body' => Str::limit($replyItem->body, 80),
+            ];
         }
 
         if ($request->wantsJson()) {
@@ -1721,34 +1727,6 @@ class ConversationsController extends Controller
     }
 
     /**
-     * Save or delete the current user's composer draft for a conversation.
-     * If body is empty, the draft is deleted.
-     */
-    public function saveDraft(SaveDraftRequest $request, Conversation $conversation): JsonResponse
-    {
-        $this->authorize('update', $conversation);
-
-        $validated = $request->validated();
-        $body = trim($validated['body'] ?? '');
-
-        if ($body === '') {
-            $conversation->drafts()->where('user_id', auth()->id())->delete();
-
-            return response()->json(['success' => true, 'message' => 'Borrador eliminado.']);
-        }
-
-        $conversation->drafts()->updateOrCreate(
-            ['user_id' => auth()->id()],
-            [
-                'body' => $body,
-                'is_internal' => $request->boolean('is_internal'),
-            ]
-        );
-
-        return response()->json(['success' => true, 'message' => 'Borrador guardado.']);
-    }
-
-    /**
      * Schedule a message to be sent at a future datetime.
      */
     public function storeScheduledMessage(StoreScheduledMessageRequest $request, Conversation $conversation): JsonResponse
@@ -2046,6 +2024,17 @@ class ConversationsController extends Controller
 
         if (! $path || ! \Storage::disk('public')->exists($path)) {
             return response()->json(['success' => false, 'message' => 'Archivo no encontrado en almacenamiento.'], 404);
+        }
+
+        // Autorizar sobre la conversación ORIGEN del adjunto (defense-in-depth,
+        // igual que downloadAttachment): el path embebe .../conversations/{id}/...
+        // Sin esto un agente podría copiar a su conversación un adjunto de una
+        // conversación/inbox al que no tiene acceso, conociendo solo su URL.
+        if (preg_match('#/conversations/(\d+)/#', $path, $sourceMatch)) {
+            $sourceConversation = Conversation::find((int) $sourceMatch[1]);
+            if ($sourceConversation) {
+                $this->authorize('view', $sourceConversation);
+            }
         }
 
         $customerId = $conversation->customer_id ?: 0;

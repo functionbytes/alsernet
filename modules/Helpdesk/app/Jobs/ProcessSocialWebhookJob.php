@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Jobs;
 
+use App\Helpers\PiiMasker;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,14 +17,10 @@ use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
-use Modules\Helpdesk\Models\Inbox;
-use Modules\Helpdesk\Models\OffHoursResponse;
-use Modules\Helpdesk\Services\BusinessHoursService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
-use Modules\Helpdesk\Services\OutboundMessageService;
-use Modules\Helpdesk\Services\WhatsAppBusinessService;
+use Modules\Helpdesk\Services\Webhooks\InboundMessageIngestor;
+use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 class ProcessSocialWebhookJob implements ShouldQueue
 {
@@ -66,10 +63,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
     }
 
     public function handle(
-        WhatsAppBusinessService $whatsappService,
         FacebookMessengerService $facebookService,
-        OutboundMessageService $outboundService,
-        BusinessHoursService $businessHoursService,
     ): void {
         // Status events (read/delivery/reaction) are channel-agnostic.
         if (in_array($this->eventType, ['read', 'delivery', 'reaction'], true)) {
@@ -78,12 +72,34 @@ class ProcessSocialWebhookJob implements ShouldQueue
             return;
         }
 
+        // El pipeline común de ingesta (conversación, dedup, ítem, broadcast,
+        // automatizaciones, media) vive en InboundMessageIngestor; aquí solo queda
+        // el parseo específico de cada canal.
+        $ingestor = app(InboundMessageIngestor::class);
+
         match ($this->channel) {
-            'whatsapp' => $this->processWhatsApp($whatsappService, $outboundService, $businessHoursService),
-            'facebook' => $this->processFacebook($facebookService, $outboundService, $businessHoursService),
-            'instagram' => $this->processInstagram($outboundService, $businessHoursService),
+            'whatsapp' => $this->processWhatsApp($ingestor),
+            'facebook' => $this->processFacebook($ingestor, $facebookService),
+            'instagram' => $this->processInstagram($ingestor),
             default => Log::warning("Unknown webhook channel: {$this->channel}"),
         };
+    }
+
+    /**
+     * Emite el broadcast en tiempo real de forma resiliente: un fallo de Reverb
+     * (p. ej. servidor caído) no debe abortar la recepción del mensaje ni sus
+     * efectos posteriores (ConversationCreated, automatizaciones, descarga de media).
+     */
+    private function broadcastMessageSafely(ConversationItem $item, bool $isNewConversation): void
+    {
+        try {
+            broadcast(new ConversationMessageCreated($item, $isNewConversation));
+        } catch (\Throwable $e) {
+            Log::warning('ProcessSocialWebhookJob: broadcast en tiempo real falló (mensaje ya persistido)', [
+                'item_id' => $item->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -93,7 +109,9 @@ class ProcessSocialWebhookJob implements ShouldQueue
     private function processStatusEvent(): void
     {
         $event = $this->event;
-        $externalSenderId = $event['psid'] ?? $event['ig_user_id'] ?? null;
+        // WhatsApp identifica al cliente por 'recipient_id' (su teléfono); Messenger
+        // por 'psid' e Instagram por 'ig_user_id'.
+        $externalSenderId = $event['psid'] ?? $event['ig_user_id'] ?? $event['recipient_id'] ?? null;
         if (! $externalSenderId) {
             return;
         }
@@ -133,22 +151,30 @@ class ProcessSocialWebhookJob implements ShouldQueue
             $item->metadata = $meta;
             $item->save();
 
-            broadcast(new ConversationMessageCreated($item, false));
+            $this->broadcastMessageSafely($item, false);
 
             return;
         }
 
-        // For read / delivery: mark all our outbound items up to the watermark.
+        // Recibos de lectura/entrega: Messenger/Instagram entregan un watermark
+        // (marca todos los ítems salientes hasta ese instante); WhatsApp entrega el
+        // estado por mensaje individual (marca solo el ítem con ese external_id).
         $field = $this->eventType === 'read' ? 'customer_read_at' : 'customer_delivered_at';
         $now = now()->toIso8601String();
 
-        $items = ConversationItem::query()
+        $itemsQuery = ConversationItem::query()
             ->where('conversation_id', $conversation->id)
-            ->whereNotNull('user_id')
-            ->when($watermark, fn ($q) => $q->where('created_at', '<=', Carbon::createFromTimestampMs($watermark)))
-            ->get();
+            ->whereNotNull('user_id');
 
-        foreach ($items as $item) {
+        if ($watermark) {
+            $itemsQuery->where('created_at', '<=', Carbon::createFromTimestampMs($watermark));
+        } elseif ($messageId) {
+            $itemsQuery->where('external_id', $messageId);
+        } else {
+            return;
+        }
+
+        foreach ($itemsQuery->get() as $item) {
             $meta = is_array($item->metadata) ? $item->metadata : [];
             if (isset($meta[$field])) {
                 continue;
@@ -157,17 +183,14 @@ class ProcessSocialWebhookJob implements ShouldQueue
             $item->metadata = $meta;
             $item->save();
 
-            broadcast(new ConversationMessageCreated($item, false));
+            $this->broadcastMessageSafely($item, false);
         }
     }
 
     // ─── WhatsApp ─────────────────────────────────────────────────────────────
 
-    private function processWhatsApp(
-        WhatsAppBusinessService $whatsappService,
-        OutboundMessageService $outboundService,
-        BusinessHoursService $businessHoursService,
-    ): void {
+    private function processWhatsApp(InboundMessageIngestor $ingestor): void
+    {
         if ($this->eventType !== 'message') {
             return;
         }
@@ -177,49 +200,28 @@ class ProcessSocialWebhookJob implements ShouldQueue
         try {
             $customer = Customer::firstOrCreate(
                 ['whatsapp_phone' => $event['phone']],
-                ['name' => $event['name'], 'whatsapp_phone' => $event['phone'], 'email' => null],
+                ['name' => $event['name'], 'phone' => $event['phone'], 'whatsapp_phone' => $event['phone'], 'email' => null],
             );
-
-            $conversation = $this->findOrCreateConversation('whatsapp', $event['phone'], $customer->id);
-
-            if ($this->isDuplicate($conversation->id, $event['message_id'])) {
-                return;
-            }
 
             // Build body label only — media downloads happen in the background.
             [$body, $pendingAttachment] = $this->buildWhatsAppBody($event);
 
-            $item = ConversationItem::create([
-                'conversation_id' => $conversation->id,
-                'author_id' => $customer->id,
-                'type' => 'message',
+            $item = $ingestor->ingest('whatsapp', $event['phone'], $customer, [
                 'body' => $body,
                 'external_id' => $event['message_id'],
                 'attachment_urls' => [],
                 'metadata' => $this->buildWhatsAppMetadata($event),
-            ]);
+            ], $pendingAttachment ? [$pendingAttachment] : []);
 
-            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
-
-            if ($conversation->wasRecentlyCreated) {
-                ConversationCreated::dispatch($conversation);
-                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService);
+            if (! $item) {
+                return; // duplicado
             }
 
-            $whatsappService->markAsRead($event['message_id']);
-
-            // Hand off media resolution + download to the background job.
-            if ($pendingAttachment) {
-                DownloadConversationAttachmentsJob::dispatch(
-                    $item->id,
-                    [$pendingAttachment],
-                    'whatsapp',
-                );
-            }
+            MarkWhatsAppMessageReadJob::dispatch($event['message_id']);
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: WhatsApp failed', [
-                'phone' => $event['phone'] ?? null,
+                'phone' => PiiMasker::phone($event['phone'] ?? null),
                 'error' => $e->getMessage(),
             ]);
             throw $e;
@@ -228,11 +230,8 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     // ─── Facebook ─────────────────────────────────────────────────────────────
 
-    private function processFacebook(
-        FacebookMessengerService $facebookService,
-        OutboundMessageService $outboundService,
-        BusinessHoursService $businessHoursService,
-    ): void {
+    private function processFacebook(InboundMessageIngestor $ingestor, FacebookMessengerService $facebookService): void
+    {
         $event = $this->event;
 
         try {
@@ -255,24 +254,14 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 );
             }
 
-            $conversation = $this->findOrCreateConversation('facebook', $event['psid'], $customer->id);
-
-            if (isset($event['message_id']) && $this->isDuplicate($conversation->id, $event['message_id'])) {
-                return;
-            }
-
-            $rawAttachments = $event['attachments'] ?? [];
             [$body, $downloadedAttachments] = $this->resolveBodyAndAttachments(
                 $event['body'] ?? null,
-                $rawAttachments,
+                $event['attachments'] ?? [],
                 'facebook',
                 $this->eventType === 'postback' ? ($event['title'] ?? '[postback]') : '[mensaje]'
             );
 
-            $item = ConversationItem::create([
-                'conversation_id' => $conversation->id,
-                'author_id' => $customer->id,
-                'type' => 'message',
+            $ingestor->ingest('facebook', $event['psid'], $customer, [
                 'body' => $body,
                 'external_id' => $event['message_id'] ?? null,
                 'attachment_urls' => $this->toAttachmentUrls($downloadedAttachments),
@@ -280,20 +269,10 @@ class ProcessSocialWebhookJob implements ShouldQueue
                     'attachments' => $downloadedAttachments ?: null,
                     'quick_reply' => $event['quick_reply'] ?? null,
                     'postback' => $this->eventType === 'postback' ? ($event['payload'] ?? null) : null,
+                    'referral' => $event['referral'] ?? null,
                     'platform' => 'facebook',
                 ]),
-            ]);
-
-            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
-
-            if ($conversation->wasRecentlyCreated) {
-                ConversationCreated::dispatch($conversation);
-                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService);
-            }
-
-            if ($downloadedAttachments) {
-                DownloadConversationAttachmentsJob::dispatch($item->id, $downloadedAttachments, 'facebook');
-            }
+            ], $downloadedAttachments);
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: Facebook failed', [
@@ -306,10 +285,8 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     // ─── Instagram ────────────────────────────────────────────────────────────
 
-    private function processInstagram(
-        OutboundMessageService $outboundService,
-        BusinessHoursService $businessHoursService,
-    ): void {
+    private function processInstagram(InboundMessageIngestor $ingestor): void
+    {
         $event = $this->event;
 
         try {
@@ -318,12 +295,6 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 ['name' => $event['ig_user_id'], 'instagram_id' => $event['ig_user_id']],
             );
 
-            $conversation = $this->findOrCreateConversation('instagram', $event['ig_user_id'], $customer->id);
-
-            if ($this->isDuplicate($conversation->id, $event['message_id'])) {
-                return;
-            }
-
             [$body, $downloadedAttachments] = $this->resolveBodyAndAttachments(
                 filled($event['body'] ?? null) ? $event['body'] : null,
                 $event['attachments'] ?? [],
@@ -331,10 +302,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
                 '[media]'
             );
 
-            $item = ConversationItem::create([
-                'conversation_id' => $conversation->id,
-                'author_id' => $customer->id,
-                'type' => 'message',
+            $ingestor->ingest('instagram', $event['ig_user_id'], $customer, [
                 'body' => $body,
                 'external_id' => $event['message_id'],
                 'attachment_urls' => $this->toAttachmentUrls($downloadedAttachments),
@@ -344,18 +312,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
                     'story_url' => $event['story_url'] ?? null,
                     'platform' => 'instagram',
                 ]),
-            ]);
-
-            broadcast(new ConversationMessageCreated($item, $conversation->wasRecentlyCreated));
-
-            if ($conversation->wasRecentlyCreated) {
-                ConversationCreated::dispatch($conversation);
-                $this->handleNewConversationAutomations($conversation, $item, $outboundService, $businessHoursService);
-            }
-
-            if ($downloadedAttachments) {
-                DownloadConversationAttachmentsJob::dispatch($item->id, $downloadedAttachments, 'instagram');
-            }
+            ], $downloadedAttachments);
 
         } catch (\Throwable $e) {
             Log::error('ProcessSocialWebhookJob: Instagram failed', [
@@ -368,94 +325,9 @@ class ProcessSocialWebhookJob implements ShouldQueue
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    /**
-     * Run post-creation automations for new conversations:
-     * 1. Send off-hours auto-reply when business is closed.
-     *
-     * Routing/auto-assignment is no longer triggered here: the
-     * ConversationCreated event dispatched by the caller drives it via the
-     * AutoAssignNewConversation listener (gated by config), avoiding double
-     * routing.
-     */
-    private function handleNewConversationAutomations(
-        Conversation $conversation,
-        ConversationItem $item,
-        OutboundMessageService $outboundService,
-        BusinessHoursService $businessHoursService,
-    ): void {
-        if ($businessHoursService->isOpenNow()) {
-            return;
-        }
-
-        try {
-            $response = OffHoursResponse::findForChannel($conversation->channel);
-
-            if ($response) {
-                $outboundService->sendReply($conversation, $response->message);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('ProcessSocialWebhookJob: off-hours reply failed', [
-                'conversation_id' => $conversation->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    private function findOrCreateConversation(string $channel, string $externalSenderId, int $customerId): Conversation
-    {
-        $existing = Conversation::query()
-            ->where('channel', $channel)
-            ->where('external_sender_id', $externalSenderId)
-            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-            ->latest()
-            ->first();
-
-        if ($existing) {
-            return $existing;
-        }
-
-        // Cache the default status ID and per-channel inbox ID for 30 minutes —
-        // these almost never change and saved 2 DB queries per webhook.
-        $statusId = Cache::remember(
-            'helpdesk:default_status_id',
-            now()->addMinutes(30),
-            fn () => ConversationStatus::query()
-                ->where('is_default', true)
-                ->orWhere('is_open', true)
-                ->orderByDesc('is_default')
-                ->value('id') ?? 1,
-        );
-
-        $inboxId = Cache::remember(
-            "helpdesk:inbox_id:{$channel}",
-            now()->addMinutes(30),
-            fn () => Inbox::query()
-                ->where('channel_type', $channel)
-                ->value('id'),
-        );
-
-        $conversation = Conversation::create([
-            'customer_id' => $customerId,
-            'channel' => $channel,
-            'external_sender_id' => $externalSenderId,
-            'inbox_id' => $inboxId,
-            'status_id' => $statusId,
-        ]);
-
-        return $conversation;
-    }
-
-    private function isDuplicate(int $conversationId, ?string $externalId): bool
-    {
-        if (blank($externalId)) {
-            return false;
-        }
-
-        return ConversationItem::query()
-            ->where('conversation_id', $conversationId)
-            ->where('external_id', $externalId)
-            ->exists();
-    }
+    // handleNewConversationAutomations(), findOrCreateConversation() e
+    // isDuplicate() se movieron a InboundMessageIngestor (pipeline compartido de
+    // ingesta usado también por los *MessageProcessor del simulador).
 
     /**
      * Build the display body and structured attachments for a WhatsApp message event.
@@ -540,6 +412,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
             'filename' => $event['filename'] ?? null,
             'caption' => $event['caption'] ?? null,
             'message_type' => $event['message_type'] ?? null,
+            'referral' => $event['referral'] ?? null,
             'platform' => 'whatsapp',
         ]);
     }
@@ -562,7 +435,7 @@ class ProcessSocialWebhookJob implements ShouldQueue
             $type = $attachment['type'] ?? 'file';
             $url = $attachment['url'] ?? $attachment['payload']['url'] ?? null;
 
-            if ($url) {
+            if ($url && OutboundMediaUrlGuard::isAllowed($url)) {
                 $attachments[] = [
                     'type' => $type,
                     'original_url' => $url,
@@ -640,6 +513,15 @@ class ProcessSocialWebhookJob implements ShouldQueue
      */
     private function downloadMedia(string $url, string $mediaType, string $platform, ?string $bearerToken = null): ?array
     {
+        if (! OutboundMediaUrlGuard::isAllowed($url)) {
+            Log::warning('ProcessSocialWebhookJob: URL de media bloqueada por guard SSRF', [
+                'platform' => $platform,
+                'url' => substr($url, 0, 100),
+            ]);
+
+            return null;
+        }
+
         try {
             $request = Http::timeout(30);
 
