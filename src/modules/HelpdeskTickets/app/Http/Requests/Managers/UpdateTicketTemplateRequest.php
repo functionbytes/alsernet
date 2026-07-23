@@ -18,8 +18,8 @@ class UpdateTicketTemplateRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:500'],
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
-            'category_id' => ['nullable', 'exists:helpdesk_ticket_categories,id'],
-            'priority_id' => ['nullable', 'exists:helpdesk_priorities,id'],
+            'category_id' => ['nullable', 'exists:helpdesk.helpdesk_ticket_categories,id'],
+            'priority_id' => ['nullable', 'exists:helpdesk.helpdesk_priorities,id'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

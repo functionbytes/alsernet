@@ -14,6 +14,6 @@ Route::post('tickets', [CustomerPortalController::class, 'storeTicket'])->name('
 Route::get('tickets/{ticketNumber}', [CustomerPortalController::class, 'showTicket'])->name('tickets.show');
 Route::post('tickets/{ticketNumber}/reply', [CustomerPortalController::class, 'replyToTicket'])->name('tickets.reply');
 Route::post('tickets/{ticketNumber}/rate', [CustomerPortalController::class, 'rateTicket'])->name('tickets.rate');
-Route::get('tickets/{ticketNumber}/rate/{rating}', [CustomerPortalController::class, 'rateTicketFromEmail'])->name('portal.tickets.rate.email')->middleware('signed');
+Route::get('tickets/{ticketNumber}/rate/{rating}', [CustomerPortalController::class, 'rateTicketFromEmail'])->name('tickets.rate.email')->middleware('signed');
 Route::get('account', [CustomerPortalController::class, 'account'])->name('account');
 Route::put('account', [CustomerPortalController::class, 'updateAccount'])->name('account.update');

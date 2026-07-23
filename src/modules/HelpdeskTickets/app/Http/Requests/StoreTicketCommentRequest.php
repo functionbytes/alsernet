@@ -23,7 +23,7 @@ class StoreTicketCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ticket_id' => 'required|exists:helpdesk_tickets,id',
+            'ticket_id' => 'required|exists:helpdesk.helpdesk_tickets,id',
             'body' => 'nullable|string|max:10000|required_without:html_body',
             'html_body' => 'nullable|string|max:20000|required_without:body',
             'is_internal' => 'boolean',

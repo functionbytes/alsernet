@@ -186,6 +186,17 @@
                             <i class="fas fa-lock me-1"></i> Esta nota es interna — el cliente no la verá
                         </div>
 
+                        @if(helpdesk_helpcenter_enabled())
+                            <div class="mb-2 border rounded" id="suggested-articles-box"
+                                data-url="{{ route('manager.helpdesk.tickets.suggested-articles', $ticket->id) }}">
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none px-2 py-1"
+                                    id="suggested-articles-toggle">
+                                    <i class="fas fa-lightbulb me-1"></i>Artículos sugeridos
+                                </button>
+                                <div id="suggested-articles-list" class="px-2 pb-2 d-none"></div>
+                            </div>
+                        @endif
+
                         <div class="mb-2">
                             <textarea name="body" id="reply-body" class="form-control" rows="4" placeholder="Escribe tu respuesta..." required></textarea>
                         </div>
@@ -196,6 +207,12 @@
                             <label for="attachments" class="btn btn-light btn-sm">
                                 <i class="fas fa-paperclip me-1"></i>Adjuntar archivo
                             </label>
+                            @if(helpdesk_translate_enabled())
+                                <button type="button" class="btn btn-light btn-sm" id="translate-reply-btn"
+                                    data-url="{{ route('manager.helpdesk.tickets.translate', $ticket->id) }}">
+                                    <i class="fas fa-language me-1"></i>Traducir borrador
+                                </button>
+                            @endif
                             <div id="attachment-preview" class="d-flex flex-wrap gap-2 mt-2"></div>
                         </div>
 
@@ -412,16 +429,79 @@
                     <small class="text-muted d-block mb-1">Origen</small>
                     @php
                         $sourceIcons = [
-                            'manager' => 'fas fa-desktop',
-                            'widget'  => 'fas fa-comment',
-                            'portal'  => 'fas fa-globe',
-                            'api'     => 'fas fa-code',
-                            'email'   => 'fas fa-envelope',
+                            'manager'      => 'fas fa-desktop',
+                            'widget'       => 'fas fa-comment',
+                            'portal'       => 'fas fa-globe',
+                            'api'          => 'fas fa-code',
+                            'email'        => 'fas fa-envelope',
+                            'conversation' => 'fas fa-comments',
+                            'chatflow'     => 'fas fa-robot',
+                            'social'       => 'fas fa-share-nodes',
+                            'contacts'     => 'fas fa-address-book',
                         ];
                         $sourceIcon = $sourceIcons[$ticket->source] ?? 'fas fa-question-circle';
                     @endphp
                     <span><i class="{{ $sourceIcon }} me-1"></i>{{ ucfirst($ticket->source) }}</span>
                 </div>
+
+                @if($ticket->conversation)
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Conversación de origen</small>
+                        <a href="{{ route('manager.helpdesk.conversations.show', $ticket->conversation) }}"
+                            class="text-decoration-none">
+                            <i class="fas fa-comments me-1"></i>{{ $ticket->conversation->subject ?? 'Conversación #'.$ticket->conversation->id }}
+                        </a>
+                    </div>
+                @endif
+
+                @if($ticket->aiSuggestedCategory || $ticket->ai_suggested_priority)
+                    <div class="mb-3 p-2 border rounded bg-body-tertiary" id="ai-suggestions"
+                        data-url="{{ route('manager.helpdesk.tickets.apply-ai-suggestion', $ticket->id) }}">
+                        <small class="text-muted d-block mb-2 fw-bold"><i class="fas fa-wand-magic-sparkles me-1"></i>Sugerencias de IA</small>
+                        @if($ticket->aiSuggestedCategory)
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small">Categoría: <span class="fw-semibold">{{ $ticket->aiSuggestedCategory->name }}</span></span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 apply-ai-suggestion" data-field="category">Aplicar</button>
+                            </div>
+                        @endif
+                        @if($ticket->ai_suggested_priority)
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="small">Prioridad: <span class="fw-semibold">{{ ucfirst($ticket->ai_suggested_priority) }}</span></span>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 apply-ai-suggestion" data-field="priority">Aplicar</button>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                @can('update', $ticket)
+                    <div class="mb-3 p-2 border rounded" id="followups-box"
+                        data-store-url="{{ route('manager.helpdesk.tickets.followups.store', $ticket->id) }}"
+                        data-base-url="{{ url('panel/helpdesk/tickets/'.$ticket->id.'/followups') }}">
+                        <small class="text-muted d-block mb-2 fw-bold"><i class="fas fa-bell me-1"></i>Seguimientos</small>
+
+                        <div id="followups-list">
+                            @forelse($ticket->followups as $followup)
+                                <div class="d-flex align-items-start justify-content-between gap-2 py-1 border-bottom" data-followup-id="{{ $followup->id }}">
+                                    <div class="small">
+                                        <span class="fw-semibold">{{ $followup->scheduled_at?->format('d/m/Y H:i') }}</span>
+                                        @if($followup->note)<div class="text-muted">{{ $followup->note }}</div>@endif
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-light py-0 px-1 cancel-followup" title="Cancelar"><i class="fas fa-xmark"></i></button>
+                                </div>
+                            @empty
+                                <div class="text-muted small py-1" id="followups-empty">Sin seguimientos programados.</div>
+                            @endforelse
+                        </div>
+
+                        <div class="mt-2">
+                            <input type="datetime-local" class="form-control form-control-sm mb-1" id="followup-when">
+                            <input type="text" class="form-control form-control-sm mb-1" id="followup-note" maxlength="1000" placeholder="Nota (opcional)">
+                            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="add-followup">
+                                <i class="fas fa-plus me-1"></i>Programar seguimiento
+                            </button>
+                        </div>
+                    </div>
+                @endcan
 
                 @if($ticket->custom_fields)
                     <div class="mb-3">
@@ -1042,6 +1122,158 @@ $(function () {
                 is_typing: 0,
             });
         }, 2500);
+    });
+});
+</script>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    const $box = $('#suggested-articles-box');
+    if (!$box.length) return;
+
+    const $list = $('#suggested-articles-list');
+    let loaded = false;
+
+    function esc(s) {
+        return $('<div>').text(s == null ? '' : s).html();
+    }
+
+    function load() {
+        $list.html('<div class="text-muted small py-1">Buscando…</div>');
+        $.ajax({
+            url: $box.data('url'),
+            method: 'GET',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (r) {
+            const items = (r && r.data) || [];
+            if (!items.length) {
+                $list.html('<div class="text-muted small py-1">No hay artículos relacionados.</div>');
+                return;
+            }
+            const html = items.map(function (a) {
+                return '<div class="d-flex align-items-start justify-content-between gap-2 py-1 border-bottom">'
+                    + '<a href="' + esc(a.url) + '" target="_blank" class="small text-decoration-none">'
+                    + '<i class="fas fa-file-lines me-1"></i>' + esc(a.title) + '</a>'
+                    + '<button type="button" class="btn btn-sm btn-light py-0 px-1 insert-article-link" '
+                    + 'data-url="' + esc(a.url) + '" data-title="' + esc(a.title) + '" title="Insertar enlace">'
+                    + '<i class="fas fa-plus"></i></button></div>';
+            }).join('');
+            $list.html(html);
+        }).fail(function () {
+            $list.html('<div class="text-danger small py-1">No se pudieron cargar las sugerencias.</div>');
+        });
+    }
+
+    $('#suggested-articles-toggle').on('click', function () {
+        $list.toggleClass('d-none');
+        if (!loaded && !$list.hasClass('d-none')) {
+            loaded = true;
+            load();
+        }
+    });
+
+    $(document).on('click', '.insert-article-link', function () {
+        const $t = $('#reply-body');
+        const link = $(this).data('title') + ': ' + $(this).data('url');
+        $t.val(($t.val() ? $t.val() + '\n' : '') + link).trigger('input').focus();
+        if (window.toastr) { toastr.success('Enlace del artículo insertado'); }
+    });
+
+    // ── Aplicar sugerencias de IA (categoría / prioridad) ──
+    $(document).on('click', '.apply-ai-suggestion', function () {
+        const $btn = $(this);
+        const $box = $('#ai-suggestions');
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: $box.data('url'),
+            method: 'POST',
+            dataType: 'json',
+            data: { field: $btn.data('field') },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function () {
+            if (window.toastr) { toastr.success('Sugerencia aplicada'); }
+            setTimeout(function () { window.location.reload(); }, 500);
+        }).fail(function () {
+            $btn.prop('disabled', false);
+            if (window.toastr) { toastr.error('No se pudo aplicar la sugerencia'); }
+        });
+    });
+
+    // ── Seguimientos programados ──
+    const $fBox = $('#followups-box');
+    function escF(s) { return $('<div>').text(s == null ? '' : s).html(); }
+
+    $('#add-followup').on('click', function () {
+        const when = $('#followup-when').val();
+        if (!when) { if (window.toastr) { toastr.info('Elige fecha y hora'); } return; }
+        const note = $('#followup-note').val();
+        const $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: $fBox.data('store-url'),
+            method: 'POST',
+            dataType: 'json',
+            data: { scheduled_at: when, note: note },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (r) {
+            const f = (r && r.data) || {};
+            const dt = new Date(f.scheduled_at).toLocaleString();
+            $('#followups-empty').remove();
+            $('#followups-list').append(
+                '<div class="d-flex align-items-start justify-content-between gap-2 py-1 border-bottom" data-followup-id="' + f.id + '">'
+                + '<div class="small"><span class="fw-semibold">' + escF(dt) + '</span>'
+                + (f.note ? '<div class="text-muted">' + escF(f.note) + '</div>' : '') + '</div>'
+                + '<button type="button" class="btn btn-sm btn-light py-0 px-1 cancel-followup" title="Cancelar"><i class="fas fa-xmark"></i></button></div>');
+            $('#followup-when').val(''); $('#followup-note').val('');
+            if (window.toastr) { toastr.success('Seguimiento programado'); }
+        }).fail(function (xhr) {
+            const msg = xhr.responseJSON && xhr.responseJSON.errors
+                ? Object.values(xhr.responseJSON.errors)[0][0] : 'No se pudo programar';
+            if (window.toastr) { toastr.error(msg); }
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+
+    $(document).on('click', '.cancel-followup', function () {
+        const $row = $(this).closest('[data-followup-id]');
+        $.ajax({
+            url: $fBox.data('base-url') + '/' + $row.data('followup-id'),
+            method: 'DELETE',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function () {
+            $row.remove();
+            if (!$('#followups-list').children().length) {
+                $('#followups-list').html('<div class="text-muted small py-1" id="followups-empty">Sin seguimientos programados.</div>');
+            }
+            if (window.toastr) { toastr.success('Seguimiento cancelado'); }
+        }).fail(function () { if (window.toastr) { toastr.error('No se pudo cancelar'); } });
+    });
+
+    // ── Traducir el borrador de respuesta ──
+    $('#translate-reply-btn').on('click', function () {
+        const $btn = $(this);
+        const $t = $('#reply-body');
+        const text = ($t.val() || '').trim();
+        if (!text) { if (window.toastr) { toastr.info('Escribe algo para traducir'); } return; }
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: $btn.data('url'),
+            method: 'POST',
+            dataType: 'json',
+            data: { text: text, target_lang: (document.documentElement.lang || 'es') },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        }).done(function (r) {
+            if (r && r.text) { $t.val(r.text).trigger('input'); }
+            if (window.toastr) {
+                r && r.translated ? toastr.success('Borrador traducido') : toastr.info('Traducción no disponible');
+            }
+        }).fail(function () {
+            if (window.toastr) { toastr.error('No se pudo traducir'); }
+        }).always(function () {
+            $btn.prop('disabled', false);
+        });
     });
 });
 </script>

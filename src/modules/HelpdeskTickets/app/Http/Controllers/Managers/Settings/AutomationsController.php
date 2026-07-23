@@ -95,13 +95,4 @@ class AutomationsController extends Controller
             ->route('manager.helpdesk.settings.automations.index')
             ->with('success', 'Automatizacion eliminada exitosamente.');
     }
-
-    public function toggle(Automation $automation): RedirectResponse
-    {
-        $automation->update(['is_active' => ! $automation->is_active]);
-
-        $label = $automation->is_active ? 'activada' : 'desactivada';
-
-        return back()->with('success', "Automatizacion {$label} exitosamente.");
-    }
 }

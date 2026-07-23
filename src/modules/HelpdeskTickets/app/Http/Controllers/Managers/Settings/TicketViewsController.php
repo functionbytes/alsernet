@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketViewRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketViewRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketViewRequest;
 use Modules\HelpdeskTickets\Models\TicketView;
@@ -127,12 +128,9 @@ class TicketViewsController extends Controller
     /**
      * Reorder views via drag and drop.
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderTicketViewRequest $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:helpdesk_ticket_views,id',
-        ]);
+        $validated = $request->validated();
 
         TicketView::reorder($validated['ids']);
 

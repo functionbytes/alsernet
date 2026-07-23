@@ -18,11 +18,19 @@ class ConversationSlaObserver
 
     public function created(Conversation $conversation): void
     {
+        if (! helpdesk_sla_enabled()) {
+            return;
+        }
+
         $this->slaService->initialize($conversation);
     }
 
     public function updated(Conversation $conversation): void
     {
+        if (! helpdesk_sla_enabled()) {
+            return;
+        }
+
         if ($conversation->wasChanged('closed_at') && $conversation->closed_at !== null) {
             $this->slaService->finalize($conversation);
 

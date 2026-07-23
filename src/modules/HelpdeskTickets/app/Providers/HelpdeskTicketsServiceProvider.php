@@ -14,6 +14,7 @@ use Modules\HelpdeskTickets\Console\Commands\CollectOpsMetricsCommand;
 use Modules\HelpdeskTickets\Console\Commands\FetchEmailTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SendScheduledRepliesCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
 use Modules\HelpdeskTickets\Http\Controllers\Dev\EmailTestController;
@@ -176,6 +177,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             class_exists(SendSlaWarningsCommand::class) ? SendSlaWarningsCommand::class : null,
             class_exists(CollectOpsMetricsCommand::class) ? CollectOpsMetricsCommand::class : null,
             class_exists(SendDueTicketFollowupsCommand::class) ? SendDueTicketFollowupsCommand::class : null,
+            class_exists(SendScheduledRepliesCommand::class) ? SendScheduledRepliesCommand::class : null,
             class_exists(SendScheduledReportsCommand::class) ? SendScheduledReportsCommand::class : null,
         ]));
 
@@ -196,6 +198,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $schedule->command('ticket:autoresponseticket')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:send-followups')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('ticket:send-scheduled-replies')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
 
             // Observabilidad operativa: snapshot de colas/webhooks/SLA en cache
             // + evaluación de alertas (mail a managers, OFF por defecto).

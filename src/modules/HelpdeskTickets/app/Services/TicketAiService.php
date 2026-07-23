@@ -103,50 +103,6 @@ class TicketAiService
     }
 
     /**
-     * Generate smart reply suggestions based on the last customer message.
-     *
-     * @return array<int, string>
-     */
-    public function smartReplySuggestions(Ticket $ticket): array
-    {
-        $lastMessage = $ticket->items()
-            ->where('is_internal', false)
-            ->latest()
-            ->first();
-
-        if (! $lastMessage) {
-            return [];
-        }
-
-        $text = strtolower($lastMessage->body ?? '');
-        $suggestions = [];
-
-        if (str_contains($text, 'gracias') || str_contains($text, 'thank')) {
-            $suggestions[] = 'De nada, si necesitas cualquier otra cosa estamos aqui.';
-            $suggestions[] = 'Gracias a ti por tu paciencia.';
-        }
-
-        if (str_contains($text, '?') || str_contains($text, 'como ') || str_contains($text, 'how ')) {
-            $suggestions[] = 'Permiteme revisar esto y te respondo en unos minutos.';
-            $suggestions[] = 'Te envio mas detalles por email.';
-        }
-
-        if (str_contains($text, 'no funciona') || str_contains($text, 'error') || str_contains($text, 'bug')) {
-            $suggestions[] = 'Lamento las molestias. Estamos revisando el problema.';
-            $suggestions[] = 'Podrias enviarnos una captura del error y los pasos para reproducirlo?';
-        }
-
-        if (empty($suggestions)) {
-            $suggestions = [
-                'Gracias por contactarnos. Estamos revisando tu caso.',
-                'Permitenos investigar y te respondemos a la brevedad.',
-            ];
-        }
-
-        return array_slice($suggestions, 0, 3);
-    }
-
-    /**
      * Analyze sentiment for a TicketItem and update the ticket's average.
      */
     public function analyzeAndTag(TicketItem $item): void

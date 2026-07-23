@@ -2,7 +2,6 @@
 
 namespace Modules\HelpdeskTickets\Notifications;
 
-use App\Models\Notifications\NotificationPreference;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -10,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\Notification\Models\NotificationPreference;
 
 class TicketMentionNotification extends Notification implements ShouldBroadcast, ShouldQueue
 {

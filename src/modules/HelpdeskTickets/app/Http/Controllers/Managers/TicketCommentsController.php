@@ -7,10 +7,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketCommentRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketCommentRequest;
+use Modules\HelpdeskTickets\Mail\TicketReplyMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
-use Modules\Mail\Mail\Helpdesk\TicketReplyMail;
+use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 class TicketCommentsController extends Controller
 {
@@ -59,9 +60,24 @@ class TicketCommentsController extends Controller
             $comment->notifyMentionedUsers();
         }
 
-        // Send reply notification to customer if external comment
-        if (! $comment->is_internal && $ticket->customer_id) {
-            Mail::queue(new TicketReplyMail($ticket, $comment, true));
+        // Send reply notification to customer if external comment. Reuses the
+        // seeded `helpdesk.ticket_reply` Mailer template (same as the TicketItem
+        // path listener) so the design stays editable from the Mailer admin.
+        if (! $comment->is_internal && $ticket->customer?->email) {
+            [$subject, $content] = TicketMailRenderer::render(
+                'helpdesk.ticket_reply',
+                [
+                    'CUSTOMER_NAME' => $ticket->customer->name ?? 'Cliente',
+                    'TICKET_NUMBER' => $ticket->ticket_number,
+                    'SUBJECT' => $ticket->subject,
+                    'AGENT_NAME' => auth()->user()?->name ?? 'Soporte',
+                    'COMPANY_NAME' => config('app.name', 'Soporte'),
+                ],
+                'Nueva respuesta en tu ticket #'.$ticket->ticket_number,
+            );
+
+            Mail::to($ticket->customer->email, $ticket->customer->name)
+                ->queue(new TicketReplyMail($ticket, $subject, $content));
         }
 
         return response()->json($comment->load(['user', 'author']), 201);

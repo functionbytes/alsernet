@@ -41,11 +41,12 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
 
         $ticket = Ticket::create([
             'customer_id' => $conversation->customer_id,
+            'conversation_id' => $conversation->id,
             'subject' => $payload['subject'] ?? $defaultTitle,
             'description' => $payload['description'] ?? ($firstItem?->body ?? ''),
             'priority' => $payload['priority'] ?? 'normal',
             'category_id' => $payload['category_id'] ?? null,
-            'source' => 'conversation',
+            'source' => $payload['source'] ?? 'conversation',
             'assignee_id' => $payload['assignee_id'] ?? $conversation->assignee_id,
         ]);
 
@@ -114,6 +115,15 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
             ->with('status')
             ->latest()
             ->limit($limit)
+            ->get();
+    }
+
+    public function getConversationTickets(Conversation $conversation): Collection
+    {
+        return Ticket::query()
+            ->where('conversation_id', $conversation->id)
+            ->with('status')
+            ->latest()
             ->get();
     }
 

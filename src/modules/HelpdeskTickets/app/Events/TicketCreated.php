@@ -62,24 +62,24 @@ class TicketCreated implements ShouldBroadcast
                 'subject' => $this->ticket->subject,
                 'priority' => $this->ticket->priority,
                 'source' => $this->ticket->source,
-                'status' => [
+                'status' => $this->ticket->status ? [
                     'id' => $this->ticket->status->id,
                     'name' => $this->ticket->status->name,
                     'is_open' => $this->ticket->status->is_open,
                     'color' => $this->ticket->status->color,
-                ],
-                'category' => [
+                ] : null,
+                'category' => $this->ticket->category ? [
                     'id' => $this->ticket->category->id,
                     'name' => $this->ticket->category->name,
                     'icon' => $this->ticket->category->icon,
                     'color' => $this->ticket->category->color,
-                ],
-                'customer' => [
+                ] : null,
+                'customer' => $this->ticket->customer ? [
                     'id' => $this->ticket->customer->id,
                     'name' => $this->ticket->customer->name,
                     'email' => $this->ticket->customer->email,
                     'avatar_url' => $this->ticket->customer->getAvatarUrl(),
-                ],
+                ] : null,
                 'assignee' => $this->ticket->assignee ? [
                     'id' => $this->ticket->assignee->id,
                     'name' => $this->ticket->assignee->name,

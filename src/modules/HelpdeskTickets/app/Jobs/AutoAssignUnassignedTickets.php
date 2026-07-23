@@ -78,6 +78,8 @@ class AutoAssignUnassignedTickets implements ShouldQueue
                         $assignedAgent = $assignmentService->autoAssignByRoundRobin($ticket);
                     } elseif ($strategy === 'workload' || $strategy === 'least_load') {
                         $assignedAgent = $assignmentService->autoAssignByWorkload($ticket);
+                    } elseif ($strategy === 'skills') {
+                        $assignedAgent = $assignmentService->autoAssignBySkills($ticket);
                     } else {
                         Log::warning("Unknown auto-assignment strategy: {$strategy}");
 

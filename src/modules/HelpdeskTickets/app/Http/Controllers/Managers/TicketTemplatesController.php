@@ -4,8 +4,9 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Managers\StoreTicketTemplateRequest;
+use Modules\HelpdeskTickets\Http\Requests\Managers\UpdateTicketTemplateRequest;
 use Modules\HelpdeskTickets\Models\Priority;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketTemplate;
@@ -48,19 +49,11 @@ class TicketTemplatesController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreTicketTemplateRequest $request): RedirectResponse
     {
         $this->authorize('helpdesk.tickets.create');
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'subject' => 'required|string|max:255',
-            'body' => 'required|string',
-            'category_id' => 'nullable|exists:helpdesk_ticket_categories,id',
-            'priority_id' => 'nullable|exists:helpdesk_priorities,id',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
@@ -85,19 +78,11 @@ class TicketTemplatesController extends Controller
         ]);
     }
 
-    public function update(Request $request, TicketTemplate $ticketTemplate): RedirectResponse
+    public function update(UpdateTicketTemplateRequest $request, TicketTemplate $ticketTemplate): RedirectResponse
     {
         $this->authorize('helpdesk.tickets.update');
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'subject' => 'required|string|max:255',
-            'body' => 'required|string',
-            'category_id' => 'nullable|exists:helpdesk_ticket_categories,id',
-            'priority_id' => 'nullable|exists:helpdesk_priorities,id',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['is_active'] = $request->boolean('is_active');
 

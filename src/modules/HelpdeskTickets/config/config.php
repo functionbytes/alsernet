@@ -5,6 +5,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Razones de CSAT
+    |--------------------------------------------------------------------------
+    | Lista de razones de insatisfacción que se ofrecen al cliente cuando valora
+    | bajo (rating <= csat_reason_threshold). key => etiqueta. El desglose por
+    | razón aparece en el reporte de CSAT.
+    */
+    'csat_reason_threshold' => 3,
+
+    'csat_reasons' => [
+        'slow' => 'Tardó demasiado en resolverse',
+        'unresolved' => 'No resolvió mi problema',
+        'unfriendly' => 'Trato poco amable',
+        'repeated_info' => 'Tuve que repetir la información varias veces',
+        'unclear' => 'La respuesta fue poco clara',
+        'other' => 'Otro motivo',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Motor de escalado de tickets (EscalateTicketsJob / EscalationService)
     |--------------------------------------------------------------------------
     | Los umbrales base por prioridad y el interruptor global viven en

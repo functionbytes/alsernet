@@ -3,10 +3,10 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 class BulkTicketsController extends Controller
@@ -19,28 +19,27 @@ class BulkTicketsController extends Controller
     /**
      * Handle bulk ticket operations.
      *
-     * Actions: assign, close, reopen, change_status, delete
+     * Actions: assign, close, reopen, change_status, delete, add_tag, assign_group
      */
-    public function handle(Request $request): RedirectResponse
+    public function handle(BulkTicketRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'ticket_ids' => 'required|array|min:1|max:100',
-            'ticket_ids.*' => 'integer',
-            'action' => 'required|string|in:assign,close,reopen,change_status,delete',
-            'agent_id' => 'required_if:action,assign|nullable|integer|exists:users,id',
-            'status_id' => 'required_if:action,change_status|nullable|integer|exists:helpdesk_ticket_statuses,id',
-        ]);
+        $validated = $request->validated();
 
         $ids = $validated['ticket_ids'];
 
         try {
+            // Todas las ramas iteran modelos (no mass update/delete del builder)
+            // para que TicketObserver registre historial y bumpee la caché de
+            // reportes igual que en las acciones individuales.
             $count = DB::transaction(function () use ($validated, $ids): int {
                 return match ($validated['action']) {
-                    'assign' => Ticket::whereIn('id', $ids)->update([
-                        'assignee_id' => $validated['agent_id'],
-                        'assigned_at' => now(),
-                        'updated_at' => now(),
-                    ]),
+                    'assign' => Ticket::whereIn('id', $ids)
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'assignee_id' => $validated['agent_id'],
+                            'assigned_at' => now(),
+                        ]))
+                        ->count(),
                     'close' => Ticket::whereIn('id', $ids)
                         ->whereNull('closed_at')
                         ->get()
@@ -51,11 +50,28 @@ class BulkTicketsController extends Controller
                         ->get()
                         ->each(fn (Ticket $ticket) => $ticket->reopen())
                         ->count(),
-                    'change_status' => Ticket::whereIn('id', $ids)->update([
-                        'status_id' => $validated['status_id'],
-                        'updated_at' => now(),
-                    ]),
-                    'delete' => Ticket::whereIn('id', $ids)->delete(),
+                    'change_status' => Ticket::whereIn('id', $ids)
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'status_id' => $validated['status_id'],
+                        ]))
+                        ->count(),
+                    'delete' => Ticket::whereIn('id', $ids)
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->delete())
+                        ->count(),
+                    'add_tag' => Ticket::whereIn('id', $ids)
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'tags' => array_values(array_unique(array_merge($ticket->tags ?? [], [$validated['tag']]))),
+                        ]))
+                        ->count(),
+                    'assign_group' => Ticket::whereIn('id', $ids)
+                        ->get()
+                        ->each(fn (Ticket $ticket) => $ticket->update([
+                            'group_id' => $validated['group_id'],
+                        ]))
+                        ->count(),
                 };
             });
 

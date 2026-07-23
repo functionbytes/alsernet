@@ -40,8 +40,8 @@ class SlaBreachesController extends Controller
             'data' => $breaches->getCollection()->map(fn (ConversationSlaBreach $breach): array => [
                 'id' => $breach->id,
                 'conversationId' => $breach->conversation_id,
-                'subject' => $breach->conversation?->subject ?? 'Sin asunto',
-                'customer' => $breach->conversation?->customer?->name ?? 'Sin cliente',
+                'subject' => $breach->conversation?->subject ?? __('helpdesksla::messages.no_subject'),
+                'customer' => $breach->conversation?->customer?->name ?? __('helpdesksla::messages.no_customer'),
                 'channel' => $breach->conversation?->channel,
                 'slaType' => $breach->sla_type,
                 'slaTypeLabel' => $breach->type_label,

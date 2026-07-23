@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -68,7 +69,7 @@ class FeedbackSignedUrlTest extends TestCase
         // actingAs: el layout público (layouts.theme) asume un usuario
         // autenticado (bug preexistente de la vista, ajeno a la firma).
         // La firma es lo que se valida aquí: sin ella la ruta devuelve 403.
-        $this->actingAs(\App\Models\User::factory()->create())
+        $this->actingAs(User::factory()->create())
             ->get(URL::signedRoute('helpdesk.feedback.show', ['ticketNumber' => $ticket->ticket_number]))
             ->assertOk()
             ->assertSee($ticket->ticket_number);
@@ -110,6 +111,40 @@ class FeedbackSignedUrlTest extends TestCase
         )->assertRedirect();
 
         $this->assertSame(5, $ticket->fresh()->rating);
+    }
+
+    public function test_low_rating_stores_the_dissatisfaction_reason(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->post(
+            URL::signedRoute('helpdesk.feedback.submit', ['ticketNumber' => $ticket->ticket_number]),
+            ['rating' => 1, 'reason' => 'slow', 'comment' => 'Muy lento']
+        )->assertRedirect();
+
+        $this->assertSame('slow', $ticket->fresh()->rating_reason);
+    }
+
+    public function test_reason_is_ignored_on_a_high_rating(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->post(
+            URL::signedRoute('helpdesk.feedback.submit', ['ticketNumber' => $ticket->ticket_number]),
+            ['rating' => 5, 'reason' => 'slow']
+        )->assertRedirect();
+
+        $this->assertNull($ticket->fresh()->rating_reason);
+    }
+
+    public function test_invalid_reason_is_rejected(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->post(
+            URL::signedRoute('helpdesk.feedback.submit', ['ticketNumber' => $ticket->ticket_number]),
+            ['rating' => 1, 'reason' => 'no-existe']
+        )->assertSessionHasErrors(['reason']);
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────

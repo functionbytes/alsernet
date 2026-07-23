@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Services;
 
 use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Notifications\AutomationTicketNotification;
 
 class AutomationEngine
 {
@@ -38,6 +39,8 @@ class AutomationEngine
                 'equals' => $ticketValue == $value,
                 'not_equals' => $ticketValue != $value,
                 'contains' => is_string($ticketValue) && str_contains($ticketValue, $value),
+                'not_contains' => is_string($ticketValue) && ! str_contains($ticketValue, $value),
+                'in' => is_array($value) && in_array($ticketValue, $value, false),
                 'greater_than' => $ticketValue > $value,
                 'less_than' => $ticketValue < $value,
                 'is_null' => $ticketValue === null,
@@ -68,8 +71,25 @@ class AutomationEngine
                     'tags' => array_unique(array_merge($ticket->tags ?? [], [$value])),
                 ]),
                 'close' => $ticket->update(['closed_at' => now()]),
+                'add_internal_note' => $ticket->items()->create([
+                    'type' => 'message',
+                    'body' => $value,
+                    'is_internal' => true,
+                ]),
+                'notify_agent' => $this->notifyAgent($ticket),
                 default => null,
             };
         }
+    }
+
+    private function notifyAgent(Ticket $ticket): void
+    {
+        $agent = $ticket->assignee;
+
+        if (! $agent) {
+            return;
+        }
+
+        $agent->notify(new AutomationTicketNotification($ticket));
     }
 }

@@ -15,7 +15,7 @@ class ReorderTicketViewRequest extends FormRequest
     {
         return [
             'ids' => ['required', 'array'],
-            'ids.*' => ['exists:helpdesk_ticket_views,id'],
+            'ids.*' => ['exists:helpdesk.helpdesk_ticket_views,id'],
         ];
     }
 

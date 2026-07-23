@@ -8,7 +8,7 @@ class BulkTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.tickets.view') ?? false;
+        return $this->user()?->can('helpdesk.tickets.manage') ?? false;
     }
 
     public function rules(): array
@@ -16,9 +16,11 @@ class BulkTicketRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
-            'action' => ['required', 'string', 'in:assign,close,reopen,change_status,resolve,delete'],
+            'action' => ['required', 'string', 'in:assign,close,reopen,change_status,delete,add_tag,assign_group'],
             'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
-            'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk_ticket_statuses,id'],
+            'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
+            'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
+            'tag' => ['required_if:action,add_tag', 'nullable', 'string', 'max:50'],
         ];
     }
 
@@ -35,6 +37,9 @@ class BulkTicketRequest extends FormRequest
             'agent_id.exists' => 'El agente seleccionado no existe.',
             'status_id.required_if' => 'El estado es obligatorio cuando la accion es cambiar estado.',
             'status_id.exists' => 'El estado seleccionado no existe.',
+            'group_id.required_if' => 'El grupo es obligatorio cuando la accion es asignar grupo.',
+            'group_id.exists' => 'El grupo seleccionado no existe.',
+            'tag.required_if' => 'La etiqueta es obligatoria cuando la accion es anadir etiqueta.',
         ];
     }
 
@@ -45,6 +50,8 @@ class BulkTicketRequest extends FormRequest
             'action' => 'accion',
             'agent_id' => 'agente',
             'status_id' => 'estado',
+            'group_id' => 'grupo',
+            'tag' => 'etiqueta',
         ];
     }
 }

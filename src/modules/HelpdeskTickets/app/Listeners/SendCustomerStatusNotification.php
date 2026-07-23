@@ -68,4 +68,12 @@ class SendCustomerStatusNotification implements ShouldQueue
 
         Mail::html($html, fn ($m) => $m->to($ticket->customer->email)->subject($subject));
     }
+
+    public function failed(TicketStatusChanged $event, \Throwable $exception): void
+    {
+        Log::error('SendCustomerStatusNotification listener failed', [
+            'ticket_id' => $event->ticket->id,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

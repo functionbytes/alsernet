@@ -16,8 +16,8 @@ class UpdateTicketRequest extends FormRequest
         return [
             'subject' => ['sometimes', 'string', 'max:255'],
             'description' => ['sometimes', 'string'],
-            'status_id' => ['sometimes', 'integer', 'exists:helpdesk_ticket_statuses,id'],
-            'category_id' => ['sometimes', 'integer', 'exists:helpdesk_ticket_categories,id'],
+            'status_id' => ['sometimes', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
+            'category_id' => ['sometimes', 'integer', 'exists:helpdesk.helpdesk_ticket_categories,id'],
             'priority' => ['sometimes', 'string', 'in:low,normal,high,urgent'],
         ];
     }

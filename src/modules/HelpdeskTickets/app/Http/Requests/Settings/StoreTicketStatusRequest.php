@@ -15,7 +15,7 @@ class StoreTicketStatusRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255', 'unique:helpdesk_ticket_statuses,slug', 'regex:/^[a-z0-9_-]+$/'],
+            'slug' => ['nullable', 'string', 'max:255', 'unique:helpdesk.helpdesk_ticket_statuses,slug', 'regex:/^[a-z0-9_-]+$/'],
             'color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'description' => ['nullable', 'string', 'max:1000'],
             'is_open' => ['nullable', 'boolean'],

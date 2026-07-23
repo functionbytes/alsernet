@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
+use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Events\TicketSlaBreached;
 use Modules\HelpdeskTickets\Events\TicketSlaNearBreach;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
@@ -24,6 +25,7 @@ use Modules\HelpdeskTickets\Listeners\RunAiSentimentAnalysis;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketAssigned;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketClosed;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketCreated;
+use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketResolved;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketStatusChanged;
 use Modules\HelpdeskTickets\Listeners\RunAutomationsOnTicketUpdated;
 use Modules\HelpdeskTickets\Listeners\SendCustomerConfirmation;
@@ -62,6 +64,9 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
         TicketReopened::class => [
             RecordTicketHistory::class,
             SendCustomerReopenNotification::class,
+        ],
+        TicketResolved::class => [
+            RunAutomationsOnTicketResolved::class,
         ],
         TicketAssigned::class => [
             RecordTicketHistory::class,

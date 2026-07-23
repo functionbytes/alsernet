@@ -90,10 +90,10 @@ class RecordTicketHistory implements ShouldQueue
             TicketHistory::create([
                 'ticket_id' => $ticketId,
                 'user_id' => auth()->id(),
-                'action' => $action,
+                'action_type' => $action,
                 'old_value' => $oldValue,
                 'new_value' => $newValue,
-                'description' => $description,
+                'metadata' => $description ? ['description' => $description] : null,
             ]);
 
             Log::info('Ticket history recorded', [

@@ -9,27 +9,52 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
 
-class PortalMagicLinkMail extends Mailable implements ShouldQueue
+/**
+ * Asunto y cuerpo ya renderizados por TicketMailRenderer desde la plantilla del
+ * módulo Mailer; este Mailable solo transporta el HTML final.
+ */
+class PortalMagicLinkMail extends Mailable implements ShouldQueue, TracksEmailLog
 {
-    use Queueable, SerializesModels;
+    use AddsEmailLogHeaders, Queueable, SerializesModels;
 
     public function __construct(
-        public Customer $customer,
-        public string $token,
-    ) {}
+        public readonly Customer $customer,
+        public readonly string $emailSubject,
+        public readonly string $emailContent,
+    ) {
+        $this->onQueue('emails');
+    }
+
+    public function getEmailLogModule(): string
+    {
+        return 'HelpdeskTickets';
+    }
+
+    public function getEmailLogEntityType(): string
+    {
+        return Customer::class;
+    }
+
+    public function getEmailLogEntityId(): int|string
+    {
+        return $this->customer->id;
+    }
+
+    public function getEmailLogExternalId(): ?string
+    {
+        return null;
+    }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Your portal login link',
-        );
+        return new Envelope(subject: $this->emailSubject);
     }
 
     public function content(): Content
     {
-        return new Content(
-            view: 'helpdesktickets::emails.portal-magic-link',
-        );
+        return new Content(htmlString: $this->emailContent);
     }
 }

@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketStatusRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketStatusRequest;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -123,12 +124,9 @@ class TicketStatusesController extends Controller
     /**
      * Reorder statuses via drag and drop.
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderTicketStatusRequest $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:helpdesk_ticket_statuses,id',
-        ]);
+        $validated = $request->validated();
 
         TicketStatus::reorder($validated['ids']);
 

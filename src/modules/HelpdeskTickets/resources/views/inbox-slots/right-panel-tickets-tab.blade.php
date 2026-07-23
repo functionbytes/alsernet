@@ -54,7 +54,7 @@
             </button>
             @if($tCounts['open'] > 0)
                 <button class="media-pill" data-bv-tickets-filter="open">
-                    <span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;opacity:.7"></span>
+                    <span class="bv-x80"></span>
                     Abiertos <span class="c">{{ $tCounts['open'] }}</span>
                 </button>
             @endif
@@ -65,7 +65,7 @@
             @endif
             @if($tCounts['urgent'] > 0)
                 <button class="media-pill" data-bv-tickets-filter="urgent">
-                    <i class="fas fa-fire" style="font-size:10px"></i>
+                    <i class="fas fa-fire bv-x27"></i>
                     Urgentes <span class="c">{{ $tCounts['urgent'] }}</span>
                 </button>
             @endif
@@ -84,14 +84,18 @@
                         ? trim(($tAssignee->firstname ?? '').' '.($tAssignee->lastname ?? ''))
                         : null;
                     $tFilterTags   = 'all ' . ($tIsClosed ? 'closed' : 'open') . ($ticket->priority === 'urgent' ? ' urgent' : '');
+                    $tFromThisConv = isset($rpConversationId) && $rpConversationId && (int) ($ticket->conversation_id ?? 0) === (int) $rpConversationId;
                 @endphp
                 <button class="tk-card prio-{{ $ticket->priority }} {{ $tIsClosed ? 'is-closed' : '' }}"
                         data-bv-modal="ticket"
                         data-ticket-id="{{ $ticket->id }}"
                         data-bv-ticket-tags="{{ $tFilterTags }}">
                     <div class="head">
-                        <i class="fa-solid fa-bars" style="font-size:10px;color:var(--bv-text-muted,#71717a)"></i>
+                        <i class="fa-solid fa-bars bv-x81"></i>
                         <span class="id">#{{ $ticket->ticket_number ?? $ticket->id }}</span>
+                        @if($tFromThisConv)
+                            <span class="badge bg-primary-subtle text-primary" title="Creado desde esta conversación"><i class="fas fa-link me-1"></i>De esta conversación</span>
+                        @endif
                         <span class="status">{{ $tStatusName }}</span>
                     </div>
                     <div class="title">{{ \Illuminate\Support\Str::limit($tSubject, 60) }}</div>
@@ -105,7 +109,7 @@
                             <span class="seg"><i class="fa-regular fa-folder"></i> {{ \Illuminate\Support\Str::limit($ticket->category->name ?? '', 12) }}</span>
                         @endif
                         @if($ticket->created_at)
-                            <span class="seg" style="margin-left:auto"><i class="fa-regular fa-clock"></i> {{ $ticket->created_at->diffForHumans(['short' => true]) }}</span>
+                            <span class="seg bv-x69"><i class="fa-regular fa-clock"></i> {{ $ticket->created_at->diffForHumans(['short' => true]) }}</span>
                         @endif
                     </div>
                 </button>
