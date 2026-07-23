@@ -5,6 +5,7 @@ namespace Modules\HelpdeskSla\Services;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Models\BusinessHour;
+use Modules\HelpdeskSla\Models\Holiday;
 
 /**
  * Único algoritmo de horas hábiles del producto sobre el calendario real
@@ -27,6 +28,8 @@ class BusinessHoursCalculator
      */
     public const CACHE_KEY = 'helpdesksla:business_hours_schedule';
 
+    public const HOLIDAYS_CACHE_KEY = 'helpdesksla:business_hours_holidays';
+
     /**
      * Add a number of hours to a start date, optionally honouring the configured
      * business-hours calendar (helpdesk_business_hours, with a config fallback).
@@ -45,10 +48,13 @@ class BusinessHoursCalculator
         $remaining = $hours * 60;
         $guard = 0;
 
+        $holidays = $this->holidays();
+
         while ($remaining > 0 && $guard++ < 1000) {
             $day = $schedule[$cursor->dayOfWeek] ?? null;
 
-            if ($day === null) {
+            // Día no laborable (fuera del calendario) o festivo: se salta entero.
+            if ($day === null || $this->isHoliday($cursor, $holidays)) {
                 $cursor = $cursor->addDay()->startOfDay();
 
                 continue;
@@ -113,5 +119,51 @@ class BusinessHoursCalculator
 
             return $map;
         });
+    }
+
+    /**
+     * Festivos del calendario de negocio. Los fijos (is_recurring) se indexan por
+     * 'm-d' para repetirse cada año; los puntuales por 'Y-m-d'. Degrada a lista
+     * vacía si el módulo de festivos aún no está migrado.
+     *
+     * @return array{recurring: array<string, true>, dates: array<string, true>}
+     */
+    public function holidays(): array
+    {
+        return Cache::remember(self::HOLIDAYS_CACHE_KEY, 300, function (): array {
+            $recurring = [];
+            $dates = [];
+
+            try {
+                foreach (Holiday::all() as $holiday) {
+                    if (! $holiday->date) {
+                        continue;
+                    }
+
+                    if ($holiday->is_recurring) {
+                        $recurring[$holiday->date->format('m-d')] = true;
+                    } else {
+                        $dates[$holiday->date->format('Y-m-d')] = true;
+                    }
+                }
+            } catch (\Throwable) {
+                // Tabla ausente: sin festivos (comportamiento previo).
+            }
+
+            return ['recurring' => $recurring, 'dates' => $dates];
+        });
+    }
+
+    /**
+     * ¿La fecha cae en festivo? Público para reutilizarlo desde el cálculo SLA
+     * de tickets (Ticket::calculateBusinessTime), que tiene su propio bucle de
+     * horas hábiles pero comparte la misma fuente de festivos.
+     *
+     * @param  array{recurring: array<string, true>, dates: array<string, true>}  $holidays
+     */
+    public function isHoliday(Carbon $cursor, array $holidays): bool
+    {
+        return isset($holidays['dates'][$cursor->format('Y-m-d')])
+            || isset($holidays['recurring'][$cursor->format('m-d')]);
     }
 }

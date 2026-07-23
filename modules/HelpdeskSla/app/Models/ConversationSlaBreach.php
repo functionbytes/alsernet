@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskSla\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Helpdesk\Models\Conversation;
@@ -65,12 +66,14 @@ class ConversationSlaBreach extends Model
         return $this;
     }
 
-    public function getTypeLabelAttribute(): string
+    protected function typeLabel(): Attribute
     {
-        return match ($this->sla_type) {
-            self::TYPE_FIRST_RESPONSE => __('helpdesksla::messages.breach_first_response'),
-            self::TYPE_RESOLUTION => __('helpdesksla::messages.breach_resolution'),
-            default => $this->sla_type,
-        };
+        return Attribute::make(
+            get: fn (): string => match ($this->sla_type) {
+                self::TYPE_FIRST_RESPONSE => __('helpdesksla::messages.breach_first_response'),
+                self::TYPE_RESOLUTION => __('helpdesksla::messages.breach_resolution'),
+                default => $this->sla_type,
+            },
+        );
     }
 }

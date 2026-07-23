@@ -89,6 +89,14 @@ class NotifyAgentsOnNewTicket implements ShouldQueue
         }
     }
 
+    public function failed(TicketCreated $event, \Throwable $exception): void
+    {
+        Log::error('NotifyAgentsOnNewTicket listener failed', [
+            'ticket_id' => $event->ticket->id,
+            'error' => $exception->getMessage(),
+        ]);
+    }
+
     private function resolveAgents()
     {
         $agents = User::whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))

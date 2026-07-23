@@ -13,9 +13,12 @@ class SubmitFeedbackRequest extends FormRequest
 
     public function rules(): array
     {
+        $reasonKeys = array_keys((array) config('helpdesktickets.csat_reasons', []));
+
         return [
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:1000'],
+            'reason' => ['nullable', 'string', 'in:'.implode(',', $reasonKeys)],
         ];
     }
 

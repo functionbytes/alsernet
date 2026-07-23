@@ -11,8 +11,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\SlaWarning;
 use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Services\SlaService;
-use Modules\HelpdeskTickets\Services\TicketNotificationService;
 
 /**
  * Job to send warnings for tickets approaching SLA deadline
@@ -48,7 +46,7 @@ class SendSlaWarnings implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(SlaService $slaService, TicketNotificationService $notificationService): void
+    public function handle(): void
     {
         try {
             Log::info('SendSlaWarnings job started at '.now());
@@ -76,9 +74,9 @@ class SendSlaWarnings implements ShouldQueue
                     $percentUsed = $totalTime > 0 ? ($usedTime / $totalTime) * 100 : 0;
 
                     if ($percentUsed >= $thresholdPercent) {
+                        // El aviso lo envía el listener SendSlaWarningNotification
+                        // (SlaWarningMail) suscrito a SlaWarning — no duplicar aquí.
                         event(new SlaWarning($ticket, $percentUsed));
-
-                        $notificationService->notifySlaWarning($ticket);
 
                         Log::warning("SLA warning for ticket #{$ticket->id} - {$percentUsed}% time used", [
                             'ticket_id' => $ticket->id,

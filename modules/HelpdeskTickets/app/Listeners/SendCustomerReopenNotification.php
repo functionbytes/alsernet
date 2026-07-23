@@ -63,4 +63,12 @@ class SendCustomerReopenNotification implements ShouldQueue
 
         Mail::html($html, fn ($m) => $m->to($ticket->customer->email)->subject($subject));
     }
+
+    public function failed(TicketReopened $event, \Throwable $exception): void
+    {
+        Log::error('SendCustomerReopenNotification listener failed', [
+            'ticket_id' => $event->ticket->id,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

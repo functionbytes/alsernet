@@ -62,6 +62,10 @@ class TicketsCrudController extends Controller
 
         $filter->apply($query);
 
+        // Los tickets pospuestos (snooze activo) salen de la cola salvo que se
+        // pidan explícitamente con ?snoozed=1 (vista "Pospuestos").
+        $request->boolean('snoozed') ? $query->snoozed() : $query->notSnoozed();
+
         $tickets = $query->paginate(50)->appends($request->query());
         $statuses = CatalogCacheService::statuses();
         $categories = CatalogCacheService::categories();
@@ -167,7 +171,8 @@ class TicketsCrudController extends Controller
     {
         $this->authorize('view', $ticket);
 
-        $ticket->load(['customer', 'status', 'category', 'assignee', 'group', 'slaPolicy', 'items.user', 'items.author', 'watchers']);
+        $ticket->load(['customer', 'conversation', 'status', 'category', 'assignee', 'group', 'slaPolicy', 'items.user', 'items.author', 'watchers', 'aiSuggestedCategory']);
+        $ticket->load(['followups' => fn ($q) => $q->where('is_sent', false)->with('user')]);
 
         $sidebarQuery = Ticket::query()
             ->with(['customer', 'status', 'category'])

@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketGroupRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketGroupRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketGroupRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -175,12 +176,9 @@ class TicketGroupsController extends Controller
     /**
      * Reorder groups via drag and drop.
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderTicketGroupRequest $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:helpdesk_ticket_groups,id',
-        ]);
+        $validated = $request->validated();
 
         TicketGroup::reorder($validated['ids']);
 

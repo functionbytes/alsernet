@@ -1,11 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\ApplyAiSuggestionController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\BulkTicketsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\ConversationTicketBridgeController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\HelpdeskReportsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\MacroApplyController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\RecurringTicketsController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\ScheduledRepliesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\AutomationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\MacrosController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketCannedRepliesController;
@@ -16,15 +18,20 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketGroupsContr
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketSlaPoliciesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketStatusesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\Settings\TicketViewsController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\SuggestedArticlesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketAttachmentDownloadController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketCommentsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketExportController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketFollowupsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketLifecycleController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketMessagingController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketNotesController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketPresenceController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketsCrudController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSearchController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketSideConversationsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTemplatesController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketTranslationController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TimeEntriesController;
 
 Route::group(['prefix' => ''], function () {
@@ -35,6 +42,34 @@ Route::group(['prefix' => ''], function () {
     // Macros (apply to ticket)
     Route::get('/macros/available', [MacroApplyController::class, 'list'])->name('manager.helpdesk.macros.list');
     Route::post('/tickets/{ticket}/macros/{macro}/apply', [MacroApplyController::class, 'apply'])->name('manager.helpdesk.tickets.macros.apply');
+
+    // Artículos del centro de ayuda sugeridos al responder (deflexión)
+    Route::get('/tickets/{ticket}/suggested-articles', [SuggestedArticlesController::class, 'index'])->name('manager.helpdesk.tickets.suggested-articles');
+
+    // Traducción de texto del ticket (mensaje entrante / borrador de respuesta)
+    Route::post('/tickets/{ticket}/translate', [TicketTranslationController::class, 'translate'])->name('manager.helpdesk.tickets.translate');
+
+    // Aplicar sugerencia de IA (categoría / prioridad)
+    Route::post('/tickets/{ticket}/apply-ai-suggestion', [ApplyAiSuggestionController::class, 'apply'])->name('manager.helpdesk.tickets.apply-ai-suggestion');
+
+    // Recordatorios de seguimiento del ticket
+    Route::post('/tickets/{ticket}/followups', [TicketFollowupsController::class, 'store'])->name('manager.helpdesk.tickets.followups.store');
+    Route::delete('/tickets/{ticket}/followups/{followup}', [TicketFollowupsController::class, 'destroy'])->name('manager.helpdesk.tickets.followups.destroy');
+
+    // Side conversations del ticket (hilos laterales privados)
+    Route::get('/tickets/{ticket}/side-conversations', [TicketSideConversationsController::class, 'index'])->name('manager.helpdesk.tickets.side-conversations.index');
+    Route::post('/tickets/{ticket}/side-conversations', [TicketSideConversationsController::class, 'store'])->name('manager.helpdesk.tickets.side-conversations.store');
+    Route::post('/tickets/{ticket}/side-conversations/{sideConversation}/messages', [TicketSideConversationsController::class, 'addMessage'])->name('manager.helpdesk.tickets.side-conversations.messages.store');
+    Route::post('/tickets/{ticket}/side-conversations/{sideConversation}/close', [TicketSideConversationsController::class, 'close'])->name('manager.helpdesk.tickets.side-conversations.close');
+
+    // Presencia de agentes en el ticket (agent collision)
+    Route::post('/tickets/{ticket}/presence', [TicketPresenceController::class, 'heartbeat'])->name('manager.helpdesk.tickets.presence.heartbeat');
+    Route::delete('/tickets/{ticket}/presence', [TicketPresenceController::class, 'leave'])->name('manager.helpdesk.tickets.presence.leave');
+
+    // Respuestas programadas del ticket (send later)
+    Route::get('/tickets/{ticket}/scheduled-replies', [ScheduledRepliesController::class, 'index'])->name('manager.helpdesk.tickets.scheduled-replies.index');
+    Route::post('/tickets/{ticket}/scheduled-replies', [ScheduledRepliesController::class, 'store'])->name('manager.helpdesk.tickets.scheduled-replies.store');
+    Route::delete('/tickets/{ticket}/scheduled-replies/{scheduledReply}', [ScheduledRepliesController::class, 'destroy'])->name('manager.helpdesk.tickets.scheduled-replies.destroy');
 
     // Tickets bulk action
     Route::post('/tickets/bulk', [BulkTicketsController::class, 'handle'])->name('manager.helpdesk.tickets.bulk');
@@ -62,6 +97,8 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/merge', [TicketLifecycleController::class, 'merge'])->name('manager.helpdesk.tickets.merge');
     Route::post('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'watch'])->name('manager.helpdesk.tickets.watch');
     Route::delete('/tickets/{ticket}/watch', [TicketLifecycleController::class, 'unwatch'])->name('manager.helpdesk.tickets.unwatch');
+    Route::post('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'snooze'])->name('manager.helpdesk.tickets.snooze');
+    Route::delete('/tickets/{ticket}/snooze', [TicketLifecycleController::class, 'unsnooze'])->name('manager.helpdesk.tickets.unsnooze');
     Route::post('/tickets/{ticket}/link', [TicketLifecycleController::class, 'linkTicket'])->name('manager.helpdesk.tickets.link');
     Route::delete('/tickets/{ticket}/link/{linkId}', [TicketLifecycleController::class, 'unlinkTicket'])->name('manager.helpdesk.tickets.unlink');
 

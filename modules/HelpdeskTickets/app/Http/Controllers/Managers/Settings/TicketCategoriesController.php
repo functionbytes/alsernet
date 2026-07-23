@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Http\Requests\Settings\ReorderTicketCategoryRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCategoryRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketCategoryRequest;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
@@ -198,12 +199,9 @@ class TicketCategoriesController extends Controller
     /**
      * Reorder categories via drag and drop.
      */
-    public function reorder(Request $request)
+    public function reorder(ReorderTicketCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'exists:helpdesk_ticket_categories,id',
-        ]);
+        $validated = $request->validated();
 
         TicketCategory::reorder($validated['ids']);
 

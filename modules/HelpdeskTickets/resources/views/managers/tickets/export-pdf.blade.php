@@ -35,7 +35,7 @@
                     <td>{{ $t->status?->name ?? '' }}</td>
                     <td>{{ $t->priority }}</td>
                     <td>{{ \Str::limit($t->customer?->name ?? '', 25) }}</td>
-                    <td>{{ \Str::limit($t->assignee?->name ?? '', 20) }}</td>
+                    <td>{{ \Str::limit($t->assignee?->full_name ?? '', 20) }}</td>
                     <td>{{ $t->created_at?->format('Y-m-d H:i') }}</td>
                 </tr>
             @endforeach

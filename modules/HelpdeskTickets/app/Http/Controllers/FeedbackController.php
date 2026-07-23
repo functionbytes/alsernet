@@ -55,9 +55,15 @@ class FeedbackController extends Controller
         $validated = $request->validated();
 
         if (! $ticket->rated_at) {
+            // La razón solo aplica a valoraciones bajas (insatisfacción); en
+            // valoraciones altas se ignora aunque el cliente la mande.
+            $threshold = (int) config('helpdesktickets.csat_reason_threshold', 3);
+            $reason = $validated['rating'] <= $threshold ? ($validated['reason'] ?? null) : null;
+
             $ticket->update([
                 'rating' => $validated['rating'],
                 'rating_comment' => $validated['comment'] ?? null,
+                'rating_reason' => $reason,
                 'rated_at' => now(),
             ]);
         }

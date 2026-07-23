@@ -15,7 +15,7 @@ class ReorderTicketStatusRequest extends FormRequest
     {
         return [
             'ids' => ['required', 'array'],
-            'ids.*' => ['exists:helpdesk_ticket_statuses,id'],
+            'ids.*' => ['exists:helpdesk.helpdesk_ticket_statuses,id'],
         ];
     }
 

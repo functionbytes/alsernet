@@ -12,6 +12,8 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
+        abort_if(! helpdesk_tickets_enabled(), 404);
+
         $agentId = auth()->id();
 
         $stats = Cache::remember("helpdesk:agent:dashboard:{$agentId}", 60, function () use ($agentId) {
@@ -46,6 +48,6 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        return view('helpdesk::agents.dashboard', compact('stats', 'recentTickets', 'urgentTickets'));
+        return view('helpdesktickets::agents.dashboard', compact('stats', 'recentTickets', 'urgentTickets'));
     }
 }

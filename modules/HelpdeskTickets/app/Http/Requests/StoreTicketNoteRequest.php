@@ -23,7 +23,7 @@ class StoreTicketNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ticket_id' => 'required|exists:helpdesk_tickets,id',
+            'ticket_id' => 'required|exists:helpdesk.helpdesk_tickets,id',
             'title' => 'nullable|string|max:255',
             'body' => 'required|string|max:5000',
             'color' => 'nullable|in:yellow,blue,green,red,purple,orange',

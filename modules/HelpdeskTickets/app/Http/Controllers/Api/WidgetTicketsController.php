@@ -82,20 +82,14 @@ class WidgetTicketsController extends Controller
             ], 422);
         }
 
-        $customer = Customer::where('email', $email)->first();
-
-        if (! $customer) {
-            return response()->json(['success' => true, 'has_tickets' => false, 'open_count' => 0]);
-        }
-
-        $openCount = Ticket::where('customer_id', $customer->id)
-            ->whereHas('status', fn ($q) => $q->where('is_open', true))
-            ->count();
-
+        // Respuesta neutra e idéntica exista o no el cliente/tickets: devolver
+        // has_tickets/open_count convertía este endpoint público en un oráculo
+        // de enumeración de clientes (email registrado vs no). El visitante
+        // demuestra la propiedad del email en el portal (magic-link) para ver
+        // sus tickets reales.
         return response()->json([
             'success' => true,
-            'has_tickets' => $openCount > 0,
-            'open_count' => $openCount,
+            'message' => 'Si tienes solicitudes asociadas a este correo, accede al portal para consultarlas.',
             'login_url' => route('portal.login'),
         ]);
     }

@@ -86,4 +86,12 @@ class SendCustomerReplyNotification implements ShouldQueue
             'sent_at' => now(),
         ]);
     }
+
+    public function failed(MessageAdded $event, \Throwable $exception): void
+    {
+        Log::error('SendCustomerReplyNotification listener failed', [
+            'ticket_item_id' => $event->item->id,
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

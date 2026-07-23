@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             StatusesSeeder::class,
             CategoriesSeeder::class,
             TicketViewSeeder::class,
+            HelpdeskTicketsEmailTemplatesSeeder::class,
         ]);
     }
 }

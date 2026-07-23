@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Mail\SlaBreachMail;
+use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 /**
  * Send notification when ticket SLA is breached
@@ -56,9 +57,20 @@ class SendSlaBreachNotification implements ShouldQueue
             }
         }
 
+        [$subject, $content] = TicketMailRenderer::render(
+            'helpdesk_tickets.sla_breach',
+            [
+                'TICKET_NUMBER' => $ticket->ticket_number,
+                'TICKET_SUBJECT' => $ticket->subject,
+                'CUSTOMER_NAME' => $ticket->customer->name ?? 'N/A',
+                'DUE_AT' => $ticket->sla_resolution_due_at?->format('M d, Y H:i') ?? 'N/A',
+            ],
+            'SLA Breach Alert — Ticket #'.$ticket->ticket_number,
+        );
+
         foreach ($recipients as $recipient) {
             try {
-                Mail::to($recipient->email, $recipient->name)->queue(new SlaBreachMail($ticket));
+                Mail::to($recipient->email, $recipient->name)->queue(new SlaBreachMail($ticket, $subject, $content));
 
                 Log::info('SLA breach notification sent', [
                     'ticket_id' => $ticket->id,
@@ -72,5 +84,13 @@ class SendSlaBreachNotification implements ShouldQueue
                 ]);
             }
         }
+    }
+
+    public function failed(SlaBreached $event, \Throwable $exception): void
+    {
+        Log::error('SendSlaBreachNotification listener failed', [
+            'ticket_id' => $event->ticket->id,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

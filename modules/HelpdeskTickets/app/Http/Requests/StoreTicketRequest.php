@@ -23,16 +23,16 @@ class StoreTicketRequest extends BaseTicketRequest
     public function rules(): array
     {
         return [
-            'subject' => 'nullable|string|max:255',
-            'description' => 'required|string|max:50000',
-            'category_id' => 'nullable|integer|exists:helpdesk_ticket_categories,id',
-            'priority' => 'nullable|string|in:low,normal,high,urgent',
-            'customer_id' => 'nullable|integer|exists:helpdesk_customers,id',
-            'status_id' => 'nullable|integer|exists:helpdesk_ticket_statuses,id',
-            'sla_policy_id' => 'nullable|integer|exists:helpdesk_ticket_sla_policies,id',
-            'assignee_id' => 'nullable|integer|exists:users,id',
-            'group_id' => 'nullable|integer|exists:helpdesk_groups,id',
-            'attachments' => 'nullable|array|max:10',
+            'subject' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string', 'max:50000'],
+            'category_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_categories,id'],
+            'priority' => ['nullable', 'string', 'in:low,normal,high,urgent'],
+            'customer_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_customers,id'],
+            'status_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
+            'sla_policy_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_sla_policies,id'],
+            'assignee_id' => ['nullable', 'integer', 'exists:users,id'],
+            'group_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],
+            'attachments' => ['nullable', 'array', 'max:10'],
             'attachments.*' => [
                 'file',
                 'max:'.config('helpdesk.attachments.max_size', 10240),

@@ -23,7 +23,7 @@ class StoreTicketCannedReplyRequest extends FormRequest
             'is_global' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'ticket_categories' => ['nullable', 'array'],
-            'ticket_categories.*' => ['exists:helpdesk_ticket_categories,id'],
+            'ticket_categories.*' => ['exists:helpdesk.helpdesk_ticket_categories,id'],
         ];
     }
 

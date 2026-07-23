@@ -120,22 +120,33 @@ class TicketView extends Model
     }
 
     /**
-     * Apply filters to a ticket query
+     * Apply filters to a ticket query.
+     *
+     * @param  int|null  $userId  Owner of "mine"/"assignee=me" filters. Defaults to the
+     *                            authenticated user when omitted (kept for backward compatibility).
      */
-    public function applyFilters($query)
+    public function applyFilters($query, ?int $userId = null)
     {
         $filters = $this->filters ?? [];
+        $userId ??= auth()->id();
 
         foreach ($filters as $key => $value) {
             match ($key) {
                 'status_id' => $query->where('status_id', $value),
                 'category_id' => $query->where('category_id', $value),
                 'priority' => $query->where('priority', $value),
-                'assignee_id' => $query->where('assignee_id', $value),
+                'assignee_id' => $value === 'me'
+                    ? $query->where('assignee_id', $userId)
+                    : $query->where('assignee_id', $value),
                 'group_id' => $query->where('group_id', $value),
                 'source' => $query->where('source', $value),
                 'is_archived' => $query->where('is_archived', $value),
                 'sla_breach' => $value ? $query->slaBreach() : $query,
+                'mine' => $value ? $query->where('assignee_id', $userId) : $query,
+                'unassigned' => $value ? $query->whereNull('assignee_id') : $query,
+                'tags' => $this->applyTagsFilter($query, $value),
+                'created_from' => $value ? $query->whereDate('created_at', '>=', $value) : $query,
+                'created_to' => $value ? $query->whereDate('created_at', '<=', $value) : $query,
                 default => $query,
             };
         }
@@ -145,6 +156,24 @@ class TicketView extends Model
         }
 
         return $query;
+    }
+
+    /**
+     * Match tickets whose `tags` JSON column contains any of the given tags.
+     */
+    protected function applyTagsFilter($query, mixed $tags)
+    {
+        $tags = array_filter((array) $tags);
+
+        if (empty($tags)) {
+            return $query;
+        }
+
+        return $query->where(function ($tagQuery) use ($tags) {
+            foreach ($tags as $tag) {
+                $tagQuery->orWhereJsonContains('tags', $tag);
+            }
+        });
     }
 
     /**

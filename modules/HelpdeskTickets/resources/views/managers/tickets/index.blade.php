@@ -50,7 +50,7 @@
     $ticketsPayload = $tickets->getCollection()->map(function ($t) use ($statusSlug, $sourceSlug, $slaKind, $slaText) {
         $assignee = null;
         if ($t->assignee) {
-            $name = trim(($t->assignee->firstname ?? '') . ' ' . ($t->assignee->lastname ?? '')) ?: ($t->assignee->name ?? 'Agente');
+            $name = trim(($t->assignee->firstname ?? '') . ' ' . ($t->assignee->lastname ?? '')) ?: 'Agente';
             $assignee = ['id' => $t->assignee->id, 'name' => $name];
         }
 
@@ -76,7 +76,7 @@
             'created_at_human' => optional($t->created_at)->diffForHumans(),
             'updated_at' => optional($t->updated_at)->toIso8601String(),
             'assigned_at' => optional($t->assigned_at)->toIso8601String(),
-            'unread_count' => method_exists($t, 'getUnreadCountForUser') ? (int) $t->getUnreadCountForUser(auth()->id()) : 0,
+            'unread_count' => (int) ($t->unread_count ?? $t->getUnreadCountForUser(auth()->id())),
             'sla_kind' => $slaKind($t),
             'sla_text' => $slaText($t),
             'sla_status' => $t->sla_status,

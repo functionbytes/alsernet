@@ -16,9 +16,9 @@ class StoreTicketApiRequest extends FormRequest
         return [
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
-            'category_id' => ['required', 'integer', 'exists:helpdesk_ticket_categories,id'],
+            'category_id' => ['required', 'integer', 'exists:helpdesk.helpdesk_ticket_categories,id'],
             'priority' => ['nullable', 'string', 'in:low,normal,high,urgent'],
-            'customer_id' => ['nullable', 'integer', 'exists:helpdesk_customers,id'],
+            'customer_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_customers,id'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'customer_name' => ['nullable', 'string', 'max:255'],
         ];

@@ -18,6 +18,10 @@ class MarkConversationFirstResponse
 
     public function handle(ConversationMessageCreated $event): void
     {
+        if (! helpdesk_sla_enabled()) {
+            return;
+        }
+
         $item = $event->item;
 
         if ($item->type !== 'message' || $item->is_internal) {

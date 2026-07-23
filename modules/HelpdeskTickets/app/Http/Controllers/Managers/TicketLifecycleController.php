@@ -7,8 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Managers\SnoozeTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketLink;
@@ -20,6 +22,31 @@ class TicketLifecycleController extends Controller
     public function close(Request $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
         $this->authorize('close', $ticket);
+
+        // Dependencias: no cerrar si un ticket bloqueante sigue abierto, salvo
+        // que el manager fuerce explícitamente (force=1).
+        if (! $request->boolean('force')) {
+            $blockers = $ticket->openBlockers();
+
+            if ($blockers->isNotEmpty()) {
+                $numbers = $blockers->pluck('ticket_number')->implode(', ');
+                $message = "No se puede cerrar: hay tickets bloqueantes abiertos ({$numbers}).";
+
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                        'blockers' => $blockers->map(fn ($t) => [
+                            'id' => $t->id,
+                            'ticket_number' => $t->ticket_number,
+                            'subject' => $t->subject,
+                        ])->all(),
+                    ], 409);
+                }
+
+                return back()->with('error', $message);
+            }
+        }
 
         $ticket->close();
 
@@ -41,6 +68,8 @@ class TicketLifecycleController extends Controller
         $this->authorize('resolve', $ticket);
 
         $ticket->resolve();
+
+        TicketResolved::dispatch($ticket);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -181,6 +210,29 @@ class TicketLifecycleController extends Controller
         TicketWatcher::removeWatcher($ticket->id, auth()->id());
 
         return response()->json(['watching' => false, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_unwatched')]);
+    }
+
+    public function snooze(SnoozeTicketRequest $request, Ticket $ticket): JsonResponse
+    {
+        $this->authorize('update', $ticket);
+
+        $until = $request->validated()['snoozed_until'];
+        $ticket->update(['snoozed_until' => $until, 'snoozed_by' => auth()->id()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ticket pospuesto.',
+            'data' => ['snoozed_until' => $ticket->snoozed_until?->toIso8601String()],
+        ]);
+    }
+
+    public function unsnooze(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('update', $ticket);
+
+        $ticket->update(['snoozed_until' => null, 'snoozed_by' => null]);
+
+        return response()->json(['success' => true, 'message' => 'Ticket reactivado.']);
     }
 
     public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse

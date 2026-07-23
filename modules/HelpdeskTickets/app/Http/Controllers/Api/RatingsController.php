@@ -23,10 +23,25 @@ class RatingsController extends Controller
             ->orderBy('rating')
             ->pluck('count', 'rating');
 
+        // Desglose de las razones de insatisfacción (el *por qué* del CSAT bajo).
+        $reasonLabels = (array) config('helpdesktickets.csat_reasons', []);
+        $reasons = Ticket::whereNotNull('rated_at')
+            ->whereNotNull('rating_reason')
+            ->selectRaw('rating_reason, COUNT(*) as count')
+            ->groupBy('rating_reason')
+            ->orderByDesc('count')
+            ->get()
+            ->map(fn ($row) => [
+                'reason' => $row->rating_reason,
+                'label' => $reasonLabels[$row->rating_reason] ?? $row->rating_reason,
+                'count' => (int) $row->count,
+            ]);
+
         return ApiResponse::success([
             'avgRating' => round((float) $data->avg_rating, 2),
             'totalRated' => (int) $data->total_rated,
             'distribution' => $distribution,
+            'dissatisfactionReasons' => $reasons,
         ]);
     }
 }

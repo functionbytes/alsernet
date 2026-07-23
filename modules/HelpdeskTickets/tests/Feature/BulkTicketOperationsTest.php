@@ -74,6 +74,34 @@ class BulkTicketOperationsTest extends TestCase
         $this->assertNotNull(Ticket::find($ticketB->id)->closed_at);
     }
 
+    public function test_bulk_add_tag_appends_tag_to_all_tickets(): void
+    {
+        $ticketA = $this->createTestTicket();
+        $ticketB = $this->createTestTicket(['tags' => ['existente']]);
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticketA->id, $ticketB->id],
+                'action' => 'add_tag',
+                'tag' => 'urgente-triaje',
+            ])->assertRedirect(route('manager.helpdesk.tickets.index'));
+
+        $this->assertContains('urgente-triaje', Ticket::find($ticketA->id)->tags);
+        // No duplica ni pierde las etiquetas previas.
+        $this->assertEqualsCanonicalizing(['existente', 'urgente-triaje'], Ticket::find($ticketB->id)->tags);
+    }
+
+    public function test_bulk_add_tag_requires_the_tag(): void
+    {
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'add_tag',
+            ])->assertSessionHasErrors(['tag']);
+    }
+
     public function test_bulk_assign_sets_assigned_to_on_all_tickets(): void
     {
         $agent = User::factory()->create();

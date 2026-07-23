@@ -8,32 +8,54 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
-class TicketEscalatedMail extends Mailable implements ShouldQueue
+/**
+ * El asunto y el cuerpo llegan ya renderizados por TicketMailRenderer desde la
+ * plantilla del módulo Mailer (helpdesk_tickets.ticket_escalated); este Mailable
+ * solo transporta el HTML final (igual que CustomerIdentityCodeMail/AttentionCustomMail).
+ */
+class TicketEscalatedMail extends Mailable implements ShouldQueue, TracksEmailLog
 {
-    use Queueable, SerializesModels;
+    use AddsEmailLogHeaders, Queueable, SerializesModels;
 
     public function __construct(
-        public Ticket $ticket,
-        public string $oldPriority,
-        public string $newPriority,
-    ) {}
+        public readonly Ticket $ticket,
+        public readonly string $emailSubject,
+        public readonly string $emailContent,
+    ) {
+        $this->onQueue('emails');
+    }
+
+    public function getEmailLogModule(): string
+    {
+        return 'HelpdeskTickets';
+    }
+
+    public function getEmailLogEntityType(): string
+    {
+        return Ticket::class;
+    }
+
+    public function getEmailLogEntityId(): int|string
+    {
+        return $this->ticket->id;
+    }
+
+    public function getEmailLogExternalId(): ?string
+    {
+        return $this->ticket->ticket_number !== null ? (string) $this->ticket->ticket_number : null;
+    }
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Ticket escalated: #'.$this->ticket->ticket_number,
-        );
+        return new Envelope(subject: $this->emailSubject);
     }
 
     public function content(): Content
     {
-        return new Content(
-            view: 'helpdesktickets::emails.ticket-escalated',
-            with: [
-                'ticketUrl' => route('manager.helpdesk.tickets.show', $this->ticket->id),
-            ],
-        );
+        return new Content(htmlString: $this->emailContent);
     }
 }

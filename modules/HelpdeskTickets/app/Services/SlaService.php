@@ -4,6 +4,8 @@ namespace Modules\HelpdeskTickets\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Events\SlaBreached;
 use Modules\HelpdeskTickets\Events\SlaWarning;
@@ -12,9 +14,22 @@ use Modules\HelpdeskTickets\Models\Ticket;
 
 class SlaService
 {
-    public function __construct(
-        private TicketNotificationService $notificationService
-    ) {}
+    /**
+     * English->Spanish priority slug aliases. Ticket.priority is stored in
+     * English (low/medium/high/normal/urgent) while helpdesk_priorities.slug is
+     * in Spanish (baja/normal/alta/urgente/critico). 'medium' has no dedicated
+     * priority, so it shares the 'normal' policy.
+     */
+    private const PRIORITY_SLUG_ALIASES = [
+        'low' => 'baja',
+        'medium' => 'normal',
+        'normal' => 'normal',
+        'high' => 'alta',
+        'urgent' => 'urgente',
+        'critical' => 'critico',
+    ];
+
+    private const PRIORITY_CACHE_KEY = 'helpdesktickets:priority_slug_map';
 
     /**
      * Calculate due date for a ticket based on SLA policy
@@ -62,11 +77,14 @@ class SlaService
                 ->whereNull('closed_at')
                 ->cursor()
                 ->each(function (Ticket $ticket) use ($breachedTickets) {
-                    $ticket->update(['sla_resolution_breached' => true]);
+                    // updateQuietly: es un sweep por lotes, no queremos disparar
+                    // los observers del ticket (historial, embeddings…) por cada
+                    // fila solo por marcar el flag. El aviso va por el evento SLA.
+                    $ticket->updateQuietly(['sla_resolution_breached' => true]);
 
+                    // El aviso de incumplimiento lo envía el listener
+                    // SendSlaBreachNotification (SlaBreachMail) — no duplicar aquí.
                     event(new SlaBreached($ticket));
-
-                    $this->notificationService->notifySlaBreach($ticket);
 
                     Log::warning('SLA breach detected', [
                         'ticket_id' => $ticket->id,
@@ -112,9 +130,9 @@ class SlaService
                     $warningThreshold = $policy->warning_threshold_percent ?? 80;
 
                     if ($percentUsed >= $warningThreshold) {
+                        // El aviso lo envía el listener SendSlaWarningNotification
+                        // (SlaWarningMail) suscrito a SlaWarning — no duplicar aquí.
                         event(new SlaWarning($ticket, round($percentUsed, 2)));
-
-                        $this->notificationService->notifySlaWarning($ticket);
 
                         $sentCount++;
 
@@ -244,23 +262,65 @@ class SlaService
     }
 
     /**
-     * Get applicable SLA policy for a ticket
+     * Get applicable SLA policy for a ticket.
+     *
+     * Ticket.priority is a string slug; the legacy helpdesk_sla_policies table
+     * routes by priority_id, so the slug is resolved to its id first. The prior
+     * implementation compared the non-existent $ticket->priority_id, which
+     * Eloquent turned into `WHERE priority_id IS NULL` — priority was ignored
+     * and only a global (priority-less) policy could ever match.
      */
     public function getApplicablePolicy(Ticket $ticket): ?SlaPolicy
     {
-        $policy = SlaPolicy::where('priority_id', $ticket->priority_id)
-            ->where('category_id', $ticket->category_id)
-            ->where('is_active', true)
-            ->first();
+        $priorityId = $this->priorityIdForSlug($ticket->priority);
 
-        if (! $policy) {
-            $policy = SlaPolicy::where('priority_id', $ticket->priority_id)
+        if ($priorityId !== null) {
+            $policy = SlaPolicy::where('priority_id', $priorityId)
+                ->where('category_id', $ticket->category_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($policy) {
+                return $policy;
+            }
+
+            $policy = SlaPolicy::where('priority_id', $priorityId)
                 ->whereNull('category_id')
                 ->where('is_active', true)
                 ->first();
+
+            if ($policy) {
+                return $policy;
+            }
         }
 
-        return $policy;
+        return SlaPolicy::whereNull('priority_id')
+            ->whereNull('category_id')
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Resolve a ticket priority slug (English or Spanish) to a
+     * helpdesk_priorities id, applying the English->Spanish alias when needed.
+     */
+    private function priorityIdForSlug(?string $slug): ?int
+    {
+        if ($slug === null || $slug === '') {
+            return null;
+        }
+
+        $map = Cache::remember(self::PRIORITY_CACHE_KEY, 300, function (): array {
+            return DB::connection('helpdesk')
+                ->table('helpdesk_priorities')
+                ->pluck('id', 'slug')
+                ->map(fn ($id) => (int) $id)
+                ->toArray();
+        });
+
+        $alias = self::PRIORITY_SLUG_ALIASES[$slug] ?? null;
+
+        return $map[$slug] ?? ($alias !== null ? ($map[$alias] ?? null) : null);
     }
 
     /**

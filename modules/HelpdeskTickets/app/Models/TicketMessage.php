@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Helpdesk\Database\Factories\TicketMessageFactory;
+use Modules\HelpdeskTickets\Database\Factories\TicketMessageFactory;
 
 class TicketMessage extends Model
 {

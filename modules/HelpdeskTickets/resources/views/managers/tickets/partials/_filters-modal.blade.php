@@ -102,6 +102,25 @@
                         </select>
                     </div>
 
+                    <div class="filter-group">
+                        <label for="htk-f-tags">Etiquetas</label>
+                        <input type="text" id="htk-f-tags" name="tags" class="form-control"
+                               value="{{ request('tags') }}"
+                               placeholder="Separadas por coma, ej: vip, reembolso"/>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="htk-f-created-from">Creado desde</label>
+                        <input type="date" id="htk-f-created-from" name="created_from" class="form-control"
+                               value="{{ request('created_from') }}"/>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="htk-f-created-to">Creado hasta</label>
+                        <input type="date" id="htk-f-created-to" name="created_to" class="form-control"
+                               value="{{ request('created_to') }}"/>
+                    </div>
+
                     <div class="filter-group form-check">
                         <input type="checkbox" id="htk-f-archived" name="archived" value="1"
                                class="form-check-input" @checked(request('archived'))>

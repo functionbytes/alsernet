@@ -20,6 +20,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Retención de incumplimientos
+    |--------------------------------------------------------------------------
+    | Días que se conservan las filas de helpdesk_conversation_sla_breaches ya
+    | resueltas antes de purgarlas (helpdesksla:prune-breaches, diario). 0 o
+    | menos desactiva la limpieza.
+    */
+    'breach_retention_days' => (int) env('HELPDESKSLA_BREACH_RETENTION_DAYS', 365),
+
+    /*
+    |--------------------------------------------------------------------------
     | Horario laboral por defecto
     |--------------------------------------------------------------------------
     | Usado para calcular vencimientos cuando la policy tiene business_hours_only

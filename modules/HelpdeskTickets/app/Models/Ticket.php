@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Modules\Helpdesk\Concerns\HasMessageThread;
+use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Group;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Database\Factories\TicketFactory;
 use Modules\HelpdeskTickets\Models\Concerns\HasCustomAttributes;
 use Spatie\Activitylog\LogOptions;
@@ -43,6 +46,7 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number',
         'customer_id',
+        'conversation_id',
         'category_id',
         'status_id',
         'sla_policy_id',
@@ -69,8 +73,11 @@ class Ticket extends Model
         'sla_paused_at',
         'sla_paused_duration_minutes',
         'is_archived',
+        'snoozed_until',
+        'snoozed_by',
         'rating',
         'rating_comment',
+        'rating_reason',
         'rated_at',
         'escalated_at',
         'escalation_count',
@@ -98,6 +105,7 @@ class Ticket extends Model
             'sla_next_response_breached' => 'boolean',
             'sla_resolution_breached' => 'boolean',
             'is_archived' => 'boolean',
+            'snoozed_until' => 'datetime',
             'rating' => 'integer',
             'rated_at' => 'datetime',
             'escalated_at' => 'datetime',
@@ -196,6 +204,24 @@ class Ticket extends Model
     public function slaPolicy(): BelongsTo
     {
         return $this->belongsTo(TicketSlaPolicy::class, 'sla_policy_id');
+    }
+
+    /**
+     * Conversación de origen (inbox/chat/social) desde la que se creó el ticket,
+     * si nació de una. Ambas tablas viven en la conexión helpdesk.
+     */
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class, 'conversation_id');
+    }
+
+    /**
+     * Categoría sugerida por la IA (aún no aplicada), para mostrarla en el panel
+     * con la opción de aplicarla en un clic.
+     */
+    public function aiSuggestedCategory(): BelongsTo
+    {
+        return $this->belongsTo(TicketCategory::class, 'ai_suggested_category_id');
     }
 
     /**
@@ -345,9 +371,46 @@ class Ticket extends Model
         return $this->hasMany(TicketLink::class, 'linked_ticket_id');
     }
 
+    /**
+     * Tickets bloqueantes que siguen ABIERTOS: este ticket no debería cerrarse
+     * mientras existan. Cubre las dos direcciones del enlace:
+     *  - este ticket declara `blocked_by` a otro (links)
+     *  - otro ticket declara que `blocks` a este (linkedBy)
+     *
+     * @return Collection<int, Ticket>
+     */
+    public function openBlockers(): Collection
+    {
+        $blockedByOpen = $this->links()
+            ->where('link_type', 'blocked_by')
+            ->whereHas('linkedTicket', fn ($q) => $q->whereNull('closed_at'))
+            ->with('linkedTicket:id,ticket_number,subject')
+            ->get()
+            ->map(fn (TicketLink $l) => $l->linkedTicket);
+
+        $blocksThisOpen = $this->linkedBy()
+            ->where('link_type', 'blocks')
+            ->whereHas('ticket', fn ($q) => $q->whereNull('closed_at'))
+            ->with('ticket:id,ticket_number,subject')
+            ->get()
+            ->map(fn (TicketLink $l) => $l->ticket);
+
+        return $blockedByOpen->merge($blocksThisOpen)->filter()->unique('id')->values();
+    }
+
     public function followups(): HasMany
     {
         return $this->hasMany(TicketFollowup::class, 'ticket_id')->orderBy('scheduled_at');
+    }
+
+    public function scheduledReplies(): HasMany
+    {
+        return $this->hasMany(TicketScheduledReply::class, 'ticket_id')->orderBy('deliver_at');
+    }
+
+    public function sideConversations(): HasMany
+    {
+        return $this->hasMany(TicketSideConversation::class, 'ticket_id')->latest();
     }
 
     /**
@@ -358,6 +421,28 @@ class Ticket extends Model
         $openIds = Cache::remember('helpdesk:open-status-ids', 3600, fn () => TicketStatus::where('is_open', true)->pluck('id')->toArray());
 
         return $query->whereIn('status_id', $openIds);
+    }
+
+    /**
+     * Scope: tickets pospuestos (snooze activo — reaparecen en el futuro).
+     */
+    public function scopeSnoozed(Builder $query): Builder
+    {
+        return $query->whereNotNull('snoozed_until')->where('snoozed_until', '>', now());
+    }
+
+    /**
+     * Scope: excluye los pospuestos de las colas activas (snooze vencido o nulo
+     * cuenta como no-pospuesto). Úsalo en los listados por defecto.
+     */
+    public function scopeNotSnoozed(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q->whereNull('snoozed_until')->orWhere('snoozed_until', '<=', now()));
+    }
+
+    public function isSnoozed(): bool
+    {
+        return $this->snoozed_until !== null && $this->snoozed_until->isFuture();
     }
 
     /**
@@ -522,6 +607,15 @@ class Ticket extends Model
             $this->sla_first_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
 
+        // Calculate next-response due date (agente debe responder de nuevo tras
+        // una réplica del cliente). Antes la columna sla_next_response_due_at
+        // existía pero nunca se rellenaba: el vencimiento de siguiente respuesta
+        // quedaba sin control.
+        if ($policy->next_response_time) {
+            $minutes = (int) ($policy->next_response_time * $multiplier);
+            $this->sla_next_response_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
+        }
+
         // Calculate resolution due date
         if ($policy->resolution_time) {
             $minutes = (int) ($policy->resolution_time * $multiplier);
@@ -554,11 +648,18 @@ class Ticket extends Model
         $current = $start->copy()->setTimezone($policy->timezone ?? 'UTC');
         $remainingMinutes = $minutes;
 
+        // Festivos del calendario de negocio (dependencia blanda con HelpdeskSla:
+        // sin ese módulo, el cálculo sigue sólo con días de la semana).
+        $calculator = class_exists(BusinessHoursCalculator::class)
+            ? app(BusinessHoursCalculator::class)
+            : null;
+        $holidays = $calculator?->holidays() ?? ['recurring' => [], 'dates' => []];
+
         while ($remainingMinutes > 0) {
             $dayOfWeek = strtolower($current->format('l'));
 
-            // Skip if not a business day
-            if (! isset($businessHours[$dayOfWeek])) {
+            // Skip if not a business day or a holiday
+            if (! isset($businessHours[$dayOfWeek]) || ($calculator && $calculator->isHoliday($current, $holidays))) {
                 $current->addDay()->setTime(0, 0);
 
                 continue;

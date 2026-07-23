@@ -15,6 +15,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\TicketService;
 use PhpImap\IncomingMailAttachment;
 use PhpImap\Mailbox;
 
@@ -28,6 +29,8 @@ class FetchTicketEmailsJob implements ShouldQueue
 
     /** @var array<int, int> */
     public array $backoff = [30, 60, 120];
+
+    protected ?TicketService $ticketService = null;
 
     public function __construct()
     {
@@ -48,17 +51,97 @@ class FetchTicketEmailsJob implements ShouldQueue
     }
 
     /**
-     * Execute the job.
+     * Execute the job. Procesa las conexiones IMAP definidas en el setting
+     * `incoming_email` (multi-buzón); si no hay ninguna, cae al buzón único de
+     * config('helpdesk.email.imap') para no romper instalaciones existentes.
      */
-    public function handle(): void
+    public function handle(?TicketService $ticketService = null): void
     {
+        $this->ticketService = $ticketService;
+
         try {
-            $this->fetchEmails();
+            $connections = $this->incomingConnections();
+
+            if (empty($connections)) {
+                $this->fetchEmails();
+
+                return;
+            }
+
+            foreach ($connections as $connection) {
+                $createTickets = (bool) ($connection['create_tickets'] ?? false);
+                $createReplies = (bool) ($connection['create_replies'] ?? false);
+
+                // Sin ninguna acción habilitada no hay nada que hacer con este buzón.
+                if (! $createTickets && ! $createReplies) {
+                    continue;
+                }
+
+                try {
+                    $this->processConnection($connection);
+                } catch (\Throwable $e) {
+                    Log::error('FetchTicketEmailsJob: error procesando conexión', [
+                        'connection' => $connection['name'] ?? '?',
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
         } catch (\Exception $e) {
             Log::error('Error fetching ticket emails: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Conexiones IMAP entrantes definidas en el setting `incoming_email`.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    protected function incomingConnections(): array
+    {
+        $raw = DB::table('settings')->where('key', 'incoming_email')->value('value');
+
+        if (! $raw) {
+            return [];
+        }
+
+        $data = json_decode((string) $raw, true);
+
+        return $data['imap']['connections'] ?? [];
+    }
+
+    /**
+     * Conecta a un buzón IMAP concreto y procesa sus mensajes no leídos.
+     *
+     * @param  array<string, mixed>  $connection
+     */
+    protected function processConnection(array $connection): void
+    {
+        $encryption = $connection['encryption'] ?? 'ssl';
+        $folder = $connection['folder'] ?? 'INBOX';
+        $connectionString = '{'.$connection['host'].':'.($connection['port'] ?? 993).'/imap/'.$encryption.'}'.$folder;
+
+        $mailbox = new Mailbox(
+            $connectionString,
+            $connection['username'] ?? '',
+            $connection['password'] ?? '',
+            storage_path('app/imap-attachments'),
+            'UTF-8'
+        );
+
+        try {
+            foreach ($mailbox->searchMailbox('UNSEEN') as $messageId) {
+                try {
+                    $this->processIncomingEmail($mailbox->getMail($messageId), $connection);
+                    $mailbox->setFlag($messageId, 'Seen');
+                } catch (\Throwable $e) {
+                    Log::error("Error processing email {$messageId}: ".$e->getMessage());
+                }
+            }
+        } finally {
+            $mailbox->closeMailbox();
         }
     }
 
@@ -117,7 +200,7 @@ class FetchTicketEmailsJob implements ShouldQueue
     /**
      * Process a single incoming email message.
      */
-    protected function processIncomingEmail($message): void
+    protected function processIncomingEmail($message, array $connection = []): void
     {
         // Parse email data
         $parsed = [
@@ -139,7 +222,7 @@ class FetchTicketEmailsJob implements ShouldQueue
         $parsed['attachments'] = $this->parseAttachments($message);
 
         // Find or create ticket
-        $ticket = $this->findOrCreateTicket($parsed);
+        $ticket = $this->findOrCreateTicket($parsed, $connection);
 
         if (! $ticket) {
             Log::warning('Could not create ticket for email: '.$parsed['subject']);
@@ -171,7 +254,7 @@ class FetchTicketEmailsJob implements ShouldQueue
     /**
      * Find existing ticket or create new one for email.
      */
-    protected function findOrCreateTicket(array $parsed): ?Ticket
+    protected function findOrCreateTicket(array $parsed, array $connection = []): ?Ticket
     {
         // Try to find by Message-ID threading first
         if ($parsed['in_reply_to']) {
@@ -207,6 +290,15 @@ class FetchTicketEmailsJob implements ShouldQueue
                 ]);
             }
         }
+
+        // Llegados aquí no se pudo enlazar con un ticket existente, así que
+        // habría que CREAR uno nuevo. Si esta conexión no permite crear tickets
+        // (solo respuestas), no se crea: se devuelve null y el email se ignora.
+        // Sin conexión (fallback de buzón único) se mantiene el comportamiento previo.
+        if ($connection !== [] && ! ($connection['create_tickets'] ?? false)) {
+            return null;
+        }
+
         $customer = Customer::where('email', $fromEmail)->first();
 
         if (! $customer) {
@@ -228,6 +320,9 @@ class FetchTicketEmailsJob implements ShouldQueue
             'source' => 'email',
             'status_id' => TicketStatus::where('is_default', true)->first()?->id ?? 1,
             'priority' => $this->detectPriority($parsed['subject']),
+            // Explícito (no depender del TicketObserver::creating): el número se
+            // genera aquí, dentro de la transacción que hace efectivo el lockForUpdate.
+            'ticket_number' => Ticket::generateTicketNumber(),
         ]));
 
         Log::info("Created new ticket #{$ticket->ticket_number} from email");

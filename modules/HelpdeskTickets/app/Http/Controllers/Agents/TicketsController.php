@@ -7,6 +7,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Http\Requests\Agents\AssignTicketRequest;
+use Modules\HelpdeskTickets\Http\Requests\Agents\UpdateTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
@@ -115,17 +117,11 @@ class TicketsController extends Controller
         return view('helpdesktickets::agents.tickets.edit', compact('ticket', 'categories', 'statuses'));
     }
 
-    public function update(Request $request, Ticket $ticket): RedirectResponse
+    public function update(UpdateTicketRequest $request, Ticket $ticket): RedirectResponse
     {
         $this->authorize('update', $ticket);
 
-        $validated = $request->validate([
-            'subject' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'status_id' => 'sometimes|integer|exists:helpdesk_ticket_statuses,id',
-            'category_id' => 'sometimes|integer|exists:helpdesk_ticket_categories,id',
-            'priority' => 'sometimes|string|in:low,normal,high,urgent',
-        ]);
+        $validated = $request->validated();
 
         $ticket->update($validated);
 
@@ -142,11 +138,10 @@ class TicketsController extends Controller
             ->with('success', __('helpdesk::helpdesk.messages.ticket_deleted'));
     }
 
-    public function assign(Request $request, Ticket $ticket): RedirectResponse
+    public function assign(AssignTicketRequest $request, Ticket $ticket): RedirectResponse
     {
         $this->authorize('assign', $ticket);
 
-        $request->validate(['agent_id' => 'required|integer|exists:users,id']);
         $ticket->assignTo($request->integer('agent_id'));
 
         return back()->with('success', __('helpdesk::helpdesk.messages.ticket_assigned'));

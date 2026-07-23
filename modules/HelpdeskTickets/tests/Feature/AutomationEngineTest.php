@@ -77,6 +77,24 @@ class AutomationEngineTest extends TestCase
         $this->assertNotContains('revisar', $ticket->fresh()->tags ?? []);
     }
 
+    public function test_resolved_trigger_runs_its_automation(): void
+    {
+        Automation::create([
+            'name' => 'Etiqueta al resolver',
+            'trigger_event' => 'ticket.resolved',
+            'conditions' => [],
+            'actions' => [['type' => 'add_tag', 'value' => 'resuelto-auto']],
+            'is_active' => true,
+            'order' => 1,
+        ]);
+
+        $ticket = $this->ticket([]);
+
+        app(AutomationEngine::class)->handle('ticket.resolved', $ticket);
+
+        $this->assertContains('resuelto-auto', $ticket->fresh()->tags ?? []);
+    }
+
     public function test_inactive_automation_does_not_run(): void
     {
         Automation::create([

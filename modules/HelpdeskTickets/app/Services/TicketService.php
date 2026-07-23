@@ -43,10 +43,12 @@ class TicketService
 
                 $ticket = Ticket::create($data);
 
-                $dueDate = $this->slaService->calculateDueDate($ticket);
-                if ($dueDate) {
-                    $ticket->update(['due_at' => $dueDate]);
-                }
+                // El SLA lo calcula TicketObserver::created vía
+                // Ticket::calculateSlaDueDates() con TicketSlaPolicy (la que
+                // configura la UI). El antiguo calculateDueDate() escribía a
+                // `due_at` —columna inexistente— vía el modelo SlaPolicy
+                // @deprecated: era un no-op. Se elimina para no consultar la
+                // tabla obsoleta ni divergir del motor real.
 
                 event(new TicketCreated($ticket));
 
@@ -74,16 +76,17 @@ class TicketService
     {
         try {
             return DB::transaction(function () use ($ticket, $data) {
-                $originalPriority = $ticket->priority_id;
+                $originalPriority = $ticket->priority;
                 $originalStatus = $ticket->status_id;
 
                 $ticket->update($data);
 
-                if (isset($data['priority_id']) && $data['priority_id'] !== $originalPriority) {
-                    $dueDate = $this->slaService->calculateDueDate($ticket);
-                    if ($dueDate) {
-                        $ticket->update(['due_at' => $dueDate]);
-                    }
+                // Al cambiar la prioridad, recalcular los vencimientos SLA con el
+                // motor real (TicketSlaPolicy + priority_multipliers). Antes la
+                // condición miraba `priority_id` —columna inexistente— y escribía
+                // a `due_at` —tampoco existe— vía el SlaPolicy @deprecated: no-op.
+                if (array_key_exists('priority', $data) && $data['priority'] !== $originalPriority) {
+                    $ticket->calculateSlaDueDates();
                 }
 
                 if (isset($data['status_id']) && $data['status_id'] !== $originalStatus) {
@@ -115,7 +118,15 @@ class TicketService
     }
 
     /**
-     * Add a message to a ticket
+     * Add a message to a ticket.
+     *
+     * @deprecated Escribe en `helpdesk_ticket_messages` (TicketMessage), que NO
+     * es la tabla del hilo del inbox de manager — ese hilo se renderiza desde
+     * `$ticket->items` (TicketItem). Un mensaje creado por aquí NO aparecería en
+     * el hilo. Sin callers actuales. Para responder a un ticket usar la vía
+     * única TicketMessagingController::createMessageItem (TicketItem + eventos).
+     * TicketMessage solo debe usarse en el subsistema widget/portal/público
+     * (storeAttachments), no para el hilo del agente.
      */
     public function addMessage(Ticket $ticket, array $data): TicketMessage
     {

@@ -8,6 +8,10 @@ use Modules\HelpdeskTickets\Models\Ticket;
 
 class MacroExecutor
 {
+    public function __construct(
+        private readonly TicketVariableInterpolator $interpolator = new TicketVariableInterpolator,
+    ) {}
+
     public function run(Macro $macro, Ticket $ticket): void
     {
         DB::connection('helpdesk')->transaction(function () use ($macro, $ticket) {
@@ -31,14 +35,14 @@ class MacroExecutor
                 'type' => 'message',
                 'user_id' => auth()->id(),
                 'author_id' => auth()->id(),
-                'body' => $this->interpolate($body, $ticket),
+                'body' => $this->interpolator->interpolate($body, $ticket),
                 'is_internal' => false,
             ]),
             'internal_note' => $ticket->items()->create([
                 'type' => 'message',
                 'user_id' => auth()->id(),
                 'author_id' => auth()->id(),
-                'body' => $this->interpolate($body, $ticket),
+                'body' => $this->interpolator->interpolate($body, $ticket),
                 'is_internal' => true,
             ]),
             'assign_group' => $ticket->update(['group_id' => $value]),
@@ -49,19 +53,5 @@ class MacroExecutor
             'close' => $ticket->update(['closed_at' => now()]),
             default => null,
         };
-    }
-
-    private function interpolate(?string $body, Ticket $ticket): string
-    {
-        if (! $body) {
-            return '';
-        }
-
-        return strtr($body, [
-            '{{ticket_number}}' => $ticket->ticket_number,
-            '{{ticket_title}}' => $ticket->subject ?? $ticket->title ?? '',
-            '{{customer_name}}' => $ticket->customer?->name ?? 'Cliente',
-            '{{agent_name}}' => auth()->user()?->name ?? 'Agente',
-        ]);
     }
 }

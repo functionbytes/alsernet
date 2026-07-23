@@ -255,6 +255,51 @@ class AssignmentService
     }
 
     /**
+     * Auto-assign a ticket to an agent that has ALL the skills detected from its
+     * subject+description (reusing the shared SkillsRoutingService). Among the
+     * matching, available agents it picks the one with the lowest open workload.
+     * Never leaves a ticket unassigned: if no skills are detected or no skilled
+     * agent is available, it degrades to workload-based assignment.
+     */
+    public function autoAssignBySkills(Ticket $ticket): ?TicketAssignment
+    {
+        try {
+            $router = app(SkillsRoutingService::class);
+
+            $skillIds = $router->detectSkillIds(trim($ticket->subject.' '.(string) $ticket->description));
+
+            if ($skillIds === []) {
+                return $this->autoAssignByWorkload($ticket);
+            }
+
+            $skilledAgentIds = $router->agentsWithAllSkills($skillIds);
+
+            if ($skilledAgentIds === []) {
+                return $this->autoAssignByWorkload($ticket);
+            }
+
+            $workloads = Ticket::whereIn('assignee_id', $skilledAgentIds)
+                ->whereNull('closed_at')
+                ->selectRaw('assignee_id, COUNT(*) as workload')
+                ->groupBy('assignee_id')
+                ->pluck('workload', 'assignee_id');
+
+            $selectedAgentId = collect($skilledAgentIds)
+                ->sortBy(fn ($id) => $workloads[$id] ?? 0)
+                ->first();
+
+            return $this->assignTicket($ticket, $selectedAgentId, 'Auto-assigned by skills');
+        } catch (\Exception $e) {
+            Log::error('Error in skills assignment', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
      * Get current workload (ticket count) for an agent
      */
     public function getAgentWorkload(int $agentId): int

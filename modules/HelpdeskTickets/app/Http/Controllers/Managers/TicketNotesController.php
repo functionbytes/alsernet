@@ -5,26 +5,11 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketNoteRequest;
-use Modules\HelpdeskTickets\Http\Requests\UpdateTicketNoteRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketNote;
 
 class TicketNotesController extends Controller
 {
-    /**
-     * Display a listing of notes for a ticket (pinned first).
-     */
-    public function index(Ticket $ticket): JsonResponse
-    {
-        $this->authorize('view', $ticket);
-
-        $notes = $ticket->notes()
-            ->orderByPinnedThenRecent()
-            ->paginate(50);
-
-        return response()->json($notes);
-    }
-
     /**
      * Store a newly created note in storage.
      */
@@ -54,29 +39,6 @@ class TicketNotesController extends Controller
         if ($note->ticket_id !== $ticket->id) {
             abort(404);
         }
-
-        return response()->json($note->load('user'));
-    }
-
-    /**
-     * Update the specified note in storage.
-     */
-    public function update(
-        UpdateTicketNoteRequest $request,
-        Ticket $ticket,
-        TicketNote $note
-    ): JsonResponse {
-        if ($note->ticket_id !== $ticket->id) {
-            abort(404);
-        }
-
-        $this->authorize('update', $note);
-
-        $note->update([
-            'title' => $request->input('title') ?? $note->title,
-            'body' => $request->input('body') ?? $note->body,
-            'color' => $request->input('color') ?? $note->color,
-        ]);
 
         return response()->json($note->load('user'));
     }
@@ -140,21 +102,5 @@ class TicketNotesController extends Controller
             'message' => 'Color de nota actualizado',
             'color' => $note->color,
         ]);
-    }
-
-    /**
-     * Restore a soft-deleted note.
-     */
-    public function restore(Ticket $ticket, TicketNote $note): JsonResponse
-    {
-        if ($note->ticket_id !== $ticket->id) {
-            abort(404);
-        }
-
-        $this->authorize('restore', $note);
-
-        $note->restore();
-
-        return response()->json($note->load('user'));
     }
 }
