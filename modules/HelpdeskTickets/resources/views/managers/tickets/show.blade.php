@@ -79,6 +79,14 @@
                 </div>
             </div>
 
+            {{-- Aviso de colisión de agentes (otro agente viendo/respondiendo) --}}
+            <div id="collision-banner"
+                class="alert alert-warning py-2 px-3 mb-0 border-0 border-bottom rounded-0 d-none small"
+                data-heartbeat-url="{{ route('manager.helpdesk.tickets.presence.heartbeat', $ticket->id) }}"
+                data-leave-url="{{ route('manager.helpdesk.tickets.presence.leave', $ticket->id) }}">
+                <i class="fas fa-users me-1"></i><span id="collision-text"></span>
+            </div>
+
             {{-- Messages thread --}}
             <div class="p-3 ticket-messages-scroll" data-simplebar id="messagesContainer">
                 @forelse($ticket->items as $item)
@@ -501,6 +509,40 @@
                             </button>
                         </div>
                     </div>
+
+                    {{-- Respuestas programadas (send later) --}}
+                    <div class="mb-3 p-2 border rounded" id="scheduled-box"
+                        data-store-url="{{ route('manager.helpdesk.tickets.scheduled-replies.store', $ticket->id) }}"
+                        data-index-url="{{ route('manager.helpdesk.tickets.scheduled-replies.index', $ticket->id) }}"
+                        data-base-url="{{ url('panel/helpdesk/tickets/'.$ticket->id.'/scheduled-replies') }}">
+                        <small class="text-muted d-block mb-2 fw-bold"><i class="fas fa-clock me-1"></i>Respuestas programadas</small>
+                        <div id="scheduled-list">
+                            <div class="text-muted small py-1" id="scheduled-empty">Sin respuestas programadas.</div>
+                        </div>
+                        <div class="mt-2">
+                            <textarea class="form-control form-control-sm mb-1" id="scheduled-body" rows="2" maxlength="20000" placeholder="Respuesta a enviar..."></textarea>
+                            <input type="datetime-local" class="form-control form-control-sm mb-1" id="scheduled-when">
+                            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="add-scheduled">
+                                <i class="fas fa-paper-plane me-1"></i>Programar envío
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Conversaciones laterales (side conversations) --}}
+                    <div class="mb-3 p-2 border rounded" id="side-box"
+                        data-index-url="{{ route('manager.helpdesk.tickets.side-conversations.index', $ticket->id) }}"
+                        data-store-url="{{ route('manager.helpdesk.tickets.side-conversations.store', $ticket->id) }}"
+                        data-base-url="{{ url('panel/helpdesk/tickets/'.$ticket->id.'/side-conversations') }}">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <small class="text-muted fw-bold"><i class="fas fa-comments me-1"></i>Conversaciones laterales</small>
+                            <button type="button" class="btn btn-sm btn-light py-0 px-1" data-bs-toggle="modal" data-bs-target="#sideConversationModal" title="Nueva">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div id="side-list">
+                            <div class="text-muted small py-1" id="side-empty">Sin conversaciones laterales.</div>
+                        </div>
+                    </div>
                 @endcan
 
                 @if($ticket->custom_fields)
@@ -560,6 +602,23 @@
                             </button>
                         </form>
                     @endif
+                @endcan
+
+                @can('update', $ticket)
+                    <div id="snooze-actions"
+                        data-snooze-url="{{ route('manager.helpdesk.tickets.snooze', $ticket->id) }}"
+                        data-unsnooze-url="{{ route('manager.helpdesk.tickets.unsnooze', $ticket->id) }}">
+                        @if($ticket->isSnoozed())
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100 mb-2" id="unsnooze-btn">
+                                <i class="fas fa-bell me-1"></i> Reactivar (pospuesto hasta {{ $ticket->snoozed_until?->format('d/m H:i') }})
+                            </button>
+                        @elseif(!$ticket->isClosed())
+                            <button type="button" class="btn btn-light btn-sm w-100 mb-2"
+                                    data-bs-toggle="modal" data-bs-target="#snooze-ticket-modal">
+                                <i class="fas fa-clock me-1"></i> Posponer
+                            </button>
+                        @endif
+                    </div>
                 @endcan
 
                 @can('archive', $ticket)
@@ -747,6 +806,75 @@
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger w-100">Eliminar</button>
                         </form>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
+
+    @can('update', $ticket)
+        {{-- Modal: posponer ticket --}}
+        <div class="modal fade" id="snooze-ticket-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Posponer ticket</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label class="form-label small">Reactivar el ticket el</label>
+                        <input type="datetime-local" class="form-control" id="snooze-until">
+                        <div class="form-text">El ticket se ocultará del listado hasta esa fecha.</div>
+                    </div>
+                    <div class="modal-footer d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-primary w-100" id="snooze-confirm-btn">Posponer</button>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal: nueva conversación lateral --}}
+        <div class="modal fade" id="sideConversationModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Nueva conversación lateral</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small">Asunto</label>
+                            <input type="text" class="form-control" id="side-subject" maxlength="255">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Participante</label>
+                            <select class="form-select" id="side-participant-type">
+                                <option value="team">Compañero de equipo</option>
+                                <option value="external_email">Contacto externo (email)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="side-team-wrap">
+                            <label class="form-label small">Compañero</label>
+                            <select class="form-select" id="side-participant-user">
+                                <option value="">Selecciona...</option>
+                                @foreach($agents as $agent)
+                                    <option value="{{ $agent->id }}">{{ $agent->full_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3 d-none" id="side-email-wrap">
+                            <label class="form-label small">Email del contacto</label>
+                            <input type="email" class="form-control" id="side-participant-email" maxlength="255">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small">Mensaje</label>
+                            <textarea class="form-control" id="side-message" rows="4" maxlength="20000"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-primary w-100" id="side-create-btn">Crear conversación</button>
                         <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
                     </div>
                 </div>
@@ -1274,6 +1402,161 @@ $(function () {
         }).always(function () {
             $btn.prop('disabled', false);
         });
+    });
+});
+</script>
+@endpush
+
+@push('scripts')
+<script>
+$(function () {
+    var CSRF = { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') };
+    function esc(s) { return $('<div>').text(s == null ? '' : s).html(); }
+
+    // ── Colisión de agentes: heartbeat cada 15s ──
+    var $collision = $('#collision-banner');
+    if ($collision.length) {
+        function renderViewers(viewers) {
+            if (!viewers || !viewers.length) { $collision.addClass('d-none'); return; }
+            var parts = viewers.map(function (v) {
+                return esc(v.name) + (v.action === 'replying' ? ' (respondiendo)' : ' (viendo)');
+            });
+            $('#collision-text').text(parts.join(', ') + ' en este ticket');
+            $collision.removeClass('d-none');
+        }
+        function beat() {
+            var action = ($('#reply-body').val() || '').trim().length ? 'replying' : 'viewing';
+            $.ajax({
+                url: $collision.data('heartbeat-url'), method: 'POST', dataType: 'json',
+                data: { action: action }, headers: CSRF,
+            }).done(function (r) { renderViewers(r && r.data ? r.data.viewers : []); });
+        }
+        beat();
+        setInterval(beat, 15000);
+        // La salida no se notifica activamente: la presencia se purga sola a los
+        // 35s (TTL del servicio), evitando un beacon que no puede cumplir CSRF/DELETE.
+    }
+
+    // ── Posponer / reactivar ticket (snooze) ──
+    var $snoozeActions = $('#snooze-actions');
+    $('#snooze-confirm-btn').on('click', function () {
+        var until = $('#snooze-until').val();
+        if (!until) { toastr.info('Elige fecha y hora'); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({ url: $snoozeActions.data('snooze-url'), method: 'POST', dataType: 'json', data: { snoozed_until: until }, headers: CSRF })
+        .done(function () { toastr.success('Ticket pospuesto'); location.reload(); })
+        .fail(function (xhr) {
+            toastr.error(xhr.responseJSON && xhr.responseJSON.errors ? Object.values(xhr.responseJSON.errors)[0][0] : 'No se pudo posponer');
+            $btn.prop('disabled', false);
+        });
+    });
+    $('#unsnooze-btn').on('click', function () {
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({ url: $snoozeActions.data('unsnooze-url'), method: 'DELETE', dataType: 'json', headers: CSRF })
+        .done(function () { toastr.success('Ticket reactivado'); location.reload(); })
+        .fail(function () { toastr.error('No se pudo reactivar'); $btn.prop('disabled', false); });
+    });
+
+    // ── Respuestas programadas (send later) ──
+    var $sch = $('#scheduled-box');
+    function schRow(r) {
+        var dt = new Date(r.deliver_at).toLocaleString();
+        return '<div class="d-flex align-items-start justify-content-between gap-2 py-1 border-bottom" data-scheduled-id="' + r.id + '">'
+            + '<div class="small"><span class="fw-semibold">' + esc(dt) + '</span>'
+            + '<div class="text-muted">' + esc((r.body || '').substring(0, 60)) + '</div></div>'
+            + '<button type="button" class="btn btn-sm btn-light py-0 px-1 cancel-scheduled" title="Cancelar"><i class="fas fa-xmark"></i></button></div>';
+    }
+    function loadScheduled() {
+        $.getJSON($sch.data('index-url')).done(function (r) {
+            var list = (r && r.data) || [];
+            if (!list.length) { $('#scheduled-list').html('<div class="text-muted small py-1" id="scheduled-empty">Sin respuestas programadas.</div>'); return; }
+            $('#scheduled-list').html(list.map(schRow).join(''));
+        });
+    }
+    if ($sch.length) { loadScheduled(); }
+    $('#add-scheduled').on('click', function () {
+        var body = ($('#scheduled-body').val() || '').trim();
+        var when = $('#scheduled-when').val();
+        if (!body) { toastr.info('Escribe la respuesta'); return; }
+        if (!when) { toastr.info('Elige fecha y hora'); return; }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({ url: $sch.data('store-url'), method: 'POST', dataType: 'json', data: { body: body, deliver_at: when }, headers: CSRF })
+        .done(function () {
+            $('#scheduled-body').val(''); $('#scheduled-when').val('');
+            toastr.success('Respuesta programada'); loadScheduled();
+        }).fail(function (xhr) {
+            toastr.error(xhr.responseJSON && xhr.responseJSON.errors ? Object.values(xhr.responseJSON.errors)[0][0] : 'No se pudo programar');
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+    $(document).on('click', '.cancel-scheduled', function () {
+        var $row = $(this).closest('[data-scheduled-id]');
+        $.ajax({ url: $sch.data('base-url') + '/' + $row.data('scheduled-id'), method: 'DELETE', dataType: 'json', headers: CSRF })
+        .done(function () { $row.remove(); if (!$('#scheduled-list').children().length) { loadScheduled(); } toastr.success('Cancelada'); })
+        .fail(function () { toastr.error('No se pudo cancelar'); });
+    });
+
+    // ── Conversaciones laterales ──
+    var $side = $('#side-box');
+    $('#side-participant-type').on('change', function () {
+        var team = $(this).val() === 'team';
+        $('#side-team-wrap').toggleClass('d-none', !team);
+        $('#side-email-wrap').toggleClass('d-none', team);
+    });
+    function sideRow(s) {
+        var badge = s.status === 'open' ? '<span class="badge bg-success-subtle text-success">abierta</span>' : '<span class="badge bg-secondary-subtle text-secondary">cerrada</span>';
+        var who = s.participant_type === 'team' ? esc(s.participant || 'Compañero') : esc(s.participant_email || '');
+        var msgs = (s.messages || []).map(function (m) {
+            return '<div class="small text-muted border-start ps-2 mt-1">' + esc(m.body) + '</div>';
+        }).join('');
+        var reply = s.status === 'open'
+            ? '<div class="input-group input-group-sm mt-1"><input type="text" class="form-control side-reply-input" placeholder="Responder..."><button class="btn btn-outline-primary side-reply-btn" type="button"><i class="fas fa-paper-plane"></i></button></div>'
+            + '<button type="button" class="btn btn-sm btn-light w-100 mt-1 side-close-btn">Cerrar conversación</button>'
+            : '';
+        return '<div class="py-2 border-bottom" data-side-id="' + s.id + '">'
+            + '<div class="d-flex justify-content-between align-items-center"><span class="small fw-semibold">' + esc(s.subject) + '</span>' + badge + '</div>'
+            + '<div class="text-muted small"><i class="fas fa-user me-1"></i>' + who + '</div>' + msgs + reply + '</div>';
+    }
+    function loadSide() {
+        $.getJSON($side.data('index-url')).done(function (r) {
+            var list = (r && r.data) || [];
+            if (!list.length) { $('#side-list').html('<div class="text-muted small py-1" id="side-empty">Sin conversaciones laterales.</div>'); return; }
+            $('#side-list').html(list.map(sideRow).join(''));
+        });
+    }
+    if ($side.length) { loadSide(); }
+    $('#side-create-btn').on('click', function () {
+        var type = $('#side-participant-type').val();
+        var payload = {
+            subject: ($('#side-subject').val() || '').trim(),
+            participant_type: type,
+            body: ($('#side-message').val() || '').trim(),
+        };
+        if (type === 'team') { payload.participant_user_id = $('#side-participant-user').val(); }
+        else { payload.participant_email = ($('#side-participant-email').val() || '').trim(); }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({ url: $side.data('store-url'), method: 'POST', dataType: 'json', data: payload, headers: CSRF })
+        .done(function () {
+            $('#sideConversationModal').modal('hide');
+            $('#side-subject, #side-message, #side-participant-email').val('');
+            toastr.success('Conversación lateral creada'); loadSide();
+        }).fail(function (xhr) {
+            toastr.error(xhr.responseJSON && xhr.responseJSON.errors ? Object.values(xhr.responseJSON.errors)[0][0] : 'No se pudo crear');
+        }).always(function () { $btn.prop('disabled', false); });
+    });
+    $(document).on('click', '.side-reply-btn', function () {
+        var $wrap = $(this).closest('[data-side-id]');
+        var $input = $wrap.find('.side-reply-input');
+        var body = ($input.val() || '').trim();
+        if (!body) { return; }
+        $.ajax({ url: $side.data('base-url') + '/' + $wrap.data('side-id') + '/messages', method: 'POST', dataType: 'json', data: { body: body }, headers: CSRF })
+        .done(function () { $input.val(''); toastr.success('Mensaje enviado'); loadSide(); })
+        .fail(function () { toastr.error('No se pudo enviar'); });
+    });
+    $(document).on('click', '.side-close-btn', function () {
+        var $wrap = $(this).closest('[data-side-id]');
+        $.ajax({ url: $side.data('base-url') + '/' + $wrap.data('side-id') + '/close', method: 'POST', dataType: 'json', headers: CSRF })
+        .done(function () { toastr.success('Conversación cerrada'); loadSide(); })
+        .fail(function () { toastr.error('No se pudo cerrar'); });
     });
 });
 </script>
