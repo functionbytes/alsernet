@@ -79,6 +79,7 @@ class HelpdeskSlaServiceProvider extends ServiceProvider
             'title' => 'Helpdesk — SLA',
             'items' => [
                 ['label' => 'Incumplimientos SLA', 'route' => 'helpdesksla.breaches.index', 'permission' => 'helpdesksla.view'],
+                ['label' => 'Festivos', 'route' => 'helpdesksla.holidays.index', 'permission' => 'helpdesksla.view'],
             ],
         ]);
     }

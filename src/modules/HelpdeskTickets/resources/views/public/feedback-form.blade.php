@@ -3,6 +3,8 @@
 @section('title', 'Tu opinion - Ticket '.$ticket->ticket_number)
 
 @section('content')
+@php($csatReasons = (array) config('helpdesktickets.csat_reasons', []))
+@php($csatThreshold = (int) config('helpdesktickets.csat_reason_threshold', 3))
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-7 col-lg-6">
@@ -17,7 +19,7 @@
                     @endif
 
                     {{-- $submitUrl es una URL firmada (la ruta submit exige middleware signed) --}}
-                    <form method="POST" action="{{ $submitUrl }}">
+                    <form method="POST" action="{{ $submitUrl }}" data-reason-threshold="{{ $csatThreshold }}">
                         @csrf
                         <div class="mb-4">
                             @for($i = 1; $i <= 5; $i++)
@@ -27,6 +29,17 @@
                                 </label>
                             @endfor
                         </div>
+                        @if($csatReasons)
+                            <div class="mb-4 d-none text-start" id="reason-block">
+                                <label class="form-label small text-muted">¿Qué podríamos mejorar?</label>
+                                <select name="reason" class="form-select">
+                                    <option value="">Selecciona un motivo...</option>
+                                    @foreach($csatReasons as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
                         <div class="mb-4">
                             <textarea name="comment" class="form-control" rows="4"
                                 placeholder="Cuentanos mas (opcional)..."></textarea>
@@ -51,14 +64,22 @@
 <script>
 (function() {
     const stars = document.querySelectorAll('.rating-star');
+    const form = document.querySelector('form[data-reason-threshold]');
+    const threshold = form ? parseInt(form.dataset.reasonThreshold, 10) : 3;
+    const reasonBlock = document.getElementById('reason-block');
     stars.forEach((star, idx) => {
         star.addEventListener('click', () => {
-            const radio = document.getElementById('r' + (idx + 1));
+            const rating = idx + 1;
+            const radio = document.getElementById('r' + rating);
             radio.checked = true;
             stars.forEach((s, i) => {
                 s.classList.toggle('active', i <= idx);
                 s.querySelector('i').className = i <= idx ? 'fas fa-star' : 'far fa-star';
             });
+            // Solo pedimos el motivo cuando la nota es baja (<= umbral).
+            if (reasonBlock) {
+                reasonBlock.classList.toggle('d-none', rating > threshold);
+            }
         });
     });
 })();
