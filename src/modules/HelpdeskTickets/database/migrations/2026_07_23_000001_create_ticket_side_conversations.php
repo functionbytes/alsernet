@@ -36,7 +36,7 @@ return new class extends Migration
         if (! Schema::connection($this->connection)->hasTable('helpdesk_ticket_side_conversation_messages')) {
             Schema::connection($this->connection)->create('helpdesk_ticket_side_conversation_messages', function (Blueprint $table) {
                 $table->id();
-                $table->unsignedBigInteger('side_conversation_id')->index();
+                $table->unsignedBigInteger('side_conversation_id')->index('hd_ticket_side_conv_msgs_side_conv_id_idx');
                 $table->unsignedBigInteger('user_id')->nullable();
                 $table->string('from_email')->nullable();
                 $table->enum('direction', ['outbound', 'inbound'])->default('outbound');
