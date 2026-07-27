@@ -98,7 +98,7 @@
                     </div>
 
                     <div class="article-feedback py-4 border-top mt-4">
-                        <h6 class="fw-bold">¿Te resultó útil este artículo?</h6>
+                        <h2 class="h6 fw-bold">¿Te resultó útil este artículo?</h2>
                         <div class="d-flex gap-2 mt-2" id="article-vote">
                             <button class="btn btn-outline-success" data-vote="1">
                                 <i class="fas fa-thumbs-up me-1"></i> Sí

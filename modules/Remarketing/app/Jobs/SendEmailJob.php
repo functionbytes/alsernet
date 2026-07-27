@@ -405,7 +405,7 @@ class SendEmailJob implements ShouldQueue
     {
         Log::error('SendEmailJob failed', [
             'message_id' => $this->message->id,
-            'email' => $this->message->email,
+            'email_hash' => hash('sha256', (string) $this->message->email),
             'error' => $exception->getMessage(),
         ]);
 

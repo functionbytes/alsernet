@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\StoreSurveyRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateSurveyRequest;
 use Modules\Helpdesk\Models\Survey;
 use Modules\Helpdesk\Models\SurveyResponse;
 
@@ -41,9 +43,10 @@ class SurveysController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreSurveyRequest $request): RedirectResponse
     {
-        $data = $this->validateSurvey($request);
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
 
         Survey::create($data);
 
@@ -60,9 +63,10 @@ class SurveysController extends Controller
         ]);
     }
 
-    public function update(Request $request, Survey $survey): RedirectResponse
+    public function update(UpdateSurveyRequest $request, Survey $survey): RedirectResponse
     {
-        $data = $this->validateSurvey($request);
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
 
         $survey->update($data);
 
@@ -88,27 +92,5 @@ class SurveysController extends Controller
             ->paginate(20);
 
         return view('helpdesk::settings.surveys.responses', compact('survey', 'responses'));
-    }
-
-    private function validateSurvey(Request $request): array
-    {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'trigger_type' => ['required', 'in:conversation_closed,manual,csat_low,tag_added'],
-            'trigger_config' => ['nullable', 'array'],
-            'questions' => ['required', 'array', 'min:1'],
-            'questions.*.id' => ['required', 'string'],
-            'questions.*.type' => ['required', 'in:rating_1_5,rating_0_10,multi_choice,single_choice,open_text,boolean'],
-            'questions.*.label' => ['required', 'string'],
-            'questions.*.required' => ['boolean'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'questions.required' => 'Debes agregar al menos una pregunta.',
-            'questions.min' => 'Debes agregar al menos una pregunta.',
-        ]);
-
-        $validated['is_active'] = $request->boolean('is_active', true);
-
-        return $validated;
     }
 }

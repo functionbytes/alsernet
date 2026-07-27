@@ -27,6 +27,10 @@
     @php
         $avatarUrl = method_exists($customer, 'getAvatarUrl') ? $customer->getAvatarUrl() : ($customer->avatar_url ?? null);
         $initials = strtoupper(mb_substr($customer->name ?? '?', 0, 1));
+        // Contactos creados desde un canal social (WhatsApp/Facebook/Instagram) solo
+        // tienen su identificador de plataforma relleno — `phone` queda null. Usamos
+        // el de WhatsApp como teléfono de contacto cuando no hay uno genérico.
+        $customerPhone = $customer->phone ?: $customer->whatsapp_phone;
     @endphp
 
     <div id="contact360"
@@ -73,8 +77,8 @@
                             @if($customer->email)
                                 <span><i class="fas fa-envelope me-1"></i> {{ $customer->email }}</span>
                             @endif
-                            @if($customer->phone)
-                                <span><i class="fas fa-phone me-1"></i> {{ $customer->phone }}</span>
+                            @if($customerPhone)
+                                <span><i class="fas fa-phone me-1"></i> {{ $customerPhone }}</span>
                             @endif
                         </div>
                         {{-- Integration pills: filled by JS from resumen data.integrations --}}
@@ -273,7 +277,7 @@
                         <div class="col-12">
                             <label class="form-label" for="edit-phone">Teléfono</label>
                             <input type="text" class="form-control" id="edit-phone" name="phone"
-                                   value="{{ $customer->phone }}">
+                                   value="{{ $customerPhone }}">
                         </div>
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="edit-language">Idioma</label>

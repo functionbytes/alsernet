@@ -99,13 +99,13 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Empresa</th>
-                                <th>Industria</th>
-                                <th>Tamaño</th>
-                                <th class="text-center">Clientes</th>
-                                <th class="text-center">Health score</th>
-                                <th>Sitio web</th>
-                                <th class="text-center">Acciones</th>
+                                <th scope="col">Empresa</th>
+                                <th scope="col">Industria</th>
+                                <th scope="col">Tamaño</th>
+                                <th scope="col" class="text-center">Clientes</th>
+                                <th scope="col" class="text-center">Health score</th>
+                                <th scope="col">Sitio web</th>
+                                <th scope="col" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -147,7 +147,7 @@
                                     </td>
                                     <td>
                                         @if($company->website)
-                                            <a href="{{ $company->website }}" target="_blank" rel="noopener noreferrer"
+                                            <a href="{{ safe_external_url($company->website) }}" target="_blank" rel="noopener noreferrer"
                                                 class="text-truncate d-inline-block hd-website-link"
                                                 title="{{ $company->website }}">
                                                 {{ $company->website }}

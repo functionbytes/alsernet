@@ -17,4 +17,13 @@ return [
         'slug' => env('BRAND_SLUG', 'engagement_chat'),
         'url' => env('BRAND_URL', config('app.url', 'https://example.com')),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | ML Prediction Service
+    |--------------------------------------------------------------------------
+    | Optional remote microservice for conversion/next-action predictions.
+    | When unset, MlPredictorService falls back to its local heuristic.
+    */
+    'ml_service_url' => env('ENGAGEMENT_ML_SERVICE_URL'),
 ];

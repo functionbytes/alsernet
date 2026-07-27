@@ -43,12 +43,12 @@
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Bandeja</th>
-                            <th>Canal</th>
-                            <th>Asignación por defecto</th>
-                            <th class="text-center">Conversaciones</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-end">Acciones</th>
+                            <th scope="col">Bandeja</th>
+                            <th scope="col">Canal</th>
+                            <th scope="col">Asignación por defecto</th>
+                            <th scope="col" class="text-center">Conversaciones</th>
+                            <th scope="col" class="text-center">Estado</th>
+                            <th scope="col" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>

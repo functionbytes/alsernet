@@ -2,13 +2,15 @@
 
 namespace Modules\Erp\Http\Requests;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class UpdateErpEndpointRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('erp.endpoints.manage') ?? false;
     }
 
     public function rules(): array
@@ -16,7 +18,7 @@ class UpdateErpEndpointRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:erp_endpoints,slug,'.$this->endpoint->id,
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'url', 'max:500', $this->safeUrlRule()],
             'method' => 'required|in:GET,POST,PUT,PATCH,DELETE',
             'credential_id' => 'nullable|exists:erp_credentials,id',
             'description' => 'nullable|string|max:1000',
@@ -40,5 +42,18 @@ class UpdateErpEndpointRequest extends FormRequest
             'url.url' => 'La URL debe ser válida',
             'method.required' => 'El método HTTP es requerido',
         ];
+    }
+
+    /**
+     * Rechaza URLs a loopback o link-local/metadata cloud (SSRF); permite la
+     * red interna donde viven los endpoints ERP legítimos.
+     */
+    protected function safeUrlRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! ErpEndpointUrlGuard::isAllowed(is_string($value) ? $value : null)) {
+                $fail('La URL no está permitida (loopback o metadata cloud bloqueado).');
+            }
+        };
     }
 }

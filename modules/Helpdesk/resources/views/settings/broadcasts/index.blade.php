@@ -123,12 +123,12 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Nombre</th>
-                                <th>Canal</th>
-                                <th>Estado</th>
-                                <th class="text-center">Destinatarios / Entregados</th>
-                                <th>Fecha</th>
-                                <th class="text-center">Acciones</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Canal</th>
+                                <th scope="col">Estado</th>
+                                <th scope="col" class="text-center">Destinatarios / Entregados</th>
+                                <th scope="col">Fecha</th>
+                                <th scope="col" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

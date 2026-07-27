@@ -599,6 +599,17 @@
     align-items: flex-start;
 }
 
+/* Carrusel de productos (coviewer): más ancho que una burbuja normal. */
+.wgt-products-wrap {
+    max-width: 92%;
+    width: 100%;
+    gap: 6px;
+}
+
+.wgt-products-wrap .wgt-rec-card {
+    width: 100%;
+}
+
 .wgt-bubble {
     padding: 10px 14px;
     border-radius: 18px;

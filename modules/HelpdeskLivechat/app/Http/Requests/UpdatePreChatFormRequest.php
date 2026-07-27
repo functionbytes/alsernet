@@ -15,7 +15,7 @@ class UpdatePreChatFormRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'inbox_id' => ['nullable', 'integer', 'exists:helpdesk_inboxes,id'],
+            'inbox_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_inboxes,id'],
             'fields' => ['required', 'array', 'min:1'],
             'fields.*.key' => ['required', 'string'],
             'fields.*.label' => ['required', 'string'],

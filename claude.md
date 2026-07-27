@@ -330,6 +330,7 @@ Always use Context7 MCP tools for up-to-date documentation on project technologi
 ### Frontend
 - Bootstrap 5.3, DevExpress jQuery, jQuery + AJAX (primary JS), Vite, Axios
 - **No Livewire/Inertia** - use jQuery/AJAX for all dynamic interactions
+- **Exception:** the HelpdeskLivechat customer widget is an isolated **React 19 + Zustand + TypeScript + Vite** bundle (injected into third-party sites where the host's jQuery can't be assumed). The helpdesk admin panel stays Blade + jQuery. See `modules/HelpdeskLivechat/README.md`.
 
 ### PDF & Documents
 - DomPDF, FPDF/FPDI/TCPDF, HTML2Text
@@ -373,15 +374,17 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 ## Foundational Context
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
-- php - 8.4.19
+- php - 8.4.22
 - laravel/framework (LARAVEL) - v12
 - laravel/horizon (HORIZON) - v5
 - laravel/mcp (MCP) - v0
+- laravel/pennant (PENNANT) - v1
 - laravel/prompts (PROMPTS) - v0
 - laravel/pulse (PULSE) - v1
 - laravel/reverb (REVERB) - v1
 - laravel/sanctum (SANCTUM) - v4
 - laravel/scout (SCOUT) - v10
+- laravel/socialite (SOCIALITE) - v5
 - laravel/telescope (TELESCOPE) - v5
 - livewire/livewire (LIVEWIRE) - v4
 - larastan/larastan (LARASTAN) - v3
@@ -571,6 +574,13 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Do not run `mcp:start`. This command hangs waiting for JSON-RPC MCP requests.
 - Some MCP clients use Node, which has its own certificate store. If a user tries to connect to their web MCP server locally using HTTPS, it could fail due to this reason. They will need to switch to HTTP during local development.
 
+=== pennant/core rules ===
+
+## Laravel Pennant
+
+- This application uses Laravel Pennant for feature flag management, providing a flexible system for controlling feature availability across different organizations and user types.
+- Use the `search-docs` tool, in combination with existing codebase conventions, to assist the user effectively with feature flags.
+
 === livewire/core rules ===
 
 ## Livewire
@@ -703,94 +713,4 @@ protected function isAccessible(User $user, ?string $path = null): bool
 | overflow-ellipsis | text-ellipsis |
 | decoration-slice | box-decoration-slice |
 | decoration-clone | box-decoration-clone |
-
----
-
-## [UNIVERSAL] Convenciones aplicadas (2026-04-27)
-
-Convenciones estandarizadas tras auditoría completa del proyecto:
-
-### Permisos Spatie
-- Convención: `{alias}.{action}` (2 segmentos) o `{alias}.{entity}.{action}` (3 segmentos)
-- Lowercase exclusivo (NO TitleCase ni snake_case con underscore)
-- Ejemplos correctos: `helpdesk.conversations.view`, `cache.settings.update`, `locale.create`
-- Ejemplos incorrectos: `Cache.settings.view`, `view-users`, `manager.helpdesk.conversations.update`
-
-### Routes
-- Prefix admin: `panel/{alias}` (ej: `panel/helpdesk`)
-- Prefix settings: `panel/settings/{alias}` (ej: `panel/settings/cache`) — plural exclusivo
-- Prefix API: `api/{alias}` con `auth:sanctum`
-- Names: `{alias}.action`, `settings.{alias}.action`, `api.{alias}.action`
-- Singular routes legacy: redirects 301 a plural
-
-#### Helpdesk module route naming (excepción documentada)
-El sistema Helpdesk (core + HelpdeskTickets + HelpdeskLiveChat, etc.) comparte el prefijo `panel/helpdesk` entre módulos y usa un esquema de nombres distinto al estándar `{alias}.action`:
-- Main ticket routes: `manager.helpdesk.tickets.{action}` (ej: `manager.helpdesk.tickets.index`)
-- Settings routes: `manager.helpdesk.settings.{entity}.{action}` (ej: `manager.helpdesk.settings.categories.index`)
-- Agent routes: `agent.helpdesk.{entity}.{action}` (ej: `agent.helpdesk.tickets.index`)
-- Portal routes: `portal.{action}` (ej: `portal.tickets.show`)
-- Archivo de rutas: `modules/HelpdeskTickets/routes/managers.php`
-
-### Form Requests
-- SIEMPRE para validation (no inline `$request->validate`)
-- Path: `modules/{Module}/app/Http/Requests/`
-- Subdirs por scope: `Settings/`, `Web/`, `Managers/`, `Api/`
-- `authorize()` con permiso Spatie real (NO `return true`)
-- `messages()` y `attributes()` en español
-
-### Policies
-- Path: `modules/{Module}/app/Policies/`
-- Métodos estándar: `viewAny`, `view`, `create`, `update`, `delete`, `manage`
-- Registrar en `{Module}ServiceProvider::registerPolicies()` con `Gate::policy()`
-- Usar Spatie permission con convención unificada
-
-### API Resources
-- Keys camelCase
-- Dates ISO8601: `->toIso8601String()`
-- Relaciones con `whenLoaded()`
-- Counts con `whenCounted()`
-- NO exponer columnas sensibles (secrets, passwords, tokens)
-
-### Notifications
-- ALWAYS implement `ShouldQueue`
-- `via()` con channels apropiados (database, broadcast, mail)
-- `toArray()` keys snake_case con `type`, `title`, `message`, `entity_id`, `action_url`
-- Naming: `{Entity}{Event}Notification` (ej: `ConversationAssignedNotification`)
-
-### Trait HasMessageThread
-- Path: `Modules\Helpdesk\Concerns\HasMessageThread`
-- Compartido entre Conversation y Ticket
-- Métodos: `assignTo`, `close`, `reopen`, `archive`, scopes Open/Closed/Assigned/Archived
-- Helpers: `isOpen()`, `isClosed()`, `isAssigned()`, `isArchived()`
-
-### ADRs documentados
-- `docs/adr/0001-mailer-vs-mailrelay.md` — Aceptado Opción C (status quo + fronteras)
-- Mailer = transactional emails
-- Mailrelay = email marketing/multi-provider
-
-### Tests
-- PHPUnit ONLY (no Pest)
-- `RefreshDatabase` trait
-- Path: `modules/{Module}/tests/Feature/` y `tests/Unit/` (lowercase)
-- Naming: `test_user_can_X` (snake_case con `test_` prefix)
-- Mock externos: `Notification::fake()`, `Mail::fake()`, `Queue::fake()`
-- Permission seeder en `setUp()`
-
-### Bugs específicos a evitar
-- Comparar enums con `===` (NO con strings — `$model->status === 'value'` falla si es enum cast)
-- `$appends` con accessor que ejecuta query → N+1
-- Closures como event listeners → rompen `event:cache`
-- `Tests/` con T mayúscula → falla PSR-4 case-sensitive en Linux
-- Namespace lowercase en composer.json (`modules\X` en vez de `Modules\X`) → falla autoload Linux
-- Form Request `authorize() { return true; }` → bypass de seguridad
-- `secret_key => Str::random(40)` en index method → regenera cada request
-- `shell_exec` con `sudo` desde HTTP endpoint → privilege escalation
-
-### Módulos con tratamiento estándar aplicado
-- Helpdesk core (13 policies, 12 Resources, 6 Notifications)
-- HelpdeskTickets (14 policies, 6 Resources, 32 Form Requests)
-- Reviews (7 policies, 23 Form Requests)
-- Page (8 policies)
-- Auth (4 policies, 0 Gates ad-hoc)
-- Cache, Optimize, Captcha, Pulse, Health, Activity, Locales, User, Theme, MailsSettings, System (permission seeders + tests básicos)
 </laravel-boost-guidelines>

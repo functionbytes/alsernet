@@ -49,12 +49,12 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4" width="60">#</th>
-                                <th>Agente</th>
-                                <th class="text-center">Total asignadas</th>
-                                <th class="text-center">Resueltas</th>
-                                <th class="text-center">% resolución</th>
-                                <th class="text-center">Tiempo promedio</th>
+                                <th scope="col" class="ps-4" width="60">#</th>
+                                <th scope="col">Agente</th>
+                                <th scope="col" class="text-center">Total asignadas</th>
+                                <th scope="col" class="text-center">Resueltas</th>
+                                <th scope="col" class="text-center">% resolución</th>
+                                <th scope="col" class="text-center">Tiempo promedio</th>
                             </tr>
                         </thead>
                         <tbody>

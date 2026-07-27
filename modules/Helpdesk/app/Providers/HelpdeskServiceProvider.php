@@ -2,13 +2,17 @@
 
 namespace Modules\Helpdesk\Providers;
 
+use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
+use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Modules\Helpdesk\Broadcasting\ResilientBroadcaster;
 use Modules\Helpdesk\Console\Commands\CheckSlaBreaches;
 use Modules\Helpdesk\Console\Commands\CleanupAgentPresence;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
@@ -20,7 +24,6 @@ use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MessageReceived;
-use Modules\Helpdesk\Http\ViewComposers\NavigationComposer;
 use Modules\Helpdesk\Listeners\Automation\RunAutomationsOnEventListener;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
@@ -90,7 +93,6 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
-        $this->registerViewComposers();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
         $this->registerHelpdeskSidebar();
         $this->registerSettingsSidebar();
@@ -99,6 +101,31 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->registerAutomationListeners();
         $this->registerSimulatorOutboundGuard();
+    }
+
+    /**
+     * Envuelve el driver de websockets para que una caída de Reverb no tumbe la
+     * petición que emite el evento (ver ResilientBroadcaster). Se registra como
+     * driver propio y se apunta la conexión 'reverb' a él, de forma que cubre
+     * los ~35 puntos que llaman a broadcast() sin tocarlos uno a uno — y sin
+     * romper el encadenado ->toOthers(), que actúa sobre el PendingBroadcast.
+     */
+    private function registerResilientBroadcaster(): void
+    {
+        // Diferido a booting(): en register() el contenedor todavía no tiene el
+        // binding del BroadcastManager. Los callbacks de booting corren antes que
+        // el boot() de cualquier provider, así que llegamos antes de que
+        // HelpdeskLivechat resuelva la conexión al declarar sus canales — y sin
+        // purgar el driver, que descartaría esas autorizaciones.
+        $this->app->booting(function ($app) {
+            $app->make(BroadcastManager::class)->extend('reverb', function ($app, array $config) {
+                $manager = $app->make(BroadcastManager::class);
+
+                return new ResilientBroadcaster(
+                    new PusherBroadcaster($manager->pusher($config))
+                );
+            });
+        });
     }
 
     /**
@@ -306,6 +333,13 @@ class HelpdeskServiceProvider extends ServiceProvider
     {
         require_once __DIR__.'/../Helpers/helpers.php';
 
+        // En register(), no en boot(): el manager cachea el driver la primera vez
+        // que se resuelve, y HelpdeskLivechat lo resuelve en su boot() al declarar
+        // los canales. Todos los register() corren antes que cualquier boot(), así
+        // que aquí el decorador siempre gana sin tener que purgar el driver (lo
+        // que descartaría las autorizaciones de canal ya registradas).
+        $this->registerResilientBroadcaster();
+
         $this->app->register(RouteServiceProvider::class);
         $this->app->register(EventServiceProvider::class);
 
@@ -371,6 +405,8 @@ class HelpdeskServiceProvider extends ServiceProvider
             ProcessScheduledBroadcasts::class,
             PurgeSimulatorConversationsCommand::class,
             PurgeOldGdprDeletes::class,
+            \Modules\Helpdesk\Console\Commands\MetaTokenStatusCommand::class,
+            \Modules\Helpdesk\Console\Commands\ChannelMetricsCommand::class,
         ]);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
@@ -475,14 +511,6 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->nameLower);
 
         Blade::componentNamespace(config('modules.namespace').'\\'.$this->name.'\\View\\Components', $this->nameLower);
-    }
-
-    protected function registerViewComposers(): void
-    {
-        view()->composer(
-            'theme.components.nav',
-            NavigationComposer::class
-        );
     }
 
     public function provides(): array

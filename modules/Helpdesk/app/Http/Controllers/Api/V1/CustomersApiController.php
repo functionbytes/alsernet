@@ -29,6 +29,10 @@ class CustomersApiController extends Controller
     public function index(IndexCustomerApiRequest $request): JsonResponse
     {
         $customers = Customer::query()
+            // Aislamiento por inbox (mismo que el controller web): sin esto un
+            // token API expondría PII de clientes de cualquier inbox. El scope
+            // respeta el bypass de helpdesk.manage / helpdesk.customers.manage.
+            ->forAgent($request->user())
             ->when($request->filled('q'), function ($query) use ($request) {
                 $q = $request->q;
                 $query->where(fn ($sub) => $sub

@@ -23,7 +23,7 @@ class UpdateMemberRequest extends FormRequest
             'accepts_conversations' => ['required', 'in:yes,no,working_hours'],
             'working_hours' => ['nullable', 'array'],
             'groups' => ['nullable', 'array'],
-            'groups.*' => ['exists:helpdesk_groups,id'],
+            'groups.*' => ['exists:helpdesk.helpdesk_groups,id'],
             'role' => ['nullable', 'exists:roles,name'],
         ];
     }

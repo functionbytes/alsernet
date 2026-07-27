@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Crypt;
+use Modules\Erp\Database\Factories\ErpCredentialFactory;
 
 class ErpCredential extends Model
 {
@@ -222,5 +223,10 @@ class ErpCredential extends Model
                 $q->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now());
             });
+    }
+
+    protected static function newFactory(): ErpCredentialFactory
+    {
+        return ErpCredentialFactory::new();
     }
 }

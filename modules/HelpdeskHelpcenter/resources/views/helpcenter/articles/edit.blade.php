@@ -233,8 +233,9 @@
         theme: 'snow'
       });
 
-      // Set existing content
-      bodyEditor.root.innerHTML = {!! json_encode($article->body) !!};
+      // Set existing content — @json escapa </script> y comillas (JSON_HEX_*),
+      // el cuerpo se guarda como HTML crudo y no debe romper este bloque.
+      bodyEditor.root.innerHTML = @json($article->body);
 
       // Update hidden field on editor change
       bodyEditor.on('text-change', function(delta, oldDelta, source) {

@@ -31,7 +31,7 @@ class ExportController extends Controller
 
     public function customers(ExportCustomersRequest $request): StreamedResponse
     {
-        $exporter = new CustomersExporter($request->validated());
+        $exporter = new CustomersExporter($request->validated(), $request->user());
 
         return $this->streamer->stream(
             'contactos-'.now()->format('Ymd').'.csv',

@@ -83,12 +83,12 @@
                         <table class="table table-hover align-middle text-nowrap">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Orden</th>
-                                    <th>Componente</th>
-                                    <th>Descripcion</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Visible</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Orden</th>
+                                    <th scope="col">Componente</th>
+                                    <th scope="col">Descripcion</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Visible</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

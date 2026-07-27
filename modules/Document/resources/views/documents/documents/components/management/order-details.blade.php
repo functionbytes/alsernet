@@ -23,7 +23,7 @@
                     </div>
                 @endif
 
-                @if($document->documentType?->label)
+                @if($document->sync?->label)
                         <div class="col-sm-12 col-md-6">
                         <label class="form-label fw-semibold">Origen</label>
                         <input type="text" class="form-control" disabled value="{{ $document->sync->label }}">

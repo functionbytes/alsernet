@@ -93,7 +93,7 @@
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-sm mb-0 align-middle">
-                            <thead><tr><th>Referencia</th><th>Estado</th><th class="text-end">Total</th><th>Fecha</th></tr></thead>
+                            <thead><tr><th scope="col">Referencia</th><th scope="col">Estado</th><th scope="col" class="text-end">Total</th><th scope="col">Fecha</th></tr></thead>
                             <tbody id="simOrdersBody"></tbody>
                         </table>
                     </div>

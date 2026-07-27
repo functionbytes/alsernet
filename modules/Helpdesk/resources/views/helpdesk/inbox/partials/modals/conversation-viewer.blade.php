@@ -1,7 +1,7 @@
 {{-- Modal: Visualizar conversación anterior (#30 conversation-viewer) --}}
 <div class="bv-modal" data-bv-modal-name="conversation-viewer">
     <div class="bv-modal-dialog lg bv-modal-dialog--cv">
-        <div class="bv-modal-head">
+        <div class="bv-modal-head bv-modal-head--with-icon">
             <div class="bv-modal-icon-box"><i class="far fa-comments"></i></div>
             <div class="bv-modal-title-wrap">
                 <span class="bv-modal-label"><span class="bv-cv-label-chat">{{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_label_chat') }}</span> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_label_suffix') }}</span>
@@ -32,10 +32,10 @@
 
         <div class="bv-modal-foot">
             <button class="btn-primary" id="cvBtnOpen">
-                <i class="fas fa-arrow-up-right-from-square"></i> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_open') }}
+                {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_open') }}
             </button>
             <button class="btn-secondary" id="cvBtnBack" data-bv-close data-bv-open="history">
-                <i class="fas fa-arrow-left"></i> {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_back_to_history') }}
+                {{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_back_to_history') }}
             </button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.conversation_viewer_close') }}</button>
         </div>

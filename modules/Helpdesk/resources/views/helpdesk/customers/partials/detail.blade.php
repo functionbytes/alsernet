@@ -12,7 +12,7 @@
         <div class="bv-page-hero-cover"></div>
         @if($selected->avatar_url && !str_contains($selected->avatar_url, 'ui-avatars.com'))
             <img src="{{ $selected->avatar_url }}" alt="{{ $selected->name }}"
-                 class="bv-page-hero-av bv-img-cover">
+                 class="bv-page-hero-av bv-img-cover" width="60" height="60" loading="lazy">
         @else
             <div class="bv-page-hero-av {{ $colorClass }}">{{ $initials }}</div>
         @endif

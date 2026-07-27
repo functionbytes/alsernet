@@ -81,7 +81,7 @@
                             <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>Activas</option>
                             <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>Inactivas</option>
                         </select>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request()->hasAny(['search', 'is_active']))
@@ -101,12 +101,12 @@
                         <table class="table table-hover align-middle text-nowrap">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Prioridad</th>
-                                    <th>Palabra clave</th>
-                                    <th>Tipo de coincidencia</th>
-                                    <th>Asignar a</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Prioridad</th>
+                                    <th scope="col">Palabra clave</th>
+                                    <th scope="col">Tipo de coincidencia</th>
+                                    <th scope="col">Asignar a</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

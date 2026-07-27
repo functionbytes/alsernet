@@ -16,13 +16,29 @@
         return;
     }
 
+    // Accesibilidad: al abrir se guarda el elemento con foco, se mueve el
+    // foco al modal (primer focusable) y se marca role/aria; al cerrar se
+    // restaura el foco al disparador original.
+    var focusReturns = {};
+
+    function focusables($modal) {
+        return $modal
+            .find('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+            .filter(':visible:not(:disabled)');
+    }
+
     window.DocsModal = window.DocsModal || {
         open: function (id) {
             var $modal = $('#' + id);
             var $backdrop = $('[data-docs-modal-backdrop-for="' + id + '"]');
             $backdrop.addClass('open');
-            $modal.addClass('open');
+            $modal.addClass('open')
+                .attr({ role: 'dialog', 'aria-modal': 'true' });
             document.body.classList.add('docs-modal-open');
+
+            focusReturns[id] = document.activeElement;
+            var $first = focusables($modal).first();
+            if ($first.length) { $first.trigger('focus'); }
         },
         close: function (id) {
             var $modal = $('#' + id);
@@ -32,6 +48,12 @@
             if ($('.docs-modal.open').length === 0) {
                 document.body.classList.remove('docs-modal-open');
             }
+
+            var previous = focusReturns[id];
+            delete focusReturns[id];
+            if (previous && document.contains(previous)) {
+                previous.focus();
+            }
         },
         closeAll: function () {
             $('.docs-modal.open').each(function () {
@@ -39,6 +61,30 @@
             });
         }
     };
+
+    // Focus trap: Tab dentro del último modal abierto no escapa de él.
+    $(document).on('keydown', function (e) {
+        if (e.key !== 'Tab') { return; }
+        var $open = $('.docs-modal.open').last();
+        if (!$open.length) { return; }
+
+        var $items = focusables($open);
+        if (!$items.length) { return; }
+
+        var first = $items.first()[0];
+        var last = $items.last()[0];
+
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        } else if (!$open[0].contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+        }
+    });
 
     $(document).on('click', '[data-docs-modal-trigger]', function (e) {
         e.preventDefault();

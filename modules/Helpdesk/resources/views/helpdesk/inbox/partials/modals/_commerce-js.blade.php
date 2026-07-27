@@ -41,7 +41,13 @@
                 state: $r.data('customer-state') || '',
                 country: $r.data('customer-country') || 'ES',
                 zip_code: $r.data('customer-zip') || '',
+                language: $r.data('customer-language') || '',
+                timezone: $r.data('customer-timezone') || '',
+                notes: $r.data('customer-notes') || '',
             };
+        },
+        updateUrl: function () {
+            return $('.bv-right').data('update-url') || null;
         },
         money: function (n) {
             var v = (Number(n) || 0).toLocaleString('es-ES', {

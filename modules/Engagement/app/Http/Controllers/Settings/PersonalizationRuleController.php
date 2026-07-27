@@ -5,6 +5,7 @@ namespace Modules\Engagement\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Engagement\Concerns\RecordsAudit;
 use Modules\Engagement\Models\PersonalizationRule;
@@ -59,6 +60,7 @@ class PersonalizationRuleController extends Controller
         ]);
 
         $rule = PersonalizationRule::query()->create($validated);
+        Cache::forget("engagement:rules:personalization:{$rule->inbox_id}");
         $this->audit('created', 'personalization', $rule->id, $validated);
 
         return response()->json([
@@ -81,6 +83,7 @@ class PersonalizationRuleController extends Controller
         ]);
 
         $personalizationRule->update($validated);
+        Cache::forget("engagement:rules:personalization:{$personalizationRule->inbox_id}");
         $this->audit('updated', 'personalization', $personalizationRule->id, $validated);
 
         return response()->json([
@@ -92,7 +95,9 @@ class PersonalizationRuleController extends Controller
     public function destroy(PersonalizationRule $personalizationRule): JsonResponse
     {
         $id = $personalizationRule->id;
+        $inboxId = $personalizationRule->inbox_id;
         $personalizationRule->delete();
+        Cache::forget("engagement:rules:personalization:{$inboxId}");
         $this->audit('deleted', 'personalization', $id);
 
         return response()->json(['success' => true]);

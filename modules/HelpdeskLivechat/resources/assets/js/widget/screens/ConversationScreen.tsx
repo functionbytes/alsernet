@@ -278,8 +278,15 @@ export function ConversationScreen() {
                     if (data.data?.customer?.email) setCustomerEmail(data.data.customer.email);
                     if (data.data?.customer?.name) setCustomerName(data.data.customer.name);
                     if (data.data?.customer?.id) setCustomerId(data.data.customer.id);
+                    // Reconcilia el id optimista con el id real del servidor. Sin
+                    // esto el primer mensaje conserva su tempId (Date.now) y un
+                    // resync/polling posterior lo trae de nuevo con su id real y
+                    // lo duplica (la deduplicación es por id).
+                    const firstRealId = data.data?.message_id ? String(data.data.message_id) : null;
                     setMessages(prev => prev.map(m =>
-                        m.id === tempId ? { ...m, status: 'sent' as const } : m
+                        m.id === tempId
+                            ? { ...m, id: firstRealId ?? m.id, status: 'sent' as const }
+                            : m
                     ));
                 }
             } else {

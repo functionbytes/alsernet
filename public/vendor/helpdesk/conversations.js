@@ -233,6 +233,13 @@
                 }
                 $d.attr('aria-labelledby', titleId);
             }
+            // UI-04: garantiza aria-label en el botón de cierre de los 72 partials bv-modal
+            // que aún no lo tienen en su Blade (evita editarlos uno a uno).
+            $modal.find('.bv-modal-close').each(function () {
+                if (!$(this).attr('aria-label')) {
+                    $(this).attr('aria-label', 'Cerrar');
+                }
+            });
             return $d;
         }
 
@@ -302,8 +309,13 @@
         });
 
         // Cerrar modal por click en data-bv-close o backdrop
+        // (soporta data-bv-open="{name}" para encadenar la apertura de otro modal, ej. "Volver al historial")
         $(document).on('click', '[data-bv-close]', function () {
             closeModal($(this).closest('.bv-modal'));
+            const openName = $(this).attr('data-bv-open');
+            if (openName) {
+                openModal(openName);
+            }
         });
 
         $(document).on('click', '.bv-modal', function (e) {
@@ -1538,8 +1550,25 @@
                     '</div>';
             }
 
+            // Server only renders an avatar for incoming messages / internal notes
+            // (outgoing bubbles don't need one — the "out" alignment identifies
+            // them), and only labels the "meta" line with the author name for
+            // outgoing messages (the avatar already identifies the customer).
+            const showAvatar = isIncoming || isInternal;
+            const colorIdx = Number.isFinite(item.colorIdx) ? item.colorIdx : 1;
+            const initialsSource = (item.author || '').trim();
+            const nameParts = initialsSource.split(/\s+/);
+            const initials = ((nameParts[0]?.[0] || '') + (nameParts[1]?.[0] || '')).toUpperCase();
+            const avatarHtml = showAvatar
+                ? '<div class="av-sm bv-th-av-c' + colorIdx + '">' + escape(initials) + '</div>'
+                : '';
+            const metaLabel = (!isIncoming && !isInternal)
+                ? escape(item.author || 'Tú') + ' · ' + escape(item.time || '')
+                : escape(item.time || '');
+
             const $bubble = $(
                 '<div class="' + msgClass + '">' +
+                    avatarHtml +
                     '<div class="' + bubbleClass + '"' + dataAttrs + '>' +
                         noteBadge +
                         quotedHtml +
@@ -1551,7 +1580,7 @@
                         locationHtml +
                         outTrHtml +
                         '<div class="meta">' +
-                            '<span>' + escape(item.author || 'Tú') + ' · ' + escape(item.time || '') + '</span>' +
+                            '<span>' + metaLabel + '</span>' +
                             checkmark +
                         '</div>' +
                     '</div>' +
@@ -1575,6 +1604,18 @@
             scrollThreadToBottom(true);
         }
         window.appendBubbleToThread = appendBubbleToThread;
+
+        // Mensajes de actividad (etiqueta añadida/quitada, asignación, cambio de
+        // estado, etc.) — se pintan como píldora centrada, no como burbuja.
+        function appendActivityPillToThread(body) {
+            const $inner = $('.bv-th-inner');
+            if (!$inner.length) return;
+            const $pill = $('<div class="bv-event-pill"><span></span></div>');
+            $pill.find('span').text(body || '');
+            $inner.append($pill);
+            scrollThreadToBottom(true);
+        }
+        window.appendActivityPillToThread = appendActivityPillToThread;
 
         // ─── UX-02: burbujas optimistas (pending / reconciliación / fallo) ───
         function appendPendingBubble(text, isInternal) {
@@ -2848,6 +2889,7 @@
                     '</div>' +
                 '</div>'
             );
+            applyModalA11y($modal, 'msg-forward');
             $('body').append($modal);
             setTimeout(() => $modal.find('#bv-fwd-search').trigger('focus'), 50);
 
@@ -2931,6 +2973,7 @@
                     '</div>' +
                 '</div>'
             );
+            applyModalA11y($modal, 'msg-info');
             $('body').append($modal);
             $modal.on('click', '.bv-modal-close, .bv-modal', function (ev) {
                 if (ev.target === this) $modal.remove();
@@ -4519,6 +4562,8 @@
                     '</div>' +
                 '</div>'
             );
+            lastFocusedBeforeModal = document.activeElement;
+            applyModalA11y($modal, 'forward-attachment');
             $('body').append($modal);
             $('body').css('overflow', 'hidden');
             $modal.attr('data-bv-fa-url', sourceUrl);

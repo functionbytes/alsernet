@@ -150,12 +150,18 @@ class MetaApiClient implements SocialApiClientInterface
 
     public function exchangeToken(string $shortLivedToken, string $appId, string $appSecret): ?string
     {
-        $response = Http::get("{$this->baseUrl()}/oauth/access_token", [
-            'grant_type' => 'fb_exchange_token',
-            'client_id' => $appId,
-            'client_secret' => $appSecret,
-            'fb_exchange_token' => $shortLivedToken,
-        ]);
+        // timeout/connectTimeout/retry como el resto de llamadas de esta clase
+        // (request()); el token va como query param, no como Bearer, así que no
+        // se puede reusar request() directamente.
+        $response = Http::timeout(30)
+            ->connectTimeout(10)
+            ->retry(3, 500, throw: false)
+            ->get("{$this->baseUrl()}/oauth/access_token", [
+                'grant_type' => 'fb_exchange_token',
+                'client_id' => $appId,
+                'client_secret' => $appSecret,
+                'fb_exchange_token' => $shortLivedToken,
+            ]);
 
         if ($response->failed()) {
             Log::warning('MetaApiClient: token exchange failed', [
@@ -188,7 +194,8 @@ class MetaApiClient implements SocialApiClientInterface
         return Http::baseUrl($this->baseUrl())
             ->withToken($accessToken)
             ->timeout(30)
-            ->connectTimeout(10);
+            ->connectTimeout(10)
+            ->retry(3, 500, throw: false);
     }
 
     private function baseUrl(): string

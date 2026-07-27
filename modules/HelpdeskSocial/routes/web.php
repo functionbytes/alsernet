@@ -50,15 +50,24 @@ Route::prefix('panel/helpdesk/social')->middleware(['web', 'auth'])->group(funct
 
     // Tags
     Route::get('tags', [SocialSettingsController::class, 'tags'])->name('helpdesksocial.tags.index');
+    Route::post('tags', [SocialSettingsController::class, 'storeTag'])->name('helpdesksocial.tags.store');
+    Route::put('tags/{tag}', [SocialSettingsController::class, 'updateTag'])->name('helpdesksocial.tags.update');
+    Route::delete('tags/{tag}', [SocialSettingsController::class, 'destroyTag'])->name('helpdesksocial.tags.destroy');
 
     // SLA Policies
     Route::get('sla-policies', [SocialSettingsController::class, 'slaPolicies'])->name('helpdesksocial.sla-policies.index');
+    Route::post('sla-policies', [SocialSettingsController::class, 'storeSlaPolicy'])->name('helpdesksocial.sla-policies.store');
+    Route::put('sla-policies/{policy}', [SocialSettingsController::class, 'updateSlaPolicy'])->name('helpdesksocial.sla-policies.update');
+    Route::delete('sla-policies/{policy}', [SocialSettingsController::class, 'destroySlaPolicy'])->name('helpdesksocial.sla-policies.destroy');
 
     // Conversations
     Route::get('conversations', [SocialSettingsController::class, 'conversations'])->name('helpdesksocial.conversations.index');
 
     // Assignment Rules
     Route::get('assignment-rules', [SocialSettingsController::class, 'assignmentRules'])->name('helpdesksocial.assignment-rules.index');
+    Route::post('assignment-rules', [SocialSettingsController::class, 'storeAssignmentRule'])->name('helpdesksocial.assignment-rules.store');
+    Route::put('assignment-rules/{rule}', [SocialSettingsController::class, 'updateAssignmentRule'])->name('helpdesksocial.assignment-rules.update');
+    Route::delete('assignment-rules/{rule}', [SocialSettingsController::class, 'destroyAssignmentRule'])->name('helpdesksocial.assignment-rules.destroy');
 
     // Mentions
     Route::get('mentions', [SocialSettingsController::class, 'mentions'])->name('helpdesksocial.mentions.index');
@@ -68,6 +77,9 @@ Route::prefix('panel/helpdesk/social')->middleware(['web', 'auth'])->group(funct
 
     // Competitors
     Route::get('competitors', [SocialSettingsController::class, 'competitors'])->name('helpdesksocial.competitors.index');
+    Route::post('competitors', [SocialSettingsController::class, 'storeCompetitor'])->name('helpdesksocial.competitors.store');
+    Route::put('competitors/{competitor}', [SocialSettingsController::class, 'updateCompetitor'])->name('helpdesksocial.competitors.update');
+    Route::delete('competitors/{competitor}', [SocialSettingsController::class, 'destroyCompetitor'])->name('helpdesksocial.competitors.destroy');
 
     // Saved Replies (AJAX)
     Route::get('saved-replies', [SocialSettingsController::class, 'savedReplies'])->name('helpdesksocial.saved-replies');

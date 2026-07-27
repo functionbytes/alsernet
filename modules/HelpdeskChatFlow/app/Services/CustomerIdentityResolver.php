@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use App\Helpers\PiiMasker;
 use Illuminate\Support\Facades\Log;
 
 class CustomerIdentityResolver
@@ -50,7 +51,7 @@ class CustomerIdentityResolver
                     $result = $this->fromErp($ctx['customer']);
                 }
             } catch (\Throwable $e) {
-                Log::warning('ChatFlow ERP lookup failed', ['email' => $email, 'error' => $e->getMessage()]);
+                Log::warning('ChatFlow ERP lookup failed', ['email' => PiiMasker::email($email), 'error' => $e->getMessage()]);
             }
         }
 
@@ -67,7 +68,7 @@ class CustomerIdentityResolver
                     }
                 }
             } catch (\Throwable $e) {
-                Log::warning('ChatFlow PS lookup failed', ['email' => $email, 'error' => $e->getMessage()]);
+                Log::warning('ChatFlow PS lookup failed', ['email' => PiiMasker::email($email), 'error' => $e->getMessage()]);
             }
         }
 
@@ -93,7 +94,7 @@ class CustomerIdentityResolver
                 return $this->byEmail($first['email'], $sources) ?? $this->fromSearchResult($first, 'erp');
             }
         } catch (\Throwable $e) {
-            Log::warning('ChatFlow ERP phone lookup failed', ['digits' => $digits, 'error' => $e->getMessage()]);
+            Log::warning('ChatFlow ERP phone lookup failed', ['digits' => PiiMasker::phone($digits), 'error' => $e->getMessage()]);
         }
 
         return null;
@@ -118,10 +119,19 @@ class CustomerIdentityResolver
                 return $this->byEmail($first['email'], $sources) ?? $this->fromSearchResult($first, 'erp');
             }
         } catch (\Throwable $e) {
-            Log::warning('ChatFlow ERP NIF lookup failed', ['nif' => $nif, 'error' => $e->getMessage()]);
+            Log::warning('ChatFlow ERP NIF lookup failed', ['nif' => $this->maskNif($nif), 'error' => $e->getMessage()]);
         }
 
         return null;
+    }
+
+    private function maskNif(string $nif): string
+    {
+        if (strlen($nif) <= 3) {
+            return str_repeat('*', strlen($nif));
+        }
+
+        return str_repeat('*', strlen($nif) - 3).substr($nif, -3);
     }
 
     /** @return array<string,mixed> */

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
         $this->addIndexIfMissing('engagement_events', 'idx_events_inbox_type_created', ['inbox_id', 'event_name', 'created_at']);

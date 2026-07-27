@@ -172,6 +172,21 @@ class HelpdeskLivechatServiceProvider extends ServiceProvider
         $this->loadWidgetApiRoutes();
         $this->loadApiRoutes();
         $this->loadSettingsRoutes();
+        $this->loadAgentRoutes();
+    }
+
+    protected function loadAgentRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/agent.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::middleware(['web', 'auth', 'can:helpdesk.conversations.reply'])
+            ->prefix('panel/helpdesk/livechat')
+            ->name('helpdesk-livechat.agent.')
+            ->group($path);
     }
 
     protected function loadApiRoutes(): void

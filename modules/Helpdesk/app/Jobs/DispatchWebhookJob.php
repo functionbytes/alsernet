@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Webhook;
 use Modules\Helpdesk\Models\WebhookDelivery;
+use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 class DispatchWebhookJob implements ShouldQueue
 {
@@ -32,6 +33,20 @@ class DispatchWebhookJob implements ShouldQueue
         $webhook = Webhook::find($this->webhookId);
 
         if (! $webhook || ! $webhook->is_active) {
+            return;
+        }
+
+        // Defensa SSRF (además de la validación en el Form Request): se revalida
+        // aquí, justo antes del envío, por si la URL se guardó antes de existir
+        // esta protección o para mitigar DNS rebinding entre validación y envío.
+        if (! OutboundMediaUrlGuard::isAllowed($webhook->url)) {
+            $webhook->increment('failure_count');
+            $webhook->update(['last_error' => 'URL bloqueada por política SSRF (IP interna/privada/loopback)']);
+            Log::warning('DispatchWebhookJob: URL bloqueada por SSRF guard', [
+                'webhook_id' => $webhook->id,
+                'url' => $webhook->url,
+            ]);
+
             return;
         }
 

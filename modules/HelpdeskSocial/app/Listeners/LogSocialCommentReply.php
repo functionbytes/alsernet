@@ -15,6 +15,8 @@ class LogSocialCommentReply implements ShouldQueue
 
     public int $tries = 3;
 
+    public int $backoff = 10;
+
     public function handle(SocialCommentReplied $event): void
     {
         $comment = $event->comment;

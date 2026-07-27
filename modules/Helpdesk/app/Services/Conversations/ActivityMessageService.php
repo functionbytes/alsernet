@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Services\Conversations;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 
@@ -12,19 +13,19 @@ class ActivityMessageService
     public function logAssigned(Conversation $conversation, User $assignee, ?User $by = null): ConversationItem
     {
         $text = $by && $by->id !== $assignee->id
-            ? "La conversación fue asignada a {$assignee->name} por {$by->name}"
-            : "La conversación fue asignada a {$assignee->name}";
+            ? "La conversación fue asignada a {$assignee->full_name} por {$by->full_name}"
+            : "La conversación fue asignada a {$assignee->full_name}";
 
         return $this->createActivity($conversation, 'assigned', $text, [
             'assignee_id' => $assignee->id,
-            'assignee_name' => $assignee->name,
+            'assignee_name' => $assignee->full_name,
         ], $by);
     }
 
     public function logUnassigned(Conversation $conversation, ?User $by = null): ConversationItem
     {
         $text = $by
-            ? "La conversación fue desasignada por {$by->name}"
+            ? "La conversación fue desasignada por {$by->full_name}"
             : 'La conversación fue desasignada';
 
         return $this->createActivity($conversation, 'unassigned', $text, [], $by);
@@ -37,7 +38,7 @@ class ActivityMessageService
             : "El estado cambió a {$newStatusName}";
 
         if ($by) {
-            $text .= " por {$by->name}";
+            $text .= " por {$by->full_name}";
         }
 
         return $this->createActivity($conversation, 'status_changed', $text, [
@@ -57,7 +58,7 @@ class ActivityMessageService
             : "La prioridad se estableció en {$newLabel}";
 
         if ($by) {
-            $text .= " por {$by->name}";
+            $text .= " por {$by->full_name}";
         }
 
         return $this->createActivity($conversation, 'priority_changed', $text, [
@@ -69,7 +70,7 @@ class ActivityMessageService
     public function logLabelAdded(Conversation $conversation, string $label, ?User $by = null): ConversationItem
     {
         $text = $by
-            ? "{$by->name} añadió la etiqueta \"{$label}\""
+            ? "{$by->full_name} añadió la etiqueta \"{$label}\""
             : "Se añadió la etiqueta \"{$label}\"";
 
         return $this->createActivity($conversation, 'label_added', $text, [
@@ -80,7 +81,7 @@ class ActivityMessageService
     public function logLabelRemoved(Conversation $conversation, string $label, ?User $by = null): ConversationItem
     {
         $text = $by
-            ? "{$by->name} eliminó la etiqueta \"{$label}\""
+            ? "{$by->full_name} eliminó la etiqueta \"{$label}\""
             : "Se eliminó la etiqueta \"{$label}\"";
 
         return $this->createActivity($conversation, 'label_removed', $text, [
@@ -91,7 +92,7 @@ class ActivityMessageService
     public function logTeamAssigned(Conversation $conversation, ?int $teamId, string $teamName, ?User $by = null): ConversationItem
     {
         $text = $by
-            ? "{$by->name} asignó la conversación al equipo {$teamName}"
+            ? "{$by->full_name} asignó la conversación al equipo {$teamName}"
             : "La conversación fue asignada al equipo {$teamName}";
 
         return $this->createActivity($conversation, 'team_assigned', $text, [
@@ -104,7 +105,7 @@ class ActivityMessageService
     {
         $untilText = $until ? $until->translatedFormat('d M Y H:i') : 'una fecha';
         $text = $by
-            ? "{$by->name} pospuso la conversación hasta {$untilText}"
+            ? "{$by->full_name} pospuso la conversación hasta {$untilText}"
             : "La conversación fue pospuesta hasta {$untilText}";
 
         return $this->createActivity($conversation, 'snoozed', $text, [
@@ -120,7 +121,7 @@ class ActivityMessageService
     public function logMuted(Conversation $conversation, ?User $by = null): ConversationItem
     {
         $text = $by
-            ? "{$by->name} silenció la conversación"
+            ? "{$by->full_name} silenció la conversación"
             : 'La conversación fue silenciada';
 
         return $this->createActivity($conversation, 'muted', $text, [], $by);
@@ -133,7 +134,7 @@ class ActivityMessageService
         array $data = [],
         ?User $by = null
     ): ConversationItem {
-        return ConversationItem::create([
+        $item = ConversationItem::create([
             'conversation_id' => $conversation->id,
             'item_type' => 'activity',
             'type' => 'activity',
@@ -143,5 +144,12 @@ class ActivityMessageService
             'user_id' => $by?->id,
             'is_internal' => false,
         ]);
+
+        // Reutiliza el mismo canal/evento que los mensajes normales para que el
+        // hilo abierto la pinte en vivo (como píldora, ver .item.created en el
+        // frontend) sin necesidad de recargar la conversación.
+        ConversationMessageCreated::dispatch($item);
+
+        return $item;
     }
 }

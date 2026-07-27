@@ -15,11 +15,12 @@ use Modules\HelpdeskChatFlow\Models\ChatFlow;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBranchConditions;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
+use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 use Modules\HelpdeskChatFlow\Services\Concerns\ValidatesUserInput;
 
 class ChatFlowEngine
 {
-    use EvaluatesBranchConditions, FormatsNumberedOptions, ValidatesUserInput;
+    use EvaluatesBranchConditions, FormatsNumberedOptions, PostsBotMessages, ValidatesUserInput;
 
     private const WAIT_FOR_INPUT_TYPES = ['collect_input', 'quick_replies', 'identify_customer', 'request_documents', 'csat', 'rich_message'];
 
@@ -35,6 +36,7 @@ class ChatFlowEngine
         private readonly ChatFlowSentiment $sentiment,
         private readonly ChatFlowLocalizer $localizer,
         private readonly ChatFlowHandoffSummary $handoff,
+        private readonly ChatFlowIdentityOtp $identityOtp,
     ) {}
 
     /**
@@ -286,12 +288,7 @@ class ChatFlowEngine
             ?? $session->chatFlow->trigger_conditions['escape_message']
             ?? 'Te paso con un agente. Un momento, por favor. 🙋';
 
-        $session->conversation->items()->create([
-            'type' => 'message',
-            'body' => $this->localize($session, $message),
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->sendBotMessage($session, $node, $this->localize($session, $message));
 
         if ($session->flowConditions()['handoff_summary'] ?? false) {
             $this->handoff->postFor($session->conversation);
@@ -338,14 +335,12 @@ class ChatFlowEngine
         return $retries >= (int) ($node['data']['max_retries'] ?? 3);
     }
 
-    private function sendBotMessage(ChatFlowSession $session, array $node, string $body): void
+    /**
+     * @param  array<string, mixed>  $extraMetadata
+     */
+    private function sendBotMessage(ChatFlowSession $session, array $node, string $body, array $extraMetadata = []): void
     {
-        $session->conversation->items()->create([
-            'type' => 'message',
-            'body' => $body,
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->postBotMessage($session->conversation, $node['id'] ?? null, $body, $extraMetadata);
     }
 
     private function processIdentification(ChatFlowSession $session, array $node, string $message): void
@@ -354,36 +349,40 @@ class ChatFlowEngine
         $sources = $data['sources'] ?? ['erp', 'ps'];
         $maxAttempts = (int) ($data['max_attempts'] ?? 3);
 
+        // Verificación de identidad por OTP (por defecto activa): sin ella, un
+        // cliente auto-identificado con el email de un tercero podía ver sus
+        // pedidos (IDOR). Se puede desactivar por nodo con require_otp=false
+        // para flujos que no exponen datos sensibles.
+        $requireOtp = $data['require_otp'] ?? true;
+
+        // Si ya enviamos un código, este mensaje es la respuesta con el código.
+        if ($requireOtp && $this->identityOtp->isPending($session)) {
+            $this->processIdentificationOtpReply($session, $node, $data, $message, $maxAttempts);
+
+            return;
+        }
+
         $customer = $this->identityResolver->resolve($message, $sources);
 
         if ($customer !== null) {
-            $values = ['customer_identified' => true];
-            foreach ($customer as $key => $value) {
-                $values['customer_'.$key] = $value;
-            }
-            $values['customer_name'] = $customer['name'] ?? '';
-            $values['customer_email'] = $customer['email'] ?? '';
-            $session->setContextValues($values);
+            // Con OTP: no marcar identificado todavía — enviar el código al
+            // email registrado (fuera de banda) y esperar a que lo introduzca.
+            if ($requireOtp) {
+                if ($this->identityOtp->challenge($session, $customer)) {
+                    $this->sendBotMessage($session, $node, $data['otp_sent_message']
+                        ?? 'Por tu seguridad, te hemos enviado un código de verificación a tu email registrado. Introdúcelo aquí para continuar.');
 
-            if (! empty($data['found_message'])) {
-                $text = preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $session->getContextValue($m[1], $m[0]), $data['found_message']);
-                $session->conversation->items()->create([
-                    'type' => 'message',
-                    'body' => $text,
-                    'is_internal' => false,
-                    'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-                ]);
-            }
-
-            // Continue linearly — designer places branches node next if found/not_found split needed
-            $nextNodeId = $this->getFirstChildId($session, $node['id']);
-
-            if ($nextNodeId) {
-                $nextNode = $session->chatFlow->getNodeById($nextNodeId);
-                if ($nextNode) {
-                    $this->runFrom($session, $nextNode);
+                    return; // sigue en este nodo esperando el código
                 }
+
+                // Sin email al que enviar el código: no se puede verificar, así
+                // que NO exponemos sus datos (fail-closed).
+                $this->handleIdentificationFailure($session, $node, $data);
+
+                return;
             }
+
+            $this->markIdentified($session, $node, $customer, $data);
 
             return;
         }
@@ -398,12 +397,75 @@ class ChatFlowEngine
         }
 
         $notFoundMsg = $data['not_found_message'] ?? 'No encontramos ningún cliente con ese dato. Intenta con tu email, teléfono o número de documento de identidad.';
-        $session->conversation->items()->create([
-            'type' => 'message',
-            'body' => $notFoundMsg,
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->sendBotMessage($session, $node, $notFoundMsg);
+    }
+
+    /**
+     * Procesa el código OTP que el cliente introduce tras la identificación.
+     *
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $data
+     */
+    private function processIdentificationOtpReply(ChatFlowSession $session, array $node, array $data, string $message, int $maxAttempts): void
+    {
+        $result = $this->identityOtp->verify($session, $message);
+
+        if ($result === 'ok') {
+            $customer = $this->identityOtp->pendingCustomer($session) ?? [];
+            $this->identityOtp->clear($session);
+            $this->markIdentified($session, $node, $customer, $data);
+
+            return;
+        }
+
+        // Código caducado o demasiados intentos: se cierra el intento de
+        // verificación y se trata como identificación fallida.
+        if (in_array($result, ['expired', 'locked'], true)) {
+            $this->identityOtp->clear($session);
+            $this->handleIdentificationFailure($session, $node, $data);
+
+            return;
+        }
+
+        // Código incorrecto: pedir de nuevo (los intentos los acota el propio
+        // verificador, que devuelve 'locked' al agotarlos).
+        $this->sendBotMessage($session, $node, $data['otp_invalid_message']
+            ?? 'El código no es correcto. Revísalo e introdúcelo de nuevo.');
+    }
+
+    /**
+     * Marca al cliente como identificado en el contexto, emite el mensaje de
+     * bienvenida y avanza al siguiente nodo. Solo se llama tras verificar la
+     * identidad (o con require_otp=false).
+     *
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $customer
+     * @param  array<string, mixed>  $data
+     */
+    private function markIdentified(ChatFlowSession $session, array $node, array $customer, array $data): void
+    {
+        $values = ['customer_identified' => true];
+        foreach ($customer as $key => $value) {
+            $values['customer_'.$key] = $value;
+        }
+        $values['customer_name'] = $customer['name'] ?? '';
+        $values['customer_email'] = $customer['email'] ?? '';
+        $session->setContextValues($values);
+
+        if (! empty($data['found_message'])) {
+            $text = preg_replace_callback('/\{\{(\w+)\}\}/', fn ($m) => $session->getContextValue($m[1], $m[0]), $data['found_message']);
+            $this->sendBotMessage($session, $node, $text);
+        }
+
+        // Continue linearly — designer places branches node next if found/not_found split needed
+        $nextNodeId = $this->getFirstChildId($session, $node['id']);
+
+        if ($nextNodeId) {
+            $nextNode = $session->chatFlow->getNodeById($nextNodeId);
+            if ($nextNode) {
+                $this->runFrom($session, $nextNode);
+            }
+        }
     }
 
     /**
@@ -426,18 +488,7 @@ class ChatFlowEngine
         $uploaded = $session->getContextValue($uploadKey) ?? [];
         $pending = array_values(array_diff($required, array_keys($uploaded)));
 
-        $docLabels = [
-            'dni_frontal' => 'DNI/NIE frontal',
-            'dni_trasera' => 'DNI/NIE trasera',
-            'pasaporte' => 'Pasaporte',
-            'contrato' => 'Contrato firmado',
-            'factura' => 'Factura de compra',
-            'foto_producto' => 'Foto del producto',
-            'proforma' => 'Factura proforma',
-            'iban' => 'Certificado bancario / IBAN',
-            'selfie' => 'Selfie con documento',
-            'recibo' => 'Recibo',
-        ];
+        $docLabels = config('helpdeskchatflow.document_labels', []);
 
         if (! empty($attachmentUrls)) {
             // File arrived — assign to pending doc that was announced (or first pending)
@@ -452,12 +503,7 @@ class ChatFlowEngine
                 $session->setContextValue('_announced_doc_'.$node['id'], null);
 
                 $label = $docLabels[$docKey] ?? $docKey;
-                $session->conversation->items()->create([
-                    'type' => 'message',
-                    'body' => "✅ {$label} recibido. Gracias.",
-                    'is_internal' => false,
-                    'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-                ]);
+                $this->sendBotMessage($session, $node, "✅ {$label} recibido. Gracias.");
 
                 $pending = array_values(array_diff($required, array_keys($uploaded)));
             }
@@ -469,23 +515,13 @@ class ChatFlowEngine
             if ($docKey) {
                 $session->setContextValue('_announced_doc_'.$node['id'], $docKey);
                 $label = $docLabels[$docKey] ?? $docKey;
-                $session->conversation->items()->create([
-                    'type' => 'message',
-                    'body' => $this->localize($session, "Entendido. Por favor envía el archivo para **{$label}**."),
-                    'is_internal' => false,
-                    'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-                ]);
+                $this->sendBotMessage($session, $node, $this->localize($session, "Entendido. Por favor envía el archivo para **{$label}**."));
 
                 return; // Stay on this node waiting for the file
             }
 
             // Out-of-range number → tell the customer instead of going silent.
-            $session->conversation->items()->create([
-                'type' => 'message',
-                'body' => $this->localize($session, 'Ese número no corresponde a ningún documento pendiente. Escribe el número de uno de la lista.'),
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->sendBotMessage($session, $node, $this->localize($session, 'Ese número no corresponde a ningún documento pendiente. Escribe el número de uno de la lista.'));
 
             return;
         }
@@ -496,12 +532,7 @@ class ChatFlowEngine
             $session->setContextValue($varName, array_keys($uploaded));
 
             $doneMsg = $data['done_message'] ?? '📂 ¡Todos los documentos recibidos! Continuamos.';
-            $session->conversation->items()->create([
-                'type' => 'message',
-                'body' => $doneMsg,
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->sendBotMessage($session, $node, $doneMsg);
 
             $nextNodeId = $this->getFirstChildId($session, $node['id']);
             $nextNode = $nextNodeId ? $session->chatFlow->getNodeById($nextNodeId) : null;
@@ -516,12 +547,7 @@ class ChatFlowEngine
                 array_keys($pending),
                 $pending
             ));
-            $session->conversation->items()->create([
-                'type' => 'message',
-                'body' => "Aún faltan los siguientes documentos:\n{$list}\n\nEscribe el número del documento y envía el archivo.",
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->sendBotMessage($session, $node, "Aún faltan los siguientes documentos:\n{$list}\n\nEscribe el número del documento y envía el archivo.");
         }
     }
 
@@ -584,12 +610,7 @@ class ChatFlowEngine
         $data = $node['data'] ?? [];
 
         if (! empty($data['timeout_message'])) {
-            $session->conversation?->items()->create([
-                'type' => 'message',
-                'body' => $data['timeout_message'],
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id'], 'timeout' => true],
-            ]);
+            $this->sendBotMessage($session, $node, $data['timeout_message'], ['timeout' => true]);
         }
 
         $action = $data['timeout_action'] ?? 'close';
@@ -652,18 +673,34 @@ class ChatFlowEngine
             return null;
         }
 
-        return $this->start($this->pickAbVariant($flow), $conversation, $triggerType);
+        return $this->start($this->pickAbVariant($flow, $conversation), $conversation, $triggerType);
     }
 
     /**
-     * A/B testing: if the flow has a configured variant and an even split, send
-     * half of new conversations to the variant so their analytics can be compared.
+     * A/B testing: if the flow has a configured variant, split conversations
+     * between the base flow and the variant so their analytics can be compared.
+     *
+     * The bucket is derived deterministically from the conversation id, so the
+     * same conversation always lands in the same arm — re-triggering the flow no
+     * longer re-rolls the assignment (which used random_int() on every call and
+     * silently contaminated the A/B statistics). Falls back to random selection
+     * only when there is no conversation context.
      */
-    public function pickAbVariant(ChatFlow $flow): ChatFlow
+    public function pickAbVariant(ChatFlow $flow, ?Conversation $conversation = null): ChatFlow
     {
         $variantId = $flow->trigger_conditions['ab_variant_id'] ?? null;
 
-        if (! $variantId || random_int(1, 100) > (int) ($flow->trigger_conditions['ab_split'] ?? 50)) {
+        if (! $variantId) {
+            return $flow;
+        }
+
+        $split = (int) ($flow->trigger_conditions['ab_split'] ?? 50);
+
+        $bucket = $conversation
+            ? (crc32($flow->id.':'.$conversation->id) % 100) + 1
+            : random_int(1, 100);
+
+        if ($bucket > $split) {
             return $flow;
         }
 
@@ -868,12 +905,7 @@ class ChatFlowEngine
 
         if (! empty($data['thanks_message'])) {
             $text = $this->localize($session, $this->interpolate($data['thanks_message'], $session));
-            $session->conversation->items()->create([
-                'type' => 'message',
-                'body' => $text,
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->sendBotMessage($session, $node, $text);
         }
 
         return false;

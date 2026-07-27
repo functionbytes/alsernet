@@ -5,6 +5,7 @@ namespace Modules\HelpdeskContacts\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Http\Requests\Managers\StoreContactTicketRequest;
 use Modules\HelpdeskContacts\Services\ContactAggregatorService;
@@ -84,7 +85,12 @@ class ContactTabsController extends Controller
 
         try {
             $ticket = $this->aggregator->createTicket($customer, $request->validated());
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::error('ContactTabsController: fallo creando ticket', [
+                'customer_id' => $customer->getKey(),
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'No se pudo crear el ticket.',
@@ -146,7 +152,11 @@ class ContactTabsController extends Controller
 
         try {
             return response()->json(['success' => true, 'data' => $resolver()]);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::warning('ContactTabsController: tab degradada por excepción', [
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json(['success' => true, 'data' => ['available' => false]]);
         }
     }

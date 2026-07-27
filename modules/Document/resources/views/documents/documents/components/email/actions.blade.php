@@ -61,6 +61,12 @@
                 <p class="text-muted small mb-2">
                     Confirmar al cliente que sus documentos han sido recibidos
                 </p>
+                @if($document->status?->key === 'received' && ! $document->uploaded_confirmation_sent_at)
+                    <div class="alert bg-warning-subtle text-warning py-2 px-3 mb-2" role="alert">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Documentos recibidos — pendiente confirmar recepción al cliente
+                    </div>
+                @endif
                 <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal"
                         data-bs-target="#uploadConfirmationModal">
                     Enviar confirmación

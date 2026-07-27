@@ -61,11 +61,11 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Agente</th>
-                                <th>Email</th>
-                                <th class="text-center">Disponibilidad</th>
-                                <th class="text-center">Tickets abiertos</th>
-                                <th class="text-center">Cerrados hoy</th>
+                                <th scope="col">Agente</th>
+                                <th scope="col">Email</th>
+                                <th scope="col" class="text-center">Disponibilidad</th>
+                                <th scope="col" class="text-center">Tickets abiertos</th>
+                                <th scope="col" class="text-center">Cerrados hoy</th>
                             </tr>
                         </thead>
                         <tbody>

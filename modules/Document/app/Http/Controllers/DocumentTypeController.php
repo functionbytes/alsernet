@@ -134,7 +134,7 @@ class DocumentTypeController extends Controller
                             // Only create translation if name is provided
                             if (! empty($translationData['name'])) {
                                 DocumentRequirementLang::create([
-                                    'document_requirement_id' => $requirement->id,
+                                    'document_type_requirement_id' => $requirement->id,
                                     'lang_id' => $translationData['lang_id'],
                                     'name' => $translationData['name'],
                                     'help_text' => $translationData['help_text'] ?? null,
@@ -314,7 +314,7 @@ class DocumentTypeController extends Controller
                             // Only create translation if name is provided
                             if (! empty($translationData['name'])) {
                                 DocumentRequirementLang::create([
-                                    'document_requirement_id' => $requirement->id,
+                                    'document_type_requirement_id' => $requirement->id,
                                     'lang_id' => $translationData['lang_id'],
                                     'name' => $translationData['name'],
                                     'help_text' => $translationData['help_text'] ?? null,

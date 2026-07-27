@@ -29,6 +29,15 @@ class HeartbeatRequest extends FormRequest
             'session_token' => ['required', 'string', 'max:64'],
             'url' => ['required', 'url'],
             'title' => ['nullable', 'string', 'max:255'],
+            // Producto que el visitante está viendo (opcional). Reportado por el
+            // snippet en la ficha de producto para la covisualización.
+            'product' => ['nullable', 'array'],
+            'product.id' => ['required_with:product', 'string', 'max:64'],
+            'product.title' => ['nullable', 'string', 'max:255'],
+            'product.image_url' => ['nullable', 'string', 'max:1000'],
+            'product.url' => ['nullable', 'string', 'max:1000'],
+            'product.price' => ['nullable', 'numeric'],
+            'product.currency' => ['nullable', 'string', 'max:8'],
         ];
     }
 

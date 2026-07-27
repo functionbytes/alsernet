@@ -19,15 +19,26 @@ Schedule::command('helpdesk-social:sync-comments')
     ->everyFifteenMinutes()
     ->onOneServer()
     ->withoutOverlapping(30)
-    ->runInBackground();
+    ->runInBackground()
+    ->when(fn () => helpdesk_social_enabled());
+
+// HelpdeskSocial: detección de incumplimientos de SLA cada 5 minutos
+Schedule::command('helpdesksocial:check-sla-breaches --notify')
+    ->everyFiveMinutes()
+    ->onOneServer()
+    ->withoutOverlapping(5)
+    ->runInBackground()
+    ->when(fn () => helpdesk_social_enabled());
 
 // HelpdeskSocial: health check diario a las 08:00
 Schedule::command('helpdesk-social:health-check --notify')
     ->dailyAt('08:00')
     ->onOneServer()
-    ->withoutOverlapping(30);
+    ->withoutOverlapping(30)
+    ->when(fn () => helpdesk_social_enabled());
 
 // HelpdeskSocial: cálculo de métricas diarias
 Schedule::job(new CalculateSocialMetricsJob(now()->subDay()->toDateString()))
     ->dailyAt('06:00')
-    ->onOneServer();
+    ->onOneServer()
+    ->when(fn () => helpdesk_social_enabled());

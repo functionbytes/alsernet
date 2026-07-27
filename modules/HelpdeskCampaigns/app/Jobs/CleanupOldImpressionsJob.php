@@ -47,4 +47,11 @@ class CleanupOldImpressionsJob implements ShouldQueue
             'cutoff' => $cutoff->toIso8601String(),
         ]);
     }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('CleanupOldImpressionsJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
+    }
 }

@@ -92,7 +92,8 @@
             @endif
 
             <!-- Upload Section (Permission-Controlled & Read-Only Check) -->
-            @if(auth()->user()->canDocument('view-document-upload') && !$document->isFullyApproved())
+            @if(auth()->user()->canDocument('view-document-upload'))
+                @if(!$document->isFullyApproved())
                     @include('documents::documents.documents.components.files.upload-section', [
                         'document' => $document,
                         'requiredDocuments' => $requiredDocuments,
@@ -100,6 +101,22 @@
                         'missingDocs' => $missingDocs,
                         'allUploaded' => $allUploaded,
                     ])
+                @elseif($allUploaded && $document->media->count() > 0)
+                    {{-- Aprobado: se ocultan los controles de carga/edicion (read-only),
+                         pero el enlace al PDF combinado de todos los documentos debe
+                         seguir disponible — es una accion de solo lectura. --}}
+                    <div class="card mb-3">
+                        <div class="card-header p-3 bg-white border-bottom">
+                            <h5 class="mb-1 fw-bold">Documentos cargados</h5>
+                            <p class="small mb-0 text-muted">Todos los documentos requeridos han sido recibidos y aprobados</p>
+                        </div>
+                        <div class="card-body">
+                            <a href="{{ route('documents.summary', $document->uid) }}" target="_blank" class="btn btn-primary w-100">
+                                <i class="fa fa-file-pdf"></i> Ver todos los documentos (PDF)
+                            </a>
+                        </div>
+                    </div>
+                @endif
             @endif
 
             <!-- Additional Attachments Section (Permission-Controlled & Read-Only Check) -->

@@ -38,9 +38,9 @@
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Cliente</th>
-                                    <th>Respondida</th>
-                                    <th>Respuestas</th>
+                                    <th scope="col">Cliente</th>
+                                    <th scope="col">Respondida</th>
+                                    <th scope="col">Respuestas</th>
                                 </tr>
                             </thead>
                             <tbody>

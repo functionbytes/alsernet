@@ -22,6 +22,27 @@ return [
     'auto_translate_outgoing' => env('HELPDESK_TRANSLATE_AUTO_OUTGOING', false),
 
     /*
+     * Circuit breaker (por proveedor). El path manual síncrono encadena DeepL
+     * (timeout 15s) + fallback LibreTranslate (10s) → hasta ~25s por request
+     * cuando ambos están caídos. Tras N fallos consecutivos de un proveedor se
+     * corta ese proveedor durante `circuit_open_seconds` para que el fallback
+     * dispare al instante (o se devuelva null sin colgar si ambos están caídos).
+     */
+    'circuit_failure_threshold' => env('HELPDESK_TRANSLATE_CIRCUIT_FAILURE_THRESHOLD', 3),
+    'circuit_open_seconds' => env('HELPDESK_TRANSLATE_CIRCUIT_OPEN_SECONDS', 60),
+
+    /*
+     * Retención (días) de la caché de traducciones. La tabla guarda el texto
+     * original y traducido, que puede contener PII del cliente; al estar
+     * deduplicada por hash (sin customer_id) no puede purgarse por cliente en un
+     * borrado GDPR hard. En su lugar se limita la retención: las entradas sin uso
+     * en este nº de días se podan a diario (helpdesktranslate:prune-cache),
+     * acotando la vida de la PII sin perder las frases recurrentes (cada acierto
+     * refresca last_used_at, así que lo común sobrevive y lo único/PII caduca).
+     */
+    'cache_retention_days' => (int) env('HELPDESK_TRANSLATE_CACHE_RETENTION_DAYS', 90),
+
+    /*
     | Cupo de caracteres traducidos por usuario y día. El throttle por minuto
     | no acota el volumen total contra el provider (coste). 0 = sin límite.
     */

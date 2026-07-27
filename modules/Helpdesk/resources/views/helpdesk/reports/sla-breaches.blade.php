@@ -52,10 +52,10 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Ticket</th>
-                            <th>Asunto</th>
-                            <th>Vence</th>
-                            <th class="text-end">Acciones</th>
+                            <th scope="col">Ticket</th>
+                            <th scope="col">Asunto</th>
+                            <th scope="col">Vence</th>
+                            <th scope="col" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-upcoming">
@@ -139,7 +139,7 @@
                 '</div>' +
                 '<div class="table-responsive">' +
                 '<table class="table table-sm table-hover align-middle mb-0">' +
-                '<thead class="table-light"><tr><th>Ticket</th><th>Asunto</th><th>Vencía</th></tr></thead>' +
+                '<thead class="table-light"><tr><th scope="col">Ticket</th><th scope="col">Asunto</th><th scope="col">Vencía</th></tr></thead>' +
                 '<tbody>' + rows + '</tbody>' +
                 '</table></div></div>'
             );

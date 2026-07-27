@@ -119,7 +119,12 @@ class FacebookMessengerService extends MetaGraphChannelDriver
 
         foreach ($payload['entry'] ?? [] as $entry) {
             foreach ($entry['messaging'] ?? [] as $messaging) {
-                $psid = $messaging['sender']['id'];
+                $psid = $messaging['sender']['id'] ?? null;
+
+                if ($psid === null) {
+                    continue;
+                }
+
                 $timestamp = (int) ($messaging['timestamp'] ?? 0);
 
                 // Skip echo messages (messages we sent)
@@ -132,11 +137,13 @@ class FacebookMessengerService extends MetaGraphChannelDriver
                     $events[] = [
                         'type' => 'message',
                         'psid' => $psid,
-                        'message_id' => $msg['mid'],
+                        'message_id' => $msg['mid'] ?? null,
                         'timestamp' => $timestamp,
                         'body' => $msg['text'] ?? null,
                         'attachments' => $this->parseAttachments($msg['attachments'] ?? []),
                         'quick_reply' => $msg['quick_reply']['payload'] ?? null,
+                        // Anuncio click-to-Messenger que originó la conversación (si aplica).
+                        'referral' => $messaging['referral'] ?? null,
                     ];
                 } elseif (isset($messaging['postback'])) {
                     $pb = $messaging['postback'];
@@ -144,21 +151,32 @@ class FacebookMessengerService extends MetaGraphChannelDriver
                         'type' => 'postback',
                         'psid' => $psid,
                         'message_id' => $pb['mid'] ?? null,
-                        'title' => $pb['title'],
-                        'payload' => $pb['payload'],
+                        'title' => $pb['title'] ?? null,
+                        'payload' => $pb['payload'] ?? null,
                         'timestamp' => $timestamp,
                     ];
                 } elseif (isset($messaging['delivery'])) {
                     $events[] = [
                         'type' => 'delivery',
                         'psid' => $psid,
-                        'watermark' => $messaging['delivery']['watermark'],
+                        'watermark' => $messaging['delivery']['watermark'] ?? null,
                     ];
                 } elseif (isset($messaging['read'])) {
                     $events[] = [
                         'type' => 'read',
                         'psid' => $psid,
-                        'watermark' => $messaging['read']['watermark'],
+                        'watermark' => $messaging['read']['watermark'] ?? null,
+                    ];
+                } elseif (isset($messaging['reaction'])) {
+                    // Reacción del cliente (emoji) a un mensaje del agente.
+                    $r = $messaging['reaction'];
+                    $events[] = [
+                        'type' => 'reaction',
+                        'psid' => $psid,
+                        'message_id' => $r['mid'] ?? null,
+                        'emoji' => $r['emoji'] ?? null,
+                        'action' => $r['action'] ?? 'react',
+                        'timestamp' => $timestamp,
                     ];
                 }
             }
@@ -213,7 +231,7 @@ class FacebookMessengerService extends MetaGraphChannelDriver
     private function parseAttachments(array $raw): array
     {
         return array_map(fn ($a) => [
-            'type' => $a['type'],
+            'type' => $a['type'] ?? 'file',
             'url' => $a['payload']['url'] ?? null,
         ], $raw);
     }

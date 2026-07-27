@@ -165,11 +165,11 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>ID cliente</th>
-                                        <th>ID externo</th>
-                                        <th>Estado</th>
-                                        <th>Enviado</th>
-                                        <th>Error</th>
+                                        <th scope="col">ID cliente</th>
+                                        <th scope="col">ID externo</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col">Enviado</th>
+                                        <th scope="col">Error</th>
                                     </tr>
                                 </thead>
                                 <tbody>

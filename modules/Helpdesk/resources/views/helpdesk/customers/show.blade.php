@@ -150,7 +150,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-subtle h-100 mb-0">
                             <div class="card-body text-center">
-                                <h6 class="text-muted mb-2 small">Páginas Visitadas</h6>
+                                <h6 class="text-muted mb-2 small">Páginas visitadas</h6>
                                 <h3 class="mb-1 fw-bold text-success">{{ $customer->total_page_visits ?? 0 }}</h3>
                                 <small class="text-muted">Vistas totales</small>
                             </div>
@@ -159,7 +159,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-subtle h-100 mb-0">
                             <div class="card-body text-center">
-                                <h6 class="text-muted mb-2 small">Último Acceso</h6>
+                                <h6 class="text-muted mb-2 small">Último acceso</h6>
                                 @if($customer->last_seen_at)
                                     <h3 class="mb-1 fw-bold text-info bv-text-base">
                                         {{ $customer->last_seen_at->diffForHumans() }}
@@ -175,7 +175,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-subtle h-100 mb-0">
                             <div class="card-body text-center">
-                                <h6 class="text-muted mb-2 small">Miembro Desde</h6>
+                                <h6 class="text-muted mb-2 small">Miembro desde</h6>
                                 <h3 class="mb-1 fw-bold text-dark bv-text-base">
                                     {{ $customer->created_at->diffForHumans() }}
                                 </h3>
@@ -277,10 +277,10 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Asunto</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                    <th width="80"></th>
+                                    <th scope="col">Asunto</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Fecha</th>
+                                    <th scope="col" width="80"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -393,11 +393,11 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Asunto</th>
-                                    <th>Modulo</th>
-                                    <th>Estado</th>
-                                    <th>Fecha</th>
-                                    <th width="60"></th>
+                                    <th scope="col">Asunto</th>
+                                    <th scope="col">Modulo</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col">Fecha</th>
+                                    <th scope="col" width="60"></th>
                                 </tr>
                             </thead>
                             <tbody>

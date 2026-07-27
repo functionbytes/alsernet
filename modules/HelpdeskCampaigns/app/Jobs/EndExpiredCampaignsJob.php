@@ -68,5 +68,20 @@ class EndExpiredCampaignsJob implements ShouldQueue
                 'goal_based' => $goalReached->count(),
             ]);
         }
+
+        // Either batch filling its 100-row cap means more may be due this tick.
+        if ($expired->count() === 100 || $goalReached->count() === 100) {
+            Log::warning('EndExpiredCampaignsJob hit its 100-row cap; more campaigns may need ending and will wait for the next run.', [
+                'time_based' => $expired->count(),
+                'goal_based' => $goalReached->count(),
+            ]);
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('EndExpiredCampaignsJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

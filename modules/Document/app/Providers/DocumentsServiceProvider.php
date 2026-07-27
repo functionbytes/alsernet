@@ -15,6 +15,7 @@ use Modules\Document\Console\Commands\MigrateProductBlockades;
 use Modules\Document\Console\Commands\MonitorEmailJobs;
 use Modules\Document\Console\Commands\ReinitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\RetryFailedEmailJobs;
+use Modules\Document\Console\Commands\RotateWeakDocumentUids;
 use Modules\Document\Console\Commands\RevalidateDocumentTypes;
 use Modules\Document\Console\Commands\SendDocumentUploadReminders;
 use Modules\Document\Console\Commands\ValidateAllDocumentAspects;
@@ -105,6 +106,15 @@ class DocumentsServiceProvider extends ServiceProvider
         Gate::define('manage-document-blockades', fn ($user) => $settingsPolicy->manageBlockades($user));
         Gate::define('sync-document-blockades', fn ($user) => $settingsPolicy->syncBlockades($user));
 
+        // Acceso al panel operativo /panel/documents (listado, pendientes, ver por UID, etc.)
+        // Reemplaza el antiguo middleware('role:super-admin|supervisor'): ese middleware de
+        // Spatie hace un hasAnyRole() directo y NUNCA pasa por Gate::before, así que los
+        // miembros de grupos validadores (licenses_team, documentation_team...) quedaban
+        // bloqueados pese a que el permiso 'view-documents' ya los cubre. 'supervisor' se
+        // resuelve aquí (no en el Gate::before global de abajo) para no convertirlo en un
+        // bypass de super-admin para el resto de la aplicación.
+        Gate::define('view-documents-panel', fn ($user) => $user->hasRole('supervisor') || $user->canDocument('view-documents'));
+
         // Register dynamic gates for document permissions
         // This allows using middleware('can:permission-name') with any permission from document_permissions table
         Gate::before(function ($user, $ability) {
@@ -176,6 +186,7 @@ class DocumentsServiceProvider extends ServiceProvider
             MonitorEmailJobs::class,
             AnalyzeEmailJobErrors::class,
             RetryFailedEmailJobs::class,
+            RotateWeakDocumentUids::class,
         ]);
     }
 

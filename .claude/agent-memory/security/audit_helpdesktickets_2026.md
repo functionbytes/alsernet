@@ -1,0 +1,14 @@
+---
+name: audit-helpdesktickets-2026
+description: Security audit of HelpdeskTickets module (jul-2026) — unauthenticated feedback IDOR via sequential ticket_number, widget enumeration reconfirmed
+metadata:
+  type: project
+---
+
+Audit performed 2026-07-06 on modules/HelpdeskTickets (~21k lines).
+
+Key finding: `FeedbackController::submit` (modules/HelpdeskTickets/app/Http/Controllers/FeedbackController.php:32) — public route `POST /helpdesk/feedback/{ticketNumber}` (routes/public.php, only `throttle:helpdesk-feedback`) looks up the ticket by `ticket_number` alone, with no token/signature check. `ticket_number` is sequential (`Ticket::generateTicketNumber()` in app/Models/Ticket.php ~line 131, prefix + zero-padded incrementing number) — fully enumerable. Anyone can guess numbers and submit a fake rating (1-5 + comment) for any closed, not-yet-rated ticket belonging to a different customer, and `show()` leaks the ticket subject line to unauthenticated requests. Contrast: the equivalent portal flow `CustomerPortalController::rateTicketFromEmail` (routes/portal.php:17) does the same "no session" rate-from-email pattern but is correctly wrapped in Laravel's `->middleware('signed')` — that's the right pattern to copy into FeedbackController (embed a signed URL in the notification email instead of a bare ticket_number).
+
+Reconfirmed still present (see [[audit_tickets_livechat_contacts_2026]]): `WidgetTicketsController::index` (app/Http/Controllers/Api/WidgetTicketsController.php:68, registered from modules/HelpdeskLivechat/routes/widget.php) still does raw email-match lookup with no ownership proof — low severity by design since it only returns has_tickets/open_count + a login link, not ticket content.
+
+Everything else audited was clean: all models use explicit `$fillable` (Ticket, TicketComment, TicketMessage, TicketAttachment, TicketNote — no `$guarded = []` anywhere); no raw SQL (`whereRaw`/`DB::raw`/`DB::select`) in the module; no `{!!` in Blade views; `CustomerPortalController` scopes every ticket query by `customer_id` (portal is solid, matches prior audit); `TicketAttachmentDownloadController` validates `item->ticket_id === ticket->id` before streaming from private disk (no path traversal, permission-gated); `TicketCommentsController`/notes controllers consistently re-check `comment->ticket_id === ticket->id` before authorize (defense against cross-ticket comment IDOR); public ticket-creation endpoints (`WidgetTicketsController::store`, `PublicTicketFormController::submit`) have proper file mime/size/count limits via `StoreWidgetTicketRequest` and `TicketCategoryValidationBuilder`; routes are consistently gated (`managers.php` under `role:super-admin|super-settings`, `agents.php` under agent/manager roles, `api.php` under `auth:sanctum`, `portal.php`/`public.php` under throttle).

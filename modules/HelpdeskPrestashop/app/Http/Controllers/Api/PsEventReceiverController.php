@@ -22,6 +22,11 @@ class PsEventReceiverController extends Controller
 
     public function handle(Request $request): JsonResponse
     {
+        if (! helpdesk_prestashop_enabled()) {
+            // Integration disabled: acknowledge with 204 so PrestaShop does not retry indefinitely.
+            return response()->json(null, 204);
+        }
+
         $timestamp = (int) $request->header('X-Alsernet-Timestamp', 0);
         $signature = (string) $request->header('X-Alsernet-Signature', '');
         $idemKey = $request->header('X-Alsernet-Idempotency-Key') ?: md5($timestamp.':'.$signature);

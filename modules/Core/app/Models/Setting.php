@@ -998,6 +998,10 @@ class Setting extends Model implements HasMedia
             'erp_sync_products',
             'erp_sync_customers',
             'erp_document_source',
+            'erp_api_auth_enabled',
+            'erp_api_auth_guard',
+            'erp_api_throttle',
+            'erp_public_token_throttle',
         ];
 
         foreach ($erpKeys as $key) {
@@ -1034,6 +1038,10 @@ class Setting extends Model implements HasMedia
             'erp_sync_products' => 'yes',
             'erp_sync_customers' => 'yes',
             'erp_document_source' => 'erp',
+            'erp_api_auth_enabled' => 'no',
+            'erp_api_auth_guard' => 'sanctum',
+            'erp_api_throttle' => '60,1',
+            'erp_public_token_throttle' => '60,1',
         ];
 
         return $defaults[$key] ?? null;

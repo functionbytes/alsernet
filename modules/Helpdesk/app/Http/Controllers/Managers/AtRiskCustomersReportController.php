@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
@@ -41,7 +42,8 @@ class AtRiskCustomersReportController extends Controller
      *
      * Ranks customers by recent negative-sentiment count (desc) then health
      * score (asc). Limited to 50 rows. Degrades to an empty list when the
-     * sentiment tags table is unavailable.
+     * sentiment tags table is unavailable. Result is cached for 5 minutes —
+     * mirrors the caching pattern used by ConversationInboxMetricsService.
      */
     public function data(Request $request): JsonResponse
     {
@@ -49,6 +51,20 @@ class AtRiskCustomersReportController extends Controller
             return response()->json(['customers' => []]);
         }
 
+        $customers = Cache::remember(
+            'helpdesk:reports:at-risk',
+            300,
+            fn () => $this->rankedAtRiskCustomers(),
+        );
+
+        return response()->json(['customers' => $customers]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function rankedAtRiskCustomers(): array
+    {
         $rows = DB::connection('helpdesk')
             ->table('helpdesk_conversation_tag_pivot as pivot')
             ->join('helpdesk_conversation_tags as t', 't.id', '=', 'pivot.tag_id')
@@ -61,32 +77,41 @@ class AtRiskCustomersReportController extends Controller
             ->get();
 
         if ($rows->isEmpty()) {
-            return response()->json(['customers' => []]);
+            return [];
         }
 
-        $lastNegativeById = $rows->keyBy('customer_id');
+        // Bound the volume before touching Customer/health-score data: only the
+        // top 50 rows are ever shown, so there's no reason to fetch customers or
+        // compute scores for the rest. Ranked by negative_count only at this
+        // stage — health score (secondary tie-break) is not known yet.
+        $topRows = $rows->sortByDesc('negative_count')->take(50)->values();
 
-        $customerIds = $rows->pluck('customer_id')->all();
+        $customerIds = $topRows->pluck('customer_id')->all();
 
+        // Aislamiento por inbox: un agente sin helpdesk.customers.manage solo ve
+        // clientes con los que comparte inbox (los demás quedan fuera del listado).
+        $user = auth()->user();
         $customers = Customer::query()
+            ->when(
+                $user && ! $user->can('helpdesk.customers.manage'),
+                fn ($q) => $q->forAgent($user),
+            )
             ->whereIn('id', $customerIds)
             ->get(['id', 'name', 'email'])
             ->keyBy('id');
 
         // Puntuaciones de salud en lote: antes se llamaba a healthScore() por
         // cliente dentro del map (~4 consultas × N clientes → N+1); ahora resuelve
-        // los mismos agregados en O(1) consultas.
+        // los mismos agregados en O(1) consultas para las 50 filas restantes.
         $healthScores = $this->insights->healthScoresFor($customerIds);
 
-        $ranked = $rows
-            ->map(function ($row) use ($customers, $lastNegativeById, $healthScores): ?array {
+        return $topRows
+            ->map(function ($row) use ($customers, $healthScores): ?array {
                 $customer = $customers->get($row->customer_id);
 
                 if (! $customer) {
                     return null;
                 }
-
-                $lastNegativeAt = $lastNegativeById->get($row->customer_id)?->last_negative_at;
 
                 return [
                     'customerId' => (int) $customer->id,
@@ -94,8 +119,8 @@ class AtRiskCustomersReportController extends Controller
                     'email' => $customer->email,
                     'negativeCount' => (int) $row->negative_count,
                     'healthScore' => $healthScores[$customer->id] ?? 50,
-                    'lastNegativeAt' => $lastNegativeAt
-                        ? now()->parse($lastNegativeAt)->toIso8601String()
+                    'lastNegativeAt' => $row->last_negative_at
+                        ? now()->parse($row->last_negative_at)->toIso8601String()
                         : null,
                     'contactUrl' => $this->contactUrl($customer->id),
                 ];
@@ -105,11 +130,8 @@ class AtRiskCustomersReportController extends Controller
                 ['negativeCount', 'desc'],
                 ['healthScore', 'asc'],
             ])
-            ->take(50)
             ->values()
             ->all();
-
-        return response()->json(['customers' => $ranked]);
     }
 
     private function contactUrl(int $customerId): ?string

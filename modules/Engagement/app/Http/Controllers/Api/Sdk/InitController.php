@@ -4,6 +4,7 @@ namespace Modules\Engagement\Http\Controllers\Api\Sdk;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use Modules\Engagement\Http\Requests\Sdk\InitRequest;
 use Modules\Engagement\Http\Resources\Sdk\PersonalizationRuleResource;
 use Modules\Engagement\Http\Resources\Sdk\TriggerRuleResource;
@@ -55,17 +56,18 @@ class InitController extends Controller
             );
         }
 
-        $triggers = TriggerRule::query()
-            ->forInbox($inbox->id)
-            ->active()
-            ->ordered()
-            ->get();
+        $triggers = Cache::remember(
+            "engagement:rules:trigger:{$inbox->id}",
+            600,
+            fn () => TriggerRule::query()->forInbox($inbox->id)->active()->ordered()->get(),
+        );
         $triggers = $this->variantAssigner->filter($triggers, $session->session_token);
 
-        $personalizations = PersonalizationRule::query()
-            ->forInbox($inbox->id)
-            ->active()
-            ->get();
+        $personalizations = Cache::remember(
+            "engagement:rules:personalization:{$inbox->id}",
+            600,
+            fn () => PersonalizationRule::query()->forInbox($inbox->id)->active()->get(),
+        );
         $personalizations = $this->variantAssigner->filter($personalizations, $session->session_token);
 
         return response()->json([

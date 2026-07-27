@@ -25,7 +25,17 @@ class NullTicketService implements TicketServiceContract
         return null;
     }
 
+    public function createForCustomer(Customer $customer, array $payload = []): ?array
+    {
+        return null;
+    }
+
     public function getCustomerTickets(Customer $customer, int $limit = 5): Collection
+    {
+        return collect();
+    }
+
+    public function getConversationTickets(Conversation $conversation): Collection
     {
         return collect();
     }

@@ -2,9 +2,11 @@
 
 namespace Modules\HelpdeskHelpcenter\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Modules\HelpdeskHelpcenter\Concerns\BuildsFulltextSearch;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
+use Modules\HelpdeskHelpcenter\Models\HelpCenterArticleVote;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterCategory;
 
 class HelpcenterWidgetService
@@ -12,9 +14,23 @@ class HelpcenterWidgetService
     use BuildsFulltextSearch;
 
     /**
+     * Cache key for the (relatively expensive) widget payload. Invalidated by the
+     * article/translation observers whenever content that feeds it changes.
+     */
+    public const WIDGET_CACHE_KEY = 'helpdeskhelpcenter:widget_data';
+
+    /**
      * @return array{categories: array<int, array<string, mixed>>, popular_articles: array<int, array<string, mixed>>, articles: array<int, array<string, mixed>>}
      */
     public function getWidgetData(): array
+    {
+        return Cache::remember(self::WIDGET_CACHE_KEY, now()->addHour(), fn (): array => $this->buildWidgetData());
+    }
+
+    /**
+     * @return array{categories: array<int, array<string, mixed>>, popular_articles: array<int, array<string, mixed>>, articles: array<int, array<string, mixed>>}
+     */
+    private function buildWidgetData(): array
     {
         // Count published+active articles per pivot category_id (any depth).
         // Articles created via the manager have category_id=NULL (pivot manages associations),
@@ -135,7 +151,11 @@ class HelpcenterWidgetService
             'id' => (string) $article->id,
             'title' => $article->title,
             'slug' => $article->slug,
-            'body' => $article->content ?? $article->body ?? '',
+            // Sanitizado con HTMLPurifier (clean()) igual que la vista pública:
+            // el widget lo renderiza con dangerouslySetInnerHTML, así que sin
+            // esto un editor podría inyectar XSS almacenado en cualquier sitio
+            // que embeba el widget.
+            'body' => clean($article->content ?? $article->body ?? ''),
             'description' => $article->excerpt ?? $article->description ?? '',
             'category' => $category,
             'section' => $section,
@@ -144,17 +164,53 @@ class HelpcenterWidgetService
         ];
     }
 
-    public function recordFeedback(int $id, bool $helpful): bool
+    /**
+     * Registra el feedback del widget creando/actualizando una fila real de
+     * voto (HelpCenterArticleVote), en vez de un increment() directo. Antes el
+     * increment quedaba huérfano y el observer de votos —que recalcula los
+     * contadores contando filas reales cuando alguien vota desde la web— lo
+     * sobrescribía, perdiendo el feedback del widget. Ahora ambos caminos
+     * escriben en la misma tabla y el observer mantiene los contadores.
+     */
+    public function recordFeedback(int $id, bool $helpful, ?string $cookieId = null, ?string $ipHash = null): bool
     {
-        $article = HelpCenterArticle::find($id);
+        $article = HelpCenterArticle::query()
+            ->where('id', $id)
+            ->where('is_published', true)
+            ->first();
 
         if (! $article) {
             return false;
         }
 
-        $column = $helpful ? 'helpful_count' : 'unhelpful_count';
+        $voteValue = $helpful ? 1 : -1;
 
-        $article->increment($column);
+        $existing = HelpCenterArticleVote::query()
+            ->where('article_id', $article->id)
+            ->where(function ($q) use ($cookieId, $ipHash) {
+                if ($cookieId) {
+                    $q->where('cookie_id', $cookieId);
+                }
+                if ($ipHash) {
+                    $q->orWhere('ip_hash', $ipHash);
+                }
+            })
+            ->when(! $cookieId && ! $ipHash, fn ($q) => $q->whereRaw('1 = 0'))
+            ->first();
+
+        if ($existing) {
+            // El observer recalcula solo si cambia; forzar saved() con update.
+            $existing->update(['vote' => $voteValue]);
+
+            return true;
+        }
+
+        HelpCenterArticleVote::create([
+            'article_id' => $article->id,
+            'cookie_id' => $cookieId,
+            'ip_hash' => $ipHash,
+            'vote' => $voteValue,
+        ]);
 
         return true;
     }

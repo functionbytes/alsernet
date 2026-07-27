@@ -19,6 +19,24 @@
     .bv-day-sep span,
     .bv-conv .preview,
     .r-tag.r-tag-muted { color: #636369; }
+
+    /* Toastr: el CSS del tema no aplica background-color a los tipos de toast, así
+       que salían con fondo blanco y texto ilegible. Forzamos fondo oscuro + texto
+       blanco + un color por tipo, de forma independiente al CSS del tema. */
+    #toast-container > div {
+        background-color: #18181b !important;
+        color: #fff !important;
+        opacity: 1 !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, .28) !important;
+    }
+    #toast-container > .toast-success { background-color: #15803d !important; }
+    #toast-container > .toast-error   { background-color: #b91c1c !important; }
+    #toast-container > .toast-warning { background-color: #b45309 !important; }
+    #toast-container > .toast-info    { background-color: #1d4ed8 !important; }
+    #toast-container > div .toast-title,
+    #toast-container > div .toast-message,
+    #toast-container > div .toast-close-button { color: #fff !important; }
     </style>
 @endpush
 
@@ -35,12 +53,13 @@
             $isUrgent   = request()->boolean('urgent');
             $isBot      = request()->boolean('bot');
             $isPending  = request()->input('status') === 'pending';
+            $isClosed   = request()->input('status') === 'closed';
             $isArchived = request()->boolean('archived') || request()->input('archived') === '1';
             $activeChannel = request()->input('channel');
             $activeInboxFilter = request()->input('inbox');
             $activeTagFilter = request()->input('tag');
             $activeGroupFilter = request()->input('group');
-            $isAll = ! $isUnread && ! $isMine && ! $isUrgent && ! $isBot && ! $isPending && ! $isArchived
+            $isAll = ! $isUnread && ! $isMine && ! $isUrgent && ! $isBot && ! $isPending && ! $isClosed && ! $isArchived
                 && ! $activeChannel && ! $activeInboxFilter
                 && ! $activeTagFilter && ! $activeGroupFilter;
 
@@ -97,41 +116,48 @@
                 </span>
             </div>
             <a href="{{ route('manager.helpdesk.conversations.index', ['unread' => 1]) }}"
-               class="bv-nav-item {{ $isUnread ? 'on' : '' }}">
-                <i class="far fa-envelope bv-vi-unread"></i> {{ __('helpdesk::helpdesk.inbox.unread') }}
+               class="bv-nav-item {{ $isUnread ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.unread') }}">
+                <i class="far fa-envelope bv-vi-unread"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.unread') }}</span>
                 <span class="c" data-counter="unread">{{ $sidebarCounters['unread'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index') }}"
-               class="bv-nav-item {{ $isAll ? 'on' : '' }}">
-                <i class="fas fa-inbox bv-vi-all"></i> {{ __('helpdesk::helpdesk.inbox.all') }}
+               class="bv-nav-item {{ $isAll ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.all') }}">
+                <i class="fas fa-inbox bv-vi-all"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.all') }}</span>
                 <span class="c" data-counter="total">{{ $totalConversations ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['mine' => 1]) }}"
-               class="bv-nav-item {{ $isMine ? 'on' : '' }}">
-                <i class="fas fa-user bv-vi-mine"></i> {{ __('helpdesk::helpdesk.inbox.mine') }}
+               class="bv-nav-item {{ $isMine ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.mine') }}">
+                <i class="fas fa-user bv-vi-mine"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.mine') }}</span>
                 <span class="c" data-counter="mine">{{ $sidebarCounters['mine'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['urgent' => 1]) }}"
-               class="bv-nav-item {{ $isUrgent ? 'on' : '' }}">
-                <i class="fas fa-fire bv-vi-urgent"></i> {{ __('helpdesk::helpdesk.inbox.urgent') }}
+               class="bv-nav-item {{ $isUrgent ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.urgent') }}">
+                <i class="fas fa-fire bv-vi-urgent"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.urgent') }}</span>
                 <span class="c" data-counter="urgent">{{ $sidebarCounters['urgent'] ?? 0 }}</span>
             </a>
             @if($isBot || ($sidebarCounters['bot'] ?? 0) > 0)
             <a href="{{ route('manager.helpdesk.conversations.index', ['bot' => 1]) }}"
                class="bv-nav-item {{ $isBot ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.in_bot_title') }}">
-                <i class="fas fa-robot bv-vi-bot"></i> {{ __('helpdesk::helpdesk.inbox.in_bot') }}
+                <i class="fas fa-robot bv-vi-bot"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.in_bot') }}</span>
                 <span class="c">{{ $sidebarCounters['bot'] ?? 0 }}</span>
             </a>
             @endif
             <a href="{{ route('manager.helpdesk.conversations.index', ['status' => 'pending']) }}"
-               class="bv-nav-item {{ $isPending ? 'on' : '' }}">
-                <i class="far fa-clock bv-vi-pending"></i> {{ __('helpdesk::helpdesk.inbox.pending') }}
+               class="bv-nav-item {{ $isPending ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.pending') }}">
+                <i class="far fa-clock bv-vi-pending"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.pending') }}</span>
                 <span class="c">{{ $sidebarCounters['pending'] ?? 0 }}</span>
             </a>
-            <a href="{{ route('manager.helpdesk.conversations.index', ['archived' => 1]) }}"
-               class="bv-nav-item {{ $isArchived ? 'on' : '' }}">
-                <i class="fas fa-circle-check bv-vi-closed"></i> {{ __('helpdesk::helpdesk.inbox.closed') }}
-                <span class="c">{{ $sidebarCounters['archived'] ?? 0 }}</span>
+            <a href="{{ route('manager.helpdesk.conversations.index', ['status' => 'closed']) }}"
+               class="bv-nav-item {{ $isClosed ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.closed') }}">
+                <i class="fas fa-circle-check bv-vi-closed"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.closed') }}</span>
+                <span class="c">{{ $sidebarCounters['closed'] ?? 0 }}</span>
             </a>
             @php
                 $isBlocked = request('view') === 'blocked';
@@ -140,17 +166,20 @@
             @endphp
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'blocked']) }}"
                class="bv-nav-item {{ $isBlocked ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.blocked_title') }}">
-                <i class="fas fa-ban bv-vi-blocked"></i> {{ __('helpdesk::helpdesk.inbox.blocked') }}
+                <i class="fas fa-ban bv-vi-blocked"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.blocked') }}</span>
                 <span class="c">{{ $sidebarCounters['blocked'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'spam']) }}"
                class="bv-nav-item {{ $isSpam ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.spam_title') }}">
-                <i class="fas fa-shield-halved bv-vi-spam"></i> {{ __('helpdesk::helpdesk.inbox.spam') }}
+                <i class="fas fa-shield-halved bv-vi-spam"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.spam') }}</span>
                 <span class="c">{{ $sidebarCounters['spam'] ?? 0 }}</span>
             </a>
             <a href="{{ route('manager.helpdesk.conversations.index', ['view' => 'deleted']) }}"
                class="bv-nav-item {{ $isDeleted ? 'on' : '' }}" title="{{ __('helpdesk::helpdesk.inbox.deleted_title') }}">
-                <i class="fas fa-trash-can bv-vi-deleted"></i> {{ __('helpdesk::helpdesk.inbox.deleted') }}
+                <i class="fas fa-trash-can bv-vi-deleted"></i>
+                <span class="bv-nav-item-label">{{ __('helpdesk::helpdesk.inbox.deleted') }}</span>
                 <span class="c">{{ $sidebarCounters['deleted'] ?? 0 }}</span>
             </a>
         </div>
@@ -158,52 +187,59 @@
         @if(! empty($sidebarInboxes) && $sidebarInboxes->count() > 0)
         @php
             $activeInboxId = (int) request('inbox');
+            // No brand colors here (Facebook blue, Instagram pink, etc.) —
+            // every sidebar icon shares the same neutral color, matching
+            // Vistas/Equipos/Etiquetas. Brand logos are kept (still the
+            // clearest way to recognize the channel at a glance), just
+            // uncolored.
             $channelIconMap = [
                 'whatsapp'   => 'fab fa-whatsapp',
                 'facebook'   => 'fab fa-facebook-messenger',
                 'instagram'  => 'fab fa-instagram',
-                'email'      => 'fas fa-envelope',
-                'web'        => 'fas fa-comment-dots',
+                'email'      => 'far fa-envelope',
+                'web'        => 'far fa-comment-dots',
                 'sms'        => 'fas fa-mobile-screen-button',
-                'prestashop' => 'fas fa-cart-shopping',
-            ];
-            $channelColorMap = [
-                'whatsapp'   => '#25d366',
-                'facebook'   => '#1877f2',
-                'instagram'  => '#e4405f',
-                'email'      => '#6b7280',
-                'web'        => '#14b8a6',
-                'sms'        => '#64748b',
-                'prestashop' => '#df1d1d',
+                'prestashop' => 'fas fa-store',
             ];
         @endphp
         <div class="bv-nav-section">
             <div class="bv-nav-label">{{ __('helpdesk::helpdesk.inbox.inboxes') }}</div>
             @foreach($sidebarInboxes as $sbInbox)
                 @php
-                    $iconClass  = $sbInbox->icon ?: ($channelIconMap[$sbInbox->channel_type] ?? 'fas fa-inbox');
-                    $iconColor  = $sbInbox->color ?: ($channelColorMap[$sbInbox->channel_type] ?? null);
-                    $iconStyle  = $iconColor ? 'color:'.e($iconColor).';' : '';
+                    $iconClass = $sbInbox->icon ?: ($channelIconMap[$sbInbox->channel_type] ?? 'fas fa-inbox');
                 @endphp
                 <a href="{{ route('manager.helpdesk.conversations.index', ['inbox' => $sbInbox->id]) }}"
                    class="bv-nav-item {{ $activeInboxId === (int) $sbInbox->id ? 'on' : '' }}"
                    title="{{ $sbInbox->name }}">
-                    <i class="{{ $iconClass }}"@if($iconStyle) style="{{ $iconStyle }}"@endif></i>
-                    {{ $sbInbox->name }}
+                    <i class="{{ $iconClass }}"></i>
+                    <span class="bv-nav-item-label">{{ $sbInbox->name }}</span>
                     <span class="c">{{ $sbInbox->conversations_count ?? 0 }}</span>
                 </a>
             @endforeach
         </div>
         @endif
 
+        @php
+            // Themed per-team icon by `key` — falls back to the generic
+            // fa-users for any team without a mapped key (new teams, etc.).
+            $groupIconMap = [
+                'general_support'   => 'fas fa-headset',
+                'technical_support' => 'fas fa-screwdriver-wrench',
+                'billing_support'   => 'fas fa-file-invoice-dollar',
+                'premium_support'   => 'fas fa-crown',
+                'returns_logistics' => 'fas fa-truck-fast',
+            ];
+        @endphp
         <div class="bv-nav-section">
             <div class="bv-nav-label">{{ __('helpdesk::helpdesk.inbox.teams') }}</div>
             @forelse(($groups ?? collect()) as $group)
                 <a href="{{ route('manager.helpdesk.conversations.index', ['group' => $group->id]) }}"
                    class="bv-nav-item {{ request('group') == $group->id ? 'on' : '' }}"
                    data-bv-team-id="{{ $group->id }}"
-                   data-bv-droptarget="team">
-                    <i class="fas fa-users"></i> {{ $group->name }}
+                   data-bv-droptarget="team"
+                   title="{{ $group->name }}">
+                    <i class="{{ $groupIconMap[$group->key] ?? 'fas fa-users' }}"></i>
+                    <span class="bv-nav-item-label">{{ $group->name }}</span>
                     <span class="c">{{ $group->conversations_count ?? '' }}</span>
                 </a>
             @empty
@@ -218,13 +254,31 @@
                     <i class="fas fa-plus"></i>
                 </a>
             </div>
-            @php $activeTagId = (int) request('tag'); @endphp
+            @php
+                $activeTagId = (int) request('tag');
+                // Themed per-tag icon by `slug` — falls back to the generic
+                // fa-tag for any tag without a mapped slug (custom tags, the
+                // seeded "técnico-30" test tag, etc.).
+                $tagIconMap = [
+                    'urgente'         => 'fas fa-fire',
+                    'bug'             => 'fas fa-bug',
+                    'consulta'        => 'fas fa-circle-question',
+                    'facturacion'     => 'fas fa-file-invoice-dollar',
+                    'onboarding'      => 'fas fa-rocket',
+                    'seguimiento'     => 'far fa-eye',
+                    'feedback'        => 'fas fa-thumbs-up',
+                    'vip'             => 'fas fa-crown',
+                    'spam'            => 'fas fa-shield-halved',
+                    'feature-request' => 'fas fa-lightbulb',
+                ];
+            @endphp
             @forelse(($inboxTags ?? collect()) as $tag)
                 <a href="{{ route('manager.helpdesk.conversations.index', ['tag' => $tag->id]) }}"
                    class="bv-nav-item bv-nav-item--tag {{ $activeTagId === (int) $tag->id ? 'on' : '' }}"
-                   data-bv-tag-id="{{ $tag->id }}">
-                    <i class="fas fa-tag"></i>
-                    {{ $tag->name }}
+                   data-bv-tag-id="{{ $tag->id }}"
+                   title="{{ $tag->name }}">
+                    <i class="{{ $tagIconMap[$tag->slug] ?? 'fas fa-tag' }}"></i>
+                    <span class="bv-nav-item-label">{{ $tag->name }}</span>
                     <span class="c">{{ $tag->conversations_count ?? 0 }}</span>
                 </a>
             @empty
@@ -394,6 +448,9 @@
             // Thread bubble rendering is handled by the per-conversation listener below.
             inboxChannel.listen('.item.created', function (e) {
                 const msg = e.message || {};
+                // Los mensajes de actividad (etiqueta, asignación, estado…) no deben
+                // pisar el preview del último mensaje real en la lista lateral.
+                if (msg.type === 'activity') return;
                 if (msg.user_id && parseInt(msg.user_id, 10) === myId) return;
 
                 const conv = e.conversation || {};
@@ -653,10 +710,20 @@
                 // El payload viene envuelto en { message: {...} } desde broadcastWith()
                 const msg = e.message || e;
 
+                // Mensajes de actividad (etiqueta añadida, cambio de estado, asignación,
+                // etc.): se pintan como píldora centrada, no como burbuja de chat.
+                if (msg.type === 'activity') {
+                    if (typeof window.appendActivityPillToThread === 'function') {
+                        window.appendActivityPillToThread(msg.body);
+                    }
+                    return;
+                }
+
                 // Si el mensaje lo envió el propio agente, ya está pintado por la UI optimista
                 if (msg.user_id && parseInt(msg.user_id, 10) === myId()) return;
 
                 const isCustomerMessage = !msg.user_id && msg.author_id;
+                const custId = (e.conversation && e.conversation.customer && e.conversation.customer.id) || convId;
                 const item = {
                     id: msg.id,
                     body: msg.body,
@@ -668,6 +735,10 @@
                     author: msg.sender_name || (isCustomerMessage ? 'Cliente' : 'Tú'),
                     time: new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     avatar: msg.sender_avatar,
+                    // Matches the server-side `(customer->id ?? conversation->id ?? 1) - 1) % 8 + 1`
+                    // so the avatar colour is identical whether the bubble came from the
+                    // initial page render or a live WebSocket append.
+                    colorIdx: ((custId - 1) % 8 + 8) % 8 + 1,
                 };
 
                 if (typeof window.appendBubbleToThread === 'function') {
@@ -819,6 +890,55 @@
         }).fail(function (xhr) {
             if (window.toastr) toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo tomar el control.');
         }).always(function () {
+            $btn.prop('disabled', false);
+        });
+    });
+    </script>
+
+    {{-- Empuje activo: fuera de la ventana de 24h de WhatsApp, guiar al agente
+         al panel de plantillas (HSM) y bloquear el envío de texto libre. --}}
+    <script>
+    (function () {
+        function steerWhatsAppWindow() {
+            var $composer = $('.bv-composer');
+            if (!$composer.length) return;
+            var closed = $composer.attr('data-bv-wa-window-closed') === '1';
+            var $replyTab = $composer.find('.bv-composer-tab[data-bv-tab="reply"]');
+            if (closed) {
+                // Abrir el panel de plantillas (dispara el handler delegado) y
+                // bloquear la pestaña de respuesta libre; las notas internas siguen.
+                var hsmTab = $composer.find('.bv-composer-tab[data-bv-tab="hsm"]')[0];
+                if (hsmTab && !$composer.hasClass('bv-hsm-mode')) { hsmTab.click(); }
+                $composer.addClass('bv-hsm-mode');
+                $replyTab.prop('disabled', true).addClass('disabled');
+            } else {
+                $composer.removeClass('bv-hsm-mode');
+                $replyTab.prop('disabled', false).removeClass('disabled');
+            }
+        }
+        document.addEventListener('pane:loaded', steerWhatsAppWindow);
+        $(function () { steerWhatsAppWindow(); });
+    })();
+    </script>
+
+    {{-- Reintentar envío de un mensaje saliente marcado como "no entregado" --}}
+    <script>
+    $(document).on('click', '.bv-retry-send', function () {
+        var $btn = $(this);
+        var url = $btn.data('bv-retry-url');
+        if (!url) return;
+        $btn.prop('disabled', true);
+        $.ajax({
+            url: url,
+            method: 'POST',
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+        }).done(function () {
+            if (window.toastr) toastr.info(@json(__('helpdesk::helpdesk.inbox.thread.retry_send_ok')));
+            // Optimista: sustituir el indicador de fallo por el check de enviado.
+            $btn.closest('.bv-send-failed').replaceWith('<span class="chk read bv-chk-read">✓✓</span>');
+        }).fail(function (xhr) {
+            if (window.toastr) toastr.error((xhr.responseJSON && xhr.responseJSON.message) || @json(__('helpdesk::helpdesk.inbox.thread.retry_send_error')));
             $btn.prop('disabled', false);
         });
     });

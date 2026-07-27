@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Services\Automation\Actions;
 
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Services\Automation\Contracts\AutomationAction;
 
 class AddLabelAction implements AutomationAction
@@ -42,7 +43,16 @@ class AddLabelAction implements AutomationAction
             return;
         }
 
+        // Descarta IDs de etiquetas que ya no existen (regla desactualizada,
+        // etiqueta borrada, etc.) — de lo contrario el pivot FK revienta con
+        // QueryException en cada ejecución.
+        $validIds = ConversationTag::query()->whereIn('id', array_map('intval', $labelIds))->pluck('id')->all();
+
+        if (empty($validIds)) {
+            return;
+        }
+
         // Attach without detaching existing labels
-        $conversation->conversationTags()->syncWithoutDetaching(array_map('intval', $labelIds));
+        $conversation->conversationTags()->syncWithoutDetaching($validIds);
     }
 }

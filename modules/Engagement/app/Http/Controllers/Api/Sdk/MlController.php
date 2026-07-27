@@ -23,7 +23,7 @@ class MlController extends Controller
             return response()->json(['success' => false, 'message' => 'Se requiere session_token.'], 400);
         }
 
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
         $probability = $this->predictor->predictConversion($sessionToken, $inbox->id);
 
         return response()->json([
@@ -47,7 +47,7 @@ class MlController extends Controller
             return response()->json(['success' => false, 'message' => 'Se requiere session_token.'], 400);
         }
 
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
         $prediction = $this->predictor->predictNextAction($sessionToken, $inbox->id);
 
         return response()->json([

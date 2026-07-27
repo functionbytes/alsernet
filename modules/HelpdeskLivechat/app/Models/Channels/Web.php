@@ -116,6 +116,10 @@ class Web extends Model
         // Live assistance
         'enable_live_view',
         'enable_screen_share',
+
+        // Catálogo de producto (coviewer / bot de recomendación)
+        'product_feed_url',
+        'enable_product_search',
     ];
 
     public const CMS_TYPES = [
@@ -186,6 +190,9 @@ class Web extends Model
             // Live assistance
             'enable_live_view' => 'boolean',
             'enable_screen_share' => 'boolean',
+
+            // Catálogo de producto
+            'enable_product_search' => 'boolean',
         ];
     }
 
@@ -407,6 +414,12 @@ class Web extends Model
      */
     public function isOpen(): bool
     {
+        // Admin kill switch (Settings → Integraciones): when Livechat is toggled
+        // off, the widget must report itself as closed instead of erroring out.
+        if (! helpdesk_livechat_enabled()) {
+            return false;
+        }
+
         if (! $this->isWithinBusinessHours()) {
             return false;
         }

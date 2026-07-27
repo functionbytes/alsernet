@@ -126,14 +126,16 @@ class WidgetConversationService
                 ->first();
 
             if ($existing) {
+                $firstMessageId = null;
                 if (! empty($data['message'])) {
-                    ConversationItem::create([
+                    $firstItem = ConversationItem::create([
                         'conversation_id' => $existing->id,
                         'author_id' => $customer->id,
                         'type' => 'message',
                         'body' => $data['message'],
                         'is_internal' => false,
                     ]);
+                    $firstMessageId = (int) $firstItem->id;
 
                     $existing->update([
                         'last_message_at' => now(),
@@ -163,6 +165,7 @@ class WidgetConversationService
                         'name' => $customer->name,
                     ],
                     'pubsub_token' => $existingPubsubToken,
+                    'message_id' => $firstMessageId,
                     'reused' => true,
                 ];
             }
@@ -210,14 +213,16 @@ class WidgetConversationService
                 );
             }
 
+            $firstMessageId = null;
             if (! empty($data['message'])) {
-                ConversationItem::create([
+                $firstItem = ConversationItem::create([
                     'conversation_id' => $conversation->id,
                     'author_id' => $customer->id,
                     'type' => 'message',
                     'body' => $data['message'],
                     'is_internal' => false,
                 ]);
+                $firstMessageId = (int) $firstItem->id;
             }
 
             $this->syncCustomerInbox($customer, $inbox);
@@ -233,6 +238,7 @@ class WidgetConversationService
                     'name' => $customer->name,
                 ],
                 'pubsub_token' => $pubsubToken,
+                'message_id' => $firstMessageId,
                 'reused' => false,
             ];
         });
@@ -471,6 +477,28 @@ class WidgetConversationService
      */
     private function itemToArray(ConversationItem $item): array
     {
+        // Carrusel de productos (coviewer): mensaje saliente (lo muestra la
+        // tienda/agente/bot), con los productos en metadata.products.
+        if ($item->type === 'product_carousel') {
+            $metadata = is_array($item->metadata) ? $item->metadata : [];
+
+            return [
+                'id' => $item->id,
+                'content' => $item->body,
+                'content_type' => 'products',
+                'message_type' => 'outgoing',
+                'created_at' => $item->created_at->toIso8601String(),
+                'sender' => [
+                    'id' => $item->user_id,
+                    'type' => ! empty($metadata['is_bot']) ? 'Bot' : 'User',
+                    'name' => ! empty($metadata['is_bot']) ? 'Asistente' : $this->resolveSenderName($item),
+                ],
+                'products' => is_array($metadata['products'] ?? null) ? $metadata['products'] : [],
+                'attachments' => [],
+                'link_preview' => null,
+            ];
+        }
+
         $isAgent = ! is_null($item->user_id);
         $contentType = 'text';
         $attachments = is_array($item->attachment_urls) ? $item->attachment_urls : [];

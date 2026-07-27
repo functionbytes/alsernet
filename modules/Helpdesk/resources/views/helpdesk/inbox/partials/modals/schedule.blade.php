@@ -102,7 +102,7 @@
                     <div class="bv-meet-link-row">
                         <i class="fas fa-link bv-meet-link-icon"></i>
                         <span id="schedMeetLink" class="bv-meet-link-text">meet.google.com/abc-defg-hij</span>
-                        <button class="bv-meet-copy-btn"><i class="far fa-copy"></i></button>
+                        <button class="bv-meet-copy-btn" title="Copiar enlace" aria-label="Copiar enlace"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
                 <label class="check">

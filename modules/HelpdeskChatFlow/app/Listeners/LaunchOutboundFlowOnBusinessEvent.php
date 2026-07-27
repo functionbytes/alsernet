@@ -30,6 +30,12 @@ class LaunchOutboundFlowOnBusinessEvent implements ShouldQueue
 
     public function handle(object $event): void
     {
+        // Admin kill switch (Settings → Integraciones): when ChatFlow is toggled
+        // off, proactive outbound flows must not launch.
+        if (! helpdesk_chatflow_enabled()) {
+            return;
+        }
+
         if ($event instanceof PsCartAbandoned) {
             $this->launcher->launch('abandoned_cart',
                 ['email' => $event->email(), 'ps_id' => $event->customerId()],

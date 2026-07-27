@@ -33,6 +33,9 @@
             </div>
         </div>
         @endcan
+        <button class="bv-bulk-btn" data-bv-modal="bulk-actions" title="Más acciones masivas">
+            <i class="fas fa-ellipsis"></i> Más acciones
+        </button>
     </div>
 </div>
 

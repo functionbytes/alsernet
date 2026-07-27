@@ -82,7 +82,7 @@ class SkillsRoutingService
      * @param  array<int, int>  $userIds
      * @return array<int, int>
      */
-    protected function filterAvailableAgents(array $userIds): array
+    public function filterAvailableAgents(array $userIds): array
     {
         if (empty($userIds)) {
             return [];
@@ -100,11 +100,59 @@ class SkillsRoutingService
                 return true;
             }
 
+            // Solo agentes "disponibles" reciben trabajo automático: en descanso
+            // (busy), ausente (away) y desconectado (offline) quedan excluidos. Un
+            // agente sin estado explícito se considera disponible (no regresar setups).
+            $presence = $agentSettings->presence_state ?? AgentSettings::PRESENCE_AVAILABLE;
+
             return $agentSettings->canReceiveAssignment()
                 && $agentSettings->acceptsConversationsNow()
                 && ! $agentSettings->hasReachedLimit()
-                && ($agentSettings->presence_state ?? 'online') !== 'offline';
+                && $presence === AgentSettings::PRESENCE_AVAILABLE;
         }));
+    }
+
+    /**
+     * Detecta las skills requeridas por un texto libre (p. ej. asunto+cuerpo de
+     * un ticket) y devuelve sus IDs. Reutiliza el mismo diccionario de palabras
+     * clave que la detección de conversaciones.
+     *
+     * @return array<int, int>
+     */
+    public function detectSkillIds(string $text): array
+    {
+        return Skill::all()
+            ->filter(fn (Skill $skill) => $this->messageRequiresSkill($text, $skill->slug))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * IDs de agentes que poseen TODAS las skills indicadas, ordenados por
+     * competencia total descendente y ya filtrados por disponibilidad.
+     *
+     * @param  array<int, int>  $requiredSkillIds
+     * @return array<int, int>
+     */
+    public function agentsWithAllSkills(array $requiredSkillIds): array
+    {
+        if (empty($requiredSkillIds)) {
+            return [];
+        }
+
+        $agents = DB::connection('helpdesk')
+            ->table('helpdesk_user_skills')
+            ->select('user_id', DB::raw('SUM(proficiency) as total_proficiency'))
+            ->whereIn('skill_id', $requiredSkillIds)
+            ->groupBy('user_id')
+            ->havingRaw('COUNT(DISTINCT skill_id) = ?', [count($requiredSkillIds)])
+            ->orderBy('total_proficiency', 'desc')
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return $this->filterAvailableAgents($agents);
     }
 
     /**

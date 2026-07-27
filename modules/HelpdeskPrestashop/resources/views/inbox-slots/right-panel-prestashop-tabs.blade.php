@@ -4,6 +4,8 @@
    panel derecho del inbox. Si el módulo se desactiva, estos tabs desaparecen.
    Datos reales vía PrestashopContextService (por email del cliente).
    Recibe: $rpCust
+   El CSS del módulo (prestashop-inbox.css) se carga desde modals/cart-build.blade.php,
+   que siempre está presente cuando el módulo está activo (cubre modales + este tab).
 --}}
 
 @php
@@ -121,7 +123,7 @@
                                         $psDateFull = !empty($pso['placed_at']) ? \Carbon\Carbon::parse($pso['placed_at'])->translatedFormat('d M Y') : '—';
                                     } catch (\Throwable $e) { $psDate = '—'; $psDateFull = '—'; }
                                 @endphp
-                                <div class="rp3-order" data-bv-modal="order" data-order-type="external"
+                                <div class="rp3-order" data-ps-order-open
                                      data-order-id="{{ $pso['id'] ?? '' }}"
                                      data-order-ref="#{{ $psRef }}"
                                      data-order-status="{{ $psStatus }}"
@@ -211,46 +213,181 @@
     </div>
 </div>
 
-{{-- Tab: Carritos asistidos --}}
+{{-- Tab: Carritos (pedidos + carrito abandonado, vía PrestashopContextService) --}}
 <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="carts" id="bv-carts-tab">
-    <div class="bv-tab-loading"><i class="fas fa-spinner fa-spin"></i> Cargando carritos...</div>
+    @php
+        $rawAttrs = $rpCust?->custom_attributes ?? [];
+        // Support nested custom_attributes (PrestaShop widget sends custom_attributes inside custom_attributes)
+        $nestedAttrs = is_array($rawAttrs['custom_attributes'] ?? null) ? $rawAttrs['custom_attributes'] : [];
+        $cartsExternalOrders = (array) ($nestedAttrs['orders'] ?? $rawAttrs['orders'] ?? []);
+        $cartData = $nestedAttrs['cart'] ?? $rawAttrs['cart'] ?? null;
+
+        // Pedidos reales de PrestaShop (vía contexto API). Este slot solo se
+        // incluye cuando $rpHasPs es true, así que el cliente ya está vinculado.
+        if ($rpCust?->email) {
+            try {
+                $psCtxCarts = app(\Modules\HelpdeskPrestashop\Services\PrestashopContextService::class)->getCustomerContext($rpCust->email);
+                foreach (($psCtxCarts['orders'] ?? []) as $pso) {
+                    $cartsExternalOrders[] = [
+                        'id' => $pso['id'] ?? null,
+                        'reference' => $pso['reference'] ?? null,
+                        'status' => $pso['state']['name'] ?? 'Pendiente',
+                        'date' => $pso['placed_at'] ?? null,
+                        'total' => $pso['totals']['total'] ?? 0,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                // best-effort
+            }
+        }
+
+        $cartsAllOrders = ! empty($cartsExternalOrders);
+        $cartsTotalOrders = count($cartsExternalOrders);
+    @endphp
+    <div class="bv-source-actions bv-hidden" id="bv-orders-source-actions">
+        <button class="btn btn-sm btn-link bv-refresh-source" data-bv-refresh-source="carts">
+            <i class="fas fa-arrows-rotate"></i> {{ __('helpdesk::helpdesk.inbox.right.refresh_action') }}
+        </button>
+        <span class="bv-source-meta" data-bv-source-meta="carts"></span>
+    </div>
+    @if(!$cartsAllOrders && empty($cartData))
+        <div class="bv-tab-empty">
+            <i class="far fa-cart-shopping"></i>
+            <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_orders_title') }}</div>
+            <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_orders_sub') }}</div>
+        </div>
+    @else
+        <div class="rp3-scroll">
+            @if($cartsAllOrders)
+            <div class="rp3-section">
+                <div class="rp3-sec-head">
+                    {{ __('helpdesk::helpdesk.inbox.right.order_history') }}
+                    <span class="count">· {{ $cartsTotalOrders }}</span>
+                    <span class="spacer"></span>
+                </div>
+                @foreach($cartsExternalOrders as $extOrder)
+                    @php
+                        $extStatus = $extOrder['status'] ?? 'Pendiente';
+                        $extStatusColor = match(strtolower($extStatus)) {
+                            'entregado', 'completed', 'complete' => 'var(--success)',
+                            'enviado', 'shipped' => 'var(--info)',
+                            'cancelado', 'cancelled', 'canceled' => 'var(--danger)',
+                            default => 'var(--warning)',
+                        };
+                        $extStatusClass = match(strtolower($extStatus)) {
+                            'entregado', 'completed', 'complete' => 'is-completed',
+                            'enviado', 'shipped' => 'is-shipped',
+                            'cancelado', 'cancelled', 'canceled' => 'is-cancelled',
+                            default => 'is-pending',
+                        };
+                        $extDateRaw = $extOrder['date'] ?? null;
+                        try {
+                            $extDate = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M') : '—';
+                            $extDateFull = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M Y') : '—';
+                        } catch (\Throwable $e) {
+                            $extDate = '—';
+                            $extDateFull = '—';
+                        }
+                        $extTotal = (float) ($extOrder['total'] ?? 0);
+                        $extRef = $extOrder['reference'] ?? $extOrder['id'] ?? '—';
+                        $extUrl = $extOrder['url'] ?? null;
+                        $extProducts = [];
+                        if (!empty($extOrder['products']) && is_array($extOrder['products'])) {
+                            foreach ($extOrder['products'] as $p) {
+                                $extProducts[] = ['name' => $p['name'] ?? 'Producto', 'qty' => $p['quantity'] ?? 1, 'price' => $p['price'] ?? 0];
+                            }
+                        }
+                    @endphp
+                    <div class="rp3-order" data-bv-modal="order" data-order-type="external"
+                         data-order-id="{{ $extOrder['id'] ?? '' }}"
+                         data-order-ref="#{{ $extRef }}"
+                         data-order-status="{{ $extStatus }}"
+                         data-order-status-color="{{ $extStatusColor }}"
+                         data-order-date="{{ $extDateFull }}"
+                         data-order-total="{{ number_format($extTotal, 2, ',', '.') }}"
+                         data-order-products="{{ json_encode($extProducts) }}"
+                         data-order-url="{{ $extUrl }}"
+                         data-order-platform="prestashop"
+                        >
+                        <div class="thumb"><i class="fas fa-box"></i></div>
+                        <div class="body">
+                            <div class="head">
+                                <span class="id">#{{ $extRef }}</span>
+                                <span class="st {{ $extStatusClass }}">{{ $extStatus }}</span>
+                            </div>
+                            @if(!empty($extProducts))
+                                <div class="t">{{ $extProducts[0]['name'] }}@if(count($extProducts) > 1) +{{ count($extProducts) - 1 }}@endif</div>
+                            @endif
+                            <div class="meta">
+                                <b>{{ number_format($extTotal, 2, ',', '.') }} €</b>
+                                <span>· {{ $extDate }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            @endif
+
+            {{-- Carrito abandonado --}}
+            @if(!empty($cartData) && is_array($cartData))
+            @php
+                $cartItemCount = count($cartData['products'] ?? []);
+                $cartTotal     = (float) ($cartData['total'] ?? 0);
+                $cartId        = $cartData['id'] ?? null;
+                $cartAdminUrl  = $cartId && ($_rpPsStoreUrl ?? null)
+                    ? rtrim($_rpPsStoreUrl, '/') . '/index.php?controller=AdminCarts&id_cart=' . (int) $cartId . '&viewcart=1'
+                    : null;
+            @endphp
+            <div class="rp3-section">
+                <div class="rp3-sec-head">
+                    {{ __('helpdesk::helpdesk.inbox.right.abandoned_cart_heading') }}
+                    @if($cartAdminUrl)
+                        <a href="{{ $cartAdminUrl }}" target="_blank" rel="noopener"
+                           class="rp3-cart-ext-link" title="{{ __('helpdesk::helpdesk.inbox.right.view_cart_prestashop_title') }}">
+                            <i class="fas fa-arrow-up-right-from-square"></i>
+                        </a>
+                    @endif
+                </div>
+                <div class="rp3-cart" @if($cartId) data-cart-id="{{ $cartId }}" @endif>
+                    <div class="hd">
+                        <span class="dot"></span>
+                        <i class="fas fa-cart-shopping"></i>
+                        {{ $cartItemCount }} item{{ $cartItemCount === 1 ? '' : 's' }}
+                    </div>
+                    <div class="rp3-cart-items">
+                        @foreach($cartData['products'] ?? [] as $product)
+                        <div class="rp3-cart-item">
+                            <div class="th"></div>
+                            <div class="n">{{ $product['name'] ?? 'Producto' }}</div>
+                            <div class="p">{{ number_format((float) ($product['price'] ?? 0), 2, ',', '.') }} €</div>
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="rp3-cart-total">
+                        <span>Total</span>
+                        <span>{{ number_format($cartTotal, 2, ',', '.') }} €</span>
+                    </div>
+                    <div class="rp3-cart-acts">
+                        <button type="button"><i class="fas fa-tag"></i> Cupón 10%</button>
+                        @if($cartAdminUrl)
+                        <button type="button" class="rp3-cart-act-primary"
+                            onclick="window.open('{{ $cartAdminUrl }}', '_blank')">
+                            <i class="fas fa-link"></i> Recuperar
+                        </button>
+                        @else
+                        <button type="button" class="rp3-cart-act-primary" disabled>
+                            <i class="fas fa-link"></i> Recuperar
+                        </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
+    @endif
 </div>
 
 @once
-@push('styles')
-<style>
-.ps-sections { padding: 8px 0; display: flex; flex-direction: column; gap: 2px; }
-.ps-section-tile {
-    display: flex; align-items: center; gap: 12px;
-    width: 100%; padding: 12px 14px;
-    background: #fff; border: 1px solid #f0f0f0; border-radius: 8px;
-    text-align: left; cursor: pointer; transition: background 0.15s, border-color 0.15s;
-}
-.ps-section-tile:hover { background: #f8fdf0; border-color: #90bb13; }
-.ps-section-tile--empty { opacity: 0.5; cursor: default; }
-.ps-section-tile--empty:hover { background: #fff; border-color: #f0f0f0; }
-.ps-st-icon {
-    width: 36px; height: 36px; flex-shrink: 0;
-    background: #f5f5f5; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.9rem; color: #6c757d;
-}
-.ps-st-icon--primary { background: #f0f7dc; color: #90bb13; }
-.ps-st-body { flex: 1; min-width: 0; }
-.ps-st-title { display: block; font-size: 0.85rem; font-weight: 600; color: #2d2d2d; }
-.ps-st-sub { display: block; font-size: 0.73rem; color: #888; margin-top: 1px; }
-.ps-st-arrow { color: #ccc; font-size: 0.75rem; flex-shrink: 0; }
-
-/* Addresses modal */
-.ps-addr-card { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; }
-.ps-addr-card:last-child { border-bottom: none; }
-.ps-addr-alias { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #90bb13; margin-bottom: 3px; letter-spacing: 0.5px; }
-.ps-addr-name { font-size: 0.85rem; font-weight: 600; }
-.ps-addr-line, .ps-addr-city { font-size: 0.8rem; color: #555; }
-.ps-addr-phone { font-size: 0.78rem; color: #888; margin-top: 3px; }
-.ps-addr-phone .fas { margin-right: 4px; }
-</style>
-@endpush
 
 @push('scripts')
 <script>
@@ -259,6 +396,18 @@
         var modal = new bootstrap.Modal(document.getElementById('psOrdersModal'));
         modal.show();
     };
+
+    // Abrir el workspace de pedido PrestaShop (detalle real vía el bridge) al
+    // pulsar un pedido de la lista. Cierra el modal-lista de bootstrap antes.
+    $(document).on('click', '.rp3-order[data-ps-order-open]', function () {
+        var id = $(this).data('order-id');
+        if (!id) { return; }
+        var lm = bootstrap.Modal.getInstance(document.getElementById('psOrdersModal'));
+        if (lm) { lm.hide(); }
+        if (typeof window.openPsOrderWorkspace === 'function') {
+            window.openPsOrderWorkspace(id);
+        }
+    });
 
     window.openPsAddressesModal = function () {
         var $body = $('#psAddressesBody');

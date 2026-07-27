@@ -142,6 +142,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Cola de envíos salientes a Meta (WhatsApp/FB/IG): límite global para no
+        // exceder los rate limits de la Cloud API bajo ráfaga.
+        RateLimiter::for('helpdesk-meta-outbound', function () {
+            return Limit::perMinute((int) config('helpdesk.integrations.outbound_rate_per_minute', 600));
+        });
+
         RateLimiter::for('wompi-webhook', function (Request $request) {
             return Limit::perMinute(60)->by($request->ip());
         });

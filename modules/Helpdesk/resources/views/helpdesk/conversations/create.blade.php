@@ -44,7 +44,7 @@
                                 <input type="hidden" name="customer_id" value="{{ $customer->id }}">
                                 <div class="form-control-plaintext">
                                     <div class="d-flex align-items-center gap-2">
-                                        <img src="{{ $customer->getAvatarUrl() }}" class="rounded-circle" width="32" height="32" alt="{{ $customer->name }}">
+                                        <img src="{{ $customer->getAvatarUrl() }}" class="rounded-circle" width="32" height="32" alt="{{ $customer->name }}" loading="lazy">
                                         <div>
                                             <div class="fw-semibold">{{ $customer->name }}</div>
                                             <small class="text-muted">{{ $customer->email }}</small>

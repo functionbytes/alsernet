@@ -83,12 +83,12 @@
                         <table class="table table-hover align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Titulo</th>
-                                    <th class="text-center">Severidad</th>
-                                    <th class="text-center">Estado</th>
-                                    <th>Iniciado</th>
-                                    <th>Resuelto</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Titulo</th>
+                                    <th scope="col" class="text-center">Severidad</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col">Iniciado</th>
+                                    <th scope="col">Resuelto</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

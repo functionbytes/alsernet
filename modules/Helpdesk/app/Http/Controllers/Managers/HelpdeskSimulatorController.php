@@ -64,10 +64,28 @@ class HelpdeskSimulatorController extends Controller
             'linked' => $result['linked'],
             'prestashop_id' => $result['prestashop_id'],
             'gestion_id' => $result['gestion_id'],
-            'message' => $result['linked']
-                ? 'Cliente sincronizado con PrestaShop'.($result['gestion_id'] ? ' y gestión.' : '.')
-                : 'El cliente no se encontró en PrestaShop.',
+            'message' => $this->syncMessage($result),
         ]);
+    }
+
+    /**
+     * @param  array{prestashop_id: ?int, gestion_id: ?int, linked: bool}  $result
+     */
+    private function syncMessage(array $result): string
+    {
+        if (! $result['linked']) {
+            return 'El cliente no se encontró en PrestaShop ni en gestión.';
+        }
+
+        if ($result['prestashop_id'] && $result['gestion_id']) {
+            return 'Cliente sincronizado con PrestaShop y gestión.';
+        }
+
+        if ($result['prestashop_id']) {
+            return 'Cliente sincronizado con PrestaShop.';
+        }
+
+        return 'Cliente sincronizado con gestión (ERP).';
     }
 
     /**

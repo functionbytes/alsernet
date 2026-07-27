@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskPrestashop\Jobs;
 
+use App\Helpers\PiiMasker;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -46,7 +47,7 @@ class RefreshPsContextJob implements ShouldBeUnique, ShouldQueue
     public function failed(\Throwable $e): void
     {
         Log::warning('RefreshPsContextJob failed', [
-            'email' => $this->email,
+            'email' => PiiMasker::email($this->email),
             'error' => $e->getMessage(),
         ]);
     }

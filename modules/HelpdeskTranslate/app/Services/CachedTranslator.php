@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTranslate\Services;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskTranslate\Models\TranslationCache;
@@ -158,6 +159,26 @@ class CachedTranslator
 
     private function callProvider(string $provider, string $text, string $target, ?string $source): ?string
     {
+        // Circuit breaker: si el proveedor viene fallando (caído / sin clave),
+        // saltarlo al instante en vez de comerse su timeout (10-15s). Con ambos
+        // proveedores abiertos, translate() devuelve null sin colgar el request.
+        if ($this->isCircuitOpen($provider)) {
+            return null;
+        }
+
+        $translated = $this->invokeProvider($provider, $text, $target, $source);
+
+        if ($translated === null) {
+            $this->recordFailure($provider);
+        } else {
+            $this->recordSuccess($provider);
+        }
+
+        return $translated;
+    }
+
+    private function invokeProvider(string $provider, string $text, string $target, ?string $source): ?string
+    {
         if ($provider === 'libretranslate') {
             $result = $this->libretranslate->translate($text, $source ?? 'auto', $target);
 
@@ -169,5 +190,35 @@ class CachedTranslator
         }
 
         return $this->deepl->translate($text, $target, $source);
+    }
+
+    /* ── Circuit breaker (por proveedor) ──────────────────────────────────── */
+
+    private function circuitKey(string $provider): string
+    {
+        return "helpdesktranslate:circuit:{$provider}";
+    }
+
+    private function isCircuitOpen(string $provider): bool
+    {
+        $threshold = (int) config('helpdesktranslate.circuit_failure_threshold', 3);
+
+        return (int) Cache::get($this->circuitKey($provider), 0) >= $threshold;
+    }
+
+    private function recordFailure(string $provider): void
+    {
+        $openSeconds = (int) config('helpdesktranslate.circuit_open_seconds', 60);
+        $key = $this->circuitKey($provider);
+
+        // Cache::add fija el TTL de la ventana solo en el primer fallo; los
+        // increments posteriores lo mantienen (Redis conserva el TTL en INCR).
+        Cache::add($key, 0, $openSeconds);
+        Cache::increment($key);
+    }
+
+    private function recordSuccess(string $provider): void
+    {
+        Cache::forget($this->circuitKey($provider));
     }
 }

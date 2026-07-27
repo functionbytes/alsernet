@@ -85,7 +85,12 @@ class InstagramService extends MetaGraphChannelDriver
 
         foreach ($payload['entry'] ?? [] as $entry) {
             foreach ($entry['messaging'] ?? [] as $messaging) {
-                $igUserId = $messaging['sender']['id'];
+                $igUserId = $messaging['sender']['id'] ?? null;
+
+                if ($igUserId === null) {
+                    continue;
+                }
+
                 $timestamp = (int) ($messaging['timestamp'] ?? 0);
 
                 // Skip echo messages
@@ -98,7 +103,7 @@ class InstagramService extends MetaGraphChannelDriver
                     $events[] = [
                         'type' => 'deleted',
                         'ig_user_id' => $igUserId,
-                        'message_id' => $messaging['message']['mid'],
+                        'message_id' => $messaging['message']['mid'] ?? null,
                     ];
 
                     continue;
@@ -119,7 +124,7 @@ class InstagramService extends MetaGraphChannelDriver
                     $events[] = [
                         'type' => isset($messaging['referral']) ? 'story_reply' : 'message',
                         'ig_user_id' => $igUserId,
-                        'message_id' => $msg['mid'],
+                        'message_id' => $msg['mid'] ?? null,
                         'timestamp' => $timestamp,
                         'body' => $msg['text'] ?? null,
                         'attachments' => $this->parseAttachments($msg['attachments'] ?? []),
@@ -131,17 +136,17 @@ class InstagramService extends MetaGraphChannelDriver
                     $events[] = [
                         'type' => 'reaction',
                         'ig_user_id' => $igUserId,
-                        'message_id' => $r['mid'],
-                        'action' => $r['action'],   // react|unreact
+                        'message_id' => $r['mid'] ?? null,
+                        'action' => $r['action'] ?? 'react',   // react|unreact
                         'emoji' => $r['emoji'] ?? null,
                     ];
                 } elseif (isset($messaging['message_status'])) {
                     $s = $messaging['message_status'];
                     $events[] = [
-                        'type' => $s['status'] === 'READ' ? 'read' : 'delivery',
+                        'type' => ($s['status'] ?? null) === 'READ' ? 'read' : 'delivery',
                         'ig_user_id' => $igUserId,
-                        'message_id' => $s['mid'],
-                        'status' => $s['status'],
+                        'message_id' => $s['mid'] ?? null,
+                        'status' => $s['status'] ?? null,
                     ];
                 }
             }
@@ -157,7 +162,7 @@ class InstagramService extends MetaGraphChannelDriver
     private function parseAttachments(array $raw): array
     {
         return array_map(fn ($a) => [
-            'type' => $a['type'],
+            'type' => $a['type'] ?? 'file',
             'url' => $a['payload']['url'] ?? null,
             'is_ephemeral' => $a['payload']['is_ephemeral'] ?? false,
         ], $raw);

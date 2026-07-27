@@ -92,7 +92,7 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request('search'))
@@ -112,12 +112,12 @@
                         <table class="table table-hover align-middle text-nowrap" id="statuses-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th></th>
-                                    <th>Nombre</th>
-                                    <th>Slug</th>
-                                    <th>Descripcion</th>
-                                    <th class="text-center">SLA</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col"></th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Slug</th>
+                                    <th scope="col">Descripcion</th>
+                                    <th scope="col" class="text-center">SLA</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="statuses-sortable">

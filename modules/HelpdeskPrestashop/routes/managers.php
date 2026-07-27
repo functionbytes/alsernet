@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\AssistedCartController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\ProductSearchController;
+use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsOrderActionsController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsOrderDetailController;
 use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsRecommendationController;
 
@@ -10,6 +11,47 @@ use Modules\HelpdeskPrestashop\Http\Controllers\Managers\PsRecommendationControl
 Route::get('/ps/orders/{order}/detail', PsOrderDetailController::class)
     ->whereNumber('order')
     ->name('manager.helpdesk.ps.orders.detail');
+
+// Catálogo de estados de pedido PS (desplegable "Cambiar estado" del workspace)
+Route::get('/ps/order-states', [PsOrderActionsController::class, 'states'])
+    ->name('manager.helpdesk.ps.order-states');
+
+// Acciones mutadoras del pedido PS (workspace del inbox) — throttle por ser
+// escritura. Atadas a {customer}: la propiedad del pedido se verifica contra
+// el email del cliente resuelto server-side, no de un campo del body.
+Route::post('/customers/{customer}/ps/orders/{order}/status', [PsOrderActionsController::class, 'changeStatus'])
+    ->whereNumber('order')
+    ->middleware('throttle:30,1')
+    ->name('manager.helpdesk.ps.orders.status');
+
+Route::post('/customers/{customer}/ps/orders/{order}/tracking', [PsOrderActionsController::class, 'setTracking'])
+    ->whereNumber('order')
+    ->middleware('throttle:30,1')
+    ->name('manager.helpdesk.ps.orders.tracking');
+
+Route::post('/customers/{customer}/ps/orders/{order}/note', [PsOrderActionsController::class, 'addNote'])
+    ->whereNumber('order')
+    ->middleware('throttle:30,1')
+    ->name('manager.helpdesk.ps.orders.note');
+
+Route::post('/customers/{customer}/ps/orders/{order}/return', [PsOrderActionsController::class, 'startReturn'])
+    ->whereNumber('order')
+    ->middleware('throttle:30,1')
+    ->name('manager.helpdesk.ps.orders.return');
+
+Route::get('/customers/{customer}/ps/orders/{order}/documents', [PsOrderActionsController::class, 'documents'])
+    ->whereNumber('order')
+    ->name('manager.helpdesk.ps.orders.documents');
+
+Route::post('/customers/{customer}/ps/orders/{order}/address', [PsOrderActionsController::class, 'setAddress'])
+    ->whereNumber('order')
+    ->middleware('throttle:30,1')
+    ->name('manager.helpdesk.ps.orders.address');
+
+Route::post('/customers/{customer}/ps/orders/{order}/email', [PsOrderActionsController::class, 'sendEmail'])
+    ->whereNumber('order')
+    ->middleware('throttle:20,1')
+    ->name('manager.helpdesk.ps.orders.email');
 
 // Carrito asistido (construido por el agente desde el chat) — módulo HelpdeskPrestashop
 Route::prefix('customers/{customer}/cart')
@@ -21,6 +63,7 @@ Route::prefix('customers/{customer}/cart')
         Route::delete('/items/{item}', [AssistedCartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
         Route::post('/discount', [AssistedCartController::class, 'applyDiscount'])->name('discount');
         Route::post('/clear', [AssistedCartController::class, 'clear'])->name('clear');
+        Route::post('/cancel', [AssistedCartController::class, 'cancel'])->name('cancel');
         Route::post('/generate-order', [AssistedCartController::class, 'generateOrder'])->name('generate-order');
         Route::post('/send-payment-link', [AssistedCartController::class, 'sendPaymentLink'])->name('send-payment-link');
     });

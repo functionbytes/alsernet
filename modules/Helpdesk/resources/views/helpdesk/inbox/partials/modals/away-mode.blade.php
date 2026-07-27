@@ -70,6 +70,7 @@
                     <select class="fselect" id="awayReassign">
                         <option value="keep">{{ __('helpdesk::helpdesk.inbox.modals.away_mode_reassign_keep') }}</option>
                         <option value="team">{{ __('helpdesk::helpdesk.inbox.modals.away_mode_reassign_team') }}</option>
+                        <optgroup label="{{ __('helpdesk::helpdesk.inbox.modals.away_mode_reassign_agent_group') }}" id="awayReassignAgentsGroup"></optgroup>
                     </select>
                 </div>
             </div>
@@ -90,10 +91,44 @@ window.HD_CURRENT_USER_ID = @json(auth()->id());
     'use strict';
 
     var _loaded = null;
+    var _agentsList = null;
     var LABELS = { available: 'Disponible', away: 'Ausente', busy: 'En descanso', offline: 'No molestar' };
     var BTN    = { available: 'Guardar estado', away: 'Activar modo ausente', busy: 'Activar descanso', offline: 'Activar no molestar' };
 
     function csrf() { return $('meta[name="csrf-token"]').attr('content'); }
+
+    function initSelect2() {
+        if (!$.fn.select2) { return; }
+        $('#awayAutoReturn').select2({ width: '100%', minimumResultsForSearch: Infinity, dropdownAutoWidth: false });
+        $('#awayReassign').select2({ width: '100%', dropdownAutoWidth: false });
+    }
+
+    // Puebla el optgroup "A un agente específico" con los agentes reales
+    // (excluyendo al propio usuario) y re-sincroniza el widget select2.
+    function populateReassignAgents(agents) {
+        var $group = $('#awayReassignAgentsGroup');
+        if (!$group.length) { return; }
+        var current = $('#awayReassign').val();
+        $group.empty();
+        (agents || []).forEach(function (a) {
+            if (String(a.user_id) === String(window.HD_CURRENT_USER_ID)) { return; }
+            $group.append($('<option>').val('agent:' + a.user_id).text(a.name));
+        });
+        $('#awayReassign').val(current).trigger('change');
+    }
+
+    function loadReassignAgents() {
+        $.ajax({
+            url: '/panel/helpdesk/presence/agents', method: 'GET',
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf() }
+        }).done(function (resp) {
+            _agentsList = resp.agents || [];
+            populateReassignAgents(_agentsList);
+            // Si la presencia ya se había cargado (posible carrera con loadPresence),
+            // reaplica la selección ahora que las opciones de agente ya existen.
+            if (_loaded) { fillForm(_loaded); }
+        });
+    }
 
     function paintCard(state) {
         var $st = $('.bv-nav-user-status');
@@ -113,8 +148,11 @@ window.HD_CURRENT_USER_ID = @json(auth()->id());
         $('#awayModeList .reason').removeClass('on');
         $('#awayModeList .reason[data-bv-value="' + st + '"]').addClass('on');
         $('#awayMessage').val((data && data.away_message) || '');
-        $('#awayAutoReturn').val((data && data.auto_return) || 'manual');
-        $('#awayReassign').val((data && data.reassign) || 'keep');
+        $('#awayAutoReturn').val((data && data.auto_return) || 'manual').trigger('change');
+        var reassign = (data && data.reassign) || 'keep';
+        var reassignVal = (reassign === 'agent' && data && data.reassign_agent_id)
+            ? ('agent:' + data.reassign_agent_id) : reassign;
+        $('#awayReassign').val(reassignVal).trigger('change');
         updateBtn();
     }
 
@@ -143,9 +181,11 @@ window.HD_CURRENT_USER_ID = @json(auth()->id());
 
     // Mantiene la presencia viva (auto-marca "disponible" si estaba offline) y
     // refleja el estado inicial en la tarjeta de usuario del nav.
+    initSelect2();
     heartbeat();
     setInterval(heartbeat, 60000);
     setTimeout(loadPresence, 500);
+    setTimeout(loadReassignAgents, 500);
     // Latir de inmediato al volver a la pestaña.
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) { heartbeat(); }
@@ -168,11 +208,19 @@ window.HD_CURRENT_USER_ID = @json(auth()->id());
 
     $(document).on('click', '#bv-away-mode-confirm', function () {
         var state = $('#awayModeList .reason.on').data('bv-value') || 'available';
+        var reassignRaw = $('#awayReassign').val() || 'keep';
+        var reassignMode = reassignRaw;
+        var reassignAgentId = null;
+        if (reassignRaw.indexOf('agent:') === 0) {
+            reassignMode = 'agent';
+            reassignAgentId = reassignRaw.slice('agent:'.length);
+        }
         var payload = {
             state: state,
             away_message: $('#awayMessage').val(),
             auto_return: $('#awayAutoReturn').val(),
-            reassign: $('#awayReassign').val(),
+            reassign: reassignMode,
+            reassign_agent_id: reassignAgentId,
             timezone: (window.Intl && Intl.DateTimeFormat().resolvedOptions().timeZone) || '',
         };
         var $btn = $(this).prop('disabled', true);
@@ -180,7 +228,10 @@ window.HD_CURRENT_USER_ID = @json(auth()->id());
             url: '/panel/helpdesk/presence/state', method: 'POST', data: payload,
             headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' }
         }).done(function (resp) {
-            _loaded = { raw_state: state, away_message: payload.away_message, auto_return: payload.auto_return, reassign: payload.reassign };
+            _loaded = {
+                raw_state: state, away_message: payload.away_message, auto_return: payload.auto_return,
+                reassign: reassignMode, reassign_agent_id: reassignAgentId,
+            };
             paintCard(state);
             $('[data-bv-modal-name="away-mode"]').removeClass('on');
             if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }

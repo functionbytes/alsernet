@@ -3,6 +3,7 @@
 namespace Modules\EcommercePayment\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\EcommercePayment\Console\Commands\CleanupPendingPaymentsCommand;
 use Modules\EcommercePayment\Models\Payment;
@@ -33,12 +34,35 @@ class EcommercePaymentServiceProvider extends ServiceProvider
         $this->registerViews();
         $this->loadTranslationsFrom(module_path($this->name, 'lang'), $this->nameLower);
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
+        $this->registerRoutes();
         $this->app->register(EventServiceProvider::class);
         $this->registerPolicies();
         $this->registerMenus();
         $this->commands([
             CleanupPendingPaymentsCommand::class,
         ]);
+    }
+
+    /**
+     * register() ya delega en Modules\EcommercePayment\Providers\RouteServiceProvider
+     * via $this->app->register(RouteServiceProvider::class), pero ese sub-provider
+     * dinamico nunca terminaba de bootear sus rutas dentro del ciclo normal de
+     * arranque (confirmado: registrarlo a mano en un proceso ya arrancado SI
+     * carga las rutas, pero durante un request real quedaban sin registrar) —
+     * dejando /payment/wompi/* y el resto del modulo de pagos completamente
+     * inalcanzables. Se cargan aqui directamente, igual que el resto de los
+     * modulos de este proyecto.
+     */
+    protected function registerRoutes(): void
+    {
+        Route::middleware('web')
+            ->namespace('Modules\EcommercePayment\Http\Controllers')
+            ->group(module_path($this->name, 'routes/web.php'));
+
+        Route::prefix('api')
+            ->middleware('api')
+            ->namespace('Modules\EcommercePayment\Http\Controllers\Api')
+            ->group(module_path($this->name, 'routes/api.php'));
     }
 
     public function register(): void

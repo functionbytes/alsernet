@@ -5,10 +5,10 @@ namespace Modules\Helpdesk\Services\Conversations;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\Inbox;
+use Modules\Helpdesk\Services\AgentPresenceService;
 
 /**
  * Datos agregados y cacheados que alimentan el sidebar/statusbar del inbox
@@ -17,6 +17,10 @@ use Modules\Helpdesk\Models\Inbox;
  */
 class ConversationInboxMetricsService
 {
+    public function __construct(
+        private readonly AgentPresenceService $presence,
+    ) {}
+
     /**
      * @return array{active_channels: int, agents_online: int, sla_avg_seconds: int, resolved_today: int}
      */
@@ -44,11 +48,13 @@ class ConversationInboxMetricsService
                     ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, first_response_at)) as avg_sec')
                     ->value('avg_sec');
 
-                $agentsOnline = (int) DB::table('sessions')
-                    ->whereNotNull('user_id')
-                    ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)
-                    ->distinct('user_id')
-                    ->count('user_id');
+                // The SQL `sessions` table is never populated — SESSION_DRIVER is
+                // redis, so real sessions live there, not in this table. This
+                // always counted 0 agents online regardless of who was actually
+                // using the panel. AgentPresenceService already tracks real
+                // presence via a Redis heartbeat (updated by the widget's
+                // /presence/heartbeat poll) — reuse that instead.
+                $agentsOnline = count($this->presence->getOnlineAgents());
 
                 return [
                     'active_channels' => $activeChannels,
@@ -88,11 +94,17 @@ class ConversationInboxMetricsService
                     ->pluck('cnt', 'channel');
 
                 return [
-                    // Sin leer: abiertas y sin asignar (heurística sin read receipts)
-                    'unread' => (clone $inbox)
-                        ->whereHas('status', fn ($q) => $q->where('is_open', true))
-                        ->whereNull('assignee_id')
-                        ->count(),
+                    // Sin leer: mismo criterio que el filtro ?unread=1 de la lista
+                    // (helpdesk_conversation_reads real, no la vieja heurística
+                    // "abierta y sin asignar" que no tenía relación con si ESTE
+                    // usuario ya la había leído — el badge decía "3" con la lista
+                    // vacía debajo porque contaban cosas distintas).
+                    'unread' => $userId
+                        ? (clone $inbox)
+                            ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                            ->whereDoesntHave('reads', fn ($r) => $r->where('user_id', $userId))
+                            ->count()
+                        : 0,
                     'mine' => $userId ? (clone $inbox)->where('assignee_id', $userId)->count() : 0,
                     'unassigned' => (clone $inbox)->whereNull('assignee_id')->count(),
                     'urgent' => (clone $inbox)->where('priority', 'urgent')->count(),
@@ -100,6 +112,18 @@ class ConversationInboxMetricsService
                         ->whereHas('status', fn ($q) => $q->where('name', 'Esperando'))
                         ->count(),
                     'archived' => (clone $inbox)->where('is_archived', true)->count(),
+                    // "Cerradas" in the sidebar means resolved/closed status
+                    // (is_open=false) — NOT archived, a separate concept. The
+                    // link used to point at ?archived=1 and show this same
+                    // 'archived' count, so it always read 0 even with closed
+                    // conversations sitting right there.
+                    'closed' => (clone $inbox)
+                        ->whereHas('status', fn ($q) => $q->where('is_open', false))
+                        ->count(),
+                    'blocked' => (clone $inbox)
+                        ->whereHas('customer', fn ($c) => $c->whereNotNull('banned_at'))
+                        ->count(),
+                    'spam' => (clone $inbox)->where('is_spam', true)->count(),
                     'whatsapp' => (int) ($channelCounts['whatsapp'] ?? 0),
                     'facebook' => (int) ($channelCounts['facebook'] ?? 0),
                     'instagram' => (int) ($channelCounts['instagram'] ?? 0),
@@ -115,6 +139,18 @@ class ConversationInboxMetricsService
                 ];
             }
         );
+    }
+
+    /**
+     * Forget the cached sidebar/list counters for a user so a read/unread
+     * change is reflected on the very next request instead of waiting out
+     * the cache TTL (up to 120s for sidebarCounters, 30s for listJson).
+     * Call this right after marking a conversation as read.
+     */
+    public function forgetCountersFor(?int $userId): void
+    {
+        Cache::forget('helpdesk:inbox:counters:'.($userId ?? 'guest'));
+        Cache::forget('helpdesk:inbox:list-counters:'.($userId ?? 'guest'));
     }
 
     /**
@@ -141,9 +177,17 @@ class ConversationInboxMetricsService
                     ->get(['id', 'name', 'channel_type', 'color', 'icon']);
 
                 // Un único GROUP BY para todos los contadores por inbox (antes 1
-                // COUNT por inbox — N+1 con N inboxes activos).
+                // COUNT por inbox — N+1 con N inboxes activos). Filtrado igual que
+                // la vista "Inbox" por defecto (is_open/is_archived/sin bot activo)
+                // para que el número mostrado en el sidebar coincida con lo que el
+                // agente realmente ve al abrir ese inbox — antes contaba TODO
+                // (incluidas conversaciones resueltas/archivadas), mostrando un
+                // número mayor a cero con la lista vacía debajo.
                 $counts = Conversation::query()
                     ->whereIn('inbox_id', $inboxList->pluck('id'))
+                    ->whereHas('status', fn ($q) => $q->where('is_open', true))
+                    ->where('is_archived', false)
+                    ->withoutActiveBot()
                     ->selectRaw('inbox_id, COUNT(*) as cnt')
                     ->groupBy('inbox_id')
                     ->pluck('cnt', 'inbox_id');

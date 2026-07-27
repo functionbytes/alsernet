@@ -191,6 +191,16 @@ class ToolExecutionService
             throw new \RuntimeException('Database tool queries may not use INTO OUTFILE/DUMPFILE or LOAD_FILE');
         }
 
+        // Rechaza cross-joins por coma (FROM a, b): extractReferencedTables()
+        // solo captura la tabla inmediatamente tras FROM/JOIN, así que una
+        // segunda tabla separada por coma se colaría sin pasar la allowlist
+        // (p.ej. `FROM migrations, users`). Las tools legítimas usan JOIN
+        // explícito; fail-closed: se bloquea la coma en la cláusula FROM.
+        if (preg_match('/\bfrom\b(.*?)(?:\bwhere\b|\bgroup\b|\border\b|\bhaving\b|\blimit\b|\bjoin\b|$)/is', $sql, $fromClause)
+            && str_contains($fromClause[1], ',')) {
+            throw new \RuntimeException('Database tool queries may not use comma-separated (implicit) joins');
+        }
+
         // Allowlist de tablas (fail-closed): aunque los db-tools estén
         // habilitados y quien crea la tool tenga el permiso, un SELECT solo
         // puede leer tablas explícitamente permitidas — nunca `users`,

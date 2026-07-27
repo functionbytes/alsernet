@@ -24,12 +24,15 @@ class CustomerExternalId extends Model
         'platform',
         'external_id',
         'metadata',
+        'last_synced_at',
+        'sync_status',
     ];
 
     protected function casts(): array
     {
         return [
             'metadata' => 'array',
+            'last_synced_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

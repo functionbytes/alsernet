@@ -5,9 +5,12 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationTag;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Models\Ticket;
 
 class GlobalSearchController extends Controller
 {
@@ -16,7 +19,7 @@ class GlobalSearchController extends Controller
         $q = trim($request->string('q'));
 
         if (strlen($q) < 2) {
-            return response()->json(['customers' => [], 'conversations' => [], 'tags' => []]);
+            return response()->json(['customers' => [], 'conversations' => [], 'tickets' => [], 'tags' => []]);
         }
 
         $customers = Customer::query()
@@ -71,7 +74,45 @@ class GlobalSearchController extends Controller
         return response()->json([
             'customers' => $customers,
             'conversations' => $conversations,
+            'tickets' => $this->searchTickets($q),
             'tags' => $tags,
         ]);
+    }
+
+    /**
+     * Search tickets — only when the HelpdeskTickets module is enabled. Guarded
+     * so a failure here never breaks the rest of the global search.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function searchTickets(string $q): Collection
+    {
+        $ticketClass = Ticket::class;
+
+        if (! function_exists('helpdesk_tickets_enabled')
+            || ! helpdesk_tickets_enabled()
+            || ! class_exists($ticketClass)
+            || ! Route::has('manager.helpdesk.tickets.show')) {
+            return collect();
+        }
+
+        try {
+            return $ticketClass::query()
+                ->search($q)
+                ->with('customer:id,name')
+                ->latest()
+                ->limit(5)
+                ->get()
+                ->map(fn ($t) => [
+                    'id' => $t->id,
+                    'ticket_number' => $t->ticket_number,
+                    'subject' => $t->subject,
+                    'customer_name' => $t->customer?->name,
+                    'type' => 'ticket',
+                    'url' => route('manager.helpdesk.tickets.show', $t),
+                ]);
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 }

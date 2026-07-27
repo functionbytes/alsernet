@@ -6,6 +6,7 @@
     <style>
         .contacts-avatar { width: 36px; height: 36px; }
         #filters-panel { visibility: visible; }
+        .icon-instagram { color: #c13584; }
     </style>
 @endpush
 
@@ -234,7 +235,7 @@
                                             <span class="text-primary" title="Facebook Messenger"><i class="fab fa-facebook-messenger"></i></span>
                                         @endif
                                         @if($customer->instagram_id)
-                                            <span style="color:#c13584" title="Instagram"><i class="fab fa-instagram"></i></span>
+                                            <span class="icon-instagram" title="Instagram"><i class="fab fa-instagram"></i></span>
                                         @endif
                                     </div>
                                 </td>

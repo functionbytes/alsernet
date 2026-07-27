@@ -2,13 +2,15 @@
 
 namespace Modules\Erp\Http\Requests;
 
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class StoreErpEndpointRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('erp.endpoints.manage') ?? false;
     }
 
     public function rules(): array
@@ -16,7 +18,7 @@ class StoreErpEndpointRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:erp_endpoints,slug',
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'url', 'max:500', $this->safeUrlRule()],
             'method' => 'required|in:GET,POST,PUT,PATCH,DELETE',
             'credential_id' => 'nullable|exists:erp_credentials,id',
             'description' => 'nullable|string|max:1000',
@@ -42,5 +44,20 @@ class StoreErpEndpointRequest extends FormRequest
             'timeout.integer' => 'El timeout debe ser un número',
             'timeout.max' => 'El timeout no puede exceder 300 segundos',
         ];
+    }
+
+    /**
+     * Rechaza URLs a loopback o link-local/metadata cloud (SSRF). A diferencia
+     * del OutboundUrlGuard genérico, permite rangos privados (RFC1918) porque
+     * los endpoints ERP legítimos viven en la red interna Docker; lo que nunca
+     * es un ERP válido es 127.0.0.1 (self-SSRF) ni 169.254.169.254 (metadata).
+     */
+    protected function safeUrlRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if (! ErpEndpointUrlGuard::isAllowed(is_string($value) ? $value : null)) {
+                $fail('La URL no está permitida (loopback o metadata cloud bloqueado).');
+            }
+        };
     }
 }

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialConversationRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialConversationResource;
 use Modules\HelpdeskSocial\Models\SocialConversation;
@@ -19,11 +20,13 @@ class SocialConversationsController extends Controller
             ->paginate(25);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialConversationResource::collection($conversations),
             'meta' => [
-                'current_page' => $conversations->currentPage(),
-                'last_page' => $conversations->lastPage(),
-                'per_page' => $conversations->perPage(),
+                'currentPage' => $conversations->currentPage(),
+                'lastPage' => $conversations->lastPage(),
+                'perPage' => $conversations->perPage(),
                 'total' => $conversations->total(),
             ],
         ]);
@@ -33,18 +36,14 @@ class SocialConversationsController extends Controller
     {
         abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
-        return response()->json([
-            'data' => new SocialConversationResource($conversation->load('account')),
-        ]);
+        return ApiResponse::success(new SocialConversationResource($conversation->load('account')));
     }
 
     public function update(UpdateSocialConversationRequest $request, SocialConversation $conversation): JsonResponse
     {
         $conversation->update($request->validated());
 
-        return response()->json([
-            'data' => new SocialConversationResource($conversation->load('account')),
-        ]);
+        return ApiResponse::success(new SocialConversationResource($conversation->load('account')), 'Conversación actualizada correctamente.');
     }
 
     public function destroy(SocialConversation $conversation): JsonResponse
@@ -53,6 +52,6 @@ class SocialConversationsController extends Controller
 
         $conversation->delete();
 
-        return response()->json(['message' => 'Conversación eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 }

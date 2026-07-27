@@ -4,6 +4,9 @@ import { apiUrl, conversationAuthHeaders, getConversationToken } from '../api';
 
 export type ConnectionStatus = 'online' | 'connecting' | 'reconnecting' | 'offline';
 
+/** Cadencia del sondeo HTTP de respaldo cuando el websocket no está disponible. */
+const FALLBACK_POLL_MS = 5000;
+
 /** Map a raw pusher-js connection state to a user-facing widget status. */
 function toConnectionStatus(state: WsConnectionState): ConnectionStatus {
     switch (state) {
@@ -52,6 +55,15 @@ interface LinkPreview {
     favicon?: string | null;
 }
 
+export interface CarouselProduct {
+    id: string | number;
+    name: string;
+    price?: number;
+    currency?: string;
+    image_url?: string;
+    url?: string;
+}
+
 export interface Message {
     id: string;
     content: string;
@@ -61,6 +73,27 @@ export interface Message {
     status?: 'sending' | 'sent' | 'delivered';
     attachments?: MessageAttachment[];
     linkPreview?: LinkPreview | null;
+    products?: CarouselProduct[];
+}
+
+/**
+ * Normaliza los productos del carrusel (coviewer). El backend los envía con la
+ * clave `title` (CatalogProduct); la UI de tarjetas usa `name`.
+ */
+function parseCarouselProducts(raw: any): CarouselProduct[] | undefined {
+    if (!Array.isArray(raw) || raw.length === 0) {
+        return undefined;
+    }
+    return raw
+        .filter((p: any) => p && (p.id !== undefined && p.id !== null && p.id !== ''))
+        .map((p: any) => ({
+            id: p.id,
+            name: p.name ?? p.title ?? '',
+            price: typeof p.price === 'number' ? p.price : undefined,
+            currency: p.currency ?? undefined,
+            image_url: p.image_url ?? p.image ?? undefined,
+            url: p.url ?? undefined,
+        }));
 }
 
 function parseApiMessage(msg: any): Message {
@@ -77,6 +110,7 @@ function parseApiMessage(msg: any): Message {
             type: a.mime_type ?? a.type ?? '',
         })),
         linkPreview: msg.link_preview ?? null,
+        products: parseCarouselProducts(msg.products),
     };
 }
 
@@ -223,6 +257,7 @@ export function useConversationMessages({
                     type: a.mime_type ?? a.type ?? '',
                 }));
                 const incomingLinkPreview = event.link_preview ?? null;
+                const incomingProducts = parseCarouselProducts(event.products);
                 let isUpdateOnly = false;
 
                 setMessages(prev => {
@@ -261,6 +296,7 @@ export function useConversationMessages({
                         status: 'delivered' as const,
                         attachments: incomingAttachments,
                         linkPreview: incomingLinkPreview,
+                        products: incomingProducts,
                     }];
                 });
 
@@ -381,6 +417,51 @@ export function useConversationMessages({
             }
         });
         return unsubscribe;
+    }, [conversationId, resyncMessages]);
+
+    // Respaldo por HTTP mientras el websocket no esté disponible.
+    //
+    // El resync de arriba sólo dispara en la TRANSICIÓN a 'connected'. Si el
+    // servidor de websockets está caído de forma sostenida, esa transición nunca
+    // llega y el visitante se queda sin ver las respuestas del agente aunque el
+    // backend las esté guardando. El tiempo real es una mejora, no el canal de
+    // entrega: mientras esté caído se sondea el mismo endpoint que ya usa el
+    // resync (deduplica por id, así que no puede duplicar mensajes).
+    useEffect(() => {
+        if (!conversationId) return;
+
+        const shouldPoll = (state: WsConnectionState) =>
+            state === 'disconnected' || state === 'unavailable' || state === 'failed';
+
+        let timer: number | null = null;
+
+        const stop = () => {
+            if (timer !== null) {
+                window.clearInterval(timer);
+                timer = null;
+            }
+        };
+
+        const start = () => {
+            if (timer !== null) return;
+            resyncMessages(conversationId);
+            timer = window.setInterval(() => resyncMessages(conversationId), FALLBACK_POLL_MS);
+        };
+
+        if (shouldPoll(getWsState())) start();
+
+        const unsubscribe = onWsStateChange(current => {
+            if (shouldPoll(current)) {
+                start();
+            } else {
+                stop();
+            }
+        });
+
+        return () => {
+            stop();
+            unsubscribe();
+        };
     }, [conversationId, resyncMessages]);
 
     // Read receipts — batch-mark the last visible agent message every 2s

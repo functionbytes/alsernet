@@ -25,6 +25,7 @@ class Document extends Model implements HasMedia
     protected $casts = [
         'confirmed_at' => 'datetime',
         'uploaded_confirmation_sent_at' => 'datetime',
+        'documents_completed_at' => 'datetime',
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'order_date' => 'datetime',
@@ -49,6 +50,7 @@ class Document extends Model implements HasMedia
         'lang_id',
         'confirmed_at',
         'uploaded_confirmation_sent_at',
+        'documents_completed_at',
         'reminder_at',
         'reminder_sent_at',
         'order_id',
@@ -78,6 +80,14 @@ class Document extends Model implements HasMedia
         'created_at',
         'updated_at',
     ];
+
+    /**
+     * Memoization cache for getRequiredDocumentsWithLabels() so repeated calls
+     * on the same instance don't recompute/requery translations.
+     */
+    protected ?array $requiredDocumentsWithLabelsCache = null;
+
+    protected ?string $requiredDocumentsWithLabelsCacheKey = null;
 
     // =========================================================================
     // MUTATORS - Automatic field transformations
@@ -769,20 +779,30 @@ class Document extends Model implements HasMedia
     /**
      * Obtiene documentos requeridos con sus labels descriptivos
      * Retorna array asociativo: {"dni_frontal": "DNI - Cara delantera", ...}
+     * Memoizado por instancia (keyed por type_id+lang_id) para evitar recalcular
+     * en llamadas repetidas dentro del mismo request.
      *
      * @return array Array con keys y labels
      */
     public function getRequiredDocumentsWithLabels(): array
     {
-        // Obtener configuración del tipo de documento desde la relación type_id
-        $documentType = $this->documentType;
+        $cacheKey = $this->type_id.':'.$this->lang_id;
 
-        if ($documentType) {
-            // Pass the document's language ID to get translated labels
-            return $documentType->getRequiredDocuments($this->lang_id);
+        if ($this->requiredDocumentsWithLabelsCacheKey === $cacheKey && $this->requiredDocumentsWithLabelsCache !== null) {
+            return $this->requiredDocumentsWithLabelsCache;
         }
 
-        return $this->getDefaultDocuments();
+        // Eager load la relación completa para que DocumentRequirement::translate() no dispare N+1
+        $this->loadMissing('documentType.requirements.langs');
+
+        $documentType = $this->documentType;
+
+        $this->requiredDocumentsWithLabelsCache = $documentType
+            ? $documentType->getRequiredDocuments($this->lang_id)
+            : $this->getDefaultDocuments();
+        $this->requiredDocumentsWithLabelsCacheKey = $cacheKey;
+
+        return $this->requiredDocumentsWithLabelsCache;
     }
 
     /**
@@ -1137,6 +1157,12 @@ class Document extends Model implements HasMedia
     {
         parent::boot();
 
+        static::saving(function (Document $document) {
+            if ($document->isDirty('customer_cellphone')) {
+                $document->customer_cellphone_normalized = self::normalizeCellphone($document->customer_cellphone);
+            }
+        });
+
         static::creating(function (Document $document) {
             // If no type_id is set, default to 'dni' type (fallback when no products or blockades)
             if (! $document->type_id) {
@@ -1212,6 +1238,20 @@ class Document extends Model implements HasMedia
 
             }
         });
+    }
+
+    /**
+     * Últimos 9 dígitos de un teléfono tras quitar todo lo no-numérico, o null
+     * si quedan menos de 9. Mantiene sincronizada la columna indexada
+     * customer_cellphone_normalized, usada por HelpdeskDocument para el
+     * fallback de match conversación↔expediente por teléfono (clientes sin
+     * email, p. ej. WhatsApp).
+     */
+    private static function normalizeCellphone(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone);
+
+        return strlen($digits) >= 9 ? substr($digits, -9) : null;
     }
 
     public function buildUploadUrl(): ?string

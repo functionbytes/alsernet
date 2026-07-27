@@ -280,7 +280,7 @@
     {{-- Header --}}
     <div class="hd-kanban-header">
         <div class="hd-kanban-title">
-            <i class="fas fa-table-columns" style="color:#90bb13"></i>
+            <i class="fas fa-table-columns bv-x7"></i>
             Kanban — conversaciones
         </div>
         <div class="hd-kanban-actions">
@@ -371,7 +371,7 @@
                         </div>
                     @empty
                         <div class="hd-kanban-empty">
-                            <i class="far fa-inbox"></i>
+                            <i class="fas fa-inbox"></i>
                             Sin conversaciones
                         </div>
                     @endforelse

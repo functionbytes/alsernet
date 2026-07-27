@@ -4,7 +4,16 @@ use Illuminate\Support\Facades\Route;
 use Modules\Document\Http\Controllers\Api\DocumentsController;
 use Modules\Document\Http\Controllers\Api\DocumentValidationController;
 
-// ✅ Public routes with rate limiting (stateless API)
+// ✅ Public routes keyed by document {uid}: throttle ESTRICTO. Estas rutas
+// exponen/mutan datos por uid sin auth, así que un límite bajo encarece la
+// enumeración de uids (protección extra frente a IDOR sobre PII sensible).
+Route::middleware(['api', 'throttle:15,1'])->group(function () {
+    Route::get('/{uid}/validation', [DocumentsController::class, 'validation'])->name('validation');
+    Route::post('/{uid}/files', [DocumentsController::class, 'uploadFiles'])->name('files.upload');
+    Route::delete('/{uid}/files/{docType}', [DocumentsController::class, 'deleteFile'])->name('files.delete.by-type');
+});
+
+// ✅ Public routes with standard rate limiting (stateless API)
 Route::middleware(['api', 'throttle:60,1'])->group(function () {
 
     // RESTful endpoint: POST /api/documents → creates a new document
@@ -14,9 +23,6 @@ Route::middleware(['api', 'throttle:60,1'])->group(function () {
     // Process endpoint: Handles action-based requests (deprecated)
     Route::post('/process', [DocumentsController::class, 'process'])->name('process');
     Route::get('/verify', [DocumentsController::class, 'verify'])->name('verify');
-    Route::get('/{uid}/validation', [DocumentsController::class, 'validation'])->name('validation');
-    Route::post('/{uid}/files', [DocumentsController::class, 'uploadFiles'])->name('files.upload');
-    Route::delete('/{uid}/files/{docType}', [DocumentsController::class, 'deleteFile'])->name('files.delete.by-type');
     Route::post('/webhooks/prestashop/order-paid', [DocumentsController::class, 'prestashopOrderPaid'])->name('webhooks.prestashop.order-paid');
     Route::post('/webhooks/erp/order-status', [DocumentsController::class, 'erpOrderStatus'])->name('webhooks.erp.order-status');
 });
@@ -25,13 +31,13 @@ Route::middleware(['api', 'throttle:60,1'])->group(function () {
 // ✅ Usar 'web' para soporte de sesión + 'auth:web' para autenticación con sesión
 // IMPORTANTE: NO usar middleware 'api' junto con 'web' - son incompatibles
 // 🔒 Seguridad (HD-DOC-01): además de autenticar, exigir el permiso base del módulo
-//    Document ('view-documents'). El gate dinámico registrado en DocumentsServiceProvider
-//    (Gate::before) resuelve este permiso contra los grupos validadores del usuario y
-//    deja pasar a super-admin. Esto cierra el acceso de cualquier usuario web autenticado
-//    sin permisos del módulo a las acciones mutadoras (assign/approve/reject/send-*/
-//    notes/attachments/upload/update/delete...) sin romper el panel admin de validación,
-//    cuyos usuarios pertenecen a un grupo validador con 'view-documents'.
-Route::middleware(['web', 'auth:web', 'role:super-admin|supervisor'])->group(function () {
+//    Document via 'can:view-documents-panel' (Gate en DocumentsServiceProvider), que deja
+//    pasar a super-admin (Gate::before), supervisor, y a los miembros de grupos validadores
+//    con el permiso 'view-documents'. Esto cierra el acceso de cualquier usuario web
+//    autenticado sin permisos del módulo a las acciones mutadoras (assign/approve/reject/
+//    send-*/notes/attachments/upload/update/delete...) sin romper el panel admin de
+//    validación, cuyos usuarios pertenecen a un grupo validador con 'view-documents'.
+Route::middleware(['web', 'auth:web', 'can:view-documents-panel'])->group(function () {
     // Document processing and syncing
     Route::get('/order/data/{order_id}', [DocumentsController::class, 'getOrderData'])->name('order.data');
     Route::post('/fill-order-data', [DocumentsController::class, 'fillDocumentWithOrderData'])->name('fill-order-data');

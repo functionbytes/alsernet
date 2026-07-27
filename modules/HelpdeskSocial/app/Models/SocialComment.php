@@ -40,6 +40,7 @@ class SocialComment extends Model
         'posted_at',
         'social_conversation_id',
         'social_sla_policy_id',
+        'escalated_ticket_number',
     ];
 
     protected function casts(): array

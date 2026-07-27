@@ -109,7 +109,7 @@
                 <!-- Personal Information -->
                 <div class="card-body border-bottom">
                     <div class="mb-3">
-                        <h6 class="mb-1 fw-bold">Información Personal</h6>
+                        <h6 class="mb-1 fw-bold">Información personal</h6>
                         <p class="text-muted mb-0">Datos básicos del cliente</p>
                     </div>
 
@@ -249,7 +249,7 @@
                 <!-- Timezone -->
                 <div class="card-body border-bottom">
                     <div class="mb-3">
-                        <h6 class="mb-1 fw-bold">Configuración Regional</h6>
+                        <h6 class="mb-1 fw-bold">Configuración regional</h6>
                         <p class="text-muted mb-0">Zona horaria para fechas y notificaciones</p>
                     </div>
 
@@ -310,7 +310,7 @@
                 <!-- Internal Notes -->
                 <div class="card-body border-bottom">
                     <div class="mb-3">
-                        <h6 class="mb-1 fw-bold">Notas Internas</h6>
+                        <h6 class="mb-1 fw-bold">Notas internas</h6>
                         <p class="text-muted mb-0">Información privada sobre este cliente</p>
                     </div>
 

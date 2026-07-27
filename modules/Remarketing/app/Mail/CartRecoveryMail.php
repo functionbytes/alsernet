@@ -17,7 +17,12 @@ class CartRecoveryMail extends Mailable implements ShouldQueue
     public function __construct(
         public readonly Customer $customer,
         public readonly array $cartPayload,
-    ) {}
+    ) {
+        // Renderiza el email en el idioma del cliente. `Mailable::locale()` es un
+        // setter fluido (`locale($locale): $this`); sobrescribirlo como getter
+        // (`locale(): string`) rompía la firma → fatal al cargar la clase.
+        $this->locale($customer->locale ?? config('app.locale', 'es'));
+    }
 
     public function envelope(): Envelope
     {
@@ -36,10 +41,5 @@ class CartRecoveryMail extends Mailable implements ShouldQueue
                 'total' => $this->cartPayload['total'] ?? 0,
             ],
         );
-    }
-
-    public function locale(): string
-    {
-        return $this->customer->locale ?? config('app.locale', 'es');
     }
 }

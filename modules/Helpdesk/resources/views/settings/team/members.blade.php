@@ -211,12 +211,12 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="30%">Miembro</th>
-                                    <th width="15%">Rol</th>
-                                    <th width="25%">Grupos</th>
-                                    <th width="15%" class="text-center">Disponibilidad</th>
-                                    <th width="10%" class="text-center">Límite</th>
-                                    <th width="5%" class="text-center">Acciones</th>
+                                    <th scope="col" width="30%">Miembro</th>
+                                    <th scope="col" width="15%">Rol</th>
+                                    <th scope="col" width="25%">Grupos</th>
+                                    <th scope="col" width="15%" class="text-center">Disponibilidad</th>
+                                    <th scope="col" width="10%" class="text-center">Límite</th>
+                                    <th scope="col" width="5%" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -282,7 +282,7 @@
                                         </td>
                                         <td class="text-center">
                                             @php
-                                                $limit = $member->agentSettings->assignment_limit ?? 0;
+                                                $limit = $member->agentSettings->max_concurrent_conversations ?? 0;
                                             @endphp
                                             <span class="badge bg-{{ $limit == 0 ? 'success' : 'info' }}-subtle text-{{ $limit == 0 ? 'success' : 'info' }}">
                                                 {{ $limit == 0 ? 'Ilimitado' : $limit }}

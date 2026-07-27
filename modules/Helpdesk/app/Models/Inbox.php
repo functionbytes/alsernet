@@ -73,6 +73,7 @@ class Inbox extends Model
 
     protected $fillable = [
         'uid',
+        'brand_id',
         'name',
         'channel_type',
         'channel_id',

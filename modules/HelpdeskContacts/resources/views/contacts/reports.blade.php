@@ -2,6 +2,12 @@
 
 @section('title', 'Reportes de contactos')
 
+@push('css')
+    <style>
+        .avatar-placeholder-32 { width: 32px; height: 32px; }
+    </style>
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Reportes de contactos'])
 @endsection
@@ -94,8 +100,7 @@
                                                              alt="{{ $customer->name }}"
                                                              loading="lazy">
                                                     @else
-                                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center"
-                                                             style="width:32px;height:32px">
+                                                        <div class="avatar-placeholder-32 rounded-circle bg-secondary d-flex align-items-center justify-content-center">
                                                             <i class="fas fa-user text-white small"></i>
                                                         </div>
                                                     @endif

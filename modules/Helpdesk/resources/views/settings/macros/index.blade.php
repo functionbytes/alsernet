@@ -98,13 +98,13 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th>Descripcion</th>
-                                    <th class="text-center">Acciones</th>
-                                    <th class="text-center">Visibilidad</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Ejecutados</th>
-                                    <th class="text-center">Opciones</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Descripcion</th>
+                                    <th scope="col" class="text-center">Acciones</th>
+                                    <th scope="col" class="text-center">Visibilidad</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Ejecutados</th>
+                                    <th scope="col" class="text-center">Opciones</th>
                                 </tr>
                             </thead>
                             <tbody>

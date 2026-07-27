@@ -36,6 +36,9 @@ class WidgetSessionUpdated implements ShouldBroadcast
             'current_url' => $this->session->current_url,
             'browser' => $device['browser'] ?? null,
             'os' => $device['os'] ?? null,
+            // Producto que el visitante está viendo — el agente lo ve en vivo en
+            // el panel de la conversación (covisualización estilo Oct8ne).
+            'current_product' => $this->session->current_product,
             'last_activity_at' => $this->session->last_activity_at?->toIso8601String(),
         ];
     }

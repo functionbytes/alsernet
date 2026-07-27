@@ -173,11 +173,11 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="25%">Grupo</th>
-                                    <th width="20%">Modo de Asignación</th>
-                                    <th width="35%">Miembros</th>
-                                    <th width="15%" class="text-center">Distribución</th>
-                                    <th width="5%" class="text-center">Acciones</th>
+                                    <th scope="col" width="25%">Grupo</th>
+                                    <th scope="col" width="20%">Modo de Asignación</th>
+                                    <th scope="col" width="35%">Miembros</th>
+                                    <th scope="col" width="15%" class="text-center">Distribución</th>
+                                    <th scope="col" width="5%" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

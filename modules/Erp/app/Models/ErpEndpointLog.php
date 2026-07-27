@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Erp\Database\Factories\ErpEndpointLogFactory;
 
 class ErpEndpointLog extends Model
 {
@@ -161,5 +162,10 @@ class ErpEndpointLog extends Model
             $this->status_code >= 500 => 'danger',
             default => 'secondary',
         };
+    }
+
+    protected static function newFactory(): ErpEndpointLogFactory
+    {
+        return ErpEndpointLogFactory::new();
     }
 }

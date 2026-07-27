@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Listeners;
 
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,11 @@ class LogActivityOnConversationAssigned implements ShouldQueue
 
     public function handle(ConversationAssigned $event): void
     {
-        $this->service->logAssigned($event->conversation, $event->assignee);
+        $this->service->logAssigned(
+            $event->conversation,
+            $event->assignee,
+            $event->byUserId ? User::find($event->byUserId) : null
+        );
     }
 
     public function failed(ConversationAssigned $event, \Throwable $exception): void

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RecommendationProduct } from '../widget-store';
 
 interface RecommendationsCardProps {
@@ -6,7 +6,19 @@ interface RecommendationsCardProps {
     primaryColor?: string;
 }
 
+const ProductPlaceholder = () => (
+    <div className="wgt-rec-img-placeholder" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor" width={24} height={24}>
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+        </svg>
+    </div>
+);
+
 export function RecommendationsCard({ products, primaryColor = '#90bb13' }: RecommendationsCardProps) {
+    // Imágenes que fallan al cargar (p. ej. ficheros ausentes) → placeholder,
+    // en vez del icono de imagen rota del navegador.
+    const [failed, setFailed] = useState<Record<string, boolean>>({});
+
     if (products.length === 0) {
         return null;
     }
@@ -40,19 +52,16 @@ export function RecommendationsCard({ products, primaryColor = '#90bb13' }: Reco
                         aria-label={product.url ? `Ver ${product.name}` : product.name}
                     >
                         <div className="wgt-rec-img-wrap">
-                            {product.image_url ? (
+                            {product.image_url && !failed[String(product.id)] ? (
                                 <img
                                     src={product.image_url}
                                     alt={product.name}
                                     loading="lazy"
                                     className="wgt-rec-img"
+                                    onError={() => setFailed((f) => ({ ...f, [String(product.id)]: true }))}
                                 />
                             ) : (
-                                <div className="wgt-rec-img-placeholder" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" width={24} height={24}>
-                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                                    </svg>
-                                </div>
+                                <ProductPlaceholder />
                             )}
                         </div>
                         <div className="wgt-rec-info">

@@ -64,6 +64,16 @@ class DatabaseToolAllowlistTest extends TestCase
         $this->runDbTool('SELECT migration FROM migrations UNION SELECT email FROM users');
     }
 
+    public function test_rejects_comma_join_that_reaches_a_forbidden_table(): void
+    {
+        // Regresión: `FROM migrations, users` colaba `users` porque el extractor
+        // solo veía la primera tabla tras FROM. Ahora se rechaza el coma-join.
+        config(['helpdeskagents.tools.allowed_tables' => ['migrations']]);
+
+        $this->expectExceptionMessage('comma-separated (implicit) joins');
+        $this->runDbTool('SELECT users.email FROM migrations, users WHERE users.id = 1');
+    }
+
     public function test_rejects_multi_statement_and_comments(): void
     {
         config(['helpdeskagents.tools.allowed_tables' => ['migrations']]);

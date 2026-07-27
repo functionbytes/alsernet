@@ -164,6 +164,13 @@ class ChatFlowAgentService
     {
         try {
             if ($name === 'lookup_order') {
+                // Defensa en profundidad: solo tras verificar la identidad
+                // (OTP) el contexto marca customer_identified; sin ella no se
+                // exponen pedidos aunque el prompt intente forzar la consulta.
+                if (empty($context['customer_identified'])) {
+                    return 'El cliente aún no ha verificado su identidad, no puedo consultar sus pedidos.';
+                }
+
                 $order = $this->orderLookup->lookup($args['order_id'] ?? null, [
                     'erp_id' => $context['customer_erp_id'] ?? null,
                     'ps_id' => $context['customer_ps_id'] ?? null,

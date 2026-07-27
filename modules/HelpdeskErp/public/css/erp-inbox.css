@@ -1,0 +1,47 @@
+/* ============================================================
+   HelpdeskErp · Panel derecho del inbox (ERP)
+   Tarjetas de saldo/estadísticas y puntos de fidelidad del cliente.
+   Extraído de Helpdesk core (conversations.css) para que el CSS del
+   módulo viva en el módulo. Hereda los tokens --bv-* del core.
+   Se carga vía @push('css') desde inbox-slots/right-panel-erp-tabs.
+   ============================================================ */
+
+/* rp3-stats: key/value grid for balance data */
+.rp3-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 4px 0 8px;
+}
+.rp3-stat {
+    background: var(--bv-bg-subtle, #f5f6f8);
+    border-radius: 8px;
+    padding: 8px 10px;
+}
+.rp3-stat .lbl {
+    font-size: 11px;
+    color: var(--bv-text-muted, #8c929d);
+    margin-bottom: 2px;
+    text-transform: capitalize;
+}
+.rp3-stat .val { font-size: 13px; font-weight: 600; }
+
+/* rp3-points-card: loyalty points highlight */
+.rp3-points-card {
+    background: linear-gradient(135deg, #90bb13 0%, #7b0000 100%);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    margin: 4px 0 8px;
+}
+.rp3-points-val {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+.rp3-points-lbl {
+    font-size: 12px;
+    color: rgba(255,255,255,.75);
+    margin-top: 4px;
+}

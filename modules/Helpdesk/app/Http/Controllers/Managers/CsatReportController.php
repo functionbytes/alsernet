@@ -5,8 +5,9 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\CsatReportDataRequest;
 use Modules\Helpdesk\Models\CsatRating;
 use Modules\Helpdesk\Models\Inbox;
 
@@ -29,13 +30,8 @@ class CsatReportController extends Controller
      * GET /panel/helpdesk/reports/csat/data
      * Returns AJAX data for charts and tables.
      */
-    public function data(Request $request): JsonResponse
+    public function data(CsatReportDataRequest $request): JsonResponse
     {
-        $request->validate([
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date'],
-        ]);
-
         $from = $request->filled('date_from')
             ? now()->parse($request->input('date_from'))->startOfDay()
             : now()->subDays(30)->startOfDay();
@@ -44,29 +40,37 @@ class CsatReportController extends Controller
             ? now()->parse($request->input('date_to'))->endOfDay()
             : now()->endOfDay();
 
-        $base = CsatRating::query()
-            ->whereNotNull('answered_at')
-            ->whereBetween('answered_at', [$from, $to]);
+        // Mismo patrón de caché que los reports hermanos (Trends/Heatmap/...):
+        // ~10 queries agregadas por request que no cambian en ventanas cortas.
+        $cacheKey = sprintf('helpdesk:reports:csat:%s:%s', $from->toDateString(), $to->toDateString());
 
-        return response()->json([
-            'summary' => $this->getSummary(clone $base),
-            'by_agent' => $this->getByAgent(clone $base),
-            'by_inbox' => $this->getByInbox(clone $base),
-            'by_channel' => $this->getByChannel(clone $base),
-            'distribution' => $this->getDistribution(clone $base),
-            'trend' => $this->getTrend(clone $base, $from, $to),
-            'low_ratings' => $this->getLowRatings(clone $base),
-        ]);
+        $payload = Cache::remember($cacheKey, 300, function () use ($from, $to): array {
+            $base = CsatRating::query()
+                ->whereNotNull('answered_at')
+                ->whereBetween('answered_at', [$from, $to]);
+
+            return [
+                'summary' => $this->getSummary(clone $base),
+                'by_agent' => $this->getByAgent(clone $base),
+                'by_inbox' => $this->getByInbox(clone $base),
+                'by_channel' => $this->getByChannel(clone $base),
+                'distribution' => $this->getDistribution(clone $base),
+                'trend' => $this->getTrend(clone $base, $from, $to),
+                'low_ratings' => $this->getLowRatings(clone $base),
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     private function getSummary($query): array
     {
-        $total = (clone $query)->count();
-        $avg = (clone $query)->avg('rating');
+        $row = (clone $query)->selectRaw('COUNT(*) as total, AVG(rating) as avg_rating')->first();
+        $total = (int) ($row->total ?? 0);
 
         return [
             'total' => $total,
-            'avg' => $total > 0 ? round((float) $avg, 2) : null,
+            'avg' => $total > 0 ? round((float) $row->avg_rating, 2) : null,
         ];
     }
 

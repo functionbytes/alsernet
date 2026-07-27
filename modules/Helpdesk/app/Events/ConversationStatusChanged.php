@@ -17,6 +17,7 @@ class ConversationStatusChanged implements ShouldBroadcast
     public function __construct(
         public readonly Conversation $conversation,
         public readonly ConversationStatus $newStatus,
+        public readonly ?int $byUserId = null,
     ) {}
 
     public function broadcastOn(): array

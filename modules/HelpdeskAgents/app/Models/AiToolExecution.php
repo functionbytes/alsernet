@@ -14,7 +14,16 @@ class AiToolExecution extends Model
 
     public $timestamps = false;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'tool_id',
+        'session_id',
+        'arguments',
+        'result',
+        'success',
+        'error_message',
+        'duration_ms',
+        'created_at',
+    ];
 
     protected function casts(): array
     {

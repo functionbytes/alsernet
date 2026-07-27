@@ -35,8 +35,10 @@ Route::get('/customers/{customer}/orders/{order}', [ErpContextController::class,
 
 // Health check for the ERP manager connection
 Route::get('/health', [ErpContextController::class, 'health'])
+    ->middleware('audit.access:erp,health_check')
     ->name('health');
 
-// Bulk cache warm
+// Bulk cache warm (impacta la carga del manager — hasta 50 emails)
 Route::post('/cache/warm', [ErpContextController::class, 'warmCache'])
+    ->middleware('audit.access:erp,cache_warm')
     ->name('cache.warm');

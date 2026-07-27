@@ -135,6 +135,7 @@ return [
         'deepl_key_max' => 'La API key de DeepL no puede superar los 255 caracteres.',
         'deepl_url_in' => 'La URL de DeepL debe ser uno de los endpoints oficiales (Free o Pro).',
         'libretranslate_endpoint_url' => 'El endpoint de LibreTranslate debe ser una URL http o https válida.',
+        'libretranslate_endpoint_unsafe' => 'El endpoint de LibreTranslate no puede apuntar a una dirección de red interna o privada.',
         // DetectLanguageRequest
         'detect_text_required' => 'El texto es obligatorio.',
         'detect_text_max' => 'El texto no puede superar los 2000 caracteres.',

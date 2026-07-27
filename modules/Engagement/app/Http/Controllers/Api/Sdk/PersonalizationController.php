@@ -5,6 +5,7 @@ namespace Modules\Engagement\Http\Controllers\Api\Sdk;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use Modules\Engagement\Http\Resources\Sdk\PersonalizationRuleResource;
 use Modules\Engagement\Models\PersonalizationRule;
 
@@ -14,10 +15,11 @@ class PersonalizationController extends Controller
     {
         $inbox = $request->attributes->get('livechat_inbox');
 
-        $rules = PersonalizationRule::query()
-            ->forInbox($inbox->id)
-            ->active()
-            ->get();
+        $rules = Cache::remember(
+            "engagement:rules:personalization:{$inbox->id}",
+            600,
+            fn () => PersonalizationRule::query()->forInbox($inbox->id)->active()->get(),
+        );
 
         return response()->json([
             'success' => true,

@@ -18,18 +18,15 @@ class BackInStockMail extends Mailable implements ShouldQueue
         public readonly Customer $customer,
         public readonly int $productId,
         public readonly array $productPayload,
-    ) {}
+    ) {
+        $this->locale($customer->locale ?? config('app.locale', 'es'));
+    }
 
     public function envelope(): Envelope
     {
         return new Envelope(
             subject: __('remarketing::messages.back_in_stock.subject'),
         );
-    }
-
-    public function locale(): string
-    {
-        return $this->customer->locale ?? config('app.locale', 'es');
     }
 
     public function content(): Content

@@ -22,6 +22,11 @@ class DsrApiController extends Controller
         $customer = Customer::with(['orders.items', 'events', 'messages', 'consentEvents', 'carts'])
             ->findOrFail($request->input('customer_id'));
 
+        abort_unless(
+            $request->user()->can('remarketing.manage') || $customer->store?->user_id === $request->user()->id,
+            403
+        );
+
         return response()->json([
             'customer' => $customer->toArray(),
             'orders' => $customer->orders->toArray(),
@@ -40,6 +45,11 @@ class DsrApiController extends Controller
         }
 
         $customer = Customer::findOrFail($request->input('customer_id'));
+
+        abort_unless(
+            $request->user()->can('remarketing.manage') || $customer->store?->user_id === $request->user()->id,
+            403
+        );
 
         DB::transaction(function () use ($customer, $request) {
             ConsentEvent::create([

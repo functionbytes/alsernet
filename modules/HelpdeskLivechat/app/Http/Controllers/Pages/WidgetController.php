@@ -36,8 +36,8 @@ class WidgetController extends Controller
         $widgetConfig = array_merge($config, [
             'reverbKey' => config('broadcasting.connections.reverb.key', 'local-key'),
             'reverbHost' => $this->connectableReverbHost(),
-            'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
-            'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', $request->isSecure() ? 'https' : 'http'),
+            'reverbPort' => $this->connectableReverbPort(),
+            'reverbScheme' => $this->connectableReverbScheme(),
             'channelPrefix' => 'helpdesk-widget-conversation',
             'eventName' => '.message.received',
             'baseUrl' => url('/'),

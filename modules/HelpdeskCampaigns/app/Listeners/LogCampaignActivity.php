@@ -23,6 +23,8 @@ class LogCampaignActivity implements ShouldQueue
 
     public int $timeout = 30;
 
+    public int $backoff = 10;
+
     public function viaQueue(): string
     {
         return 'notifications';

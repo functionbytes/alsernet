@@ -28,9 +28,13 @@ class ArticleVoteController extends Controller
         $ipHash = hash('sha256', $request->ip().$salt);
         $voteValue = (int) $request->input('vote');
 
+        // La identidad del votante es SOLO la cookie: un voto existente solo se
+        // edita si la cookie coincide. El ip_hash queda como límite anti-abuso
+        // (impide revotar borrando cookies) pero nunca como clave para
+        // sobrescribir el voto/comentario de otro visitante tras la misma NAT.
         $existing = HelpCenterArticleVote::query()
             ->where('article_id', $article->id)
-            ->where(fn ($q) => $q->where('cookie_id', $cookieId)->orWhere('ip_hash', $ipHash))
+            ->where('cookie_id', $cookieId)
             ->first();
 
         if ($existing) {
@@ -42,6 +46,16 @@ class ArticleVoteController extends Controller
             $existing->update(['vote' => $voteValue, 'comment' => $request->input('comment')]);
 
             return response()->json(['success' => true, 'updated' => true])
+                ->cookie('hd_voter_id', $cookieId, 60 * 24 * 365);
+        }
+
+        $ipAlreadyVoted = HelpCenterArticleVote::query()
+            ->where('article_id', $article->id)
+            ->where('ip_hash', $ipHash)
+            ->exists();
+
+        if ($ipAlreadyVoted) {
+            return response()->json(['already_voted' => true])
                 ->cookie('hd_voter_id', $cookieId, 60 * 24 * 365);
         }
 

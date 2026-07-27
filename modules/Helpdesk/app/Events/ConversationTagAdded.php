@@ -13,6 +13,7 @@ class ConversationTagAdded
 
     public function __construct(
         public readonly Conversation $conversation,
-        public readonly ConversationTag $tag
+        public readonly ConversationTag $tag,
+        public readonly ?int $byUserId = null,
     ) {}
 }

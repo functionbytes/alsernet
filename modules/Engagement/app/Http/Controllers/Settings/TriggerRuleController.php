@@ -5,6 +5,7 @@ namespace Modules\Engagement\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Engagement\Concerns\RecordsAudit;
 use Modules\Engagement\Models\TriggerRule;
@@ -61,6 +62,7 @@ class TriggerRuleController extends Controller
         ]);
 
         $rule = TriggerRule::query()->create($validated);
+        Cache::forget("engagement:rules:trigger:{$rule->inbox_id}");
         $this->audit('created', 'trigger', $rule->id, $validated);
 
         return response()->json([
@@ -85,6 +87,7 @@ class TriggerRuleController extends Controller
         ]);
 
         $triggerRule->update($validated);
+        Cache::forget("engagement:rules:trigger:{$triggerRule->inbox_id}");
         $this->audit('updated', 'trigger', $triggerRule->id, $validated);
 
         return response()->json([
@@ -96,7 +99,9 @@ class TriggerRuleController extends Controller
     public function destroy(TriggerRule $triggerRule): JsonResponse
     {
         $id = $triggerRule->id;
+        $inboxId = $triggerRule->inbox_id;
         $triggerRule->delete();
+        Cache::forget("engagement:rules:trigger:{$inboxId}");
         $this->audit('deleted', 'trigger', $id);
 
         return response()->json(['success' => true]);

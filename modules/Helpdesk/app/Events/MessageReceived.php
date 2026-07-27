@@ -74,13 +74,21 @@ class MessageReceived implements ShouldBroadcast
         // a visitor URL should NOT auto-unfurl on the widget side.
         $linkPreview = $isAgent ? ($this->message->metadata['link_preview'] ?? null) : null;
 
+        // Carrusel de productos (coviewer): los productos viajan en metadata.products
+        // y el widget los pinta como tarjetas. Es un mensaje saliente (tienda/agente/bot).
+        $isProductCarousel = $this->message->type === 'product_carousel';
+        $products = $isProductCarousel && is_array($this->message->metadata['products'] ?? null)
+            ? $this->message->metadata['products']
+            : [];
+
         return [
             // ── Widget-friendly flat shape (consumed by Helpdesk React widget) ──
             'id' => $this->message->id,
             'conversation_id' => $this->conversation->id,
             'content' => $this->message->body,
-            'content_type' => $this->resolveContentType($attachments),
-            'message_type' => $isAgent ? 'outgoing' : 'incoming',
+            'content_type' => $isProductCarousel ? 'products' : $this->resolveContentType($attachments),
+            'products' => $products,
+            'message_type' => $isAgent || $isProductCarousel ? 'outgoing' : 'incoming',
             'created_at' => $this->message->created_at->toIso8601String(),
             'sender' => [
                 'id' => $isAgent ? $this->message->user_id : $this->message->author_id,

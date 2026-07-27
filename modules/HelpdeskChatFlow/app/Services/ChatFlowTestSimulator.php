@@ -16,19 +16,6 @@ class ChatFlowTestSimulator
 
     private const TERMINAL_TYPES = ['end', 'transfer', 'close'];
 
-    private const DOC_LABELS = [
-        'dni_frontal' => 'DNI/NIE frontal',
-        'dni_trasera' => 'DNI/NIE trasera',
-        'pasaporte' => 'Pasaporte',
-        'contrato' => 'Contrato firmado',
-        'factura' => 'Factura de compra',
-        'foto_producto' => 'Foto del producto',
-        'proforma' => 'Factura proforma',
-        'iban' => 'Certificado bancario / IBAN',
-        'selfie' => 'Selfie con documento',
-        'recibo' => 'Recibo',
-    ];
-
     private const MAX_DEPTH = 30;
 
     private const TTL = 1800;
@@ -340,7 +327,7 @@ class ChatFlowTestSimulator
                 if (! empty($pending)) {
                     $chips = array_map(fn ($t) => [
                         'key' => $t,
-                        'label' => '📎 '.(self::DOC_LABELS[$t] ?? $t),
+                        'label' => '📎 '.(config('helpdeskchatflow.document_labels', [])[$t] ?? $t),
                     ], $pending);
                     $messages[] = ['type' => 'doc_upload_chips', 'chips' => array_values($chips)];
                 }
@@ -503,7 +490,7 @@ class ChatFlowTestSimulator
 
         // Reverse-map label → key (strip "📎 " prefix if chip was clicked)
         $reverseLabels = [];
-        foreach (self::DOC_LABELS as $key => $label) {
+        foreach (config('helpdeskchatflow.document_labels', []) as $key => $label) {
             $reverseLabels['📎 '.$label] = $key;
             $reverseLabels[$label] = $key;
             $reverseLabels[$key] = $key;
@@ -514,7 +501,7 @@ class ChatFlowTestSimulator
         if ($selectedKey && in_array($selectedKey, $required) && ! in_array($selectedKey, $uploaded)) {
             $uploaded[] = $selectedKey;
             $session['context'][$uploadKey] = $uploaded;
-            $messages[] = ['type' => 'bot', 'text' => '✅ '.(self::DOC_LABELS[$selectedKey] ?? $selectedKey).' recibido.'];
+            $messages[] = ['type' => 'bot', 'text' => '✅ '.(config('helpdeskchatflow.document_labels', [])[$selectedKey] ?? $selectedKey).' recibido.'];
         }
 
         $pending = array_values(array_diff($required, $uploaded));
@@ -527,7 +514,7 @@ class ChatFlowTestSimulator
         } else {
             $chips = array_map(fn ($t) => [
                 'key' => $t,
-                'label' => '📎 '.(self::DOC_LABELS[$t] ?? $t),
+                'label' => '📎 '.(config('helpdeskchatflow.document_labels', [])[$t] ?? $t),
             ], $pending);
             $messages[] = ['type' => 'doc_upload_chips', 'chips' => array_values($chips)];
             $nextId = null;

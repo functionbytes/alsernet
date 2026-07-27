@@ -105,8 +105,13 @@ class WorkflowTriggerWiringTest extends HelpdeskTestCase
 
     public function test_engine_is_inert_when_no_active_workflows_exist(): void
     {
-        Queue::fake();
+        // El fake se instala DESPUÉS de crear la conversación: crearla encola por
+        // sí sola el broadcast y los listeners del propio modelo, que no tienen
+        // nada que ver con el engine. Aislándolo, assertNothingPushed sigue
+        // afirmando lo que interesa — que el listener no encola absolutamente
+        // nada cuando no hay workflows activos.
         $conversation = Conversation::factory()->create();
+        Queue::fake();
 
         (new TriggerWorkflowsOnConversationCreated)->handle(new ConversationCreated($conversation));
 

@@ -20,7 +20,7 @@
                         <option value="">Todas</option>
                         <option value="facebook" {{ ($filters['platform'] ?? '') === 'facebook' ? 'selected' : '' }}>Facebook</option>
                         <option value="instagram" {{ ($filters['platform'] ?? '') === 'instagram' ? 'selected' : '' }}>Instagram</option>
-                        <option value="twitter" {{ ($filters['platform'] ?? '') === 'twitter' ? 'selected' : '' }}>Twitter</option>
+                        {{-- Twitter: pendiente de provider --}}
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -82,7 +82,7 @@
                                 </div>
                                 @if($mention->url)
                                 <small>
-                                    <a href="{{ $mention->url }}" target="_blank" class="text-muted">
+                                    <a href="{{ safe_external_url($mention->url) }}" target="_blank" class="text-muted">
                                         <i class="fas fa-external-link-alt me-1"></i>Ver publicación
                                     </a>
                                 </small>
@@ -112,7 +112,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary" title="Marcar como revisado" onclick="markMentionAsReviewed({{ $mention->id }})">
                                     <i class="fas fa-check"></i>
                                 </button>
-                                <a href="{{ $mention->url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver en plataforma">
+                                <a href="{{ safe_external_url($mention->url) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Ver en plataforma">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </td>

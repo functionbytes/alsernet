@@ -9,6 +9,10 @@ use Modules\Helpdesk\Models\Group;
 
 class MentionParser
 {
+    public function __construct(
+        private readonly AgentPresenceService $presence,
+    ) {}
+
     /**
      * Handles especiales con semántica fija — no son agentes ni equipos sino
      * macros que se expanden al resolver.
@@ -132,13 +136,13 @@ class MentionParser
 
         return match ($handle) {
             'all' => User::query()->select($select)->get(),
+            // Not the SQL `sessions` table: SESSION_DRIVER is redis, so it's
+            // never populated — @here always resolved to nobody regardless of
+            // who was actually online. AgentPresenceService tracks real
+            // presence via a Redis heartbeat.
             'here' => User::query()
                 ->select($select)
-                ->whereIn('id', \DB::table('sessions')
-                    ->whereNotNull('user_id')
-                    ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)
-                    ->pluck('user_id')
-                    ->unique())
+                ->whereIn('id', $this->presence->getOnlineAgents())
                 ->get(),
             'team' => $conversation?->group_id
                 ? Group::query()

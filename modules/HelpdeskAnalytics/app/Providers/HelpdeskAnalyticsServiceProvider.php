@@ -53,6 +53,10 @@ class HelpdeskAnalyticsServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! helpdesk_analytics_enabled()) {
+            return;
+        }
+
         NavService::registerMiniItem('helpdeskanalytics', [
             'icon' => 'fas fa-chart-line',
             'tooltip' => 'Analytics',

@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services\Search;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -15,6 +16,13 @@ class GlobalSearchService
     public const MIN_QUERY_LENGTH = 2;
 
     public const SNIPPET_LENGTH = 140;
+
+    /**
+     * Por debajo de este largo el término cae al LIKE '%term%' de siempre en
+     * vez de FULLTEXT: innodb_ft_min_token_size (3 en esta BD) hace que
+     * MariaDB ignore en silencio los términos más cortos y devuelva 0 filas.
+     */
+    private const FULLTEXT_MIN_LENGTH = 4;
 
     /**
      * Quick autocomplete payload for the global search modal/sidebar.
@@ -77,8 +85,11 @@ class GlobalSearchService
             ->forAgent(auth()->user())
             ->with(['customer:id,name,email', 'status:id,name,color'])
             ->where(function ($q) use ($term) {
-                $q->where('subject', 'like', "%{$term}%")
+                $this->applyFullTextSearch($q, 'subject', $term)
                     ->orWhere('id', $term)
+                    // Sin FULLTEXT en customer.name/email: se mantiene el LIKE
+                    // '%term%' de siempre (un prefijo rompería búsquedas por
+                    // apellido en medio del nombre o dominio del email).
                     ->orWhereHas('customer', fn ($qc) => $qc->where('name', 'like', "%{$term}%")
                         ->orWhere('email', 'like', "%{$term}%"));
             })
@@ -94,7 +105,7 @@ class GlobalSearchService
             ->forAgent(auth()->user())
             ->with(['customer:id,name,email', 'status:id,name,color'])
             ->where(function ($q) use ($term) {
-                $q->where('subject', 'like', "%{$term}%")
+                $this->applyFullTextSearch($q, 'subject', $term)
                     ->orWhere('id', $term)
                     ->orWhereHas('customer', fn ($qc) => $qc->where('name', 'like', "%{$term}%")
                         ->orWhere('email', 'like', "%{$term}%"));
@@ -108,11 +119,12 @@ class GlobalSearchService
 
     public function searchMessages(string $term, int $limit = 20): Collection
     {
-        return ConversationItem::query()
+        $query = ConversationItem::query()
             ->whereHas('conversation', fn ($q) => $q->forAgent(auth()->user()))
             ->with(['conversation:id,subject,customer_id', 'conversation.customer:id,name'])
-            ->where('is_internal', false)
-            ->where('body', 'like', "%{$term}%")
+            ->where('is_internal', false);
+
+        return $this->applyFullTextSearch($query, 'body', $term)
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get(['id', 'conversation_id', 'body', 'created_at'])
@@ -121,11 +133,12 @@ class GlobalSearchService
 
     public function paginateMessages(string $term, int $perPage = 20): LengthAwarePaginator
     {
-        return ConversationItem::query()
+        $query = ConversationItem::query()
             ->whereHas('conversation', fn ($q) => $q->forAgent(auth()->user()))
             ->with(['conversation:id,subject,customer_id', 'conversation.customer:id,name'])
-            ->where('is_internal', false)
-            ->where('body', 'like', "%{$term}%")
+            ->where('is_internal', false);
+
+        return $this->applyFullTextSearch($query, 'body', $term)
             ->orderByDesc('created_at')
             ->select(['id', 'conversation_id', 'body', 'created_at'])
             ->paginate($perPage)
@@ -180,6 +193,44 @@ class GlobalSearchService
             'type' => 'message',
             'url' => route('manager.helpdesk.conversations.index', ['selected' => $m->conversation_id]).'#message-'.$m->id,
         ];
+    }
+
+    /**
+     * Filtra `$column` (subject en conversations, body en conversation_items)
+     * usando su índice FULLTEXT en boolean mode con comodín de sufijo, para
+     * que MariaDB use el índice en vez de escanear la tabla con LIKE '%term%'.
+     * Cae al LIKE original cuando el término es corto o queda vacío tras
+     * retirar operadores boolean-mode.
+     */
+    private function applyFullTextSearch(Builder $q, string $column, string $term): Builder
+    {
+        $fullTextTerm = $this->fullTextBooleanTerm($term);
+
+        if ($fullTextTerm === null) {
+            return $q->where($column, 'like', "%{$term}%");
+        }
+
+        return $q->whereFullText($column, $fullTextTerm, ['mode' => 'boolean']);
+    }
+
+    /**
+     * Construye el término boolean-mode (con comodín de sufijo) para FULLTEXT,
+     * o null si debe usarse el LIKE '%term%' de siempre:
+     *  - términos por debajo de self::FULLTEXT_MIN_LENGTH quedarían por debajo
+     *    de innodb_ft_min_token_size y FULLTEXT los ignoraría en silencio;
+     *  - los operadores boolean-mode (+ - < > ( ) ~ * " @) se retiran para que
+     *    un término pegado con esos símbolos no rompa la sintaxis SQL; si tras
+     *    retirarlos no queda nada indexable, también se cae al LIKE.
+     */
+    private function fullTextBooleanTerm(string $term): ?string
+    {
+        if (mb_strlen($term) < self::FULLTEXT_MIN_LENGTH) {
+            return null;
+        }
+
+        $sanitized = trim((string) preg_replace('/[+\-<>()~*"@]/', ' ', $term));
+
+        return $sanitized === '' ? null : $sanitized.'*';
     }
 
     /**

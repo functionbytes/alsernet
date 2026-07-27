@@ -2,15 +2,18 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Contracts\TicketServiceContract;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Models\ChatFlowExecution;
 use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 use Modules\HelpdeskChatFlow\Services\Concerns\EvaluatesBusinessHours;
 use Modules\HelpdeskChatFlow\Services\Concerns\FormatsNumberedOptions;
+use Modules\HelpdeskChatFlow\Services\Concerns\PostsBotMessages;
 
 class ChatFlowNodeExecutor
 {
-    use EvaluatesBusinessHours, FormatsNumberedOptions;
+    use EvaluatesBusinessHours, FormatsNumberedOptions, PostsBotMessages;
 
     public function __construct(
         private readonly ChatFlowAiResponder $aiResponder,
@@ -100,19 +103,6 @@ class ChatFlowNodeExecutor
         return $context;
     }
 
-    private const DOC_LABELS = [
-        'dni_frontal' => 'DNI/NIE frontal',
-        'dni_trasera' => 'DNI/NIE trasera',
-        'pasaporte' => 'Pasaporte',
-        'contrato' => 'Contrato firmado',
-        'factura' => 'Factura de compra',
-        'foto_producto' => 'Foto del producto',
-        'proforma' => 'Factura proforma',
-        'iban' => 'Certificado bancario / IBAN',
-        'selfie' => 'Selfie con documento',
-        'recibo' => 'Recibo',
-    ];
-
     private function executeNode(array $node, ChatFlowSession $session): ?string
     {
         $conversation = $session->conversation;
@@ -142,6 +132,7 @@ class ChatFlowNodeExecutor
             'document_link' => $this->executeDocumentLink($node, $session, $conversation),
             'transfer' => $this->executeTransfer($node, $session, $conversation),
             'close' => $this->executeClose($node, $session, $conversation),
+            'create_ticket' => $this->executeCreateTicket($node, $session, $conversation),
             'end' => $this->executeEnd($node, $session),
             default => null,
         };
@@ -157,17 +148,12 @@ class ChatFlowNodeExecutor
         );
 
         $list = implode("\n", array_map(
-            fn ($i, $key) => ($i + 1).'. '.(self::DOC_LABELS[$key] ?? $key),
+            fn ($i, $key) => ($i + 1).'. '.(config('helpdeskchatflow.document_labels', [])[$key] ?? $key),
             array_keys($docTypes),
             $docTypes,
         ));
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => "{$intro}\n{$list}",
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->postBotMessage($conversation, $node['id'], "{$intro}\n{$list}");
 
         return null; // Pause — wait for customer to select and upload documents
     }
@@ -177,12 +163,7 @@ class ChatFlowNodeExecutor
         $question = $this->interpolateContext($node['data']['question'] ?? '', $session->context ?? []);
 
         if ($question !== '') {
-            $conversation->items()->create([
-                'type' => 'message',
-                'body' => $question,
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->postBotMessage($conversation, $node['id'], $question);
         }
 
         return null; // Pause — wait for the customer's reply
@@ -196,12 +177,7 @@ class ChatFlowNodeExecutor
             $session,
         );
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $question,
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->postBotMessage($conversation, $node['id'], $question);
 
         return null; // Pause — wait for customer reply
     }
@@ -216,10 +192,9 @@ class ChatFlowNodeExecutor
 
         $text = $this->localizeForCustomer($text, $session);
 
-        $metadata = ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']];
-
         // Optional WhatsApp HSM template: used by the dispatcher when sending a
         // proactive (outbound) message outside the 24h session window.
+        $metadata = [];
         if (! empty($node['data']['whatsapp_template'])) {
             $metadata['whatsapp_template'] = (string) $node['data']['whatsapp_template'];
             $metadata['template_vars'] = array_map(
@@ -228,12 +203,7 @@ class ChatFlowNodeExecutor
             );
         }
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $text,
-            'is_internal' => false,
-            'metadata' => $metadata,
-        ]);
+        $this->postBotMessage($conversation, $node['id'], $text, $metadata);
 
         return $this->getFirstChildId($node, $session);
     }
@@ -256,16 +226,9 @@ class ChatFlowNodeExecutor
             $session,
         );
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $this->numberedPrompt($header, $options),
-            'is_internal' => false,
-            'metadata' => [
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'bot_options' => $options, // delivered as native buttons where the channel supports them
-                'bot_prompt' => $header,
-            ],
+        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($header, $options), [
+            'bot_options' => $options, // delivered as native buttons where the channel supports them
+            'bot_prompt' => $header,
         ]);
 
         return null; // wait for user selection
@@ -300,17 +263,10 @@ class ChatFlowNodeExecutor
 
         $result = $this->aiResponder->generate($question, $data, $locale, $history);
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $result['answer'],
-            'is_internal' => false,
-            'metadata' => [
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'ai_generated' => true,
-                'ai_used_kb' => $result['used_kb'],
-                'ai_sources' => $result['sources'],
-            ],
+        $this->postBotMessage($conversation, $node['id'], $result['answer'], [
+            'ai_generated' => true,
+            'ai_used_kb' => $result['used_kb'],
+            'ai_sources' => $result['sources'],
         ]);
 
         $values = ['ai_used_kb' => $result['used_kb']];
@@ -330,16 +286,9 @@ class ChatFlowNodeExecutor
 
         $result = $this->agent->run($question, $session->context ?? [], $data, $locale);
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $result['text'],
-            'is_internal' => false,
-            'metadata' => [
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'ai_agent' => true,
-                'used_tools' => $result['used_tools'],
-            ],
+        $this->postBotMessage($conversation, $node['id'], $result['text'], [
+            'ai_agent' => true,
+            'used_tools' => $result['used_tools'],
         ]);
 
         if ($result['action'] === 'escalate') {
@@ -409,12 +358,7 @@ class ChatFlowNodeExecutor
                 ?? 'No he encontrado ese pedido asociado a tu cuenta. Verifica el número e inténtalo de nuevo.';
         }
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $this->localizeForCustomer($body, $session),
-            'is_internal' => false,
-            'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-        ]);
+        $this->postBotMessage($conversation, $node['id'], $this->localizeForCustomer($body, $session));
 
         return $this->getFirstChildId($node, $session);
     }
@@ -455,12 +399,7 @@ class ChatFlowNodeExecutor
         ]);
 
         if (! empty($data['show_message']) && ! empty($data['message_template'])) {
-            $conversation->items()->create([
-                'type' => 'message',
-                'body' => $this->interpolateContext($data['message_template'], $session->context ?? []),
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->postBotMessage($conversation, $node['id'], $this->interpolateContext($data['message_template'], $session->context ?? []));
         }
 
         return $this->getFirstChildId($node, $session);
@@ -491,17 +430,10 @@ class ChatFlowNodeExecutor
         );
         $options = $this->csatOptions($data);
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $this->numberedPrompt($question, $options),
-            'is_internal' => false,
-            'metadata' => [
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'csat' => true,
-                'bot_options' => $options,
-                'bot_prompt' => $question,
-            ],
+        $this->postBotMessage($conversation, $node['id'], $this->numberedPrompt($question, $options), [
+            'csat' => true,
+            'bot_options' => $options,
+            'bot_prompt' => $question,
         ]);
 
         return null; // wait for the rating
@@ -539,23 +471,16 @@ class ChatFlowNodeExecutor
             $body = $this->numberedPrompt($body, $options);
         }
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $body !== '' ? $body : ($imageUrl ?? ''),
-            'is_internal' => false,
-            'metadata' => array_filter([
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'card' => array_filter([
-                    'title' => $title,
-                    'subtitle' => $subtitle,
-                    'image_url' => $imageUrl,
-                ]),
-                'image_url' => $imageUrl, // text channels send it as an attachment
-                'bot_options' => $options ?: null,
-                'bot_prompt' => trim($title.' '.$subtitle) ?: null,
+        $this->postBotMessage($conversation, $node['id'], $body !== '' ? $body : ($imageUrl ?? ''), array_filter([
+            'card' => array_filter([
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'image_url' => $imageUrl,
             ]),
-        ]);
+            'image_url' => $imageUrl, // text channels send it as an attachment
+            'bot_options' => $options ?: null,
+            'bot_prompt' => trim($title.' '.$subtitle) ?: null,
+        ]));
 
         // With options it waits for the selection; otherwise it continues.
         return $options ? null : $this->getFirstChildId($node, $session);
@@ -586,18 +511,11 @@ class ChatFlowNodeExecutor
             $body = $header !== '' ? $header."\n\n".$list : $list;
         }
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $body,
-            'is_internal' => false,
-            'metadata' => array_filter([
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'cards' => $cards,
-                'bot_options' => $options ?: null,
-                'bot_prompt' => $header ?: null,
-            ], fn ($v) => $v !== null && $v !== ''),
-        ]);
+        $this->postBotMessage($conversation, $node['id'], $body, array_filter([
+            'cards' => $cards,
+            'bot_options' => $options ?: null,
+            'bot_prompt' => $header ?: null,
+        ], fn ($v) => $v !== null && $v !== ''));
 
         return $options ? null : $this->getFirstChildId($node, $session);
     }
@@ -650,17 +568,9 @@ class ChatFlowNodeExecutor
         $caption = $this->localizeForCustomer($data['caption'] ?? '', $session);
         $type = in_array($data['file_type'] ?? '', ['image', 'video', 'document'], true) ? $data['file_type'] : 'document';
 
-        $conversation->items()->create([
-            'type' => 'message',
-            'body' => $caption,
-            'is_internal' => false,
-            'attachment_urls' => [$url],
-            'metadata' => array_filter([
-                'sent_by_chatflow' => true,
-                'flow_node_id' => $node['id'],
-                'attachment' => ['url' => $url, 'type' => $type, 'caption' => $caption ?: null],
-            ], fn ($v) => $v !== null && $v !== ''),
-        ]);
+        $this->postBotMessage($conversation, $node['id'], $caption, array_filter([
+            'attachment' => ['url' => $url, 'type' => $type, 'caption' => $caption ?: null],
+        ], fn ($v) => $v !== null && $v !== ''), ['attachment_urls' => [$url]]);
 
         return $this->getFirstChildId($node, $session);
     }
@@ -689,12 +599,7 @@ class ChatFlowNodeExecutor
         $message = $this->localizeForCustomer($data['message'] ?? 'Un momento, te transfiero con un agente.', $session);
 
         if ($message) {
-            $conversation->items()->create([
-                'type' => 'message',
-                'body' => $message,
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->postBotMessage($conversation, $node['id'], $message);
         }
 
         if (($session->flowConditions()['handoff_summary'] ?? false) || ($data['summary'] ?? false)) {
@@ -745,17 +650,65 @@ class ChatFlowNodeExecutor
         $farewell = trim($data['farewell'] ?? '');
 
         if ($farewell) {
-            $conversation->items()->create([
-                'type' => 'message',
-                'body' => $this->localizeForCustomer($farewell, $session),
-                'is_internal' => false,
-                'metadata' => ['sent_by_chatflow' => true, 'flow_node_id' => $node['id']],
-            ]);
+            $this->postBotMessage($conversation, $node['id'], $this->localizeForCustomer($farewell, $session));
         }
 
         $session->update(['status' => 'completed', 'ended_at' => now()]);
 
         return null;
+    }
+
+    /**
+     * Nodo "crear ticket": el chatbot abre un ticket trazable (con SLA) cuando no
+     * resuelve. Va SIEMPRE por el contrato del core, así que si HelpdeskTickets
+     * está deshabilitado el fallback devuelve null y el flujo degrada limpio.
+     * El número de ticket queda en el contexto de la sesión y se comunica al
+     * cliente. Idempotente: no crea un segundo ticket si el nodo se re-ejecuta.
+     */
+    private function executeCreateTicket(array $node, ChatFlowSession $session, Conversation $conversation): ?string
+    {
+        $data = $node['data'] ?? [];
+        $context = $session->context ?? [];
+
+        if (! empty($context['created_ticket_number'])) {
+            return $this->getFirstChildId($node, $session);
+        }
+
+        $result = app(TicketServiceContract::class)->createFromConversation($conversation, array_filter([
+            'source' => 'chatflow',
+            'subject' => $this->interpolateContext((string) ($data['subject'] ?? ''), $context) ?: null,
+            'priority' => $data['priority'] ?? null,
+            'category_id' => ! empty($data['category_id']) ? (int) $data['category_id'] : null,
+        ], fn ($v) => $v !== null && $v !== ''));
+
+        if ($result === null) {
+            Log::warning('ChatFlow create_ticket: Tickets no disponible; se omite', [
+                'conversation_id' => $conversation->id,
+                'session_id' => $session->id,
+            ]);
+
+            return $this->getFirstChildId($node, $session);
+        }
+
+        $session->update([
+            'context' => array_merge($context, [
+                'created_ticket_id' => $result['id'],
+                'created_ticket_number' => $result['ticket_number'],
+            ]),
+        ]);
+
+        $confirmation = $this->localizeForCustomer(
+            $data['confirmation'] ?? 'He creado el ticket :number para dar seguimiento a tu solicitud.',
+            $session,
+        );
+
+        $this->postBotMessage(
+            $conversation,
+            $node['id'],
+            str_replace([':number', '{{ticket_number}}'], $result['ticket_number'], $confirmation),
+        );
+
+        return $this->getFirstChildId($node, $session);
     }
 
     private function executeAddTag(array $node, ChatFlowSession $session, Conversation $conversation): ?string

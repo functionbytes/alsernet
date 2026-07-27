@@ -55,8 +55,8 @@
                 <button class="tt bv-fmt-btn bv-fmt-btn-bold" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_bold_tooltip') }}">B</button>
                 <button class="tt bv-fmt-btn bv-fmt-btn-italic" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_italic_tooltip') }}"><i>I</i></button>
                 <div class="bv-toolbar-sep"></div>
-                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_link_tooltip') }}"><i class="fas fa-link bv-icon-sm"></i></button>
-                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_list_tooltip') }}"><i class="fas fa-list bv-icon-sm"></i></button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_link_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.email_format_link_tooltip') }}"><i class="fas fa-link bv-icon-sm"></i></button>
+                <button class="tt bv-fmt-btn bv-fmt-btn-muted" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_format_list_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.email_format_list_tooltip') }}"><i class="fas fa-list bv-icon-sm"></i></button>
                 <div class="bv-spacer"></div>
                 <button id="emailScheduleToggle" class="bv-schedule-btn" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.email_schedule_tooltip') }}">
                     <i class="fas fa-clock"></i> {{ __('helpdesk::helpdesk.inbox.modals.email_schedule_button') }}

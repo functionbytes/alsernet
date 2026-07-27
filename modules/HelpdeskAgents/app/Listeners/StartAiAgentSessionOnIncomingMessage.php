@@ -17,12 +17,18 @@ use Modules\HelpdeskAgents\Models\AiAgentSession;
  * only when every safety condition holds. The runtime is OFF by default: with the
  * feature flag disabled (the production default) this listener fires but does
  * nothing, so configuring the module never silently starts answering customers.
+ * Also respects the admin "Integraciones" toggle (helpdesk_agents_enabled()),
+ * so operators can disable the runtime from the panel without touching .env.
  */
 class StartAiAgentSessionOnIncomingMessage
 {
     public function handle(MessageReceived $event): void
     {
         if (config('helpdeskagents.enabled') !== true) {
+            return;
+        }
+
+        if (! helpdesk_agents_enabled()) {
             return;
         }
 

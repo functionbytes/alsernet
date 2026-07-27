@@ -3,6 +3,8 @@
 namespace Modules\HelpdeskSocial\Services;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialAgentWorkload;
 use Modules\HelpdeskSocial\Models\SocialAssignmentRule;
@@ -11,11 +13,19 @@ use Modules\HelpdeskSocial\Models\SocialComment;
 class SmartAssignmentService
 {
     /**
+     * Clave de caché de las reglas de asignación activas.
+     * Invalidada por SocialAssignmentRuleObserver ante cualquier save/delete.
+     */
+    public const RULES_CACHE_KEY = 'helpdesksocial:assignment-rules:active';
+
+    private const CACHE_TTL = 900;
+
+    /**
      * Evaluate all active assignment rules against a comment and apply the first match.
      */
     public function assign(SocialComment $comment): ?array
     {
-        $rules = SocialAssignmentRule::active()->ordered()->get();
+        $rules = $this->activeRules();
 
         foreach ($rules as $rule) {
             if ($this->matches($comment, $rule)) {
@@ -173,15 +183,12 @@ class SmartAssignmentService
     {
         $comment->update(['assigned_to_user_id' => $userId]);
 
+        // El contador active_assigned_count se mantiene de forma atómica en
+        // SocialCommentObserver al detectar el cambio de assigned_to_user_id/status,
+        // por lo que aquí solo registramos el momento de la última asignación.
         SocialAgentWorkload::updateOrCreate(
             ['user_id' => $userId],
-            [
-                'active_assigned_count' => SocialComment::query()
-                    ->where('assigned_to_user_id', $userId)
-                    ->whereNotIn('status', ['replied', 'closed', 'spam'])
-                    ->count(),
-                'last_assigned_at' => now(),
-            ]
+            ['last_assigned_at' => now()]
         );
 
         Log::info('SmartAssignmentService: comment assigned', [
@@ -213,6 +220,18 @@ class SmartAssignmentService
             ->pluck('id')
             ->map('intval')
             ->all();
+    }
+
+    /**
+     * @return Collection<int, SocialAssignmentRule>
+     */
+    private function activeRules(): Collection
+    {
+        return Cache::remember(
+            self::RULES_CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => SocialAssignmentRule::active()->ordered()->get()
+        );
     }
 
     private function evaluateCondition(mixed $actual, mixed $expected, string $field): bool

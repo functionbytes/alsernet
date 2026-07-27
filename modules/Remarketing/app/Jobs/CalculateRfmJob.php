@@ -53,9 +53,15 @@ class CalculateRfmJob implements ShouldQueue
 
         // Quintile scoring requires the full dataset to compute percentiles,
         // so the initial ->get() is intentional. We only chunk the writes.
+        // Sort each array once here (not per-customer inside quintileScore),
+        // since sort() is O(n log n) and was previously called once per customer.
         $recencyArray = $recencyValues->toArray();
         $frequencyArray = $frequencyValues->toArray();
         $monetaryArray = $monetaryValues->toArray();
+
+        sort($recencyArray);
+        sort($frequencyArray);
+        sort($monetaryArray);
 
         foreach ($customers->chunk(1000) as $chunk) {
             foreach ($chunk as $customer) {
@@ -79,16 +85,15 @@ class CalculateRfmJob implements ShouldQueue
         $this->triggerWinBackAutomations($store, $automationService);
     }
 
-    private function quintileScore(mixed $value, array $all, bool $invert = false): int
+    private function quintileScore(mixed $value, array $sortedAll, bool $invert = false): int
     {
-        sort($all);
-        $count = count($all);
+        $count = count($sortedAll);
 
         if ($count === 0) {
             return 3;
         }
 
-        $rank = array_search($value, $all);
+        $rank = array_search($value, $sortedAll);
 
         if ($rank === false) {
             $rank = 0;

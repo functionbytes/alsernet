@@ -302,7 +302,7 @@ class DocumentEmailTemplateService
     public static function sendApprovalEmail(Document $document, ?int $adminId = null): bool
     {
         try {
-            $template = self::resolveTemplate('documents.mail_template_approval_id', 'document_approval', ['approval_notification']);
+            $template = self::resolveTemplate('documents.mail_template_approval_id', 'document_approved', ['document_approval', 'approval_notification']);
 
             if (! $template) {
                 return false;
@@ -350,7 +350,7 @@ class DocumentEmailTemplateService
     public static function sendRejectionEmail(Document $document, ?string $reason = null, array $rejectedDocs = [], ?int $adminId = null): bool
     {
         try {
-            $template = self::resolveTemplate('documents.mail_template_rejection_id', 'document_rejection', ['rejection_notification']);
+            $template = self::resolveTemplate('documents.mail_template_rejection_id', 'document_rejected', ['document_rejection', 'rejection_notification']);
 
             if (! $template) {
                 return false;

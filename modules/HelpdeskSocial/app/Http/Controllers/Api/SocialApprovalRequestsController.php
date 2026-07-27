@@ -5,6 +5,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\RespondSocialApprovalRequestRequest;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialApprovalRequestRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialApprovalRequestResource;
@@ -30,11 +31,13 @@ class SocialApprovalRequestsController extends Controller
         $approvalRequests = $query->orderByDesc('created_at')->paginate(25);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialApprovalRequestResource::collection($approvalRequests),
             'meta' => [
-                'current_page' => $approvalRequests->currentPage(),
-                'last_page' => $approvalRequests->lastPage(),
-                'per_page' => $approvalRequests->perPage(),
+                'currentPage' => $approvalRequests->currentPage(),
+                'lastPage' => $approvalRequests->lastPage(),
+                'perPage' => $approvalRequests->perPage(),
                 'total' => $approvalRequests->total(),
             ],
         ]);
@@ -48,18 +51,17 @@ class SocialApprovalRequestsController extends Controller
 
         $approvalRequest = SocialApprovalRequest::create($validated);
 
-        return response()->json([
-            'data' => new SocialApprovalRequestResource($approvalRequest->load(['requester', 'approver', 'comment'])),
-        ], 201);
+        return ApiResponse::created(
+            new SocialApprovalRequestResource($approvalRequest->load(['requester', 'approver', 'comment'])),
+            'Solicitud de aprobación creada correctamente.'
+        );
     }
 
     public function show(SocialApprovalRequest $approvalRequest): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
-        return response()->json([
-            'data' => new SocialApprovalRequestResource($approvalRequest->load(['requester', 'approver', 'comment'])),
-        ]);
+        return ApiResponse::success(new SocialApprovalRequestResource($approvalRequest->load(['requester', 'approver', 'comment'])));
     }
 
     public function approve(RespondSocialApprovalRequestRequest $request, SocialApprovalRequest $approvalRequest): JsonResponse
@@ -69,9 +71,10 @@ class SocialApprovalRequestsController extends Controller
         $approvalRequest->approve($request->validated()['approver_note'] ?? null);
         $this->auditLog->log('approve', $approvalRequest, ['status' => 'pending'], ['status' => 'approved']);
 
-        return response()->json([
-            'data' => new SocialApprovalRequestResource($approvalRequest->fresh()->load(['requester', 'approver', 'comment'])),
-        ]);
+        return ApiResponse::success(
+            new SocialApprovalRequestResource($approvalRequest->fresh()->load(['requester', 'approver', 'comment'])),
+            'Solicitud aprobada correctamente.'
+        );
     }
 
     public function reject(RespondSocialApprovalRequestRequest $request, SocialApprovalRequest $approvalRequest): JsonResponse
@@ -81,8 +84,9 @@ class SocialApprovalRequestsController extends Controller
         $approvalRequest->reject($request->validated()['approver_note'] ?? null);
         $this->auditLog->log('reject', $approvalRequest, ['status' => 'pending'], ['status' => 'rejected']);
 
-        return response()->json([
-            'data' => new SocialApprovalRequestResource($approvalRequest->fresh()->load(['requester', 'approver', 'comment'])),
-        ]);
+        return ApiResponse::success(
+            new SocialApprovalRequestResource($approvalRequest->fresh()->load(['requester', 'approver', 'comment'])),
+            'Solicitud rechazada correctamente.'
+        );
     }
 }

@@ -43,15 +43,15 @@ class DocumentRequirement extends Model
 
     public function langs(): HasMany
     {
-        return $this->hasMany(DocumentRequirementLang::class);
+        return $this->hasMany(DocumentRequirementLang::class, 'document_type_requirement_id');
     }
 
-    // Get translation for specific language
+    // Get translation for specific language (uses the eager-loaded collection to avoid N+1)
     public function translate(?int $langId = null)
     {
         $langId = $langId ?? Lang::getDefaultLangId();
 
-        return $this->langs()->where('lang_id', $langId)->first();
+        return $this->langs->firstWhere('lang_id', $langId);
     }
 
     // Translation methods using database translations

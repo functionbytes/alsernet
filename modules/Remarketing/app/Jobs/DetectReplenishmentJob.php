@@ -59,20 +59,28 @@ class DetectReplenishmentJob implements ShouldQueue
                         ->distinct()
                         ->get();
 
-                    foreach ($candidates as $row) {
-                        $alreadySent = DB::table('remarketing_automation_triggers_log')
-                            ->where('customer_id', $row->customer_id)
-                            ->where('trigger_type', 'replenishment')
-                            ->where('triggered_at', '>=', now()->subDays(7))
-                            ->exists();
+                    if ($candidates->isEmpty()) {
+                        continue;
+                    }
 
-                        if (! $alreadySent) {
-                            SendReplenishmentMailJob::dispatch(
-                                (int) $row->customer_id,
-                                (int) $row->external_product_id,
-                            );
-                            $stats['candidates']++;
+                    $alreadyTriggered = DB::table('remarketing_automation_triggers_log')
+                        ->where('trigger_type', 'replenishment')
+                        ->where('triggered_at', '>=', now()->subDays(7))
+                        ->whereIn('customer_id', $candidates->pluck('customer_id')->unique())
+                        ->pluck('customer_id')
+                        ->mapWithKeys(fn ($id) => [(int) $id => true])
+                        ->all();
+
+                    foreach ($candidates as $row) {
+                        if (isset($alreadyTriggered[(int) $row->customer_id])) {
+                            continue;
                         }
+
+                        SendReplenishmentMailJob::dispatch(
+                            (int) $row->customer_id,
+                            (int) $row->external_product_id,
+                        );
+                        $stats['candidates']++;
                     }
                 }
             });

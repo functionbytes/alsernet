@@ -2,7 +2,10 @@
 
 namespace Modules\HelpdeskPrestashop\Services;
 
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\Ecommerce\Enums\OrderStatus;
 use Modules\Ecommerce\Models\Customer as EcommerceCustomer;
 use Modules\Ecommerce\Models\Order;
@@ -152,11 +155,54 @@ class AssistedCartService
     }
 
     /**
+     * Cancela (abandona) el carrito asistido: lo marca como abandonado para
+     * que salga del flujo activo. No borra los ítems (queda como histórico de
+     * carrito abandonado, visible en el panel de carritos del cliente).
+     */
+    public function cancel(AssistedCart $cart): AssistedCart
+    {
+        $this->assertEditable($cart);
+
+        $cart->update(['status' => AssistedCart::STATUS_ABANDONED]);
+
+        return $cart->refresh()->load('items');
+    }
+
+    /**
      * Convert the cart into a real Ecommerce order.
      *
      * @param  array<string, mixed>  $customerData
      */
     public function generateOrder(AssistedCart $cart, array $customerData, bool $markConverted = true): Order
+    {
+        // Idempotencia: un carrito genera como mucho UN pedido. Un doble clic
+        // o retry de red no debe crear un segundo pedido real en Ecommerce
+        // (dinero real). Si ya se generó, se devuelve ese mismo pedido.
+        if ($cart->ecommerce_order_id) {
+            return Order::findOrFail($cart->ecommerce_order_id);
+        }
+
+        // El lock cierra la ventana de concurrencia entre dos peticiones casi
+        // simultáneas que ambas verían el carrito aún sin pedido.
+        try {
+            return Cache::lock("assisted-cart-order:{$cart->id}", 15)->block(5, function () use ($cart, $customerData, $markConverted) {
+                $cart->refresh();
+
+                if ($cart->ecommerce_order_id) {
+                    return Order::findOrFail($cart->ecommerce_order_id);
+                }
+
+                return $this->createOrderForCart($cart, $customerData, $markConverted);
+            });
+        } catch (LockTimeoutException) {
+            throw new RuntimeException('Ya se está generando el pedido de este carrito, inténtalo de nuevo.');
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $customerData
+     */
+    private function createOrderForCart(AssistedCart $cart, array $customerData, bool $markConverted): Order
     {
         $this->assertEditable($cart);
 
@@ -312,7 +358,9 @@ class AssistedCartService
             [
                 'name' => $customerData['name'] ?? $cart->customer?->name ?? 'Cliente',
                 'phone' => $customerData['phone'] ?? $cart->customer?->phone,
-                'password' => bcrypt(uniqid('hd_', true)),
+                // El cliente de paso no inicia sesión con esta clave; aun así
+                // usar aleatoriedad criptográfica (uniqid() no lo es).
+                'password' => bcrypt(Str::random(40)),
                 'status' => 'active',
             ],
         );

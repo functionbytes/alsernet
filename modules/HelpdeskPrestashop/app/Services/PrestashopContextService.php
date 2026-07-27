@@ -2,16 +2,20 @@
 
 namespace Modules\HelpdeskPrestashop\Services;
 
+use App\Helpers\PiiMasker;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Concerns\HasCircuitBreaker;
 use Modules\HelpdeskPrestashop\Exceptions\PsUpstreamException;
 use Modules\HelpdeskPrestashop\Jobs\RefreshPsContextJob;
 use Modules\HelpdeskPrestashop\Support\HmacSigner;
 
 class PrestashopContextService
 {
+    use HasCircuitBreaker;
+
     private const EMPTY_CONTEXT = [
         'customer' => ['found' => false],
         'orders' => [],
@@ -19,6 +23,8 @@ class PrestashopContextService
     ];
 
     private const CIRCUIT_KEY = 'helpdeskprestashop:circuit_failures';
+
+    private const CIRCUIT_CONFIG_PREFIX = 'helpdeskprestashop';
 
     public function getCustomerContext(string $email): array
     {
@@ -38,7 +44,7 @@ class PrestashopContextService
             $result = $this->fetchContext($email);
         } catch (PsUpstreamException $e) {
             Log::warning('HelpdeskPrestashop: upstream no disponible, se devuelve contexto vacío.', [
-                'email' => $email,
+                'email' => PiiMasker::email($email),
                 'error' => $e->getMessage(),
             ]);
 
@@ -83,13 +89,14 @@ class PrestashopContextService
 
     public function getOrderDetail(int $orderId, ?string $customerEmail = null): ?array
     {
-        $payload = ['order_id' => $orderId];
-
-        if ($customerEmail !== null) {
-            $payload['lookup'] = ['email' => $this->normalizeEmail($customerEmail)];
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.detail', $orderId)) {
+            return null;
         }
 
-        return $this->callApi('order.detail', $payload);
+        return $this->callApi('order.detail', [
+            'order_id' => $orderId,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ]);
     }
 
     /**
@@ -117,13 +124,180 @@ class PrestashopContextService
 
     public function startOrderReturn(int $orderId, array $items, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
     {
-        $payload = ['order_id' => $orderId, 'items' => $items];
-
-        if ($customerEmail !== null) {
-            $payload['lookup'] = ['email' => $this->normalizeEmail($customerEmail)];
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.start_return', $orderId)) {
+            return null;
         }
 
-        return $this->callApi('order.start_return', $payload, $idempotencyKey);
+        return $this->callApi('order.start_return', [
+            'order_id' => $orderId,
+            'items' => $items,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Cambia el estado de un pedido de PrestaShop (via OrderHistory en el bridge:
+     * respeta stock/facturas y, solo si $notify, el correo del estado). $stateId
+     * es el id_order_state real de PrestaShop.
+     *
+     * @return array{order_id:int,state_id:int,state_name:string,notified:bool,changed:bool}|null
+     */
+    public function changeOrderStatus(int $orderId, int $stateId, bool $notify = false, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.change_status', $orderId)) {
+            return null;
+        }
+
+        return $this->callApi('order.change_status', [
+            'order_id' => $orderId,
+            'state_id' => $stateId,
+            'notify' => $notify,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Metadatos de documentos del pedido (facturas / albaranes): número + fecha.
+     *
+     * @return array{invoices:array<int,array>,delivery_slips:array<int,array>}|null
+     */
+    public function getOrderDocuments(int $orderId, ?string $customerEmail = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.documents', $orderId)) {
+            return null;
+        }
+
+        return $this->callApi('order.documents', [
+            'order_id' => $orderId,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ]);
+    }
+
+    /**
+     * Fail-closed: las acciones por-pedido NUNCA van al bridge sin lookup.email.
+     * Sin él, el bridge resolvería el pedido solo por su id secuencial, sin
+     * verificar que pertenezca al cliente (IDOR). La propiedad pedido↔email la
+     * aplica el bridge; aquí garantizamos que siempre tenga con qué aplicarla.
+     *
+     * @phpstan-assert-if-true string $customerEmail
+     */
+    private function assertOwnershipEmail(?string $customerEmail, string $action, int $orderId): bool
+    {
+        if ($customerEmail !== null && trim($customerEmail) !== '') {
+            return true;
+        }
+
+        Log::warning('PrestashopContextService: llamada por-pedido bloqueada sin email de cliente', [
+            'action' => $action,
+            'order_id' => $orderId,
+        ]);
+
+        return false;
+    }
+
+    /**
+     * Cambia la dirección (envío/facturación) del pedido a una dirección
+     * existente del mismo cliente.
+     *
+     * @return array{order_id:int,address_id:int,type:string}|null
+     */
+    public function setOrderAddress(int $orderId, int $addressId, string $type = 'delivery', ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.set_address', $orderId)) {
+            return null;
+        }
+
+        return $this->callApi('order.set_address', [
+            'order_id' => $orderId,
+            'address_id' => $addressId,
+            'type' => $type,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Reenvía un correo estándar del pedido al cliente (whitelist de tipos).
+     *
+     * @return array{order_id:int,type:string,sent:bool,to:string}|null
+     */
+    public function sendOrderEmail(int $orderId, string $type, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.send_email', $orderId)) {
+            return null;
+        }
+
+        return $this->callApi('order.send_email', [
+            'order_id' => $orderId,
+            'type' => $type,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Añade una nota interna a un pedido de PrestaShop (visible en el back
+     * office). Usa la acción order.add_note del bridge; verifica propiedad por
+     * el email del cliente igual que el resto de acciones de pedido.
+     *
+     * @return array{note_id:int|null,order_id:int,created_at:string,content:string}|null
+     */
+    public function addOrderNote(int $orderId, string $note, string $agentName, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.add_note', $orderId)) {
+            return null;
+        }
+
+        return $this->callApi('order.add_note', [
+            'order_id' => $orderId,
+            'note' => $note,
+            'agent_name' => $agentName,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Catálogo de estados de pedido de PrestaShop (id, name, color + flags) para
+     * el desplegable de "Cambiar estado" del workspace. Cacheado 1h (cambian raras
+     * veces). El id es el `id_order_state` real que espera changeOrderStatus().
+     *
+     * @return array<int, array{id:int,name:string,color:string,paid:int,shipped:int,delivery:int}>
+     */
+    public function getOrderStates(): array
+    {
+        return Cache::remember('ps_order_states', 3600, function (): array {
+            try {
+                $result = $this->callApi('order.states', []);
+            } catch (\Throwable) {
+                return [];
+            }
+
+            return $result['states'] ?? [];
+        });
+    }
+
+    /**
+     * Asigna número de seguimiento (y opcionalmente transportista) a un pedido.
+     * No envía correo por sí mismo — el aviso de envío se dispara al pasar el
+     * pedido a "Enviado" con changeOrderStatus($notify: true).
+     *
+     * @return array{order_id:int,tracking_number:string,carrier_id:int}|null
+     */
+    public function setOrderTracking(int $orderId, string $trackingNumber, ?int $carrierId = null, ?string $customerEmail = null, ?string $idempotencyKey = null): ?array
+    {
+        if (! $this->assertOwnershipEmail($customerEmail, 'order.set_tracking', $orderId)) {
+            return null;
+        }
+
+        $payload = [
+            'order_id' => $orderId,
+            'tracking_number' => $trackingNumber,
+            'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ];
+
+        if ($carrierId !== null) {
+            $payload['carrier_id'] = $carrierId;
+        }
+
+        return $this->callApi('order.set_tracking', $payload, $idempotencyKey);
     }
 
     public function testConnection(): array
@@ -393,29 +567,6 @@ class PrestashopContextService
         }
     }
 
-    private function isCircuitOpen(): bool
-    {
-        $threshold = (int) config('helpdeskprestashop.circuit_failure_threshold', 5);
-
-        return (int) Cache::get(self::CIRCUIT_KEY, 0) >= $threshold;
-    }
-
-    private function recordFailure(): void
-    {
-        $openSeconds = (int) config('helpdeskprestashop.circuit_open_seconds', 30);
-
-        if (Cache::add(self::CIRCUIT_KEY, 0, $openSeconds)) {
-            // first failure within the window, TTL initialised
-        }
-
-        Cache::increment(self::CIRCUIT_KEY);
-    }
-
-    private function recordSuccess(): void
-    {
-        Cache::forget(self::CIRCUIT_KEY);
-    }
-
     /**
      * Returns PS shipping addresses for a customer by email.
      *
@@ -443,7 +594,10 @@ class PrestashopContextService
      */
     public function getCategories(?string $lang = null): array
     {
-        $cacheKey = 'ps.categories.'.($lang ?? 'default');
+        // Version-scoped key: a catalog change (price drop / back in stock) bumps
+        // the version via forgetCatalogCache(), orphaning every lang variant at
+        // once instead of trying to enumerate and forget each language key.
+        $cacheKey = 'ps.categories.v'.$this->catalogCacheVersion().'.'.($lang ?? 'default');
 
         return Cache::remember($cacheKey, 3600, function () use ($lang): array {
             $payload = [];
@@ -460,6 +614,21 @@ class PrestashopContextService
 
             return $data['categories'] ?? [];
         });
+    }
+
+    private function catalogCacheVersion(): int
+    {
+        return (int) Cache::rememberForever('ps.catalog.version', fn (): int => 1);
+    }
+
+    /**
+     * Invalidate all cached catalog data (categories in every language) by
+     * bumping the catalog cache version. Called from a listener on PrestaShop
+     * price-drop / back-in-stock events.
+     */
+    public function forgetCatalogCache(): void
+    {
+        Cache::forever('ps.catalog.version', $this->catalogCacheVersion() + 1);
     }
 
     /**

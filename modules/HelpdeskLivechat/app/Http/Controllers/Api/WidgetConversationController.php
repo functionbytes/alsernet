@@ -19,6 +19,7 @@ use Modules\HelpdeskLivechat\Http\Requests\Widget\SendWidgetMessageRequest;
 use Modules\HelpdeskLivechat\Http\Requests\Widget\StoreWidgetConversationRequest;
 use Modules\HelpdeskLivechat\Mail\ConversationTranscriptMail;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
+use Modules\HelpdeskLivechat\Services\Widget\ProductShowcaseService;
 use Modules\HelpdeskLivechat\Services\Widget\WidgetConversationService;
 
 class WidgetConversationController extends Controller
@@ -26,7 +27,8 @@ class WidgetConversationController extends Controller
     use VerifiesConversationToken;
 
     public function __construct(
-        private readonly WidgetConversationService $service
+        private readonly WidgetConversationService $service,
+        private readonly ProductShowcaseService $showcase,
     ) {}
 
     public function store(StoreWidgetConversationRequest $request): JsonResponse
@@ -42,6 +44,25 @@ class WidgetConversationController extends Controller
                 $request->validated('website_token'),
                 $request->validated()
             );
+
+            // Bot de producto sobre la PRIMERA pregunta: el widget envía el primer
+            // mensaje aquí (no por sendMessage), así que el disparo del carrusel
+            // también debe vivir en este camino. Best-effort — no tumba la creación.
+            try {
+                $message = (string) ($request->validated()['message'] ?? '');
+                if ($message !== '' && ! empty($data['conversation_id'])) {
+                    $conversation = Conversation::find($data['conversation_id']);
+                    if ($conversation) {
+                        $this->showcase->autoRecommendForMessage(
+                            $conversation,
+                            $this->resolveWebForConversation($conversation),
+                            $message
+                        );
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return response()->json([
                 'success' => true,
@@ -123,6 +144,19 @@ class WidgetConversationController extends Controller
             }
 
             $data = $this->service->sendMessage($conversation, (int) $conversation->customer_id, $payload);
+
+            // Bot de producto: si el canal lo tiene activado, interpreta el texto
+            // del visitante como búsqueda y publica un carrusel de productos. Es
+            // aditivo y best-effort — un fallo aquí no debe tumbar el envío.
+            try {
+                $this->showcase->autoRecommendForMessage(
+                    $conversation,
+                    $this->resolveWebForConversation($conversation),
+                    (string) ($payload['content'] ?? '')
+                );
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             return response()->json([
                 'success' => true,

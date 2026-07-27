@@ -34,9 +34,10 @@
         <h1 class="fw-bold mb-2">Centro de ayuda</h1>
         <p class="mb-4 opacity-75">Encuentra respuestas rápidas a tus preguntas</p>
         <form action="{{ route('public.helpcenter.index') }}" method="GET" class="mb-0">
+            <label class="visually-hidden" for="helpcenter-search-input">Buscar en el centro de ayuda</label>
             <div class="input-group helpcenter-search">
-                <input type="text" name="q" class="form-control" placeholder="Busca un artículo..." value="{{ request('q') }}" autofocus>
-                <button class="btn btn-dark px-4" type="submit">
+                <input type="text" id="helpcenter-search-input" name="q" class="form-control" placeholder="Busca un artículo..." value="{{ request('q') }}">
+                <button class="btn btn-dark px-4" type="submit" aria-label="Buscar">
                     <i class="fas fa-search"></i>
                 </button>
             </div>

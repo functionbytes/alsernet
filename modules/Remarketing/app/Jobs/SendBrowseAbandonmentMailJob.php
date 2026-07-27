@@ -4,10 +4,10 @@ namespace Modules\Remarketing\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Modules\Remarketing\Mail\BrowseAbandonmentMail;
+use Modules\Remarketing\Models\AutomationTriggerLog;
 use Modules\Remarketing\Models\Customer;
 use Modules\Remarketing\Models\Suppression;
 
@@ -72,14 +72,14 @@ class SendBrowseAbandonmentMailJob implements ShouldQueue
 
     private function logTrigger(Customer $customer, ?string $skipReason, bool $sent = false): void
     {
-        DB::table('remarketing_automation_triggers_log')->insert([
+        AutomationTriggerLog::create([
             'trigger_type' => 'browse_abandonment',
             'store_id' => $customer->store_id,
             'customer_id' => $customer->id,
-            'context' => json_encode([
+            'context' => [
                 'product_id' => $this->productId,
                 'product' => $this->productData,
-            ]),
+            ],
             'email_sent' => $sent,
             'skip_reason' => $skipReason,
             'triggered_at' => now(),

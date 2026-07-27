@@ -103,7 +103,7 @@ class ProcessBounceJob implements ShouldQueue
     {
         Log::error('ProcessBounceJob failed', [
             'store_id' => $this->storeId,
-            'email' => $this->email,
+            'email_hash' => hash('sha256', strtolower((string) $this->email)),
             'type' => $this->type,
             'message_id' => $this->messageId,
             'error' => $exception->getMessage(),

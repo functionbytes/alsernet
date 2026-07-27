@@ -1,6 +1,7 @@
 import React from 'react';
 import { AudioPlayer } from './AudioPlayer';
 import { type LightboxImage } from './ImageLightbox';
+import { RecommendationsCard } from './RecommendationsCard';
 import type { Message, MessageAttachment } from '../hooks/useConversationMessages';
 
 interface MessageBubbleProps {
@@ -176,6 +177,36 @@ export function MessageBubble({
 }: MessageBubbleProps) {
     const isUser = message.author === 'user';
     const isAgent = message.author === 'agent';
+
+    // Carrusel de productos (coviewer): tarjetas a lo ancho en vez de burbuja.
+    if (message.products && message.products.length > 0) {
+        const note = (message.content ?? '').trim();
+        return (
+            <div
+                className="wgt-message-row wgt-message-row-products wgt-fade-in"
+                style={animationDelay ? { animationDelay } : undefined}
+            >
+                {showAvatar && (
+                    <div className="wgt-avatar" style={{ backgroundColor: primaryColor }}>
+                        {avatarInitial}
+                    </div>
+                )}
+                <div className="wgt-bubble-wrap is-agent wgt-products-wrap">
+                    {note ? <div className="wgt-bubble is-agent"><p>{note}</p></div> : null}
+                    <RecommendationsCard products={message.products} primaryColor={primaryColor} />
+                    <div className="wgt-row wgt-gap-1 wgt-bubble-time">
+                        <span>
+                            {message.timestamp.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                            })}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div

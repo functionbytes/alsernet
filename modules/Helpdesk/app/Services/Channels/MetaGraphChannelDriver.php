@@ -2,8 +2,11 @@
 
 namespace Modules\Helpdesk\Services\Channels;
 
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Modules\Core\Services\CircuitBreaker;
 
 /**
  * Base común para los canales que envían vía la Graph API de Meta a través del
@@ -27,6 +30,18 @@ abstract class MetaGraphChannelDriver
     abstract protected function channelLabel(): string;
 
     abstract public function isEnabled(): bool;
+
+    private ?CircuitBreaker $circuitBreaker = null;
+
+    /**
+     * Circuit breaker por canal: tras 5 fallos consecutivos se abre 60s para no
+     * martillear la Graph API durante una caída de Meta (mismo patrón y umbrales
+     * que WhatsAppBusinessService).
+     */
+    protected function circuitBreaker(): CircuitBreaker
+    {
+        return $this->circuitBreaker ??= new CircuitBreaker('meta-graph:'.Str::slug($this->channelLabel()), 5, 60);
+    }
 
     /**
      * Send a text message to a recipient id (PSID / IGSID).
@@ -67,11 +82,37 @@ abstract class MetaGraphChannelDriver
     }
 
     /**
+     * Detecta un token de Meta caducado/inválido (code 190 / OAuthException) y lo
+     * marca en caché + log claro para que ops sepa que hay que re-autenticar el
+     * canal (en vez de un fallo genérico indistinguible).
+     *
+     * @param  array<string, mixed>|null  $error
+     */
+    protected function flagInvalidTokenIfNeeded(?array $error): void
+    {
+        if ($error === null) {
+            return;
+        }
+
+        if ((int) ($error['code'] ?? 0) === 190 || ($error['type'] ?? '') === 'OAuthException') {
+            MetaTokenHealth::flagInvalid(Str::slug($this->channelLabel()), $error);
+        }
+    }
+
+    /**
      * Send a sender_action (mark_seen / typing_on / typing_off).
      */
     public function sendSenderAction(string $recipientId, string $action = 'mark_seen'): bool
     {
         if (! $this->isEnabled()) {
+            return false;
+        }
+
+        // Durante una caída de Meta (breaker abierto por fallos de envío) omitimos
+        // también los sender_action (typing/seen), que son best-effort. No
+        // registramos su resultado en el breaker para no ensuciarlo con fallos
+        // benignos (p. ej. recipiente fuera de la ventana de 24h).
+        if (! $this->circuitBreaker()->isAvailable()) {
             return false;
         }
 
@@ -123,6 +164,14 @@ abstract class MetaGraphChannelDriver
             return null;
         }
 
+        if (! $this->circuitBreaker()->isAvailable()) {
+            Log::warning($this->channelLabel().' send omitido: circuit breaker abierto', [
+                'recipient' => $recipientId,
+            ]);
+
+            return null;
+        }
+
         try {
             $response = Http::withToken($this->accessToken())
                 ->timeout(15)
@@ -134,6 +183,9 @@ abstract class MetaGraphChannelDriver
                 ]);
 
             if (! $response->successful()) {
+                $this->circuitBreaker()->recordFailure();
+                $this->flagInvalidTokenIfNeeded($response->json('error'));
+
                 Log::error($this->channelLabel().' send failed', [
                     'recipient' => $recipientId,
                     'status' => $response->status(),
@@ -143,8 +195,16 @@ abstract class MetaGraphChannelDriver
                 return null;
             }
 
+            $this->circuitBreaker()->recordSuccess();
+
             return $response->json('message_id');
         } catch (\Throwable $e) {
+            $this->circuitBreaker()->recordFailure();
+
+            if ($e instanceof RequestException) {
+                $this->flagInvalidTokenIfNeeded($e->response?->json('error'));
+            }
+
             Log::error($this->channelLabel().' exception', [
                 'recipient' => $recipientId,
                 'error' => $e->getMessage(),

@@ -2,9 +2,11 @@
 
 namespace Modules\Helpdesk\Services;
 
+use App\Helpers\PiiMasker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskErp\Services\ErpCustomerLinkerService;
 use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
 /**
@@ -47,7 +49,12 @@ class CustomerCommerceSyncService
         $match = $this->lookupInPrestashop($email);
 
         if (! $match) {
-            return ['prestashop_id' => null, 'gestion_id' => null, 'linked' => false];
+            // El cliente no tiene cuenta en la tienda online (p. ej. llego por
+            // WhatsApp/tienda fisica) — antes esto rendia "sin vincular" aunque
+            // el cliente existiera en el ERP directo. Fallback: intentar el
+            // mismo resolver que ya usa el job en background al crear una
+            // conversacion (email -> telefono -> email de PrestaShop).
+            return $this->syncErpOnly($customer, $email);
         }
 
         try {
@@ -57,7 +64,7 @@ class CustomerCommerceSyncService
                 $customer->linkExternalId('erp', (string) $match['gestion_id'], ['linked_via' => 'auto']);
             }
         } catch (\Throwable $e) {
-            Log::warning('CustomerCommerceSync: no se pudo enlazar', ['email' => $email, 'error' => $e->getMessage()]);
+            Log::warning('CustomerCommerceSync: no se pudo enlazar', ['email' => PiiMasker::email($email), 'error' => $e->getMessage()]);
         }
 
         if ($force) {
@@ -72,11 +79,64 @@ class CustomerCommerceSyncService
     }
 
     /**
+     * Fallback cuando el cliente no aparece en PrestaShop: intenta vincularlo
+     * directo al ERP (email -> telefono -> email de PrestaShop). Se degrada a
+     * "no vinculado" sin lanzar si el modulo HelpdeskErp no esta instalado.
+     *
+     * @return array{prestashop_id: ?int, gestion_id: ?int, linked: bool}
+     */
+    private function syncErpOnly(Customer $customer, string $email): array
+    {
+        $existingErpId = $customer->externalIdFor('erp');
+
+        if ($existingErpId) {
+            return ['prestashop_id' => null, 'gestion_id' => (int) $existingErpId, 'linked' => true];
+        }
+
+        if (! class_exists(ErpCustomerLinkerService::class)) {
+            return ['prestashop_id' => null, 'gestion_id' => null, 'linked' => false];
+        }
+
+        try {
+            $erpId = app(ErpCustomerLinkerService::class)->linkCustomer($customer);
+        } catch (\Throwable $e) {
+            Log::warning('CustomerCommerceSync: fallo el fallback a ERP directo', ['email' => PiiMasker::email($email), 'error' => $e->getMessage()]);
+
+            return ['prestashop_id' => null, 'gestion_id' => null, 'linked' => false];
+        }
+
+        return ['prestashop_id' => null, 'gestion_id' => $erpId, 'linked' => $erpId !== null];
+    }
+
+    /**
      * Busca clientes en PrestaShop por email, ID numérico o nombre.
+     * Los fallos de conexión se degradan a lista vacía (con log); si el
+     * caller necesita distinguir "sin resultados" de "PrestaShop caído",
+     * usar searchCustomersOrFail().
      *
      * @return list<array{id: string, name: string, email: string, meta: string}>
      */
     public function searchCustomers(string $query, string $type = 'email'): array
+    {
+        try {
+            return $this->searchCustomersOrFail($query, $type);
+        } catch (\Throwable $e) {
+            Log::warning('CustomerCommerceSync: fallo en búsqueda', ['type' => $type, 'error' => $e->getMessage()]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Variante que propaga el fallo de la BD de PrestaShop en lugar de
+     * degradarlo a [] — la usa el driver de integraciones para poder mostrar
+     * "la plataforma no respondió" en vez de un falso "sin resultados".
+     *
+     * @return list<array{id: string, name: string, email: string, meta: string}>
+     *
+     * @throws \Throwable
+     */
+    public function searchCustomersOrFail(string $query, string $type = 'email'): array
     {
         $db = (string) config('helpdeskprestashop.ps_db', 'alvarez_cristia');
         $query = trim($query);
@@ -85,38 +145,32 @@ class CustomerCommerceSyncService
             return [];
         }
 
-        try {
-            $rows = match ($type) {
-                'id' => DB::connection('mysql')->select(
-                    "SELECT c.id_customer, c.firstname, c.lastname, c.email
-                       FROM `{$db}`.aalv_customer c
-                      WHERE c.deleted = 0 AND c.id_customer = ?
-                      LIMIT 5",
-                    [(int) $query]
-                ),
-                'name' => DB::connection('mysql')->select(
-                    "SELECT c.id_customer, c.firstname, c.lastname, c.email
-                       FROM `{$db}`.aalv_customer c
-                      WHERE c.deleted = 0
-                        AND CONCAT(c.firstname, ' ', c.lastname) LIKE ?
-                      ORDER BY c.id_customer DESC
-                      LIMIT 10",
-                    [$query.'%']
-                ),
-                default => DB::connection('mysql')->select(
-                    "SELECT c.id_customer, c.firstname, c.lastname, c.email
-                       FROM `{$db}`.aalv_customer c
-                      WHERE c.deleted = 0 AND c.email = ?
-                      ORDER BY c.id_customer DESC
-                      LIMIT 10",
-                    [$query]
-                ),
-            };
-        } catch (\Throwable $e) {
-            Log::warning('CustomerCommerceSync: fallo en búsqueda', ['type' => $type, 'error' => $e->getMessage()]);
-
-            return [];
-        }
+        $rows = match ($type) {
+            'id' => DB::connection('mysql')->select(
+                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+                   FROM `{$db}`.aalv_customer c
+                  WHERE c.deleted = 0 AND c.id_customer = ?
+                  LIMIT 5",
+                [(int) $query]
+            ),
+            'name' => DB::connection('mysql')->select(
+                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+                   FROM `{$db}`.aalv_customer c
+                  WHERE c.deleted = 0
+                    AND CONCAT(c.firstname, ' ', c.lastname) LIKE ?
+                  ORDER BY c.id_customer DESC
+                  LIMIT 10",
+                [$query.'%']
+            ),
+            default => DB::connection('mysql')->select(
+                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+                   FROM `{$db}`.aalv_customer c
+                  WHERE c.deleted = 0 AND c.email = ?
+                  ORDER BY c.id_customer DESC
+                  LIMIT 10",
+                [$query]
+            ),
+        };
 
         return array_map(fn ($row) => [
             'id' => (string) $row->id_customer,

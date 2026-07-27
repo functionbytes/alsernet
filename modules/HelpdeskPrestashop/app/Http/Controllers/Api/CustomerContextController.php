@@ -4,6 +4,7 @@ namespace Modules\HelpdeskPrestashop\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Support\Concerns\ScopesCustomerByInbox;
 use Modules\HelpdeskPrestashop\Http\Requests\CustomerContextRequest;
 use Modules\HelpdeskPrestashop\Http\Requests\RefreshCustomerContextRequest;
 use Modules\HelpdeskPrestashop\Http\Resources\CustomerContextResource;
@@ -11,6 +12,8 @@ use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 
 class CustomerContextController extends Controller
 {
+    use ScopesCustomerByInbox;
+
     public function __construct(
         private readonly PrestashopContextService $service
     ) {}
@@ -48,6 +51,8 @@ class CustomerContextController extends Controller
             return $this->invalidEmailResponse();
         }
 
+        $this->assertScopedToCustomerEmail($email);
+
         $context = $this->service->getCustomerContext($email);
 
         return response()->json(new CustomerContextResource($context));
@@ -58,6 +63,8 @@ class CustomerContextController extends Controller
         if (! $this->isValidEmail($email)) {
             return $this->invalidEmailResponse();
         }
+
+        $this->assertScopedToCustomerEmail($email);
 
         $this->service->forgetCache($email);
         $context = $this->service->getCustomerContext($email);

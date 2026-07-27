@@ -222,6 +222,14 @@ body:has(.conversations) .mc-content {
     font-size: 13px;
     width: 16px;
     text-align: center;
+    flex-shrink: 0;
+}
+.bv-nav-item-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .bv-nav-item .c {
     margin-left: auto;
@@ -257,6 +265,9 @@ body:has(.conversations) .mc-content {
     overflow: hidden;
 }
 .bv-list-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 14px 12px 10px;
     border-bottom: 1px solid var(--bv-border);
 }
@@ -269,6 +280,8 @@ body:has(.conversations) .mc-content {
     border: 1px solid transparent;
     border-radius: 9px;
     font-size: 12.5px;
+    flex: 1;
+    min-width: 0;
 }
 .bv-list-search:focus-within {
     background: var(--bv-bg-panel);
@@ -287,7 +300,7 @@ body:has(.conversations) .mc-content {
 .bv-list-actions {
     display: flex;
     gap: 4px;
-    margin-top: 8px;
+    flex-shrink: 0;
 }
 .bv-list-actions .btn-ico {
     width: 30px;
@@ -792,6 +805,25 @@ body:has(.conversations) .mc-content {
     font-size: 11px;
     color: var(--bv-text-muted);
     font-weight: 500;
+}
+
+/* Mensajes de actividad (etiqueta añadida/quitada, asignación, cambio de
+   estado, etc.) — centrados y resaltados como una píldora, no como texto
+   plano de la conversación. */
+.bv-event-pill {
+    text-align: center;
+    margin: 10px 0;
+}
+.bv-event-pill span {
+    display: inline-block;
+    max-width: 90%;
+    background: var(--bv-bg-subtle, #f4f4f5);
+    border: 1px solid var(--bv-border);
+    color: var(--bv-text-soft, var(--bv-text-muted));
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 999px;
 }
 
 /* Bubbles */
@@ -4724,22 +4756,6 @@ body:has(.conversations) .mc-content {
 /* Check label con margin-top */
 .bv-modal-check-mt { margin-top: 4px; }
 
-/* --- edit-contact.blade.php --- */
-
-/* Form de edición de contacto */
-.bv-contact-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-/* Grid 2 columnas para campos de contacto */
-.bv-contact-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
 /* --- tags.blade.php --- */
 
 /* Hint de creación de tag */
@@ -5182,9 +5198,6 @@ body:has(.conversations) .mc-content {
 .bv-icon-neutral    { color: #6b7280; }
 .bv-icon-warn-red   { color: #ef4444; }
 .bv-icon-warn-amber { color: #f59e0b; }
-
-/* --- edit-contact.blade.php --- */
-.bv-textarea-resizable { resize: vertical; }
 
 /* --- newconv.blade.php --- */
 .bv-sec-title-mb10 { margin-bottom: 10px; }
@@ -10996,7 +11009,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-cv-bubble-row { display: flex; align-items: flex-end; gap: 7px; }
 .bv-cv-bubble-row.bv-out { flex-direction: row-reverse; }
 .bv-cv-av-sm {
-    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    width: 26px; height: 26px; border-radius: 6px; flex-shrink: 0;
     background: var(--bv-text-muted); color: #fff;
     font-size: 9px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
@@ -11223,6 +11236,51 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 }
 .bv-modal .fselect:focus { border-color: var(--bv-primary, #90bb13); }
 .bv-modal .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bv-modal .field-error { font-size: 11.5px; color: var(--bv-danger, #ef4444); margin-top: -4px; }
+
+/* select2 dentro de modales bv (reemplaza <select class="fselect"> cuando se inicializa) */
+.bv-modal .select2-container { width: 100% !important; font-family: inherit; }
+.bv-modal .select2-container .select2-selection--single {
+    height: auto;
+    border: 1px solid var(--bv-border, #e4e4e7);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--bv-bg-input, #fff);
+}
+.bv-modal .select2-container .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    line-height: 1.4;
+    font-size: 13px;
+    color: var(--bv-text, #18181b);
+}
+.bv-modal .select2-container .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    top: 0;
+    right: 8px;
+}
+.bv-modal .select2-container--default.select2-container--open .select2-selection--single,
+.bv-modal .select2-container--default .select2-selection--single:focus {
+    border-color: var(--bv-primary, #90bb13);
+}
+/* El dropdown de select2 se inserta en <body> (fuera de .bv-modal), por eso va
+   sin scope aquí — este archivo solo se carga en la bandeja, así que no choca
+   con el select2 (tema Bootstrap) de las páginas de settings. */
+.select2-dropdown {
+    border: 1px solid var(--bv-border, #e4e4e7);
+    border-radius: 8px;
+    font-size: 13px;
+    overflow: hidden;
+}
+.select2-results__option--highlighted[aria-selected] {
+    background: var(--bv-primary, #90bb13) !important;
+    color: #fff !important;
+}
+.select2-search--dropdown .select2-search__field {
+    border: 1px solid var(--bv-border, #e4e4e7);
+    border-radius: 6px;
+    padding: 5px 8px;
+    outline: none;
+}
 
 /* barra de prioridad */
 .bv-modal .prio-bar {
@@ -12362,9 +12420,11 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
 }
 
-/* Nombre y "Cliente desde" */
+/* Nombre y "Cliente desde" — padding-top se mantiene en 26px: el avatar de
+   .rsp-banner sobresale 20px por debajo del banner (bottom:-20px, 42px alto)
+   y necesita ese aire antes de que empiece el texto del nombre. */
 .bv-right .rsp-head {
-    padding: 26px 14px 12px;
+    padding: 26px 14px 8px;
     text-align: center;
     border-bottom: 1px solid var(--bv-border, #e4e4e7);
     margin-bottom: 0;
@@ -12386,7 +12446,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
-    padding: 0 12px 14px;
+    padding: 0 12px 10px;
 }
 .bv-right .rsp-actions button {
     background: var(--bv-bg-subtle, #f4f4f5);
@@ -12430,7 +12490,7 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     border-bottom: 1px solid var(--bv-border, #e4e4e7);
 }
 .bv-right .rsp-stats .stat {
-    padding: 11px 8px;
+    padding: 8px 8px;
     text-align: center;
     border-right: 1px solid var(--bv-border, #e4e4e7);
 }
@@ -12630,10 +12690,6 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
 .bv-right .r-tag-success {
     background: #dcfce7;
     color: #166534;
-}
-.bv-right .r-tag-color {
-    background: color-mix(in srgb, var(--rsp-tag-color, #6c757d) 14%, transparent);
-    color: var(--rsp-tag-color, #6c757d);
 }
 
 /* Filas de control (Estado / Prioridad / Agente) — selector uniforme */
@@ -12844,12 +12900,6 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     z-index: 1;
     position: relative;
 }
-.bv-right .rsp-tl-item .ic.ic-primary   { background: var(--bv-accent, #90bb13); }
-.bv-right .rsp-tl-item .ic.ic-success   { background: var(--bv-success, #13C672); }
-.bv-right .rsp-tl-item .ic.ic-warning   { background: var(--bv-warning, #FEC90F); color: #18181b; }
-.bv-right .rsp-tl-item .ic.ic-danger    { background: var(--bv-danger, #FA896B); }
-.bv-right .rsp-tl-item .ic.ic-info      { background: var(--bv-info, #539BFF); }
-.bv-right .rsp-tl-item .ic.ic-secondary { background: var(--bv-text-muted, #71717a); }
 .bv-right .rsp-tl-item .body {
     flex: 1;
     min-width: 0;
@@ -14529,3 +14579,43 @@ textarea.bv-form-input { resize: vertical; }
 .bv-x79 { font-size:11px; color:var(--bv-text-muted); }
 .bv-x80 { width:7px; height:7px; border-radius:50%; background:currentColor; display:inline-block; opacity:.7; }
 .bv-x81 { font-size:10px; color:var(--bv-text-muted,#71717a); }
+
+/* ── Aviso de ventana WhatsApp 24h: franja blanca + pill destacada ── */
+.bv-wa-strip {
+    background: var(--bv-bg-panel);
+    border-bottom: 1px solid var(--bv-border);
+    padding: 10px 16px;
+}
+.bv-wa-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    margin: 0;
+    padding: 5px 8px 5px 12px;
+    background: #fef3c7;
+    color: #92400e;
+    border: none;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+.bv-wa-pill i.fa-whatsapp { font-size: 13px; flex-shrink: 0; }
+.bv-wa-pill span { flex: 1; }
+.bv-wa-pill-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    opacity: .7;
+    cursor: pointer;
+    font-size: 11px;
+}
+.bv-wa-pill-close:hover { opacity: 1; }

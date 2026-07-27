@@ -17,6 +17,7 @@ class ConversationAssigned implements ShouldBroadcast
     public function __construct(
         public readonly Conversation $conversation,
         public readonly User $assignee,
+        public readonly ?int $byUserId = null,
     ) {}
 
     public function broadcastOn(): array

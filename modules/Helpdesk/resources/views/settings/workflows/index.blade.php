@@ -79,7 +79,7 @@
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
+                        <button type="submit" class="btn btn-primary w-100" aria-label="Filtrar">
                             <i class="fas fa-filter"></i>
                         </button>
                     </div>
@@ -94,13 +94,13 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Nombre</th>
-                                <th>Trigger</th>
-                                <th class="text-center">Nodos</th>
-                                <th class="text-center">Estado</th>
-                                <th>Ultima ejecucion</th>
-                                <th class="text-center">Ejecuciones</th>
-                                <th class="text-center">Acciones</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Trigger</th>
+                                <th scope="col" class="text-center">Nodos</th>
+                                <th scope="col" class="text-center">Estado</th>
+                                <th scope="col">Ultima ejecucion</th>
+                                <th scope="col" class="text-center">Ejecuciones</th>
+                                <th scope="col" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -7,7 +7,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Conversation;
@@ -53,7 +52,7 @@ class PublicSimulatorService
      * @param  array{phone?: ?string, email?: ?string, prestashop_id?: ?int, gestion_id?: ?int}  $links
      * @return array{conversation_id: int, token: string, channel: string, item: array<string, mixed>}
      */
-    public function startSession(string $channel, ?string $name, ?string $identifier, string $message, array $links = [], ?string $simulatedAt = null): array
+    public function startSession(string $channel, ?string $name, ?string $identifier, string $message, array $links = [], ?string $simulatedAt = null, ?string $owner = null): array
     {
         $name = $this->cleanName($name);
         $sender = $this->resolveSender($channel, $identifier);
@@ -91,6 +90,9 @@ class PublicSimulatorService
                 'widget_pubsub_token' => $token,
                 // Persist the simulated clock so follow-up inbound messages stay in it.
                 'sim_now' => $simulatedNow?->toIso8601String(),
+                // Navegador que creó la sesión: acota el listado /sessions para no
+                // filtrar los tokens de sesiones de otros visitantes (IDOR).
+                'sim_owner' => $owner,
             ], fn ($v) => $v !== null)),
         ])->save();
 
@@ -316,7 +318,6 @@ class PublicSimulatorService
             $conversation->update(['last_message_at' => now()]);
 
             broadcast(new ConversationMessageCreated($item));
-            event(new ConversationItemCreated($item));
 
             if ($conversation->assignee_id) {
                 event(new InboxItemChanged($conversation->id, $conversation->assignee_id, 'message_added'));

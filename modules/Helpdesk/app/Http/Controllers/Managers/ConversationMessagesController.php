@@ -16,6 +16,7 @@ use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationRead;
+use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 
@@ -24,6 +25,7 @@ class ConversationMessagesController extends Controller
     public function __construct(
         private readonly OutboundMessageService $outbound,
         private readonly LinkPreviewService $linkPreview,
+        private readonly ConversationInboxMetricsService $inboxMetrics,
     ) {}
 
     /**
@@ -195,6 +197,11 @@ class ConversationMessagesController extends Controller
             'user_id' => auth()->id(),
         ]);
 
+        // Otherwise the sidebar's "Sin leer" badge keeps showing the stale
+        // pre-read count for up to 120s (Cache::flexible TTL) after opening
+        // a conversation marks it read.
+        $this->inboxMetrics->forgetCountersFor(auth()->id());
+
         // Broadcast event
         broadcast(new ConversationMessageRead($item, auth()->user()))->toOthers();
 
@@ -217,6 +224,11 @@ class ConversationMessagesController extends Controller
             ['conversation_id' => $conversation->id, 'user_id' => $userId],
             ['read_at' => now()],
         );
+
+        // Otherwise the sidebar's "Sin leer" badge keeps showing the stale
+        // pre-read count for up to 120s (Cache::flexible TTL) after opening
+        // a conversation marks it read.
+        $this->inboxMetrics->forgetCountersFor($userId);
 
         // Send "seen" receipt to the customer via the channel API.
         if ($this->outbound->supports($conversation)) {

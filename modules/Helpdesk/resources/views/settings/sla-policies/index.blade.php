@@ -61,12 +61,12 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th class="text-center">Primera respuesta</th>
-                                    <th class="text-center">Resolucion</th>
-                                    <th class="text-center">Horario laboral</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col" class="text-center">Primera respuesta</th>
+                                    <th scope="col" class="text-center">Resolucion</th>
+                                    <th scope="col" class="text-center">Horario laboral</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

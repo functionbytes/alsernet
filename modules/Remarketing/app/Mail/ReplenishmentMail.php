@@ -17,18 +17,15 @@ class ReplenishmentMail extends Mailable implements ShouldQueue
     public function __construct(
         public readonly Customer $customer,
         public readonly int $productId,
-    ) {}
+    ) {
+        $this->locale($customer->locale ?? config('app.locale', 'es'));
+    }
 
     public function envelope(): Envelope
     {
         return new Envelope(
             subject: __('remarketing::messages.replenishment.subject'),
         );
-    }
-
-    public function locale(): string
-    {
-        return $this->customer->locale ?? config('app.locale', 'es');
     }
 
     public function content(): Content

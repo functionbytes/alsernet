@@ -35,6 +35,10 @@ class LinkCustomerToErpJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(ErpCustomerLinkerService $linker): void
     {
+        if (! helpdesk_erp_enabled()) {
+            return;
+        }
+
         $customer = Customer::on('helpdesk')
             ->with('externalIds')
             ->find($this->customerId);

@@ -63,7 +63,7 @@ class ChangeStatusAction implements AutomationAction
 
         $conversation->update($updates);
 
-        event(new ConversationStatusChanged($conversation));
+        event(new ConversationStatusChanged($conversation, $status, auth()->id()));
     }
 
     private function resolveStatus(string $slug): ?ConversationStatus

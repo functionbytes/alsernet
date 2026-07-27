@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\StoreBannerRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateBannerRequest;
 use Modules\Helpdesk\Models\Banner;
 
 class BannersController extends Controller
@@ -37,9 +39,11 @@ class BannersController extends Controller
         return view('helpdesk::settings.banners.form');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreBannerRequest $request): RedirectResponse
     {
-        $data = $this->validateBanner($request);
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['dismissible'] = $request->boolean('dismissible', true);
 
         Banner::create($data);
 
@@ -52,9 +56,11 @@ class BannersController extends Controller
         return view('helpdesk::settings.banners.form', compact('banner'));
     }
 
-    public function update(Request $request, Banner $banner): RedirectResponse
+    public function update(UpdateBannerRequest $request, Banner $banner): RedirectResponse
     {
-        $data = $this->validateBanner($request);
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active', true);
+        $data['dismissible'] = $request->boolean('dismissible', true);
 
         $banner->update($data);
 
@@ -68,29 +74,5 @@ class BannersController extends Controller
 
         return redirect()->route('settings.helpdesk.banners.index')
             ->with('success', 'Banner eliminado exitosamente.');
-    }
-
-    private function validateBanner(Request $request): array
-    {
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
-            'type' => ['required', 'in:info,success,warning,danger'],
-            'cta_text' => ['nullable', 'string', 'max:100'],
-            'cta_url' => ['nullable', 'url', 'max:500'],
-            'starts_at' => ['nullable', 'date'],
-            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
-        ], [
-            'title.required' => 'El titulo es obligatorio.',
-            'body.required' => 'El contenido es obligatorio.',
-            'type.required' => 'El tipo es obligatorio.',
-            'cta_url.url' => 'La URL del boton debe ser una URL valida.',
-            'ends_at.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la de inicio.',
-        ]);
-
-        $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['dismissible'] = $request->boolean('dismissible', true);
-
-        return $validated;
     }
 }

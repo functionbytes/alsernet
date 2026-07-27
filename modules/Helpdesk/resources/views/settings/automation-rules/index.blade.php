@@ -89,7 +89,7 @@
                             </select>
                         </div>
                         <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary" aria-label="Buscar">
                                 <i class="fas fa-search"></i>
                             </button>
                             @if(request()->hasAny(['event_name', 'is_active']))
@@ -109,13 +109,13 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th>Evento</th>
-                                    <th class="text-center">Condiciones</th>
-                                    <th class="text-center">Acciones</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Disparos</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Evento</th>
+                                    <th scope="col" class="text-center">Condiciones</th>
+                                    <th scope="col" class="text-center">Acciones</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Disparos</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

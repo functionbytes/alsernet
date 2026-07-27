@@ -4,8 +4,11 @@ namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\StoreStatusComponentRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\StoreStatusIncidentRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateStatusComponentRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\UpdateStatusIncidentRequest;
 use Modules\Helpdesk\Models\StatusComponent;
 use Modules\Helpdesk\Models\StatusIncident;
 
@@ -38,18 +41,8 @@ class StatusPageController extends Controller
         return view('helpdesk::settings.status-page.component-form');
     }
 
-    public function componentStore(Request $request): RedirectResponse
+    public function componentStore(StoreStatusComponentRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'status' => ['required', 'in:operational,degraded,partial_outage,major_outage,maintenance'],
-            'order' => ['integer', 'min:0'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'status.required' => 'El estado es obligatorio.',
-        ]);
-
         StatusComponent::create([
             'name' => $request->name,
             'description' => $request->description,
@@ -67,15 +60,8 @@ class StatusPageController extends Controller
         return view('helpdesk::settings.status-page.component-form', ['component' => $statusComponent]);
     }
 
-    public function componentUpdate(Request $request, StatusComponent $statusComponent): RedirectResponse
+    public function componentUpdate(UpdateStatusComponentRequest $request, StatusComponent $statusComponent): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:500'],
-            'status' => ['required', 'in:operational,degraded,partial_outage,major_outage,maintenance'],
-            'order' => ['integer', 'min:0'],
-        ]);
-
         $statusComponent->update([
             'name' => $request->name,
             'description' => $request->description,
@@ -115,20 +101,8 @@ class StatusPageController extends Controller
         return view('helpdesk::settings.status-page.incident-form', compact('components'));
     }
 
-    public function incidentStore(Request $request): RedirectResponse
+    public function incidentStore(StoreStatusIncidentRequest $request): RedirectResponse
     {
-        $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
-            'severity' => ['required', 'in:minor,major,critical'],
-            'status' => ['required', 'in:investigating,identified,monitoring,resolved'],
-            'affected_components' => ['nullable', 'array'],
-            'affected_components.*' => ['integer', 'exists:helpdesk_status_components,id'],
-        ], [
-            'title.required' => 'El titulo es obligatorio.',
-            'body.required' => 'El cuerpo del incidente es obligatorio.',
-        ]);
-
         $incident = StatusIncident::create([
             'title' => $request->title,
             'body' => $request->body,
@@ -153,16 +127,8 @@ class StatusPageController extends Controller
         ]);
     }
 
-    public function incidentUpdate(Request $request, StatusIncident $statusIncident): RedirectResponse
+    public function incidentUpdate(UpdateStatusIncidentRequest $request, StatusIncident $statusIncident): RedirectResponse
     {
-        $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string'],
-            'severity' => ['required', 'in:minor,major,critical'],
-            'status' => ['required', 'in:investigating,identified,monitoring,resolved'],
-            'affected_components' => ['nullable', 'array'],
-        ]);
-
         $resolvedAt = $statusIncident->resolved_at;
         if ($request->status === 'resolved' && ! $resolvedAt) {
             $resolvedAt = now();

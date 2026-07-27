@@ -582,7 +582,7 @@
         @endcan
 
         {{-- Social Inbox Widget --}}
-        @if(class_exists(\Modules\HelpdeskSocial\Widgets\SocialInboxWidget::class) && app('modules')->isEnabled('HelpdeskSocial'))
+        @if(class_exists(\Modules\HelpdeskSocial\Widgets\SocialInboxWidget::class) && app('modules')->isEnabled('HelpdeskSocial') && function_exists('helpdesk_social_enabled') && helpdesk_social_enabled())
             <div class="row mb-4 g-3">
                 <div class="col-12">
                     {!! (new \Modules\HelpdeskSocial\Widgets\SocialInboxWidget)->render() !!}

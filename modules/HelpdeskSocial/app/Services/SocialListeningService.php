@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskSocial\Services;
 
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Models\SocialListeningKeyword;
@@ -10,6 +12,14 @@ use Modules\HelpdeskSocial\Models\SocialMention;
 class SocialListeningService
 {
     /**
+     * Clave de caché de las palabras clave de escucha activas.
+     * Invalidada por SocialListeningKeywordObserver ante cualquier save/delete.
+     */
+    public const KEYWORDS_CACHE_KEY = 'helpdesksocial:listening-keywords:active';
+
+    private const CACHE_TTL = 900;
+
+    /**
      * Scan a comment against all active listening keywords and create mentions for matches.
      *
      * @return array<int, array<string, mixed>>
@@ -17,7 +27,7 @@ class SocialListeningService
     public function scanComment(SocialComment $comment): array
     {
         $matches = [];
-        $keywords = SocialListeningKeyword::active()->get();
+        $keywords = $this->activeKeywords();
 
         foreach ($keywords as $keyword) {
             if (! $this->platformMatches($comment->platform, $keyword)) {
@@ -51,7 +61,7 @@ class SocialListeningService
     public function scanText(string $text, string $platform, ?string $authorName = null, ?string $authorUsername = null, ?string $externalId = null, ?string $url = null): array
     {
         $matches = [];
-        $keywords = SocialListeningKeyword::active()->get();
+        $keywords = $this->activeKeywords();
 
         foreach ($keywords as $keyword) {
             if (! $this->platformMatches($platform, $keyword)) {
@@ -82,6 +92,18 @@ class SocialListeningService
         }
 
         return $matches;
+    }
+
+    /**
+     * @return Collection<int, SocialListeningKeyword>
+     */
+    private function activeKeywords(): Collection
+    {
+        return Cache::remember(
+            self::KEYWORDS_CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => SocialListeningKeyword::active()->get()
+        );
     }
 
     private function platformMatches(string $platform, SocialListeningKeyword $keyword): bool

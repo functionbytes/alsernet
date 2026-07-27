@@ -12,7 +12,7 @@ class DiscountSupport
      *
      * @return array{success: bool, discount?: Discount, amount: float, message?: string, free_shipping: bool}
      */
-    public function apply(string $code, float $subTotal): array
+    public static function apply(string $code, float $subTotal): array
     {
         $discount = Discount::query()
             ->where('code', $code)

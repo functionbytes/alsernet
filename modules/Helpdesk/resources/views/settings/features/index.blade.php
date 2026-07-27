@@ -12,7 +12,7 @@ $sections = [
         'title' => 'Barra de acciones del hilo',
         'desc'  => 'Botones que aparecen en la barra superior de la conversación.',
         'items' => [
-            'feature_email_enabled'    => ['label' => 'Enviar email',           'icon' => 'fas fa-envelope'],
+            'feature_email_enabled'    => ['label' => 'Enviar email (botón + pestaña Emails)', 'icon' => 'fas fa-envelope'],
             'feature_tickets_enabled'  => ['label' => 'Crear ticket',           'icon' => 'fas fa-ticket'],
             'feature_schedule_enabled' => ['label' => 'Agendar mensaje',        'icon' => 'fas fa-calendar-clock'],
             'feature_snooze_enabled'   => ['label' => 'Posponer conversación',  'icon' => 'fas fa-clock'],
@@ -54,12 +54,13 @@ $sections = [
         'desc'  => 'Pestañas que aparecen en el panel lateral de información del cliente.',
         'items' => [
             'feature_tab_general_enabled'     => ['label' => 'General (información de contacto)', 'icon' => 'far fa-circle-user'],
+            'feature_tab_carts_enabled'       => ['label' => 'Carritos (requiere módulo PrestaShop)', 'icon' => 'fas fa-cart-shopping'],
             'feature_tab_files_enabled'       => ['label' => 'Archivos',                          'icon' => 'far fa-folder'],
             'feature_tab_tickets_enabled'     => ['label' => 'Tickets',                           'icon' => 'fas fa-ticket'],
+            'feature_tab_document_enabled'    => ['label' => 'Documentación (requiere módulo Document)', 'icon' => 'far fa-folder-open'],
             'feature_tab_previous_enabled'    => ['label' => 'Anteriores (conversaciones previas)','icon' => 'fas fa-clock-rotate-left'],
             'feature_tab_activity_enabled'    => ['label' => 'Actividad',                         'icon' => 'fas fa-bolt-lightning'],
             'feature_tab_technology_enabled'  => ['label' => 'Tecnología (sesión widget)',         'icon' => 'fas fa-laptop'],
-            'feature_tab_orders_enabled'      => ['label' => 'Pedidos (Ecommerce)',                'icon' => 'fas fa-bag-shopping'],
             'feature_tab_customer360_enabled' => ['label' => 'Cliente 360',                        'icon' => 'fas fa-chart-pie'],
             'feature_tab_assist_enabled'      => ['label' => 'Asistir / Pantalla (live assistance)','icon' => 'fas fa-eye'],
         ],

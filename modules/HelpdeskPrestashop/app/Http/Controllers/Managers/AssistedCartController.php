@@ -138,6 +138,24 @@ class AssistedCartController extends Controller
         ]);
     }
 
+    public function cancel(Customer $customer): JsonResponse
+    {
+        $this->authorize('update', $customer);
+
+        $cart = $this->service->getOrCreateCart($customer);
+
+        try {
+            $this->service->cancel($cart);
+        } catch (RuntimeException $e) {
+            return $this->businessError($e);
+        }
+
+        return response()->json([
+            'success' => true,
+            'cart' => $this->service->summarize($cart->refresh()),
+        ]);
+    }
+
     public function generateOrder(GenerateOrderRequest $request, Customer $customer): JsonResponse
     {
         $this->authorize('update', $customer);

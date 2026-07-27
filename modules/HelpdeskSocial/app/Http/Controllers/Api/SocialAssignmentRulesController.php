@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialAssignmentRuleRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialAssignmentRuleRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialAssignmentRuleResource;
@@ -24,11 +25,13 @@ class SocialAssignmentRulesController extends Controller
             ->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialAssignmentRuleResource::collection($rules),
             'meta' => [
-                'current_page' => $rules->currentPage(),
-                'last_page' => $rules->lastPage(),
-                'per_page' => $rules->perPage(),
+                'currentPage' => $rules->currentPage(),
+                'lastPage' => $rules->lastPage(),
+                'perPage' => $rules->perPage(),
                 'total' => $rules->total(),
             ],
         ]);
@@ -43,18 +46,14 @@ class SocialAssignmentRulesController extends Controller
         $rule = SocialAssignmentRule::create($validated);
         $this->auditLog->log('create', $rule, null, $rule->toArray());
 
-        return response()->json([
-            'data' => new SocialAssignmentRuleResource($rule),
-        ], 201);
+        return ApiResponse::created(new SocialAssignmentRuleResource($rule), 'Regla de asignación creada correctamente.');
     }
 
     public function show(SocialAssignmentRule $rule): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
-        return response()->json([
-            'data' => new SocialAssignmentRuleResource($rule->load('assignee')),
-        ]);
+        return ApiResponse::success(new SocialAssignmentRuleResource($rule->load('assignee')));
     }
 
     public function update(UpdateSocialAssignmentRuleRequest $request, SocialAssignmentRule $rule): JsonResponse
@@ -64,9 +63,7 @@ class SocialAssignmentRulesController extends Controller
         $rule->update($request->validated());
         $this->auditLog->log('update', $rule, $oldValues, $rule->toArray());
 
-        return response()->json([
-            'data' => new SocialAssignmentRuleResource($rule->load('assignee')),
-        ]);
+        return ApiResponse::success(new SocialAssignmentRuleResource($rule->load('assignee')), 'Regla de asignación actualizada correctamente.');
     }
 
     public function destroy(SocialAssignmentRule $rule): JsonResponse
@@ -76,7 +73,7 @@ class SocialAssignmentRulesController extends Controller
         $rule->delete();
         $this->auditLog->log('delete', $rule, $oldValues);
 
-        return response()->json(['message' => 'Regla de asignación eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 
     public function toggleActive(SocialAssignmentRule $rule): JsonResponse
@@ -86,8 +83,6 @@ class SocialAssignmentRulesController extends Controller
         $rule->update(['is_active' => ! $rule->is_active]);
         $this->auditLog->log('update', $rule, $oldValues, ['is_active' => $rule->is_active]);
 
-        return response()->json([
-            'data' => new SocialAssignmentRuleResource($rule->load('assignee')),
-        ]);
+        return ApiResponse::success(new SocialAssignmentRuleResource($rule->load('assignee')));
     }
 }

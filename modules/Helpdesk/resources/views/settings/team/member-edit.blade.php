@@ -302,10 +302,10 @@
                         <table class="table table-bordered table-hover table-sm mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="25%">Día</th>
-                                    <th width="35%">Hora Inicio</th>
-                                    <th width="5%" class="text-center"></th>
-                                    <th width="35%">Hora Fin</th>
+                                    <th scope="col" width="25%">Día</th>
+                                    <th scope="col" width="35%">Hora Inicio</th>
+                                    <th scope="col" width="5%" class="text-center"></th>
+                                    <th scope="col" width="35%">Hora Fin</th>
                                 </tr>
                             </thead>
                             <tbody>

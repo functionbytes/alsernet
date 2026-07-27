@@ -29,7 +29,7 @@ class CustomerProfileController extends Controller
             'customer' => [
                 'name' => $customer->name,
                 'email' => $customer->email,
-                'phone' => $customer->phone,
+                'phone' => $customer->phone ?: $customer->whatsapp_phone,
                 'company' => $this->customAttribute($customer, ['company', 'empresa']),
                 'language' => $customer->language,
                 'timezone' => $customer->timezone,

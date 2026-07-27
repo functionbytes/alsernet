@@ -41,12 +41,13 @@ class FeaturesSettingsController extends Controller
         'feature_rp_integrations_enabled' => true,
         // Pestañas del panel derecho
         'feature_tab_general_enabled' => true,
+        'feature_tab_carts_enabled' => true,
         'feature_tab_files_enabled' => true,
         'feature_tab_tickets_enabled' => true,
+        'feature_tab_document_enabled' => true,
         'feature_tab_previous_enabled' => true,
         'feature_tab_activity_enabled' => true,
         'feature_tab_technology_enabled' => true,
-        'feature_tab_orders_enabled' => true,
         'feature_tab_customer360_enabled' => true,
         // Barra de redacción (composer)
         'feature_composer_hsm_enabled' => true,
@@ -86,12 +87,13 @@ class FeaturesSettingsController extends Controller
         'feature_rp_tags_section_enabled',
         'feature_rp_integrations_enabled',
         'feature_tab_general_enabled',
+        'feature_tab_carts_enabled',
         'feature_tab_files_enabled',
         'feature_tab_tickets_enabled',
+        'feature_tab_document_enabled',
         'feature_tab_previous_enabled',
         'feature_tab_activity_enabled',
         'feature_tab_technology_enabled',
-        'feature_tab_orders_enabled',
         'feature_tab_customer360_enabled',
         'feature_composer_hsm_enabled',
         'feature_composer_note_enabled',
@@ -137,6 +139,8 @@ class FeaturesSettingsController extends Controller
         foreach ($validated as $key => $value) {
             Setting::set(self::GROUP.'.'.$key, $value, self::GROUP);
         }
+
+        cache()->forget('helpdesk_features');
 
         return back()->with('success', 'Configuración de funcionalidades actualizada correctamente.');
     }

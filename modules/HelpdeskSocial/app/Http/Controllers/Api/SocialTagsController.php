@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialTagRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialTagRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialTagResource;
@@ -18,11 +19,13 @@ class SocialTagsController extends Controller
         $tags = SocialTag::orderBy('name')->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialTagResource::collection($tags),
             'meta' => [
-                'current_page' => $tags->currentPage(),
-                'last_page' => $tags->lastPage(),
-                'per_page' => $tags->perPage(),
+                'currentPage' => $tags->currentPage(),
+                'lastPage' => $tags->lastPage(),
+                'perPage' => $tags->perPage(),
                 'total' => $tags->total(),
             ],
         ]);
@@ -32,27 +35,21 @@ class SocialTagsController extends Controller
     {
         $tag = SocialTag::create($request->validated());
 
-        return response()->json([
-            'data' => new SocialTagResource($tag),
-        ], 201);
+        return ApiResponse::created(new SocialTagResource($tag), 'Etiqueta creada correctamente.');
     }
 
     public function show(SocialTag $tag): JsonResponse
     {
         abort_if(! auth()->user()?->hasAnyPermission(['helpdesksocial.view', 'helpdesksocial.rules.manage']), 403);
 
-        return response()->json([
-            'data' => new SocialTagResource($tag),
-        ]);
+        return ApiResponse::success(new SocialTagResource($tag));
     }
 
     public function update(UpdateSocialTagRequest $request, SocialTag $tag): JsonResponse
     {
         $tag->update($request->validated());
 
-        return response()->json([
-            'data' => new SocialTagResource($tag),
-        ]);
+        return ApiResponse::success(new SocialTagResource($tag), 'Etiqueta actualizada correctamente.');
     }
 
     public function destroy(SocialTag $tag): JsonResponse
@@ -61,6 +58,6 @@ class SocialTagsController extends Controller
 
         $tag->delete();
 
-        return response()->json(['message' => 'Etiqueta eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 }

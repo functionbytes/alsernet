@@ -32,7 +32,7 @@
                                 <div class="fw-semibold">{{ $competitor->name }}</div>
                                 @if($competitor->profile_url)
                                 <small>
-                                    <a href="{{ $competitor->profile_url }}" target="_blank" class="text-muted">
+                                    <a href="{{ safe_external_url($competitor->profile_url) }}" target="_blank" class="text-muted">
                                         <i class="fas fa-external-link-alt me-1"></i>Perfil
                                     </a>
                                 </small>
@@ -93,7 +93,7 @@
     </div>
 
 <div class="modal fade" id="competitorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form id="competitorForm" method="POST" action="">
                 @csrf
@@ -111,7 +111,7 @@
                         <select name="platform" class="form-select" required>
                             <option value="facebook">Facebook</option>
                             <option value="instagram">Instagram</option>
-                            <option value="twitter">Twitter</option>
+                            {{-- Twitter: pendiente de provider --}}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -127,9 +127,9 @@
                         <label class="form-check-label" for="competitorIsActive">Activo</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                <div class="modal-footer d-block">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Guardar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -148,7 +148,7 @@
     }
 
     function editCompetitor(id, name, platform, username, profileUrl, isActive) {
-        $('#competitorForm').attr('action', '{{ url('panel/helpdesk/social/competitors') }}/' + id);
+        $('#competitorForm').attr('action', '{{ route('helpdesksocial.competitors.update', '__ID__') }}'.replace('__ID__', id));
         if ($('#competitorForm').find('input[name="_method"]').length === 0) {
             $('#competitorForm').prepend('<input type="hidden" name="_method" value="PUT">');
         }

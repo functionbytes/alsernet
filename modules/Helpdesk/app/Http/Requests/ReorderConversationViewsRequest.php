@@ -15,7 +15,7 @@ class ReorderConversationViewsRequest extends FormRequest
     {
         return [
             'ids' => ['required', 'array'],
-            'ids.*' => ['exists:helpdesk_conversation_views,id'],
+            'ids.*' => ['exists:helpdesk.helpdesk_conversation_views,id'],
         ];
     }
 

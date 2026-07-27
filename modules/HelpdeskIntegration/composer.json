@@ -1,0 +1,28 @@
+{
+    "name": "modules/helpdeskintegration",
+    "description": "Motor de integraciones externas del cliente para el Helpdesk",
+    "authors": [
+        {
+            "name": "Alsernet Development",
+            "email": "dev@alsernet.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\HelpdeskIntegration\\": "app/",
+            "Modules\\HelpdeskIntegration\\Database\\Factories\\": "database/factories/",
+            "Modules\\HelpdeskIntegration\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\HelpdeskIntegration\\Tests\\": "tests/"
+        }
+    }
+}

@@ -89,7 +89,8 @@ class HelpdeskErpServiceProvider extends ServiceProvider
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('helpdeskerp:warm-cache')
                 ->everyThirtyMinutes()
-                ->withoutOverlapping();
+                ->withoutOverlapping()
+                ->when(fn () => helpdesk_erp_enabled());
         });
     }
 

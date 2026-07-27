@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Listeners;
 
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,7 @@ class LogActivityOnConversationUpdated implements ShouldQueue
     public function handle(ConversationUpdated $event): void
     {
         $conversation = $event->conversation;
-        $by = auth()->user();
+        $by = $event->byUserId ? User::find($event->byUserId) : null;
 
         $this->logPriorityIfChanged($conversation, $by);
     }

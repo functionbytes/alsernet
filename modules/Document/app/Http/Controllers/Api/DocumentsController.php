@@ -619,37 +619,34 @@ class DocumentsController extends Controller
             // Obtener documentos subidos para respuesta
             $uploadedDocs = $document->getUploadedDocumentsWithDetails();
 
-            // Disparar evento SOLO cuando todos los documentos estén completos
-            // Usa UPDATE atómico para prevenir múltiples disparos
+            // Marcar el documento como recibido SOLO cuando todos los documentos
+            // requeridos estén completos. Usa UPDATE atómico para prevenir que
+            // una condición de carrera marque el guard más de una vez.
             $isComplete = $document->hasAllRequiredDocuments();
 
             if ($isComplete) {
-                // Usar UPDATE atómico para asegurar que solo se marca una vez
+                // Guard atómico: "el cliente ya completó la subida". Separado de
+                // uploaded_confirmation_sent_at, que ahora solo se marca cuando
+                // un agente confirma manualmente el envío del correo de
+                // confirmación de carga (ver sendUploadConfirmation en
+                // DocumentValidationController).
                 $updated = \DB::table('documents')
                     ->where('id', $document->id)
-                    ->whereNull('uploaded_confirmation_sent_at')
+                    ->whereNull('documents_completed_at')
                     ->update([
-                        'uploaded_confirmation_sent_at' => Carbon::now()->setTimezone('Europe/Madrid'),
+                        'documents_completed_at' => Carbon::now()->setTimezone('Europe/Madrid'),
                         'updated_at' => Carbon::now()->setTimezone('Europe/Madrid'),
                     ]);
 
-                // Si se actualizó, procesar upload: enviar confirmación
+                // El documento pasa a "received" siempre que el cliente completó
+                // la subida, sin depender del envío del correo: la confirmación
+                // de carga al cliente ahora requiere revisión manual del agente.
                 if ($updated === 1) {
                     $document->refresh();
 
-                    // Capture adminId before releasing session
-                    $adminId = auth()->id();
-
-                    // Process upload with email service
-                    $emailService = app(DocumentEmailService::class);
-                    $sent = $emailService->sendUploadConfirmation($document, $adminId);
-
-                    if ($sent) {
-                        // Update document status to received
-                        $receivedStatus = DocumentStatus::where('key', 'received')->first();
-                        if ($receivedStatus) {
-                            $document->update(['status_id' => $receivedStatus->id]);
-                        }
+                    $receivedStatus = DocumentStatus::where('key', 'received')->first();
+                    if ($receivedStatus) {
+                        $document->update(['status_id' => $receivedStatus->id]);
                     }
                 }
             }
@@ -1592,6 +1589,20 @@ class DocumentsController extends Controller
      */
     public function deleteFiles($id)
     {
+        $user = auth()->user();
+        $privileged = $user && ($user->hasRole('super-admin') || $user->hasRole('super-settings')
+            || $user->hasRole('manager') || $user->hasRole('supervisor'));
+
+        // Borrar media requiere permiso fino: antes bastaba el gate genérico
+        // view-documents-panel, así que un usuario de grupo solo-lectura podía
+        // eliminar la evidencia de cualquier expediente por su ID numérico.
+        if (! $privileged && ! $user?->can('helpdesk.documents.manage') && ! $user?->canDocument('delete-attachments')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'No tienes permiso para eliminar archivos.',
+            ], 403);
+        }
+
         $media = Media::find($id);
 
         if (! $media) {
@@ -1626,6 +1637,10 @@ class DocumentsController extends Controller
      */
     public function prestashopOrderPaid(Request $request)
     {
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', ''))) {
+            return $response;
+        }
+
         try {
 
             $orderId = $request->input('order_id') ?? $request->input('id_order');
@@ -1678,13 +1693,8 @@ class DocumentsController extends Controller
      */
     public function erpOrderStatus(Request $request)
     {
-        // Token auth: compare against config('services.erp.webhook_secret')
-        $secret = config('services.erp.webhook_secret');
-        if ($secret) {
-            $token = $request->bearerToken() ?? $request->input('api_token');
-            if ($token !== $secret) {
-                return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
-            }
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.erp_secret', ''))) {
+            return $response;
         }
 
         $validated = $request->validate([
@@ -1786,19 +1796,78 @@ class DocumentsController extends Controller
     }
 
     /**
+     * Verifica HMAC-SHA256 sobre "{timestamp}:{raw_body}" (mismo patron que
+     * HelpdeskErp\WebhookController::ordersReady). Fail-closed: sin secreto
+     * configurado responde 503 en vez de aceptar sin verificar — antes,
+     * ambos webhooks aceptaban cualquier peticion cuando el secreto no
+     * estaba puesto (o, en erpOrderStatus, comparaban con !== en vez de
+     * hash_equals()).
+     *
+     * @return JsonResponse|null null si la firma es valida (continuar)
+     */
+    private function rejectUnsignedWebhook(Request $request, string $secret): ?JsonResponse
+    {
+        if ($secret === '') {
+            static $logged = false;
+            if (! $logged) {
+                $logged = true;
+                Log::warning('Document webhook: secret not configured.', ['path' => $request->path()]);
+            }
+
+            return response()->json(['status' => 'error', 'message' => 'webhook not configured'], 503);
+        }
+
+        $timestamp = (int) $request->header('X-Webhook-Timestamp', 0);
+
+        if ($timestamp === 0 || abs(time() - $timestamp) > 300) {
+            return response()->json(['status' => 'error', 'message' => 'invalid timestamp'], 401);
+        }
+
+        $expected = hash_hmac('sha256', $timestamp.':'.$request->getContent(), $secret);
+        $signature = (string) $request->header('X-Webhook-Signature', '');
+
+        if (! hash_equals($expected, $signature)) {
+            Log::warning('Document webhook: invalid HMAC signature.', ['ip' => $request->ip(), 'path' => $request->path()]);
+
+            return response()->json(['status' => 'error', 'message' => 'invalid signature'], 401);
+        }
+
+        return null;
+    }
+
+    /**
      * Actualizar documento
      */
     public function update(Request $request)
     {
+        // `data` se limita a los campos de contacto del cliente: antes se
+        // aplicaba como update() sobre todo el $fillable (status_id,
+        // assigned_user_id, validation_status…), permitiendo saltarse el
+        // workflow de validación con una sola petición.
         $validated = $request->validate([
             'uid' => 'required|exists:documents,uid',
             'data' => 'nullable|array',
+            'data.customer_firstname' => 'nullable|string|max:255',
+            'data.customer_lastname' => 'nullable|string|max:255',
+            'data.customer_email' => 'nullable|email|max:255',
+            'data.customer_cellphone' => 'nullable|string|max:32',
+            'data.customer_dni' => 'nullable|string|max:32',
+            'data.customer_company' => 'nullable|string|max:255',
         ]);
 
         try {
             $document = Document::where('uid', $validated['uid'])->firstOrFail();
-            if ($validated['data'] ?? null) {
-                $document->update($validated['data']);
+
+            $editable = array_intersect_key(
+                $validated['data'] ?? [],
+                array_flip([
+                    'customer_firstname', 'customer_lastname', 'customer_email',
+                    'customer_cellphone', 'customer_dni', 'customer_company',
+                ])
+            );
+
+            if ($editable !== []) {
+                $document->update($editable);
             }
 
             return response()->json([

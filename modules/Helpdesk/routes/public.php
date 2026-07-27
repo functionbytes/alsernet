@@ -12,7 +12,7 @@ use Modules\Helpdesk\Http\Controllers\SurveyController;
 // (see modules/HelpdeskTickets/routes/public.php).
 
 // Status page (public)
-Route::middleware(['web'])
+Route::middleware(['web', 'throttle:60,1'])
     ->group(function () {
         Route::get('status', [StatusPageController::class, 'index'])->name('helpdesk.status.index');
         Route::get('status.json', [StatusPageController::class, 'json'])->name('helpdesk.status.json');

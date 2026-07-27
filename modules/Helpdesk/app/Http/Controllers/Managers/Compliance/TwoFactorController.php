@@ -7,6 +7,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\Compliance\ConfirmTwoFactorRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Compliance\DisableTwoFactorRequest;
+use Modules\Helpdesk\Http\Requests\Managers\Compliance\VerifyTwoFactorRequest;
 use Modules\Helpdesk\Services\Compliance\TwoFactorService;
 
 class TwoFactorController extends Controller
@@ -18,7 +21,7 @@ class TwoFactorController extends Controller
      */
     public function setup(): View
     {
-        return view('helpdesk::compliance.2fa.setup');
+        return view('helpdesk::helpdesk.compliance.2fa.setup');
     }
 
     /**
@@ -26,7 +29,7 @@ class TwoFactorController extends Controller
      */
     public function challenge(): View
     {
-        return view('helpdesk::compliance.2fa.challenge');
+        return view('helpdesk::helpdesk.compliance.2fa.challenge');
     }
 
     /**
@@ -49,15 +52,11 @@ class TwoFactorController extends Controller
     /**
      * Confirm 2FA setup by verifying the first TOTP code from the authenticator.
      */
-    public function confirm(Request $request): JsonResponse
+    public function confirm(ConfirmTwoFactorRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => ['required', 'string', 'digits:6'],
-        ]);
-
         $confirmed = $this->twoFactorService->confirmEnable(
             $request->user(),
-            $request->input('code')
+            $request->validated('code')
         );
 
         if (! $confirmed) {
@@ -76,15 +75,11 @@ class TwoFactorController extends Controller
     /**
      * Verify a TOTP code during login and mark the session as 2FA-passed.
      */
-    public function verify(Request $request): JsonResponse|RedirectResponse
+    public function verify(VerifyTwoFactorRequest $request): JsonResponse|RedirectResponse
     {
-        $request->validate([
-            'code' => ['required', 'string'],
-        ]);
-
         $valid = $this->twoFactorService->verify(
             $request->user(),
-            $request->input('code')
+            $request->validated('code')
         );
 
         if (! $valid) {
@@ -112,12 +107,8 @@ class TwoFactorController extends Controller
     /**
      * Disable 2FA for the authenticated user.
      */
-    public function disable(Request $request): JsonResponse
+    public function disable(DisableTwoFactorRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => ['required', 'current_password'],
-        ]);
-
         $this->twoFactorService->disableForUser($request->user());
 
         $request->session()->forget('2fa_passed');

@@ -116,10 +116,10 @@
             <table class="table table-hover align-middle mb-0" id="table-low-ratings">
                 <thead class="table-light">
                     <tr>
-                        <th>Agente</th>
-                        <th>Puntuación</th>
-                        <th>Comentario</th>
-                        <th>Fecha</th>
+                        <th scope="col">Agente</th>
+                        <th scope="col">Puntuación</th>
+                        <th scope="col">Comentario</th>
+                        <th scope="col">Fecha</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-low-ratings">
