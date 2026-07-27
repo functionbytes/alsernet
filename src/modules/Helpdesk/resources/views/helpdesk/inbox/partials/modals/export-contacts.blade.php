@@ -86,72 +86,8 @@
 
 @once
 @push('scripts')
-<script>
-(function ($) {
-    'use strict';
-
-    var _ecScope = 'all';
-    var _ecFmt   = 'csv';
-
-    function closeBvModal(name) {
-        $('[data-bv-modal-name="' + name + '"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
-    }
-
-    $(document).on('bv:modal:open', function (e, name) {
-        if (name !== 'export-contacts') { return; }
-        _ecScope = 'all';
-        _ecFmt   = 'csv';
-        $('#exportContactsScope .bv-opt').removeClass('on');
-        $('#exportContactsScope .bv-opt[data-scope="all"]').addClass('on');
-        $('#exportContactsFormat .bv-export-opt').removeClass('on');
-        $('#exportContactsFormat .bv-export-opt[data-fmt="csv"]').addClass('on');
-        $('#exportContactsNotes').prop('checked', true);
-        $('#exportContactsHistory').prop('checked', false);
-    });
-
-    $(document).on('click', '#exportContactsScope .bv-opt', function () {
-        $('#exportContactsScope .bv-opt').removeClass('on');
-        $(this).addClass('on');
-        _ecScope = $(this).data('scope');
-    });
-
-    $(document).on('click', '#exportContactsFormat .bv-export-opt', function () {
-        $('#exportContactsFormat .bv-export-opt').removeClass('on');
-        $(this).addClass('on');
-        _ecFmt = $(this).data('fmt');
-    });
-
-    $(document).on('click', '#bv-export-contacts-dl', function () {
-        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Generando…');
-
-        $.ajax({
-            url: '/panel/helpdesk/contacts/export',
-            method: 'POST',
-            data: {
-                scope:            _ecScope,
-                format:           _ecFmt,
-                include_notes:    $('#exportContactsNotes').is(':checked') ? 1 : 0,
-                include_history:  $('#exportContactsHistory').is(':checked') ? 1 : 0,
-            },
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function (resp) {
-            closeBvModal('export-contacts');
-            var url = resp.url || (resp.data && resp.data.url);
-            if (url) {
-                window.location.href = url;
-            } else {
-                if (window.toastr) { toastr.success('Exportación en proceso · recibirás un email'); }
-            }
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al exportar';
-            if (window.toastr) { toastr.error(msg); }
-        }).always(function () {
-            $btn.prop('disabled', false).text('Descargar archivo');
-        });
-    });
-
-}(window.jQuery));
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
+         en vez de re-descargarse en cada render del inbox. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/export-contacts.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/export-contacts.js')) }}"></script>
 @endpush
 @endonce
