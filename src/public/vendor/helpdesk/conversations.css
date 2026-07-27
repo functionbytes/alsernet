@@ -14619,3 +14619,151 @@ textarea.bv-form-input { resize: vertical; }
     font-size: 11px;
 }
 .bv-wa-pill-close:hover { opacity: 1; }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Live view / pantalla compartida del panel derecho (.hd-liveview-*, .hd-webrtc-*).
+   Movido desde un <style> inline en inbox/partials/right-panel.blade.php: el
+   inbox ya carga esta hoja en el <head>, asi que el bloque inline solo añadia
+   peso no cacheable a cada render. Ninguna de estas clases existia aqui.
+   ──────────────────────────────────────────────────────────────────────── */
+.hd-liveview-frame {
+    position: relative;
+}
+.hd-liveview-player {
+    background: #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 240px;
+    position: relative;
+}
+.hd-liveview-player .replayer-wrapper {
+    background: #fff !important;
+}
+.hd-liveview-empty,
+.hd-webrtc-empty {
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+.hd-webrtc-wrap {
+    position: relative;
+    background: #1a1a1a;
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 200px;
+}
+.hd-webrtc-video {
+    width: 100%;
+    display: block;
+    background: #000;
+    max-height: 320px;
+}
+.hd-webrtc-video:not([srcObject]) + .hd-webrtc-empty,
+.hd-webrtc-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+/* "Solicitar pantalla" usa .btn-primary sin ningún override en este panel,
+   así que caía en el azul por defecto de Bootstrap (#0d6efd) en vez del
+   neutro que usa el resto de botones primarios del panel. */
+.bv-right .btn-primary {
+    background: var(--bv-text, #18181b);
+    border-color: var(--bv-text, #18181b);
+    color: #fff;
+}
+.bv-right .btn-primary:hover {
+    background: #333;
+    border-color: #333;
+    color: #fff;
+}
+.hd-webrtc-video[data-streaming="1"] + .hd-webrtc-empty {
+    display: none;
+}
+.hd-liveview-expand {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 0;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.15s;
+    z-index: 5;
+}
+.hd-liveview-expand:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* ── Fullscreen modal ───────────────────────────────────────── */
+.hd-liveview-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 10800;
+    display: none;
+    flex-direction: column;
+    padding: 32px;
+    animation: hd-fade-in 0.18s ease-out;
+}
+.hd-liveview-modal.is-open {
+    display: flex;
+}
+@keyframes hd-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.hd-liveview-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    margin-bottom: 16px;
+}
+.hd-liveview-modal-head .title {
+    font-weight: 600;
+    font-size: 16px;
+}
+.hd-liveview-modal-head .ml {
+    flex: 1;
+}
+.hd-liveview-modal-close {
+    background: rgba(255, 255, 255, 0.12);
+    border: 0;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.hd-liveview-modal-close:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+.hd-liveview-modal-body {
+    flex: 1;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+}
+.hd-liveview-modal-body video {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+.hd-liveview-modal-body .rr-player {
+    max-width: 100%;
+    max-height: 100%;
+}
