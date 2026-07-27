@@ -238,8 +238,11 @@
         var grid = '';
         for (var i = 1; i <= count; i++) {
             grid += '<div class="nc-var-field">' +
-                '<label class="nc-var-lbl">{{' + i + '}}</label>' +
-                '<input type="text" class="nc-input nc-hsm-var" data-var="' + i + '" placeholder="Valor {{' + i + '}}">' +
+                {{-- @{{ escapa la llave para Blade: sin el @, Blade compilaba
+                     {{' + i + '}} como un echo y renderizaba " + i + " literal en
+                     vez del marcador HSM {{1}}, {{2}}... --}}
+                '<label class="nc-var-lbl">@{{' + i + '}}</label>' +
+                '<input type="text" class="nc-input nc-hsm-var" data-var="' + i + '" placeholder="Valor @{{' + i + '}}">' +
                 '</div>';
         }
         $('#ncHsmVarsGrid').html(grid);
@@ -258,7 +261,7 @@
             var n = $(this).data('var');
             var val = $(this).val().trim();
             var token = new RegExp('\\{\\{\\s*' + n + '\\s*\\}\\}', 'g');
-            body = body.replace(token, val ? '<b>' + $('<span>').text(val).html() + '</b>' : '<b>{{' + n + '}}</b>');
+            body = body.replace(token, val ? '<b>' + $('<span>').text(val).html() + '</b>' : '<b>@{{' + n + '}}</b>');
         });
         $('#ncHsmPreviewBox').html(body);
         $('#ncHsmPreview').show();

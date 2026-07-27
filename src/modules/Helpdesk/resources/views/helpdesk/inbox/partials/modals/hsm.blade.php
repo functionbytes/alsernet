@@ -212,7 +212,9 @@
         vars.forEach(function (v) {
             var placeholder = descMap[v] || v.replace(/_/g, ' ');
             form += '<div class="bv-hsm-var-row">'
-                + '<span class="bv-var-label">{{' + v + '}}</span>'
+                {{-- @{{ escapa la llave: sin el @, Blade lo compilaba como echo y
+                     el label salia como " + v + " en vez del marcador {{nombre}}. --}}
+                + '<span class="bv-var-label">@{{' + v + '}}</span>'
                 + '<input type="text" placeholder="' + placeholder + '" data-var="' + v + '" class="bv-var-input">'
                 + '</div>';
         });

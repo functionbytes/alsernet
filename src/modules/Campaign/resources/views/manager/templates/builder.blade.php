@@ -442,7 +442,10 @@
                     <div>
                         <div class="b-var-group-title" x-text="group.label"></div>
                         <template x-for="v in group.variables" :key="v.tag">
-                            <span class="b-var-pill" @click="insertVar(v.tag)" :title="v.description || v.label" x-text="'{{'+v.tag+'}}'"></span>
+                            {{-- @{{ escapa la llave para Blade: sin el @, compilaba el
+                                 x-text como un echo de PHP y la pastilla mostraba
+                                 "+v.tag+" en vez del marcador {{tag}}. --}}
+                            <span class="b-var-pill" @click="insertVar(v.tag)" :title="v.description || v.label" x-text="'@{{'+v.tag+'}}'"></span>
                         </template>
                     </div>
                 </template>
@@ -1279,7 +1282,9 @@ function builder() {
             } catch { this.variableGroups = []; }
         },
         insertVar(tag) {
-            const placeholder = '{{' + tag + '}}';
+            {{-- @{{ escapa la llave: sin el @, Blade compilaba esto como echo y el
+                 placeholder insertado quedaba como " + tag + " en vez de {{tag}}. --}}
+            const placeholder = '@{{' + tag + '}}';
             const field = this.lastFocusedField;
             if (!field) {
                 navigator.clipboard.writeText(placeholder);
