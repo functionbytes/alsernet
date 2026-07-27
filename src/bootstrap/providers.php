@@ -17,6 +17,7 @@ use Modules\Core\Providers\CoreServiceProvider;
 use Modules\Database\Providers\DatabaseServiceProvider;
 use Modules\Document\Providers\DocumentsServiceProvider;
 use Modules\Ecommerce\Providers\EcommerceServiceProvider;
+use Modules\EcommercePayment\Providers\EcommercePaymentServiceProvider;
 use Modules\Engagement\Providers\EngagementServiceProvider;
 use Modules\Faqs\Providers\FaqsServiceProvider;
 use Modules\Forms\Providers\FormsServiceProvider;
@@ -29,6 +30,7 @@ use Modules\HelpdeskCompliance\Providers\HelpdeskComplianceServiceProvider;
 use Modules\HelpdeskContacts\Providers\HelpdeskContactsServiceProvider;
 use Modules\HelpdeskDocument\Providers\HelpdeskDocumentServiceProvider;
 use Modules\HelpdeskErp\Providers\HelpdeskErpServiceProvider;
+use Modules\HelpdeskIntegration\Providers\HelpdeskIntegrationServiceProvider;
 use Modules\HelpdeskLivechat\Providers\HelpdeskLivechatServiceProvider;
 use Modules\HelpdeskPrestashop\Providers\HelpdeskPrestashopServiceProvider;
 use Modules\HelpdeskSla\Providers\HelpdeskSlaServiceProvider;
@@ -76,6 +78,7 @@ return [
     DatabaseServiceProvider::class,
     DocumentsServiceProvider::class,
     EcommerceServiceProvider::class,
+    EcommercePaymentServiceProvider::class,
     EngagementServiceProvider::class,
     FaqsServiceProvider::class,
     FormsServiceProvider::class,
@@ -87,6 +90,7 @@ return [
     HelpdeskDocumentServiceProvider::class,
     HelpdeskContactsServiceProvider::class,
     HelpdeskErpServiceProvider::class,
+    HelpdeskIntegrationServiceProvider::class,
     HelpdeskLivechatServiceProvider::class,
     HelpdeskPrestashopServiceProvider::class,
     HelpdeskSlaServiceProvider::class,

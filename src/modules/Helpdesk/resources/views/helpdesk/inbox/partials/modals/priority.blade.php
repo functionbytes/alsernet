@@ -1,18 +1,18 @@
 {{-- Modal: Cambiar prioridad --}}
 <div class="bv-modal" data-bv-modal-name="priority">
-    <div class="bv-modal-dialog">
-        <div class="bv-modal-head bv-modal-head--with-icon">
-            <div class="bv-modal-icon-box"><i class="fas fa-flag"></i></div>
-            <div class="bv-modal-title-wrap">
-                <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.label_conversation') }}</span>
-                <div class="bv-modal-title">
+    <div class="modal w-sm">
+        <div class="modal-head">
+            <div class="modal-icon"><i class="fa-solid fa-flag"></i></div>
+            <div class="modal-title-wrap">
+                <div class="modal-label">{{ __('helpdesk::helpdesk.inbox.modals.label_conversation') }}</div>
+                <div class="modal-title">
                     {{ __('helpdesk::helpdesk.inbox.modals.priority_title') }}
-                    @if(!empty($selectedConversation))<span class="bv-chip-id">#{{ $selectedConversation->id }}</span>@endif
+                    @if(!empty($selectedConversation))<span class="chip">#{{ $selectedConversation->id }}</span>@endif
                 </div>
             </div>
-            <button class="bv-modal-close" data-bv-close><i class="fas fa-xmark"></i></button>
+            <button class="modal-close" data-bv-close><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="bv-modal-body">
+        <div class="modal-body">
 
             <div class="prio-list">
 
@@ -69,9 +69,9 @@
             </div>
 
         </div>
-        <div class="bv-modal-foot">
-            <button class="btn-primary" data-bv-apply="priority">{{ __('helpdesk::helpdesk.inbox.modals.priority_apply') }}</button>
-            <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
+        <div class="modal-foot">
+            <button class="btn btn-primary" data-bv-apply="priority">{{ __('helpdesk::helpdesk.inbox.modals.priority_apply') }}</button>
+            <button class="btn btn-outline" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
         </div>
     </div>
 </div>

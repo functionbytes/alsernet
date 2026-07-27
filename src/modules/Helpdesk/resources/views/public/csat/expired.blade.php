@@ -1,4 +1,4 @@
-@extends('layouts.theme')
+@extends('helpdesk::public.csat.layout')
 
 @section('title', 'Encuesta expirada - ' . config('app.name'))
 

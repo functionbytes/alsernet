@@ -45,7 +45,7 @@ class ErpService
 
     public function __construct()
     {
-        $this->urlErp = rtrim(config('services.erp.url', env('ERP_URL')), '/');
+        $this->urlErp = rtrim(config('erp.url_erp'), '/');
 
         $this->client = new Client([
             'base_uri' => $this->urlErp,

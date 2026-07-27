@@ -482,6 +482,38 @@
                 </div>
             </div>
         </div>
+
+        <div class="card mt-4">
+            <div class="card-header p-4 border-bottom border-light">
+                <h6 class="mb-1 fw-bold">Catálogo de producto (coviewer)</h6>
+                <p class="small mb-0 text-muted">Muestra productos de tu catálogo dentro del chat: el agente puede compartirlos y el bot puede recomendarlos a partir de la pregunta del visitante.</p>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="wt_product_feed_url">URL del product feed (JSON)</label>
+                    <input type="url" id="wt_product_feed_url" name="widget[product_feed_url]" class="form-control"
+                           value="{{ $w('product_feed_url', '') }}" placeholder="https://tutienda.com/feed.json">
+                    <div class="small text-muted mt-1">
+                        Array JSON de productos con <code>id</code>, <code>title</code>, <code>image_url</code>,
+                        <code>url</code>, <code>price</code>, <code>currency</code>. Se descarga y cachea automáticamente.
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-0">
+                    <input type="hidden" name="widget[enable_product_search]" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="wt_enable_product_search"
+                           name="widget[enable_product_search]" value="1"
+                           @checked($w('enable_product_search', false))>
+                    <label class="form-check-label" for="wt_enable_product_search">
+                        <strong>Activar recomendación por bot</strong>
+                    </label>
+                    <div class="small text-muted mt-1">
+                        Cuando el visitante escribe, el bot busca en el catálogo y responde con un carrusel de productos.
+                        Requiere una URL de feed configurada.
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="tab-pane fade" id="wt-install" role="tabpanel">

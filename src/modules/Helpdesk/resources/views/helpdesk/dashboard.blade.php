@@ -190,11 +190,11 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Ticket</th>
-                                        <th>Asunto</th>
-                                        <th>Cliente</th>
-                                        <th>Asignado a</th>
-                                        <th>Vencimiento SLA</th>
+                                        <th scope="col">Ticket</th>
+                                        <th scope="col">Asunto</th>
+                                        <th scope="col">Cliente</th>
+                                        <th scope="col">Asignado a</th>
+                                        <th scope="col">Vencimiento SLA</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -210,7 +210,13 @@
                                                 {{ $ticket->subject }}
                                             </td>
                                             <td>{{ $ticket->customer?->name ?? '—' }}</td>
-                                            <td>{!! $ticket->assignee?->name ?? '<em class="text-muted">Sin asignar</em>' !!}</td>
+                                            <td>
+                                                @if($ticket->assignee)
+                                                    {{ $ticket->assignee->full_name }}
+                                                @else
+                                                    <em class="text-muted">Sin asignar</em>
+                                                @endif
+                                            </td>
                                             <td>
                                                 @if($ticket->sla_resolution_due_at)
                                                     <span class="text-danger fw-semibold">
@@ -288,11 +294,11 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Ticket</th>
-                                        <th>Asunto</th>
-                                        <th>Cliente</th>
-                                        <th>Estado</th>
-                                        <th>Creado</th>
+                                        <th scope="col">Ticket</th>
+                                        <th scope="col">Asunto</th>
+                                        <th scope="col">Cliente</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col">Creado</th>
                                     </tr>
                                 </thead>
                                 <tbody>

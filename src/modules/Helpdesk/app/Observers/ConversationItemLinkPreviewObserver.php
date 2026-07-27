@@ -3,22 +3,27 @@
 namespace Modules\Helpdesk\Observers;
 
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Jobs\GenerateLinkPreviewJob;
 use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Services\LinkPreviewService;
 
 /**
- * Generates an OpenGraph link preview when an agent sends a message containing
- * a URL. Runs on every newly created ConversationItem regardless of which
- * controller / job persisted it, so the preview always lands in metadata.
+ * Al crear un ConversationItem del agente con URL, encola la generación del
+ * preview OpenGraph (antes se hacía SÍNCRONO en el observer, bloqueando el
+ * request hasta 6s). Corre en todo item nuevo sin importar qué controller/job lo
+ * persistió.
  *
- * Skips visitor-authored items and internal notes (intentional: only the agent
- * gets URL unfurls in the widget, like WhatsApp/Instagram).
+ * Se salta items de visitantes y notas internas (intencional: solo el agente
+ * recibe unfurls en el widget, como WhatsApp/Instagram).
  */
 class ConversationItemLinkPreviewObserver
 {
-    public function __construct(
-        private readonly LinkPreviewService $linkPreview,
-    ) {}
+    /**
+     * Canales con un consumidor real de MessageReceived (el widget de chat en
+     * vivo y su simulador). Para el resto (whatsapp/facebook/instagram/email)
+     * este broadcast no tiene oyentes — dispararlo solo gasta una query extra
+     * + una llamada a Reverb en cada mensaje sin ningún beneficio.
+     */
+    private const WIDGET_CHANNELS = ['web', 'widget'];
 
     public function created(ConversationItem $item): void
     {
@@ -26,25 +31,26 @@ class ConversationItemLinkPreviewObserver
             return;
         }
 
-        // Only enrich agent-authored items with a link preview. Visitor URLs
-        // are NOT auto-unfurled (mirrors WhatsApp/Instagram behaviour).
+        // Solo enriquecemos con preview los mensajes del agente que contienen una
+        // URL; el fetch OG (HTTP) se hace en GenerateLinkPreviewJob, fuera del
+        // request. El check de URL es barato y evita despachar un job por mensaje.
         $isAgent = ! empty($item->user_id);
 
         if ($isAgent && is_string($item->body) && trim($item->body) !== '') {
             $existing = $item->metadata ?? [];
-            if (! isset($existing['link_preview'])) {
-                $preview = $this->linkPreview->previewFromBody($item->body);
-                if ($preview !== null) {
-                    $item->metadata = array_merge($existing, ['link_preview' => $preview]);
-                    $item->saveQuietly();
-                }
+
+            if (! isset($existing['link_preview']) && preg_match('#https?://#i', $item->body)) {
+                GenerateLinkPreviewJob::dispatch($item->id);
             }
         }
 
-        // Always broadcast the widget event from the observer (single source of
-        // truth) — the controller no longer dispatches MessageReceived itself.
-        if ($item->conversation) {
-            broadcast(new MessageReceived($item->conversation, $item->fresh()));
+        // Broadcast inmediato del evento del widget (single source of truth). El
+        // preview llega después vía el job, que re-emite MessageReceived; el
+        // widget deduplica por id y actualiza el mensaje en su sitio.
+        $conversation = $item->conversation;
+
+        if ($conversation && in_array($conversation->channel, self::WIDGET_CHANNELS, true)) {
+            broadcast(new MessageReceived($conversation, $item));
         }
     }
 }

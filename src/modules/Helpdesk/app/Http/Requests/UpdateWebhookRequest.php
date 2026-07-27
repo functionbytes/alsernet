@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\WebhooksController;
+use Modules\Helpdesk\Support\OutboundMediaUrlGuard;
 
 class UpdateWebhookRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class UpdateWebhookRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'url' => ['required', 'url', 'max:500'],
+            'url' => ['required', 'url', 'max:500', $this->publicUrlRule()],
             'integration_type' => ['nullable', 'string', 'in:generic,slack,discord,teams'],
             'events' => ['required', 'array', 'min:1'],
             'events.*' => ['string', 'in:'.implode(',', array_keys(WebhooksController::AVAILABLE_EVENTS))],
@@ -24,6 +25,19 @@ class UpdateWebhookRequest extends FormRequest
             'headers' => ['nullable', 'string'],
             'is_active' => ['boolean'],
         ];
+    }
+
+    /**
+     * Regla SSRF: la URL del webhook saliente debe resolver a una IP pública
+     * (no privada/reservada/loopback).
+     */
+    protected function publicUrlRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (is_string($value) && $value !== '' && ! OutboundMediaUrlGuard::isAllowed($value)) {
+                $fail('La URL debe ser pública: no se permiten IPs internas, privadas ni loopback.');
+            }
+        };
     }
 
     public function messages(): array

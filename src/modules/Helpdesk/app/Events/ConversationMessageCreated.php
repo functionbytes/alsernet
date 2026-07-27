@@ -35,6 +35,11 @@ class ConversationMessageCreated implements ShouldBroadcastNow
      */
     public function broadcastWith(): array
     {
+        // Evita el N+1 por cada broadcast: carga en una sola pasada las relaciones
+        // que consume el payload (conversación+cliente y el remitente). loadMissing
+        // es no-op si quien dispara el evento ya las tenía cargadas.
+        $this->item->loadMissing(['conversation.customer', 'author:id,name', 'user:id,firstname,lastname']);
+
         $conversation = $this->item->conversation;
         $customer = $conversation?->customer;
 

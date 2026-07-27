@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Detects the customer's language and translates fixed bot messages into it,
  * reusing the helpdesk's CachedTranslator (DeepL/LibreTranslate) when available.
@@ -30,7 +32,9 @@ class ChatFlowLocalizer
 
         try {
             return $this->translator->detectLanguage($text);
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::debug('ChatFlowLocalizer: language detection failed', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -54,7 +58,9 @@ class ChatFlowLocalizer
             $translated = $this->translator->translate($text, $targetLang, self::BASE_LANG);
 
             return $translated ?: $text;
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::debug('ChatFlowLocalizer: translation failed', ['error' => $e->getMessage()]);
+
             return $text;
         }
     }

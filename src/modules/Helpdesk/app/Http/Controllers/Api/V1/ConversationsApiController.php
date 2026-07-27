@@ -41,6 +41,10 @@ class ConversationsApiController extends Controller
     public function index(IndexConversationApiRequest $request): JsonResponse
     {
         $conversations = Conversation::query()
+            // Aislamiento por inbox (mismo que el controller web): sin esto un
+            // token API de un agente restringido listaría conversaciones de TODOS
+            // los inboxes. El scope respeta el bypass de helpdesk.manage.
+            ->forAgent($request->user())
             ->with(['customer', 'status', 'assignee', 'conversationTags'])
             ->when($request->filled('q'), fn ($q, $search) => $q->where('subject', 'like', "%{$search}%"))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->priority))
@@ -125,7 +129,7 @@ class ConversationsApiController extends Controller
         if ($request->filled('status_id') && $conversation->wasChanged('status_id')) {
             $newStatus = ConversationStatus::find($request->status_id);
             if ($newStatus) {
-                ConversationStatusChanged::dispatch($conversation, $newStatus);
+                ConversationStatusChanged::dispatch($conversation, $newStatus, auth()->id());
             }
         }
 

@@ -21,6 +21,9 @@ class HelpdeskPrestashopPermissionsSeeder extends Seeder
             'helpdeskprestashop.refresh',
             'helpdeskprestashop.orders.view',
             'helpdeskprestashop.orders.return',
+            // Acciones que MUTAN el pedido en PrestaShop (cambiar estado,
+            // asignar seguimiento) desde el workspace del inbox.
+            'helpdeskprestashop.orders.manage',
         ];
 
         foreach ($permissions as $permission) {

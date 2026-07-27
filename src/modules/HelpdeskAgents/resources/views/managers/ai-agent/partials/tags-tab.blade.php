@@ -6,10 +6,6 @@
     $inactive = $total - $active;
 @endphp
 
-@push('styles')
-<style>.tag-color-dot { width: 12px; height: 12px; }</style>
-@endpush
-
 {{-- Header --}}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>

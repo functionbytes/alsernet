@@ -15,6 +15,8 @@ class AutoTagOnIntentClassified implements ShouldQueue
 
     public int $tries = 3;
 
+    public int $backoff = 10;
+
     public function handle(IntentClassified $event): void
     {
         $comment = $event->comment;

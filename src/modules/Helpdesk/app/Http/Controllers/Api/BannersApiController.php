@@ -12,6 +12,10 @@ class BannersApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        // Antes cualquier token Sanctum sin ningún permiso de helpdesk podía
+        // llamar este endpoint y usar customer_id como oráculo de existencia/segmento.
+        abort_unless($request->user()?->can('helpdesk.view'), 403);
+
         $banners = Banner::query()->active()->get();
 
         $customerId = $request->query('customer_id');

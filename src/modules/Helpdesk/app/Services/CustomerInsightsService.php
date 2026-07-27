@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\CsatRating;
@@ -17,8 +18,21 @@ class CustomerInsightsService
      *   +20  per every 5 successfully closed conversations
      *   -20  last conversation was more than 6 months ago
      *   -30  tag slug 'sentiment-negative' applied in the last 30 days
+     *
+     * Cached for 15 minutes per customer — this individual lookup is used
+     * when opening a single customer profile; the batch healthScoresFor()
+     * used by reports is not cached here (already O(1) queries).
      */
     public function healthScore(Customer $customer): int
+    {
+        return Cache::remember(
+            "helpdesk:health-score:{$customer->id}",
+            900,
+            fn (): int => $this->calculateHealthScore($customer)
+        );
+    }
+
+    private function calculateHealthScore(Customer $customer): int
     {
         $score = 50; // base neutral
 

@@ -5,12 +5,13 @@ namespace Modules\HelpdeskCampaigns\Listeners;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Modules\HelpdeskCampaigns\Events\CampaignEnded;
 use Modules\HelpdeskCampaigns\Events\CampaignPaused;
 use Modules\HelpdeskCampaigns\Events\CampaignPublished;
 use Modules\HelpdeskCampaigns\Events\CampaignResumed;
+use Modules\HelpdeskCampaigns\Jobs\DeliverCampaignWebhookJob;
 
 /**
  * Posts campaign lifecycle events to any webhook subscribers configured under
@@ -18,14 +19,15 @@ use Modules\HelpdeskCampaigns\Events\CampaignResumed;
  *
  * Each webhook is { url: string, secret?: string, events?: string[] }.
  * Payload format mirrors GitHub-style webhooks: { event, data, timestamp }.
+ *
+ * La entrega real va en DeliverCampaignWebhookJob (un job por suscriptor) para
+ * que el reintento de un endpoint caído no re-entregue a los demás.
  */
 class DispatchCampaignWebhooks implements ShouldQueue
 {
     use InteractsWithQueue, Queueable;
 
-    public int $tries = 3;
-
-    public int $backoff = 60;
+    public int $tries = 1;
 
     public function viaQueue(): string
     {
@@ -65,8 +67,20 @@ class DispatchCampaignWebhooks implements ShouldQueue
                 continue;
             }
 
-            $this->deliver($webhook, $payload);
+            DeliverCampaignWebhookJob::dispatch(
+                $webhook['url'],
+                $webhook['secret'] ?? null,
+                $payload,
+            );
         }
+    }
+
+    public function failed(object $event, \Throwable $exception): void
+    {
+        Log::error('DispatchCampaignWebhooks listener failed', [
+            'campaign_id' => $event->campaign->id ?? null,
+            'error' => $exception->getMessage(),
+        ]);
     }
 
     private function shouldDeliver(array $webhook, string $eventName): bool
@@ -90,43 +104,9 @@ class DispatchCampaignWebhooks implements ShouldQueue
 
     private function isSafeUrl(string $url): bool
     {
-        $parsed = parse_url($url);
-
-        if (! in_array($parsed['scheme'] ?? '', ['https', 'http'], true)) {
-            return false;
-        }
-
-        $host = $parsed['host'] ?? '';
-
-        if (filter_var($host, FILTER_VALIDATE_IP)) {
-            return (bool) filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
-        }
-
-        $blocked = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
-
-        return ! in_array(strtolower($host), $blocked, true);
-    }
-
-    private function deliver(array $webhook, array $payload): void
-    {
-        $headers = ['Content-Type' => 'application/json'];
-
-        if (! empty($webhook['secret'])) {
-            $signature = hash_hmac('sha256', json_encode($payload), $webhook['secret']);
-            $headers['X-Helpdesk-Signature'] = "sha256={$signature}";
-        }
-
-        try {
-            Http::timeout(8)
-                ->withHeaders($headers)
-                ->post($webhook['url'], $payload);
-        } catch (\Throwable $e) {
-            Log::warning('Campaign webhook delivery failed', [
-                'host' => parse_url($webhook['url'], PHP_URL_HOST),
-                'event' => $payload['event'],
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
-        }
+        // Resuelve DNS y bloquea loopback/RFC1918/link-local; el chequeo
+        // anterior solo cubría IPs literales y dejaba pasar hostnames que
+        // resolvían a rangos internos.
+        return OutboundUrlGuard::isSafe($url);
     }
 }

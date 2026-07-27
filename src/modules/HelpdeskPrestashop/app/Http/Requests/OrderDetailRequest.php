@@ -14,13 +14,17 @@ class OrderDetailRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_email' => ['nullable', 'email:rfc'],
+            // Obligatorio: sin el email, el pedido se resuelve solo por ID
+            // secuencial en el bridge PrestaShop, sin verificar que pertenezca
+            // al cliente — permitía consultar pedidos de otros clientes.
+            'customer_email' => ['required', 'email:rfc'],
         ];
     }
 
     public function messages(): array
     {
         return [
+            'customer_email.required' => 'El correo del cliente es obligatorio.',
             'customer_email.email' => 'El correo del cliente no tiene un formato válido.',
         ];
     }

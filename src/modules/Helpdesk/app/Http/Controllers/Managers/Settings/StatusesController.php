@@ -15,7 +15,7 @@ class StatusesController extends Controller
     {
         $this->middleware('can:helpdesk.statuses.view')->only(['index']);
         $this->middleware('can:helpdesk.statuses.create')->only(['create', 'store']);
-        $this->middleware('can:helpdesk.statuses.update')->only(['edit', 'update', 'toggle', 'toggleActive', 'reorder']);
+        $this->middleware('can:helpdesk.statuses.update')->only(['edit', 'update', 'toggle', 'reorder']);
         $this->middleware('can:helpdesk.statuses.delete')->only(['destroy']);
     }
 
@@ -142,14 +142,6 @@ class StatusesController extends Controller
         $status->update(['active' => ! $status->active]);
 
         return back()->with('success', 'Estado actualizado exitosamente.');
-    }
-
-    /**
-     * @deprecated Use toggle() instead.
-     */
-    public function toggleActive(ConversationStatus $status)
-    {
-        return $this->toggle($status);
     }
 
     /**

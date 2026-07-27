@@ -20,66 +20,75 @@ Route::middleware(['api'])->group(function () {
         ->group(function () {
 
             Route::prefix('customer')->group(function () {
-                // Collection
-                Route::get('/', [CustomerController::class, 'list']);
-                Route::post('/', [CustomerController::class, 'create']);
-                Route::patch('/lopd', [CustomerController::class, 'updateLopd']);
-                Route::get('/search', [CustomerController::class, 'search']);
+                // Escritura: crear cliente / actualizar LOPD.
+                Route::middleware('can:erp.customer.update')->group(function () {
+                    Route::post('/', [CustomerController::class, 'create']);
+                    Route::patch('/lopd', [CustomerController::class, 'updateLopd']);
+                });
 
-                // Customer summary + identity
-                Route::get('/{id}', [CustomerController::class, 'summary'])->whereNumber('id');
-                Route::get('/{id}/personal', [CustomerController::class, 'personal'])->whereNumber('id');
-                Route::get('/{id}/lopd', [CustomerController::class, 'lopd'])->whereNumber('id');
+                // Lectura / consulta.
+                Route::middleware('can:erp.customer.view')->group(function () {
+                    // Collection
+                    Route::get('/', [CustomerController::class, 'list']);
+                    Route::get('/search', [CustomerController::class, 'search']);
 
-                // Contact / addresses
-                Route::get('/{id}/addresses', [CustomerController::class, 'addresses'])->whereNumber('id');
-                Route::get('/{id}/contact', [CustomerController::class, 'contact'])->whereNumber('id');
+                    // Customer summary + identity
+                    Route::get('/{id}', [CustomerController::class, 'summary'])->whereNumber('id');
+                    Route::get('/{id}/personal', [CustomerController::class, 'personal'])->whereNumber('id');
+                    Route::get('/{id}/lopd', [CustomerController::class, 'lopd'])->whereNumber('id');
 
-                // Cards / accounts / catalogs / quotas
-                Route::get('/{id}/cards', [CustomerController::class, 'cards'])->whereNumber('id');
-                Route::get('/{id}/accounts', [CustomerController::class, 'accounts'])->whereNumber('id');
-                Route::get('/{id}/catalogs', [CustomerController::class, 'catalogs'])->whereNumber('id');
-                Route::get('/{id}/quotas', [CustomerController::class, 'quotas'])->whereNumber('id');
+                    // Contact / addresses
+                    Route::get('/{id}/addresses', [CustomerController::class, 'addresses'])->whereNumber('id');
+                    Route::get('/{id}/contact', [CustomerController::class, 'contact'])->whereNumber('id');
 
-                // Commercial
-                Route::get('/{id}/orders', [CustomerController::class, 'orders'])->whereNumber('id');
-                Route::get('/{id}/orders/{orderId}', [CustomerController::class, 'orderDetail'])
-                    ->whereNumber('id')->whereNumber('orderId');
-                Route::get('/{id}/delivery-notes', [CustomerController::class, 'deliveryNotes'])->whereNumber('id');
-                Route::get('/{id}/delivery-notes/{deliveryId}', [CustomerController::class, 'deliveryNoteDetail'])
-                    ->whereNumber('id')->whereNumber('deliveryId');
-                Route::get('/{id}/invoices', [CustomerController::class, 'invoices'])->whereNumber('id');
-                Route::get('/{id}/invoices/{invoiceId}', [CustomerController::class, 'invoiceDetail'])
-                    ->whereNumber('id')->whereNumber('invoiceId');
+                    // Cards / accounts / catalogs / quotas
+                    Route::get('/{id}/cards', [CustomerController::class, 'cards'])->whereNumber('id');
+                    Route::get('/{id}/accounts', [CustomerController::class, 'accounts'])->whereNumber('id');
+                    Route::get('/{id}/catalogs', [CustomerController::class, 'catalogs'])->whereNumber('id');
+                    Route::get('/{id}/quotas', [CustomerController::class, 'quotas'])->whereNumber('id');
 
-                // Financial
-                Route::get('/{id}/payments', [CustomerController::class, 'payments'])->whereNumber('id');
-                Route::get('/{id}/debts', [CustomerController::class, 'debts'])->whereNumber('id');
-                Route::get('/{id}/balance', [CustomerController::class, 'balance'])->whereNumber('id');
+                    // Commercial
+                    Route::get('/{id}/orders', [CustomerController::class, 'orders'])->whereNumber('id');
+                    Route::get('/{id}/orders/{orderId}', [CustomerController::class, 'orderDetail'])
+                        ->whereNumber('id')->whereNumber('orderId');
+                    Route::get('/{id}/delivery-notes', [CustomerController::class, 'deliveryNotes'])->whereNumber('id');
+                    Route::get('/{id}/delivery-notes/{deliveryId}', [CustomerController::class, 'deliveryNoteDetail'])
+                        ->whereNumber('id')->whereNumber('deliveryId');
+                    Route::get('/{id}/invoices', [CustomerController::class, 'invoices'])->whereNumber('id');
+                    Route::get('/{id}/invoices/{invoiceId}', [CustomerController::class, 'invoiceDetail'])
+                        ->whereNumber('id')->whereNumber('invoiceId');
 
-                // Promotional
-                Route::get('/{id}/vouchers', [CustomerController::class, 'vouchers'])->whereNumber('id');
-                Route::get('/{id}/bonuses', [CustomerController::class, 'bonuses'])->whereNumber('id');
-                Route::get('/{id}/loyalty-points', [CustomerController::class, 'loyaltyPoints'])->whereNumber('id');
+                    // Financial
+                    Route::get('/{id}/payments', [CustomerController::class, 'payments'])->whereNumber('id');
+                    Route::get('/{id}/debts', [CustomerController::class, 'debts'])->whereNumber('id');
+                    Route::get('/{id}/balance', [CustomerController::class, 'balance'])->whereNumber('id');
 
-                // Cache
-                Route::delete('/{id}/cache', [CustomerController::class, 'clearCache'])->whereNumber('id');
+                    // Promotional
+                    Route::get('/{id}/vouchers', [CustomerController::class, 'vouchers'])->whereNumber('id');
+                    Route::get('/{id}/bonuses', [CustomerController::class, 'bonuses'])->whereNumber('id');
+                    Route::get('/{id}/loyalty-points', [CustomerController::class, 'loyaltyPoints'])->whereNumber('id');
+
+                    // Cache
+                    Route::delete('/{id}/cache', [CustomerController::class, 'clearCache'])->whereNumber('id');
+                });
             });
 
-            Route::prefix('families')->group(function () {
-                Route::get('/', [JerarquiaController::class, 'indexFamilias']);
-                Route::get('/{id}', [JerarquiaController::class, 'showFamilia']);
-            });
-            Route::prefix('subfamilies')->group(function () {
-                Route::get('/', [JerarquiaController::class, 'indexSubfamilias']);
-                Route::get('/{id}', [JerarquiaController::class, 'showSubfamilia']);
-            });
-            Route::prefix('groups')->group(function () {
-                Route::get('/', [JerarquiaController::class, 'indexGrupos']);
-                Route::get('/{id}', [JerarquiaController::class, 'showGrupo']);
+            Route::middleware('can:erp.jerarquia.view')->group(function () {
+                Route::prefix('families')->group(function () {
+                    Route::get('/', [JerarquiaController::class, 'indexFamilias']);
+                    Route::get('/{id}', [JerarquiaController::class, 'showFamilia']);
+                });
+                Route::prefix('subfamilies')->group(function () {
+                    Route::get('/', [JerarquiaController::class, 'indexSubfamilias']);
+                    Route::get('/{id}', [JerarquiaController::class, 'showSubfamilia']);
+                });
+                Route::prefix('groups')->group(function () {
+                    Route::get('/', [JerarquiaController::class, 'indexGrupos']);
+                    Route::get('/{id}', [JerarquiaController::class, 'showGrupo']);
+                });
             });
 
-            Route::prefix('suppliers')->group(function () {
+            Route::prefix('suppliers')->middleware('can:erp.suppliers.view')->group(function () {
                 Route::get('/', [SuppliersController::class, 'index']);
                 Route::get('/{id}', [SuppliersController::class, 'show']);
                 Route::get('/{id}/detailed', [SuppliersController::class, 'showDetailed']);
@@ -89,7 +98,7 @@ Route::middleware(['api'])->group(function () {
                 Route::get('/{id}/supplier', [SuppliersController::class, 'showSupplier']);
             });
 
-            Route::prefix('products')->group(function () {
+            Route::prefix('products')->middleware('can:erp.products.view')->group(function () {
                 Route::get('/', [ProductsController::class, 'index']);
                 Route::get('/filter', [ProductsController::class, 'filter']);
                 Route::get('/{id}', [ProductsController::class, 'show']);
@@ -104,7 +113,9 @@ Route::middleware(['api'])->group(function () {
     // panel callers) and `/api/erp/v2/endpoints/*` (test suite + future versioned
     // path). Same controllers, same auth.
     foreach (['erp/endpoints', 'erp/v2/endpoints'] as $endpointsPrefix) {
-        Route::prefix($endpointsPrefix)->middleware('auth:sanctum')->group(function () {
+        // Además de auth:sanctum, exige el permiso de gestión: antes cualquier
+        // token Sanctum válido podía crear/ejecutar endpoints ERP (SSRF).
+        Route::prefix($endpointsPrefix)->middleware(['auth:sanctum', 'can:erp.endpoints.manage'])->group(function () {
             Route::get('/', [ErpEndpointsApiController::class, 'index']);
             Route::post('/', [ErpEndpointsApiController::class, 'store']);
             Route::get('/{endpoint}', [ErpEndpointsApiController::class, 'show']);

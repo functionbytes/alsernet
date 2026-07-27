@@ -24,7 +24,11 @@ class ChatFlowHttpRequester
     public function send(array $data, array $context): array
     {
         $method = strtoupper($data['method'] ?? 'GET');
-        $url = $this->interpolate((string) ($data['url'] ?? ''), $context);
+        // urlEncode=true: los valores de {{var}} que un cliente controla (p. ej.
+        // last_input) se codifican al interpolarse en la URL, de modo que no
+        // puedan escapar del path/query previsto (../, ?, &, #) hacia rutas no
+        // deseadas dentro de un host que el guard SSRF sí permite.
+        $url = $this->interpolate((string) ($data['url'] ?? ''), $context, urlEncode: true);
 
         $resolved = $this->ssrfSafeCurlOptions($url);
 
@@ -131,11 +135,19 @@ class ChatFlowHttpRequester
     /**
      * @param  array<string,mixed>  $context
      */
-    private function interpolate(string $text, array $context): string
+    private function interpolate(string $text, array $context, bool $urlEncode = false): string
     {
         return preg_replace_callback(
             '/\{\{(\w+)\}\}/',
-            fn ($m) => is_scalar($context[$m[1]] ?? null) ? (string) $context[$m[1]] : $m[0],
+            function ($m) use ($context, $urlEncode) {
+                $value = $context[$m[1]] ?? null;
+
+                if (! is_scalar($value)) {
+                    return $m[0];
+                }
+
+                return $urlEncode ? rawurlencode((string) $value) : (string) $value;
+            },
             $text
         );
     }

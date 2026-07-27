@@ -20,6 +20,9 @@
                         <p class="small mb-0 text-muted">Administra, habilita, deshabilita e instala módulos del sistema</p>
                     </div>
                     <div class="d-flex gap-2">
+                        <a href="{{ route('settings.modules.menu-features.index') }}" class="btn btn-outline-secondary">
+                            Funcionalidades de menú
+                        </a>
                         <a href="{{ route('settings.modules.uploadForm') }}" class="btn btn-primary">
                             Instalar módulo
                         </a>

@@ -7,8 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Settings\EnrollDripCampaignRequest;
 use Modules\Helpdesk\Http\Requests\Settings\StoreDripCampaignRequest;
 use Modules\Helpdesk\Http\Requests\Settings\UpdateDripCampaignRequest;
 use Modules\Helpdesk\Jobs\ProcessDripStepJob;
@@ -155,16 +155,8 @@ class DripCampaignsController extends Controller
             ->with('success', "Campaña drip {$label} exitosamente.");
     }
 
-    public function enroll(Request $request, DripCampaign $dripCampaign): JsonResponse
+    public function enroll(EnrollDripCampaignRequest $request, DripCampaign $dripCampaign): JsonResponse
     {
-        $request->validate([
-            'customer_id' => [
-                'required',
-                'integer',
-                Rule::exists('helpdesk.helpdesk_customers', 'id'),
-            ],
-        ]);
-
         $execution = DripExecution::updateOrCreate(
             ['campaign_id' => $dripCampaign->id, 'customer_id' => $request->integer('customer_id')],
             ['status' => 'active', 'current_step' => 0, 'started_at' => now()],

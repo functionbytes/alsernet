@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskChatFlow\Services;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Analyzes the sentiment of a customer message, reusing the helpdesk's
  * SentimentService when available. Used to escalate frustrated customers to a
@@ -32,7 +34,9 @@ class ChatFlowSentiment
                 'label' => $result['label'] ?? 'neutral',
                 'score' => (float) ($result['score'] ?? 0.0),
             ];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::debug('ChatFlowSentiment: sentiment analysis failed', ['error' => $e->getMessage()]);
+
             return ['label' => 'neutral', 'score' => 0.0];
         }
     }

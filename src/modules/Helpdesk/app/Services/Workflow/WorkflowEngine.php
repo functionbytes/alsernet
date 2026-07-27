@@ -239,7 +239,10 @@ class WorkflowEngine
 
         $headers = $config['headers'] ?? [];
 
-        Http::withHeaders($headers)->{$method}($url, $context);
+        // timeout/connectTimeout: la URL la define el usuario y esto corre en un
+        // listener encolado; sin límite, un endpoint del cliente colgado bloquea
+        // el worker. Mismo criterio que DispatchWebhookJob/DispatchDirectWebhookJob.
+        Http::withHeaders($headers)->timeout(10)->connectTimeout(5)->{$method}($url, $context);
     }
 
     protected function matchesTriggerConfig(Workflow $workflow, array $context): bool

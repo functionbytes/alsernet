@@ -423,8 +423,11 @@
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Queue/database/seeders" isTestSource="false" packagePrefix="Modules\Queue\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Queue/tests" isTestSource="true" packagePrefix="Modules\Queue\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/app" isTestSource="false" packagePrefix="modules\Remarketing\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/app" isTestSource="false" packagePrefix="Modules\Remarketing\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/database/factories" isTestSource="false" packagePrefix="modules\Remarketing\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/database/factories" isTestSource="false" packagePrefix="Modules\Remarketing\Database\Factories\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/database/seeders" isTestSource="false" packagePrefix="modules\Remarketing\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/database/seeders" isTestSource="false" packagePrefix="Modules\Remarketing\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Remarketing/tests" isTestSource="true" packagePrefix="modules\Remarketing\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Reverb/app" isTestSource="false" packagePrefix="Modules\Reverb\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/Reverb/vendor/laravel/reverb/src" isTestSource="false" packagePrefix="Laravel\Reverb\" />
@@ -496,6 +499,13 @@
       <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskSla/app" isTestSource="false" packagePrefix="Modules\HelpdeskSla\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskSla/database/seeders" isTestSource="false" packagePrefix="Modules\HelpdeskSla\Database\Seeders\" />
       <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskSla/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskDocument/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskDocument/tests" isTestSource="true" packagePrefix="Modules\HelpdeskDocument\Tests\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskIntegration/app" isTestSource="false" packagePrefix="Modules\HelpdeskIntegration\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskIntegration/database/factories" isTestSource="false" packagePrefix="Modules\HelpdeskIntegration\Database\Factories\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskIntegration/database/seeders" isTestSource="false" packagePrefix="Modules\HelpdeskIntegration\Database\Seeders\" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskIntegration/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/modules/HelpdeskIntegration/tests" isTestSource="true" packagePrefix="Modules\HelpdeskIntegration\Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/src/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/tests" isTestSource="true" packagePrefix="Tests\" />
       <sourceFolder url="file://$MODULE_DIR$/modules/Template/tests" isTestSource="true" />

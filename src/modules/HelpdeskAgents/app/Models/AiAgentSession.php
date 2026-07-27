@@ -47,6 +47,9 @@ class AiAgentSession extends Model
         return $this->belongsTo(AiAgent::class, 'ai_agent_id');
     }
 
+    /**
+     * @return BelongsTo<Conversation, $this>
+     */
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class);

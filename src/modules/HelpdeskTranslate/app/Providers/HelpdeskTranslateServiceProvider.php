@@ -2,6 +2,8 @@
 
 namespace Modules\HelpdeskTranslate\Providers;
 
+use Illuminate\Console\Scheduling\Schedule;
+use Modules\HelpdeskTranslate\Console\Commands\PruneTranslationCacheCommand;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Support\ModuleServiceProvider;
 
@@ -22,6 +24,31 @@ class HelpdeskTranslateServiceProvider extends ModuleServiceProvider
 
         $this->registerPublishableAssets();
         $this->registerSettingsSidebar();
+        $this->registerCommands();
+        $this->registerSchedule();
+    }
+
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                PruneTranslationCacheCommand::class,
+            ]);
+        }
+    }
+
+    /**
+     * Poda diaria de la caché de traducciones para acotar la retención de PII.
+     * Sin gating por toggle de integración: la retención GDPR debe ejecutarse
+     * aunque la traducción automática esté desactivada.
+     */
+    protected function registerSchedule(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('helpdesktranslate:prune-cache')
+                ->daily()
+                ->withoutOverlapping();
+        });
     }
 
     /**

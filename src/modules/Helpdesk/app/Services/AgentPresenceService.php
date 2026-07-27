@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Redis;
 use Modules\Helpdesk\Events\AgentPresenceChanged;
 use Modules\Helpdesk\Models\AgentSettings;
+use Modules\Helpdesk\Models\Conversation;
 
 class AgentPresenceService
 {
@@ -13,12 +14,24 @@ class AgentPresenceService
 
     private const ONLINE_TTL = 90; // seconds
 
-    public function setState(int $userId, string $state): void
+    /**
+     * @param  array<string, mixed>|null  $preferences  Away-mode preferences to
+     *                                                  merge into agent_settings.preferences
+     *                                                  (away_message, auto_return, reassign,
+     *                                                  reassign_agent_id).
+     */
+    public function setState(int $userId, string $state, ?array $preferences = null): void
     {
         $settings = AgentSettings::query()->firstOrCreate(
             ['user_id' => $userId],
             ['presence_state' => AgentSettings::PRESENCE_OFFLINE]
         );
+
+        if ($preferences !== null) {
+            $settings->update([
+                'preferences' => array_merge($settings->preferences ?? [], $preferences),
+            ]);
+        }
 
         $oldState = $settings->presence_state ?? AgentSettings::PRESENCE_OFFLINE;
 
@@ -42,6 +55,50 @@ class AgentPresenceService
         }
 
         $this->clearWidgetConfigCache($userId);
+    }
+
+    /**
+     * Current agent presence state plus the persisted away-mode preferences,
+     * used to hydrate the "Cambiar disponibilidad" modal.
+     *
+     * @return array{state: string, raw_state: string, away_message: string, auto_return: string, reassign: string, reassign_agent_id: int|null}
+     */
+    public function getSettings(int $userId): array
+    {
+        $settings = AgentSettings::query()->where('user_id', $userId)->first();
+        $prefs = $settings?->preferences ?? [];
+
+        return [
+            'state' => $this->getState($userId),
+            'raw_state' => $settings?->presence_state ?? AgentSettings::PRESENCE_OFFLINE,
+            'away_message' => $prefs['away_message'] ?? '',
+            'auto_return' => $prefs['auto_return'] ?? 'manual',
+            'reassign' => $prefs['reassign'] ?? 'keep',
+            'reassign_agent_id' => $prefs['reassign_agent_id'] ?? null,
+        ];
+    }
+
+    /**
+     * Unassign the agent's open conversations so they return to the inbox queue,
+     * or hand them off to a specific agent when $toUserId is given. Called when
+     * an agent goes away/busy/offline with the "reassign" preference set to
+     * "team" (null $toUserId) or "agent" (specific $toUserId). Returns the
+     * number of conversations released/reassigned.
+     */
+    public function reassignActiveConversations(int $userId, ?int $toUserId = null): int
+    {
+        $count = Conversation::query()
+            ->where('assignee_id', $userId)
+            ->open()
+            ->update(['assignee_id' => $toUserId]);
+
+        if ($count > 0) {
+            AgentSettings::query()
+                ->where('user_id', $userId)
+                ->update(['current_open_count' => 0]);
+        }
+
+        return $count;
     }
 
     public function getState(int $userId): string
@@ -170,7 +227,7 @@ class AgentPresenceService
     public function getAgentsList(?int $inboxId = null): array
     {
         $query = AgentSettings::query()
-            ->with('user:id,name,email');
+            ->with('user:id,firstname,lastname,email');
 
         if ($inboxId !== null) {
             $query->whereHas('user', function ($q) use ($inboxId) {
@@ -181,11 +238,17 @@ class AgentPresenceService
         return $query->get()->map(function (AgentSettings $settings) {
             $user = $settings->user;
 
+            // Sin re-consultar la BD por agente: reutiliza la columna ya cargada y
+            // solo comprueba el heartbeat en Redis (offline si expiró).
+            $presence = Redis::ttl(self::REDIS_KEY.':'.$settings->user_id) > 0
+                ? ($settings->presence_state ?? AgentSettings::PRESENCE_OFFLINE)
+                : AgentSettings::PRESENCE_OFFLINE;
+
             return [
                 'user_id' => $settings->user_id,
                 'name' => $user?->name ?? 'Unknown',
                 'email' => $user?->email ?? '',
-                'presence_state' => $this->getState($settings->user_id),
+                'presence_state' => $presence,
                 'last_heartbeat_at' => $settings->last_heartbeat_at?->toIso8601String(),
                 'presence_changed_at' => $settings->presence_changed_at?->toIso8601String(),
             ];

@@ -164,7 +164,7 @@
                 <!-- Timezone -->
                 <div class="card-body">
                     <div class="mb-3">
-                        <h6 class="mb-1 fw-bold">Configuración Regional</h6>
+                        <h6 class="mb-1 fw-bold">Configuración regional</h6>
                         <p class="text-muted mb-0">Zona horaria para fechas y notificaciones</p>
                     </div>
 

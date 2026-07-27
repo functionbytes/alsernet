@@ -2,13 +2,13 @@
     <table class="table table-hover align-middle">
         <thead class="table-light">
             <tr>
-                <th>Nombre</th>
-                <th>Clave</th>
-                <th>Formato</th>
-                <th>Permiso</th>
-                <th class="text-center">Requerido</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Clave</th>
+                <th scope="col">Formato</th>
+                <th scope="col">Permiso</th>
+                <th scope="col" class="text-center">Requerido</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center">Acciones</th>
             </tr>
         </thead>
         <tbody>

@@ -87,7 +87,7 @@ class RecommenderService
             $query->whereIn('category', $favCategories);
         }
 
-        $products = $query->inRandomOrder()->limit($limit)->get();
+        $products = $query->limit(200)->get()->shuffle()->take($limit);
 
         if ($products->count() < $limit && ! empty($favCategories)) {
             $extra = CatalogProduct::query()
@@ -95,9 +95,10 @@ class RecommenderService
                 ->when($inboxId, fn ($q) => $q->forInbox($inboxId))
                 ->when(! empty($excludeIds), fn ($q) => $q->whereNotIn('platform_product_id', $excludeIds))
                 ->whereNotIn('id', $products->pluck('id'))
-                ->inRandomOrder()
-                ->limit($limit - $products->count())
-                ->get();
+                ->limit(200)
+                ->get()
+                ->shuffle()
+                ->take($limit - $products->count());
 
             $products = $products->concat($extra);
         }

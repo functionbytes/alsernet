@@ -14,14 +14,21 @@ use Modules\HelpdeskTranslate\Http\Controllers\Managers\TranslateItemController;
 | URLs and route names already used by the Helpdesk frontend.
 */
 
-Route::post('/translate', TranslateController::class)
-    ->middleware('throttle:60,1')
-    ->name('translate');
+// Toda la superficie manual de traducción queda tras el toggle de
+// "Settings > Integraciones" (helpdesk_translate_enabled()), igual que
+// HelpdeskDocument/HelpdeskCompliance — antes solo los listeners automáticos
+// respetaban el toggle y estos endpoints seguían operativos con la
+// integración desactivada.
+Route::middleware('integration.enabled:translate')->group(function () {
+    Route::post('/translate', TranslateController::class)
+        ->middleware('throttle:60,1')
+        ->name('translate');
 
-Route::post('/conversations/items/{item}/translate', TranslateItemController::class)
-    ->middleware('throttle:60,1')
-    ->name('conversations.items.translate');
+    Route::post('/conversations/items/{item}/translate', TranslateItemController::class)
+        ->middleware('throttle:60,1')
+        ->name('conversations.items.translate');
 
-Route::post('/detect-language', DetectLanguageController::class)
-    ->middleware('throttle:60,1')
-    ->name('detect-language');
+    Route::post('/detect-language', DetectLanguageController::class)
+        ->middleware('throttle:60,1')
+        ->name('detect-language');
+});

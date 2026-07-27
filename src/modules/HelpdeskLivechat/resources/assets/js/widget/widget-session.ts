@@ -24,6 +24,36 @@ function resolveHeartbeatIntervalMs(): number {
     return DEFAULT_HEARTBEAT_INTERVAL_MS;
 }
 
+/**
+ * Producto que el visitante está viendo, para la covisualización (el agente lo
+ * ve en el panel antes de abrir el chat). La página anfitriona lo publica en
+ * `window.HELPDESK_WIDGET_PRODUCT` en las fichas de producto (p. ej. desde el
+ * hook de PrestaShop/Shopify). Ausente en páginas que no son de producto.
+ */
+interface WidgetProduct {
+    id: string | number;
+    title?: string;
+    image_url?: string;
+    url?: string;
+    price?: number;
+    currency?: string;
+}
+
+function resolveCurrentProduct(): WidgetProduct | null {
+    const product = (window as unknown as { HELPDESK_WIDGET_PRODUCT?: WidgetProduct }).HELPDESK_WIDGET_PRODUCT;
+    if (!product || product.id === undefined || product.id === null || product.id === '') {
+        return null;
+    }
+    return {
+        id: String(product.id),
+        title: product.title,
+        image_url: product.image_url,
+        url: product.url,
+        price: typeof product.price === 'number' ? product.price : undefined,
+        currency: product.currency,
+    };
+}
+
 export function getSessionToken(): string {
     let token = '';
     try {
@@ -70,10 +100,12 @@ export async function sendHeartbeat(): Promise<void> {
     const token = getSessionToken();
     const url = window.location.href;
     const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const product = resolveCurrentProduct();
     const payload = {
         session_token: token,
         url,
         title: document.title,
+        ...(product ? { product } : {}),
     };
 
     lastSentUrl = url;

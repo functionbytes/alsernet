@@ -47,5 +47,16 @@ class PublishScheduledCampaignsJob implements ShouldQueue
         if ($due->isNotEmpty()) {
             Log::info('Auto-published scheduled campaigns', ['count' => $due->count()]);
         }
+
+        if ($due->count() === 100) {
+            Log::warning('PublishScheduledCampaignsJob hit its 100-row cap; more scheduled campaigns may be due and will wait for the next run.');
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('PublishScheduledCampaignsJob failed', [
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

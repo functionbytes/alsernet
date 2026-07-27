@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Events\ConversationCreated;
+use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -50,7 +51,7 @@ class WidgetConversationFlowTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonStructure(['data' => ['conversation_id', 'customer_id', 'reused']]);
+            ->assertJsonStructure(['data' => ['conversation_id', 'customer_id', 'message_id', 'reused']]);
 
         // Filtra por el id devuelto (la BD compartida entre runs puede tener
         // conversaciones 'web' residuales) y usa la conexión 'helpdesk', que es
@@ -58,6 +59,16 @@ class WidgetConversationFlowTest extends TestCase
         $this->assertDatabaseHas('helpdesk_conversations', [
             'id' => $response->json('data.conversation_id'),
             'channel' => 'web',
+        ], 'helpdesk');
+
+        // El id real del primer mensaje se devuelve para que el widget reconcilie
+        // su mensaje optimista y un resync/polling posterior no lo duplique.
+        $messageId = $response->json('data.message_id');
+        $this->assertNotNull($messageId);
+        $this->assertDatabaseHas('helpdesk_conversation_items', [
+            'id' => $messageId,
+            'conversation_id' => $response->json('data.conversation_id'),
+            'body' => 'Hola',
         ], 'helpdesk');
 
         Event::assertDispatched(ConversationCreated::class);

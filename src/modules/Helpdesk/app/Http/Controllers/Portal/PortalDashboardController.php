@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Portal\SendMessageRequest;
+use Modules\Helpdesk\Http\Requests\Portal\UpdateProfileRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
@@ -23,7 +25,7 @@ class PortalDashboardController extends Controller
             ->latest('last_message_at')
             ->paginate(15);
 
-        return view('helpdesk::portal.dashboard', compact('customer', 'conversations'));
+        return view('helpdesk::public.portal.dashboard', compact('customer', 'conversations'));
     }
 
     public function showConversation(Request $request, int $id): View
@@ -33,23 +35,19 @@ class PortalDashboardController extends Controller
 
         $conversation = Conversation::query()
             ->where('customer_id', $customer->id)
-            ->with(['status', 'inbox', 'items' => fn ($q) => $q->orderBy('created_at')])
+            ->with(['status', 'inbox', 'items' => fn ($q) => $q->reorder('created_at', 'desc')->limit(200)])
             ->findOrFail($id);
 
-        return view('helpdesk::portal.conversation', compact('customer', 'conversation'));
+        // La vista pinta el hilo en orden ascendente (más antiguo arriba, scroll al final abajo)
+        $conversation->setRelation('items', $conversation->items->sortBy('created_at')->values());
+
+        return view('helpdesk::public.portal.conversation', compact('customer', 'conversation'));
     }
 
-    public function sendMessage(Request $request, int $id): RedirectResponse
+    public function sendMessage(SendMessageRequest $request, int $id): RedirectResponse
     {
         /** @var Customer $customer */
         $customer = $request->get('portal_customer');
-
-        $request->validate([
-            'message' => ['required', 'string', 'max:5000'],
-        ], [
-            'message.required' => 'El mensaje no puede estar vacio.',
-            'message.max' => 'El mensaje no puede superar los 5000 caracteres.',
-        ]);
 
         $conversation = Conversation::query()
             ->where('customer_id', $customer->id)
@@ -58,7 +56,7 @@ class PortalDashboardController extends Controller
         ConversationItem::create([
             'conversation_id' => $conversation->id,
             'type' => 'message',
-            'body' => $request->message,
+            'body' => $request->validated('message'),
             'author_id' => $customer->id,
             'metadata' => ['source' => 'portal', 'customer_id' => $customer->id],
         ]);
@@ -74,22 +72,15 @@ class PortalDashboardController extends Controller
         /** @var Customer $customer */
         $customer = $request->get('portal_customer');
 
-        return view('helpdesk::portal.profile', compact('customer'));
+        return view('helpdesk::public.portal.profile', compact('customer'));
     }
 
-    public function updateProfile(Request $request): RedirectResponse
+    public function updateProfile(UpdateProfileRequest $request): RedirectResponse
     {
         /** @var Customer $customer */
         $customer = $request->get('portal_customer');
 
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-        ]);
-
-        $customer->update($request->only('name', 'phone'));
+        $customer->update($request->validated());
 
         return back()->with('success', 'Perfil actualizado correctamente.');
     }

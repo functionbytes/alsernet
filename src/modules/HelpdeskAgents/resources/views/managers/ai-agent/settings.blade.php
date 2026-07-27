@@ -2,6 +2,10 @@
 
 @section('title', 'Configuración - Agente IA')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskagents/css/agents.css') }}">
+@endpush
+
 @section('content')
 <div>
     <!-- Breadcrumb -->

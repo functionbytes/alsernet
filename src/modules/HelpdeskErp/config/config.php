@@ -39,6 +39,19 @@ return [
     'http_timeout' => env('HELPDESK_ERP_HTTP_TIMEOUT', 15),
 
     /*
+     | Circuit breaker: nº de fallos consecutivos del manager (conexión rechazada
+     | o timeout) tras los que se corta el tráfico ERP. Con el manager caído cada
+     | request cuelga hasta http_timeout; el breaker evita arrastrar el inbox.
+     */
+    'circuit_failure_threshold' => env('HELPDESK_ERP_CIRCUIT_FAILURE_THRESHOLD', 5),
+
+    /*
+     | Circuit breaker: segundos que permanece abierto (se saltan las llamadas y
+     | se devuelve contexto vacío) antes de reintentar contra el manager.
+     */
+    'circuit_open_seconds' => env('HELPDESK_ERP_CIRCUIT_OPEN_SECONDS', 30),
+
+    /*
      | TTL en segundos para la línea temporal agregada del cliente (ERP + PrestaShop + Helpdesk).
      | TTL corto: solo evita re-agregar las tres fuentes en visitas repetidas (default: 2 min).
      | El webhook orders-ready invalida esta entrada al terminar el escaneo Oracle.

@@ -33,7 +33,7 @@ class AiAgentFlow extends Model
         'ai_agent_id',
         'name',
         'description',
-        'trigger_type',
+        'trigger',
         'trigger_conditions',
         'status',
         'nodes',
@@ -69,7 +69,7 @@ class AiAgentFlow extends Model
 
     public function scopeByTrigger($query, $trigger)
     {
-        return $query->where('trigger_type', $trigger);
+        return $query->where('trigger', $trigger);
     }
 
     // ==================== Accessors ====================
@@ -77,12 +77,12 @@ class AiAgentFlow extends Model
     protected function triggerLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => match ($this->trigger_type) {
+            get: fn () => match ($this->trigger) {
                 'message' => 'Mensaje',
                 'intent' => 'Intención',
                 'keyword' => 'Palabra clave',
                 'conversation_start' => 'Inicio de conversación',
-                default => $this->trigger_type,
+                default => $this->trigger,
             },
         );
     }

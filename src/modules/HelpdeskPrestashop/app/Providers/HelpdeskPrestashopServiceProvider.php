@@ -3,10 +3,14 @@
 namespace Modules\HelpdeskPrestashop\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\HelpdeskPrestashop\Console\Commands\TestConnectionCommand;
 use Modules\HelpdeskPrestashop\Console\Commands\WarmPsCacheCommand;
+use Modules\HelpdeskPrestashop\Events\PsBackInStock;
+use Modules\HelpdeskPrestashop\Events\PsPriceDropped;
+use Modules\HelpdeskPrestashop\Listeners\InvalidateCatalogCache;
 use Nwidart\Modules\Facades\Module;
 
 class HelpdeskPrestashopServiceProvider extends ServiceProvider
@@ -42,8 +46,13 @@ class HelpdeskPrestashopServiceProvider extends ServiceProvider
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->command('helpdeskprestashop:warm-cache')
                 ->everyThirtyMinutes()
-                ->withoutOverlapping();
+                ->withoutOverlapping()
+                ->when(fn () => helpdesk_prestashop_enabled());
         });
+
+        // A price drop or restock makes the cached catalog stale.
+        Event::listen(PsPriceDropped::class, InvalidateCatalogCache::class);
+        Event::listen(PsBackInStock::class, InvalidateCatalogCache::class);
     }
 
     protected function registerConfig(): void

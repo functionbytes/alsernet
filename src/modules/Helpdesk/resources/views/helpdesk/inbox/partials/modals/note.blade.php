@@ -19,10 +19,10 @@
                 </div>
                 <textarea id="noteBody" rows="3" placeholder="{{ __('helpdesk::helpdesk.inbox.modals.note_body_placeholder') }}"></textarea>
                 <div class="tools">
-                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_mention_tooltip') }}"><i class="fas fa-at"></i></button>
-                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_tag_tooltip') }}"><i class="fas fa-tag"></i></button>
-                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_attach_tooltip') }}"><i class="fas fa-paperclip"></i></button>
-                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_link_tooltip') }}"><i class="fas fa-link"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_mention_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_mention_tooltip') }}"><i class="fas fa-at"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_tag_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_tag_tooltip') }}"><i class="fas fa-tag"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_attach_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_attach_tooltip') }}"><i class="fas fa-paperclip"></i></button>
+                    <button class="tt" data-tt="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_link_tooltip') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.note_tool_link_tooltip') }}"><i class="fas fa-link"></i></button>
                     <span class="bv-note-team-tag">{{ __('helpdesk::helpdesk.inbox.modals.note_team_only_tag') }}</span>
                 </div>
             </div>

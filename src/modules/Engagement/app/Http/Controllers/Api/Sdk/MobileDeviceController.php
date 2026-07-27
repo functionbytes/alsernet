@@ -13,7 +13,7 @@ class MobileDeviceController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
 
         $validated = $request->validate([
             'device_token' => ['required', 'string', 'max:255'],
@@ -43,7 +43,7 @@ class MobileDeviceController extends Controller
 
     public function updatePreferences(Request $request): JsonResponse
     {
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
         $token = $request->validate(['device_token' => ['required', 'string']])['device_token'];
 
         $device = MobileDevice::query()
@@ -65,7 +65,7 @@ class MobileDeviceController extends Controller
 
     public function unregister(Request $request): JsonResponse
     {
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
         $token = $request->validate(['device_token' => ['required', 'string']])['device_token'];
 
         MobileDevice::query()

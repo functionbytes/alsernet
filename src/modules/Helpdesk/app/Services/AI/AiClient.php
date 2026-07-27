@@ -35,7 +35,9 @@ class AiClient
             if ($response->failed()) {
                 Log::warning('AiClient: OpenAI chat failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    // Preview truncado: el body de error de OpenAI podría ecoar
+                    // fragmentos del prompt (que incluye contenido del cliente).
+                    'body_preview' => mb_substr($response->body(), 0, 500),
                 ]);
 
                 return null;

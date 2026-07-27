@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskCampaigns\Http\Controllers\Managers\CampaignsController;
 
-Route::group(['prefix' => ''], function () {
+Route::middleware('integration.enabled:campaigns')->group(function () {
 
     // Campaigns
     Route::get('/campaigns', [CampaignsController::class, 'index'])->name('helpdesk.campaigns.index');

@@ -5,6 +5,7 @@ namespace Modules\HelpdeskContacts\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ApplyContactCartDiscountRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\GenerateContactOrderRequest;
@@ -212,7 +213,11 @@ class ContactCartController extends Controller
             return $resolver(app(self::SERVICE));
         } catch (RuntimeException $e) {
             return $this->businessError($e);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            Log::error('ContactCartController: fallo inesperado en operación de carrito', [
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'No se pudo procesar la operación del carrito.',

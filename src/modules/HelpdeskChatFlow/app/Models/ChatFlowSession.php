@@ -52,11 +52,17 @@ class ChatFlowSession extends Model
 
     // ==================== Relationships ====================
 
+    /**
+     * @return BelongsTo<ChatFlow, $this>
+     */
     public function chatFlow(): BelongsTo
     {
         return $this->belongsTo(ChatFlow::class, 'chat_flow_id');
     }
 
+    /**
+     * @return BelongsTo<Conversation, $this>
+     */
     public function conversation(): BelongsTo
     {
         return $this->belongsTo(Conversation::class, 'conversation_id');

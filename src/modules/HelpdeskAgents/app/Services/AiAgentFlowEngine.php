@@ -63,10 +63,19 @@ class AiAgentFlowEngine
     public function processMessage(AiAgentSession $session, string $userMessage): ?string
     {
         try {
+            // HD-003: sanitizar ANTES de persistir. Si se guarda el mensaje crudo,
+            // buildHistoryWindow() lo reenvía al LLM sin filtrar en este turno y en
+            // los siguientes, anulando el sanitizador (la copia final ya iba limpia,
+            // pero la inyección se colaba por el historial).
+            $sanitizedMessage = $this->sanitizer->sanitize(
+                $userMessage,
+                $session->customer?->id
+            );
+
             AiAgentSessionMessage::create([
                 'session_id' => $session->id,
                 'role' => 'user',
-                'content' => $userMessage,
+                'content' => $sanitizedMessage,
             ]);
 
             $flow = AiAgentFlow::with('flowNodes')->find($session->flow_id);
@@ -84,12 +93,6 @@ class AiAgentFlowEngine
 
                 return null;
             }
-
-            // HD-003: sanitize user input before passing through the flow
-            $sanitizedMessage = $this->sanitizer->sanitize(
-                $userMessage,
-                $session->customer?->id
-            );
 
             $result = $this->executeNode($node, $session, $sanitizedMessage);
             $output = $result['output'];
@@ -357,9 +360,12 @@ class AiAgentFlowEngine
      */
     private function executeWithRateLimit(int|string $userId, int|string $sessionId, Closure $call): string
     {
-        $perMinuteLimit = config('helpdesk.llm_rate_limits.per_user_per_minute', 10);
-        $per5minLimit = config('helpdesk.llm_rate_limits.per_session_per_5min', 30);
-        $perDayLimit = config('helpdesk.llm_rate_limits.per_user_per_day', 1000);
+        // Namespace propio del módulo (config/config.php): es donde el operador
+        // ajusta el control de gasto de LLM. Antes leía helpdesk.llm_rate_limits
+        // (otro módulo), dejando el bloque de este módulo como config muerto.
+        $perMinuteLimit = config('helpdeskagents.llm_rate_limits.per_user_per_minute', 10);
+        $per5minLimit = config('helpdeskagents.llm_rate_limits.per_session_per_5min', 30);
+        $perDayLimit = config('helpdeskagents.llm_rate_limits.per_user_per_day', 1000);
 
         $perMinuteKey = "llm:user:{$userId}:per_minute";
         $per5minKey = "llm:session:{$sessionId}:per_5min";

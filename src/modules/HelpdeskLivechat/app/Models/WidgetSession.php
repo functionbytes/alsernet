@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskLivechat\Database\Factories\WidgetSessionFactory;
 
 class WidgetSession extends Model
 {
@@ -26,6 +27,7 @@ class WidgetSession extends Model
         'device',
         'ip_address',
         'country_code',
+        'current_product',
         'started_at',
         'last_activity_at',
     ];
@@ -34,6 +36,7 @@ class WidgetSession extends Model
     {
         return [
             'device' => 'array',
+            'current_product' => 'array',
             'started_at' => 'datetime',
             'last_activity_at' => 'datetime',
             'created_at' => 'datetime',
@@ -100,5 +103,15 @@ class WidgetSession extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Laravel no puede adivinar la ruta de la factory a partir del
+     * namespace del modulo (Modules\X\Models\Y no encaja con la convencion
+     * App\Models\Y de la resolucion por defecto de HasFactory).
+     */
+    protected static function newFactory(): WidgetSessionFactory
+    {
+        return new WidgetSessionFactory;
     }
 }

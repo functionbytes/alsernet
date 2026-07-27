@@ -78,7 +78,7 @@
 
         @unless($hasAny)
             <div class="bv-empty-state">
-                <i class="far fa-inbox bv-empty-state-icon"></i>
+                <i class="fas fa-inbox bv-empty-state-icon"></i>
                 <div class="bv-empty-state-title">No hay conversaciones</div>
                 <div class="bv-empty-state-sub">Inicia una nueva conversación o ajusta los filtros</div>
             </div>

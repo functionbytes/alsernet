@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialAccountRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialAccountResource;
@@ -22,11 +23,13 @@ class SocialAccountsController extends Controller
         $accounts = SocialAccount::orderBy('name')->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialAccountResource::collection($accounts),
             'meta' => [
-                'current_page' => $accounts->currentPage(),
-                'last_page' => $accounts->lastPage(),
-                'per_page' => $accounts->perPage(),
+                'currentPage' => $accounts->currentPage(),
+                'lastPage' => $accounts->lastPage(),
+                'perPage' => $accounts->perPage(),
                 'total' => $accounts->total(),
             ],
         ]);
@@ -41,18 +44,14 @@ class SocialAccountsController extends Controller
         $account = SocialAccount::create($validated);
         $this->auditLog->log('create', $account, null, $account->toArray());
 
-        return response()->json([
-            'data' => new SocialAccountResource($account),
-        ], 201);
+        return ApiResponse::created(new SocialAccountResource($account), 'Cuenta creada correctamente.');
     }
 
     public function show(SocialAccount $account): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
-        return response()->json([
-            'data' => new SocialAccountResource($account),
-        ]);
+        return ApiResponse::success(new SocialAccountResource($account));
     }
 
     public function update(UpdateSocialAccountRequest $request, SocialAccount $account): JsonResponse
@@ -62,9 +61,7 @@ class SocialAccountsController extends Controller
         $account->update($request->validated());
         $this->auditLog->log('update', $account, $oldValues, $account->toArray());
 
-        return response()->json([
-            'data' => new SocialAccountResource($account),
-        ]);
+        return ApiResponse::success(new SocialAccountResource($account), 'Cuenta actualizada correctamente.');
     }
 
     public function destroy(SocialAccount $account): JsonResponse
@@ -74,7 +71,7 @@ class SocialAccountsController extends Controller
         $account->delete();
         $this->auditLog->log('delete', $account, $oldValues);
 
-        return response()->json(['message' => 'Cuenta eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 
     public function toggleActive(SocialAccount $account): JsonResponse
@@ -84,8 +81,6 @@ class SocialAccountsController extends Controller
         $account->update(['is_active' => ! $account->is_active]);
         $this->auditLog->log('update', $account, $oldValues, ['is_active' => $account->is_active]);
 
-        return response()->json([
-            'data' => new SocialAccountResource($account),
-        ]);
+        return ApiResponse::success(new SocialAccountResource($account));
     }
 }

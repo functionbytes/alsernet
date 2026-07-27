@@ -8,7 +8,7 @@ use Modules\Helpdesk\Events\AiAgentEscalated;
 use Modules\Helpdesk\Models\AiAgent;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
-use Modules\Helpdesk\Models\HelpCenterArticle;
+use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
 
 class AiAgentService
 {

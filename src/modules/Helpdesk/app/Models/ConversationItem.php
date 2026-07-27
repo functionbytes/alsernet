@@ -24,6 +24,9 @@ class ConversationItem extends Model
         'author_id',
         'user_id',
         'type',
+        'item_type',
+        'activity_type',
+        'activity_data',
         'body',
         'html_body',
         'attachment_urls',
@@ -39,6 +42,7 @@ class ConversationItem extends Model
         return [
             'attachment_urls' => 'array',
             'metadata' => 'array',
+            'activity_data' => 'array',
             'is_internal' => 'boolean',
             'scheduled_at' => 'datetime',
             'created_at' => 'datetime',

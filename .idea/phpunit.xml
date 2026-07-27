@@ -19,7 +19,6 @@
         <option value="$PROJECT_DIR$/modules/Inventory/tests" />
         <option value="$PROJECT_DIR$/modules/Chat/tests" />
         <option value="$PROJECT_DIR$/modules/Document/tests" />
-        <option value="$PROJECT_DIR$/tests" />
         <option value="$PROJECT_DIR$/modules/Ads/tests" />
         <option value="$PROJECT_DIR$/modules/Seo/tests" />
         <option value="$PROJECT_DIR$/modules/Blog/tests" />
@@ -33,26 +32,18 @@
         <option value="$PROJECT_DIR$/modules/Locales/tests" />
         <option value="$PROJECT_DIR$/modules/Reviews/tests" />
         <option value="$PROJECT_DIR$/modules/Campaign/tests" />
-        <option value="$PROJECT_DIR$/modules/Helpdesk/tests" />
         <option value="$PROJECT_DIR$/modules/Optimize/tests" />
         <option value="$PROJECT_DIR$/modules/Template/tests" />
         <option value="$PROJECT_DIR$/modules/Ecommerce/tests" />
         <option value="$PROJECT_DIR$/modules/Locations/tests" />
-        <option value="$PROJECT_DIR$/modules/Engagement/tests" />
         <option value="$PROJECT_DIR$/modules/Newsletter/tests" />
         <option value="$PROJECT_DIR$/modules/HelpdeskErp/tests" />
         <option value="$PROJECT_DIR$/modules/Remarketing/tests" />
         <option value="$PROJECT_DIR$/modules/SimpleSlider/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskAgents/tests" />
         <option value="$PROJECT_DIR$/modules/HelpdeskSocial/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskTickets/tests" />
         <option value="$PROJECT_DIR$/modules/EcommercePayment/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskEmailLog/tests" />
         <option value="$PROJECT_DIR$/modules/HelpdeskLivechat/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskCampaigns/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskTranslate/tests" />
         <option value="$PROJECT_DIR$/modules/HelpdeskHelpcenter/tests" />
-        <option value="$PROJECT_DIR$/modules/HelpdeskPrestashop/tests" />
         <option value="$PROJECT_DIR$/modules/CampaignSendingServers/tests" />
         <option value="$PROJECT_DIR$/src/tests" />
         <option value="$PROJECT_DIR$/src/modules/Core/tests" />
@@ -60,8 +51,10 @@
         <option value="$PROJECT_DIR$/src/modules/SimpleSlider/tests" />
         <option value="$PROJECT_DIR$/src/modules/HelpdeskChatFlow/tests" />
         <option value="$PROJECT_DIR$/src/modules/HelpdeskContacts/tests" />
+        <option value="$PROJECT_DIR$/src/modules/HelpdeskDocument/tests" />
         <option value="$PROJECT_DIR$/src/modules/HelpdeskAnalytics/tests" />
         <option value="$PROJECT_DIR$/src/modules/HelpdeskCompliance/tests" />
+        <option value="$PROJECT_DIR$/src/modules/HelpdeskIntegration/tests" />
       </list>
     </option>
   </component>

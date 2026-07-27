@@ -97,13 +97,13 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th>URL</th>
-                                    <th>Eventos</th>
-                                    <th class="text-center">Exitos / Fallos</th>
-                                    <th>Ultimo envio</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">URL</th>
+                                    <th scope="col">Eventos</th>
+                                    <th scope="col" class="text-center">Exitos / Fallos</th>
+                                    <th scope="col">Ultimo envio</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

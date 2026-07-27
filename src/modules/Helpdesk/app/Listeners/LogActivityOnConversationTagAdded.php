@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Listeners;
 
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +28,7 @@ class LogActivityOnConversationTagAdded implements ShouldQueue
         $this->service->logLabelAdded(
             $event->conversation,
             $event->tag->name,
-            auth()->user()
+            $event->byUserId ? User::find($event->byUserId) : null
         );
     }
 

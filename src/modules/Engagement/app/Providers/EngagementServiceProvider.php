@@ -118,8 +118,7 @@ class EngagementServiceProvider extends ServiceProvider
                 ->withoutOverlapping();
 
             $schedule->job(new ArchiveOldEventsJob)
-                ->weekly()
-                ->sundays()
+                ->daily()
                 ->at('02:00')
                 ->withoutOverlapping();
 

@@ -5,11 +5,16 @@ namespace Modules\HelpdeskSocial\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class HelpdeskSocialPermissionsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Reset Spatie's permission cache so the newly created permissions are
+        // visible immediately (otherwise can() checks may miss them until TTL).
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $permissions = [
             'helpdesksocial.view',
             'helpdesksocial.manage',

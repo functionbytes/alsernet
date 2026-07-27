@@ -5,9 +5,9 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Managers\SlaBreachesReportDataRequest;
 use Nwidart\Modules\Facades\Module;
 
 /**
@@ -43,15 +43,11 @@ class SlaBreachesReportController extends Controller
      * Returns breached tickets grouped by assignee plus the upcoming breaches
      * for the next 24 hours. Guards gracefully when HelpdeskTickets is disabled.
      */
-    public function data(Request $request): JsonResponse
+    public function data(SlaBreachesReportDataRequest $request): JsonResponse
     {
         if (! $this->ticketsAvailable()) {
             return response()->json(['available' => false]);
         }
-
-        $request->validate([
-            'agent_id' => ['nullable', 'integer'],
-        ]);
 
         $sla = app(self::SLA_SERVICE);
 

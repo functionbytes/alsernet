@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialTemplateRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialTemplateRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialTemplateResource;
@@ -24,11 +25,13 @@ class SocialTemplatesController extends Controller
             ->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialTemplateResource::collection($templates),
             'meta' => [
-                'current_page' => $templates->currentPage(),
-                'last_page' => $templates->lastPage(),
-                'per_page' => $templates->perPage(),
+                'currentPage' => $templates->currentPage(),
+                'lastPage' => $templates->lastPage(),
+                'perPage' => $templates->perPage(),
                 'total' => $templates->total(),
             ],
         ]);
@@ -44,18 +47,14 @@ class SocialTemplatesController extends Controller
         $template = SocialTemplate::create($validated);
         $this->auditLog->log('create', $template, null, $template->toArray());
 
-        return response()->json([
-            'data' => new SocialTemplateResource($template),
-        ], 201);
+        return ApiResponse::created(new SocialTemplateResource($template), 'Plantilla creada correctamente.');
     }
 
     public function show(SocialTemplate $template): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.templates.manage'), 403);
 
-        return response()->json([
-            'data' => new SocialTemplateResource($template),
-        ]);
+        return ApiResponse::success(new SocialTemplateResource($template));
     }
 
     public function update(UpdateSocialTemplateRequest $request, SocialTemplate $template): JsonResponse
@@ -65,9 +64,7 @@ class SocialTemplatesController extends Controller
         $template->update($request->validated());
         $this->auditLog->log('update', $template, $oldValues, $template->toArray());
 
-        return response()->json([
-            'data' => new SocialTemplateResource($template),
-        ]);
+        return ApiResponse::success(new SocialTemplateResource($template), 'Plantilla actualizada correctamente.');
     }
 
     public function destroy(SocialTemplate $template): JsonResponse
@@ -77,7 +74,7 @@ class SocialTemplatesController extends Controller
         $template->delete();
         $this->auditLog->log('delete', $template, $oldValues);
 
-        return response()->json(['message' => 'Plantilla eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 
     public function preview(): JsonResponse
@@ -91,8 +88,6 @@ class SocialTemplatesController extends Controller
         $tpl = SocialTemplate::find($template['template_id']);
         $data = $template['variables'] ?? [];
 
-        return response()->json([
-            'rendered' => $tpl->render($data),
-        ]);
+        return ApiResponse::success(['rendered' => $tpl->render($data)]);
     }
 }

@@ -27,7 +27,7 @@ class ContactDrop extends BaseDrop
 
     public function phone(): string
     {
-        return $this->customer->phone ?? '';
+        return $this->customer->phone ?: ($this->customer->whatsapp_phone ?? '');
     }
 
     public function company(): string

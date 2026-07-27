@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class PermissionsSeeder extends Seeder
@@ -29,6 +30,7 @@ class PermissionsSeeder extends Seeder
             'helpdesk.conversations.delete',
             'helpdesk.conversations.manage',
             'helpdesk.conversations.participants.manage',
+            'helpdesk.conversations.link-customer',
 
             // Customers / Contactos
             'helpdesk.customers.view',
@@ -42,6 +44,11 @@ class PermissionsSeeder extends Seeder
             // Companies (cuentas empresa)
             'helpdesk.companies.view',
             'helpdesk.companies.manage',
+
+            // Documents (gestión de expedientes KYC desde el inbox —
+            // aprobar/rechazar/enviar/subir/eliminar; separado de solo ver
+            // la conversación).
+            'helpdesk.documents.manage',
 
             // Agents
             'helpdesk.agents.manage',
@@ -193,5 +200,22 @@ class PermissionsSeeder extends Seeder
         foreach ($permissions as $name) {
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
+
+        $this->backfillDocumentsManage();
+    }
+
+    /**
+     * `helpdesk.documents.manage` es nuevo: para no dejar sin acceso a quien ya
+     * gestionaba expedientes, se otorga a todo rol que ya tuviera
+     * `helpdesk.conversations.update` (el tramo de "escritura" del helpdesk).
+     * Idempotente y seguro de re-ejecutar.
+     */
+    private function backfillDocumentsManage(): void
+    {
+        Role::whereHas('permissions', fn ($q) => $q->where('name', 'helpdesk.conversations.update'))
+            ->get()
+            ->each(fn (Role $role) => $role->givePermissionTo('helpdesk.documents.manage'));
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

@@ -28,6 +28,7 @@ class ChatFlow extends Model
         'trigger_type',
         'trigger_conditions',
         'nodes',
+        'edges',
         'published_nodes',
         'status',
         'priority',
@@ -40,6 +41,7 @@ class ChatFlow extends Model
         return [
             'trigger_conditions' => 'array',
             'nodes' => 'array',
+            'edges' => 'array',
             'published_nodes' => 'array',
             'published_at' => 'datetime',
         ];
@@ -49,7 +51,7 @@ class ChatFlow extends Model
 
     const STATUSES = ['draft', 'active', 'archived'];
 
-    const NODE_TYPES = ['start', 'message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'branches', 'branchItem', 'action', 'delay', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'rich_message', 'send_file', 'document_link', 'csat', 'business_hours', 'add_tag', 'set_attribute', 'go_to_step', 'transfer', 'close', 'end'];
+    const NODE_TYPES = ['start', 'message', 'quick_replies', 'collect_input', 'identify_customer', 'request_documents', 'branches', 'branchItem', 'action', 'delay', 'ai_response', 'ai_agent', 'order_lookup', 'http_request', 'rich_message', 'send_file', 'document_link', 'csat', 'business_hours', 'add_tag', 'set_attribute', 'go_to_step', 'transfer', 'close', 'create_ticket', 'end'];
 
     /**
      * Cache key for the cheap "any active flows?" gate used by the global

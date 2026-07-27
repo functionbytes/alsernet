@@ -22,6 +22,7 @@ use Modules\Erp\Http\Middleware\ApiAuth;
 use Modules\Erp\Http\Middleware\ValidateEndpointToken;
 use Modules\Erp\Services\CircuitBreaker;
 use Modules\Erp\Services\ErpService;
+use Modules\Erp\Services\OCI8Service;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -77,6 +78,11 @@ class ErpServiceProvider extends ServiceProvider
         $this->app->singleton(CircuitBreaker::class, function ($app) {
             return new CircuitBreaker;
         });
+
+        // Share a single OCI8 connection per request/worker so the isAlive()
+        // ping in connect() reuses the live connection instead of opening a
+        // fresh Oracle connection on every app(OCI8Service::class) resolution.
+        $this->app->singleton(OCI8Service::class);
     }
 
     /**

@@ -49,7 +49,6 @@ Route::prefix('helpcenter')->group(function () {
         Route::delete('/categories/{id}', [HelpCenterController::class, 'destroy'])->name('manager.helpcenter.api.categories.delete');
 
         Route::get('/categories/{id}/sections', [HelpCenterController::class, 'apiSections'])->name('manager.helpcenter.api.sections');
-        Route::delete('/sections/{id}', [HelpCenterController::class, 'destroySection'])->name('manager.helpcenter.api.sections.delete');
 
         Route::get('/sections/{id}/articles', [HelpCenterController::class, 'apiSectionArticles'])->name('manager.helpcenter.api.articles');
         Route::post('/articles', [HelpCenterController::class, 'storeArticle'])->name('manager.helpcenter.api.articles.create');

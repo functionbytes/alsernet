@@ -240,7 +240,13 @@
                     });
                     $('[data-bv-modal-name="tags"]').removeClass('on');
                     if (!$('.bv-modal.on').length) { $('body').css('overflow', ''); }
-                    updateRightPanelTags();
+
+                    // Recarga el pane para que la sección "Etiquetas" del panel
+                    // derecho refleje de inmediato lo que se acaba de guardar.
+                    var convId = $('.bv-composer').data('bv-conversation-id');
+                    if (convId && typeof window.bvLoadConversationPane === 'function') {
+                        window.bvLoadConversationPane(convId, null, { push: false });
+                    }
                 } else {
                     toastr.error(resp.message || 'Error al guardar etiquetas');
                 }
@@ -252,39 +258,6 @@
         });
     });
 
-    /* ── Actualiza chips del panel derecho ───────────────────── */
-    function updateRightPanelTags() {
-        var chips = [];
-        applied().find('.bv-rtag').each(function () {
-            var $chip = $(this);
-            var id    = $chip.data('tag-id');
-            var name  = $chip.clone().children().remove().end().text().trim();
-            var color = '#6c757d';
-            chips.push({ name: name, color: color });
-        });
-
-        var $section = $('.bv-right-section').filter(function () {
-            return $(this).find('.bv-tags-wrap, .bv-tab-empty-inline').length > 0;
-        }).first();
-
-        if (!$section.length) { return; }
-
-        var $wrap  = $section.find('.bv-tags-wrap');
-        var $empty = $section.find('.bv-tab-empty-inline');
-
-        if (chips.length) {
-            var html = chips.map(function (t) {
-                return '<span class="bv-tag-pill bv-tag-pill--dynamic" style="--bv-tag-color:' +
-                    $('<span>').text(t.color).html() + '">' +
-                    $('<span>').text(t.name).html() + '</span>';
-            }).join('');
-            if ($wrap.length) { $wrap.html(html); } else { $empty.before('<div class="bv-tags-wrap">' + html + '</div>'); }
-            $empty.hide();
-        } else {
-            $wrap.remove();
-            $empty.show();
-        }
-    }
 })();
 </script>
 @endpush

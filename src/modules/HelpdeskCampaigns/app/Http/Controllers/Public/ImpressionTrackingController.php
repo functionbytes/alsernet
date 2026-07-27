@@ -31,6 +31,14 @@ class ImpressionTrackingController extends Controller
      */
     public function recordView(RecordImpressionRequest $request, FrequencyCapService $cap, TargetingService $targeting, VariantSelector $variants): JsonResponse
     {
+        if (! helpdesk_campaigns_enabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Campaign tracking is disabled.',
+                'code' => 'INTEGRATION_DISABLED',
+            ]);
+        }
+
         $campaign = Campaign::query()
             ->where('id', $request->integer('campaign_id'))
             ->where('status', 'active')
@@ -124,6 +132,14 @@ class ImpressionTrackingController extends Controller
      */
     public function recordClick(string $impressionUuid): JsonResponse
     {
+        if (! helpdesk_campaigns_enabled()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Campaign tracking is disabled.',
+                'code' => 'INTEGRATION_DISABLED',
+            ]);
+        }
+
         $impression = CampaignImpression::where('impression_id', $impressionUuid)->first();
 
         if (! $impression) {
@@ -156,12 +172,14 @@ class ImpressionTrackingController extends Controller
         ]);
     }
 
+    /**
+     * customer_session_id es client-supplied sin cookie firmada por el
+     * servidor — no puede ser la base del dedup (un visitante podia mandar
+     * un valor aleatorio en cada request para saltarselo). Para anonimos se
+     * usa solo la IP (mismo criterio en FrequencyCapService::visitorKey()).
+     */
     private function dedupKey(int $campaignId, array $visitor): ?string
     {
-        if (! empty($visitor['customer_session_id'])) {
-            return 'hc:dedup:'.$campaignId.':s'.substr(md5($visitor['customer_session_id']), 0, 12);
-        }
-
         if (! empty($visitor['customer_id'])) {
             return 'hc:dedup:'.$campaignId.':c'.$visitor['customer_id'];
         }

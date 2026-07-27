@@ -40,10 +40,11 @@ class ErpCredentialsApiController extends Controller
             $endpoint->credentials()->update(['is_active' => false]);
         }
 
-        $validated['endpoint_id'] = $endpoint->id;
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        $credential = ErpCredential::create($validated);
+        // Crear vía la relación: fija endpoint_id (que no está en $fillable, así
+        // que ErpCredential::create() lo descartaba dejando la credencial huérfana).
+        $credential = $endpoint->credentials()->create($validated);
 
         return response()->json([
             'message' => 'Credencial creada correctamente',

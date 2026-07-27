@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialRuleRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialRuleRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialRuleResource;
@@ -25,11 +26,13 @@ class SocialRulesController extends Controller
             ->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialRuleResource::collection($rules),
             'meta' => [
-                'current_page' => $rules->currentPage(),
-                'last_page' => $rules->lastPage(),
-                'per_page' => $rules->perPage(),
+                'currentPage' => $rules->currentPage(),
+                'lastPage' => $rules->lastPage(),
+                'perPage' => $rules->perPage(),
                 'total' => $rules->total(),
             ],
         ]);
@@ -45,18 +48,14 @@ class SocialRulesController extends Controller
         $rule = SocialRule::create($validated);
         $this->auditLog->log('create', $rule, null, $rule->toArray());
 
-        return response()->json([
-            'data' => new SocialRuleResource($rule),
-        ], 201);
+        return ApiResponse::created(new SocialRuleResource($rule), 'Regla creada correctamente.');
     }
 
     public function show(SocialRule $rule): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.rules.manage'), 403);
 
-        return response()->json([
-            'data' => new SocialRuleResource($rule),
-        ]);
+        return ApiResponse::success(new SocialRuleResource($rule));
     }
 
     public function update(UpdateSocialRuleRequest $request, SocialRule $rule): JsonResponse
@@ -66,9 +65,7 @@ class SocialRulesController extends Controller
         $rule->update($request->validated());
         $this->auditLog->log('update', $rule, $oldValues, $rule->toArray());
 
-        return response()->json([
-            'data' => new SocialRuleResource($rule),
-        ]);
+        return ApiResponse::success(new SocialRuleResource($rule), 'Regla actualizada correctamente.');
     }
 
     public function destroy(SocialRule $rule): JsonResponse
@@ -78,7 +75,7 @@ class SocialRulesController extends Controller
         $rule->delete();
         $this->auditLog->log('delete', $rule, $oldValues);
 
-        return response()->json(['message' => 'Regla eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 
     public function toggleActive(SocialRule $rule): JsonResponse
@@ -88,9 +85,7 @@ class SocialRulesController extends Controller
         $rule->update(['is_active' => ! $rule->is_active]);
         $this->auditLog->log('update', $rule, $oldValues, ['is_active' => $rule->is_active]);
 
-        return response()->json([
-            'data' => new SocialRuleResource($rule),
-        ]);
+        return ApiResponse::success(new SocialRuleResource($rule));
     }
 
     public function simulate(): JsonResponse
@@ -111,7 +106,7 @@ class SocialRulesController extends Controller
             ->ordered()
             ->get();
 
-        return response()->json([
+        return ApiResponse::success([
             'classification' => $classification,
             'matched_rules' => SocialRuleResource::collection($rules),
         ]);

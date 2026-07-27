@@ -200,6 +200,10 @@ class EmbeddingsService
      */
     public function search(string $query, int $limit = 10, ?string $locale = null): array
     {
+        if (! helpdesk_helpcenter_enabled()) {
+            return [];
+        }
+
         $queryEmbedding = $this->callEmbeddingApi($query);
 
         if (empty($queryEmbedding['embedding'])) {

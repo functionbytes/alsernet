@@ -49,7 +49,7 @@ class RecoverAbandonedCartListener implements ShouldQueue
     {
         Log::error('RecoverAbandonedCartListener failed', [
             'cart_id' => $event->cartId(),
-            'email' => $event->email(),
+            'email_hash' => hash('sha256', (string) $event->email()),
             'error' => $exception->getMessage(),
         ]);
     }

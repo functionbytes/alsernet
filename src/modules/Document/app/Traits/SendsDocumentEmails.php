@@ -81,6 +81,13 @@ trait SendsDocumentEmails
             ], 429);
         }
 
+        // Registrar cuándo se envió realmente el correo de confirmación de
+        // carga. El envío ahora es manual (revisión del agente), así que este
+        // timestamp ya no se marca automáticamente al completar la subida.
+        if ($emailType === 'upload' && ! $document->uploaded_confirmation_sent_at) {
+            $document->update(['uploaded_confirmation_sent_at' => now()]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Email enviado correctamente',

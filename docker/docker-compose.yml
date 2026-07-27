@@ -36,51 +36,8 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    environment:
-      - APP_URL=http://localhost:8090
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
-      - DB_CONNECTION=mysql
-      - DB_HOST=host.docker.internal
-      - DB_PORT=3306
-      - DB_DATABASE=system
-      - DB_USERNAME=root
-      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      - DB_DATABASE_PRESTASHOP=prestashop
-      - DB_DATABASE_WEBADMIN=webadmin
-      # Oracle Database
-      - ORACLE_HOST=192.168.253.8
-      - ORACLE_PORT=1521
-      - ORACLE_DATABASE=GESTCENT
-      - ORACLE_SERVICE_NAME=GESTCENT
-      - ORACLE_USERNAME=lectura
-      - ORACLE_PASSWORD=alsernet
-      - ORACLE_SCHEMA=DEVELOPER
-      - ORACLE_CHARSET=AL32UTF8
-      # AI Services
-      - OPENAI_API_KEY=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
-      # Manager webhook (recibe eventos desde manager)
-      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
-      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
-      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
-      - ERP_MANAGER_URL=http://host.docker.internal:8090
-      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
-      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
-      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
-      - REDIS_CLIENT=phpredis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      # Broadcasting — deshabilitado en Docker (no hay servidor Reverb local)
-      - BROADCAST_CONNECTION=null
-      - BROADCAST_DRIVER=null
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=system-mailpit
-      - MAIL_PORT=1025
-      - MAIL_USERNAME=null
-      - MAIL_PASSWORD=null
-      - MAIL_ENCRYPTION=null
+    env_file:
+      - ./laravel.env
 
   # Redis — caché, sesiones y colas
   redis:
@@ -124,7 +81,7 @@ services:
     container_name: system-worker
     restart: unless-stopped
     working_dir: /tmp
-    command: php /var/www/artisan queue:work redis --queue=helpdesk-webhooks,webhooks,notifications-high,helpdesk-events,helpdesk,chatflow,emails,notifications,broadcasts,exports,sync,drip,high,default,low --sleep=3 --tries=3 --timeout=960 --max-jobs=500
+    command: php /var/www/artisan queue:work redis --queue=webhooks,notifications-high,helpdesk,chatflow,emails,notifications,broadcasts,exports,sync,drip,high,default,low --sleep=0.5 --tries=3 --timeout=960 --max-jobs=500
     volumes:
       - ../src:/var/www
       - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
@@ -144,47 +101,114 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    environment:
-      - APP_URL=http://localhost:8090
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
-      - DB_CONNECTION=mysql
-      - DB_HOST=host.docker.internal
-      - DB_PORT=3306
-      - DB_DATABASE=system
-      - DB_USERNAME=root
-      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      - DB_DATABASE_PRESTASHOP=prestashop
-      - DB_DATABASE_WEBADMIN=webadmin
-      - ORACLE_HOST=192.168.253.8
-      - ORACLE_PORT=1521
-      - ORACLE_DATABASE=GESTCENT
-      - ORACLE_SERVICE_NAME=GESTCENT
-      - ORACLE_USERNAME=lectura
-      - ORACLE_PASSWORD=alsernet
-      - ORACLE_SCHEMA=DEVELOPER
-      - ORACLE_CHARSET=AL32UTF8
-      - OPENAI_API_KEY=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
-      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
-      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
-      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
-      - ERP_MANAGER_URL=http://host.docker.internal:8090
-      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
-      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
-      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
-      - REDIS_CLIENT=phpredis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      - BROADCAST_CONNECTION=null
-      - BROADCAST_DRIVER=null
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=system-mailpit
-      - MAIL_PORT=1025
-      - MAIL_USERNAME=null
-      - MAIL_PASSWORD=null
-      - MAIL_ENCRYPTION=null
+    env_file:
+      - ./laravel.env
+    depends_on:
+      - app
+      - redis
+
+  # Worker dedicado a webhooks entrantes (WhatsApp/Facebook/Instagram) — SOLO
+  # ingesta (crear cliente/conversación/ítem + broadcast). sleep=0 para latencia
+  # mínima. helpdesk-events vive en su propio worker (abajo) para que un
+  # mensaje nuevo nunca espere detrás del post-procesamiento (traducción,
+  # sentiment, auto-tag, IA) del mensaje anterior.
+  worker-webhooks:
+    image: system
+    container_name: system-worker-webhooks
+    restart: unless-stopped
+    working_dir: /tmp
+    command: php /var/www/artisan queue:work redis --queue=helpdesk-webhooks --sleep=0 --tries=3 --timeout=60 --max-jobs=1000
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - ./laravel.env
+    depends_on:
+      - app
+      - redis
+
+  # Worker dedicado al post-procesamiento de mensajes (traducción, sentiment,
+  # auto-tag, automatizaciones, agente IA) — separado de worker-webhooks para
+  # que nunca bloquee la ingesta de mensajes nuevos.
+  worker-events:
+    image: system
+    container_name: system-worker-events
+    restart: unless-stopped
+    working_dir: /tmp
+    command: php /var/www/artisan queue:work redis --queue=helpdesk-events --sleep=0.5 --tries=3 --timeout=60 --max-jobs=1000
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - ./laravel.env
+    depends_on:
+      - app
+      - redis
+
+  # Worker "misc" — colas de contexto/segundo plano no críticas para la ingesta:
+  # IA del bot, embeddings, contexto ERP/PrestaShop y su warming, GDPR, livechat,
+  # scheduler de campañas e impresiones. Espeja prueba-laravel-queue-worker-misc.conf
+  # de producción (supervisor); sin esto, en el Docker local esas colas no se
+  # procesaban y sus jobs quedaban acumulados en Redis.
+  worker-misc:
+    image: system
+    container_name: system-worker-misc
+    restart: unless-stopped
+    working_dir: /tmp
+    command: php /var/www/artisan queue:work redis --queue=helpdesk-ai,helpdesk-audit,helpdesk-broadcasts,helpdesk-embeddings,helpdesk-erp,helpdesk-erp-warming,helpdesk-ps,helpdesk-ps-warming,helpdesk-scheduled,helpdeskcompliance,helpdesklivechat,campaigns-scheduler,impressions,helpdesk-social-webhooks,helpdesk-social-processing,helpdesk-social-analytics,helpdesk-social-ai --sleep=1 --tries=3 --timeout=300 --max-jobs=500
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - ./laravel.env
     depends_on:
       - app
       - redis
@@ -216,49 +240,51 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    environment:
-      - APP_URL=http://localhost:8090
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_KEY=base64:SKTeA72QmFthXXEkjZxNjZlmq6yumOjhMKjlXn4n8P4=
-      - DB_CONNECTION=mysql
-      - DB_HOST=host.docker.internal
-      - DB_PORT=3306
-      - DB_DATABASE=system
-      - DB_USERNAME=root
-      - DB_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      - DB_DATABASE_PRESTASHOP=prestashop
-      - DB_DATABASE_WEBADMIN=webadmin
-      - ORACLE_HOST=192.168.253.8
-      - ORACLE_PORT=1521
-      - ORACLE_DATABASE=GESTCENT
-      - ORACLE_SERVICE_NAME=GESTCENT
-      - ORACLE_USERNAME=lectura
-      - ORACLE_PASSWORD=alsernet
-      - ORACLE_SCHEMA=DEVELOPER
-      - ORACLE_CHARSET=AL32UTF8
-      - OPENAI_API_KEY=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
-      - MANAGER_WEBHOOK_URL=http://host.docker.internal:8080
-      # HelpdeskErp usa el ERP del PROPIO system (modulo Erp, Oracle directo OCI8) — NO el manager.
-      # Loopback al propio nginx (8090). PrestaShop bridge en :8091.
-      - ERP_MANAGER_URL=http://host.docker.internal:8090
-      - ERP_WEBHOOK_SECRET=741fba7c4b3d575d945fdb84f6c91ea84930646526cb839ee67142439600026f
-      - ALSERNETBRIDGE_API_URL=http://host.docker.internal:8091/modules/alsernetbridge/api.php
-      - ALSERNETBRIDGE_WEBHOOK_SECRET=fba6ea7e73e5afd426cb99e2065ca69c28471be3869b0fe8bf0f7d31c2a9434f
-      - REDIS_CLIENT=phpredis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=6cWRY1PUmiwYciQxJXkg
-      - BROADCAST_CONNECTION=null
-      - BROADCAST_DRIVER=null
-      - MAIL_MAILER=smtp
-      - MAIL_HOST=system-mailpit
-      - MAIL_PORT=1025
-      - MAIL_USERNAME=null
-      - MAIL_PASSWORD=null
-      - MAIL_ENCRYPTION=null
+    env_file:
+      - ./laravel.env
     depends_on:
       - app
+      - redis
+
+  # Reverb — servidor WebSocket para broadcasting en tiempo real (solo interno,
+  # sin puerto publicado al host; nginx lo expone via proxy en /app/)
+  reverb:
+    image: system
+    container_name: system-reverb
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php /var/www/artisan reverb:start --host=0.0.0.0 --port=8080
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ../src:/var/www
+      - ./php/php.ini:/usr/local/etc/php/conf.d/zz-custom.ini:ro
+    networks:
+      - system-network
+    platform: linux/amd64
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "oracle.local:192.168.253.8"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    # Un servidor WebSocket mantiene un file descriptor por conexion abierta —
+    # necesita el mismo limite ampliado que app/worker/scheduler.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    env_file:
+      - ./laravel.env
+    environment:
+      - REVERB_SERVER_HOST=0.0.0.0
+      - REVERB_SERVER_PORT=8080
+    depends_on:
       - redis
 
   # Servicio Nginx
@@ -276,6 +302,7 @@ services:
       - system-network
     depends_on:
       - app
+      - reverb
     dns:
       - 127.0.0.1
       - 8.8.8.8

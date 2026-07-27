@@ -7,6 +7,7 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Services\CircuitBreaker;
+use Modules\Helpdesk\Services\Channels\MetaTokenHealth;
 
 class WhatsAppBusinessService
 {
@@ -263,24 +264,52 @@ class WhatsAppBusinessService
 
                 // Incoming messages
                 foreach ($value['messages'] ?? [] as $msg) {
+                    $from = $msg['from'] ?? null;
+                    $id = $msg['id'] ?? null;
+                    $type = $msg['type'] ?? null;
+
+                    if ($from === null || $id === null || $type === null) {
+                        continue;
+                    }
+
+                    // Reacción del cliente a un mensaje nuestro → evento de reacción
+                    // (no un mensaje nuevo); lo procesa processStatusEvent. WhatsApp
+                    // manda un emoji vacío cuando el cliente RETIRA la reacción.
+                    if ($type === 'reaction') {
+                        $reaction = $msg['reaction'] ?? [];
+                        $emoji = $reaction['emoji'] ?? null;
+                        $events[] = [
+                            'type' => 'reaction',
+                            'recipient_id' => $from,
+                            'message_id' => $reaction['message_id'] ?? null,
+                            'emoji' => $emoji,
+                            'action' => filled($emoji) ? 'react' : 'unreact',
+                            'timestamp' => (int) ($msg['timestamp'] ?? 0),
+                        ];
+
+                        continue;
+                    }
+
                     $contact = collect($value['contacts'] ?? [])
-                        ->firstWhere('wa_id', $msg['from']);
+                        ->firstWhere('wa_id', $from);
 
                     $event = [
                         'type' => 'message',
-                        'phone' => $msg['from'],
-                        'name' => $contact['profile']['name'] ?? $msg['from'],
-                        'message_id' => $msg['id'],
-                        'timestamp' => (int) $msg['timestamp'],
-                        'message_type' => $msg['type'],
+                        'phone' => $from,
+                        'name' => $contact['profile']['name'] ?? $from,
+                        'message_id' => $id,
+                        'timestamp' => (int) ($msg['timestamp'] ?? 0),
+                        'message_type' => $type,
                         'body' => null,
                         'media_id' => null,
                         'caption' => null,
                         'filename' => null,
                         'mime_type' => null,
+                        // Anuncio click-to-WhatsApp que originó el mensaje (si aplica).
+                        'referral' => $msg['referral'] ?? null,
                     ];
 
-                    match ($msg['type']) {
+                    match ($type) {
                         'text' => $event['body'] = $msg['text']['body'] ?? null,
                         'image' => $this->fillMediaEvent($event, $msg['image'] ?? []),
                         'document' => $this->fillMediaEvent($event, $msg['document'] ?? [], withFilename: true),
@@ -291,7 +320,7 @@ class WhatsAppBusinessService
                         'interactive' => $event['body'] = $this->parseInteractiveReply($msg['interactive'] ?? []),
                         'location' => $event['body'] = $this->parseLocation($msg['location'] ?? []),
                         'contacts' => $event['body'] = '[contacto]',
-                        default => $event['body'] = "[{$msg['type']}]",
+                        default => $event['body'] = "[{$type}]",
                     };
 
                     $events[] = $event;
@@ -301,10 +330,10 @@ class WhatsAppBusinessService
                 foreach ($value['statuses'] ?? [] as $status) {
                     $events[] = [
                         'type' => 'status',
-                        'message_id' => $status['id'],
-                        'status' => $status['status'],       // sent|delivered|read|failed
-                        'recipient_id' => $status['recipient_id'],
-                        'timestamp' => (int) $status['timestamp'],
+                        'message_id' => $status['id'] ?? null,
+                        'status' => $status['status'] ?? null,       // sent|delivered|read|failed
+                        'recipient_id' => $status['recipient_id'] ?? null,
+                        'timestamp' => (int) ($status['timestamp'] ?? 0),
                         'errors' => $status['errors'] ?? [],
                     ];
                 }
@@ -412,6 +441,7 @@ class WhatsAppBusinessService
 
             if (! $response->successful()) {
                 $this->circuitBreaker->recordFailure();
+                $this->flagInvalidTokenIfNeeded($response->json('error'));
                 $this->logApiError('send', $response->json(), $to);
 
                 return null;
@@ -422,9 +452,31 @@ class WhatsAppBusinessService
             return $response->json('messages.0.id');
         } catch (\Throwable $e) {
             $this->circuitBreaker->recordFailure();
+
+            if ($e instanceof RequestException) {
+                $this->flagInvalidTokenIfNeeded($e->response?->json('error'));
+            }
+
             Log::error('WhatsApp send exception', ['to' => $to, 'error' => $e->getMessage()]);
 
             return null;
+        }
+    }
+
+    /**
+     * Detecta un token de Meta caducado/inválido (code 190 / OAuthException) y lo
+     * marca en caché + log claro para que ops sepa que hay que re-autenticar.
+     *
+     * @param  array<string, mixed>|null  $error
+     */
+    private function flagInvalidTokenIfNeeded(?array $error): void
+    {
+        if ($error === null) {
+            return;
+        }
+
+        if ((int) ($error['code'] ?? 0) === 190 || ($error['type'] ?? '') === 'OAuthException') {
+            MetaTokenHealth::flagInvalid('whatsapp', $error);
         }
     }
 

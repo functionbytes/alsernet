@@ -67,6 +67,17 @@ return [
         'add_knowledge' => 'Add knowledge',
     ],
 
+    'flow_results' => [
+        'ticket_not_found' => 'No ticket found for this conversation',
+        'action_failed' => 'Action could not be completed',
+        'skipped_no_agent' => 'Action skipped: no agent_id configured',
+        'ticket_assigned' => 'Ticket assigned to agent',
+        'skipped_no_status' => 'Action skipped: no status_id configured',
+        'ticket_status_updated' => 'Ticket status updated',
+        'tag_added' => 'Tag added to ticket',
+        'ticket_closed' => 'Ticket closed',
+    ],
+
     'ai' => [
         'session_started' => 'Session started with AI agent.',
         'no_agent_available' => 'No agents available at this time.',

@@ -16,10 +16,35 @@ trait ResolvesReverbHost
     {
         $host = (string) config('broadcasting.connections.reverb.options.host', '');
 
-        if ($host === '' || in_array($host, ['0.0.0.0', '::', '[::]'], true)) {
+        // 'reverb' is the docker-compose service name used for server-to-server
+        // publishing between containers — also unreachable from a browser.
+        if ($host === '' || in_array($host, ['0.0.0.0', '::', '[::]', 'reverb'], true)) {
             return request()->getHost();
         }
 
         return $host;
+    }
+
+    /**
+     * The 'options.port'/'options.scheme' config is for server-to-server calls
+     * (backend -> reverb container over the internal Docker network) and is
+     * never reachable from a browser. 'public_port'/'public_scheme' are the
+     * values a browser (admin inbox or the embeddable widget) should use —
+     * e.g. the nginx-proxied port on the same host the request came in on.
+     */
+    protected function connectableReverbPort(): int
+    {
+        $port = config('broadcasting.connections.reverb.public_port');
+
+        return $port !== null && $port !== ''
+            ? (int) $port
+            : (int) config('broadcasting.connections.reverb.options.port', 8080);
+    }
+
+    protected function connectableReverbScheme(): string
+    {
+        $scheme = config('broadcasting.connections.reverb.public_scheme');
+
+        return $scheme ?: config('broadcasting.connections.reverb.options.scheme', 'http');
     }
 }

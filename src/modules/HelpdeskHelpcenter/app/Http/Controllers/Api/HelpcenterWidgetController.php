@@ -5,6 +5,7 @@ namespace Modules\HelpdeskHelpcenter\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Modules\HelpdeskHelpcenter\Http\Requests\ArticleFeedbackRequest;
 use Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService;
 
@@ -48,12 +49,18 @@ class HelpcenterWidgetController extends Controller
 
     public function apiArticleFeedback(int $id, ArticleFeedbackRequest $request): JsonResponse
     {
-        $ok = $this->service->recordFeedback($id, (bool) $request->validated('helpful'));
+        // Mismo dedup que el voto público: cookie del votante + hash de IP.
+        $cookieId = $request->cookie('hd_voter_id') ?? Str::uuid()->toString();
+        $salt = config('helpdeskhelpcenter.vote_ip_salt') ?: config('app.key');
+        $ipHash = hash('sha256', $request->ip().$salt);
+
+        $ok = $this->service->recordFeedback($id, (bool) $request->validated('helpful'), $cookieId, $ipHash);
 
         if (! $ok) {
             return response()->json(['error' => 'Article not found'], 404);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true])
+            ->cookie('hd_voter_id', $cookieId, 60 * 24 * 365);
     }
 }

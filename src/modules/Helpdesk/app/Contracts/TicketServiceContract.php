@@ -28,9 +28,27 @@ interface TicketServiceContract
     public function createFromConversation(Conversation $conversation, array $payload = []): ?array;
 
     /**
+     * Create a ticket directly for a customer (no originating conversation).
+     * Returns the same compact shape as createFromConversation, or null if
+     * creation failed or the integration is unavailable.
+     *
+     * @param  array{subject?: string, message?: string, description?: string, priority?: string, category_id?: int|null, assignee_id?: int|null}  $payload
+     * @return array{id: int, ticket_number: string, subject: string, status: ?string, priority: ?string, url: string}|null
+     */
+    public function createForCustomer(Customer $customer, array $payload = []): ?array;
+
+    /**
      * Latest tickets owned by a customer, sorted by most recent.
      */
     public function getCustomerTickets(Customer $customer, int $limit = 5): Collection;
+
+    /**
+     * Tickets created from (linked to) a given conversation. Enables the inbox
+     * to surface the tickets that originated in the current conversation.
+     *
+     * @return Collection<int, mixed>
+     */
+    public function getConversationTickets(Conversation $conversation): Collection;
 
     /**
      * Lightweight list of categories for ticket creation forms.

@@ -7,7 +7,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\HelpdeskAgents\Concerns\InteractsWithDefaultAiAgent;
-use Modules\HelpdeskAgents\Http\Requests\GetAiAgentModelsRequest;
 use Modules\HelpdeskAgents\Http\Requests\TestAiAgentConnectionRequest;
 use Modules\HelpdeskAgents\Http\Requests\UpdateAiAgentSettingsRequest;
 use Modules\HelpdeskAgents\Models\AiAgent;
@@ -106,49 +105,5 @@ class AgentSettingsController extends Controller
                 'message' => $e->getMessage(),
             ], 400);
         }
-    }
-
-    public function getModels(GetAiAgentModelsRequest $request): JsonResponse
-    {
-        $this->authorize('viewAny', AiAgent::class);
-
-        $provider = config("helpdeskagents.providers.{$request->provider}");
-        $models = $provider['models'] ?? [];
-
-        return response()->json(['models' => $models]);
-    }
-
-    public function statistics(): JsonResponse
-    {
-        $this->authorize('viewAny', AiAgent::class);
-
-        $agent = $this->getDefaultAgent();
-
-        if (! $agent) {
-            return response()->json(['error' => 'No agent configured'], 404);
-        }
-
-        $sessionCounts = $agent->sessions()
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw("SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active")
-            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed")
-            ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed")
-            ->selectRaw('AVG(CASE WHEN ended_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, started_at, ended_at) END) as avg_duration')
-            ->first();
-
-        $totalMessages = $agent->sessions()
-            ->join('helpdesk_ai_agent_session_messages', 'helpdesk_ai_agent_sessions.id', '=', 'helpdesk_ai_agent_session_messages.session_id')
-            ->count();
-
-        return response()->json([
-            'total_sessions' => (int) ($sessionCounts->total ?? 0),
-            'active_sessions' => (int) ($sessionCounts->active ?? 0),
-            'completed_sessions' => (int) ($sessionCounts->completed ?? 0),
-            'failed_sessions' => (int) ($sessionCounts->failed ?? 0),
-            'total_messages' => $totalMessages,
-            'average_session_duration' => round((float) ($sessionCounts->avg_duration ?? 0), 1),
-            'enabled_at' => $agent->enabled_at?->toIso8601String(),
-            'status' => $agent->status,
-        ]);
     }
 }

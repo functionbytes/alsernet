@@ -16,6 +16,12 @@ class ConversationItemObserver
 
     public function created(ConversationItem $item): void
     {
+        // Admin kill switch (Settings → Integraciones): when ChatFlow is toggled
+        // off, no chat flow should trigger nor deliver, inbound or outbound.
+        if (! helpdesk_chatflow_enabled()) {
+            return;
+        }
+
         if ($item->type !== 'message') {
             return;
         }

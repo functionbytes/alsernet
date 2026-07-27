@@ -111,9 +111,12 @@ trait UsesOCI8Performance
             ],
         ];
 
-        // Cache result for 60 seconds
+        // Cache result: catalog data (familias/subfamilias/grupos) is near-static,
+        // so a longer TTL raises the hit ratio dramatically versus the old 60s that
+        // expired almost as fast as it filled. Invalidate proactively from
+        // MonitorOracleChanges when a real change is detected.
         if ($useCache) {
-            cache()->put($cacheKey, $response, 60);
+            cache()->put($cacheKey, $response, 900);
         }
 
         return $response;

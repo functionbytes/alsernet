@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Engagement\Http\Controllers\Api\Sdk;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -17,7 +18,7 @@ class GdprController extends Controller
      * POST /eng/api/sdk/gdpr/export
      *
      * Returns all personal data associated with the given email, scoped to
-     * the authenticated channel (website_token). Complies with GDPR Art. 15.
+     * the authenticated inbox (website_token). Complies with GDPR Art. 15.
      *
      * TODO: Add HMAC signature verification from the PS plugin payload to
      * harden auth beyond the website_token already checked by EnsureWebsiteToken.
@@ -29,15 +30,15 @@ class GdprController extends Controller
         ]);
 
         $email = strtolower(trim($request->input('email')));
-        $channel = $request->attributes->get('website_channel');
+        $inboxId = $this->requireInboxId($request);
 
         $data = [
             'email' => $email,
-            'visitor_sessions' => $this->collectFromTable('engagement_visitor_sessions', $email, $channel),
-            'visitor_contexts' => $this->collectFromTable('engagement_visitor_contexts', $email, $channel),
-            'events' => $this->collectFromTable('engagement_events', $email, $channel),
-            'mobile_devices' => $this->collectFromTable('engagement_mobile_devices', $email, $channel),
-            'audit_logs' => $this->collectFromTable('engagement_audit_logs', $email, $channel),
+            'visitor_sessions' => $this->collectFromTable('engagement_visitor_sessions', $email, $inboxId),
+            'visitor_contexts' => $this->collectFromTable('engagement_visitor_contexts', $email, $inboxId),
+            'events' => $this->collectFromTable('engagement_events', $email, $inboxId),
+            'mobile_devices' => $this->collectFromTable('engagement_mobile_devices', $email, $inboxId),
+            'audit_logs' => $this->collectFromTable('engagement_audit_logs', $email, $inboxId),
             'exported_at' => now()->toIso8601String(),
         ];
 
@@ -61,25 +62,18 @@ class GdprController extends Controller
 
         $email = strtolower(trim($request->input('email')));
         $hash = hash('sha256', $email);
-        $channel = $request->attributes->get('website_channel');
-        $channelId = $channel?->id;
+        $inboxId = $this->requireInboxId($request);
 
         $totals = [];
 
-        DB::transaction(function () use ($email, $hash, $channelId, &$totals): void {
+        DB::transaction(function () use ($email, $hash, $inboxId, &$totals): void {
             // Anonymise rows that still carry PII but must be kept for aggregates.
             foreach (['engagement_visitor_sessions', 'engagement_visitor_contexts', 'engagement_audit_logs'] as $table) {
                 if (! Schema::hasTable($table)) {
                     continue;
                 }
 
-                $query = DB::table($table)->where('email', $email);
-
-                if ($channelId && Schema::hasColumn($table, 'web_channel_id')) {
-                    $query->where('web_channel_id', $channelId);
-                }
-
-                $totals[$table] = $query->update([
+                $totals[$table] = $this->scopedQuery($table, $email, $inboxId)->update([
                     'email' => 'gdpr-deleted-'.$hash.'@deleted.local',
                     'ip_address' => '0.0.0.0',
                     'user_agent' => 'redacted',
@@ -88,40 +82,65 @@ class GdprController extends Controller
 
             // Mobile device tokens are fully personal — hard delete.
             if (Schema::hasTable('engagement_mobile_devices')) {
-                $totals['engagement_mobile_devices'] = DB::table('engagement_mobile_devices')
-                    ->where('email', $email)
-                    ->delete();
+                $totals['engagement_mobile_devices'] = $this->scopedQuery('engagement_mobile_devices', $email, $inboxId)->delete();
             }
 
             // Event records contain PII in their payload — hard delete.
             if (Schema::hasTable('engagement_events')) {
-                $totals['engagement_events'] = DB::table('engagement_events')
-                    ->where('email', $email)
-                    ->delete();
+                $totals['engagement_events'] = $this->scopedQuery('engagement_events', $email, $inboxId)->delete();
             }
         });
 
         Log::info('GDPR delete executed', [
             'email_hash' => substr($hash, 0, 16),
-            'channel_id' => $channelId,
+            'inbox_id' => $inboxId,
             'totals' => $totals,
         ]);
 
         return response()->json(['ok' => true, 'deleted' => $totals]);
     }
 
-    private function collectFromTable(string $table, string $email, ?object $channel): array
+    private function requireInboxId(Request $request): int
+    {
+        $inbox = $request->attributes->get('livechat_inbox');
+        abort_unless($inbox, 401, 'Canal web no resuelto.');
+
+        return (int) $inbox->id;
+    }
+
+    private function collectFromTable(string $table, string $email, int $inboxId): array
     {
         if (! Schema::hasTable($table) || ! Schema::hasColumn($table, 'email')) {
             return [];
         }
 
-        $query = DB::table($table)->where('email', $email);
+        return $this->scopedQuery($table, $email, $inboxId)->limit(1000)->get()->toArray();
+    }
 
-        if ($channel && Schema::hasColumn($table, 'web_channel_id')) {
-            $query->where('web_channel_id', $channel->id);
+    /**
+     * Builds an email-filtered query always scoped to the caller's inbox when
+     * the table exposes an `inbox_id` column, preventing cross-tenant access.
+     */
+    private function scopedQuery(string $table, string $email, int $inboxId): Builder
+    {
+        $query = DB::table($table);
+
+        // NOTE: the engagement_* tables do not currently expose an `email`
+        // column (data is keyed by session_token / customer_id, not email).
+        // Guard the filter so delete/export never throw a "unknown column"
+        // SQL error and never touch unrelated rows. The email↔data mapping
+        // (likely via customer_id -> helpdesk_customers.email) needs a
+        // dedicated redesign before this endpoint can actually resolve data.
+        if (Schema::hasColumn($table, 'email')) {
+            $query->where('email', $email);
+        } else {
+            $query->whereRaw('1 = 0');
         }
 
-        return $query->limit(1000)->get()->toArray();
+        if (Schema::hasColumn($table, 'inbox_id')) {
+            $query->where('inbox_id', $inboxId);
+        }
+
+        return $query;
     }
 }

@@ -5,7 +5,7 @@ use Modules\HelpdeskAgents\Http\Controllers\Managers\Settings\ScheduleController
 
 // Schedule (shifts, vacations, on-call) — registered under settings.helpdesk.schedule.*
 // to keep public URLs and route names stable after the refactor.
-Route::prefix('schedule')->name('schedule.')->group(function () {
+Route::prefix('schedule')->name('schedule.')->middleware('integration.enabled:agents')->group(function () {
     Route::get('/', [ScheduleController::class, 'index'])->name('index');
     Route::post('shifts', [ScheduleController::class, 'storeShift'])->name('shifts.store');
     Route::delete('shifts/{shift}', [ScheduleController::class, 'destroyShift'])->name('shifts.destroy');

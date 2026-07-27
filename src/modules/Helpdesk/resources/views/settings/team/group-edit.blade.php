@@ -118,13 +118,13 @@
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th width="5%">
+                                            <th scope="col" width="5%">
                                                 <input type="checkbox" class="form-check-input cursor-pointer" id="selectAll">
                                             </th>
-                                            <th width="45%">Agente</th>
-                                            <th width="30%">Email</th>
-                                            <th width="10%">Rol</th>
-                                            <th width="10%">Prioridad</th>
+                                            <th scope="col" width="45%">Agente</th>
+                                            <th scope="col" width="30%">Email</th>
+                                            <th scope="col" width="10%">Rol</th>
+                                            <th scope="col" width="10%">Prioridad</th>
                                         </tr>
                                     </thead>
                                     <tbody>

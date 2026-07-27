@@ -47,10 +47,10 @@
                 <table class="table align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Nombre</th>
-                            <th>Último uso</th>
-                            <th>Creado</th>
-                            <th class="text-end">Acciones</th>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Último uso</th>
+                            <th scope="col">Creado</th>
+                            <th scope="col" class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -13,9 +13,14 @@ use Modules\Helpdesk\Http\Requests\UpdateAgentSettingsRequest;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Group;
+use Modules\Helpdesk\Services\AgentPresenceService;
 
 class AgentsController extends Controller
 {
+    public function __construct(
+        private readonly AgentPresenceService $presence,
+    ) {}
+
     public function index(): View
     {
         $this->authorize('helpdesk.manage');
@@ -38,7 +43,6 @@ class AgentsController extends Controller
         $this->authorize('viewAny', Conversation::class);
 
         $term = trim((string) $request->input('q', ''));
-        $sessionThreshold = now()->subMinutes(5)->timestamp;
 
         // Permite incluir al usuario actual con ?include_self=1 para fallback de demo
         $includeSelf = $request->boolean('include_self');
@@ -47,7 +51,7 @@ class AgentsController extends Controller
             ->select(['id', 'firstname', 'lastname', 'email'])
             ->with([
                 'roles:id,name',
-                'agentSettings:id,user_id,assignment_limit,accepts_conversations',
+                'agentSettings:id,user_id,max_concurrent_conversations,accepts_conversations',
                 'groups:id,name',
             ])
             ->when(! $includeSelf, fn ($q) => $q->where('id', '!=', auth()->id()))
@@ -62,12 +66,11 @@ class AgentsController extends Controller
             ->limit(12)
             ->get();
 
-        $onlineIds = \DB::table('sessions')
-            ->whereNotNull('user_id')
-            ->where('last_activity', '>=', $sessionThreshold)
-            ->pluck('user_id')
-            ->unique()
-            ->all();
+        // Not the SQL `sessions` table: SESSION_DRIVER is redis, so it's never
+        // populated — this used to mark every agent "offline" regardless of who
+        // was actually using the panel. AgentPresenceService tracks real
+        // presence via a Redis heartbeat.
+        $onlineIds = $this->presence->getOnlineAgents();
 
         // Workload actual por agente: conversaciones abiertas (no archivadas, status open)
         $agentIds = $agents->pluck('id');
@@ -89,7 +92,7 @@ class AgentsController extends Controller
 
             $isOnline = in_array($u->id, $onlineIds, true);
             $accepts = $u->agentSettings?->accepts_conversations ?? 'yes';
-            $limit = (int) ($u->agentSettings?->assignment_limit ?? 0);
+            $limit = (int) ($u->agentSettings?->max_concurrent_conversations ?? 0);
             $current = (int) ($workloads[$u->id] ?? 0);
             $maxWorkload = $limit > 0 ? $limit : 15;
 

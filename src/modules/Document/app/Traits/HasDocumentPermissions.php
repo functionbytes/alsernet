@@ -155,6 +155,16 @@ trait HasDocumentPermissions
      */
     public function canDocument(string $name): bool
     {
+        // Perfiles de gestión y supervisor: acceso completo, igual que el
+        // guard denyUnlessCanDocument() de DocumentValidationController y el
+        // gate view-documents-panel. Sin esto, las vistas Blade del panel
+        // (que llaman canDocument() directamente, no a través de Gate)
+        // ocultaban todas las opciones a un super-admin que no pertenece a
+        // ningún DocumentValidatorGroup.
+        if ($this->hasRole('super-admin') || $this->hasRole('super-settings') || $this->hasRole('manager') || $this->hasRole('supervisor')) {
+            return true;
+        }
+
         // First, try direct permission check
         if ($this->canInDocumentModule($name)) {
             return true;

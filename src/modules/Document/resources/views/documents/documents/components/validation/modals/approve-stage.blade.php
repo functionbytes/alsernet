@@ -158,11 +158,29 @@
                             positionClass: "toast-bottom-right"
                         });
 
-                        // Cerrar modal y recargar página después de 1.5s
                         $('#approveStageModal').modal('hide');
-                        setTimeout(() => {
-                            location.reload();
-                        }, 1500);
+
+                        const wasLastStage = response.completion_status?.was_last_stage;
+                        const $approvalModal = $('#approvalModal');
+
+                        // Si el documento quedó completamente aprobado, pedir
+                        // confirmación al agente para enviar el correo de
+                        // aprobación (reutiliza el modal y el handler existentes
+                        // de #btnSendApproval). Si el agente no tiene permiso
+                        // de envío, ese modal no existe en el DOM y simplemente
+                        // recargamos como antes.
+                        if (wasLastStage && $approvalModal.length) {
+                            $('#approveStageModal').one('hidden.bs.modal', function () {
+                                $approvalModal.one('hidden.bs.modal', function () {
+                                    location.reload();
+                                });
+                                $approvalModal.modal('show');
+                            });
+                        } else {
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500);
+                        }
                     }
                 },
                 error: function(xhr) {

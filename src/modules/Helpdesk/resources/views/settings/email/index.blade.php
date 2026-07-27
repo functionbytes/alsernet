@@ -291,9 +291,9 @@
                 <table class="table table-sm table-bordered mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th class="ps-3">Protocolo</th>
-                            <th>Puerto</th>
-                            <th>Cifrado</th>
+                            <th scope="col" class="ps-3">Protocolo</th>
+                            <th scope="col">Puerto</th>
+                            <th scope="col">Cifrado</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTranslate\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 
 class UpdateTranslateSettingsRequest extends FormRequest
 {
@@ -21,7 +22,18 @@ class UpdateTranslateSettingsRequest extends FormRequest
             'auto_translate_outgoing' => ['nullable', 'boolean'],
             'deepl_key' => ['nullable', 'string', 'max:255'],
             'deepl_url' => ['nullable', 'string', Rule::in(config('helpdesktranslate.deepl_allowed_urls', []))],
-            'libretranslate_endpoint' => ['nullable', 'string', 'url:http,https', 'max:255'],
+            // A diferencia de deepl_url (allowlist cerrada), este endpoint es
+            // libre — sin el guard SSRF, un titular de este permiso podia
+            // apuntarlo a una IP interna y exfiltrar los mensajes de clientes
+            // que se envian a "traducir" en cada mensaje entrante/saliente.
+            'libretranslate_endpoint' => [
+                'nullable', 'string', 'url:http,https', 'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if ($value !== null && $value !== '' && ! OutboundUrlGuard::isSafe($value)) {
+                        $fail(__('helpdesktranslate::messages.validation.libretranslate_endpoint_unsafe'));
+                    }
+                },
+            ],
             'libretranslate_api_key' => ['nullable', 'string', 'max:255'],
         ];
     }

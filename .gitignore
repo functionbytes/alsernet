@@ -45,6 +45,9 @@ CLAUDE.local.md
 # Secretos / backups / caches / dumps (proteccion baseline)
 .env.*
 !.env.example
+# Ficheros env con nombre propio (docker/laravel.env, *.env de servicios) que
+# no empiezan por ".env" y por tanto .env.* no captura. Contienen credenciales.
+*.env
 *.bak
 /.phpunit.cache/
 *.zip

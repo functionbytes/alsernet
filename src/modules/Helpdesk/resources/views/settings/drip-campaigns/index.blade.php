@@ -101,12 +101,12 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Nombre</th>
-                                <th>Disparador</th>
-                                <th class="text-center">Pasos</th>
-                                <th class="text-center">Ejecuciones</th>
-                                <th class="text-center">Estado</th>
-                                <th class="text-center">Acciones</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Disparador</th>
+                                <th scope="col" class="text-center">Pasos</th>
+                                <th scope="col" class="text-center">Ejecuciones</th>
+                                <th scope="col" class="text-center">Estado</th>
+                                <th scope="col" class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

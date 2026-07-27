@@ -15,13 +15,21 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
 
+// Connect to the same host/scheme/port the page was loaded from, instead of a
+// value baked in at build time. The app is reachable through several fronts
+// (localhost:8090 directly, or the public domain via the Cloudflare tunnel) —
+// a fixed VITE_REVERB_HOST would only work for whichever one was set at build
+// time, and the browser can't open a ws:// socket from an https:// page anyway.
+const isSecurePage = window.location.protocol === 'https:';
+const wsPort = window.location.port || (isSecurePage ? 443 : 80);
+
 window.Echo = new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+    wsHost: window.location.hostname,
+    wsPort,
+    wssPort: wsPort,
+    forceTLS: isSecurePage,
     enabledTransports: ['ws', 'wss'],
     auth: {
         headers: {

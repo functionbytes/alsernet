@@ -11,7 +11,7 @@
 
             <div class="card-body">
                 <div class="d-flex no-block align-items-center">
-                    <h5 class="mb-0">Editar Atributo</h5>
+                    <h5 class="mb-0">Editar atributo</h5>
                 </div>
                 <p class="card-subtitle mb-3 mt-3">
                     Modifica la configuración de este atributo personalizado. Ten en cuenta que cambiar el tipo de campo puede afectar los datos existentes en las conversaciones.
@@ -21,7 +21,7 @@
 
                     <!-- Basic Information -->
                     <div class="col-12">
-                        <h6 class="mb-1 mt-3 fw-semibold">Información Básica</h6>
+                        <h6 class="mb-1 mt-3 fw-semibold">Información básica</h6>
                         <p class="text-muted mb-3">Modifica el nombre y descripción del atributo. La clave única no puede ser modificada una vez creado el atributo para mantener la integridad de los datos existentes.</p>
                     </div>
 

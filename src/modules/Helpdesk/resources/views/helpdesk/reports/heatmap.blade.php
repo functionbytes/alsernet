@@ -13,14 +13,14 @@
             <table class="table table-borderless mb-0" style="font-size:11px">
                 <thead>
                     <tr>
-                        <th></th>
-                        @for($h = 0; $h < 24; $h++)<th class="text-center">{{ str_pad($h,2,'0',STR_PAD_LEFT) }}</th>@endfor
+                        <th scope="col"></th>
+                        @for($h = 0; $h < 24; $h++)<th scope="col" class="text-center">{{ str_pad($h,2,'0',STR_PAD_LEFT) }}</th>@endfor
                     </tr>
                 </thead>
                 <tbody>
                     @for($d = 1; $d <= 7; $d++)
                         <tr>
-                            <th class="text-end pe-3">{{ $days[$d-1] ?? '?' }}</th>
+                            <th scope="row" class="text-end pe-3">{{ $days[$d-1] ?? '?' }}</th>
                             @for($h = 0; $h < 24; $h++)
                                 @php
                                     $val = (int) ($matrix[$d][$h] ?? 0);

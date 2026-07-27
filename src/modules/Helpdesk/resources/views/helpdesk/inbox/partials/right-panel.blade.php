@@ -33,11 +33,15 @@
     data-ps-store-url="{{ $_rpPsStoreUrl }}"
     data-customer-name="{{ $_rpCustEarly?->name }}"
     data-customer-email="{{ $_rpEmail }}"
-    data-customer-phone="{{ $_rpCustEarly?->phone }}"
+    data-customer-phone="{{ $_rpCustEarly?->phone ?: $_rpCustEarly?->whatsapp_phone }}"
     data-customer-city="{{ $_rpCustEarly?->city }}"
     data-customer-state="{{ $_rpCustEarly?->state }}"
     data-customer-country="{{ $_rpCustEarly?->country }}"
     data-customer-zip="{{ $_rpCustEarly?->postal_code }}"
+    data-customer-language="{{ $_rpCustEarly?->language }}"
+    data-customer-timezone="{{ $_rpCustEarly?->timezone }}"
+    data-customer-notes="{{ $_rpCustEarly?->internal_notes }}"
+    data-update-url="{{ $_rpCustEarly ? route('manager.helpdesk.customers.update', $_rpCustEarly) : '' }}"
     data-csrf="{{ csrf_token() }}">
 @if(empty($selectedConversationId))
     <div class="bv-right-empty">
@@ -77,7 +81,6 @@
 
         // Status
         $rpStatusName  = $rpConvo?->status?->name  ?? 'Abierta';
-        $rpStatusColor = $rpConvo?->status?->color ?? '#6c757d';
 
         // Tickets (HelpdeskTickets module - optional)
         $rpTickets = collect();
@@ -94,8 +97,12 @@
         // para que la importacion desde la galeria del chat siga funcionando.
         $rpDocuments = [];
         $rpHasDocument = false;
-        if (helpdesk_document_enabled() && $rpConvo
-            && class_exists(\Modules\HelpdeskDocument\Services\ConversationDocumentLinker::class)) {
+        // Disponibilidad del módulo (independiente de si YA hay expedientes
+        // vinculados) — gate real de la tab, para poder asignar/crear un
+        // expediente nuevo desde una conversación que todavía no tiene ninguno.
+        $rpDocumentModuleAvailable = helpdesk_document_enabled() && $rpConvo
+            && class_exists(\Modules\HelpdeskDocument\Services\ConversationDocumentLinker::class);
+        if ($rpDocumentModuleAvailable) {
             try {
                 $rpLinker = app(\Modules\HelpdeskDocument\Services\ConversationDocumentLinker::class);
                 $rpDocs = $rpLinker->documentsForConversation($rpConvo);
@@ -114,7 +121,7 @@
         }
 
         // Activity events
-        $rpEvents = $rpConvo ? $rpConvo->events()->latest()->limit(20)->get() : collect();
+        $rpEvents = $rpConvo ? $rpConvo->events()->with(['author', 'user'])->latest()->limit(20)->get() : collect();
 
         // Widget technology + visited pages (HelpdeskLivechat module).
         // Show the tab for web-channel conversations (and as fallback for any
@@ -155,8 +162,10 @@
                     ->first();
             }
 
-            // Fallback: link by customer_id if session token wasn't recorded.
-            if (! $rpWidgetSession && $rpCust) {
+            // Fallback: link by customer_id (solo canal web). Evita una query de
+            // WidgetSession por cada cambio de conversación en canales sin widget
+            // (WhatsApp/Facebook/Instagram), que es la mayoría en un inbox social.
+            if ($rpIsWebChannel && ! $rpWidgetSession && $rpCust) {
                 $rpWidgetSession = \Modules\HelpdeskLivechat\Models\WidgetSession::query()
                     ->where('customer_id', $rpCust->id)
                     ->orderByDesc('last_activity_at')
@@ -183,20 +192,6 @@
 
         // Backwards-compat alias for places that already check $rpHasWidgetData
         $rpHasWidgetData = $rpShowTechnologyTab;
-
-        // Pedidos del cliente (Ecommerce module)
-        $rpOrders = collect();
-        if ($rpCust && class_exists(\Modules\Ecommerce\Models\Order::class)) {
-            try {
-                $rpOrders = \Modules\Ecommerce\Models\Order::query()
-                    ->where('customer_id', $rpCust->id)
-                    ->latest('created_at')
-                    ->limit(20)
-                    ->get();
-            } catch (\Throwable $e) {
-                $rpOrders = collect();
-            }
-        }
 
         // Archivos: extraer attachments de los items de TODAS las conversaciones del cliente
         $rpFiles = collect();
@@ -328,6 +323,7 @@
                 @if(helpdesk_feature_enabled('merge'))
                 <button type="button" role="menuitem" data-bv-modal="merge"><i class="fa-solid fa-code-merge" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.merge_conversation') }}</button>
                 @endif
+                <button type="button" role="menuitem" data-bv-modal="link-customer"><i class="fa-solid fa-link" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.link_customer') }}</button>
                 <div class="sep"></div>
                 <button type="button" role="menuitem" class="danger" data-bv-modal="block-contact"><i class="fa-solid fa-ban" aria-hidden="true"></i>{{ __('helpdesk::helpdesk.inbox.right.block_contact') }}</button>
             </div>
@@ -361,8 +357,10 @@
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
         </button>
         @endif
-        {{-- Tab "Pedidos" genérico eliminado: PrestaShop → tab "Tienda", ERP → tab "Gestión" --}}
-        @if($rpCust && helpdesk_prestashop_enabled() && helpdesk_feature_enabled('tab_carts'))
+        {{-- Tab "Pedidos" genérico eliminado: PrestaShop → tab "Tienda", ERP → tab "Gestión".
+             "Carritos" es exclusivo de PrestaShop (contenido real vive en el
+             módulo HelpdeskPrestashop, ver inbox-slots/right-panel-prestashop-tabs). --}}
+        @if($rpCust && $rpHasPs && helpdesk_feature_enabled('tab_carts'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="carts" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_carts') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_carts') }}">
             <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
         </button>
@@ -377,7 +375,7 @@
             <i class="fa-solid fa-ticket" aria-hidden="true"></i>
         </button>
         @endif
-        @if($rpHasDocument && helpdesk_feature_enabled('tab_document'))
+        @if($rpDocumentModuleAvailable && helpdesk_feature_enabled('tab_document'))
         <button type="button" class="tab bv-right-tab" data-bv-tab="document" data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.tab_document') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.right.tab_document') }}">
             <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
         </button>
@@ -451,23 +449,25 @@
             {{-- Información de contacto --}}
             @php
                 $rpLangCode = $rpCust?->language ? strtolower(substr($rpCust->language, 0, 2)) : null;
-                $rpLangFlags = [
-                    'es' => '🇪🇸', 'en' => '🇬🇧', 'fr' => '🇫🇷', 'de' => '🇩🇪',
-                    'it' => '🇮🇹', 'pt' => '🇵🇹', 'nl' => '🇳🇱', 'ja' => '🇯🇵',
-                    'zh' => '🇨🇳', 'ru' => '🇷🇺', 'ar' => '🇸🇦', 'ko' => '🇰🇷',
-                ];
                 $rpLangNames = [
                     'es' => 'Español', 'en' => 'Inglés', 'fr' => 'Francés', 'de' => 'Alemán',
                     'it' => 'Italiano', 'pt' => 'Portugués', 'nl' => 'Neerlandés', 'ja' => 'Japonés',
                     'zh' => 'Chino', 'ru' => 'Ruso', 'ar' => 'Árabe', 'ko' => 'Coreano',
                 ];
-                $rpFlag = $rpLangCode ? ($rpLangFlags[$rpLangCode] ?? '🌐') : null;
                 $rpLangLabel = $rpLangCode ? ($rpLangNames[$rpLangCode] ?? strtoupper($rpCust->language)) : null;
                 $rpCompany = $rpCust?->custom_attributes['company'] ?? null;
                 $rpLocation = $rpCust?->country || $rpCust?->city
                     ? implode(', ', array_filter([$rpCust->city, $rpCust->state, $rpCust->country]))
                     : null;
-                $rpHasContactData = $rpCust?->email || $rpCust?->phone || $rpCompany || $rpCust?->language || $rpCust?->timezone || $rpLocation;
+                // Customers created from a channel webhook (WhatsApp/Facebook/Instagram)
+                // only have their platform-specific identifier filled in — `phone` stays
+                // null. Fall back to whichever one the customer actually has so the panel
+                // isn't empty for every social-channel contact.
+                $rpPhone = $rpCust?->phone ?: $rpCust?->whatsapp_phone;
+                $rpPhoneLabel = $rpCust?->phone
+                    ? __('helpdesk::helpdesk.inbox.right.phone_label')
+                    : __('helpdesk::helpdesk.inbox.right.whatsapp_label');
+                $rpHasContactData = $rpCust?->email || $rpPhone || $rpCust?->facebook_psid || $rpCust?->instagram_id || $rpCompany || $rpCust?->language || $rpCust?->timezone || $rpLocation;
             @endphp
             <div class="rsp-section">
                 <div class="lbl">
@@ -477,14 +477,20 @@
                 @if($rpCust?->email)
                     <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.email_label') }}</span><span class="v mono" title="{{ $rpCust->email }}">{{ $rpCust->email }}</span></div>
                 @endif
-                @if($rpCust?->phone)
-                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.phone_label') }}</span><span class="v">{{ $rpCust->phone }}</span></div>
+                @if($rpPhone)
+                    <div class="rsp-kv"><span class="k">{{ $rpPhoneLabel }}</span><span class="v">{{ $rpPhone }}</span></div>
+                @endif
+                @if($rpCust?->facebook_psid)
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.facebook_label') }}</span><span class="v mono">{{ $rpCust->facebook_psid }}</span></div>
+                @endif
+                @if($rpCust?->instagram_id)
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.instagram_label') }}</span><span class="v mono">{{ $rpCust->instagram_id }}</span></div>
                 @endif
                 @if($rpCompany)
                     <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.company_label') }}</span><span class="v">{{ $rpCompany }}</span></div>
                 @endif
                 @if($rpLangCode)
-                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.language_label') }}</span><span class="v">{{ $rpFlag }} {{ $rpLangLabel }} ({{ strtoupper($rpCust->language) }})</span></div>
+                    <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.language_label') }}</span><span class="v">{{ $rpLangLabel }} ({{ strtoupper($rpCust->language) }})</span></div>
                 @endif
                 @if($rpCust?->timezone)
                     <div class="rsp-kv"><span class="k">{{ __('helpdesk::helpdesk.inbox.right.timezone_label') }}</span><span class="v">{{ $rpCust->timezone }}</span></div>
@@ -505,7 +511,7 @@
                     <span class="k">{{ __('helpdesk::helpdesk.inbox.right.status_label') }}</span>
                     <span class="v">
                         <button type="button" class="r-tag r-tag-btn" data-bv-modal="status">
-                            <span class="dot" style="background:{{ $rpStatusColor }}"></span>{{ $rpStatusName }}
+                            {{ $rpStatusName }}
                             <i class="fa-solid fa-chevron-down"></i>
                         </button>
                     </span>
@@ -555,7 +561,7 @@
                 @if($rpConvo?->conversationTags?->isNotEmpty())
                     <div class="rsp-tag-wrap">
                         @foreach($rpConvo->conversationTags as $tag)
-                            <span class="r-tag r-tag-color" style="--rsp-tag-color:{{ $tag->color ?? '#6c757d' }}">{{ $tag->name }}</span>
+                            <span class="r-tag">{{ $tag->name }}</span>
                         @endforeach
                     </div>
                 @else
@@ -627,9 +633,11 @@
                     // Fallback sin el módulo HelpdeskIntegration: mapa estático
                     // PS/ERP como antes.
                     if ($rpHasPs || $rpHasErp) {
+                        // Sin 'color': el icono de .rsp-integration ya es neutro por
+                        // CSS (var(--bv-bg-subtle)/var(--bv-text)) — esta clave nunca
+                        // se leía en el render, era ruido de marca sin efecto.
                         $rpIntegrationsList[] = [
                             'icon'  => 'fas fa-cart-shopping',
-                            'color' => '#df1d1d',
                             'name'  => 'PrestaShop',
                             'id'    => $rpExternalPsId ? 'PS-#'.$rpExternalPsId : 'sin vincular',
                             'connected' => (bool) $rpExternalPsId,
@@ -637,7 +645,6 @@
 
                         $rpIntegrationsList[] = [
                             'icon'  => 'fas fa-clipboard-list',
-                            'color' => '#f59e0b',
                             'name'  => 'Gestión (ERP)',
                             'id'    => $rpExternalErpId ? 'ERP-'.$rpExternalErpId : 'sin vincular',
                             'connected' => (bool) $rpExternalErpId,
@@ -686,6 +693,9 @@
                     @else
                         <button type="button" class="r-tag r-tag-btn bv-identity-verify-trigger ms-auto" data-customer-id="{{ $rpCust->id }}">
                             {{ __('helpdesk::helpdesk.inbox.right.verify_identity') }}
+                        </button>
+                        <button type="button" class="r-tag r-tag-btn" data-bv-modal="link-customer">
+                            {{ __('helpdesk::helpdesk.inbox.right.link_customer_short') }}
                         </button>
                     @endif
                 </div>
@@ -738,229 +748,8 @@
         </div>
         @endif
 
-        {{-- ── Tab: Carritos ── --}}
-        @if($rpCust && helpdesk_prestashop_enabled() && helpdesk_feature_enabled('tab_carts'))
-        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="carts" id="bv-carts-tab">
-            @php
-                $rawAttrs = $rpCust?->custom_attributes ?? [];
-                // Support nested custom_attributes (PrestaShop widget sends custom_attributes inside custom_attributes)
-                $nestedAttrs = is_array($rawAttrs['custom_attributes'] ?? null) ? $rawAttrs['custom_attributes'] : [];
-                $externalOrders = (array) ($nestedAttrs['orders'] ?? $rawAttrs['orders'] ?? []);
-                $cartData = $nestedAttrs['cart'] ?? $rawAttrs['cart'] ?? null;
-
-                // Pedidos reales de PrestaShop (via contexto API) cuando el cliente
-                // esta vinculado. Es la fuente fiable (accion customer.orders).
-                if (($rpHasPs ?? false) && $rpCust?->email) {
-                    try {
-                        $psCtx = app(\Modules\HelpdeskPrestashop\Services\PrestashopContextService::class)->getCustomerContext($rpCust->email);
-                        foreach (($psCtx['orders'] ?? []) as $pso) {
-                            $externalOrders[] = [
-                                'id' => $pso['id'] ?? null,
-                                'reference' => $pso['reference'] ?? null,
-                                'status' => $pso['state']['name'] ?? 'Pendiente',
-                                'date' => $pso['placed_at'] ?? null,
-                                'total' => $pso['totals']['total'] ?? 0,
-                            ];
-                        }
-                    } catch (\Throwable $e) {
-                        // best-effort
-                    }
-                }
-
-                $allOrders = $rpOrders->isNotEmpty() || !empty($externalOrders);
-                $totalOrders = $rpOrders->count() + count($externalOrders);
-            @endphp
-            @if($rpHasPs || $rpHasErp)
-            <div class="bv-source-actions bv-hidden" id="bv-orders-source-actions">
-                <button class="btn btn-sm btn-link bv-refresh-source" data-bv-refresh-source="carts">
-                    <i class="fas fa-arrows-rotate"></i> {{ __('helpdesk::helpdesk.inbox.right.refresh_action') }}
-                </button>
-                <span class="bv-source-meta" data-bv-source-meta="carts"></span>
-            </div>
-            @endif
-            @if(!$allOrders && empty($cartData))
-                <div class="bv-tab-empty">
-                    <i class="far fa-cart-shopping"></i>
-                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_orders_title') }}</div>
-                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_orders_sub') }}</div>
-                </div>
-            @else
-                <div class="rp3-scroll">
-                    @if($allOrders)
-                    <div class="rp3-section">
-                        <div class="rp3-sec-head">
-                            {{ __('helpdesk::helpdesk.inbox.right.order_history') }}
-                            <span class="count">· {{ $totalOrders }}</span>
-                            <span class="spacer"></span>
-                        </div>
-                        {{-- Pedidos locales (módulo Ecommerce) --}}
-                        @foreach($rpOrders as $order)
-                            @php
-                                $orderTotal = $order->total ?? $order->grand_total ?? 0;
-                                $orderStatus = $order->status?->name ?? $order->status_name ?? $order->status ?? 'Pendiente';
-                                $orderStatusColor = match(strtolower($orderStatus)) {
-                                    'entregado', 'completed', 'complete' => 'var(--success)',
-                                    'enviado', 'shipped' => 'var(--info)',
-                                    'cancelado', 'cancelled', 'canceled' => 'var(--danger)',
-                                    default => 'var(--warning)',
-                                };
-                                $orderStatusClass = match(strtolower($orderStatus)) {
-                                    'entregado', 'completed', 'complete' => 'is-completed',
-                                    'enviado', 'shipped' => 'is-shipped',
-                                    'cancelado', 'cancelled', 'canceled' => 'is-cancelled',
-                                    default => 'is-pending',
-                                };
-                                $orderDate = $order->created_at?->translatedFormat('d M') ?? '—';
-                            @endphp
-                            <div class="rp3-order" data-bv-modal="order" data-order-type="local"
-                                 data-order-id="{{ $order->id }}"
-                                 data-order-ref="#{{ $order->order_number ?? $order->reference ?? $order->id }}"
-                                 data-order-status="{{ $orderStatus }}"
-                                 data-order-status-color="{{ $orderStatusColor }}"
-                                 data-order-date="{{ $order->created_at?->translatedFormat('d M Y') ?? '—' }}"
-                                 data-order-total="{{ number_format((float) $orderTotal, 2, ',', '.') }}"
-                                 data-order-products="{{ json_encode([['name' => $order->title ?? 'Producto', 'qty' => 1, 'price' => $orderTotal]]) }}"
-                                >
-                                <div class="thumb"><i class="fas fa-box"></i></div>
-                                <div class="body">
-                                    <div class="head">
-                                        <span class="id">#{{ $order->order_number ?? $order->reference ?? $order->id }}</span>
-                                        <span class="st {{ $orderStatusClass }}">{{ $orderStatus }}</span>
-                                    </div>
-                                    @if(!empty($order->title))
-                                        <div class="t">{{ $order->title }}</div>
-                                    @endif
-                                    <div class="meta">
-                                        <b>{{ number_format((float) $orderTotal, 2, ',', '.') }} €</b>
-                                        <span>· {{ $orderDate }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-
-                        {{-- Pedidos externos (PrestaShop, Shopify, etc.) --}}
-                        @foreach($externalOrders as $extOrder)
-                            @php
-                                $extStatus = $extOrder['status'] ?? 'Pendiente';
-                                $extStatusColor = match(strtolower($extStatus)) {
-                                    'entregado', 'completed', 'complete' => 'var(--success)',
-                                    'enviado', 'shipped' => 'var(--info)',
-                                    'cancelado', 'cancelled', 'canceled' => 'var(--danger)',
-                                    default => 'var(--warning)',
-                                };
-                                $extStatusClass = match(strtolower($extStatus)) {
-                                    'entregado', 'completed', 'complete' => 'is-completed',
-                                    'enviado', 'shipped' => 'is-shipped',
-                                    'cancelado', 'cancelled', 'canceled' => 'is-cancelled',
-                                    default => 'is-pending',
-                                };
-                                $extDateRaw = $extOrder['date'] ?? null;
-                                try {
-                                    $extDate = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M') : '—';
-                                    $extDateFull = $extDateRaw ? \Carbon\Carbon::parse($extDateRaw)->translatedFormat('d M Y') : '—';
-                                } catch (\Throwable $e) {
-                                    $extDate = '—';
-                                    $extDateFull = '—';
-                                }
-                                $extTotal = (float) ($extOrder['total'] ?? 0);
-                                $extRef = $extOrder['reference'] ?? $extOrder['id'] ?? '—';
-                                $extUrl = $extOrder['url'] ?? null;
-                                $extProducts = [];
-                                if (!empty($extOrder['products']) && is_array($extOrder['products'])) {
-                                    foreach ($extOrder['products'] as $p) {
-                                        $extProducts[] = ['name' => $p['name'] ?? 'Producto', 'qty' => $p['quantity'] ?? 1, 'price' => $p['price'] ?? 0];
-                                    }
-                                }
-                            @endphp
-                            <div class="rp3-order" data-bv-modal="order" data-order-type="external"
-                                 data-order-id="{{ $extOrder['id'] ?? '' }}"
-                                 data-order-ref="#{{ $extRef }}"
-                                 data-order-status="{{ $extStatus }}"
-                                 data-order-status-color="{{ $extStatusColor }}"
-                                 data-order-date="{{ $extDateFull }}"
-                                 data-order-total="{{ number_format($extTotal, 2, ',', '.') }}"
-                                 data-order-products="{{ json_encode($extProducts) }}"
-                                 data-order-url="{{ $extUrl }}"
-                                 data-order-platform="{{ $rpCust?->custom_attributes['platform'] ?? '' }}"
-                                >
-                                <div class="thumb"><i class="fas fa-box"></i></div>
-                                <div class="body">
-                                    <div class="head">
-                                        <span class="id">#{{ $extRef }}</span>
-                                        <span class="st {{ $extStatusClass }}">{{ $extStatus }}</span>
-                                    </div>
-                                    @if(!empty($extProducts))
-                                        <div class="t">{{ $extProducts[0]['name'] }}@if(count($extProducts) > 1) +{{ count($extProducts) - 1 }}@endif</div>
-                                    @endif
-                                    <div class="meta">
-                                        <b>{{ number_format($extTotal, 2, ',', '.') }} €</b>
-                                        <span>· {{ $extDate }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    @endif
-
-                    {{-- Carrito abandonado --}}
-                    @if(!empty($cartData) && is_array($cartData))
-                    @php
-                        $cartItemCount = count($cartData['products'] ?? []);
-                        $cartTotal     = (float) ($cartData['total'] ?? 0);
-                        $cartId        = $cartData['id'] ?? null;
-                        $cartAdminUrl  = $cartId && $_rpPsStoreUrl
-                            ? rtrim($_rpPsStoreUrl, '/') . '/index.php?controller=AdminCarts&id_cart=' . (int) $cartId . '&viewcart=1'
-                            : null;
-                    @endphp
-                    <div class="rp3-section">
-                        <div class="rp3-sec-head">
-                            {{ __('helpdesk::helpdesk.inbox.right.abandoned_cart_heading') }}
-                            @if($cartAdminUrl)
-                                <a href="{{ $cartAdminUrl }}" target="_blank" rel="noopener"
-                                   class="rp3-cart-ext-link" title="{{ __('helpdesk::helpdesk.inbox.right.view_cart_prestashop_title') }}">
-                                    <i class="fas fa-arrow-up-right-from-square"></i>
-                                </a>
-                            @endif
-                        </div>
-                        <div class="rp3-cart" @if($cartId) data-cart-id="{{ $cartId }}" @endif>
-                            <div class="hd">
-                                <span class="dot"></span>
-                                <i class="fas fa-cart-shopping"></i>
-                                {{ $cartItemCount }} item{{ $cartItemCount === 1 ? '' : 's' }}
-                            </div>
-                            <div class="rp3-cart-items">
-                                @foreach($cartData['products'] ?? [] as $product)
-                                <div class="rp3-cart-item">
-                                    <div class="th"></div>
-                                    <div class="n">{{ $product['name'] ?? 'Producto' }}</div>
-                                    <div class="p">{{ number_format((float) ($product['price'] ?? 0), 2, ',', '.') }} €</div>
-                                </div>
-                                @endforeach
-                            </div>
-                            <div class="rp3-cart-total">
-                                <span>Total</span>
-                                <span>{{ number_format($cartTotal, 2, ',', '.') }} €</span>
-                            </div>
-                            <div class="rp3-cart-acts">
-                                <button type="button"><i class="fas fa-tag"></i> Cupón 10%</button>
-                                @if($cartAdminUrl)
-                                <button type="button" class="rp3-cart-act-primary"
-                                    onclick="window.open('{{ $cartAdminUrl }}', '_blank')">
-                                    <i class="fas fa-link"></i> Recuperar
-                                </button>
-                                @else
-                                <button type="button" class="rp3-cart-act-primary" disabled>
-                                    <i class="fas fa-link"></i> Recuperar
-                                </button>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            @endif
-        </div>
-        @endif
+        {{-- ── Tab: Carritos ── (contenido movido al módulo HelpdeskPrestashop,
+             ver inbox-slots/right-panel-prestashop-tabs.blade.php) --}}
 
         {{-- ── Tab: Archivos ── --}}
         @php
@@ -1220,11 +1009,11 @@
 
         {{-- ── Tab: Tickets (slot del módulo HelpdeskTickets) ── --}}
         @if($rpTicketsEnabled && helpdesk_feature_enabled('tab_tickets'))
-            @include('helpdesktickets::inbox-slots.right-panel-tickets-tab', ['rpTickets' => $rpTickets])
+            @include('helpdesktickets::inbox-slots.right-panel-tickets-tab', ['rpTickets' => $rpTickets, 'rpConversationId' => $rpConvo?->id])
         @endif
 
         {{-- ── Tab: Documentacion (slot del módulo HelpdeskDocument) ── --}}
-        @if($rpHasDocument)
+        @if($rpDocumentModuleAvailable)
             @include('helpdeskdocument::inbox-slots.right-panel-document-tab', [
                 'rpDocuments' => $rpDocuments,
                 'rpConvo'     => $rpConvo,
@@ -1239,7 +1028,8 @@
                 if ($rpCust) {
                     $rpPrevious = \Modules\Helpdesk\Models\Conversation::where('customer_id', $rpCust->id)
                         ->where('id', '!=', $rpConvo?->id)
-                        ->with(['status', 'assignee', 'inbox'])
+                        ->with(['status', 'assignee', 'inbox', 'lastMessage'])
+                        ->withCount(['items as messages_count'])
                         ->latest('last_message_at')
                         ->limit(20)
                         ->get();
@@ -1299,7 +1089,7 @@
                             );
                             $msgCount   = $prev->messages_count ?? 0;
                             $dateLabel  = optional($prev->last_message_at ?? $prev->created_at)->diffForHumans(['short' => true]) ?? '—';
-                            $preview    = $prev->last_message ?? '';
+                            $preview    = $prev->lastMessage?->body ?? '';
                             if (!$preview && $prev->subject) { $preview = $prev->subject; }
                         @endphp
                         <button class="bv-conv-card"
@@ -1358,7 +1148,7 @@
                     <div class="rsp-timeline">
                         @foreach($rpEvents as $event)
                         <div class="rsp-tl-item">
-                            <div class="ic ic-{{ $event->event_color }}">
+                            <div class="ic">
                                 <i class="{{ $rpEventIcons[$event->type] ?? 'fas fa-circle-info' }}"></i>
                             </div>
                             <div class="body">
@@ -1998,6 +1788,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+/* "Solicitar pantalla" usa .btn-primary sin ningún override en este panel,
+   así que caía en el azul por defecto de Bootstrap (#0d6efd) en vez del
+   neutro que usa el resto de botones primarios del panel. */
+.bv-right .btn-primary {
+    background: var(--bv-text, #18181b);
+    border-color: var(--bv-text, #18181b);
+    color: #fff;
+}
+.bv-right .btn-primary:hover {
+    background: #333;
+    border-color: #333;
+    color: #fff;
 }
 .hd-webrtc-video[data-streaming="1"] + .hd-webrtc-empty {
     display: none;

@@ -7,6 +7,14 @@ use Illuminate\Http\Request;
 
 class ConversationFilter
 {
+    /**
+     * Por debajo de este largo el término cae al LIKE '%term%' de siempre en
+     * vez de FULLTEXT: innodb_ft_min_token_size (3 en esta BD) hace que
+     * MariaDB ignore en silencio los términos más cortos y devuelva 0 filas,
+     * así que se deja margen para no romper búsquedas cortas.
+     */
+    private const FULLTEXT_MIN_LENGTH = 4;
+
     /** @var array<string, mixed> Filters of the active view, remembered so apply()'s base scope doesn't fight them. */
     protected array $viewFilters = [];
 
@@ -42,6 +50,18 @@ class ConversationFilter
             ->when(
                 $this->request->filled('inbox'),
                 fn ($q) => $q->where('inbox_id', (int) $this->request->input('inbox'))
+            )
+            // Sidebar "Bloqueados" / "Spam" links (?view=blocked / ?view=spam)
+            // used to fall through to the plain default-view query — same
+            // result as clicking "Todas" — because nothing here ever read
+            // the `view` param for these two cases.
+            ->when(
+                $this->request->input('view') === 'blocked',
+                fn ($q) => $q->whereHas('customer', fn ($c) => $c->whereNotNull('banned_at'))
+            )
+            ->when(
+                $this->request->input('view') === 'spam',
+                fn ($q) => $q->where('is_spam', true)
             )
             ->when(
                 true,
@@ -108,6 +128,13 @@ class ConversationFilter
             return $query->snoozed();
         }
 
+        // "Cerradas" (sidebar) means resolved/closed — is_open=false. There are
+        // two seeded statuses with is_open=false ("Resuelto", "Cerrado"), so this
+        // can't be resolved by a single status name the way "pending" is below.
+        if ($status === 'closed') {
+            return $query->whereHas('status', fn ($q) => $q->where('is_open', false));
+        }
+
         // Non-numeric status keywords (the sidebar "En espera" link sends
         // status=pending) must be resolved by name — the status_id column is an
         // integer, so where('status_id', 'pending') matched nothing and the view
@@ -138,8 +165,12 @@ class ConversationFilter
     protected function applySearchValue(Builder $query, string $search): Builder
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('subject', 'like', "%{$search}%")
+            $this->applySubjectSearch($q, $search)
                 ->orWhereHas('customer', fn ($c) => $c
+                    // Sin FULLTEXT en estos campos: un agente puede buscar por
+                    // apellido en medio del nombre, dominio del email o los
+                    // últimos dígitos del teléfono, así que se mantiene el
+                    // LIKE '%term%' de siempre (un prefijo rompería esos casos).
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%"));
@@ -149,6 +180,43 @@ class ConversationFilter
                 $q->orWhere('helpdesk_conversations.id', (int) $search);
             }
         });
+    }
+
+    /**
+     * Filtra `subject` usando el índice FULLTEXT (helpdesk_conversations_subject_fulltext)
+     * en boolean mode con comodín de sufijo, para que MariaDB use el índice en
+     * vez de escanear la tabla con LIKE '%term%'. Cae al LIKE original cuando
+     * el término es corto o queda vacío tras retirar operadores boolean-mode.
+     */
+    private function applySubjectSearch(Builder $q, string $search): Builder
+    {
+        $fullTextTerm = $this->fullTextBooleanTerm($search);
+
+        if ($fullTextTerm === null) {
+            return $q->where('subject', 'like', "%{$search}%");
+        }
+
+        return $q->whereFullText('subject', $fullTextTerm, ['mode' => 'boolean']);
+    }
+
+    /**
+     * Construye el término boolean-mode (con comodín de sufijo) para FULLTEXT,
+     * o null si debe usarse el LIKE '%term%' de siempre:
+     *  - términos por debajo de self::FULLTEXT_MIN_LENGTH quedarían por debajo
+     *    de innodb_ft_min_token_size y FULLTEXT los ignoraría en silencio;
+     *  - los operadores boolean-mode (+ - < > ( ) ~ * " @) se retiran para que
+     *    un término pegado con esos símbolos no rompa la sintaxis SQL; si tras
+     *    retirarlos no queda nada indexable, también se cae al LIKE.
+     */
+    private function fullTextBooleanTerm(string $search): ?string
+    {
+        if (mb_strlen($search) < self::FULLTEXT_MIN_LENGTH) {
+            return null;
+        }
+
+        $sanitized = trim((string) preg_replace('/[+\-<>()~*"@]/', ' ', $search));
+
+        return $sanitized === '' ? null : $sanitized.'*';
     }
 
     protected function applyArchived(Builder $query): Builder

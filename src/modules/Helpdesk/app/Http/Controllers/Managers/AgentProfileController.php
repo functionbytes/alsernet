@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\CsatRating;
+use Modules\Helpdesk\Services\AgentPresenceService;
 
 class AgentProfileController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        private readonly AgentPresenceService $presence,
+    ) {
         $this->middleware('can:helpdesk.manage');
     }
 
@@ -73,11 +75,10 @@ class AgentProfileController extends Controller
      */
     private function presence(User $agent, ?AgentSettings $settings): array
     {
-        $sessionThreshold = now()->subMinutes(5)->timestamp;
-        $isOnline = DB::table('sessions')
-            ->where('user_id', $agent->id)
-            ->where('last_activity', '>=', $sessionThreshold)
-            ->exists();
+        // Not the SQL `sessions` table: SESSION_DRIVER is redis, so it's never
+        // populated — real presence lives in AgentPresenceService's Redis
+        // heartbeat instead.
+        $isOnline = in_array($agent->id, $this->presence->getOnlineAgents(), true);
 
         $accepts = $settings?->accepts_conversations ?? 'yes';
 

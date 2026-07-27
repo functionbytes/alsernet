@@ -12,7 +12,7 @@
 	================================ */
 	const initAppToggler = () => {
 		const appTogglers = document.querySelectorAll('.app-toggler');
-		const appMenubars = document.getElementById('appMenubar');
+		const appMenubar = document.getElementById('appMenubar');
 
 		if (!appTogglers.length || !appMenubar) return;
 
@@ -33,13 +33,13 @@
 		});
 
 		appMenubar.addEventListener('mouseenter', () => {
-			if (docEl.getAttribute('data-app-sidebar') === 'mini' && !appMenubars.classList.contains('no-sidebar-open')) {
-				appMenubars.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+			if (docEl.getAttribute('data-app-sidebar') === 'mini' && !appMenubar.classList.contains('no-sidebar-open')) {
+				appMenubar.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
 					bootstrap.Tooltip.getInstance(el)?.hide();
 				});
 				docEl.setAttribute('data-app-sidebar', 'mini-hover');
 				setTimeout(() => {
-					appMenubars.querySelectorAll('.tab-pane.active [data-simplebar]').forEach(el => {
+					appMenubar.querySelectorAll('.tab-pane.active [data-simplebar]').forEach(el => {
 						const instance = SimpleBar.instances.get(el);
 						if (instance) {
 							instance.recalculate();
@@ -57,7 +57,7 @@
 			}
 		});
 
-		appMenubars.querySelectorAll('#appMenubarTabs [data-bs-toggle="tab"]').forEach(tabLink => {
+		appMenubar.querySelectorAll('#appMenubarTabs [data-bs-toggle="tab"]').forEach(tabLink => {
 			tabLink.addEventListener('mouseenter', () => {
 				if (docEl.getAttribute('data-app-sidebar') === 'mini-hover') {
 					bootstrap.Tab.getOrCreateInstance(tabLink).show();
@@ -66,12 +66,12 @@
 
 			tabLink.addEventListener('click', () => {
 				if (docEl.getAttribute('data-app-sidebar') === 'mini') {
-					appMenubars.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+					appMenubar.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
 						bootstrap.Tooltip.getInstance(el)?.hide();
 					});
 					docEl.setAttribute('data-app-sidebar', 'mini-hover');
 					setTimeout(() => {
-						const pane = appMenubars.querySelector('.tab-pane.active [data-simplebar]');
+						const pane = appMenubar.querySelector('.tab-pane.active [data-simplebar]');
 						if (!pane) return;
 						const instance = SimpleBar.instances.get(pane);
 						if (instance) {
@@ -83,7 +83,7 @@
 				}
 			});
 		});
-		
+
 	};
 
 

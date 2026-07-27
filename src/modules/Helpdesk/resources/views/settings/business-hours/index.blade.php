@@ -57,10 +57,10 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-3">Día</th>
-                                    <th class="text-center">Abierto</th>
-                                    <th>Hora de apertura</th>
-                                    <th>Hora de cierre</th>
+                                    <th scope="col" class="ps-3">Día</th>
+                                    <th scope="col" class="text-center">Abierto</th>
+                                    <th scope="col">Hora de apertura</th>
+                                    <th scope="col">Hora de cierre</th>
                                 </tr>
                             </thead>
                             <tbody>

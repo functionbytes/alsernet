@@ -102,6 +102,7 @@
                             class="rounded-circle border"
                             width="72"
                             height="72"
+                            loading="lazy"
                         >
                         <div class="mt-2 fw-semibold">{{ $customer->name }}</div>
                         <small class="text-muted">{{ $customer->email }}</small>

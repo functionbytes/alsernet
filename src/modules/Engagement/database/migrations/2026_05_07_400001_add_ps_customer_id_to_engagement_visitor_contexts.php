@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    protected $connection = 'helpdesk';
+
     public function up(): void
     {
         Schema::table('engagement_visitor_contexts', function (Blueprint $table) {

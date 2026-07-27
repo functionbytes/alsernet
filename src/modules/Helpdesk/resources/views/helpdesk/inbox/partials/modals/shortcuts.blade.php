@@ -45,7 +45,7 @@
                 <span class="bv-modal-label">{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_label') }}</span>
                 <div class="bv-modal-title">{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_title') }}</div>
             </div>
-            <button class="bv-modal-close" data-bv-close aria-label="{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_close_aria') }}"
+            <button class="bv-modal-close" data-bv-close aria-label="{{ __('helpdesk::helpdesk.inbox.modals.shortcuts_close_aria') }}">
                 <i class="fas fa-xmark"></i>
             </button>
         </div>

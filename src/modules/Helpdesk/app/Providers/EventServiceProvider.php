@@ -33,6 +33,7 @@ use Modules\Helpdesk\Listeners\LogActivityOnConversationUpdated;
 use Modules\Helpdesk\Listeners\LogConversationCreated;
 use Modules\Helpdesk\Listeners\LogConversationUpdated;
 use Modules\Helpdesk\Listeners\NotifySlackOnSlaBreached;
+use Modules\Helpdesk\Listeners\SendAwayAutoReply;
 use Modules\Helpdesk\Listeners\SendConversationAssignedNotification;
 use Modules\Helpdesk\Listeners\SendEscalationNotification;
 use Modules\Helpdesk\Listeners\SendMentionNotification;
@@ -71,6 +72,7 @@ class EventServiceProvider extends ServiceProvider
         MessageReceived::class => [
             SendMessageReceivedNotification::class,
             TriggerWorkflowsOnMessageReceived::class,
+            SendAwayAutoReply::class,
         ],
         MentionDetected::class => [
             SendMentionNotification::class,

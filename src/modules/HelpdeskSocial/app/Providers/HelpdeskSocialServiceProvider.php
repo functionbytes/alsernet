@@ -4,12 +4,14 @@ namespace Modules\HelpdeskSocial\Providers;
 
 use App\Console\Commands\AnonymizeSocialUserCommand;
 use App\Console\Commands\ExportSocialUserDataCommand;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\HelpdeskSocial\Console\Commands\CheckSlaBreachesCommand;
 use Modules\HelpdeskSocial\Console\Commands\ExportSocialCommentsCommand;
 use Modules\HelpdeskSocial\Console\Commands\ImportSocialCommentsCommand;
+use Modules\HelpdeskSocial\Console\Commands\PruneSocialContentCommand;
 use Modules\HelpdeskSocial\Console\Commands\ResetSocialAccountCommand;
 use Modules\HelpdeskSocial\Console\Commands\SocialHealthCheckCommand;
 use Modules\HelpdeskSocial\Console\Commands\SyncCompetitorMetricsCommand;
@@ -23,9 +25,17 @@ use Modules\HelpdeskSocial\Contracts\WebhookParserInterface;
 use Modules\HelpdeskSocial\Contracts\WebhookVerifierInterface;
 use Modules\HelpdeskSocial\Middleware\LogSocialApiCalls;
 use Modules\HelpdeskSocial\Models\SocialAccount;
+use Modules\HelpdeskSocial\Models\SocialAssignmentRule;
 use Modules\HelpdeskSocial\Models\SocialComment;
+use Modules\HelpdeskSocial\Models\SocialListeningKeyword;
 use Modules\HelpdeskSocial\Models\SocialRule;
+use Modules\HelpdeskSocial\Models\SocialSlaPolicy;
 use Modules\HelpdeskSocial\Models\SocialTemplate;
+use Modules\HelpdeskSocial\Observers\SocialAssignmentRuleObserver;
+use Modules\HelpdeskSocial\Observers\SocialCommentObserver;
+use Modules\HelpdeskSocial\Observers\SocialListeningKeywordObserver;
+use Modules\HelpdeskSocial\Observers\SocialRuleObserver;
+use Modules\HelpdeskSocial\Observers\SocialSlaPolicyObserver;
 use Modules\HelpdeskSocial\Policies\SocialAccountPolicy;
 use Modules\HelpdeskSocial\Policies\SocialCommentPolicy;
 use Modules\HelpdeskSocial\Policies\SocialRulePolicy;
@@ -41,6 +51,7 @@ use Modules\HelpdeskSocial\Services\Classifiers\OpenAiIntentClassifier;
 use Modules\HelpdeskSocial\Services\Classifiers\RulesIntentClassifier;
 use Modules\HelpdeskSocial\Services\Engines\RuleBasedAutoReplyEngine;
 use Modules\Theme\Services\NavService;
+use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
 
 class HelpdeskSocialServiceProvider extends ServiceProvider
@@ -61,6 +72,12 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Skip all wiring (routes, policies, menus, channels…) when the module is
+        // disabled, mirroring the other Helpdesk satellite providers.
+        if (Module::find($this->name)?->isDisabled()) {
+            return;
+        }
+
         $this->registerConfig();
         $this->registerViews();
         $this->registerTranslations();
@@ -72,6 +89,33 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerChannels();
         $this->registerCommands();
+        $this->registerSchedules();
+        $this->registerObservers();
+    }
+
+    protected function registerSchedules(): void
+    {
+        $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
+            $schedule->command('helpdesksocial:prune')
+                ->daily()
+                ->at('03:50')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->when(fn (): bool => helpdesk_social_enabled());
+        });
+    }
+
+    /**
+     * Registra los observers que invalidan cachés de configuración y mantienen
+     * el contador atómico de carga de trabajo de los agentes.
+     */
+    protected function registerObservers(): void
+    {
+        SocialAssignmentRule::observe(SocialAssignmentRuleObserver::class);
+        SocialSlaPolicy::observe(SocialSlaPolicyObserver::class);
+        SocialRule::observe(SocialRuleObserver::class);
+        SocialListeningKeyword::observe(SocialListeningKeywordObserver::class);
+        SocialComment::observe(SocialCommentObserver::class);
     }
 
     protected function registerCommands(): void
@@ -87,6 +131,7 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
             ImportSocialCommentsCommand::class,
             ExportSocialUserDataCommand::class,
             AnonymizeSocialUserCommand::class,
+            PruneSocialContentCommand::class,
         ]);
     }
 
@@ -184,6 +229,10 @@ class HelpdeskSocialServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         if (! class_exists(NavService::class)) {
+            return;
+        }
+
+        if (! helpdesk_social_enabled()) {
             return;
         }
 

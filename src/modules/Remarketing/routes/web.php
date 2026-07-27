@@ -100,7 +100,7 @@ Route::prefix('r')->group(function () {
             ->name('remarketing.public.click');
     });
 
-    Route::prefix('webhooks')->group(function () {
+    Route::prefix('webhooks')->middleware('throttle:120,1')->group(function () {
         Route::post('/shopify/{storeToken}', [PublicCtrl\WebhookController::class, 'shopify'])->name('remarketing.public.webhook.shopify');
         Route::post('/woocommerce/{storeToken}', [PublicCtrl\WebhookController::class, 'woocommerce'])->name('remarketing.public.webhook.woocommerce');
         Route::post('/prestashop/{storeToken}', [PublicCtrl\WebhookController::class, 'prestashop'])->name('remarketing.public.webhook.prestashop');

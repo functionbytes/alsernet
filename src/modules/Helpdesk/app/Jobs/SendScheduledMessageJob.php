@@ -5,7 +5,7 @@ namespace Modules\Helpdesk\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use Modules\Helpdesk\Events\ConversationItemCreated;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\ConversationItem;
 
 class SendScheduledMessageJob implements ShouldQueue
@@ -41,7 +41,7 @@ class SendScheduledMessageJob implements ShouldQueue
             'scheduled_by' => null,
         ]);
 
-        ConversationItemCreated::dispatch($item);
+        broadcast(new ConversationMessageCreated($item));
     }
 
     public function failed(\Throwable $e): void

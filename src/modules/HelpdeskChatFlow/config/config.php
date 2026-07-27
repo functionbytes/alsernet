@@ -5,6 +5,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Retención de sesiones
+    |--------------------------------------------------------------------------
+    | Días que se conservan las sesiones ya terminadas (completed/failed/
+    | transferred/abandoned) antes de purgarlas junto a sus executions
+    | (chatflow:prune-sessions, diario). 0 o menos desactiva la limpieza.
+    */
+    'session_retention_days' => (int) env('HELPDESKCHATFLOW_SESSION_RETENTION_DAYS', 90),
+
+    /*
+    |--------------------------------------------------------------------------
     | AI response node
     |--------------------------------------------------------------------------
     | Defaults for the `ai_response` node (RAG over the help center + LLM).
@@ -37,5 +47,34 @@ return [
     */
     'voice' => [
         'max_bytes' => (int) env('CHATFLOW_VOICE_MAX_BYTES', 26214400), // 25 MB
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Flow import
+    |--------------------------------------------------------------------------
+    | Cota de nodos al importar un flow (además del límite de bytes del Form
+    | Request) para no degradar el validador ni el editor React.
+    */
+    'import' => [
+        'max_nodes' => (int) env('CHATFLOW_IMPORT_MAX_NODES', 500),
+    ],
+
+    /*
+     * Human labels for document-request keys, shown to the customer in the
+     * document-collection node. Centralised here so they can be edited without
+     * touching the engine (fallback is the raw key).
+     */
+    'document_labels' => [
+        'dni_frontal' => 'DNI/NIE frontal',
+        'dni_trasera' => 'DNI/NIE trasera',
+        'pasaporte' => 'Pasaporte',
+        'contrato' => 'Contrato firmado',
+        'factura' => 'Factura de compra',
+        'foto_producto' => 'Foto del producto',
+        'proforma' => 'Factura proforma',
+        'iban' => 'Certificado bancario / IBAN',
+        'selfie' => 'Selfie con documento',
+        'recibo' => 'Recibo',
     ],
 ];

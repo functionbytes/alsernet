@@ -375,7 +375,7 @@ Route::prefix('slack-integrations')->name('slack-integrations.')->group(function
 });
 
 // Audit log viewer (también accesible desde /panel/helpdesk/audit)
-Route::redirect('audit', '/panel/settings/helpdesk/audits');
+Route::redirect('audit', '/panel/settings/helpdesk/audits')->name('audit.redirect');
 
 // API personal access tokens (Sanctum) — cada usuario gestiona los suyos
 Route::prefix('profile/tokens')->name('profile.tokens.')->group(function () {

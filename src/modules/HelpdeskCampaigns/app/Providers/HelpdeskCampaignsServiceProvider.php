@@ -81,6 +81,10 @@ class HelpdeskCampaignsServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
+        if (! helpdesk_campaigns_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Campañas',
             'items' => [

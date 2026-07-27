@@ -35,7 +35,9 @@ class CampaignImpression extends Model
     }
 
     protected $fillable = [
+        'impression_id',
         'campaign_id',
+        'variant_id',
         'customer_id',
         'customer_session_id',
         'page_url',

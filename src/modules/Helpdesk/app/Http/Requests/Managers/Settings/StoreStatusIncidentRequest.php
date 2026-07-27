@@ -19,7 +19,7 @@ class StoreStatusIncidentRequest extends FormRequest
             'severity' => ['required', 'in:minor,major,critical'],
             'status' => ['required', 'in:investigating,identified,monitoring,resolved'],
             'affected_components' => ['nullable', 'array'],
-            'affected_components.*' => ['integer', 'exists:helpdesk_status_components,id'],
+            'affected_components.*' => ['integer', 'exists:helpdesk.helpdesk_status_components,id'],
         ];
     }
 

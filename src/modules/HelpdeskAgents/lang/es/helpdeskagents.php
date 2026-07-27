@@ -67,6 +67,17 @@ return [
         'add_knowledge' => 'Agregar conocimiento',
     ],
 
+    'flow_results' => [
+        'ticket_not_found' => 'No hay ticket para esta conversación',
+        'action_failed' => 'No se pudo completar la acción',
+        'skipped_no_agent' => 'Acción omitida: sin agent_id configurado',
+        'ticket_assigned' => 'Ticket asignado al agente',
+        'skipped_no_status' => 'Acción omitida: sin status_id configurado',
+        'ticket_status_updated' => 'Estado del ticket actualizado',
+        'tag_added' => 'Etiqueta añadida al ticket',
+        'ticket_closed' => 'Ticket cerrado',
+    ],
+
     'ai' => [
         'session_started' => 'Sesion iniciada con el agente IA.',
         'no_agent_available' => 'No hay agentes disponibles en este momento.',

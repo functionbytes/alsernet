@@ -102,6 +102,26 @@ class InboxWidgetSettingsHttpTest extends TestCase
         $this->assertSame('Soporte HTTP', $fresh->header_title);
     }
 
+    public function test_update_persists_catalog_settings(): void
+    {
+        [$web, $inbox] = $this->makeWebInbox([
+            'product_feed_url' => null,
+            'enable_product_search' => false,
+        ]);
+
+        $this->actingAs($this->manager)
+            ->put(route('settings.helpdesk.inboxes.update', $inbox), $this->basePayload($inbox, [
+                'product_feed_url' => 'https://tienda.example/feed.json',
+                'enable_product_search' => '1',
+            ]))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('settings.helpdesk.inboxes.edit', $inbox));
+
+        $fresh = $web->fresh();
+        $this->assertSame('https://tienda.example/feed.json', $fresh->product_feed_url);
+        $this->assertTrue((bool) $fresh->enable_product_search);
+    }
+
     public function test_update_with_custom_cms_type_resets_platform_integration(): void
     {
         $integration = PlatformIntegrationFactory::new()->prestashop()->create();

@@ -5,7 +5,6 @@ namespace Modules\Helpdesk\Providers;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Managers\AgentsController;
-use Modules\Helpdesk\Http\Controllers\Managers\ConversationParticipantsController;
 use Modules\Helpdesk\Http\Controllers\Managers\ConversationsController;
 use Modules\Helpdesk\Http\Middleware\Require2FA;
 
@@ -90,15 +89,6 @@ class RouteServiceProvider extends ServiceProvider
                 Route::get('/api/attachment-download', [ConversationsController::class, 'downloadAttachment'])
                     ->middleware('throttle:60,1')
                     ->name('manager.helpdesk.api.attachment-download');
-
-                // Conversation participants (auth-only, no admin role required)
-                Route::prefix('conversations/{conversation}/participants')
-                    ->name('manager.helpdesk.conversations.participants.')
-                    ->group(function () {
-                        Route::get('/', [ConversationParticipantsController::class, 'index'])->name('index');
-                        Route::post('/', [ConversationParticipantsController::class, 'store'])->name('store');
-                        Route::delete('/{userId}', [ConversationParticipantsController::class, 'destroy'])->name('destroy');
-                    });
             });
 
         Route::middleware(['web'])

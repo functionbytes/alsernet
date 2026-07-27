@@ -132,7 +132,7 @@
                                 <input type="date" name="date_to" class="form-control h-100" value="{{ request('date_to') }}">
                             </div>
                             <div class="d-flex gap-2 flex-shrink-0">
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary" aria-label="Buscar">
                                     <i class="fas fa-search"></i>
                                 </button>
                                 @if(request()->hasAny(['search', 'user_id', 'log_name', 'date_from', 'date_to']))
@@ -152,11 +152,11 @@
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Fecha</th>
-                                        <th>Agente</th>
-                                        <th>Descripción</th>
-                                        <th>Módulo</th>
-                                        <th class="text-center">Acciones</th>
+                                        <th scope="col">Fecha</th>
+                                        <th scope="col">Agente</th>
+                                        <th scope="col">Descripción</th>
+                                        <th scope="col">Módulo</th>
+                                        <th scope="col" class="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>

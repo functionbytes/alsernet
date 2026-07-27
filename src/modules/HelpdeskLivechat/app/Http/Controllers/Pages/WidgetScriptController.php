@@ -74,8 +74,8 @@ class WidgetScriptController extends Controller
             [
                 'reverbKey' => config('broadcasting.connections.reverb.key', ''),
                 'reverbHost' => $this->connectableReverbHost(),
-                'reverbPort' => (int) config('broadcasting.connections.reverb.options.port', 8080),
-                'reverbScheme' => config('broadcasting.connections.reverb.options.scheme', request()->isSecure() ? 'https' : 'http'),
+                'reverbPort' => $this->connectableReverbPort(),
+                'reverbScheme' => $this->connectableReverbScheme(),
                 'channelPrefix' => 'helpdesk-widget-conversation',
                 'eventName' => '.message.received',
             ]

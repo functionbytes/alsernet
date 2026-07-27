@@ -8,11 +8,11 @@
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th>Agente</th>
-                        <th class="text-end">Cerradas</th>
-                        <th class="text-end">CSAT avg</th>
-                        <th class="text-end">1ª resp. avg (s)</th>
-                        <th class="text-end">Mensajes enviados</th>
+                        <th scope="col">Agente</th>
+                        <th scope="col" class="text-end">Cerradas</th>
+                        <th scope="col" class="text-end">CSAT avg</th>
+                        <th scope="col" class="text-end">1ª resp. avg (s)</th>
+                        <th scope="col" class="text-end">Mensajes enviados</th>
                     </tr>
                 </thead>
                 <tbody>

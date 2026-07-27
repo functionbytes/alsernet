@@ -3,20 +3,30 @@
 namespace Modules\Erp\Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Erp\Models\ErpEndpoint;
+use Modules\Erp\Models\ErpEndpointLog;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class ErpEndpointsApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // La API de gestión de endpoints exige `erp.endpoints.manage` (guard SSRF
+        // añadido para que un token Sanctum cualquiera no pueda crear/ejecutar
+        // endpoints). El usuario de test lo recibe para ejercer el flujo real.
+        Permission::firstOrCreate(['name' => 'erp.endpoints.manage', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->givePermissionTo('erp.endpoints.manage');
     }
 
     public function test_can_list_endpoints(): void
@@ -38,7 +48,7 @@ class ErpEndpointsApiTest extends TestCase
     {
         $data = [
             'name' => 'Test Endpoint',
-            'url' => 'https://api.example.com/users',
+            'url' => 'http://172.20.0.5/users',
             'method' => 'GET',
             'description' => 'Test endpoint for users',
             'timeout' => 30,
@@ -95,7 +105,7 @@ class ErpEndpointsApiTest extends TestCase
 
         $data = [
             'name' => 'Updated Endpoint',
-            'url' => 'https://api.updated.com/endpoint',
+            'url' => 'http://172.20.0.6/endpoint',
             'method' => 'POST',
             'is_active' => false,
         ];
@@ -153,7 +163,7 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_get_endpoint_logs(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(5)->create();
+        ErpEndpointLog::factory(5)->create(['endpoint_id' => $endpoint->id]);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/erp/v2/endpoints/{$endpoint->id}/logs");
@@ -170,7 +180,7 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_clear_endpoint_logs(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(3)->create();
+        ErpEndpointLog::factory(3)->create(['endpoint_id' => $endpoint->id]);
 
         $response = $this->actingAs($this->user)
             ->deleteJson("/api/erp/v2/endpoints/{$endpoint->id}/logs");
@@ -182,8 +192,8 @@ class ErpEndpointsApiTest extends TestCase
     public function test_can_get_endpoint_statistics(): void
     {
         $endpoint = ErpEndpoint::factory()->create();
-        $endpoint->logs()->factory(5)->create(['success' => true]);
-        $endpoint->logs()->factory(2)->create(['success' => false]);
+        ErpEndpointLog::factory(5)->create(['endpoint_id' => $endpoint->id, 'success' => true]);
+        ErpEndpointLog::factory(2)->create(['endpoint_id' => $endpoint->id, 'success' => false]);
 
         $response = $this->actingAs($this->user)
             ->getJson("/api/erp/v2/endpoints/{$endpoint->id}/statistics");

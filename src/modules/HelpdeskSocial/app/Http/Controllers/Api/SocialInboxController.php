@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Contracts\SocialApiClientInterface;
 use Modules\HelpdeskSocial\Events\SocialCommentReplied;
 use Modules\HelpdeskSocial\Http\Requests\AssignSocialCommentRequest;
@@ -54,11 +55,13 @@ class SocialInboxController extends Controller
         $comments = $query->paginate($request->get('per_page', 25));
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialCommentResource::collection($comments),
             'meta' => [
-                'current_page' => $comments->currentPage(),
-                'last_page' => $comments->lastPage(),
-                'per_page' => $comments->perPage(),
+                'currentPage' => $comments->currentPage(),
+                'lastPage' => $comments->lastPage(),
+                'perPage' => $comments->perPage(),
                 'total' => $comments->total(),
             ],
         ]);
@@ -68,9 +71,7 @@ class SocialInboxController extends Controller
     {
         abort_if(! auth()->user()?->can('helpdesksocial.view'), 403);
 
-        return response()->json([
-            'data' => new SocialCommentResource($comment->load(['socialAccount', 'intent', 'conversation', 'assignedUser'])),
-        ]);
+        return ApiResponse::success(new SocialCommentResource($comment->load(['socialAccount', 'intent', 'conversation', 'assignedUser'])));
     }
 
     public function reply(ReplySocialCommentRequest $request, SocialComment $comment): JsonResponse
@@ -79,7 +80,7 @@ class SocialInboxController extends Controller
         $validated = $request->validated();
 
         if ($comment->status === 'replied') {
-            return response()->json(['message' => 'Este comentario ya tiene una respuesta'], 422);
+            return ApiResponse::error('Este comentario ya tiene una respuesta', 422);
         }
 
         $account = $comment->socialAccount;
@@ -91,16 +92,14 @@ class SocialInboxController extends Controller
         );
 
         if (! $replyId) {
-            return response()->json(['message' => 'Error al enviar la respuesta a la red social'], 500);
+            return ApiResponse::error('Error al enviar la respuesta a la red social', 500);
         }
 
         $comment->markAsReplied($validated['body'], auth()->id(), $replyId, 'manual');
         $this->auditLog->log('reply', $comment, null, ['reply_body' => $validated['body']]);
         SocialCommentReplied::dispatch($comment->fresh());
 
-        return response()->json([
-            'data' => new SocialCommentResource($comment->fresh()),
-        ]);
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()), 'Respuesta enviada correctamente.');
     }
 
     public function markAsSpam(SocialComment $comment): JsonResponse
@@ -110,9 +109,7 @@ class SocialInboxController extends Controller
         $comment->markAsSpam();
         $this->auditLog->log('update', $comment, $oldValues, ['is_spam' => true, 'status' => 'spam']);
 
-        return response()->json([
-            'data' => new SocialCommentResource($comment->fresh()),
-        ]);
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()));
     }
 
     public function markAsEscalated(SocialComment $comment): JsonResponse
@@ -122,9 +119,7 @@ class SocialInboxController extends Controller
         $comment->markAsEscalated();
         $this->auditLog->log('escalate', $comment, $oldValues, ['status' => 'escalated']);
 
-        return response()->json([
-            'data' => new SocialCommentResource($comment->fresh()),
-        ]);
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()));
     }
 
     public function assign(AssignSocialCommentRequest $request, SocialComment $comment): JsonResponse
@@ -138,9 +133,7 @@ class SocialInboxController extends Controller
         $comment->assignTo($validated['user_id']);
         $this->auditLog->log('assign', $comment, $oldValues, ['assigned_to_user_id' => $validated['user_id']]);
 
-        return response()->json([
-            'data' => new SocialCommentResource($comment->fresh()->load('assignedUser')),
-        ]);
+        return ApiResponse::success(new SocialCommentResource($comment->fresh()->load('assignedUser')));
     }
 
     public function bulk(BulkSocialCommentRequest $request): JsonResponse
@@ -173,10 +166,7 @@ class SocialInboxController extends Controller
             }
         }
 
-        return response()->json([
-            'message' => "Procesados {$results['processed']} comentarios.",
-            'results' => $results,
-        ]);
+        return ApiResponse::success($results, "Procesados {$results['processed']} comentarios.");
     }
 
     public function stats(Request $request): JsonResponse
@@ -192,7 +182,7 @@ class SocialInboxController extends Controller
             $query->where('social_account_id', $request->get('account_id'));
         }
 
-        return response()->json([
+        return ApiResponse::success([
             'total' => (clone $query)->count(),
             'pending' => (clone $query)->where('status', 'pending')->count(),
             'replied' => (clone $query)->where('status', 'replied')->count(),

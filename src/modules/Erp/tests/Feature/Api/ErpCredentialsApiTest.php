@@ -3,14 +3,17 @@
 namespace Modules\Erp\Tests\Feature\Api;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Modules\Erp\Models\ErpCredential;
 use Modules\Erp\Models\ErpEndpoint;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class ErpCredentialsApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected $connectionsToTransact = ['mariadb', 'helpdesk'];
 
     protected User $user;
 
@@ -19,15 +22,20 @@ class ErpCredentialsApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // La API de credenciales cuelga de la de endpoints, que exige
+        // `erp.endpoints.manage` (guard SSRF). El usuario de test lo recibe.
+        Permission::firstOrCreate(['name' => 'erp.endpoints.manage', 'guard_name' => 'web']);
         $this->user = User::factory()->create();
+        $this->user->givePermissionTo('erp.endpoints.manage');
         $this->endpoint = ErpEndpoint::factory()->create();
     }
 
     public function test_can_list_credentials_for_endpoint(): void
     {
         $this->endpoint->credentials()->createMany([
-            ['auth_type' => 'basic', 'username' => 'user1', 'password' => 'pass1'],
-            ['auth_type' => 'bearer', 'token' => 'token123'],
+            ['name' => 'List basic', 'auth_type' => 'basic', 'username' => 'user1', 'password' => 'pass1'],
+            ['name' => 'List bearer', 'auth_type' => 'bearer', 'token' => 'token123'],
         ]);
 
         $response = $this->actingAs($this->user)
@@ -45,6 +53,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_create_basic_auth_credential(): void
     {
         $data = [
+            'name' => 'Basic Auth cred',
             'auth_type' => 'basic',
             'username' => 'admin',
             'password' => 'secretpassword',
@@ -69,6 +78,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_create_bearer_token_credential(): void
     {
         $data = [
+            'name' => 'Bearer cred',
             'auth_type' => 'bearer',
             'token' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
             'is_active' => true,
@@ -87,6 +97,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_create_api_key_credential(): void
     {
         $data = [
+            'name' => 'API Key cred',
             'auth_type' => 'api_key',
             'api_key' => 'sk_test_51234567890',
             'api_key_header' => 'X-API-Key',
@@ -106,6 +117,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_create_no_auth_credential(): void
     {
         $data = [
+            'name' => 'No auth cred',
             'auth_type' => 'none',
             'is_active' => true,
         ];
@@ -119,6 +131,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_basic_auth_requires_username_and_password(): void
     {
         $data = [
+            'name' => 'Incomplete basic',
             'auth_type' => 'basic',
             // Missing username and password
             'is_active' => true,
@@ -133,6 +146,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_bearer_auth_requires_token(): void
     {
         $data = [
+            'name' => 'Incomplete bearer',
             'auth_type' => 'bearer',
             // Missing token
             'is_active' => true,
@@ -147,6 +161,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_show_credential(): void
     {
         $credential = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic',
             'auth_type' => 'basic',
             'username' => 'user',
             'password' => 'pass',
@@ -164,6 +179,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_update_credential(): void
     {
         $credential = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic',
             'auth_type' => 'basic',
             'username' => 'user',
             'password' => 'pass',
@@ -188,6 +204,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_delete_credential(): void
     {
         $credential = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic',
             'auth_type' => 'basic',
             'username' => 'user',
             'password' => 'pass',
@@ -203,6 +220,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_toggle_credential_active_status(): void
     {
         $credential = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic',
             'auth_type' => 'basic',
             'username' => 'user',
             'password' => 'pass',
@@ -219,6 +237,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_activating_credential_deactivates_others(): void
     {
         $cred1 = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic 1',
             'auth_type' => 'basic',
             'username' => 'user1',
             'password' => 'pass1',
@@ -226,6 +245,7 @@ class ErpCredentialsApiTest extends TestCase
         ]);
 
         $cred2 = $this->endpoint->credentials()->create([
+            'name' => 'Seed bearer 2',
             'auth_type' => 'bearer',
             'token' => 'token2',
             'is_active' => false,
@@ -241,6 +261,7 @@ class ErpCredentialsApiTest extends TestCase
     public function test_can_rotate_credential(): void
     {
         $credential = $this->endpoint->credentials()->create([
+            'name' => 'Seed basic',
             'auth_type' => 'basic',
             'username' => 'user',
             'password' => 'pass',

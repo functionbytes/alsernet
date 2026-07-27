@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Http\Requests\Settings\StoreApiTokenRequest;
 
 class ApiTokensController extends Controller
 {
@@ -18,13 +19,9 @@ class ApiTokensController extends Controller
         return view('helpdesk::settings.profile.tokens', compact('tokens'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreApiTokenRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:80'],
-            'abilities' => ['nullable', 'array'],
-            'abilities.*' => ['string', 'max:64'],
-        ]);
+        $data = $request->validated();
 
         $abilities = $data['abilities'] ?? ['*'];
         $created = $request->user()->createToken($data['name'], $abilities);

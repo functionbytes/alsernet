@@ -12,11 +12,9 @@ return [
             'verify_token' => env('HELPDESK_SOCIAL_META_VERIFY_TOKEN'),
             'webhook_path' => env('HELPDESK_SOCIAL_META_WEBHOOK_PATH', '/webhooks/meta'),
         ],
-        'whatsapp' => [
-            'enabled' => env('HELPDESK_SOCIAL_WHATSAPP_ENABLED', true),
-            'api_version' => env('HELPDESK_SOCIAL_WHATSAPP_API_VERSION', 'v25.0'),
-            'verify_token' => env('HELPDESK_SOCIAL_WHATSAPP_VERIFY_TOKEN'),
-        ],
+        // El chat de WhatsApp (mensajes entrantes) lo gestiona el módulo Helpdesk
+        // core vía `helpdesk.integrations.whatsapp`. Este módulo solo cubre
+        // comentarios y menciones de Facebook/Instagram por la Graph API.
     ],
 
     'auto_reply' => [
@@ -39,6 +37,7 @@ return [
         'enabled' => env('HELPDESK_SOCIAL_COMMENTS_ENABLED', true),
         'sync_interval_minutes' => 15,
         'max_comments_per_sync' => 100,
+        'max_posts_per_sync' => 20,
         'reply_to_comments_enabled' => true,
         'hide_spam_comments' => true,
     ],
@@ -47,10 +46,21 @@ return [
         'webhooks' => 'helpdesk-social-webhooks',
         'processing' => 'helpdesk-social-processing',
         'analytics' => 'helpdesk-social-analytics',
+        'ai' => 'helpdesk-social-ai',
     ],
 
     'analytics' => [
         'retention_days' => 365,
         'aggregation_interval' => 'daily',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retención de comentarios y menciones
+    |--------------------------------------------------------------------------
+    | Días que se conservan los comentarios ya cerrados (replied/spam/escalated)
+    | y las menciones ya procesadas (status != new) antes de purgarlos
+    | (helpdesksocial:prune, diario). 0 o menos desactiva la limpieza.
+    */
+    'comment_retention_days' => (int) env('HELPDESKSOCIAL_RETENTION_DAYS', 180),
 ];

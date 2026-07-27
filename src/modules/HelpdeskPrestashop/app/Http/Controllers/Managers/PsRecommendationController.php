@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\HelpdeskPrestashop\Http\Requests\StorePsRecommendationRequest;
 use Modules\HelpdeskPrestashop\Models\PsRecommendation;
 
 class PsRecommendationController extends Controller
@@ -24,21 +25,9 @@ class PsRecommendationController extends Controller
         return response()->json(['success' => true, 'recommendations' => $recommendations]);
     }
 
-    public function store(Request $request, Conversation $conversation): JsonResponse
+    public function store(StorePsRecommendationRequest $request, Conversation $conversation): JsonResponse
     {
-        $this->authorize('view', $conversation);
-
-        $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'min:1'],
-            'id_product_attribute' => ['nullable', 'integer', 'min:1'],
-            'product_name' => ['required', 'string', 'max:255'],
-            'product_sku' => ['nullable', 'string', 'max:100'],
-            'price_with_tax' => ['nullable', 'numeric', 'min:0'],
-            'product_url' => ['nullable', 'string', 'max:500'],
-            'product_image' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        $rec = PsRecommendation::create(array_merge($validated, [
+        $rec = PsRecommendation::create(array_merge($request->validated(), [
             'conversation_id' => $conversation->id,
             'user_id' => auth()->id(),
         ]));

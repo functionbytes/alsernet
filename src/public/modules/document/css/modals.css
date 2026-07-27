@@ -61,7 +61,7 @@
 }
 .docs-modal.docs-modal-md { max-width: 560px; }
 .docs-modal.docs-modal-lg { max-width: 760px; max-height: 92vh; }
-.docs-modal.docs-modal-xl { max-width: 980px; max-height: 92vh; }
+.docs-modal.docs-modal-xl { max-width: 980px; height: min(90vh, 720px); max-height: 92vh; }
 
 /* ── Cabecera ───────────────────────────────────────────────── */
 .docs-head {
@@ -92,6 +92,12 @@
     line-height: 1.25;
     display: flex; align-items: center; gap: 8px;
     flex-wrap: wrap;
+}
+.docs-head-order {
+    font-size: 13px; font-weight: 700;
+    color: var(--docs-text);
+    line-height: 1.25;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 .docs-head-title .docs-chip {
     font-size: 10px; font-weight: 500;
@@ -151,6 +157,10 @@
 .docs-foot .btn-primary:hover, .docs-foot .btn-primary:focus { background: #000; border-color: #000; color: #fff; }
 .docs-foot .btn-outline-secondary { background: #fff; color: #18181b; border-color: #e5e7eb; }
 .docs-foot .btn-outline-secondary:hover { border-color: #18181b; color: #18181b; background: #fafafa; }
+
+/* ── Acciones destructivas (reemplaza estilos inline por color) ─ */
+.docs-action-danger { color: var(--docs-danger); }
+.docs-action-danger:hover, .docs-action-danger:focus { color: var(--docs-danger); border-color: var(--docs-danger); }
 
 /* ── Tabla informativa key/value ────────────────────────────── */
 .docs-info-table {
@@ -228,11 +238,13 @@
 .docs-status {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
     padding: 2px 7px;
     border-radius: 999px;
 }
 .docs-status i { font-size: 9px; }
-.docs-status.approved { background: #dcfce7; color: #166534; }
+.docs-status.approved { background: #eaf3d3; color: #5f7d0c; }
 .docs-status.pending { background: #fef3c7; color: #92400e; }
 .docs-status.rejected { background: #fee2e2; color: #991b1b; }
 
@@ -384,6 +396,84 @@
 }
 .docs-check input { accent-color: var(--docs-primary); }
 
+/* ── Buscador de expedientes con resultados tipo card ────────── */
+.docs-search-field {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid var(--docs-border);
+    border-radius: 6px;
+    background: #fff;
+    transition: border-color .12s;
+}
+.docs-search-field:focus-within { border-color: var(--docs-text); box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+.docs-search-field i { font-size: 11px; color: var(--docs-text-muted); flex-shrink: 0; }
+.docs-search-field input {
+    flex: 1; min-width: 0;
+    border: none; outline: none;
+    font-size: 12px; color: var(--docs-text);
+    background: transparent; font-family: inherit;
+}
+.docs-search-field input::placeholder { color: var(--docs-text-muted); }
+
+.docs-opt-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.docs-opt {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    width: 100%; text-align: left;
+    font-family: inherit;
+    transition: background .12s, border-color .12s;
+}
+.docs-opt:hover { background: var(--docs-bg-hover); }
+.docs-opt.on { border-color: var(--docs-text); background: var(--docs-bg-subtle); }
+
+.docs-opt .icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+}
+.docs-opt.on .icon { background: var(--docs-text); color: #fff; }
+
+.docs-opt .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.docs-opt .body .name {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.docs-opt .body .sub {
+    font-size: 11px; color: var(--docs-text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.docs-opt .radio {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--docs-border-strong);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+    font-size: 8px;
+    transition: background .12s, border-color .12s, color .12s;
+}
+.docs-opt.on .radio { background: var(--docs-text); border-color: var(--docs-text); color: #fff; }
+
+.docs-opt-empty {
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--docs-text-muted);
+}
+
 /* ── Info banner ─────────────────────────────────────────────── */
 .docs-minfo {
     display: flex; align-items: flex-start; gap: 8px;
@@ -421,7 +511,8 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 6px;
 }
-.docs-cg-pick {
+.docs-cg-pick,
+.docs-inline-pick {
     background: #fff;
     border: 2px solid var(--docs-border);
     border-radius: 8px;
@@ -433,9 +524,12 @@
     transition: border-color .12s;
     padding: 0;
 }
-.docs-cg-pick:hover { border-color: var(--docs-border-strong); }
-.docs-cg-pick.on { border-color: var(--docs-primary); }
-.docs-cg-pick .check {
+.docs-cg-pick:hover,
+.docs-inline-pick:hover { border-color: var(--docs-border-strong); }
+.docs-cg-pick.on,
+.docs-inline-pick.on { border-color: var(--docs-primary); }
+.docs-cg-pick .check,
+.docs-inline-pick .check {
     position: absolute; top: 6px; right: 6px;
     width: 18px; height: 18px;
     border-radius: 50%;
@@ -445,15 +539,25 @@
     color: #fff;
     font-size: 9px;
 }
-.docs-cg-pick.on .check {
+.docs-cg-pick.on .check,
+.docs-inline-pick.on .check {
     background: var(--docs-primary);
     border-color: var(--docs-primary);
 }
-.docs-cg-pick i.preview {
+.docs-cg-pick i.preview,
+.docs-inline-pick i.preview {
     font-size: 24px;
     color: var(--docs-text-muted);
 }
-.docs-cg-pick .lbl {
+.docs-cg-pick img.preview,
+.docs-inline-pick img.preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.docs-cg-pick .lbl,
+.docs-inline-pick .lbl {
     position: absolute; bottom: 0; left: 0; right: 0;
     padding: 4px 7px;
     font-size: 9px;
@@ -464,9 +568,15 @@
 }
 
 /* ── Vista detalle (2 columnas: main + side) ────────────────── */
+.docs-rp {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
 .docs-vd-grid {
     display: grid;
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr 344px;
     gap: 0;
     flex: 1;
     min-height: 0;
@@ -582,6 +692,61 @@
     opacity: .5;
 }
 
+.docs-attach-dropzone {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 18px 12px;
+    border: 1px dashed var(--docs-border);
+    border-radius: 10px;
+    background: var(--docs-bg-subtle);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.docs-attach-dropzone:hover,
+.docs-attach-dropzone.dragover {
+    border-color: var(--docs-primary);
+    background: #f7faef;
+}
+.docs-attach-dropzone i { font-size: 20px; color: var(--docs-text-muted); }
+.docs-attach-dropzone .dz-title { font-size: 12px; font-weight: 600; color: var(--docs-text); }
+.docs-attach-dropzone .dz-sub { font-size: 10.5px; color: var(--docs-text-muted); }
+.docs-attach-dropzone .dz-file { font-size: 11px; font-weight: 600; color: var(--docs-primary); margin-top: 2px; }
+
+.docs-file-detail-head {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+}
+.docs-file-preview {
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    background: var(--docs-bg-subtle);
+    aspect-ratio: 16 / 10;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--docs-text-muted);
+    text-decoration: none;
+}
+.docs-file-preview:hover {
+    border-color: var(--docs-border-strong);
+    color: var(--docs-text-soft);
+}
+.docs-file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.docs-file-preview i {
+    font-size: 46px;
+    opacity: .55;
+}
+.docs-file-detail-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .docs-vd-meta-block {
     display: flex; flex-direction: column;
     gap: 7px;
@@ -640,23 +805,6 @@
     flex-shrink: 0;
 }
 .docs-rp-head-text { flex: 1; min-width: 0; }
-.docs-rp-head-label {
-    font-size: 9.5px;
-    font-weight: 700;
-    letter-spacing: .06em;
-    color: var(--docs-text-muted);
-    text-transform: uppercase;
-    margin-bottom: 2px;
-}
-.docs-rp-head-title {
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--docs-text);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
 .docs-rp-meta {
     display: flex; flex-direction: column;
     gap: 4px;
@@ -766,8 +914,8 @@
     position: relative;
 }
 .docs-rp .doc-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-.docs-rp .doc-card.doc-card-pending { cursor: default; opacity: .75; }
-.docs-rp .doc-card.doc-card-pending:hover { box-shadow: none; }
+.docs-rp .doc-card.doc-card-pending { cursor: pointer; opacity: .75; }
+.docs-rp .doc-card.doc-card-pending:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
 .docs-rp .doc-card .thumb {
     background: var(--docs-bg-subtle);
     height: 110px;
@@ -1069,10 +1217,10 @@
 /* ── Workspace side panel tabs ───────────────────────────────── */
 .docs-ws-tabs {
     display: flex;
-    gap: 2px;
-    background: var(--docs-bg-subtle);
+    gap: 0;
+    background: #fafafa;
     border-bottom: 1px solid var(--docs-border);
-    padding: 6px 6px 0;
+    padding: 10px 6px 0;
     flex-shrink: 0;
     position: sticky;
     top: 0;
@@ -1082,25 +1230,35 @@
 }
 .docs-ws-tabs::-webkit-scrollbar { display: none; }
 .docs-ws-tab {
+    flex: 1;
     flex-shrink: 0;
-    padding: 5px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 2px;
     border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
     background: transparent;
     color: var(--docs-text-muted);
     font-size: 10.5px;
     font-weight: 600;
+    letter-spacing: -.01em;
     cursor: pointer;
-    border-radius: 5px 5px 0 0;
-    border-bottom: 2px solid transparent;
     transition: color .12s, border-color .12s;
     line-height: 1;
+    font-family: inherit;
 }
-.docs-ws-tab:hover { color: var(--docs-text); }
+/* Solo ícono + tooltip nativo (title=""), como el mockup Alvarez */
+.docs-ws-tab span { display: none; }
+.docs-ws-tab i { font-size: 16px; }
+.docs-ws-tab:hover { color: var(--docs-text-soft); }
 .docs-ws-tab.on {
     color: var(--docs-text);
     border-bottom-color: var(--docs-primary);
-    background: #fff;
 }
+.docs-ws-tab.on i { color: var(--docs-primary); }
 .docs-ws-pane {
     display: none;
     flex: 1;
@@ -1135,6 +1293,8 @@
 /* ── Tarjeta de expediente ────────────────────────────────────── */
 .docs-list-card {
     border-left-width: 1px !important;
+    border-left-style: solid;
+    border-left-color: var(--bv-border, #e4e4e7);
     gap: 7px;
     padding: 11px 13px;
 }
@@ -1150,7 +1310,7 @@
 }
 .docs-card-prog       { display: flex; align-items: center; gap: 8px; margin-top: 1px; }
 .docs-card-prog-track { flex: 1; height: 5px; border-radius: 99px; background: var(--bv-bg-subtle, #f4f4f5); overflow: hidden; }
-.docs-card-prog-fill  { height: 100%; border-radius: 99px; }
+.docs-card-prog-fill  { height: 100%; width: var(--pct); border-radius: 99px; }
 .docs-card-docs-lbl   { font-size: 10px; color: var(--bv-text-muted, #71717a); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .docs-list-card .foot { border-top: 1px solid var(--bv-border, #e4e4e7); padding-top: 7px; margin-top: 1px; }
 .docs-list-card .title { font-size: 13px; }
@@ -1249,3 +1409,708 @@
 .sort-item .ico { width: 15px; display: flex; justify-content: center; font-size: 11px; color: var(--docs-text-muted); }
 .sort-item.sel .ico { color: var(--docs-primary); }
 .sort-item-lbl { flex: 1; }
+
+/* ── Icono de sección (encabezado de tarjeta en el panel lateral) ── */
+.docs-ws-sec-ic {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+/* ── Stepper de validación por etapas ─────────────────────────── */
+.docs-ws-step { display: flex; align-items: center; gap: 0; }
+.docs-ws-step .node {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.docs-ws-step .node.done { background: var(--docs-primary); color: #fff; }
+.docs-ws-step .node.curr { background: #fff; border: 2px solid var(--docs-primary); color: var(--docs-primary); }
+.docs-ws-step .node.todo { background: var(--docs-bg-subtle); border: 1px solid var(--docs-border); color: var(--docs-text-muted); }
+.docs-ws-step .node.rejected { background: #fee2e2; border: 1px solid var(--docs-danger); color: var(--docs-danger); }
+.docs-ws-step .bar { height: 2px; flex: 1; background: var(--docs-border); }
+.docs-ws-step .bar.fill { background: var(--docs-primary); }
+.docs-ws-step .bar.rej { background: var(--docs-danger); }
+
+/* ── Icono circular de comunicaciones (correos automáticos) ───── */
+.docs-ws-comm-ic {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.docs-ws-comm-ic.on { background: #eaf3d3; color: #6f9410; }
+.docs-ws-comm-sent {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #6f9410;
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Componentes del catálogo Alvarez · Fase 3 (jul-2026)
+   Toggle galería/lista, selección múltiple, timeline unificada, checklist
+   de requeridos, CTA contextual, estados vacíos con acción, toast deshacer,
+   atajos de teclado y acentos de progreso por estado (sin hex inline).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Botones de marca (sustituye style="background:#90bb13" inline) ── */
+.docs-modal .btn-primary,
+.docs-rp .btn-primary {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+.docs-modal .btn-primary:hover,
+.docs-rp .btn-primary:hover {
+    background: #7da310;
+    border-color: #7da310;
+}
+
+/* ── Acento de progreso por grupo de estado ── */
+.docs-card-prog-fill.approved { background: var(--docs-primary); }
+.docs-card-prog-fill.rejected { background: #FA896B; }
+.docs-card-prog-fill.pending  { background: #FEC90F; }
+
+/* ── Cabecera de card en fila (sustituye flex inline repetido) ── */
+.docs-vd-card > .h.h-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.docs-vd-card > .h .h-grow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+/* ── Fila de acciones bajo el título (título nunca compite por espacio
+     con los botones, así no se envuelve a 2 líneas) ── */
+.docs-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+/* ── Toggle galería ↔ lista ── */
+.dg-toggle {
+    display: inline-flex;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.dg-toggle button {
+    width: 30px;
+    height: 28px;
+    border: none;
+    background: #fff;
+    color: var(--docs-text-muted);
+    cursor: pointer;
+    font-size: 11px;
+}
+.dg-toggle button.on {
+    background: var(--docs-bg-subtle);
+    color: var(--docs-primary);
+}
+
+/* ── Vista compacta (lista) de documentos ── */
+.doc-list-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.doc-listrow {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 11px;
+    border: 1px solid var(--docs-border);
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+}
+.doc-listrow:hover { border-color: var(--docs-border-strong); }
+.doc-listrow.is-pending {
+    opacity: .6;
+    cursor: default;
+}
+.doc-listrow .lic {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--docs-bg-subtle);
+    display: grid;
+    place-items: center;
+    color: var(--docs-text-muted);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.doc-listrow .lb {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.doc-listrow .lb .n {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.doc-listrow .lb .m {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Selección múltiple de documentos ── */
+.doc-card.selmode { cursor: pointer; }
+.doc-card.sel {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+}
+.doc-card .doc-check {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .85);
+    background: rgba(0, 0, 0, .25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 4;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+/* El check solo debe verse cuando la tarjeta está realmente seleccionada —
+   antes se dibujaba siempre en blanco, incluso sobre el círculo "vacío". */
+.doc-card .doc-check i {
+    display: none;
+}
+.doc-card.sel .doc-check {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+.doc-card.sel .doc-check i {
+    display: block;
+}
+.docs-bulkbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: #18181b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+.docs-bulkbar .sp { flex: 1; }
+.docs-bulkbar .bb-btn {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+}
+.docs-bulkbar .bb-btn:hover { background: rgba(255, 255, 255, .1); }
+
+/* ── Timeline unificada (historial + correos) ── */
+.docs-utl {
+    position: relative;
+    padding-left: 22px;
+}
+.docs-utl::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--docs-border);
+}
+.docs-utl-item {
+    position: relative;
+    padding: 0 0 15px;
+}
+.docs-utl-item:last-child { padding-bottom: 0; }
+.docs-utl-dot {
+    position: absolute;
+    left: -19px;
+    top: 2px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--docs-text-muted);
+}
+.docs-utl-dot.mail { border-color: var(--docs-text-soft); }
+.docs-utl-dot.ok {
+    border-color: var(--docs-primary);
+    background: var(--docs-primary);
+}
+.docs-utl-dot.rej {
+    border-color: #3f3f46;
+    background: #3f3f46;
+}
+.docs-utl-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--docs-text);
+    letter-spacing: -.01em;
+}
+.docs-utl-sub {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    margin-top: 1px;
+}
+.docs-utl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+    margin-left: 6px;
+    vertical-align: 1px;
+}
+
+/* ── Checklist de documentos requeridos ── */
+.docs-req-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.docs-req-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-req-item:last-child { border-bottom: none; }
+.docs-req-ic {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+.docs-req-ic.done {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-req-ic.miss {
+    background: #f4f4f5;
+    color: #a1a1aa;
+    border: 1px dashed #d4d4d8;
+}
+.docs-req-nm {
+    flex: 1;
+    font-size: 12px;
+    color: var(--docs-text);
+    font-weight: 500;
+}
+.docs-req-item.pending .docs-req-nm { color: var(--docs-text-muted); }
+.docs-req-tag {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+.docs-req-tag.done {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-req-tag.miss {
+    background: #f4f4f5;
+    color: #a1a1aa;
+}
+.docs-req-link {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--docs-text-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    font-family: inherit;
+    text-decoration: underline;
+}
+
+/* ── Acción principal contextual (banner CTA) ── */
+.docs-cta {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px 13px;
+    border-radius: 11px;
+    border: 1px solid var(--docs-border);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+.docs-cta.warn {
+    border-color: #e0e2e6;
+    background: #f6f7f9;
+}
+.docs-cta.ok {
+    border-color: #dbe8bd;
+    background: #f7faef;
+}
+.docs-cta .ic {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+}
+.docs-cta.warn .ic {
+    background: #e9ebee;
+    color: #5b6572;
+}
+.docs-cta.ok .ic {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-cta .tx {
+    flex: 1;
+    min-width: 0;
+    padding-top: 1px;
+}
+.docs-cta .tx .t {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--docs-text);
+    line-height: 1.3;
+}
+.docs-cta .tx .s {
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+}
+.docs-cta .btn {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* ── Estado vacío con acción ── */
+.docs-es-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    padding: 26px 18px;
+}
+.docs-es-empty .eic {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--docs-bg-subtle);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    color: var(--docs-text-muted);
+}
+.docs-es-empty .et {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--docs-text);
+}
+.docs-es-empty .esb {
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    line-height: 1.5;
+    max-width: 240px;
+}
+
+/* Centra el estado de carga del expediente dentro del alto disponible del
+   modal (.docs-body es flex column; sin esto el mensaje quedaba pegado
+   arriba con todo el resto del modal en blanco debajo). */
+.docs-loading-center {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Toast con deshacer ── */
+.docs-undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 2100;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px 11px 16px;
+    background: #18181b;
+    color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .28);
+    font-size: 12.5px;
+    font-weight: 500;
+    animation: docs-toast-in .18s ease;
+}
+@keyframes docs-toast-in {
+    from { transform: translate(-50%, 12px); opacity: 0; }
+    to   { transform: translate(-50%, 0); opacity: 1; }
+}
+.docs-undo-toast > i { color: #a1a1aa; }
+.docs-undo-toast .ub {
+    background: none;
+    border: none;
+    color: #a3e635;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+.docs-undo-toast .ux {
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* ── Navegación por teclado en la lista ── */
+.docs-list-card.kb-active {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+    background: #f6faec !important;
+}
+.docs-kbd-hints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--docs-border);
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+}
+.docs-kbd-hints .kh {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.docs-kbd-hints kbd {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--docs-text-soft);
+}
+
+/* ── Stepper de validación con etiquetas (mockup .wv-steps) ── */
+.docs-wv-steps {
+    display: flex;
+    gap: 0;
+    margin: 4px 0 6px;
+}
+.docs-wv-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    text-align: center;
+}
+.docs-wv-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--docs-border);
+    z-index: 0;
+}
+.docs-wv-step.done::after { background: var(--docs-primary); }
+.docs-wv-step.rejected::after { background: var(--docs-danger); }
+.docs-wv-node {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 1;
+    position: relative;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+    color: var(--docs-text-muted);
+}
+.docs-wv-step.done .docs-wv-node {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+    color: #fff;
+}
+.docs-wv-step.curr .docs-wv-node {
+    background: #fff;
+    border: 2px solid var(--docs-primary);
+    color: var(--docs-primary);
+    box-shadow: 0 0 0 4px rgba(144, 187, 19, .14);
+}
+.docs-wv-step.rejected .docs-wv-node {
+    background: #fee2e2;
+    border-color: var(--docs-danger);
+    color: var(--docs-danger);
+}
+.docs-wv-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--docs-text);
+    letter-spacing: -.01em;
+}
+.docs-wv-step.todo .docs-wv-lbl { color: var(--docs-text-muted); }
+.docs-wv-sub {
+    font-size: 9.5px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Fila de progreso de subida (mockup sección 8) ── */
+.docs-upload-progress { cursor: default; }
+.docs-upload-progress .lic {
+    background: #eef3df;
+    color: #5f7d0c;
+}
+.docs-upload-progress-track {
+    margin-top: 5px;
+    width: 100%;
+}
+.docs-upload-progress-pct {
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* docs-viewer · empty state must span both gallery columns
+   (movido desde Helpdesk core conversations-commerce.css) */
+.docs-gallery .docs-gallery-empty {
+    grid-column: 1 / -1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Accesibilidad + eliminación de estilos inline · auditoría jul-2026
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Correo del cliente: permite partir emails largos ── */
+.docs-break-all { word-break: break-all; }
+
+/* ── Barra de progreso de la galería (cabecera del panel) ── */
+.docs-gallery-progress { display: flex; align-items: center; gap: 10px; }
+.docs-gallery-progress-track {
+    flex: 1;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--docs-bg-subtle);
+    overflow: hidden;
+}
+.docs-gallery-progress-fill {
+    height: 100%;
+    width: var(--pct);
+    background: var(--docs-primary);
+    border-radius: 99px;
+}
+.docs-gallery-progress-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--docs-text-muted);
+    white-space: nowrap;
+}
+
+/* ── Banner de estado del expediente (vista detalle) ── */
+.docs-vd-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+}
+.docs-vd-status-banner-badge { font-size: 12px; padding: 4px 11px; }
+.docs-vd-status-banner-stage {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    white-space: nowrap;
+}
+.docs-vd-status-banner-stage-value {
+    color: var(--docs-text);
+    font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.docs-vd-order-ref { font-size: 11px; }
+
+/* ── Fila de botones genérica (acciones de la etapa) ── */
+.docs-btn-row-8 { display: flex; gap: 8px; }
+
+/* ── Modificador de docs-action-row para filas de comunicaciones ── */
+.docs-action-row--comm { gap: 10px; }
+
+/* ── Divisor entre envíos automáticos y acciones manuales (redactar) ── */
+.docs-action-divider { height: 1px; background: var(--docs-border); margin: 4px 0; }
+
+/* ── Separación del badge de estado en la cabecera del panel ── */
+.docs-status-spacer { margin-right: 6px; }

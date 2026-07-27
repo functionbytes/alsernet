@@ -67,10 +67,10 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Canal</th>
-                                    <th>Eventos configurados</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Canal</th>
+                                    <th scope="col">Eventos configurados</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialCompetitorRequest;
 use Modules\HelpdeskSocial\Http\Requests\UpdateSocialCompetitorRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialCompetitorResource;
@@ -20,11 +21,13 @@ class SocialCompetitorsController extends Controller
             ->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialCompetitorResource::collection($competitors),
             'meta' => [
-                'current_page' => $competitors->currentPage(),
-                'last_page' => $competitors->lastPage(),
-                'per_page' => $competitors->perPage(),
+                'currentPage' => $competitors->currentPage(),
+                'lastPage' => $competitors->lastPage(),
+                'perPage' => $competitors->perPage(),
                 'total' => $competitors->total(),
             ],
         ]);
@@ -34,27 +37,21 @@ class SocialCompetitorsController extends Controller
     {
         $competitor = SocialCompetitor::create($request->validated());
 
-        return response()->json([
-            'data' => new SocialCompetitorResource($competitor),
-        ], 201);
+        return ApiResponse::created(new SocialCompetitorResource($competitor), 'Competidor creado correctamente.');
     }
 
     public function show(SocialCompetitor $competitor): JsonResponse
     {
         abort_if(! auth()->user()?->can('helpdesksocial.analytics.view'), 403);
 
-        return response()->json([
-            'data' => new SocialCompetitorResource($competitor->load('latestMetrics')),
-        ]);
+        return ApiResponse::success(new SocialCompetitorResource($competitor->load('latestMetrics')));
     }
 
     public function update(UpdateSocialCompetitorRequest $request, SocialCompetitor $competitor): JsonResponse
     {
         $competitor->update($request->validated());
 
-        return response()->json([
-            'data' => new SocialCompetitorResource($competitor->load('latestMetrics')),
-        ]);
+        return ApiResponse::success(new SocialCompetitorResource($competitor->load('latestMetrics')), 'Competidor actualizado correctamente.');
     }
 
     public function destroy(SocialCompetitor $competitor): JsonResponse
@@ -63,6 +60,6 @@ class SocialCompetitorsController extends Controller
 
         $competitor->delete();
 
-        return response()->json(['message' => 'Competidor eliminado correctamente']);
+        return ApiResponse::noContent();
     }
 }

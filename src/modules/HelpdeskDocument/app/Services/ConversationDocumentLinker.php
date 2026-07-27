@@ -5,15 +5,18 @@ namespace Modules\HelpdeskDocument\Services;
 use Illuminate\Support\Collection;
 use Modules\Document\Entities\Document;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\HelpdeskDocument\Support\PhoneMatcher;
 
 /**
  * Links Helpdesk conversations to their customer's Document expediente.
  *
- * A conversation stores the linked document in `metadata.document_id`. When a
- * conversation has no link yet, this service finds the most relevant document
- * for the customer (matched by email) and persists the link lazily, so both
- * existing and future conversations get associated the first time they are
- * opened in the inbox.
+ * A conversation stores the most recently linked document in
+ * `metadata.document_id` (+ an informational snapshot), and the full history
+ * of every linked document id in `metadata.document_ids`. When a conversation
+ * has no link yet, this service finds the most relevant document for the
+ * customer (matched by email) and persists the link lazily, so both existing
+ * and future conversations get associated the first time they are opened in
+ * the inbox.
  */
 class ConversationDocumentLinker
 {
@@ -68,15 +71,22 @@ class ConversationDocumentLinker
     }
 
     /**
-     * All documents for the conversation's customer, matched by email
-     * (case-insensitive) and ordered by inbox relevance (status rank, then
-     * most recent first). Empty when the customer has no email or no documents.
+     * All documents for the conversation's customer, ordered by inbox
+     * relevance (status rank, then most recent first).
+     *
+     * Match primario por email (case-insensitive); si el cliente no tiene
+     * email (p. ej. WhatsApp), fallback por teléfono normalizado contra la
+     * columna indexada customer_cellphone_normalized (mantenida en sync por
+     * el modelo Document). Vacío si no hay ninguna clave de match.
      */
     public function documentsForConversation(Conversation $conversation): Collection
     {
-        $email = trim((string) $conversation->customer?->email);
+        $customer = $conversation->customer;
+        $email = trim((string) $customer?->email);
+        $phone = PhoneMatcher::normalize($customer?->phone ?: $customer?->whatsapp_phone);
+        $linkedIds = $this->linkedDocumentIds($conversation);
 
-        if ($email === '') {
+        if ($email === '' && $phone === null && $linkedIds === []) {
             return collect();
         }
 
@@ -90,7 +100,27 @@ class ConversationDocumentLinker
             ->select('documents.*')
             ->with(['status', 'documentType', 'media'])
             ->leftJoin('document_statuses', 'document_statuses.id', '=', 'documents.status_id')
-            ->whereRaw('LOWER(documents.customer_email) = ?', [mb_strtolower($email)])
+            ->where(function ($query) use ($email, $phone, $linkedIds) {
+                // Coincidencia por email/teléfono del cliente...
+                $query->where(function ($q) use ($email, $phone) {
+                    if ($email !== '') {
+                        // customer_email is utf8mb4_unicode_ci (case-insensitive) and
+                        // indexed, so a plain equality already matches regardless of
+                        // case — wrapping it in LOWER() only forced a full scan.
+                        $q->where('documents.customer_email', $email);
+                    } elseif ($phone !== null) {
+                        $q->where('documents.customer_cellphone_normalized', $phone);
+                    } else {
+                        $q->whereRaw('0 = 1');
+                    }
+                });
+
+                // ...o cualquier expediente ASIGNADO manualmente a la conversación,
+                // aunque su email/teléfono no coincida (metadata.document_ids).
+                if ($linkedIds !== []) {
+                    $query->orWhereIn('documents.id', $linkedIds);
+                }
+            })
             ->orderByRaw("FIELD(document_statuses.`key`, {$placeholders}) = 0", $priority)
             ->orderByRaw("FIELD(document_statuses.`key`, {$placeholders})", $priority)
             ->orderByDesc('documents.created_at')
@@ -108,24 +138,110 @@ class ConversationDocumentLinker
     }
 
     /**
+     * Mantiene el vínculo conversación↔expediente al hidratar el panel:
+     * crea el link si no existe, lo re-apunta al mejor candidato si el
+     * expediente vinculado ya no pertenece al cliente, y refresca el
+     * snapshot informativo si quedó desactualizado (estado, referencia…).
+     *
+     * @param  Collection<int, Document>  $documents  Expedientes del cliente, ya ordenados por relevancia.
+     */
+    public function syncLink(Conversation $conversation, Collection $documents): void
+    {
+        if ($documents->isEmpty()) {
+            return;
+        }
+
+        $existingId = (int) ($conversation->metadata['document_id'] ?? 0);
+        $current = $existingId ? $documents->firstWhere('id', $existingId) : null;
+
+        if (! $current) {
+            $this->link($conversation, $documents->first());
+
+            return;
+        }
+
+        $this->refreshSnapshot($conversation, $current);
+    }
+
+    /**
      * Persist the document link (id + an informational snapshot) on the
      * conversation metadata, preserving any other metadata keys.
+     *
+     * `document_id`/snapshot fields keep pointing at the most recently linked
+     * expediente (used where a single "primary" document is displayed), while
+     * `document_ids` accumulates every id ever linked so an earlier manual
+     * link is never evicted from the list or from ownership checks.
      */
     public function link(Conversation $conversation, Document $document): void
     {
         $metadata = $conversation->metadata ?? [];
 
-        $metadata['document_id'] = (int) $document->id;
-        $metadata['document_uid'] = $document->uid;
-        $metadata['document_type_id'] = $document->type_id;
-        $metadata['document_type_label'] = $document->documentType?->label;
-        $metadata['document_status_id'] = $document->status_id;
-        $metadata['document_status_key'] = $document->status?->key;
-        $metadata['document_status_label'] = $document->status?->label;
-        $metadata['order_reference'] = $document->order_reference;
+        $matchedByEmail = trim((string) $conversation->customer?->email) !== '';
+
+        $linkedIds = $this->linkedDocumentIds($conversation);
+        $linkedIds[] = (int) $document->id;
+
+        $metadata = [...$metadata, ...$this->snapshot($document)];
+        $metadata['document_ids'] = array_values(array_unique($linkedIds));
         $metadata['document_linked_at'] = now()->toIso8601String();
-        $metadata['document_link_source'] = 'auto:email';
+        $metadata['document_link_source'] = $matchedByEmail ? 'auto:email' : 'auto:phone';
 
         $conversation->forceFill(['metadata' => $metadata])->save();
+    }
+
+    /**
+     * Every document id ever linked to the conversation — the accumulated
+     * `document_ids` list plus the legacy singular `document_id` pointer
+     * (conversations linked before this list existed).
+     *
+     * @return array<int, int>
+     */
+    public function linkedDocumentIds(Conversation $conversation): array
+    {
+        $metadata = $conversation->metadata ?? [];
+        $ids = array_map('intval', $metadata['document_ids'] ?? []);
+
+        if ($legacy = $metadata['document_id'] ?? null) {
+            $ids[] = (int) $legacy;
+        }
+
+        return array_values(array_unique(array_filter($ids)));
+    }
+
+    /**
+     * Re-escribe solo el snapshot informativo (estado, tipo, referencia) si
+     * ha cambiado desde el último link, sin tocar linked_at/link_source —
+     * antes quedaba congelado con los datos del primer vínculo.
+     */
+    private function refreshSnapshot(Conversation $conversation, Document $document): void
+    {
+        $metadata = $conversation->metadata ?? [];
+        $snapshot = $this->snapshot($document);
+
+        $drifted = collect($snapshot)
+            ->contains(fn ($value, string $key) => ($metadata[$key] ?? null) !== $value);
+
+        if (! $drifted) {
+            return;
+        }
+
+        $conversation->forceFill(['metadata' => [...$metadata, ...$snapshot]])->save();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function snapshot(Document $document): array
+    {
+        return [
+            'document_id' => (int) $document->id,
+            'document_uid' => $document->uid,
+            'document_type_id' => $document->type_id,
+            'document_type_label' => $document->documentType?->label,
+            'document_status_id' => $document->status_id,
+            'document_status_key' => $document->status?->key,
+            'document_status_label' => $document->status?->label,
+            'order_reference' => $document->order_reference,
+        ];
     }
 }

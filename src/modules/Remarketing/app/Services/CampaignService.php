@@ -192,6 +192,7 @@ class CampaignService
         $statsByVariant = Message::query()
             ->where('campaign_id', $campaign->id)
             ->where('is_holdout', false)
+            ->where('is_test', false)
             ->whereIn('variant_id', $variants->pluck('id'))
             ->selectRaw('
                 variant_id,
@@ -300,6 +301,7 @@ class CampaignService
         $stats = Message::query()
             ->where('campaign_id', $campaign->id)
             ->where('is_holdout', false)
+            ->where('is_test', false)
             ->selectRaw('
                 COUNT(*) as total,
                 SUM(status = "sent") as sent,

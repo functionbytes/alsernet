@@ -9,8 +9,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Campaign\Models\CampaignWebhook;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 
 /**
  * Dispara un webhook de campaña a un endpoint externo.
@@ -55,6 +57,15 @@ class DispatchCampaignWebhook implements ShouldQueue
         $webhook = CampaignWebhook::find($this->webhookId);
 
         if (! $webhook || ! $webhook->enabled) {
+            return;
+        }
+
+        if (! OutboundUrlGuard::isSafe($webhook->url)) {
+            Log::warning('DispatchCampaignWebhook: blocked unsafe URL (SSRF guard)', [
+                'webhook_id' => $webhook->id,
+                'url' => $webhook->url,
+            ]);
+
             return;
         }
 

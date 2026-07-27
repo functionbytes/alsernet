@@ -12,7 +12,7 @@ class AbTestController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $inbox = $request->attributes->get('website_inbox');
+        $inbox = $request->attributes->get('livechat_inbox');
         $sessionToken = $request->header('X-Session-Token') ?? '';
 
         $tests = AbTest::query()

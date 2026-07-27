@@ -12,8 +12,8 @@ class HelpdeskWebhookSender
      */
     public function notifyOrdersReady(string $email, ?int $customerId = null): bool
     {
-        $url = (string) config('services.helpdesk.webhook_url', env('SYSTEM_WEBHOOK_URL', ''));
-        $secret = (string) config('services.helpdesk.webhook_secret', env('SYSTEM_WEBHOOK_SECRET', ''));
+        $url = (string) config('erp.webhook.url', '');
+        $secret = (string) config('erp.webhook.secret', '');
 
         if (! $url || ! $secret) {
             return false;
@@ -34,7 +34,7 @@ class HelpdeskWebhookSender
 
             // TLS verification skipped only when explicitly opted-in (dev environments
             // with self-signed certs). In production this stays on by default.
-            if (config('services.helpdesk.skip_tls_verify', env('SYSTEM_WEBHOOK_SKIP_TLS', false))) {
+            if (config('erp.webhook.skip_tls_verify', false)) {
                 $client = $client->withOptions(['verify' => false]);
             }
 

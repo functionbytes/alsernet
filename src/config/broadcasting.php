@@ -47,6 +47,13 @@ return [
                 'verify' => env('REVERB_TLS_VERIFY', false),
             ],
             'timeout' => 30,
+
+            // Port/scheme a exponer a navegadores (admin inbox, widget externo).
+            // 'options.port/scheme' arriba son para las llamadas servidor-a-servidor
+            // (backend -> contenedor reverb, internas a Docker); un navegador real
+            // nunca puede alcanzar esas. Ver Modules\HelpdeskLivechat\Concerns\ResolvesReverbHost.
+            'public_port' => env('REVERB_PUBLIC_PORT'),
+            'public_scheme' => env('REVERB_PUBLIC_SCHEME'),
         ],
 
         'pusher' => [

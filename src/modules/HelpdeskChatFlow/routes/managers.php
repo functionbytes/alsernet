@@ -7,6 +7,7 @@ use Modules\HelpdeskChatFlow\Http\Controllers\ChatFlowTestController;
 
 Route::prefix('chatflows')
     ->name('chatflow.')
+    ->middleware('integration.enabled:chatflow')
     ->group(function () {
         Route::get('/', [ChatFlowsController::class, 'index'])->name('index');
         Route::get('/create', [ChatFlowsController::class, 'create'])->name('create');

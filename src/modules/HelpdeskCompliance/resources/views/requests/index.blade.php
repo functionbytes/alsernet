@@ -10,6 +10,7 @@
         Registro trazable de cada borrado/anonimizado de cliente y su cascada a tickets y sesiones de chatbot.
     </p>
     <div class="ms-auto order-2 d-flex gap-2">
+        <label class="visually-hidden" for="f-type">Tipo</label>
         <select id="f-type" class="form-select form-select-sm">
             <option value="">Todos los tipos</option>
             <option value="delete_soft">Anonimizado (soft)</option>

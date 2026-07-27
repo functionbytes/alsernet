@@ -112,10 +112,10 @@
                             <table class="table table-hover mb-0 small">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Ticket</th>
-                                        <th>Cliente</th>
-                                        <th>Estado</th>
-                                        <th>Actualizado</th>
+                                        <th scope="col">Ticket</th>
+                                        <th scope="col">Cliente</th>
+                                        <th scope="col">Estado</th>
+                                        <th scope="col">Actualizado</th>
                                     </tr>
                                 </thead>
                                 <tbody>

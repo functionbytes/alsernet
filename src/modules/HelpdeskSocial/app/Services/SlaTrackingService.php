@@ -2,12 +2,22 @@
 
 namespace Modules\HelpdeskSocial\Services;
 
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskSocial\Models\SocialComment;
 use Modules\HelpdeskSocial\Models\SocialSlaPolicy;
 
 class SlaTrackingService
 {
+    /**
+     * Clave de caché de las políticas SLA activas.
+     * Invalidada por SocialSlaPolicyObserver ante cualquier save/delete.
+     */
+    public const POLICIES_CACHE_KEY = 'helpdesksocial:sla-policies:active';
+
+    private const CACHE_TTL = 900;
+
     /**
      * Find and apply the best matching SLA policy to a comment.
      */
@@ -143,17 +153,25 @@ class SlaTrackingService
 
     private function findMatchingPolicy(SocialComment $comment): ?SocialSlaPolicy
     {
-        $policies = SocialSlaPolicy::active()
-            ->orderByDesc('priority')
-            ->get();
-
-        foreach ($policies as $policy) {
+        foreach ($this->activePolicies() as $policy) {
             if ($this->policyMatches($comment, $policy)) {
                 return $policy;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @return Collection<int, SocialSlaPolicy>
+     */
+    private function activePolicies(): Collection
+    {
+        return Cache::remember(
+            self::POLICIES_CACHE_KEY,
+            self::CACHE_TTL,
+            fn () => SocialSlaPolicy::active()->orderByDesc('priority')->get()
+        );
     }
 
     private function policyMatches(SocialComment $comment, SocialSlaPolicy $policy): bool

@@ -14,7 +14,7 @@
         {{-- Avatar --}}
         @if($customer->avatar_url && !str_contains($customer->avatar_url, 'ui-avatars.com'))
             <img src="{{ $customer->avatar_url }}" alt="{{ $customer->name }}"
-                 class="bv-av bv-img-cover">
+                 class="bv-av bv-img-cover" width="38" height="38" loading="lazy">
         @else
             <div class="bv-av {{ $colorClass }}">{{ $initials }}</div>
         @endif

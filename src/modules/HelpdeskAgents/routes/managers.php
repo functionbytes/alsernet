@@ -12,8 +12,6 @@ Route::prefix('ai')->group(function () {
     Route::get('settings', [AgentSettingsController::class, 'index'])->name('settings');
     Route::put('settings', [AgentSettingsController::class, 'update'])->name('settings.update');
     Route::post('settings/test-connection', [AgentSettingsController::class, 'testConnection'])->middleware('throttle:60,1')->name('settings.test');
-    Route::post('settings/get-models', [AgentSettingsController::class, 'getModels'])->middleware('throttle:60,1')->name('settings.get-models');
-    Route::get('settings/statistics', [AgentSettingsController::class, 'statistics'])->middleware('throttle:60,1')->name('settings.statistics');
 
     // Tags
     Route::middleware('throttle:60,1')->group(function () {
@@ -47,18 +45,12 @@ Route::prefix('ai')->group(function () {
     Route::get('/', [AiAgentFlowsController::class, 'index'])->name('flows.index');
     Route::get('/create', [AiAgentFlowsController::class, 'create'])->name('flows.create');
     Route::post('/', [AiAgentFlowsController::class, 'store'])->name('flows.store');
-    Route::get('/{flow}', [AiAgentFlowsController::class, 'show'])->name('flows.show');
     Route::get('/{flow}/edit', [AiAgentFlowsController::class, 'edit'])->name('flows.edit');
     Route::put('/{flow}', [AiAgentFlowsController::class, 'update'])->name('flows.update');
     Route::delete('/{flow}', [AiAgentFlowsController::class, 'destroy'])->name('flows.destroy');
     Route::post('flows/{flow}/publish', [AiAgentFlowsController::class, 'publish'])->name('flows.publish');
     Route::post('flows/{flow}/archive', [AiAgentFlowsController::class, 'archive'])->name('flows.archive');
     Route::post('flows/{flow}/duplicate', [AiAgentFlowsController::class, 'duplicate'])->name('flows.duplicate');
-
-    // Flow Nodes
-    Route::post('flows/{flow}/nodes', [AiAgentFlowsController::class, 'storeNode'])->name('flows.nodes.store');
-    Route::put('flows/{flow}/nodes/{node}', [AiAgentFlowsController::class, 'updateNode'])->name('flows.nodes.update');
-    Route::delete('flows/{flow}/nodes/{node}', [AiAgentFlowsController::class, 'deleteNode'])->name('flows.nodes.delete');
 
     // Flow Structure
     Route::put('flows/{flow}/structure', [AiAgentFlowsController::class, 'updateStructure'])->name('flows.structure');

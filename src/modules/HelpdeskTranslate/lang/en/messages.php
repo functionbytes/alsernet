@@ -32,6 +32,7 @@ return [
 
     'panel' => [
         'title' => 'Translate message',
+        'mode_label' => 'Translation mode',
         'mode_incoming' => 'Translate incoming',
         'mode_outgoing' => 'Translate outgoing',
         'mode_both' => 'Bidirectional',
@@ -81,6 +82,7 @@ return [
         'deepl_key_max' => 'The DeepL API key cannot exceed 255 characters.',
         'deepl_url_in' => 'The DeepL URL must be one of the official endpoints (Free or Pro).',
         'libretranslate_endpoint_url' => 'The LibreTranslate endpoint must be a valid http or https URL.',
+        'libretranslate_endpoint_unsafe' => 'The LibreTranslate endpoint cannot point to an internal or private network address.',
         'detect_text_required' => 'The text is required.',
         'detect_text_max' => 'The text cannot exceed 2000 characters.',
     ],

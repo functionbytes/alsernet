@@ -63,6 +63,10 @@ class HelpdeskComplianceServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! helpdesk_compliance_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('settings', [
             'title' => 'Helpdesk — Cumplimiento',
             'items' => [

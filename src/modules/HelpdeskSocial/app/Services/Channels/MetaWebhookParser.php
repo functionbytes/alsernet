@@ -33,7 +33,11 @@ class MetaWebhookParser implements WebhookParserInterface
         $events = [];
 
         foreach ($payload['entry'] ?? [] as $entry) {
-            $pageId = $entry['id'];
+            $pageId = $entry['id'] ?? null;
+
+            if ($pageId === null) {
+                continue;
+            }
 
             foreach ($entry['changes'] ?? [] as $change) {
                 $value = $change['value'] ?? [];
@@ -51,7 +55,7 @@ class MetaWebhookParser implements WebhookParserInterface
                         'author_name' => $value['from']['name'] ?? 'Usuario',
                         'author_username' => null,
                         'body' => $value['message'] ?? '',
-                        'created_at' => isset($value['created_time']) ? Carbon::parse($value['created_time']) : now(),
+                        'created_at' => isset($value['created_time']) ? $this->parseMetaTime($value['created_time']) : now(),
                         'is_mention' => false,
                         'attachments' => [],
                         'metadata' => [
@@ -72,7 +76,7 @@ class MetaWebhookParser implements WebhookParserInterface
                         'author_name' => $value['sender_name'] ?? 'Usuario',
                         'author_username' => null,
                         'body' => $value['message'] ?? '',
-                        'created_at' => isset($value['created_time']) ? Carbon::parse($value['created_time']) : now(),
+                        'created_at' => isset($value['created_time']) ? $this->parseMetaTime($value['created_time']) : now(),
                         'is_mention' => true,
                         'attachments' => [],
                         'metadata' => ['field' => 'mentions'],
@@ -96,7 +100,11 @@ class MetaWebhookParser implements WebhookParserInterface
         $events = [];
 
         foreach ($payload['entry'] ?? [] as $entry) {
-            $instagramId = $entry['id'];
+            $instagramId = $entry['id'] ?? null;
+
+            if ($instagramId === null) {
+                continue;
+            }
 
             foreach ($entry['changes'] ?? [] as $change) {
                 $value = $change['value'] ?? [];
@@ -112,7 +120,7 @@ class MetaWebhookParser implements WebhookParserInterface
                         'author_name' => $value['sender_username'] ?? 'Usuario',
                         'author_username' => $value['sender_username'] ?? null,
                         'body' => $value['text'] ?? '',
-                        'created_at' => isset($value['created_time']) ? Carbon::parse($value['created_time']) : now(),
+                        'created_at' => isset($value['created_time']) ? $this->parseMetaTime($value['created_time']) : now(),
                         'is_mention' => true,
                         'attachments' => [],
                         'metadata' => ['field' => 'mentions'],
@@ -229,5 +237,22 @@ class MetaWebhookParser implements WebhookParserInterface
                 'is_ephemeral' => $message['is_ephemeral'] ?? false,
             ],
         ];
+    }
+
+    /**
+     * Meta puede enviar `created_time` como epoch Unix o como string ISO;
+     * tolera ambos formatos y valores malformados.
+     */
+    private function parseMetaTime(mixed $value): Carbon
+    {
+        if (is_numeric($value)) {
+            return Carbon::createFromTimestamp((int) $value);
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return now();
+        }
     }
 }

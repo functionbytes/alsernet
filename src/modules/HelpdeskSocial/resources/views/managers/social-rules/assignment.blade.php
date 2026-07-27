@@ -39,7 +39,7 @@
                                 </span>
                                 @endforeach
                             </td>
-                            <td>{{ $rule->assignee?->name ?? 'No asignado' }}</td>
+                            <td>{{ $rule->assignee?->full_name ?? 'No asignado' }}</td>
                             <td>
                                 <span class="badge bg-light text-dark">{{ ucfirst($rule->assignment_strategy ?? 'direct') }}</span>
                             </td>
@@ -73,7 +73,7 @@
     </div>
 
 <div class="modal fade" id="assignmentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form id="assignmentForm" method="POST" action="">
                 @csrf
@@ -109,9 +109,9 @@
                         <label class="form-check-label" for="assignmentIsActive">Activa</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                <div class="modal-footer d-block">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Guardar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -130,7 +130,7 @@
     }
 
     function editAssignmentRule(id, name, conditions, assigneeUserId, strategy, priority, isActive) {
-        $('#assignmentForm').attr('action', '{{ url('panel/helpdesk/social/assignment-rules') }}/' + id);
+        $('#assignmentForm').attr('action', '{{ route('helpdesksocial.assignment-rules.update', '__ID__') }}'.replace('__ID__', id));
         if ($('#assignmentForm').find('input[name="_method"]').length === 0) {
             $('#assignmentForm').prepend('<input type="hidden" name="_method" value="PUT">');
         }

@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Modules\Helpdesk\Events\ConversationItemCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Http\Requests\Public\InjectSimulatorMessageRequest;
 use Modules\Helpdesk\Http\Requests\Public\SendSimulatorMessageRequest;
 use Modules\Helpdesk\Http\Requests\Public\StartSimulatorRequest;
+use Modules\Helpdesk\Http\Requests\Public\UploadSimulatorAttachmentRequest;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\CsatRating;
@@ -37,10 +39,16 @@ class PublicSimulatorController extends Controller
         abort_unless((bool) config('helpdesk.simulator_public_enabled'), 404);
     }
 
-    public function sessions(): JsonResponse
+    public function sessions(Request $request): JsonResponse
     {
+        // Solo las sesiones creadas por ESTE navegador: el listado devuelve el
+        // sim_token de cada sesión (la credencial que la protege), así que no
+        // debe exponer las de otros visitantes (IDOR).
+        $owner = $this->simulatorOwner($request);
+
         $conversations = Conversation::query()
             ->whereRaw("JSON_EXTRACT(metadata, '$.is_simulator') = true")
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.sim_owner')) = ?", [$owner])
             ->with([
                 'status',
                 'customer:id,name,email',
@@ -99,6 +107,7 @@ class PublicSimulatorController extends Controller
                     'gestion_id' => $data['gestion_id'] ?? null,
                 ],
                 $data['simulated_datetime'] ?? null,
+                $this->simulatorOwner($request),
             );
         } catch (Throwable $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
@@ -134,6 +143,11 @@ class PublicSimulatorController extends Controller
 
     public function lookup(Request $request): JsonResponse
     {
+        // El autocompletado de clientes devuelve PII (email/nombre/pedidos) de
+        // producción; exige que este navegador ya tenga alguna sesión de
+        // simulador para no ser un oráculo de enumeración totalmente anónimo.
+        abort_unless($this->ownerHasSession($request), 403);
+
         $q = trim((string) $request->input('q', ''));
 
         if (mb_strlen($q) < 2) {
@@ -172,14 +186,9 @@ class PublicSimulatorController extends Controller
         return response()->json(['data' => $data]);
     }
 
-    public function attachment(Conversation $conversation, Request $request): JsonResponse
+    public function attachment(Conversation $conversation, UploadSimulatorAttachmentRequest $request): JsonResponse
     {
         $this->authorizeToken($conversation, $request->input('token'));
-
-        $request->validate([
-            'file' => ['required', 'file', 'max:20480', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,mp3,mp4,webm,ogg,wav'],
-            'token' => ['required', 'string', 'max:64'],
-        ]);
 
         $file = $request->file('file');
         $path = $file->store('helpdesk/attachments', 'public');
@@ -209,26 +218,20 @@ class PublicSimulatorController extends Controller
         $conversation->touch('last_message_at');
 
         broadcast(new ConversationMessageCreated($item));
-        event(new ConversationItemCreated($item));
 
         return response()->json(['ok' => true, 'item' => $this->simulator->present($item)]);
     }
 
-    public function inject(Conversation $conversation, Request $request): JsonResponse
+    public function inject(Conversation $conversation, InjectSimulatorMessageRequest $request): JsonResponse
     {
         $this->authorizeToken($conversation, $request->input('token'));
-
-        $request->validate([
-            'message' => ['required', 'string', 'max:2000'],
-            'token' => ['required', 'string', 'max:64'],
-        ]);
 
         $item = ConversationItem::create([
             'conversation_id' => $conversation->id,
             'user_id' => null,
             'author_id' => null,
             'type' => 'message',
-            'body' => $request->input('message'),
+            'body' => $request->validated('message'),
             'metadata' => ['injected_as_agent' => true, 'simulator' => true],
             'external_id' => 'sim_inj_'.uniqid('', true),
         ]);
@@ -260,6 +263,40 @@ class PublicSimulatorController extends Controller
             'token' => $rating->survey_token,
             'url' => route('helpdesk.csat.show', $rating->survey_token),
         ]);
+    }
+
+    /**
+     * Opaque per-browser owner id, kept in the web session. Scopes /sessions so
+     * a visitor only ever sees (and gets the tokens of) the simulator sessions
+     * their own browser created.
+     */
+    private function simulatorOwner(Request $request): string
+    {
+        $owner = $request->session()->get('sim_owner');
+
+        if (! is_string($owner) || $owner === '') {
+            $owner = Str::random(40);
+            $request->session()->put('sim_owner', $owner);
+        }
+
+        return $owner;
+    }
+
+    /**
+     * True when this browser already owns at least one simulator session — used
+     * to gate the customer-lookup PII endpoint behind a real simulator user.
+     */
+    private function ownerHasSession(Request $request): bool
+    {
+        $owner = $request->session()->get('sim_owner');
+
+        if (! is_string($owner) || $owner === '') {
+            return false;
+        }
+
+        return Conversation::query()
+            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.sim_owner')) = ?", [$owner])
+            ->exists();
     }
 
     /**

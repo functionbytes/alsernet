@@ -60,8 +60,13 @@ class WhatsAppHsmService
 
         $url = rtrim($apiUrl, '/')."/{$phoneNumberId}/messages";
 
+        // retry ante fallos transitorios de conexión (throw:false mantiene el
+        // manejo de errores de plantilla vía $response->failed() más abajo, que
+        // NO deben reintentarse porque son deterministas). Alinea la resiliencia
+        // con WhatsAppBusinessService, que pega al mismo endpoint de Meta.
         $response = Http::withToken($accessToken)
             ->timeout(15)
+            ->retry(2, 500, throw: false)
             ->post($url, $payload);
 
         if ($response->failed()) {

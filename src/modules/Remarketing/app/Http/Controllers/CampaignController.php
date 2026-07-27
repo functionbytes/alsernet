@@ -5,6 +5,7 @@ namespace Modules\Remarketing\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Services\MailerTemplateRendererService;
@@ -14,6 +15,7 @@ use Modules\Remarketing\Http\Requests\Web\UpdateCampaignRequest;
 use Modules\Remarketing\Jobs\SendEmailJob;
 use Modules\Remarketing\Models\Campaign;
 use Modules\Remarketing\Models\CampaignVariant;
+use Modules\Remarketing\Models\Message;
 use Modules\Remarketing\Models\Segment;
 use Modules\Remarketing\Models\Store;
 use Modules\Remarketing\Models\Template;
@@ -133,15 +135,33 @@ class CampaignController extends Controller
     {
         $this->authorize('update', $campaign);
 
-        // Dispatch test send to authenticated user email
-        if (class_exists(SendEmailJob::class)) {
-            // TODO: create a test-send variant with flag is_test=true
-            SendEmailJob::dispatch($campaign, auth()->user())
-                ->onQueue('remarketing');
+        $testEmail = auth()->user()->email;
+
+        try {
+            $message = Message::create([
+                'store_id' => $campaign->store_id,
+                'campaign_id' => $campaign->id,
+                'email' => $testEmail,
+                'subject' => $campaign->subject,
+                'status' => 'queued',
+                'is_test' => true,
+                'open_token' => Str::random(64),
+                'click_token' => Str::random(64),
+            ]);
+
+            SendEmailJob::dispatch($message)->onQueue('remarketing');
+        } catch (\Throwable $e) {
+            Log::error('CampaignController::sendTest failed', [
+                'campaign_id' => $campaign->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'No se pudo enviar el email de prueba.');
         }
 
         return redirect()->back()
-            ->with('success', 'Email de prueba enviado a '.auth()->user()->email.'.');
+            ->with('success', 'Email de prueba enviado a '.$testEmail.'.');
     }
 
     public function cancel(Campaign $campaign): RedirectResponse

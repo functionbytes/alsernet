@@ -175,6 +175,10 @@ class HelpdeskHelpcenterServiceProvider extends ServiceProvider
 
     protected function registerMenus(): void
     {
+        if (! helpdesk_helpcenter_enabled()) {
+            return;
+        }
+
         NavService::registerSidebar('helpdesk', [
             'title' => 'Centro de conocimiento',
             'items' => [

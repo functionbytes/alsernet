@@ -28,6 +28,7 @@ class EmbeddingService
 
         $response = Http::withToken($this->apiKey)
             ->timeout($this->timeout)
+            ->retry(3, 250, throw: false)
             ->post('https://api.openai.com/v1/embeddings', [
                 'model' => $this->model,
                 'input' => $text,
@@ -52,6 +53,7 @@ class EmbeddingService
 
         $response = Http::withToken($this->apiKey)
             ->timeout($this->timeout)
+            ->retry(3, 250, throw: false)
             ->post('https://api.openai.com/v1/embeddings', [
                 'model' => $this->model,
                 'input' => $texts,

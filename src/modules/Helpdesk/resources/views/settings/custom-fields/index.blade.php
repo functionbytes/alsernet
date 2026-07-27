@@ -102,12 +102,12 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Etiqueta</th>
-                                    <th>Entidad</th>
-                                    <th>Tipo</th>
-                                    <th class="text-center">Requerido</th>
-                                    <th class="text-center">Orden</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Etiqueta</th>
+                                    <th scope="col">Entidad</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col" class="text-center">Requerido</th>
+                                    <th scope="col" class="text-center">Orden</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

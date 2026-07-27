@@ -12,6 +12,7 @@ use Modules\HelpdeskSocial\Listeners\ApplySlaPolicyListener;
 use Modules\HelpdeskSocial\Listeners\AutoAssignCommentListener;
 use Modules\HelpdeskSocial\Listeners\AutoTagOnIntentClassified;
 use Modules\HelpdeskSocial\Listeners\BroadcastSocialComment;
+use Modules\HelpdeskSocial\Listeners\CreateTicketOnSocialEscalation;
 use Modules\HelpdeskSocial\Listeners\LogSocialCommentReply;
 use Modules\HelpdeskSocial\Listeners\SendNewSocialCommentNotification;
 use Modules\HelpdeskSocial\Listeners\SendSocialEscalationNotification;
@@ -38,6 +39,7 @@ class EventServiceProvider extends ServiceProvider
         SocialCommentEscalated::class => [
             SendSocialEscalationNotification::class,
             SendSocialWebPush::class,
+            CreateTicketOnSocialEscalation::class,
         ],
     ];
 }

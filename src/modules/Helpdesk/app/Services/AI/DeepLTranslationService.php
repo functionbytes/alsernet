@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services\AI;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +38,7 @@ class DeepLTranslationService
             try {
                 $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
                     ->timeout(15)
+                    ->retry(2, 200, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                     ->post($this->resolveBaseUrl().'/v2/translate', [
                         'text' => [$text],
                         'target_lang' => strtoupper($targetLang),
@@ -87,6 +89,7 @@ class DeepLTranslationService
         try {
             $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
                 ->timeout(15)
+                ->retry(2, 200, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                 ->post($this->resolveBaseUrl().'/v2/translate', $payload);
 
             if ($response->failed()) {

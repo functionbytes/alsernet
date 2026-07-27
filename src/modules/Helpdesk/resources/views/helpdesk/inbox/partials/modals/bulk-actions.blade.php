@@ -39,6 +39,22 @@
                     <i class="fas fa-box-archive"></i>
                     <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_archive') }}</span>
                 </button>
+                <button class="bv-bulk-act" data-bulk-action="team">
+                    <i class="fas fa-people-group"></i>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_team') }}</span>
+                </button>
+                <button class="bv-bulk-act" data-bulk-action="tag">
+                    <i class="fas fa-tag"></i>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_tag') }}</span>
+                </button>
+                <button class="bv-bulk-act" data-bulk-action="snooze">
+                    <i class="far fa-clock"></i>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_snooze') }}</span>
+                </button>
+                <button class="bv-bulk-act" data-bulk-action="mute">
+                    <i class="fas fa-bell-slash"></i>
+                    <span>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_action_mute') }}</span>
+                </button>
             </div>
 
             {{-- Sub-panel condicional por acción --}}
@@ -71,6 +87,54 @@
                         <div class="bv-warn-box__body">
                             <strong>{{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_strong') }}</strong> {{ __('helpdesk::helpdesk.inbox.modals.bulk_actions_delete_confirm_text') }}
                         </div>
+                    </div>
+                </div>
+
+                {{-- Team sub-panel --}}
+                <div id="bulkSubTeam" class="bv-bulk-sub" style="display:none">
+                    <div class="bv-opt-list">
+                        @forelse($groups ?? [] as $group)
+                            <button type="button" class="bv-opt" data-bulk-group-id="{{ $group->id }}">
+                                <div class="bv-av c{{ ($loop->index % 8) + 1 }}"><i class="fas fa-users bv-icon-sm"></i></div>
+                                <div class="body"><div class="name">{{ $group->name }}</div></div>
+                                <i class="fas fa-check check"></i>
+                            </button>
+                        @empty
+                            <div class="bv-empty-msg">{{ __('helpdesk::helpdesk.inbox.modals.move_team_empty') }}</div>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- Tag sub-panel (multi-select) --}}
+                <div id="bulkSubTag" class="bv-bulk-sub" style="display:none">
+                    <div class="bv-tags-chip-wrap">
+                        @forelse($inboxTags ?? [] as $tag)
+                            <span class="bv-rtag" data-bulk-tag-id="{{ $tag->id }}">{{ $tag->name }}</span>
+                        @empty
+                            <em class="bv-tags-empty">{{ __('helpdesk::helpdesk.inbox.modals.tags_none_available') }}</em>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- Snooze sub-panel --}}
+                <div id="bulkSubSnooze" class="bv-bulk-sub" style="display:none">
+                    <div class="snz-list">
+                        <button type="button" class="snz-opt on" data-bulk-snooze="1h">
+                            <i class="fa-solid fa-stopwatch snz-ic"></i>
+                            <div class="snz-body"><b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_1h') }}</b></div>
+                        </button>
+                        <button type="button" class="snz-opt" data-bulk-snooze="4h">
+                            <i class="fa-regular fa-clock snz-ic"></i>
+                            <div class="snz-body"><b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_4h') }}</b></div>
+                        </button>
+                        <button type="button" class="snz-opt" data-bulk-snooze="tom">
+                            <i class="fa-solid fa-sun snz-ic"></i>
+                            <div class="snz-body"><b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_tomorrow') }}</b></div>
+                        </button>
+                        <button type="button" class="snz-opt" data-bulk-snooze="week">
+                            <i class="fa-solid fa-calendar-week snz-ic"></i>
+                            <div class="snz-body"><b>{{ __('helpdesk::helpdesk.inbox.modals.snooze_week') }}</b></div>
+                        </button>
                     </div>
                 </div>
 
@@ -117,9 +181,36 @@
             $('#bulkSubPriority').show();
         } else if (type === 'delete') {
             $('#bulkSubDelete').show();
+        } else if (type === 'team') {
+            $('#bulkSubTeam').show();
+        } else if (type === 'tag') {
+            $('#bulkSubTag').show();
+        } else if (type === 'snooze') {
+            $('#bulkSubSnooze').show();
+            // La opción "1h" ya aparece preseleccionada visualmente: fija el
+            // payload por defecto para que "Aplicar" funcione sin un click extra.
+            $('#bulkSubSnooze .snz-opt').removeClass('on');
+            $('#bulkSubSnooze .snz-opt[data-bulk-snooze="1h"]').addClass('on');
+            var defaultUntil = calcBulkSnoozeUntil('1h');
+            _bulkPayload.until = defaultUntil ? defaultUntil.toISOString() : null;
         } else {
             $('#bulkSubPanel').hide();
         }
+    }
+
+    function calcBulkSnoozeUntil(opt) {
+        var now = new Date();
+        if (opt === '1h') { return new Date(now.getTime() + 60 * 60 * 1000); }
+        if (opt === '4h') { return new Date(now.getTime() + 4 * 60 * 60 * 1000); }
+        if (opt === 'tom') {
+            var t = new Date(now); t.setDate(t.getDate() + 1); t.setHours(9, 0, 0, 0); return t;
+        }
+        if (opt === 'week') {
+            var w = new Date(now);
+            var diff = (8 - w.getDay()) % 7 || 7;
+            w.setDate(w.getDate() + diff); w.setHours(9, 0, 0, 0); return w;
+        }
+        return null;
     }
 
     function loadBulkAgents() {
@@ -166,7 +257,7 @@
         _bulkPayload = {};
         $('#bv-bulk-apply').prop('disabled', false);
 
-        var noSubPanel = ['resolve', 'close', 'archive'];
+        var noSubPanel = ['resolve', 'close', 'archive', 'mute'];
         if (noSubPanel.indexOf(_bulkAction) !== -1) {
             $('#bulkSubPanel').hide();
         } else {
@@ -191,6 +282,25 @@
         $('#bulkSubPriority .bv-opt').removeClass('on');
         $(this).addClass('on');
         _bulkPayload.priority = $(this).data('bv-value');
+    });
+
+    $(document).on('click', '#bulkSubTeam .bv-opt', function () {
+        $('#bulkSubTeam .bv-opt').removeClass('on');
+        $(this).addClass('on');
+        _bulkPayload.group_id = $(this).data('bulk-group-id');
+    });
+
+    $(document).on('click', '#bulkSubTag .bv-rtag', function () {
+        $(this).toggleClass('bv-rtag--on');
+        var ids = $('#bulkSubTag .bv-rtag--on').map(function () { return $(this).data('bulk-tag-id'); }).get();
+        _bulkPayload.tag_ids = ids;
+    });
+
+    $(document).on('click', '#bulkSubSnooze .snz-opt', function () {
+        $('#bulkSubSnooze .snz-opt').removeClass('on');
+        $(this).addClass('on');
+        var until = calcBulkSnoozeUntil($(this).data('bulk-snooze'));
+        _bulkPayload.until = until ? until.toISOString() : null;
     });
 
     $(document).on('click', '#bv-bulk-apply', function () {

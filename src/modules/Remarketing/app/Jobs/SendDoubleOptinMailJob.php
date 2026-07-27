@@ -48,7 +48,7 @@ class SendDoubleOptinMailJob implements ShouldQueue
     {
         Log::error('SendDoubleOptinMailJob failed', [
             'customer_id' => $this->customer->id,
-            'customer_email' => $this->customer->email,
+            'email_hash' => hash('sha256', (string) $this->customer->email),
             'error' => $e->getMessage(),
         ]);
     }

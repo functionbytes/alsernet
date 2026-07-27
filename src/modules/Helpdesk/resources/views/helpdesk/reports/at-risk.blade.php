@@ -28,12 +28,12 @@
             <table class="table table-hover align-middle mb-0" id="table-at-risk">
                 <thead class="table-light">
                     <tr>
-                        <th>Cliente</th>
-                        <th>Email</th>
-                        <th class="text-center">Sentimientos negativos</th>
-                        <th class="text-center">Salud</th>
-                        <th>Último negativo</th>
-                        <th class="text-end">Acciones</th>
+                        <th scope="col">Cliente</th>
+                        <th scope="col">Email</th>
+                        <th scope="col" class="text-center">Sentimientos negativos</th>
+                        <th scope="col" class="text-center">Salud</th>
+                        <th scope="col">Último negativo</th>
+                        <th scope="col" class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tbody-at-risk">

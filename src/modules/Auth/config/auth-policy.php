@@ -66,6 +66,14 @@ return [
             'max_attempts' => env('AUTH_PWD_RESET_MAX_ATTEMPTS', 3),
             'decay_seconds' => env('AUTH_PWD_RESET_DECAY', 900),
         ],
+        'customer_identity' => [
+            'max_attempts' => env('AUTH_CUSTOMER_IDENTITY_MAX_ATTEMPTS', 3),
+            'decay_seconds' => env('AUTH_CUSTOMER_IDENTITY_DECAY', 60),
+        ],
+        'customer_identity_request' => [
+            'max_attempts' => env('AUTH_CUSTOMER_IDENTITY_REQUEST_MAX_ATTEMPTS', 5),
+            'decay_seconds' => env('AUTH_CUSTOMER_IDENTITY_REQUEST_DECAY', 600),
+        ],
     ],
 
     /*

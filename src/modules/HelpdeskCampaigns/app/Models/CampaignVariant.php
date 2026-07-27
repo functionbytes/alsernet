@@ -2,17 +2,24 @@
 
 namespace Modules\HelpdeskCampaigns\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\HelpdeskCampaigns\Database\Factories\CampaignVariantFactory;
 
 class CampaignVariant extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_campaign_variants';
+
+    protected static function newFactory(): CampaignVariantFactory
+    {
+        return CampaignVariantFactory::new();
+    }
 
     protected $fillable = [
         'campaign_id',

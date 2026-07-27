@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services;
 
+use App\Helpers\PiiMasker;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -79,7 +80,7 @@ class SideConversationService
         } catch (\Throwable $e) {
             Log::error('SideConversationService: failed to send external email', [
                 'side_conversation_id' => $sc->id,
-                'email' => $email,
+                'email' => PiiMasker::email($email),
                 'error' => $e->getMessage(),
             ]);
         }

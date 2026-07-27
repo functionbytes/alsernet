@@ -86,7 +86,7 @@
                             </select>
                         </div>
                         <div class="col-md-1">
-                            <button type="submit" class="btn btn-primary w-100">
+                            <button type="submit" class="btn btn-primary w-100" aria-label="Filtrar">
                                 <i class="fas fa-filter"></i>
                             </button>
                         </div>
@@ -101,12 +101,12 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Titulo</th>
-                                    <th>Atajo</th>
-                                    <th>Categoria</th>
-                                    <th class="text-center">Alcance</th>
-                                    <th class="text-center">Uso</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Titulo</th>
+                                    <th scope="col">Atajo</th>
+                                    <th scope="col">Categoria</th>
+                                    <th scope="col" class="text-center">Alcance</th>
+                                    <th scope="col" class="text-center">Uso</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

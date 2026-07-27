@@ -50,6 +50,7 @@ use Modules\Core\Http\Middleware\ValidateSignature;
 use Modules\Core\Http\Middleware\VerifyCsrfToken;
 use Modules\Ecommerce\Http\Middleware\TrackAffiliateReferral;
 use Modules\Health\Mail\CriticalErrorMail;
+use Modules\Helpdesk\Http\Middleware\EnsureIntegrationEnabled;
 use Modules\Modules\Http\Middleware\EnsureModuleEnabled;
 use Modules\Page\Http\Middleware\PageCacheMiddleware;
 use Modules\Page\Services\ErrorPageService;
@@ -151,6 +152,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Module status middleware
             'module' => EnsureModuleEnabled::class,
+
+            // Helpdesk satellite integration toggle (Settings > Integraciones)
+            'integration.enabled' => EnsureIntegrationEnabled::class,
 
             // Admin roles group - all internal staff roles
             'settings' => RoleMiddleware::class.':super-settings|administrative|manager|callcenter|license|accounting|warehouse|shop|documentation|return',

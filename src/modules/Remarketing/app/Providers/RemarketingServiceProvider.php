@@ -19,6 +19,7 @@ use Modules\Remarketing\Console\Commands\ComputeSendTimeCommand;
 use Modules\Remarketing\Console\Commands\MarkAbandonedCartsCommand;
 use Modules\Remarketing\Console\Commands\PopulateProductWatchesCommand;
 use Modules\Remarketing\Console\Commands\ProcessAutomationsCommand;
+use Modules\Remarketing\Console\Commands\ProcessScheduledCampaignsCommand;
 use Modules\Remarketing\Console\Commands\ReconcileCatalogCommand;
 use Modules\Remarketing\Jobs\DetectBrowseAbandonmentJob;
 use Modules\Remarketing\Jobs\DetectOrderAnniversaryJob;
@@ -249,6 +250,10 @@ class RemarketingServiceProvider extends ServiceProvider
                 ->everyMinute()
                 ->withoutOverlapping();
 
+            $schedule->command('remarketing:process-scheduled-campaigns')
+                ->everyMinute()
+                ->withoutOverlapping();
+
             $schedule->command('remarketing:calculate-rfm')
                 ->dailyAt('03:00')
                 ->withoutOverlapping();
@@ -291,6 +296,7 @@ class RemarketingServiceProvider extends ServiceProvider
     {
         $commands = [
             ProcessAutomationsCommand::class,
+            ProcessScheduledCampaignsCommand::class,
             CalculateRfmCommand::class,
             ComputeSendTimeCommand::class,
             ReconcileCatalogCommand::class,

@@ -106,7 +106,7 @@
 
     const box = document.createElement('div');
     box.style.cssText = `
-      background:${appearance.bg || '#fff'};color:${appearance.color || '#222'};
+      background:${cssColor(appearance.bg, '#fff')};color:${cssColor(appearance.color, '#222')};
       padding:32px 28px;border-radius:12px;max-width:480px;width:90%;
       box-shadow:0 20px 50px rgba(0,0,0,.3);position:relative;
       font-family:system-ui,-apple-system,sans-serif;
@@ -117,8 +117,8 @@
       ${content.headline ? `<h3 style="margin:0 0 12px;font-size:20px;">${escapeHtml(content.headline)}</h3>` : ''}
       ${content.body ? `<p style="margin:0 0 20px;line-height:1.5;">${escapeHtml(content.body)}</p>` : ''}
       ${content.cta_label ? `
-        <a href="${content.cta_url || '#'}" id="hd-campaign-cta"
-           style="display:inline-block;padding:10px 20px;background:${appearance.accent || '#90bb13'};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
+        <a href="${escapeHtml(safeUrl(content.cta_url))}" id="hd-campaign-cta"
+           style="display:inline-block;padding:10px 20px;background:${cssColor(appearance.accent, '#90bb13')};color:#fff;text-decoration:none;border-radius:6px;font-weight:600;">
           ${escapeHtml(content.cta_label)}
         </a>` : ''}
     `;
@@ -128,6 +128,20 @@
 
   function escapeHtml(s) {
     return String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  // Solo http(s): descarta javascript:/data: y otros esquemas peligrosos en el
+  // href del CTA (la URL viene de la configuración de la campaña).
+  function safeUrl(u) {
+    const s = String(u ?? '').trim();
+    return /^https?:\/\//i.test(s) ? s : '#';
+  }
+
+  // Valor de color CSS seguro (hex/rgb/rgba/hsl/hsla o nombre) inyectado en un
+  // style inline; descarta cualquier otra cosa que pudiera romper el atributo.
+  function cssColor(v, fallback) {
+    const s = String(v ?? '').trim();
+    return /^(#[0-9a-f]{3,8}|rgba?\([\d.,\s%]+\)|hsla?\([\d.,\s%]+\)|[a-z]+)$/i.test(s) ? s : fallback;
   }
 
   async function start() {

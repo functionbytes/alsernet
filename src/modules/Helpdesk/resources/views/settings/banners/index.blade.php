@@ -83,7 +83,7 @@
                             <option value="warning" {{ request('type') === 'warning' ? 'selected' : '' }}>Advertencia</option>
                             <option value="danger" {{ request('type') === 'danger' ? 'selected' : '' }}>Peligro</option>
                         </select>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request()->hasAny(['search', 'type']))
@@ -103,12 +103,12 @@
                         <table class="table table-hover align-middle text-nowrap">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Titulo</th>
-                                    <th>Tipo</th>
-                                    <th>Vigencia</th>
-                                    <th class="text-center">Cerrable</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col">Titulo</th>
+                                    <th scope="col">Tipo</th>
+                                    <th scope="col">Vigencia</th>
+                                    <th scope="col" class="text-center">Cerrable</th>
+                                    <th scope="col" class="text-center">Estado</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>

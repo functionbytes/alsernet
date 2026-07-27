@@ -92,7 +92,7 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary flex-shrink-0">
+                        <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request('search'))
@@ -112,14 +112,14 @@
                         <table class="table table-hover align-middle" id="views-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="36"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                                    <th width="40"></th>
-                                    <th>Nombre</th>
-                                    <th>Descripcion</th>
-                                    <th>Ordenacion</th>
-                                    <th class="text-center">Tipo</th>
-                                    <th class="text-center">Sistema</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th scope="col" width="36"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th scope="col" width="40"></th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Descripcion</th>
+                                    <th scope="col">Ordenacion</th>
+                                    <th scope="col" class="text-center">Tipo</th>
+                                    <th scope="col" class="text-center">Sistema</th>
+                                    <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="views-sortable">

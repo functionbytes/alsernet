@@ -2,6 +2,7 @@
 
 namespace Modules\Helpdesk\Services\Automation\Actions;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationAssigned;
 use Modules\Helpdesk\Models\Conversation;
@@ -48,7 +49,11 @@ class AssignAgentAction implements AutomationAction
             'assigned_at' => now(),
         ]);
 
-        event(new ConversationAssigned($conversation));
+        $assignee = User::find($agentId);
+
+        if ($assignee) {
+            event(new ConversationAssigned($conversation, $assignee));
+        }
     }
 
     private function resolveAgentId(array $params, Conversation $conversation): ?int

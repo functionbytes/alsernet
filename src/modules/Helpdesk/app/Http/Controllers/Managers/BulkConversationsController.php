@@ -4,12 +4,14 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Http\Requests\BulkConversationsRequest;
+use Modules\Helpdesk\Jobs\UnsnoozeConversationJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Services\CsatService;
@@ -24,7 +26,7 @@ class BulkConversationsController extends Controller
     /**
      * Handle bulk conversation operations.
      *
-     * Actions: archive | unarchive | close | reopen | assign | tag | mark_read | mark_unread
+     * Actions: archive | unarchive | close | reopen | assign | tag | mark_read | mark_unread | priority | team | snooze | mute
      */
     public function handle(BulkConversationsRequest $request): JsonResponse
     {
@@ -67,6 +69,12 @@ class BulkConversationsController extends Controller
 
                     'priority' => Conversation::whereIn('id', $ids)
                         ->update(['priority' => $payload['priority'] ?? 'normal', 'updated_at' => now()]),
+
+                    'team' => $this->bulkMoveToTeam($conversations, $payload['group_id'] ?? null),
+
+                    'snooze' => $this->bulkSnooze($conversations, $payload['until'] ?? null),
+
+                    'mute' => $this->bulkMute($ids, $request->user()->id, $payload['until'] ?? null),
                 };
             });
 
@@ -187,10 +195,11 @@ class BulkConversationsController extends Controller
     private function bulkAssign(Collection $conversations, ?int $assigneeId): int
     {
         $assignee = $assigneeId ? User::find($assigneeId) : null;
+        $accessibleInboxIds = $this->assigneeAccessibleInboxIds($assignee);
         $count = 0;
 
         foreach ($conversations as $conversation) {
-            if ($assignee && ! $this->assigneeCanAccessInbox($assignee, $conversation->inbox_id)) {
+            if ($assignee && ! $this->assigneeCanAccessInbox($accessibleInboxIds, $conversation->inbox_id)) {
                 Log::warning('Bulk assign skipped: assignee lacks inbox capacity', [
                     'conversation_id' => $conversation->id,
                     'assignee_id' => $assignee->id,
@@ -207,15 +216,27 @@ class BulkConversationsController extends Controller
         return $count;
     }
 
-    private function assigneeCanAccessInbox(User $assignee, ?int $inboxId): bool
+    /**
+     * Preloaded inbox ids the assignee has capacity for, fetched once instead
+     * of a per-conversation exists() query inside bulkAssign()'s foreach.
+     *
+     * @return array<int, int>|null null = unrestricted (assignee has helpdesk.manage)
+     */
+    private function assigneeAccessibleInboxIds(?User $assignee): ?array
     {
-        if ($assignee->hasPermissionTo('helpdesk.manage')) {
-            return true;
+        if (! $assignee || $assignee->hasPermissionTo('helpdesk.manage')) {
+            return null;
         }
 
-        return AgentInboxCapacity::where('user_id', $assignee->id)
-            ->where('inbox_id', $inboxId)
-            ->exists();
+        return AgentInboxCapacity::where('user_id', $assignee->id)->pluck('inbox_id')->all();
+    }
+
+    /**
+     * @param  array<int, int>|null  $accessibleInboxIds  null when unrestricted
+     */
+    private function assigneeCanAccessInbox(?array $accessibleInboxIds, ?int $inboxId): bool
+    {
+        return $accessibleInboxIds === null || in_array($inboxId, $accessibleInboxIds, true);
     }
 
     private function bulkTag(array $ids, array $tagIds): int
@@ -233,13 +254,18 @@ class BulkConversationsController extends Controller
     {
         $now = now();
 
-        foreach ($ids as $conversationId) {
-            DB::connection('helpdesk')->table('helpdesk_conversation_reads')
-                ->updateOrInsert(
-                    ['conversation_id' => $conversationId, 'user_id' => $userId],
-                    ['read_at' => $now, 'updated_at' => $now, 'created_at' => $now]
-                );
-        }
+        // Upsert único (índice conversation_id+user_id) en vez de un
+        // updateOrInsert (SELECT + write) por conversación.
+        $rows = array_map(fn (int $conversationId): array => [
+            'conversation_id' => $conversationId,
+            'user_id' => $userId,
+            'read_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $ids);
+
+        DB::connection('helpdesk')->table('helpdesk_conversation_reads')
+            ->upsert($rows, ['conversation_id', 'user_id'], ['read_at', 'updated_at']);
 
         return count($ids);
     }
@@ -250,5 +276,81 @@ class BulkConversationsController extends Controller
             ->whereIn('conversation_id', $ids)
             ->where('user_id', $userId)
             ->delete();
+    }
+
+    /**
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkMoveToTeam(Collection $conversations, ?int $groupId): int
+    {
+        if (! $groupId) {
+            return 0;
+        }
+
+        foreach ($conversations as $conversation) {
+            $conversation->update(['group_id' => $groupId]);
+        }
+
+        return $conversations->count();
+    }
+
+    /**
+     * Mirrors ConversationsController::snooze() per conversation: sets
+     * snoozed_until/snoozed_by, broadcasts, and schedules the auto-unsnooze job.
+     *
+     * @param  Collection<int, Conversation>  $conversations
+     */
+    private function bulkSnooze(Collection $conversations, ?string $until): int
+    {
+        if (! $until) {
+            return 0;
+        }
+
+        $untilDate = Carbon::parse($until);
+        $count = 0;
+
+        foreach ($conversations as $conversation) {
+            $conversation->update([
+                'snoozed_until' => $untilDate,
+                'snoozed_by' => auth()->id(),
+            ]);
+
+            $conversation->broadcastInboxChanged('snoozed');
+
+            UnsnoozeConversationJob::dispatch($conversation)->delay($untilDate);
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Mutes each conversation for the acting user (per-agent, mirrors
+     * ConversationsController::toggleMute()) — never global to the conversation.
+     */
+    private function bulkMute(array $ids, int $userId, ?string $until): int
+    {
+        $untilDate = $until ? Carbon::parse($until) : now()->addDays(7);
+        $now = now();
+
+        // Un único upsert (índice único user_id+conversation_id) en vez de
+        // SELECT + update/insert por conversación; en filas existentes solo se
+        // tocan muted_until/updated_at, preservando pinned_at y blocked.
+        $rows = array_map(fn (int $conversationId): array => [
+            'user_id' => $userId,
+            'conversation_id' => $conversationId,
+            'pinned_at' => null,
+            'muted_until' => $untilDate,
+            'blocked' => false,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $ids);
+
+        DB::connection('helpdesk')
+            ->table('helpdesk_user_conversation_meta')
+            ->upsert($rows, ['user_id', 'conversation_id'], ['muted_until', 'updated_at']);
+
+        return count($ids);
     }
 }

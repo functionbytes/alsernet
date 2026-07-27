@@ -26,6 +26,7 @@
     "HelpdeskAnalytics": true,
     "HelpdeskCampaigns": true,
     "HelpdeskCompliance": true,
+    "HelpdeskIntegration": true,
     "HelpdeskLivechat": true,
     "HelpdeskPrestashop": true,
     "HelpdeskSla": true,

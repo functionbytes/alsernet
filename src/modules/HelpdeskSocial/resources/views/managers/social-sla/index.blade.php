@@ -75,7 +75,7 @@
     </div>
 
 <div class="modal fade" id="slaModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form id="slaForm" method="POST" action="">
                 @csrf
@@ -94,7 +94,7 @@
                             <option value="">Todas</option>
                             <option value="facebook">Facebook</option>
                             <option value="instagram">Instagram</option>
-                            <option value="twitter">Twitter</option>
+                            {{-- Twitter: pendiente de provider --}}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -121,9 +121,9 @@
                         <label class="form-check-label" for="slaIsActive">Activa</label>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                <div class="modal-footer d-block">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Guardar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -142,7 +142,7 @@
     }
 
     function editSla(id, name, platform, priority, responseTime, resolutionTime, isActive) {
-        $('#slaForm').attr('action', '{{ url('panel/helpdesk/social/sla') }}/' + id);
+        $('#slaForm').attr('action', '{{ route('helpdesksocial.sla-policies.update', '__ID__') }}'.replace('__ID__', id));
         if ($('#slaForm').find('input[name="_method"]').length === 0) {
             $('#slaForm').prepend('<input type="hidden" name="_method" value="PUT">');
         }

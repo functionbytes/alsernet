@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Modules\Http\Controllers\MenuFeaturesController;
 use Modules\Modules\Http\Controllers\ModulesController;
 
 /*
@@ -17,6 +18,8 @@ use Modules\Modules\Http\Controllers\ModulesController;
 
 // Modules management routes (Views)
 Route::get('/', [ModulesController::class, 'index'])->name('index');
+Route::get('/menu-features', [MenuFeaturesController::class, 'index'])->name('menu-features.index');
+Route::put('/menu-features', [MenuFeaturesController::class, 'update'])->name('menu-features.update');
 Route::get('/{moduleAlias}', [ModulesController::class, 'show'])->name('show');
 Route::get('/{moduleAlias}/edit', [ModulesController::class, 'edit'])->name('edit');
 Route::get('/upload/form', [ModulesController::class, 'uploadForm'])->name('uploadForm');

@@ -18,7 +18,10 @@ class StartReturnRequest extends FormRequest
             'items.*.order_detail_id' => ['required', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.reason' => ['nullable', 'string', 'max:500'],
-            'customer_email' => ['nullable', 'email:rfc'],
+            // Obligatorio: sin el email, la devolucion se inicia solo por ID
+            // secuencial en el bridge PrestaShop, sin verificar que el pedido
+            // pertenezca al cliente — permitía devolver pedidos de otros.
+            'customer_email' => ['required', 'email:rfc'],
         ];
     }
 
@@ -35,6 +38,7 @@ class StartReturnRequest extends FormRequest
             'items.*.quantity.min' => 'La cantidad mínima a devolver es 1.',
             'items.*.reason.string' => 'El motivo debe ser texto.',
             'items.*.reason.max' => 'El motivo no puede superar los 500 caracteres.',
+            'customer_email.required' => 'El correo del cliente es obligatorio.',
             'customer_email.email' => 'El correo del cliente no es válido.',
         ];
     }

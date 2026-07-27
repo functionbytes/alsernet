@@ -24,6 +24,7 @@ class CustomerOutboundEmail extends Mailable implements ShouldQueue, TracksEmail
         public readonly ?string $emailBodyPlain = null,
         public readonly array $ccEmails = [],
         public readonly array $bccEmails = [],
+        public readonly ?string $externalId = null,
     ) {
         $this->onQueue('emails');
     }
@@ -41,6 +42,11 @@ class CustomerOutboundEmail extends Mailable implements ShouldQueue, TracksEmail
     public function getEmailLogEntityId(): int|string
     {
         return $this->conversation->id;
+    }
+
+    public function getEmailLogExternalId(): ?string
+    {
+        return $this->externalId;
     }
 
     public function envelope(): Envelope

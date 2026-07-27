@@ -1,4 +1,4 @@
-@extends('layouts.theme')
+@extends('helpdesk::public.csat.layout')
 
 @section('title', 'Gracias por tu valoración - ' . config('app.name'))
 

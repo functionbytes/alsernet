@@ -38,7 +38,12 @@
     @include('helpdeskprestashop::modals.cart-build')
     @include('helpdeskprestashop::modals.carts-list')
     @include('helpdeskprestashop::modals.cart-detail')
+    @include('helpdeskprestashop::modals.order-workspace')
     @include('helpdeskprestashop::modals.product-recommend')
+@endif
+
+@if(helpdesk_erp_enabled() && view()->exists('helpdeskerp::modals.order-workspace'))
+    @include('helpdeskerp::modals.order-workspace')
 @endif
 
 {{-- orders-list / order-view eliminados: consolidados en el tab "Tienda" (PrestaShop)
@@ -47,8 +52,15 @@
 {{-- Modales de cliente, agente, tickets, ayuda, integraciones y documentos --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.profile-customer')
 @include('helpdesk::helpdesk.inbox.partials.modals.agent-profile')
-@include('helpdesk::helpdesk.inbox.partials.modals.help-center')
-@include('helpdesk::helpdesk.inbox.partials.modals.customer-integrations')
+@if(helpdesk_helpcenter_enabled())
+    @include('helpdesk::helpdesk.inbox.partials.modals.help-center')
+@endif
+@if(helpdesk_integration_enabled() && view()->exists('helpdeskintegration::modals.customer-integrations'))
+    @include('helpdeskintegration::modals.customer-integrations')
+@endif
+@if(view()->exists('helpdeskintegration::modals.verify-customer-identity'))
+    @include('helpdeskintegration::modals.verify-customer-identity')
+@endif
 
 {{-- Modales de búsqueda y composer --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.customer-search')
@@ -76,6 +88,9 @@
 {{-- Modales: Adjuntar (contacto, ubicación) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.attach-contact')
 @include('helpdesk::helpdesk.inbox.partials.modals.attach-location')
+
+{{-- Modal: Vincular conversación a otro cliente (identidad/ficha incorrecta) --}}
+@include('helpdesk::helpdesk.inbox.partials.modals.link-customer')
 
 {{-- Modal: Plantillas WhatsApp HSM --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.hsm')
@@ -126,10 +141,11 @@
 @include('helpdesk::helpdesk.inbox.partials.modals.report-incident')
 @include('helpdesk::helpdesk.inbox.partials.modals.supervisor-review')
 
-{{-- Modales de administración (roles, SLA, horarios) --}}
+{{-- Modales de administración (roles, SLA, horarios, auto-asignación) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.role-perms')
 @include('helpdesk::helpdesk.inbox.partials.modals.sla-config')
 @include('helpdesk::helpdesk.inbox.partials.modals.business-hours')
+@include('helpdesk::helpdesk.inbox.partials.modals.auto-assign')
 
 {{-- Modales de feedback y novedades --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.feedback')
@@ -142,11 +158,6 @@
 
 {{-- Modales de nueva conversación (wizard 2 pasos) --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.new-conv-wizard')
-
-{{-- Modales de documentos --}}
-@include('helpdesk::helpdesk.inbox.partials.modals.docs-viewer')
-@include('helpdesk::helpdesk.inbox.partials.modals.doc-manage')
-@include('helpdesk::helpdesk.inbox.partials.modals.doc-from-chat')
 
 {{-- Modales de pedidos y paneles laterales --}}
 @include('helpdesk::helpdesk.inbox.partials.modals.orders-list')

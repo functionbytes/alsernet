@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskDocument\Services;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentMail;
 
@@ -41,13 +42,7 @@ class DocumentPanelPresenter
                 ? (int) round(($fileUploaded / $fileTotal) * 100)
                 : ($fileUploaded > 0 ? 100 : 0);
 
-            $progressAccent = match ($group) {
-                'approved' => '#90bb13',
-                'rejected' => '#FA896B',
-                default => '#FEC90F',
-            };
-
-            $customerName = trim(($doc->customer_firstname ?? '') . ' ' . ($doc->customer_lastname ?? ''));
+            $customerName = trim(($doc->customer_firstname ?? '').' '.($doc->customer_lastname ?? ''));
 
             return [
                 'id' => (int) $doc->id,
@@ -65,7 +60,6 @@ class DocumentPanelPresenter
                 'file_total' => max($fileTotal, $fileUploaded),
                 'file_uploaded' => $fileUploaded,
                 'progress_pct' => $progressPct,
-                'progress_accent' => $progressAccent,
             ];
         })->all();
     }
@@ -84,6 +78,7 @@ class DocumentPanelPresenter
         try {
             $reqLabels = $document->getRequiredDocumentsWithLabels();
         } catch (\Throwable $e) {
+            $this->logSectionFailure($document, 'etiquetas de requeridos', $e);
             $reqLabels = collect((array) $document->required_documents)
                 ->mapWithKeys(fn ($k) => [$k => ucfirst(str_replace('_', ' ', $k))])->all();
         }
@@ -129,6 +124,7 @@ class DocumentPanelPresenter
                 ];
             }
         } catch (\Throwable $e) {
+            $this->logSectionFailure($document, 'adjuntos', $e);
         }
 
         $notes = [];
@@ -141,37 +137,63 @@ class DocumentPanelPresenter
                 ];
             }
         } catch (\Throwable $e) {
+            $this->logSectionFailure($document, 'notas', $e);
         }
 
         $mails = [];
+        $timeline = [];
         try {
             $mailTypeLabels = DocumentMail::EMAIL_TYPE_LABELS;
             foreach ($document->mails->sortByDesc('sent_at')->take(10) as $mail) {
+                $sentAt = $mail->sent_at ?? $mail->created_at;
                 $mails[] = [
                     'uid' => $mail->uid,
                     'type' => $mail->email_type,
                     'type_label' => $mailTypeLabels[$mail->email_type] ?? $mail->email_type,
                     'subject' => $mail->subject ?? '—',
-                    'sent_at' => $mail->sent_at?->format('d/m/Y H:i') ?? ($mail->created_at?->format('d/m/Y H:i') ?? '—'),
+                    'sent_at' => $sentAt?->format('d/m/Y H:i') ?? '—',
                     'status' => $mail->status ?? 'sent',
+                ];
+                $timeline[] = [
+                    'kind' => 'mail',
+                    'dot' => 'mail',
+                    'label' => $mailTypeLabels[$mail->email_type] ?? $mail->email_type,
+                    'sub' => '«'.($mail->subject ?? '—').'» · '.($sentAt?->format('d/m H:i') ?? '—'),
+                    'sort' => $sentAt?->getTimestamp() ?? 0,
                 ];
             }
         } catch (\Throwable $e) {
+            $this->logSectionFailure($document, 'correos', $e);
         }
 
         $actions = [];
         try {
             foreach ($document->actions->sortByDesc('created_at')->take(20) as $a) {
+                $actor = $a->performed_by_type ?? 'Sistema';
+                $label = $a->action_name ?? $a->action_type;
                 $actions[] = [
                     'ts' => $a->created_at?->format('d/m H:i') ?? '—',
-                    'actor' => $a->performed_by_type ?? 'Sistema',
-                    'description' => $a->action_name ?? $a->action_type,
+                    'actor' => $actor,
+                    'description' => $label,
                     'key' => $a->action_type,
-                    'label' => $a->action_name ?? $a->action_type,
+                    'label' => $label,
+                ];
+                $timeline[] = [
+                    'kind' => 'action',
+                    'dot' => $this->timelineDot((string) $a->action_type),
+                    'label' => $label,
+                    'sub' => ($a->created_at?->format('d/m/Y H:i') ?? '—').($actor !== 'Sistema' ? ' · '.$actor : ''),
+                    'sort' => $a->created_at?->getTimestamp() ?? 0,
                 ];
             }
         } catch (\Throwable $e) {
+            $this->logSectionFailure($document, 'historial de acciones', $e);
         }
+
+        // Timeline unificada (mockup Alvarez): acciones + correos fusionados
+        // en una sola cronología descendente para el tab Historial.
+        usort($timeline, fn (array $a, array $b) => $b['sort'] <=> $a['sort']);
+        $timeline = array_slice($timeline, 0, 30);
 
         return [
             'id' => (int) $document->id,
@@ -200,9 +222,10 @@ class DocumentPanelPresenter
             'products' => $document->products->map(fn ($p) => [
                 'name' => $p->product_name ?? '—',
                 'sku' => $p->product_reference ?? '—',
-                'qty' => ($p->quantity ?? 1).'ud',
+                'qty' => ($p->quantity ?? 1).' ud',
             ])->all(),
             'actions' => $actions,
+            'timeline' => $timeline,
             'files' => $files,
             'missing' => $missing,
             'attachments' => $attachments,
@@ -210,6 +233,33 @@ class DocumentPanelPresenter
             'mails' => $mails,
             'chat_files' => [],
         ];
+    }
+
+    /**
+     * Color del punto de la timeline según el tipo de acción: verde para
+     * aprobaciones, oscuro para rechazos, neutro para el resto.
+     */
+    private function timelineDot(string $actionType): string
+    {
+        return match (true) {
+            str_contains($actionType, 'approv') => 'ok',
+            str_contains($actionType, 'reject') => 'rej',
+            default => '',
+        };
+    }
+
+    /**
+     * Las secciones del panel degradan a vacío para no tumbar el detalle
+     * completo por un dato corrupto, pero el fallo debe quedar registrado
+     * (antes los catch vacíos ocultaban errores reales).
+     */
+    private function logSectionFailure(Document $document, string $section, \Throwable $e): void
+    {
+        Log::warning("DocumentPanelPresenter: fallo montando {$section} del expediente", [
+            'document_id' => $document->id,
+            'document_uid' => $document->uid,
+            'error' => $e->getMessage(),
+        ]);
     }
 
     private function formatBytes(mixed $bytes): string

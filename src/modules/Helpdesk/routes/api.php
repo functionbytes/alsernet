@@ -2,23 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Http\Controllers\Api\BannersApiController;
-use Modules\Helpdesk\Http\Controllers\Api\CannedRepliesController;
-use Modules\Helpdesk\Http\Controllers\Api\CustomersController;
 use Modules\Helpdesk\Http\Controllers\Api\V1\AgentsApiController;
 use Modules\Helpdesk\Http\Controllers\Api\V1\ConversationsApiController;
 use Modules\Helpdesk\Http\Controllers\Api\V1\CustomersApiController;
 use Modules\Helpdesk\Http\Controllers\Api\V1\TagsApiController;
-
-Route::middleware(['api', 'auth:sanctum', 'throttle:60,1'])
-    ->prefix('helpdesk')
-    ->name('api.helpdesk.')
-    ->group(function () {
-        Route::get('customers', [CustomersController::class, 'index'])->name('customers.index');
-        Route::post('customers', [CustomersController::class, 'store'])->name('customers.store');
-        Route::get('customers/{id}', [CustomersController::class, 'show'])->name('customers.show');
-
-        Route::get('canned-replies', [CannedRepliesController::class, 'index'])->name('canned-replies.index');
-    });
 
 Route::get('agents/me', [AgentsApiController::class, 'me'])->name('agents.me');
 

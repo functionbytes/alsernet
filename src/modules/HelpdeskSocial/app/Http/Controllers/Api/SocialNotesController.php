@@ -5,6 +5,7 @@ namespace Modules\HelpdeskSocial\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Modules\Helpdesk\Http\Responses\ApiResponse;
 use Modules\HelpdeskSocial\Http\Requests\StoreSocialNoteRequest;
 use Modules\HelpdeskSocial\Http\Resources\SocialNoteResource;
 use Modules\HelpdeskSocial\Models\SocialComment;
@@ -22,11 +23,13 @@ class SocialNotesController extends Controller
             ->paginate(20);
 
         return response()->json([
+            'success' => true,
+            'message' => 'OK',
             'data' => SocialNoteResource::collection($notes),
             'meta' => [
-                'current_page' => $notes->currentPage(),
-                'last_page' => $notes->lastPage(),
-                'per_page' => $notes->perPage(),
+                'currentPage' => $notes->currentPage(),
+                'lastPage' => $notes->lastPage(),
+                'perPage' => $notes->perPage(),
                 'total' => $notes->total(),
             ],
         ]);
@@ -40,9 +43,7 @@ class SocialNotesController extends Controller
 
         $note = SocialCommentNote::create($validated);
 
-        return response()->json([
-            'data' => new SocialNoteResource($note->load('user')),
-        ], 201);
+        return ApiResponse::created(new SocialNoteResource($note->load('user')), 'Nota creada correctamente.');
     }
 
     public function destroy(SocialCommentNote $note): JsonResponse
@@ -51,6 +52,6 @@ class SocialNotesController extends Controller
 
         $note->delete();
 
-        return response()->json(['message' => 'Nota eliminada correctamente']);
+        return ApiResponse::noContent();
     }
 }

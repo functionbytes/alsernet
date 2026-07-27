@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskPrestashop\Jobs;
 
+use App\Helpers\PiiMasker;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -30,7 +31,7 @@ class WarmPsCacheJob implements ShouldQueue
                 $service->getCustomerContext($email);
             } catch (\Throwable $e) {
                 Log::debug('WarmPsCacheJob: error warming email', [
-                    'email' => $email,
+                    'email' => PiiMasker::email($email),
                     'error' => $e->getMessage(),
                 ]);
             }

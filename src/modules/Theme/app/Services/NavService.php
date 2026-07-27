@@ -262,6 +262,56 @@ class NavService
     }
 
     /**
+     * Estructura plana de TODOS los items de navegación registrados (mini-nav
+     * + sidebars + items de cada sección), sin filtrar por permisos ni por
+     * nav_item_enabled(). Pensada para la pantalla de administración que
+     * permite activar/desactivar cada entrada del menú.
+     *
+     * @return array<int, array{key: string, label: string, group: string}>
+     */
+    public static function getAllItemsForAdmin(): array
+    {
+        $rows = [];
+
+        foreach (self::getMiniItems() as $item) {
+            $moduleId = $item['id'] ?? null;
+            if (! $moduleId) {
+                continue;
+            }
+            $rows[] = [
+                'key' => "mini:{$moduleId}",
+                'label' => $item['tooltip'] ?? $moduleId,
+                'group' => 'Módulos (icono lateral)',
+            ];
+        }
+
+        foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
+            $rows[] = [
+                'key' => "sidebar:{$sidebarId}",
+                'label' => "Menú: {$sidebarId}",
+                'group' => 'Menús desplegables',
+            ];
+
+            $sections = $sidebar['sections'] ?? [['title' => $sidebar['title'] ?? $sidebarId, 'items' => $sidebar['items'] ?? []]];
+
+            foreach ($sections as $section) {
+                foreach ($section['items'] ?? [] as $item) {
+                    if (empty($item['route'])) {
+                        continue;
+                    }
+                    $rows[] = [
+                        'key' => 'item:'.$item['route'],
+                        'label' => $item['label'] ?? $item['route'],
+                        'group' => $section['title'] ?? $sidebarId,
+                    ];
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
      * Reset all static navigation state (useful for testing and module reloading)
      */
     public static function flush(): void
@@ -285,6 +335,10 @@ class NavService
             $moduleId = $item['id'] ?? null;
             if (! $moduleId) {
                 return true; // Si no tiene ID, mostrar
+            }
+
+            if (! nav_item_enabled("mini:{$moduleId}")) {
+                return false;
             }
 
             $permissionName = "modules.view.{$moduleId}";
@@ -320,11 +374,15 @@ class NavService
         $sidebars = [];
 
         foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
+            if (! nav_item_enabled("sidebar:{$sidebarId}")) {
+                continue;
+            }
+
             $permissionName = "modules.view.{$sidebarId}";
 
             // Si el usuario es super-settings, mostrar todos
             if ($user->hasRole('super-settings')) {
-                $sidebars[$sidebarId] = $sidebar;
+                $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
 
                 continue;
             }
@@ -332,7 +390,7 @@ class NavService
             // Verificar si el usuario tiene permiso para este módulo
             try {
                 if ($user->hasPermissionTo($permissionName)) {
-                    $sidebars[$sidebarId] = $sidebar;
+                    $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
                 }
             } catch (PermissionDoesNotExist $e) {
                 logger()->warning("NavService: permission '{$permissionName}' not found. Run the module seeder.");
@@ -340,6 +398,33 @@ class NavService
         }
 
         return $sidebars;
+    }
+
+    /**
+     * Quita del sidebar los items individuales deshabilitados vía nav_item_enabled().
+     * No filtra por permisos: eso ya se resolvió en el llamador.
+     */
+    private static function filterDisabledItems(array $sidebar): array
+    {
+        $filterItems = fn (array $items) => array_values(array_filter(
+            $items,
+            fn ($item) => empty($item['route']) || nav_item_enabled('item:'.$item['route'])
+        ));
+
+        if (isset($sidebar['sections'])) {
+            $sidebar['sections'] = array_map(
+                fn ($section) => [...$section, 'items' => $filterItems($section['items'] ?? [])],
+                $sidebar['sections']
+            );
+
+            return $sidebar;
+        }
+
+        if (isset($sidebar['items'])) {
+            $sidebar['items'] = $filterItems($sidebar['items']);
+        }
+
+        return $sidebar;
     }
 
     /**
