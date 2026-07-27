@@ -56,6 +56,8 @@ return [
     /*
      | Nombre de la base de datos de PrestaShop (solo lectura) usada por el banco
      | de pruebas del helpdesk para buscar clientes. Se consulta vía conexión `mysql`.
+     | Vacío por defecto: sin esta variable configurada, las búsquedas/sync de
+     | clientes de PrestaShop se omiten en vez de intentar leer un esquema ajeno.
      */
-    'ps_db' => env('HELPDESK_PS_DB', 'alvarez_cristia'),
+    'ps_db' => env('HELPDESK_PS_DB', ''),
 ];
