@@ -519,7 +519,7 @@
                 }
             });
         </script>
-        <script src="{{ url('theme/js/forms/template-preview.js') }}"></script>
+        <script src="{{ themeAsset('js/forms/template-preview.js') }}"></script>
     @endpush
 
 @endsection

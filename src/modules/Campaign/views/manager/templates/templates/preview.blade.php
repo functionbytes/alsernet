@@ -1,5 +1,5 @@
 
-<script src="{{ url('theme/libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>
+<script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}" type="text/javascript"></script>
 
 <div class="saving" style="display:none; position: fixed;
     height: 100%;
