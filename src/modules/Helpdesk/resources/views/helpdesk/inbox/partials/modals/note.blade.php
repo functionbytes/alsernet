@@ -1,5 +1,13 @@
 {{-- Modal: Notas internas --}}
-<div class="bv-modal" data-bv-modal-name="note">
+{{-- data-agent-*: identidad del agente por atributo, para que el JS no necesite Blade.
+     Se lee full_name, no name: la tabla users no tiene columna "name" (guarda
+     firstname/lastname y el modelo expone el accessor full_name), asi que el
+     ->name de antes era siempre null y el modal mostraba el literal "Agente"
+     con inicial "A" para todo el mundo. --}}
+@php($hdAgentName = trim(auth()->user()?->full_name ?? '') ?: 'Agente')
+<div class="bv-modal" data-bv-modal-name="note"
+     data-agent-name="{{ $hdAgentName }}"
+     data-agent-initials="{{ collect(preg_split('/\s+/', $hdAgentName))->take(2)->map(fn($w) => mb_substr($w, 0, 1))->implode('') }}">
     <div class="bv-modal-dialog">
         <div class="bv-modal-head">
             <div class="bv-modal-title"><i class="fas fa-note-sticky bv-modal-title-icon bv-modal-title-icon--warning"></i> {{ __('helpdesk::helpdesk.inbox.modals.note_title') }}</div>
@@ -43,144 +51,7 @@
 
 @once
 @push('scripts')
-<script>
-(function() {
-    var csrf = $('meta[name="csrf-token"]').attr('content');
-    var currentAgentName = '{{ addslashes(auth()->user()->name ?? 'Agente') }}';
-    var currentAgentInitials = '{{ addslashes(collect(preg_split('/\s+/', trim(auth()->user()->name ?? 'A')))->take(2)->map(fn($w) => mb_substr($w,0,1))->implode('')) }}';
-
-    function loadNotes() {
-        var convId = $('.bv-composer').data('bv-conversation-id');
-        var $list = $('#noteList');
-        var $title = $('#noteListTitle');
-        if (!convId) {
-            $list.html('<div class="bv-list-state">Sin conversación activa</div>');
-            $title.hide();
-            return;
-        }
-        $list.html('<div class="bv-list-state"><i class="fas fa-circle-notch fa-spin"></i> Cargando…</div>');
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/notes',
-            method: 'GET',
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
-        }).done(function(resp) {
-            var notes = resp.notes || [];
-            if (!notes.length) {
-                $list.html('<div class="bv-list-state">Sin notas internas</div>');
-                $title.hide();
-                return;
-            }
-            $title.show().text('Notas existentes (' + notes.length + ')');
-            var html = '';
-            notes.forEach(function(n) {
-                var pinned = n.is_pinned ? '<span class="pin-flag"><i class="fas fa-thumbtack"></i></span>' : '';
-                var colorClass = 'c' + ((n.id % 8) + 1);
-                html += '<div class="mv4-note" data-note-id="' + n.id + '">' +
-                    pinned +
-                    '<div class="av ' + colorClass + '">' + escapeHtml(n.initials || 'A') + '</div>' +
-                    '<div class="body">' +
-                        '<div class="head"><b>' + escapeHtml(n.author) + '</b><span>' + escapeHtml(n.time_ago) + '</span></div>' +
-                        '<div class="txt">' + escapeHtml(n.body) + '</div>' +
-                    '</div>' +
-                    '<div class="actions">' +
-                        '<button class="tt note-btn-delete" data-tt="Eliminar"><i class="far fa-trash-can"></i></button>' +
-                    '</div>' +
-                '</div>';
-            });
-            $list.html(html);
-        }).fail(function() {
-            $list.html('<div class="bv-list-state">Error al cargar notas</div>');
-            $title.hide();
-        });
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    $(document).on('click', '#noteBtnSave', function() {
-        var txt = $('#noteBody').val().trim();
-        if (!txt) {
-            toastr.warning('Escribe algo antes de guardar');
-            return;
-        }
-
-        var $btn = $(this);
-        var $composer = $('.bv-composer[data-bv-conversation-id]');
-        var sendUrl = $composer.data('bv-send-url');
-
-        if (!sendUrl) {
-            toastr.warning('No hay conversación activa');
-            return;
-        }
-
-        $btn.prop('disabled', true);
-
-        $.ajax({
-            url: sendUrl,
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                body: txt,
-                is_internal: 1,
-                action: 'send',
-                metadata: { is_pinned: $('#notePin').is(':checked') ? 1 : 0 },
-            },
-            headers: {
-                'X-CSRF-TOKEN': csrf,
-                'Accept': 'application/json',
-            },
-        })
-            .done(function(resp) {
-                if (resp && resp.item) {
-                    $(document).trigger('bv:message:added', [resp.item, true]);
-                }
-                $('#noteBody').val('');
-                $('#notePin').prop('checked', false);
-                loadNotes();
-            })
-            .fail(function(xhr) {
-                var msg = xhr?.responseJSON?.errors?.body?.[0]
-                    || xhr?.responseJSON?.message
-                    || 'No se pudo guardar la nota';
-                toastr.error(msg);
-            })
-            .always(function() {
-                $btn.prop('disabled', false);
-            });
-    });
-
-    $(document).on('click', '.note-btn-delete', function() {
-        var $note = $(this).closest('.mv4-note');
-        var noteId = $note.data('note-id');
-        if (!noteId) return;
-        window.__confirm('¿Eliminar esta nota?', function () {
-        $.ajax({
-            url: '/panel/helpdesk/conversation-items/' + noteId,
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
-        }).done(function() {
-            $note.fadeOut(200, function() { $(this).remove(); });
-            var count = $('.mv4-note').length;
-            if (count <= 1) $('#noteListTitle').hide();
-            else $('#noteListTitle').text('Notas existentes (' + (count - 1) + ')');
-        }).fail(function() {
-            toastr.error('No se pudo eliminar la nota');
-        });
-    });
-    });
-
-    $(document).on('bv:modal:open', function(e, name) {
-        if (name !== 'note') return;
-        $('#noteBody').val('');
-        $('#notePin').prop('checked', false);
-        // Update composer avatar to current agent
-        $('.mv4-note-compose .av').text(currentAgentInitials || 'A').attr('class', 'av c1');
-        $('.mv4-note-compose span b').text(currentAgentName || 'Agente');
-        loadNotes();
-    });
-}());
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/note.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/note.js')) }}"></script>
 @endpush
 @endonce
