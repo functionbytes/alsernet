@@ -279,7 +279,12 @@
        toasts (e.g. "Subject is required") rendered under the panel and
        silently disappeared. */
     --z-toast:              2000;
-    --z-tooltip:            700;
+    /* Mismo caso que el toast de arriba: con 700 el tooltip flotante quedaba
+       por detrás de los modales que se saltan esta escala (.docs-modal 1081,
+       .hd-overlay 10500, .hd-liveview-modal 10800). Se activaba al pasar el
+       ratón, pero se dibujaba debajo del modal y no llegaba a verse. Este valor
+       los supera sin alcanzar los widgets embebidos (99999+). */
+    --z-tooltip:            11000;
 }
 
 /* ==========================================================================

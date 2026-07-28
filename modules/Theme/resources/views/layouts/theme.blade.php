@@ -136,7 +136,11 @@
 
 {{-- ─── Form / Input Libraries ─────────────────────────────── --}}
 <script data-pagespeed-no-defer src="{{ themeAsset('libs/taginput/bootstrap-tagsinput.js') }}"></script>
-<script data-pagespeed-no-defer src="{{ themeAsset('libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}"></script>
+{{-- moment vive en libs/moment/, no bajo el node_modules del datetimepicker (esa
+     carpeta no existe en el tema): la ruta anterior devolvia el 404 como HTML y
+     el navegador lo rechazaba por MIME, dejando window.moment sin definir y
+     daterangepicker —que lo usa en 47 sitios— roto en toda la app. --}}
+<script data-pagespeed-no-defer src="{{ themeAsset('libs/moment/min/moment.min.js') }}"></script>
 <script data-pagespeed-no-defer src="{{ themeAsset('libs/daterangepicker/daterangepicker.js') }}"></script>
 <script data-pagespeed-no-defer src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
 <script data-pagespeed-no-defer src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>

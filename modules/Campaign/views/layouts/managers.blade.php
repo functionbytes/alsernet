@@ -29,20 +29,20 @@
 
 
     <!-- Library CSS -->
-    <link rel="stylesheet" href="{{ url('theme/libs/taginput/bootstrap-tagsinput.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/owl.carousel/dist/assets/owl.carousel.min.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/select2/dist/css/select2.min.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/quill/dist/quill.snow.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/toastr/toastr.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/dropzone/dist/min/dropzone.min.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/libs/daterangepicker/daterangepicker.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/taginput/bootstrap-tagsinput.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/owl.carousel/dist/assets/owl.carousel.min.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/select2/dist/css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/quill/dist/quill.snow.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/toastr/toastr.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/dropzone/dist/min/dropzone.min.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('libs/daterangepicker/daterangepicker.css') }}">
 
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="{{ url('theme/libs/fontawesome/fontawesome.css') }}"
+    <link rel="stylesheet" href="{{ themeAsset('libs/fontawesome/fontawesome.css') }}"
 
     <!-- Theme CSS -->
-    <link rel="stylesheet" href="{{ url('theme/css/style.css') }}">
-    <link rel="stylesheet" href="{{ url('theme/css/extra.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ themeAsset('css/extra.css') }}">
 
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded">
 
@@ -89,26 +89,26 @@
 </div>
 
 <!-- Core Libraries -->
-<script src="{{ url('theme/libs/jquery/dist/jquery.min.js') }}"></script>
-<script src="{{ url('theme/libs/simplebar/dist/simplebar.min.js') }}"></script>
-<script src="{{ url('theme/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ themeAsset('libs/jquery/dist/jquery.min.js') }}"></script>
+<script src="{{ themeAsset('libs/simplebar/dist/simplebar.min.js') }}"></script>
+<script src="{{ themeAsset('libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url('core/tooltipster/js/tooltipster.bundle.min.js') }}"></script>
 
 <!-- Form/Input Libraries -->
-<script src="{{ url('theme/libs/taginput/bootstrap-tagsinput.js') }}"></script>
-<script src="{{ url('theme/libs/bootstrap-material-datetimepicker/node_modules/moment/moment.js') }}"></script>
-<script src="{{ url('theme/libs/select2/dist/js/select2.min.js') }}"></script>
-<script src="{{ url('theme/libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
-<script src="{{ url('theme/libs/dropzone/dist/dropzone.js') }}"></script>
-<script src="{{ url('theme/libs/toastr/toastr.min.js') }}"></script>
-<script src="{{ url('theme/libs/quill/dist/quill.min.js') }}"></script>
+<script src="{{ themeAsset('libs/taginput/bootstrap-tagsinput.js') }}"></script>
+<script src="{{ themeAsset('libs/moment/min/moment.min.js') }}"></script>
+<script src="{{ themeAsset('libs/select2/dist/js/select2.min.js') }}"></script>
+<script src="{{ themeAsset('libs/jquery-validation/dist/jquery.validate.min.js') }}"></script>
+<script src="{{ themeAsset('libs/dropzone/dist/dropzone.js') }}"></script>
+<script src="{{ themeAsset('libs/toastr/toastr.min.js') }}"></script>
+<script src="{{ themeAsset('libs/quill/dist/quill.min.js') }}"></script>
 
 <!-- Theme & App Scripts -->
-<script src="{{ url('theme/js/theme/theme.js') }}"></script>
+<script src="{{ themeAsset('js/theme/theme.js') }}"></script>
 
 <!-- Form Initializers -->
-<script src="{{ url('theme/js/forms/select2.init.js') }}"></script>
-<script src="{{ url('theme/js/forms/quill-init.js') }}"></script>
+<script src="{{ themeAsset('js/forms/select2.init.js') }}"></script>
+<script src="{{ themeAsset('js/forms/quill-init.js') }}"></script>
 
 <!-- Core App Scripts -->
 <script src="{{ url('core/js/functions.js') }}"></script>

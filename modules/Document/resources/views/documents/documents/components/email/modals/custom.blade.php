@@ -12,7 +12,7 @@
             <div class="modal-body">
                 <form id="customEmailForm">
                     {{-- Plantilla configurada - Cargado via AJAX --}}
-                    <div class="alert alert-info" id="templateInfo" style="display: none;">
+                    <div class="alert alert-info d-none" id="templateInfo">
                         <h6 class="mb-1 fw-semibold">Plantilla configurada</h6>
                         <p class="mb-0 small">Se usará: <span class="badge bg-primary" id="templateName"></span></p>
                     </div>
@@ -34,10 +34,10 @@
                 </form>
             </div>
             <div class="modal-footer border-top">
-                <button type="button" class="btn btn-primary w-100 mb-1" id="btnSendCustomEmail">
+                <button type="button" class="btn btn-primary w-100 mb-2" id="btnSendCustomEmail">
                     Enviar email
                 </button>
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>
@@ -89,12 +89,11 @@
             const charCount = $(this).val().length;
             $('#charCount').text(charCount);
 
-            // Cambiar color del contador si no hay suficientes caracteres
-            if (charCount < 10) {
-                $('#charCount').parent().css('color', '#dc3545');
-            } else {
-                $('#charCount').parent().css('color', '#6c757d');
-            }
+            // Contador en rojo mientras no se alcance el minimo. Se conmutan clases
+            // de Bootstrap en vez de .css() para no inyectar estilos inline.
+            $('#charCount').parent()
+                .toggleClass('text-danger', charCount < 10)
+                .toggleClass('text-muted', charCount >= 10);
         });
 
         // Cargar plantilla de email cuando se abre el modal
@@ -102,7 +101,7 @@
             // Resetear formulario y validación
             $('#customEmailForm').trigger('reset');
             $('#customEmailForm').find('input, textarea').removeClass('is-invalid');
-            $('#charCount').text('0').parent().css('color', '#6c757d');
+            $('#charCount').text('0').parent().removeClass('text-danger').addClass('text-muted');
 
             $.ajax({
                 url: "{{ route('api.documents.custom-email-template') }}",
@@ -111,7 +110,7 @@
                     if (response.success && response.template) {
                         customEmailTemplateId = response.template.id;
                         $('#templateName').text(response.template.name);
-                        $('#templateInfo').show();
+                        $('#templateInfo').removeClass('d-none');
                     }
                 }
             });
@@ -208,7 +207,7 @@
                                     ${timerContent}
                                 </div>
                                 <div class="modal-footer border-top bg-light">
-                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                 </div>
                             </div>
                         </div>
@@ -230,7 +229,7 @@
                                     <p class="text-muted">${response.message || 'No se pudo enviar el email. Intenta de nuevo en unos segundos.'}</p>
                                 </div>
                                 <div class="modal-footer border-top bg-light">
-                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                 </div>
                             </div>
                         </div>

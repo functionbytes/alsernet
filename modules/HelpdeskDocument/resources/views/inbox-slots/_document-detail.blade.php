@@ -268,9 +268,8 @@
                                         @if($fStatusKey !== 'approved')
                                             <button type="button" class="doc-del docs-file-del"
                                                     data-doc-type="{{ $f['doc_type'] }}"
-                                                    data-doc-label="{{ $f['type_label'] }}"
-                                                    title="Eliminar">
-                                                <i class="fas fa-trash"></i>
+                                                    data-doc-label="{{ $f['type_label'] }}">
+                                                Eliminar
                                             </button>
                                         @endif
                                     </div>
@@ -361,6 +360,12 @@
                     <div class="docs-file-detail d-none" data-docs-file-detail></div>
                 </div>
 
+                {{-- Panel desacoplado: correos al cliente e importar documentos. Va
+                     FUERA de la tarjeta "Documentación del expediente": son
+                     componentes propios que la sustituyen mientras estan abiertos,
+                     no secciones suyas. Solo uno puede estar abierto a la vez. --}}
+                <div class="docs-detached-pane d-none" data-docs-pane></div>
+
             </div>
 
             {{-- ═══ Columna lateral (derecha) — 5 tabs ══════════════════ --}}
@@ -402,10 +407,10 @@
 
                 {{-- Nav de tabs --}}
                 <div class="docs-ws-tabs" id="docsWsTabs_{{ $modalSuffix }}" role="tablist" aria-label="Secciones del expediente">
-                    <button type="button" class="docs-ws-tab" data-ws-tab="ficha" title="Ficha" role="tab" aria-selected="false" aria-controls="docsWsPane_ficha_{{ $modalSuffix }}" id="docsWsTab_ficha_{{ $modalSuffix }}"><i class="fa-regular fa-address-card"></i><span>Ficha</span></button>
+                    <button type="button" class="docs-ws-tab" data-ws-tab="ficha" title="Ficha" role="tab" aria-selected="false" aria-controls="docsWsPane_ficha_{{ $modalSuffix }}" id="docsWsTab_ficha_{{ $modalSuffix }}"><i class="fa-solid fa-address-card"></i><span>Ficha</span></button>
                     <button type="button" class="docs-ws-tab on" data-ws-tab="estado" title="Estado" role="tab" aria-selected="true" aria-controls="docsWsPane_estado_{{ $modalSuffix }}" id="docsWsTab_estado_{{ $modalSuffix }}"><i class="fa-solid fa-circle-info"></i><span>Estado</span></button>
                     <button type="button" class="docs-ws-tab" data-ws-tab="validacion" title="Validación" role="tab" aria-selected="false" aria-controls="docsWsPane_validacion_{{ $modalSuffix }}" id="docsWsTab_validacion_{{ $modalSuffix }}"><i class="fa-solid fa-clipboard-check"></i><span>Validación</span></button>
-                    <button type="button" class="docs-ws-tab" data-ws-tab="correos" title="Correos" role="tab" aria-selected="false" aria-controls="docsWsPane_correos_{{ $modalSuffix }}" id="docsWsTab_correos_{{ $modalSuffix }}"><i class="fa-solid fa-paper-plane"></i><span>Correos</span></button>
+                    <button type="button" class="docs-ws-tab" data-ws-tab="correos" title="Correos" role="tab" aria-selected="false" aria-controls="docsWsPane_correos_{{ $modalSuffix }}" id="docsWsTab_correos_{{ $modalSuffix }}"><i class="fa-solid fa-envelope"></i><span>Correos</span></button>
                     <button type="button" class="docs-ws-tab" data-ws-tab="notas" title="Notas" role="tab" aria-selected="false" aria-controls="docsWsPane_notas_{{ $modalSuffix }}" id="docsWsTab_notas_{{ $modalSuffix }}"><i class="fa-solid fa-pen-to-square"></i><span>Notas</span></button>
                     <button type="button" class="docs-ws-tab" data-ws-tab="adjuntos" title="Adjuntos" role="tab" aria-selected="false" aria-controls="docsWsPane_adjuntos_{{ $modalSuffix }}" id="docsWsTab_adjuntos_{{ $modalSuffix }}"><i class="fa-solid fa-paperclip"></i><span>Adjuntos</span></button>
                     <button type="button" class="docs-ws-tab" data-ws-tab="historial" title="Historial" role="tab" aria-selected="false" aria-controls="docsWsPane_historial_{{ $modalSuffix }}" id="docsWsTab_historial_{{ $modalSuffix }}"><i class="fa-solid fa-clock-rotate-left"></i><span>Historial</span></button>
@@ -555,7 +560,6 @@
                     @if(count($files) > 0 || count($missing) > 0)
                         <div class="docs-vd-card">
                             <div class="h h-row">
-                                <span class="docs-ws-sec-ic"><i class="fa-solid fa-list-check"></i></span>
                                 <div class="h-grow">
                                     <span class="t">Documentos requeridos</span>
                                     <span class="s">{{ count($files) }} de {{ $totalDocs }} completado{{ $totalDocs === 1 ? '' : 's' }}</span>
@@ -587,7 +591,6 @@
 
                     <div class="docs-vd-card">
                         <div class="h h-row">
-                            <span class="docs-ws-sec-ic"><i class="fa-solid fa-circle-info"></i></span>
                             <span class="t">Estado del expediente</span>
                         </div>
                         <div class="docs-vd-status-banner">
@@ -627,7 +630,6 @@
                 <div class="docs-ws-pane" data-ws-pane="validacion" role="tabpanel" id="docsWsPane_validacion_{{ $modalSuffix }}" aria-labelledby="docsWsTab_validacion_{{ $modalSuffix }}" tabindex="0">
                     <div class="docs-vd-card">
                         <div class="h h-row">
-                            <span class="docs-ws-sec-ic"><i class="fa-solid fa-clipboard-check"></i></span>
                             <div class="h-grow">
                                 <span class="t">Validación por etapas</span>
                                 <span class="s">Etapa {{ $stage }} / {{ $totalStages }}</span>
@@ -707,7 +709,7 @@
                             </div>
                         @else
                             <div class="docs-vd-empty">
-                                <i class="fa-regular fa-file-circle-question"></i>
+                                <i class="fa-regular fa-circle-question"></i>
                                 Sin documentos subidos para validar
                             </div>
                         @endif
@@ -719,7 +721,6 @@
                     <div class="docs-ws-pane-scroll">
                         <div class="docs-vd-card">
                             <div class="h h-row">
-                                <span class="docs-ws-sec-ic"><i class="fa-solid fa-paper-plane"></i></span>
                                 <div class="h-grow">
                                     <span class="t">Acciones de envío</span>
                                     <span class="s">Comunicaciones automáticas</span>
@@ -730,8 +731,16 @@
                                 <div class="docs-action-row docs-action-row--comm">
                                     <div class="docs-ws-comm-ic {{ $sentMail ? 'on' : '' }}"><i class="{{ $cmIcon }}"></i></div>
                                     <div class="body"><div class="nm">{{ $cmName }}</div><div class="ds">{{ $cmDesc }}</div></div>
+                                    {{-- Ya enviado: se conserva la marca, pero se permite reenviar.
+                                         Antes la fila se quedaba sin acción y no habia forma de repetir
+                                         el aviso si el cliente decia no haberlo recibido. --}}
                                     @if($sentMail)
-                                        <span class="docs-ws-comm-sent"><i class="fa-solid fa-circle-check"></i> Enviado</span>
+                                        {{-- Sin marca "Enviado": la propia palabra "Reenviar" ya dice que salió
+                                             una vez. La fecha exacta vive en el tooltip. --}}
+                                        <button type="button" class="btn btn-outline-secondary btn-sm {{ $cmClass }}"
+                                                title="Enviado el {{ $sentMail['sent_at'] ?? '—' }} · volver a enviar">
+                                            <i class="fa-solid fa-rotate-right"></i> Reenviar
+                                        </button>
                                     @else
                                         <button type="button" class="btn btn-outline-secondary btn-sm {{ $cmClass }}">Enviar</button>
                                     @endif
@@ -751,7 +760,7 @@
                                 </div>
                             @endif
                             <div class="docs-action-row docs-action-row--comm">
-                                <div class="docs-ws-comm-ic"><i class="fa-regular fa-envelope-circle-check"></i></div>
+                                <div class="docs-ws-comm-ic"><i class="fa-regular fa-circle-xmark"></i></div>
                                 <div class="body"><div class="nm">Correo de rechazo</div><div class="ds">Notificar rechazo de documentación</div></div>
                                 <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-docs-email-trigger="rejection">
@@ -771,12 +780,18 @@
                         @if(count($mails) > 0)
                             <div class="docs-vd-card">
                                 <div class="h"><span class="t">Correos enviados</span><span class="s">{{ count($mails) }}</span></div>
+                                {{-- Cada correo abre su vista previa, igual que en la pantalla
+                                     de gestión: antes la lista era texto muerto y no había forma
+                                     de comprobar qué se le envió al cliente. --}}
                                 @foreach($mails as $mail)
-                                    <div class="docs-mail-item">
+                                    <a class="docs-mail-item" target="_blank" rel="noopener"
+                                       href="{{ route('documents.emails.preview', $mail['uid']) }}"
+                                       title="Ver el correo enviado">
                                         <span class="docs-mail-type">{{ $mail['type_label'] }}</span>
                                         <span class="docs-mail-subject">{{ $mail['subject'] }}</span>
                                         <span class="docs-mail-ts">{{ $mail['sent_at'] }}</span>
-                                    </div>
+                                        <i class="fa-solid fa-arrow-up-right-from-square docs-mail-go"></i>
+                                    </a>
                                 @endforeach
                             </div>
                         @endif
@@ -788,7 +803,6 @@
                     <div class="docs-ws-pane-scroll">
                         <div class="docs-vd-card">
                             <div class="h h-row">
-                                <span class="docs-ws-sec-ic"><i class="fa-solid fa-pen-to-square"></i></span>
                                 <div class="h-grow">
                                     <span class="t">Notas del expediente</span>
                                     <span class="s">Anotaciones internas del equipo</span>
@@ -884,7 +898,6 @@
                     <div class="docs-ws-pane-scroll">
                         <div class="docs-vd-card">
                             <div class="h h-row">
-                                <span class="docs-ws-sec-ic"><i class="fa-solid fa-clock-rotate-left"></i></span>
                                 <div class="h-grow">
                                     <span class="t">Actividad del expediente</span>
                                     <span class="s">Acciones y correos en orden cronológico</span>

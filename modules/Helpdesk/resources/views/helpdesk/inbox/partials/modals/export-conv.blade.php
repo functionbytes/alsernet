@@ -76,7 +76,10 @@
             <button class="btn-primary" id="bv-export-conv-go">
                 {{ __('helpdesk::helpdesk.inbox.modals.export_conv_submit') }}
             </button>
-            <button class="btn-secondary" id="bv-export-conv-email">
+            {{-- data-label-default: el JS restaura este texto tras el envio; lo lee
+                 del atributo para no interpolar la traduccion dentro del bloque JS. --}}
+            <button class="btn-secondary" id="bv-export-conv-email"
+                    data-label-default="{{ __('helpdesk::helpdesk.inbox.modals.export_conv_submit_email') }}">
                 {{ __('helpdesk::helpdesk.inbox.modals.export_conv_submit_email') }}
             </button>
             <button class="btn-secondary" data-bv-close>{{ __('helpdesk::helpdesk.inbox.modals.cancel') }}</button>
@@ -86,70 +89,7 @@
 
 @once
 @push('scripts')
-<script>
-(function ($) {
-    'use strict';
-
-    function getConvId() {
-        return $('.bv-composer').data('bv-conversation-id') || null;
-    }
-
-    function closeBvModal(name) {
-        $('[data-bv-modal-name="' + name + '"]').removeClass('on');
-        if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
-    }
-
-    $(document).on('click', '#exportFormatList .bv-opt', function () {
-        $('#exportFormatList .bv-opt').removeClass('on');
-        $(this).addClass('on');
-    });
-
-    function exportPayload(convId) {
-        return {
-            conversation_id: convId,
-            format:          $('#exportFormatList .bv-opt.on').data('bv-value') || 'pdf',
-            include_notes:   $('#exportNotes').is(':checked') ? '1' : '0',
-            include_meta:    $('#exportMeta').is(':checked') ? '1' : '0',
-            include_attachments: $('#exportAttachments').is(':checked') ? '1' : '0',
-            include_header:  $('#exportHeader').is(':checked') ? '1' : '0',
-        };
-    }
-
-    $(document).on('click', '#bv-export-conv-go', function () {
-        var convId = getConvId();
-        if (!convId) {
-            if (window.toastr) { toastr.warning('Sin conversación activa'); }
-            return;
-        }
-        var params = new URLSearchParams(exportPayload(convId));
-        window.location.href = '/panel/helpdesk/exports/conversation-transcript?' + params.toString();
-        closeBvModal('export-conv');
-    });
-
-    $(document).on('click', '#bv-export-conv-email', function () {
-        var convId = getConvId();
-        if (!convId) {
-            if (window.toastr) { toastr.warning('Sin conversación activa'); }
-            return;
-        }
-        var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Enviando…');
-        $.ajax({
-            url: '/panel/helpdesk/exports/conversation-transcript/email',
-            method: 'POST',
-            data: exportPayload(convId),
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function (resp) {
-            closeBvModal('export-conv');
-            if (window.toastr) { toastr.success(resp.message || 'Enviado por email'); }
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'No se pudo enviar el archivo por email';
-            if (window.toastr) { toastr.error(msg); }
-        }).always(function () {
-            $btn.prop('disabled', false).text('{{ __('helpdesk::helpdesk.inbox.modals.export_conv_submit_email') }}');
-        });
-    });
-
-}(window.jQuery));
-</script>
+    {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
+    <script src="{{ asset('vendor/helpdesk/modals/export-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/export-conv.js')) }}"></script>
 @endpush
 @endonce

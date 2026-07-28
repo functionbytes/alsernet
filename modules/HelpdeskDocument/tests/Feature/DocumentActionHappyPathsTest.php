@@ -226,6 +226,10 @@ class DocumentActionHappyPathsTest extends HelpdeskTestCase
             ->assertUnprocessable()
             ->assertJsonPath('error_type', 'missing_email');
 
-        Queue::assertNothingPushed();
+        // Se afirma sobre el job de correo, no sobre la cola entera: las factories de
+        // arriba ya encolan un BroadcastEvent y un CallQueuedListener al crear cliente y
+        // conversacion, asi que assertNothingPushed() fallaba por ruido del montaje sin
+        // decir nada sobre la accion que se esta probando.
+        Queue::assertNotPushed(MailTemplateJob::class);
     }
 }

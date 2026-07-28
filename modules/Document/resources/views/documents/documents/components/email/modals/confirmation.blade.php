@@ -15,10 +15,10 @@
                 </div>
             </div>
             <div class="modal-footer border-top">
-                <button type="button" class="btn btn-primary w-100 mb-1" id="btnConfirmUpload">
+                <button type="button" class="btn btn-primary w-100 mb-2" id="btnConfirmUpload">
                     Enviar confirmación
                 </button>
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
                     Cancelar
                 </button>
             </div>
@@ -122,7 +122,7 @@
                                     ${timerContent}
                                 </div>
                                 <div class="modal-footer border-top bg-light">
-                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                 </div>
                             </div>
                         </div>
@@ -144,7 +144,7 @@
                                     <p class="text-muted">${response.message || 'No se pudo enviar el email. Intenta de nuevo en unos segundos.'}</p>
                                 </div>
                                 <div class="modal-footer border-top bg-light">
-                                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                 </div>
                             </div>
                         </div>

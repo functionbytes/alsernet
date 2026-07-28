@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskDocument\Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Modules\Document\Entities\Document;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Customer;
@@ -59,6 +60,28 @@ class DocumentActionAuthorizationTest extends HelpdeskTestCase
         ]);
 
         return [$conversation, $document];
+    }
+
+    /**
+     * Minimal payload that PASSES each action's Form Request validation.
+     *
+     * Necesario para el test de ownership: los Form Request se validan ANTES de
+     * que corra el cuerpo del controller, asi que con un payload vacio las
+     * acciones con campos obligatorios responderian 422 (validacion) y el test
+     * nunca llegaria — ni probaria — el guard assertDocumentBelongsToConversation().
+     *
+     * @return array<string, mixed>
+     */
+    private function validPayloadFor(string $action): array
+    {
+        return match ($action) {
+            'reject-stage' => ['reason' => 'Documento ilegible, vuelve a enviarlo.'],
+            'send-custom-email' => ['subject' => 'Asunto', 'message' => 'Mensaje de prueba lo bastante largo.'],
+            'notes.add' => ['content' => 'Nota de prueba'],
+            'upload-attachment' => ['file' => UploadedFile::fake()->image('adjunto.jpg')],
+            'update' => ['data' => ['customer_firstname' => 'Intruso']],
+            default => [],
+        };
     }
 
     private function urlFor(string $action, Conversation $conversation, Document $document, bool $needsId): string
@@ -129,6 +152,16 @@ class DocumentActionAuthorizationTest extends HelpdeskTestCase
         ]);
     }
 
+    /**
+     * El guard de ownership (assertDocumentBelongsToConversation) es el control
+     * de seguridad central del modulo: impide que un agente con permiso legitimo
+     * opere sobre el expediente de OTRO cliente colando su id en la URL (IDOR).
+     *
+     * Se recorren las 16 rutas mutadoras — no solo una — porque el guard se
+     * llama a mano en cada metodo del controller (no hay middleware que lo
+     * garantice): si un metodo nuevo o un refactor se lo saltara, solo un test
+     * que las cubra todas lo detectaria.
+     */
     public function test_manager_cannot_act_on_document_of_another_customer(): void
     {
         $customer = Customer::factory()->create(['email' => 'owner@example.com']);
@@ -139,15 +172,53 @@ class DocumentActionAuthorizationTest extends HelpdeskTestCase
             'customer_lastname' => 'Person',
         ]);
 
-        $this->actingAs($this->manager)
-            ->postJson($this->urlFor('assign', $conversation, $foreignDocument, false), [
-                'assigned_user_id' => $this->manager->id,
-            ])
-            ->assertNotFound();
+        foreach ($this->mutatingActions() as [$action, $verb, $needsId]) {
+            $response = $this->actingAs($this->manager)->{$verb}(
+                $this->urlFor($action, $conversation, $foreignDocument, $needsId),
+                $this->validPayloadFor($action)
+            );
 
+            $this->assertSame(
+                404,
+                $response->getStatusCode(),
+                "La accion '{$action}' no bloqueo un expediente de otro cliente: ".
+                "se esperaba 404 del guard de ownership y respondio {$response->getStatusCode()}."
+            );
+        }
+    }
+
+    /**
+     * Complementa al test anterior: ademas de responder 404, ninguna accion
+     * debe haber dejado efecto persistido sobre el expediente ajeno.
+     */
+    public function test_blocked_actions_leave_the_foreign_document_untouched(): void
+    {
+        $customer = Customer::factory()->create(['email' => 'owner@example.com']);
+        $conversation = Conversation::factory()->create(['customer_id' => $customer->id]);
+        $foreignDocument = Document::create([
+            'customer_email' => 'someone-else@example.com',
+            'customer_firstname' => 'Other',
+            'customer_lastname' => 'Person',
+        ]);
+
+        foreach ($this->mutatingActions() as [$action, $verb, $needsId]) {
+            $this->actingAs($this->manager)->{$verb}(
+                $this->urlFor($action, $conversation, $foreignDocument, $needsId),
+                $this->validPayloadFor($action)
+            );
+        }
+
+        // 'assign' no pudo asignarse un validador, 'update' no pudo reescribir
+        // el nombre del cliente y 'notes.add' no pudo dejar rastro.
         $this->assertDatabaseMissing('documents', [
             'id' => $foreignDocument->id,
             'assigned_user_id' => $this->manager->id,
+        ]);
+
+        $this->assertDatabaseHas('documents', [
+            'id' => $foreignDocument->id,
+            'customer_firstname' => 'Other',
+            'customer_email' => 'someone-else@example.com',
         ]);
     }
 }

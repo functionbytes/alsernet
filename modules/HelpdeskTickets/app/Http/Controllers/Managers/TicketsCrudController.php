@@ -214,7 +214,9 @@ class TicketsCrudController extends Controller
             }
         }
 
-        $mentionableUsers = CatalogCacheService::agents()
+        $agents = CatalogCacheService::agents();
+
+        $mentionableUsers = $agents
             ->take(50)
             ->map(fn ($u) => [
                 'id' => $u->id,
@@ -235,6 +237,9 @@ class TicketsCrudController extends Controller
             'statuses' => $statuses,
             'categories' => $categories,
             'groups' => $groups,
+            // La vista lo recorre para el selector de participantes; sin el, show()
+            // reventaba con "Undefined variable $agents" (500 en el detalle del ticket).
+            'agents' => $agents,
             'mentionableUsers' => $mentionableUsers,
             'history' => $history,
             'ticketMails' => $ticketMails,
