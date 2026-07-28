@@ -39,7 +39,11 @@
         <env name="APP_LOCALE" value="en" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <!-- 'log', no 'null': phpunit convierte la cadena "null" en un NULL de PHP,
+             asi que env('BROADCAST_CONNECTION', 'reverb') caia al default y los tests
+             intentaban construir Pusher con credenciales vacias (TypeError al registrar
+             los canales de Engagement). El driver log no tiene dependencias externas. -->
+        <env name="BROADCAST_CONNECTION" value="log" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <!-- MariaDB 12+ testing (uses mariadb driver for compatible DDL) -->
         <env name="DB_CONNECTION" value="mariadb" force="true"/>
