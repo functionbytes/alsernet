@@ -21,6 +21,7 @@ use Modules\Newsletter\Database\Seeders\NewsletterPermissionsSeeder;
 use Modules\Notification\Database\Seeders\NotificationPermissionsSeeder;
 use Modules\Page\Database\Seeders\CmsPermissionsSeeder;
 use Modules\Page\Database\Seeders\PageDatabaseSeeder;
+use Modules\PriceLabels\Database\Seeders\PriceLabelsPermissionsSeeder;
 use Modules\Queue\Database\Seeders\QueuePermissionsSeeder;
 use Modules\Reviews\Database\Seeders\ReviewsPermissionsSeeder;
 use Modules\Role\Database\Seeders\CompleteRolesAndPermissionsSeeder;
@@ -128,6 +129,10 @@ class DatabaseSeeder extends Seeder
 
         if (class_exists(QueuePermissionsSeeder::class)) {
             $this->call(QueuePermissionsSeeder::class);
+        }
+
+        if (class_exists(PriceLabelsPermissionsSeeder::class)) {
+            $this->call(PriceLabelsPermissionsSeeder::class);
         }
 
         if (class_exists(StoragePermissionsSeeder::class)) {

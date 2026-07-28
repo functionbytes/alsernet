@@ -1,0 +1,421 @@
+@extends('layouts.theme')
+
+@section('title', $pageTitle)
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('modules/pricelabels/css/editor.css') }}">
+@endpush
+
+@section('content')
+
+    @php
+        $fieldLabels = collect($fieldDefinitions)->pluck('label', 'key')->all();
+        $fieldLabels['label'] = 'Texto fijo (label)';
+        $fontOptions = ['helvetica' => 'Helvetica', 'times' => 'Times', 'courier' => 'Courier'];
+        $showVertical = in_array($template->orientation, ['vertical', 'both'], true);
+        $showHorizontal = in_array($template->orientation, ['horizontal', 'both'], true);
+    @endphp
+
+    @include('core::components.card', ['title' => $pageTitle])
+
+    <nav class="pricelabels-subnav mb-3">
+        <a href="#section-datos" class="pricelabels-subnav-link">Datos y estilo</a>
+        @if($showVertical)
+            <a href="#section-vertical" class="pricelabels-subnav-link">Vista previa vertical</a>
+        @endif
+        @if($showHorizontal)
+            <a href="#section-horizontal" class="pricelabels-subnav-link">Vista previa horizontal</a>
+        @endif
+        <a href="#section-generar" class="pricelabels-subnav-link">Generar PDF</a>
+    </nav>
+
+    <div class="row g-3">
+
+        <div class="col-12" id="section-datos">
+            <div class="card">
+                <form id="templateForm" action="{{ route('pricelabels.update', $template) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="card-header border-bottom p-3">
+                        <h5 class="mb-0 fw-bold">Datos generales</h5>
+                        <small class="text-muted">Nombre, estado, texto fijo e imagenes base de la plantilla.</small>
+                    </div>
+
+                    <div class="card-body">
+                        @include('core::components.alerts')
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                                       name="name" value="{{ old('name', $template->name) }}" required>
+                                @error('name')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Estado</label>
+                                <select class="form-select select2" name="is_active">
+                                    <option value="1" {{ old('is_active', $template->is_active ? '1' : '0') == '1' ? 'selected' : '' }}>Activa</option>
+                                    <option value="0" {{ old('is_active', $template->is_active ? '1' : '0') == '0' ? 'selected' : '' }}>Inactiva</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Texto fijo</label>
+                                <input type="text" class="form-control @error('label_text') is-invalid @enderror"
+                                       name="label_text" value="{{ old('label_text', $template->label_text) }}">
+                                @error('label_text')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Esta plantilla es para</label>
+                                <select class="form-select select2" name="orientation">
+                                    <option value="vertical" {{ old('orientation', $template->orientation) == 'vertical' ? 'selected' : '' }}>Vertical</option>
+                                    <option value="horizontal" {{ old('orientation', $template->orientation) == 'horizontal' ? 'selected' : '' }}>Horizontal</option>
+                                    <option value="both" {{ old('orientation', $template->orientation) == 'both' ? 'selected' : '' }}>Ambas</option>
+                                </select>
+                                @error('orientation')
+                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                @enderror
+                                <small class="form-text text-muted">Cambiar y guardar actualiza las columnas de estilo abajo.</small>
+                            </div>
+
+                            @if($showVertical)
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Filas x columnas (vertical)</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="number" min="1" max="20" class="form-control" name="vertical_rows" value="{{ old('vertical_rows', $template->vertical_rows) }}">
+                                        <input type="number" min="1" max="20" class="form-control" name="vertical_columns" value="{{ old('vertical_columns', $template->vertical_columns) }}">
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($showHorizontal)
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label">Filas x columnas (horizontal)</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="number" min="1" max="20" class="form-control" name="horizontal_rows" value="{{ old('horizontal_rows', $template->horizontal_rows) }}">
+                                        <input type="number" min="1" max="20" class="form-control" name="horizontal_columns" value="{{ old('horizontal_columns', $template->horizontal_columns) }}">
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if($showVertical)
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Imagen base vertical</label>
+                                    <input type="file" class="form-control @error('image_vertical') is-invalid @enderror"
+                                           name="image_vertical" accept="image/*">
+                                    @if($template->image_vertical)
+                                        <small class="form-text text-muted">Actual: {{ basename($template->image_vertical) }}</small>
+                                    @endif
+                                    @error('image_vertical')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            @endif
+
+                            @if($showHorizontal)
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Imagen base horizontal</label>
+                                    <input type="file" class="form-control @error('image_horizontal') is-invalid @enderror"
+                                           name="image_horizontal" accept="image/*">
+                                    @if($template->image_horizontal)
+                                        <small class="form-text text-muted">Actual: {{ basename($template->image_horizontal) }}</small>
+                                    @endif
+                                    @error('image_horizontal')
+                                        <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                                    @enderror
+                                </div>
+                            @endif
+                        </div>
+
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Estilo por campo</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Campo</th>
+                                        <th>Color</th>
+                                        @if($showVertical)
+                                            <th>Fuente (vertical)</th>
+                                            <th>Tam.</th>
+                                        @endif
+                                        <th>Negrita</th>
+                                        <th>Cursiva</th>
+                                        @if($showHorizontal)
+                                            <th>Fuente (horizontal)</th>
+                                            <th>Tam.</th>
+                                        @endif
+                                        <th>Ancho caja</th>
+                                        <th>Alto caja</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($fieldLabels as $key => $label)
+                                        <tr data-field-key="{{ $key }}">
+                                            <td class="fw-semibold">{{ $label }}</td>
+                                            <td>
+                                                <input type="color" class="form-control form-control-color"
+                                                       id="field-{{ $key }}-color"
+                                                       name="fields[{{ $key }}][color]"
+                                                       value="{{ $fields[$key]['color'] }}">
+                                            </td>
+                                            @if($showVertical)
+                                                <td>
+                                                    <select class="form-select form-select-sm" id="field-{{ $key }}-font-family" name="fields[{{ $key }}][font_family]">
+                                                        @foreach($fontOptions as $value => $font)
+                                                            <option value="{{ $value }}" {{ $fields[$key]['font_family'] === $value ? 'selected' : '' }}>{{ $font }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" style="width:70px"
+                                                           id="field-{{ $key }}-font-size"
+                                                           name="fields[{{ $key }}][font_size]" min="6" max="72"
+                                                           value="{{ $fields[$key]['font_size'] }}">
+                                                </td>
+                                            @endif
+                                            <td>
+                                                <input type="hidden" name="fields[{{ $key }}][bold]" value="0">
+                                                <input type="checkbox" class="form-check-input" id="field-{{ $key }}-bold" name="fields[{{ $key }}][bold]" value="1"
+                                                       {{ $fields[$key]['bold'] ? 'checked' : '' }}>
+                                            </td>
+                                            <td>
+                                                <input type="hidden" name="fields[{{ $key }}][italic]" value="0">
+                                                <input type="checkbox" class="form-check-input" id="field-{{ $key }}-italic" name="fields[{{ $key }}][italic]" value="1"
+                                                       {{ $fields[$key]['italic'] ? 'checked' : '' }}>
+                                            </td>
+                                            @if($showHorizontal)
+                                                <td>
+                                                    <select class="form-select form-select-sm" id="field-{{ $key }}-font-family-h" name="fields[{{ $key }}][font_family_h]">
+                                                        @foreach($fontOptions as $value => $font)
+                                                            <option value="{{ $value }}" {{ $fields[$key]['font_family_h'] === $value ? 'selected' : '' }}>{{ $font }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm" style="width:70px"
+                                                           id="field-{{ $key }}-font-size-h"
+                                                           name="fields[{{ $key }}][font_size_h]" min="6" max="72"
+                                                           value="{{ $fields[$key]['font_size_h'] }}">
+                                                </td>
+                                            @endif
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" style="width:80px"
+                                                       id="field-{{ $key }}-box-w"
+                                                       name="fields[{{ $key }}][box_w]" min="10" max="2000"
+                                                       value="{{ $fields[$key]['box_w'] }}">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm" style="width:80px"
+                                                       id="field-{{ $key }}-box-h"
+                                                       name="fields[{{ $key }}][box_h]" min="10" max="2000"
+                                                       value="{{ $fields[$key]['box_h'] }}">
+                                            </td>
+                                            <td>
+                                                @if($key !== 'label')
+                                                    <button type="button" class="btn btn-sm btn-light delete-btn" title="Eliminar campo"
+                                                            data-bs-toggle="modal" data-bs-target="#delete-modal"
+                                                            data-title="Eliminar campo: {{ $label }}"
+                                                            data-url="{{ route('pricelabels.fields.destroy', [$template, $key]) }}">
+                                                        <i class="fas fa-trash-can"></i>
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
+                        <a href="{{ route('pricelabels.index') }}" class="btn btn-light w-100">Volver al listado</a>
+                    </div>
+                </form>
+
+                <div class="card-footer border-top">
+                    <h6 class="fw-bold mb-3">Anadir campo</h6>
+                    <form action="{{ route('pricelabels.fields.store', $template) }}" method="POST" class="row g-2 align-items-end">
+                        @csrf
+                        <div class="col-12 col-md-4">
+                            <label class="form-label">Nombre del campo</label>
+                            <input type="text" class="form-control" name="label" placeholder="ej: Promocion" required>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label">Columna Excel</label>
+                            <input type="text" class="form-control" name="excel_column" placeholder="ej: E" maxlength="2" required>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select" name="type">
+                                <option value="text">Texto</option>
+                                <option value="price">Precio</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">Anadir</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @if($showVertical)
+        <div class="col-12" id="section-vertical">
+            <div class="card">
+                <div class="card-header border-bottom p-3">
+                    <h5 class="mb-0 fw-bold">Previsualizacion vertical</h5>
+                    <small class="text-muted">Arrastra cada campo a su posicion ({{ $template->vertical_rows * $template->vertical_columns }} etiquetas por hoja)</small>
+                </div>
+                <div class="card-body">
+                    @if(! $template->image_vertical)
+                        <div class="alert alert-warning mb-0">Sube primero una imagen base vertical y guarda.</div>
+                    @else
+                        <div class="pricelabels-zoom mb-2">
+                            <label class="form-label small mb-0 me-2">Zoom</label>
+                            <input type="range" class="form-range" id="zoom-v" min="50" max="150" value="100">
+                            <span class="small text-muted" id="zoom-v-value">100%</span>
+                            <button type="button" id="zoom-v-reset" class="btn btn-sm btn-light">Restablecer</button>
+                        </div>
+                        <div id="canvas-outer-v" class="pricelabels-canvas-outer">
+                            <div id="canvas-v" class="pricelabels-canvas"
+                                 data-bg="{{ $imageVerticalUrl }}"></div>
+                        </div>
+                        <button type="button" id="save-positions-v" class="btn btn-outline-primary mt-3">
+                            Guardar posiciones (vertical)
+                        </button>
+                        @if($showHorizontal && $template->image_horizontal)
+                            <button type="button" id="copy-positions-to-h" class="btn btn-light mt-3">
+                                Copiar posiciones a horizontal
+                            </button>
+                        @endif
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if($showHorizontal)
+        <div class="col-12" id="section-horizontal">
+            <div class="card">
+                <div class="card-header border-bottom p-3">
+                    <h5 class="mb-0 fw-bold">Previsualizacion horizontal</h5>
+                    <small class="text-muted">Arrastra cada campo a su posicion ({{ $template->horizontal_rows * $template->horizontal_columns }} etiquetas por hoja)</small>
+                </div>
+                <div class="card-body">
+                    @if(! $template->image_horizontal)
+                        <div class="alert alert-warning mb-0">Sube primero una imagen base horizontal y guarda.</div>
+                    @else
+                        <div class="pricelabels-zoom mb-2">
+                            <label class="form-label small mb-0 me-2">Zoom</label>
+                            <input type="range" class="form-range" id="zoom-h" min="50" max="150" value="100">
+                            <span class="small text-muted" id="zoom-h-value">100%</span>
+                            <button type="button" id="zoom-h-reset" class="btn btn-sm btn-light">Restablecer</button>
+                        </div>
+                        <div id="canvas-outer-h" class="pricelabels-canvas-outer">
+                            <div id="canvas-h" class="pricelabels-canvas"
+                                 data-bg="{{ $imageHorizontalUrl }}"></div>
+                        </div>
+                        <button type="button" id="save-positions-h" class="btn btn-outline-primary mt-3">
+                            Guardar posiciones (horizontal)
+                        </button>
+                        @if($showVertical && $template->image_vertical)
+                            <button type="button" id="copy-positions-to-v" class="btn btn-light mt-3">
+                                Copiar posiciones a vertical
+                            </button>
+                        @endif
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <div class="col-12" id="section-generar">
+            <div class="card">
+                <div class="card-header border-bottom p-3">
+                    <h5 class="mb-0 fw-bold">Generar PDF</h5>
+                    <small class="text-muted">
+                        Columnas del Excel:
+                        @foreach($fieldDefinitions as $definition)
+                            {{ strtoupper($definition['label']) }} ({{ $definition['excel_column'] }}){{ ! $loop->last ? ',' : '' }}
+                        @endforeach
+                        (fila 1 = cabecera)
+                    </small>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('pricelabels.generate', $template) }}" method="POST"
+                          enctype="multipart/form-data" target="_blank" data-preview-url="{{ route('pricelabels.preview-excel', $template) }}">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Archivo Excel (XLSX/XLS)</label>
+                            <input type="file" id="generate-excel" name="excel_file" accept=".xlsx,.xls" class="form-control" required>
+                            <div id="generate-excel-preview" class="small mt-2 d-none"></div>
+                        </div>
+                        @if($showVertical)
+                            <button type="submit" name="type" value="vertical" class="btn btn-primary" {{ $template->image_vertical ? '' : 'disabled' }}>
+                                Generar PDF vertical
+                            </button>
+                        @endif
+                        @if($showHorizontal)
+                            <button type="submit" name="type" value="horizontal" class="btn btn-outline-primary" {{ $template->image_horizontal ? '' : 'disabled' }}>
+                                Generar PDF horizontal
+                            </button>
+                        @endif
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    @include('core::components.delete')
+
+    <script>
+        window.PRICE_LABELS_EDITOR = {
+            urls: {
+                savePositions: "{{ route('pricelabels.positions.save', $template) }}",
+            },
+            positions: {
+                vertical: @json($positionsVertical),
+                horizontal: @json($positionsHorizontal),
+            },
+            fields: @json($fields),
+            fieldKeys: @json($fieldKeys),
+            fieldLabels: @json($fieldLabels),
+            labelText: @json($template->label_text),
+            grid: {
+                vertical: { rows: {{ $template->vertical_rows }}, columns: {{ $template->vertical_columns }} },
+                horizontal: { rows: {{ $template->horizontal_rows }}, columns: {{ $template->horizontal_columns }} },
+            },
+            newFieldKey: @json(session('new_field_key')),
+        };
+    </script>
+
+@endsection
+
+@push('scripts')
+<script src="{{ asset('modules/pricelabels/js/vendor/interact.min.js') }}"></script>
+<script src="{{ asset('modules/pricelabels/js/editor.js') }}"></script>
+<script>
+$(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+
+    $('.delete-btn').on('click', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').attr('action', $(this).data('url'));
+    });
+
+    @if(session('success'))
+        toastr.success('{{ session('success') }}', 'Exito');
+    @endif
+});
+</script>
+@endpush
