@@ -46,7 +46,10 @@ class PriceLabelPdfService
             $widthPt = $canvas['page_w_mm'] * self::MM_PER_POINT;
             $heightPt = $canvas['page_h_mm'] * self::MM_PER_POINT;
 
-            return $pdf->setPaper([0, 0, $widthPt, $heightPt], 'landscape');
+            // No pasar 'landscape' aqui: DomPDF invierte ancho/alto del array
+            // custom cuando la orientacion es 'landscape', aunque el array ya
+            // sea apaisado (ancho > alto), dejando la pagina en vertical.
+            return $pdf->setPaper([0, 0, $widthPt, $heightPt]);
         }
 
         return $pdf->setPaper('a4', 'portrait');
