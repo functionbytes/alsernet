@@ -12,9 +12,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="alert bg-light border-0 mb-3">
-                    Se enviará un email notificando que los documentos han sido rechazados.
-                </div>
+                {{-- Sin aviso introductorio: repetia literalmente el subtitulo de la
+                     cabecera y empujaba el formulario fuera de la vista. En confirmation
+                     y reminder si se mantiene, porque alli el aviso es el unico contenido. --}}
 
                 {{-- Razón del rechazo (requerido) --}}
                 <div class="mb-3">
@@ -63,10 +63,10 @@
                 </div>
             </div>
             <div class="modal-footer border-top">
-                <button type="button" class="btn btn-primary w-100 mb-1" id="btnSendRejection">
+                <button type="button" class="btn btn-primary w-100 mb-2" id="btnSendRejection">
                     Enviar rechazo
                 </button>
-                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
                     Cancelar
                 </button>
             </div>
@@ -210,7 +210,7 @@
                                         ${timerContent}
                                     </div>
                                     <div class="modal-footer border-top bg-light">
-                                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                     </div>
                                 </div>
                             </div>
@@ -232,7 +232,7 @@
                                         <p class="text-muted">${response.message || 'No se pudo enviar el email. Intenta de nuevo en unos segundos.'}</p>
                                     </div>
                                     <div class="modal-footer border-top bg-light">
-                                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Entendido</button>
+                                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Entendido</button>
                                     </div>
                                 </div>
                             </div>
