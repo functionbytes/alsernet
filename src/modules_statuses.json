@@ -42,6 +42,7 @@
     "Notification": true,
     "Optimize": true,
     "Page": true,
+    "PriceLabels": true,
     "Pulse": false,
     "Queue": true,
     "Reverb": true,

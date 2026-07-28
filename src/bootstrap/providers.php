@@ -45,6 +45,7 @@ use Modules\Newsletter\Providers\NewsletterServiceProvider;
 use Modules\Notification\Providers\NotificationServiceProvider;
 use Modules\Optimize\Providers\OptimizeServiceProvider;
 use Modules\Page\Providers\PageServiceProvider;
+use Modules\PriceLabels\Providers\PriceLabelsServiceProvider;
 use Modules\Queue\Providers\QueueServiceProvider;
 use Modules\Remarketing\Providers\RemarketingServiceProvider;
 use Modules\Reverb\Providers\ReverServiceProvider;
@@ -106,6 +107,7 @@ return [
     NotificationServiceProvider::class,
     OptimizeServiceProvider::class,
     PageServiceProvider::class,
+    PriceLabelsServiceProvider::class,
     QueueServiceProvider::class,
     RemarketingServiceProvider::class,
     ReverServiceProvider::class,
