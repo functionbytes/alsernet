@@ -20,13 +20,18 @@ window.Pusher = Pusher;
 // (localhost:8090 directly, or the public domain via the Cloudflare tunnel) —
 // a fixed VITE_REVERB_HOST would only work for whichever one was set at build
 // time, and the browser can't open a ws:// socket from an https:// page anyway.
+// Exception: if VITE_REVERB_PORT is explicitly set at build time, prefer it —
+// some deployments run Reverb on its own port/vhost, separate from the page's
+// own port (e.g. Apache can't proxy the WebSocket upgrade, so Reverb serves
+// its own TLS on a dedicated port instead).
 const isSecurePage = window.location.protocol === 'https:';
-const wsPort = window.location.port || (isSecurePage ? 443 : 80);
+const explicitPort = import.meta.env.VITE_REVERB_PORT;
+const wsPort = explicitPort || window.location.port || (isSecurePage ? 443 : 80);
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
     key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: window.location.hostname,
+    wsHost: import.meta.env.VITE_REVERB_HOST || window.location.hostname,
     wsPort,
     wssPort: wsPort,
     forceTLS: isSecurePage,

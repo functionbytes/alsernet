@@ -221,7 +221,10 @@ class ConversationsController extends Controller
             ? Conversation::query()
                 ->with([
                     'customer.externalIds', 'status', 'assignee', 'conversationTags',
-                    'items' => fn ($q) => $q->latest('id')->limit(50),
+                    // items() defines orderBy('created_at', 'asc'); reorder() it out first
+                    // or MySQL keeps that ASC clause and limit(50) grabs the *oldest* 50
+                    // instead of the newest (see Conversation::getLatestMessage()).
+                    'items' => fn ($q) => $q->reorder()->latest('id')->limit(50),
                     // Evita el N+1 de $item->user/$item->author al renderizar el hilo
                     // (thread.blade.php accede a ambos por cada uno de los 50 ítems).
                     'items.user:id,firstname,lastname',
