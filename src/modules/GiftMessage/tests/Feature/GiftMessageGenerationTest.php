@@ -4,6 +4,7 @@ namespace Modules\GiftMessage\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -32,11 +33,8 @@ class GiftMessageGenerationTest extends TestCase
             'giftmessage.delete',
         ]);
 
-        // GiftMessageConfig::current() looks up id=1 via firstOrCreate(), but 'id' is not
-        // fillable, so a missing row would otherwise be created with an autoincremented id
-        // instead of 1, breaking the singleton lookup on the next current() call. Force the
-        // row here so the config set up in each test is the same one the controller/service
-        // sees when it calls current() during the request.
+        // Fuerza la fila singleton para que el config que arma cada test sea el
+        // mismo que el controller/service ve al llamar a current() en la request.
         GiftMessageConfig::query()->forceCreate(['id' => 1]);
     }
 
@@ -75,6 +73,27 @@ class GiftMessageGenerationTest extends TestCase
     {
         Storage::fake('public');
         Http::fake(['*' => Http::response(str_repeat('x', 200), 200)]);
+
+        $response = $this->actingAs($this->admin)
+            ->post(route('giftmessage.generate'), [
+                'type' => 'card',
+                'rows' => [[
+                    'id_order' => 1,
+                    'gift_message' => 'Feliz cumple 🎂',
+                    'firstname' => 'Juan',
+                    'lastname' => 'Perez',
+                    'id_gestion' => '73231',
+                ]],
+            ]);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+    }
+
+    public function test_generating_card_pdf_does_not_fail_when_the_twemoji_cdn_is_unreachable(): void
+    {
+        Storage::fake('public');
+        Http::fake(fn () => throw new ConnectionException('cdnjs unreachable'));
 
         $response = $this->actingAs($this->admin)
             ->post(route('giftmessage.generate'), [

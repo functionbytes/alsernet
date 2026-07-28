@@ -222,7 +222,13 @@ class GiftMessagePdfService
                 return $path;
             }
 
-            $response = Http::get(self::TWEMOJI_BASE_URL.$fileName);
+            try {
+                $response = Http::connectTimeout(2)->timeout(5)->get(self::TWEMOJI_BASE_URL.$fileName);
+            } catch (\Throwable $e) {
+                // El CDN de Twemoji caido/lento no debe tumbar la generacion del
+                // PDF: se cae al texto plano del emoji para este grafema.
+                continue;
+            }
 
             if ($response->successful() && strlen($response->body()) > 100) {
                 $disk->put($path, $response->body());
