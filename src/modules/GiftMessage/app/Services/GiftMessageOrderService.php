@@ -30,31 +30,6 @@ class GiftMessageOrderService
     }
 
     /**
-     * Busca un pedido puntual dentro del listado que expone
-     * `giftmessage.orders_with_message` (pedidos de los ultimos 30 dias con
-     * `current_state` 27 o 59). No existe todavia una accion de bridge para
-     * resolver un pedido suelto por id, asi que un pedido que solo aparece via
-     * `searchByGestion` (sin ese filtro de fecha/estado) no se encontrara aqui.
-     *
-     * El flujo de generacion de PDF (`GiftMessageGenerationController::generate()`)
-     * ya no depende de este metodo: recibe las filas completas que el frontend
-     * ya tenia resueltas en pantalla, evitando este problema por completo. Se
-     * mantiene por si un futuro consumidor necesita resolver un pedido suelto.
-     *
-     * @return array<string, mixed>|null
-     */
-    public function orderForPdf(int $orderId): ?array
-    {
-        foreach ($this->ordersWithGiftMessage() as $order) {
-            if ((int) ($order['id_order'] ?? 0) === $orderId) {
-                return $order;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>|null
      */
