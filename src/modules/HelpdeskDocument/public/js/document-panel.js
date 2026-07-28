@@ -152,6 +152,66 @@
         }, 3000));
     }
 
+    /**
+     * Confirmación en panel, con el mismo patrón que el importador: encabezado
+     * con volver, explicación de lo que va a pasar y dos botones explícitos.
+     *
+     * Sustituye al doble clic con cuenta atrás en los envíos de correo: aquel
+     * pintaba el botón de rojo y exigía volver a pulsarlo en 3 segundos, sin
+     * decir a quién se escribía ni qué se enviaba, y con prisa de por medio.
+     *
+     * opts: { eyebrow, title, message, hint, confirmLabel, danger, onConfirm }
+     */
+    function openConfirmPane($source, opts) {
+        var $rp = rootOf($source);
+        if (!detachedPane($rp).length) { return false; }
+
+        var $card = $('<div class="docs-inline-confirm"></div>');
+
+        $card.append(
+            $('<div class="h docs-inline-confirm-head"></div>')
+                .append('<button type="button" class="docs-inline-confirm-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>')
+                .append(
+                    $('<div class="h-grow"></div>')
+                        .append($('<span class="s docs-head-label"></span>').text(opts.eyebrow || 'Confirmar acción'))
+                        .append($('<span class="t"></span>').text(opts.title || ''))
+                )
+        );
+
+        $card.append(
+            $('<div class="docs-minfo"></div>')
+                .append('<i class="fa-solid fa-circle-info"></i>')
+                .append($('<div></div>').text(opts.message || ''))
+        );
+
+        if (opts.hint) {
+            $card.append($('<div class="docs-inline-confirm-hint"></div>').text(opts.hint));
+        }
+
+        var $confirmar = $('<button type="button" class="btn btn-sm flex-fill docs-inline-confirm-ok"></button>')
+            .addClass(opts.danger ? 'btn-danger' : 'btn-primary')
+            .text(opts.confirmLabel || 'Confirmar');
+
+        $card.append(
+            $('<div class="docs-inline-confirm-actions"></div>')
+                .append($('<button type="button" class="btn btn-outline-secondary btn-sm flex-fill docs-inline-confirm-cancel"></button>').text('Cancelar'))
+                .append($confirmar)
+        );
+
+        $confirmar.one('click', function () {
+            closeDetachedPane($rp);
+            opts.onConfirm();
+        });
+
+        openDetachedPane($rp, $card);
+
+        return true;
+    }
+
+    $(document).on('click', '.docs-inline-confirm-back, .docs-inline-confirm-cancel', function () {
+        closeDetachedPane(rootOf(this));
+    });
+
     function doPost(url, data, $btn, loadingLabel, successMsg) {
         busy($btn, true, loadingLabel);
         $.ajax({
@@ -277,36 +337,96 @@
         });
     });
 
-    // ── Solicitar documentacion (send-notification) ────────────
+    // ── Solicitar documentación (send-notification) ────────────
     $(document).on('click', '.docs-rp .docs-comm-notify', function () {
         var $btn = $(this);
-        twoClickConfirm($btn, '¿Enviar solicitud?', function () {
+        var esReenvio = /reenviar/i.test($btn.text());
+        var enviar = function () {
             doPost(rootOf($btn).data('url-send-notify'), {}, $btn, 'Enviando…', 'Solicitud enviada.');
-        });
+        };
+
+        // Si el panel desacoplado no está disponible se mantiene el doble clic.
+        if (!openConfirmPane($btn, {
+            eyebrow: 'CORREO AL CLIENTE',
+            title: 'Solicitud de documentos',
+            message: 'Se enviará al cliente un correo pidiéndole la documentación que falta.',
+            hint: esReenvio
+                ? 'Este correo ya se envió antes; el cliente recibirá una copia nueva.'
+                : 'Se enviará a la dirección registrada en la ficha del cliente.',
+            confirmLabel: 'Enviar solicitud',
+            onConfirm: enviar
+        })) {
+            twoClickConfirm($btn, '¿Enviar solicitud?', enviar);
+        }
     });
 
     // ── Recordatorio ────────────────────────────────────────────
     $(document).on('click', '.docs-rp .docs-comm-reminder', function () {
         var $btn = $(this);
-        twoClickConfirm($btn, '¿Enviar recordatorio?', function () {
+        var esReenvio = /reenviar/i.test($btn.text());
+        var enviar = function () {
             doPost(rootOf($btn).data('url-send-reminder'), {}, $btn, 'Enviando…', 'Recordatorio enviado.');
-        });
+        };
+
+        // Si el panel desacoplado no está disponible se mantiene el doble clic.
+        if (!openConfirmPane($btn, {
+            eyebrow: 'CORREO AL CLIENTE',
+            title: 'Reenviar solicitud pendiente',
+            message: 'Se reenviará al cliente la solicitud de los documentos que siguen pendientes.',
+            hint: esReenvio
+                ? 'Este correo ya se envió antes; el cliente recibirá una copia nueva.'
+                : 'Se enviará a la dirección registrada en la ficha del cliente.',
+            confirmLabel: 'Enviar recordatorio',
+            onConfirm: enviar
+        })) {
+            twoClickConfirm($btn, '¿Enviar recordatorio?', enviar);
+        }
     });
 
     // ── Confirmar recepcion ─────────────────────────────────────
     $(document).on('click', '.docs-rp .docs-comm-upload-confirm', function () {
         var $btn = $(this);
-        twoClickConfirm($btn, '¿Confirmar recepción?', function () {
+        var esReenvio = /reenviar/i.test($btn.text());
+        var enviar = function () {
             doPost(rootOf($btn).data('url-send-upload-confirm'), {}, $btn, 'Enviando…', 'Confirmación enviada.');
-        });
+        };
+
+        // Si el panel desacoplado no está disponible se mantiene el doble clic.
+        if (!openConfirmPane($btn, {
+            eyebrow: 'CORREO AL CLIENTE',
+            title: 'Avisar recepción correcta',
+            message: 'Se avisará al cliente de que su documentación se ha recibido correctamente.',
+            hint: esReenvio
+                ? 'Este correo ya se envió antes; el cliente recibirá una copia nueva.'
+                : 'Se enviará a la dirección registrada en la ficha del cliente.',
+            confirmLabel: 'Enviar confirmación',
+            onConfirm: enviar
+        })) {
+            twoClickConfirm($btn, '¿Confirmar recepción?', enviar);
+        }
     });
 
     // ── Notificación de aprobación ───────────────────────────────
     $(document).on('click', '.docs-rp .docs-comm-approval', function () {
         var $btn = $(this);
-        twoClickConfirm($btn, '¿Enviar notificación?', function () {
+        var esReenvio = /reenviar/i.test($btn.text());
+        var enviar = function () {
             doPost(rootOf($btn).data('url-send-approval'), {}, $btn, 'Enviando…', 'Notificación enviada.');
-        });
+        };
+
+        // Si el panel desacoplado no está disponible se mantiene el doble clic.
+        if (!openConfirmPane($btn, {
+            eyebrow: 'CORREO AL CLIENTE',
+            title: 'Documento aprobado',
+            message: 'Se comunicará al cliente que su documentación ha sido aprobada.',
+            hint: esReenvio
+                ? 'Este correo ya se envió antes; el cliente recibirá una copia nueva.'
+                : 'Se enviará a la dirección registrada en la ficha del cliente.',
+            confirmLabel: 'Enviar notificación',
+            onConfirm: enviar
+        })) {
+            twoClickConfirm($btn, '¿Enviar notificación?', enviar);
+        }
     });
 
     // ── Solicitar faltantes: enviar desde vista inline ──────────
@@ -325,7 +445,7 @@
             headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' }
         }).done(function (res) {
             notify('success', (res && res.message) || 'Solicitud enviada.');
-            closeFileDetail($rp);
+            closeDetachedPane($rp);
         }).fail(function (xhr) {
             busy($btn, false);
             notifyAjaxError(xhr, 'Error al enviar.');
@@ -348,7 +468,7 @@
             headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' }
         }).done(function (res) {
             notify('success', (res && res.message) || 'Correo de rechazo enviado.');
-            closeFileDetail($rp);
+            closeDetachedPane($rp);
         }).fail(function (xhr) {
             busy($btn, false);
             notifyAjaxError(xhr, 'Error al enviar correo.');
@@ -371,7 +491,7 @@
             headers: { 'X-CSRF-TOKEN': csrf(), 'Accept': 'application/json' }
         }).done(function (res) {
             notify('success', (res && res.message) || 'Correo enviado correctamente.');
-            closeFileDetail($rp);
+            closeDetachedPane($rp);
         }).fail(function (xhr) {
             busy($btn, false);
             notifyAjaxError(xhr, 'Error al enviar correo.');
@@ -505,7 +625,7 @@
     });
 
     $(document).on('click', '.docs-cust-cancel', function () {
-        closeFileDetail(rootOf(this));
+        closeDetachedPane(rootOf(this));
     });
 
     $(document).on('click', '.docs-cust-save', function () {
@@ -555,7 +675,7 @@
                 $(this).val(values[$(this).attr('name')] || '');
             });
 
-            closeFileDetail($root);
+            closeDetachedPane($root);
         }).fail(function (xhr) {
             busy($btn, false);
             notifyAjaxError(xhr, 'Error al guardar.');
@@ -1033,44 +1153,44 @@
     // formulario en la columna lateral angosta.
     function openCustomerEditDetail($source) {
         var $rp = rootOf($source);
-        var $detail = $rp.find('[data-docs-file-detail]').first();
         var $origCard = $rp.find('.docs-ws-pane[data-ws-pane="ficha"] .docs-vd-card').first();
-        if (!$detail.length || !$origCard.length) { return; }
+        if (!detachedPane($rp).length || !$origCard.length) { return; }
 
         var $edit = $origCard.find('.docs-cust-edit').clone(false, false).removeClass('d-none');
-        var $card = $('<div class="docs-vd-card docs-cust-edit-detail"></div>');
+        // Sin docs-vd-card ni clases docs-file-detail-*: editar la ficha del cliente
+        // es un componente propio del panel desacoplado.
+        var $card = $('<div class="docs-cust-edit-detail"></div>');
         $card.append(
-            $('<div class="h docs-file-detail-head"></div>')
-                .append($('<button type="button" class="btn-icon docs-file-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
+            $('<div class="h docs-cust-edit-detail-head"></div>')
+                .append($('<button type="button" class="docs-cust-edit-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
                 .append($('<div class="h-grow"></div>')
                     .append($('<span class="s docs-head-label"></span>').text('FICHA · CLIENTE'))
                     .append($('<span class="t"></span>').text('Editar datos del cliente')))
         );
         $card.append($edit);
 
-        $detail.empty().append($card).removeClass('d-none');
-        $rp.find('[data-docs-doc-view], [data-docs-bulkbar], .docs-gallery-progress, .docs-gallery-toolbar').addClass('d-none');
-        $rp.find('.docs-select-toggle').addClass('d-none');
-        $detail[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        openDetachedPane($rp, $card);
     }
 
     function openImportDetail($source, selectedKey) {
         var $rp = rootOf($source);
-        var $detail = $rp.find('[data-docs-file-detail]').first();
         var customerId = currentCustomerId();
         var convId = currentConversationId();
 
-        if (!$detail.length) { return; }
+        if (!detachedPane($rp).length) { return; }
 
         var missing = parseMissingList($rp);
         var category = importCategoryFor(missing, selectedKey);
-        var $card = $('<div class="docs-vd-card docs-inline-import"></div>')
+        // Sin docs-vd-card ni clases docs-file-detail-*: el importador es un
+        // componente propio del panel desacoplado, no una seccion de la tarjeta de
+        // documentación ni la ficha de un archivo.
+        var $card = $('<div class="docs-inline-import"></div>')
             .attr('data-import-category', category.key)
             .data('missing-list', missing)
             .data('generic-fill', !selectedKey);
         $card.append(
-            $('<div class="h docs-file-detail-head"></div>')
-                .append($('<button type="button" class="btn-icon docs-file-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
+            $('<div class="h docs-inline-import-head"></div>')
+                .append($('<button type="button" class="docs-inline-import-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
                 .append($('<div class="h-grow"></div>')
                     .append($('<span class="s docs-head-label"></span>').text('DOCUMENTOS · IMPORTAR'))
                     .append($('<span class="t"></span>').text('Cargar desde galería del chat')))
@@ -1088,16 +1208,13 @@
                 .append($('<div class="docs-cg-gallery docs-inline-import-gallery"><div class="docs-cg-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div></div>'))
         );
         $card.append(
-            $('<div class="docs-file-detail-actions"></div>')
+            $('<div class="docs-inline-import-actions"></div>')
                 .append($('<button type="button" class="btn btn-primary btn-sm flex-fill docs-inline-import-submit" disabled></button>').text('Selecciona imágenes'))
                 .append($('<button type="button" class="btn btn-outline-secondary btn-sm flex-fill docs-inline-device-btn"></button>').text('Subir desde mi equipo'))
                 .append($('<input type="file" class="docs-inline-device-input d-none" multiple accept="image/*">'))
         );
 
-        $detail.empty().append($card).removeClass('d-none');
-        $rp.find('[data-docs-doc-view], [data-docs-bulkbar], .docs-gallery-progress, .docs-gallery-toolbar').addClass('d-none');
-        $rp.find('.docs-select-toggle').addClass('d-none');
-        $detail[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        openDetachedPane($rp, $card);
 
         if (!customerId) {
             $card.find('.docs-inline-import-gallery').html('<div class="docs-vd-empty"><i class="fas fa-triangle-exclamation"></i> Sin cliente vinculado</div>');
@@ -1176,7 +1293,7 @@
         var $card = $('<div class="docs-vd-card"></div>');
         $card.append(
             $('<div class="h docs-file-detail-head"></div>')
-                .append($('<button type="button" class="btn-icon docs-file-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
+                .append($('<button type="button" class="docs-file-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>'))
                 .append($('<div class="h-grow"></div>')
                     .append($('<span class="t"></span>').text(data.label))
                     .append($('<span class="s"></span>').text(data.size + ' · ' + data.uploaded)))
@@ -1240,67 +1357,72 @@
     // de [data-docs-file-detail], sin abrir un modal sobre el modal principal.
     var EMAIL_COMPOSE = {
         missing: {
-            icon: 'fa-solid fa-triangle-exclamation',
             title: 'Solicitar documentos faltantes',
             buildBody: function ($rp) {
                 var missing = parseMissingList($rp);
                 var $body = $('<div></div>');
-                $body.append('<p class="text-muted small mb-2">Selecciona los documentos que el cliente debe enviar.</p>');
+                $body.append('<p class="text-muted small mb-2">Los siguientes documentos están pendientes de carga:</p>');
                 if (missing.length) {
+                    // Agrupados en un bloque con fondo, como el modal del gestor
+                    // de documentos: sueltos se confundian con el resto del texto.
+                    var $grupo = $('<div class="docs-check-group"></div>');
                     missing.forEach(function (m) {
-                        $body.append(
-                            $('<label class="docs-check mb-1"></label>')
+                        $grupo.append(
+                            $('<label class="docs-check"></label>')
                                 .append($('<input type="checkbox" class="docs-missing-cb" checked>').val(m.key))
                                 .append(document.createTextNode(' ' + m.label))
                         );
                     });
+                    $body.append($grupo);
                 } else {
                     $body.append('<p class="text-muted small">No hay documentos faltantes registrados.</p>');
                 }
                 $body.append(
                     $('<div class="docs-field mt-2"></div>')
-                        .append('<label class="flabel">Nota adicional <span class="hint">opcional</span></label>')
-                        .append('<textarea class="ftextarea docs-missing-notes" rows="2" placeholder="Recuerda incluir foto con ambos lados..."></textarea>')
+                        .append('<label class="flabel">Notas adicionales <span class="fopt">(opcional)</span></label>')
+                        .append('<textarea class="ftextarea docs-missing-notes" rows="2" placeholder="Ej: La foto del DNI está borrosa..."></textarea>')
                 );
                 $body.append(
-                    $('<div class="docs-file-detail-actions"></div>')
+                    $('<div class="docs-inline-email-actions"></div>')
                         .append('<button type="button" class="btn btn-primary btn-sm flex-fill docs-missing-send">Enviar solicitud</button>')
                 );
                 return $body;
             }
         },
         rejection: {
-            icon: 'fa-regular fa-envelope-circle-check',
             title: 'Correo de rechazo',
             buildBody: function ($rp) {
                 var files = parseRejectableFiles($rp);
                 var $body = $('<div></div>');
                 $body.append(
                     $('<div class="docs-field"></div>')
-                        .append('<label class="flabel">Motivo del rechazo <span class="hint">min. 10 caracteres</span></label>')
-                        .append('<textarea class="ftextarea docs-rej-email-reason" rows="3" placeholder="El documento enviado no es legible..."></textarea>')
+                        .append('<label class="flabel">Razón del rechazo <span class="freq">*</span></label>')
+                        .append('<textarea class="ftextarea docs-rej-email-reason" rows="3" placeholder="Ejemplo: Los documentos no cumplen con los requisitos de calidad. Por favor, envíe fotografías más claras."></textarea>')
+                        .append('<div class="docs-fhint"><i class="fas fa-info-circle"></i> Esta razón será incluida en el email enviado al cliente (mínimo 10 caracteres).</div>')
                 );
                 if (files.length) {
                     var $fieldset = $('<div class="docs-field mt-2"></div>')
-                        .append('<label class="flabel">Documentos rechazados <span class="hint">opcional</span></label>');
+                        .append('<label class="flabel">Documentos rechazados específicos <span class="fopt">(opcional)</span></label>')
+                        .append('<div class="docs-fhint mb-1">Si no selecciona ninguno, se asumirá que todos los documentos fueron rechazados.</div>');
+                    var $grupoRej = $('<div class="docs-check-group"></div>');
                     files.forEach(function (f) {
-                        $fieldset.append(
-                            $('<label class="docs-check mb-1"></label>')
+                        $grupoRej.append(
+                            $('<label class="docs-check"></label>')
                                 .append($('<input type="checkbox" class="docs-rej-doc-cb">').val(f.value))
                                 .append(document.createTextNode(' ' + f.label))
                         );
                     });
+                    $fieldset.append($grupoRej);
                     $body.append($fieldset);
                 }
                 $body.append(
-                    $('<div class="docs-file-detail-actions"></div>')
+                    $('<div class="docs-inline-email-actions"></div>')
                         .append('<button type="button" class="btn btn-primary btn-sm flex-fill docs-rej-email-send">Enviar correo de rechazo</button>')
                 );
                 return $body;
             }
         },
         custom: {
-            icon: 'fa-regular fa-envelope',
             title: 'Correo personalizado',
             buildBody: function () {
                 return $('<div></div>')
@@ -1315,7 +1437,7 @@
                             .append('<textarea class="ftextarea docs-custom-message" rows="4" placeholder="Estimado cliente, le informamos que..."></textarea>')
                     )
                     .append(
-                        $('<div class="docs-file-detail-actions"></div>')
+                        $('<div class="docs-inline-email-actions"></div>')
                             .append('<button type="button" class="btn btn-primary btn-sm flex-fill docs-custom-email-send">Enviar correo</button>')
                     );
             }
@@ -1326,14 +1448,20 @@
         var cfg = EMAIL_COMPOSE[kind];
         if (!cfg) { return; }
         var $rp = rootOf($source);
-        var $detail = $rp.find('[data-docs-file-detail]').first();
-        if (!$detail.length) { return; }
+        // Contenedor propio, hermano de la tarjeta de documentación: el correo no
+        // se dibuja dentro de "Documentación del expediente", la sustituye.
+        var $pane = detachedPane($rp);
+        if (!$pane.length) { return; }
 
-        var $card = $('<div class="docs-vd-card docs-inline-email"></div>').attr('data-email-kind', kind);
+        // Sin docs-vd-card: esto es un formulario de correo, no una tarjeta del
+        // expediente. .docs-inline-email lleva su propio aspecto en modals.css.
+        var $card = $('<div class="docs-inline-email"></div>').attr('data-email-kind', kind);
         $card.append(
-            $('<div class="h docs-file-detail-head"></div>')
-                .append('<button type="button" class="btn-icon docs-file-detail-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>')
-                .append($('<span class="docs-ws-sec-ic"><i></i></span>').find('i').addClass(cfg.icon).end())
+            // Clases propias en vez de las docs-file-detail-*: esta tarjeta es un
+            // formulario de correo, no la ficha de un archivo. La disposicion en
+            // línea la comparte via el selector agrupado de modals.css.
+            $('<div class="h docs-inline-email-head"></div>')
+                .append('<button type="button" class="docs-inline-email-back" aria-label="Volver a documentos"><i class="fa-solid fa-arrow-left"></i></button>')
                 .append(
                     $('<div class="h-grow"></div>')
                         .append('<span class="s docs-head-label">Correo al cliente</span>')
@@ -1342,10 +1470,28 @@
         );
         $card.append(cfg.buildBody($rp));
 
-        $detail.empty().append($card).removeClass('d-none');
-        $rp.find('[data-docs-doc-view], [data-docs-bulkbar], .docs-gallery-progress, .docs-gallery-toolbar').addClass('d-none');
-        $rp.find('.docs-select-toggle').addClass('d-none');
-        $detail[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        openDetachedPane($rp, $card);
+    }
+
+    /**
+     * Panel hermano de la tarjeta "Documentación del expediente". Lo comparten los
+     * correos al cliente y el importador: son vistas completas de la columna, no
+     * secciones de esa tarjeta. Solo una puede estar abierta a la vez.
+     */
+    function detachedPane($rp) {
+        return $rp.find('[data-docs-pane]').first();
+    }
+
+    function openDetachedPane($rp, $content) {
+        var $pane = detachedPane($rp);
+        $pane.empty().append($content).removeClass('d-none');
+        $rp.find('.docs-vd-main > .docs-vd-card').addClass('d-none');
+        $pane[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeDetachedPane($rp) {
+        detachedPane($rp).addClass('d-none').empty();
+        $rp.find('.docs-vd-main > .docs-vd-card').removeClass('d-none');
     }
 
     $(document).on('click', '[data-docs-email-trigger]', function () {
@@ -1522,6 +1668,10 @@
 
     $(document).on('click', '.docs-file-detail-back', function () {
         closeFileDetail(rootOf(this));
+    });
+
+    $(document).on('click', '.docs-inline-email-back, .docs-inline-import-back, .docs-cust-edit-detail-back', function () {
+        closeDetachedPane(rootOf(this));
     });
 
     $(document).on('click', '.docs-bulk-download', function () {

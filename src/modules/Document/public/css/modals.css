@@ -114,7 +114,16 @@
     margin-left: 4px;
 }
 .docs-breadcrumb i { font-size: 7px; margin: 0 4px; }
-.docs-close {
+/* Los botones de volver de los paneles comparten el aspecto del botón de cerrar,
+   pero NO su clase: .docs-close lleva el handler que cierra el modal entero
+   (modals.js), así que aplicársela los haría salir del expediente en vez de
+   retroceder. Por eso van aquí como selectores propios. */
+.docs-close,
+.docs-file-detail-back,
+.docs-inline-email-back,
+.docs-inline-import-back,
+.docs-inline-confirm-back,
+.docs-cust-edit-detail-back {
     width: 28px; height: 28px;
     border-radius: 7px;
     border: none;
@@ -122,11 +131,29 @@
     color: var(--docs-text-muted);
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; cursor: pointer; flex-shrink: 0;
+    padding: 0;
+    margin-right: 10px;
     transition: background .12s, color .12s;
 }
-.docs-close:hover {
+.docs-close:hover,
+.docs-file-detail-back:hover,
+.docs-inline-email-back:hover,
+.docs-inline-import-back:hover,
+.docs-inline-confirm-back:hover,
+.docs-cust-edit-detail-back:hover {
     background: var(--docs-border);
     color: var(--docs-text);
+}
+
+/* Volver es una acción de navegación, no un descarte como cerrar: la flecha va en
+   el gris fuerte del texto (#374151) porque en muted (#6b7280) sobre el fondo casi
+   blanco del botón quedaba lavada y apenas se leía. */
+.docs-file-detail-back,
+.docs-inline-email-back,
+.docs-inline-import-back,
+.docs-inline-confirm-back,
+.docs-cust-edit-detail-back {
+    color: var(--docs-text-soft);
 }
 
 /* ── Cuerpo ─────────────────────────────────────────────────── */
@@ -396,6 +423,44 @@
 }
 .docs-check input { accent-color: var(--docs-primary); }
 
+/* Bloque de casillas con fondo, como en los modales del gestor de documentos:
+   sueltas sobre el fondo blanco se confundian con el resto del texto del
+   formulario y no se leian como un grupo. */
+.docs-check-group {
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    background: var(--docs-bg-subtle);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* "(opcional)" va dentro de la etiqueta, no alineado a la derecha como .hint:
+   así se lee como parte del nombre del campo. */
+.docs-field .flabel .fopt {
+    font-size: 10.5px;
+    font-weight: 400;
+    color: var(--docs-text-muted);
+    margin-left: 4px;
+}
+
+/* Asterisco de campo obligatorio. */
+.docs-field .flabel .freq {
+    color: var(--docs-danger, #dc2626);
+    font-weight: 700;
+    margin-left: 3px;
+}
+
+/* Nota de apoyo bajo un campo (equivale al .form-text de los modales). */
+.docs-fhint {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    line-height: 1.45;
+    margin-top: 5px;
+}
+.docs-fhint i { margin-right: 3px; }
+
 /* ── Buscador de expedientes con resultados tipo card ────────── */
 .docs-search-field {
     display: flex; align-items: center; gap: 8px;
@@ -594,20 +659,47 @@
     display: flex; flex-direction: column; gap: 14px;
     background: #fafafa;
 }
-.docs-vd-card {
+/* Panel desacoplado, hermano de la tarjeta de documentación dentro de
+   .docs-vd-main (no anidado en ella). Lo comparten los correos y el importador. */
+.docs-detached-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Los tres componentes del panel desacoplado (correo, importador y edición de
+   ficha) acompanan a .docs-vd-card en estos grupos porque comparten su aspecto,
+   pero no son tarjetas del expediente: van fuera de esa clase para no heredar
+   nada más de ella. */
+.docs-vd-card,
+.docs-inline-email,
+.docs-inline-import,
+.docs-inline-confirm,
+.docs-cust-edit-detail {
     background: #fff;
     border: 1px solid var(--docs-border);
     border-radius: 9px;
     padding: 12px 14px;
     display: flex; flex-direction: column; gap: 10px;
 }
-.docs-vd-card .h {
+.docs-vd-card .h,
+.docs-inline-email .h,
+.docs-inline-import .h,
+.docs-inline-confirm .h,
+.docs-cust-edit-detail .h {
     display: flex; flex-direction: column; gap: 1px;
     padding-bottom: 7px;
     border-bottom: 1px solid var(--docs-border);
 }
-.docs-vd-card .h .t { font-size: 12.5px; font-weight: 700; color: var(--docs-text); }
-.docs-vd-card .h .s { font-size: 10.5px; color: var(--docs-text-muted); }
+.docs-vd-card .h .t,
+.docs-inline-email .h .t,
+.docs-inline-import .h .t,
+.docs-inline-confirm .h .t,
+.docs-cust-edit-detail .h .t { font-size: 12.5px; font-weight: 700; color: var(--docs-text); margin-bottom: 0; }
+.docs-vd-card .h .s,
+.docs-inline-email .h .s,
+.docs-inline-import .h .s,
+.docs-cust-edit-detail .h .s { font-size: 10.5px; color: var(--docs-text-muted); }
 
 .docs-vd-kv {
     display: grid;
@@ -712,10 +804,34 @@
 .docs-attach-dropzone .dz-sub { font-size: 10.5px; color: var(--docs-text-muted); }
 .docs-attach-dropzone .dz-file { font-size: 11px; font-weight: 600; color: var(--docs-primary); margin-top: 2px; }
 
-.docs-file-detail-head {
+/* La cabecera por defecto de .docs-vd-card apila en columna; estos paneles la
+   necesitan en línea para que el botón de volver quede junto al título. Los
+   formularios de correo usan su propio nombre en vez de docs-file-detail-*,
+   porque no son la ficha de un archivo. */
+.docs-file-detail-head,
+.docs-inline-email-head,
+.docs-inline-import-head,
+.docs-inline-confirm-head,
+.docs-cust-edit-detail-head {
     flex-direction: row !important;
     align-items: center;
     gap: 8px;
+}
+/* Va con la misma forma que la regla base (.docs-inline-email .h) y después de
+   ella: con .docs-inline-email-head a secas perdia por especificidad. */
+.docs-inline-email > .h,
+.docs-inline-import > .h,
+.docs-inline-confirm > .h,
+.docs-cust-edit-detail > .h {
+    padding-bottom: 10px;
+}
+/* Sin margen inferior: la separacion con el título la pone el gap de .h-grow. */
+.docs-file-detail-head .docs-head-label,
+.docs-inline-email-head .docs-head-label,
+.docs-inline-import-head .docs-head-label,
+.docs-inline-confirm-head .docs-head-label,
+.docs-cust-edit-detail-head .docs-head-label {
+    margin-bottom: 0;
 }
 .docs-file-preview {
     border: 1px solid var(--docs-border);
@@ -742,9 +858,16 @@
     font-size: 46px;
     opacity: .55;
 }
-.docs-file-detail-actions {
+.docs-file-detail-actions,
+.docs-inline-email-actions,
+.docs-inline-import-actions,
+.docs-inline-confirm-actions {
     display: flex;
     gap: 8px;
+    /* Los campos y el botón van dentro de un mismo div sin clase, así que el
+       gap de .docs-inline-email no los separa: el botón quedaba pegado al
+       último campo. */
+    margin-top: 14px;
 }
 
 .docs-vd-meta-block {
@@ -1143,10 +1266,40 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 0;
+    padding: 8px 26px 8px 0;   /* hueco a la derecha para el icono de abrir */
     border-bottom: 1px solid var(--docs-border);
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color .12s ease;
 }
 .docs-mail-item:last-child { border-bottom: none; }
+.docs-mail-item:hover,
+.docs-mail-item:focus-visible {
+    background: var(--docs-bg-subtle);
+    text-decoration: none;
+    color: inherit;
+}
+.docs-mail-item:focus-visible {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+    border-radius: 6px;
+}
+.docs-mail-item:hover .docs-mail-subject { color: var(--docs-primary); }
+/* El indicador de "abre fuera" solo aparece al apuntar la fila: en reposo
+   ensuciaba una lista que casi siempre tiene varias entradas. */
+.docs-mail-go {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    opacity: 0;
+    transition: opacity .12s ease;
+}
+.docs-mail-item:hover .docs-mail-go,
+.docs-mail-item:focus-visible .docs-mail-go { opacity: 1; }
 .docs-mail-type {
     font-size: 10px; font-weight: 700;
     color: var(--docs-primary);
@@ -1254,6 +1407,15 @@
 .docs-ws-tab span { display: none; }
 .docs-ws-tab i { font-size: 16px; }
 .docs-ws-tab:hover { color: var(--docs-text-soft); }
+/* El anillo de foco se dibuja HACIA DENTRO. Con el offset positivo por defecto
+   sobresalía 4px del botón, y .docs-ws-tabs solo deja 1px libre por abajo
+   (padding: 10px 6px 0) además de recortar: al declarar overflow-x el navegador
+   fuerza también overflow-y, así que el anillo salía cortado por la mitad. */
+.docs-ws-tab:focus-visible {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -3px;
+    border-radius: 6px;
+}
 .docs-ws-tab.on {
     color: var(--docs-text);
     border-bottom-color: var(--docs-primary);
@@ -1410,20 +1572,6 @@
 .sort-item.sel .ico { color: var(--docs-primary); }
 .sort-item-lbl { flex: 1; }
 
-/* ── Icono de sección (encabezado de tarjeta en el panel lateral) ── */
-.docs-ws-sec-ic {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
-    background: var(--docs-bg-subtle);
-    color: var(--docs-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    flex-shrink: 0;
-}
-
 /* ── Stepper de validación por etapas ─────────────────────────── */
 .docs-ws-step { display: flex; align-items: center; gap: 0; }
 .docs-ws-step .node {
@@ -1459,16 +1607,6 @@
     flex-shrink: 0;
 }
 .docs-ws-comm-ic.on { background: #eaf3d3; color: #6f9410; }
-.docs-ws-comm-sent {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 10.5px;
-    font-weight: 600;
-    color: #6f9410;
-    white-space: nowrap;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    Componentes del catálogo Alvarez · Fase 3 (jul-2026)
    Toggle galería/lista, selección múltiple, timeline unificada, checklist
@@ -1499,11 +1637,27 @@
     align-items: center;
     gap: 8px;
 }
-.docs-vd-card > .h .h-grow {
+/* Los paneles desacoplados son formularios cortos: respiran menos que la tarjeta
+   del expediente, que agrupa muchas secciones. */
+.docs-inline-email,
+.docs-inline-import,
+.docs-inline-confirm,
+.docs-cust-edit-detail {
+    gap: 8px;
+}
+
+.docs-vd-card > .h .h-grow,
+.docs-inline-email > .h .h-grow,
+.docs-inline-import > .h .h-grow,
+.docs-inline-confirm > .h .h-grow,
+.docs-cust-edit-detail > .h .h-grow {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    /* Separacion entre antetitulo y título ("DOCUMENTOS · IMPORTAR" y "Cargar
+       desde galeria del chat"): con 1px quedaban pegados. Mismo valor que el
+       margen del antetitulo en .docs-head, el encabezado de referencia. */
+    gap: 3px;
 }
 
 /* ── Fila de acciones bajo el título (título nunca compite por espacio
@@ -2089,7 +2243,7 @@
     background: var(--docs-bg-subtle);
     border: 1px solid var(--docs-border);
 }
-.docs-vd-status-banner-badge { font-size: 12px; padding: 4px 11px; }
+.docs-vd-status-banner-badge { font-size: 8.5px; padding: 4px 11px; }
 .docs-vd-status-banner-stage {
     margin-left: auto;
     font-size: 11px;
@@ -2109,8 +2263,27 @@
 /* ── Modificador de docs-action-row para filas de comunicaciones ── */
 .docs-action-row--comm { gap: 10px; }
 
+/* El botón de la derecha ("Enviar" o "Reenviar") no se comprime: el texto de la
+   izquierda es el que cede ancho. */
+.docs-action-row--comm .btn {
+    flex-shrink: 0;
+}
+.docs-action-row--comm .btn i {
+    margin-right: 5px;
+    font-size: 10.5px;
+}
+
 /* ── Divisor entre envíos automáticos y acciones manuales (redactar) ── */
 .docs-action-divider { height: 1px; background: var(--docs-border); margin: 4px 0; }
 
 /* ── Separación del badge de estado en la cabecera del panel ── */
 .docs-status-spacer { margin-right: 6px; }
+
+/* Confirmación en panel (.docs-inline-confirm). Reutiliza el aspecto de las
+   demás subvistas vía los selectores agrupados de arriba; solo necesita estilo
+   propio la línea de apoyo bajo el aviso. */
+.docs-inline-confirm-hint {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    line-height: 1.45;
+}
