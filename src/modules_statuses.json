@@ -20,6 +20,7 @@
     "Engagement": true,
     "Faqs": false,
     "Forms": true,
+    "GiftMessage": true,
     "Health": true,
     "Helpdesk": true,
     "HelpdeskAgents": true,

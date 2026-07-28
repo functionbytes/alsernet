@@ -21,6 +21,7 @@ use Modules\EcommercePayment\Providers\EcommercePaymentServiceProvider;
 use Modules\Engagement\Providers\EngagementServiceProvider;
 use Modules\Faqs\Providers\FaqsServiceProvider;
 use Modules\Forms\Providers\FormsServiceProvider;
+use Modules\GiftMessage\Providers\GiftMessageServiceProvider;
 use Modules\Health\Providers\HealthServiceProvider;
 use Modules\Helpdesk\Providers\HelpdeskServiceProvider;
 use Modules\HelpdeskAgents\Providers\HelpdeskAgentsServiceProvider;
@@ -83,6 +84,7 @@ return [
     EngagementServiceProvider::class,
     FaqsServiceProvider::class,
     FormsServiceProvider::class,
+    GiftMessageServiceProvider::class,
     HealthServiceProvider::class,
     HelpdeskAgentsServiceProvider::class,
     HelpdeskAnalyticsServiceProvider::class,
