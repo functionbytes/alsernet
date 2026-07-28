@@ -6052,7 +6052,13 @@ body:has(.conversations) .mc-content {
 [data-bv-tip] {
     position: relative;
 }
-[data-tooltip]::after,
+/* Solo [data-bv-tip]. Theme/Tooltip.js migra cada title="…" a data-tooltip y le
+   pinta su propio tooltip flotante (.mc-tooltip, position:fixed en el body), así
+   que este pseudo salía ADEMÁS del flotante: doble tooltip. Y como el pseudo
+   vive dentro del elemento, cualquier ancestro con overflow lo recorta — en las
+   pestañas del expediente (.docs-ws-tabs y .docs-vd-side, ambas con overflow)
+   solo asomaba la franja negra superior. data-bv-tip no lo cubre Tooltip.js,
+   así que ahi el pseudo sigue siendo el unico tooltip. */
 [data-bv-tip]::after {
     position: absolute;
     bottom: calc(100% + 6px);
@@ -6070,10 +6076,7 @@ body:has(.conversations) .mc-content {
     transform: translateX(-50%) translateY(2px);
     z-index: 9999;
 }
-[data-tooltip]::after { content: attr(data-tooltip); }
 [data-bv-tip]::after  { content: attr(data-bv-tip); }
-[data-tooltip]:hover::after,
-[data-tooltip]:focus-visible::after,
 [data-bv-tip]:hover::after,
 [data-bv-tip]:focus-visible::after {
     opacity: 1;

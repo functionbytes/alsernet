@@ -228,7 +228,14 @@
     --z-modal-backdrop:     400;
     --z-modal:              500;
     --z-toast:              600;
-    --z-tooltip:            700;
+    /* El tooltip se sale de la progresión a propósito. Módulos anteriores a
+       esta escala usan valores propios muy altos para sus modales (.docs-modal
+       1081, .hd-overlay 10500, .hd-liveview-modal 10800), así que con 700 el
+       tooltip flotante quedaba tapado por ellos: se activaba, pero se dibujaba
+       por detrás del modal y no se veía. Un tooltip debe quedar sobre todo lo
+       demás; este valor supera esos modales sin llegar a los widgets embebidos
+       (99999+), que sí deben permanecer por encima. */
+    --z-tooltip:            11000;
 }
 
 /* ==========================================================================
