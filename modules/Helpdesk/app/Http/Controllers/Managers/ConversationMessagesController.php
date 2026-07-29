@@ -125,6 +125,10 @@ class ConversationMessagesController extends Controller
             );
         }
 
+        // Traducir antes de emitir: la burbuja del cliente ya sale traducida
+        // en el primer render en vez de parchearse despues.
+        helpdesk_translate_item($item);
+
         // Single broadcast reaches both the open thread channel and the global
         // inbox channel — sidebar updates without a second round-trip.
         broadcast(new ConversationMessageCreated($item, false))->toOthers();

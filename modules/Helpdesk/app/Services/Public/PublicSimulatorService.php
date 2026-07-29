@@ -317,6 +317,8 @@ class PublicSimulatorService
 
             $conversation->update(['last_message_at' => now()]);
 
+            helpdesk_translate_item($item);
+
             broadcast(new ConversationMessageCreated($item));
 
             if ($conversation->assignee_id) {

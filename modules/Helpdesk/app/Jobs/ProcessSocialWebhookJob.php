@@ -93,6 +93,11 @@ class ProcessSocialWebhookJob implements ShouldQueue
     private function broadcastMessageSafely(ConversationItem $item, bool $isNewConversation): void
     {
         try {
+            // Traducir ANTES de emitir el evento: la burbuja se pinta ya
+            // traducida en el primer render, en vez de aparecer sin traducir
+            // y parchearse unos segundos despues via el listener en cola.
+            helpdesk_translate_item($item);
+
             broadcast(new ConversationMessageCreated($item, $isNewConversation));
         } catch (\Throwable $e) {
             Log::warning('ProcessSocialWebhookJob: broadcast en tiempo real falló (mensaje ya persistido)', [

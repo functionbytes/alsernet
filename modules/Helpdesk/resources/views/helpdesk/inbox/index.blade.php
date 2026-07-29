@@ -793,6 +793,24 @@
                 }
             });
 
+            // La auto-traducción corre en cola, después de que la burbuja ya se
+            // pintó vía .item.created — este evento la parchea in-place cuando
+            // termina, sin esperar a un F5.
+            convChannel.listen('.item.translated', function (e) {
+                const $bubble = $('.bv-bubble[data-bv-item-id="' + e.item_id + '"]');
+                if (!$bubble.length || $bubble.find('.bv-bubble-translation').length) return;
+
+                const isOutgoing = e.field === 'outgoing_translated_body';
+                const $tr = $('<div class="bv-bubble-translation' + (isOutgoing ? ' bv-outgoing-translation' : '') + '"></div>');
+                $tr.attr('data-bv-original', $bubble.data('bv-body') || '');
+                $tr.attr('data-bv-translated', e.translated_body);
+                $tr.append('<span class="bv-bubble-translation-lbl">&#8627; </span>');
+                $tr.append(document.createTextNode(e.translated_body));
+                $tr.append(' <button type="button" class="bv-bubble-translation-toggle" title="Ver original"><i class="fas fa-arrows-rotate"></i></button>');
+                $bubble.append($tr);
+                $bubble.find('.bv-translate-item-btn[data-item-id="' + e.item_id + '"]').remove();
+            });
+
             // ─── Typing indicator: peer (Echo whisper) + customer (Meta API) ────
             $(document).on('input.bvconv', '.bv-composer-input', function () {
                 var now = Date.now();
