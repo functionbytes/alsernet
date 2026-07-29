@@ -16,6 +16,8 @@ Route::middleware(['web', 'auth'])
 
         Route::get('/history', [PriceLabelGenerationController::class, 'index'])->name('history.index');
         Route::get('/history/{generation}/download', [PriceLabelGenerationController::class, 'download'])->name('history.download');
+        Route::get('/history/{generation}/status', [PriceLabelGenerationController::class, 'status'])->name('history.status');
+        Route::post('/history/{generation}/regenerate', [PriceLabelGenerationController::class, 'regenerate'])->name('history.regenerate');
         Route::delete('/history/{generation}', [PriceLabelGenerationController::class, 'destroy'])->name('history.destroy');
         Route::post('/history/bulk-action', [PriceLabelGenerationController::class, 'bulkAction'])->name('history.bulk-action');
 
@@ -28,7 +30,9 @@ Route::middleware(['web', 'auth'])
         Route::post('/{price_label_template}/fields', [PriceLabelFieldController::class, 'store'])->name('fields.store');
         Route::delete('/{price_label_template}/fields/{key}', [PriceLabelFieldController::class, 'destroy'])->name('fields.destroy');
 
+        Route::get('/{price_label_template}/positions', [PriceLabelTemplateController::class, 'editPositions'])->name('positions.edit');
         Route::post('/{price_label_template}/positions', [PriceLabelEditorController::class, 'savePositions'])->name('positions.save');
         Route::post('/{price_label_template}/generate', [PriceLabelEditorController::class, 'generate'])->name('generate');
         Route::post('/{price_label_template}/preview-excel', [PriceLabelEditorController::class, 'previewExcel'])->name('preview-excel');
+        Route::get('/{price_label_template}/excel-template', [PriceLabelEditorController::class, 'downloadExcelTemplate'])->name('excel-template');
     });

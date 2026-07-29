@@ -2,8 +2,10 @@
 
 namespace Modules\PriceLabels\Services;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Modules\PriceLabels\Models\PriceLabelGeneration;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
 
@@ -13,22 +15,57 @@ class PriceLabelGenerationService
 
     private const FOLDER = 'pricelabels/generated';
 
-    public function store(PriceLabelTemplate $template, string $type, int $rowsCount, string $pdfContent): PriceLabelGeneration
+    private const UPLOADS_FOLDER = 'pricelabels/uploads';
+
+    public function storeUploadedExcel(UploadedFile $file): string
     {
-        $fileName = 'etiquetas-'.$type.'-'.now()->format('Ymd_His').'.pdf';
-        $path = self::FOLDER.'/'.$fileName;
+        return $file->store(self::UPLOADS_FOLDER, self::DISK);
+    }
 
-        Storage::disk(self::DISK)->put($path, $pdfContent);
-
+    public function createPending(PriceLabelTemplate $template, string $type, string $sourceExcelPath): PriceLabelGeneration
+    {
         return PriceLabelGeneration::query()->create([
             'price_label_template_id' => $template->id,
             'template_name' => $template->name,
             'type' => $type,
-            'rows_count' => $rowsCount,
-            'file_path' => $path,
-            'file_name' => $fileName,
+            'status' => 'pending',
+            'rows_count' => 0,
+            'source_excel_path' => $sourceExcelPath,
             'generated_by' => auth()->id(),
         ]);
+    }
+
+    public function markCompleted(PriceLabelGeneration $generation, int $rowsCount, ?array $sampleRow, string $pdfContent): void
+    {
+        $fileName = 'etiquetas-'.$generation->type.'-'.now()->format('Ymd_His').'.pdf';
+        $path = self::FOLDER.'/'.$fileName;
+
+        Storage::disk(self::DISK)->put($path, $pdfContent);
+
+        $generation->update([
+            'status' => 'completed',
+            'rows_count' => $rowsCount,
+            'sample_row' => $sampleRow,
+            'file_path' => $path,
+            'file_name' => $fileName,
+        ]);
+    }
+
+    public function markFailed(PriceLabelGeneration $generation, string $message): void
+    {
+        $generation->update([
+            'status' => 'failed',
+            'error_message' => $message,
+        ]);
+    }
+
+    public function lastSampleRow(PriceLabelTemplate $template): ?array
+    {
+        return PriceLabelGeneration::query()
+            ->where('price_label_template_id', $template->id)
+            ->whereNotNull('sample_row')
+            ->latest()
+            ->value('sample_row');
     }
 
     public function list(array $filters, int $perPage = 15): LengthAwarePaginator
@@ -45,11 +82,30 @@ class PriceLabelGenerationService
 
     public function delete(PriceLabelGeneration $generation): void
     {
-        if (Storage::disk(self::DISK)->exists($generation->file_path)) {
-            Storage::disk(self::DISK)->delete($generation->file_path);
+        foreach ([$generation->file_path, $generation->source_excel_path] as $path) {
+            if ($path && Storage::disk(self::DISK)->exists($path)) {
+                Storage::disk(self::DISK)->delete($path);
+            }
         }
 
         $generation->delete();
+    }
+
+    public function regenerate(PriceLabelGeneration $generation): ?PriceLabelGeneration
+    {
+        if (! $generation->source_excel_path || ! Storage::disk(self::DISK)->exists($generation->source_excel_path)) {
+            return null;
+        }
+
+        $template = $generation->template;
+        if (! $template) {
+            return null;
+        }
+
+        $newPath = self::UPLOADS_FOLDER.'/'.Str::uuid().'.xlsx';
+        Storage::disk(self::DISK)->copy($generation->source_excel_path, $newPath);
+
+        return $this->createPending($template, $generation->type, $newPath);
     }
 
     public function bulkAction(array $ids, string $action): void

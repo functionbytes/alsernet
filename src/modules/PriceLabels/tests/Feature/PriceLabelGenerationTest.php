@@ -50,17 +50,20 @@ class PriceLabelGenerationTest extends TestCase
                 'excel_file' => $excel,
             ])
             ->assertOk()
-            ->assertHeader('Content-Type', 'application/pdf');
+            ->assertJson(['success' => true]);
 
         $this->assertDatabaseHas('price_label_generations', [
             'price_label_template_id' => $template->id,
             'template_name' => $template->name,
             'type' => 'vertical',
             'rows_count' => 1,
+            'status' => 'completed',
         ]);
 
         $generation = PriceLabelGeneration::query()->first();
         Storage::disk('public')->assertExists($generation->file_path);
+        Storage::disk('public')->assertExists($generation->source_excel_path);
+        $this->assertSame('REF-1', $generation->sample_row['referencia']);
     }
 
     public function test_history_index_lists_generations(): void
@@ -100,6 +103,60 @@ class PriceLabelGenerationTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('pricelabels.history.download', $generation))
             ->assertOk();
+    }
+
+    public function test_status_endpoint_reports_pending_state_without_download_url(): void
+    {
+        $generation = PriceLabelGeneration::factory()->create([
+            'status' => 'pending',
+            'file_path' => null,
+            'file_name' => null,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('pricelabels.history.status', $generation))
+            ->assertOk()
+            ->assertJson(['status' => 'pending', 'download_url' => null]);
+    }
+
+    public function test_status_endpoint_reports_download_url_once_completed(): void
+    {
+        $generation = PriceLabelGeneration::factory()->create(['status' => 'completed']);
+
+        $response = $this->actingAs($this->admin)
+            ->get(route('pricelabels.history.status', $generation))
+            ->assertOk()
+            ->assertJson(['status' => 'completed']);
+
+        $this->assertNotNull($response->json('download_url'));
+    }
+
+    public function test_regenerate_creates_a_new_completed_generation_from_the_stored_excel(): void
+    {
+        Storage::fake('public');
+
+        $template = PriceLabelTemplate::factory()->create([
+            'image_vertical' => 'pricelabels/backgrounds/fake.jpg',
+        ]);
+
+        $excelPath = $this->makeExcelFile()->store('pricelabels/uploads', 'public');
+
+        $generation = PriceLabelGeneration::factory()->create([
+            'price_label_template_id' => $template->id,
+            'type' => 'vertical',
+            'source_excel_path' => $excelPath,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('pricelabels.history.regenerate', $generation))
+            ->assertRedirect(route('pricelabels.history.index'));
+
+        $this->assertSame(2, PriceLabelGeneration::query()->count());
+        $this->assertDatabaseHas('price_label_generations', [
+            'price_label_template_id' => $template->id,
+            'type' => 'vertical',
+            'status' => 'completed',
+        ]);
     }
 
     public function test_destroy_removes_row_and_file(): void

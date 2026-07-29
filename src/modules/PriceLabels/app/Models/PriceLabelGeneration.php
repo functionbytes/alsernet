@@ -17,7 +17,11 @@ class PriceLabelGeneration extends Model
         'price_label_template_id',
         'template_name',
         'type',
+        'status',
         'rows_count',
+        'sample_row',
+        'source_excel_path',
+        'error_message',
         'file_path',
         'file_name',
         'generated_by',
@@ -27,6 +31,7 @@ class PriceLabelGeneration extends Model
     {
         return [
             'rows_count' => 'integer',
+            'sample_row' => 'array',
         ];
     }
 

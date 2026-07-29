@@ -2,6 +2,10 @@
 
 @section('title', $pageTitle)
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('modules/pricelabels/css/editor.css') }}">
+@endpush
+
 @section('content')
 
     @include('core::components.card', ['title' => $pageTitle])
@@ -106,6 +110,7 @@
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Plantilla</th>
                                     <th>Tipo</th>
+                                    <th>Estado</th>
                                     <th>Generado por</th>
                                     <th>Etiquetas</th>
                                     <th>Fecha</th>
@@ -114,7 +119,7 @@
                             </thead>
                             <tbody>
                                 @foreach($generations as $generation)
-                                    <tr>
+                                    <tr @if($generation->status === 'pending') data-generation-pending="{{ $generation->id }}" data-status-url="{{ route('pricelabels.history.status', $generation) }}" @endif>
                                         <td>
                                             <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $generation->id }}">
                                         </td>
@@ -131,6 +136,18 @@
                                             <span class="badge bg-info-subtle text-info">
                                                 {{ $generation->type === 'horizontal' ? 'Horizontal' : 'Vertical' }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            @if($generation->status === 'pending')
+                                                <span class="badge pricelabels-status-badge status-pending">Procesando…</span>
+                                            @elseif($generation->status === 'failed')
+                                                <span class="badge pricelabels-status-badge status-failed pricelabels-error-badge" role="button"
+                                                      data-error="{{ $generation->error_message }}">
+                                                    <i class="fas fa-circle-info"></i> Fallo
+                                                </span>
+                                            @else
+                                                <span class="badge pricelabels-status-badge status-completed">Completado</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="small">
@@ -150,7 +167,17 @@
                                                     <i class="fas fa-ellipsis-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li><a class="dropdown-item" href="{{ route('pricelabels.history.download', $generation) }}">Descargar</a></li>
+                                                    @if($generation->status === 'completed')
+                                                        <li><a class="dropdown-item" href="{{ route('pricelabels.history.download', $generation) }}">Descargar</a></li>
+                                                    @endif
+                                                    @if($generation->source_excel_path)
+                                                        <li>
+                                                            <form action="{{ route('pricelabels.history.regenerate', $generation) }}" method="POST">
+                                                                @csrf
+                                                                <button type="submit" class="dropdown-item">Regenerar</button>
+                                                            </form>
+                                                        </li>
+                                                    @endif
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item delete-btn" href="#"
@@ -327,8 +354,39 @@ $(document).ready(function () {
         $('#delete-modal').modal('show');
     });
 
+    $(document).on('click', '.pricelabels-error-badge', function () {
+        toastr.error($(this).data('error') || 'No hay detalle del error disponible.', 'Error al generar');
+    });
+
+    var $pending = $('tr[data-generation-pending]');
+    if ($pending.length) {
+        var pollInterval = setInterval(function () {
+            var stillPending = false;
+
+            $pending.each(function () {
+                var $row = $(this);
+
+                $.get($row.data('status-url'), function (res) {
+                    if (res.status !== 'pending') {
+                        location.reload();
+                    }
+                });
+
+                stillPending = true;
+            });
+
+            if (!stillPending) {
+                clearInterval(pollInterval);
+            }
+        }, 4000);
+    }
+
     @if(session('success'))
         toastr.success('{{ session('success') }}', 'Exito');
+    @endif
+
+    @if(session('error'))
+        toastr.error('{{ session('error') }}', 'Error');
     @endif
 });
 </script>

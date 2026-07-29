@@ -2,6 +2,10 @@
 
 @section('title', $pageTitle)
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('modules/pricelabels/css/editor.css') }}">
+@endpush
+
 @section('content')
 
     @include('core::components.card', ['title' => $pageTitle])
@@ -58,9 +62,10 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                    <th width="5%">Vista previa</th>
                                     <th>Nombre</th>
                                     <th>Estado</th>
-                                    <th>Imagenes</th>
+                                    <th>Imagenes / Grid</th>
                                     <th>Actualizada</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -70,6 +75,13 @@
                                     <tr>
                                         <td>
                                             <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $template->id }}">
+                                        </td>
+                                        <td>
+                                            @if($template->thumbnail_url)
+                                                <img src="{{ $template->thumbnail_url }}" alt="" class="pricelabels-index-thumb" loading="lazy">
+                                            @else
+                                                <span class="text-muted small">—</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="small fw-semibold">{{ $template->name }}</div>
@@ -89,6 +101,7 @@
                                             @if(! $template->image_vertical && ! $template->image_horizontal)
                                                 <span class="text-muted small">Sin imagenes</span>
                                             @endif
+                                            <div class="small text-muted">{{ $template->grid_summary }}</div>
                                         </td>
                                         <td>
                                             <div class="small">{{ $template->updated_at->format('d/m/Y H:i') }}</div>
@@ -105,11 +118,13 @@
                                                            data-preview-url="{{ route('pricelabels.preview-excel', $template) }}"
                                                            data-name="{{ $template->name }}"
                                                            data-has-vertical="{{ $template->image_vertical ? 1 : 0 }}"
-                                                           data-has-horizontal="{{ $template->image_horizontal ? 1 : 0 }}">
+                                                           data-has-horizontal="{{ $template->image_horizontal ? 1 : 0 }}"
+                                                           data-field-labels="{{ json_encode($template->field_labels_map) }}">
                                                             Generar PDF
                                                         </a>
                                                     </li>
                                                     <li><a class="dropdown-item" href="{{ route('pricelabels.edit', $template) }}">Editar</a></li>
+                                                    <li><a class="dropdown-item" href="{{ route('pricelabels.positions.edit', $template) }}">Editar posiciones</a></li>
                                                     <li>
                                                         <a class="dropdown-item duplicate-btn" href="#"
                                                            data-url="{{ route('pricelabels.duplicate', $template) }}">
@@ -212,7 +227,7 @@
     <div class="modal fade" id="generate-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="generate-form" method="POST" enctype="multipart/form-data" target="_blank">
+                <form id="generate-form" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Generar PDF</h5>
@@ -239,8 +254,9 @@
                         <div class="mb-3">
                             <label class="form-label">Archivo Excel (XLSX/XLS)</label>
                             <input type="file" id="generate-modal-excel" name="excel_file" accept=".xlsx,.xls" class="form-control" required>
-                            <small class="form-text text-muted">Columnas: REFERENCIA, DESCRIPCION, PVP RECOM PROV, PVP (fila 1 = cabecera)</small>
+                            <small class="form-text text-muted" id="generate-modal-columns-hint"></small>
                             <div id="generate-modal-preview" class="small mt-2 d-none"></div>
+                            <div id="generate-modal-status" class="small mt-2"></div>
                         </div>
                     </div>
                     <div class="modal-footer flex-column">
@@ -261,6 +277,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('modules/pricelabels/js/generate-shared.js') }}"></script>
 <script>
 $(document).ready(function () {
     const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
@@ -316,11 +333,16 @@ $(document).ready(function () {
         const $btn = $(this);
         const hasVertical = $btn.data('has-vertical') == 1;
         const hasHorizontal = $btn.data('has-horizontal') == 1;
+        const fieldLabels = $btn.data('field-labels') || {};
 
-        $('#generate-form').attr('action', $btn.data('url')).data('preview-url', $btn.data('preview-url'));
+        $('#generate-form').attr('action', $btn.data('url')).data('preview-url', $btn.data('preview-url')).data('field-labels', fieldLabels);
         $('#generate-modal-name').text($btn.data('name'));
         $('#generate-modal-excel').val('');
         $('#generate-modal-preview').addClass('d-none').empty();
+        $('#generate-modal-status').empty();
+
+        const columnLabels = Object.keys(fieldLabels).filter((key) => key !== 'label').map((key) => fieldLabels[key].toUpperCase());
+        $('#generate-modal-columns-hint').text(columnLabels.length ? 'Columnas: ' + columnLabels.join(', ') + ' (fila 1 = cabecera)' : '');
 
         $('#generate-type-vertical').prop('disabled', !hasVertical);
         $('#generate-type-horizontal').prop('disabled', !hasHorizontal);
@@ -335,23 +357,10 @@ $(document).ready(function () {
         $('#duplicate-form').attr('action', $(this).data('url')).trigger('submit');
     });
 
-    function renderExcelPreview($container, data) {
-        let html = '<span class="text-success">Se detectaron ' + data.rows_count + ' etiqueta(s).</span>';
-
-        if (data.sample && data.sample.length) {
-            html += '<table class="table table-sm table-borderless mt-1 mb-0">';
-            data.sample.forEach(function (row) {
-                html += '<tr><td class="p-0 pe-2">' + row.referencia + '</td><td class="p-0 text-muted">' + row.descripcion + '</td></tr>';
-            });
-            html += '</table>';
-        }
-
-        $container.removeClass('d-none').html(html);
-    }
-
     $('#generate-modal-excel').on('change', function () {
         const file = this.files[0];
         const url = $('#generate-form').data('preview-url');
+        const fieldLabels = $('#generate-form').data('field-labels') || {};
         const $preview = $('#generate-modal-preview');
 
         if (!file || !url) { $preview.addClass('d-none').empty(); return; }
@@ -368,9 +377,54 @@ $(document).ready(function () {
             processData: false,
             contentType: false,
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function (res) { renderExcelPreview($preview, res); },
+            success: function (res) { window.PriceLabelsShared.renderExcelPreview($preview, res, fieldLabels); },
             error: function (xhr) {
                 $preview.removeClass('d-none').html('<span class="text-danger">' + (xhr.responseJSON?.message ?? 'No se pudo leer el archivo.') + '</span>');
+            },
+        });
+    });
+
+    let generateIsSubmitting = false;
+
+    $('#generate-form').on('submit', function (e) {
+        e.preventDefault();
+
+        if (generateIsSubmitting) { return; }
+        generateIsSubmitting = true;
+
+        const $form = $(this);
+        const $submitBtn = $form.find('button[type="submit"]');
+
+        $submitBtn.prop('disabled', true).text('Generando...');
+        $('#generate-modal-status').html('<span class="text-muted">Enviando archivo...</span>');
+
+        const fd = new FormData(this);
+
+        function restoreButton() {
+            generateIsSubmitting = false;
+            $submitBtn.prop('disabled', false).text('Generar');
+        }
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#generate-modal-status').html('<span class="text-muted">Procesando etiquetas en segundo plano...</span>');
+                window.PriceLabelsShared.pollGenerationStatus({
+                    statusUrl: res.status_url,
+                    $status: $('#generate-modal-status'),
+                    onDone: restoreButton,
+                });
+            },
+            error: function (xhr) {
+                const message = xhr.responseJSON?.message ?? (xhr.responseJSON?.errors && Object.values(xhr.responseJSON.errors)[0][0]) ?? 'Error al enviar el archivo.';
+                $('#generate-modal-status').html('<span class="text-danger">' + message + '</span>');
+                toastr.error(message);
+                restoreButton();
             },
         });
     });

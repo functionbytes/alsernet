@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Modules\PriceLabels\Jobs\GeneratePriceLabelPdfJob;
 use Modules\PriceLabels\Models\PriceLabelGeneration;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
 use Modules\PriceLabels\Services\PriceLabelGenerationService;
@@ -38,6 +39,36 @@ class PriceLabelGenerationController extends Controller
         $this->authorize('view', $generation);
 
         return Storage::disk('public')->download($generation->file_path, $generation->file_name);
+    }
+
+    public function status(PriceLabelGeneration $generation): JsonResponse
+    {
+        $this->authorize('view', $generation);
+
+        return response()->json([
+            'status' => $generation->status,
+            'download_url' => $generation->status === 'completed' ? route('pricelabels.history.download', $generation) : null,
+            'error_message' => $generation->error_message,
+        ]);
+    }
+
+    public function regenerate(PriceLabelGeneration $generation): RedirectResponse
+    {
+        $this->authorize('view', $generation);
+
+        $new = $this->generationService->regenerate($generation);
+
+        if (! $new) {
+            return redirect()
+                ->route('pricelabels.history.index')
+                ->with('error', 'No se pudo regenerar: el archivo Excel original ya no esta disponible o la plantilla fue eliminada.');
+        }
+
+        GeneratePriceLabelPdfJob::dispatch($new);
+
+        return redirect()
+            ->route('pricelabels.history.index')
+            ->with('success', 'Regeneracion en curso. Aparecera en la lista en unos segundos.');
     }
 
     public function destroy(PriceLabelGeneration $generation): RedirectResponse

@@ -4,6 +4,7 @@ namespace Modules\PriceLabels\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\PriceLabels\Services\PriceLabelTemplateService;
 
 class StorePriceLabelFieldRequest extends FormRequest
 {
@@ -16,7 +17,20 @@ class StorePriceLabelFieldRequest extends FormRequest
     {
         return [
             'label' => ['required', 'string', 'max:100'],
-            'excel_column' => ['required', 'string', 'regex:/^[A-Za-z]{1,2}$/'],
+            'excel_column' => [
+                'required', 'string', 'regex:/^[A-Za-z]{1,2}$/',
+                function ($attribute, $value, $fail) {
+                    $template = $this->route('price_label_template');
+                    $definitions = $template?->field_definitions ?: app(PriceLabelTemplateService::class)->defaultFieldDefinitions();
+                    $usedColumns = collect($definitions)
+                        ->pluck('excel_column')
+                        ->map(fn ($column) => strtoupper($column));
+
+                    if ($usedColumns->contains(strtoupper($value))) {
+                        $fail('Esa columna del Excel ya esta usada por otro campo.');
+                    }
+                },
+            ],
             'type' => ['required', 'string', Rule::in(['text', 'price'])],
         ];
     }
