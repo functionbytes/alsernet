@@ -209,6 +209,19 @@ class PriceLabelTemplateTest extends TestCase
         $this->assertFalse(collect($template->field_definitions)->pluck('key')->contains('promocion'));
     }
 
+    public function test_cannot_add_field_with_already_used_excel_column(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        $this->actingAs($this->admin)->post(route('pricelabels.fields.store', $template), [
+            'label' => 'Duplicado',
+            'excel_column' => 'A',
+            'type' => 'text',
+        ])->assertSessionHasErrors('excel_column');
+
+        $this->assertNull($template->fresh()->field_definitions);
+    }
+
     public function test_edit_view_hides_horizontal_style_columns_for_vertical_only_template(): void
     {
         $template = PriceLabelTemplate::factory()->create(['orientation' => 'vertical']);
@@ -218,6 +231,81 @@ class PriceLabelTemplateTest extends TestCase
             ->assertOk()
             ->assertSee('Fuente (vertical)')
             ->assertDontSee('Fuente (horizontal)');
+    }
+
+    public function test_admin_can_view_standalone_positions_editor(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        $this->actingAs($this->admin)
+            ->get(route('pricelabels.positions.edit', $template))
+            ->assertOk()
+            ->assertDontSee('Datos generales')
+            ->assertSee('Volver a la edicion completa');
+    }
+
+    public function test_positions_editor_defaults_to_first_available_orientation(): void
+    {
+        $template = PriceLabelTemplate::factory()->create(['orientation' => 'both']);
+
+        $this->actingAs($this->admin)
+            ->get(route('pricelabels.positions.edit', $template))
+            ->assertOk()
+            ->assertSee('Previsualizacion vertical')
+            ->assertDontSee('Previsualizacion horizontal');
+    }
+
+    public function test_positions_editor_shows_only_the_selected_orientation(): void
+    {
+        $template = PriceLabelTemplate::factory()->create(['orientation' => 'both']);
+
+        $this->actingAs($this->admin)
+            ->get(route('pricelabels.positions.edit', $template).'?orientation=horizontal')
+            ->assertOk()
+            ->assertSee('Previsualizacion horizontal')
+            ->assertDontSee('Previsualizacion vertical');
+    }
+
+    public function test_positions_editor_hides_orientation_tabs_for_single_orientation_template(): void
+    {
+        $template = PriceLabelTemplate::factory()->create(['orientation' => 'vertical']);
+
+        $this->actingAs($this->admin)
+            ->get(route('pricelabels.positions.edit', $template))
+            ->assertOk()
+            ->assertDontSee('nav-pills', false);
+    }
+
+    public function test_user_without_permission_cannot_view_positions_editor(): void
+    {
+        $user = User::factory()->create();
+        $template = PriceLabelTemplate::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('pricelabels.positions.edit', $template))
+            ->assertForbidden();
+    }
+
+    public function test_admin_can_download_excel_template_with_correct_headers(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        $response = $this->actingAs($this->admin)
+            ->get(route('pricelabels.excel-template', $template));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $path = tempnam(sys_get_temp_dir(), 'pricelabels-download').'.xlsx';
+        file_put_contents($path, $response->streamedContent());
+
+        $sheet = (new \PhpOffice\PhpSpreadsheet\Reader\Xlsx)->load($path)->getActiveSheet();
+
+        $this->assertSame('REFERENCIA', $sheet->getCell('A1')->getValue());
+        $this->assertSame('DESCRIPCION', $sheet->getCell('B1')->getValue());
+        $this->assertSame('PVP', $sheet->getCell('D1')->getValue());
+
+        unlink($path);
     }
 
     public function test_preview_excel_returns_parsed_row_count(): void

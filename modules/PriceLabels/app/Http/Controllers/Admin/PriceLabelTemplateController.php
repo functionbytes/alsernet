@@ -11,12 +11,14 @@ use Illuminate\Support\Facades\Storage;
 use Modules\PriceLabels\Http\Requests\StorePriceLabelTemplateRequest;
 use Modules\PriceLabels\Http\Requests\UpdatePriceLabelTemplateRequest;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
+use Modules\PriceLabels\Services\PriceLabelGenerationService;
 use Modules\PriceLabels\Services\PriceLabelTemplateService;
 
 class PriceLabelTemplateController extends Controller
 {
     public function __construct(
-        private readonly PriceLabelTemplateService $templateService
+        private readonly PriceLabelTemplateService $templateService,
+        private readonly PriceLabelGenerationService $generationService
     ) {}
 
     public function index(Request $request): View
@@ -76,6 +78,29 @@ class PriceLabelTemplateController extends Controller
             'imageHorizontalUrl' => $priceLabelTemplate->image_horizontal ? Storage::disk('public')->url($priceLabelTemplate->image_horizontal) : null,
             'fieldDefinitions' => $fieldDefinitions,
             'fieldKeys' => $this->templateService->fieldKeys($fieldDefinitions),
+            'sampleRow' => $this->generationService->lastSampleRow($priceLabelTemplate),
+        ]);
+    }
+
+    public function editPositions(PriceLabelTemplate $priceLabelTemplate): View
+    {
+        $this->authorize('update', $priceLabelTemplate);
+
+        $fieldDefinitions = $priceLabelTemplate->field_definitions ?: $this->templateService->defaultFieldDefinitions();
+        $fieldLabels = collect($fieldDefinitions)->pluck('label', 'key')->all();
+        $fieldLabels['label'] = 'Texto fijo (label)';
+
+        return view('pricelabels::admin.templates.positions', [
+            'pageTitle' => 'Editar posiciones',
+            'template' => $priceLabelTemplate,
+            'fields' => $this->templateService->fieldsWithDefaults($priceLabelTemplate),
+            'positionsVertical' => $this->templateService->positionsWithDefaults($priceLabelTemplate, 'vertical'),
+            'positionsHorizontal' => $this->templateService->positionsWithDefaults($priceLabelTemplate, 'horizontal'),
+            'imageVerticalUrl' => $priceLabelTemplate->image_vertical ? Storage::disk('public')->url($priceLabelTemplate->image_vertical) : null,
+            'imageHorizontalUrl' => $priceLabelTemplate->image_horizontal ? Storage::disk('public')->url($priceLabelTemplate->image_horizontal) : null,
+            'fieldKeys' => $this->templateService->fieldKeys($fieldDefinitions),
+            'fieldLabels' => $fieldLabels,
+            'sampleRow' => $this->generationService->lastSampleRow($priceLabelTemplate),
         ]);
     }
 

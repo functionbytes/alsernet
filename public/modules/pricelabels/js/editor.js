@@ -8,8 +8,13 @@
         pvprp: '169,99€',
         pvp: '149,99€',
     };
+    var SAMPLE_ROW = null;
 
     function sampleTextFor(key) {
+        if (SAMPLE_ROW && SAMPLE_ROW[key]) {
+            return SAMPLE_ROW[key];
+        }
+
         return SAMPLE_TEXT[key] || FIELD_LABELS[key] || key;
     }
     var FONT_STACKS = {
@@ -190,6 +195,7 @@
                 var $el = $('<div class="pricelabels-drag"></div>')
                     .attr('data-key', key)
                     .attr('data-slot', slot)
+                    .attr('tabindex', '0')
                     .text(text + ' #' + slot)
                     .css({ left: pos.x + 'px', top: pos.y + 'px' });
 
@@ -242,23 +248,29 @@
         }
     }
 
-    function renderExcelPreview($preview, data) {
-        var html = '<span class="text-success">Se detectaron ' + data.rows_count + ' etiqueta(s).</span>';
+    function pagesLine(rowsCount, slotsV, slotsH) {
+        var parts = [];
 
-        if (data.sample && data.sample.length) {
-            html += '<table class="table table-sm table-borderless mt-1 mb-0">';
-            data.sample.forEach(function (row) {
-                html += '<tr>' + Object.keys(row).map(function (key) {
-                    return '<td class="p-0 pe-2 text-muted">' + row[key] + '</td>';
-                }).join('') + '</tr>';
-            });
-            html += '</table>';
+        if (slotsV && $('#save-positions-v').length) {
+            parts.push('Vertical: ' + Math.ceil(rowsCount / slotsV) + ' pagina(s) (' + slotsV + ' por hoja)');
+        }
+        if (slotsH && $('#save-positions-h').length) {
+            parts.push('Horizontal: ' + Math.ceil(rowsCount / slotsH) + ' pagina(s) (' + slotsH + ' por hoja)');
         }
 
-        $preview.removeClass('d-none').html(html);
+        return parts.join(' &middot; ');
     }
 
-    function bindExcelPreview() {
+    function renderExcelPreview($preview, data, slotsV, slotsH) {
+        window.PriceLabelsShared.renderExcelPreview($preview, data, FIELD_LABELS);
+
+        var pages = pagesLine(data.rows_count, slotsV, slotsH);
+        if (pages) {
+            $preview.find('span.text-success').first().after('<div class="text-muted">' + pages + '</div>');
+        }
+    }
+
+    function bindExcelPreview(slotsV, slotsH) {
         var $input = $('#generate-excel');
         var $preview = $('#generate-excel-preview');
         if (!$input.length) {
@@ -287,9 +299,80 @@
                 processData: false,
                 contentType: false,
                 headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function (res) { renderExcelPreview($preview, res); },
+                success: function (res) { renderExcelPreview($preview, res, slotsV, slotsH); },
                 error: function (xhr) {
                     $preview.removeClass('d-none').html('<span class="text-danger">' + ((xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo leer el archivo.') + '</span>');
+                },
+            });
+        });
+    }
+
+    function bindGenerateForm() {
+        var $form = $('#generate-form');
+        if (!$form.length) {
+            return;
+        }
+
+        var $status = $('#generate-status');
+        var $buttons = $form.find('button[type="submit"]');
+        var clickedType = null;
+        var isSubmitting = false;
+
+        $buttons.on('click', function () {
+            clickedType = $(this).val();
+        });
+
+        $form.on('submit', function (e) {
+            e.preventDefault();
+
+            if (isSubmitting) {
+                return;
+            }
+            isSubmitting = true;
+
+            var originalTexts = {};
+            $buttons.each(function () {
+                var $btn = $(this);
+                originalTexts[$btn.attr('name') + $btn.val()] = $btn.text();
+            });
+
+            $buttons.prop('disabled', true).each(function () {
+                $(this).text($(this).val() === clickedType ? 'Generando...' : $(this).text());
+            });
+
+            $status.html('<span class="text-muted">Enviando archivo...</span>');
+
+            var fd = new FormData(this);
+            fd.append('type', clickedType);
+
+            function restoreButtons() {
+                isSubmitting = false;
+                $buttons.each(function () {
+                    var $btn = $(this);
+                    $btn.prop('disabled', false).text(originalTexts[$btn.attr('name') + $btn.val()] || $btn.text());
+                });
+            }
+
+            $.ajax({
+                url: $form.attr('action'),
+                method: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $status.html('<span class="text-muted">Procesando etiquetas en segundo plano...</span>');
+                    window.PriceLabelsShared.pollGenerationStatus({
+                        statusUrl: res.status_url,
+                        $status: $status,
+                        onDone: restoreButtons,
+                    });
+                },
+                error: function (xhr) {
+                    var message = (xhr.responseJSON && (xhr.responseJSON.message || (xhr.responseJSON.errors && Object.values(xhr.responseJSON.errors)[0][0]))) || 'Error al enviar el archivo.';
+                    $status.html('<span class="text-danger">' + message + '</span>');
+                    toastr.error(message);
+                    restoreButtons();
                 },
             });
         });
@@ -356,9 +439,28 @@
         });
 
         $(document).on('mouseenter', '.pricelabels-drag', function () {
+            $(this).addClass('is-highlighted');
             $('tr[data-field-key="' + $(this).data('key') + '"]').addClass('pricelabels-row-highlight');
         }).on('mouseleave', '.pricelabels-drag', function () {
+            $(this).removeClass('is-highlighted');
             $('tr[data-field-key="' + $(this).data('key') + '"]').removeClass('pricelabels-row-highlight');
+        });
+
+        $('tr[data-field-key]').on('click', function (e) {
+            if ($(e.target).is('input, select, button, a, i')) {
+                return;
+            }
+
+            var $row = $(this);
+            var wasPinned = $row.hasClass('is-pinned');
+
+            $('tr[data-field-key]').removeClass('is-pinned');
+            $('.pricelabels-drag').removeClass('is-pinned');
+
+            if (!wasPinned) {
+                $row.addClass('is-pinned');
+                $('[data-key="' + $row.data('field-key') + '"]').addClass('is-pinned');
+            }
         });
     }
 
@@ -376,6 +478,75 @@
 
         $('[data-key="' + key + '"]').addClass('is-new');
         setTimeout(function () { $('[data-key="' + key + '"]').removeClass('is-new'); }, 4500);
+    }
+
+    function bindKeyboardNudge() {
+        $(document).on('keydown', '.pricelabels-drag', function (e) {
+            var step = e.shiftKey ? 10 : 1;
+            var $el = $(this);
+            var left = parseFloat($el.css('left')) || 0;
+            var top = parseFloat($el.css('top')) || 0;
+            var moved = true;
+
+            if (e.key === 'ArrowLeft') {
+                left -= step;
+            } else if (e.key === 'ArrowRight') {
+                left += step;
+            } else if (e.key === 'ArrowUp') {
+                top -= step;
+            } else if (e.key === 'ArrowDown') {
+                top += step;
+            } else {
+                moved = false;
+            }
+
+            if (moved) {
+                e.preventDefault();
+                $el.css({ left: left + 'px', top: top + 'px' });
+                markDirty(canvasKeyFor($el));
+            }
+        });
+    }
+
+    function bindApplyStyleToAll() {
+        var $button = $('#apply-style-all');
+        if (!$button.length) {
+            return;
+        }
+
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h'];
+        var checkboxProps = ['bold', 'italic'];
+
+        $button.on('click', function () {
+            var source = $('#apply-style-source').val();
+            if (!source) {
+                return;
+            }
+
+            FIELDS.forEach(function (key) {
+                if (key === source) {
+                    return;
+                }
+
+                props.forEach(function (prop) {
+                    var $src = $('#field-' + source + '-' + prop);
+                    var $dst = $('#field-' + key + '-' + prop);
+                    if ($src.length && $dst.length) {
+                        $dst.val($src.val()).trigger($dst.is('select') ? 'change' : 'input');
+                    }
+                });
+
+                checkboxProps.forEach(function (prop) {
+                    var $src = $('#field-' + source + '-' + prop);
+                    var $dst = $('#field-' + key + '-' + prop);
+                    if ($src.length && $dst.length) {
+                        $dst.prop('checked', $src.is(':checked')).trigger('change');
+                    }
+                });
+            });
+
+            toastr.success('Estilo aplicado a todos los campos. No olvides pulsar "Guardar cambios".');
+        });
     }
 
     function bindStyleInputs() {
@@ -418,6 +589,7 @@
 
         FIELDS = config.fieldKeys || [];
         FIELD_LABELS = config.fieldLabels || {};
+        SAMPLE_ROW = config.sampleRow || null;
 
         var grid = config.grid || {};
         var slotsV = ((grid.vertical && grid.vertical.rows) || 2) * ((grid.vertical && grid.vertical.columns) || 2);
@@ -446,6 +618,8 @@
         initInteractions();
         bindStyleInputs();
         bindRowCanvasHighlight();
+        bindKeyboardNudge();
+        bindApplyStyleToAll();
         highlightNewField(config.newFieldKey);
 
         initZoom('zoom-v', 'zoom-v-value', 'canvas-outer-v', 'canvas-v', 'v', 'v');
@@ -476,6 +650,7 @@
             copyPositions(false, slotsH, slotsV);
         });
 
-        bindExcelPreview();
+        bindExcelPreview(slotsV, slotsH);
+        bindGenerateForm();
     });
 })(jQuery);

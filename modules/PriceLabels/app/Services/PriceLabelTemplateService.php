@@ -190,6 +190,16 @@ class PriceLabelTemplateService
         return array_replace_recursive($this->defaultPositions($template, $orientation), $stored ?? []);
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function columnMap(PriceLabelTemplate $template): array
+    {
+        return collect($template->field_definitions ?: $this->defaultFieldDefinitions())
+            ->pluck('excel_column', 'key')
+            ->all();
+    }
+
     public function defaultFieldDefinitions(): array
     {
         return [

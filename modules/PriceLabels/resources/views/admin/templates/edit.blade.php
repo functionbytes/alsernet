@@ -27,6 +27,9 @@
             <a href="#section-horizontal" class="pricelabels-subnav-link">Vista previa horizontal</a>
         @endif
         <a href="#section-generar" class="pricelabels-subnav-link">Generar PDF</a>
+        <a href="{{ route('pricelabels.positions.edit', $template) }}" class="pricelabels-subnav-link pricelabels-subnav-link-alt">
+            Editar solo posiciones
+        </a>
     </nav>
 
     <div class="row g-3">
@@ -135,6 +138,24 @@
                         </div>
 
                         <h6 class="fw-bold mb-3 border-bottom pb-2">Estilo por campo</h6>
+                        <p class="small text-muted mb-3">
+                            Si un campo queda tapado por otro en el lienzo, haz clic en su fila (fuera de los controles) para traerlo al frente y poder arrastrarlo.
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+                            <div>
+                                <label class="form-label mb-0 small">Copiar estilo desde</label>
+                                <select id="apply-style-source" class="form-select form-select-sm">
+                                    @foreach($fieldLabels as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button type="button" id="apply-style-all" class="btn btn-sm btn-light">
+                                Aplicar a todos los campos
+                            </button>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
                                 <thead class="table-light">
@@ -268,75 +289,7 @@
             </div>
         </div>
 
-        @if($showVertical)
-        <div class="col-12" id="section-vertical">
-            <div class="card">
-                <div class="card-header border-bottom p-3">
-                    <h5 class="mb-0 fw-bold">Previsualizacion vertical</h5>
-                    <small class="text-muted">Arrastra cada campo a su posicion ({{ $template->vertical_rows * $template->vertical_columns }} etiquetas por hoja)</small>
-                </div>
-                <div class="card-body">
-                    @if(! $template->image_vertical)
-                        <div class="alert alert-warning mb-0">Sube primero una imagen base vertical y guarda.</div>
-                    @else
-                        <div class="pricelabels-zoom mb-2">
-                            <label class="form-label small mb-0 me-2">Zoom</label>
-                            <input type="range" class="form-range" id="zoom-v" min="50" max="150" value="100">
-                            <span class="small text-muted" id="zoom-v-value">100%</span>
-                            <button type="button" id="zoom-v-reset" class="btn btn-sm btn-light">Restablecer</button>
-                        </div>
-                        <div id="canvas-outer-v" class="pricelabels-canvas-outer">
-                            <div id="canvas-v" class="pricelabels-canvas"
-                                 data-bg="{{ $imageVerticalUrl }}"></div>
-                        </div>
-                        <button type="button" id="save-positions-v" class="btn btn-outline-primary mt-3">
-                            Guardar posiciones (vertical)
-                        </button>
-                        @if($showHorizontal && $template->image_horizontal)
-                            <button type="button" id="copy-positions-to-h" class="btn btn-light mt-3">
-                                Copiar posiciones a horizontal
-                            </button>
-                        @endif
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
-
-        @if($showHorizontal)
-        <div class="col-12" id="section-horizontal">
-            <div class="card">
-                <div class="card-header border-bottom p-3">
-                    <h5 class="mb-0 fw-bold">Previsualizacion horizontal</h5>
-                    <small class="text-muted">Arrastra cada campo a su posicion ({{ $template->horizontal_rows * $template->horizontal_columns }} etiquetas por hoja)</small>
-                </div>
-                <div class="card-body">
-                    @if(! $template->image_horizontal)
-                        <div class="alert alert-warning mb-0">Sube primero una imagen base horizontal y guarda.</div>
-                    @else
-                        <div class="pricelabels-zoom mb-2">
-                            <label class="form-label small mb-0 me-2">Zoom</label>
-                            <input type="range" class="form-range" id="zoom-h" min="50" max="150" value="100">
-                            <span class="small text-muted" id="zoom-h-value">100%</span>
-                            <button type="button" id="zoom-h-reset" class="btn btn-sm btn-light">Restablecer</button>
-                        </div>
-                        <div id="canvas-outer-h" class="pricelabels-canvas-outer">
-                            <div id="canvas-h" class="pricelabels-canvas"
-                                 data-bg="{{ $imageHorizontalUrl }}"></div>
-                        </div>
-                        <button type="button" id="save-positions-h" class="btn btn-outline-primary mt-3">
-                            Guardar posiciones (horizontal)
-                        </button>
-                        @if($showVertical && $template->image_vertical)
-                            <button type="button" id="copy-positions-to-v" class="btn btn-light mt-3">
-                                Copiar posiciones a vertical
-                            </button>
-                        @endif
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
+        @include('pricelabels::admin.templates.partials.positions-canvas')
 
         <div class="col-12" id="section-generar">
             <div class="card">
@@ -348,11 +301,13 @@
                             {{ strtoupper($definition['label']) }} ({{ $definition['excel_column'] }}){{ ! $loop->last ? ',' : '' }}
                         @endforeach
                         (fila 1 = cabecera)
+                        &middot;
+                        <a href="{{ route('pricelabels.excel-template', $template) }}">Descargar plantilla Excel</a>
                     </small>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('pricelabels.generate', $template) }}" method="POST"
-                          enctype="multipart/form-data" target="_blank" data-preview-url="{{ route('pricelabels.preview-excel', $template) }}">
+                    <form id="generate-form" action="{{ route('pricelabels.generate', $template) }}" method="POST"
+                          enctype="multipart/form-data" data-preview-url="{{ route('pricelabels.preview-excel', $template) }}">
                         @csrf
                         <div class="mb-3">
                             <label class="form-label">Archivo Excel (XLSX/XLS)</label>
@@ -369,6 +324,7 @@
                                 Generar PDF horizontal
                             </button>
                         @endif
+                        <div id="generate-status" class="small mt-2"></div>
                     </form>
                 </div>
             </div>
@@ -396,6 +352,7 @@
                 horizontal: { rows: {{ $template->horizontal_rows }}, columns: {{ $template->horizontal_columns }} },
             },
             newFieldKey: @json(session('new_field_key')),
+            sampleRow: @json($sampleRow ?? null),
         };
     </script>
 
@@ -403,6 +360,7 @@
 
 @push('scripts')
 <script src="{{ asset('modules/pricelabels/js/vendor/interact.min.js') }}"></script>
+<script src="{{ asset('modules/pricelabels/js/generate-shared.js') }}"></script>
 <script src="{{ asset('modules/pricelabels/js/editor.js') }}"></script>
 <script>
 $(document).ready(function () {

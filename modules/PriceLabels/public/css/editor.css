@@ -101,8 +101,38 @@
     color: #fff;
 }
 
+.pricelabels-subnav-link-alt {
+    margin-left: auto;
+    background: #333;
+    color: #fff;
+}
+
+.pricelabels-subnav-link-alt:hover {
+    background: #000;
+    color: #fff;
+}
+
+.pricelabels-drag:focus {
+    outline: 2px solid #333;
+    outline-offset: 1px;
+}
+
 tr[data-field-key].pricelabels-row-highlight {
     background: rgba(144, 187, 19, 0.15);
+}
+
+tr[data-field-key] {
+    cursor: pointer;
+}
+
+tr[data-field-key].is-pinned {
+    background: rgba(144, 187, 19, 0.25);
+}
+
+.pricelabels-drag.is-pinned {
+    z-index: 30;
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.7);
 }
 
 .pricelabels-drag.is-highlighted {
@@ -119,4 +149,31 @@ tr[data-field-key].pricelabels-row-highlight {
 @keyframes pricelabels-pulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(144, 187, 19, 0.9); }
     50% { box-shadow: 0 0 0 6px rgba(144, 187, 19, 0.3); }
+}
+
+.pricelabels-index-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.pricelabels-status-badge.status-pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #b98600;
+}
+
+.pricelabels-status-badge.status-completed {
+    background: rgba(144, 187, 19, 0.15);
+    color: #5c7a0d;
+}
+
+.pricelabels-status-badge.status-failed {
+    background: rgba(220, 53, 69, 0.15);
+    color: #a02532;
+}
+
+.pricelabels-error-badge {
+    cursor: pointer;
 }

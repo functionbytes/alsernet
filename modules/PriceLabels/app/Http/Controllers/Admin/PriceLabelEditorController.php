@@ -4,16 +4,20 @@ namespace Modules\PriceLabels\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\PriceLabels\Http\Requests\GeneratePriceLabelPdfRequest;
 use Modules\PriceLabels\Http\Requests\PreviewPriceLabelExcelRequest;
 use Modules\PriceLabels\Http\Requests\SavePriceLabelPositionsRequest;
+use Modules\PriceLabels\Jobs\GeneratePriceLabelPdfJob;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
 use Modules\PriceLabels\Services\PriceLabelExcelImportService;
 use Modules\PriceLabels\Services\PriceLabelGenerationService;
 use Modules\PriceLabels\Services\PriceLabelPdfService;
 use Modules\PriceLabels\Services\PriceLabelTemplateService;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PriceLabelEditorController extends Controller
 {
@@ -33,7 +37,7 @@ class PriceLabelEditorController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function generate(GeneratePriceLabelPdfRequest $request, PriceLabelTemplate $priceLabelTemplate): Response
+    public function generate(GeneratePriceLabelPdfRequest $request, PriceLabelTemplate $priceLabelTemplate): JsonResponse
     {
         $data = $request->validated();
         $type = $data['type'];
@@ -46,27 +50,21 @@ class PriceLabelEditorController extends Controller
             ]);
         }
 
-        $rows = $this->excelImportService->read($request->file('excel_file'), $this->columnMap($priceLabelTemplate));
+        $sourceExcelPath = $this->generationService->storeUploadedExcel($request->file('excel_file'));
+        $generation = $this->generationService->createPending($priceLabelTemplate, $type, $sourceExcelPath);
 
-        if (empty($rows)) {
-            throw ValidationException::withMessages([
-                'excel_file' => 'El archivo Excel esta vacio o no tiene el formato esperado.',
-            ]);
-        }
+        GeneratePriceLabelPdfJob::dispatch($generation);
 
-        $pdfContent = $this->pdfService->generate($priceLabelTemplate, $rows, $type)->output();
-
-        $generation = $this->generationService->store($priceLabelTemplate, $type, count($rows), $pdfContent);
-
-        return response($pdfContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="'.$generation->file_name.'"',
+        return response()->json([
+            'success' => true,
+            'generation_id' => $generation->id,
+            'status_url' => route('pricelabels.history.status', $generation),
         ]);
     }
 
     public function previewExcel(PreviewPriceLabelExcelRequest $request, PriceLabelTemplate $priceLabelTemplate): JsonResponse
     {
-        $rows = $this->excelImportService->read($request->file('excel_file'), $this->columnMap($priceLabelTemplate));
+        $rows = $this->excelImportService->read($request->file('excel_file'), $this->templateService->columnMap($priceLabelTemplate));
 
         return response()->json([
             'success' => true,
@@ -75,13 +73,25 @@ class PriceLabelEditorController extends Controller
         ]);
     }
 
-    /**
-     * @return array<string, string>
-     */
-    private function columnMap(PriceLabelTemplate $priceLabelTemplate): array
+    public function downloadExcelTemplate(PriceLabelTemplate $priceLabelTemplate): StreamedResponse
     {
-        return collect($priceLabelTemplate->field_definitions ?: $this->templateService->defaultFieldDefinitions())
-            ->pluck('excel_column', 'key')
-            ->all();
+        $this->authorize('view', $priceLabelTemplate);
+
+        $definitions = $priceLabelTemplate->field_definitions ?: $this->templateService->defaultFieldDefinitions();
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+
+        foreach ($definitions as $definition) {
+            $sheet->setCellValue($definition['excel_column'].'1', strtoupper($definition['label']));
+        }
+
+        $fileName = 'plantilla-excel-'.Str::slug($priceLabelTemplate->name).'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            (new Xlsx($spreadsheet))->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
