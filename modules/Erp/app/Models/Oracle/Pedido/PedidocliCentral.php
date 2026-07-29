@@ -4,16 +4,6 @@ namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Cliente\ClienteCent;
-use Modules\Erp\Models\Oracle\Cliente\ClientecuentaCent;
-use Modules\Erp\Models\Oracle\Cobro\FppedcliCentral;
-use Modules\Erp\Models\Oracle\Configuracion\Afiliado;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Configuracion\Regpais;
-use Modules\Erp\Models\Oracle\Otros\PrefijoTelefono;
-use Modules\Erp\Models\Oracle\Otros\Prioridad;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -81,7 +71,7 @@ class PedidocliCentral extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(ClienteCent::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClienteCent::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -90,7 +80,7 @@ class PedidocliCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -128,7 +118,7 @@ class PedidocliCentral extends Model
      */
     public function formasPago()
     {
-        return $this->hasMany(FppedcliCentral::class, 'idpedidocli_central', 'idpedidocli_central');
+        return $this->hasMany(\Modules\Erp\Models\Oracle\Cobro\FppedcliCentral::class, 'idpedidocli_central', 'idpedidocli_central');
     }
 
     /**
@@ -137,7 +127,7 @@ class PedidocliCentral extends Model
      */
     public function pedidoCapthaya()
     {
-        return $this->belongsTo(PedidocliCapthaya::class, 'idpedidocli', 'idpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidocliCapthaya::class, 'idpedidocli', 'idpedidocli');
     }
 
     /**
@@ -146,7 +136,7 @@ class PedidocliCentral extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -155,7 +145,7 @@ class PedidocliCentral extends Model
      */
     public function prioridad()
     {
-        return $this->belongsTo(Prioridad::class, 'idprioridad', 'idprioridad');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Prioridad::class, 'idprioridad', 'idprioridad');
     }
 
     /**
@@ -164,7 +154,7 @@ class PedidocliCentral extends Model
      */
     public function origenpedidocli()
     {
-        return $this->belongsTo(Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
     }
 
     /**
@@ -173,7 +163,7 @@ class PedidocliCentral extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -182,7 +172,7 @@ class PedidocliCentral extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -191,7 +181,7 @@ class PedidocliCentral extends Model
      */
     public function tmotivoanulacionpedido()
     {
-        return $this->belongsTo(Tmotivoanulacionpedido::class, 'idtmotivoanulacionpedido', 'idtmotivoanulacionpedido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Tmotivoanulacionpedido::class, 'idtmotivoanulacionpedido', 'idtmotivoanulacionpedido');
     }
 
     /**
@@ -200,7 +190,7 @@ class PedidocliCentral extends Model
      */
     public function afiliado()
     {
-        return $this->belongsTo(Afiliado::class, 'idafiliado', 'idafiliado');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Afiliado::class, 'idafiliado', 'idafiliado');
     }
 
     /**
@@ -209,7 +199,7 @@ class PedidocliCentral extends Model
      */
     public function clientecuenta()
     {
-        return $this->belongsTo(ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
     }
 
     /**
@@ -218,6 +208,6 @@ class PedidocliCentral extends Model
      */
     public function prefijoTelefono()
     {
-        return $this->belongsTo(PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
     }
 }

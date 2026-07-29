@@ -12,6 +12,8 @@ class Setting extends Model implements HasMedia
 
     public const UPLOAD_PATH = 'app/setting/';
 
+    protected $fillable = ['key', 'value'];
+
     /**
      * Register media collections for Setting model
      */
@@ -968,8 +970,13 @@ class Setting extends Model implements HasMedia
      */
     public static function getErpSettings(): array
     {
-        $erpSettings = [];
         $erpKeys = [
+            // API security
+            'erp_api_auth_enabled',
+            'erp_api_auth_guard',
+            'erp_api_throttle',
+            'erp_public_token_throttle',
+
             'erp_api_url',
             'erp_sync_url',
             'erp_xmlrpc_url',
@@ -998,17 +1005,34 @@ class Setting extends Model implements HasMedia
             'erp_sync_products',
             'erp_sync_customers',
             'erp_document_source',
-            'erp_api_auth_enabled',
-            'erp_api_auth_guard',
-            'erp_api_throttle',
-            'erp_public_token_throttle',
+            'oracle_host',
+            'oracle_port',
+            'oracle_database',
+            'oracle_service_name',
+            'oracle_username',
+            'oracle_password',
+            'oracle_schema',
+            'oracle_charset',
+            'oracle_enable_cache',
+            'oracle_last_check',
+            'oracle_last_status',
         ];
 
-        foreach ($erpKeys as $key) {
-            $erpSettings[$key] = self::get($key, self::getErpDefaultValue($key));
-        }
+        // Single cache entry for all ERP settings (1 cache read instead of 34).
+        return cache()->remember('settings_erp_bundle', now()->addMinutes(10), function () use ($erpKeys) {
+            $stored = self::whereIn('key', $erpKeys)->pluck('value', 'key')->all();
+            $result = [];
+            foreach ($erpKeys as $key) {
+                $result[$key] = $stored[$key] ?? self::getErpDefaultValue($key);
+            }
 
-        return $erpSettings;
+            return $result;
+        });
+    }
+
+    public static function clearErpSettingsCache(): void
+    {
+        cache()->forget('settings_erp_bundle');
     }
 
     /**
@@ -1017,6 +1041,13 @@ class Setting extends Model implements HasMedia
     private static function getErpDefaultValue(string $key): mixed
     {
         $defaults = [
+            // API security — default OFF: API accessible only behind firewall.
+            // Flip via /panel/settings/erp/api-security or ERP_API_AUTH_ENABLED env.
+            'erp_api_auth_enabled' => env('ERP_API_AUTH_ENABLED', false) ? 'yes' : 'no',
+            'erp_api_auth_guard' => env('ERP_API_AUTH_GUARD', 'sanctum'),
+            'erp_api_throttle' => env('ERP_API_THROTTLE', '60,1'),
+            'erp_public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),
+
             'erp_api_url' => env('ERP_URL', 'http://interges:8080/api-gestion'),
             'erp_sync_url' => env('ERP_SYNC_URL', 'http://223.1.1.18:9000/integracion'),
             'erp_xmlrpc_url' => env('ERP_XMLRPC_URL', 'http://192.168.1.6:8081'),
@@ -1038,10 +1069,6 @@ class Setting extends Model implements HasMedia
             'erp_sync_products' => 'yes',
             'erp_sync_customers' => 'yes',
             'erp_document_source' => 'erp',
-            'erp_api_auth_enabled' => 'no',
-            'erp_api_auth_guard' => 'sanctum',
-            'erp_api_throttle' => '60,1',
-            'erp_public_token_throttle' => '60,1',
         ];
 
         return $defaults[$key] ?? null;
@@ -1053,10 +1080,14 @@ class Setting extends Model implements HasMedia
     public static function setErpSettings(array $data): void
     {
         foreach ($data as $key => $value) {
-            if (str_starts_with($key, 'erp_')) {
+            // Persistir tanto las claves ERP (erp_*) como las de la conexión Oracle (oracle_*).
+            // Antes solo guardaba 'erp_*', por lo que el host/puerto/schema del panel ERP Database
+            // se descartaban silenciosamente y la app seguía conectando a la BD anterior.
+            if (str_starts_with($key, 'erp_') || str_starts_with($key, 'oracle_')) {
                 self::set($key, $value);
             }
         }
+        self::clearErpSettingsCache();
     }
 
     /**
@@ -1326,16 +1357,33 @@ class Setting extends Model implements HasMedia
      */
     public static function getEmailSettings(): array
     {
-        return [
-            'mail_mailer' => self::get('mail_mailer', env('MAIL_MAILER', 'smtp')),
-            'mail_host' => self::get('mail_host', env('MAIL_HOST', 'smtp.mailtrap.io')),
-            'mail_port' => self::get('mail_port', env('MAIL_PORT', '2525')),
-            'mail_username' => self::get('mail_username', env('MAIL_USERNAME', '')),
-            'mail_password' => self::get('mail_password', env('MAIL_PASSWORD', '')),
-            'mail_encryption' => self::get('mail_encryption', env('MAIL_ENCRYPTION', 'tls')),
-            'mail_from_address' => self::get('mail_from_address', env('MAIL_FROM_ADDRESS', 'mail@example.com')),
-            'mail_from_name' => self::get('mail_from_name', env('MAIL_FROM_NAME', env('APP_NAME', 'Alsernet'))),
+        $defaults = [
+            'mail_mailer' => env('MAIL_MAILER', 'smtp'),
+            'mail_host' => env('MAIL_HOST', 'smtp.mailtrap.io'),
+            'mail_port' => env('MAIL_PORT', '2525'),
+            'mail_username' => env('MAIL_USERNAME', ''),
+            'mail_password' => env('MAIL_PASSWORD', ''),
+            'mail_encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'mail_from_address' => env('MAIL_FROM_ADDRESS', 'mail@example.com'),
+            'mail_from_name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Alsernet')),
         ];
+
+        // Single cache entry for all email settings (1 cache read instead of 8).
+        return cache()->remember('settings_email_bundle', now()->addMinutes(10), function () use ($defaults) {
+            $keys = array_keys($defaults);
+            $stored = self::whereIn('key', $keys)->pluck('value', 'key')->all();
+            $result = [];
+            foreach ($keys as $key) {
+                $result[$key] = $stored[$key] ?? $defaults[$key];
+            }
+
+            return $result;
+        });
+    }
+
+    public static function clearEmailSettingsCache(): void
+    {
+        cache()->forget('settings_email_bundle');
     }
 
     /**
@@ -1348,6 +1396,7 @@ class Setting extends Model implements HasMedia
                 self::set($key, $value);
             }
         }
+        self::clearEmailSettingsCache();
     }
 
     /**

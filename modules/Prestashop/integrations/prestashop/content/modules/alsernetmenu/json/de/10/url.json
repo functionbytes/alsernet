@@ -1,0 +1,30 @@
+[
+    {
+    "title": "KÖNNTE SIE INTERESSIEREN",
+    "language": "de",
+    "position": 5,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "special",
+    "items": [
+      {
+        "title": "Unsere Marken anzeigen",
+        "url": "/de/padel/marken-liste"
+      },
+      {
+        "title": "Angebote",
+        "url": "/de/padel/angebote"
+      },
+      {
+        "title": "Neuheiten",
+        "url": "/de/padel/neuen"
+      },
+      {
+        "title": "Bestseller",
+        "url": "/de/padel/bestseller"
+      }
+    ]
+  }
+
+]

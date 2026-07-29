@@ -338,7 +338,13 @@ class CreateBlockedProductDocuments extends Command
      */
     private function fetchPrestashopOrdersAfterOrderId(int $lastOrderId): array
     {
-        $config = config('documents.prestashop_db');
+        $config = [
+            'host' => env('DB_HOST_PRESTASHOP', '192.168.1.120'),
+            'port' => env('DB_PORT_PRESTASHOP', 3306),
+            'database' => env('DB_DATABASE_PRESTASHOP', 'alvarez_ana'),
+            'username' => env('DB_USERNAME_PRESTASHOP', 'alvarez_ana'),
+            'password' => env('DB_PASSWORD_PRESTASHOP', ''),
+        ];
 
         // Query: Obtener órdenes PAGADAS únicamente con datos de documento válidos
         // Usa EXISTS para validar que la orden TUVO estado de pagada en algún momento

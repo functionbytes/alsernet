@@ -51,6 +51,6 @@ class Tipodireccion extends Model
      */
     public function tipodireccion()
     {
-        return $this->belongsTo(Tipodireccion::class, 'idtipodireccion', 'idtipodireccion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodireccion::class, 'idtipodireccion', 'idtipodireccion');
     }
 }

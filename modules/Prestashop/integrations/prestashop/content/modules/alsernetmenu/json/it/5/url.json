@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Ti potrebbe interessare",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "subcategorie",
+    "items": [
+      {
+        "title": "Scopri le nostre marche",
+        "url": "/it/pesca/lista-marchi"
+      },
+      {
+        "title": "Offerte",
+        "url": "/it/pesca/offerte"
+      },
+      {
+        "title": "Novità",
+        "url": "/it/pesca/novita"
+      },
+      {
+        "title": "I più venduti",
+        "url": "/it/pesca/i_piu_venduti"
+      }
+    ]
+  }
+]

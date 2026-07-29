@@ -51,6 +51,6 @@ class PlataformaPago extends Model
      */
     public function plataformaPago()
     {
-        return $this->belongsTo(PlataformaPago::class, 'idplataforma_pago', 'idplataforma_pago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\PlataformaPago::class, 'idplataforma_pago', 'idplataforma_pago');
     }
 }

@@ -66,6 +66,6 @@ class CatalogoImpreso extends Model
      */
     public function catalogoImpreso()
     {
-        return $this->belongsTo(CatalogoImpreso::class, 'idcatalogo_impreso', 'idcatalogo_impreso');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\CatalogoImpreso::class, 'idcatalogo_impreso', 'idcatalogo_impreso');
     }
 }

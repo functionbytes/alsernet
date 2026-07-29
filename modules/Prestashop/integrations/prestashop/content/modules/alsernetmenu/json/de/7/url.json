@@ -1,0 +1,29 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/tauchen/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/tauchen/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/tauchen/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/tauchen/bestseller"
+          }
+        ]
+      }
+]

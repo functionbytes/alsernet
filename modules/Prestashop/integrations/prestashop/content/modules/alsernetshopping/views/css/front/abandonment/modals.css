@@ -1,0 +1,641 @@
+/**
+ * CSS para modales de carrito abandonado
+ * AlsernetShopping Module
+ */
+
+/* ==========================================================================
+   ESTILOS BASE PARA MODALES
+   ========================================================================== */
+
+.abandoned-cart-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.abandoned-cart-modal.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+}
+
+.modal-container {
+    position: relative;
+    margin: auto;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    position: relative;
+    padding: 30px 30px 20px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #007cba, #005a87);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-body h3 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+    font-weight: 600;
+}
+
+.modal-footer {
+    padding: 20px 30px 30px;
+    text-align: center;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .btn {
+    margin: 5px;
+    padding: 12px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   MODAL DE DESCUENTO
+   ========================================================================== */
+
+.modal-discount .modal-icon {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.discount-badge {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.discount-code {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.code-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-copy {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+.price-comparison {
+    background: #e8f5e8;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.price-original {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.price-discounted {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #27ae60;
+}
+
+.savings {
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.countdown-timer {
+    text-align: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 8px;
+}
+
+.timer {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #856404;
+    margin-top: 10px;
+}
+
+/* ==========================================================================
+   MODAL DE URGENCIA
+   ========================================================================== */
+
+.modal-urgency .modal-icon {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+}
+
+.urgency-title {
+    color: #e74c3c !important;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.low-stock-list {
+    margin: 20px 0;
+}
+
+.social-proof {
+    background: #e8f4fd;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 20px 0;
+    color: #0c5460;
+}
+
+.urgency-message {
+    text-align: center;
+    color: #e74c3c;
+    font-size: 1.1em;
+    margin: 20px 0;
+}
+
+.stock-indicators {
+    margin-top: 20px;
+}
+
+.stock-bar {
+    width: 100%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.stock-level {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #f39c12);
+    transition: width 0.3s ease;
+}
+
+.stock-text {
+    font-size: 0.9em;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* ==========================================================================
+   MODAL DE RECOMENDACIONES
+   ========================================================================== */
+
+.current-cart, .recommendations {
+    margin: 25px 0;
+}
+
+.current-cart h4, .recommendations h4 {
+    border-bottom: 2px solid #007cba;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.recommended-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.combo-offer {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.combo-badge {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* ==========================================================================
+   MODAL DE RECUPERACIÓN
+   ========================================================================== */
+
+.modal-recovery .modal-icon {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+.welcome-info {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.welcome-info > div {
+    margin: 10px 0;
+    color: #666;
+}
+
+.good-news {
+    background: #e8f5e8;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.news-header {
+    font-weight: bold;
+    color: #27ae60;
+    margin-bottom: 15px;
+}
+
+.price-drops-list {
+    margin-top: 15px;
+}
+
+.offers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* ==========================================================================
+   ELEMENTOS DE PRODUCTO
+   ========================================================================== */
+
+.product-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    border-color: #007cba;
+    box-shadow: 0 4px 12px rgba(0, 124, 186, 0.1);
+}
+
+.product-image img {
+    width: 100%;
+    max-width: 80px;
+    height: auto;
+    border-radius: 5px;
+}
+
+.product-name {
+    font-size: 0.9em;
+    margin: 10px 0 5px;
+    color: #333;
+}
+
+.product-price {
+    margin: 10px 0;
+}
+
+.price-current {
+    font-weight: bold;
+    color: #007cba;
+}
+
+.discount-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    margin-left: 8px;
+}
+
+.stock-warning {
+    color: #e74c3c;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+/* ==========================================================================
+   PRODUCTOS CON STOCK BAJO
+   ========================================================================== */
+
+.low-stock-product {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 4px solid #f39c12;
+}
+
+.low-stock-product .product-image {
+    width: 60px;
+    margin-right: 15px;
+}
+
+.low-stock-product .product-info {
+    flex-grow: 1;
+}
+
+.stock-warning-text {
+    color: #856404;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+/* ==========================================================================
+   OFERTAS PERSONALIZADAS
+   ========================================================================== */
+
+.offer-item {
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.offer-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 50px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+.offer-badge.premium {
+    background: #9b59b6;
+}
+
+.offer-badge.limited {
+    background: #f39c12;
+}
+
+.offer-content {
+    flex-grow: 1;
+}
+
+.offer-content h5 {
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.offer-content p {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.offer-prices {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.price-offer {
+    font-weight: bold;
+    color: #27ae60;
+    font-size: 1.1em;
+}
+
+/* ==========================================================================
+   PRODUCTOS REBAJADOS
+   ========================================================================== */
+
+.price-drop-item {
+    display: flex;
+    align-items: center;
+    background: #e8f5e8;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.drop-badge {
+    background: #27ae60;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.price-drop-item .product-info {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.price-drop-item .product-image {
+    width: 40px;
+    margin-right: 10px;
+}
+
+.price-drop-item .product-image img {
+    width: 100%;
+    border-radius: 4px;
+}
+
+.price-comparison {
+    font-size: 0.85em;
+}
+
+.price-was {
+    text-decoration: line-through;
+    color: #999;
+    margin-right: 8px;
+}
+
+.price-now {
+    font-weight: bold;
+    color: #27ae60;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .modal-container {
+        width: 95%;
+        margin: 20px auto;
+    }
+    
+    .modal-header, .modal-body, .modal-footer {
+        padding: 20px;
+    }
+    
+    .modal-footer .btn {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .recommended-products-grid, .offers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .offer-item, .low-stock-product, .price-drop-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .offer-badge, .drop-badge {
+        margin-bottom: 10px;
+    }
+}
+
+/* ==========================================================================
+   ANIMACIONES Y EFECTOS
+   ========================================================================== */
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estados de carga */
+.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Efectos de hover mejorados */
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.product-item:hover {
+    transform: translateY(-2px);
+}
+
+/* Indicadores de estado */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-indicator.online {
+    background: #27ae60;
+    animation: blink 1.5s ease-in-out infinite alternate;
+}
+
+.status-indicator.offline {
+    background: #95a5a6;
+}
+
+@keyframes blink {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+}

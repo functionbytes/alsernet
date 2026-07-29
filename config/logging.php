@@ -1,6 +1,5 @@
 <?php
 
-use Modules\Core\Logging\MaskSensitiveData;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -57,14 +56,6 @@ return [
             'driver' => 'stack',
             'channels' => explode(',', (string) env('LOG_STACK', 'daily,syslog')),
             'ignore_exceptions' => false,
-        ],
-
-        'api-mobile' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/api-mobile.log'),
-            'level' => env('LOG_LEVEL', 'info'),
-            'days' => env('LOG_DAILY_DAYS', 14),
-            'replace_placeholders' => true,
         ],
 
         'single' => [
@@ -142,45 +133,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
-        'failed_jobs' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/failed-jobs.log'),
-            'level' => 'error',
-            'days' => 30,
-        ],
-
-        // Mailrelay channel — identical stack but with SensitiveDataMasker applied
-        // to prevent API keys from leaking into log storage.
-        'mailrelay' => [
-            'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'daily,syslog')),
-            'ignore_exceptions' => false,
-            'tap' => [MaskSensitiveData::class],
-        ],
-
-        // Helpdesk channel — identical stack with SensitiveDataMasker applied
-        // to redact LLM API tokens (OpenAI/Anthropic/Gemini) from logs.
-        'helpdesk' => [
-            'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'daily,syslog')),
-            'ignore_exceptions' => false,
-            'tap' => [MaskSensitiveData::class],
-        ],
-
-        // Slow query audit channel — written by app:audit-slow-queries command.
-        'slow-queries' => [
-            'driver' => 'daily',
-            'path' => storage_path('logs/slow-queries.log'),
-            'level' => 'debug',
-            'days' => 7,
-        ],
-
-        // Email jobs channel — used by MailTemplateJob::failed()
         'email-jobs' => [
             'driver' => 'daily',
             'path' => storage_path('logs/email-jobs.log'),
-            'level' => 'debug',
-            'days' => 14,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 30),
+            'replace_placeholders' => true,
         ],
 
     ],

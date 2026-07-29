@@ -1,0 +1,245 @@
+[
+    {
+        "title": "Safety",
+        "action": "",
+        "type": "subcategorie",
+        "id": 54,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Lifevest",
+                "url": "\/en\/boating\/lifevest",
+                "visible": "1"
+            },
+            {
+                "title": "Security and Rescue",
+                "url": "\/en\/boating\/security_and_rescue",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Personal Equipment",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Nautical clothing",
+                "url": "\/en\/boating\/nautical_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Nautical footwear",
+                "url": "\/en\/boating\/nautical_footwear",
+                "visible": "1"
+            },
+            {
+                "title": "Travel Bags",
+                "url": "\/en\/boating\/travel_bags",
+                "visible": "1"
+            },
+            {
+                "title": "Waterproof bags and covers",
+                "url": "\/en\/boating\/waterproof_bags_and_covers",
+                "visible": "1"
+            },
+            {
+                "title": "Cameras",
+                "url": "\/en\/boating\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "Sunglasses",
+                "url": "\/en\/boating\/sunglasses",
+                "visible": "1"
+            },
+            {
+                "title": "Knives and Multipurpose",
+                "url": "\/en\/boating\/knives_and_multipurpose",
+                "visible": "1"
+            },
+            {
+                "title": "Watches",
+                "url": "\/en\/boating\/watches",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Anchoring",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Anchoring",
+                "url": "\/en\/boating\/anchoring",
+                "visible": "1"
+            },
+            {
+                "title": "Rubber",
+                "url": "\/en\/boating\/rubber",
+                "visible": "1"
+            },
+            {
+                "title": "Engines",
+                "url": "\/en\/boating\/engines",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Entertainment",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Recreational Boating",
+                "url": "\/en\/boating\/recreational_boating",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Deck Equipment",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Deck Equipment",
+                "url": "\/en\/boating\/deck_equipment",
+                "visible": "1"
+            },
+            {
+                "title": "Spotlights and Flashlights",
+                "url": "\/en\/boating\/spotlights_and_flashlights",
+                "visible": "1"
+            },
+            {
+                "title": "Navigation lights",
+                "url": "\/en\/boating\/navigation_lights",
+                "visible": "1"
+            },
+            {
+                "title": "Boat maintenance",
+                "url": "\/en\/boating\/boat_maintenance",
+                "visible": "1"
+            },
+            {
+                "title": "Batteries",
+                "url": "\/en\/boating\/batteries",
+                "visible": "1"
+            },
+            {
+                "title": "Gas",
+                "url": "\/en\/boating\/gas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Compasses, electronics, and navigation",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Stations and VHF",
+                "url": "\/en\/boating\/stations_and_vhf",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/en\/boating\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navigation",
+                "url": "\/en\/boating\/navigation",
+                "visible": "1"
+            },
+            {
+                "title": "Binoculars",
+                "url": "\/en\/boating\/binoculars",
+                "visible": "1"
+            },
+            {
+                "title": "Fish Finder",
+                "url": "\/en\/boating\/fish_finder",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopes",
+                "url": "\/en\/boating\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "Metal detectors",
+                "url": "\/en\/boating\/metal_detectors",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Comfort",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Water on Board",
+                "url": "\/en\/boating\/water_on_board",
+                "visible": "1"
+            },
+            {
+                "title": "Comfort",
+                "url": "\/en\/boating\/comfort",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet and offers",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet and Liquidations",
+                "url": "\/en\/boating\/outlet_and_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "Nautical Express Offer",
+                "url": "\/en\/boating\/nautical_express_offer",
+                "visible": "0"
+            }
+        ]
+    }
+]

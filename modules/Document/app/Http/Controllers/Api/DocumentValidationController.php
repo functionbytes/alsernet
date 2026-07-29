@@ -3,7 +3,6 @@
 namespace Modules\Document\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -17,9 +16,7 @@ use Modules\Document\Services\DocumentActionService;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentTypeService;
 use Modules\Document\Traits\SendsDocumentEmails;
-use Modules\Mailer\Models\MailerTemplate;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * API Controller Genérico para Validación de Documentos
@@ -53,7 +50,7 @@ class DocumentValidationController extends Controller
         $user = auth()->user();
 
         // Detectar perfil basado en roles
-        if ($user->hasRole('super-admin') || $user->hasRole('super-settings') || $user->hasRole('manager')) {
+        if ($user->hasRole('super-admin') || $user->hasRole('manager')) {
             return 'manager';
         }
 
@@ -74,83 +71,6 @@ class DocumentValidationController extends Controller
     }
 
     /**
-     * Guard de acción del panel: los perfiles de gestión (super-admin,
-     * super-settings, manager) siempre pasan; el resto debe tener el permiso
-     * fino del grupo validador. Devuelve una respuesta 403 lista para retornar,
-     * o null si la acción está autorizada.
-     *
-     * Antes muchas acciones mutadoras (send-*, assign, upload, downloadZip)
-     * solo estaban tras el gate genérico `view-documents-panel`: cualquier
-     * usuario de un grupo "solo lectura" podía ejecutarlas. Este guard aplica
-     * el permiso granular ya modelado en HasDocumentPermissions.
-     */
-    protected function denyUnlessCanDocument(string $permission): ?JsonResponse
-    {
-        $user = auth()->user();
-
-        // Perfiles de gestión y supervisor: acceso completo, igual que el gate
-        // view-documents-panel que ya protege la ruta (super-admin/super-settings/
-        // manager vía getUserProfile; supervisor por rol). No se les exige el
-        // permiso fino del grupo validador.
-        if ($this->getUserProfile() === 'manager' || $user?->hasRole('supervisor')) {
-            return null;
-        }
-
-        // El puente HelpdeskDocument ya autoriza (helpdesk.documents.manage +
-        // ownership de la conversación) antes de delegar aquí: no re-exigir el
-        // sistema de grupos validadores del módulo Document a los agentes del
-        // inbox, que no pertenecen a ninguno.
-        if ($user?->can('helpdesk.documents.manage')) {
-            return null;
-        }
-
-        // El resto (grupos validadores) debe tener el permiso fino de la acción.
-        // Cierra la escalada: un usuario de grupo solo-lectura pasaba el gate
-        // view-documents-panel (canDocument('view-documents')) y podía mutar.
-        if ($user?->canDocument($permission)) {
-            return null;
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No tienes permiso para realizar esta acción.',
-        ], 403);
-    }
-
-    /**
-     * Asigna el documento a un usuario validador sin avanzar la etapa.
-     */
-    public function assignUser(Request $request, string $uid): JsonResponse
-    {
-        if ($denied = $this->denyUnlessCanDocument('assign-validators')) {
-            return $denied;
-        }
-
-        $document = Document::findByUid($uid);
-
-        if (! $document) {
-            return response()->json(['success' => false, 'message' => 'Documento no encontrado.'], 404);
-        }
-
-        $data = $request->validate([
-            'assigned_user_id' => ['nullable', 'integer', 'exists:users,id'],
-        ]);
-
-        $document->assigned_user_id = $data['assigned_user_id'] ?? null;
-        $document->save();
-
-        $assignee = $document->assigned_user_id ? User::find($document->assigned_user_id) : null;
-
-        return response()->json([
-            'success' => true,
-            'message' => $assignee
-                ? 'Documento asignado a '.($assignee->name ?? $assignee->full_name ?? ('usuario #'.$assignee->id)).'.'
-                : 'Asignación retirada del documento.',
-            'assigned_user_id' => $document->assigned_user_id,
-        ]);
-    }
-
-    /**
      * Aprobar etapa actual del documento
      * Si es la última etapa, envía automáticamente el correo de confirmación
      */
@@ -166,9 +86,8 @@ class DocumentValidationController extends Controller
             ], 422);
         }
 
-        // Managers can always approve; others must belong to the current validator group
-        $profile = $this->getUserProfile();
-        if ($profile !== 'manager' && ! $document->canUserValidate(auth()->id())) {
+        // Validar permisos: el usuario debe pertenecer al grupo actual de validadores
+        if (! $document->canUserValidate(auth()->id())) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permiso para validar en esta etapa.',
@@ -191,16 +110,14 @@ class DocumentValidationController extends Controller
                 $validated['assigned_user_id'] ?? null
             );
 
-            // Si fue la última etapa, actualizar estado. El correo de aprobación
-            // ya NO se envía automáticamente aquí: queda pendiente de que el
-            // agente lo confirme desde el modal de "Notificación aprobación"
-            // (ver completion_status.was_last_stage en la respuesta).
+            // Si fue la última etapa, actualizar estado y enviar correo de confirmación
             if ($isLastStage) {
                 $approvedStatus = DocumentStatus::where('key', 'approved')->first();
                 if ($approvedStatus) {
                     $result->update(['status_id' => $approvedStatus->id]);
                     $result->refresh();
                 }
+                $this->emailService->sendCompletionEmail($result, auth()->id());
 
                 if ($result->order_id) {
                     $this->notifyErpDocumentacionOk($result->order_id);
@@ -210,7 +127,7 @@ class DocumentValidationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $isLastStage
-                    ? 'Documento completamente aprobado. Estado actualizado.'
+                    ? 'Documento completamente aprobado. Estado actualizado. Correo enviado.'
                     : 'Etapa aprobada exitosamente',
                 'document' => $result,
                 'is_completed' => $result->isApproved(),
@@ -252,9 +169,8 @@ class DocumentValidationController extends Controller
             ], 422);
         }
 
-        // Managers can always reject; others must belong to the current validator group
-        $profile = $this->getUserProfile();
-        if ($profile !== 'manager' && ! $document->canUserValidate(auth()->id())) {
+        // Validar permisos: el usuario debe pertenecer al grupo actual de validadores
+        if (! $document->canUserValidate(auth()->id())) {
             return response()->json([
                 'success' => false,
                 'message' => "No tienes permiso. Tu usuario no pertenece al grupo: {$document->current_validator_group}",
@@ -315,15 +231,11 @@ class DocumentValidationController extends Controller
      */
     public function sendApproval(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-approval')) {
-            return $denied;
-        }
-
         return $this->sendEmail(
             $request,
             $uid,
             fn ($doc, $adminId) => $this->emailService->sendApprovalEmail($doc, $adminId)
-            // Sin verificación de autorización
+        // Sin verificación de autorización
         );
     }
 
@@ -332,10 +244,6 @@ class DocumentValidationController extends Controller
      */
     public function sendRejection(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-rejection')) {
-            return $denied;
-        }
-
         $validated = $this->validateEmailRequest($request, [
             'reason' => 'required|string|min:10',
             'rejected_docs' => 'nullable|array',
@@ -350,7 +258,7 @@ class DocumentValidationController extends Controller
                 $validated['rejected_docs'] ?? [],
                 $adminId
             )
-            // Sin verificación de autorización
+        // Sin verificación de autorización
         );
     }
 
@@ -359,10 +267,6 @@ class DocumentValidationController extends Controller
      */
     public function sendCustomEmail(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-custom-email')) {
-            return $denied;
-        }
-
         $validated = $this->validateEmailRequest($request, [
             'subject' => 'required|string|max:200',
             'message' => 'required|string|min:10',
@@ -385,10 +289,6 @@ class DocumentValidationController extends Controller
      */
     public function sendReminder(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-reminders')) {
-            return $denied;
-        }
-
         return $this->sendEmail(
             $request,
             $uid,
@@ -401,10 +301,6 @@ class DocumentValidationController extends Controller
      */
     public function requestInitialDocuments(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-initial-request')) {
-            return $denied;
-        }
-
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
 
@@ -428,10 +324,6 @@ class DocumentValidationController extends Controller
      */
     public function requestMissingDocuments(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-missing-docs')) {
-            return $denied;
-        }
-
         $validated = $this->validateEmailRequest($request, [
             'missing_docs' => 'required|array|min:1',
             'notes' => 'nullable|string',
@@ -454,10 +346,6 @@ class DocumentValidationController extends Controller
      */
     public function sendNotification(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-initial-request')) {
-            return $denied;
-        }
-
         return $this->sendEmail(
             $request,
             $uid,
@@ -470,10 +358,6 @@ class DocumentValidationController extends Controller
      */
     public function sendUploadConfirmation(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-upload-confirmation')) {
-            return $denied;
-        }
-
         return $this->sendEmail(
             $request,
             $uid,
@@ -486,10 +370,6 @@ class DocumentValidationController extends Controller
      */
     public function sendMissingDocuments(Request $request, string $uid): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('send-missing-docs')) {
-            return $denied;
-        }
-
         $document = Document::where('uid', $uid)->firstOrFail();
 
         // Auto-detectar documentos faltantes si no se especifican
@@ -521,6 +401,7 @@ class DocumentValidationController extends Controller
     public function emailHistory(string $uid): JsonResponse
     {
         $document = Document::where('uid', $uid)->firstOrFail();
+        // $this->authorize('view', $document);
 
         $emails = $document->mails()
             ->orderBy('sent_at', 'desc')
@@ -538,6 +419,7 @@ class DocumentValidationController extends Controller
     public function emailPreview(string $uid, string $mailUid): JsonResponse
     {
         $document = Document::where('uid', $uid)->firstOrFail();
+        // $this->authorize('view', $document);
 
         $email = $document->mails()
             ->where('uid', $mailUid)
@@ -564,6 +446,8 @@ class DocumentValidationController extends Controller
 
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
+
+        // $this->authorize('update', $document);
 
         $validated = $request->validate([
             'content' => 'required|string|min:3',
@@ -662,44 +546,6 @@ class DocumentValidationController extends Controller
     }
 
     /**
-     * Descargar todos los archivos del expediente como ZIP.
-     */
-    public function downloadZip(string $uid): StreamedResponse|JsonResponse
-    {
-        if ($denied = $this->denyUnlessCanDocument('export-documents')) {
-            return $denied;
-        }
-
-        $document = Document::where('uid', $uid)->firstOrFail();
-
-        $mediaItems = $document->getMedia('documents')
-            ->merge($document->getMedia('additional_attachments'))
-            ->filter(fn ($m) => file_exists($m->getPath()));
-
-        if ($mediaItems->isEmpty()) {
-            return response()->json(['message' => 'El expediente no tiene archivos para descargar.'], 404);
-        }
-
-        $zipName = 'expediente-'.$uid.'.zip';
-        $zipPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.$zipName;
-
-        $zip = new \ZipArchive;
-        $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-        foreach ($mediaItems as $media) {
-            $zip->addFile($media->getPath(), $media->file_name);
-        }
-        $zip->close();
-
-        return response()->streamDownload(function () use ($zipPath) {
-            readfile($zipPath);
-            @unlink($zipPath);
-        }, $zipName, [
-            'Content-Type' => 'application/zip',
-            'Content-Disposition' => 'attachment; filename="'.$zipName.'"',
-        ]);
-    }
-
-    /**
      * Obtener historial de acciones
      */
     public function getActionHistory(string $uid): JsonResponse
@@ -707,8 +553,10 @@ class DocumentValidationController extends Controller
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
 
+        // $this->authorize('view', $document);
+
         $history = $document->actions()
-            ->with('performer')
+            ->with('user')
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -725,6 +573,8 @@ class DocumentValidationController extends Controller
     {
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
+
+        // $this->authorize('view', $document);
 
         $emails = $document->mails()
             ->orderBy('sent_at', 'desc')
@@ -744,6 +594,8 @@ class DocumentValidationController extends Controller
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
 
+        // $this->authorize('view', $document);
+
         $timeline = $document->statusHistories()
             ->with('user')
             ->orderBy('created_at', 'asc')
@@ -762,6 +614,8 @@ class DocumentValidationController extends Controller
     {
         $document = Document::where('uid', $uid)->firstOrFail();
         $profile = $this->getUserProfile();
+
+        // $this->authorize('view', $document);
 
         if ($document->current_stage >= $document->total_stages) {
             return response()->json([
@@ -804,7 +658,7 @@ class DocumentValidationController extends Controller
      */
     public function getCustomEmailTemplate(): JsonResponse
     {
-        $template = MailerTemplate::where('key', 'custom_document')->first();
+        $template = \Modules\Mailer\Models\MailerTemplate::where('key', 'custom_document')->first();
 
         if (! $template) {
             return response()->json([
@@ -829,10 +683,6 @@ class DocumentValidationController extends Controller
      */
     public function uploadDocument(Request $request, $uid)
     {
-        if ($denied = $this->denyUnlessCanDocument('upload-documents')) {
-            return $denied;
-        }
-
         try {
             $document = Document::findByUid($uid);
 
@@ -843,11 +693,9 @@ class DocumentValidationController extends Controller
                 ], 404);
             }
 
-            // Validar que venga al menos un archivo. La whitelist de `mimes` es
-            // obligatoria: el destino es el disco público, así que sin ella se
-            // podría subir .php/.html/.svg a una URL servible (RCE / XSS).
+            // Validar que venga al menos un archivo
             $request->validate([
-                'documents.*' => 'nullable|file|max:10240|mimes:pdf,jpg,jpeg,png,doc,docx',
+                'documents.*' => 'nullable|file|max:10240', // Máximo 10MB por archivo
             ]);
 
             $uploadedCount = 0;
@@ -1045,10 +893,6 @@ class DocumentValidationController extends Controller
      */
     public function uploadAdditionalAttachment(Request $request, $uid)
     {
-        if ($denied = $this->denyUnlessCanDocument('upload-attachments')) {
-            return $denied;
-        }
-
         try {
             $document = Document::findByUid($uid);
 
@@ -1158,12 +1002,10 @@ class DocumentValidationController extends Controller
      */
     public function deleteAdditionalAttachment(string $uid, int $mediaId): JsonResponse
     {
-        if ($denied = $this->denyUnlessCanDocument('delete-attachments')) {
-            return $denied;
-        }
-
         try {
             $document = Document::where('uid', $uid)->firstOrFail();
+
+            // $this->authorize('update', $document);
 
             $media = Media::find($mediaId);
 
@@ -1239,14 +1081,14 @@ class DocumentValidationController extends Controller
             if (! $response->successful()) {
                 Log::warning('ERP documentacion-ok respondió con error', [
                     'order_id' => $orderId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'status'   => $response->status(),
+                    'body'     => $response->body(),
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Error al notificar ERP documentacion-ok', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
         }
     }

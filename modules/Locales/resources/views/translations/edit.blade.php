@@ -138,7 +138,7 @@
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
                                 <input type="search" name="search"
-                                       class="form-control -0 ps-0"
+                                       class="form-control border-start-0 ps-0"
                                        placeholder="Buscar clave o texto..."
                                        value="{{ $search }}">
                             </div>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>alsernetproducts</name>
+    <displayName><![CDATA[Alsernet - productos]]></displayName>
+    <version><![CDATA[2.0.4]]></version>
+    <description><![CDATA[Haz que tus clientes se sientan como en casa en tu tienda, &iexcl;inv&iacute;talos a registrarse!]]></description>
+    <author><![CDATA[Alsernet]]></author>
+    <tab><![CDATA[]]></tab>
+    <is_configurable>0</is_configurable>
+    <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+</module>

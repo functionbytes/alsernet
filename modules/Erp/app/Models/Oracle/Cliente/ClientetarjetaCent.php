@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Banco;
-use Modules\Erp\Models\Oracle\Configuracion\Moneda;
-use Modules\Erp\Models\Oracle\Otros\Tarjetas;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -61,7 +58,7 @@ class ClientetarjetaCent extends Model
      */
     public function clientetarjeta()
     {
-        return $this->belongsTo(ClientetarjetaCent::class, 'idclientetarjeta', 'idclientetarjeta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientetarjetaCent::class, 'idclientetarjeta', 'idclientetarjeta');
     }
 
     /**
@@ -70,7 +67,7 @@ class ClientetarjetaCent extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -79,7 +76,7 @@ class ClientetarjetaCent extends Model
      */
     public function tarjeta()
     {
-        return $this->belongsTo(Tarjetas::class, 'idtarjeta', 'idtarjeta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tarjetas::class, 'idtarjeta', 'idtarjeta');
     }
 
     /**
@@ -88,7 +85,7 @@ class ClientetarjetaCent extends Model
      */
     public function banco()
     {
-        return $this->belongsTo(Banco::class, 'idbanco', 'idbanco');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Banco::class, 'idbanco', 'idbanco');
     }
 
     /**
@@ -97,6 +94,6 @@ class ClientetarjetaCent extends Model
      */
     public function moneda()
     {
-        return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Moneda::class, 'idmoneda', 'idmoneda');
     }
 }

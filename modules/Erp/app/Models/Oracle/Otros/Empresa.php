@@ -55,6 +55,6 @@ class Empresa extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 }

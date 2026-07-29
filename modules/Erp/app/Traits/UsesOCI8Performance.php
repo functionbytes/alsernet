@@ -2,7 +2,6 @@
 
 namespace Modules\Erp\Traits;
 
-use Modules\Core\Models\Setting;
 use Modules\Erp\Services\OCI8Service;
 
 /**
@@ -23,7 +22,7 @@ trait UsesOCI8Performance
 
         // Read cache setting from database if not explicitly set
         if ($useCache === null) {
-            $settings = Setting::getErpSettings();
+            $settings = \Modules\Core\Models\Setting::getErpSettings();
             $useCache = $settings['oracle_enable_cache'] ?? true;
         }
 
@@ -111,12 +110,9 @@ trait UsesOCI8Performance
             ],
         ];
 
-        // Cache result: catalog data (familias/subfamilias/grupos) is near-static,
-        // so a longer TTL raises the hit ratio dramatically versus the old 60s that
-        // expired almost as fast as it filled. Invalidate proactively from
-        // MonitorOracleChanges when a real change is detected.
+        // Cache result for 60 seconds
         if ($useCache) {
-            cache()->put($cacheKey, $response, 900);
+            cache()->put($cacheKey, $response, 60);
         }
 
         return $response;

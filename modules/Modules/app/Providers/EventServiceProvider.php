@@ -114,7 +114,7 @@ class EventServiceProvider extends LaravelEventServiceProvider
     protected function registerMenus(): void
     {
 
-        NavService::addItemsToSection('settings', 'Configuraciones', [
+        NavService::addSidebarItems('settings', [
             ['label' => 'Gestión de módulos', 'route' => 'settings.modules.index'],
         ]);
 

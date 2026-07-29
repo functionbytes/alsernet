@@ -13,7 +13,7 @@ class TestOracleConnection extends Command
      *
      * @var string
      */
-    protected $signature = 'erp:test-oracle {--code-only : Suprimir salida detallada, devuelve solo el código de salida}';
+    protected $signature = 'erp:test-oracle {--quiet : Suprimir salida detallada, devuelve solo el código de salida}';
 
     /**
      * The console command description.
@@ -27,7 +27,7 @@ class TestOracleConnection extends Command
      */
     public function handle(): int
     {
-        if ($this->option('code-only')) {
+        if ($this->option('quiet')) {
             return $this->runQuietCheck();
         }
 

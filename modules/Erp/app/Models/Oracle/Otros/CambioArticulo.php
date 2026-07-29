@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +54,7 @@ class CambioArticulo extends Model
      */
     public function cambioArticulo()
     {
-        return $this->belongsTo(CambioArticulo::class, 'idcambio_articulo', 'idcambio_articulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CambioArticulo::class, 'idcambio_articulo', 'idcambio_articulo');
     }
 
     /**
@@ -64,6 +63,6 @@ class CambioArticulo extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

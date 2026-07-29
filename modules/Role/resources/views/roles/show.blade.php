@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3">
                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                             style="width: 70px; height: 70px; background: #90bb13;">
+                             style="width: 70px; height: 70px; background: #13C672;">
                             <i class="fas fa-user-shield fs-2 text-white"></i>
                         </div>
                         <div class="flex-grow-1">
@@ -62,7 +62,7 @@
             <!-- Statistics Cards -->
             <div class="row mb-3">
                 <div class="col-md-4 mb-3">
-                    <div class="card  border-primary  h-100">
+                    <div class="card border-start border-primary border-4 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <div class="card  border-success  h-100">
+                    <div class="card border-start border-success border-4 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -96,7 +96,7 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <div class="card  border-info  h-100">
+                    <div class="card border-start border-info border-4 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -210,7 +210,7 @@
                                 <div class="list-group-item border-0 px-0">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                             style="width: 40px; height: 40px; background-color: #90bb13; color: white; font-weight: bold;">
+                                             style="width: 40px; height: 40px; background-color: #13C672; color: white; font-weight: bold;">
                                             {{ strtoupper(substr($user->firstname ?? 'U', 0, 1)) }}{{ strtoupper(substr($user->lastname ?? 'S', 0, 1)) }}
                                         </div>
                                         <div class="flex-grow-1">
@@ -413,7 +413,7 @@
     }
 
     .permission-list::-webkit-scrollbar-thumb {
-        background: #90bb13;
+        background: #13C672;
         border-radius: 10px;
     }
 </style>

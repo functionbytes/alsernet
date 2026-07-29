@@ -25,7 +25,6 @@ namespace Modules\Mailer\Library;
 use Closure;
 use DOMDocument;
 use DomXpath;
-use Symfony\Component\HttpFoundation\IpUtils;
 
 class StringHelper
 {
@@ -416,7 +415,7 @@ class StringHelper
             }
 
             // find and replace all inline style background url
-            $xpath = new DomXpath($document);
+            $xpath = new DOMXPath($document);
             $elements = $xpath->query('//*[@style]');
             foreach ($elements as $element) {
                 $style = $element->getAttribute('style');
@@ -523,7 +522,7 @@ class StringHelper
     {
         $googleIpRanges = config('google');
         foreach ($googleIpRanges as $cidr) {
-            if (IpUtils::checkIp($ipAddress, $cidr)) {
+            if (\Symfony\Component\HttpFoundation\IpUtils::checkIp($ipAddress, $cidr)) {
                 return false;
             }
         }

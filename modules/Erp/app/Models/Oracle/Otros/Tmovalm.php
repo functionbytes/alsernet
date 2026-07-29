@@ -52,7 +52,7 @@ class Tmovalm extends Model
      */
     public function tmovalm()
     {
-        return $this->belongsTo(Tmovalm::class, 'idtmovalm', 'idtmovalm');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tmovalm::class, 'idtmovalm', 'idtmovalm');
     }
 
     /**
@@ -61,6 +61,6 @@ class Tmovalm extends Model
      */
     public function teststock()
     {
-        return $this->belongsTo(Teststock::class, 'idteststock', 'idteststock');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Teststock::class, 'idteststock', 'idteststock');
     }
 }

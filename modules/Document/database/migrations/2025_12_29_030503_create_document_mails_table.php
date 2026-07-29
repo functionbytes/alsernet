@@ -27,7 +27,7 @@ return new class extends Migration
             $table->longText('body_text')->nullable()->comment('Cuerpo en texto plano');
             $table->foreignId('template_id')
                 ->nullable()
-                ->constrained('mailer_templates')
+                ->constrained('mail_templates')
                 ->nullOnDelete();
             $table->foreignId('sent_by')
                 ->nullable()

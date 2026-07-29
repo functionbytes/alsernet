@@ -56,6 +56,6 @@ class Cambiotabla extends Model
      */
     public function cambiotabla()
     {
-        return $this->belongsTo(Cambiotabla::class, 'idcambiotabla', 'idcambiotabla');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Cambiotabla::class, 'idcambiotabla', 'idcambiotabla');
     }
 }

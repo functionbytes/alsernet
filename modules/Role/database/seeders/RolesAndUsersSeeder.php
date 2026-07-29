@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class RolesAndUsersSeeder extends Seeder
 {
@@ -29,7 +28,7 @@ class RolesAndUsersSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Deshabilitar eventos de Eloquent (activity logging)
         User::withoutEvents(function () {
@@ -65,7 +64,7 @@ class RolesAndUsersSeeder extends Seeder
         );
 
         // Asignar rol al usuario si no lo tiene
-        if (! $user->hasRole($role)) {
+        if (!$user->hasRole($role)) {
             $user->assignRole($role);
         }
 

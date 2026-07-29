@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Cela peut vous intéresser",
+        "language": "fr",
+        "position": 3,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Marques",
+            "url": "/fr/peche/liste-marques"
+          },
+          {
+            "title": "Offres",
+            "url": "/fr/peche/offres"
+          },
+          {
+            "title": "Nouveautés",
+            "url": "/fr/peche/nouveautes"
+          },
+          {
+            "title": "Meilleures ventes",
+            "url": "/fr/peche/les_plus_vendus"
+          }
+        ]
+      }
+]

@@ -67,7 +67,7 @@ class Provincia extends Model
      */
     public function provincia()
     {
-        return $this->belongsTo(Provincia::class, 'idprovincia', 'idprovincia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Provincia::class, 'idprovincia', 'idprovincia');
     }
 
     /**
@@ -76,6 +76,6 @@ class Provincia extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
     }
 }

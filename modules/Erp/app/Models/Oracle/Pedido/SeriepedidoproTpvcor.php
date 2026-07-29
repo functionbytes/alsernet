@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Otros\Empresa;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -55,7 +54,7 @@ class SeriepedidoproTpvcor extends Model
      */
     public function seriepedidopro()
     {
-        return $this->belongsTo(SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
     }
 
     /**
@@ -64,6 +63,6 @@ class SeriepedidoproTpvcor extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 }

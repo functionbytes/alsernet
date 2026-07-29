@@ -230,10 +230,10 @@ class ProductsController extends ApiController
                         'name' => $apDefault?->descripcion ?: $a->descripcion,
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
-                        'categorie' => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
-                        'grupo' => $a->idgrupo_cl,
+                        'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
+                        'grupo'        => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
-                        'sport_id' => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
+                        'sport_id'     => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
                         'supplier' => $aps->map(fn ($ap) => [
                             'id' => $ap->idartiprov,
                             'supplier_id' => $ap->idproveedor,
@@ -258,6 +258,7 @@ class ProductsController extends ApiController
                     'description' => $modelo->descripcion,
                     'available' => $modelo->estado,
                     'web' => $modelo->estado_publicado_web,
+                    'marca' => $modelo->idmarca,
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,
                         'description' => $familiaCl->descripcion,
@@ -386,9 +387,10 @@ class ProductsController extends ApiController
      *                             Single: ?brand_id=5  |  Multiple: ?brand_id[]=5&brand_id[]=8
      * - color_id     (int|int[])  Filter by color/group (idgrupo_cl). Single value or array.
      *                             Single: ?color_id=12  |  Multiple: ?color_id[]=12&color_id[]=15
-     * - date_from    (string)     Filter fmodificacion >= date_from. Format: Y-m-d or Y-m-d H:i:s
+     * - date_from    (string)     Filter fcreacion >= date_from. Format: Y-m-d or Y-m-d H:i:s
      *                             If date_from is set but date_to is omitted, date_to defaults to now()
-     * - date_to      (string)     Filter fmodificacion <= date_to. Format: Y-m-d or Y-m-d H:i:s
+     * - date_to      (string)     Filter fcreacion <= date_to. Format: Y-m-d or Y-m-d H:i:s
+     * - idproveedor  (int)        Filter by supplier ERP id (via artiprov join).
      * - limit        (int)        Max results per page. Default: 10, max: 100
      * - offset       (int)        Pagination offset. Default: 0
      *
@@ -398,6 +400,7 @@ class ProductsController extends ApiController
      *   GET /api/erp/products/filter?web[]=0&web[]=1&brand_id[]=5&brand_id[]=8
      *   GET /api/erp/products/filter?color_id=12&date_from=2026-01-01
      *   GET /api/erp/products/filter?web=1&brand_id=5&date_from=2026-03-01&date_to=2026-04-10
+     *   GET /api/erp/products/filter?idproveedor=12&description_empty=1
      */
     public function filter(Request $request): JsonResponse
     {
@@ -416,8 +419,10 @@ class ProductsController extends ApiController
             'brand_id.*' => 'integer|min:1',
             'color_id' => 'sometimes|array',
             'color_id.*' => 'integer|min:1',
-            'date_from' => 'sometimes|nullable|date',
-            'date_to' => 'sometimes|nullable|date',
+            'date_from'  => 'sometimes|nullable|date',
+            'date_to'    => 'sometimes|nullable|date',
+            'date_field' => 'sometimes|in:creation,modification',
+            'idproveedor' => 'sometimes|nullable|integer|min:1',
             'limit' => 'sometimes|integer|min:1|max:100',
             'offset' => 'sometimes|integer|min:0',
         ]);
@@ -471,23 +476,51 @@ class ProductsController extends ApiController
                     : $query->whereIn('idgrupo_cl', $grupos);
             }
 
-            // date range por fmodificacion
-            $dateTo = $request->filled('date_to')
-                ? $request->get('date_to')
-                : ($request->filled('date_from') ? now()->format('Y-m-d H:i:s') : null);
+            // date range por fcreacion o fmodificacion — TO_DATE() explícito para evitar
+            // conversión implícita Oracle que depende de NLS_DATE_FORMAT.
+            // date_field=creation → FCREACION (defecto), date_field=modification → FMODIFICACION
+            $dateCol = $request->get('date_field', 'creation') === 'modification'
+                ? '"FMODIFICACION"'
+                : '"FCREACION"';
+
+            $dateTo = null;
 
             if ($request->filled('date_from')) {
-                $query->where('fmodificacion', '>=', $request->get('date_from'));
+                $dateFrom = substr($request->get('date_from'), 0, 10); // solo YYYY-MM-DD
+                $query->whereRaw("{$dateCol} >= TO_DATE(?, 'YYYY-MM-DD')", [$dateFrom]);
+
+                $dateTo = $request->filled('date_to')
+                    ? substr($request->get('date_to'), 0, 10)
+                    : now()->format('Y-m-d');
+                $query->whereRaw("{$dateCol} < TO_DATE(?, 'YYYY-MM-DD') + 1", [$dateTo]);
+            } elseif ($request->filled('date_to')) {
+                $dateTo = substr($request->get('date_to'), 0, 10);
+                $query->whereRaw("{$dateCol} < TO_DATE(?, 'YYYY-MM-DD') + 1", [$dateTo]);
             }
 
-            if ($dateTo) {
-                $query->where('fmodificacion', '<=', $dateTo);
+            // Filtro por proveedor ERP vía join con artiprov (sin comillas para que Oracle
+            // auto-mayusculice los nombres de tabla/columna y evitar ORA-00904)
+            if ($request->filled('idproveedor')) {
+                $idproveedor = (int) $request->get('idproveedor');
+                $query->whereExists(function ($sub) use ($idproveedor) {
+                    $sub->selectRaw('1')
+                        ->from('artiprov')
+                        ->join('articulo', 'artiprov.idarticulo', '=', 'articulo.idarticulo')
+                        ->whereRaw('artiprov.idproveedor = ?', [$idproveedor])
+                        ->whereRaw('articulo.idmodelo = modelo.idmodelo')
+                        ->whereNull('artiprov.fbaja')
+                        ->whereNull('articulo.fbaja');
+                });
             }
 
             // Skip the expensive `count()` (full scan on MODELO without index on
             // fmodificacion/nombre). Callers should use `hasMore` for cursor-style
             // pagination. To force a count, pass ?include_total=1.
             $total = $request->boolean('include_total') ? (clone $query)->count() : null;
+
+            $orderByCol = $request->get('date_field', 'creation') === 'modification'
+                ? 'fmodificacion'
+                : 'fcreacion';
 
             $modelos = $query
                 ->with([
@@ -498,7 +531,7 @@ class ProductsController extends ApiController
                     'grupoCl.subfamiliaCl.familiaCl.categoriaCl.deporteCl:iddeporte_cl,descripcion,desc_corta,estado',
                     'articulos' => fn ($q) => $q->whereNull('fbaja')->orderBy('codigo'),
                 ])
-                ->orderBy('fmodificacion', 'desc')
+                ->orderBy($orderByCol, 'desc')
                 ->offset($offset)
                 ->limit($limit + 1)
                 ->get();
@@ -538,10 +571,10 @@ class ProductsController extends ApiController
                         'name' => $apDefault?->descripcion ?: $a->descripcion,
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
-                        'categorie' => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
-                        'grupo' => $a->idgrupo_cl,
+                        'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
+                        'grupo'        => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
-                        'sport_id' => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
+                        'sport_id'     => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
                         'supplier' => $aps->map(fn ($ap) => [
                             'id' => $ap->idartiprov,
                             'supplier_id' => $ap->idproveedor,
@@ -572,6 +605,7 @@ class ProductsController extends ApiController
                     'description' => $modelo->descripcion,
                     'available' => $modelo->estado,
                     'web' => $modelo->estado_publicado_web,
+                    'marca' => $modelo->idmarca,
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,
                         'description' => $familiaCl->descripcion,
@@ -621,8 +655,9 @@ class ProductsController extends ApiController
                         'web' => $request->has('web') ? array_map('intval', (array) $request->get('web')) : null,
                         'brand_id' => $request->filled('brand_id') ? array_map('intval', (array) $request->get('brand_id')) : null,
                         'color_id' => $request->filled('color_id') ? array_map('intval', (array) $request->get('color_id')) : null,
-                        'date_from' => $request->get('date_from'),
-                        'date_to' => $dateTo,
+                        'date_from'  => $request->get('date_from'),
+                        'date_to'    => $dateTo ?? null,
+                        'date_field' => $request->get('date_field', 'creation'),
                     ],
                     'execution_time_ms' => round($totalTime * 1000, 2),
                 ],

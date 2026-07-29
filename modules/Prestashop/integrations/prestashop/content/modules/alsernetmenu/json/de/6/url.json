@@ -1,0 +1,29 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/reiten/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/reiten/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/reiten/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/reiten/bestseller"
+          }
+        ]
+      }
+]

@@ -1,0 +1,41 @@
+[
+  {
+    "title": "Te puede interesar",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "subcategorie",
+    "items": [
+      {
+        "title": "Marcas",
+        "url": "/pesca/listado-marcas"
+      },
+      {
+        "title": "Ofertas",
+        "url": "/pesca/ofertas"
+      },
+      {
+        "title": "Novedades",
+        "url": "/pesca/novedades"
+      },
+      {
+        "title": "Los más vendidos",
+        "url": "/pesca/lo_mas_vendido"
+      },
+      {
+        "title": "Boletines",
+        "url": "/pesca/monthlynewsletters"
+      },
+      {
+        "title": "Blog",
+        "url": "/blog/pesca/"
+      },
+      {
+        "title": "Licencias de Pesca",
+        "url": "70770-licencias-de-pesca"
+      }
+    ]
+  }
+]

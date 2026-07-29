@@ -55,6 +55,6 @@ class Contrasena extends Model
      */
     public function contrasena()
     {
-        return $this->belongsTo(Contrasena::class, 'idcontrasena', 'idcontrasena');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Contrasena::class, 'idcontrasena', 'idcontrasena');
     }
 }

@@ -43,6 +43,6 @@ class Equivpuntoeuro extends Model
      */
     public function equivpuntoeuro()
     {
-        return $this->belongsTo(Equivpuntoeuro::class, 'idequivpuntoeuro', 'idequivpuntoeuro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Equivpuntoeuro::class, 'idequivpuntoeuro', 'idequivpuntoeuro');
     }
 }

@@ -61,6 +61,6 @@ class Origenpedidocli extends Model
      */
     public function origenpedidocli()
     {
-        return $this->belongsTo(Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
     }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "alsernet/etiquetatiendas",
+  "type": "prestashop-module",
+  "require": {
+    "phpoffice/phpspreadsheet": "^1.23",
+    "tecnickcom/tcpdf": "^6.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Alsernet\\Etiquetas\\": "src/"
+    }
+  }
+}

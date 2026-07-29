@@ -52,7 +52,7 @@ class Ordmfiltro extends Model
      */
     public function ordmfiltro()
     {
-        return $this->belongsTo(Ordmfiltro::class, 'idordmfiltro', 'idordmfiltro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Ordmfiltro::class, 'idordmfiltro', 'idordmfiltro');
     }
 
     /**
@@ -61,7 +61,7 @@ class Ordmfiltro extends Model
      */
     public function campo()
     {
-        return $this->belongsTo(Campo::class, 'idcampo', 'idcampo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Campo::class, 'idcampo', 'idcampo');
     }
 
     /**
@@ -70,6 +70,6 @@ class Ordmfiltro extends Model
      */
     public function mfiltro()
     {
-        return $this->belongsTo(Mfiltro::class, 'idmfiltro', 'idmfiltro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Mfiltro::class, 'idmfiltro', 'idmfiltro');
     }
 }

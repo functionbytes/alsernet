@@ -3,29 +3,22 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lang;
-use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Modules\Core\Models\Setting;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentAction;
 use Modules\Document\Entities\DocumentLoad;
-use Modules\Document\Entities\DocumentMail;
 use Modules\Document\Entities\DocumentNote;
-use Modules\Document\Entities\DocumentProductBlockade;
 use Modules\Document\Entities\DocumentSource;
-// use Modules\Document\Events\DocumentCreated; // Event no implementado
 use Modules\Document\Entities\DocumentStatus;
 use Modules\Document\Entities\DocumentStatusTransition;
 use Modules\Document\Entities\DocumentSync;
 use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentUploadType;
-use Modules\Document\Entities\DocumentValidationHistory;
 use Modules\Document\Entities\DocumentValidatorGroup;
+// use Modules\Document\Events\DocumentCreated; // Event no implementado
 use Modules\Document\Jobs\MailTemplateJob;
 use Modules\Document\Services\DocumentActionService;
 use Modules\Document\Services\DocumentEmailService;
@@ -250,7 +243,7 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Import failed: '.$e->getMessage(),
@@ -357,11 +350,28 @@ class DocumentsController extends Controller
             }
             $document->save();
 
+            // Si el pedido incluye LICENCIA-B, crear nota interna, cambiar estado y enviar email
+            if ($document->fresh()->hasLicenciaBProduct()) {
+                $awaitingStatus = DocumentStatus::where('key', 'awaiting_documents')->first();
+                if ($awaitingStatus) {
+                    $document->status_id = $awaitingStatus->id;
+                    $document->save();
+                }
+                $document->notes()->create([
+                    'content'     => 'LICENCIA-B detectada. Pedido pendiente de revisión manual. Asignar a RECOGIDA CORUÑA (10) en ERP.',
+                    'is_internal' => true,
+                ]);
+                MailTemplateJob::dispatch($document, 'fusil_license');
+            }
+
             // Fire event
             // DocumentCreated::dispatch($document); // Event no implementado
 
+
+
             return $document;
         } catch (\Exception $e) {
+
 
             return null;
         }
@@ -428,7 +438,7 @@ class DocumentsController extends Controller
 
                 // Check for product blockades using source_id (id_origen in ERP = source_id in our table)
                 if ($idArticulo) {
-                    $blockades = DocumentProductBlockade::where('source_id', $idArticulo)
+                    $blockades = \Modules\Document\Entities\DocumentProductBlockade::where('source_id', $idArticulo)
                         ->pluck('blockade_type')
                         ->toArray();
 
@@ -451,18 +461,18 @@ class DocumentsController extends Controller
             // Store unique blockades found in document metadata
             if (! empty($documentBlockades)) {
                 $uniqueBlockades = array_unique($documentBlockades);
-
+               
             }
 
         } catch (\Exception $e) {
-
+           
         }
     }
 
     /**
      * Obtiene órdenes disponibles para el Select2 dinámico
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getAvailableOrders(Request $request)
     {
@@ -514,6 +524,10 @@ class DocumentsController extends Controller
     {
         $document = Document::findByUid($uid);
 
+        if (! $document) {
+            abort(404, 'Documento no encontrado.');
+        }
+
         // Filtrar por tipo de documentos si se especifica
         $type = request()->query('type');
 
@@ -548,6 +562,9 @@ class DocumentsController extends Controller
             } catch (\Exception $e) {
                 // Si hay error, saltamos la imagen
                 $pdf->AddPage();
+                // SetFont es obligatorio antes de Cell(), de lo contrario FPDF lanza
+                // "No font has been set".
+                $pdf->SetFont('Arial', '', 12);
                 $pdf->Cell(0, 10, 'Error con imagen: '.basename($path));
 
                 continue;
@@ -594,8 +611,16 @@ class DocumentsController extends Controller
                     $pdf->useTemplate($tpl);
                 }
             } catch (\Exception $e) {
-
+              
             }
+        }
+
+        // Si no se añadió ninguna página (sin imágenes ni PDFs válidos), generar una
+        // página de aviso para evitar un PDF de 0 páginas / error de fuente al renderizar.
+        if ($pdf->PageNo() === 0) {
+            $pdf->AddPage();
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->Cell(0, 10, 'No hay documentos disponibles para mostrar.');
         }
 
         return response($pdf->Output('S'), 200)
@@ -614,15 +639,50 @@ class DocumentsController extends Controller
         }
 
         $info = getimagesize($srcPath);
-        if ($info === false) {
-            throw new \Exception('Archivo no es una imagen válida: '.$srcPath);
+
+        // getimagesize() no soporta HEIC/HEIF (fotos de iPhone). Detectar por mime real
+        // y convertir a JPEG con Imagick para poder incrustarlas en el PDF.
+        $realMime = function_exists('mime_content_type') ? mime_content_type($srcPath) : null;
+        if ($info === false || in_array($realMime, ['image/heic', 'image/heif'], true)) {
+            if (! extension_loaded('imagick')) {
+                throw new \Exception('Imagen no soportada (HEIC) y Imagick no disponible: '.$srcPath);
+            }
+
+            $converted = $destDir.'/'.pathinfo($srcPath, PATHINFO_FILENAME).'_heic.jpg';
+            try {
+                $imagick = new \Imagick($srcPath);
+                $imagick->setImageFormat('jpeg');
+                $imagick->writeImage($converted);
+                $imagick->clear();
+                $imagick->destroy();
+            } catch (\Throwable $e) {
+                throw new \Exception('No se pudo convertir la imagen HEIC: '.$srcPath.' ('.$e->getMessage().')');
+            }
+
+            return $converted;
         }
 
         $mime = $info['mime'];
 
         switch ($mime) {
             case 'image/png':
-                return $srcPath; // ya es PNG válido
+                // El byte 24 del fichero PNG contiene el bit depth; FPDF solo soporta 8 bits.
+                $f = fopen($srcPath, 'rb');
+                fseek($f, 24);
+                $bitDepth = ord(fread($f, 1));
+                fclose($f);
+
+                if ($bitDepth <= 8) {
+                    return $srcPath;
+                }
+
+                // PNG de 16 bits → convertir a 8 bits con GD
+                $image = imagecreatefrompng($srcPath);
+                if ($image === false) {
+                    throw new \Exception('No se pudo leer PNG 16-bit: '.$srcPath);
+                }
+                imagesavealpha($image, true);
+                break;
             case 'image/jpeg':
                 $image = imagecreatefromjpeg($srcPath);
                 break;
@@ -707,7 +767,7 @@ class DocumentsController extends Controller
                     try {
                         $emailSent = $this->sendEmailBasedOnStatus($document, $newStatus->key, $request);
                     } catch (\Exception $e) {
-
+                       
                     }
                 }
             }
@@ -1031,7 +1091,7 @@ class DocumentsController extends Controller
      * Sincroniza todos los documentos con los datos de sus órdenes
      * Incluye importación de productos
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncAllDocuments()
     {
@@ -1116,7 +1176,7 @@ class DocumentsController extends Controller
      * Crea un nuevo documento si no existe, o sincroniza los existentes
      * Incluye importación de productos
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncByOrderId(Request $request)
     {
@@ -1363,6 +1423,7 @@ class DocumentsController extends Controller
             $uploadedDocs[$docType] = $media;
         }
 
+
         // Calcular documentos faltantes
         $missingDocs = array_diff_key($requiredDocuments, $uploadedDocs);
         $allUploaded = empty($missingDocs);
@@ -1475,7 +1536,7 @@ class DocumentsController extends Controller
                 if ($newStatus) {
                     try {
                         // Obtener el servicio de email
-                        $emailService = app(DocumentEmailService::class);
+                        $emailService = app(\Modules\Document\Services\DocumentEmailService::class);
 
                         // Determinar qué email enviar basado en el nuevo estado
                         // Buscar si el nuevo estado corresponde a "aprobado", "rechazado", etc.
@@ -1487,7 +1548,7 @@ class DocumentsController extends Controller
                         } elseif (strpos($statusSlug, 'rejected') !== false || strpos($statusSlug, 'rejected') !== false) {
                             // Enviar email de rechazo (sin razón especificada)
                             $emailService->sendRejectionEmail($document, 'El documento ha sido rechazado.', [], auth()->id());
-                        }
+                        } 
                     } catch (\Exception $e) {
                     }
                 }
@@ -1645,7 +1706,7 @@ class DocumentsController extends Controller
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $docType => $file) {
                     if ($file && $file->isValid()) {
-
+                       
                         // Recargar media del documento para asegurar que tenemos la versión más reciente
                         $document->load('media');
 
@@ -1697,6 +1758,7 @@ class DocumentsController extends Controller
                 }
             }
 
+           
             if ($uploadedCount === 0) {
                 return response()->json([
                     'success' => false,
@@ -1950,10 +2012,13 @@ class DocumentsController extends Controller
             $uploadedDocs = [];
             $allMedia = $document->media()->where('collection_name', 'documents')->get();
 
+
             foreach ($allMedia as $media) {
                 $docType = $media->getCustomProperty('document_type', 'documents');
                 $uploadedDocs[$docType] = $media;
             }
+
+           
 
             // Calcular documentos faltantes
             $missingDocs = array_diff_key($requiredDocuments, $uploadedDocs);
@@ -1973,7 +2038,7 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
-
+           
             return response()->json([
                 'success' => false,
                 'message' => 'Error al refrescar la sección: '.$e->getMessage(),
@@ -2384,7 +2449,7 @@ class DocumentsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al enviar correo: '.$e->getMessage(),
@@ -2434,6 +2499,7 @@ class DocumentsController extends Controller
             ]);
 
         } catch (\Exception $e) {
+           
 
             return response()->json([
                 'success' => false,
@@ -2573,7 +2639,7 @@ class DocumentsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cargar adjunto: '.$e->getMessage(),
@@ -2700,7 +2766,7 @@ class DocumentsController extends Controller
 
             // Validar que el usuario asignado existe y pertenece al grupo correcto (si se especifica)
             if ($assignedUserId) {
-                $user = User::find($assignedUserId);
+                $user = \App\Models\User::find($assignedUserId);
                 if (! $user) {
                     return response()->json([
                         'success' => false,
@@ -2745,14 +2811,14 @@ class DocumentsController extends Controller
             if ($document->validation_status === 'in_validation') {
                 $response['next_group'] = $document->current_validator_group;
                 $response['assigned_to'] = $document->assigned_user_id
-                    ? User::find($document->assigned_user_id)->full_name
+                    ? \App\Models\User::find($document->assigned_user_id)->full_name
                     : 'Todo el grupo';
             }
 
             return response()->json($response);
 
         } catch (\Exception $e) {
-
+          
             return response()->json([
                 'success' => false,
                 'message' => 'Error al aprobar etapa: '.$e->getMessage(),
@@ -2841,12 +2907,12 @@ class DocumentsController extends Controller
             $isoCode = strtolower(trim($order->lang?->iso_code));
 
             // Find Laravel language by iso_code
-            $laravelLang = Lang::iso($isoCode);
+            $laravelLang = \App\Models\Lang::iso($isoCode);
 
             if ($laravelLang) {
                 $langId = $laravelLang->id;
             } else {
-                $defaultLang = Lang::iso('es');
+                $defaultLang = \App\Models\Lang::iso('es');
                 $langId = $defaultLang ? $defaultLang->id : null;
             }
         }
@@ -2886,6 +2952,20 @@ class DocumentsController extends Controller
         }
         $document->save();
 
+        // Si el pedido incluye LICENCIA-B, crear nota interna, cambiar estado y enviar email de licencia federativa
+        if ($document->fresh()->hasLicenciaBProduct()) {
+            $awaitingStatus = \Modules\Document\Entities\DocumentStatus::where('key', 'awaiting_documents')->first();
+            if ($awaitingStatus) {
+                $document->status_id = $awaitingStatus->id;
+                $document->save();
+            }
+            $document->notes()->create([
+                'content'     => 'LICENCIA-B detectada. Pedido pendiente de revisión manual. Asignar a RECOGIDA CORUÑA (10) en ERP.',
+                'is_internal' => true,
+            ]);
+            MailTemplateJob::dispatch($document, 'fusil_license');
+        }
+
         return true;
     }
 
@@ -2915,7 +2995,7 @@ class DocumentsController extends Controller
      */
     public function emailPreview($mailUid)
     {
-        $mail = DocumentMail::where('uid', $mailUid)->firstOrFail();
+        $mail = \Modules\Document\Entities\DocumentMail::where('uid', $mailUid)->firstOrFail();
         $document = $mail->document;
 
         return view('documents::documents.emails.preview', compact('mail', 'document'));
@@ -2949,7 +3029,7 @@ class DocumentsController extends Controller
     {
         $stage = $stageNumber;
 
-        $validationHistory = DocumentValidationHistory::where('stage_number', $stage)
+        $validationHistory = \Modules\Document\Entities\DocumentValidationHistory::where('stage_number', $stage)
             ->with(['document', 'validator'])
             ->orderBy('validated_at', 'desc')
             ->paginate(15);
@@ -2982,7 +3062,7 @@ class DocumentsController extends Controller
                 'disks' => $disks,
             ]);
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener los discos configurados',
@@ -3045,7 +3125,7 @@ class DocumentsController extends Controller
 
                     }
                 } catch (\Exception $e) {
-
+                   
                 }
             }
 
@@ -3063,13 +3143,14 @@ class DocumentsController extends Controller
                 'disk' => $diskName,
             ]);
 
-        } catch (ValidationException $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation error',
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            
 
             return response()->json([
                 'status' => 'error',
@@ -3090,7 +3171,7 @@ class DocumentsController extends Controller
         }
 
         // Obtener todos los grupos de validación que el usuario pertenece
-        $validatorGroups = DocumentValidatorGroup::whereHas(
+        $validatorGroups = \Modules\Document\Entities\DocumentValidatorGroup::whereHas(
             'users',
             fn ($q) => $q->where('users.id', $user->id)
         )->pluck('key')->toArray();
@@ -3125,12 +3206,12 @@ class DocumentsController extends Controller
 
             // Log del inicio de la carga
             $documentsArray = $request->file('documents') ?? [];
-
+            
             // Procesar cada archivo del array documents
             if ($request->hasFile('documents')) {
                 foreach ($request->file('documents') as $docType => $file) {
                     if ($file && $file->isValid()) {
-
+                   
                         // Recargar media del documento para asegurar que tenemos la versión más reciente
                         $document->load('media');
 
@@ -3138,6 +3219,7 @@ class DocumentsController extends Controller
                         $existingMedia = null;
                         foreach ($document->media as $media) {
                             $storedType = $media->getCustomProperty('document_type');
+                            
 
                             if ($storedType === $docType) {
                                 $existingMedia = $media;
@@ -3146,7 +3228,7 @@ class DocumentsController extends Controller
                         }
 
                         if ($existingMedia) {
-
+                            
                             $existingMedia->delete();
                         }
 
@@ -3157,6 +3239,7 @@ class DocumentsController extends Controller
 
                         // Verificar que el custom property se guardó correctamente
                         $savedProperty = $media->getCustomProperty('document_type');
+                        
 
                         // Asegurar que el archivo es accesible al servidor web
                         $mediaPath = $media->getPath();
@@ -3239,12 +3322,14 @@ class DocumentsController extends Controller
         return $documentType?->id;
     }
 
+
     public function getUploadUrl(Document $document)
     {
         $uploadUrl = $document->buildUploadUrl();
 
         return response()->json([
-            'url' => $uploadUrl,
+            'url' => $uploadUrl
         ]);
     }
+
 }

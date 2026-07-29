@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Cela peut vous intéresser",
+        "language": "fr",
+        "position": 3,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Marques",
+            "url": "/fr/aventure/liste-marques"
+          },
+          {
+            "title": "Nouveautés",
+            "url": "/fr/aventure/nouveautes"
+          },
+          {
+            "title": "Les plus vendus",
+            "url": "/fr/aventure/les_plus_vendus"
+          },
+          {
+            "title": "Forfaits de plongée",
+            "url": "/fr/forfaits-plongee"
+          }
+        ]
+      }
+]

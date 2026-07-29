@@ -40,7 +40,7 @@
                         <div class="d-flex align-items-center gap-3 p-3 rounded-3 border">
                             <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0"
                                  style="width:40px;height:40px;background:#fce8e8;">
-                                <i class="fas {{ $e['icon'] }}" style="color:#90bb13;"></i>
+                                <i class="fas {{ $e['icon'] }}" style="color:#13C672;"></i>
                             </div>
                             <div style="min-width:0;flex:1;">
                                 <div class="fw-semibold small">{{ $e['label'] }}</div>
@@ -49,7 +49,7 @@
                             <div class="d-flex gap-1 flex-shrink-0">
                                 <button class="btn btn-sm btn-outline-secondary" style="font-size:0.72rem;padding:3px 8px;"
                                         onclick="exportData('{{ $e['key'] }}','json')">JSON</button>
-                                <button class="btn btn-sm" style="font-size:0.72rem;padding:3px 8px;background:#90bb13;color:#fff;border:none;"
+                                <button class="btn btn-sm" style="font-size:0.72rem;padding:3px 8px;background:#13C672;color:#fff;border:none;"
                                         onclick="exportData('{{ $e['key'] }}','csv')">CSV</button>
                             </div>
                         </div>
@@ -77,10 +77,10 @@
     .map-reset-btn { position: absolute; top: 10px; right: 10px; z-index: 999; }
     .progress-thin { height: 4px; }
     .cmp-up   { color: #2e7d32; }
-    .cmp-down { color: #90bb13; }
+    .cmp-down { color: #13C672; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     /* Brand icon boxes */
-    .brand-box-red   { background: #fce8e8; color: #90bb13; }
+    .brand-box-red   { background: #fce8e8; color: #13C672; }
     .brand-box-dark  { background: #e8e8e8; color: #333333; }
     .brand-box-red2  { background: #f5d0d0; color: #7b0000; }
     .brand-box-gray  { background: #efefef; color: #555555; }
@@ -244,7 +244,7 @@
                 { name: 'Vistas de página', data: views }
             ],
             chart: { type: 'area', height: 295, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
-            colors: ['#90bb13', '#333333'],
+            colors: ['#13C672', '#333333'],
             stroke: { curve: 'smooth', width: 2 },
             fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.15, opacityTo: 0.02, stops: [0, 100] } },
             xaxis: { categories: dates, labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
@@ -276,7 +276,7 @@
         });
 
         const sparks = {
-            '#spark-sessions':  { data: chartData.map(r => parseInt(r.sessions || 0)),                              color: '#90bb13', type: 'area' },
+            '#spark-sessions':  { data: chartData.map(r => parseInt(r.sessions || 0)),                              color: '#13C672', type: 'area' },
             '#spark-users':     { data: chartData.map(r => parseInt(r.totalUsers || 0)),                            color: '#333333', type: 'bar'  },
             '#spark-pageviews': { data: chartData.map(r => parseInt(r.screenPageViews || 0)),                       color: '#7b0000', type: 'bar'  },
             '#spark-bounce':    { data: chartData.map(r => parseFloat((r.bounceRate || 0) * 100).toFixed(1)),       color: '#555555', type: 'area' },
@@ -293,7 +293,7 @@
 
     // ─── Channel trend (stacked area) ────────────────────────────────────
     const channelColors = {
-        organic: '#90bb13', cpc: '#333333', social: '#7b0000',
+        organic: '#13C672', cpc: '#333333', social: '#7b0000',
         referral: '#555555', email: '#c41c1c', direct: '#888888',
         none: '#888888', '(none)': '#888888'
     };
@@ -345,7 +345,7 @@
                     series: series,
                     chart: { type: 'heatmap', height: 200, toolbar: { show: false } },
                     dataLabels: { enabled: false },
-                    colors: ['#90bb13'],
+                    colors: ['#13C672'],
                     xaxis: { labels: { style: { fontSize: '10px' } } },
                     tooltip: { theme: 'light', y: { formatter: v => fmt(v) + ' sesiones' } },
                     legend: { show: false }
@@ -355,7 +355,7 @@
     }
 
     // ─── Browsers ────────────────────────────────────────────────────────
-    const browserChartColors = ['#90bb13','#333333','#7b0000','#555555','#c41c1c','#888888'];
+    const browserChartColors = ['#13C672','#333333','#7b0000','#555555','#c41c1c','#888888'];
     const browserBgCls  = ['bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle'];
     const browserTxtCls = ['text-primary','text-primary','text-primary','text-primary','text-primary','text-primary'];
     const browserIconMap = { chrome:'fab fa-chrome', safari:'fab fa-safari', firefox:'fab fa-firefox-browser', edge:'fab fa-edge', opera:'fab fa-opera', samsung:'fas fa-mobile-alt' };
@@ -447,7 +447,7 @@
         if (!sessions) return '#f0f0f0';
         const r = sessions / max;
         if (r > 0.75) return '#7b0000';
-        if (r > 0.5)  return '#90bb13';
+        if (r > 0.5)  return '#13C672';
         if (r > 0.25) return '#c41c1c';
         if (r > 0.1)  return '#d94444';
         if (r > 0.02) return '#f0aaaa';
@@ -490,12 +490,12 @@
                 countryLayers[name] = layer;
 
                 const tooltipContent = sessions
-                    ? `<strong>${name}</strong><br><span style="color:#90bb13">${fmt(sessions)}</span> sesiones`
+                    ? `<strong>${name}</strong><br><span style="color:#13C672">${fmt(sessions)}</span> sesiones`
                     : `<strong>${name}</strong><br><span class="text-muted">Sin visitas</span>`;
                 layer.bindTooltip(tooltipContent, { sticky: true, className: 'leaflet-tooltip-custom' });
 
                 layer.on('mouseover', function () {
-                    if (sessions) { this.setStyle({ weight: 2, color: '#90bb13', fillOpacity: 1 }); }
+                    if (sessions) { this.setStyle({ weight: 2, color: '#13C672', fillOpacity: 1 }); }
                 });
                 layer.on('mouseout', function () {
                     geoLayer.resetStyle(this);
@@ -534,18 +534,18 @@
                         .fail(() => $('#visits-map').html('<div class="text-center py-5 text-muted"><i class="fas fa-exclamation-triangle"></i> No se pudo cargar el mapa</div>'));
                 }
 
-                const rankColor = i => i === 0 ? '#90bb13' : i === 1 ? '#c41c1c' : i === 2 ? '#d94444' : '#ccc';
+                const rankColor = i => i === 0 ? '#13C672' : i === 1 ? '#c41c1c' : i === 2 ? '#d94444' : '#ccc';
                 $('#countries-list').html(res.data.slice(0, 15).map((c, i) => `
                     <div class="country-item" data-country="${escHtml(c.country)}">
                         <span class="fw-bold flex-shrink-0 me-2" style="font-size:0.75rem;width:18px;text-align:right;color:${rankColor(i)};">${i + 1}</span>
                         <div style="min-width:0;flex:1;">
                             <div class="fw-semibold text-truncate mb-1" style="font-size:0.82rem;">${escHtml(c.country)}</div>
                             <div class="progress rounded-pill" style="height:6px;">
-                                <div class="progress-bar rounded-pill" style="width:${c.percentage}%;background:#90bb13;"></div>
+                                <div class="progress-bar rounded-pill" style="width:${c.percentage}%;background:#13C672;"></div>
                             </div>
                         </div>
                         <div class="text-end flex-shrink-0 ms-3">
-                            <div class="fw-bold lh-1" style="font-size:0.95rem;color:#90bb13;">${fmt(c.sessions)}</div>
+                            <div class="fw-bold lh-1" style="font-size:0.95rem;color:#13C672;">${fmt(c.sessions)}</div>
                             <div class="text-muted lh-1 mt-1" style="font-size:0.7rem;">${c.percentage}%</div>
                         </div>
                     </div>`).join(''));
@@ -558,7 +558,7 @@
 
     // ─── Devices ─────────────────────────────────────────────────────────
     const deviceIcons  = { desktop: 'fas fa-desktop', mobile: 'fas fa-mobile-alt', tablet: 'fas fa-tablet-alt' };
-    const deviceColors = { desktop: '#90bb13', mobile: '#333333', tablet: '#7b0000' };
+    const deviceColors = { desktop: '#13C672', mobile: '#333333', tablet: '#7b0000' };
     const deviceBg     = { desktop: 'bg-primary-subtle', mobile: 'bg-primary-subtle', tablet: 'bg-primary-subtle' };
     const deviceTxt    = { desktop: 'text-primary',      mobile: 'text-primary',      tablet: 'text-primary'     };
     const deviceLabel  = { desktop: 'Computadoras de escritorio', mobile: 'Teléfonos móviles', tablet: 'Tablets y similares' };
@@ -607,7 +607,7 @@
     }
 
     // ─── OS ──────────────────────────────────────────────────────────────
-    const osColors  = ['#90bb13','#333333','#7b0000','#555555','#c41c1c','#888888','#d94444','#000000','#f0aaaa','#f5f6f8'];
+    const osColors  = ['#13C672','#333333','#7b0000','#555555','#c41c1c','#888888','#d94444','#000000','#f0aaaa','#f5f6f8'];
     const osBgCls   = ['bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle','bg-primary-subtle'];
     const osTxtCls  = ['text-primary','text-primary','text-primary','text-primary','text-primary','text-primary'];
     const osIconMap = { windows:'fab fa-windows', android:'fab fa-android', ios:'fab fa-apple', macos:'fab fa-apple', linux:'fab fa-linux', chrome:'fab fa-chrome' };
@@ -834,7 +834,7 @@
         const btn = (p, label, disabled, active) => {
             const base  = 'pager-btn d-inline-flex align-items-center justify-content-center border-0 rounded';
             const style = active
-                ? `background:#90bb13;color:#fff;font-weight:600;`
+                ? `background:#13C672;color:#fff;font-weight:600;`
                 : (disabled ? 'background:transparent;color:#ccc;cursor:default;' : 'background:transparent;color:#555;');
             return `<button class="${base}" style="width:30px;height:30px;font-size:0.8rem;${style}"` +
                    ` data-pkey="${key}" data-page="${p}" ${disabled ? 'disabled' : ''}>${label}</button>`;

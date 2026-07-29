@@ -19,7 +19,7 @@ class DatabaseCheck extends Check
             DB::connection()->getPdo();
 
             // Simple query test
-            DB::select('SELECT 1');
+            $users = DB::table('users')->count();
 
             $responseTime = round((microtime(true) - $startTime) * 1000, 2);
 
@@ -28,6 +28,7 @@ class DatabaseCheck extends Check
                 ->meta([
                     'connection' => config('database.default'),
                     'response_time_ms' => $responseTime,
+                    'users_count' => $users,
                 ]);
         } catch (\Exception $e) {
             $result->failed()

@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Cobro\Formapago;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -54,7 +53,7 @@ class Lcierre extends Model
      */
     public function lcierre()
     {
-        return $this->belongsTo(Lcierre::class, 'idlcierre', 'idlcierre');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Lcierre::class, 'idlcierre', 'idlcierre');
     }
 
     /**
@@ -63,7 +62,7 @@ class Lcierre extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -72,6 +71,6 @@ class Lcierre extends Model
      */
     public function cierre()
     {
-        return $this->belongsTo(Cierre::class, 'idcierre', 'idcierre');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Cierre::class, 'idcierre', 'idcierre');
     }
 }

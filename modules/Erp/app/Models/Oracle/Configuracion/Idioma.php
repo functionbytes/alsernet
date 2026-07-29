@@ -60,6 +60,6 @@ class Idioma extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
     }
 }

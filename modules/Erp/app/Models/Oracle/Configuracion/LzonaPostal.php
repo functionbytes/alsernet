@@ -52,7 +52,7 @@ class LzonaPostal extends Model
      */
     public function lzonaPostal()
     {
-        return $this->belongsTo(LzonaPostal::class, 'idlzona_postal', 'idlzona_postal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\LzonaPostal::class, 'idlzona_postal', 'idlzona_postal');
     }
 
     /**
@@ -61,7 +61,7 @@ class LzonaPostal extends Model
      */
     public function zonaPostal()
     {
-        return $this->belongsTo(ZonaPostal::class, 'idzona_postal', 'idzona_postal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ZonaPostal::class, 'idzona_postal', 'idzona_postal');
     }
 
     /**
@@ -70,6 +70,6 @@ class LzonaPostal extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
     }
 }

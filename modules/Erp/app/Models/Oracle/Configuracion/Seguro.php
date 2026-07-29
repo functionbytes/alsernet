@@ -74,7 +74,7 @@ class Seguro extends Model
      */
     public function tbonoPromocion()
     {
-        return $this->belongsTo(TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
     }
 
     /**
@@ -83,6 +83,6 @@ class Seguro extends Model
      */
     public function seguro()
     {
-        return $this->belongsTo(Seguro::class, 'idseguro', 'idseguro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Seguro::class, 'idseguro', 'idseguro');
     }
 }

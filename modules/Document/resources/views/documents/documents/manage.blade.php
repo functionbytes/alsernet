@@ -64,6 +64,16 @@
 
         <div class="col-lg-8">
 
+            <!-- Aviso licencia federativa para fusiles de pesca submarina -->
+            @if($document->hasFusilProducts())
+                <div class="fw-bold text-white mb-3 py-3 px-4"
+                     style="background-color: #dc3545; border-radius: 6px; font-size: 0.95rem;">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    PARA LA COMPRA DE UN FUSIL DE PESCA SUBMARINA ES NECESARIA UNA LICENCIA FEDERATIVA.
+                    Por favor, añade el número de tu licencia en OBSERVACIONES.
+                </div>
+            @endif
+
             <!-- Products List (Permission-Controlled) -->
             @if(auth()->user()->canDocument('view-products-list'))
                 @include('documents::documents.documents.components.management.products-list')
@@ -92,8 +102,7 @@
             @endif
 
             <!-- Upload Section (Permission-Controlled & Read-Only Check) -->
-            @if(auth()->user()->canDocument('view-document-upload'))
-                @if(!$document->isFullyApproved())
+            @if(auth()->user()->canDocument('view-document-upload') && !$document->isFullyApproved())
                     @include('documents::documents.documents.components.files.upload-section', [
                         'document' => $document,
                         'requiredDocuments' => $requiredDocuments,
@@ -101,22 +110,6 @@
                         'missingDocs' => $missingDocs,
                         'allUploaded' => $allUploaded,
                     ])
-                @elseif($allUploaded && $document->media->count() > 0)
-                    {{-- Aprobado: se ocultan los controles de carga/edicion (read-only),
-                         pero el enlace al PDF combinado de todos los documentos debe
-                         seguir disponible — es una accion de solo lectura. --}}
-                    <div class="card mb-3">
-                        <div class="card-header p-3 bg-white border-bottom">
-                            <h5 class="mb-1 fw-bold">Documentos cargados</h5>
-                            <p class="small mb-0 text-muted">Todos los documentos requeridos han sido recibidos y aprobados</p>
-                        </div>
-                        <div class="card-body">
-                            <a href="{{ route('documents.summary', $document->uid) }}" target="_blank" class="btn btn-primary w-100">
-                                <i class="fa fa-file-pdf"></i> Ver todos los documentos (PDF)
-                            </a>
-                        </div>
-                    </div>
-                @endif
             @endif
 
             <!-- Additional Attachments Section (Permission-Controlled & Read-Only Check) -->

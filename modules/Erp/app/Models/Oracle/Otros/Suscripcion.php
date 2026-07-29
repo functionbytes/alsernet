@@ -48,7 +48,7 @@ class Suscripcion extends Model
      */
     public function suscripcion()
     {
-        return $this->belongsTo(Suscripcion::class, 'idsuscripcion', 'idsuscripcion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Suscripcion::class, 'idsuscripcion', 'idsuscripcion');
     }
 
     /**
@@ -57,7 +57,7 @@ class Suscripcion extends Model
      */
     public function evento()
     {
-        return $this->belongsTo(Evento::class, 'idevento', 'idevento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Evento::class, 'idevento', 'idevento');
     }
 
     /**
@@ -66,6 +66,6 @@ class Suscripcion extends Model
      */
     public function usuariosistema()
     {
-        return $this->belongsTo(Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
     }
 }

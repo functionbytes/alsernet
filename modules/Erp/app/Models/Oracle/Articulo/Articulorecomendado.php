@@ -52,7 +52,7 @@ class Articulorecomendado extends Model
      */
     public function articulorecomendado()
     {
-        return $this->belongsTo(Articulorecomendado::class, 'idarticulorecomendado', 'idarticulorecomendado');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulorecomendado::class, 'idarticulorecomendado', 'idarticulorecomendado');
     }
 
     /**
@@ -61,6 +61,6 @@ class Articulorecomendado extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

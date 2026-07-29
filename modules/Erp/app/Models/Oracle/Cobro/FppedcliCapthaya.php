@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Cobro;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Cliente\ClientetarjetaCent;
-use Modules\Erp\Models\Oracle\Otros\Vale;
-use Modules\Erp\Models\Oracle\Pedido\PedidocliCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -61,7 +58,7 @@ class FppedcliCapthaya extends Model
      */
     public function fppedcli()
     {
-        return $this->belongsTo(FppedcliCapthaya::class, 'idfppedcli', 'idfppedcli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\FppedcliCapthaya::class, 'idfppedcli', 'idfppedcli');
     }
 
     /**
@@ -70,7 +67,7 @@ class FppedcliCapthaya extends Model
      */
     public function cobrocli()
     {
-        return $this->belongsTo(CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\CobrocliCapthaya::class, 'idcobrocli', 'idcobrocli');
     }
 
     /**
@@ -79,7 +76,7 @@ class FppedcliCapthaya extends Model
      */
     public function pedido()
     {
-        return $this->belongsTo(PedidocliCapthaya::class, 'idpedidocli', 'idpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidocliCapthaya::class, 'idpedidocli', 'idpedidocli');
     }
 
     /**
@@ -88,7 +85,7 @@ class FppedcliCapthaya extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -97,7 +94,7 @@ class FppedcliCapthaya extends Model
      */
     public function clientetarjeta()
     {
-        return $this->belongsTo(ClientetarjetaCent::class, 'idclientetarjeta', 'idclientetarjeta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientetarjetaCent::class, 'idclientetarjeta', 'idclientetarjeta');
     }
 
     /**
@@ -106,6 +103,6 @@ class FppedcliCapthaya extends Model
      */
     public function vale()
     {
-        return $this->belongsTo(Vale::class, 'idvale', 'idvale');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Vale::class, 'idvale', 'idvale');
     }
 }

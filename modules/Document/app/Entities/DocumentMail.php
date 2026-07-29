@@ -3,9 +3,9 @@
 namespace Modules\Document\Entities;
 
 use App\Models\User;
+use Modules\Document\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Document\Traits\HasUid;
 use Modules\Mailer\Models\MailerTemplate;
 
 class DocumentMail extends Model

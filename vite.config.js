@@ -8,7 +8,8 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'modules/HelpdeskChatFlow/resources/js/chatflow-editor.tsx', // ChatFlow visual editor
+                'modules/Helpdesk/resources/js/helpdesk/app.tsx', // React islands entry point
+                'modules/Helpdesk/resources/js/helpdesk/widget/widget-entry.tsx', // LiveChat widget
             ],
             refresh: true,
         }),

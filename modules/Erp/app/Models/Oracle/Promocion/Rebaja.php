@@ -54,6 +54,6 @@ class Rebaja extends Model
      */
     public function rebaja()
     {
-        return $this->belongsTo(Rebaja::class, 'idrebaja', 'idrebaja');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Rebaja::class, 'idrebaja', 'idrebaja');
     }
 }

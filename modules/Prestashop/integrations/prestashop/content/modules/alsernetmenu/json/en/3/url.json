@@ -1,0 +1,33 @@
+[
+    {
+        "title":"It may interest you",
+        "url":"",
+        "action":"",
+        "type": "special",
+        "column":"1",
+        "id":"2",
+        "position":"2",
+        "items":[
+       {
+          "title": "See our brands",
+          "url": "/en/golf/brand-list"
+        },
+        {
+          "title": "Deals",
+          "url": "/en/golf/deals"
+        },
+        {
+          "title": "News",
+          "url": "/en/golf/news?deporte=golf&id=3&rewrite=golf"
+        },
+        {
+          "title": "Best sellers",
+          "url": "/en/golf/most_sold"
+        },
+        {
+          "title": "Golf Equipment Diagnosis",
+          "url": "/en/golf-equipment-diagnosis"
+        }
+      ]
+}
+]

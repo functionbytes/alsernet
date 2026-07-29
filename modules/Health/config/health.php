@@ -1,10 +1,5 @@
 <?php
 
-use Spatie\Health\Models\HealthCheckResultHistoryItem;
-use Spatie\Health\Notifications\CheckFailedNotification;
-use Spatie\Health\Notifications\Notifiable;
-use Spatie\Health\ResultStores\EloquentHealthResultStore;
-
 return [
     /*
      * A result store is responsible for saving the results of the checks. The
@@ -12,10 +7,10 @@ return [
      * can use multiple stores at the same time.
      */
     'result_stores' => [
-        EloquentHealthResultStore::class => [
+        Spatie\Health\ResultStores\EloquentHealthResultStore::class => [
             'connection' => env('HEALTH_DB_CONNECTION', env('DB_CONNECTION')),
-            'model' => HealthCheckResultHistoryItem::class,
-            'keep_history_for_days' => 90,
+            'model' => Spatie\Health\Models\HealthCheckResultHistoryItem::class,
+            'keep_history_for_days' => 5,
         ],
 
         /*
@@ -43,14 +38,14 @@ return [
         'enabled' => true,
 
         'notifications' => [
-            CheckFailedNotification::class => ['mail'],
+            Spatie\Health\Notifications\CheckFailedNotification::class => ['mail'],
         ],
 
         /*
          * Here you can specify the notifiable to which the notifications should be sent. The default
          * notifiable will use the variables specified in this config file.
          */
-        'notifiable' => Notifiable::class,
+        'notifiable' => Spatie\Health\Notifications\Notifiable::class,
 
         /*
          * When checks start failing, you could potentially end up getting

@@ -51,7 +51,7 @@ class Codigopostal extends Model
      */
     public function codigopostal()
     {
-        return $this->belongsTo(Codigopostal::class, 'idcodigopostal', 'idcodigopostal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Codigopostal::class, 'idcodigopostal', 'idcodigopostal');
     }
 
     /**
@@ -60,6 +60,6 @@ class Codigopostal extends Model
      */
     public function poblacion()
     {
-        return $this->belongsTo(Poblacion::class, 'idpoblacion', 'idpoblacion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Poblacion::class, 'idpoblacion', 'idpoblacion');
     }
 }

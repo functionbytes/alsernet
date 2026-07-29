@@ -15,21 +15,19 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth', 'hd/api/*', 'hd/widget/*', 'eng/api/*', 'r/*', 'widget/helpdesk/*', 'build-helpdesklivechat/*', 'build-engagement/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
-    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    'allowed_methods' => ['*'],
 
-    // SDK loads from 3rd-party domains; security boundary is website_token, not origin.
-    // Lock down via CORS_ALLOWED_ORIGINS env in production if needed.
-    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', '*'))),
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'X-CSRF-TOKEN', 'Accept', 'Accept-Language', 'Idempotency-Key', 'X-Website-Token', 'X-Session-Token', 'X-SDK-Version', 'X-Conversation-Token'],
+    'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['X-API-Version', 'Retry-After', 'X-RateLimit-Remaining', 'X-RateLimit-Limit'],
+    'exposed_headers' => [],
 
-    'max_age' => 86400,
+    'max_age' => 0,
 
     'supports_credentials' => false,
 

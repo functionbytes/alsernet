@@ -2,9 +2,9 @@
 
 namespace Modules\Media\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use Modules\Media\Models\MediaFile;
 
 class ModerationController extends Controller
@@ -19,7 +19,7 @@ class ModerationController extends Controller
                     ->orWhereRaw("JSON_EXTRACT(metadata, '$.ai_tags') IS NOT NULL");
             })
             ->where('visibility', 'public')
-            ->with('user:id,name')
+            ->with('user:id,firstname,lastname,email')
             ->paginate(20);
 
         return response()->json(['items' => $items]);

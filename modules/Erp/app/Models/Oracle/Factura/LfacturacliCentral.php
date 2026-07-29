@@ -3,13 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Factura;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Albaran\LalbarancliCapthaya;
-use Modules\Erp\Models\Oracle\Albaran\LalbarancliCentral;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
-use Modules\Erp\Models\Oracle\Lote\Lote;
-use Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -68,7 +61,7 @@ class LfacturacliCentral extends Model
      */
     public function lfacturacli()
     {
-        return $this->belongsTo(LfacturacliCentral::class, 'idlfacturacli', 'idlfacturacli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\LfacturacliCentral::class, 'idlfacturacli', 'idlfacturacli');
     }
 
     /**
@@ -77,7 +70,7 @@ class LfacturacliCentral extends Model
      */
     public function facturacli()
     {
-        return $this->belongsTo(FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
     }
 
     /**
@@ -86,7 +79,7 @@ class LfacturacliCentral extends Model
      */
     public function lalbarancli()
     {
-        return $this->belongsTo(LalbarancliCapthaya::class, 'idlalbarancli', 'idlalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbarancliCapthaya::class, 'idlalbarancli', 'idlalbarancli');
     }
 
     /**
@@ -95,7 +88,7 @@ class LfacturacliCentral extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -104,7 +97,7 @@ class LfacturacliCentral extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -113,7 +106,7 @@ class LfacturacliCentral extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -122,7 +115,7 @@ class LfacturacliCentral extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
     }
 
     /**
@@ -131,7 +124,7 @@ class LfacturacliCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -140,6 +133,6 @@ class LfacturacliCentral extends Model
      */
     public function lalbarancliCentral()
     {
-        return $this->belongsTo(LalbarancliCentral::class, 'idlalbarancli_central', 'idlalbarancli_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbarancliCentral::class, 'idlalbarancli_central', 'idlalbarancli_central');
     }
 }

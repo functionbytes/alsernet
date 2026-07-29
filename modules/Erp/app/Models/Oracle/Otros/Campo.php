@@ -52,7 +52,7 @@ class Campo extends Model
      */
     public function campo()
     {
-        return $this->belongsTo(Campo::class, 'idcampo', 'idcampo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Campo::class, 'idcampo', 'idcampo');
     }
 
     /**
@@ -61,6 +61,6 @@ class Campo extends Model
      */
     public function tabla()
     {
-        return $this->belongsTo(Tabla::class, 'idtabla', 'idtabla');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tabla::class, 'idtabla', 'idtabla');
     }
 }

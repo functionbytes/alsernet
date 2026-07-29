@@ -4,13 +4,6 @@ namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
-use Modules\Erp\Models\Oracle\Lote\Lote;
-use Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya;
-use Modules\Erp\Models\Oracle\Promocion\BonoPromocion;
-use Modules\Erp\Models\Oracle\Promocion\Tipodescuento;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -66,7 +59,7 @@ class LalbarancliCapthaya extends Model
      */
     public function lalbarancli()
     {
-        return $this->belongsTo(LalbarancliCapthaya::class, 'idlalbarancli', 'idlalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbarancliCapthaya::class, 'idlalbarancli', 'idlalbarancli');
     }
 
     /**
@@ -75,7 +68,7 @@ class LalbarancliCapthaya extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -84,7 +77,7 @@ class LalbarancliCapthaya extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -93,7 +86,7 @@ class LalbarancliCapthaya extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -102,7 +95,7 @@ class LalbarancliCapthaya extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -111,7 +104,7 @@ class LalbarancliCapthaya extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
     }
 
     /**
@@ -120,7 +113,7 @@ class LalbarancliCapthaya extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -129,7 +122,7 @@ class LalbarancliCapthaya extends Model
      */
     public function tipodescuento()
     {
-        return $this->belongsTo(Tipodescuento::class, 'idtipodescuento', 'idtipodescuento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Tipodescuento::class, 'idtipodescuento', 'idtipodescuento');
     }
 
     /**
@@ -138,6 +131,6 @@ class LalbarancliCapthaya extends Model
      */
     public function bonoPromocion()
     {
-        return $this->belongsTo(BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Modules\Mailer\Library;
 
+
 use League\Pipeline\StageInterface;
 
 class InjectMessageIdToBody implements StageInterface

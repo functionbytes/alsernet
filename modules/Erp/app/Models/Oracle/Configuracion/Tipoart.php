@@ -51,6 +51,6 @@ class Tipoart extends Model
      */
     public function tipoart()
     {
-        return $this->belongsTo(Tipoart::class, 'idtipoart', 'idtipoart');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipoart::class, 'idtipoart', 'idtipoart');
     }
 }

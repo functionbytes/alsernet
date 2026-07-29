@@ -3,17 +3,14 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\Document\Entities\Document;
@@ -131,6 +128,7 @@ class DocumentConfigurationController extends Controller
                 ->back()
                 ->with('success', 'Disco de almacenamiento actualizado correctamente');
         } catch (\Exception $e) {
+           
 
             return back()
                 ->withInput()
@@ -232,7 +230,7 @@ class DocumentConfigurationController extends Controller
 
             return redirect()->back()->with('success', 'Programación de sincronización guardada correctamente.');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Error al guardar la configuración: '.$e->getMessage());
+            return back()->withInput()->with('error', 'Error al guardar la configuración: ' . $e->getMessage());
         }
     }
 
@@ -252,7 +250,7 @@ class DocumentConfigurationController extends Controller
             $nextRun = $this->calculateNextRun($frequency, $hour, Setting::get('documents.blockade_sync_cron', ''));
         }
 
-        $lastSyncCarbon = $lastSync ? Carbon::parse($lastSync) : null;
+        $lastSyncCarbon = $lastSync ? \Carbon\Carbon::parse($lastSync) : null;
 
         return [
             'blockade_sync_enabled' => $enabled,
@@ -260,11 +258,11 @@ class DocumentConfigurationController extends Controller
             'blockade_sync_hour' => $hour,
             'blockade_sync_cron' => Setting::get('documents.blockade_sync_cron', ''),
             'blockade_sync_fresh' => Setting::get('documents.blockade_sync_fresh', 'no') === 'yes',
-            'last_sync' => $lastSyncCarbon ? $lastSyncCarbon->diffForHumans() : 'Nunca',
-            'last_sync_full' => $lastSyncCarbon ? $lastSyncCarbon->format('d/m/Y H:i') : 'Nunca',
-            'sync_count' => $syncCount ?? '0',
-            'unique_products' => (string) DocumentProductBlockade::distinct('product_id')->count('product_id'),
-            'next_run' => $nextRun,
+            'last_sync'         => $lastSyncCarbon ? $lastSyncCarbon->diffForHumans() : 'Nunca',
+            'last_sync_full'    => $lastSyncCarbon ? $lastSyncCarbon->format('d/m/Y H:i') : 'Nunca',
+            'sync_count'        => $syncCount ?? '0',
+            'unique_products'   => (string) DocumentProductBlockade::distinct('product_id')->count('product_id'),
+            'next_run'          => $nextRun,
         ];
     }
 
@@ -274,13 +272,12 @@ class DocumentConfigurationController extends Controller
     private function calculateNextRun(string $frequency, string $hour, string $cron): string
     {
         try {
-            $now = Carbon::now();
-            [$h, $m] = array_map('intval', explode(':', $hour.':00'));
+            $now = \Carbon\Carbon::now();
+            [$h, $m] = array_map('intval', explode(':', $hour . ':00'));
             $h2 = ($h + 12) % 24;
 
             $nextAt = function (int $targetH, int $targetM) use ($now) {
                 $candidate = $now->copy()->setTime($targetH, $targetM);
-
                 return $candidate->gt($now) ? $candidate : $candidate->addDay();
             };
 
@@ -289,10 +286,10 @@ class DocumentConfigurationController extends Controller
                 'every_2_hours' => $now->copy()->addHours(2)->setMinute($m)->setSecond(0)->format('d/m/Y H:i'),
                 'every_6_hours' => $now->copy()->addHours(6)->setMinute($m)->setSecond(0)->format('d/m/Y H:i'),
                 'every_12_hours' => collect([$nextAt($h, $m), $nextAt($h2, $m)])->sortBy(fn ($d) => $d->timestamp)->first()->format('d/m/Y H:i'),
-                'daily' => $nextAt($h, $m)->format('d/m/Y H:i'),
-                'weekly' => $now->copy()->next(Carbon::SUNDAY)->setTime($h, $m)->format('d/m/Y H:i'),
-                'custom' => $cron ? 'Según expresión: '.$cron : 'Expresión no configurada',
-                default => 'No programado',
+                'daily'  => $nextAt($h, $m)->format('d/m/Y H:i'),
+                'weekly' => $now->copy()->next(\Carbon\Carbon::SUNDAY)->setTime($h, $m)->format('d/m/Y H:i'),
+                'custom' => $cron ? 'Según expresión: ' . $cron : 'Expresión no configurada',
+                default  => 'No programado',
             };
         } catch (\Exception $e) {
             return 'No disponible';
@@ -357,7 +354,7 @@ class DocumentConfigurationController extends Controller
                 ->back()
                 ->with('success', 'Configuración global actualizada correctamente');
         } catch (\Exception $e) {
-
+           
             return back()
                 ->withInput()
                 ->with('error', 'Error al actualizar la configuración: '.$e->getMessage());
@@ -455,7 +452,7 @@ class DocumentConfigurationController extends Controller
                 'pagination' => ['more' => false],
             ]);
         } catch (\Exception $e) {
-
+           
             return response()->json([
                 'results' => [],
                 'error' => 'Error al buscar templates: '.$e->getMessage(),
@@ -579,7 +576,7 @@ class DocumentConfigurationController extends Controller
                 'metadata' => $result['metadata'] ?? null,
             ]);
         } catch (\Exception $e) {
-
+          
             return response()->json([
                 'success' => false,
                 'message' => 'Error al probar conexión: '.$e->getMessage(),
@@ -1704,28 +1701,28 @@ class DocumentConfigurationController extends Controller
     public function testEndpoint(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'url' => 'required|url|max:500',
+            'url'      => 'required|url|max:500',
             'order_id' => 'nullable|string|max:50',
         ]);
 
-        $url = $validated['url'];
+        $url     = $validated['url'];
         $orderId = (string) ($validated['order_id'] ?? '0');
         $payload = ['identificadororigen' => $orderId];
 
         try {
-            $response = Http::timeout(5)->asForm()->post($url, $payload);
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post($url, $payload);
 
             return response()->json([
                 'success' => $response->successful(),
-                'status' => $response->status(),
-                'sent' => $payload,
-                'body' => Str::limit($response->body(), 300),
+                'status'  => $response->status(),
+                'sent'    => $payload,
+                'body'    => \Illuminate\Support\Str::limit($response->body(), 300),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-                'sent' => $payload,
+                'sent'    => $payload,
             ]);
         }
     }

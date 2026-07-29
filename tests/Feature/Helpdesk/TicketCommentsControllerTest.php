@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Helpdesk;
 
+use App\Models\Helpdesk\Ticket;
+use App\Models\Helpdesk\TicketComment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Modules\HelpdeskTickets\Models\Ticket;
-use Modules\HelpdeskTickets\Models\TicketComment;
 use Tests\TestCase;
 
 class TicketCommentsControllerTest extends TestCase

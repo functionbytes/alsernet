@@ -2,11 +2,9 @@
 
 namespace Modules\Erp\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Erp\Database\Factories\ErpEndpointLogFactory;
 
 class ErpEndpointLog extends Model
 {
@@ -69,7 +67,7 @@ class ErpEndpointLog extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
     /**
@@ -162,10 +160,5 @@ class ErpEndpointLog extends Model
             $this->status_code >= 500 => 'danger',
             default => 'secondary',
         };
-    }
-
-    protected static function newFactory(): ErpEndpointLogFactory
-    {
-        return ErpEndpointLogFactory::new();
     }
 }

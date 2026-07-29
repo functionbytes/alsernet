@@ -4,7 +4,6 @@ namespace Modules\Document\Traits;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Modules\Document\Entities\Document;
 
 /**
@@ -81,13 +80,6 @@ trait SendsDocumentEmails
             ], 429);
         }
 
-        // Registrar cuándo se envió realmente el correo de confirmación de
-        // carga. El envío ahora es manual (revisión del agente), así que este
-        // timestamp ya no se marca automáticamente al completar la subida.
-        if ($emailType === 'upload' && ! $document->uploaded_confirmation_sent_at) {
-            $document->update(['uploaded_confirmation_sent_at' => now()]);
-        }
-
         return response()->json([
             'success' => true,
             'message' => 'Email enviado correctamente',
@@ -102,8 +94,8 @@ trait SendsDocumentEmails
     {
         $rateLimitKey = "email_sent:{$document->id}:{$emailType}";
 
-        if (Cache::has($rateLimitKey)) {
-            $retryTime = Cache::get($rateLimitKey);
+        if (\Illuminate\Support\Facades\Cache::has($rateLimitKey)) {
+            $retryTime = \Illuminate\Support\Facades\Cache::get($rateLimitKey);
             $secondsRemaining = now()->diffInSeconds($retryTime, false);
 
             // Redondear hacia arriba para asegurar que el usuario espere tiempo suficiente

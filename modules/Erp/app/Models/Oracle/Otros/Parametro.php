@@ -40,6 +40,6 @@ class Parametro extends Model
      */
     public function parametro()
     {
-        return $this->belongsTo(Parametro::class, 'idparametro', 'idparametro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Parametro::class, 'idparametro', 'idparametro');
     }
 }

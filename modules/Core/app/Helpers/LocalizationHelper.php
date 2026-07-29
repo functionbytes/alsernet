@@ -51,7 +51,7 @@ if (! function_exists('get_localization_config')) {
      * @param  string  $locale  The locale code
      * @return mixed The configuration value
      *
-     * @throws Exception
+     * @throws \Exception
      */
     function get_localization_config($name, $locale)
     {
@@ -66,7 +66,7 @@ if (! function_exists('get_localization_config')) {
         } elseif (array_key_exists($name, $defaultConfig)) {
             return $defaultConfig[$name];
         } else {
-            throw new Exception('Localization config for "'.$name.'" does not exist');
+            throw new \Exception('Localization config for "'.$name.'" does not exist');
         }
     }
 }

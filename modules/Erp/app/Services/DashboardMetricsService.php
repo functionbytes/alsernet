@@ -4,9 +4,9 @@ namespace Modules\Erp\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Modules\Erp\Models\ErpEndpoint;
 use Modules\Erp\Models\ErpEndpointLog;
-use Modules\Erp\Models\ErpEndpointToken;
 
 class DashboardMetricsService
 {
@@ -49,7 +49,7 @@ class DashboardMetricsService
             'configured_endpoints' => $configuredEndpoints,
             'active_endpoints' => (int) ($row->active ?? 0),
             'deprecated_endpoints' => (int) ($row->deprecated ?? 0),
-            'tokens_generated' => ErpEndpointToken::count(),
+            'tokens_generated' => \Modules\Erp\Models\ErpEndpointToken::count(),
             'unconfigured_endpoints' => $totalEndpoints - $configuredEndpoints,
         ];
     }

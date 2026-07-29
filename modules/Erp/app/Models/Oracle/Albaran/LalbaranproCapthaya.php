@@ -3,9 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
-use Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -51,7 +48,7 @@ class LalbaranproCapthaya extends Model
      */
     public function lalbaranpro()
     {
-        return $this->belongsTo(LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
     }
 
     /**
@@ -60,7 +57,7 @@ class LalbaranproCapthaya extends Model
      */
     public function lpedidopro()
     {
-        return $this->belongsTo(LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
     }
 
     /**
@@ -69,7 +66,7 @@ class LalbaranproCapthaya extends Model
      */
     public function albaranpro()
     {
-        return $this->belongsTo(AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
     }
 
     /**
@@ -78,7 +75,7 @@ class LalbaranproCapthaya extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -87,7 +84,7 @@ class LalbaranproCapthaya extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -96,7 +93,7 @@ class LalbaranproCapthaya extends Model
      */
     public function lalbaranproCentral()
     {
-        return $this->belongsTo(LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
     }
 
     /**
@@ -105,6 +102,6 @@ class LalbaranproCapthaya extends Model
      */
     public function albaranproCentral()
     {
-        return $this->belongsTo(AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
     }
 }

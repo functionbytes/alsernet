@@ -1,0 +1,115 @@
+.wrapper {
+  background: #06050a no-repeat;
+}
+
+.trail {
+  justify-content: center;
+  background: #06050a no-repeat;
+  align-items: center;
+  display: flex;
+  padding: 30px 0px;
+}
+
+.trail .container .container-welcome {
+  margin-bottom: 15px;
+}
+
+.trail .container .container-welcome img {
+  width: 100%;
+  height: auto;
+}
+
+.trail .container .container-items {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+  margin-top: 70px;
+}
+
+.trail .container .container-items .item {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: 20px;
+  margin-right: 20px;
+  text-align: center;
+  justify-content: center;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.trail .container .container-items .item .title {
+  font-size: 13px;
+  width: 100%;
+  color: #fec341;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.trail .container .container-items .item .description {
+  font-size: 15px;
+  width: 100%;
+  color: #fff;
+  font-weight: 700;
+}
+
+.trail .container .container-items .item img {
+  width: 100%;
+  height: auto;
+  max-width: 100px;
+  margin-bottom: 20px;
+}
+
+
+.trail .container p {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 14px;
+  letter-spacing: 0;
+  line-height: 22px;
+  color: #fff;
+}
+
+.trail .container {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.trail .container .message {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.trail .container .container-btn {
+  margin-bottom: 40px;
+  margin-top: 40px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.trail .container .container-btn .btn {
+  border: 1px solid #fff;
+  font-size: 14px;
+  color: #000;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: center;
+  background: #fff;
+  padding: 5px 25px;
+  border-radius: 4px;
+}
+
+
+@media (min-width: 576px) {
+  .trail .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 15px;
+    margin-bottom: 30px;
+  }
+}

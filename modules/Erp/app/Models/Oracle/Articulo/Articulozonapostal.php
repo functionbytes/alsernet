@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Articulo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\ZonaPostal;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Articulozonapostal extends Model
      */
     public function articulozonapostal()
     {
-        return $this->belongsTo(Articulozonapostal::class, 'idarticulozonapostal', 'idarticulozonapostal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulozonapostal::class, 'idarticulozonapostal', 'idarticulozonapostal');
     }
 
     /**
@@ -62,7 +61,7 @@ class Articulozonapostal extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -71,6 +70,6 @@ class Articulozonapostal extends Model
      */
     public function zonaPostal()
     {
-        return $this->belongsTo(ZonaPostal::class, 'idzona_postal', 'idzona_postal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ZonaPostal::class, 'idzona_postal', 'idzona_postal');
     }
 }

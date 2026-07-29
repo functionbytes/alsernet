@@ -75,7 +75,7 @@ class WTiendas extends Model
      */
     public function padre()
     {
-        return $this->belongsTo(WTiendas::class, 'id_padre', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WTiendas::class, 'id_padre', 'id');
     }
 
     /**
@@ -84,6 +84,6 @@ class WTiendas extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

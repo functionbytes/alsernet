@@ -65,7 +65,7 @@ class WValoresNavIdioma extends Model
      */
     public function valor()
     {
-        return $this->belongsTo(WValoresNav::class, 'id_valor', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WValoresNav::class, 'id_valor', 'id');
     }
 
     /**
@@ -74,6 +74,6 @@ class WValoresNavIdioma extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

@@ -15,7 +15,7 @@ class AutoCaptionFactory
         $apiKey = (string) config('media.ai.auto_caption.api_key');
 
         return match ($driver) {
-            '.claude' => new ClaudeDriver($apiKey),
+            'claude' => new ClaudeDriver($apiKey),
             'openai' => new OpenAIDriver($apiKey),
             default => new NullDriver,
         };

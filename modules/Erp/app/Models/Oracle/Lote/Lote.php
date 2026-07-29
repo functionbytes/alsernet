@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Lote;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Impuesto;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Lote extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
     }
 
     /**
@@ -62,6 +61,6 @@ class Lote extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 }

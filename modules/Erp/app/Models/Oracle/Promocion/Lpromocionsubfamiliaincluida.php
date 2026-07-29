@@ -77,7 +77,7 @@ class Lpromocionsubfamiliaincluida extends Model
      */
     public function subfamiliaCl()
     {
-        return $this->belongsTo(SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
     }
 
     /**
@@ -86,6 +86,6 @@ class Lpromocionsubfamiliaincluida extends Model
      */
     public function lpromocionsubfamiliaincluida()
     {
-        return $this->belongsTo(Lpromocionsubfamiliaincluida::class, 'idlpromocionsubfamiliaincluida', 'idlpromocionsubfamiliaincluida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocionsubfamiliaincluida::class, 'idlpromocionsubfamiliaincluida', 'idlpromocionsubfamiliaincluida');
     }
 }

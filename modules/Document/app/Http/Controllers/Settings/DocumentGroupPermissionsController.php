@@ -3,11 +3,8 @@
 namespace Modules\Document\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\View\View;
 use Modules\Document\Entities\DocumentPermission;
 use Modules\Document\Entities\DocumentValidatorGroup;
 
@@ -20,7 +17,8 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Display the permissions management view for a specific group
      *
-     * @return View
+     * @param  DocumentValidatorGroup  $group
+     * @return \Illuminate\View\View
      */
     public function edit(DocumentValidatorGroup $group)
     {
@@ -80,7 +78,9 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Update permissions for a specific group
      *
-     * @return RedirectResponse
+     * @param  Request  $request
+     * @param  DocumentValidatorGroup  $group
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, DocumentValidatorGroup $group)
     {
@@ -104,7 +104,8 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Get permissions for a group (AJAX endpoint)
      *
-     * @return JsonResponse
+     * @param  DocumentValidatorGroup  $group
+     * @return \Illuminate\Http\JsonResponse
      */
     public function show(DocumentValidatorGroup $group)
     {
@@ -135,7 +136,7 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Get all available permissions (AJAX endpoint)
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function available()
     {
@@ -165,7 +166,8 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Bulk update permissions for multiple groups
      *
-     * @return JsonResponse
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function bulkUpdate(Request $request)
     {
@@ -192,6 +194,9 @@ class DocumentGroupPermissionsController extends Controller
 
     /**
      * Clear permissions cache for all users in a group
+     *
+     * @param  DocumentValidatorGroup  $group
+     * @return void
      */
     protected function clearGroupPermissionsCache(DocumentValidatorGroup $group): void
     {
@@ -206,7 +211,9 @@ class DocumentGroupPermissionsController extends Controller
     /**
      * Clone permissions from one group to another
      *
-     * @return RedirectResponse
+     * @param  Request  $request
+     * @param  DocumentValidatorGroup  $sourceGroup
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function clone(Request $request, DocumentValidatorGroup $sourceGroup)
     {

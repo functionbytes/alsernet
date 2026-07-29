@@ -1,0 +1,37 @@
+[
+  {
+    "title": "Te puede interesar",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "subcategorie",
+    "items": [
+      {
+        "title": "Ver nuestras marcas",
+        "url": "/hipica/listado-marcas"
+      },
+      {
+        "title": "Ofertas",
+        "url": "/hipica/ofertas"
+      },
+      {
+        "title": "Novedades",
+        "url": "/hipica/novedades"
+      },
+      {
+        "title": "Los más vendidos",
+        "url": "/hipica/lo_mas_vendido"
+      },
+      {
+        "title": "Boletines",
+        "url": "/hipica/monthlynewsletters"
+      },
+      {
+        "title": "Blog",
+        "url": "/blog/hipica/"
+      }
+    ]
+  }
+]

@@ -1,9 +1,0 @@
-{
-    "name": "Full Width Template",
-    "namespace": "Template\\FullWidth\\",
-    "description": "Plantilla de ancho completo sin sidebars",
-    "author": "Alsernet",
-    "version": "1.0.0",
-    "inherit": "default",
-    "required_plugins": []
-}

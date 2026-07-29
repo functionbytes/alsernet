@@ -74,7 +74,7 @@
                             <span class="input-group-text bg-white border-end-1">
                                 <i class="fas fa-search text-muted"></i>
                             </span>
-                            <input type="search" class="form-control -0 ps-0" id="filterSearch" placeholder="Buscar en descripción...">
+                            <input type="search" class="form-control border-start-0 ps-0" id="filterSearch" placeholder="Buscar en descripción...">
                         </div>
                     </div>
                     <div class="flex-shrink-0" style="min-width: 180px;">

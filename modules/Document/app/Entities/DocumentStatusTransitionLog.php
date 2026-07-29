@@ -2,7 +2,6 @@
 
 namespace Modules\Document\Entities;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -49,7 +48,7 @@ class DocumentStatusTransitionLog extends Model
 
     public function performedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'performed_by');
+        return $this->belongsTo(\App\Models\User::class, 'performed_by');
     }
 
     public function scopeForDocument($query, int $documentId)

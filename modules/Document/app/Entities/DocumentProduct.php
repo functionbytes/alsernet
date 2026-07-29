@@ -2,7 +2,6 @@
 
 namespace Modules\Document\Entities;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -28,9 +27,9 @@ class DocumentProduct extends Model
     // MUTATORS - Automatic field transformations
     // =========================================================================
 
-    protected function productName(): Attribute
+    protected function productName(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return Attribute::make(
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
@@ -39,4 +38,5 @@ class DocumentProduct extends Model
     {
         return $this->belongsTo(Document::class, 'document_id');
     }
+
 }

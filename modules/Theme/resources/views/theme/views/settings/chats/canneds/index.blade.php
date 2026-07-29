@@ -1,10 +1,8 @@
 @extends('layouts.theme')
 
-@section('page_header')
-    @include('core::components.card', ['title' => 'Estados'])
-@endsection
-
 @section('content')
+
+    @include('core::components.card', ['title' => 'Estados'])
 
     <div class="widget-content searchable-container list">
 

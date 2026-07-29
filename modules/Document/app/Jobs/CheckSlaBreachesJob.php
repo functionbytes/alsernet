@@ -7,18 +7,11 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentSlaBreach;
-use Modules\Document\Entities\DocumentSlaPolicy;
 use Modules\Document\Entities\DocumentStatus;
 
 class CheckSlaBreachesJob implements ShouldQueue
 {
     use Queueable;
-
-    public int $tries = 3;
-
-    public int $timeout = 120;
-
-    public int $backoff = 30;
 
     public function __construct()
     {
@@ -201,16 +194,9 @@ class CheckSlaBreachesJob implements ShouldQueue
         }
     }
 
-    public function failed(\Throwable $exception): void
-    {
-        Log::error('CheckSlaBreachesJob failed', [
-            'error' => $exception->getMessage(),
-        ]);
-    }
-
     private function escalateBreach(
         DocumentSlaBreach $breach,
-        DocumentSlaPolicy $slaPolicy,
+        \Modules\Document\Entities\DocumentSlaPolicy $slaPolicy,
         Document $document
     ): void {
         try {

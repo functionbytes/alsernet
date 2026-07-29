@@ -45,7 +45,7 @@ class ApiRoutesTest extends TestCase
             'api.documents.delete',
 
             // File operations
-            'api.documents.files.upload',
+            'api.documents.files.store',
             'api.documents.files.get',
             'api.documents.files.delete',
         ];
@@ -111,14 +111,8 @@ class ApiRoutesTest extends TestCase
             $route = $routes->getByName($routeName);
             $this->assertNotNull($route);
 
-            // HD-DOC-01: usa 'auth:web' (guard explicito), no el alias
-            // generico 'auth' — el test comparaba contra el string exacto
-            // equivocado y quedo desactualizado tras ese fix de seguridad.
             $middleware = $route->gatherMiddleware();
-            $hasAuthMiddleware = collect($middleware)->contains(
-                fn (string $m) => $m === 'auth' || str_starts_with($m, 'auth:')
-            );
-            $this->assertTrue($hasAuthMiddleware, "Ruta {$routeName} debe tener middleware de autenticación");
+            $this->assertContains('auth', $middleware, "Ruta {$routeName} debe tener middleware 'auth'");
         }
     }
 

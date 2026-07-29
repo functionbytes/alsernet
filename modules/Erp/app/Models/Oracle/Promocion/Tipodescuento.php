@@ -52,6 +52,6 @@ class Tipodescuento extends Model
      */
     public function tipodescuento()
     {
-        return $this->belongsTo(Tipodescuento::class, 'idtipodescuento', 'idtipodescuento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Tipodescuento::class, 'idtipodescuento', 'idtipodescuento');
     }
 }

@@ -52,7 +52,7 @@ class Mantfil extends Model
      */
     public function mantfil()
     {
-        return $this->belongsTo(Mantfil::class, 'idmantfil', 'idmantfil');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Mantfil::class, 'idmantfil', 'idmantfil');
     }
 
     /**
@@ -61,7 +61,7 @@ class Mantfil extends Model
      */
     public function mfiltro()
     {
-        return $this->belongsTo(Mfiltro::class, 'idmfiltro', 'idmfiltro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Mfiltro::class, 'idmfiltro', 'idmfiltro');
     }
 
     /**
@@ -70,6 +70,6 @@ class Mantfil extends Model
      */
     public function objeto()
     {
-        return $this->belongsTo(Objeto::class, 'idobjeto', 'idobjeto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Objeto::class, 'idobjeto', 'idobjeto');
     }
 }

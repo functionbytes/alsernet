@@ -22,7 +22,7 @@
         left: 0;
         right: 0;
         height: 4px;
-        background: #90bb13, var(--stat-color));
+        background: #13C672, var(--stat-color));
     }
 
     .stat-card:hover {
@@ -30,7 +30,7 @@
         transform: translateY(-4px);
     }
 
-    .stat-card.folders { --stat-color: #90bb13; }
+    .stat-card.folders { --stat-color: #13C672; }
     .stat-card.files { --stat-color: #13C672; }
     .stat-card.storage { --stat-color: #FEC90F; }
 
@@ -44,7 +44,7 @@
     .media-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-4px);
-        border-color: #90bb13;
+        border-color: #13C672;
     }
 
     .folder-card {
@@ -55,7 +55,7 @@
     .folder-card:hover {
         box-shadow: 0 8px 24px rgba(93, 135, 255, 0.15) !important;
         transform: translateY(-4px);
-        border-color: #90bb13 !important;
+        border-color: #13C672 !important;
     }
 
     .folder-preview {
@@ -127,31 +127,31 @@
 
     /* Gradient Backgrounds */
     .bg-gradient-danger {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-success {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-info {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-warning {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-purple {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-dark {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .bg-gradient-secondary {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .text-purple {
@@ -187,46 +187,46 @@
 
     .action-btn:hover {
         background: #f0f4ff;
-        border-color: #90bb13;
-        color: #90bb13;
+        border-color: #13C672;
+        color: #13C672;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.15);
     }
 
     .upload-zone {
-        border: 2px dashed #90bb13;
+        border: 2px dashed #13C672;
         border-radius: 12px;
-        background: #90bb13;
+        background: #13C672;
         transition: all 0.3s ease;
     }
 
     .upload-zone:hover {
         border-color: #3E5BDB;
-        background: #90bb13;
+        background: #13C672;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.12);
     }
 
     .upload-zone.drag-over {
         border-color: #3E5BDB;
-        background: #90bb13;
+        background: #13C672;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
     }
 
     /* Upload Zone Modern */
     .upload-zone-modern {
-        background: #90bb13;
+        background: #13C672;
         border: 2px dashed #e0e7ff;
         transition: all 0.3s ease;
     }
 
     .upload-zone-modern:hover {
-        border-color: #90bb13;
-        background: #90bb13;
+        border-color: #13C672;
+        background: #13C672;
         box-shadow: 0 4px 16px rgba(93, 135, 255, 0.1);
     }
 
     .upload-zone-modern.drag-active {
-        border-color: #90bb13;
-        background: #90bb13;
+        border-color: #13C672;
+        background: #13C672;
         box-shadow: 0 6px 20px rgba(93, 135, 255, 0.2);
         transform: scale(1.01);
     }
@@ -237,7 +237,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #90bb13;
+        background: #13C672;
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3);
     }
@@ -254,7 +254,7 @@
     }
 
     .card-header {
-        background: #90bb13;
+        background: #13C672;
         border-color: #f0f0f0 !important;
     }
 
@@ -318,8 +318,8 @@
     }
 
     .folder-file-item:hover {
-        background: #90bb13;
-        border-color: #90bb13 !important;
+        background: #13C672;
+        border-color: #13C672 !important;
         box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);
         transform: translateY(-2px);
     }
@@ -329,7 +329,7 @@
     }
 
     .folder-file-item:hover i {
-        color: #90bb13 !important;
+        color: #13C672 !important;
     }
 
     /* Dropdown for folder options */
@@ -345,7 +345,7 @@
 
     .dropdown-item:hover {
         background: #f0f4ff;
-        color: #90bb13;
+        color: #13C672;
     }
 
     .dropdown-item.text-danger:hover {
@@ -372,14 +372,14 @@
     }
 
     .user-profile-tab .nav-link:hover {
-        color: #90bb13;
+        color: #13C672;
         border-bottom-color: rgba(93, 135, 255, 0.3);
         background: rgba(93, 135, 255, 0.05) !important;
     }
 
     .user-profile-tab .nav-link.active {
-        color: #90bb13;
-        border-bottom-color: #90bb13;
+        color: #13C672;
+        border-bottom-color: #13C672;
         background: transparent !important;
         font-weight: 600;
     }
@@ -431,7 +431,7 @@
 
     .context-menu-item:hover {
         background: #f0f4ff;
-        color: #90bb13;
+        color: #13C672;
     }
 
     .context-menu-item.danger:hover {
@@ -464,8 +464,8 @@
     }
 
     .card.selected {
-        border: 3px solid #90bb13 !important;
-        background: #90bb13;
+        border: 3px solid #13C672 !important;
+        background: #13C672;
         box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.15),
                     0 8px 24px rgba(93, 135, 255, 0.25) !important;
         transform: translateY(-2px);
@@ -483,7 +483,7 @@
         left: 12px;
         width: 28px;
         height: 28px;
-        background: #90bb13;
+        background: #13C672;
         border-radius: 50%;
         z-index: 20;
         box-shadow: 0 2px 8px rgba(93, 135, 255, 0.5);
@@ -562,13 +562,13 @@
     }
 
     .card-header:has(.text-primary) {
-        background: #90bb13 !important;
-        border-bottom: 2px solid #90bb13 !important;
+        background: #13C672 !important;
+        border-bottom: 2px solid #13C672 !important;
     }
 
     /* Enhanced sidebar-like navigation */
     .user-profile-tab {
-        background: #90bb13;
+        background: #13C672;
     }
 
     .user-profile-tab .nav-link {
@@ -584,7 +584,7 @@
         transform: translateY(-50%);
         width: 0;
         height: 0;
-        background: #90bb13;
+        background: #13C672;
         border-radius: 0 4px 4px 0;
         transition: all 0.3s ease;
     }
@@ -837,7 +837,7 @@
                             <span class="input-group-text bg-white border-end-1">
                                 <i class="fas fa-search text-muted"></i>
                             </span>
-                            <input type="text" v-model="searchQuery" v-on:input="performSearch" class="form-control -0 ps-0 media-search-input" placeholder="Buscar archivos y carpetas..." />
+                            <input type="text" v-model="searchQuery" v-on:input="performSearch" class="form-control border-start-0 ps-0 media-search-input" placeholder="Buscar archivos y carpetas..." />
                             <button v-if="searchQuery" v-on:click="clearSearch" class="btn btn-outline-secondary" title="Limpiar búsqueda">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -867,25 +867,25 @@
                         </button>
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
-                        <button v-on:click="loadList" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Buscar">
+                        <button v-on:click="loadList" class="btn btn-primary" title="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
-                        <button class="btn btn-outline-secondary" v-on:click="openDuplicatesModal" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Encontrar duplicados">
-                            <i class="fas fa-clone"></i>
+                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openDuplicatesModal" title="Encontrar duplicados">
+                            <i class="fas fa-clone me-1"></i>Duplicados
                         </button>
-                        <button class="btn btn-outline-secondary" v-on:click="openHeatmap" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Actividad reciente">
-                            <i class="fas fa-chart-line"></i>
+                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openHeatmap" title="Actividad reciente">
+                            <i class="fas fa-chart-line me-1"></i>Actividad
                         </button>
-                        <button class="btn btn-outline-secondary" v-on:click="setView('recently_deleted')" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recientes eliminados">
-                            <i class="fas fa-clock-rotate-left"></i>
+                        <button class="btn btn-sm btn-outline-secondary" v-on:click="setView('recently_deleted')" title="Últimos eliminados">
+                            <i class="fas fa-clock-rotate-left me-1"></i>Recientes eliminados
                         </button>
-                        <button class="btn btn-outline-secondary" v-on:click="openActivityLog" v-if="isAdmin" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Registro de actividad">
-                            <i class="fas fa-list"></i>
+                        <button class="btn btn-sm btn-outline-secondary" v-on:click="openActivityLog" v-if="isAdmin" title="Registro de actividad">
+                            <i class="fas fa-list me-1"></i>Registro
                         </button>
                         {{-- Tags filter dropdown --}}
                         <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Filtrar por tags">
-                                <i class="fas fa-tags"></i><span v-if="selectedTagIds.length" class="badge bg-primary ms-1">@{{ selectedTagIds.length }}</span>
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-tags me-1"></i>Tags <span v-if="selectedTagIds.length" class="badge bg-primary ms-1">@{{ selectedTagIds.length }}</span>
                             </button>
                             <ul class="dropdown-menu p-2" style="min-width: 250px; max-height: 300px; overflow-y: auto">
                                 <li v-for="tag in availableTags" :key="tag.id" class="mb-1">
@@ -1370,7 +1370,7 @@
     <div class="modal fade" id="modalConfirmDelete" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header ">
+                <div class="modal-header border-danger">
                     <h5 class="modal-title fw-bold">Eliminar archivo</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -3599,35 +3599,18 @@
                     const res = await $.get('/panel/media/activity-log', { filter: this.activityLogFilter });
                     this.activityLogEntries = res.data || res.logs || [];
                 } catch (e) {
+                    // Endpoint may not exist yet — show empty state
                     this.activityLogEntries = [];
                 }
-            },
-            _setupScrollObserver() {
-                if (!this.$refs.scrollSentinel) return;
-                if (this.scrollObserver) {
-                    this.scrollObserver.disconnect();
-                }
-                this.scrollObserver = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting && this.hasMore && !this.loadingMore) {
-                            this.loadMore();
-                        }
-                    });
-                }, { rootMargin: '200px' });
-                this.scrollObserver.observe(this.$refs.scrollSentinel);
             },
         },
         watch: {
             selectedItems(newVal) {
+                // Toggle selection mode class on body
                 if (newVal.length > 0) {
                     document.body.classList.add('selection-mode');
                 } else {
                     document.body.classList.remove('selection-mode');
-                }
-            },
-            loading(val) {
-                if (!val) {
-                    this.$nextTick(() => this._setupScrollObserver());
                 }
             }
         },
@@ -3635,6 +3618,20 @@
             this.loadMedia();
             this.loadQuota();
             this.loadTags();
+
+            // Infinite scroll observer
+            this.$nextTick(() => {
+                if (this.$refs.scrollSentinel) {
+                    this.scrollObserver = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting && this.hasMore && !this.loadingMore) {
+                                this.loadMore();
+                            }
+                        });
+                    }, { rootMargin: '200px' });
+                    this.scrollObserver.observe(this.$refs.scrollSentinel);
+                }
+            });
 
             // Keyboard shortcuts
             document.addEventListener('keydown', (e) => {
@@ -3680,13 +3677,6 @@
             };
 
             setTimeout(initSelects, 500);
-
-            // Initialize Bootstrap tooltips
-            this.$nextTick(() => {
-                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-                    new bootstrap.Tooltip(el);
-                });
-            });
         }
     }).mount('#mediaManagerApp');
 </script>

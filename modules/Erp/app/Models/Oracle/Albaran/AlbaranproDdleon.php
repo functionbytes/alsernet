@@ -4,12 +4,6 @@ namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Pedido\PedidoproCapthaya;
-use Modules\Erp\Models\Oracle\Proveedor\Proveedor;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -63,7 +57,7 @@ class AlbaranproDdleon extends Model
      */
     public function albaranpro()
     {
-        return $this->belongsTo(AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCapthaya::class, 'idalbaranpro', 'idalbaranpro');
     }
 
     /**
@@ -72,7 +66,7 @@ class AlbaranproDdleon extends Model
      */
     public function pedidopro()
     {
-        return $this->belongsTo(PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
     }
 
     /**
@@ -81,7 +75,7 @@ class AlbaranproDdleon extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -90,7 +84,7 @@ class AlbaranproDdleon extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -99,7 +93,7 @@ class AlbaranproDdleon extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -108,7 +102,7 @@ class AlbaranproDdleon extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -117,7 +111,7 @@ class AlbaranproDdleon extends Model
      */
     public function conversionmoneda()
     {
-        return $this->belongsTo(Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
     }
 
     /**
@@ -126,7 +120,7 @@ class AlbaranproDdleon extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -135,6 +129,6 @@ class AlbaranproDdleon extends Model
      */
     public function albaranproCentral()
     {
-        return $this->belongsTo(AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbaranproCentral::class, 'idalbaranpro_central', 'idalbaranpro_central');
     }
 }

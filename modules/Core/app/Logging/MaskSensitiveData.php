@@ -2,7 +2,6 @@
 
 namespace Modules\Core\Logging;
 
-use Illuminate\Log\Logger as IlluminateLogger;
 use Monolog\Logger;
 
 /**
@@ -11,10 +10,9 @@ use Monolog\Logger;
  */
 class MaskSensitiveData
 {
-    public function __invoke(IlluminateLogger|Logger $logger): void
+    public function __invoke(Logger $logger): void
     {
-        $monolog = $logger instanceof IlluminateLogger ? $logger->getLogger() : $logger;
-        foreach ($monolog->getHandlers() as $handler) {
+        foreach ($logger->getHandlers() as $handler) {
             $handler->pushProcessor(new SensitiveDataMasker);
         }
     }

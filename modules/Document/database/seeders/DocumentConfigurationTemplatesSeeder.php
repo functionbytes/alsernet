@@ -24,7 +24,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['initial_request']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_initial_request_id'],
-                ['value' => (string) $templates['initial_request'], 'updated_at' => now()]
+                ['value' => (string)$templates['initial_request'], 'updated_at' => now()]
             );
             $this->command->info("✓ Initial request template linked: {$templates['initial_request']}");
         }
@@ -32,7 +32,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['reminder']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_reminder_id'],
-                ['value' => (string) $templates['reminder'], 'updated_at' => now()]
+                ['value' => (string)$templates['reminder'], 'updated_at' => now()]
             );
             $this->command->info("✓ Reminder template linked: {$templates['reminder']}");
         }
@@ -40,7 +40,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['missing_docs']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_missing_docs_id'],
-                ['value' => (string) $templates['missing_docs'], 'updated_at' => now()]
+                ['value' => (string)$templates['missing_docs'], 'updated_at' => now()]
             );
             $this->command->info("✓ Missing docs template linked: {$templates['missing_docs']}");
         }
@@ -48,7 +48,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['upload_confirmation']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_upload_confirmation_id'],
-                ['value' => (string) $templates['upload_confirmation'], 'updated_at' => now()]
+                ['value' => (string)$templates['upload_confirmation'], 'updated_at' => now()]
             );
             $this->command->info("✓ Upload confirmation template linked: {$templates['upload_confirmation']}");
         }
@@ -56,7 +56,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['approval']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_approval_id'],
-                ['value' => (string) $templates['approval'], 'updated_at' => now()]
+                ['value' => (string)$templates['approval'], 'updated_at' => now()]
             );
             $this->command->info("✓ Approval template linked: {$templates['approval']}");
         }
@@ -64,7 +64,7 @@ class DocumentConfigurationTemplatesSeeder extends Seeder
         if ($templates['rejection']) {
             DB::table('settings')->updateOrInsert(
                 ['key' => 'documents.mail_template_rejection_id'],
-                ['value' => (string) $templates['rejection'], 'updated_at' => now()]
+                ['value' => (string)$templates['rejection'], 'updated_at' => now()]
             );
             $this->command->info("✓ Rejection template linked: {$templates['rejection']}");
         }

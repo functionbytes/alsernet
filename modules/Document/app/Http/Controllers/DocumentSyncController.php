@@ -5,10 +5,10 @@ namespace Modules\Document\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
-use Modules\Document\Entities\DocumentLang;
 use Modules\Document\Entities\DocumentProduct;
+use Modules\Document\Entities\DocumentLang;
 use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
 use Modules\Supplier\Services\Integrations\ErpService;
 
@@ -172,7 +172,7 @@ class DocumentSyncController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+           
             return response()->json([
                 'success' => false,
                 'message' => 'Error al sincronizar desde ERP: '.$e->getMessage(),
@@ -366,7 +366,7 @@ class DocumentSyncController extends Controller
                     }
                 } catch (\Exception $e) {
                     $failed++;
-
+                   
                 }
             }
 
@@ -400,13 +400,13 @@ class DocumentSyncController extends Controller
             // Check if document already exists
             $existingDocument = Document::where('order_reference', $orderIdentifier)->first();
 
-            if ($existingDocument) {
+            if ($existingDocument) {                
                 return $existingDocument;
             }
 
             // Create new document
             $document = Document::create([
-                'uid' => Str::uuid(),
+                'uid' => \Illuminate\Support\Str::uuid(),
                 'order_reference' => $orderIdentifier,
                 'order_date' => $orderData['date'] ?? now(),
                 'customer_email' => $orderData['customer_email'] ?? null,
@@ -451,7 +451,7 @@ class DocumentSyncController extends Controller
                     'price' => $productData['price'] ?? 0,
                 ]);
             } catch (\Exception $e) {
-
+               
             }
         }
     }
@@ -504,6 +504,7 @@ class DocumentSyncController extends Controller
             return true;
 
         } catch (\Exception $e) {
+           
 
             return false;
         }

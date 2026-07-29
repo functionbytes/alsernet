@@ -1,0 +1,475 @@
+[
+    {
+        "title": "Diving Suits",
+        "action": "",
+        "type": "subcategorie",
+        "id": 46,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Wet Suits",
+                "url": "\/en\/diving\/diving_suits-wet_suits",
+                "visible": "1"
+            },
+            {
+                "title": "semi-dry suits",
+                "url": "\/en\/diving\/diving_suits-semidry_suits",
+                "visible": "1"
+            },
+            {
+                "title": "Thermal Clothing Diving",
+                "url": "\/en\/diving\/diving_suits-thermal_clothing_diving",
+                "visible": "1"
+            },
+            {
+                "title": "Shortys",
+                "url": "\/en\/diving\/diving_suits-shortys",
+                "visible": "1"
+            },
+            {
+                "title": "T-shirts and UV protection",
+                "url": "\/en\/diving\/diving_suits-tshirts_and_uv_protection",
+                "visible": "1"
+            },
+            {
+                "title": "Hoods",
+                "url": "\/en\/diving\/diving_suits-hoods",
+                "visible": "1"
+            },
+            {
+                "title": "Drysuits",
+                "url": "\/en\/diving\/diving_suits-drysuits",
+                "visible": "1"
+            },
+            {
+                "title": "Diving Suits (See all)",
+                "url": "\/en\/diving\/diving_suits",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Swimming",
+        "action": "",
+        "type": "subcategorie",
+        "id": 47,
+        "column": "1",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Swimming glasses",
+                "url": "\/en\/diving\/swimming_and_swimming-swimming_glasses",
+                "visible": "1"
+            },
+            {
+                "title": "Swimming caps",
+                "url": "\/en\/diving\/swimming_and_swimming-swimming_caps",
+                "visible": "1"
+            },
+            {
+                "title": "Swimsuits",
+                "url": "\/en\/diving\/swimming_and_swimming-swimsuits",
+                "visible": "1"
+            },
+            {
+                "title": "Flip flops",
+                "url": "\/en\/diving\/swimming_and_swimming-flip_flops",
+                "visible": "1"
+            },
+            {
+                "title": "accessories",
+                "url": "\/en\/diving\/swimming_and_swimming-accessories",
+                "visible": "1"
+            },
+            {
+                "title": "Pool fins",
+                "url": "\/en\/diving\/swimming_and_swimming-pool_fins",
+                "visible": "1"
+            },
+            {
+                "title": "Waterproof bags",
+                "url": "\/en\/diving\/swimming_and_swimming-waterproof_bags",
+                "visible": "1"
+            },
+            {
+                "title": "Pool plugs and tweezers",
+                "url": "\/en\/diving\/swimming_and_swimming-pool_plugs_and_tweezers",
+                "visible": "1"
+            },
+            {
+                "title": "Swimming and Swimming",
+                "url": "\/en\/diving\/swimming_and_swimming",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Diving equipment",
+        "action": "",
+        "type": "subcategorie",
+        "id": 48,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Regulators",
+                "url": "\/en\/diving\/regulators",
+                "visible": "1"
+            },
+            {
+                "title": "Octopus",
+                "url": "\/en\/diving\/octopus",
+                "visible": "1"
+            },
+            {
+                "title": "Computers \/ Interface",
+                "url": "\/en\/diving\/computers_interface",
+                "visible": "1"
+            },
+            {
+                "title": "Consoles Pressure Gauge",
+                "url": "\/en\/diving\/consoles_pressure_gauge",
+                "visible": "1"
+            },
+            {
+                "title": "Compass Compasses",
+                "url": "\/en\/diving\/compass_compasses",
+                "visible": "1"
+            },
+            {
+                "title": "Jackets Vests",
+                "url": "\/en\/diving\/jackets_vests",
+                "visible": "1"
+            },
+            {
+                "title": "Boots",
+                "url": "\/en\/diving\/boots",
+                "visible": "1"
+            },
+            {
+                "title": "Diving gloves",
+                "url": "\/en\/diving\/diving_gloves",
+                "visible": "1"
+            },
+            {
+                "title": "Snorkels",
+                "url": "\/en\/diving\/snorkels",
+                "visible": "1"
+            },
+            {
+                "title": "Spotlights and Flashlights",
+                "url": "\/en\/diving\/spotlights_and_flashlights",
+                "visible": "1"
+            },
+            {
+                "title": "Diving masks",
+                "url": "\/en\/diving\/diving_masks",
+                "visible": "1"
+            },
+            {
+                "title": "Fins",
+                "url": "\/en\/diving\/fins",
+                "visible": "1"
+            },
+            {
+                "title": "Knives",
+                "url": "\/en\/diving\/knives",
+                "visible": "1"
+            },
+            {
+                "title": "Diving Bags",
+                "url": "\/en\/diving\/diving_bags",
+                "visible": "1"
+            },
+            {
+                "title": "Bottles",
+                "url": "\/en\/diving\/bottles",
+                "visible": "1"
+            },
+            {
+                "title": "Pneumatics and Engines",
+                "url": "\/en\/diving\/pneumatics_and_engines",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Clothing",
+        "action": "",
+        "type": "subcategorie",
+        "id": 49,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Swimsuits",
+                "url": "\/en\/diving\/clothes_and_shoes-swimsuits",
+                "visible": "1"
+            },
+            {
+                "title": "Bermuda",
+                "url": "\/en\/diving\/clothes_and_shoes-bermuda",
+                "visible": "1"
+            },
+            {
+                "title": "Socks",
+                "url": "\/en\/diving\/clothes_and_shoes-socks",
+                "visible": "0"
+            },
+            {
+                "title": "Tshirts",
+                "url": "\/en\/diving\/clothes_and_shoes-tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Vests",
+                "url": "\/en\/diving\/clothes_and_shoes-vests",
+                "visible": "1"
+            },
+            {
+                "title": "Jackets and Softshells",
+                "url": "\/en\/diving\/clothes_and_shoes-jackets_and_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Pants",
+                "url": "\/en\/diving\/clothes_and_shoes-pants",
+                "visible": "1"
+            },
+            {
+                "title": "Poles",
+                "url": "\/en\/diving\/clothes_and_shoes-poles",
+                "visible": "0"
+            },
+            {
+                "title": "Woman cloth",
+                "url": "\/en\/diving\/clothes_and_shoes-woman_cloth",
+                "visible": "1"
+            },
+            {
+                "title": "Clothes and shoes",
+                "url": "\/en\/diving\/clothes_and_shoes",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Electronics",
+        "action": "",
+        "type": "subcategorie",
+        "id": 50,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Stations",
+                "url": "\/en\/diving\/stations",
+                "visible": "1"
+            },
+            {
+                "title": "Cameras",
+                "url": "\/en\/diving\/cameras",
+                "visible": "0"
+            },
+            {
+                "title": "Gps and Probes",
+                "url": "\/en\/gps_and_probes",
+                "visible": "0"
+            },
+            {
+                "title": "Watches",
+                "url": "\/en\/diving\/watches",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Diving accessories",
+        "action": "",
+        "type": "subcategorie",
+        "id": 51,
+        "column": "4",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "buoys",
+                "url": "\/en\/diving\/diving_accessories-buoys",
+                "visible": "1"
+            },
+            {
+                "title": "reels",
+                "url": "\/en\/diving\/diving_accessories-reels",
+                "visible": "1"
+            },
+            {
+                "title": "straps",
+                "url": "\/en\/diving\/diving_accessories-straps",
+                "visible": "1"
+            },
+            {
+                "title": "Acoustic Warning Devices",
+                "url": "\/en\/diving\/diving_accessories-acoustic_warning_devices",
+                "visible": "1"
+            },
+            {
+                "title": "carabiners",
+                "url": "\/en\/diving\/diving_accessories-carabiners",
+                "visible": "1"
+            },
+            {
+                "title": "hangers",
+                "url": "\/en\/diving\/diving_accessories-hangers",
+                "visible": "1"
+            },
+            {
+                "title": "hoses",
+                "url": "\/en\/diving\/diving_accessories-hoses",
+                "visible": "1"
+            },
+            {
+                "title": "decompression balloons",
+                "url": "\/en\/diving\/diving_accessories-decompression_balloons",
+                "visible": "0"
+            },
+            {
+                "title": "extenders",
+                "url": "\/en\/diving\/diving_accessories-extenders",
+                "visible": "1"
+            },
+            {
+                "title": "retractors",
+                "url": "\/en\/diving\/diving_accessories-retractors",
+                "visible": "1"
+            },
+            {
+                "title": "Accessory Kit",
+                "url": "\/en\/diving\/diving_accessories-accessory_kit",
+                "visible": "1"
+            },
+            {
+                "title": "multipurpose",
+                "url": "\/en\/diving\/diving_accessories-multipurpose",
+                "visible": "1"
+            },
+            {
+                "title": "Key ring",
+                "url": "\/en\/diving\/diving_accessories-key_ring",
+                "visible": "1"
+            },
+            {
+                "title": "Diving Accessories",
+                "url": "\/en\/diving\/diving_accessories",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Underwater fishing",
+        "action": "",
+        "type": "subcategorie",
+        "id": 52,
+        "column": "5",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Submarine Fishing Rifles",
+                "url": "\/en\/diving\/underwater_fishing-submarine_fishing_rifles",
+                "visible": "1"
+            },
+            {
+                "title": "Underwater Fishing Fins",
+                "url": "\/en\/diving\/underwater_fishing-underwater_fishing_fins",
+                "visible": "1"
+            },
+            {
+                "title": "Knives",
+                "url": "\/en\/diving\/underwater_fishing-knives",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras De Pesca Submarina",
+                "url": "\/en\/diving\/underwater_fishing-mascaras_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Underwater Fishing Accessories",
+                "url": "\/en\/diving\/underwater_fishing-underwater_fishing_accessories",
+                "visible": "1"
+            },
+            {
+                "title": "Gloves",
+                "url": "\/en\/diving\/underwater_fishing-gloves",
+                "visible": "1"
+            },
+            {
+                "title": "Escarpines de Pesca Submarina",
+                "url": "\/en\/diving\/underwater_fishing-escarpines_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Bags",
+                "url": "\/en\/diving\/underwater_fishing-bags",
+                "visible": "1"
+            },
+            {
+                "title": "Capuchas",
+                "url": "\/en\/diving\/underwater_fishing-capuchas",
+                "visible": "1"
+            },
+            {
+                "title": "Cuidados del equipo",
+                "url": "\/en\/diving\/underwater_fishing-cuidados_del_equipo",
+                "visible": "1"
+            },
+            {
+                "title": "Spotlights and lanterns",
+                "url": "\/en\/diving\/underwater_fishing-spotlights_and_lanterns",
+                "visible": "1"
+            },
+            {
+                "title": "Trajes de Pesca Submarina",
+                "url": "\/en\/diving\/underwater_fishing-trajes_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Tubos",
+                "url": "\/en\/diving\/underwater_fishing-tubos",
+                "visible": "1"
+            },
+            {
+                "title": "Underwater fishing (See all)",
+                "url": "\/en\/diving\/underwater_fishing",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet and offers",
+        "action": "",
+        "type": "subcategorie",
+        "id": 53,
+        "column": "5",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet and Liquidations",
+                "url": "\/en\/diving\/outlet_and_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "EXPRESS Diving Offer",
+                "url": "\/en\/diving\/express_diving_offer",
+                "visible": "1"
+            }
+        ]
+    }
+]

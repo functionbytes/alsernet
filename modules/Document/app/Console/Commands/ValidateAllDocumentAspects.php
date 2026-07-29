@@ -204,7 +204,7 @@ class ValidateAllDocumentAspects extends Command
                 if (empty($document->current_validator_group)) {
                     $issues[] = [
                         'type' => 'missing_validator_group',
-                        'message' => 'Document in validation but missing validator group assignment',
+                        'message' => "Document in validation but missing validator group assignment",
                     ];
                 }
             }
@@ -223,7 +223,7 @@ class ValidateAllDocumentAspects extends Command
             if ($document->validation_status === 'in_validation' && ! $document->validation_started_at) {
                 $issues[] = [
                     'type' => 'missing_start_timestamp',
-                    'message' => 'Document status is in_validation but validation_started_at is empty',
+                    'message' => "Document status is in_validation but validation_started_at is empty",
                 ];
             }
         } else {
@@ -292,7 +292,7 @@ class ValidateAllDocumentAspects extends Command
         if (empty($document->type_id) || ! $document->documentType) {
             $issues[] = [
                 'type' => 'missing_document_type',
-                'message' => 'Document has no associated document type',
+                'message' => "Document has no associated document type",
             ];
         }
 
@@ -300,7 +300,7 @@ class ValidateAllDocumentAspects extends Command
         if (empty($document->uid)) {
             $issues[] = [
                 'type' => 'missing_uid',
-                'message' => 'Document has no UID',
+                'message' => "Document has no UID",
             ];
         }
     }
@@ -435,7 +435,7 @@ class ValidateAllDocumentAspects extends Command
         }
 
         if (! empty($statistics['validation_errors'])) {
-            $this->line('  ⚠ Validation errors: <fg=red>'.count($statistics['validation_errors']).'</fg=red>');
+            $this->line("  ⚠ Validation errors: <fg=red>" . count($statistics['validation_errors']) . '</fg=red>');
         }
 
         // Detailed issues
@@ -474,14 +474,14 @@ class ValidateAllDocumentAspects extends Command
                 ? round((($statistics['healthy'] + $statistics['issues_fixed']) / $statistics['total']) * 100, 2)
                 : 0;
 
-            $this->info('✓ Validation and repair completed!');
+            $this->info("✓ Validation and repair completed!");
             $this->info("  System health: <fg=green>{$healthyPercent}%</fg=green>");
         } else {
             $healthyPercent = $statistics['total'] > 0
                 ? round(($statistics['healthy'] / $statistics['total']) * 100, 2)
                 : 0;
 
-            $this->info('ℹ Validation completed (dry-run mode)');
+            $this->info("ℹ Validation completed (dry-run mode)");
             $this->info("  System health: <fg=yellow>{$healthyPercent}%</fg=yellow>");
 
             if ($statistics['issues_found'] > 0) {

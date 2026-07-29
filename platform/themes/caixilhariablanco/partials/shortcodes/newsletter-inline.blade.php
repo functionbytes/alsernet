@@ -1,1 +1,0 @@
-@include('newsletter::shortcodes.inline')

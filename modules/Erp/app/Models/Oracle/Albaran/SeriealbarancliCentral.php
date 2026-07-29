@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Otros\Empresa;
-use Modules\Erp\Models\Oracle\Serie\Serie;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -59,7 +56,7 @@ class SeriealbarancliCentral extends Model
      */
     public function seriealbarancliCentral()
     {
-        return $this->belongsTo(SeriealbarancliCentral::class, 'idseriealbarancli_central', 'idseriealbarancli_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCentral::class, 'idseriealbarancli_central', 'idseriealbarancli_central');
     }
 
     /**
@@ -68,7 +65,7 @@ class SeriealbarancliCentral extends Model
      */
     public function seriealbarancli()
     {
-        return $this->belongsTo(SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
     }
 
     /**
@@ -77,7 +74,7 @@ class SeriealbarancliCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -86,7 +83,7 @@ class SeriealbarancliCentral extends Model
      */
     public function serie()
     {
-        return $this->belongsTo(Serie::class, 'idserie', 'idserie');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Serie\Serie::class, 'idserie', 'idserie');
     }
 
     /**
@@ -95,6 +92,6 @@ class SeriealbarancliCentral extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 }

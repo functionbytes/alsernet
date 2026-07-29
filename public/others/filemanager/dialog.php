@@ -1,7 +1,4 @@
 <?php
-
-use filemanager\include\FtpException;
-
 $time = time();
 
 $config = include 'config/config.php';
@@ -626,7 +623,7 @@ if ($ftp) {
         if (! $ftp->isDir($config['ftp_base_folder'].$config['ftp_thumbs_dir'].$rfm_subfolder.$subdir)) {
             create_folder(false, $config['ftp_base_folder'].$config['ftp_thumbs_dir'].$rfm_subfolder.$subdir, $ftp, $config);
         }
-    } catch (FtpException $e) {
+    } catch (\filemanager\include\FtpException $e) {
         echo 'Error: ';
         echo $e->getMessage();
         echo '<br/>Please check configurations';

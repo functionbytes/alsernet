@@ -287,7 +287,7 @@ class Response
      * status codes and left empty otherwise.
      * @return Response
      *
-     * @throws InvalidArgumentException When the HTTP status code is not valid
+     * @throws \InvalidArgumentException When the HTTP status code is not valid
      *
      * @api
      */

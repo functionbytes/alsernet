@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Otros\Subcuenta;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Banco extends Model
      */
     public function banco()
     {
-        return $this->belongsTo(Banco::class, 'idbanco', 'idbanco');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Banco::class, 'idbanco', 'idbanco');
     }
 
     /**
@@ -62,6 +61,6 @@ class Banco extends Model
      */
     public function subcuenta()
     {
-        return $this->belongsTo(Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Subcuenta::class, 'idsubcuenta', 'idsubcuenta');
     }
 }

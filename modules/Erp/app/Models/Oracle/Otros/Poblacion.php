@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Provincia;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -52,7 +51,7 @@ class Poblacion extends Model
      */
     public function poblacion()
     {
-        return $this->belongsTo(Poblacion::class, 'idpoblacion', 'idpoblacion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Poblacion::class, 'idpoblacion', 'idpoblacion');
     }
 
     /**
@@ -61,6 +60,6 @@ class Poblacion extends Model
      */
     public function provincia()
     {
-        return $this->belongsTo(Provincia::class, 'idprovincia', 'idprovincia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Provincia::class, 'idprovincia', 'idprovincia');
     }
 }

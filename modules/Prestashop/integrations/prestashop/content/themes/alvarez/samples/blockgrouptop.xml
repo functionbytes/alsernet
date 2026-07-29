@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<dataSample>
+  <configurations>
+    <config><name><![CDATA[LEO_BLOCKGROUPTOP_USEINFO]]></name><value><![CDATA[0]]></value></config>
+</configurations>
+
+<sql>
+<![CDATA[]]></sql>
+
+  <hooks>
+    <hook module="blockgrouptop" hook="Header" position="8" exceptions=""/>
+  </hooks>
+</dataSample>

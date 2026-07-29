@@ -15,38 +15,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Secretos de webhooks entrantes
-    |--------------------------------------------------------------------------
-    |
-    | HMAC-SHA256 sobre "{timestamp}:{raw_body}". Sin secreto configurado el
-    | endpoint responde 503 (fail-closed), nunca acepta sin verificar.
-    |
-    */
-    'webhooks' => [
-        'prestashop_secret' => env('DOCUMENTS_PRESTASHOP_WEBHOOK_SECRET', ''),
-        'erp_secret' => env('DOCUMENTS_ERP_WEBHOOK_SECRET', ''),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Conexión directa a la BD de PrestaShop (comando de reconciliación)
-    |--------------------------------------------------------------------------
-    |
-    | Usada por CreateBlockedProductDocuments para leer órdenes pagadas. Las
-    | credenciales viven aquí (no con env() directo en el comando) siguiendo la
-    | convención del proyecto.
-    |
-    */
-    'prestashop_db' => [
-        'host' => env('DB_HOST_PRESTASHOP', '192.168.1.120'),
-        'port' => env('DB_PORT_PRESTASHOP', 3306),
-        'database' => env('DB_DATABASE_PRESTASHOP', 'alvarez_ana'),
-        'username' => env('DB_USERNAME_PRESTASHOP', 'alvarez_ana'),
-        'password' => env('DB_PASSWORD_PRESTASHOP', ''),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Estados pagados de Prestashop
     |--------------------------------------------------------------------------
     |

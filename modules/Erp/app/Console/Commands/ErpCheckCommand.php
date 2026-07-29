@@ -2,21 +2,36 @@
 
 namespace Modules\Erp\Console\Commands;
 
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Modules\Core\Models\Setting;
-use Modules\Erp\Services\ErpService;
+use Modules\Supplier\Services\Integrations\ErpService;
 
 class ErpCheckCommand extends Command
 {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
     protected $signature = 'erp:check
                             {--update-status : Update the connection status in database}';
 
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
     protected $description = 'Verify connection to the ERP system';
 
-    public function __construct(private readonly ErpService $erpService)
+    protected ErpService $erpService;
+
+    /**
+     * Create a new command instance.
+     */
+    public function __construct(ErpService $erpService)
     {
         parent::__construct();
+        $this->erpService = $erpService;
     }
 
     /**
@@ -117,7 +132,7 @@ class ErpCheckCommand extends Command
                 ['Total Requests', number_format((int) $settings['erp_total_requests'])],
                 ['Failed Requests', number_format((int) $settings['erp_failed_requests'])],
                 ['Success Rate', number_format((float) $settings['erp_success_rate'] ?? 100.0, 2).'%'],
-                ['Last Check', $settings['erp_last_connection_check'] ? Carbon::parse($settings['erp_last_connection_check'])->diffForHumans() : 'Never'],
+                ['Last Check', $settings['erp_last_connection_check'] ? \Carbon\Carbon::parse($settings['erp_last_connection_check'])->diffForHumans() : 'Never'],
                 ['Last Status', ucfirst($settings['erp_last_connection_status'] ?? 'unknown')],
             ]
         );

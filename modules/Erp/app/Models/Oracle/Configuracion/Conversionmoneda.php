@@ -47,7 +47,7 @@ class Conversionmoneda extends Model
      */
     public function conversionmoneda()
     {
-        return $this->belongsTo(Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
     }
 
     /**
@@ -56,6 +56,6 @@ class Conversionmoneda extends Model
      */
     public function moneda()
     {
-        return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Moneda::class, 'idmoneda', 'idmoneda');
     }
 }

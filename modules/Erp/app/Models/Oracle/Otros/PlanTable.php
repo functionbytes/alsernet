@@ -3,7 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Web\WAyudas;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -45,6 +44,6 @@ class PlanTable extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

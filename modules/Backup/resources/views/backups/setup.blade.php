@@ -9,7 +9,7 @@
     padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600;
 }
 .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-.status-pill.ok     { background: rgba(177,1,0,.1);  color: #90bb13; }
+.status-pill.ok     { background: rgba(177,1,0,.1);  color: #13C672; }
 .status-pill.warn   { background: #fff9e5;            color: #a07a00; }
 .status-pill.danger { background: rgba(177,1,0,.08); color: #7a0000; }
 .status-pill.muted  { background: #e9ecef;            color: #6c757d; }
@@ -23,8 +23,8 @@
     display: flex; align-items: center; justify-content: center; font-size: 1rem;
 }
 .health-strip.ok     { background: rgba(177,1,0,.06); }
-.health-strip.ok     .health-icon { background: #90bb13; color: #fff; }
-.health-strip.ok     .health-title { color: #90bb13; }
+.health-strip.ok     .health-icon { background: #13C672; color: #fff; }
+.health-strip.ok     .health-title { color: #13C672; }
 .health-strip.warn   { background: #fff9e5; }
 .health-strip.warn   .health-icon { background: #FEC90F; color: #fff; }
 .health-strip.warn   .health-title { color: #7a6200; }
@@ -74,7 +74,7 @@
 
             {{-- Loading --}}
             <div id="status-loading" class="card-body text-center py-5">
-                <div class="spinner-border mb-3" role="status" style="color:#90bb13; width:2rem; height:2rem;"></div>
+                <div class="spinner-border mb-3" role="status" style="color:#13C672; width:2rem; height:2rem;"></div>
                 <p class="text-muted mb-0">Verificando estado del sistema...</p>
             </div>
 

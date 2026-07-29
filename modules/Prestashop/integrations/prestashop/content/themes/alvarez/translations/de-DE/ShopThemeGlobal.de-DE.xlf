@@ -1,0 +1,751 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="2522c683186ee0dd472658e0f5a4e308">
+        <source>Panel Tool</source>
+        <target>Bedienfeld</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:15</note>
+      </trans-unit>
+      <trans-unit id="671fcb3ca53cbc54cde7bcf4ebf01a38">
+        <source>Layout Mod</source>
+        <target>Layout Mod</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:19</note>
+      </trans-unit>
+      <trans-unit id="d721757161f7f70c5b0949fdb6ec2c30">
+        <source>Theme</source>
+        <target>Thema</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:32</note>
+      </trans-unit>
+      <trans-unit id="7a1920d61156abc05a60135aefe8bc67">
+        <source>Default</source>
+        <target>Standard</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:35</note>
+      </trans-unit>
+      <trans-unit id="fdb2c741397cac29e9a68164925b0dd6">
+        <source>Float Header</source>
+        <target>Schwimmerkopf</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:51</note>
+      </trans-unit>
+      <trans-unit id="93cba07454f06a4a960172bbd6e2a435">
+        <source>Yes</source>
+        <target>Ja</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:55</note>
+      </trans-unit>
+      <trans-unit id="bafd7322c6e97d25b6299b5d6fe8920b">
+        <source>No</source>
+        <target>Nein</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:58</note>
+      </trans-unit>
+      <trans-unit id="739abe09ca70c329d652a629fe1b3c9b">
+        <source>Live Theme Editor</source>
+        <target>Live Theme Editor</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:82</note>
+      </trans-unit>
+      <trans-unit id="2d09eb77e92cfef7f76b2aabf984ea2f">
+        <source>Those Images in folder YOURTHEME/assets/img/patterns/</source>
+        <target>Diese bilder im ordner YOURTHEME/assets/img/patterns/</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:113</note>
+      </trans-unit>
+      <trans-unit id="e9cb217697088a98b1937d111d936281">
+        <source>Attachment</source>
+        <target>Befestigung</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:121</note>
+      </trans-unit>
+      <trans-unit id="9ba66a9f92056682b7d86a38b4bc18c0">
+        <source>Not set</source>
+        <target>Nicht eingestellt</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:141</note>
+      </trans-unit>
+      <trans-unit id="52f5e0bc3859bc5f5e25130b6c7e8881">
+        <source>Position</source>
+        <target>Position</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:130</note>
+      </trans-unit>
+      <trans-unit id="7020426cfb0a204051be4b3053d2acc8">
+        <source>Repeat</source>
+        <target>Wiederholen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:139</note>
+      </trans-unit>
+      <trans-unit id="c49484faf79e2388b580e49444d6ac11">
+        <source>Inherit</source>
+        <target>Erben</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\info\paneltool.tpl:153</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\profiles\plist1499676422.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="c91e4ee170226d66e90f99ba917e4c20">
+        <source>Quick view</source>
+        <target>Schnellansicht</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\profiles\plist1499676422.tpl:83</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="43340e6cc4e88197d57f8d6d5ea50a46">
+        <source>Read more</source>
+        <target>Weiterlesen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:79</note>
+      </trans-unit>
+      <trans-unit id="efeb369cccbd560588a756610865664c">
+        <source>In</source>
+        <target>Im</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:32</note>
+      </trans-unit>
+      <trans-unit id="521c36a31c2762741cf0f8890cbe05e3">
+        <source>On</source>
+        <target>Auf</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:39</note>
+      </trans-unit>
+      <trans-unit id="ebfe5e1791db03c4cd6ab95801e0977d">
+        <source>Hit</source>
+        <target>Schlagen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:62</note>
+      </trans-unit>
+      <trans-unit id="9d1a0949c39e66a0cd65240bc0ac9177">
+        <source>Sunday</source>
+        <target>Sonntag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:87</note>
+      </trans-unit>
+      <trans-unit id="6f8522e0610541f1ef215a22ffa66ff6">
+        <source>Monday</source>
+        <target>Montag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:88</note>
+      </trans-unit>
+      <trans-unit id="5792315f09a5d54fb7e3d066672b507f">
+        <source>Tuesday</source>
+        <target>Dienstag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:89</note>
+      </trans-unit>
+      <trans-unit id="796c163589f295373e171842f37265d5">
+        <source>Wednesday</source>
+        <target>Mittwoch</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:90</note>
+      </trans-unit>
+      <trans-unit id="78ae6f0cd191d25147e252dc54768238">
+        <source>Thursday</source>
+        <target>Donnerstag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:91</note>
+      </trans-unit>
+      <trans-unit id="c33b138a163847cdb6caeeb7c9a126b4">
+        <source>Friday</source>
+        <target>Freitag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:92</note>
+      </trans-unit>
+      <trans-unit id="8b7051187b9191cdcdae6ed5a10e5adc">
+        <source>Saturday</source>
+        <target>Samstag</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:93</note>
+      </trans-unit>
+      <trans-unit id="86f5978d9b80124f509bdb71786e929e">
+        <source>January</source>
+        <target>Januar</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:95</note>
+      </trans-unit>
+      <trans-unit id="659e59f062c75f81259d22786d6c44aa">
+        <source>February</source>
+        <target>Februar</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:96</note>
+      </trans-unit>
+      <trans-unit id="fa3e5edac607a88d8fd7ecb9d6d67424">
+        <source>March</source>
+        <target>März</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:97</note>
+      </trans-unit>
+      <trans-unit id="3fcf026bbfffb63fb24b8de9d0446949">
+        <source>April</source>
+        <target>April</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:98</note>
+      </trans-unit>
+      <trans-unit id="195fbb57ffe7449796d23466085ce6d8">
+        <source>May</source>
+        <target>Kann</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:99</note>
+      </trans-unit>
+      <trans-unit id="688937ccaf2a2b0c45a1c9bbba09698d">
+        <source>June</source>
+        <target>Juni</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:100</note>
+      </trans-unit>
+      <trans-unit id="1b539f6f34e8503c97f6d3421346b63c">
+        <source>July</source>
+        <target>Juli</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:101</note>
+      </trans-unit>
+      <trans-unit id="41ba70891fb6f39327d8ccb9b1dafb84">
+        <source>August</source>
+        <target>August</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:102</note>
+      </trans-unit>
+      <trans-unit id="cc5d90569e1c8313c2b1c2aab1401174">
+        <source>September</source>
+        <target>September</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:103</note>
+      </trans-unit>
+      <trans-unit id="eca60ae8611369fe28a02e2ab8c5d12e">
+        <source>October</source>
+        <target>Oktober</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:104</note>
+      </trans-unit>
+      <trans-unit id="7e823b37564da492ca1629b4732289a8">
+        <source>November</source>
+        <target>November</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:105</note>
+      </trans-unit>
+      <trans-unit id="82331503174acbae012b2004f6431fa5">
+        <source>December</source>
+        <target>Dezember</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_listing_blog.tpl:106</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\appagebuilder\views\templates\hook\cate-image\ApCategoryImage.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="0b4db271fc4624853e634ef6882ea8be">
+        <source>View all</source>
+        <target>Alle anzeigen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\appagebuilder\views\templates\hook\cate-image\ApCategoryImage.tpl:68</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\blockgrouptop\views\templates\hook\blockgrouptop.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="51ac4bf63a0c6a9cefa7ba69b4154ef1">
+        <source>Setting</source>
+        <target>Rahmen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\blockgrouptop\views\templates\hook\blockgrouptop.tpl:17</note>
+      </trans-unit>
+      <trans-unit id="0885f0c211f74834f0109c5abaf4cdc4">
+        <source>Language:</source>
+        <target>Sprache:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\blockgrouptop\views\templates\hook\blockgrouptop.tpl:22</note>
+      </trans-unit>
+      <trans-unit id="77295c7d814e7397c55f64ec06313984">
+        <source>Currency:</source>
+        <target>Währung:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\blockgrouptop\views\templates\hook\blockgrouptop.tpl:34</note>
+      </trans-unit>
+      <trans-unit id="d95cf4ab2cbf1dfb63f066b50558b07d">
+        <source>My account</source>
+        <target>Mein Konto</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\blockgrouptop\views\templates\hook\blockgrouptop.tpl:84</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_customersignin\ps_customersignin.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="8b1a9953c4611296a827abf8c47804d7">
+        <source>Hello</source>
+        <target>Hallo</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_customersignin\ps_customersignin.tpl:40</note>
+      </trans-unit>
+      <trans-unit id="641254d77e7a473aa5910574f3f9453c">
+        <source>Wishlist</source>
+        <target>Wunschliste</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_customersignin\ps_customersignin.tpl:74</note>
+      </trans-unit>
+      <trans-unit id="7eece51cf3938103677db7a5051ef8f5">
+        <source>Compare</source>
+        <target>Vergleichen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_customersignin\ps_customersignin.tpl:86</note>
+      </trans-unit>
+      <trans-unit id="08bd40c7543007ad06e4fce31618f6ec">
+        <source>Account</source>
+        <target>Konto</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_customersignin\ps_customersignin.tpl:28</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\nav.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="02d4482d332e1aef3437cd61c9bcc624">
+        <source>Contact us</source>
+        <target>Kontaktiere uns</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\nav.tpl:39</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\category.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="8971af49a12a5e4a7dbe9d31f0e56ae1">
+        <source>Sorry, We are updating data, please come back later!!!!</source>
+        <target>Entschuldigung, wir aktualisieren Daten, bitte komm später später !!!!</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\category.tpl:116</note>
+      </trans-unit>
+      <trans-unit id="2faf27eb519570d498ac5f0b9672cd96">
+        <source>Childrens</source>
+        <target>Kinder</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\category.tpl:50</note>
+      </trans-unit>
+      <trans-unit id="e586c16f02ec61b8fc930d42681835b2">
+        <source>Recent blog posts</source>
+        <target>Aktuelle Blog-Beiträge</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\category.tpl:68</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="94936ad65bdf649c16b14b27794effb6">
+        <source>Posted By</source>
+        <target>Geschrieben von</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:24</note>
+      </trans-unit>
+      <trans-unit id="0be8406951cdfda82f00f79328cf4efc">
+        <source>Comment</source>
+        <target>Kommentar</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:67</note>
+      </trans-unit>
+      <trans-unit id="8413c683b4b27cc3f4dbd4c90329d8ba">
+        <source>Comments</source>
+        <target>Bemerkungen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:14</note>
+      </trans-unit>
+      <trans-unit id="1b60ba0c9bf033a378647a9788586bbe">
+        <source>Created On</source>
+        <target>Erstellt am</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:23</note>
+      </trans-unit>
+      <trans-unit id="41e29f72f5517ea06e3db9c130dfc282">
+        <source>Comment Link</source>
+        <target>Kommentar Link</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:27</note>
+      </trans-unit>
+      <trans-unit id="ba3f8c9fbcc595f55b778118b65fc8ea">
+        <source>Leave your comment</source>
+        <target>Hinterlasse ein Kommentar</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:45</note>
+      </trans-unit>
+      <trans-unit id="630058029627ce58e7571e7a5b6ec591">
+        <source>Full Name</source>
+        <target>Vollständiger Name</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:49</note>
+      </trans-unit>
+      <trans-unit id="387af98b1574a74e12eb99f3ed220831">
+        <source>Enter your full name</source>
+        <target>Geben Sie Ihren vollständigen Namen ein</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:52</note>
+      </trans-unit>
+      <trans-unit id="ce8ae9da5b7cd6c3df2929543a9af92d">
+        <source>Email</source>
+        <target>Email</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:58</note>
+      </trans-unit>
+      <trans-unit id="95d3fa6b9e69c588a333f4e78139a7cd">
+        <source>Enter your email</source>
+        <target>Geben sie ihre E-Mail Adresse ein</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:61</note>
+      </trans-unit>
+      <trans-unit id="4e9ce95a0f4e750b14ad77bc86d62479">
+        <source>Enter your comment</source>
+        <target>Geben Sie Ihren Kommentar ein</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:70</note>
+      </trans-unit>
+      <trans-unit id="45d048c35e3cfd449dc0a1b503cd103a">
+        <source>Captcha</source>
+        <target>Captcha</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:76</note>
+      </trans-unit>
+      <trans-unit id="a4d3b161ce1309df1c4e25df28694b7b">
+        <source>Submit</source>
+        <target>Einreichen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\_local_comment.tpl:86</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\blog.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="32b502f33a535f75dcbf63f6753c631e">
+        <source>Tags:</source>
+        <target>Tags:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\blog.tpl:100</note>
+      </trans-unit>
+      <trans-unit id="2d8bb0220c9fd05edb0178050e8c76cc">
+        <source>In Same Category</source>
+        <target>In der gleichen Kategorie</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\blog.tpl:113</note>
+      </trans-unit>
+      <trans-unit id="ce7c9dd6bcaf9d54b2501ed1c8e6d5d1">
+        <source>Related by Tags</source>
+        <target>Verwandt mit Tags</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\blog.tpl:121</note>
+      </trans-unit>
+      <trans-unit id="bfad8746759ef359ed37bae63f368ac1">
+        <source>Sorry, This blog is not avariable. May be this was unpublished or deleted.</source>
+        <target>Sorry, dieses Blog ist nicht avariable. Vielleicht ist dies unveröffentlicht oder gelöscht.</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\leoblog\views\templates\front\default\blog.tpl:152</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_categoryproducts\views\templates\hook\ps_categoryproducts.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="38070661d5ad384d9c7d21895dc4e784">
+        <source>Related products</source>
+        <target>Ähnliche Produkte</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_categoryproducts\views\templates\hook\ps_categoryproducts.tpl:27</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="c6359db4a43cb7267a84b389229fd073">
+        <source>Call us: [1]%phone%[/1]</source>
+        <target>Rufen sie uns an: [1]%phone%[/1]</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo.tpl:43</note>
+      </trans-unit>
+      <trans-unit id="3aea774cdcd8f2c45549f10758a71323">
+        <source>Store information</source>
+        <target>Information speichern</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo.tpl:29</note>
+      </trans-unit>
+      <trans-unit id="da6eb684bd77243a780629a180c9d19b">
+        <source>Fax: [1]%fax%[/1]</source>
+        <target>Faxen: [1]%fax%[/1]</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo.tpl:57</note>
+      </trans-unit>
+      <trans-unit id="077d21d48dae9586405c0d264f6d32e7">
+        <source>Email us: [1]%email%[/1]</source>
+        <target>Mailen Sie uns: [1]%email%[/1]</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo.tpl:72</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo-rich.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="1300caaefd15b839f37952dc7cc75d82">
+        <source>Call us:</source>
+        <target>Rufen Sie uns an:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo-rich.tpl:37</note>
+      </trans-unit>
+      <trans-unit id="0e2fb5b02182fd28b9b96e86ed27838f">
+        <source>Fax:</source>
+        <target>Faxen:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo-rich.tpl:47</note>
+      </trans-unit>
+      <trans-unit id="a0bfe0853cf82bdf5dcb9b0bac76c357">
+        <source>Email us:</source>
+        <target>Mailen Sie uns:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_contactinfo\ps_contactinfo-rich.tpl:57</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_currencyselector\ps_currencyselector.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="386c339d37e737a436499d423a77df0c">
+        <source>Currency</source>
+        <target>Währung</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_currencyselector\ps_currencyselector.tpl:27</note>
+      </trans-unit>
+      <trans-unit id="72d43a6525ac95e552ca4eaf1dc0ad1a">
+        <source>Currency dropdown</source>
+        <target>Währung Dropdown</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_currencyselector\ps_currencyselector.tpl:27</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_emailsubscription\views\templates\hook\ps_emailsubscription.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="ba73f83c1a946b252ba5cac286c59d24">
+        <source>join our newsletter</source>
+        <target>Abonnieren Sie unseren Newsletter</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_emailsubscription\views\templates\hook\ps_emailsubscription.tpl:27</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_imageslider\views\templates\hook\slider.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="6dbac206aa2d7e374277ae9ff8ec1987">
+        <source>Carousel buttons</source>
+        <target>Karussellknöpfe</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_imageslider\views\templates\hook\slider.tpl:45</note>
+      </trans-unit>
+      <trans-unit id="dd1f775e443ff3b9a89270713580a51b">
+        <source>Previous</source>
+        <target>Bisherige</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_imageslider\views\templates\hook\slider.tpl:50</note>
+      </trans-unit>
+      <trans-unit id="10ac3d04253ef7e1ddc73e6091c0cd55">
+        <source>Next</source>
+        <target>Nächster</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_imageslider\views\templates\hook\slider.tpl:56</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_languageselector\ps_languageselector.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="4994a8ffeba4ac3140beb89e8d41f174">
+        <source>Language</source>
+        <target>Sprache</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_languageselector\ps_languageselector.tpl:27</note>
+      </trans-unit>
+      <trans-unit id="217148b9c333b63a3fb1883670f5bff2">
+        <source>Language dropdown</source>
+        <target>Sprachunterbrechung</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\modules\ps_languageselector\ps_languageselector.tpl:27</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\profiles\id_gencode_597719e66686a_1500977638.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="96d6f2e7e1f705ab5e59c84a6dc009b2">
+        <source>logo</source>
+        <target>logo</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\profiles\id_gencode_597719e66686a_1500977638.tpl:1</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\active_filters.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="2143f8cb66482342b35208bdc3fd949c">
+        <source>Active filters</source>
+        <target>Aktive filters</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\active_filters.tpl:27</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\facets.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="7a1c5301da6b1ce9e4345bd501397045">
+        <source>(no filter)</source>
+        <target>(kein filter)</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\facets.tpl:132</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\products-top.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="5174d1309f275ba6f275db3af9eb3e18">
+        <source>Grid</source>
+        <target>Gitter</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\products-top.tpl:30</note>
+      </trans-unit>
+      <trans-unit id="4ee29ca12c7d126654bd0e5275de6135">
+        <source>List</source>
+        <target>Liste</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\products-top.tpl:31</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\sort-orders.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="6f9d01a14011f05fffe48559583fc609">
+        <source>Sort by:</source>
+        <target>Sortiere nach:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\catalog\_partials\sort-orders.tpl:25</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\checkout\_partials\steps\payment.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="d3d2e617335f08df83599665eef8a418">
+        <source>Close</source>
+        <target>Schließen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\checkout\_partials\steps\payment.tpl:151</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\category.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="6c5c05a5b907385c60c3baa4087ea1a1">
+        <source>List of sub categories in %name%:</source>
+        <target>Liste der unterkategorien in %name%:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\category.tpl:34</note>
+      </trans-unit>
+      <trans-unit id="51af726259b3283f6b53613165f95697">
+        <source>List of pages in %name%:</source>
+        <target>Liste der seiten in %name%:</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\category.tpl:45</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\sitemap.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="5813ce0ec7196c492c97596718f71969">
+        <source>Sitemap</source>
+        <target>Sitemap</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\sitemap.tpl:28</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\stores.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="34c869c542dee932ef8cd96d2f91cae6">
+        <source>Our stores</source>
+        <target>Unsere Läden</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\stores.tpl:28</note>
+      </trans-unit>
+      <trans-unit id="adc4f9f9cccaa450c10977d50da58d8d">
+        <source>About and Contact</source>
+        <target>Über und Kontakt</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\cms\stores.tpl:44</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\customer\order-detail.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="44749712dbec183e983dcd78a7736c41">
+        <source>Date</source>
+        <target>Datum</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\customer\order-detail.tpl:188</note>
+      </trans-unit>
+      <trans-unit id="ec53a8c4f07baed5d8825072c89799be">
+        <source>Status</source>
+        <target>Status</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\customer\order-detail.tpl:89</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\customer\_partials\my-account-links.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="8cf04a9734132302f96da8e113e80ce5">
+        <source>Home</source>
+        <target>Zuhause</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\customer\_partials\my-account-links.tpl:32</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\maintenance.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="27b4383b976d6be981598d457cc7e62d">
+        <source>We'll be back soon.</source>
+        <target>Wir werden bald zurück sein.</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\maintenance.tpl:42</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\not-found.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="7e74146e0ff2e289abfc8bec1d2b2a18">
+        <source>Sorry for the inconvenience.</source>
+        <target>Entschuldigen Sie die Unannehmlichkeiten.</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\not-found.tpl:28</note>
+      </trans-unit>
+      <trans-unit id="519ee4cd58a2b719f7113965cc949d24">
+        <source>Search again what you are looking for</source>
+        <target>Suchen Sie noch einmal was Sie suchen</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\not-found.tpl:29</note>
+      </trans-unit>
+    </body>
+  </file>
+  <file original="D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\restricted-country.tpl" source-language="de-DE" target-language="de-DE" datatype="plaintext">
+    <body>
+      <trans-unit id="6351030f724f6f42fd11ec9aa6ee8c76">
+        <source>403 Forbidden</source>
+        <target>403 Verboten</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\restricted-country.tpl:43</note>
+      </trans-unit>
+      <trans-unit id="cf8092a0be7b972d6cee3db90bfaf923">
+        <source>You cannot access this store from your country. We apologize for the inconvenience.</source>
+        <target>Sie können nicht auf diesen Laden von Ihrem Land zugreifen. Wir entschuldigen uns für die Unannehmlichkeiten.</target>
+        <note>Context:
+File: D:\xamppnew\htdocs\theme_1712\leo_alaska\themes\leo_alaska\templates\errors\restricted-country.tpl:44</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

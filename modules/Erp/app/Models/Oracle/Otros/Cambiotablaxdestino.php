@@ -52,7 +52,7 @@ class Cambiotablaxdestino extends Model
      */
     public function cambiotablaxdestino()
     {
-        return $this->belongsTo(Cambiotablaxdestino::class, 'idcambiotablaxdestino', 'idcambiotablaxdestino');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Cambiotablaxdestino::class, 'idcambiotablaxdestino', 'idcambiotablaxdestino');
     }
 
     /**
@@ -61,7 +61,7 @@ class Cambiotablaxdestino extends Model
      */
     public function cambiotabla()
     {
-        return $this->belongsTo(Cambiotabla::class, 'idcambiotabla', 'idcambiotabla');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Cambiotabla::class, 'idcambiotabla', 'idcambiotabla');
     }
 
     /**
@@ -70,6 +70,6 @@ class Cambiotablaxdestino extends Model
      */
     public function destinocambio()
     {
-        return $this->belongsTo(Destinocambio::class, 'iddestinocambio', 'iddestinocambio');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Destinocambio::class, 'iddestinocambio', 'iddestinocambio');
     }
 }

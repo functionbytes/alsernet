@@ -51,6 +51,6 @@ class TarifaCabeceraTcalculo extends Model
      */
     public function tarifaCabeceraTcalculo()
     {
-        return $this->belongsTo(TarifaCabeceraTcalculo::class, 'idtarifa_cabecera_tcalculo', 'idtarifa_cabecera_tcalculo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TarifaCabeceraTcalculo::class, 'idtarifa_cabecera_tcalculo', 'idtarifa_cabecera_tcalculo');
     }
 }

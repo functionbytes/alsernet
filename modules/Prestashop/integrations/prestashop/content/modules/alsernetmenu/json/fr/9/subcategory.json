@@ -1,0 +1,251 @@
+[
+    {
+        "title": "Skis",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Skis et Fixations",
+                "url": "\/fr\/ski\/skis_et_fixations",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Chaussures de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 63,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Chaussures de Ski",
+                "url": "\/fr\/ski\/chaussures_de_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussures Apr\u00e8s-Ski",
+                "url": "\/fr\/ski\/chaussures_apres_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussures",
+                "url": "\/fr\/ski\/chaussures",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Casques et Protections",
+        "action": "",
+        "type": "subcategorie",
+        "id": 64,
+        "column": "1",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Casques de Ski",
+                "url": "\/fr\/ski\/casques_de_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Protections dorsales et \u00e9quipements de protection pour le ski",
+                "url": "\/fr\/ski\/protections_dorsales_et_equipements_de_protection_pour_le_ski",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Masques et Lunettes de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 65,
+        "column": "1",
+        "position_category": "5",
+        "position": "4",
+        "items": [
+            {
+                "title": "Masques et Lunettes de Ski",
+                "url": "\/fr\/ski\/masques_et_lunettes_de_ski",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "B\u00e2tons de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 66,
+        "column": "1",
+        "position_category": "4",
+        "position": "5",
+        "items": [
+            {
+                "title": "B\u00e2tons de Ski",
+                "url": "\/fr\/ski\/batons_de_ski",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessoires de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 67,
+        "column": "2",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Accessoires de Ski",
+                "url": "\/fr\/ski\/accessoires_de_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Luge et Ski pour Enfants",
+                "url": "\/fr\/ski\/luge_et_ski_pour_enfants",
+                "visible": "1"
+            },
+            {
+                "title": "Soin personnel",
+                "url": "\/fr\/ski\/soin_personnel",
+                "visible": "1"
+            },
+            {
+                "title": "Cam\u00e9ras",
+                "url": "\/fr\/ski\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "\u00c9metteurs",
+                "url": "\/fr\/ski\/emetteurs",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/fr\/ski\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Lampes et Projecteurs",
+                "url": "\/fr\/ski\/lampes_et_projecteurs",
+                "visible": "1"
+            },
+            {
+                "title": "Jumelles",
+                "url": "\/fr\/ski\/jumelles",
+                "visible": "1"
+            },
+            {
+                "title": "Montres",
+                "url": "\/fr\/ski\/montres",
+                "visible": "0"
+            },
+            {
+                "title": "T\u00e9lescopes",
+                "url": "\/fr\/ski\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "Loisirs",
+                "url": "\/fr\/ski\/loisirs",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "V\u00eatements de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 68,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "V\u00eatements Homme Ski",
+                "url": "\/fr\/ski\/vetements_homme_ski",
+                "visible": "1"
+            },
+            {
+                "title": "V\u00eatements de Ski Femme",
+                "url": "\/fr\/ski\/vetements_de_ski_femme",
+                "visible": "1"
+            },
+            {
+                "title": "V\u00eatements de Ski Junior",
+                "url": "\/fr\/ski\/vetements_de_ski_junior",
+                "visible": "1"
+            },
+            {
+                "title": "V\u00eatements Outdoor",
+                "url": "\/fr\/outdoor\/vetements_et_accessoires-vetements_outdoor",
+                "visible": "1"
+            },
+            {
+                "title": "Bonnets et Tours de Cou",
+                "url": "\/fr\/ski\/bonnets_et_tours_de_cou",
+                "visible": "1"
+            },
+            {
+                "title": "Gants de Ski",
+                "url": "\/fr\/ski\/gants_de_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Sous-v\u00eatements Techniques",
+                "url": "\/fr\/ski\/sous_vetements_techniques",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Transport & Sacs de ski",
+        "action": "",
+        "type": "subcategorie",
+        "id": 69,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Sacs et Housses de Transport",
+                "url": "\/fr\/ski\/sacs_et_housses_de_transport",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs \u00e0 dos",
+                "url": "\/fr\/ski\/sacs_et_housses_de_transport-sacs_a_dos",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet et offres",
+        "action": "",
+        "type": "subcategorie",
+        "id": 70,
+        "column": "3",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet et Liquidations Ski",
+                "url": "\/fr\/ski\/outlet_et_liquidations_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Offre Flash Ski",
+                "url": "\/fr\/offre_flash_ski",
+                "visible": "1"
+            }
+        ]
+    }
+]

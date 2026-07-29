@@ -1,0 +1,33 @@
+<?php
+
+if (! defined('_PS_ADMIN_DIR_')) {
+    define('_PS_ADMIN_DIR_', __DIR__);
+}
+include _PS_ADMIN_DIR_.'/../config/config.inc.php';
+
+function getfieldvalue($dbh, $sql)
+{
+    $rows = $dbh->query($sql);
+    foreach ($rows as $row) {
+        return $row[0];
+    }
+}
+
+function getdatarows($dbh, $sql)
+{
+    return $dbh->query($sql);
+}
+
+try {
+
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    echo $e->getMessage();
+}
+
+$rows = getdatarows($dbh, 'SELECT * FROM producto where id in (100007408,100070814,100070815,100070816,100070817,100070818,100072600,100072601,100088167,100088168,100088170,100088173,100088174,100088175,100113456,100113457,100113458,100113459,100130401,100130402,100130403,100130404,100130405,100130406,100130407,100130408,100130409,100130410,100130411,100130412,100130413,100130414,100130416,100130417,100130418,100130419,100130420,100130421,100132049,100132050,100132051,100132052,100132053,100132054,100132055,100132056,100159237,100159315,100159316,100159317,100159318,100159319,100159320,100159321,100159322,100159323,100159324,100159325,100159916)');
+foreach ($rows as $row) {
+    echo '<br/>'.$row['id'].' - '.$row['id_modelo'];
+}
+
+echo '<br/>acaba';

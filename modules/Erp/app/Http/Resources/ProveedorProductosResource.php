@@ -23,7 +23,7 @@ class ProveedorProductosResource extends JsonResource
             // Productos del proveedor con categorías
             'productos' => $this->when(
                 $this->relationLoaded('artiprovs'),
-                fn () => $this->artiprovs->map(fn ($artiprov) => [
+                $this->artiprovs->map(fn ($artiprov) => [
                     'idArtiprov' => $artiprov->idartiprov,
                     'codigo' => $this->utf8Clean($artiprov->codigo),
                     'descripcion' => $this->utf8Clean($artiprov->descripcion),
@@ -48,7 +48,7 @@ class ProveedorProductosResource extends JsonResource
             // Estadísticas
             'estadisticas' => $this->when(
                 $this->relationLoaded('artiprovs'),
-                fn () => [
+                [
                     'totalProductos' => $this->artiprovs->count(),
                     'productosActivos' => $this->artiprovs->where('estado', 1)->count(),
                 ]

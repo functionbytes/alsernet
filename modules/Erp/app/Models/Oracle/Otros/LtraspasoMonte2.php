@@ -3,8 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Factura\LfacturacliCentral;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -47,7 +45,7 @@ class LtraspasoMonte2 extends Model
      */
     public function ltraspaso()
     {
-        return $this->belongsTo(LtraspasoCapthaya::class, 'idltraspaso', 'idltraspaso');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\LtraspasoCapthaya::class, 'idltraspaso', 'idltraspaso');
     }
 
     /**
@@ -56,7 +54,7 @@ class LtraspasoMonte2 extends Model
      */
     public function traspaso()
     {
-        return $this->belongsTo(TraspasoCapthaya::class, 'idtraspaso', 'idtraspaso');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TraspasoCapthaya::class, 'idtraspaso', 'idtraspaso');
     }
 
     /**
@@ -65,7 +63,7 @@ class LtraspasoMonte2 extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -74,6 +72,6 @@ class LtraspasoMonte2 extends Model
      */
     public function lfacturacli()
     {
-        return $this->belongsTo(LfacturacliCentral::class, 'idlfacturacli', 'idlfacturacli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\LfacturacliCentral::class, 'idlfacturacli', 'idlfacturacli');
     }
 }

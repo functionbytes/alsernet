@@ -52,6 +52,6 @@ class Tarjetas extends Model
      */
     public function tarjeta()
     {
-        return $this->belongsTo(Tarjetas::class, 'idtarjeta', 'idtarjeta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tarjetas::class, 'idtarjeta', 'idtarjeta');
     }
 }

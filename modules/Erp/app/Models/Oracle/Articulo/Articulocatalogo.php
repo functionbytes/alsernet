@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Articulo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Articulocatalogo extends Model
      */
     public function articulocatalogo()
     {
-        return $this->belongsTo(Articulocatalogo::class, 'idarticulocatalogo', 'idarticulocatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulocatalogo::class, 'idarticulocatalogo', 'idarticulocatalogo');
     }
 
     /**
@@ -62,7 +61,7 @@ class Articulocatalogo extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -71,6 +70,6 @@ class Articulocatalogo extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 }

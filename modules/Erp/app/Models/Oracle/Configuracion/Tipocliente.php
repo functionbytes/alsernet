@@ -51,6 +51,6 @@ class Tipocliente extends Model
      */
     public function tipocliente()
     {
-        return $this->belongsTo(Tipocliente::class, 'idtipocliente', 'idtipocliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipocliente::class, 'idtipocliente', 'idtipocliente');
     }
 }

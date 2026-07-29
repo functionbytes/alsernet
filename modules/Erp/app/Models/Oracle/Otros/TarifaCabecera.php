@@ -4,10 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\ImppaisFecha;
-use Modules\Erp\Models\Oracle\Configuracion\Regpais;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -88,7 +84,7 @@ class TarifaCabecera extends Model
      */
     public function tarifaCabecera()
     {
-        return $this->belongsTo(TarifaCabecera::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TarifaCabecera::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
     }
 
     /**
@@ -97,7 +93,7 @@ class TarifaCabecera extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -106,7 +102,7 @@ class TarifaCabecera extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -115,7 +111,7 @@ class TarifaCabecera extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -124,7 +120,7 @@ class TarifaCabecera extends Model
      */
     public function imppaisFecha()
     {
-        return $this->belongsTo(ImppaisFecha::class, 'idimppais_fecha', 'idimppais_fecha');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ImppaisFecha::class, 'idimppais_fecha', 'idimppais_fecha');
     }
 
     /**
@@ -133,7 +129,7 @@ class TarifaCabecera extends Model
      */
     public function tarifaCabeceraTcalculo()
     {
-        return $this->belongsTo(TarifaCabeceraTcalculo::class, 'idtarifa_cabecera_tcalculo', 'idtarifa_cabecera_tcalculo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TarifaCabeceraTcalculo::class, 'idtarifa_cabecera_tcalculo', 'idtarifa_cabecera_tcalculo');
     }
 
     /**
@@ -142,7 +138,7 @@ class TarifaCabecera extends Model
      */
     public function ttarifa()
     {
-        return $this->belongsTo(Ttarifa::class, 'idttarifa', 'idttarifa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Ttarifa::class, 'idttarifa', 'idttarifa');
     }
 
     /**
@@ -151,6 +147,6 @@ class TarifaCabecera extends Model
      */
     public function tarifasLinea()
     {
-        return $this->hasMany(TarifaLinea::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
+        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\TarifaLinea::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
     }
 }

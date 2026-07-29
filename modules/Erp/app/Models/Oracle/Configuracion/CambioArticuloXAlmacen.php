@@ -3,7 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Otros\CambioArticulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -44,7 +43,7 @@ class CambioArticuloXAlmacen extends Model
      */
     public function cambioArticuloXAlmacen()
     {
-        return $this->belongsTo(CambioArticuloXAlmacen::class, 'idcambio_articulo_x_almacen', 'idcambio_articulo_x_almacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\CambioArticuloXAlmacen::class, 'idcambio_articulo_x_almacen', 'idcambio_articulo_x_almacen');
     }
 
     /**
@@ -53,7 +52,7 @@ class CambioArticuloXAlmacen extends Model
      */
     public function cambioArticulo()
     {
-        return $this->belongsTo(CambioArticulo::class, 'idcambio_articulo', 'idcambio_articulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CambioArticulo::class, 'idcambio_articulo', 'idcambio_articulo');
     }
 
     /**
@@ -62,6 +61,6 @@ class CambioArticuloXAlmacen extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

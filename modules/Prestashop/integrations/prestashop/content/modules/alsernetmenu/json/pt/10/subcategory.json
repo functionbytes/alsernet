@@ -1,0 +1,179 @@
+[
+    {
+        "title": "Raquetes de Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 71,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "N\u00edvel avan\u00e7ado",
+                "url": "\/pt\/padel\/raquetes_de_padel-nivel_avancado",
+                "visible": "1"
+            },
+            {
+                "title": "N\u00edvel m\u00e9dio",
+                "url": "\/pt\/padel\/raquetes_de_padel-nivel_medio",
+                "visible": "1"
+            },
+            {
+                "title": "Principiante",
+                "url": "\/pt\/padel\/raquetes_de_padel-principiante",
+                "visible": "1"
+            },
+            {
+                "title": "Raquetes J\u00fanior",
+                "url": "\/pt\/padel\/raquetes_de_padel-raquetes_junior",
+                "visible": "0"
+            },
+            {
+                "title": "Raquetes de Padel (Ver todos)",
+                "url": "\/pt\/padel\/raquetes_de_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sacos de Raquetes",
+        "action": "",
+        "type": "subcategorie",
+        "id": 72,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Sacos de Raquetes (Ver todos)",
+                "url": "\/pt\/padel\/sacos_de_raquetes",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Acess\u00f3rios de Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 73,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Protetores",
+                "url": "\/pt\/padel\/acessorios_padel-protetores",
+                "visible": "0"
+            },
+            {
+                "title": "overgrips",
+                "url": "\/pt\/padel\/acessorios_padel-overgrips",
+                "visible": "1"
+            },
+            {
+                "title": "Bon\u00e9s",
+                "url": "\/pt\/padel\/acessorios_padel-bones",
+                "visible": "1"
+            },
+            {
+                "title": "Fitas de Pulso",
+                "url": "\/pt\/padel\/acessorios_padel-fitas_de_pulso",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas",
+                "url": "\/pt\/padel\/acessorios_padel-bolsas",
+                "visible": "0"
+            },
+            {
+                "title": "Porta-Chaves",
+                "url": "\/pt\/padel\/acessorios_padel-portachaves",
+                "visible": "0"
+            },
+            {
+                "title": "Acess\u00f3rios Padel (Ver todos)",
+                "url": "\/pt\/padel\/acessorios_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bolas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 74,
+        "column": "3",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Bolas",
+                "url": "\/pt\/padel\/bolas",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Roupa",
+        "action": "",
+        "type": "subcategorie",
+        "id": 75,
+        "column": "3",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Homem",
+                "url": "\/pt\/padel\/roupa-homem",
+                "visible": "1"
+            },
+            {
+                "title": "Mulher",
+                "url": "\/pt\/padel\/roupa-mulher",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa (Ver todos)",
+                "url": "\/pt\/padel\/roupa",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sapatilhas de padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 76,
+        "column": "4",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Sapatilhas de padel",
+                "url": "\/pt\/padel\/sapatilhas_de_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 77,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/padel\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Padel",
+                "url": "\/pt\/padel\/oferta_express_padel",
+                "visible": "1"
+            }
+        ]
+    }
+]

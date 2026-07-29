@@ -48,7 +48,7 @@ class GrupousuarioMensajeria extends Model
      */
     public function grupousuarioMensajeria()
     {
-        return $this->belongsTo(GrupousuarioMensajeria::class, 'idgrupousuario_mensajeria', 'idgrupousuario_mensajeria');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupousuarioMensajeria::class, 'idgrupousuario_mensajeria', 'idgrupousuario_mensajeria');
     }
 
     /**
@@ -57,6 +57,6 @@ class GrupousuarioMensajeria extends Model
      */
     public function usuariosistema()
     {
-        return $this->belongsTo(Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
     }
 }

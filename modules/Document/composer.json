@@ -15,7 +15,7 @@
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
         "setasign/fpdi-tcpdf": "^2.3",
-        "soundasleep/html2text": "^2.1",
+        "soundasleep/html2text": "~1.1",
         "ezyang/htmlpurifier": "^4.17"
     },
     "extra": {

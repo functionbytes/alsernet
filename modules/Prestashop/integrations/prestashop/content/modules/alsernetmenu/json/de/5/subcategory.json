@@ -1,0 +1,603 @@
+[
+    {
+        "title": "Angelruten",
+        "action": "",
+        "type": "subcategorie",
+        "id": 23,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Spinnruten",
+                "url": "\/de\/angeln\/angelruten-spinnruten",
+                "visible": "1"
+            },
+            {
+                "title": "Steckruten f\u00fcr Surfcasting",
+                "url": "\/de\/angeln\/angelruten-steckruten_fuer_surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Steckruten mit Wurf\u00f6sen",
+                "url": "\/de\/angeln\/angelruten-steckruten_mit_wurfoesen",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskopruten mit Wurfringen f\u00fcr leichtes Werfen, kurzer Faltma\u00df",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_mit_wurfringen_fuer_leichtes_werfen_kurzer_faltmass",
+                "visible": "1"
+            },
+            {
+                "title": "Bootsruten",
+                "url": "\/de\/angeln\/angelruten-bootsruten",
+                "visible": "1"
+            },
+            {
+                "title": "Trollingruten",
+                "url": "\/de\/angeln\/angelruten-trollingruten",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskopruten mit extra starken Ringen f\u00fcr Posenfischen",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_mit_extra_starken_ringen_fuer_posenfischen",
+                "visible": "1"
+            },
+            {
+                "title": "Tintenfischeruten und Kalmareruten",
+                "url": "\/de\/angeln\/angelruten-tintenfischeruten_und_kalmareruten",
+                "visible": "1"
+            },
+            {
+                "title": "Jiggingruten",
+                "url": "\/de\/angeln\/angelruten-jiggingruten",
+                "visible": "1"
+            },
+            {
+                "title": "Karpfenruten",
+                "url": "\/de\/angeln\/angelruten-karpfenruten",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskopruten f\u00fcr Surfcasting",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_fuer_surfcasting",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskopruten mit Ringen f\u00fcr K\u00f6der- und Stippangeln",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_mit_ringen_fuer_koeder_und_stippangeln",
+                "visible": "1"
+            },
+            {
+                "title": "Black-Bass-Angelruten",
+                "url": "\/de\/angeln\/angelruten-black_bass_angelruten",
+                "visible": "1"
+            },
+            {
+                "title": "Welsruten",
+                "url": "\/de\/angeln\/angelruten-welsruten",
+                "visible": "1"
+            },
+            {
+                "title": "Steckruten ohne Ringe",
+                "url": "\/de\/angeln\/angelruten-steckruten_ohne_ringe",
+                "visible": "0"
+            },
+            {
+                "title": "Teleskopruten f\u00fcr Grundangeln",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_fuer_grundangeln",
+                "visible": "1"
+            },
+            {
+                "title": "Rockfishing-Steckruten",
+                "url": "\/de\/angeln\/angelruten-rockfishing_steckruten",
+                "visible": "1"
+            },
+            {
+                "title": "Teleskopruten ohne Ringe f\u00fcr K\u00f6der- und Stippangeln",
+                "url": "\/de\/angeln\/angelruten-teleskopruten_ohne_ringe_fuer_koeder_und_stippangeln",
+                "visible": "1"
+            },
+            {
+                "title": "Feederruten",
+                "url": "\/de\/angeln\/angelruten-feederruten",
+                "visible": "1"
+            },
+            {
+                "title": "Fliegenruten",
+                "url": "\/de\/angeln\/angelruten-fliegenruten",
+                "visible": "1"
+            },
+            {
+                "title": "Bogenruten",
+                "url": "\/de\/angeln\/angelruten-bogenruten",
+                "visible": "1"
+            },
+            {
+                "title": "Angelruten (Alles sehen)",
+                "url": "\/de\/angeln\/angelruten",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelrollen",
+        "action": "",
+        "type": "subcategorie",
+        "id": 24,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Frontbremse",
+                "url": "\/de\/angeln\/angelrollen-frontbremse",
+                "visible": "1"
+            },
+            {
+                "title": "Spinnrollen",
+                "url": "\/de\/angeln\/angelrollen-spinnrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Brandungsrollen",
+                "url": "\/de\/angeln\/angelrollen-brandungsrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Trollingrollen",
+                "url": "\/de\/angeln\/angelrollen-trollingrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Jigging-Rollen",
+                "url": "\/de\/angeln\/angelrollen-jiggingrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Multirollen",
+                "url": "\/de\/angeln\/angelrollen-multirollen",
+                "visible": "1"
+            },
+            {
+                "title": "Freilaufrollen",
+                "url": "\/de\/angeln\/angelrollen-freilaufrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Heckbremse",
+                "url": "\/de\/angeln\/angelrollen-heckbremse",
+                "visible": "1"
+            },
+            {
+                "title": "Elektrische Multirollen",
+                "url": "\/de\/angeln\/angelrollen-elektrische_multirollen",
+                "visible": "1"
+            },
+            {
+                "title": "Feederrollen",
+                "url": "\/de\/angeln\/angelrollen-feederrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Kapselrollen",
+                "url": "\/de\/angeln\/angelrollen-kapselrollen",
+                "visible": "1"
+            },
+            {
+                "title": "Angelrollen (Alles sehen)",
+                "url": "\/de\/angeln\/angelrollen",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelsets",
+        "action": "",
+        "type": "subcategorie",
+        "id": 25,
+        "column": "2",
+        "position_category": "3",
+        "position": "2",
+        "items": [
+            {
+                "title": "Angelset Brandung",
+                "url": "\/de\/angeln\/angelsets-angelset_brandung",
+                "visible": "1"
+            },
+            {
+                "title": "Angelset Spinn",
+                "url": "\/de\/angeln\/angelsets-angelset_spinn",
+                "visible": "1"
+            },
+            {
+                "title": "Angelset Leichtes Werfen",
+                "url": "\/de\/angeln\/angelsets-angelset_leichtes_werfen",
+                "visible": "1"
+            },
+            {
+                "title": "Angelset Karpfen",
+                "url": "\/de\/angeln\/angelsets-angelset_karpfen",
+                "visible": "1"
+            },
+            {
+                "title": "Angelset Grundangeln",
+                "url": "\/de\/angeln\/angelsets-angelset_grundangeln",
+                "visible": "1"
+            },
+            {
+                "title": "Angelset Trolling",
+                "url": "\/de\/angeln\/angelsets-angelset_trolling",
+                "visible": "0"
+            },
+            {
+                "title": "Angelset Feeder",
+                "url": "\/de\/angeln\/angelsets-angelset_feeder",
+                "visible": "0"
+            },
+            {
+                "title": "Angelset Fliegenfischen",
+                "url": "\/de\/angeln\/angelsets-angelset_fliegenfischen",
+                "visible": "0"
+            },
+            {
+                "title": "Angelset Casting",
+                "url": "\/de\/angeln\/angelsets-angelset_casting",
+                "visible": "1"
+            },
+            {
+                "title": "Angeln mit K\u00f6der",
+                "url": "\/de\/angeln\/angelsets-angeln_mit_koeder",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelschnur",
+        "action": "",
+        "type": "subcategorie",
+        "id": 26,
+        "column": "3",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Monofile Schn\u00fcre",
+                "url": "\/de\/angeln\/angelschnur-monofile_schnuere",
+                "visible": "1"
+            },
+            {
+                "title": "Geflochtene Schn\u00fcre",
+                "url": "\/de\/angeln\/angelschnur-geflochtene_schnuere",
+                "visible": "1"
+            },
+            {
+                "title": "Fluorocarbon Schn\u00fcre",
+                "url": "\/de\/angeln\/angelschnur-fluorocarbon_schnuere",
+                "visible": "1"
+            },
+            {
+                "title": "Angelschnur Aufspulen",
+                "url": "\/de\/angeln\/angelschnur-angelschnur_aufspulen",
+                "visible": "1"
+            },
+            {
+                "title": "Angelschnur (Alles sehen)",
+                "url": "\/de\/angeln\/angelschnur",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelk\u00f6der",
+        "action": "",
+        "type": "subcategorie",
+        "id": 27,
+        "column": "3",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "Spoons",
+                "url": "\/de\/angeln\/spoons",
+                "visible": "1"
+            },
+            {
+                "title": "Kunstk\u00f6der und Angelk\u00f6der",
+                "url": "\/de\/angeln\/kunstkoeder_und_angelkoeder",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelausr\u00fcstung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 28,
+        "column": "3",
+        "position_category": "6",
+        "position": "3",
+        "items": [
+            {
+                "title": "Haken Und Wirbel",
+                "url": "\/de\/angeln\/haken_und_wirbel",
+                "visible": "1"
+            },
+            {
+                "title": "Angeltaschen Und Angelrucks\u00e4cke",
+                "url": "\/de\/angeln\/angeltaschen_und_angelrucksacke",
+                "visible": "1"
+            },
+            {
+                "title": "Angelboxen Und Weidenk\u00f6rbe",
+                "url": "\/de\/angeln\/angelboxen_und_weidenkorbe",
+                "visible": "1"
+            },
+            {
+                "title": "Posen Und Bleie",
+                "url": "\/de\/angeln\/posen_und_bleie",
+                "visible": "1"
+            },
+            {
+                "title": "Rutentaschen Und Rollentaschen",
+                "url": "\/de\/angeln\/rutentaschen_und_rollentaschen",
+                "visible": "1"
+            },
+            {
+                "title": "Anglerbrillen",
+                "url": "\/de\/angeln\/anglerbrillen",
+                "visible": "1"
+            },
+            {
+                "title": "Belly Boote",
+                "url": "\/de\/angeln\/belly_boote",
+                "visible": "1"
+            },
+            {
+                "title": "K\u00f6derboxen",
+                "url": "\/de\/angeln\/koderboxen",
+                "visible": "1"
+            },
+            {
+                "title": "Unterfangkescher Und Setzkescher",
+                "url": "\/de\/angeln\/unterfangkescher_und_setzkescher",
+                "visible": "1"
+            },
+            {
+                "title": "Angelstative Und Rutenhalter",
+                "url": "\/de\/angeln\/angelstative_und_rutenhalter",
+                "visible": "1"
+            },
+            {
+                "title": "Angelzubeh\u00f6r",
+                "url": "\/de\/angeln\/angelzubehor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 29,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fischkissen",
+                "url": "\/de\/angeln\/fischkissen",
+                "visible": "1"
+            },
+            {
+                "title": "Angelb\u00fccher",
+                "url": "\/de\/angeln\/angelbucher",
+                "visible": "1"
+            },
+            {
+                "title": "Boots Und Bootsmotor",
+                "url": "\/de\/angeln\/boots_und_bootsmotor",
+                "visible": "1"
+            },
+            {
+                "title": "Angelliegen",
+                "url": "\/de\/angeln\/angelliegen",
+                "visible": "1"
+            },
+            {
+                "title": "Echolote",
+                "url": "\/de\/angeln\/echolote",
+                "visible": "1"
+            },
+            {
+                "title": "Freizeit",
+                "url": "\/de\/angeln\/freizeit",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 30,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Messer",
+                "url": "\/de\/angeln\/messer",
+                "visible": "1"
+            },
+            {
+                "title": "Metalldetektoren",
+                "url": "\/de\/angeln\/metalldetektoren",
+                "visible": "1"
+            },
+            {
+                "title": "Funkger\u00e4te",
+                "url": "\/de\/angeln\/funkgerate",
+                "visible": "1"
+            },
+            {
+                "title": "\u00c4xte",
+                "url": "\/de\/angeln\/axte",
+                "visible": "1"
+            },
+            {
+                "title": "Taschenlampen Und Handscheinwerfern",
+                "url": "\/de\/angeln\/taschenlampen_und_handscheinwerfern",
+                "visible": "1"
+            },
+            {
+                "title": "Macheten",
+                "url": "\/de\/angeln\/macheten",
+                "visible": "1"
+            },
+            {
+                "title": "Zugelassene Masken",
+                "url": "\/de\/angeln\/zugelassene_masken",
+                "visible": "1"
+            },
+            {
+                "title": "Taschenmesser",
+                "url": "\/de\/angeln\/taschenmesser",
+                "visible": "1"
+            },
+            {
+                "title": "Ferngl\u00e4ser",
+                "url": "\/de\/angeln\/fernglaser",
+                "visible": "1"
+            },
+            {
+                "title": "Uhren",
+                "url": "\/de\/angeln\/uhren",
+                "visible": "1"
+            },
+            {
+                "title": "Spektive",
+                "url": "\/de\/angeln\/spektive",
+                "visible": "1"
+            },
+            {
+                "title": "Artikel F\u00fcr Das Auto",
+                "url": "\/de\/angeln\/artikel_fur_das_auto",
+                "visible": "1"
+            },
+            {
+                "title": "Mehrzweck",
+                "url": "\/de\/angeln\/mehrzweck",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Wathosen und Schuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 31,
+        "column": "4",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Wathosen",
+                "url": "\/de\/angeln\/wathosen",
+                "visible": "1"
+            },
+            {
+                "title": "Schuhe",
+                "url": "\/de\/angeln\/schuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Angelbekleidung Und Accessoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 32,
+        "column": "5",
+        "position_category": "10",
+        "position": "1",
+        "items": [
+            {
+                "title": "Anglerwesten",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-anglerwesten",
+                "visible": "1"
+            },
+            {
+                "title": "Handschuhe Angeln",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-handschuhe_angeln",
+                "visible": "1"
+            },
+            {
+                "title": "Angelhemden Und T-shirts",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-angelhemden_und_t_shirts",
+                "visible": "1"
+            },
+            {
+                "title": "Angeljacken Und Softshell",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-angeljacken_und_softshell",
+                "visible": "1"
+            },
+            {
+                "title": "Angelhosen",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-angelhosen",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00fctzen Und Caps",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-mutzen_und_caps",
+                "visible": "1"
+            },
+            {
+                "title": "Socken",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-socken",
+                "visible": "1"
+            },
+            {
+                "title": "Regenbekleidung",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-regenbekleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Schlauchschals Und Sturmhauben",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires-schlauchschals_und_sturmhauben",
+                "visible": "1"
+            },
+            {
+                "title": "Angelbekleidung Und Accessoires (Alles sehen)",
+                "url": "\/de\/angeln\/angelbekleidung_und_accessoires",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und Angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 33,
+        "column": "5",
+        "position_category": "12",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/angeln\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Schnellangebot Angeln",
+                "url": "\/de\/angeln\/schnellangebot_angeln",
+                "visible": "1"
+            },
+            {
+                "title": "Ausverkauf Angelruten und Rollen",
+                "url": "\/de\/angeln\/liquidacion_canas_y_carretes",
+                "visible": "1"
+            }
+        ]
+    }
+]

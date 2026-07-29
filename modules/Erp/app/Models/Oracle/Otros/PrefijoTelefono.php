@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Pais;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class PrefijoTelefono extends Model
      */
     public function prefijoTelefono()
     {
-        return $this->belongsTo(PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
     }
 
     /**
@@ -62,6 +61,6 @@ class PrefijoTelefono extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
     }
 }

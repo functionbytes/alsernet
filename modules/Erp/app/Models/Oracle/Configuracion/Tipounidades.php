@@ -47,6 +47,6 @@ class Tipounidades extends Model
      */
     public function tipounidades()
     {
-        return $this->belongsTo(Tipounidades::class, 'idtipounidades', 'idtipounidades');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipounidades::class, 'idtipounidades', 'idtipounidades');
     }
 }

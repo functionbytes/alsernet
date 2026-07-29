@@ -79,7 +79,7 @@
                                 <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
                                        placeholder="Buscar por nombre, apellido o email..."
                                        value="{{ $search }}">
                             </div>
@@ -381,7 +381,7 @@ $(function () {
         templateResult: function (user) {
             if (!user.id) { return user.text; }
             var initials = user.first_name.charAt(0).toUpperCase() + user.last_name.charAt(0).toUpperCase();
-            return $('<span><span style="display:inline-block;width:32px;height:32px;background:#90bb13;color:#fff;border-radius:50%;text-align:center;line-height:32px;margin-right:8px;font-weight:bold;font-size:12px;">' + initials + '</span>' + user.first_name + ' ' + user.last_name + ' <small class="text-muted">(' + user.email + ')</small></span>');
+            return $('<span><span style="display:inline-block;width:32px;height:32px;background:#13C672;color:#fff;border-radius:50%;text-align:center;line-height:32px;margin-right:8px;font-weight:bold;font-size:12px;">' + initials + '</span>' + user.first_name + ' ' + user.last_name + ' <small class="text-muted">(' + user.email + ')</small></span>');
         },
         templateSelection: function (user) {
             return user.id ? user.first_name + ' ' + user.last_name : user.text;

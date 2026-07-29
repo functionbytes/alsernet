@@ -12,7 +12,7 @@ use Modules\Mailer\Models\MailerTemplateLang;
  * ExampleTemplatesSeeder
  *
  * Seeds reference email templates with Caixilharia Blanco branding.
- * Colors: #90bb13 accent, #000000 primary.
+ * Colors: #b10100 accent, #000000 primary.
  * Uses active Locales (locales table) as the language source.
  */
 class ExampleTemplatesSeeder extends Seeder
@@ -121,7 +121,7 @@ class ExampleTemplatesSeeder extends Seeder
       </table>
 
       <table width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background-color:#f6f7f9; border-left:4px solid #90bb13; margin-bottom:24px;">
+             style="background-color:#f6f7f9; border-left:4px solid #b10100; margin-bottom:24px;">
         <tr>
           <td style="padding:14px 16px;">
             <strong>Accede a tu cuenta para explorar todos los servicios disponibles.</strong>
@@ -131,7 +131,7 @@ class ExampleTemplatesSeeder extends Seeder
 
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
         <tr>
-          <td style="background-color:#90bb13;border-radius:4px;">
+          <td style="background-color:#b10100;border-radius:4px;">
             <a href="{ACCOUNT_DASHBOARD_URL}"
                style="display:inline-block;padding:12px 28px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
               Acceder a mi cuenta
@@ -173,7 +173,7 @@ HTML;
       </table>
 
       <table width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background-color:#f6f7f9; border-left:4px solid #90bb13; margin-bottom:24px;">
+             style="background-color:#f6f7f9; border-left:4px solid #b10100; margin-bottom:24px;">
         <tr>
           <td style="padding:14px 16px;">
             <strong>Este enlace de restablecimiento expira en 60 minutos. Si no realizaste esta solicitud, puedes ignorar este correo.</strong>
@@ -183,7 +183,7 @@ HTML;
 
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
         <tr>
-          <td style="background-color:#90bb13;border-radius:4px;">
+          <td style="background-color:#b10100;border-radius:4px;">
             <a href="{RESET_PASSWORD_URL}"
                style="display:inline-block;padding:12px 28px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
               Restablecer contraseña
@@ -225,7 +225,7 @@ HTML;
       </table>
 
       <table width="100%" cellpadding="0" cellspacing="0" border="0"
-             style="background-color:#f6f7f9; border-left:4px solid #90bb13; margin-bottom:24px;">
+             style="background-color:#f6f7f9; border-left:4px solid #b10100; margin-bottom:24px;">
         <tr>
           <td style="padding:14px 16px;">
             <strong>Si no creaste esta cuenta, puedes ignorar este correo con seguridad.</strong>
@@ -235,7 +235,7 @@ HTML;
 
       <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
         <tr>
-          <td style="background-color:#90bb13;border-radius:4px;">
+          <td style="background-color:#b10100;border-radius:4px;">
             <a href="{VERIFY_EMAIL_URL}"
                style="display:inline-block;padding:12px 28px;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;font-family:Arial,sans-serif;">
               Verificar email
@@ -259,7 +259,7 @@ HTML;
         return <<<'HTML'
 <!-- ENCABEZADO DE ALERTA -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="border-collapse:collapse;background-color:#90bb13;margin-bottom:0;">
+       style="border-collapse:collapse;background-color:#b10100;margin-bottom:0;">
   <tr>
     <td style="padding:14px 24px;">
       <p style="margin:0;font-size:11px;font-weight:700;color:#ffffff;font-family:Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">
@@ -281,7 +281,7 @@ HTML;
               {FORM_NAME}
             </p>
             <p style="margin:0;font-size:13px;color:#6b7280;">
-              Envío&nbsp;<strong style="color:#90bb13;">{SUBMISSION_ID}</strong>
+              Envío&nbsp;<strong style="color:#b10100;">{SUBMISSION_ID}</strong>
               &nbsp;&bull;&nbsp;{SUBMISSION_DATE}
               &nbsp;&bull;&nbsp;IP:&nbsp;{SUBMITTER_IP}
               &nbsp;({SUBMITTER_COUNTRY})
@@ -290,7 +290,7 @@ HTML;
           <td align="right" valign="top" style="white-space:nowrap;">
             <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
               <tr>
-                <td style="background-color:#90bb13;border-radius:4px;">
+                <td style="background-color:#b10100;border-radius:4px;">
                   <a href="{ADMIN_URL}"
                      style="display:inline-block;padding:10px 20px;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;font-family:Arial,sans-serif;white-space:nowrap;">
                     Ver solicitud &rarr;
@@ -336,7 +336,7 @@ HTML;
     <td style="padding:16px 24px;">
       <p style="margin:0;font-size:12px;color:#6b7280;font-family:Arial,sans-serif;">
         Para gestionar esta solicitud accede al panel de administración:
-        <a href="{ADMIN_URL}" style="color:#90bb13;text-decoration:none;font-weight:600;">{ADMIN_URL}</a>
+        <a href="{ADMIN_URL}" style="color:#b10100;text-decoration:none;font-weight:600;">{ADMIN_URL}</a>
       </p>
     </td>
   </tr>
@@ -364,7 +364,7 @@ HTML;
 
 <!-- CAJA PRÓXIMOS PASOS -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0"
-       style="border-collapse:collapse;background-color:#f6f7f9;border-left:4px solid #90bb13;margin-bottom:24px;">
+       style="border-collapse:collapse;background-color:#f6f7f9;border-left:4px solid #b10100;margin-bottom:24px;">
   <tr>
     <td style="padding:16px 20px;font-family:Arial,sans-serif;font-size:14px;color:#374151;">
       <p style="margin:0 0 6px;font-weight:700;color:#111827;">Próximos pasos</p>
@@ -395,10 +395,10 @@ HTML;
   <tr>
     <td>
       <a href="tel:{COMPANY_PHONE}"
-         style="color:#90bb13;text-decoration:none;font-weight:600;">{COMPANY_PHONE}</a>
+         style="color:#b10100;text-decoration:none;font-weight:600;">{COMPANY_PHONE}</a>
       &nbsp;&bull;&nbsp;
       <a href="mailto:{COMPANY_EMAIL}"
-         style="color:#90bb13;text-decoration:none;">{COMPANY_EMAIL}</a>
+         style="color:#b10100;text-decoration:none;">{COMPANY_EMAIL}</a>
     </td>
   </tr>
 </table>

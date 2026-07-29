@@ -56,7 +56,7 @@
             </div>
             <div class="modal-footer d-block">
                 <button type="button" class="btn btn-primary w-100 mb-2" id="btnTrustConfirm">
-                    <i class="fas fa-shield-check me-1"></i> Confirmar confianza
+                    Confirmar confianza
                 </button>
                 <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
             </div>

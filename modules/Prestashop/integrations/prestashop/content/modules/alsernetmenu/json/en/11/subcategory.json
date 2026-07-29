@@ -1,0 +1,361 @@
+[
+    {
+        "title": "Clothes and Shoes",
+        "action": "",
+        "type": "subcategorie",
+        "id": 78,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Clothes and complements",
+                "url": "\/en\/adventure\/clothes_and_complements",
+                "visible": "1"
+            },
+            {
+                "title": "FOOTWEAR",
+                "url": "\/en\/adventure\/footwear",
+                "visible": "1"
+            },
+            {
+                "title": "Clothing Women and Children",
+                "url": "\/en\/adventure\/clothing_women_and_children",
+                "visible": "1"
+            },
+            {
+                "title": "",
+                "url": "",
+                "visible": "1"
+            },
+            {
+                "title": "Hats and Hats",
+                "url": "\/en\/adventure\/hats_and_hats",
+                "visible": "1"
+            },
+            {
+                "title": "Gloves",
+                "url": "\/en\/adventure\/gloves",
+                "visible": "1"
+            },
+            {
+                "title": "Panties and balaclava",
+                "url": "\/en\/adventure\/panties_and_balaclava",
+                "visible": "1"
+            },
+            {
+                "title": "Glasses",
+                "url": "\/en\/adventure\/glasses",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Backpacks and Bags",
+        "action": "",
+        "type": "subcategorie",
+        "id": 79,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Backpacks",
+                "url": "\/en\/adventure\/backpacks",
+                "visible": "1"
+            },
+            {
+                "title": "Travel Bags",
+                "url": "\/en\/adventure\/travel_bags",
+                "visible": "1"
+            },
+            {
+                "title": "Waterproof bags",
+                "url": "\/en\/adventure\/waterproof_bags",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Optics and Lighting",
+        "action": "",
+        "type": "subcategorie",
+        "id": 80,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Binoculars",
+                "url": "\/en\/adventure\/binoculars",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopes",
+                "url": "\/en\/adventure\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "Night vision",
+                "url": "\/en\/adventure\/night_vision",
+                "visible": "1"
+            },
+            {
+                "title": "Termic vision",
+                "url": "\/en\/adventure\/termic_vision",
+                "visible": "1"
+            },
+            {
+                "title": "Monocular",
+                "url": "\/en\/adventure\/monocular",
+                "visible": "1"
+            },
+            {
+                "title": "Distance Meters",
+                "url": "\/en\/adventure\/distance_meters",
+                "visible": "1"
+            },
+            {
+                "title": "Flashlights and Spotlights",
+                "url": "\/en\/adventure\/flashlights_and_spotlights",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Electronics",
+        "action": "",
+        "type": "subcategorie",
+        "id": 81,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Watches",
+                "url": "\/en\/adventure\/watches",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/en\/adventure\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Stations",
+                "url": "\/en\/adventure\/stations",
+                "visible": "1"
+            },
+            {
+                "title": "Cameras",
+                "url": "\/en\/adventure\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "Metal detectors",
+                "url": "\/en\/adventure\/metal_detectors",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Safety and Survival",
+        "action": "",
+        "type": "subcategorie",
+        "id": 82,
+        "column": "3",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Survival equipment",
+                "url": "\/en\/adventure\/survival_equipment",
+                "visible": "1"
+            },
+            {
+                "title": "Security and Rescue",
+                "url": "\/en\/adventure\/security_and_rescue",
+                "visible": "1"
+            },
+            {
+                "title": "Repellents",
+                "url": "\/en\/adventure\/repellents",
+                "visible": "1"
+            },
+            {
+                "title": "Personal care",
+                "url": "\/en\/adventure\/personal_care",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cutlery",
+        "action": "",
+        "type": "subcategorie",
+        "id": 83,
+        "column": "3",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Knives",
+                "url": "\/en\/adventure\/knives",
+                "visible": "1"
+            },
+            {
+                "title": "Razors",
+                "url": "\/en\/adventure\/razors",
+                "visible": "1"
+            },
+            {
+                "title": "Multipurpose",
+                "url": "\/en\/adventure\/multipurpose",
+                "visible": "1"
+            },
+            {
+                "title": "Axes and hammers",
+                "url": "\/en\/adventure\/axes_and_hammers",
+                "visible": "1"
+            },
+            {
+                "title": "Machetes",
+                "url": "\/en\/adventure\/machetes",
+                "visible": "1"
+            },
+            {
+                "title": "Afiladores",
+                "url": "\/en\/adventure\/afiladores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Camping and Outdoor",
+        "action": "",
+        "type": "subcategorie",
+        "id": 84,
+        "column": "4",
+        "position_category": "7",
+        "position": "1",
+        "items": [
+            {
+                "title": "Products for the Dog",
+                "url": "\/en\/adventure\/products_for_the_dog",
+                "visible": "1"
+            },
+            {
+                "title": "Items for the car",
+                "url": "\/en\/adventure\/items_for_the_car",
+                "visible": "1"
+            },
+            {
+                "title": "Chairs and Stools",
+                "url": "\/en\/adventure\/chairs_and_stools",
+                "visible": "1"
+            },
+            {
+                "title": "Camping",
+                "url": "\/en\/adventure\/camping",
+                "visible": "1"
+            },
+            {
+                "title": "Archery Kits",
+                "url": "\/en\/adventure\/archery_kits",
+                "visible": "1"
+            },
+            {
+                "title": "Material for Mushrooms",
+                "url": "\/en\/adventure\/material_for_mushrooms",
+                "visible": "1"
+            },
+            {
+                "title": "Free time",
+                "url": "\/en\/adventure\/free_time",
+                "visible": "1"
+            },
+            {
+                "title": "Bastones de Traves\u00eda",
+                "url": "\/en\/adventure\/bastones_de_travesia",
+                "visible": "1"
+            },
+            {
+                "title": "Bird watching",
+                "url": "\/en\/adventure\/bird_watching",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Adventure at sea",
+        "action": "",
+        "type": "subcategorie",
+        "id": 85,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Motorboats and Engines",
+                "url": "\/en\/adventure\/motorboats_and_engines",
+                "visible": "1"
+            },
+            {
+                "title": "Probes and Plotters",
+                "url": "\/en\/adventure\/probes_and_plotters",
+                "visible": "0"
+            },
+            {
+                "title": "Fins",
+                "url": "\/en\/adventure\/fins",
+                "visible": "1"
+            },
+            {
+                "title": "Masks and diving tubes",
+                "url": "\/en\/adventure\/masks_and_diving_tubes",
+                "visible": "1"
+            },
+            {
+                "title": "Swimming and Swimming",
+                "url": "\/en\/adventure\/swimming_and_swimming",
+                "visible": "1"
+            },
+            {
+                "title": "Chalecos Salvavidas",
+                "url": "\/en\/adventure\/chalecos_salvavidas",
+                "visible": "1"
+            },
+            {
+                "title": "Camisetas y Protecci\u00f3n UV",
+                "url": "\/en\/adventure\/camisetas_y_proteccion_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Escarpines",
+                "url": "\/en\/adventure\/escarpines",
+                "visible": "1"
+            },
+            {
+                "title": "Guantes de Buceo",
+                "url": "\/en\/adventure\/guantes_de_buceo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet and offers",
+        "action": "",
+        "type": "subcategorie",
+        "id": 86,
+        "column": "4",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet and Liquidations",
+                "url": "\/en\/adventure\/outlet_and_liquidations",
+                "visible": "1"
+            }
+        ]
+    }
+]

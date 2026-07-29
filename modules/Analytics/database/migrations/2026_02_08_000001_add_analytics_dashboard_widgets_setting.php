@@ -52,8 +52,8 @@ return new class extends Migration
 
             foreach ($defaultSettings as $setting) {
                 // Only insert if the setting doesn't already exist
-                if (! DB::table('settings')->where('key', $setting['key'])->exists()) {
-                    DB::table('settings')->insert($setting);
+                if (! \DB::table('settings')->where('key', $setting['key'])->exists()) {
+                    \DB::table('settings')->insert($setting);
                 }
             }
         }
@@ -66,7 +66,7 @@ return new class extends Migration
     {
         // Remove analytics settings from settings table
         if (Schema::hasTable('settings')) {
-            DB::table('settings')->whereIn('key', [
+            \DB::table('settings')->whereIn('key', [
                 'google_analytics_enable',
                 'google_analytics_property_id',
                 'google_analytics_credentials',

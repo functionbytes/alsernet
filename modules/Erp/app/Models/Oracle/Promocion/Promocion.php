@@ -90,7 +90,7 @@ class Promocion extends Model
      */
     public function catalogoConsumo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo_consumo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo_consumo', 'idcatalogo');
     }
 
     /**
@@ -99,7 +99,7 @@ class Promocion extends Model
      */
     public function promocion()
     {
-        return $this->belongsTo(Promocion::class, 'idpromocion', 'idpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Promocion::class, 'idpromocion', 'idpromocion');
     }
 
     /**
@@ -108,6 +108,6 @@ class Promocion extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 }

@@ -41,6 +41,6 @@ class Frcampo extends Model
      */
     public function campo()
     {
-        return $this->belongsTo(Campo::class, 'idcampo', 'idcampo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Campo::class, 'idcampo', 'idcampo');
     }
 }

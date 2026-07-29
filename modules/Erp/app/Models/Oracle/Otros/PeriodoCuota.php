@@ -52,6 +52,6 @@ class PeriodoCuota extends Model
      */
     public function periodoCuota()
     {
-        return $this->belongsTo(PeriodoCuota::class, 'idperiodo_cuota', 'idperiodo_cuota');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\PeriodoCuota::class, 'idperiodo_cuota', 'idperiodo_cuota');
     }
 }

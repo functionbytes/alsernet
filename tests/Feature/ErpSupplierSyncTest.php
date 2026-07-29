@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Modules\Erp\Jobs\MonitorOracleChanges;
 use Modules\Erp\Models\Oracle\Otros\DeporteCl;
 use Modules\Erp\Models\Oracle\Proveedor\Proveedor;

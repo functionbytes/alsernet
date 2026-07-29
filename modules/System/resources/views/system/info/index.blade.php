@@ -232,7 +232,7 @@
                                     <span class="input-group-text bg-white border-end-1">
                                         <i class="fas fa-search text-muted"></i>
                                     </span>
-                                    <input type="text" class="form-control -0" id="packageSearch" placeholder="Buscar paquete...">
+                                    <input type="text" class="form-control border-start-0" id="packageSearch" placeholder="Buscar paquete...">
                                 </div>
 
                                 <div class="table-responsive">

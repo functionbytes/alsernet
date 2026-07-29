@@ -1,0 +1,251 @@
+[
+    {
+        "title": "Skis",
+        "action": "",
+        "type": "subcategorie",
+        "id": 62,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Skis + Fixings",
+                "url": "\/en\/skiing\/skis_fixings",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Boots",
+        "action": "",
+        "type": "subcategorie",
+        "id": 63,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Ski boots",
+                "url": "\/en\/skiing\/ski_boots",
+                "visible": "1"
+            },
+            {
+                "title": "Apreski boots",
+                "url": "\/en\/skiing\/apreski_boots",
+                "visible": "1"
+            },
+            {
+                "title": "FOOTWEAR",
+                "url": "\/en\/skiing\/footwear",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Helmets and protective gear",
+        "action": "",
+        "type": "subcategorie",
+        "id": 64,
+        "column": "1",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Ski Helmets",
+                "url": "\/en\/skiing\/ski_helmets",
+                "visible": "1"
+            },
+            {
+                "title": "Back protectors and protectors",
+                "url": "\/en\/skiing\/back_protectors_and_protectors",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Eyeglasses and masks",
+        "action": "",
+        "type": "subcategorie",
+        "id": 65,
+        "column": "1",
+        "position_category": "5",
+        "position": "4",
+        "items": [
+            {
+                "title": "Ski goggles and masks",
+                "url": "\/en\/skiing\/ski_goggles_and_masks",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ski poles",
+        "action": "",
+        "type": "subcategorie",
+        "id": 66,
+        "column": "1",
+        "position_category": "4",
+        "position": "5",
+        "items": [
+            {
+                "title": "Ski poles",
+                "url": "\/en\/skiing\/ski_poles",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessories",
+        "action": "",
+        "type": "subcategorie",
+        "id": 67,
+        "column": "2",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ski Accessories",
+                "url": "\/en\/skiing\/ski_accessories",
+                "visible": "1"
+            },
+            {
+                "title": "Sleds and children's ski",
+                "url": "\/en\/skiing\/sleds_and_childrens_ski",
+                "visible": "1"
+            },
+            {
+                "title": "Personal care",
+                "url": "\/en\/skiing\/personal_care",
+                "visible": "1"
+            },
+            {
+                "title": "Cameras",
+                "url": "\/en\/skiing\/cameras",
+                "visible": "1"
+            },
+            {
+                "title": "Stations",
+                "url": "\/en\/skiing\/stations",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/en\/skiing\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Flashlights and Spotlights",
+                "url": "\/en\/skiing\/flashlights_and_spotlights",
+                "visible": "1"
+            },
+            {
+                "title": "Binoculars",
+                "url": "\/en\/skiing\/binoculars",
+                "visible": "1"
+            },
+            {
+                "title": "Watches",
+                "url": "\/en\/skiing\/watches",
+                "visible": "0"
+            },
+            {
+                "title": "Telescopes",
+                "url": "\/en\/skiing\/telescopes",
+                "visible": "1"
+            },
+            {
+                "title": "Free time",
+                "url": "\/en\/skiing\/free_time",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Clothes",
+        "action": "",
+        "type": "subcategorie",
+        "id": 68,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Ski Men's Clothing",
+                "url": "\/en\/skiing\/ski_mens_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Women's Ski Clothing",
+                "url": "\/en\/skiing\/womens_ski_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Children's Ski Clothing",
+                "url": "\/en\/skiing\/childrens_ski_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Outdoor Clothing",
+                "url": "\/en\/adventure\/clothes_and_complements-outdoor_clothing",
+                "visible": "1"
+            },
+            {
+                "title": "Caps and Tubular",
+                "url": "\/en\/skiing\/caps_and_tubular",
+                "visible": "1"
+            },
+            {
+                "title": "Ski gloves",
+                "url": "\/en\/skiing\/ski_gloves",
+                "visible": "1"
+            },
+            {
+                "title": "Underwear",
+                "url": "\/en\/skiing\/underwear",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Transport",
+        "action": "",
+        "type": "subcategorie",
+        "id": 69,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Transportation bags",
+                "url": "\/en\/skiing\/transportation_bags",
+                "visible": "1"
+            },
+            {
+                "title": "Backpacks",
+                "url": "\/en\/skiing\/transportation_bags-backpacks",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet and offers",
+        "action": "",
+        "type": "subcategorie",
+        "id": 70,
+        "column": "3",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet and liquidations",
+                "url": "\/en\/skiing\/outlet_and_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "EXPRESS Ski Offer",
+                "url": "\/en\/express_ski_offer",
+                "visible": "1"
+            }
+        ]
+    }
+]

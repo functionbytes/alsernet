@@ -1,0 +1,41 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/jagd/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/jagd/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/jagd/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/jagd/bestseller"
+          },
+          {
+            "title": "Microprecios",
+            "url": "/de/jagd/microprecios_caza"
+          },
+          {
+            "title": "Waffen Aus Zweiter Hand",
+            "url": "/de/jagd/waffen_aus_zweiter_hand"
+          },
+          {
+            "title": "Büchsenmacherwerkstatt",
+            "url": "/de/armero-werkstatt"
+          }
+        ]
+      }
+]

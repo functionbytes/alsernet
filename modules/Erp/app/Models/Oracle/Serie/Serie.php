@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Serie;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Tipodiario;
-use Modules\Erp\Models\Oracle\Otros\Empresa;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -71,7 +68,7 @@ class Serie extends Model
      */
     public function seriegenericaGrupoconta()
     {
-        return $this->belongsTo(Seriegenerica::class, 'idseriegenerica_grupoconta', 'idseriegenerica');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Serie\Seriegenerica::class, 'idseriegenerica_grupoconta', 'idseriegenerica');
     }
 
     /**
@@ -80,7 +77,7 @@ class Serie extends Model
      */
     public function serie()
     {
-        return $this->belongsTo(Serie::class, 'idserie', 'idserie');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Serie\Serie::class, 'idserie', 'idserie');
     }
 
     /**
@@ -89,7 +86,7 @@ class Serie extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 
     /**
@@ -98,7 +95,7 @@ class Serie extends Model
      */
     public function tipodiario()
     {
-        return $this->belongsTo(Tipodiario::class, 'idtipodiario', 'idtipodiario');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodiario::class, 'idtipodiario', 'idtipodiario');
     }
 
     /**
@@ -107,6 +104,6 @@ class Serie extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

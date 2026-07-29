@@ -340,8 +340,8 @@ class MonitorOracleChanges implements ShouldQueue
         $shutdownHandler = function (int $sig) {
             $name = match ($sig) {
                 SIGTERM => 'SIGTERM',
-                SIGINT => 'SIGINT',
-                SIGHUP => 'SIGHUP',
+                SIGINT  => 'SIGINT',
+                SIGHUP  => 'SIGHUP',
                 default => "signal {$sig}",
             };
             Log::info("Signal {$name} received - initiating graceful shutdown");

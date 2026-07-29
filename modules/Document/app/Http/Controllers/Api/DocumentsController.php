@@ -4,19 +4,17 @@ namespace Modules\Document\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentLang;
 use Modules\Document\Entities\DocumentLoad;
 use Modules\Document\Entities\DocumentSource;
 use Modules\Document\Entities\DocumentStatus;
-use Modules\Document\Entities\DocumentStatusHistory;
 use Modules\Document\Entities\DocumentSync;
 use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentUploadType;
+use Modules\Document\Events\DocumentCreated;
 use Modules\Document\Jobs\MailTemplateJob;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentTypeService;
@@ -27,7 +25,6 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class DocumentsController extends Controller
 {
     use SendsDocumentEmails;
-
     /**
      * Sincroniza un documento con los datos de su orden e importa productos
      * Método helper reutilizable para sincronización de datos y productos
@@ -80,6 +77,7 @@ class DocumentsController extends Controller
      */
     public function process(Request $request)
     {
+       
 
         $action = $request->input('action');
         $data = $request->all();
@@ -117,7 +115,7 @@ class DocumentsController extends Controller
      *
      * Endpoint RESTful: GET /api/documents/verify?order_id={order_id}
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function verify(Request $request)
     {
@@ -160,7 +158,7 @@ class DocumentsController extends Controller
      * Valida si el documento puede recibir uploads según su estado.
      *
      * @param  string  $uid  UID del documento
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function validation($uid)
     {
@@ -202,17 +200,17 @@ class DocumentsController extends Controller
             'status' => 'success',
             'message' => 'Document validation successful',
             'data' => [
-                'uid' => $document->uid,
-                'type' => $document->type,
-                'order_id' => $document->order_id,
-                'reference' => $document->order_reference,
-                'label' => $document->documentType?->getLabel() ?? 'N/A',
-                'validation_status' => $validationStatus,
-                'document_status' => $currentStatusKey,
-                'can_upload' => ! $document->confirmed_at,
-                'required_documents' => $document->getRequiredDocumentsWithLabels(),
-                'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
-                'missing_documents' => $document->getMissingDocuments(),
+                    'uid' => $document->uid,
+                    'type' => $document->type,
+                    'order_id' => $document->order_id,
+                    'reference' => $document->order_reference,
+                    'label' => $document->documentType?->getLabel() ?? 'N/A',
+                    'validation_status' => $validationStatus,
+                    'document_status' => $currentStatusKey,
+                    'can_upload' => ! $document->confirmed_at,
+                    'required_documents' => $document->getRequiredDocumentsWithLabels(),
+                    'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
+                    'missing_documents' => $document->getMissingDocuments(),
             ],
         ], 200);
     }
@@ -222,18 +220,19 @@ class DocumentsController extends Controller
      *
      * Endpoint RESTful: POST /api/documents
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
-    {
-
+    { 
+        
         // Delegar al método existente documentRequests (mantiene lógica existente)
         return $this->documentRequests($request->all());
     }
 
     public function documentRequests($data)
     {
-
+       
+        
         try {
             // Obtener order_id (compatible con múltiples formatos)
             $orderId = $data['order_id'] ?? $data['order'] ?? null;
@@ -471,7 +470,7 @@ class DocumentsController extends Controller
      * Endpoint RESTful: POST /api/documents/{uid}/files
      *
      * @param  string  $uid  UID del documento
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function uploadFiles(Request $request, $uid)
     {
@@ -619,34 +618,37 @@ class DocumentsController extends Controller
             // Obtener documentos subidos para respuesta
             $uploadedDocs = $document->getUploadedDocumentsWithDetails();
 
-            // Marcar el documento como recibido SOLO cuando todos los documentos
-            // requeridos estén completos. Usa UPDATE atómico para prevenir que
-            // una condición de carrera marque el guard más de una vez.
+            // Disparar evento SOLO cuando todos los documentos estén completos
+            // Usa UPDATE atómico para prevenir múltiples disparos
             $isComplete = $document->hasAllRequiredDocuments();
 
             if ($isComplete) {
-                // Guard atómico: "el cliente ya completó la subida". Separado de
-                // uploaded_confirmation_sent_at, que ahora solo se marca cuando
-                // un agente confirma manualmente el envío del correo de
-                // confirmación de carga (ver sendUploadConfirmation en
-                // DocumentValidationController).
+                // Usar UPDATE atómico para asegurar que solo se marca una vez
                 $updated = \DB::table('documents')
                     ->where('id', $document->id)
-                    ->whereNull('documents_completed_at')
+                    ->whereNull('uploaded_confirmation_sent_at')
                     ->update([
-                        'documents_completed_at' => Carbon::now()->setTimezone('Europe/Madrid'),
+                        'uploaded_confirmation_sent_at' => Carbon::now()->setTimezone('Europe/Madrid'),
                         'updated_at' => Carbon::now()->setTimezone('Europe/Madrid'),
                     ]);
 
-                // El documento pasa a "received" siempre que el cliente completó
-                // la subida, sin depender del envío del correo: la confirmación
-                // de carga al cliente ahora requiere revisión manual del agente.
+                // Si se actualizó, procesar upload: enviar confirmación
                 if ($updated === 1) {
                     $document->refresh();
 
-                    $receivedStatus = DocumentStatus::where('key', 'received')->first();
-                    if ($receivedStatus) {
-                        $document->update(['status_id' => $receivedStatus->id]);
+                    // Capture adminId before releasing session
+                    $adminId = auth()->id();
+
+                    // Process upload with email service
+                    $emailService = app(DocumentEmailService::class);
+                    $sent = $emailService->sendUploadConfirmation($document, $adminId);
+
+                    if ($sent) {
+                        // Update document status to received
+                        $receivedStatus = DocumentStatus::where('key', 'received')->first();
+                        if ($receivedStatus) {
+                            $document->update(['status_id' => $receivedStatus->id]);
+                        }
                     }
                 }
             }
@@ -675,7 +677,7 @@ class DocumentsController extends Controller
      *
      * @param  string  $uid  UID del documento
      * @param  string  $docType  Tipo de documento a eliminar
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function deleteFile($uid, $docType)
     {
@@ -798,7 +800,7 @@ class DocumentsController extends Controller
      * Obtiene datos de la orden y cliente para llenar el documento
      * Consulta los datos en Prestashop y los devuelve para desnormalización
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getOrderData(Request $request)
     {
@@ -855,7 +857,7 @@ class DocumentsController extends Controller
      * Llena automáticamente los datos desnormalizados de un documento
      * usando los datos de la orden y cliente de Prestashop
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function fillDocumentWithOrderData(Request $request)
     {
@@ -935,7 +937,7 @@ class DocumentsController extends Controller
      * Sincroniza todos los documentos existentes con los datos de sus órdenes
      * Busca documentos sin datos desnormalizados y los llena desde Prestashop
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncAllDocumentsWithOrders()
     {
@@ -1023,7 +1025,7 @@ class DocumentsController extends Controller
      * Sincroniza documentos de una orden específica por query parameter
      * Recibe order_id como parámetro query e importa todos los datos y productos
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncDocumentsByOrderQuery(Request $request)
     {
@@ -1110,7 +1112,7 @@ class DocumentsController extends Controller
      * Sincroniza un documento específico con los datos de su orden
      * Busca por order_id y llena todos los datos desnormalizados
      *
-     * @return JsonResponse
+     * @return \Illuminate\Http\JsonResponse
      */
     public function syncDocumentByOrderId(Request $request)
     {
@@ -1147,7 +1149,7 @@ class DocumentsController extends Controller
 
             // Asignar campos básicos si es nuevo
             if ($isNew) {
-                $document->uid = (string) Str::uuid();
+                $document->uid = (string) \Illuminate\Support\Str::uuid();
                 $document->status_id = DocumentStatus::where('key', 'pending')->value('id') ?? 1;
                 $document->source_id = DocumentSource::where('key', 'prestashop')->first()?->id;
                 $document->load_id = DocumentLoad::where('key', 'manual')->first()?->id;
@@ -1216,7 +1218,7 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Error syncing document by order ID: '.$e->getMessage());
+            Log::error('Error syncing document by order ID: ' . $e->getMessage());
 
             return response()->json([
                 'status' => 'failed',
@@ -1589,20 +1591,6 @@ class DocumentsController extends Controller
      */
     public function deleteFiles($id)
     {
-        $user = auth()->user();
-        $privileged = $user && ($user->hasRole('super-admin') || $user->hasRole('super-settings')
-            || $user->hasRole('manager') || $user->hasRole('supervisor'));
-
-        // Borrar media requiere permiso fino: antes bastaba el gate genérico
-        // view-documents-panel, así que un usuario de grupo solo-lectura podía
-        // eliminar la evidencia de cualquier expediente por su ID numérico.
-        if (! $privileged && ! $user?->can('helpdesk.documents.manage') && ! $user?->canDocument('delete-attachments')) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'No tienes permiso para eliminar archivos.',
-            ], 403);
-        }
-
         $media = Media::find($id);
 
         if (! $media) {
@@ -1637,10 +1625,6 @@ class DocumentsController extends Controller
      */
     public function prestashopOrderPaid(Request $request)
     {
-        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', ''))) {
-            return $response;
-        }
-
         try {
 
             $orderId = $request->input('order_id') ?? $request->input('id_order');
@@ -1679,7 +1663,7 @@ class DocumentsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+           
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to process webhook',
@@ -1688,186 +1672,19 @@ class DocumentsController extends Controller
     }
 
     /**
-     * Handle ERP webhook to update document status
-     * Receives order data + target status from ERP and updates the document accordingly
-     */
-    public function erpOrderStatus(Request $request)
-    {
-        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.erp_secret', ''))) {
-            return $response;
-        }
-
-        $validated = $request->validate([
-            'order_id' => ['required'],
-            'status' => ['required', 'string', 'exists:document_statuses,key'],
-            'erp_status' => ['nullable', 'string', 'max:100'],
-            'reason' => ['nullable', 'string', 'max:1000'],
-            'customer_name' => ['nullable', 'string', 'max:200'],
-            'customer_email' => ['nullable', 'email', 'max:200'],
-            'customer_phone' => ['nullable', 'string', 'max:50'],
-            'customer_dni' => ['nullable', 'string', 'max:50'],
-            'reference' => ['nullable', 'string', 'max:255'],
-            'metadata' => ['nullable', 'array'],
-        ]);
-
-        try {
-            $newStatus = DocumentStatus::getByKey($validated['status']);
-            if (! $newStatus) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Status not found: '.$validated['status'],
-                ], 422);
-            }
-
-            $erpSource = DocumentSource::firstOrCreate(
-                ['key' => 'erp'],
-                ['label' => 'ERP', 'description' => 'Webhook desde ERP']
-            );
-
-            $document = Document::where('order_id', $validated['order_id'])->first();
-
-            if (! $document) {
-                $pendingStatus = DocumentStatus::getByKey('pending');
-
-                $nameParts = isset($validated['customer_name'])
-                    ? explode(' ', $validated['customer_name'], 2)
-                    : [];
-
-                $document = Document::create([
-                    'order_id' => $validated['order_id'],
-                    'source_id' => $erpSource->id,
-                    'status_id' => $pendingStatus?->id,
-                    'order_reference' => $validated['reference'] ?? null,
-                    'customer_email' => $validated['customer_email'] ?? null,
-                    'customer_firstname' => $nameParts[0] ?? null,
-                    'customer_lastname' => $nameParts[1] ?? null,
-                    'customer_cellphone' => $validated['customer_phone'] ?? null,
-                    'customer_dni' => $validated['customer_dni'] ?? null,
-                ]);
-            }
-
-            $fromStatusId = $document->status_id;
-
-            $document->status_id = $newStatus->id;
-            $document->save();
-
-            DocumentStatusHistory::create([
-                'document_id' => $document->id,
-                'from_status_id' => $fromStatusId,
-                'to_status_id' => $newStatus->id,
-                'changed_by' => null,
-                'reason' => $validated['reason'] ?? null,
-                'metadata' => array_merge(
-                    $validated['metadata'] ?? [],
-                    array_filter([
-                        'source' => 'erp_webhook',
-                        'erp_status' => $validated['erp_status'] ?? null,
-                        'order_id' => $validated['order_id'],
-                    ])
-                ),
-            ]);
-
-            Log::info('[ERP Webhook] Estado actualizado', [
-                'order_id' => $validated['order_id'],
-                'document_id' => $document->id,
-                'from_status' => $fromStatusId,
-                'to_status' => $newStatus->key,
-                'erp_status' => $validated['erp_status'] ?? null,
-            ]);
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Estado del documento actualizado',
-                'document_uid' => $document->uid,
-                'new_status' => $newStatus->key,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('[ERP Webhook] Error al procesar', [
-                'order_id' => $request->input('order_id'),
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Error al procesar el webhook',
-            ], 500);
-        }
-    }
-
-    /**
-     * Verifica HMAC-SHA256 sobre "{timestamp}:{raw_body}" (mismo patron que
-     * HelpdeskErp\WebhookController::ordersReady). Fail-closed: sin secreto
-     * configurado responde 503 en vez de aceptar sin verificar — antes,
-     * ambos webhooks aceptaban cualquier peticion cuando el secreto no
-     * estaba puesto (o, en erpOrderStatus, comparaban con !== en vez de
-     * hash_equals()).
-     *
-     * @return JsonResponse|null null si la firma es valida (continuar)
-     */
-    private function rejectUnsignedWebhook(Request $request, string $secret): ?JsonResponse
-    {
-        if ($secret === '') {
-            static $logged = false;
-            if (! $logged) {
-                $logged = true;
-                Log::warning('Document webhook: secret not configured.', ['path' => $request->path()]);
-            }
-
-            return response()->json(['status' => 'error', 'message' => 'webhook not configured'], 503);
-        }
-
-        $timestamp = (int) $request->header('X-Webhook-Timestamp', 0);
-
-        if ($timestamp === 0 || abs(time() - $timestamp) > 300) {
-            return response()->json(['status' => 'error', 'message' => 'invalid timestamp'], 401);
-        }
-
-        $expected = hash_hmac('sha256', $timestamp.':'.$request->getContent(), $secret);
-        $signature = (string) $request->header('X-Webhook-Signature', '');
-
-        if (! hash_equals($expected, $signature)) {
-            Log::warning('Document webhook: invalid HMAC signature.', ['ip' => $request->ip(), 'path' => $request->path()]);
-
-            return response()->json(['status' => 'error', 'message' => 'invalid signature'], 401);
-        }
-
-        return null;
-    }
-
-    /**
      * Actualizar documento
      */
     public function update(Request $request)
     {
-        // `data` se limita a los campos de contacto del cliente: antes se
-        // aplicaba como update() sobre todo el $fillable (status_id,
-        // assigned_user_id, validation_status…), permitiendo saltarse el
-        // workflow de validación con una sola petición.
         $validated = $request->validate([
             'uid' => 'required|exists:documents,uid',
             'data' => 'nullable|array',
-            'data.customer_firstname' => 'nullable|string|max:255',
-            'data.customer_lastname' => 'nullable|string|max:255',
-            'data.customer_email' => 'nullable|email|max:255',
-            'data.customer_cellphone' => 'nullable|string|max:32',
-            'data.customer_dni' => 'nullable|string|max:32',
-            'data.customer_company' => 'nullable|string|max:255',
         ]);
 
         try {
             $document = Document::where('uid', $validated['uid'])->firstOrFail();
-
-            $editable = array_intersect_key(
-                $validated['data'] ?? [],
-                array_flip([
-                    'customer_firstname', 'customer_lastname', 'customer_email',
-                    'customer_cellphone', 'customer_dni', 'customer_company',
-                ])
-            );
-
-            if ($editable !== []) {
-                $document->update($editable);
+            if ($validated['data'] ?? null) {
+                $document->update($validated['data']);
             }
 
             return response()->json([
@@ -2052,6 +1869,7 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
+        
 
             return response()->json([
                 'success' => false,
@@ -2102,6 +1920,7 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
+            
 
             return response()->json([
                 'success' => false,
@@ -2141,12 +1960,72 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al refrescar el historial: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Recibe el número de licencia federativa enviado por el cliente desde Prestashop.
+     * Crea una nota pública en el documento y cambia el estado a "pending" (solicitado).
+     */
+    public function submitHuntingLicense(Request $request, string $uid)
+    {
+        $document = Document::uid($uid)->first();
+
+        if (! $document) {
+            return response()->json(['status' => 'error', 'message' => 'Document not found'], 404);
+        }
+
+        $licenseNumber = trim($request->input('license_number', ''));
+        if (empty($licenseNumber)) {
+            return response()->json(['status' => 'error', 'message' => 'license_number is required'], 422);
+        }
+
+        $firstname = trim($request->input('firstname', ''));
+        $lastname  = trim($request->input('lastname', ''));
+        $dni       = trim($request->input('dni', ''));
+        $phone     = trim($request->input('phone', ''));
+        $email     = trim($request->input('email', ''));
+        $address   = trim($request->input('address', ''));
+
+        $noteLines = ["Licencia federativa aportada por el cliente: {$licenseNumber}"];
+        if ($firstname || $lastname) {
+            $noteLines[] = "Nombre: {$firstname} {$lastname}";
+        }
+        if ($dni) {
+            $noteLines[] = "DNI: {$dni}";
+        }
+        if ($phone) {
+            $noteLines[] = "Teléfono: {$phone}";
+        }
+        if ($email) {
+            $noteLines[] = "Email: {$email}";
+        }
+        if ($address) {
+            $noteLines[] = "Dirección: {$address}";
+        }
+
+        $document->notes()->create([
+            'content'     => implode("\n", $noteLines),
+            'is_internal' => false,
+        ]);
+
+        $pendingStatus = \Modules\Document\Entities\DocumentStatus::where('key', 'pending')->first();
+        if ($pendingStatus && $document->status?->key === 'awaiting_documents') {
+            $document->status_id = $pendingStatus->id;
+            $document->save();
+        }
+
+        MailTemplateJob::dispatch($document, 'fusil_license_confirmation');
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Hunting license submitted successfully',
+        ]);
     }
 
     public function destroy($uid)

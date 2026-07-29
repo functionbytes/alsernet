@@ -78,7 +78,7 @@ class Tarifalote extends Model
      */
     public function tarifalote()
     {
-        return $this->belongsTo(Tarifalote::class, 'idtarifalote', 'idtarifalote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Tarifalote::class, 'idtarifalote', 'idtarifalote');
     }
 
     /**
@@ -87,6 +87,6 @@ class Tarifalote extends Model
      */
     public function llote()
     {
-        return $this->belongsTo(Llote::class, 'idllote', 'idllote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Llote::class, 'idllote', 'idllote');
     }
 }

@@ -5,7 +5,6 @@ namespace Modules\Database\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class CreateDatabasePermissionsSeeder extends Seeder
 {
@@ -21,7 +20,7 @@ class CreateDatabasePermissionsSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Define all database permissions
         $permissions = $this->definePermissions();

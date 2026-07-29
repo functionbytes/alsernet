@@ -26,7 +26,7 @@
                             <p class="mb-0 text-warning">
                                 <strong>Tablas protegidas</strong> (no se pueden vaciar):
                                 @foreach($protectedTables as $pt)
-                                    <span class="badge bg-danger-subtle text-danger border -subtle ms-1">{{ $pt }}</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">{{ $pt }}</span>
                                 @endforeach
                             </p>
                         </div>
@@ -133,7 +133,7 @@
                                                 <td>
                                                     <code class="bg-light-secondary p-2 rounded small text-black">{{ $table['name'] }}</code>
                                                     @if($table['protected'])
-                                                        <span class="badge bg-danger-subtle text-danger border -subtle ms-1">Protegida</span>
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle ms-1">Protegida</span>
                                                     @elseif($table['records'] === 0)
                                                         <span class="badge bg-success ms-2">Vacía</span>
                                                     @endif

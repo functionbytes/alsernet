@@ -2,26 +2,25 @@
 
 namespace Modules\Document\Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use Modules\Document\Entities\DocumentLang;
 use Modules\Mailer\Models\MailerTemplate;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DocumentEmailTemplateSeeder extends Seeder
 {
+
     public function run(): void
     {
         try {
             $langs = DocumentLang::all();
         } catch (\Exception $e) {
             $this->command->warn('⚠️ DocumentLang table not found. Skipping email template seeding.');
-
             return;
         }
 
         if ($langs->isEmpty()) {
             $this->command->warn('⚠️ No language found in database. Skipping email template seeding.');
-
             return;
         }
 

@@ -155,6 +155,14 @@
                         success: function(response) {
                             window.location.href = response.redirect;
                         },
+                        error: function(xhr) {
+                            if (xhr.status === 422 || xhr.status === 429 || xhr.status === 403) {
+                                handleLoginError(xhr);
+                            } else {
+                                // Error inesperado (500, red, etc.) — recargar para que la sesión redirija si el login fue exitoso
+                                window.location.reload();
+                            }
+                        },
                         statusCode: {
                             422: handleLoginError,
                             429: handleLoginError,

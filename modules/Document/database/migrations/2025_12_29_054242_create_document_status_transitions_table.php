@@ -11,14 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Migración duplicada: la tabla document_status_transitions ya la crea
-        // 2025_12_29_030512_create_document_status_transitions_table (definición
-        // canónica con todas las columnas). Se deja como no-op idempotente para no
-        // romper `migrate` en una base de datos fresca con "table already exists".
-        if (Schema::hasTable('document_status_transitions')) {
-            return;
-        }
-
         Schema::create('document_status_transitions', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
@@ -30,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No-op: la tabla la gestiona la migración canónica 030512.
+        Schema::dropIfExists('document_status_transitions');
     }
 };

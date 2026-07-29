@@ -183,7 +183,7 @@
                                 });
 
                                 setTimeout(function () {
-                                    window.location = "{{ route('core.dashboard') }}";
+                                    window.location = "{{ route('manager.dashboard') }}";
                                 }, 2000);
 
                             } else {

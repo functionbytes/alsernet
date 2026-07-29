@@ -316,14 +316,14 @@
             }
 
             .variable-badge:hover {
-                border-color: #90bb13;
+                border-color: #13C672;
                 background: #f6faf0;
                 transform: translateY(-1px);
                 box-shadow: 0 2px 8px rgba(144, 187, 19, 0.15);
             }
 
             .variable-badge i {
-                color: #90bb13;
+                color: #13C672;
                 font-size: 12px;
             }
 
@@ -384,8 +384,8 @@
 
             /* Button Group Active State */
             .btn-group .btn.active {
-                background-color: #90bb13 !important;
-                border-color: #90bb13 !important;
+                background-color: #13C672 !important;
+                border-color: #13C672 !important;
                 color: white !important;
             }
 
@@ -519,7 +519,7 @@
                 }
             });
         </script>
-        <script src="{{ themeAsset('js/forms/template-preview.js') }}"></script>
+        <script src="{{ url('theme/js/forms/template-preview.js') }}"></script>
     @endpush
 
 @endsection

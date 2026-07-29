@@ -1,8 +1,5 @@
 <?php
 
-use App\Models\User;
-use Spatie\Activitylog\Models\Activity;
-
 return [
     /*
      * If set to false, no activities will be recorded.
@@ -13,7 +10,7 @@ return [
      * The eloquent model that will be used to log activity.
      * Must be the fully qualified class name of the model.
      */
-    'activity_model' => Activity::class,
+    'activity_model' => \Spatie\Activitylog\Models\Activity::class,
 
     /*
      * The name of the table that will be created by the migration and
@@ -45,7 +42,7 @@ return [
 
     'default_auth_driver' => null,
 
-    'default_auth_model' => User::class,
+    'default_auth_model' => \App\Models\User::class,
 
     'methods' => [
         'retrieve',

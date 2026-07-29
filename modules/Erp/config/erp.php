@@ -20,17 +20,6 @@ return [
     ],
 
     'url_erp' => env('ERP_URL'),
-
-    // =========================================
-    // HELPDESK WEBHOOK (Oracle scan → Helpdesk notify)
-    // =========================================
-    'webhook' => [
-        'url' => env('SYSTEM_WEBHOOK_URL', ''),
-        'secret' => env('SYSTEM_WEBHOOK_SECRET', ''),
-        // TLS verification skipped only when explicitly opted-in (dev environments
-        // with self-signed certs). In production this stays on by default.
-        'skip_tls_verify' => env('SYSTEM_WEBHOOK_SKIP_TLS', false),
-    ],
     // Constantes para bonos
     'bono_origen_web' => 'web',
     'bono_origen_gestion' => 'gestion',

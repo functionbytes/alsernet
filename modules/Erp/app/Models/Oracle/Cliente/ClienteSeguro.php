@@ -82,6 +82,6 @@ class ClienteSeguro extends Model
      */
     public function clienteSeguro()
     {
-        return $this->belongsTo(ClienteSeguro::class, 'idcliente_seguro', 'idcliente_seguro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClienteSeguro::class, 'idcliente_seguro', 'idcliente_seguro');
     }
 }

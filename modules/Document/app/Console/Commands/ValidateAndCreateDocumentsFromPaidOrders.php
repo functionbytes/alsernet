@@ -15,7 +15,6 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
     protected $description = 'Validate and create documents for paid orders with blocked products, delete documents for orders without estado 27 or blocked products';
 
     private const PAID_STATE = 27;
-
     private const ANALYSIS_DATE = '2025-11-15';
 
     public function handle(): int
@@ -53,9 +52,10 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 ->distinct('o.id_order')
                 ->pluck('o.id_order')
                 ->toArray();
+            
 
             $ordersWithStatus27Set = array_flip($ordersWithStatus27);
-            $this->info('✓ Orders with estado 27 (from '.self::ANALYSIS_DATE.'): '.count($ordersWithStatus27));
+            $this->info("✓ Orders with estado 27 (from ".self::ANALYSIS_DATE."): ".count($ordersWithStatus27));
 
             // Get all blockades
             $blockades = DB::connection('mysql')
@@ -78,7 +78,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                     $blockadeMap[$key] = true;
                 }
             }
-            $this->info('✓ Blockade records: '.count($blockades));
+            $this->info("✓ Blockade records: ".count($blockades));
 
             // Get order products with attributes
             $orderProducts = DB::connection('prestashop')
@@ -96,7 +96,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                     'attribute_id' => $item->product_attribute_id,
                 ];
             }
-            $this->info('✓ Orders mapped: '.count($orderProductMap));
+            $this->info("✓ Orders mapped: ".count($orderProductMap));
             $this->line('');
 
             // Step 2: Get all existing documents
@@ -109,7 +109,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 ->select('id', 'order_id', 'uid', 'type_id')
                 ->get();
 
-            $this->info('✓ Total documents: '.count($allDocuments));
+            $this->info("✓ Total documents: ".count($allDocuments));
 
             // Sync missing customer data and lang_id in existing documents
             $this->line('');
@@ -125,14 +125,12 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 // Check 1: Does order have estado 27?
                 if (! isset($ordersWithStatus27Set[$doc->order_id])) {
                     $toDelete[] = $doc;
-
                     continue;
                 }
 
                 // Check 2: Does order have products?
                 if (! isset($orderProductMap[$doc->order_id])) {
                     $toDelete[] = $doc;
-
                     continue;
                 }
 
@@ -178,6 +176,9 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 }
             }
             $validOrdersSet = array_flip($validOrderIds);
+
+
+
 
             // Find orders that SHOULD have documents (have estado 27 + products + blocked products)
             // but currently DON'T have valid documents
@@ -245,12 +246,12 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
 
             if ($this->option('dry-run')) {
                 $this->comment('DRY RUN: No changes will be applied. Use --force to run without confirmation.');
-
                 return 0;
             }
 
+
             dump($toCreate);
-            exit();
+            die();
 
             // Step 5: Create missing documents
             if (count($toCreate) > 0) {
@@ -275,7 +276,6 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                             $errors[] = "Order {$orderId}: Could not fetch order data from Prestashop";
                             $failed++;
                             $bar->advance();
-
                             continue;
                         }
 
@@ -459,22 +459,21 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
             $docsToSync = Document::whereNotNull('order_id')
                 ->where(function ($q) {
                     $q->whereNull('customer_firstname')
-                        ->orWhereNull('customer_lastname')
-                        ->orWhereNull('customer_email')
-                        ->orWhereNull('customer_company')
-                        ->orWhereNull('customer_dni')
-                        ->orWhereNull('customer_cellphone')
-                        ->orWhereNull('order_reference')
-                        ->orWhereNull('lang_id')
-                        ->orWhereNull('order_date')
-                        ->orWhere('customer_email', 'like', 'anon_%');
+                      ->orWhereNull('customer_lastname')
+                      ->orWhereNull('customer_email')
+                      ->orWhereNull('customer_company')
+                      ->orWhereNull('customer_dni')
+                      ->orWhereNull('customer_cellphone')
+                      ->orWhereNull('order_reference')
+                      ->orWhereNull('lang_id')
+                      ->orWhereNull('order_date')
+                      ->orWhere('customer_email', 'like', 'anon_%');
                 })
                 ->select('id', 'order_id', 'customer_email', 'customer_id')
                 ->get();
 
             if ($docsToSync->isEmpty()) {
                 $this->info('  ✓ All documents have complete data');
-
                 return;
             }
 
@@ -487,7 +486,6 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                     $orderData = $this->fetchPrestashopOrderData($doc->order_id);
                     if (! $orderData) {
                         $failed++;
-
                         continue;
                     }
 
@@ -538,7 +536,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 $this->warn("  ⚠️  Failed: {$failed} documents");
             }
         } catch (\Exception $e) {
-            $this->warn('  ⚠️  Sync error: '.$e->getMessage());
+            $this->warn("  ⚠️  Sync error: ".$e->getMessage());
         }
     }
 
@@ -556,7 +554,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 ->select('company', 'vat_number', 'phone', 'phone_mobile')
                 ->first();
 
-            if (! $address) {
+            if (!$address) {
                 return null;
             }
 
@@ -586,7 +584,7 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 ->select('firstname', 'lastname', 'email')
                 ->first();
 
-            if (! $customer) {
+            if (!$customer) {
                 return null;
             }
 
@@ -642,15 +640,15 @@ class ValidateAndCreateDocumentsFromPaidOrders extends Command
                 ->where('deleted', 0)
                 ->where(function ($q) {
                     $q->whereNotNull('firstname')
-                        ->where('firstname', '!=', '')
-                        ->whereNotNull('lastname')
-                        ->where('lastname', '!=', '');
+                      ->where('firstname', '!=', '')
+                      ->whereNotNull('lastname')
+                      ->where('lastname', '!=', '');
                 })
                 ->orderByDesc('id_address')
                 ->select('firstname', 'lastname', 'company', 'vat_number', 'phone', 'phone_mobile')
                 ->first();
 
-            if (! $address) {
+            if (!$address) {
                 return null;
             }
 

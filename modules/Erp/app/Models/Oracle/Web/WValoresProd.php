@@ -84,7 +84,7 @@ class WValoresProd extends Model
      */
     public function caracteristica()
     {
-        return $this->belongsTo(WCaracteristicasProd::class, 'id_caracteristica', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WCaracteristicasProd::class, 'id_caracteristica', 'id');
     }
 
     /**
@@ -93,6 +93,6 @@ class WValoresProd extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

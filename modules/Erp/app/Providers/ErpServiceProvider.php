@@ -11,8 +11,19 @@ use Modules\Erp\Console\Commands\CacheCustomerOrders;
 use Modules\Erp\Console\Commands\ClearProductImports;
 use Modules\Erp\Console\Commands\ErpCheckCommand;
 use Modules\Erp\Console\Commands\ExtractOracleDDL;
+use Modules\Erp\Console\Commands\ImportProductsFromPrestashop;
 use Modules\Erp\Console\Commands\IssueBridgeTokenCommand;
 use Modules\Erp\Console\Commands\ShowImportStatistics;
+use Modules\Erp\Console\Commands\Supplier\CircuitBreakerStatus;
+use Modules\Erp\Console\Commands\Supplier\RetrySyncFailures;
+use Modules\Erp\Console\Commands\Supplier\StartOracleMonitor;
+use Modules\Erp\Console\Commands\Supplier\SyncAll;
+use Modules\Erp\Console\Commands\Supplier\SyncCategories;
+use Modules\Erp\Console\Commands\Supplier\SyncPrices;
+use Modules\Erp\Console\Commands\Supplier\SyncProducts as SupplierSyncProducts;
+use Modules\Erp\Console\Commands\Supplier\SyncProviderProducts;
+use Modules\Erp\Console\Commands\Supplier\SyncProviders;
+use Modules\Erp\Console\Commands\Supplier\SyncStats;
 use Modules\Erp\Console\Commands\SyncErpEndpointsCommand;
 use Modules\Erp\Console\Commands\SyncProducts;
 use Modules\Erp\Console\Commands\SyncSpecificPrices;
@@ -22,7 +33,6 @@ use Modules\Erp\Http\Middleware\ApiAuth;
 use Modules\Erp\Http\Middleware\ValidateEndpointToken;
 use Modules\Erp\Services\CircuitBreaker;
 use Modules\Erp\Services\ErpService;
-use Modules\Erp\Services\OCI8Service;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
@@ -78,11 +88,6 @@ class ErpServiceProvider extends ServiceProvider
         $this->app->singleton(CircuitBreaker::class, function ($app) {
             return new CircuitBreaker;
         });
-
-        // Share a single OCI8 connection per request/worker so the isAlive()
-        // ping in connect() reuses the live connection instead of opening a
-        // fresh Oracle connection on every app(OCI8Service::class) resolution.
-        $this->app->singleton(OCI8Service::class);
     }
 
     /**
@@ -232,10 +237,11 @@ class ErpServiceProvider extends ServiceProvider
             TestPerformance::class,
 
             // Imports
+            ImportProductsFromPrestashop::class,
             ClearProductImports::class,
             ShowImportStatistics::class,
 
-            // External API sync
+            // External API / Prestashop sync
             SyncProducts::class,
             SyncSpecificPrices::class,
             CacheCustomerOrders::class,
@@ -245,6 +251,18 @@ class ErpServiceProvider extends ServiceProvider
 
             // Bridge token issuance for Alsernet → ERP integration
             IssueBridgeTokenCommand::class,
+
+            // Supplier → ERP sync pipeline (Oracle source of truth)
+            SyncAll::class,
+            SyncCategories::class,
+            SyncProviders::class,
+            SupplierSyncProducts::class,
+            SyncProviderProducts::class,
+            SyncPrices::class,
+            SyncStats::class,
+            RetrySyncFailures::class,
+            StartOracleMonitor::class,
+            CircuitBreakerStatus::class,
         ]);
     }
 

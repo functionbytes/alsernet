@@ -91,7 +91,7 @@ class Pais extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
     }
 
     /**
@@ -100,7 +100,7 @@ class Pais extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
     }
 
     /**
@@ -109,6 +109,6 @@ class Pais extends Model
      */
     public function moneda()
     {
-        return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Moneda::class, 'idmoneda', 'idmoneda');
     }
 }

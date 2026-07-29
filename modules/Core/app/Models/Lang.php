@@ -2,11 +2,8 @@
 
 namespace Modules\Core\Models;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
-use Modules\System\Models\Categorie;
 
 /**
  * @property int $id
@@ -18,9 +15,9 @@ use Modules\System\Models\Categorie;
  * @property string|null $date_format_full
  * @property string|null $date_format_lite
  * @property int $available
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read Collection<int, Categorie> $categories
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Modules\System\Models\Categorie> $categories
  * @property-read int|null $categories_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Lang ascending()

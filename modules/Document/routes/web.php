@@ -27,24 +27,10 @@ use Modules\Document\Http\Controllers\Settings\StageEmailActionController;
 
 Route::middleware(['web', 'auth'])->group(function () {
 
-    // Preview de los 4 modales reutilizables (solo entornos no productivos).
-    if (! app()->isProduction()) {
-        Route::get('panel/documents/modals-preview', function () {
-            return view('documents::modals.preview');
-        })->name('documents.modals.preview');
-    }
-
     // ====================================================================
     // OPERATIONAL ROUTES - /panel/documents
     // ====================================================================
-    // 🔒 Seguridad: sin este permiso, cualquier usuario autenticado (agente,
-    // portal, etc.) podia listar/ver/gestionar cualquier documento (DNI,
-    // licencias de armas) solo con el UID. Mismo patron ya aplicado a
-    // routes/api.php (ver comentario alli) — 'can:view-documents-panel'
-    // (Gate en DocumentsServiceProvider) deja pasar a super-admin (via
-    // Gate::before), supervisor, y a los miembros de grupos validadores
-    // con el permiso 'view-documents'.
-    Route::prefix('panel/documents')->name('documents.')->middleware('can:view-documents-panel')->group(function () {
+    Route::prefix('panel/documents')->name('documents.')->group(function () {
         // Listing routes
         Route::get('/', [DocumentsController::class, 'index'])->name('index');
         Route::get('/pending', [DocumentsController::class, 'pending'])->name('pending');
@@ -178,6 +164,7 @@ Route::middleware(['web', 'auth'])->group(function () {
                     Route::post('/{sourceGroup}/clone', [DocumentGroupPermissionsController::class, 'clone'])->name('clone');
                 });
             });
+
 
             // Stage email action routes
             Route::prefix('stage-email-actions')->name('stage-email-actions.')->group(function () {

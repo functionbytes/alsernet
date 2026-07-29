@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Cela peut vous intéresser",
+        "language": "fr",
+        "position": 3,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Marques",
+            "url": "/fr/equitation/liste-marques"
+          },
+          {
+            "title": "Offres",
+            "url": "/fr/equitation/offres"
+          },
+          {
+            "title": "Nouveautés",
+            "url": "/fr/equitation/nouveautes"
+          },
+          {
+            "title": "Meilleures ventes",
+            "url": "/fr/equitation/les_plus_vendus"
+          }
+        ]
+      }
+]

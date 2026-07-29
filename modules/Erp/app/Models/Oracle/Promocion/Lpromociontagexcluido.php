@@ -52,7 +52,7 @@ class Lpromociontagexcluido extends Model
      */
     public function lpromociontagexcluido()
     {
-        return $this->belongsTo(Lpromociontagexcluido::class, 'idlpromociontagexcluido', 'idlpromociontagexcluido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromociontagexcluido::class, 'idlpromociontagexcluido', 'idlpromociontagexcluido');
     }
 
     /**
@@ -61,6 +61,6 @@ class Lpromociontagexcluido extends Model
      */
     public function promocion()
     {
-        return $this->belongsTo(Promocion::class, 'idpromocion', 'idpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Promocion::class, 'idpromocion', 'idpromocion');
     }
 }

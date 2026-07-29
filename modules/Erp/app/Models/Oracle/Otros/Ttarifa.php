@@ -69,6 +69,6 @@ class Ttarifa extends Model
      */
     public function ttarifa()
     {
-        return $this->belongsTo(Ttarifa::class, 'idttarifa', 'idttarifa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Ttarifa::class, 'idttarifa', 'idttarifa');
     }
 }

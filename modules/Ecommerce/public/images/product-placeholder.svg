@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-  <rect width="400" height="400" fill="#f1f3f5"/>
-  <g transform="translate(200,200)">
-    <circle r="80" fill="none" stroke="#ced4da" stroke-width="3"/>
-    <path transform="translate(-30,-30)" d="M20 0 L40 40 L0 40 Z" fill="#dee2e6"/>
-    <circle cx="15" cy="-10" r="8" fill="#ced4da"/>
-  </g>
-  <text x="200" y="320" font-family="Arial,sans-serif" font-size="14" fill="#adb5bd" text-anchor="middle">Sin imagen disponible</text>
-</svg>

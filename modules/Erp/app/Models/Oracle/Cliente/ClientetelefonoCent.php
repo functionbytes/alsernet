@@ -4,8 +4,6 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Tipotelefono;
-use Modules\Erp\Models\Oracle\Otros\PrefijoTelefono;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -59,7 +57,7 @@ class ClientetelefonoCent extends Model
      */
     public function clientetelefono()
     {
-        return $this->belongsTo(ClientetelefonoCent::class, 'idclientetelefono', 'idclientetelefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientetelefonoCent::class, 'idclientetelefono', 'idclientetelefono');
     }
 
     /**
@@ -68,7 +66,7 @@ class ClientetelefonoCent extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -77,7 +75,7 @@ class ClientetelefonoCent extends Model
      */
     public function tipotelefono()
     {
-        return $this->belongsTo(Tipotelefono::class, 'idtipotelefono', 'idtipotelefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipotelefono::class, 'idtipotelefono', 'idtipotelefono');
     }
 
     /**
@@ -86,6 +84,6 @@ class ClientetelefonoCent extends Model
      */
     public function prefijoTelefono()
     {
-        return $this->belongsTo(PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\PrefijoTelefono::class, 'idprefijo_telefono', 'idprefijo_telefono');
     }
 }

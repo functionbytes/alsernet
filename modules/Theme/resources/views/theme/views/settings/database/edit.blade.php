@@ -4,7 +4,7 @@
 
     <div class="card w-100">
 
-        <form id="formDatabase" method="POST" action="{{ route('settings.database.update') }}" novalidate>
+        <form id="formDatabase" method="POST" action="{{ route('backups.database.update') }}" novalidate>
 
             {{ csrf_field() }}
             @method('PUT')
@@ -244,7 +244,7 @@
                 <button type="submit" class="btn btn-info px-4 waves-effect waves-light mt-2 w-100">
                     Guardar
                 </button>
-                <a href="{{ route('settings.database.index') }}"
+                <a href="{{ route('backups.database.index') }}"
                    class="btn btn-secondary px-4 waves-effect waves-light mt-2 w-100">
                     Volver
                 </a>

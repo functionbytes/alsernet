@@ -51,6 +51,6 @@ class Talmacen extends Model
      */
     public function talmacen()
     {
-        return $this->belongsTo(Talmacen::class, 'idtalmacen', 'idtalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Talmacen::class, 'idtalmacen', 'idtalmacen');
     }
 }

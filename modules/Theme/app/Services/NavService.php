@@ -2,9 +2,7 @@
 
 namespace Modules\Theme\Services;
 
-use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection;
-use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 
 /**
  * NavService - Servicio centralizado para gestionar la navegación del panel administrativo
@@ -84,24 +82,11 @@ class NavService
                 }
             }
 
-            // Buscar sección con el mismo título para fusionar
-            $merged = false;
-            foreach (self::$menus['sidebar'][$sidebarId]['sections'] as &$section) {
-                if ($section['title'] === $config['title']) {
-                    $section['items'] = array_merge($section['items'], $config['items']);
-                    $merged = true;
-                    break;
-                }
-            }
-            unset($section);
-
-            // Si no existe sección con ese título, agregar una nueva
-            if (! $merged) {
-                self::$menus['sidebar'][$sidebarId]['sections'][] = [
-                    'title' => $config['title'],
-                    'items' => $config['items'],
-                ];
-            }
+            // Agregar nueva sección
+            self::$menus['sidebar'][$sidebarId]['sections'][] = [
+                'title' => $config['title'],
+                'items' => $config['items'],
+            ];
         } else {
             // Crear sidebar nuevo con estructura de secciones
             self::$menus['sidebar'][$sidebarId] = [
@@ -148,60 +133,6 @@ class NavService
     }
 
     /**
-     * Agregar items a una sección específica de un sidebar, buscando por título.
-     *
-     * Si el sidebar no existe, lo crea. Si la sección con ese título no existe, la crea.
-     * Si ya existe una sección con ese título, fusiona los items en ella.
-     *
-     * Uso recomendado cuando un módulo quiere aportar items a una sección ya definida
-     * por otro módulo, sin depender del orden de carga de los ServiceProviders.
-     *
-     * Ejemplo:
-     *   NavService::addItemsToSection('settings', 'Configuraciones', [
-     *       ['label' => 'Almacenamiento', 'route' => 'settings.storage'],
-     *   ]);
-     */
-    public static function addItemsToSection(string $sidebarId, string $sectionTitle, array $items): void
-    {
-        if (! isset(self::$menus['sidebar'])) {
-            self::$menus['sidebar'] = [];
-        }
-
-        // Si el sidebar no existe, crearlo con la sección directamente
-        if (! isset(self::$menus['sidebar'][$sidebarId])) {
-            self::$menus['sidebar'][$sidebarId] = [
-                'sections' => [
-                    ['title' => $sectionTitle, 'items' => $items],
-                ],
-            ];
-
-            return;
-        }
-
-        $sidebar = &self::$menus['sidebar'][$sidebarId];
-
-        // Normalizar a estructura de secciones si está en formato legacy
-        if (! isset($sidebar['sections'])) {
-            $legacyItems = $sidebar['items'] ?? [];
-            $legacyTitle = $sidebar['title'] ?? 'Menu';
-            $sidebar['sections'] = [['title' => $legacyTitle, 'items' => $legacyItems]];
-            unset($sidebar['items'], $sidebar['title']);
-        }
-
-        // Buscar una sección existente con el mismo título
-        foreach ($sidebar['sections'] as &$section) {
-            if ($section['title'] === $sectionTitle) {
-                $section['items'] = array_merge($section['items'], $items);
-
-                return;
-            }
-        }
-
-        // No se encontró la sección: crear una nueva
-        $sidebar['sections'][] = ['title' => $sectionTitle, 'items' => $items];
-    }
-
-    /**
      * Obtener todos los items del mini-nav ordenados
      */
     public static function getMiniItems(): Collection
@@ -238,6 +169,43 @@ class NavService
     }
 
     /**
+     * Obtener todos los items de navegación (compatible con NavigationService anterior)
+     */
+    public static function getNavigation(): array
+    {
+        $navigation = [];
+
+        foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
+            $miniItem = self::getMiniItem($sidebarId);
+
+            if ($miniItem) {
+                // Soportar nueva estructura de secciones
+                if (isset($sidebar['sections'])) {
+                    // Extraer primer título de la primera sección
+                    $firstSectionTitle = $sidebar['sections'][0]['title'] ?? $sidebarId;
+
+                    $navigation[$sidebarId] = [
+                        'id' => $sidebarId,
+                        'title' => $firstSectionTitle,
+                        'icon' => $miniItem['icon'],
+                        'sections' => $sidebar['sections'],
+                    ];
+                } else {
+                    // Estructura legacy
+                    $navigation[$sidebarId] = [
+                        'id' => $sidebarId,
+                        'title' => $sidebar['title'] ?? $sidebarId,
+                        'icon' => $miniItem['icon'],
+                        'items' => $sidebar['items'] ?? [],
+                    ];
+                }
+            }
+        }
+
+        return $navigation;
+    }
+
+    /**
      * Verificar si un módulo está registrado
      */
     public static function hasMiniItem(string $moduleId): bool
@@ -262,59 +230,9 @@ class NavService
     }
 
     /**
-     * Estructura plana de TODOS los items de navegación registrados (mini-nav
-     * + sidebars + items de cada sección), sin filtrar por permisos ni por
-     * nav_item_enabled(). Pensada para la pantalla de administración que
-     * permite activar/desactivar cada entrada del menú.
-     *
-     * @return array<int, array{key: string, label: string, group: string}>
+     * Limpiar todos los menús (testing)
      */
-    public static function getAllItemsForAdmin(): array
-    {
-        $rows = [];
-
-        foreach (self::getMiniItems() as $item) {
-            $moduleId = $item['id'] ?? null;
-            if (! $moduleId) {
-                continue;
-            }
-            $rows[] = [
-                'key' => "mini:{$moduleId}",
-                'label' => $item['tooltip'] ?? $moduleId,
-                'group' => 'Módulos (icono lateral)',
-            ];
-        }
-
-        foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
-            $rows[] = [
-                'key' => "sidebar:{$sidebarId}",
-                'label' => "Menú: {$sidebarId}",
-                'group' => 'Menús desplegables',
-            ];
-
-            $sections = $sidebar['sections'] ?? [['title' => $sidebar['title'] ?? $sidebarId, 'items' => $sidebar['items'] ?? []]];
-
-            foreach ($sections as $section) {
-                foreach ($section['items'] ?? [] as $item) {
-                    if (empty($item['route'])) {
-                        continue;
-                    }
-                    $rows[] = [
-                        'key' => 'item:'.$item['route'],
-                        'label' => $item['label'] ?? $item['route'],
-                        'group' => $section['title'] ?? $sidebarId,
-                    ];
-                }
-            }
-        }
-
-        return $rows;
-    }
-
-    /**
-     * Reset all static navigation state (useful for testing and module reloading)
-     */
-    public static function flush(): void
+    public static function clear(): void
     {
         self::$menus = [];
     }
@@ -337,25 +255,15 @@ class NavService
                 return true; // Si no tiene ID, mostrar
             }
 
-            if (! nav_item_enabled("mini:{$moduleId}")) {
-                return false;
-            }
-
             $permissionName = "modules.view.{$moduleId}";
 
-            // Si el usuario es super-settings, mostrar siempre
-            if ($user->hasRole('super-settings')) {
+            // Si el usuario es super-admin, mostrar siempre
+            if ($user->hasRole('super-admin')) {
                 return true;
             }
 
             // Verificar si el usuario tiene permiso para este módulo
-            try {
-                return $user->hasPermissionTo($permissionName);
-            } catch (PermissionDoesNotExist $e) {
-                logger()->warning("NavService: permission '{$permissionName}' not found. Run the module seeder.");
-
-                return false;
-            }
+            return $user->hasPermissionTo($permissionName);
         });
     }
 
@@ -374,26 +282,18 @@ class NavService
         $sidebars = [];
 
         foreach (self::getAllSidebars() as $sidebarId => $sidebar) {
-            if (! nav_item_enabled("sidebar:{$sidebarId}")) {
-                continue;
-            }
-
             $permissionName = "modules.view.{$sidebarId}";
 
-            // Si el usuario es super-settings, mostrar todos
-            if ($user->hasRole('super-settings')) {
-                $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
+            // Si el usuario es super-admin, mostrar todos
+            if ($user->hasRole('super-admin')) {
+                $sidebars[$sidebarId] = $sidebar;
 
                 continue;
             }
 
             // Verificar si el usuario tiene permiso para este módulo
-            try {
-                if ($user->hasPermissionTo($permissionName)) {
-                    $sidebars[$sidebarId] = self::filterDisabledItems($sidebar);
-                }
-            } catch (PermissionDoesNotExist $e) {
-                logger()->warning("NavService: permission '{$permissionName}' not found. Run the module seeder.");
+            if ($user->hasPermissionTo($permissionName)) {
+                $sidebars[$sidebarId] = $sidebar;
             }
         }
 
@@ -401,36 +301,55 @@ class NavService
     }
 
     /**
-     * Quita del sidebar los items individuales deshabilitados vía nav_item_enabled().
-     * No filtra por permisos: eso ya se resolvió en el llamador.
+     * Obtener navegación filtrada por permisos del usuario
      */
-    private static function filterDisabledItems(array $sidebar): array
+    public static function getNavigationForUser(): array
     {
-        $filterItems = fn (array $items) => array_values(array_filter(
-            $items,
-            fn ($item) => empty($item['route']) || nav_item_enabled('item:'.$item['route'])
-        ));
+        $user = auth()->user();
 
-        if (isset($sidebar['sections'])) {
-            $sidebar['sections'] = array_map(
-                fn ($section) => [...$section, 'items' => $filterItems($section['items'] ?? [])],
-                $sidebar['sections']
-            );
-
-            return $sidebar;
+        if (! $user) {
+            return [];
         }
 
-        if (isset($sidebar['items'])) {
-            $sidebar['items'] = $filterItems($sidebar['items']);
+        $navigation = [];
+        $miniItems = self::getMiniItemsForUser();
+        $sidebars = self::getSidebarsForUser();
+
+        foreach ($miniItems as $miniItem) {
+            $sidebarId = $miniItem['sidebar_id'] ?? null;
+
+            if ($sidebarId && isset($sidebars[$sidebarId])) {
+                $sidebar = $sidebars[$sidebarId];
+
+                // Soportar nueva estructura de secciones
+                if (isset($sidebar['sections'])) {
+                    $firstSectionTitle = $sidebar['sections'][0]['title'] ?? $sidebarId;
+
+                    $navigation[$sidebarId] = [
+                        'id' => $sidebarId,
+                        'title' => $firstSectionTitle,
+                        'icon' => $miniItem['icon'],
+                        'sections' => $sidebar['sections'],
+                    ];
+                } else {
+                    // Estructura legacy
+                    $navigation[$sidebarId] = [
+                        'id' => $sidebarId,
+                        'title' => $sidebar['title'] ?? $sidebarId,
+                        'icon' => $miniItem['icon'],
+                        'items' => $sidebar['items'] ?? [],
+                    ];
+                }
+            }
         }
 
-        return $sidebar;
+        return $navigation;
     }
 
     /**
      * Verificar si un usuario puede ver un módulo específico
      */
-    public static function userCanAccessModule(string $moduleId, ?User $user = null): bool
+    public static function userCanAccessModule(string $moduleId, ?\Illuminate\Foundation\Auth\User $user = null): bool
     {
         $user ??= auth()->user();
 
@@ -438,8 +357,8 @@ class NavService
             return false;
         }
 
-        // Super-settings siempre tiene acceso
-        if ($user->hasRole('super-settings')) {
+        // Super-admin siempre tiene acceso
+        if ($user->hasRole('super-admin')) {
             return true;
         }
 
@@ -467,41 +386,18 @@ class NavService
         $miniItems = self::getMiniItemsForUser();
         $sidebars = self::getSidebarsForUser();
 
-        // Si la ruta actual coincide exactamente con la URL directa de un mini-item,
-        // ese ítem se resalta pero no se abre ningún panel lateral.
-        $currentRoute = request()->route()?->getName();
-        $directMatch = $currentRoute
-            ? $miniItems->first(fn ($item) => ! empty($item['url']) && $item['url'] === $currentRoute)
-            : null;
+        // Determinar el sidebar activo basándose en la ruta actual
+        $activeSidebarId = self::findActiveSidebarForUser($sidebars, $user);
 
-        if ($directMatch) {
-            return [
-                'miniItems' => $miniItems,
-                'sidebars' => $sidebars,
-                'activeSidebarId' => null,
-                'activeMiniId' => $directMatch['sidebar_id'],
-                'activeItemRoute' => null,
-            ];
+        // Si no hay sidebar activo y hay sidebars disponibles, usar el primero
+        if (! $activeSidebarId && count($sidebars) > 0) {
+            $activeSidebarId = array_key_first($sidebars);
         }
-
-        // Sidebar candidato por ruta (exacto primero, luego prefijo)
-        $candidateSidebarId = self::findActiveSidebarForUser($sidebars, $user)
-            ?? self::findSidebarByRoutePrefix($sidebars);
-
-        // Ítem activo dentro del sidebar candidato
-        $activeItemRoute = $candidateSidebarId
-            ? self::findBestMatchingItemRoute($sidebars[$candidateSidebarId] ?? [])
-            : null;
-
-        // Panel solo se abre si hay ítem coincidente
-        $activeSidebarId = $activeItemRoute ? $candidateSidebarId : null;
 
         return [
             'miniItems' => $miniItems,
             'sidebars' => $sidebars,
             'activeSidebarId' => $activeSidebarId,
-            'activeMiniId' => $candidateSidebarId,
-            'activeItemRoute' => $activeItemRoute,
         ];
     }
 
@@ -511,23 +407,17 @@ class NavService
      * Busca a través de todos los sidebars y sus items para determinar
      * cuál debería estar activo basándose en la ruta que se está viendo.
      *
-     * @param  array  $sidebars  Sidebars filtrados por permisos
-     * @param  User|null  $user  Usuario autenticado
+     * @param array $sidebars Sidebars filtrados por permisos
+     * @param \Illuminate\Foundation\Auth\User|null $user Usuario autenticado
      * @return string|null ID del sidebar activo, o null si no se encuentra
      */
-    private static function findActiveSidebarForUser(array $sidebars, ?User $user = null): ?string
+    private static function findActiveSidebarForUser(array $sidebars, ?\Illuminate\Foundation\Auth\User $user = null): ?string
     {
         if (! $user) {
             return null;
         }
 
         foreach ($sidebars as $sidebarId => $sidebar) {
-            // Si el mini-item correspondiente tiene URL directa, no activar este sidebar
-            $miniItem = self::getMiniItem($sidebarId);
-            if ($miniItem && ! empty($miniItem['url'])) {
-                continue; // Saltar sidebars con URL directa
-            }
-
             // Soportar nueva estructura de secciones
             if (isset($sidebar['sections'])) {
                 foreach ($sidebar['sections'] as $section) {
@@ -535,7 +425,7 @@ class NavService
                         // Validar que el usuario tenga permisos para este item
                         if (self::userCanAccessItem($item, $user)) {
                             // Verificar si la ruta actual coincide
-                            if (request()->routeIs($item['route'].'*')) {
+                            if (request()->routeIs($item['route'] . '*')) {
                                 return $sidebarId;
                             }
                         }
@@ -547,7 +437,7 @@ class NavService
                     // Validar que el usuario tenga permisos para este item
                     if (self::userCanAccessItem($item, $user)) {
                         // Verificar si la ruta actual coincide
-                        if (request()->routeIs($item['route'].'*')) {
+                        if (request()->routeIs($item['route'] . '*')) {
                             return $sidebarId;
                         }
                     }
@@ -559,125 +449,15 @@ class NavService
     }
 
     /**
-     * Fallback: busca sidebar cuyo prefijo de ruta coincida con el prefijo de la ruta actual.
-     * Útil para rutas como `pages.edit` que no están registradas en el nav pero pertenecen
-     * al mismo módulo que un sidebar (prefijo `pages`).
-     */
-    private static function findSidebarByRoutePrefix(array $sidebars): ?string
-    {
-        $currentRoute = request()->route()?->getName();
-
-        if (! $currentRoute) {
-            return null;
-        }
-
-        $prefix = explode('.', $currentRoute)[0];
-
-        foreach ($sidebars as $sidebarId => $sidebar) {
-            $miniItem = self::getMiniItem($sidebarId);
-            if ($miniItem && ! empty($miniItem['url'])) {
-                continue;
-            }
-
-            $items = isset($sidebar['sections'])
-                ? collect($sidebar['sections'])->flatMap(fn ($s) => $s['items'] ?? [])->all()
-                : ($sidebar['items'] ?? []);
-
-            foreach ($items as $item) {
-                if (isset($item['route']) && str_starts_with($item['route'], $prefix.'.')) {
-                    return $sidebarId;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Encuentra el ítem del sidebar que mejor coincide con la ruta actual.
-     *
-     * Solo acepta dos tipos de relación válida:
-     *  - Ancestro: todos los segmentos del ítem coinciden al inicio de la ruta actual
-     *    (el ítem es padre/abuelo de la ruta). Ej: pages.categories → pages.categories.edit
-     *  - Hermano: misma profundidad y todos los segmentos excepto el último coinciden.
-     *    Ej: pages.index ↔ pages.edit (ambos bajo "pages.")
-     *
-     * Esto evita falsos positivos como settings.storage activándose para settings.users.index.
-     */
-    private static function findBestMatchingItemRoute(array $sidebar): ?string
-    {
-        $currentRoute = request()->route()?->getName();
-
-        if (! $currentRoute) {
-            return null;
-        }
-
-        $currentParts = explode('.', $currentRoute);
-        $currentDepth = count($currentParts);
-        $bestRoute = null;
-        $bestMatchDepth = 0;
-
-        $items = isset($sidebar['sections'])
-            ? collect($sidebar['sections'])->flatMap(fn ($s) => $s['items'] ?? [])->all()
-            : ($sidebar['items'] ?? []);
-
-        foreach ($items as $item) {
-            $itemRoute = $item['route'] ?? '';
-
-            if (! $itemRoute) {
-                continue;
-            }
-
-            // Coincidencia exacta: prioridad máxima
-            if (request()->routeIs($itemRoute.'*')) {
-                return $itemRoute;
-            }
-
-            $itemParts = explode('.', $itemRoute);
-            $itemDepth = count($itemParts);
-
-            // Contar segmentos iniciales coincidentes
-            $matching = 0;
-            foreach ($itemParts as $i => $seg) {
-                if (($currentParts[$i] ?? null) === $seg) {
-                    $matching++;
-                } else {
-                    break;
-                }
-            }
-
-            // Ancestro: todos los segmentos del ítem coinciden y la ruta es más profunda
-            $isAncestor = $matching === $itemDepth && $currentDepth > $itemDepth;
-
-            // Hermano: misma profundidad, todos los segmentos excepto el último coinciden
-            $isSibling = $currentDepth > 1
-                && $itemDepth === $currentDepth
-                && $matching === $itemDepth - 1;
-
-            if (! $isAncestor && ! $isSibling) {
-                continue;
-            }
-
-            // Preferir el match más profundo (más específico)
-            if ($matching > $bestMatchDepth) {
-                $bestMatchDepth = $matching;
-                $bestRoute = $itemRoute;
-            }
-        }
-
-        return $bestRoute;
-    }
-
-    /**
      * Verificar si un usuario puede acceder a un item específico del menú
      *
      * Maneja tanto permisos simples como múltiples (separadas por |)
      *
-     * @param  array  $item  Item del menú con opcional campo 'permission'
-     * @param  User  $user  Usuario autenticado
+     * @param array $item Item del menú con opcional campo 'permission'
+     * @param \Illuminate\Foundation\Auth\User $user Usuario autenticado
      * @return bool True si el usuario puede acceder, false en caso contrario
      */
-    public static function userCanAccessItem(array $item, User $user): bool
+    private static function userCanAccessItem(array $item, \Illuminate\Foundation\Auth\User $user): bool
     {
         // Si no hay requerimiento de permiso, permitir acceso
         if (empty($item['permission'])) {

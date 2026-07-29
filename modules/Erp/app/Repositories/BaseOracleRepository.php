@@ -2,14 +2,13 @@
 
 namespace Modules\Erp\Repositories;
 
+use Illuminate\Support\Collection;
 use Modules\Erp\Services\OCI8Service;
 
 abstract class BaseOracleRepository
 {
     protected OCI8Service $oci8;
-
     protected string $table;
-
     protected string $primaryKey = 'id';
 
     public function __construct(OCI8Service $oci8)
@@ -61,9 +60,8 @@ abstract class BaseOracleRepository
         }
 
         // Remove ROWNUM column if present
-        $results = array_map(function ($row) {
+        $results = array_map(function($row) {
             unset($row['RN']);
-
             return $row;
         }, $results);
 
@@ -91,7 +89,7 @@ abstract class BaseOracleRepository
             return $this->getDefaultWhereClause();
         }
 
-        return $this->getDefaultWhereClause().' AND '.implode(' AND ', $conditions);
+        return $this->getDefaultWhereClause() . ' AND ' . implode(' AND ', $conditions);
     }
 
     /**

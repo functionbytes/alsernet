@@ -4,15 +4,6 @@ namespace Modules\Erp\Models\Oracle\Factura;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Cliente\Cliente;
-use Modules\Erp\Models\Oracle\Cobro\Formapago;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Pais;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Configuracion\Regpais;
-use Modules\Erp\Models\Oracle\Otros\AsientoCent;
-use Modules\Erp\Models\Oracle\Serie\Serie;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -74,7 +65,7 @@ class FacturacliCentral extends Model
      */
     public function facturacli()
     {
-        return $this->belongsTo(FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
     }
 
     /**
@@ -83,7 +74,7 @@ class FacturacliCentral extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -92,7 +83,7 @@ class FacturacliCentral extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -101,7 +92,7 @@ class FacturacliCentral extends Model
      */
     public function serie()
     {
-        return $this->belongsTo(Serie::class, 'idserie', 'idserie');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Serie\Serie::class, 'idserie', 'idserie');
     }
 
     /**
@@ -110,7 +101,7 @@ class FacturacliCentral extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
     }
 
     /**
@@ -119,7 +110,7 @@ class FacturacliCentral extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'idpais', 'idpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Pais::class, 'idpais', 'idpais');
     }
 
     /**
@@ -128,7 +119,7 @@ class FacturacliCentral extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -137,7 +128,7 @@ class FacturacliCentral extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -146,7 +137,7 @@ class FacturacliCentral extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -155,6 +146,6 @@ class FacturacliCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

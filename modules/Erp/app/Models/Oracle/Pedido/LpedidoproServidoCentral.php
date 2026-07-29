@@ -40,7 +40,7 @@ class LpedidoproServidoCentral extends Model
      */
     public function lpedidoproServido()
     {
-        return $this->belongsTo(LpedidoproServidoCapthaya::class, 'idlpedidopro_servido', 'idlpedidopro_servido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproServidoCapthaya::class, 'idlpedidopro_servido', 'idlpedidopro_servido');
     }
 
     /**
@@ -49,7 +49,7 @@ class LpedidoproServidoCentral extends Model
      */
     public function lpedidopro()
     {
-        return $this->belongsTo(LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
     }
 
     /**
@@ -58,7 +58,7 @@ class LpedidoproServidoCentral extends Model
      */
     public function lpedidoproCentral()
     {
-        return $this->belongsTo(LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCentral::class, 'idlpedidopro_central', 'idlpedidopro_central');
     }
 
     /**
@@ -67,6 +67,6 @@ class LpedidoproServidoCentral extends Model
      */
     public function lpedidoproServidoCentral()
     {
-        return $this->belongsTo(LpedidoproServidoCentral::class, 'idlpedidopro_servido_central', 'idlpedidopro_servido_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproServidoCentral::class, 'idlpedidopro_servido_central', 'idlpedidopro_servido_central');
     }
 }

@@ -1,0 +1,29 @@
+[
+    {
+        "title": "It may interest you",
+        "language": "en",
+        "position": 2,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Brands",
+            "url": "/en/diving/brand-list"
+          },
+          {
+            "title": "Deals",
+            "url": "/en/diving/deals"
+          },
+          {
+            "title": "News",
+            "url": "/en/diving/news"
+          },
+          {
+            "title": "Best sellers",
+            "url": "/en/diving/most_sold"
+          }
+        ]
+      }
+]

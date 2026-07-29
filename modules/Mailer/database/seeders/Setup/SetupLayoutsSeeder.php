@@ -12,7 +12,7 @@ use Modules\Mailer\Models\MailerLayoutLang;
  *
  * Seeds base email layout components (header, footer, wrapper).
  * Uses active Locales (locales table) as the language source.
- * Colors: #90bb13 accent, #000000 primary, white background.
+ * Colors: #b10100 accent, #000000 primary, white background.
  */
 class SetupLayoutsSeeder extends Seeder
 {
@@ -103,7 +103,7 @@ class SetupLayoutsSeeder extends Seeder
 
     <!-- BANDA DE SERVICIOS (rojo) -->
     <tr>
-      <td align="center" style="background-color:#90bb13;padding:12px 24px;">
+      <td align="center" style="background-color:#b10100;padding:12px 24px;">
         <p style="margin:0;font-size:10px;font-weight:700;color:#ffffff;font-family:Arial,sans-serif;letter-spacing:0.5px;line-height:1.8;text-align:center;">
           VENTANAS PVC &nbsp;&bull;&nbsp; ESTORES EXTERIORES &nbsp;&bull;&nbsp; MOSQUITERAS &nbsp;&bull;&nbsp; BARANDILLAS DE VIDRIO
         </p>
@@ -141,7 +141,7 @@ class SetupLayoutsSeeder extends Seeder
             <!-- DIRECCIÓN -->
             <td width="40%" valign="top" align="center"
                 style="padding:0 8px;border-right:1px solid #e5e7eb;">
-              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#90bb13;font-family:Arial,sans-serif;text-align:center;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#b10100;font-family:Arial,sans-serif;text-align:center;">
                 Dirección
               </p>
               <p style="margin:0;font-size:12px;color:#374151;font-family:Arial,sans-serif;line-height:1.6;text-align:center;">
@@ -154,7 +154,7 @@ class SetupLayoutsSeeder extends Seeder
             <!-- TELÉFONO -->
             <td width="30%" valign="top" align="center"
                 style="padding:0 8px;border-right:1px solid #e5e7eb;">
-              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#90bb13;font-family:Arial,sans-serif;text-align:center;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#b10100;font-family:Arial,sans-serif;text-align:center;">
                 Teléfono
               </p>
               <p style="margin:0;font-size:12px;font-family:Arial,sans-serif;text-align:center;">
@@ -167,7 +167,7 @@ class SetupLayoutsSeeder extends Seeder
 
             <!-- HORARIO -->
             <td width="30%" valign="top" align="center" style="padding:0 8px;">
-              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#90bb13;font-family:Arial,sans-serif;text-align:center;">
+              <p style="margin:0 0 4px;font-size:12px;font-weight:700;color:#b10100;font-family:Arial,sans-serif;text-align:center;">
                 Horario
               </p>
               <p style="margin:0;font-size:12px;color:#374151;font-family:Arial,sans-serif;line-height:1.6;text-align:center;">
@@ -183,7 +183,7 @@ class SetupLayoutsSeeder extends Seeder
 
     <!-- COPYRIGHT -->
     <tr>
-      <td align="center" style="background-color:#90bb13;padding:14px 40px;">
+      <td align="center" style="background-color:#b10100;padding:14px 40px;">
         <p style="margin:0;font-size:11px;color:#ffffff;font-family:Arial,sans-serif;text-align:center;">
           &copy; {CURRENT_YEAR} Caixilharia Blanco. Todos los derechos reservados.
         </p>

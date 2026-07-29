@@ -1,0 +1,260 @@
+.campaigns {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+  }
+  
+  .campaigns .container .container-campaigns {
+    margin-top: 40px;
+  }
+  
+  .campaigns .container .container-campaigns img {
+    width: 100%;
+    height: auto;
+  }
+  
+  .campaigns .container .container-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    margin-top: -20px;
+  }
+  
+  .campaigns .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 30px;
+  }
+  
+  .campaigns .container .container-items .item .title {
+    font-size: 13px;
+    width: 100%;
+    color: #90bb13;
+    font-weight: 900;
+    letter-spacing: 0.14px;
+    line-height: 1;
+  }
+  
+  .campaigns .container .container-items .item .description {
+    font-size: 16px;
+    font-family: Roboto;
+    width: 100%;
+    color: #ffffff;
+    font-weight: 900;
+    letter-spacing: 0.16px;
+  }
+  
+  .campaigns .container .container-items .item img {
+    width: 100%;
+    height: auto;
+    max-width: 100px;
+  }
+  
+  .campaigns .container .content-description {
+    margin-bottom: 14px;
+    margin-top: 40px;
+  }
+  
+  .campaigns .container form .form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #4c4c4c;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  .campaigns .container .description-text {
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 22px;
+    font-family: Barlow;
+    justify-content: center;
+    display: flex;
+  }
+  
+  .campaigns .success-campaigns-container {
+    text-align: center;
+    background: #fff;
+    padding: 50px;
+    border-radius: 10px;
+  }
+  
+  .campaigns .success-campaigns-container h1 {
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .campaigns .success-campaigns-container i {
+    font-size: 100px;
+    color: #90bb13;
+    margin-bottom: 20px;
+  }
+  
+  .campaigns .success-campaigns-container a {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 5px 35px;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: Barlow;
+    color: #ffffff !important;
+    background-color: #90bb13;
+    border-radius: 5px;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0px;
+    cursor: pointer;
+  }
+  
+  .campaigns .success-campaigns-container p {
+    font-size: 16px;
+  }
+  
+  .campaigns .container {
+    text-align: left;
+    margin: 20px 0;
+  }
+  
+  .campaigns .container .message {
+    text-align: left;
+    margin: 20px 5px;
+  }
+  
+  .campaigns .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+  }
+  
+  .campaigns .container .container-items .col-lg-1 {
+    width: 50%;
+  }
+  
+  @media (min-width: 992px) {
+    .campaigns .container .container-items .col-lg-1 {
+      max-width: unset;
+    }
+  
+    .campaigns .container .container-items {
+      margin-top: 40px;
+    }
+  
+    .campaigns .container .container-campaigns img {
+      margin-top: -20px;
+    }
+  
+    .campaigns .container .message {
+      text-align: left;
+      margin: 20px 10px;
+    }
+  }
+  
+  .campaigns .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 100%;
+  }
+  
+  .campaigns .container .container-campaigns-top {
+    height: 66px;
+    background-color: #90bb13;
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -20px;
+    margin-top: -10px;
+    display: flex;
+  }
+  
+  .campaigns .container .container-items .btn-campaigns-container {
+    align-items: center;
+    justify-content: center;
+    display: flex;
+  }
+  
+  .campaigns .container .container-items .btn-campaigns {
+    width: 40%;
+    font-size: 30px;
+    font-weight: bold;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-align: center;
+    background: #90bb13;
+    border-radius: 5px;
+    border: 0px;
+    padding: 25px 25px;
+    letter-spacing: 0px;
+    cursor: pointer;
+  }
+  
+  #alsernet-campaigns {
+    .btn:disabled {
+      border: 0 !important;
+      border-radius: 5px;
+    }
+  
+    .form-check-container {
+      margin-top: 10px;
+    }
+  }
+  .campaigns .g-recaptcha {
+    margin-top: 10px !important;
+  }
+  
+  @media (max-width: 992px) {
+    .campaigns {
+      margin-bottom: -60px;
+    }
+  
+    .campaigns .container .container-campaigns-top {
+      font-size: 20px;
+      height: 46px;
+    }
+  
+    #alsernet-campaigns {
+      .sports-container .sports-wrap .sport-select .sport-item {
+        width: 32%;
+      }
+    }
+  
+    .campaigns .container .rc-anchor-normal .rc-anchor-pt {
+      right: 30px !important;
+    }
+  
+    .campaigns .container .container-campaigns-top {
+      margin-bottom: -40px;
+    }
+  
+    .campaigns .container .description-text {
+      font-size: 12px;
+    }
+  
+    .campaigns .container .container-items .btn-campaigns {
+      width: 60%;
+      height: 54px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  
+    .campaigns .success-campaigns-container a {
+      height: 54px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+  }
+  

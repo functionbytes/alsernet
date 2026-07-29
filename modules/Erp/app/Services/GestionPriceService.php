@@ -191,7 +191,6 @@ class GestionPriceService
                 foreach ($chunk as $r) {
                     $results[$r]['error'] = $e->getMessage();
                 }
-
                 continue;
             }
 

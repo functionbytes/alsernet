@@ -30,7 +30,7 @@
                                         class="form-control @error('oracle_host') is-invalid @enderror"
                                         id="oracle_host"
                                         name="oracle_host"
-                                        value="{{ old('oracle_host', config('database.connections.oracle.host') ?? '') }}"
+                                        value="{{ old('oracle_host', $settings['oracle_host'] ?? '') }}"
                                         placeholder="192.168.253.8"
                                         required>
                                     @error('oracle_host')
@@ -48,7 +48,7 @@
                                         class="form-control @error('oracle_port') is-invalid @enderror"
                                         id="oracle_port"
                                         name="oracle_port"
-                                        value="{{ old('oracle_port', config('database.connections.oracle.port') ?? 1521) }}"
+                                        value="{{ old('oracle_port', $settings['oracle_port'] ?? 1521) }}"
                                         placeholder="1521"
                                         min="1"
                                         max="65535"
@@ -68,7 +68,7 @@
                                         class="form-control @error('oracle_database') is-invalid @enderror"
                                         id="oracle_database"
                                         name="oracle_database"
-                                        value="{{ old('oracle_database', config('database.connections.oracle.database') ?? 'GESTCENT') }}"
+                                        value="{{ old('oracle_database', $settings['oracle_database'] ?? 'GESTCENT') }}"
                                         placeholder="GESTCENT"
                                         required>
                                     @error('oracle_database')
@@ -86,7 +86,7 @@
                                         class="form-control @error('oracle_service_name') is-invalid @enderror"
                                         id="oracle_service_name"
                                         name="oracle_service_name"
-                                        value="{{ old('oracle_service_name', config('database.connections.oracle.service_name') ?? 'GESTCENT') }}"
+                                        value="{{ old('oracle_service_name', $settings['oracle_service_name'] ?? 'GESTCENT') }}"
                                         placeholder="GESTCENT"
                                         required>
                                     @error('oracle_service_name')
@@ -104,7 +104,7 @@
                                         class="form-control @error('oracle_username') is-invalid @enderror"
                                         id="oracle_username"
                                         name="oracle_username"
-                                        value="{{ old('oracle_username', config('database.connections.oracle.username') ?? '') }}"
+                                        value="{{ old('oracle_username', $settings['oracle_username'] ?? '') }}"
                                         placeholder="lectura"
                                         required>
                                     @error('oracle_username')
@@ -122,7 +122,7 @@
                                         class="form-control @error('oracle_password') is-invalid @enderror"
                                         id="oracle_password"
                                         name="oracle_password"
-                                        value="{{ old('oracle_password', config('database.connections.oracle.password') ?? '') }}"
+                                        value="{{ old('oracle_password', $settings['oracle_password'] ?? '') }}"
                                         placeholder="••••••••"
                                         required>
                                     @error('oracle_password')
@@ -140,7 +140,7 @@
                                         class="form-control @error('oracle_schema') is-invalid @enderror"
                                         id="oracle_schema"
                                         name="oracle_schema"
-                                        value="{{ old('oracle_schema', config('database.connections.oracle.prefix_schema') ?? 'DEVELOPER') }}"
+                                        value="{{ old('oracle_schema', $settings['oracle_schema'] ?? 'DEVELOPER') }}"
                                         placeholder="DEVELOPER"
                                         required>
                                     @error('oracle_schema')
@@ -158,7 +158,7 @@
                                         class="form-control @error('oracle_charset') is-invalid @enderror"
                                         id="oracle_charset"
                                         name="oracle_charset"
-                                        value="{{ old('oracle_charset', config('database.connections.oracle.charset') ?? 'AL32UTF8') }}"
+                                        value="{{ old('oracle_charset', $settings['oracle_charset'] ?? 'AL32UTF8') }}"
                                         placeholder="AL32UTF8"
                                         required>
                                     @error('oracle_charset')
@@ -264,22 +264,22 @@
                     <h6 class="mb-3">Formato de valores</h6>
                     <div class="bg-light p-3 rounded">
                         <code class="d-block mb-2">
-                            <strong>Host:</strong> 192.168.253.8
+                            <strong>Host:</strong> {{ $settings['oracle_host'] ?? '—' }}
                         </code>
                         <code class="d-block mb-2">
-                            <strong>Port:</strong> 1521
+                            <strong>Port:</strong> {{ $settings['oracle_port'] ?? 1521 }}
                         </code>
                         <code class="d-block mb-2">
-                            <strong>Database:</strong> GESTCENT
+                            <strong>Database:</strong> {{ $settings['oracle_database'] ?? '—' }}
                         </code>
                         <code class="d-block mb-2">
-                            <strong>Service Name:</strong> GESTCENT
+                            <strong>Service Name:</strong> {{ $settings['oracle_service_name'] ?? '—' }}
                         </code>
                         <code class="d-block mb-2">
-                            <strong>Username:</strong> lectura
+                            <strong>Username:</strong> {{ $settings['oracle_username'] ?? '—' }}
                         </code>
                         <code class="d-block mb-2">
-                            <strong>Schema:</strong> DEVELOPER
+                            <strong>Schema:</strong> {{ $settings['oracle_schema'] ?? '—' }}
                         </code>
                         <code class="d-block">
                             <strong>Charset:</strong> AL32UTF8

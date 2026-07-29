@@ -25,7 +25,7 @@ class ClaudeDriver implements PiiDetectionDriver
                 'content-type' => 'application/json',
             ])
             ->post('https://api.anthropic.com/v1/messages', [
-                'model' => '.claude-haiku-4-5',
+                'model' => 'claude-haiku-4-5',
                 'max_tokens' => 150,
                 'messages' => [[
                     'role' => 'user',

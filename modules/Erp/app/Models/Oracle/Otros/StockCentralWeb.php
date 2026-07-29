@@ -3,7 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -44,7 +43,7 @@ class StockCentralWeb extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -53,6 +52,6 @@ class StockCentralWeb extends Model
      */
     public function stockCentralWeb()
     {
-        return $this->belongsTo(StockCentralWeb::class, 'idstock_central_web', 'idstock_central_web');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\StockCentralWeb::class, 'idstock_central_web', 'idstock_central_web');
     }
 }

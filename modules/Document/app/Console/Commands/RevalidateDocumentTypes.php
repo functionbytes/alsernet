@@ -63,7 +63,7 @@ class RevalidateDocumentTypes extends Command
             $this->line('');
 
             $orderProductMap = $this->loadOrderProducts();
-            $this->info('✓ Loaded products for '.count($orderProductMap).' orders');
+            $this->info("✓ Loaded products for ".count($orderProductMap)." orders");
             $this->line('');
 
             // Step 3: Process documents
@@ -224,7 +224,6 @@ class RevalidateDocumentTypes extends Command
                 if (! $document->order_id) {
                     $stats['skipped_no_order']++;
                     $bar->advance();
-
                     continue;
                 }
 
@@ -232,7 +231,6 @@ class RevalidateDocumentTypes extends Command
                 if (! isset($orderProductMap[$document->order_id])) {
                     $stats['skipped_no_products']++;
                     $bar->advance();
-
                     continue;
                 }
 
@@ -246,7 +244,6 @@ class RevalidateDocumentTypes extends Command
                 if ($correctTypeId === null) {
                     $stats['skipped_no_blockades']++;
                     $bar->advance();
-
                     continue;
                 }
 
@@ -254,7 +251,6 @@ class RevalidateDocumentTypes extends Command
                 if ($document->type_id == $correctTypeId) {
                     $stats['skipped_same_type']++;
                     $bar->advance();
-
                     continue;
                 }
 

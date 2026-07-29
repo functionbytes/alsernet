@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -68,7 +67,7 @@ class AsientoCent extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
     }
 
     /**
@@ -77,7 +76,7 @@ class AsientoCent extends Model
      */
     public function diario()
     {
-        return $this->belongsTo(Diario::class, 'iddiario', 'iddiario');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Diario::class, 'iddiario', 'iddiario');
     }
 
     /**
@@ -86,6 +85,6 @@ class AsientoCent extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

@@ -30,7 +30,7 @@ class SubfamiliaClResource extends JsonResource
             // Grupos de esta subfamilia
             'grupos' => $this->when(
                 $this->relationLoaded('grupos'),
-                fn () => $this->grupos->map(fn ($grupo) => [
+                $this->grupos->map(fn ($grupo) => [
                     'id' => $grupo->idgrupo_cl,
                     'descripcion' => $this->utf8Clean($grupo->descripcion),
                     'descripcionCorta' => $this->utf8Clean($grupo->desc_corta),
@@ -42,7 +42,7 @@ class SubfamiliaClResource extends JsonResource
             // Estadísticas
             'estadisticas' => $this->when(
                 $this->relationLoaded('grupos'),
-                fn () => [
+                [
                     'totalGrupos' => $this->grupos->count(),
                     'gruposActivos' => $this->grupos->where('estado', 1)->count(),
                 ]

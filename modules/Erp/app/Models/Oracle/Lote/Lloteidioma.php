@@ -77,7 +77,7 @@ class Lloteidioma extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
     }
 
     /**
@@ -86,6 +86,6 @@ class Lloteidioma extends Model
      */
     public function lloteidioma()
     {
-        return $this->belongsTo(Lloteidioma::class, 'idlloteidioma', 'idlloteidioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lloteidioma::class, 'idlloteidioma', 'idlloteidioma');
     }
 }

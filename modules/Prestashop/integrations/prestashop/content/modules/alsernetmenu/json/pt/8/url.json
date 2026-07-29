@@ -1,0 +1,33 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/vela/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/vela/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/vela/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/vela/mais_vendidos"
+          },
+          {
+            "title": "Boletins",
+            "url": "/pt/vela/monthlynewsletters"
+          }
+        ]
+      }
+]

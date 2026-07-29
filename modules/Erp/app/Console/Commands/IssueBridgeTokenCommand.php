@@ -42,13 +42,6 @@ class IssueBridgeTokenCommand extends Command
             $this->info("Usuario sistema creado: {$email}");
         }
 
-        // Sin esto, el token Sanctum autentica al usuario pero can:erp.customer.view
-        // sigue rechazando la request — el token no basta, hace falta el permiso Spatie.
-        if (! $user->hasRole('erp-service')) {
-            $user->assignRole('erp-service');
-            $this->info('Rol erp-service asignado (permiso erp.customer.view).');
-        }
-
         $token = $user->createToken($label, $abilities);
         $plainText = $token->plainTextToken;
 

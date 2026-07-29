@@ -81,6 +81,6 @@ class Regfiscal extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 }

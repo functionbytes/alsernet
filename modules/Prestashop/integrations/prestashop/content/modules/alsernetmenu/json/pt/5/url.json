@@ -1,0 +1,33 @@
+[
+    {
+        "title": "Pode lhe interessar",
+        "language": "pt",
+        "position": 4,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Marcas",
+            "url": "/pt/pesca/lista-marcas"
+          },
+          {
+            "title": "Promoçoes",
+            "url": "/pt/pesca/promocoes"
+          },
+          {
+            "title": "Novidades",
+            "url": "/pt/pesca/novidades"
+          },
+          {
+            "title": "Mais vendidos",
+            "url": "/pt/pesca/mais_vendidos"
+          },
+          {
+            "title": "Boletins",
+            "url": "/pt/pesca/monthlynewsletters"
+          }
+        ]
+      }
+]

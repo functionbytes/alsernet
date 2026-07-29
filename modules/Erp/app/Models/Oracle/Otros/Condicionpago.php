@@ -48,6 +48,6 @@ class Condicionpago extends Model
      */
     public function condicionpago()
     {
-        return $this->belongsTo(Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Condicionpago::class, 'idcondicionpago', 'idcondicionpago');
     }
 }

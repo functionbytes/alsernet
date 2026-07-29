@@ -202,7 +202,7 @@ return [
         | This option for register migration automatically.
         |
         */
-        'migrations' => false,
+        'migrations' => true,
 
         /*
         |--------------------------------------------------------------------------

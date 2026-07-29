@@ -1,10 +1,8 @@
 @extends('layouts.theme')
 
-@section('page_header')
-    @include('core::components.card', ['title' => 'Configuración de base de datos'])
-@endsection
-
 @section('content')
+
+    @include('core::components.card', ['title' => 'Configuración de Base de Datos'])
 
     <div class="widget-content searchable-container list">
 
@@ -23,7 +21,7 @@
             <div class="card-header p-4 border-bottom border-light">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="mb-1 fw-bold">Configuración de base de datos</h5>
+                        <h5 class="mb-1 fw-bold">Configuración de Base de Datos</h5>
                         <p class="small mb-0 text-muted">Gestiona la conexión a la base de datos y verifica su
                             estado.</p>
                     </div>
@@ -31,7 +29,7 @@
                         <button type="button" class="btn btn-primary" id="testConnectionBtn">
                             <i class="fa fa-plug me-1"></i> Probar conexión
                         </button>
-                        <a href="{{ route('settings.database.edit') }}" class="btn btn-secondary">
+                        <a href="{{ route('backups.database.edit') }}" class="btn btn-secondary">
                             <i class="fa fa-pen-to-square me-1"></i> Editar configuración
                         </a>
                     </div>
@@ -114,7 +112,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Detalles técnicos</h6>
-                        <p class="text-muted mb-0">Parámetros de configuración de la base de datos</p>
+                        <p class="text-muted small mb-0">Parámetros de configuración de la base de datos</p>
                     </div>
                 </div>
 
@@ -194,7 +192,7 @@
                 btn.html('<i class="fa fa-spinner fa-spin me-1"></i> Probando...');
 
                 $.ajax({
-                    url: '{{ route("settings.database.check-connection") }}',
+                    url: '{{ route("backups.database.check-connection") }}',
                     type: 'POST',
                     dataType: 'json',
                     headers: {

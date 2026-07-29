@@ -48,7 +48,7 @@ class Observador extends Model
      */
     public function observador()
     {
-        return $this->belongsTo(Observador::class, 'idobservador', 'idobservador');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Observador::class, 'idobservador', 'idobservador');
     }
 
     /**
@@ -57,6 +57,6 @@ class Observador extends Model
      */
     public function usuariosistema()
     {
-        return $this->belongsTo(Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Usuariosistema::class, 'idusuariosistema', 'idusuariosistema');
     }
 }

@@ -22,25 +22,25 @@ class TestPerformance extends Command
             $t1 = microtime(true);
             DB::connection('oracle')->selectOne('SELECT 1 FROM DUAL');
             $t2 = microtime(true);
-            $this->line('✓ Conexión Oracle: '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ Conexión Oracle: " . round(($t2 - $t1) * 1000) . "ms");
 
             // 2. COUNT total
             $t1 = microtime(true);
             $total = DB::connection('oracle')->table('cliente_cent')->count();
             $t2 = microtime(true);
-            $this->line('✓ COUNT total: '.round(($t2 - $t1) * 1000)."ms (Total: $total)");
+            $this->line("✓ COUNT total: " . round(($t2 - $t1) * 1000) . "ms (Total: $total)");
 
             // 3. SELECT 10 - SQL directo
             $t1 = microtime(true);
             $rows = DB::connection('oracle')->table('cliente_cent')->limit(10)->get();
             $t2 = microtime(true);
-            $this->line('✓ SELECT 10 rows (DB::table): '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ SELECT 10 rows (DB::table): " . round(($t2 - $t1) * 1000) . "ms");
 
             // 4. Eloquent limit 10
             $t1 = microtime(true);
             $clientes = ClienteCent::limit(10)->get();
             $t2 = microtime(true);
-            $this->line('✓ Eloquent::limit(10): '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ Eloquent::limit(10): " . round(($t2 - $t1) * 1000) . "ms");
 
             // 5. SELECT solo columnas necesarias
             $t1 = microtime(true);
@@ -50,34 +50,34 @@ class TestPerformance extends Command
                 ->limit(10)
                 ->get();
             $t2 = microtime(true);
-            $this->line('✓ SELECT 5 cols: '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ SELECT 5 cols: " . round(($t2 - $t1) * 1000) . "ms");
 
             // 6. Formateo de 10 registros
             $t1 = microtime(true);
-            $formatted = $clientes->map(fn ($c) => [
+            $formatted = $clientes->map(fn($c) => [
                 'idcliente' => $c->idcliente,
                 'nombre' => $c->nombre,
                 'email' => $c->email,
             ])->toArray();
             $t2 = microtime(true);
-            $this->line('✓ Formateo 10 registros: '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ Formateo 10 registros: " . round(($t2 - $t1) * 1000) . "ms");
 
             // 7. JSON encode
             $t1 = microtime(true);
             json_encode(['data' => $formatted]);
             $t2 = microtime(true);
-            $this->line('✓ JSON encode: '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ JSON encode: " . round(($t2 - $t1) * 1000) . "ms");
 
             // 8. Test HTTP request simulado
             $t1 = microtime(true);
             $result = $this->simulateHttpRequest();
             $t2 = microtime(true);
-            $this->line('✓ HTTP simulado (full process): '.round(($t2 - $t1) * 1000).'ms');
+            $this->line("✓ HTTP simulado (full process): " . round(($t2 - $t1) * 1000) . "ms");
 
-            $this->info("\n=== TOTAL: ".round((microtime(true) - $start) * 1000).'ms ===');
+            $this->info("\n=== TOTAL: " . round((microtime(true) - $start) * 1000) . "ms ===");
 
         } catch (\Exception $e) {
-            $this->error('Error: '.$e->getMessage());
+            $this->error('Error: ' . $e->getMessage());
         }
     }
 

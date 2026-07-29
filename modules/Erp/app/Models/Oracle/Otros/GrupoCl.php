@@ -5,10 +5,7 @@ namespace Modules\Erp\Models\Oracle\Otros;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierGroup;
 
 /**
  * Modelo para la tabla GRUPO_CL
@@ -61,7 +58,7 @@ class GrupoCl extends Model
      */
     public function grupoCl()
     {
-        return $this->belongsTo(GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
     }
 
     /**
@@ -70,7 +67,7 @@ class GrupoCl extends Model
      */
     public function subfamiliaCl()
     {
-        return $this->belongsTo(SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
     }
 
     /**
@@ -78,7 +75,7 @@ class GrupoCl extends Model
      */
     public function supplierGroups(): HasMany
     {
-        return $this->hasMany(SupplierGroup::class, 'erp_group_id', 'idgrupo_cl');
+        return $this->hasMany(\Modules\Supplier\Entities\SupplierGroup::class, 'erp_group_id', 'idgrupo_cl');
     }
 
     /**
@@ -86,6 +83,6 @@ class GrupoCl extends Model
      */
     public function articulos()
     {
-        return $this->hasMany(Articulo::class, 'idgrupo_cl', 'idgrupo_cl');
+        return $this->hasMany(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idgrupo_cl', 'idgrupo_cl');
     }
 }

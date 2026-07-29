@@ -93,13 +93,19 @@
                     @foreach ($documents as $key => $document)
                         <tr class="search-items">
                             <td>
-                                <strong>{{ $document->order_id }}</strong>
+                                @if(auth()->user()->canDocument('route-manage-documents'))
+                                    <a href="{{ route('documents.manage', $document->uid) }}">
+                                        <strong>{{ $document->order_id }}</strong>
+                                    </a>
+                                @else
+                                    <strong>{{ $document->order_id }}</strong>
+                                @endif
                             </td>
                             <td>
                                 {{ $document->order_reference ?? '-' }}
                             </td>
                             <td>
-                                {{ $document->customer_firstname }} {{ $document->customer_lastname }}
+                                {{ Str::of($document->customer_firstname)->explode(' ')->first() }} {{ Str::of($document->customer_lastname)->explode(' ')->first() }}
                             </td>
                             <td>
                                 @if($document->documentLoad)
@@ -124,7 +130,7 @@
                                         <i class="fa-duotone fa-solid fa-ellipsis"></i>
                                     </a>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                        @if($document->status && $document->status->key === 'pending')
+                                        @if($document->status->label = "pending")
                                             <li>
                                                 <a class="dropdown-item d-flex align-items-center gap-3 cursor-pointer"
                                                    data-document-id="{{ $document->id }}"
@@ -185,6 +191,8 @@
 @endsection
 
 @push('scripts')
+    <script src="{{ url('theme/libs/daterangepicker/moment.min.js') }}"></script>
+    <script src="{{ url('theme/libs/daterangepicker/daterangepicker.js') }}"></script>
     <script>
 
         function copyToClipboardDocument(event) {
@@ -194,7 +202,7 @@
             console.log('Document ID:', documentId);
 
             $.ajax({
-                url: `/documents/upload/${documentId}`,
+                url: `/panel/documents/upload/${documentId}`,
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -226,6 +234,14 @@
 
 
         $(document).ready(function() {
+            // Permitir que los dropdowns de la tabla se muestren por encima del overflow
+            $(document).on('shown.bs.dropdown', function(e) {
+                $(e.target).closest('.table-responsive').css('overflow', 'visible');
+            });
+            $(document).on('hidden.bs.dropdown', function(e) {
+                $(e.target).closest('.table-responsive').css('overflow', '');
+            });
+
             // ===== Daterange Picker =====
             if ($('#daterange').length && typeof $.fn.daterangepicker !== 'undefined') {
                 $('#daterange').daterangepicker({

@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -74,19 +73,19 @@ return new class extends Migration
         // SQLite doesn't support SHOW INDEX, use schema-agnostic method
         if (config('database.default') === 'sqlite') {
             try {
-                $indexes = DB::select(
+                $indexes = \Illuminate\Support\Facades\DB::select(
                     "SELECT name FROM sqlite_master WHERE type='index' AND name=?",
                     [$indexName]
                 );
 
                 return ! empty($indexes);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 return false;
             }
         }
 
         // MySQL/PostgreSQL
-        $indexes = DB::select("SHOW INDEX FROM {$table} WHERE Key_name = '{$indexName}'");
+        $indexes = \Illuminate\Support\Facades\DB::select("SHOW INDEX FROM {$table} WHERE Key_name = '{$indexName}'");
 
         return ! empty($indexes);
     }

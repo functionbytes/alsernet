@@ -3,10 +3,8 @@
 namespace Modules\Erp\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Modules\Erp\Http\Resources\FamiliaClResource;
 use Modules\Erp\Http\Resources\GrupoClResource;
@@ -73,29 +71,27 @@ class JerarquiaController extends Controller
         $startTime = microtime(true);
 
         try {
-            $data = Cache::remember("erp:jerarquia:familia:{$id}", now()->addMinutes(30), function () use ($id) {
-                $familia = FamiliaCl::with([
-                    'categoriaCl',
-                    'subfamilias' => function ($query) {
-                        $query->whereNull('fbaja')
-                            ->orderBy('descripcion', 'asc');
-                    },
-                ])
-                    ->whereNull('fbaja')
-                    ->findOrFail($id);
-
-                return $this->cleanUtf8Array((new FamiliaClResource($familia))->resolve());
-            });
+            $familia = FamiliaCl::with([
+                'categoriaCl',
+                'subfamilias' => function ($query) {
+                    $query->whereNull('fbaja')
+                        ->orderBy('descripcion', 'asc');
+                },
+            ])
+                ->whereNull('fbaja')
+                ->findOrFail($id);
 
             $totalTime = microtime(true) - $startTime;
             Log::debug('=== TIEMPO Familia Detalle: '.round($totalTime * 1000, 2).'ms ===');
+
+            $data = $this->cleanUtf8Array((new FamiliaClResource($familia))->resolve());
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (ModelNotFoundException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Familia no encontrada',
@@ -159,29 +155,27 @@ class JerarquiaController extends Controller
         $startTime = microtime(true);
 
         try {
-            $data = Cache::remember("erp:jerarquia:subfamilia:{$id}", now()->addMinutes(30), function () use ($id) {
-                $subfamilia = SubfamiliaCl::with([
-                    'familiaCl',
-                    'grupos' => function ($query) {
-                        $query->whereNull('fbaja')
-                            ->orderBy('descripcion', 'asc');
-                    },
-                ])
-                    ->whereNull('fbaja')
-                    ->findOrFail($id);
-
-                return $this->cleanUtf8Array((new SubfamiliaClResource($subfamilia))->resolve());
-            });
+            $subfamilia = SubfamiliaCl::with([
+                'familiaCl',
+                'grupos' => function ($query) {
+                    $query->whereNull('fbaja')
+                        ->orderBy('descripcion', 'asc');
+                },
+            ])
+                ->whereNull('fbaja')
+                ->findOrFail($id);
 
             $totalTime = microtime(true) - $startTime;
             Log::debug('=== TIEMPO Subfamilia Detalle: '.round($totalTime * 1000, 2).'ms ===');
+
+            $data = $this->cleanUtf8Array((new SubfamiliaClResource($subfamilia))->resolve());
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (ModelNotFoundException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Subfamilia no encontrada',
@@ -245,30 +239,28 @@ class JerarquiaController extends Controller
         $startTime = microtime(true);
 
         try {
-            $data = Cache::remember("erp:jerarquia:grupo:{$id}", now()->addMinutes(30), function () use ($id) {
-                $grupo = GrupoCl::with([
-                    'subfamiliaCl',
-                    'articulos' => function ($query) {
-                        $query->whereNull('fbaja')
-                            ->orderBy('codigo', 'asc')
-                            ->limit(50); // Limitar a 50 artículos más recientes
-                    },
-                ])
-                    ->whereNull('fbaja')
-                    ->findOrFail($id);
-
-                return $this->cleanUtf8Array((new GrupoClResource($grupo))->resolve());
-            });
+            $grupo = GrupoCl::with([
+                'subfamiliaCl',
+                'articulos' => function ($query) {
+                    $query->whereNull('fbaja')
+                        ->orderBy('codigo', 'asc')
+                        ->limit(50); // Limitar a 50 artículos más recientes
+                },
+            ])
+                ->whereNull('fbaja')
+                ->findOrFail($id);
 
             $totalTime = microtime(true) - $startTime;
             Log::debug('=== TIEMPO Grupo Detalle: '.round($totalTime * 1000, 2).'ms ===');
+
+            $data = $this->cleanUtf8Array((new GrupoClResource($grupo))->resolve());
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
             ], 200, [], JSON_UNESCAPED_UNICODE);
 
-        } catch (ModelNotFoundException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'Grupo no encontrado',

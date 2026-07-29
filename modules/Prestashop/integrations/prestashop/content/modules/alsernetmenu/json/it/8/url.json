@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Ti potrebbe interessare",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "special",
+    "items": [
+      {
+        "title": "Scopri le nostre marche",
+        "url": "/it/nautica/lista-marchi"
+      },
+      {
+        "title": "Offerte",
+        "url": "/it/nautica/offerte"
+      },
+      {
+        "title": "Novità",
+        "url": "/it/nautica/novita"
+      },
+      {
+        "title": "I più venduti",
+        "url": "/it/nautica/i_piu_venduti"
+      }
+    ]
+  }
+]

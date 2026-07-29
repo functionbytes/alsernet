@@ -59,7 +59,7 @@ class WDescuentosRelacionados extends Model
      */
     public function tienda()
     {
-        return $this->belongsTo(WTiendas::class, 'id_tienda', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WTiendas::class, 'id_tienda', 'id');
     }
 
     /**
@@ -68,6 +68,6 @@ class WDescuentosRelacionados extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

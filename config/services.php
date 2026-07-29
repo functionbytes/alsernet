@@ -35,56 +35,12 @@ return [
         ],
     ],
 
-    'anthropic' => [
-        'key' => env('ANTHROPIC_API_KEY', ''),
-    ],
-
-    'google' => [
-        'pagespeed_key' => env('GOOGLE_PAGESPEED_KEY', ''),
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URL', '/tienda/auth/google/callback'),
-    ],
-
-    'facebook' => [
-        'client_id' => env('FACEBOOK_CLIENT_ID'),
-        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('FACEBOOK_REDIRECT_URL', '/tienda/auth/facebook/callback'),
-    ],
-
-    'fcm' => [
-        'project_id' => env('FCM_PROJECT_ID', ''),
-        'credentials_path' => env('FCM_CREDENTIALS_PATH', storage_path('app/firebase-credentials.json')),
-    ],
-
-    'deepl' => [
-        'key' => env('DEEPL_API_KEY', ''),
-        'url' => env('DEEPL_API_URL', 'https://api-free.deepl.com'),
-    ],
-
-    'mailrelay' => [
-        'api_key' => env('MAILRELAY_API_KEY'),
-        'host' => env('MAILRELAY_HOST'),
-        'newsletter_group_id' => env('MAILRELAY_NEWSLETTER_GROUP_ID'),
-        'webhook_token' => env('MAILRELAY_WEBHOOK_TOKEN', ''),
-    ],
-
-    'sentry' => [
-        'dsn' => env('SENTRY_DSN'),
-        'environment' => env('SENTRY_ENVIRONMENT'),
-        'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 0.1),
-    ],
-
-    'instagram' => [
-        'enabled' => env('INSTAGRAM_ENABLED', false),
-        'access_token' => env('INSTAGRAM_ACCESS_TOKEN'),
-        'business_account_id' => env('INSTAGRAM_BUSINESS_ACCOUNT_ID'),
-    ],
-
     'openai' => [
-        'key' => env('OPENAI_API_KEY', ''),
-        'embedding_model' => env('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small'),
-        'chat_model' => env('OPENAI_CHAT_MODEL', 'gpt-4o-mini'),
+        'api_key' => env('OPENAI_API_KEY'),
+    ],
+
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
     ],
 
 ];

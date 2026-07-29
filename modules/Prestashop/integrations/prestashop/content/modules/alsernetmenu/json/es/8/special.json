@@ -1,0 +1,26 @@
+[
+    {
+        "type": "public",
+        "title": "IDEAS REGALO NAVIDAD",
+        "style": "background-color: #93131F;color: #E4B982;",
+        "url": "/nautica/ideas_para_regalar_nautica"
+    },
+    {
+        "type": "public",
+        "title": "LOTERÍA NAVIDAD 2025",
+        "style": "background-color: #213357;color: #e1c173;",
+        "url": "/aventura/loteria_de_navidad_2025"
+    },
+    {
+        "type": "public",
+        "title": "TARJETA REGALO ÁLVAREZ",
+        "style": "background-color: #90BB13;color: #FFFFFF;",
+        "url": "/65732-tarjeta"
+    },
+    {
+        "type": "public",
+        "title": "Senderismo - Camino de Santiago",
+        "style": "background-color: #fec341;color: #000;",
+        "url": "/camino_de_santiago"
+    }
+]

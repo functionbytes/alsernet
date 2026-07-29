@@ -77,7 +77,7 @@ class Lpromocionorigenexcluido extends Model
      */
     public function origenpedidocli()
     {
-        return $this->belongsTo(Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Origenpedidocli::class, 'idorigenpedidocli', 'idorigenpedidocli');
     }
 
     /**
@@ -86,6 +86,6 @@ class Lpromocionorigenexcluido extends Model
      */
     public function lpromocionorigenexcluido()
     {
-        return $this->belongsTo(Lpromocionorigenexcluido::class, 'idlpromocionorigenexcluido', 'idlpromocionorigenexcluido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocionorigenexcluido::class, 'idlpromocionorigenexcluido', 'idlpromocionorigenexcluido');
     }
 }

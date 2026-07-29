@@ -1,0 +1,144 @@
+name: alvarez
+display_name: Alvarez
+version: 1.0.0
+theme_key: 2170d1b6541ce293b34b6c1eb18e002b
+author:
+  name: "ADDIS Network"
+  email: "soporte@addis.es"
+  url: "https://www.addis.es/"
+
+meta:
+  compatibility:
+      from: 1.7.8.0
+      to: ~
+
+  available_layouts:
+    layout-full-width:
+      name: Full Width
+      description: No side columns, ideal for distraction-free pages such as product pages.
+    layout-both-columns:
+      name: Three Columns
+      description: One large central column and 2 side columns.
+    layout-left-column:
+      name: Two Columns, small left column
+      description: Two columns with a small left column
+    layout-right-column:
+      name: Two Columns, small right column
+      description: Two columns with a small right column
+
+assets:
+  # If you're using this theme as child and you want to load
+  # the parent theme assets, uncomment this line.
+#  use_parent_assets: true
+
+  # The following lines are showing how to load assets in your page
+  # Uncomment and change value to start loading css or js files
+#  css:
+#    all:
+#      - id: custom-lib-style
+#        path: assets/css/custom-lib.css
+#    product:
+#      - id: product-style
+#        path: assets/css/product.css
+#        media: all
+#        priority: 200
+#  js:
+#    cart:
+#      - id: cat-extra-lib
+#        path: assets/js/cart-lib.js
+dependencies:
+  modules:
+    - appagebuilder
+    - leobootstrapmenu
+    - leoslideshow
+    - leoblog
+    - leofeature
+    - blockgrouptop
+    - leoquicklogin
+    - leoproductsearch
+    - leoextratab
+global_settings:
+  configuration:
+    PS_IMAGE_QUALITY: png
+  modules:
+   to_disable:
+     - ps_contactinfo
+     - ps_mainmenu
+     - ps_imageslider
+     - ps_featuredproducts
+     - ps_banner
+     - ps_customtext
+     - productcomments
+     - ps_linklist
+     - blockwishlist
+  hooks:
+    modules_to_hook:
+      displayNav1:
+        - appagebuilder
+      displayNav2:
+        - appagebuilder
+      displayTop:
+        - appagebuilder
+      displayHome:
+        - leoblog
+      displayFooterBefore:
+        - appagebuilder
+      displayFooter:
+        - appagebuilder
+      actionAdminBefore:
+        - appagebuilder
+        - leobootstrapmenu
+        - leoslideshow
+        - leoblog
+        - leofeature
+        - blockgrouptop
+        - leoquicklogin
+        - leoproductsearch
+        - leoextratab
+  image_types:
+    cart_default:
+      width: 125
+      height: 157
+      scope: [inventaries]
+    small_default:
+      width: 98
+      height: 123
+      scope: [inventaries, categories, manufacturers, suppliers]
+    medium_default:
+      width: 378
+      height: 472
+      scope: [inventaries, manufacturers, suppliers]
+    home_default:
+      width: 378
+      height: 472
+      scope: [inventaries]
+    large_default:
+      width: 800
+      height: 1000
+      scope: [inventaries, manufacturers, suppliers]
+    category_default:
+      width: 480
+      height: 360
+      scope: [categories]
+    stores_default:
+      width: 170
+      height: 115
+      scope: [stores]
+    manu_default:
+      width: 130
+      height: 87
+      scope: [manufacturers]
+
+theme_settings:
+  default_layout: layout-full-width
+  layouts:
+    category: layout-left-column
+    best-sales: layout-left-column
+    new-products: layout-left-column
+    prices-drop: layout-left-column
+    contact: layout-left-column
+    manufacturer: layout-left-column
+    supplier: layout-left-column
+    module-leoblog-blog: layout-left-column
+    module-leoblog-category: layout-left-column
+    module-leoblog-list: layout-left-column

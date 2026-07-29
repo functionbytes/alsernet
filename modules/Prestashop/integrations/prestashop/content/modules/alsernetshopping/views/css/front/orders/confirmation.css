@@ -1,0 +1,804 @@
+
+
+.document-block .document-container {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-left: 4px solid #90bb13;
+}
+
+.document-block .document-container p {
+    font-size: 1.4rem;
+    line-height: 1.86;
+    margin: 0;
+}
+
+.document-block .document-container ul{
+    padding: 0;
+    list-style: none;
+    margin: 0;
+    display: grid;
+}
+
+.document-block .document-container ul li{
+    font-size: 1.4rem;
+}
+
+.document-block .document-container ul li::before {
+    left: 3px;
+    content: "\f00c";
+    font-family: 'Font Awesome 6 Duotone';
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: #90BB13;
+    margin-right: 10px;
+}
+
+
+
+.page-order-confirmation .page-order-confirmation .card-block > .row {
+    display: initial
+}
+
+
+.page-order-confirmation #order-details > .card-title {
+    font-size: 18px;
+    color: #90BB13;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.page-content.page-order-confirmation.card,
+.page-order-confirmation #order-details {
+    border: none;
+    box-shadow: none;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}
+
+.page-order-confirmation #order-details ul {
+    margin-top: 20px;
+    padding: 0;
+}
+
+.page-order-confirmation #order-details ul li {
+    font-size: 15px;
+    color: #000;
+    margin-bottom: 5px;
+}
+
+
+#order-items .qty {
+    margin-bottom: 0;
+    color: #90BB13;
+    font-weight: 700;
+    font-size: 16px
+}
+
+.total.product-price strong {
+    font-size: 18px;
+    color: #000;
+    font-weight: 700
+}
+
+.total.product-price {
+    text-align: right
+}
+
+
+#order-items .total-value td:first-child {
+    padding-left: 15px;
+    text-transform: none
+}
+
+#order-items .total-value td:last-child {
+    padding-right: 15px
+}
+
+
+.page-order-confirmation .card .order-confirmation-table .order-items {
+    margin-top: 15px;
+    border-bottom: 1px solid #acacac4a;
+    margin-bottom: 20px;
+    padding-bottom: 30px;
+}
+
+.page-content.page-order-confirmation.card, .page-order-confirmation .card-title {
+    font-size: 18px;
+    color: #90BB13;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin: 0;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .ref {
+    margin-bottom: 0px;
+    font-size: 14px;
+    color: #454545;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .content-total {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .total {
+    text-align: right;
+    margin-right: 35px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .total strong {
+    font-size: 18px;
+    color: #000;
+    font-weight: 700;
+    padding: 0;
+    line-height: 1;
+
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .details .atributos {
+    font-size: 14px;
+    color: #454545;
+    font-weight: 400
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .image img {
+    width: 100px;
+    max-width: 200px;
+    margin: 0px 15px;
+}
+
+
+.page-order-confirmation .card .order-confirmation-table .order-items .details .product-details {
+    display: flex;
+    align-items: center;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .details .product-details .title {
+    margin: 0px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #000;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .total  .qty {
+    color: #90BB13;
+    font-weight: 700;
+    line-height: normal;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    margin-left: 5px;
+}
+
+
+.page-order-confirmation .card .order-confirmation-table {
+    margin: 20px 0 0px 0;
+}
+
+.page-order-confirmation .document-container {
+    margin-top: 15px;
+    padding: 20px;
+    background: #F6F6F6;
+    border-radius: 4px;
+    width: 100%;
+}
+
+.page-order-confirmation .document-container strong {
+    color: #000;
+}
+
+
+.page-order-confirmation .document-container strong {
+    margin-bottom: 0px;
+}
+.page-order-confirmation .card .order-confirmation-table .order-totals {
+    margin-top: 15px;
+    padding: 20px;
+    background: #F6F6F6;
+    border-radius: 4px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table {
+    width: 100%;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals .items-tabla-subtotales tr {
+    height: 30px;
+}
+
+.page-order-confirmation .card .order-confirmation-table hr {
+    margin: .5rem 0 1.5rem;
+    border: 0;
+    border-top: 1px solid #f6f6f6;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals .items-tabla-subtotales td {
+    font-size: 15px;
+    color: #000;
+    font-weight: 700;
+    padding: 0;
+    line-height: 1
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals .items-tabla-subtotales td.valor {
+    font-size: 18px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr td.order-message {
+    background: #90BB13;
+    font-size: 14px;
+    color: #FFF;
+    font-weight: 700 !important;
+    text-transform: none;
+    box-shadow: inset 0 1px 0 0 #dcdcdc;
+    border-radius: 4px;
+    text-align: left !important;
+    padding: 10px 15px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr td.order-message br {
+    display: none;
+    margin-right: 10px;
+    position: relative;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr td.order-message strong {
+
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr.items-tabla-subtotales {
+    height: 30px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr {
+    height: 10px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr td:first-child {
+    padding-left: 15px;
+    text-transform: none;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals table tr td:last-child {
+    text-align: right;
+    padding-right: 15px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-totals .total-item {
+    background: #90BB13;
+    font-size: 20px;
+    color: #FFF;
+    font-weight: 700 !important;
+    text-transform: none;
+    box-shadow: inset 0 1px 0 0 #dcdcdc;
+    border-radius: 4px;
+}
+
+
+.page-order-confirmation .card .order-confirmation-table .order-items .product-line-info.product-price .current-price .price {
+    font-weight: 700;
+    color: #000;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .product-line-info.product-price .current-price.has_discount .price {
+    color: #FF662E
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .product-line-info.product-price .product-discount .regular-price {
+    font-size: 13px;
+    color: #585858;
+    font-weight: 700;
+    margin-left: 10px
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .product-line-info.product-price .product-discount .discount {
+    font-size: 14px;
+    color: #FFF;
+    font-weight: 700;
+    background: #FF662E;
+    padding: 5px 7px;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .total.product-price strong {
+    font-size: 18px;
+    color: #000;
+    font-weight: 700;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .order-line {
+    box-shadow: inset 0 1px 0 0 #dcdcdc;
+    padding-top: 15px;
+    margin-top: 0
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .order-line:first-child {
+    box-shadow: none;
+    padding-top: 0
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .order-line .details {
+    font-size: 16px;
+    color: #000;
+    font-weight: 700;
+    line-height: 19.2px
+}
+
+
+.product-line-grid-right .bootstrap-touchspin > .form-control, .product-line-grid-right .bootstrap-touchspin > .input-group, .product-line-grid-right .bootstrap-touchspin .input-group-btn-vertical > .btn {
+    background: #F6F6F6 !important
+}
+
+.cart-summary-line .value {
+    text-transform: none !important
+}
+
+.checkout.cart-detailed-actions.card-block {
+    position: relative
+}
+
+@media (max-width: 780px) {
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .image img {
+        max-width: 100%;
+        width: 100%;
+        margin: 0px;
+    }
+
+    .page-order-confirmation.card .card-block {
+        padding-left: 0;
+        padding-right: 0
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items {
+        width: 100%;
+        border: 0 solid #585858;
+        padding-top: 20px;
+        background: #F6F6F6;
+        padding: 20px;
+        border-bottom: 1px solid #acacac4a;
+        padding-bottom: 30px;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .order-line {
+        box-shadow: inset 0 1px 0 0 #9B9B9B
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .order-line:last-child {
+        box-shadow: inset 0 1px 0 0 #9B9B9B
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .order-items hr {
+        border-top-color: #9B9B9B
+    }
+
+}
+
+
+.page-order-confirmation .definition-list {
+}
+
+
+.page-order-confirmation .definition-list p {
+    margin-bottom: 10px;
+    line-height: normal;
+    font-size: 16px;
+}
+
+.page-order-confirmation .definition-list p br {
+    display: none;
+}
+
+
+.page-order-confirmation .definition-list strong {
+    font-size: 15px;
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+}
+
+
+.page-order-confirmation .definition-list dl {
+    padding: 20px;
+    background: #F6F6F6;
+    border-radius: 4px;
+}
+
+.page-order-confirmation .definition-list dl dd,
+.page-order-confirmation .definition-list dl dt,
+.page-order-confirmation .definition-list dl dd:nth-of-type(even),
+.page-order-confirmation .definition-list dl dt:nth-of-type(even) {
+    background: transparent;
+    margin: 0
+}
+
+.page-order-confirmation .definition-list dl dt {
+    font-size: 15px;
+    color: #000;
+    font-weight: 400;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    box-shadow: inset 0 1px 0 0 #DCDCDC
+}
+
+.page-order-confirmation .definition-list dl dd {
+    font-size: 15px;
+    color: #000;
+    font-weight: 700;
+    padding-top: 7px;
+    padding-bottom: 7px;
+    box-shadow: inset 0 1px 0 0 #DCDCDC
+}
+
+.page-order-confirmation .definition-list dl dt:first-child, .definition-list dl dd.no {
+    box-shadow: none
+}
+
+
+.page-order-confirmation .definition-list dl dd,
+.page-order-confirmation .definition-list dl dt,
+.page-order-confirmation .definition-list dl dd:nth-of-type(even),
+.page-order-confirmation .definition-list dl dt:nth-of-type(even) {
+    background: transparent;
+    margin: 0
+}
+
+
+.page-order-confirmation .definition-listdl dt:first-child,
+.page-order-confirmation .definition-listdl dd.no {
+    box-shadow: none
+}
+
+.page-order-confirmation .definition-list .card-block .col-md-12 p {
+    font-size: 14px;
+    color: #000
+}
+
+.page-order-confirmation .definition-list .col-md-12 p.ok {
+    font-size: 15px;
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+
+.page-order-confirmation .card-confirmation {
+    align-items: center;
+    display: flex;
+    background: #90bb13;
+}
+
+
+.page-order-confirmation .card-confirmation .order-confirmation .icon-confirmation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation-center {
+    align-items: center;
+    display: flex;
+    padding: 30px;
+    background: #90bb13;
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .confirmation-description {
+    font-size: 15px;
+    color: #000;
+    font-weight: 700
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .confirmation-description h3 {
+
+    font-size: 32px;
+    color: #fff;
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .confirmation-description p {
+    font-size: 15px;
+    color: #ffffff;
+    font-weight: 700;
+    padding: 0;
+    margin: 0;
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .icon {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .icon i {
+    font-size: 80px;
+}
+
+.page-order-confirmation .card .order-confirmation-table .order-items .details .product-line-info {
+    display: flex;
+}
+
+
+.page-order-confirmation .card-confirmation .order-confirmation .icon .fad::before,
+.page-order-confirmation .card-confirmation .order-confirmation .icon .fa-duotone::before {
+    position: absolute;
+    color: #ffffff;
+    opacity: var(--fa-primary-opacity, 1);
+}
+
+.page-order-confirmation .card-confirmation .order-confirmation .icon .fad::after,
+.page-order-confirmation .card-confirmation .order-confirmation .icon .fa-duotone::after {
+    opacity: var(--fa-secondary-opacity, .4);
+    color: #ffffff;
+}
+
+@media (max-width: 767px) {
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals table tr td:last-child {
+        text-align: right;
+        padding-right: 0px;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals .total-item td:first-child {
+        padding-left: 0px;
+        text-transform: none;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals table tr td:last-child {
+        text-align: right;
+        padding-right: 10px;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals .total-item td:first-child {
+        padding-left: 10px;
+        text-transform: none;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .details {
+        margin-top: 10px;
+    }
+
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals .items-tabla-subtotales td.valor {
+        font-size: 15px;
+    }
+
+    .page-order-confirmation .card-confirmation .order-confirmation {
+        text-align: center;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals .total-item {
+
+        font-size: 15px;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .total {
+        text-align: left;
+    }
+
+    .page-order-confirmation .definition-list dl dt {
+        width: 100%;
+
+    }
+
+    .page-order-confirmation .definition-list dl dd {
+        width: 100%;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-items .content-total {
+        display: flex;
+        justify-content: left;
+        align-items: center;
+    }
+
+    .page-order-confirmation .card .order-confirmation-table .order-totals table tr td:first-child {
+        padding-left: 0px;
+        text-transform: none;
+    }
+
+}
+
+.page-order-confirmation {
+    padding-top: 15px;
+}
+
+.page-order-confirmation h4.h4 {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.page-order-confirmation h4.black {
+    color: #000000;
+}
+
+.page-order-confirmation h4.addresshead {
+
+    width: 100%;
+    display: flex;
+    position: relative;
+    font-weight: 700;
+    margin-top: 3px;
+    color: #444;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.page-order-confirmation .noshadow {
+    box-shadow: none;
+    padding: 0px;
+}
+
+.page-order-confirmation #order-items {
+    border-right: 0;
+}
+
+.page-order-confirmation #order-items h3.h3 {
+    color: #414141;
+    margin-top: 20px;
+}
+
+.page-order-confirmation #order-items table tr:first-child td {
+    border-top: 0;
+}
+
+.page-order-confirmation .order-confirmation-table {
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 0;
+}
+
+.page-order-confirmation .summary-selected-carrier {
+    margin-bottom: 0.75rem;
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 0;
+    padding: 1rem;
+}
+
+.page-order-confirmation .step-edit {
+    display: inline;
+    color: #acaaa6;
+    font-size: 0;
+}
+
+.page-order-confirmation .step-edit i {
+    font-size: 14px;
+    vertical-align: -2px;
+}
+
+.page-order-confirmation .step-edit:hover {
+    cursor: pointer;
+}
+
+.page-order-confirmation a .step-edit {
+    color: #acaaa6;
+}
+
+
+.page-order-confirmation .card,
+.page-order-confirmation .summary-selected-carrier {
+    border: none;
+}
+
+
+.page-order-confirmation .summary-selected-carrier {
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.page-order-confirmation .step-edit i {
+    display: none;
+}
+
+.page-order-confirmation .col-md-12 > h4.black {
+    font-size: 20px;
+    color: #90BB13;
+    font-weight: 700;
+}
+
+.page-order-confirmation .card .card-block {
+    background: #FFF;
+    font-size: 15px;
+    color: #353238;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+
+.page-order-confirmation h4.h4 {
+    font-size: 16px;
+    color: #353238;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.page-order-confirmation h4.black {
+    font-weight: 700;
+}
+
+
+.page-order-confirmation .checkout-several-product-types {
+
+    font-size: 15px;
+    letter-spacing: .3px;
+    padding: 18px 24px;
+    background-color: #ff00001f;
+    border-color: #ff0000;
+    color: #ff0000;
+    margin-bottom: 30px;
+}
+
+
+.page-order-confirmation .checkout-several-product-types p {
+    font-size: 14px;
+    line-height: normal;
+    margin-bottom: 10px;
+}
+
+.page-order-confirmation .summery-container {
+    position: relative;
+    display: block;
+    margin-bottom: .75rem;
+    background-color: #fff;
+    border-radius: .25rem;
+    border: 1px solid rgba(0, 0, 0, .125);
+    font-family: 'Open Sans', sans-serif;
+    box-shadow: 2px 2px 11px 0 rgba(0, 0, 0, .1);
+    padding: 10px 20px;
+    margin-bottom: 20px;
+}
+
+.page-order-confirmation .summery-container .summery-box .summery-header {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    border-radius: 4px 4px 0 0;
+}
+
+.page-order-confirmation .product-customization {
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+.page-order-confirmation .product-customization .table-bordered {
+    border: 1px solid #eceeef;
+}
+
+.page-order-confirmation .product-customization .table-bordered th,
+.page-order-confirmation .product-customization .table-bordered td {
+     border: 1px solid transparent;
+     padding: 0px 0px 5px 0px;
+ }
+
+
+.page-order-confirmation .product-customization .table-bordered th:not(:last-child),
+.page-order-confirmation .product-customization .table-bordered td:not(:last-child) {
+    border: 1px solid transparent;
+    padding: 0px 0px 5px 0px;
+}

@@ -64,6 +64,6 @@ class Lpromociontagincluido extends Model
      */
     public function lpromociontagincluido()
     {
-        return $this->belongsTo(Lpromociontagincluido::class, 'idlpromociontagincluido', 'idlpromociontagincluido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromociontagincluido::class, 'idlpromociontagincluido', 'idlpromociontagincluido');
     }
 }

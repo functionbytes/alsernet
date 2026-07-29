@@ -1,0 +1,401 @@
+[
+    {
+        "title": "Clubs de golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 1,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Drivers",
+                "url": "\/fr\/golf\/clubs_de_golf-drivers",
+                "visible": "1"
+            },
+            {
+                "title": "S\u00e9ries de Fers",
+                "url": "\/fr\/golf\/clubs_de_golf-series_de_fers",
+                "visible": "1"
+            },
+            {
+                "title": "Bois de parcours",
+                "url": "\/fr\/golf\/clubs_de_golf-bois_de_parcours",
+                "visible": "1"
+            },
+            {
+                "title": "Hybrides",
+                "url": "\/fr\/golf\/clubs_de_golf-hybrides_",
+                "visible": "1"
+            },
+            {
+                "title": "Putters",
+                "url": "\/fr\/golf\/clubs_de_golf-putters",
+                "visible": "1"
+            },
+            {
+                "title": "Wedges",
+                "url": "\/fr\/golf\/clubs_de_golf-wedges",
+                "visible": "1"
+            },
+            {
+                "title": "Kits",
+                "url": "\/fr\/golf\/clubs_de_golf-kits",
+                "visible": "1"
+            },
+            {
+                "title": "Clubs de golf (Voir tous)",
+                "url": "\/fr\/golf\/clubs_de_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Chaussures de golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 2,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Homme",
+                "url": "\/fr\/golf\/chaussures_de_golf-homme",
+                "visible": "1"
+            },
+            {
+                "title": "Femme",
+                "url": "\/fr\/golf\/chaussures_de_golf-femme",
+                "visible": "1"
+            },
+            {
+                "title": "Jeune",
+                "url": "\/fr\/golf\/chaussures_de_golf-jeune",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs \u00e0 Chaussures",
+                "url": "\/fr\/golf\/chaussures_de_golf-sacs_a_chaussures",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires",
+                "url": "\/fr\/golf\/chaussures_de_golf-accessoires",
+                "visible": "1"
+            },
+            {
+                "title": "Chaussures de golf (Voir tous)",
+                "url": "\/fr\/golf\/chaussures_de_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Balles de golf et accessoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 3,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Callaway",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-callaway",
+                "visible": "1"
+            },
+            {
+                "title": "TaylorMade",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-taylormade",
+                "visible": "1"
+            },
+            {
+                "title": "Titleist",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-titleist",
+                "visible": "1"
+            },
+            {
+                "title": "Srixon",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-srixon",
+                "visible": "1"
+            },
+            {
+                "title": "Pinacle",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-pinacle",
+                "visible": "0"
+            },
+            {
+                "title": "Wilson",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-wilson",
+                "visible": "1"
+            },
+            {
+                "title": "XXIO",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-xxio",
+                "visible": "1"
+            },
+            {
+                "title": "Mizuno",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-mizuno",
+                "visible": "1"
+            },
+            {
+                "title": "Donnay",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-donnay",
+                "visible": "0"
+            },
+            {
+                "title": "Balles de couleurs",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-boules_de_couleurs",
+                "visible": "1"
+            },
+            {
+                "title": "Balles pour entra\u00eenement",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-balles_pour_entrainement_",
+                "visible": "1"
+            },
+            {
+                "title": "Balles recycl\u00e9es",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-boules_recyclees",
+                "visible": "1"
+            },
+            {
+                "title": "Balles Lady",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-boules_lady",
+                "visible": "1"
+            },
+            {
+                "title": "Ramasseur de balles",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires-ramasseur_de_balles",
+                "visible": "1"
+            },
+            {
+                "title": "Balles de golf et accessoires (Voir tous)",
+                "url": "\/fr\/golf\/balles_de_golf_et_accessoires",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessoires",
+        "action": "",
+        "type": "subcategorie",
+        "id": 4,
+        "column": "3",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Sacs de voyage",
+                "url": "\/fr\/golf\/sacs_de_voyage",
+                "visible": "1"
+            },
+            {
+                "title": "Montres GPS de golf",
+                "url": "\/fr\/golf\/montres_gps_de_golf",
+                "visible": "1"
+            },
+            {
+                "title": "T\u00e9l\u00e9m\u00e8tres",
+                "url": "\/fr\/golf\/telemetres",
+                "visible": "1"
+            },
+            {
+                "title": "Am\u00e9liorez votre jeu",
+                "url": "\/fr\/golf\/ameliorez_votre_jeu",
+                "visible": "1"
+            },
+            {
+                "title": "Parapluie de golf",
+                "url": "\/fr\/golf\/parapluie_de_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Couvres Clubs",
+                "url": "\/fr\/golf\/couvres_clubs",
+                "visible": "1"
+            },
+            {
+                "title": "Tees",
+                "url": "\/fr\/golf\/tees",
+                "visible": "1"
+            },
+            {
+                "title": "Serviettes de golf",
+                "url": "\/fr\/golf\/serviettes_de_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Lunettes de soleil",
+                "url": "\/fr\/golf\/lunettes_de_soleil",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires",
+                "url": "\/fr\/golf\/accessoires",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Chariots de golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 5,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Chariots de golf \u00e9lectriques",
+                "url": "\/fr\/golf\/chariots_de_golf-electriques",
+                "visible": "1"
+            },
+            {
+                "title": "Chariots de golf manuels",
+                "url": "\/fr\/golf\/chariots_de_golf-manuels",
+                "visible": "1"
+            },
+            {
+                "title": "Accessoires pour chariots",
+                "url": "\/fr\/golf\/chariots_de_golf-accessoires_pour_chariots",
+                "visible": "1"
+            },
+            {
+                "title": "Chariots de golf (Voir tous)",
+                "url": "\/fr\/golf\/chariots_de_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet et offres",
+        "action": "",
+        "type": "subcategorie",
+        "id": 6,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet et liquidations",
+                "url": "\/fr\/golf\/outlet_et_liquidations",
+                "visible": "1"
+            },
+            {
+                "title": "Offre sp\u00e9ciale Bushnell golf",
+                "url": "\/fr\/golf\/offre_speciale_bushnell_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Offre de Golf Express",
+                "url": "\/fr\/golf\/offre_de_golf_express",
+                "visible": "1"
+            },
+            {
+                "title": "Offre TaylorMade Stealth 2",
+                "url": "\/fr\/golf\/offre_taylormade_stealth_2",
+                "visible": "1"
+            },
+            {
+                "title": "Offre Callaway Rogue",
+                "url": "\/fr\/golf\/offre_callaway_rogue",
+                "visible": "1"
+            },
+            {
+                "title": "Offre TaylorMade SIM MAX-2",
+                "url": "\/fr\/golf\/offre_taylormade_sim_max2",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "V\u00eatements",
+        "action": "",
+        "type": "subcategorie",
+        "id": 7,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "V\u00eatements de Golf",
+                "url": "\/fr\/golf\/vetements",
+                "visible": "1"
+            },
+            {
+                "title": "Chapeaux",
+                "url": "\/fr\/golf\/chapeaux",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Gants de golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 8,
+        "column": "5",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Homme",
+                "url": "\/fr\/golf\/gants_de_golf-homme",
+                "visible": "1"
+            },
+            {
+                "title": "Femme",
+                "url": "\/fr\/golf\/gants_de_golf-femme",
+                "visible": "1"
+            },
+            {
+                "title": "Jeune",
+                "url": "\/fr\/golf\/gants_de_golf-jeune",
+                "visible": "1"
+            },
+            {
+                "title": "Gants de golf (Voir tous)",
+                "url": "\/fr\/golf\/gants_de_golf",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sacs de golf",
+        "action": "",
+        "type": "subcategorie",
+        "id": 9,
+        "column": "5",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Sacs Carry",
+                "url": "\/fr\/golf\/sacs_de_golf-sacs_carry",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs Cart",
+                "url": "\/fr\/golf\/sacs_de_golf-sacs_cart",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs Tr\u00e9pied",
+                "url": "\/fr\/golf\/sacs_de_golf-sacs_trepied",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs Imperm\u00e9ables",
+                "url": "\/fr\/golf\/sacs_de_golf-sacs_impermeables",
+                "visible": "1"
+            },
+            {
+                "title": "Sacs de golf (Voir tous)",
+                "url": "\/fr\/golf\/sacs_de_golf",
+                "visible": "1"
+            }
+        ]
+    }
+]

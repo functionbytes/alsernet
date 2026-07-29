@@ -4,8 +4,6 @@ namespace Modules\Mailer\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
-use Modules\Core\Models\Lang;
 use Modules\Mailer\Traits\HasUid;
 
 /**
@@ -16,10 +14,10 @@ use Modules\Mailer\Traits\HasUid;
  * @property string|null $subject
  * @property string|null $preheader
  * @property string|null $content
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read MailerTemplate|null $emailTemplate
- * @property-read Lang|null $lang
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Modules\Mailer\Models\MailerTemplate|null $emailTemplate
+ * @property-read \Modules\Core\Models\Lang|null $lang
  */
 class MailerTemplateLang extends Model
 {

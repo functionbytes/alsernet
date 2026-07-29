@@ -117,6 +117,47 @@ trait HasUserAttributes
     }
 
     /**
+     * Check if user account is temporarily locked (too many failed logins)
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until > now();
+    }
+
+    /**
+     * Lock the user account for a given number of minutes
+     */
+    public function lockFor(int $minutes = 15): void
+    {
+        $this->update([
+            'locked_until' => now()->addMinutes($minutes),
+        ]);
+    }
+
+    /**
+     * Unlock the user account and reset failed login counter
+     */
+    public function unlock(): void
+    {
+        $this->update([
+            'locked_until'       => null,
+            'failed_login_count' => 0,
+        ]);
+    }
+
+    /**
+     * Increment failed login count and lock if threshold reached
+     */
+    public function incrementFailedLogins(int $maxAttempts = 5, int $lockMinutes = 15): void
+    {
+        $this->increment('failed_login_count');
+
+        if ($this->failed_login_count >= $maxAttempts) {
+            $this->lockFor($lockMinutes);
+        }
+    }
+
+    /**
      * Enable customer
      */
     public function enable(): bool
@@ -167,5 +208,14 @@ trait HasUserAttributes
     public function hasAdminAccount(): bool
     {
         return $this->user && $this->user->admin;
+    }
+
+    /**
+     * Check if two-factor authentication is fully enabled and confirmed.
+     * Requires both a secret and a confirmed_at timestamp.
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return ! empty($this->two_factor_secret) && ! empty($this->two_factor_confirmed_at);
     }
 }

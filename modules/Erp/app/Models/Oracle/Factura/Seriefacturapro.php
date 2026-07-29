@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Factura;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Tipodiario;
-use Modules\Erp\Models\Oracle\Otros\Empresa;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -66,7 +63,7 @@ class Seriefacturapro extends Model
      */
     public function seriefacturapro()
     {
-        return $this->belongsTo(Seriefacturapro::class, 'idseriefacturapro', 'idseriefacturapro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Seriefacturapro::class, 'idseriefacturapro', 'idseriefacturapro');
     }
 
     /**
@@ -75,7 +72,7 @@ class Seriefacturapro extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 
     /**
@@ -84,7 +81,7 @@ class Seriefacturapro extends Model
      */
     public function tipodiario()
     {
-        return $this->belongsTo(Tipodiario::class, 'idtipodiario', 'idtipodiario');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodiario::class, 'idtipodiario', 'idtipodiario');
     }
 
     /**
@@ -93,6 +90,6 @@ class Seriefacturapro extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

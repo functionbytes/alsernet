@@ -51,6 +51,6 @@ class ZonaPostal extends Model
      */
     public function zonaPostal()
     {
-        return $this->belongsTo(ZonaPostal::class, 'idzona_postal', 'idzona_postal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ZonaPostal::class, 'idzona_postal', 'idzona_postal');
     }
 }

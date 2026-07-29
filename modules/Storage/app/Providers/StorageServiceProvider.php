@@ -67,7 +67,7 @@ class StorageServiceProvider extends ServiceProvider
     protected function registerMenus(): void
     {
         // Add storage configuration to settings sidebar
-        NavService::addItemsToSection('settings', 'Configuraciones', [
+        NavService::addSidebarItems('settings', [
             ['label' => 'Almacenamiento', 'route' => 'settings.storage.index'],
         ]);
 

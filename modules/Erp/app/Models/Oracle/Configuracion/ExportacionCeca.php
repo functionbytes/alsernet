@@ -48,6 +48,6 @@ class ExportacionCeca extends Model
      */
     public function exportacionCeca()
     {
-        return $this->belongsTo(ExportacionCeca::class, 'idexportacion_ceca', 'idexportacion_ceca');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ExportacionCeca::class, 'idexportacion_ceca', 'idexportacion_ceca');
     }
 }

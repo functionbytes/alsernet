@@ -15,7 +15,7 @@ if (! function_exists('table')) {
      */
     function table($name)
     {
-        return DB::getTablePrefix().$name;
+        return \DB::getTablePrefix().$name;
     }
 }
 
@@ -43,6 +43,6 @@ if (! function_exists('db_quote')) {
      */
     function db_quote($value)
     {
-        return DB::connection()->getPdo()->quote($value);
+        return \DB::connection()->getPdo()->quote($value);
     }
 }

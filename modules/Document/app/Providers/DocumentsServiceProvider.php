@@ -7,25 +7,25 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Modules\Core\Models\Setting;
-use Modules\Document\Console\Commands\AnalyzeEmailJobErrors;
+use Modules\Document\Console\Commands\AnalyzePaidOrdersVsDocuments;
 use Modules\Document\Console\Commands\CreateBlockedProductDocuments;
+use Modules\Document\Console\Commands\DeepAnalyzePrestashopOrderStates;
 use Modules\Document\Console\Commands\InitializeDocumentWorkflows;
 use Modules\Document\Console\Commands\MigrateProductBlockades;
-use Modules\Document\Console\Commands\MonitorEmailJobs;
-use Modules\Document\Console\Commands\ReinitializeDocumentWorkflows;
-use Modules\Document\Console\Commands\RetryFailedEmailJobs;
-use Modules\Document\Console\Commands\RotateWeakDocumentUids;
+use Modules\Document\Console\Commands\MigrateRequestDocuments;
 use Modules\Document\Console\Commands\RevalidateDocumentTypes;
 use Modules\Document\Console\Commands\SendDocumentUploadReminders;
-use Modules\Document\Console\Commands\ValidateAllDocumentAspects;
+use Modules\Document\Console\Commands\ValidateAndCleanupDocuments;
 use Modules\Document\Console\Commands\ValidateAndCreateDocumentsFromPaidOrders;
+use Modules\Document\Console\Commands\ValidateDocumentStages;
+use Modules\Document\Console\Commands\ValidateAllDocumentAspects;
 use Modules\Document\Console\Commands\ValidateDocumentMedia;
 use Modules\Document\Console\Commands\ValidateDocumentsComplete;
-use Modules\Document\Console\Commands\ValidateDocumentStages;
+use Modules\Document\Console\Commands\ReinitializeDocumentWorkflows;
+use Modules\Document\Console\Commands\MonitorEmailJobs;
+use Modules\Document\Console\Commands\AnalyzeEmailJobErrors;
+use Modules\Document\Console\Commands\RetryFailedEmailJobs;
 use Modules\Document\Entities\Document;
-use Modules\Document\Entities\DocumentPermission;
-use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Http\ViewComposers\NavigationComposer;
 use Modules\Document\Policies\DocumentPolicy;
 use Modules\Document\Policies\SettingsPolicy;
@@ -106,15 +106,6 @@ class DocumentsServiceProvider extends ServiceProvider
         Gate::define('manage-document-blockades', fn ($user) => $settingsPolicy->manageBlockades($user));
         Gate::define('sync-document-blockades', fn ($user) => $settingsPolicy->syncBlockades($user));
 
-        // Acceso al panel operativo /panel/documents (listado, pendientes, ver por UID, etc.)
-        // Reemplaza el antiguo middleware('role:super-admin|supervisor'): ese middleware de
-        // Spatie hace un hasAnyRole() directo y NUNCA pasa por Gate::before, así que los
-        // miembros de grupos validadores (licenses_team, documentation_team...) quedaban
-        // bloqueados pese a que el permiso 'view-documents' ya los cubre. 'supervisor' se
-        // resuelve aquí (no en el Gate::before global de abajo) para no convertirlo en un
-        // bypass de super-admin para el resto de la aplicación.
-        Gate::define('view-documents-panel', fn ($user) => $user->hasRole('supervisor') || $user->canDocument('view-documents'));
-
         // Register dynamic gates for document permissions
         // This allows using middleware('can:permission-name') with any permission from document_permissions table
         Gate::before(function ($user, $ability) {
@@ -125,11 +116,11 @@ class DocumentsServiceProvider extends ServiceProvider
 
             // Check if this ability exists in document permissions
             if (class_exists('Modules\Document\Entities\DocumentPermission')) {
-                $permission = DocumentPermission::where('name', $ability)->first();
+                $permission = \Modules\Document\Entities\DocumentPermission::where('name', $ability)->first();
 
                 if ($permission) {
                     // Get user's validator groups
-                    $userGroups = DocumentValidatorGroup::whereHas('users', function ($q) use ($user) {
+                    $userGroups = \Modules\Document\Entities\DocumentValidatorGroup::whereHas('users', function ($q) use ($user) {
                         $q->where('user_id', $user->id);
                     })->get();
 
@@ -186,7 +177,6 @@ class DocumentsServiceProvider extends ServiceProvider
             MonitorEmailJobs::class,
             AnalyzeEmailJobErrors::class,
             RetryFailedEmailJobs::class,
-            RotateWeakDocumentUids::class,
         ]);
     }
 
@@ -213,25 +203,25 @@ class DocumentsServiceProvider extends ServiceProvider
     /**
      * Register the blockade sync schedule based on saved configuration.
      */
-    protected function registerBlockadeSyncSchedule(Schedule $schedule): void
+    protected function registerBlockadeSyncSchedule(\Illuminate\Console\Scheduling\Schedule $schedule): void
     {
         try {
-            $setting = Setting::get('documents.blockade_sync_enabled', 'no');
+            $setting = \Modules\Core\Models\Setting::get('documents.blockade_sync_enabled', 'no');
             if ($setting !== 'yes') {
                 return;
             }
 
-            $frequency = Setting::get('documents.blockade_sync_frequency', 'manual');
+            $frequency = \Modules\Core\Models\Setting::get('documents.blockade_sync_frequency', 'manual');
             if ($frequency === 'manual') {
                 return;
             }
 
-            $hourRaw = Setting::get('documents.blockade_sync_hour', '08:00');
-            $cronExpr = Setting::get('documents.blockade_sync_cron', '');
-            $fresh = Setting::get('documents.blockade_sync_fresh', 'no') === 'yes';
-            $args = $fresh ? ['--fresh' => true] : [];
+            $hourRaw  = \Modules\Core\Models\Setting::get('documents.blockade_sync_hour', '08:00');
+            $cronExpr = \Modules\Core\Models\Setting::get('documents.blockade_sync_cron', '');
+            $fresh    = \Modules\Core\Models\Setting::get('documents.blockade_sync_fresh', 'no') === 'yes';
+            $args     = $fresh ? ['--fresh' => true] : [];
 
-            [$h, $m] = array_map('intval', explode(':', $hourRaw.':00'));
+            [$h, $m] = array_map('intval', explode(':', $hourRaw . ':00'));
 
             $command = $schedule->command('migrate:product-blockades', $args)
                 ->withoutOverlapping()
@@ -239,14 +229,14 @@ class DocumentsServiceProvider extends ServiceProvider
                 ->appendOutputTo(storage_path('logs/document-blockade-sync.log'));
 
             match ($frequency) {
-                'hourly' => $command->hourlyAt($m),
+                'hourly'        => $command->hourlyAt($m),
                 'every_2_hours' => $command->everyTwoHours($m),
                 'every_6_hours' => $command->everySixHours($m),
-                'every_12_hours' => $command->twiceDailyAt($h, ($h + 12) % 24, $m),
-                'daily' => $command->dailyAt($hourRaw),
-                'weekly' => $command->weeklyOn(0, $hourRaw),
-                'custom' => $cronExpr ? $command->cron($cronExpr) : null,
-                default => null,
+                'every_12_hours'=> $command->twiceDailyAt($h, ($h + 12) % 24, $m),
+                'daily'         => $command->dailyAt($hourRaw),
+                'weekly'        => $command->weeklyOn(0, $hourRaw),
+                'custom'        => $cronExpr ? $command->cron($cronExpr) : null,
+                default         => null,
             };
         } catch (\Exception $e) {
             // No interrumpir el boot si la tabla settings aún no existe
@@ -314,10 +304,6 @@ class DocumentsServiceProvider extends ServiceProvider
         $this->publishes([$sourcePath => $viewPath], ['views', $this->nameLower.'-module-views']);
 
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->nameLower);
-
-        $this->publishes([
-            module_path($this->name, 'public') => public_path('modules/'.$this->nameLower),
-        ], ['public', $this->nameLower.'-module-assets']);
 
         Blade::componentNamespace(config('modules.namespace').'\\'.$this->name.'\\View\\Components', $this->nameLower);
     }

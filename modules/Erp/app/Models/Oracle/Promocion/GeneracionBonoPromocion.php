@@ -61,6 +61,6 @@ class GeneracionBonoPromocion extends Model
      */
     public function generacionBonoPromo()
     {
-        return $this->belongsTo(GeneracionBonoPromocion::class, 'idgeneracion_bono_promo', 'idgeneracion_bono_promo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\GeneracionBonoPromocion::class, 'idgeneracion_bono_promo', 'idgeneracion_bono_promo');
     }
 }

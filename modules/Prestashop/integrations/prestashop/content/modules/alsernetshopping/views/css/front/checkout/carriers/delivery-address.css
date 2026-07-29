@@ -1,0 +1,42 @@
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper  {
+    font-size: 14px;
+    line-height: normal;
+    background-color: #f5f6f8;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 10px;
+    position: relative;
+    width: 100%;
+}
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper h5 {
+    font-weight: 600;
+    color: #333;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper .relay-address  {
+    display: grid
+
+}
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper .relay-address   li {
+    line-height: 1.5;
+    color: #555;
+    font-size: 13px;
+
+}
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper .btn {
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+.page-order .left-sidebar-checkout .checkout-detail-box .checkout-step .checkout-box .carrier-extra-contents .selected-address-wrapper .btn i {
+    font-size: 11px;
+    margin-right: 5px;
+}
+

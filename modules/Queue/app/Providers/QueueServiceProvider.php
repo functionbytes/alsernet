@@ -53,7 +53,7 @@ class QueueServiceProvider extends ServiceProvider
 
     protected function registerNavigation(): void
     {
-        NavService::addItemsToSection('settings', 'Configuraciones', [
+        NavService::addSidebarItems('settings', [
             ['label' => 'Gestión de colas', 'route' => 'settings.queue.dashboard'],
         ]);
     }

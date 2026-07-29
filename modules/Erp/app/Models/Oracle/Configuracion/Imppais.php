@@ -53,7 +53,7 @@ class Imppais extends Model
      */
     public function imppais()
     {
-        return $this->belongsTo(Imppais::class, 'idimppais', 'idimppais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Imppais::class, 'idimppais', 'idimppais');
     }
 
     /**
@@ -62,7 +62,7 @@ class Imppais extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 
     /**
@@ -71,6 +71,6 @@ class Imppais extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 }

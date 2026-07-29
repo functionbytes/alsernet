@@ -62,6 +62,6 @@ class Seriegenerica extends Model
      */
     public function seriegenerica()
     {
-        return $this->belongsTo(Seriegenerica::class, 'idseriegenerica', 'idseriegenerica');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Serie\Seriegenerica::class, 'idseriegenerica', 'idseriegenerica');
     }
 }

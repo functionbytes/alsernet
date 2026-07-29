@@ -1,0 +1,29 @@
+[
+    {
+        "title": "Te puede interesar",
+        "language": "es",
+        "position": 1,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Ver nuestras marcas",
+            "url": "/aventura/listado-marcas"
+          },
+          {
+            "title": "Novedades",
+            "url": "/aventura/novedades"
+          },
+          {
+            "title": "Los más vendidos",
+            "url": "/aventura/lo_mas_vendido"
+          },
+          {
+            "title": "Blog",
+            "url": "/blog/aventura/"
+          }
+        ]
+      }
+]

@@ -51,6 +51,6 @@ class Prioridad extends Model
      */
     public function prioridad()
     {
-        return $this->belongsTo(Prioridad::class, 'idprioridad', 'idprioridad');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Prioridad::class, 'idprioridad', 'idprioridad');
     }
 }

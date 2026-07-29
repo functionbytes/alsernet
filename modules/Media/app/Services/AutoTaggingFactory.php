@@ -16,7 +16,7 @@ class AutoTaggingFactory
         $apiKey = (string) config('media.ai.auto_tagging.api_key');
 
         return match ($driver) {
-            '.claude' => new ClaudeDriver($apiKey),
+            'claude' => new ClaudeDriver($apiKey),
             'openai' => new OpenAIDriver($apiKey),
             'google' => new GoogleVisionDriver($apiKey),
             default => new NullDriver,

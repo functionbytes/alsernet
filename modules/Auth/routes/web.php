@@ -23,8 +23,9 @@ use Modules\Auth\Http\Controllers\VerificationController;
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('auth.login');
 Route::post('/login', [LoginController::class, 'login'])->name('auth.login.post')->middleware('throttle:5,1');
 
-// Logout route (requires auth middleware override)
+// Logout routes (POST es el estándar; GET redirige al mismo método para soportar links directos)
 Route::post('/logout', [LoginController::class, 'logout'])->name('auth.logout')->withoutMiddleware('guest')->middleware('auth');
+Route::get('/logout', [LoginController::class, 'logout'])->withoutMiddleware('guest')->middleware('auth');
 
 // Password reset routes
 Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequest'])->name('auth.password.request');

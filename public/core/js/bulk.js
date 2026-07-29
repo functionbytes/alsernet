@@ -1,70 +1,86 @@
 /**
- * BulkActions - Plugin reutilizable para acciones masivas en tablas.
+ * BulkActions — selección masiva con toolbar flotante y contador.
  *
- * Uso mínimo en cualquier vista:
- *
+ * Uso:
  *   const bulk = window.BulkActions.init({
- *       checkbox  : '.my-checkbox',   // clase de checkboxes individuales
- *       selectAll : '#select-all',    // checkbox cabecera
- *       toolbar   : '#bulk-toolbar',  // barra flotante (contiene data-bulk-count)
+ *     checkbox:  '.my-checkbox',
+ *     toolbar:   '#my-toolbar',   // id con o sin '#'
+ *     selectAll: '#my-select-all' // id con o sin '#'
  *   });
- *
- *   bulk.getIds()   → array de IDs seleccionados (parseInt)
- *   bulk.getCount() → número de ítems seleccionados
- *   bulk.reset()    → deselecciona todo y oculta la barra
+ *   bulk.getIds()   → [1, 2, 3]
+ *   bulk.reset()    → desmarca todo
  */
-window.BulkActions = (function ($) {
+window.BulkActions = (function () {
 
     function init(options) {
-        const cfg = $.extend({
-            checkbox  : '.bulk-checkbox',
-            selectAll : '#select-all',
-            toolbar   : '#bulk-toolbar',
-        }, options);
+        const checkboxSelector = options.checkbox || '.bulk-checkbox';
 
-        const $selectAll = $(cfg.selectAll);
-        const $toolbar   = $(cfg.toolbar);
+        // Resolve toolbar: accept id string with or without '#', fallback to legacy id
+        const toolbarId = options.toolbar
+            ? options.toolbar.replace(/^#/, '')
+            : 'bulk-toolbar';
+        const toolbar = document.getElementById(toolbarId);
 
-        /* ── Helpers ─────────────────────────────────────────────────────── */
-        function sync() {
-            const total   = $(cfg.checkbox).length;
-            const checked = $(cfg.checkbox + ':checked').length;
+        // Resolve select-all: accept id string with or without '#', fallback to legacy ids
+        const selectAllId = options.selectAll
+            ? options.selectAll.replace(/^#/, '')
+            : null;
+        const selectAllEl = selectAllId
+            ? document.getElementById(selectAllId)
+            : (document.getElementById('check-all') || document.getElementById('select-all'));
 
-            $selectAll.prop('indeterminate', checked > 0 && checked < total);
-            $selectAll.prop('checked', total > 0 && checked === total);
-
-            $toolbar.find('[data-bulk-count]').text(checked);
-            $toolbar.toggleClass('d-none', checked === 0);
+        // Build count elements: toolbar + corresponding modal (bulk-toolbar-X → bulk-X-modal)
+        function getCountEls() {
+            const group = toolbarId.replace('bulk-toolbar-', '');
+            const modalEl = document.getElementById('bulk-' + group + '-modal');
+            const els = [
+                ...(toolbar  ? Array.from(toolbar.querySelectorAll('[data-bulk-count]'))  : []),
+                ...(modalEl  ? Array.from(modalEl.querySelectorAll('[data-bulk-count]'))  : []),
+            ];
+            return els.length ? els : Array.from(document.querySelectorAll('[data-bulk-count]'));
         }
 
-        /* ── Eventos ─────────────────────────────────────────────────────── */
-        $selectAll.off('change.bulk').on('change.bulk', function () {
-            $(cfg.checkbox).prop('checked', this.checked);
-            sync();
+        function selectedIds() {
+            return Array.from(document.querySelectorAll(checkboxSelector + ':checked'))
+                .map(el => el.value);
+        }
+
+        function updateUI() {
+            const count = selectedIds().length;
+            getCountEls().forEach(el => { el.textContent = count; });
+            if (toolbar) {
+                toolbar.classList.toggle('d-none', count === 0);
+            }
+        }
+
+        function reset() {
+            document.querySelectorAll(checkboxSelector).forEach(cb => { cb.checked = false; });
+            if (selectAllEl) selectAllEl.checked = false;
+            updateUI();
+        }
+
+        // Delegation so dynamically added rows work
+        document.addEventListener('change', function (e) {
+            if (e.target.matches(checkboxSelector)) {
+                updateUI();
+            }
         });
 
-        $(document).off('change.bulk', cfg.checkbox)
-                   .on('change.bulk', cfg.checkbox, sync);
+        if (selectAllEl) {
+            selectAllEl.addEventListener('change', function () {
+                document.querySelectorAll(checkboxSelector).forEach(cb => {
+                    cb.checked = this.checked;
+                });
+                updateUI();
+            });
+        }
 
-        /* ── API pública ─────────────────────────────────────────────────── */
         return {
-            sync,
-            reset() {
-                $(cfg.checkbox).prop('checked', false);
-                $selectAll.prop({ checked: false, indeterminate: false });
-                $toolbar.addClass('d-none').find('[data-bulk-count]').text(0);
-            },
-            getIds() {
-                return $(cfg.checkbox + ':checked')
-                    .map(function () { return parseInt(this.value, 10); })
-                    .get();
-            },
-            getCount() {
-                return $(cfg.checkbox + ':checked').length;
-            },
+            getIds: selectedIds,
+            reset:  reset,
         };
     }
 
-    return { init };
+    return { init: init };
 
-})(jQuery);
+})();

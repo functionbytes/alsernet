@@ -14,7 +14,7 @@
                             <i class="fas fa-compress-alt text-muted"></i>
                         </button>
                     </div>
-                    <div class="col-lg-4 ">
+                    <div class="col-lg-4 border-start">
                         <div id="countries-list" style="max-height:400px;overflow-y:auto;"></div>
                     </div>
                 </div>

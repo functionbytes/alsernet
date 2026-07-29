@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Promocion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Lpromocionexcluido extends Model
      */
     public function lpromocionexcluido()
     {
-        return $this->belongsTo(Lpromocionexcluido::class, 'idlpromocionexcluido', 'idlpromocionexcluido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocionexcluido::class, 'idlpromocionexcluido', 'idlpromocionexcluido');
     }
 
     /**
@@ -62,7 +61,7 @@ class Lpromocionexcluido extends Model
      */
     public function promocion()
     {
-        return $this->belongsTo(Promocion::class, 'idpromocion', 'idpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Promocion::class, 'idpromocion', 'idpromocion');
     }
 
     /**
@@ -71,6 +70,6 @@ class Lpromocionexcluido extends Model
      */
     public function subfamiliaCl()
     {
-        return $this->belongsTo(SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
     }
 }

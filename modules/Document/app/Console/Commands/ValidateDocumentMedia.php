@@ -193,7 +193,7 @@ class ValidateDocumentMedia extends Command
             if (json_encode($actualUploaded) !== json_encode($jsonUploaded)) {
                 $issues[] = [
                     'type' => 'uploaded_documents_mismatch',
-                    'message' => "uploaded_documents JSON doesn't match actual media. Actual: ".implode(', ', $actualUploaded),
+                    'message' => "uploaded_documents JSON doesn't match actual media. Actual: " . implode(', ', $actualUploaded),
                 ];
             }
         } catch (\Exception $e) {

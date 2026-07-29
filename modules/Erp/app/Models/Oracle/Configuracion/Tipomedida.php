@@ -52,6 +52,6 @@ class Tipomedida extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 }

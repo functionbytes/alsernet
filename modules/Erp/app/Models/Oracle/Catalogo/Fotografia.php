@@ -64,6 +64,6 @@ class Fotografia extends Model
      */
     public function fotografia()
     {
-        return $this->belongsTo(Fotografia::class, 'idfotografia', 'idfotografia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Fotografia::class, 'idfotografia', 'idfotografia');
     }
 }

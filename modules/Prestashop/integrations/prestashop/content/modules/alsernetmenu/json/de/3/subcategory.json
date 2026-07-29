@@ -1,0 +1,411 @@
+[
+    {
+        "title": "Golfschl\u00e4ger",
+        "action": "",
+        "type": "subcategorie",
+        "id": 1,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Driver",
+                "url": "\/de\/golf\/golfschlaeger-drivers",
+                "visible": "1"
+            },
+            {
+                "title": "Eisens\u00e4tze",
+                "url": "\/de\/golf\/golfschlaeger-eisensaetze",
+                "visible": "1"
+            },
+            {
+                "title": "Fairwayh\u00f6lzer",
+                "url": "\/de\/golf\/golfschlaeger-fairwayhoelzer",
+                "visible": "1"
+            },
+            {
+                "title": "Hybriden und Utility",
+                "url": "\/de\/golf\/golfschlaeger-hybriden_und_utility",
+                "visible": "1"
+            },
+            {
+                "title": "Putter",
+                "url": "\/de\/golf\/golfschlaeger-putter",
+                "visible": "1"
+            },
+            {
+                "title": "Wedges",
+                "url": "\/de\/golf\/golfschlaeger-wedges",
+                "visible": "1"
+            },
+            {
+                "title": "Komplettsets",
+                "url": "\/de\/golf\/golfschlaeger-komplettsets",
+                "visible": "1"
+            },
+            {
+                "title": "Golfschl\u00e4ger (Alles sehen)",
+                "url": "\/de\/golf\/golfschlaeger",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golfschuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 2,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Herren",
+                "url": "\/de\/golf\/golfschuhe-herren",
+                "visible": "1"
+            },
+            {
+                "title": "Damen",
+                "url": "\/de\/golf\/golfschuhe-damen",
+                "visible": "1"
+            },
+            {
+                "title": "Kinder",
+                "url": "\/de\/golf\/golfschuhe-kinder",
+                "visible": "1"
+            },
+            {
+                "title": "Schuhbag",
+                "url": "\/de\/golf\/golfschuhe-schuhbag",
+                "visible": "1"
+            },
+            {
+                "title": "Zubeh\u00f6r",
+                "url": "\/de\/golf\/golfschuhe-zubehor",
+                "visible": "1"
+            },
+            {
+                "title": "Golfschuhe (Alles sehen)",
+                "url": "\/de\/golf\/golfschuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golfb\u00e4lle und Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 3,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Callaway",
+                "url": "\/de\/golf\/golfballe_und_zubehor-callaway",
+                "visible": "1"
+            },
+            {
+                "title": "TaylorMade",
+                "url": "\/de\/golf\/golfballe_und_zubehor-taylormade",
+                "visible": "1"
+            },
+            {
+                "title": "Titleist",
+                "url": "\/de\/golf\/golfballe_und_zubehor-titleist",
+                "visible": "1"
+            },
+            {
+                "title": "Srixon",
+                "url": "\/de\/golf\/golfballe_und_zubehor-srixon",
+                "visible": "1"
+            },
+            {
+                "title": "Gipfel",
+                "url": "\/de\/golf\/golfballe_und_zubehor-gipfel",
+                "visible": "0"
+            },
+            {
+                "title": "Wilson",
+                "url": "\/de\/golf\/golfballe_und_zubehor-wilson",
+                "visible": "1"
+            },
+            {
+                "title": "XXIO",
+                "url": "\/de\/golf\/golfballe_und_zubehor-xxio",
+                "visible": "1"
+            },
+            {
+                "title": "Mizuno",
+                "url": "\/de\/golf\/golfballe_und_zubehor-mizuno",
+                "visible": "1"
+            },
+            {
+                "title": "Donnay",
+                "url": "\/de\/golf\/golfballe_und_zubehor-donnay",
+                "visible": "0"
+            },
+            {
+                "title": "Farbige Golfb\u00e4lle",
+                "url": "\/de\/golf\/golfballe_und_zubehor-farbige_golfbaelle",
+                "visible": "1"
+            },
+            {
+                "title": "\u00dcbungsb\u00e4lle",
+                "url": "\/de\/golf\/golfballe_und_zubehor-ubungsballe",
+                "visible": "1"
+            },
+            {
+                "title": "Lakeballs",
+                "url": "\/de\/golf\/golfballe_und_zubehor-lakeballs",
+                "visible": "1"
+            },
+            {
+                "title": "Golfb\u00e4lle f\u00fcr Damen",
+                "url": "\/de\/golf\/golfballe_und_zubehor-golfbaelle_fuer_damen",
+                "visible": "1"
+            },
+            {
+                "title": "Ballsammler",
+                "url": "\/de\/golf\/golfballe_und_zubehor-ballsammler",
+                "visible": "1"
+            },
+            {
+                "title": "Golfb\u00e4lle und Zubeh\u00f6r (Alles sehen)",
+                "url": "\/de\/golf\/golfballe_und_zubehor",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golf Zubeh\u00f6r",
+        "action": "",
+        "type": "subcategorie",
+        "id": 4,
+        "column": "3",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Travelcover",
+                "url": "\/de\/golf\/travelcover",
+                "visible": "1"
+            },
+            {
+                "title": "Golf-GPS-Uhren",
+                "url": "\/de\/golf\/golfgpsuhren",
+                "visible": "1"
+            },
+            {
+                "title": "Entfernungsmesser",
+                "url": "\/de\/golf\/entfernungsmesser",
+                "visible": "1"
+            },
+            {
+                "title": "Trainingshilfen",
+                "url": "\/de\/golf\/trainingshilfen",
+                "visible": "1"
+            },
+            {
+                "title": "Golfschirm",
+                "url": "\/de\/golf\/golfschirm",
+                "visible": "1"
+            },
+            {
+                "title": "Schl\u00e4gerhauben",
+                "url": "\/de\/golf\/schlaegerhauben",
+                "visible": "1"
+            },
+            {
+                "title": "Tees",
+                "url": "\/de\/golf\/tees",
+                "visible": "1"
+            },
+            {
+                "title": "Golfhandt\u00fccher",
+                "url": "\/de\/golf\/golfhandtucher",
+                "visible": "1"
+            },
+            {
+                "title": "Sonnenbrillen",
+                "url": "\/de\/golf\/sonnenbrillen",
+                "visible": "1"
+            },
+            {
+                "title": "Golf Zubeh\u00f6r",
+                "url": "\/de\/golf\/golf_zubehoer",
+                "visible": "1"
+            },
+            {
+                "title": "DVDs und B\u00fccher",
+                "url": "\/de\/golf\/dvds_und_buecher",
+                "visible": "1"
+            },
+            {
+                "title": "Outdoorzeit",
+                "url": "\/de\/golf\/outdoorzeit",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golftrolleys",
+        "action": "",
+        "type": "subcategorie",
+        "id": 5,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Elektro Trolleys",
+                "url": "\/de\/golf\/golftrolleys-Elektrisch",
+                "visible": "1"
+            },
+            {
+                "title": "Manuelle Trolleys",
+                "url": "\/de\/golf\/golftrolleys-manuelle_trolleys",
+                "visible": "1"
+            },
+            {
+                "title": "Golf Trolley-Zubeh\u00f6r",
+                "url": "\/de\/golf\/golftrolleys-golf_trolley_zubehoer",
+                "visible": "1"
+            },
+            {
+                "title": "Golftrolleys (Alles sehen)",
+                "url": "\/de\/golf\/golftrolleys",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet und Angebote",
+        "action": "",
+        "type": "subcategorie",
+        "id": 6,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet Und Ausverkauf",
+                "url": "\/de\/golf\/outlet_und_ausverkauf",
+                "visible": "1"
+            },
+            {
+                "title": "Bushnell golf  sonderangebot",
+                "url": "\/de\/golf\/bushnell_golf_sonderangebot",
+                "visible": "1"
+            },
+            {
+                "title": "Golf Express Angebot",
+                "url": "\/de\/golf\/golf_express_angebot",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta TaylorMade Stealth 2",
+                "url": "\/de\/golf\/oferta_taylormade_stealth_2",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Callaway Rogue",
+                "url": "\/de\/golf\/oferta_callaway_rogue",
+                "visible": "1"
+            },
+            {
+                "title": "TaylorMade SIM MAX-2 Angebot",
+                "url": "\/de\/golf\/taylormade_sim_max2_angebot",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golfbekleidung",
+        "action": "",
+        "type": "subcategorie",
+        "id": 7,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Golfbekleidung",
+                "url": "\/de\/golf\/kleidung",
+                "visible": "1"
+            },
+            {
+                "title": "Caps",
+                "url": "\/de\/golf\/caps",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Handschuhe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 8,
+        "column": "5",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Herren",
+                "url": "\/de\/golf\/handschuhe-herren",
+                "visible": "1"
+            },
+            {
+                "title": "Damen",
+                "url": "\/de\/golf\/handschuhe-damen",
+                "visible": "1"
+            },
+            {
+                "title": "Junior",
+                "url": "\/de\/golf\/handschuhe-junior",
+                "visible": "1"
+            },
+            {
+                "title": "Handschuhe (Alles sehen)",
+                "url": "\/de\/golf\/handschuhe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Golfbags",
+        "action": "",
+        "type": "subcategorie",
+        "id": 9,
+        "column": "5",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Carrybags",
+                "url": "\/de\/golf\/golfbags-carrybags",
+                "visible": "1"
+            },
+            {
+                "title": "Cartbags",
+                "url": "\/de\/golf\/golfbags-cartbags",
+                "visible": "1"
+            },
+            {
+                "title": "Standbags",
+                "url": "\/de\/golf\/golfbags-standbags",
+                "visible": "1"
+            },
+            {
+                "title": "Wasserdichte Golfbags",
+                "url": "\/de\/golf\/golfbags-wasserdichte_golfbags",
+                "visible": "1"
+            },
+            {
+                "title": "Golfbags (Alles sehen)",
+                "url": "\/de\/golf\/golfbags",
+                "visible": "1"
+            }
+        ]
+    }
+]

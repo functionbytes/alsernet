@@ -48,9 +48,6 @@ class SystemServiceProvider extends ServiceProvider
             __DIR__.'/../../config/system.php' => config_path('system.php'),
         ], 'system-config');
 
-        // Register global search searchers
-        $this->app->make(GlobalSearchRegistrar::class)->register();
-
         // Register menus
         $this->registerMenus();
 

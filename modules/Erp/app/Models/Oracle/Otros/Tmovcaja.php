@@ -51,6 +51,6 @@ class Tmovcaja extends Model
      */
     public function tmovcaja()
     {
-        return $this->belongsTo(Tmovcaja::class, 'idtmovcaja', 'idtmovcaja');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tmovcaja::class, 'idtmovcaja', 'idtmovcaja');
     }
 }

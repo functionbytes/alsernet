@@ -62,7 +62,7 @@ class TarifaLinea extends Model
      */
     public function tarifaLinea()
     {
-        return $this->belongsTo(TarifaLinea::class, 'idtarifa_linea', 'idtarifa_linea');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TarifaLinea::class, 'idtarifa_linea', 'idtarifa_linea');
     }
 
     /**
@@ -71,6 +71,6 @@ class TarifaLinea extends Model
      */
     public function tarifaCabecera()
     {
-        return $this->belongsTo(TarifaCabecera::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\TarifaCabecera::class, 'idtarifa_cabecera', 'idtarifa_cabecera');
     }
 }

@@ -36,9 +36,9 @@ return new class extends Migration
                 ->onDelete('set null');
 
             // Indexes for common queries
-            $table->index('validator_group_id', 'dvgch_group_idx');
+            $table->index('validator_group_id');
             $table->index('user_id');
-            $table->index('created_at', 'dvgch_created_idx');
+            $table->index('created_at');
         });
     }
 

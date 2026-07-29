@@ -25,7 +25,7 @@
                                     <small class="text-muted">Cierra sesión en todos los demás dispositivos</small>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-warning" id="btnShowRevokeAll">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Cerrar todas
+                                    Cerrar todas
                                 </button>
                             </div>
                             <div id="revoke-all-form" class="d-none mt-3">

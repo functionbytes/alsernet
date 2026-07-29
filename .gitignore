@@ -1,50 +1,59 @@
-# Dependencias
-/vendor/
-/node_modules/
-modules/*/vendor/
-modules/*/node_modules/
+vendor/
+node_modules/
+stubs/
 
-# Build / assets compilados de Vite
-/public/build/
-/public/hot
+bootstrap/compiled.php
+bootstrap/cache/
 
-# Storage runtime (mantener estructura via .gitignore propios de Laravel)
-/public/storage
-/storage/*.key
+public/storage
+public/hot
+public_html/storage
+public_html/hot
+public/build
+public/storage
+
+/storage/
 /storage/pail
-/storage/app/public/*
-/storage/framework/cache/data/*
-/storage/framework/sessions/*
-/storage/framework/testing/*
-/storage/framework/views/*
-/storage/logs/*
-/bootstrap/cache/*
+storage/*.key
 
-# Entorno y secretos
 .env
-.env.*
-!.env.example
-*.bak
-*.zip
-auth.json
-
-# Caches de herramientas
-.phpunit.result.cache
-.phpunit.cache
-/.phpunit.cache
-.phpstan.cache
+.env.backup
+.env.production
 .phpactor.json
 
-# Claude Code (worktrees de agentes + locales)
-.claude/worktrees/
-.claude/settings.local.json
-.claude/projects/
+# Logs & caches
+*.log
+*.cache
+*.txt
 
-# Snapshots / dumps de testing del proyecto
-/system_testing
-/system_test_clean
-/snapshot_*.txt
-
-# macOS
+# IDE & OS
 .DS_Store
-**/.DS_Store
+
+# Claude Code & Development Tools
+.claude/
+.tinker/
+.idea/
+.vscode/
+
+# Composer
+composer.lock
+composer.phar
+
+# NPM/Yarn
+package-lock.json
+yarn.lock
+
+# Dumps / backups
+*.sql
+*.sql.gz
+*.zip
+*.tar
+*.tar.gz
+*.gz
+*.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+EOF

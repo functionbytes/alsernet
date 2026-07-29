@@ -5,10 +5,8 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Otros\GrupoCl;
 use Modules\Erp\Models\Oracle\Promocion\Lpromocionsubfamiliaincluida;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierSubfamily;
 
 /**
  * Modelo para la tabla SUBFAMILIA_CL
@@ -68,7 +66,7 @@ class SubfamiliaCl extends Model
      */
     public function subfamiliaCl()
     {
-        return $this->belongsTo(SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
     }
 
     /**
@@ -77,7 +75,7 @@ class SubfamiliaCl extends Model
      */
     public function familiaCl()
     {
-        return $this->belongsTo(FamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\FamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
     }
 
     /**
@@ -85,7 +83,7 @@ class SubfamiliaCl extends Model
      */
     public function supplierSubfamilies(): HasMany
     {
-        return $this->hasMany(SupplierSubfamily::class, 'erp_subfamily_id', 'idsubfamilia_cl');
+        return $this->hasMany(\Modules\Supplier\Entities\SupplierSubfamily::class, 'erp_subfamily_id', 'idsubfamilia_cl');
     }
 
     /**
@@ -93,6 +91,6 @@ class SubfamiliaCl extends Model
      */
     public function grupos()
     {
-        return $this->hasMany(GrupoCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
+        return $this->hasMany(\Modules\Erp\Models\Oracle\Otros\GrupoCl::class, 'idsubfamilia_cl', 'idsubfamilia_cl');
     }
 }

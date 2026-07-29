@@ -38,9 +38,6 @@
                         ];
                         $config = $typeConfig[$mail->email_type] ?? $typeConfig['custom'];
                     @endphp
-                    {{-- La ruta recibe UN parámetro: el uid del correo. Al pasarle
-                         además el del documento, este ocupaba {mail} y el del correo
-                         se iba a la query string, así que el preview daba 404. --}}
                     <a href="{{ route('documents.emails.preview', $mail->uid) }}"
                        class="email-item d-block text-decoration-none"
                        target="_blank">

@@ -39,7 +39,7 @@ class LpedidoproServidoCorunya extends Model
      */
     public function lpedidoproServido()
     {
-        return $this->belongsTo(LpedidoproServidoCapthaya::class, 'idlpedidopro_servido', 'idlpedidopro_servido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproServidoCapthaya::class, 'idlpedidopro_servido', 'idlpedidopro_servido');
     }
 
     /**
@@ -48,6 +48,6 @@ class LpedidoproServidoCorunya extends Model
      */
     public function lpedidopro()
     {
-        return $this->belongsTo(LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidoproCapthaya::class, 'idlpedidopro', 'idlpedidopro');
     }
 }

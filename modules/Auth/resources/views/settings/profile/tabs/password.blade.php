@@ -37,7 +37,7 @@
 
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-key me-2"></i>Actualizar contraseña
+                            Actualizar contraseña
                         </button>
                     </div>
                 </form>

@@ -69,7 +69,7 @@ class ArticuloCatalogoImpreso extends Model
      */
     public function catalogoImpreso()
     {
-        return $this->belongsTo(CatalogoImpreso::class, 'idcatalogo_impreso', 'idcatalogo_impreso');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\CatalogoImpreso::class, 'idcatalogo_impreso', 'idcatalogo_impreso');
     }
 
     /**
@@ -78,7 +78,7 @@ class ArticuloCatalogoImpreso extends Model
      */
     public function articuloCatalogoimpreso()
     {
-        return $this->belongsTo(ArticuloCatalogoImpreso::class, 'idarticulo_catalogoimpreso', 'idarticulo_catalogoimpreso');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\ArticuloCatalogoImpreso::class, 'idarticulo_catalogoimpreso', 'idarticulo_catalogoimpreso');
     }
 
     /**
@@ -87,6 +87,6 @@ class ArticuloCatalogoImpreso extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

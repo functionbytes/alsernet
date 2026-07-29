@@ -56,7 +56,7 @@ class Llote extends Model
      */
     public function llote()
     {
-        return $this->belongsTo(Llote::class, 'idllote', 'idllote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Llote::class, 'idllote', 'idllote');
     }
 
     /**
@@ -65,6 +65,6 @@ class Llote extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
     }
 }

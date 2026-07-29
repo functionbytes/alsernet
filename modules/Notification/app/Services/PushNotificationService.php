@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Modules\Core\Services\CircuitBreaker;
-use Modules\Notification\Enums\PushResult;
 
 /**
  * Firebase Cloud Messaging v1 (HTTP API v1)
@@ -49,12 +48,12 @@ class PushNotificationService
     /**
      * Enviar notificación push a un token específico.
      */
-    public function sendToToken(string $token, array $data, string $deviceType = 'android'): PushResult
+    public function sendToToken(string $token, array $data, string $deviceType = 'android'): bool
     {
         if (! $this->circuitBreaker->isAvailable()) {
             Log::warning('FCM circuit breaker is open — sendToToken skipped');
 
-            return PushResult::Failed;
+            return false;
         }
 
         try {
@@ -66,14 +65,7 @@ class PushNotificationService
             if ($response->successful()) {
                 $this->circuitBreaker->recordSuccess();
 
-                return PushResult::Success;
-            }
-
-            if ($this->isInvalidTokenResponse($response)) {
-                // FCM respondió correctamente; el token está muerto, no es indisponibilidad del servicio.
-                $this->circuitBreaker->recordSuccess();
-
-                return PushResult::InvalidToken;
+                return true;
             }
 
             $this->circuitBreaker->recordFailure();
@@ -82,19 +74,19 @@ class PushNotificationService
                 'body' => $response->json(),
             ]);
 
-            return PushResult::Failed;
+            return false;
         } catch (\Exception $e) {
             $this->circuitBreaker->recordFailure();
             Log::error('FCM sendToToken exception: '.$e->getMessage());
 
-            return PushResult::Failed;
+            return false;
         }
     }
 
     /**
      * Enviar notificación a múltiples tokens (un request por token).
      *
-     * @return array<string, PushResult>
+     * @return array<string, bool>
      */
     public function sendToTokens(array $tokens, array $data): array
     {
@@ -105,16 +97,6 @@ class PushNotificationService
         }
 
         return $results;
-    }
-
-    /**
-     * Determinar si la respuesta de FCM indica que el token ya no es válido
-     * (desinstalado / no registrado) y debe desactivarse.
-     */
-    private function isInvalidTokenResponse(Response $response): bool
-    {
-        return $response->status() === 404
-            || $response->json('error.details.0.errorCode') === 'UNREGISTERED';
     }
 
     /**

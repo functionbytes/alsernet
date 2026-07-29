@@ -64,6 +64,6 @@ class TamanoTipofotografia extends Model
      */
     public function tamanoTipofotografia()
     {
-        return $this->belongsTo(TamanoTipofotografia::class, 'idtamano_tipofotografia', 'idtamano_tipofotografia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\TamanoTipofotografia::class, 'idtamano_tipofotografia', 'idtamano_tipofotografia');
     }
 }

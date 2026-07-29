@@ -51,6 +51,6 @@ class GrupoObjetos extends Model
      */
     public function grupoobjeto()
     {
-        return $this->belongsTo(GrupoObjetos::class, 'idgrupoobjeto', 'idgrupoobjeto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupoObjetos::class, 'idgrupoobjeto', 'idgrupoobjeto');
     }
 }

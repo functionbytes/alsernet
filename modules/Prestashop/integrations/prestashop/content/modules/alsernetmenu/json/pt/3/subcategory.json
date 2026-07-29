@@ -1,0 +1,411 @@
+[
+    {
+        "title": "Tacos de Golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 1,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Driver",
+                "url": "\/pt\/golfe\/tacos_de_golfe-drivers",
+                "visible": "1"
+            },
+            {
+                "title": "Ferros",
+                "url": "\/pt\/golfe\/tacos_de_golfe-ferros",
+                "visible": "1"
+            },
+            {
+                "title": "Madeiras",
+                "url": "\/pt\/golfe\/tacos_de_golfe-madeiras",
+                "visible": "1"
+            },
+            {
+                "title": "H\u00edbridos e Utility",
+                "url": "\/pt\/golfe\/tacos_de_golfe-hibridos_e_utility",
+                "visible": "1"
+            },
+            {
+                "title": "Putters",
+                "url": "\/pt\/golfe\/tacos_de_golfe-putters",
+                "visible": "1"
+            },
+            {
+                "title": "Wedges",
+                "url": "\/pt\/golfe\/tacos_de_golfe-wedges",
+                "visible": "1"
+            },
+            {
+                "title": "Kits",
+                "url": "\/pt\/golfe\/tacos_de_golfe-kits",
+                "visible": "1"
+            },
+            {
+                "title": "Tacos de Golfe (Ver todos)",
+                "url": "\/pt\/golfe\/tacos_de_golfe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Cal\u00e7ado de Golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 2,
+        "column": "1",
+        "position_category": "6",
+        "position": "2",
+        "items": [
+            {
+                "title": "Homem",
+                "url": "\/pt\/golfe\/calcado_de_golfe-homem",
+                "visible": "1"
+            },
+            {
+                "title": "Mulher",
+                "url": "\/pt\/golfe\/calcado_de_golfe-mulher",
+                "visible": "1"
+            },
+            {
+                "title": "J\u00fanior",
+                "url": "\/pt\/golfe\/calcado_de_golfe-junior",
+                "visible": "1"
+            },
+            {
+                "title": "Porta-Sapatos",
+                "url": "\/pt\/golfe\/calcado_de_golfe-portasapatos",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios",
+                "url": "\/pt\/golfe\/calcado_de_golfe-acessorios",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7ado de Golfe (Ver todos)",
+                "url": "\/pt\/golfe\/calcado_de_golfe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Bolas de golfe e Acess\u00f3rios",
+        "action": "",
+        "type": "subcategorie",
+        "id": 3,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Callaway",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-callaway",
+                "visible": "1"
+            },
+            {
+                "title": "TaylorMade",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-taylormade",
+                "visible": "1"
+            },
+            {
+                "title": "Titleist",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-titleist",
+                "visible": "1"
+            },
+            {
+                "title": "Srixon",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-srixon",
+                "visible": "1"
+            },
+            {
+                "title": "Pinnacle",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-pinnacle",
+                "visible": "0"
+            },
+            {
+                "title": "Wilson",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-wilson",
+                "visible": "1"
+            },
+            {
+                "title": "XXIO",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-xxio",
+                "visible": "1"
+            },
+            {
+                "title": "Mizuno",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-mizuno",
+                "visible": "1"
+            },
+            {
+                "title": "Donnay",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-donnay",
+                "visible": "0"
+            },
+            {
+                "title": "Bolas de Cores",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-bolas_de_cores",
+                "visible": "1"
+            },
+            {
+                "title": "Bolas de Treino",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-bolas_de_treino",
+                "visible": "1"
+            },
+            {
+                "title": "Bolas usadas",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-bolas_usadas",
+                "visible": "1"
+            },
+            {
+                "title": "Bolas Lady",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-bolas_lady",
+                "visible": "1"
+            },
+            {
+                "title": "Apanha Bolas",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios-apanha_bolas",
+                "visible": "1"
+            },
+            {
+                "title": "Bolas de golfe e Acess\u00f3rios (Ver todos)",
+                "url": "\/pt\/golfe\/bolas_de_golfe_e_acessorios",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Complementos de golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 4,
+        "column": "3",
+        "position_category": "8",
+        "position": "1",
+        "items": [
+            {
+                "title": "Sacos de Viagem",
+                "url": "\/pt\/golfe\/sacos_de_viagem",
+                "visible": "1"
+            },
+            {
+                "title": "Rel\u00f3gios GPS de Golfe",
+                "url": "\/pt\/golfe\/relogios_gps_de_golfe",
+                "visible": "1"
+            },
+            {
+                "title": "Medidores de Dist\u00e2ncia",
+                "url": "\/pt\/golfe\/medidores_de_distancia",
+                "visible": "1"
+            },
+            {
+                "title": "Melhore o seu jogo",
+                "url": "\/pt\/golfe\/melhore_o_seu_jogo",
+                "visible": "1"
+            },
+            {
+                "title": "Guarda-chuvas golf",
+                "url": "\/pt\/golfe\/guardachuvas_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Head Cover",
+                "url": "\/pt\/golfe\/head_cover",
+                "visible": "1"
+            },
+            {
+                "title": "Tees",
+                "url": "\/pt\/golfe\/tees",
+                "visible": "1"
+            },
+            {
+                "title": "Toalhas Golf",
+                "url": "\/pt\/golfe\/toalhas_golf",
+                "visible": "1"
+            },
+            {
+                "title": "\u00d3culos de sol",
+                "url": "\/pt\/golfe\/oculos_de_sol",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos",
+                "url": "\/pt\/golfe\/complementos",
+                "visible": "1"
+            },
+            {
+                "title": "Dvd's e Livros",
+                "url": "\/pt\/golfe\/dvds_e_livros",
+                "visible": "1"
+            },
+            {
+                "title": "Tempo Livre",
+                "url": "\/pt\/golfe\/tempo_livre",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Carros de Golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 5,
+        "column": "4",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Carrinhos de golfe el\u00e9ctricos",
+                "url": "\/pt\/golfe\/carros_de_golfe-electricos",
+                "visible": "1"
+            },
+            {
+                "title": "Carrinhos Manuais",
+                "url": "\/pt\/golfe\/carros_de_golfe-manuais",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos para carros",
+                "url": "\/pt\/golfe\/carros_de_golfe-complementos_para_carros",
+                "visible": "1"
+            },
+            {
+                "title": "Carros de Golfe (Ver todos)",
+                "url": "\/pt\/golfe\/carros_de_golfe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 6,
+        "column": "4",
+        "position_category": "9",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/golfe\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Ofertas Bushnell Golf",
+                "url": "\/pt\/golfe\/ofertas_bushnell_golf",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Golfe",
+                "url": "\/pt\/golfe\/oferta_express_golfe",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta TaylorMade Stealth 2",
+                "url": "\/pt\/golfe\/oferta_taylormade_stealth_2",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Callaway Rogue",
+                "url": "\/pt\/golfe\/oferta_callaway_rogue",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta TaylorMade SIM MAX-2",
+                "url": "\/pt\/golfe\/oferta_taylormade_sim_max2",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Roupa de golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 7,
+        "column": "5",
+        "position_category": "5",
+        "position": "1",
+        "items": [
+            {
+                "title": "Roupa de Golfe",
+                "url": "\/pt\/golfe\/roupa",
+                "visible": "1"
+            },
+            {
+                "title": "Bon\u00e9s",
+                "url": "\/pt\/golfe\/bones",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Luvas de Golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 8,
+        "column": "5",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Homem",
+                "url": "\/pt\/golfe\/luvas_de_golfe-homem",
+                "visible": "1"
+            },
+            {
+                "title": "Mulher",
+                "url": "\/pt\/golfe\/luvas_de_golfe-mulher",
+                "visible": "1"
+            },
+            {
+                "title": "J\u00fanior",
+                "url": "\/pt\/golfe\/luvas_de_golfe-junior",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas de Golfe (Ver todos)",
+                "url": "\/pt\/golfe\/luvas_de_golfe",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Sacos de Golfe",
+        "action": "",
+        "type": "subcategorie",
+        "id": 9,
+        "column": "5",
+        "position_category": "3",
+        "position": "3",
+        "items": [
+            {
+                "title": "Bolsas Carry",
+                "url": "\/pt\/golfe\/sacos_de_golfe-bolsas_carry",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas Cart",
+                "url": "\/pt\/golfe\/sacos_de_golfe-bolsas_cart",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas Stand_Trip\u00e9",
+                "url": "\/pt\/golfe\/sacos_de_golfe-bolsas_standtripe",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas DRY-Imperme\u00e1veis",
+                "url": "\/pt\/golfe\/sacos_de_golfe-bolsas_dryimpermeaveis",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos de Golfe (Ver todos)",
+                "url": "\/pt\/golfe\/sacos_de_golfe",
+                "visible": "1"
+            }
+        ]
+    }
+]

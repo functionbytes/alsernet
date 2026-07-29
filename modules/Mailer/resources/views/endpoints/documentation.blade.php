@@ -150,7 +150,7 @@
                                         <h6 class="fw-bold text-primary mb-2">
                                             <i class="fas fa-list me-1"></i>Variables Esperadas
                                         </h6>
-                                        <div class="bg-light p-3 rounded  border-3 border-info">
+                                        <div class="bg-light p-3 rounded border-start border-3 border-info">
                                             <div class="d-flex flex-wrap gap-2">
                                                 @foreach($endpoint->expected_variables as $variable)
                                                     <span class="badge bg-info text-white" style="font-family: monospace; padding: 6px 10px;">
@@ -168,7 +168,7 @@
                                         <h6 class="fw-bold text-danger mb-2">
                                             <i class="fas fa-asterisk me-1"></i>Variables Requeridas
                                         </h6>
-                                        <div class="bg-light p-3 rounded  border-3 ">
+                                        <div class="bg-light p-3 rounded border-start border-3 border-danger">
                                             <div class="d-flex flex-wrap gap-2">
                                                 @foreach($endpoint->required_variables as $variable)
                                                     <span class="badge bg-danger text-white" style="font-family: monospace; padding: 6px 10px;">

@@ -254,7 +254,7 @@
     /* Checked state - green theme */
     .module-checkbox.border-primary {
         background-color: rgba(144, 187, 19, 0.05);
-        border-color: #90bb13 !important;
+        border-color: #13C672 !important;
     }
 
     /* Checked hover - enhanced green effect */
@@ -274,7 +274,7 @@
         right: 10px;
         width: 24px;
         height: 24px;
-        background-color: #90bb13;
+        background-color: #13C672;
         color: white;
         border-radius: 50%;
         display: flex;
@@ -309,8 +309,8 @@
     }
 
     .form-check-input:checked {
-        background-color: #90bb13;
-        border-color: #90bb13;
+        background-color: #13C672;
+        border-color: #13C672;
     }
 </style>
 @endpush

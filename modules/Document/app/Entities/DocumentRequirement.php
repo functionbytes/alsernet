@@ -2,11 +2,11 @@
 
 namespace Modules\Document\Entities;
 
+use Modules\Core\Models\Lang;
+use Modules\Document\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Core\Models\Lang;
-use Modules\Document\Traits\HasUid;
 
 class DocumentRequirement extends Model
 {
@@ -43,15 +43,15 @@ class DocumentRequirement extends Model
 
     public function langs(): HasMany
     {
-        return $this->hasMany(DocumentRequirementLang::class, 'document_type_requirement_id');
+        return $this->hasMany(DocumentRequirementLang::class);
     }
 
-    // Get translation for specific language (uses the eager-loaded collection to avoid N+1)
+    // Get translation for specific language
     public function translate(?int $langId = null)
     {
         $langId = $langId ?? Lang::getDefaultLangId();
 
-        return $this->langs->firstWhere('lang_id', $langId);
+        return $this->langs()->where('lang_id', $langId)->first();
     }
 
     // Translation methods using database translations

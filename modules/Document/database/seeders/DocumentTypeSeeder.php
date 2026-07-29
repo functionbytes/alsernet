@@ -248,55 +248,7 @@ class DocumentTypeSeeder extends Seeder
                     ],
                 ],
             ],
-            [
-                'slug' => 'compra_online',
-                'label' => 'Compra online',
-                'icon' => 'fa-duotone fas fa-cart-shopping',
-                'color' => '#90bb13',
-                'sort_order' => 6,
-                'sla_multiplier' => 1.0,
-                'requirements' => [
-                    [
-                        'key' => 'dni_frontal',
-                        'is_required' => true,
-                        'max_file_size' => 5120,
-                        'translations' => [
-                            ['lang_id' => 1, 'name' => 'DNI frontal', 'help_text' => 'Foto clara del frente de tu identificación'],
-                            ['lang_id' => 2, 'name' => 'ID Front', 'help_text' => 'Clear photo of the front of your identification'],
-                        ],
-                    ],
-                    [
-                        'key' => 'dni_trasera',
-                        'is_required' => true,
-                        'max_file_size' => 5120,
-                        'translations' => [
-                            ['lang_id' => 1, 'name' => 'DNI trasera', 'help_text' => 'Foto clara del reverso de tu identificación'],
-                            ['lang_id' => 2, 'name' => 'ID Back', 'help_text' => 'Clear photo of the back of your identification'],
-                        ],
-                    ],
-                    [
-                        'key' => 'factura_proforma',
-                        'is_required' => true,
-                        'max_file_size' => 10240,
-                        'translations' => [
-                            ['lang_id' => 1, 'name' => 'Factura proforma', 'help_text' => 'Factura proforma de la compra'],
-                            ['lang_id' => 2, 'name' => 'Proforma invoice', 'help_text' => 'Proforma invoice for the purchase'],
-                        ],
-                    ],
-                    [
-                        'key' => 'contrato_firmado',
-                        'is_required' => true,
-                        'max_file_size' => 10240,
-                        'translations' => [
-                            ['lang_id' => 1, 'name' => 'Contrato firmado', 'help_text' => 'Contrato de compraventa firmado'],
-                            ['lang_id' => 2, 'name' => 'Signed contract', 'help_text' => 'Signed purchase agreement'],
-                        ],
-                    ],
-                ],
-            ],
         ];
-
-        $availableLangIds = DB::table('langs')->pluck('id')->all();
 
         try {
             DB::beginTransaction();
@@ -357,20 +309,16 @@ class DocumentTypeSeeder extends Seeder
                         ]
                     );
 
-                    // Add translations (only for languages actually configured in this environment,
-                    // lang_id has a FK constraint against the langs table)
+                    // Add translations
                     if (! empty($translations)) {
                         foreach ($translations as $translation) {
-                            if (! in_array($translation['lang_id'], $availableLangIds, true)) {
-                                continue;
-                            }
-
                             DB::table('document_type_requirement_langs')->updateOrInsert(
                                 [
-                                    'document_type_requirement_id' => $requirement->id,
+                                    'document_requirement_id' => $requirement->id,
                                     'lang_id' => $translation['lang_id'],
                                 ],
                                 [
+                                    'uid' => (string) Str::uuid(),
                                     'name' => $translation['name'],
                                     'help_text' => $translation['help_text'] ?? '',
                                     'created_at' => now(),

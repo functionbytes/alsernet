@@ -51,6 +51,6 @@ class Tipotelefono extends Model
      */
     public function tipotelefono()
     {
-        return $this->belongsTo(Tipotelefono::class, 'idtipotelefono', 'idtipotelefono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipotelefono::class, 'idtipotelefono', 'idtipotelefono');
     }
 }

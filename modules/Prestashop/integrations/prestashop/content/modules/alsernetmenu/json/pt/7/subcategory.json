@@ -1,0 +1,475 @@
+[
+    {
+        "title": "Fatos de Mergulho",
+        "action": "",
+        "type": "subcategorie",
+        "id": 46,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fatos H\u00famidos",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-fatos_humidos",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos Semi-secos",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-fatos_semisecos",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa Termica Mergulho",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-roupa_termica_mergulho",
+                "visible": "1"
+            },
+            {
+                "title": "Shortys",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-shortys",
+                "visible": "1"
+            },
+            {
+                "title": "Camisolas, T-Shirts e Prote\u00e7ao UV",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-camisolas_tshirts_e_protecao_uv",
+                "visible": "1"
+            },
+            {
+                "title": "Capuzes",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-capuzes",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos Secos",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho-fatos_secos",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos de Mergulho (Ver todos)",
+                "url": "\/pt\/mergulho\/fatos_de_mergulho",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Piscine e nata\u00e7\u00e3o",
+        "action": "",
+        "type": "subcategorie",
+        "id": 47,
+        "column": "1",
+        "position_category": "5",
+        "position": "2",
+        "items": [
+            {
+                "title": "\u00d3culos de nata\u00e7\u00e3o",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-oculos_de_natacao",
+                "visible": "1"
+            },
+            {
+                "title": "Toucas de nata\u00e7\u00e3o",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-toucas_de_natacao",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos de Banho",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-fatos_de_banho",
+                "visible": "1"
+            },
+            {
+                "title": "Sand\u00e1lias de dedo",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-sandalias_de_dedo",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-acessorios",
+                "visible": "1"
+            },
+            {
+                "title": "Barbatanas de nata\u00e7\u00e3o",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-barbatanas_de_natacao",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas estanques",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-bolsas_estanques",
+                "visible": "1"
+            },
+            {
+                "title": "Tamp\u00f5es e pin\u00e7as de nata\u00e7\u00e3o",
+                "url": "\/pt\/mergulho\/piscina_e_natacao-tampoes_e_pincas_de_natacao",
+                "visible": "1"
+            },
+            {
+                "title": "Piscina e Nata\u00e7\u00e3o",
+                "url": "\/pt\/mergulho\/piscina_e_natacao",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Equipamento de mergulho",
+        "action": "",
+        "type": "subcategorie",
+        "id": 48,
+        "column": "2",
+        "position_category": "2",
+        "position": "1",
+        "items": [
+            {
+                "title": "Reguladores",
+                "url": "\/pt\/mergulho\/reguladores",
+                "visible": "1"
+            },
+            {
+                "title": "Octopus",
+                "url": "\/pt\/mergulho\/octopus",
+                "visible": "1"
+            },
+            {
+                "title": "Computadores\/Interface",
+                "url": "\/pt\/mergulho\/computadoresinterface",
+                "visible": "1"
+            },
+            {
+                "title": "Consolas Man\u00f3metros",
+                "url": "\/pt\/mergulho\/consolas_manometros",
+                "visible": "1"
+            },
+            {
+                "title": "B\u00fassulas",
+                "url": "\/pt\/mergulho\/bussulas",
+                "visible": "1"
+            },
+            {
+                "title": "Jackets",
+                "url": "\/pt\/mergulho\/jackets",
+                "visible": "1"
+            },
+            {
+                "title": "Botas de Mergulho",
+                "url": "\/pt\/mergulho\/botas_de_mergulho",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas de mergulho",
+                "url": "\/pt\/mergulho\/luvas_de_mergulho",
+                "visible": "1"
+            },
+            {
+                "title": "Tubos",
+                "url": "\/pt\/mergulho\/tubos",
+                "visible": "1"
+            },
+            {
+                "title": "Focos e Lanternas",
+                "url": "\/pt\/mergulho\/focos_e_lanternas",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras de Mergulho",
+                "url": "\/pt\/mergulho\/mascaras_de_mergulho",
+                "visible": "1"
+            },
+            {
+                "title": "Barbatanas",
+                "url": "\/pt\/mergulho\/barbatanas",
+                "visible": "1"
+            },
+            {
+                "title": "Facas",
+                "url": "\/pt\/mergulho\/facas",
+                "visible": "1"
+            },
+            {
+                "title": "Bolsas de Mergulho",
+                "url": "\/pt\/mergulho\/bolsas_de_mergulho",
+                "visible": "1"
+            },
+            {
+                "title": "Garrafas",
+                "url": "\/pt\/mergulho\/garrafas",
+                "visible": "1"
+            },
+            {
+                "title": "Pneum\u00e1ticos e Motores",
+                "url": "\/pt\/mergulho\/pneumaticos_e_motores",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ropa",
+        "action": "",
+        "type": "subcategorie",
+        "id": 49,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fatos de Banho",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-fatos_de_banho",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7\u00f5es",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-calcoes",
+                "visible": "1"
+            },
+            {
+                "title": "Meias",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-meias",
+                "visible": "0"
+            },
+            {
+                "title": "Camisolas e T-Shirts",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-camisolas_e_tshirts",
+                "visible": "1"
+            },
+            {
+                "title": "Coletes",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-coletes",
+                "visible": "1"
+            },
+            {
+                "title": "Casacos e Softshells",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-casacos_e_softshells",
+                "visible": "1"
+            },
+            {
+                "title": "Cal\u00e7as",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-calcas",
+                "visible": "1"
+            },
+            {
+                "title": "Polos",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-polos",
+                "visible": "0"
+            },
+            {
+                "title": "Roupa Mulher",
+                "url": "\/pt\/mergulho\/roupa_e_calcado-roupa_mulher",
+                "visible": "1"
+            },
+            {
+                "title": "Roupa e Cal\u00e7ado",
+                "url": "\/pt\/mergulho\/roupa_e_calcado",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Eletr\u00f4nicos",
+        "action": "",
+        "type": "subcategorie",
+        "id": 50,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Emissoras",
+                "url": "\/pt\/mergulho\/emissoras",
+                "visible": "1"
+            },
+            {
+                "title": "C\u00e2maras",
+                "url": "\/pt\/mergulho\/camaras",
+                "visible": "0"
+            },
+            {
+                "title": "Gps e Sondas",
+                "url": "\/pt\/gps_e_sondas",
+                "visible": "0"
+            },
+            {
+                "title": "Rel\u00f3gios",
+                "url": "\/pt\/mergulho\/relogios",
+                "visible": "0"
+            }
+        ]
+    },
+    {
+        "title": "Complementos mergulho",
+        "action": "",
+        "type": "subcategorie",
+        "id": 51,
+        "column": "4",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "B\u00f3ias",
+                "url": "\/pt\/mergulho\/complementos_mergulho-boias",
+                "visible": "1"
+            },
+            {
+                "title": "Carretos",
+                "url": "\/pt\/mergulho\/complementos_mergulho-carretos",
+                "visible": "1"
+            },
+            {
+                "title": "Correias",
+                "url": "\/pt\/mergulho\/complementos_mergulho-correias",
+                "visible": "1"
+            },
+            {
+                "title": "Avisadores Ac\u00fasticos",
+                "url": "\/pt\/mergulho\/complementos_mergulho-avisadores_acusticos",
+                "visible": "1"
+            },
+            {
+                "title": "Mosquet\u00f5es",
+                "url": "\/pt\/mergulho\/complementos_mergulho-mosquetoes",
+                "visible": "1"
+            },
+            {
+                "title": "Cabides",
+                "url": "\/pt\/mergulho\/complementos_mergulho-cabides",
+                "visible": "1"
+            },
+            {
+                "title": "Tubos",
+                "url": "\/pt\/mergulho\/complementos_mergulho-tubos",
+                "visible": "1"
+            },
+            {
+                "title": "B\u00f3ias de Descompress\u00e3o",
+                "url": "\/pt\/mergulho\/complementos_mergulho-boias_de_descompressao",
+                "visible": "0"
+            },
+            {
+                "title": "Extensores",
+                "url": "\/pt\/mergulho\/complementos_mergulho-extensores",
+                "visible": "1"
+            },
+            {
+                "title": "Retratores",
+                "url": "\/pt\/mergulho\/complementos_mergulho-retratores",
+                "visible": "1"
+            },
+            {
+                "title": "Kit de Acess\u00f3rios",
+                "url": "\/pt\/mergulho\/complementos_mergulho-kit_de_acessorios",
+                "visible": "1"
+            },
+            {
+                "title": "Multi\u00fasos",
+                "url": "\/pt\/mergulho\/complementos_mergulho-multiusos",
+                "visible": "1"
+            },
+            {
+                "title": "Porta-Chaves",
+                "url": "\/pt\/mergulho\/complementos_mergulho-portachaves",
+                "visible": "1"
+            },
+            {
+                "title": "Complementos mergulho",
+                "url": "\/pt\/mergulho\/complementos_mergulho",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Pesca Submarina",
+        "action": "",
+        "type": "subcategorie",
+        "id": 52,
+        "column": "5",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Armas de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-armas_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Barbatanas de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-barbatanas_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Facas",
+                "url": "\/pt\/mergulho\/pesca_submarina-facas",
+                "visible": "1"
+            },
+            {
+                "title": "M\u00e1scaras de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-mascaras_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Acess\u00f3rios de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-acessorios_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Luvas",
+                "url": "\/pt\/mergulho\/pesca_submarina-luvas",
+                "visible": "1"
+            },
+            {
+                "title": "Botas de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-botas_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Sacos",
+                "url": "\/pt\/mergulho\/pesca_submarina-sacos",
+                "visible": "1"
+            },
+            {
+                "title": "Capuzes",
+                "url": "\/pt\/mergulho\/pesca_submarina-capuzes",
+                "visible": "1"
+            },
+            {
+                "title": "Cuidados do equipamento",
+                "url": "\/pt\/mergulho\/pesca_submarina-cuidados_do_equipamento",
+                "visible": "1"
+            },
+            {
+                "title": "Focos e Lanternas",
+                "url": "\/pt\/mergulho\/pesca_submarina-focos_e_lanternas",
+                "visible": "1"
+            },
+            {
+                "title": "Fatos de Pesca Submarina",
+                "url": "\/pt\/mergulho\/pesca_submarina-fatos_de_pesca_submarina",
+                "visible": "1"
+            },
+            {
+                "title": "Tubos",
+                "url": "\/pt\/mergulho\/pesca_submarina-tubos",
+                "visible": "1"
+            },
+            {
+                "title": "Pesca Submarina (Ver todos)",
+                "url": "\/pt\/mergulho\/pesca_submarina",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e ofertas",
+        "action": "",
+        "type": "subcategorie",
+        "id": 53,
+        "column": "5",
+        "position_category": "9",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquida\u00e7\u00f5es",
+                "url": "\/pt\/mergulho\/outlet_e_liquidacoes",
+                "visible": "1"
+            },
+            {
+                "title": "Oferta Express Mergulho",
+                "url": "\/pt\/mergulho\/oferta_express_mergulho",
+                "visible": "1"
+            }
+        ]
+    }
+]

@@ -13,7 +13,7 @@ trait HasUid
     {
         static::creating(function ($model) {
             if (empty($model->uid)) {
-                $model->uid = Str::uuid();
+                $model->uid = (string) Str::ulid();
             }
         });
     }

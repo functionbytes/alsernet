@@ -133,15 +133,15 @@ return [
 
     'ai' => [
         'auto_tagging' => [
-            'driver' => env('MEDIA_AUTOTAG_DRIVER', 'null'), // null, .claude, openai, google
+            'driver' => env('MEDIA_AUTOTAG_DRIVER', 'null'), // null, claude, openai, google
             'api_key' => env('MEDIA_AUTOTAG_API_KEY'),
         ],
         'pii_detection' => [
-            'driver' => env('MEDIA_PII_DRIVER', 'null'), // null, .claude
+            'driver' => env('MEDIA_PII_DRIVER', 'null'), // null, claude
             'api_key' => env('MEDIA_PII_API_KEY'),
         ],
         'auto_caption' => [
-            'driver' => env('MEDIA_CAPTION_DRIVER', 'null'), // null, .claude, openai
+            'driver' => env('MEDIA_CAPTION_DRIVER', 'null'), // null, claude, openai
             'api_key' => env('MEDIA_CAPTION_API_KEY'),
         ],
         'transcription' => [

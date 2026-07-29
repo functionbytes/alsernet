@@ -8,13 +8,10 @@ use Illuminate\Support\Facades\File;
 class AddOCI8PerformanceTrait extends Command
 {
     protected $signature = 'erp:add-oci8-trait';
-
     protected $description = 'Add UsesOCI8Performance trait to all Oracle models';
 
     private int $updated = 0;
-
     private int $skipped = 0;
-
     private int $errors = 0;
 
     public function handle(): int
@@ -26,9 +23,9 @@ class AddOCI8PerformanceTrait extends Command
 
         // Get all PHP files excluding Mlog and Rupd (logs)
         $files = collect(File::allFiles($modelsPath))
-            ->filter(fn ($file) => $file->getExtension() === 'php')
-            ->filter(fn ($file) => ! str_contains($file->getPath(), '/Mlog/'))
-            ->filter(fn ($file) => ! str_contains($file->getPath(), '/Rupd/'));
+            ->filter(fn($file) => $file->getExtension() === 'php')
+            ->filter(fn($file) => !str_contains($file->getPath(), '/Mlog/'))
+            ->filter(fn($file) => !str_contains($file->getPath(), '/Rupd/'));
 
         $this->info("Found {$files->count()} models to process");
         $this->newLine();
@@ -66,19 +63,17 @@ class AddOCI8PerformanceTrait extends Command
         // Skip if already has the trait
         if (str_contains($content, 'use UsesOCI8Performance')) {
             $this->skipped++;
-
             return;
         }
 
         // Skip if not a Model class
-        if (! str_contains($content, 'extends Model')) {
+        if (!str_contains($content, 'extends Model')) {
             $this->skipped++;
-
             return;
         }
 
         // Add use statement after other use statements
-        $useStatement = 'use Modules\\Erp\\Traits\\UsesOCI8Performance;';
+        $useStatement = "use Modules\\Erp\\Traits\\UsesOCI8Performance;";
 
         // Find the last use statement
         if (preg_match('/^use .+;$/m', $content, $matches, PREG_OFFSET_CAPTURE)) {
@@ -88,7 +83,7 @@ class AddOCI8PerformanceTrait extends Command
             // Insert after the last use statement
             $content = substr_replace(
                 $content,
-                "\n".$useStatement,
+                "\n" . $useStatement,
                 $lastUseLine,
                 0
             );
@@ -96,7 +91,7 @@ class AddOCI8PerformanceTrait extends Command
             // No use statements, add after namespace
             $content = preg_replace(
                 '/^namespace .+;$/m',
-                "$0\n\n".$useStatement,
+                "$0\n\n" . $useStatement,
                 $content
             );
         }
@@ -112,12 +107,11 @@ class AddOCI8PerformanceTrait extends Command
         } elseif (preg_match('/(class \w+ extends Model\s*\{)/s', $content, $matches)) {
             $content = str_replace(
                 $matches[1],
-                $matches[1]."\n    use UsesOCI8Performance;\n",
+                $matches[1] . "\n    use UsesOCI8Performance;\n",
                 $content
             );
         } else {
             $this->skipped++;
-
             return;
         }
 

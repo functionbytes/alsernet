@@ -98,7 +98,7 @@
                     <div class="col-6 col-md-3">
                         <div class="card bg-light-success border-0 mb-3">
                             <div class="card-body p-3 text-center">
-                                <h3 class="mb-1 fw-bold text-success">{{ number_format($successCount) }}</h3>
+                                <h3 class="mb-1 fw-bold ">{{ number_format($successCount) }}</h3>
                                 <small class="text-muted">Exitosos</small>
                             </div>
                         </div>

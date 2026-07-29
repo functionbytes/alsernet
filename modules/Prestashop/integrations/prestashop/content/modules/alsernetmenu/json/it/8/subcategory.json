@@ -1,0 +1,245 @@
+[
+    {
+        "title": "Sicurezza a Bordo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 54,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Giubbotti di Salvataggio",
+                "url": "\/it\/nautica\/giubbotti_di_salvataggio",
+                "visible": "1"
+            },
+            {
+                "title": "Sicurezza e Salvataggio",
+                "url": "\/it\/nautica\/sicurezza_e_salvataggio",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Attrezzatura Personale",
+        "action": "",
+        "type": "subcategorie",
+        "id": 55,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Abbigliamento Nautico",
+                "url": "\/it\/nautica\/abbigliamento_nautico",
+                "visible": "1"
+            },
+            {
+                "title": "Scarpe Nautiche",
+                "url": "\/it\/nautica\/scarpe_nautiche",
+                "visible": "1"
+            },
+            {
+                "title": "Borse da viaggio",
+                "url": "\/it\/nautica\/borse_da_viaggio",
+                "visible": "1"
+            },
+            {
+                "title": "Borse e custodie impermeabili",
+                "url": "\/it\/nautica\/borse_e_custodie_impermeabili",
+                "visible": "1"
+            },
+            {
+                "title": "Fotocamere",
+                "url": "\/it\/nautica\/fotocamere",
+                "visible": "1"
+            },
+            {
+                "title": "Occhiali da sole nautici",
+                "url": "\/it\/nautica\/occhiali_da_sole_nautici",
+                "visible": "1"
+            },
+            {
+                "title": "Lame pieghevoli e multiuso",
+                "url": "\/it\/nautica\/lame_pieghevoli_e_multiuso",
+                "visible": "1"
+            },
+            {
+                "title": "Orologi",
+                "url": "\/it\/nautica\/orologi",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Ancoraggio e Ormeggio",
+        "action": "",
+        "type": "subcategorie",
+        "id": 56,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Fondeggio e ancoraggio",
+                "url": "\/it\/nautica\/fondeggio_e_ancoraggio",
+                "visible": "1"
+            },
+            {
+                "title": "Lance",
+                "url": "\/it\/nautica\/lance",
+                "visible": "1"
+            },
+            {
+                "title": "Motori",
+                "url": "\/it\/nautica\/motori",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Intrattenimento a bordo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 57,
+        "column": "2",
+        "position_category": "4",
+        "position": "2",
+        "items": [
+            {
+                "title": "Nautica Ricreativa",
+                "url": "\/it\/nautica\/nautica_ricreativa",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Attrezzatura di Coperta",
+        "action": "",
+        "type": "subcategorie",
+        "id": 58,
+        "column": "2",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Attrezzatura di Coperta",
+                "url": "\/it\/nautica\/attrezzatura_di_coperta",
+                "visible": "1"
+            },
+            {
+                "title": "Fari e torce nautiche",
+                "url": "\/it\/nautica\/fari_e_torce_nautiche",
+                "visible": "1"
+            },
+            {
+                "title": "Luci di Navigazione",
+                "url": "\/it\/nautica\/luci_di_navigazione",
+                "visible": "1"
+            },
+            {
+                "title": "Manutenzione Barca",
+                "url": "\/it\/nautica\/manutenzione_barca",
+                "visible": "1"
+            },
+            {
+                "title": "Batterie",
+                "url": "\/it\/nautica\/batterie",
+                "visible": "1"
+            },
+            {
+                "title": "Accessori per Carburante Nautico",
+                "url": "\/it\/nautica\/accessori_per_carburante_nautico",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Strumenti, Elettronica e Navigazione",
+        "action": "",
+        "type": "subcategorie",
+        "id": 59,
+        "column": "3",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Radio e VHF Nautici",
+                "url": "\/it\/nautica\/radio_e_vhf_nautici",
+                "visible": "1"
+            },
+            {
+                "title": "GPS",
+                "url": "\/it\/nautica\/gps",
+                "visible": "0"
+            },
+            {
+                "title": "Navigazione",
+                "url": "\/it\/nautica\/navigazione",
+                "visible": "1"
+            },
+            {
+                "title": "Binocoli",
+                "url": "\/it\/nautica\/binocoli",
+                "visible": "1"
+            },
+            {
+                "title": "Sonde Nautiche",
+                "url": "\/it\/nautica\/sonde_nautiche",
+                "visible": "1"
+            },
+            {
+                "title": "Telescopi",
+                "url": "\/it\/nautica\/telescopi",
+                "visible": "1"
+            },
+            {
+                "title": "Rivelatori di metalli",
+                "url": "\/it\/nautica\/rivelatori_di_metalli",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Comfort e Vita a Bordo",
+        "action": "",
+        "type": "subcategorie",
+        "id": 60,
+        "column": "3",
+        "position_category": "7",
+        "position": "2",
+        "items": [
+            {
+                "title": "Acqua a bordo",
+                "url": "\/it\/nautica\/acqua_a_bordo",
+                "visible": "1"
+            },
+            {
+                "title": "Comfort a bordo",
+                "url": "\/it\/nautica\/comfort_a_bordo",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 61,
+        "column": "3",
+        "position_category": "8",
+        "position": "3",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/nautica\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Nautical Express",
+                "url": "\/it\/nautica\/offerta_nautical_express",
+                "visible": "0"
+            }
+        ]
+    }
+]

@@ -3,7 +3,6 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -48,7 +47,7 @@ class DocumentValidationController extends Controller
 
             // Validar que el usuario asignado existe y pertenece al grupo correcto (si se especifica)
             if ($assignedUserId) {
-                $user = User::find($assignedUserId);
+                $user = \App\Models\User::find($assignedUserId);
                 if (! $user) {
                     return response()->json([
                         'success' => false,
@@ -93,7 +92,7 @@ class DocumentValidationController extends Controller
             if ($document->validation_status === 'in_validation') {
                 $response['next_group'] = $document->current_validator_group;
                 $response['assigned_to'] = $document->assigned_user_id
-                    ? User::find($document->assigned_user_id)->full_name
+                    ? \App\Models\User::find($document->assigned_user_id)->full_name
                     : 'Todo el grupo';
             }
 
@@ -113,6 +112,7 @@ class DocumentValidationController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
+           
 
             return response()->json([
                 'success' => false,
@@ -179,7 +179,7 @@ class DocumentValidationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+           
             return response()->json([
                 'success' => false,
                 'message' => 'Error al rechazar documento: '.$e->getMessage(),
@@ -241,14 +241,14 @@ class DocumentValidationController extends Controller
             if (! $response->successful()) {
                 Log::warning('ERP documentacion-ok respondió con error', [
                     'order_id' => $orderId,
-                    'status' => $response->status(),
-                    'body' => $response->body(),
+                    'status'   => $response->status(),
+                    'body'     => $response->body(),
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Error al notificar ERP documentacion-ok', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage(),
+                'error'    => $e->getMessage(),
             ]);
         }
     }

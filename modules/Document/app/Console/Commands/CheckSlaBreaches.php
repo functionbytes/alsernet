@@ -4,10 +4,9 @@ namespace Modules\Document\Console\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Ticket;
 use Modules\Helpdesk\Models\TicketSlaBreach;
-use Modules\Mail\Mail\Helpdesk\TicketSlaBreachMail;
 
 class CheckSlaBreaches extends Command
 {
@@ -205,8 +204,8 @@ class CheckSlaBreaches extends Command
                 $recipients = $ticket->slaPolicy->escalation_recipients ?? [];
                 foreach ($recipients as $email) {
                     // Send email notification
-                    Mail::to($email)->send(
-                        new TicketSlaBreachMail($ticket, $breach)
+                    \Illuminate\Support\Facades\Mail::to($email)->send(
+                        new \Modules\Mail\Mail\Helpdesk\TicketSlaBreachMail($ticket, $breach)
                     );
                 }
             }

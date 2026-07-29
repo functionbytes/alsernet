@@ -3,10 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Proveedor\Proveedor;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -57,7 +53,7 @@ class PedidoproMonte2 extends Model
      */
     public function pedidopro()
     {
-        return $this->belongsTo(PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
     }
 
     /**
@@ -66,7 +62,7 @@ class PedidoproMonte2 extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -75,7 +71,7 @@ class PedidoproMonte2 extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -84,7 +80,7 @@ class PedidoproMonte2 extends Model
      */
     public function seriepedidopro()
     {
-        return $this->belongsTo(SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
     }
 
     /**
@@ -93,7 +89,7 @@ class PedidoproMonte2 extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -102,7 +98,7 @@ class PedidoproMonte2 extends Model
      */
     public function tipopedidoprov()
     {
-        return $this->belongsTo(Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
     }
 
     /**
@@ -111,6 +107,6 @@ class PedidoproMonte2 extends Model
      */
     public function conversionmoneda()
     {
-        return $this->belongsTo(Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
     }
 }

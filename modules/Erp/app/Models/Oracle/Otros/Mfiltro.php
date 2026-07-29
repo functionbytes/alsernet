@@ -51,6 +51,6 @@ class Mfiltro extends Model
      */
     public function mfiltro()
     {
-        return $this->belongsTo(Mfiltro::class, 'idmfiltro', 'idmfiltro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Mfiltro::class, 'idmfiltro', 'idmfiltro');
     }
 }

@@ -99,4 +99,6 @@ class DocumentPermission extends Model
 
         return $permission;
     }
+
+
 }

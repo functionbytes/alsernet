@@ -43,6 +43,6 @@ class Liquidacionbono extends Model
      */
     public function liquidacionbono()
     {
-        return $this->belongsTo(Liquidacionbono::class, 'idliquidacionbono', 'idliquidacionbono');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Liquidacionbono::class, 'idliquidacionbono', 'idliquidacionbono');
     }
 }

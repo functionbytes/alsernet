@@ -51,6 +51,6 @@ class Tipocaja extends Model
      */
     public function tipocaja()
     {
-        return $this->belongsTo(Tipocaja::class, 'idtipocaja', 'idtipocaja');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipocaja::class, 'idtipocaja', 'idtipocaja');
     }
 }

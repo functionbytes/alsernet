@@ -23,10 +23,10 @@
                     </div>
                 @endif
 
-                @if($document->sync?->label)
+                @if($document->documentType?->label)
                         <div class="col-sm-12 col-md-6">
                         <label class="form-label fw-semibold">Origen</label>
-                        <input type="text" class="form-control" disabled value="{{ $document->sync->label }}">
+                        <input type="text" class="form-control" disabled value="{{ $document->sync?->label ?? '-' }}">
                     </div>
                 @endif
 

@@ -52,7 +52,7 @@
                 <button type="button"
                         class="btn btn-sm btn-outline-secondary w-100 mb-2"
                         onclick="document.getElementById('avatarInput').click()">
-                    <i class="fas fa-camera me-1"></i>Cambiar foto
+                    Cambiar foto
                 </button>
             </form>
 
@@ -63,7 +63,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="btn btn-sm btn-link text-danger p-0">
-                        <i class="fas fa-trash-alt me-1"></i>Eliminar foto
+                        Eliminar foto
                     </button>
                 </form>
             @endif
@@ -183,9 +183,9 @@
                     </div>
 
                     <button type="submit"
-                            class="btn px-4"
+                            class="btn px-4 w-100"
                             style="background-color:#90bb13;color:#fff;">
-                        <i class="fas fa-save me-2"></i>Guardar cambios
+                        Guardar cambios
                     </button>
                 </form>
             </div>

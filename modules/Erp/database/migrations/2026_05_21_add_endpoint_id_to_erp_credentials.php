@@ -34,14 +34,14 @@ return new class extends Migration
 
         Schema::table('erp_endpoint_tokens', function (Blueprint $table) {
             // SHOW INDEX equivalent: only add if not present
-            $indexExists = collect(DB::select("SHOW INDEX FROM erp_endpoint_tokens WHERE Key_name = 'erp_endpoint_tokens_endpoint_name_unique'"))->isNotEmpty();
+            $indexExists = collect(\DB::select("SHOW INDEX FROM erp_endpoint_tokens WHERE Key_name = 'erp_endpoint_tokens_endpoint_name_unique'"))->isNotEmpty();
             if (! $indexExists) {
                 $table->unique(['endpoint_id', 'name'], 'erp_endpoint_tokens_endpoint_name_unique');
             }
         });
 
         Schema::table('erp_endpoint_logs', function (Blueprint $table) {
-            $indexExists = collect(DB::select("SHOW INDEX FROM erp_endpoint_logs WHERE Key_name = 'erp_endpoint_logs_success_endpoint_created_idx'"))->isNotEmpty();
+            $indexExists = collect(\DB::select("SHOW INDEX FROM erp_endpoint_logs WHERE Key_name = 'erp_endpoint_logs_success_endpoint_created_idx'"))->isNotEmpty();
             if (! $indexExists) {
                 $table->index(['success', 'endpoint_id', 'created_at'], 'erp_endpoint_logs_success_endpoint_created_idx');
             }

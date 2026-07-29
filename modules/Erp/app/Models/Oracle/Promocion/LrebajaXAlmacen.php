@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Promocion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class LrebajaXAlmacen extends Model
      */
     public function lrebajaXAlmacen()
     {
-        return $this->belongsTo(LrebajaXAlmacen::class, 'idlrebaja_x_almacen', 'idlrebaja_x_almacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\LrebajaXAlmacen::class, 'idlrebaja_x_almacen', 'idlrebaja_x_almacen');
     }
 
     /**
@@ -62,7 +61,7 @@ class LrebajaXAlmacen extends Model
      */
     public function rebaja()
     {
-        return $this->belongsTo(Rebaja::class, 'idrebaja', 'idrebaja');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Rebaja::class, 'idrebaja', 'idrebaja');
     }
 
     /**
@@ -71,6 +70,6 @@ class LrebajaXAlmacen extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

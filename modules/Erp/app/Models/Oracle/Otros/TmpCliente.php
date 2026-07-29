@@ -3,7 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Cliente\Cliente;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -34,6 +33,6 @@ class TmpCliente extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 }

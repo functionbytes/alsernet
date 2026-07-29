@@ -1,10 +1,9 @@
 @extends('layouts.theme')
 
-@section('page_header')
-    @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
-@endsection
-
 @section('content')
+    <div class="container-fluid">
+
+        @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
 
         @include('core::components.alerts')
 
@@ -164,10 +163,10 @@
 
                             <div class="row">
                                 <div class="border-top pt-1 mt-4 pt-2">
-                                    <button type="submit" class="btn btn-primary w-100 mb-1" id="cleanupBtn" disabled>
+                                    <button type="submit" class="btn btn-primary w-100 mb-2" id="cleanupBtn" disabled>
                                         Limpiar tablas seleccionadas
                                     </button>
-                                    <a href="{{ route('settings.database.index') }}"
+                                    <a href="{{ route('backups.database.index') }}"
                                        class="btn btn-secondary w-100 ">
                                         Cancelar
                                     </a>
@@ -191,11 +190,12 @@
 
         </form>
 
+    </div>
 
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1" role="dialog" aria-labelledby="confirmationModalLabel"
          aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmationModalLabel">
@@ -239,7 +239,7 @@
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel"
          aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="successModalLabel">
@@ -415,7 +415,7 @@
                 confirmCleanupBtn.disabled = true;
                 confirmCleanupBtn.innerHTML = '<i class="fa fa-spinner animate-spin"></i> Limpiando...';
 
-                fetch('{{ route("settings.database.cleanup.truncate") }}', {
+                fetch('{{ route("backups.database.cleanup.truncate") }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

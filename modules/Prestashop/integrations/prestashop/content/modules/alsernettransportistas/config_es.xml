@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>alsernettransportistas</name>
+    <displayName><![CDATA[Alsernet - Transportistas]]></displayName>
+    <version><![CDATA[1.0.0]]></version>
+    <description><![CDATA[Se cre&oacute; este administrador para administrar los trasportistas de los pedidos que se env&iacute;an a gesti&oacute;n.]]></description>
+    <author><![CDATA[Alsernet]]></author>
+    <tab><![CDATA[]]></tab>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>

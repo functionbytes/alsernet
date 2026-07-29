@@ -3,9 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya;
-use Modules\Erp\Models\Oracle\Cliente\Cliente;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -52,7 +49,7 @@ class Puntofidelizacion extends Model
      */
     public function puntofidelizacion()
     {
-        return $this->belongsTo(Puntofidelizacion::class, 'idpuntofidelizacion', 'idpuntofidelizacion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Puntofidelizacion::class, 'idpuntofidelizacion', 'idpuntofidelizacion');
     }
 
     /**
@@ -61,7 +58,7 @@ class Puntofidelizacion extends Model
      */
     public function tarjeta()
     {
-        return $this->belongsTo(Tarjetas::class, 'idtarjeta', 'idtarjeta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Tarjetas::class, 'idtarjeta', 'idtarjeta');
     }
 
     /**
@@ -70,7 +67,7 @@ class Puntofidelizacion extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -79,7 +76,7 @@ class Puntofidelizacion extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -88,6 +85,6 @@ class Puntofidelizacion extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 }

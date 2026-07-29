@@ -82,7 +82,7 @@
                                 <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
                                        placeholder="Buscar por nombre de permiso..."
                                        value="{{ request('search') }}">
                             </div>

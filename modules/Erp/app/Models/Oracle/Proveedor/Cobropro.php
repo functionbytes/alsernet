@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Cobro\Formapago;
-use Modules\Erp\Models\Oracle\Cobro\Tcobro;
-use Modules\Erp\Models\Oracle\Otros\AsientoCent;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -56,7 +53,7 @@ class Cobropro extends Model
      */
     public function cobropro()
     {
-        return $this->belongsTo(Cobropro::class, 'idcobropro', 'idcobropro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Cobropro::class, 'idcobropro', 'idcobropro');
     }
 
     /**
@@ -65,7 +62,7 @@ class Cobropro extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
     }
 
     /**
@@ -74,7 +71,7 @@ class Cobropro extends Model
      */
     public function tcobro()
     {
-        return $this->belongsTo(Tcobro::class, 'idtcobro', 'idtcobro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Tcobro::class, 'idtcobro', 'idtcobro');
     }
 
     /**
@@ -83,6 +80,6 @@ class Cobropro extends Model
      */
     public function asiento()
     {
-        return $this->belongsTo(AsientoCent::class, 'idasiento', 'idasiento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\AsientoCent::class, 'idasiento', 'idasiento');
     }
 }

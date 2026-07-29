@@ -91,7 +91,7 @@ class LgeneracionBonoPromocion extends Model
      */
     public function generacionBonoPromo()
     {
-        return $this->belongsTo(GeneracionBonoPromocion::class, 'idgeneracion_bono_promo', 'idgeneracion_bono_promo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\GeneracionBonoPromocion::class, 'idgeneracion_bono_promo', 'idgeneracion_bono_promo');
     }
 
     /**
@@ -100,7 +100,7 @@ class LgeneracionBonoPromocion extends Model
      */
     public function tbonoPromocion()
     {
-        return $this->belongsTo(TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
     }
 
     /**
@@ -109,7 +109,7 @@ class LgeneracionBonoPromocion extends Model
      */
     public function lgeneracionBonoPromo()
     {
-        return $this->belongsTo(LgeneracionBonoPromocion::class, 'idlgeneracion_bono_promo', 'idlgeneracion_bono_promo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\LgeneracionBonoPromocion::class, 'idlgeneracion_bono_promo', 'idlgeneracion_bono_promo');
     }
 
     /**
@@ -118,6 +118,6 @@ class LgeneracionBonoPromocion extends Model
      */
     public function bonoPromocion()
     {
-        return $this->belongsTo(BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
     }
 }

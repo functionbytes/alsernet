@@ -53,7 +53,7 @@ class ExportacionCecaFppedcli extends Model
      */
     public function exportacionCeca()
     {
-        return $this->belongsTo(ExportacionCeca::class, 'idexportacion_ceca', 'idexportacion_ceca');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ExportacionCeca::class, 'idexportacion_ceca', 'idexportacion_ceca');
     }
 
     /**
@@ -62,7 +62,7 @@ class ExportacionCecaFppedcli extends Model
      */
     public function exportacionCecaFppedcli()
     {
-        return $this->belongsTo(ExportacionCecaFppedcli::class, 'idexportacion_ceca_fppedcli', 'idexportacion_ceca_fppedcli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\ExportacionCecaFppedcli::class, 'idexportacion_ceca_fppedcli', 'idexportacion_ceca_fppedcli');
     }
 
     /**
@@ -71,6 +71,6 @@ class ExportacionCecaFppedcli extends Model
      */
     public function fppedcli()
     {
-        return $this->belongsTo(FppedcliCapthaya::class, 'idfppedcli', 'idfppedcli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\FppedcliCapthaya::class, 'idfppedcli', 'idfppedcli');
     }
 }

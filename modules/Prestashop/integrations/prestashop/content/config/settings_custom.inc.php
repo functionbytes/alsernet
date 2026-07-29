@@ -1,0 +1,93 @@
+<?php
+
+define('_PS_SCRIPTSALSERNET_DIR_', _PS_ROOT_DIR_.'/scriptsalsernet/');
+
+define('_PSALV_URL_PROD_', 'https://www.a-alvarez.com');
+// Emails
+define('_PS_PROGRAMACION_EMAIL_', 'alvarez@alsernet.es');
+define('_PS_SISTEMAS_EMAIL_', 'admin@alsernet.es');
+
+// Estado pedidos
+define('_PSALV_ORDER_STATUS_DELIVERED_', 5); // Entregado
+define('_PSALV_ORDER_STATUS_PAYMENTACCEPTED_', 2); // Pago aceptado
+define('_PSALV_ORDER_STATUS_INERP_', 27); // Pedido en ERP
+define('_PSALV_ORDER_STATUS_OUTWARWHOUSE_', 38); // Salida de almacen
+define('_PSALV_ORDER_STOCK_SUM_', [ // Se usa para los estados de pedido [ Suma el Stock ]
+    6, // Pedidos cancelado
+    7, // Reembolsado
+    21, // Financiación cancelada
+    24, // Financiación no autorizada
+    30, // Anulado CEX
+    41, // seQura: Cancelado
+]);
+define('_PSALV_ORDER_STOCK_NOTHING_', [ // Se usa para los estados de pedido [ Deja el Stock que tiene ]
+    5, // Entregado
+    9, // Pedido pendiente por falta de Stock (PAGADO)
+    22, // Financiación formalizada
+    23, // Financiación autorizada
+    27, // Pedido en ERP
+    38, // Salida del Almacén
+    40, // seQura: Aprobado
+]);
+define('_PSALV_ORDER_STOCK_NOTHING_PAYPAL', 33);
+
+// Empleados
+define('_PSALV_EMPLOYEE_ERP_', 24);
+
+// Tipos de producto
+define('_PSALV_CONFIG_PRODUCTTYPE_LOTTERY_', 'BAN_PRODUCT_FEATURE_VALUE_ID_LIST_PRODUCT_TYPE_LOTTERY');
+define('_PSALV_CONFIG_PRODUCTTYPE_FEATURE_', 5);
+define('_PSALV_CONFIG_BLOCKSALE_FEATURE_', 17);
+
+// IDIOMAS
+define('_PSALV_LANG_ID_ES_', 1);
+define('_PSALV_LANG_ID_EN_', 2);
+define('_PSALV_LANG_ID_FR_', 3);
+define('_PSALV_LANG_ID_PT_', 4);
+define('_PSALV_LANG_ID_DE_', 5);
+define('_PSALV_LANG_ID_IT_', 6);
+
+// PAISES
+define('_PSALV_COUNTRY_ID_ES_PENINSULA_', 6);
+define('_PSALV_COUNTRY_ID_ES_BALEARES_', 244);
+define('_PSALV_COUNTRY_ID_ES_CANARIAS_', 243);
+define('_PSALV_COUNTRY_ID_ES_CEUTA_', 242);
+define('_PSALV_COUNTRY_ID_UK_', 17);
+define('_PSALV_COUNTRY_ID_FR_', 8);
+define('_PSALV_COUNTRY_ID_PT_PENINSULA_', 15);
+define('_PSALV_COUNTRY_ID_PT_AZORES_', 245);
+define('_PSALV_COUNTRY_ID_DE_', 1);
+define('_PSALV_COUNTRY_ID_IT_', 10);
+
+// ProcesarTarifalote
+// ERP
+define('_ERP_LOTE_PAIS_ES_', 1);
+define('_ERP_LOTE_PAIS_PT_', 2);
+
+// PS
+define('_PS_LOTE_PAIS_ES_', 0);
+define('_PS_LOTE_PAIS_PT_', 15);
+
+// RELACION
+define('_TARIFA_LOTE_PAIS_', [
+    _ERP_LOTE_PAIS_ES_ => _PS_LOTE_PAIS_ES_,
+    _ERP_LOTE_PAIS_PT_ => _PS_LOTE_PAIS_PT_,
+]);
+
+define('_PSALV_ID_ALMACEN_POCOMACO_', 9);
+
+define('_PSALV_TRADEDOUBLER_EVENTID_TEXTIL', 203522);
+define('_PSALV_TRADEDOUBLER_EVENTID_RESTO', 203524);
+define('_PSALV_TRADEDOUBLER_CATEGORIAS_ROPA_CALZADO', [
+    63, 403, 404, 405, 402, 45, 60, 413, 2624, 2625, 414, 2623, 2622, 415, 2620, 2621, 64, 11219, 11220, 1744, 1745, 1746, 1747, 1748, 1749, 1750, 1743, 1742, 1751, 1752, 1753, 1754, 1755, 1756, 1757, 1758,
+    11221, 41, 1276, 1268, 1280, 22, 2769, 2784, 2759, 2779, 2764, 2804, 2799, 2794, 2774, 2789, 2809, 591, 602, 592, 593, 594, 595, 1480, 1478, 2704, 2711, 2715, 2716, 2717, 2718, 2719, 2720, 2721, 2722,
+    2723, 2724, 2725, 2726, 2727, 2681, 2693, 2694, 2695, 2696, 2697, 2698, 178, 2444, 2443, 1453, 1474, 1626, 1627, 1628, 1629, 1630, 1631, 1632, 181, 185, 2338, 2339, 2340, 2341, 2342, 2343, 2344, 2345,
+    2346, 2347, 2348, 2337, 217, 615, 621, 613, 623, 609, 608, 611, 606, 612, 12708, 614, 625, 618, 604, 624, 607, 603, 610, 616, 617, 619, 620, 605, 622, 23, 2785, 2770, 2765, 2760, 2805, 2780, 2795, 2800,
+    2775, 2790, 2810, 274, 1054, 1052, 1057, 1059, 1053, 1055, 11222, 1056, 1058, 1060, 1638, 1648, 21, 2768, 2783, 2758, 2763, 2778, 2793, 2798, 2803, 2788, 2773, 2808, 109, 2520, 2521, 2205, 129, 506, 503,
+    497, 570, 571, 572, 505, 496, 495, 494, 502, 501, 499, 504, 2138, 2139, 2140, 500, 2018, 2031, 2032, 2035, 2036, 2037, 2038, 2039, 148, 2374, 2384, 2386, 2379, 2380, 2383, 2375, 2377, 2376, 2378, 2381,
+    2382, 2385, 72, 2816, 2817, 2818, 2819, 90, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136, 1137, 1138, 1139, 1140, 1141, 1142, 1143, 1144, 1681, 2362, 2363, 1683, 307, 309, 24, 2761, 2766, 2771, 2781,
+    2776, 2786, 2791, 2796, 2801, 2806, 2811, 304, 2162, 11224, 2163, 2164, 2165, 2166, 2167, 2168, 302, 2169, 2170, 2171, 2173, 2174, 301, 2175, 2176, 2177, 2178, 2179, 2180, 321, 312, 2666, 2667, 326,
+    1780, 1781, 1782, 1783, 2232, 2233, 2235, 2236, 2237, 2240, 2246, 1193, 1191, 1777, 1778, 1779, 2323, 2322, 2321, 2762, 2767, 2772, 2777, 2782, 2787, 2792, 2797, 2802, 2807, 333, 2481, 2483, 2484, 2485,
+    2486, 2487, 2488, 2489, 2490, 2491, 2482, 336, 2472, 2473, 2474, 2475, 2476, 2477, 2478, 2479, 2480, 340, 2293, 2308, 2309, 2311, 2313, 2314, 2289, 374, 1168, 1169, 1170, 1171, 1172, 1173, 1174, 1175,
+    1176, 1177, 1178, 1180, 1181,
+]);

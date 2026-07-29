@@ -30,7 +30,7 @@ class FamiliaClResource extends JsonResource
             // Subfamilias de esta familia
             'subfamilias' => $this->when(
                 $this->relationLoaded('subfamilias'),
-                fn () => $this->subfamilias->map(fn ($subfamilia) => [
+                $this->subfamilias->map(fn ($subfamilia) => [
                     'id' => $subfamilia->idsubfamilia_cl,
                     'descripcion' => $this->utf8Clean($subfamilia->descripcion),
                     'descripcionCorta' => $this->utf8Clean($subfamilia->desc_corta),
@@ -41,7 +41,7 @@ class FamiliaClResource extends JsonResource
             // Estadísticas
             'estadisticas' => $this->when(
                 $this->relationLoaded('subfamilias'),
-                fn () => [
+                [
                     'totalSubfamilias' => $this->subfamilias->count(),
                     'subfamiliasActivas' => $this->subfamilias->where('estado', 1)->count(),
                 ]

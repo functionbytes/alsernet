@@ -3,9 +3,10 @@
 namespace Modules\Erp\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Modules\Core\Models\Setting;
@@ -22,7 +23,7 @@ class OracleDatabaseController extends Controller
         // Obtener estado de la conexión
         $lastCheck = $settings['oracle_last_check'] ?? null;
         $lastStatus = $settings['oracle_last_status'] ?? 'unknown';
-        $lastCheckDate = $lastCheck ? Carbon::parse($lastCheck) : null;
+        $lastCheckDate = $lastCheck ? \Carbon\Carbon::parse($lastCheck) : null;
 
         return view('erp::settings.database.index', compact('settings', 'lastStatus', 'lastCheckDate'));
     }
@@ -78,6 +79,20 @@ class OracleDatabaseController extends Controller
 
         // Actualizar .env
         $this->updateOracleEnv($request);
+
+        // Forzar que la nueva configuración se aplique de inmediato:
+        // 1) invalidar el bundle de settings ERP cacheado (settings_erp_bundle, TTL 10 min)
+        // 2) olvidar las claves oracle_* cacheadas individualmente
+        // 3) cerrar la conexión Oracle activa para que la próxima reconecte con el nuevo host/schema
+        Setting::clearErpSettingsCache();
+        foreach (array_keys($settingsData) as $cacheKey) {
+            Cache::forget("setting_{$cacheKey}");
+        }
+        try {
+            DB::purge('oracle');
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo purgar la conexión Oracle tras guardar config', ['error' => $e->getMessage()]);
+        }
 
         return redirect()->route('settings.erp.database.index')
             ->with('success', 'Configuración de Oracle Database actualizada correctamente');
@@ -136,15 +151,13 @@ class OracleDatabaseController extends Controller
             $settings = Setting::getErpSettings();
 
             // Intentar conectar a Oracle
-            // Fallback a la conexión 'oracle' ya definida en config/database.php
-            // (evita leer env() fuera de un archivo de config).
-            $host = $settings['oracle_host'] ?? config('database.connections.oracle.host');
-            $port = (int) ($settings['oracle_port'] ?? config('database.connections.oracle.port'));
-            $serviceName = $settings['oracle_service_name'] ?? config('database.connections.oracle.service_name');
-            $username = $settings['oracle_username'] ?? config('database.connections.oracle.username');
-            $password = $settings['oracle_password'] ?? config('database.connections.oracle.password');
-            $charset = $settings['oracle_charset'] ?? config('database.connections.oracle.charset');
-            $database = $settings['oracle_database'] ?? config('database.connections.oracle.database');
+            $host = $settings['oracle_host'] ?? env('ORACLE_HOST');
+            $port = (int) ($settings['oracle_port'] ?? env('ORACLE_PORT', 1521));
+            $serviceName = $settings['oracle_service_name'] ?? env('ORACLE_SERVICE_NAME');
+            $username = $settings['oracle_username'] ?? env('ORACLE_USERNAME');
+            $password = $settings['oracle_password'] ?? env('ORACLE_PASSWORD');
+            $charset = $settings['oracle_charset'] ?? env('ORACLE_CHARSET', 'AL32UTF8');
+            $database = $settings['oracle_database'] ?? env('ORACLE_DATABASE');
 
             // Check if OCI8 extension is available
             if (! extension_loaded('oci8')) {
@@ -206,8 +219,14 @@ class OracleDatabaseController extends Controller
             ]);
 
             // Actualizar estado en settings
-            Setting::set('oracle_last_check', now()->toIso8601String());
-            Setting::set('oracle_last_status', 'online');
+            Setting::updateOrCreate(
+                ['key' => 'oracle_last_check'],
+                ['value' => now()->toIso8601String()]
+            );
+            Setting::updateOrCreate(
+                ['key' => 'oracle_last_status'],
+                ['value' => 'online']
+            );
 
             return response()->json([
                 'success' => true,
@@ -224,7 +243,10 @@ class OracleDatabaseController extends Controller
         } catch (\Exception $e) {
             Log::error('Error verificando conexión Oracle: '.$e->getMessage());
 
-            Setting::set('oracle_last_status', 'offline');
+            Setting::updateOrCreate(
+                ['key' => 'oracle_last_status'],
+                ['value' => 'offline']
+            );
 
             return response()->json([
                 'success' => false,
@@ -236,6 +258,134 @@ class OracleDatabaseController extends Controller
                     'Asegúrate de que el servidor Oracle está en línea',
                     'Verifica que el usuario y contraseña sean correctos',
                 ],
+                'timestamp' => now()->toIso8601String(),
+            ], 200);
+        }
+    }
+
+    /**
+     * Check Oracle connection via Docker when OCI8 is not available
+     */
+    private function checkConnectionViaDocker(array $params)
+    {
+        try {
+            $host = $params['host'];
+            $port = $params['port'];
+            $serviceName = $params['service_name'];
+            $username = addslashes($params['username']);
+            $password = addslashes($params['password']);
+
+            // Build TNS connection string (key/value format)
+            // This format works better with OCI8
+            $connString = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={$host})(PORT={$port}))(CONNECT_DATA=(SERVICE_NAME={$serviceName})))";
+
+            // Build PHP command to test connection with better error handling
+            $phpCode = sprintf(
+                'ini_set("display_errors", "1"); '.
+                'error_reporting(E_ALL); '.
+                '$conn = @oci_connect(\'%s\', \'%s\', \'%s\', "AL32UTF8"); '.
+                'if ($conn) { '.
+                '    $stmt = oci_parse($conn, "SELECT TO_CHAR(SYSDATE, \'DD-MON-YY HH24:MI:SS\') AS fecha FROM DUAL"); '.
+                '    if ($stmt) { '.
+                '        $exec = oci_execute($stmt); '.
+                '        if ($exec) { '.
+                '            $row = oci_fetch_array($stmt, OCI_ASSOC); '.
+                '            echo "SUCCESS:" . ($row ? $row["FECHA"] : "null"); '.
+                '        } else { '.
+                '            $error = oci_error($stmt); '.
+                '            echo "EXEC_ERROR:" . $error["message"]; '.
+                '        } '.
+                '    } else { '.
+                '        $error = oci_error($conn); '.
+                '        echo "PARSE_ERROR:" . $error["message"]; '.
+                '    } '.
+                '    oci_close($conn); '.
+                '} else { '.
+                '    $error = oci_error(); '.
+                '    echo "CONNECT_ERROR:" . ($error ? $error["message"] : "Unknown error"); '.
+                '}',
+                $username,
+                $password,
+                $connString
+            );
+
+            // Execute via Docker
+            $command = sprintf(
+                'docker exec manager-app php -r %s 2>&1',
+                escapeshellarg($phpCode)
+            );
+
+            Log::info('Oracle connection test via Docker', [
+                'host' => $host,
+                'port' => $port,
+                'service_name' => $serviceName,
+                'conn_string' => $connString,
+            ]);
+
+            $output = shell_exec($command);
+
+            Log::info('Oracle connection test output', [
+                'output' => $output,
+                'output_length' => strlen($output),
+            ]);
+
+            // Parse output
+            if (strpos($output, 'SUCCESS:') === 0) {
+                $serverDate = trim(substr($output, 8));
+
+                // Update settings
+                Setting::updateOrCreate(
+                    ['key' => 'oracle_last_check'],
+                    ['value' => now()->toIso8601String()]
+                );
+                Setting::updateOrCreate(
+                    ['key' => 'oracle_last_status'],
+                    ['value' => 'online']
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'status' => 'online',
+                    'message' => "Conexión con Oracle Database establecida correctamente. Fecha servidor: {$serverDate}",
+                    'host' => "{$host}:{$port}",
+                    'database' => $params['database'],
+                    'service_name' => $serviceName,
+                    'server_date' => $serverDate,
+                    'via' => 'docker',
+                    'timestamp' => now()->toIso8601String(),
+                ]);
+            } elseif (strpos($output, 'CONNECT_ERROR:') === 0) {
+                $errorMsg = trim(substr($output, 14));
+                throw new \Exception("Conexión rechazada: {$errorMsg}. Verifica que el host {$host}:{$port} sea accesible.");
+            } elseif (strpos($output, 'PARSE_ERROR:') === 0) {
+                $errorMsg = trim(substr($output, 12));
+                throw new \Exception("Error al procesar la consulta: {$errorMsg}");
+            } elseif (strpos($output, 'EXEC_ERROR:') === 0) {
+                $errorMsg = trim(substr($output, 11));
+                throw new \Exception("Error al ejecutar la consulta: {$errorMsg}");
+            } else {
+                throw new \Exception('Respuesta inesperada del servidor: '.trim($output));
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Error verificando conexión Oracle: '.$e->getMessage());
+
+            Setting::updateOrCreate(
+                ['key' => 'oracle_last_status'],
+                ['value' => 'offline']
+            );
+
+            return response()->json([
+                'success' => false,
+                'status' => 'offline',
+                'message' => 'Error al conectar a Oracle: '.$e->getMessage(),
+                'troubleshooting' => [
+                    'Verifica que el host y puerto sean correctos: '.$params['host'].':'.$params['port'],
+                    'Asegúrate de que el servidor Oracle está en línea',
+                    'Verifica que el usuario y contraseña sean correctos',
+                    'Comprueba la conectividad de red desde el contenedor',
+                ],
+                'via' => 'docker',
                 'timestamp' => now()->toIso8601String(),
             ], 200);
         }

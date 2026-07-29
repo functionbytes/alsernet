@@ -24,13 +24,13 @@ class DocumentCreated implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, Channel>
+     * @return array<int, \Illuminate\Broadcasting\Channel>
      */
     public function broadcastOn(): array
     {
         return [
             new Channel('documents.created'),
-            new PrivateChannel('documents.'.$this->document->user_id),
+            new PrivateChannel('documents.'.$this->document->user_id)
         ];
     }
 
@@ -45,7 +45,7 @@ class DocumentCreated implements ShouldBroadcast
             'title' => $this->document->title,
             'order_id' => $this->document->order_id,
             'order_reference' => $this->document->order_reference ?? $this->document->order_id,
-            'customer_name' => $this->document->customer_firstname.' '.$this->document->customer_lastname,
+            'customer_name' => $this->document->customer_firstname . ' ' . $this->document->customer_lastname,
             'type' => $this->document->document_type_id,
             'stage' => $this->document->current_stage,
             'created_at' => $this->document->created_at,

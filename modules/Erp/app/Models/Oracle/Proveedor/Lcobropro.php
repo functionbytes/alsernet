@@ -60,7 +60,7 @@ class Lcobropro extends Model
      */
     public function lcobropro()
     {
-        return $this->belongsTo(Lcobropro::class, 'idlcobropro', 'idlcobropro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Lcobropro::class, 'idlcobropro', 'idlcobropro');
     }
 
     /**
@@ -69,6 +69,6 @@ class Lcobropro extends Model
      */
     public function cobropro()
     {
-        return $this->belongsTo(Cobropro::class, 'idcobropro', 'idcobropro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Cobropro::class, 'idcobropro', 'idcobropro');
     }
 }

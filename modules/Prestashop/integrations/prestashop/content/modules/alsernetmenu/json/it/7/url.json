@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Ti potrebbe interessare",
+    "language": "es",
+    "position": 1,
+    "column": 1,
+    "url": "",
+    "action": "",
+    "type": "special",
+    "items": [
+      {
+        "title": "Scopri le nostre marche",
+        "url": "/it/subacquea/lista-marchi"
+      },
+      {
+        "title": "Offerte",
+        "url": "/it/subacquea/offerte"
+      },
+      {
+        "title": "Novità",
+        "url": "/it/subacquea/novita"
+      },
+      {
+        "title": "I più venduti",
+        "url": "/it/subacquea/i_piu_venduti"
+      }
+    ]
+  }
+]

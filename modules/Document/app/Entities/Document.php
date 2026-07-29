@@ -2,19 +2,17 @@
 
 namespace Modules\Document\Entities;
 
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
-use Modules\Core\Models\Setting;
+use Illuminate\Support\Facades\Log;
 use Modules\Document\Services\DocumentMailService;
 use Modules\Document\Traits\HasUid;
 use Modules\Document\Traits\HasValidationWorkflow;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Modules\Core\Models\Setting;
 
 class Document extends Model implements HasMedia
 {
@@ -25,7 +23,6 @@ class Document extends Model implements HasMedia
     protected $casts = [
         'confirmed_at' => 'datetime',
         'uploaded_confirmation_sent_at' => 'datetime',
-        'documents_completed_at' => 'datetime',
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'order_date' => 'datetime',
@@ -50,7 +47,6 @@ class Document extends Model implements HasMedia
         'lang_id',
         'confirmed_at',
         'uploaded_confirmation_sent_at',
-        'documents_completed_at',
         'reminder_at',
         'reminder_sent_at',
         'order_id',
@@ -81,35 +77,27 @@ class Document extends Model implements HasMedia
         'updated_at',
     ];
 
-    /**
-     * Memoization cache for getRequiredDocumentsWithLabels() so repeated calls
-     * on the same instance don't recompute/requery translations.
-     */
-    protected ?array $requiredDocumentsWithLabelsCache = null;
-
-    protected ?string $requiredDocumentsWithLabelsCacheKey = null;
-
     // =========================================================================
     // MUTATORS - Automatic field transformations
     // =========================================================================
 
-    protected function customerFirstname(): Attribute
+    protected function customerFirstname(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return Attribute::make(
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
 
-    protected function customerLastname(): Attribute
+    protected function customerLastname(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return Attribute::make(
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
 
-    protected function customerCompany(): Attribute
+    protected function customerCompany(): \Illuminate\Database\Eloquent\Casts\Attribute
     {
-        return Attribute::make(
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
@@ -142,9 +130,9 @@ class Document extends Model implements HasMedia
     /**
      * Filtra documentos por estado de carga (con o sin media)
      *
-     * @param  Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  int|null  $hasMedia  1 = con media, 0 = sin media, null = todos
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeFilterByUploadStatus($query, $hasMedia = null)
     {
@@ -163,9 +151,9 @@ class Document extends Model implements HasMedia
      * Busca documentos por nombre de cliente, ID de orden u orden reference
      * Busca tanto en datos denormalizados como en relaciones
      *
-     * @param  Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string  $search  Término de búsqueda
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeSearchByCustomerOrOrder($query, $search = '')
     {
@@ -192,8 +180,8 @@ class Document extends Model implements HasMedia
     /**
      * Ordena documentos por prioridad (sin carga primero), fecha de creación y agrupa por día
      *
-     * @param  Builder  $query
-     * @return Builder
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeOrderByUploadPriority($query)
     {
@@ -209,16 +197,16 @@ class Document extends Model implements HasMedia
     /**
      * Filtra documentos por rango de fechas
      *
-     * @param  Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string|null  $dateFrom  Fecha inicial en formato Y-m-d
      * @param  string|null  $dateTo  Fecha final en formato Y-m-d
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeFilterByDateRange($query, $dateFrom = null, $dateTo = null)
     {
         if ($dateFrom) {
             try {
-                $startDate = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay();
+                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay();
                 $query->whereDate('created_at', '>=', $startDate);
             } catch (\Exception $e) {
                 // Si la fecha es inválida, ignorar el filtro
@@ -227,7 +215,7 @@ class Document extends Model implements HasMedia
 
         if ($dateTo) {
             try {
-                $endDate = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay();
+                $endDate = \Carbon\Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay();
                 $query->whereDate('created_at', '<=', $endDate);
             } catch (\Exception $e) {
                 // Si la fecha es inválida, ignorar el filtro
@@ -242,12 +230,12 @@ class Document extends Model implements HasMedia
      * Combina filtrado, búsqueda, filtrado por fechas y ordenamiento
      * Nota: Usa datos denormalizados sin cargar relaciones para mejor performance
      *
-     * @param  Builder  $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @param  string  $search  Término de búsqueda
      * @param  int|null  $uploadStatus  1 = con media, 0 = sin media, null = todos
      * @param  string|null  $dateFrom  Fecha inicial en formato Y-m-d
      * @param  string|null  $dateTo  Fecha final en formato Y-m-d
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeFilterListing($query, $search = '', $uploadStatus = null, $dateFrom = null, $dateTo = null)
     {
@@ -779,30 +767,20 @@ class Document extends Model implements HasMedia
     /**
      * Obtiene documentos requeridos con sus labels descriptivos
      * Retorna array asociativo: {"dni_frontal": "DNI - Cara delantera", ...}
-     * Memoizado por instancia (keyed por type_id+lang_id) para evitar recalcular
-     * en llamadas repetidas dentro del mismo request.
      *
      * @return array Array con keys y labels
      */
     public function getRequiredDocumentsWithLabels(): array
     {
-        $cacheKey = $this->type_id.':'.$this->lang_id;
-
-        if ($this->requiredDocumentsWithLabelsCacheKey === $cacheKey && $this->requiredDocumentsWithLabelsCache !== null) {
-            return $this->requiredDocumentsWithLabelsCache;
-        }
-
-        // Eager load la relación completa para que DocumentRequirement::translate() no dispare N+1
-        $this->loadMissing('documentType.requirements.langs');
-
+        // Obtener configuración del tipo de documento desde la relación type_id
         $documentType = $this->documentType;
 
-        $this->requiredDocumentsWithLabelsCache = $documentType
-            ? $documentType->getRequiredDocuments($this->lang_id)
-            : $this->getDefaultDocuments();
-        $this->requiredDocumentsWithLabelsCacheKey = $cacheKey;
+        if ($documentType) {
+            // Pass the document's language ID to get translated labels
+            return $documentType->getRequiredDocuments($this->lang_id);
+        }
 
-        return $this->requiredDocumentsWithLabelsCache;
+        return $this->getDefaultDocuments();
     }
 
     /**
@@ -1004,6 +982,28 @@ class Document extends Model implements HasMedia
     }
 
     /**
+     * Verifica si el documento incluye algún fusil de pesca submarina.
+     * Se usa para mostrar el aviso de licencia federativa en la vista de gestión.
+     */
+    public function hasFusilProducts(): bool
+    {
+        return $this->products()
+            ->whereRaw('LOWER(product_name) LIKE ?', ['%fusil%'])
+            ->exists();
+    }
+
+    /**
+     * Verifica si el documento incluye el producto complementario LICENCIA-B.
+     * Cuando está presente se crea una nota interna y se envía el email de licencia.
+     */
+    public function hasLicenciaBProduct(): bool
+    {
+        return $this->products()
+            ->where('product_reference', 'LICENCIA-B')
+            ->exists();
+    }
+
+    /**
      * Check if any product in this document requires DNI
      * Uses the new DocumentProductBlockade system instead of PrestaShop features
      */
@@ -1157,12 +1157,6 @@ class Document extends Model implements HasMedia
     {
         parent::boot();
 
-        static::saving(function (Document $document) {
-            if ($document->isDirty('customer_cellphone')) {
-                $document->customer_cellphone_normalized = self::normalizeCellphone($document->customer_cellphone);
-            }
-        });
-
         static::creating(function (Document $document) {
             // If no type_id is set, default to 'dni' type (fallback when no products or blockades)
             if (! $document->type_id) {
@@ -1240,20 +1234,6 @@ class Document extends Model implements HasMedia
         });
     }
 
-    /**
-     * Últimos 9 dígitos de un teléfono tras quitar todo lo no-numérico, o null
-     * si quedan menos de 9. Mantiene sincronizada la columna indexada
-     * customer_cellphone_normalized, usada por HelpdeskDocument para el
-     * fallback de match conversación↔expediente por teléfono (clientes sin
-     * email, p. ej. WhatsApp).
-     */
-    private static function normalizeCellphone(?string $phone): ?string
-    {
-        $digits = preg_replace('/\D+/', '', (string) $phone);
-
-        return strlen($digits) >= 9 ? substr($digits, -9) : null;
-    }
-
     public function buildUploadUrl(): ?string
     {
 
@@ -1302,4 +1282,5 @@ class Document extends Model implements HasMedia
         // Reemplazar el placeholder {uid} con el UID real del documento
         return str_replace('{uid}', $this->uid, $fullUrl);
     }
+
 }

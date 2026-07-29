@@ -51,6 +51,6 @@ class Tipodiario extends Model
      */
     public function tipodiario()
     {
-        return $this->belongsTo(Tipodiario::class, 'idtipodiario', 'idtipodiario');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodiario::class, 'idtipodiario', 'idtipodiario');
     }
 }

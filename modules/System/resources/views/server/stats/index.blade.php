@@ -177,7 +177,7 @@
                                  aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
-                        <div class="alert {{ $stats['disk_usage_percent'] > 80 ? 'alert-danger' : ($stats['disk_usage_percent'] > 60 ? 'alert-warning' : 'alert-success') }}   mb-0" role="alert">
+                        <div class="alert {{ $stats['disk_usage_percent'] > 80 ? 'alert-danger' : ($stats['disk_usage_percent'] > 60 ? 'alert-warning' : 'alert-success') }} border-start border-4 mb-0" role="alert">
                             @if($stats['disk_usage_percent'] > 80)
                                 <i class="fa fa-triangle-exclamation me-2"></i>
                                 <strong>Crítico:</strong> El espacio en disco está casi lleno. Considera liberar espacio inmediatamente.
@@ -277,7 +277,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="alert alert-light   border-primary mb-0" role="alert">
+                        <div class="alert alert-light border-start border-4 border-primary mb-0" role="alert">
                             <div class="d-flex align-items-start gap-2">
                                 <i class="fa fa-clock text-primary mt-1"></i>
                                 <div class="small">

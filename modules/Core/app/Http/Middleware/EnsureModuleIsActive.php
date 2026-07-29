@@ -84,10 +84,9 @@ class EnsureModuleIsActive
                 }
 
                 // Intentar capitalizar el recurso (events → Event)
-                $guessed = ucfirst(rtrim($resource, 's'));
-                $module = Module::find($guessed);
-                if ($module) {
-                    return $module->getName();
+                $moduleName = ucfirst(rtrim($resource, 's'));
+                if (Module::find($moduleName)) {
+                    return $moduleName;
                 }
             }
         }

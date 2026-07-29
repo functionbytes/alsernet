@@ -1,0 +1,154 @@
+.boletines-header {
+    width: 100%;
+}
+
+.boletines-footer {
+    width: 100%;
+    background: #FFF;
+}
+
+.boletines-header h1 {
+    background: #90BB13;
+    margin: 0;
+    font-size: 16px !important;
+    text-transform: uppercase;
+    color: #fff !important;
+    font-weight: 700 !important;
+    border-radius: 4px;
+    padding: 8px 15px !important;
+    line-height: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.boletines-header h2 {
+    font-size: 19px;
+    color: #333;
+    text-transform: uppercase;
+    font-weight: 700;
+    text-align: left;
+    margin-bottom: 15px;
+    margin-top: 20px;
+}
+
+.boletines-header h3 {
+    font-size: 19px;
+    color: #90BB13;
+    font-weight: 400;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.boletines-header p {
+    text-align: left;
+    font-size: 15px;
+    color: #333;
+}
+
+
+.boletines-header hr {
+    border: none !important; /* Elimina el borde predeterminado */
+    width: 100% !important;
+    border-top: 1px solid rgba(0, 0, 0, .1) !important;
+    height: unset !important;
+}
+
+.boletines-footer hr {
+    border: none !important; /* Elimina el borde predeterminado */
+    width: 100% !important;
+    border-top: 1px solid rgba(0, 0, 0, .1) !important;
+    height: unset !important;
+}
+
+
+.bloque-boletin {
+    max-width: 80%;
+    margin: 0 auto;
+    background: #F6F6F6;
+    margin-bottom: 25px;
+}
+
+.bloque-boletin h3.titulobol {
+    background: #90BB13;
+    font-size: 19px;
+    color: #FFF;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: flex;
+    min-height: 50px;
+    line-height: normal;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .bloque-boletin h3.titulobol {
+        padding: 0 10px;
+    }
+}
+
+.bloque-boletin div.contentbol {
+    background: #F6F6F6;
+    font-size: 15px;
+    color: #333;
+    padding: 20px;
+    padding-top: 0;
+}
+
+.bloque-boletin .contentbol p{
+    background: #F6F6F6;
+    font-size: 15px !important;
+    color: #333;
+    padding: 20px;
+    padding-top: 0;
+    font-family: Barlow !important;
+}
+
+.bol-anteriores-title {
+    font-size: 19px;
+    color: #333;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    text-align: left;
+    margin-top: 30px;
+}
+
+.boletines-footer .text-sm-center {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.boton-descarga{
+    text-align: center !important;
+    padding-top: 10px;
+}
+
+.boton-descarga a{
+    display: inline-block;  /* Permite aplicar padding, margin, etc. */
+    font-size: 19px;
+    color: #FFF !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    background: #90BB13;
+    text-align: center !important;
+    padding: 10px 30px;
+}
+
+
+.ano-boletines {
+    border: 1px solid #90BB13;
+    font-size: 16px;
+    color: #90BB13;
+    font-weight: 700;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-bottom: 20px;
+    margin-right: 20px;
+    width: 73px;
+    height: 30px;
+    line-height: 30px;
+    background: transparent;
+    cursor: pointer;
+}

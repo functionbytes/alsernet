@@ -4,9 +4,6 @@ namespace App\Models;
 
 use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -15,10 +12,7 @@ use Modules\Auth\Traits\HasUserAttributes;
 use Modules\Auth\Traits\HasUserScopes;
 use Modules\Core\Traits\HasQuotaManagement;
 use Modules\Document\Traits\HasDocumentPermissions;
-use Modules\Helpdesk\Models\AgentSettings;
-use Modules\Helpdesk\Models\Group;
 use Modules\Notification\Traits\HasNotificationSystem;
-use Modules\Reviews\Traits\HasNotificationPreferences;
 use Modules\Storage\Traits\HasFileSystemPaths;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -33,13 +27,12 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     // Core Laravel traits
-    use HasApiTokens, HasFactory, HasRoles, HasUid, LogsActivity, SoftDeletes;
+    use HasApiTokens, HasFactory, HasRoles, HasUid, LogsActivity;
 
     // Custom User traits organized by responsibility
     use HasBasicRelations;
     use HasDocumentPermissions;
     use HasFileSystemPaths;
-    use HasNotificationPreferences;
 
     // Notifiable and HasNotificationSystem - resolve method conflicts
     use HasNotificationSystem, Notifiable {
@@ -58,6 +51,8 @@ class User extends Authenticatable
 
     protected $table = 'users';
 
+    protected $quotaTracker;
+
     /*
     |--------------------------------------------------------------------------
     | Constants
@@ -74,10 +69,7 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
-    protected static function recordEvents(): array
-    {
-        return ['created', 'updated', 'deleted'];
-    }
+    protected static $recordEvents = ['deleted', 'updated', 'created'];
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -108,7 +100,7 @@ class User extends Authenticatable
         'validation',
         'page',
         'setting',
-        // 'role' excluded: Spatie roles are managed via assignRole()/syncRoles(), not mass-assignment
+        'role',
         'company',
         'detail',
         'user_img',
@@ -117,17 +109,14 @@ class User extends Authenticatable
         'mail_verified_at',
         'remember_token',
         'timezone',
-        'locale',
         'voilated',
         'last_login_at',
         'last_login_ip',
         'last_logins_at',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'two_factor_confirmed_at',
         'failed_login_count',
         'locked_until',
-        'email_signature',
+        'created_at',
+        'updated_at',
     ];
 
     /*
@@ -139,8 +128,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
     ];
 
     /*
@@ -161,39 +148,11 @@ class User extends Authenticatable
     {
         return [
             'mail_verified_at' => 'datetime',
-            'last_login_at' => 'datetime',
-            'deleted_at' => 'datetime',
-            'active' => 'boolean',
-            'confirmed' => 'boolean',
-            'two_factor_confirmed_at' => 'datetime',
-            'two_factor_recovery_codes' => 'encrypted:array',
-            'two_factor_secret' => 'encrypted',
-            'locked_until' => 'datetime',
+            'last_login_at'    => 'datetime',
+            'locked_until'     => 'datetime',
+            'deleted_at'       => 'datetime',
+            'active'           => 'boolean',
+            'confirmed'        => 'boolean',
         ];
-    }
-
-    public function hasTwoFactorEnabled(): bool
-    {
-        return ! is_null($this->two_factor_confirmed_at);
-    }
-
-    public function isLocked(): bool
-    {
-        return $this->locked_until !== null && $this->locked_until->isFuture();
-    }
-
-    public function agentSettings(): HasOne
-    {
-        return $this->hasOne(AgentSettings::class);
-    }
-
-    public function groups(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Group::class,
-            'helpdesk_group_user',
-            'user_id',
-            'group_id'
-        )->withPivot('conversation_priority')->withTimestamps();
     }
 }

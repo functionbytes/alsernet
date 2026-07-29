@@ -582,7 +582,7 @@
         @endcan
 
         {{-- Social Inbox Widget --}}
-        @if(class_exists(\Modules\HelpdeskSocial\Widgets\SocialInboxWidget::class) && app('modules')->isEnabled('HelpdeskSocial') && function_exists('helpdesk_social_enabled') && helpdesk_social_enabled())
+        @if(class_exists(\Modules\HelpdeskSocial\Widgets\SocialInboxWidget::class) && app('modules')->isEnabled('HelpdeskSocial'))
             <div class="row mb-4 g-3">
                 <div class="col-12">
                     {!! (new \Modules\HelpdeskSocial\Widgets\SocialInboxWidget)->render() !!}
@@ -591,10 +591,14 @@
         @endif
 
         {{-- Analytics KPI Widget --}}
-        @include('analytics::components.dashboard-widget')
+        @if(app('modules')->isEnabled('Analytics'))
+            @include('analytics::components.dashboard-widget')
+        @endif
 
         {{-- Cookie consent widget --}}
-        @include('cookie::components.consent-widget')
+        @if(view()->exists('cookie::components.consent-widget'))
+            @include('cookie::components.consent-widget')
+        @endif
 
     </div>
 
@@ -695,10 +699,10 @@
                 if (!alerts.length) { $banner.addClass('d-none').empty(); return; }
                 var html = '<div class="d-flex flex-column gap-2">';
                 alerts.forEach(function (a) {
-                    var bg = a.severity === 'danger' ? 'bg-danger-subtle ' : 'bg-warning-subtle border-warning';
+                    var bg = a.severity === 'danger' ? 'bg-danger-subtle border-danger' : 'bg-warning-subtle border-warning';
                     var txt = a.severity === 'danger' ? 'text-danger' : 'text-warning';
                     var icon = a.severity === 'danger' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle';
-                    html += `<a href="${a.link}" class="alert-banner-item d-flex align-items-center gap-3 p-3 rounded-3   ${bg} text-decoration-none">
+                    html += `<a href="${a.link}" class="alert-banner-item d-flex align-items-center gap-3 p-3 rounded-3 border-start border-4 ${bg} text-decoration-none">
                         <div class="p-2 bg-primary-subtle rounded-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;">
                             <i class="fas ${icon} text-primary"></i>
                         </div>
@@ -800,7 +804,7 @@
 
     function renderSparklines(labels, reviews, attention, forms) {
         const sparks = {
-            '#spark-reviews':   { data: reviews,   color: '#90bb13', type: 'area' },
+            '#spark-reviews':   { data: reviews,   color: '#13C672', type: 'area' },
             '#spark-attention': { data: attention, color: '#333333', type: 'bar'  },
             '#spark-forms':     { data: forms,     color: '#7b0000', type: 'area' },
         };
@@ -820,7 +824,7 @@
         activityChart = new ApexCharts(document.querySelector('#activity-chart'), {
             series: [{ name: 'Reseñas', data: reviews }, { name: 'PQRSF', data: attention }, { name: 'Formularios', data: forms }],
             chart: { type: 'area', height: 295, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
-            colors: ['#90bb13', '#333333', '#7b0000'],
+            colors: ['#13C672', '#333333', '#7b0000'],
             stroke: { curve: 'smooth', width: 2 },
             fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.15, opacityTo: 0.02, stops: [0, 100] } },
             xaxis: { categories: labels, labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
@@ -847,7 +851,7 @@
                     series: data.series,
                     labels: data.labels,
                     chart: { type: 'donut', height: 200, fontFamily: 'inherit' },
-                    colors: ['#90bb13', '#333333', '#7b0000', '#555555'],
+                    colors: ['#13C672', '#333333', '#7b0000', '#555555'],
                     legend: { show: false },
                     dataLabels: { enabled: false },
                     tooltip: { y: { formatter: v => fmt(v) } },
@@ -1005,7 +1009,7 @@
     function renderSecurityScore(score) {
         if (securityScoreChart) { securityScoreChart.destroy(); }
         $('#security-score-chart').html('');
-        var color = score >= 80 ? '#13C672' : score >= 50 ? '#FEC90F' : '#90bb13';
+        var color = score >= 80 ? '#13C672' : score >= 50 ? '#FEC90F' : '#13C672';
         securityScoreChart = new ApexCharts(document.querySelector('#security-score-chart'), {
             series: [score],
             chart: { type: 'radialBar', height: 140, fontFamily: 'inherit' },
@@ -1025,7 +1029,7 @@
             series: [pct],
             chart: { type: 'radialBar', height: 140, fontFamily: 'inherit' },
             plotOptions: { radialBar: { hollow: { size: '55%' }, dataLabels: { show: true, name: { show: false }, value: { fontSize: '22px', fontWeight: 600, color: '#333333', formatter: v => v + '%' } } } },
-            colors: ['#90bb13'],
+            colors: ['#13C672'],
             stroke: { lineCap: 'round' },
         });
         twofaChart.render();
@@ -1058,7 +1062,7 @@
                         { name: 'Bloqueos', data: data.lockout || [] }
                     ],
                     chart: { type: 'bar', height: 260, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', stacked: true },
-                    colors: ['#13C672', '#90bb13', '#555555'],
+                    colors: ['#13C672', '#13C672', '#555555'],
                     plotOptions: { bar: { borderRadius: 2, columnWidth: '70%' } },
                     xaxis: { categories: data.labels || [], labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                     yaxis: { labels: { style: { fontSize: '11px', colors: '#adb5bd' }, formatter: v => Math.round(v) } },

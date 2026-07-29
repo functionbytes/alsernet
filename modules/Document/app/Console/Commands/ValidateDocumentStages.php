@@ -211,9 +211,9 @@ class ValidateDocumentStages extends Command
                 };
 
                 $this->line(
-                    "  {$statusIcon} <fg={$statusColor}>{$status}</fg={$statusColor}> ".
-                    "UID: <fg=cyan>{$detail['uid']}</fg=cyan> | ".
-                    "Type: <fg=blue>{$detail['type']}</fg=blue> | ".
+                    "  {$statusIcon} <fg={$statusColor}>{$status}</fg={$statusColor}> " .
+                    "UID: <fg=cyan>{$detail['uid']}</fg=cyan> | " .
+                    "Type: <fg=blue>{$detail['type']}</fg=blue> | " .
                     "Stages: {$detail['current_stages']} → {$detail['correct_stages']}"
                 );
 
@@ -226,7 +226,7 @@ class ValidateDocumentStages extends Command
                 }
 
                 if (! empty($detail['stages'])) {
-                    $this->line('    Correct stages: '.implode(' → ', $detail['stages']));
+                    $this->line("    Correct stages: " . implode(' → ', $detail['stages']));
                 }
             }
         }

@@ -60,6 +60,6 @@ class Marca extends Model
      */
     public function marca()
     {
-        return $this->belongsTo(Marca::class, 'idmarca', 'idmarca');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Marca::class, 'idmarca', 'idmarca');
     }
 }

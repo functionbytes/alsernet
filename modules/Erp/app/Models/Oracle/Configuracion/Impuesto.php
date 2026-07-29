@@ -53,6 +53,6 @@ class Impuesto extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 }

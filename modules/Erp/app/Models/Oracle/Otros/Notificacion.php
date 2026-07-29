@@ -43,6 +43,6 @@ class Notificacion extends Model
      */
     public function notificacionCentral()
     {
-        return $this->belongsTo(Notificacion::class, 'idnotificacion_central', 'idnotificacion_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Notificacion::class, 'idnotificacion_central', 'idnotificacion_central');
     }
 }

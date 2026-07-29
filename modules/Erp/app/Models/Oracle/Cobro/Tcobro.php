@@ -47,6 +47,6 @@ class Tcobro extends Model
      */
     public function tcobro()
     {
-        return $this->belongsTo(Tcobro::class, 'idtcobro', 'idtcobro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Tcobro::class, 'idtcobro', 'idtcobro');
     }
 }

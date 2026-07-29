@@ -1,0 +1,439 @@
+/* Utilidades */
+.kb-clearfix { clear: both; }
+
+
+
+
+/* Contenedor de búsqueda */
+.page-order .delivery-options .delivery-content  {
+    margin: 20px auto;
+    padding: 0 15px;
+    box-sizing: border-box;
+    background: #f5f6f8;
+    border-radius: 4px;
+    width: 100%;
+}
+/* Contenedor de búsqueda */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-search-container {
+    max-width: 1170px;
+    width: 100%;
+    box-sizing: border-box;
+    background: #f5f6f8;
+    border-radius: 4px;
+}
+
+/* Wrapper general */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-locator {
+    margin-top: 14px;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Filtros (form) */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters {
+    margin-bottom: 30px;
+    padding: 20px 10px 10px;
+}
+
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .velo_gc_add_distance,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .velo_gc_add_number {
+    margin-top: 5px;
+    display: block;
+    color: #FF662E;
+    background: #ff662e3d !important;
+    border-color: #FF662E !important;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list-alert {
+    margin-top: 20px;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list-alert .alert.alert-success {
+    color: #FF662E;
+    background: #ff662e1f !important;
+    border-color: #ff662e33 !important;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list-alert .alert {
+    font-size: 15px;
+    padding: 10px;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list-alert .alert span {
+    display: inline-block;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .btn  {
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+/* Inputs inline (usados en fecha preferida) */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline {
+    display: inline-block;
+    margin-right: 20px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline input,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline select {
+    padding: 7px 12px;
+    border: 1px solid #e3f0f9;
+    height: 35px;
+    margin-bottom: 10px;
+    border-radius: 2px;
+    background: #fff;
+    box-sizing: border-box;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline input:focus,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline select:focus {
+    outline: 0;
+}
+
+/* Botones del formulario (Buscar / Reiniciar) */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters .button-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 10px;
+    align-items: center;
+    margin: 0;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters .button-group .btn {
+    border-radius: 4px;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters .button-group .btn.btn-secondary {
+    color: #fff;
+    border-color: #90bb13;
+    background-color: #90bb13;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters .form-label {
+    margin-bottom: .5rem;
+    font-weight: 600;
+    color: #4C4C4C;
+    text-align: left;
+    width: 100%;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters .form-control {
+    display: block;
+    width: 100%;
+    height: 40px;
+    background: #fff;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #4C4C4C;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-clip: padding-box;
+    border: 1px solid #90bb1347;
+    border-radius: 7px;
+    box-shadow: var(--bs-box-shadow-inset);
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-pickup-stores {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+/* Mapa */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map {
+    float: right;
+    width: 68%;
+    height: 500px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map #map {
+    height: 100%;
+}
+
+/* Lista */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list {
+    width: 32%;
+    float: left;
+    max-height: 500px;
+    overflow: auto;
+    padding-right: 10px;
+    box-sizing: border-box;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li {
+    list-style: none;
+    background-repeat: no-repeat;
+    background-position: 0 10px;
+    padding: 15px;
+    border: 1px solid #e3f0f9;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 2px;
+    margin-bottom: 10px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .title-address {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-popup .title-address {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-popup .velo-show-more  {
+    display: none;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-popup .velo-directions-button  {
+    display: none;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-popup .velo-directions-link  {
+    display: none;
+}
+
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .detail-address {}
+
+/* “Show more” dentro del item */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list .velo-show-more {
+    display: grid;
+    text-align: center;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list .velo-show-more .button-show-more {
+    color: #4c4c4c;
+}
+
+/* Extra content (horarios, teléfono, web) */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper img.velo-phone-icon {
+    max-width: 14px !important;
+    margin-right: 5px;
+    transform: rotate(5deg);
+    display: inline-block;
+    vertical-align: middle;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo_add_number,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo_add_distance {
+    margin-top: 5px;
+    display: block;
+}
+
+/* Horarios */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours {
+    background-color: #fdfdfd;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .velo_add_clock {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    border-color: #90bb13;
+    background-color: #90bb13;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    text-transform: uppercase;
+    padding: 10px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list tbody {
+    display: grid;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list tbody tr {
+    display: contents;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list .mp-openday-list-title {
+    font-weight: 500;
+    color: #555;
+    text-transform: uppercase;
+    align-items: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list .mp-openday-list-value {
+    text-align: center;
+    color: #333;
+    padding: 8px 10px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-store-hours .mp-openday-list .mp-openday-list-value span {
+    color: red !important;
+    display: flex;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+/* Acciones del item */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb-gc-velo-store-select-link  {
+    display: block;
+    clear: both;
+    box-sizing: border-box;
+    text-align: center;
+    position: relative;
+    width: 100%;
+    color: #fff;
+    background-color: #90bb13;
+    border-color: #90bb13;
+    transition: background-color .2s, border-color .2s;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb_gc_velo-store-select-link:hover,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .kb_gc_velo-store-select-link.active {
+    background-color: #90bb13;
+    border-color: #90bb13;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-selected {
+    background: #FF662E !important;
+    border-color: #FF662E !important;
+    font-weight: bold;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-directions-button,
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-directions-link {
+    display: block;
+    background: #4c4c4c;
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+    color: #fff !important;
+    margin-top: 5px;
+    width: 100%;
+    border: 0;
+}
+
+/* Campo de fecha preferida + botón enviar */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-preferred-date { width: 70%; }
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-search-button button {
+    border: 1px solid #4772d4;
+    padding: 8px 25px;
+    width: 100%;
+    max-width: 200px;
+    display: inline-block;
+    background: #6d96f3;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-date-time-block {
+    clear: both;
+    margin: 0;
+    padding-top: 15px;
+}
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-date-time-block button {
+    margin-left: 25px;
+}
+
+/* Ajuste mínimo Google Maps info window */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .gm-style-iw-chr button span {
+    width: 12px !important;
+    height: 12px !important;
+}
+
+/* Variante de ancho cuando está dentro de  */
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map { width: 60%; }
+.page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list { width: 40%; }
+
+/* Responsivo */
+@media (max-width:1200px) {
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .velo-directions-button,
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .velo-directions-link { float: left; }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list ul li .velo-directions-button { margin-right: 5px; }
+}
+
+@media (max-width:992px) {
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list { width: 40%; }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map { width: 60%; }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters { text-align: center; }
+}
+
+@media (max-width:767px) {
+
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list,
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map,
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map {
+        width: 100% !important;
+    }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-location-list {
+        margin-top: 30px;
+        padding: 0px;
+        overflow-x: hidden !important;
+    }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .store-filters { margin-bottom: 10px; }
+}
+
+@media (max-width:640px) {
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-store-map { height: 400px; }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline { margin-right: 10px; }
+}
+
+@media (max-width:420px) {
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline label {
+        padding-right: 7px;
+        width: 100%;
+        display: inline-block;
+        text-align: left;
+        margin-bottom: 5px;
+    }
+    .page-order .delivery-options .delivery-content  .kbgcs-pts-carrier-wrapper .velo-field-inline { width: 49%; margin-right: 0; }
+}
+
+
+
+
+.page-order .delivery-options .delivery-content .selected-kb-pts-wrapper {
+    padding: 20px;
+    border-radius: 4px
+}
+
+
+.page-order .delivery-options .delivery-content .selected-kb-pts-wrapper .selected-kb-pts .kb-pts-address .detail-address .title-address {
+    margin-bottom: 10px !important;
+    line-height: normal;
+    text-align: left;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.page-order .delivery-options .delivery-content .selected-kb-pts-wrapper  .selected-kb-pts .kb-pts-address .detail-address {
+    font-size: 14px;
+}
+
+.page-order .delivery-options .delivery-content .selected-kb-pts-wrapper  .selected-kb-pts .kb-pts-address .detail-address p {
+   margin: 0px !important;
+    margin-bottom: 10px !important;
+   line-height: normal;
+}
+
+.page-order .delivery-options .delivery-content .selected-kb-pts-wrapper  .selected-kb-pts .kb-pts-address  .btn {
+    color: #fff;
+    border-color: #4C4C4C;
+    background-color: #4C4C4C;
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>alsernetcustomcategoryfield</name>
+	<displayname>Alsernet - Custom Category Field</displayname>
+	<version>1.0.0</version>
+	<description>Alsernet - Custom Category Field</description>
+	<author>Alsernet</author>
+	<tab>administration</tab>
+	<need_instance>0</need_instance>
+	<psver_compliancy min="1.7.0" max="1.7.9"/>
+	<is_configurable>0</is_configurable>
+</module>

@@ -1,193 +1,302 @@
 @php
     use Modules\Theme\Services\NavService;
-    use Illuminate\Support\Facades\Route;
 
+    // Obtener todos los datos de navegación procesados desde el backend
+    // Esto incluye: miniItems filtrados, sidebars filtrados, y el ID del sidebar activo
     ['miniItems' => $miniItems, 'sidebars' => $allSidebars, 'activeSidebarId' => $activeSidebarId] = NavService::getNavDataForUser();
-
-    $navMiniItems    = collect($miniItems)->keyBy('sidebar_id')->all();
-    $settingsSidebar = $allSidebars['settings'] ?? null;
-    $mainSidebars    = collect($allSidebars)
-        ->except('settings')
-        ->filter(fn ($sidebar, $sidebarId) => isset($navMiniItems[$sidebarId]))
-        ->sortBy(fn ($v, $k) => $navMiniItems[$k]['order'] ?? 999)
-        ->all();
-
-    $panelIsOpen = $activeSidebarId !== null
-        && isset($navMiniItems[$activeSidebarId])
-        && collect($allSidebars[$activeSidebarId]['sections'] ?? [])
-            ->flatMap(fn ($s) => $s['items'] ?? [])
-            ->count() > 1;
+    $currentRoute = request()->route()?->getName() ?? '';
 @endphp
 
-<!-- begin::Sidebar Menu -->
-<aside class="app-menubar-tabs{{ !$panelIsOpen ? ' no-sidebar-open' : '' }}" id="appMenubar">
-
-    <div class="app-navbar-tabs" data-simplebar="">
-        <ul class="nav" id="appMenubarTabs" role="list" aria-orientation="vertical">
-
-            @foreach($mainSidebars as $sidebarId => $sidebar)
-                @php
-                    $miniItem  = $navMiniItems[$sidebarId] ?? null;
-                    $iconClass = $miniItem['icon'] ?? 'fa-duotone fa-thin fa-circle-dot';
-                    $label     = $miniItem['tooltip'] ?? ucfirst(str_replace(['-', '_'], ' ', $sidebarId));
-                    $allItems  = collect($sidebar['sections'] ?? [])->flatMap(fn ($s) => $s['items'] ?? []);
-
-                    if ($allItems->count() === 1) {
-                        $directRoute = $miniItem['url'] ?? ($allItems->first()['route'] ?? '');
-                        $directUrl   = $directRoute && Route::has($directRoute) ? route($directRoute) : '#';
-                        $isActive    = $directRoute && request()->routeIs($directRoute . '*');
-                    } else {
-                        $isActive = $activeSidebarId === $sidebarId;
-                    }
-                @endphp
-                <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $label }}">
-                    @if($allItems->count() === 1)
-                        <a class="menu-link{{ $isActive ? ' active' : '' }}" href="{{ $directUrl }}" aria-label="{{ $label }}">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
-                        </a>
-                    @else
-                        <a class="menu-link{{ $isActive ? ' active' : '' }}"
-                           href="#tab-{{ $sidebarId }}"
-                           aria-controls="tab-{{ $sidebarId }}"
-                           aria-label="{{ $label }}"
-                           data-bs-toggle="tab">
-                            <i class="{{ $iconClass }}" aria-hidden="true"></i>
-                        </a>
-                    @endif
-                </li>
-            @endforeach
-
-            @if($settingsSidebar)
-                @php
-                    $settingsMiniItem = $navMiniItems['settings'] ?? null;
-                    $settingsIcon     = $settingsMiniItem['icon'] ?? 'fa-duotone fa-thin fa-gear';
-                    $settingsLabel    = $settingsMiniItem['tooltip'] ?? 'Configuración';
-                    $settingsActive   = $activeSidebarId === 'settings';
-                @endphp
-                <li class="nav-item-hr" role="presentation"></li>
-                <li class="nav-item" role="presentation" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="{{ $settingsLabel }}">
-                    <a class="menu-link{{ $settingsActive ? ' active' : '' }}"
-                       href="#tab-settings"
-                       aria-controls="tab-settings"
-                       aria-label="{{ $settingsLabel }}"
-                       data-bs-toggle="tab">
-                        <i class="{{ $settingsIcon }}" aria-hidden="true"></i>
+<aside class="side-mini-panel with-vertical">
+    <!-- ---------------------------------- -->
+    <!-- Start Vertical Layout Sidebar -->
+    <!-- ---------------------------------- -->
+    <div class="iconbar">
+        <div>
+            <!-- ---------------------------------- -->
+            <!-- Mini Navigation Icons -->
+            <!-- ---------------------------------- -->
+            <div class="mini-nav">
+                <div class="brand-logo d-flex align-items-center justify-content-center">
+                    <a class="nav-link sidebartoggler" id="headerCollapse" href="javascript:void(0)">
+                        <i class="fa-duotone fa-bars fs-6"></i>
                     </a>
-                </li>
-            @endif
+                </div>
+                <ul class="mini-nav-ul" data-simplebar="">
+                    @forelse($miniItems as $miniItem)
+                        @php
+                            $isActive = $activeSidebarId === $miniItem['sidebar_id'];
+                        @endphp
+                        <!-- --------------------------------------------------------------------------------------------------------- -->
+                        <!-- {{ $miniItem['tooltip'] }} -->
+                        <!-- --------------------------------------------------------------------------------------------------------- -->
+                        <li class="mini-nav-item {{ $isActive ? 'selected' : '' }}"
+                            id="mini-{{ $miniItem['id'] }}"
+                            data-sidebar-id="{{ $miniItem['sidebar_id'] }}">
+                            <a href="javascript:void(0)"
+                               data-bs-toggle="tooltip"
+                               data-bs-custom-class="custom-tooltip"
+                               data-bs-placement="right"
+                               data-bs-title="{{ $miniItem['tooltip'] }}">
+                                <i class="fa {{ $miniItem['icon'] }} fs-5"></i>
+                            </a>
+                        </li>
 
-        </ul>
-    </div>
+                        @if(!empty($miniItem['divider_after']) && !$loop->last)
+                            <li>
+                                <span class="sidebar-divider lg"></span>
+                            </li>
+                        @endif
+                    @empty
+                        <li class="text-muted text-center p-3">
+                            <small>No hay menús disponibles</small>
+                        </li>
+                    @endforelse
+                </ul>
 
-    <div class="app-tab-content">
-        <div class="app-content-inner">
-            <div class="tab-content" id="appMenubarTabsContent">
-
-                @foreach($mainSidebars as $sidebarId => $sidebar)
+            </div>
+            <!-- ---------------------------------- -->
+            <!-- Sidebar Menus -->
+            <!-- ---------------------------------- -->
+            <div class="sidebarmenu">
+                @forelse($allSidebars as $sidebarId => $sidebar)
                     @php
-                        $allItems = collect($sidebar['sections'] ?? [])->flatMap(fn ($s) => $s['items'] ?? []);
+                        $sidebarIsActive = $activeSidebarId === $sidebarId;
                     @endphp
-                    @if($allItems->count() === 1)
-                        @continue
-                    @endif
-                    @php $isPaneActive = $activeSidebarId === $sidebarId; @endphp
-                    <div class="tab-pane{{ $isPaneActive ? ' show active' : '' }}"
-                         id="tab-{{ $sidebarId }}"
-                         role="tabpanel"
-                         tabindex="0">
-                        <nav class="app-navbar" data-simplebar="">
-                            <ul class="side-menubar">
-                                @foreach($sidebar['sections'] ?? [] as $section)
-                                    @if($section['title'])
-                                        <li class="menu-heading">
-                                            <span class="menu-label">{{ $section['title'] }}</span>
+                    <!-- ---------------------------------- -->
+                    <!-- Sidebar: {{ $sidebar['title'] ?? 'Menu' }} -->
+                    <!-- ---------------------------------- -->
+                    <nav class="sidebar-nav scroll-sidebar {{ $sidebarIsActive ? 'd-block' : '' }}"
+                         id="menu-right-{{ $sidebarId }}"
+                         data-simplebar="">
+                        <ul class="sidebar-menu" id="sidebarnav-{{ $sidebarId }}">
+                            @php
+                                // Si el sidebar tiene secciones, usarlas; sino crear una sección única
+                                $sections = isset($sidebar['sections']) && is_array($sidebar['sections'])
+                                    ? $sidebar['sections']
+                                    : [['title' => $sidebar['title'] ?? 'Menu', 'items' => $sidebar['items'] ?? []]];
+                            @endphp
+
+                            @forelse($sections as $section)
+                                <!-- ---------------------------------- -->
+                                <!-- {{ $section['title'] }} Section -->
+                                <!-- ---------------------------------- -->
+                                <li class="nav-small-cap">
+                                    <span class="hide-menu">{{ $section['title'] }}</span>
+                                </li>
+
+                                <!-- Section Items -->
+                                @forelse($section['items'] as $item)
+                                    @php
+                                        $currentRouteName = request()->route()?->getName() ?? '';
+                                        $itemRoute = $item['route'] ?? '';
+
+                                        // Usar comparación con wildcard para marcar rutas hijas como activas
+                                        $isItemActive = $itemRoute && request()->routeIs($itemRoute . '*');
+
+                                        // Validación de permisos del item
+                                        $canAccessItem = true;
+                                        if (!empty($item['permission'])) {
+                                            $permissions = array_map('trim', explode('|', $item['permission']));
+                                            $canAccessItem = false;
+
+                                            // Verificar si el usuario tiene al menos uno de los permisos (OR logic)
+                                            foreach ($permissions as $permission) {
+                                                if (auth()->user()?->can($permission)) {
+                                                    $canAccessItem = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        // Verificar si el item tiene sub-items (para has-arrow)
+                                        $hasSubItems = !empty($item['children']) && is_array($item['children']);
+                                    @endphp
+
+                                    @if($canAccessItem)
+                                        <!-- ---------------------------------- -->
+                                        <!-- {{ $item['label'] }} -->
+                                        <!-- ---------------------------------- -->
+                                        <li class="sidebar-item {{ $isItemActive ? 'selected' : '' }}">
+                                            @if($hasSubItems)
+                                                <!-- Item with dropdown -->
+                                                <a href="javascript:void(0)"
+                                                   class="sidebar-link has-arrow {{ $isItemActive ? 'active' : '' }}"
+                                                   aria-expanded="{{ $isItemActive ? 'true' : 'false' }}">
+                                                    @if(!empty($item['icon']))
+                                                        <i class="fa {{ $item['icon'] }}"></i>
+                                                    @endif
+                                                    <span class="hide-menu">{{ $item['label'] }}</span>
+                                                </a>
+
+                                                <!-- Sub-items -->
+                                                <ul aria-expanded="{{ $isItemActive ? 'true' : 'false' }}"
+                                                    class="collapse first-level {{ $isItemActive ? 'in' : '' }}">
+                                                    @foreach($item['children'] as $child)
+                                                        @php
+                                                            $childRoute = $child['route'] ?? '';
+                                                            $childIsActive = $childRoute && request()->routeIs($childRoute . '*');
+
+                                                            // Validar permisos del child
+                                                            $canAccessChild = true;
+                                                            if (!empty($child['permission'])) {
+                                                                $childPermissions = array_map('trim', explode('|', $child['permission']));
+                                                                $canAccessChild = false;
+
+                                                                foreach ($childPermissions as $perm) {
+                                                                    if (auth()->user()?->can($perm)) {
+                                                                        $canAccessChild = true;
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                        @endphp
+
+                                                        @if($canAccessChild)
+                                                            <li class="sidebar-item {{ $childIsActive ? 'active' : '' }}">
+                                                                <a href="{{ route($childRoute) }}"
+                                                                   class="sidebar-link {{ $childIsActive ? 'active' : '' }}">
+                                                                    <span class="icon-small"></span>
+                                                                    <span class="hide-menu">{{ $child['label'] }}</span>
+                                                                </a>
+                                                            </li>
+                                                        @endif
+                                                    @endforeach
+                                                </ul>
+                                            @else
+                                                <!-- Simple link without dropdown -->
+                                                <a href="{{ $itemRoute ? route($itemRoute) : 'javascript:void(0)' }}"
+                                                   class="sidebar-link {{ $isItemActive ? 'active' : '' }}"
+                                                   aria-expanded="false"
+                                                   data-current-route="{{ $currentRouteName }}"
+                                                   data-item-route="{{ $itemRoute }}"
+                                                   data-is-active="{{ $isItemActive ? 'true' : 'false' }}">
+                                                    @if(!empty($item['icon']))
+                                                        <i class="fa {{ $item['icon'] }}"></i>
+                                                    @endif
+                                                    <span class="hide-menu">{{ $item['label'] }}</span>
+
+                                                    @if(!empty($item['badge']))
+                                                        <span class="badge bg-{{ $item['badge']['color'] ?? 'primary' }} rounded ms-auto">
+                                                            {{ $item['badge']['text'] }}
+                                                        </span>
+                                                    @endif
+                                                </a>
+                                            @endif
                                         </li>
                                     @endif
-                                    @foreach($section['items'] ?? [] as $item)
-                                        @php
-                                            $cr   = $item['route'] ?? '';
-                                            $cUrl = ($cr && Route::has($cr)) ? route($cr) : '#';
-                                            $cAct = $cr && request()->routeIs($cr . '*');
-                                        @endphp
-                                        <li class="menu-item">
-                                            <a class="menu-link{{ $cAct ? ' active' : '' }}" href="{{ $cUrl }}" role="button">
-                                                <span class="menu-label">{{ $item['label'] }}</span>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                @endforeach
-                            </ul>
-                        </nav>
-                    </div>
-                @endforeach
+                                @empty
+                                    <li class="sidebar-item">
+                                        <span class="hide-menu text-muted ps-3">Sin opciones disponibles</span>
+                                    </li>
+                                @endforelse
 
-                @if($settingsSidebar)
-                    @php $isSettingsActive = $activeSidebarId === 'settings'; @endphp
-                    <div class="tab-pane{{ $isSettingsActive ? ' show active' : '' }}"
-                         id="tab-settings"
-                         role="tabpanel"
-                         tabindex="0">
-                        <nav class="app-navbar" data-simplebar="">
-                            <ul class="side-menubar">
-                                @foreach($settingsSidebar['sections'] ?? [] as $section)
-                                    @if($section['title'])
-                                        <li class="menu-heading">
-                                            <span class="menu-label">{{ $section['title'] }}</span>
-                                        </li>
-                                    @endif
-                                    @foreach($section['items'] ?? [] as $item)
-                                        @php
-                                            $cr   = $item['route'] ?? '';
-                                            $cUrl = ($cr && Route::has($cr)) ? route($cr) : '#';
-                                            $cAct = $cr && request()->routeIs($cr . '*');
-                                        @endphp
-                                        <li class="menu-item">
-                                            <a class="menu-link{{ $cAct ? ' active' : '' }}" href="{{ $cUrl }}" role="button">
-                                                <span class="menu-label">{{ $item['label'] }}</span>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                @endforeach
-                            </ul>
-                        </nav>
+                                <!-- Optional divider after section -->
+                                @if(!$loop->last)
+                                    <li>
+                                        <span class="sidebar-divider"></span>
+                                    </li>
+                                @endif
+                            @empty
+                                <li class="sidebar-item">
+                                    <span class="hide-menu text-muted ps-3">Sin secciones configuradas</span>
+                                </li>
+                            @endforelse
+                        </ul>
+                    </nav>
+                @empty
+                    <!-- No sidebars available -->
+                    <div class="p-3 text-center text-muted">
+                        <small>No hay menús configurados</small>
                     </div>
-                @endif
-
+                @endforelse
             </div>
         </div>
     </div>
-
 </aside>
-<!-- end::Sidebar Menu -->
 
 @push('scripts')
 <script>
-(function () {
-    var menubar = document.getElementById('appMenubar');
+    /**
+     * Toggle sidebar visibility when clicking on mini nav items
+     * Updates the active state and shows the corresponding sidebar
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+        'use strict';
 
-    document.querySelectorAll('#appMenubarTabs [data-bs-toggle="tab"]').forEach(function (tab) {
-        tab.addEventListener('show.bs.tab', function () {
-            menubar.classList.remove('no-sidebar-open');
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+
+        // Add click handlers to mini nav items
+        document.querySelectorAll('.mini-nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Get the sidebar ID from data attribute
+                const sidebarId = this.dataset.sidebarId;
+                if (!sidebarId) {
+                    console.warn('No sidebar ID found for mini item:', this.id);
+                    return;
+                }
+
+                // Remove 'selected' class from all mini items
+                document.querySelectorAll('.mini-nav-item').forEach(navItem => {
+                    navItem.classList.remove('selected');
+                });
+
+                // Add 'selected' class to clicked mini item
+                this.classList.add('selected');
+
+                // Hide all sidebars
+                document.querySelectorAll('.sidebar-nav').forEach(nav => {
+                    nav.classList.remove('d-block');
+                    nav.classList.add('d-none');
+                });
+
+                // Show the corresponding sidebar
+                const targetSidebar = document.querySelector(`#menu-right-${sidebarId}`);
+                if (targetSidebar) {
+                    targetSidebar.classList.remove('d-none');
+                    targetSidebar.classList.add('d-block');
+                } else {
+                    console.warn(`Sidebar not found: menu-right-${sidebarId}`);
+                }
+
+                // Set body attribute to full sidebar mode
+                document.body.setAttribute('data-sidebartype', 'full');
+            });
         });
 
-        tab.addEventListener('shown.bs.tab', function (e) {
-            var pane = document.querySelector(e.target.getAttribute('href'));
-            if (!pane) { return; }
-            pane.querySelectorAll('[data-simplebar]').forEach(function (el) {
-                var instance = SimpleBar.instances.get(el);
-                if (instance) {
-                    instance.recalculate();
+        // Handle multilevel menu clicks
+        document.querySelectorAll('.sidebar-link.has-arrow').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const isActive = this.classList.contains('active');
+                const parentUl = this.closest('ul');
+                const submenu = this.nextElementSibling;
+
+                if (!isActive) {
+                    // Close any open menus and remove all other classes
+                    parentUl.querySelectorAll('ul').forEach(function(ul) {
+                        ul.classList.remove('in');
+                    });
+                    parentUl.querySelectorAll('a').forEach(function(navLink) {
+                        navLink.classList.remove('active');
+                    });
+
+                    // Open our new menu and add the open class
+                    if (submenu) {
+                        submenu.classList.add('in');
+                    }
+                    this.classList.add('active');
                 } else {
-                    new SimpleBar(el);
+                    this.classList.remove('active');
+                    if (submenu) {
+                        submenu.classList.remove('in');
+                    }
                 }
             });
         });
     });
-
-    document.querySelectorAll('#appMenubarTabsContent .tab-pane.active [data-simplebar]').forEach(function (el) {
-        var instance = SimpleBar.instances.get(el);
-        if (instance) { instance.recalculate(); }
-    });
-}());
 </script>
 @endpush

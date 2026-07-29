@@ -48,6 +48,6 @@ class Evento extends Model
      */
     public function evento()
     {
-        return $this->belongsTo(Evento::class, 'idevento', 'idevento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Evento::class, 'idevento', 'idevento');
     }
 }

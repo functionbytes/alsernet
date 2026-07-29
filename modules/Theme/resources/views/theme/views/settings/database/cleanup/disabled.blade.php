@@ -1,10 +1,9 @@
 @extends('layouts.theme')
 
-@section('page_header')
-    @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
-@endsection
-
 @section('content')
+    <div class="container-fluid">
+
+        @include('core::components.card', ['title' => 'Limpieza de Base de Datos'])
 
         @include('core::components.alerts')
 
@@ -43,7 +42,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 text-muted">
+                        <div class="mt-4 text-muted small">
                             <p>
                                 <i class="fa fa-circle-info"></i>
                                 Después de realizar el cambio, recarga esta página para acceder a la limpieza de base de
@@ -64,7 +63,7 @@
                             <i class="fa fa-shield-check text-success"></i>
                             <strong>Protección contra eliminación accidental</strong>
                         </p>
-                        <p class=" text-muted">
+                        <p class="small text-muted">
                             Esta característica requiere una confirmación explícita en el archivo de configuración para
                             prevenir la eliminación accidental de datos.
                         </p>
@@ -75,7 +74,7 @@
                             <i class="fa fa-lock text-warning"></i>
                             <strong>Requiere permisos de administrador</strong>
                         </p>
-                        <p class=" text-muted">
+                        <p class="small text-muted">
                             Solo usuarios con rol de administrador podrán usar esta función.
                         </p>
 
@@ -85,7 +84,7 @@
                             <i class="fa fa-history text-info"></i>
                             <strong>Auditoria registrada</strong>
                         </p>
-                        <p class=" text-muted">
+                        <p class="small text-muted">
                             Todas las operaciones de limpieza se registran en el historial de actividades.
                         </p>
                     </div>
@@ -93,6 +92,7 @@
             </div>
         </div>
 
+    </div>
 
     <style>
         .card {

@@ -1,0 +1,33 @@
+[
+    {
+        "title": "Cela peut vous intéresser",
+        "url": "",
+        "action": "",
+        "type": "special",
+        "column": "1",
+        "id": "3",
+        "position": "3",
+        "items": [
+          {
+            "title": "Voir nos marques",
+            "url": "/fr/golf/liste-marques"
+          },
+          {
+            "title": "Offres",
+            "url": "/fr/golf/offres"
+          },
+          {
+            "title": "Nouveautés",
+            "url": "/fr/golf/nouveautes?deporte=golf&id=3&rewrite=golf"
+          },
+          {
+            "title": "Meilleures ventes",
+            "url": "/fr/golf/les_plus_vendus"
+          },
+          {
+            "title": "Diagnostic d'équipements",
+            "url": "/fr/diagnostic-equipement-golf"
+          }
+        ]
+      }
+]

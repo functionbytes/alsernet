@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Articulo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Idioma;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Articuloidioma extends Model
      */
     public function articuloidioma()
     {
-        return $this->belongsTo(Articuloidioma::class, 'idarticuloidioma', 'idarticuloidioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articuloidioma::class, 'idarticuloidioma', 'idarticuloidioma');
     }
 
     /**
@@ -62,7 +61,7 @@ class Articuloidioma extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -71,6 +70,6 @@ class Articuloidioma extends Model
      */
     public function idioma()
     {
-        return $this->belongsTo(Idioma::class, 'ididioma', 'ididioma');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Idioma::class, 'ididioma', 'ididioma');
     }
 }

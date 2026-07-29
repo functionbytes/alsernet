@@ -44,7 +44,7 @@ class ImppaisFecha extends Model
      */
     public function imppaisFecha()
     {
-        return $this->belongsTo(ImppaisFecha::class, 'idimppais_fecha', 'idimppais_fecha');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\ImppaisFecha::class, 'idimppais_fecha', 'idimppais_fecha');
     }
 
     /**
@@ -53,7 +53,7 @@ class ImppaisFecha extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 
     /**
@@ -62,6 +62,6 @@ class ImppaisFecha extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 }

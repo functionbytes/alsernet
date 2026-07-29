@@ -2,13 +2,13 @@
 
 namespace Modules\System\Services;
 
-use App\Models\User;
 use Illuminate\Support\Str;
 use Modules\Attention\Models\Attention;
-use Modules\Helpdesk\Models\Conversation;
-use Modules\Helpdesk\Models\Customer;
-use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\Blog\Models\BlogPost;
+use Modules\Forms\Models\Form;
+use Modules\Helpdesk\Models\HelpdeskTicket;
 use Modules\Page\Models\Page;
+use Modules\Reviews\Models\Review;
 
 class GlobalSearchRegistrar
 {
@@ -18,116 +18,38 @@ class GlobalSearchRegistrar
 
     public function register(): void
     {
-        $this->registerUsersSearcher();
-        $this->registerConversationsSearcher();
-        $this->registerTicketsSearcher();
-        $this->registerCustomersSearcher();
+        $this->registerReviewsSearcher();
         $this->registerPagesSearcher();
+        $this->registerBlogSearcher();
         $this->registerAttentionSearcher();
+        $this->registerFormsSearcher();
+        $this->registerHelpdeskSearcher();
     }
 
-    private function registerUsersSearcher(): void
+    private function registerReviewsSearcher(): void
     {
-        $this->search->register('users', function (string $query, int $limit) {
-            return User::query()
-                ->where(function ($q) use ($query) {
-                    $q->where('firstname', 'LIKE', "%{$query}%")
-                        ->orWhere('lastname', 'LIKE', "%{$query}%")
-                        ->orWhere('email', 'LIKE', "%{$query}%");
-                })
-                ->limit($limit)
-                ->get()
-                ->map(fn ($u) => [
-                    'type' => 'user',
-                    'type_label' => 'Usuario',
-                    'icon' => 'fas fa-user',
-                    'color' => 'primary',
-                    'title' => trim("{$u->firstname} {$u->lastname}"),
-                    'subtitle' => $u->email,
-                    'url' => route('settings.users.show', $u->uid),
-                    'relevance' => 2,
-                ]);
-        });
-    }
-
-    private function registerConversationsSearcher(): void
-    {
-        if (! class_exists(Conversation::class)) {
+        if (! class_exists(Review::class)) {
             return;
         }
 
-        $this->search->register('conversations', function (string $query, int $limit) {
-            return Conversation::query()
-                ->where('subject', 'LIKE', "%{$query}%")
-                ->latest('last_message_at')
+        $this->search->register('reviews', function (string $query, int $limit) {
+            return Review::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('comment', 'LIKE', "%{$query}%")
+                        ->orWhere('reviewer_name', 'LIKE', "%{$query}%");
+                })
+                ->latest('review_time')
                 ->limit($limit)
                 ->get()
-                ->map(fn ($c) => [
-                    'type' => 'conversation',
-                    'type_label' => 'Conversación',
-                    'icon' => 'fas fa-comments',
-                    'color' => 'info',
-                    'title' => $c->subject ?? "Conversación #{$c->id}",
-                    'subtitle' => "#{$c->id} · ".($c->created_at?->diffForHumans() ?? ''),
-                    'url' => route('manager.helpdesk.conversations.show', $c->id),
+                ->map(fn ($r) => [
+                    'type' => 'review',
+                    'type_label' => 'Reseña',
+                    'icon' => 'fas fa-star',
+                    'color' => 'warning',
+                    'title' => $r->reviewer_name ?? 'Reseña',
+                    'subtitle' => Str::limit($r->comment ?? '', 80),
+                    'url' => route('reviews.show', $r->id),
                     'relevance' => 1,
-                ]);
-        });
-    }
-
-    private function registerTicketsSearcher(): void
-    {
-        if (! class_exists(Ticket::class)) {
-            return;
-        }
-
-        $this->search->register('tickets', function (string $query, int $limit) {
-            return Ticket::query()
-                ->where(function ($q) use ($query) {
-                    $q->where('ticket_number', 'LIKE', "%{$query}%")
-                        ->orWhere('subject', 'LIKE', "%{$query}%")
-                        ->orWhere('description', 'LIKE', "%{$query}%");
-                })
-                ->latest()
-                ->limit($limit)
-                ->get()
-                ->map(fn ($t) => [
-                    'type' => 'ticket',
-                    'type_label' => 'Ticket',
-                    'icon' => 'fas fa-ticket',
-                    'color' => 'secondary',
-                    'title' => "#{$t->ticket_number} — {$t->subject}",
-                    'subtitle' => Str::limit(strip_tags($t->description ?? ''), 80),
-                    'url' => route('manager.helpdesk.tickets.show', $t->id),
-                    'relevance' => 2,
-                ]);
-        });
-    }
-
-    private function registerCustomersSearcher(): void
-    {
-        if (! class_exists(Customer::class)) {
-            return;
-        }
-
-        $this->search->register('customers', function (string $query, int $limit) {
-            return Customer::query()
-                ->where(function ($q) use ($query) {
-                    $q->where('name', 'LIKE', "%{$query}%")
-                        ->orWhere('email', 'LIKE', "%{$query}%")
-                        ->orWhere('phone', 'LIKE', "%{$query}%");
-                })
-                ->limit($limit)
-                ->get()
-                ->map(fn ($c) => [
-                    'type' => 'customer',
-                    'type_label' => 'Contacto',
-                    'icon' => 'fas fa-address-card',
-                    'color' => 'success',
-                    'title' => $c->name,
-                    'subtitle' => $c->email,
-                    'url' => route('manager.helpdesk.customers.show', $c->id),
-                    'relevance' => 2,
                 ]);
         });
     }
@@ -142,7 +64,8 @@ class GlobalSearchRegistrar
             return Page::query()
                 ->where(function ($q) use ($query) {
                     $q->where('title', 'LIKE', "%{$query}%")
-                        ->orWhere('description', 'LIKE', "%{$query}%");
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhere('content', 'LIKE', "%{$query}%");
                 })
                 ->limit($limit)
                 ->get()
@@ -152,8 +75,36 @@ class GlobalSearchRegistrar
                     'icon' => 'fas fa-file-alt',
                     'color' => 'primary',
                     'title' => $p->title,
-                    'subtitle' => Str::limit(strip_tags($p->description ?? ''), 80),
+                    'subtitle' => Str::limit(strip_tags($p->description ?? $p->content ?? ''), 80),
                     'url' => route('pages.edit', $p->id),
+                    'relevance' => 1,
+                ]);
+        });
+    }
+
+    private function registerBlogSearcher(): void
+    {
+        if (! class_exists(BlogPost::class)) {
+            return;
+        }
+
+        $this->search->register('blog', function (string $query, int $limit) {
+            return BlogPost::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('title', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%")
+                        ->orWhere('content', 'LIKE', "%{$query}%");
+                })
+                ->limit($limit)
+                ->get()
+                ->map(fn ($p) => [
+                    'type' => 'blog',
+                    'type_label' => 'Post',
+                    'icon' => 'fas fa-newspaper',
+                    'color' => 'info',
+                    'title' => $p->title,
+                    'subtitle' => Str::limit($p->description ?? strip_tags($p->content ?? ''), 80),
+                    'url' => route('blog.posts.edit', $p->id),
                     'relevance' => 1,
                 ]);
         });
@@ -170,6 +121,7 @@ class GlobalSearchRegistrar
                 ->where(function ($q) use ($query) {
                     $q->where('radicado', 'LIKE', "%{$query}%")
                         ->orWhere('subject', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%")
                         ->orWhere('customer_firstname', 'LIKE', "%{$query}%")
                         ->orWhere('customer_lastname', 'LIKE', "%{$query}%")
                         ->orWhere('customer_email', 'LIKE', "%{$query}%");
@@ -188,5 +140,65 @@ class GlobalSearchRegistrar
                     'relevance' => 1,
                 ]);
         });
+    }
+
+    private function registerFormsSearcher(): void
+    {
+        if (! class_exists(Form::class)) {
+            return;
+        }
+
+        $this->search->register('forms', function (string $query, int $limit) {
+            return Form::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('name', 'LIKE', "%{$query}%")
+                        ->orWhere('description', 'LIKE', "%{$query}%");
+                })
+                ->limit($limit)
+                ->get()
+                ->map(fn ($f) => [
+                    'type' => 'form',
+                    'type_label' => 'Formulario',
+                    'icon' => 'fas fa-wpforms',
+                    'color' => 'success',
+                    'title' => $f->name,
+                    'subtitle' => Str::limit($f->description ?? '', 80),
+                    'url' => route('settings.forms.edit', $f->id),
+                    'relevance' => 1,
+                ]);
+        });
+    }
+
+    private function registerHelpdeskSearcher(): void
+    {
+        try {
+            if (! class_exists(HelpdeskTicket::class, false)) {
+                return;
+            }
+
+            $this->search->register('helpdesk', function (string $query, int $limit) {
+                return HelpdeskTicket::query()
+                    ->where(function ($q) use ($query) {
+                        $q->where('ticket_number', 'LIKE', "%{$query}%")
+                            ->orWhere('title', 'LIKE', "%{$query}%")
+                            ->orWhere('description', 'LIKE', "%{$query}%");
+                    })
+                    ->latest()
+                    ->limit($limit)
+                    ->get()
+                    ->map(fn ($t) => [
+                        'type' => 'helpdesk',
+                        'type_label' => 'Ticket',
+                        'icon' => 'fas fa-headset',
+                        'color' => 'secondary',
+                        'title' => "{$t->ticket_number} — {$t->title}",
+                        'subtitle' => Str::limit($t->description ?? '', 80),
+                        'url' => route('helpdesk.tickets.show', $t->id),
+                        'relevance' => 1,
+                    ]);
+            });
+        } catch (\Throwable) {
+            // module not installed
+        }
     }
 }

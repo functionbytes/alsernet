@@ -51,6 +51,6 @@ class Tipopedidoproveedor extends Model
      */
     public function tipopedidoprov()
     {
-        return $this->belongsTo(Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
     }
 }

@@ -52,6 +52,6 @@ class Afiliado extends Model
      */
     public function afiliado()
     {
-        return $this->belongsTo(Afiliado::class, 'idafiliado', 'idafiliado');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Afiliado::class, 'idafiliado', 'idafiliado');
     }
 }

@@ -53,7 +53,7 @@ class LcategoriaCliente extends Model
      */
     public function lcategoriaCliente()
     {
-        return $this->belongsTo(LcategoriaCliente::class, 'idlcategoria_cliente', 'idlcategoria_cliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\LcategoriaCliente::class, 'idlcategoria_cliente', 'idlcategoria_cliente');
     }
 
     /**
@@ -62,6 +62,6 @@ class LcategoriaCliente extends Model
      */
     public function categoriaCliente()
     {
-        return $this->belongsTo(CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CategoriaCliente::class, 'idcategoria_cliente', 'idcategoria_cliente');
     }
 }

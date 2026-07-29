@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<dataSample>
+  <configurations>
+    <config><name><![CDATA[AP_INSTALLED_LEOFEATURE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_CORRECT_MOUDLE]]></name><value><![CDATA[2.2.1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_PRODUCTWISHLIST]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_PRODUCTCOMPARE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_AJAXCART]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_SELECTATTRIBUTE]]></name><value><![CDATA[]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_UPDATELABEL]]></name><value><![CDATA[]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_INPUTQUANTITY]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_FLYCART_EFFECT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_NOTIFICATION]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_POPUP]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_PRODUCT_REVIEWS]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_PRODUCT_REVIEWS_LISTPRODUCT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_NUMBER_PRODUCT_REVIEWS_LISTPRODUCT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_ZERO_PRODUCT_REVIEWS_LISTPRODUCT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCT_REVIEWS_MINIMAL_TIME]]></name><value><![CDATA[30]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCT_REVIEWS_ALLOW_GUESTS]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCT_REVIEWS_ALLOW_USEFULL_BUTTON]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCT_REVIEWS_ALLOW_REPORT_BUTTON]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCT_REVIEWS_MODERATE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_PRODUCTCOMPARE_PRODUCTPAGE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_PRODUCTCOMPARE_LISTPRODUCT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_COMPARATOR_MAX_ITEM]]></name><value><![CDATA[3]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_PRODUCTWISHLIST_PRODUCTPAGE]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_PRODUCTWISHLIST_LISTPRODUCT]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_DEFAULT_TAB]]></name><value><![CDATA[#fieldset_1_1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_DROPDOWN_DEFAULTCART]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_TYPE_DROPDOWN_DEFAULTCART]]></name><value><![CDATA[dropdown]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_DROPDOWN_FLYCART]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_TYPE_DROPDOWN_FLYCART]]></name><value><![CDATA[slidebar_bottom]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_TYPE_POSITION_FLYCART]]></name><value><![CDATA[fixed]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_FLYCART]]></name><value><![CDATA[bottom]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_VALUE_FLYCART]]></name><value><![CDATA[10]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_UNIT_FLYCART]]></name><value><![CDATA[pixel]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_FLYCART]]></name><value><![CDATA[left]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_VALUE_FLYCART]]></name><value><![CDATA[10]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_UNIT_FLYCART]]></name><value><![CDATA[pixel]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_TYPE_EFFECT_FLYCART]]></name><value><![CDATA[fade]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_OVERLAYBACKGROUND_ALLCART]]></name><value><![CDATA[1]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_UPDATE_QUANTITY_ALLCART]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_ENABLE_BUTTON_QUANTITY_ALLCART]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_COMBINATION_ALLCART]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_SHOW_CUSTOMIZATION_ALLCART]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_WIDTH_CARTITEM_ALLCART]]></name><value><![CDATA[265]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_HEIGHT_CARTITEM_ALLCART]]></name><value><![CDATA[100]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_NUMBER_CARTITEM_DISPLAY_ALLCART]]></name><value><![CDATA[3]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_WIDTH_NOTIFICATION]]></name><value><![CDATA[100]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_WIDTH_UNIT_NOTIFICATION]]></name><value><![CDATA[percent]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_NOTIFICATION]]></name><value><![CDATA[top]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_VALUE_NOTIFICATION]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_VERTICAL_UNIT_NOTIFICATION]]></name><value><![CDATA[pixel]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_NOTIFICATION]]></name><value><![CDATA[left]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_VALUE_NOTIFICATION]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_POSITION_HORIZONTAL_UNIT_NOTIFICATION]]></name><value><![CDATA[pixel]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCTATTRIBUTE_TYPE]]></name><value><![CDATA[0]]></value></config>
+    <config><name><![CDATA[LEOFEATURE_PRODUCTATTRIBUTE_SHOW_LABLE]]></name><value><![CDATA[0]]></value></config>
+</configurations>
+
+<fields objectName="ProductReviewGrade" objectFile="ProductReviewGrade.php" searchField="">
+</fields>
+<fields objectName="ProductReviewCriterion" objectFile="ProductReviewCriterion.php" searchField="">
+  <field><id>1</id><id_product_review_criterion_type>1</id_product_review_criterion_type><active>1</active><name><en><![CDATA[Quality]]></en><fr><![CDATA[Quality]]></fr><de><![CDATA[Quality]]></de><it><![CDATA[Quality]]></it><es><![CDATA[Quality]]></es><ar><![CDATA[Quality]]></ar></name></field>
+</fields>
+<fields objectName="ProductReview" objectFile="ProductReview.php" searchField="">
+</fields>
+<sql>
+<![CDATA[CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_compare` (
+  `id_compare` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id_customer` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_compare`)
+) ENGINE=ENGINE_TYPE AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_compare_product` (
+  `id_compare` int(10) unsigned NOT NULL,
+  `id_product` int(10) unsigned NOT NULL,
+  `date_add` datetime NOT NULL,
+  `date_upd` datetime NOT NULL,
+  PRIMARY KEY (`id_compare`,`id_product`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review` (
+  `id_product_review` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id_product` int(10) unsigned NOT NULL,
+  `id_customer` int(10) unsigned NOT NULL,
+  `id_guest` int(10) unsigned DEFAULT NULL,
+  `title` varchar(64) DEFAULT NULL,
+  `content` text NOT NULL,
+  `customer_name` varchar(64) DEFAULT NULL,
+  `grade` float unsigned NOT NULL,
+  `validate` tinyint(1) NOT NULL,
+  `deleted` tinyint(1) NOT NULL,
+  `date_add` datetime NOT NULL,
+  PRIMARY KEY (`id_product_review`),
+  KEY `id_product` (`id_product`),
+  KEY `id_customer` (`id_customer`),
+  KEY `id_guest` (`id_guest`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_criterion` (
+  `id_product_review_criterion` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id_product_review_criterion_type` tinyint(1) NOT NULL,
+  `active` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id_product_review_criterion`)
+) ENGINE=ENGINE_TYPE AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_criterion_category` (
+  `id_product_review_criterion` int(10) unsigned NOT NULL,
+  `id_category` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_product_review_criterion`,`id_category`),
+  KEY `id_category` (`id_category`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_criterion_lang` (
+  `id_product_review_criterion` int(11) unsigned NOT NULL,
+  `id_lang` int(11) unsigned NOT NULL,
+  `name` varchar(64) NOT NULL,
+  PRIMARY KEY (`id_product_review_criterion`,`id_lang`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_criterion_product` (
+  `id_product` int(10) unsigned NOT NULL,
+  `id_product_review_criterion` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_product`,`id_product_review_criterion`),
+  KEY `id_product_review_criterion` (`id_product_review_criterion`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_grade` (
+  `id_product_review_grade` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id_product_review` int(10) unsigned NOT NULL,
+  `id_product_review_criterion` int(10) unsigned NOT NULL,
+  `grade` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_product_review_grade`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_report` (
+  `id_product_review` int(10) unsigned NOT NULL,
+  `id_customer` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_product_review`,`id_customer`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_product_review_usefulness` (
+  `id_product_review` int(10) unsigned NOT NULL,
+  `id_customer` int(10) unsigned NOT NULL,
+  `usefulness` tinyint(1) unsigned NOT NULL,
+  PRIMARY KEY (`id_product_review`,`id_customer`)
+) ENGINE=ENGINE_TYPE DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_wishlist` (
+  `id_wishlist` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `id_customer` int(10) unsigned NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `counter` int(10) unsigned DEFAULT NULL,
+  `id_shop` int(10) unsigned DEFAULT '1',
+  `id_shop_group` int(10) unsigned DEFAULT '1',
+  `date_add` datetime NOT NULL,
+  `date_upd` datetime NOT NULL,
+  `default` int(10) unsigned DEFAULT '0',
+  PRIMARY KEY (`id_wishlist`)
+) ENGINE=ENGINE_TYPE AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `PREFIX_leofeature_wishlist_product` (
+  `id_wishlist_product` int(10) NOT NULL AUTO_INCREMENT,
+  `id_wishlist` int(10) unsigned NOT NULL,
+  `id_product` int(10) unsigned NOT NULL,
+  `id_product_attribute` int(10) unsigned NOT NULL,
+  `quantity` int(10) unsigned NOT NULL,
+  `priority` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`id_wishlist_product`)
+) ENGINE=ENGINE_TYPE AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+]]></sql>
+
+  <hooks>
+    <hook module="leofeature" hook="Header" position="14" exceptions=""/>
+    <hook module="leofeature" hook="displayBeforeBodyClosingTag" position="3" exceptions=""/>
+    <hook module="leofeature" hook="displayCustomerAccount" position="2" exceptions=""/>
+    <hook module="leofeature" hook="displayBackOfficeHeader" position="6" exceptions=""/>
+    <hook module="leofeature" hook="actionUpdateLangAfter" position="3" exceptions=""/>
+    <hook module="leofeature" hook="actionAdminControllerSetMedia" position="9" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoCartButton" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoProductReviewExtra" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoProductTab" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoProductTabContent" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoProductListReview" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoCompareButton" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoWishlistButton" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoProducReviewCompare" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoCartAttribute" position="1" exceptions=""/>
+    <hook module="leofeature" hook="displayLeoCartQuantity" position="1" exceptions=""/>
+  </hooks>
+</dataSample>

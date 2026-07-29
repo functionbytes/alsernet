@@ -5,9 +5,7 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Otros\CategoriaCl;
 use Modules\Erp\Traits\UsesOCI8Performance;
-use Modules\Supplier\Entities\SupplierFamily;
 
 /**
  * Modelo para la tabla FAMILIA_CL
@@ -55,7 +53,7 @@ class FamiliaCl extends Model
      */
     public function familiaCl()
     {
-        return $this->belongsTo(FamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\FamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
     }
 
     /**
@@ -64,7 +62,7 @@ class FamiliaCl extends Model
      */
     public function categoriaCl()
     {
-        return $this->belongsTo(CategoriaCl::class, 'idcategoria_cl', 'idcategoria_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\CategoriaCl::class, 'idcategoria_cl', 'idcategoria_cl');
     }
 
     /**
@@ -72,7 +70,7 @@ class FamiliaCl extends Model
      */
     public function supplierFamilies(): HasMany
     {
-        return $this->hasMany(SupplierFamily::class, 'erp_family_id', 'idfamilia_cl');
+        return $this->hasMany(\Modules\Supplier\Entities\SupplierFamily::class, 'erp_family_id', 'idfamilia_cl');
     }
 
     /**
@@ -80,6 +78,6 @@ class FamiliaCl extends Model
      */
     public function subfamilias()
     {
-        return $this->hasMany(SubfamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
+        return $this->hasMany(\Modules\Erp\Models\Oracle\Configuracion\SubfamiliaCl::class, 'idfamilia_cl', 'idfamilia_cl');
     }
 }

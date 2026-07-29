@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Promocion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -53,7 +52,7 @@ class Lpromocionbloquea extends Model
      */
     public function lpromocionbloquea()
     {
-        return $this->belongsTo(Lpromocionbloquea::class, 'idlpromocionbloquea', 'idlpromocionbloquea');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocionbloquea::class, 'idlpromocionbloquea', 'idlpromocionbloquea');
     }
 
     /**
@@ -62,7 +61,7 @@ class Lpromocionbloquea extends Model
      */
     public function promocion()
     {
-        return $this->belongsTo(Promocion::class, 'idpromocion', 'idpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Promocion::class, 'idpromocion', 'idpromocion');
     }
 
     /**
@@ -71,6 +70,6 @@ class Lpromocionbloquea extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

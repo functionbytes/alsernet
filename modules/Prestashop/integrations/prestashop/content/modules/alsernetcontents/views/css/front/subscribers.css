@@ -1,0 +1,274 @@
+.subscribers {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    margin-top: 40px;
+}
+.subscribers hr{
+    padding-top: 40px;
+    padding-bottom: 40px;
+    border-top: 1px solid #0000000d;
+    display: flex;
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
+
+.subscribers .container .container-subscribers {
+    margin-top: 40px;
+}
+
+.subscribers .container .container-subscribers img {
+    width: 100%;
+    height: auto;
+}
+
+.subscribers .container .container-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    margin-top: -20px;
+}
+
+.subscribers .container .container-items .item {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-align: center;
+    justify-content: center;
+    padding-bottom: 30px;
+}
+
+.subscribers .container .container-items .item .title {
+    font-size: 13px;
+    width: 100%;
+    color: #90bb13;
+    font-weight: 900;
+    letter-spacing: 0.14px;
+    line-height: 1;
+}
+
+.subscribers .container .container-items .item .description {
+    font-size: 16px;
+    font-family: Roboto;
+    width: 100%;
+    color: #ffffff;
+    font-weight: 900;
+    letter-spacing: 0.16px;
+}
+
+.subscribers .container .container-items .item img {
+    width: 100%;
+    height: auto;
+    max-width: 100px;
+}
+
+.subscribers .container .content-description {
+    margin-bottom: 14px;
+    margin-top: 40px;
+}
+
+.subscribers .container form .form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #4c4c4c;
+    text-align: left;
+    font-size: 14px;
+}
+
+.subscribers .container .description-text {
+    margin-bottom: 14px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 22px;
+    font-family: Barlow;
+    justify-content: center;
+    display: flex;
+}
+
+.subscribers .success-subscribers-container {
+    text-align: center;
+    background: #fff;
+    padding: 50px;
+    border-radius: 10px;
+}
+
+.subscribers .success-subscribers-container h1 {
+    text-align: center;
+    justify-content: center;
+}
+
+.subscribers .success-subscribers-container i {
+    font-size: 100px;
+    color: #90bb13;
+    margin-bottom: 20px;
+}
+
+.subscribers .success-subscribers-container a {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 5px 35px;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: Barlow;
+    color: #ffffff !important;
+    background-color: #90bb13;
+    border-radius: 5px;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 0px;
+    cursor: pointer;
+}
+
+.subscribers .success-subscribers-container p {
+    font-size: 16px;
+}
+
+.subscribers .container {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.subscribers .container .message {
+    text-align: left;
+    margin: 20px 5px;
+}
+
+.subscribers .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.subscribers .container .container-items .col-lg-1 {
+    width: 50%;
+}
+
+@media (min-width: 992px) {
+    .subscribers .container .container-items .col-lg-1 {
+        max-width: unset;
+    }
+
+    .subscribers .container .container-items {
+        margin-top: 40px;
+    }
+
+    .subscribers .container .container-subscribers img {
+        margin-top: -20px;
+    }
+
+    .subscribers .container .message {
+        text-align: left;
+        margin: 20px 10px;
+    }
+}
+
+.subscribers .container .container-btn {
+    margin-bottom: 40px;
+    margin-top: 40px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    width: 100%;
+}
+
+.subscribers .container .container-subscribers-top {
+    height: 66px;
+    background-color: #90bb13;
+    font-size: 32px;
+    font-weight: bold;
+    color: #ffffff;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: -20px;
+    margin-top: -10px;
+    display: flex;
+}
+
+.subscribers .container .container-items .btn-subscribers-container {
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.subscribers .container .container-items .btn-subscribers {
+    width: 40%;
+    font-size: 30px;
+    font-weight: bold;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-align: center;
+    background: #90bb13;
+    border-radius: 5px;
+    border: 0px;
+    padding: 25px 25px;
+    letter-spacing: 0px;
+    cursor: pointer;
+}
+.subscribers .container .success-verification-container h1{
+    text-align: center;
+    display: flex;
+    justify-content: center;
+}
+
+#alsernet-subscribers {
+    .btn:disabled {
+        border: 0 !important;
+        border-radius: 5px;
+    }
+
+    .form-check-container {
+        margin-top: 10px;
+    }
+}
+.subscribers .g-recaptcha {
+    margin-top: 10px !important;
+}
+
+@media (max-width: 992px) {
+    .subscribers {
+        margin-bottom: -60px;
+    }
+
+    .subscribers .container .container-subscribers-top {
+        font-size: 20px;
+        height: 46px;
+    }
+
+    #alsernet-subscribers {
+        .sports-container .sports-wrap .sport-select .sport-item {
+            width: 32%;
+        }
+    }
+
+    .subscribers .container .rc-anchor-normal .rc-anchor-pt {
+        right: 30px !important;
+    }
+
+    .subscribers .container .container-subscribers-top {
+        margin-bottom: -40px;
+    }
+
+    .subscribers .container .description-text {
+        font-size: 12px;
+    }
+
+    .subscribers .container .container-items .btn-subscribers {
+        width: 60%;
+        height: 54px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .subscribers .success-subscribers-container a {
+        height: 54px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+}

@@ -53,7 +53,7 @@ class Clienteguia extends Model
      */
     public function clienteguia()
     {
-        return $this->belongsTo(Clienteguia::class, 'idclienteguia', 'idclienteguia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Clienteguia::class, 'idclienteguia', 'idclienteguia');
     }
 
     /**
@@ -62,6 +62,6 @@ class Clienteguia extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 }

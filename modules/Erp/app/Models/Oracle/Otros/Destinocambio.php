@@ -43,6 +43,6 @@ class Destinocambio extends Model
      */
     public function destinocambio()
     {
-        return $this->belongsTo(Destinocambio::class, 'iddestinocambio', 'iddestinocambio');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Destinocambio::class, 'iddestinocambio', 'iddestinocambio');
     }
 }

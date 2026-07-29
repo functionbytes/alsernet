@@ -51,7 +51,7 @@ class WPaisesIdiomas extends Model
      */
     public function pais()
     {
-        return $this->belongsTo(WPaises::class, 'id_pais', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WPaises::class, 'id_pais', 'id');
     }
 
     /**
@@ -60,6 +60,6 @@ class WPaisesIdiomas extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

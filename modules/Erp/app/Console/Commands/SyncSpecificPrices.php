@@ -2,7 +2,6 @@
 
 namespace Modules\Erp\Console\Commands;
 
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Modules\Erp\Jobs\V2\ValidatePriceFromGestion;
@@ -209,7 +208,7 @@ class SyncSpecificPrices extends Command
     /**
      * Calcular próxima ejecución
      */
-    protected function calculateNextExecution($specificPrice): ?Carbon
+    protected function calculateNextExecution($specificPrice): ?\Carbon\Carbon
     {
         $from = $this->parseDate($specificPrice->from);
         $to = $this->parseDate($specificPrice->to);
@@ -251,14 +250,14 @@ class SyncSpecificPrices extends Command
     /**
      * Parsear fecha de Prestashop
      */
-    protected function parseDate($date): ?Carbon
+    protected function parseDate($date): ?\Carbon\Carbon
     {
         if (empty($date) || $date === '0000-00-00 00:00:00') {
             return null;
         }
 
         try {
-            return Carbon::parse($date);
+            return \Carbon\Carbon::parse($date);
         } catch (\Exception $e) {
             return null;
         }

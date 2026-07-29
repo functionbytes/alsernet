@@ -39,6 +39,6 @@ class Cambiotablametatabla extends Model
      */
     public function cambiotablametatabla()
     {
-        return $this->belongsTo(Cambiotablametatabla::class, 'idcambiotablametatabla', 'idcambiotablametatabla');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Cambiotablametatabla::class, 'idcambiotablametatabla', 'idcambiotablametatabla');
     }
 }

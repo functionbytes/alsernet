@@ -51,6 +51,6 @@ class Calibre extends Model
      */
     public function calibre()
     {
-        return $this->belongsTo(Calibre::class, 'idcalibre', 'idcalibre');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Calibre::class, 'idcalibre', 'idcalibre');
     }
 }

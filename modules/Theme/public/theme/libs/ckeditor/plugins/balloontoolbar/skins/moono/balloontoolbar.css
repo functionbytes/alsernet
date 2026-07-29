@@ -5,8 +5,8 @@ For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 
 .cke_balloon.cke_balloontoolbar
 {
-	background: linear-gradient(to bottom, #f9f9f9, #cfd1cf);
-	filter: progid:DXImageTransform.Microsoft.gradient(gradientType=0, startColorstr='#f9f9f9', endColorstr='#cfd1cf');
+	background: linear-gradient(to bottom, #f5f5f5, #cfd1cf);
+	filter: progid:DXImageTransform.Microsoft.gradient(gradientType=0, startColorstr='#f5f5f5', endColorstr='#cfd1cf');
 	border: 1px solid #b6b6b6;
 	border-radius: 0;
 }
@@ -30,5 +30,5 @@ For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
 
 .cke_balloon.cke_balloontoolbar .cke_balloon_triangle_inner.cke_balloon_triangle_top
 {
-	border-color: #f9f9f9 transparent;
+	border-color: #f5f5f5 transparent;
 }

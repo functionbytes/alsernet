@@ -19,7 +19,7 @@ if (! function_exists('write_env')) {
      */
     function write_env($key, $value, $overwrite = true)
     {
-        Artisan::call('config:clear');
+        \Artisan::call('config:clear');
 
         if (file_exists(base_path('bootstrap/cache/config.php'))) {
             unlink(base_path('bootstrap/cache/config.php'));

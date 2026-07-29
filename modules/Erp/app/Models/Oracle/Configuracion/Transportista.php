@@ -66,7 +66,7 @@ class Transportista extends Model
      */
     public function transportista()
     {
-        return $this->belongsTo(Transportista::class, 'idtransportista', 'idtransportista');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Transportista::class, 'idtransportista', 'idtransportista');
     }
 
     /**
@@ -75,6 +75,6 @@ class Transportista extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 }

@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Tipodireccion;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -58,7 +57,7 @@ class Clientedireccion extends Model
      */
     public function clientedireccion()
     {
-        return $this->belongsTo(Clientedireccion::class, 'idclientedireccion', 'idclientedireccion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Clientedireccion::class, 'idclientedireccion', 'idclientedireccion');
     }
 
     /**
@@ -67,7 +66,7 @@ class Clientedireccion extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -76,6 +75,6 @@ class Clientedireccion extends Model
      */
     public function tipodireccion()
     {
-        return $this->belongsTo(Tipodireccion::class, 'idtipodireccion', 'idtipodireccion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipodireccion::class, 'idtipodireccion', 'idtipodireccion');
     }
 }

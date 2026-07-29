@@ -1,0 +1,37 @@
+[
+    {
+        "title": "Te puede interesar",
+        "language": "es",
+        "position": 1,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "special",
+        "items": [
+          {
+            "title": "Ver nuestras marcas",
+            "url": "/nautica/listado-marcas"
+          },
+          {
+            "title": "Ofertas",
+            "url": "/nautica/ofertas"
+          },
+          {
+            "title": "Novedades",
+            "url": "/nautica/novedades"
+          },
+          {
+            "title": "Los más vendidos",
+            "url": "/nautica/lo_mas_vendido"
+          },
+          {
+            "title": "Boletines",
+            "url": "/nautica/monthlynewsletters"
+          },
+          {
+            "title": "Blog",
+            "url": "/blog/nautica/"
+          }
+        ]
+      }
+]

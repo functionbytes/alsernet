@@ -51,6 +51,6 @@ class Teststock extends Model
      */
     public function teststock()
     {
-        return $this->belongsTo(Teststock::class, 'idteststock', 'idteststock');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Teststock::class, 'idteststock', 'idteststock');
     }
 }

@@ -4,11 +4,6 @@ namespace Modules\Erp\Models\Oracle\Factura;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya;
-use Modules\Erp\Models\Oracle\Albaran\LalbaranproCentral;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -56,7 +51,7 @@ class Lfacturapro extends Model
      */
     public function lfacturapro()
     {
-        return $this->belongsTo(Lfacturapro::class, 'idlfacturapro', 'idlfacturapro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Lfacturapro::class, 'idlfacturapro', 'idlfacturapro');
     }
 
     /**
@@ -65,7 +60,7 @@ class Lfacturapro extends Model
      */
     public function facturapro()
     {
-        return $this->belongsTo(Facturapro::class, 'idfacturapro', 'idfacturapro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Facturapro::class, 'idfacturapro', 'idfacturapro');
     }
 
     /**
@@ -74,7 +69,7 @@ class Lfacturapro extends Model
      */
     public function lalbaranpro()
     {
-        return $this->belongsTo(LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
     }
 
     /**
@@ -83,7 +78,7 @@ class Lfacturapro extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -92,7 +87,7 @@ class Lfacturapro extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -101,7 +96,7 @@ class Lfacturapro extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -110,6 +105,6 @@ class Lfacturapro extends Model
      */
     public function lalbaranproCentral()
     {
-        return $this->belongsTo(LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCentral::class, 'idlalbaranpro_central', 'idlalbaranpro_central');
     }
 }

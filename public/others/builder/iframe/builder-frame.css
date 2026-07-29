@@ -546,7 +546,7 @@ body {
 .list-group-container .list-group .list-group-item:hover {
     color: #555;
     text-decoration: none;
-    background-color: #f9f9f9;
+    background-color: #f5f5f5;
 }
 
 /*jumbotron widget*/
@@ -691,7 +691,7 @@ body {
 
 .panel-container .panel .panel-footer {
     padding: 10px 15px;
-    background-color: #f9f9f9;
+    background-color: #f5f5f5;
     border-top: 1px solid #ddd;
     border-bottom-right-radius: 3px;
     border-bottom-left-radius: 3px;
@@ -1132,7 +1132,7 @@ li.list-group-item i.text-danger {
     display: inline-block;
     border: 1px solid #e7e7e7;
     padding: 19px;
-    background-color: #f5f6f8;
+    background-color: #fafafa;
     border-radius: 4px;
     -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
     box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);

@@ -52,6 +52,6 @@ class Moneda extends Model
      */
     public function moneda()
     {
-        return $this->belongsTo(Moneda::class, 'idmoneda', 'idmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Moneda::class, 'idmoneda', 'idmoneda');
     }
 }

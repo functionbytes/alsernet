@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Proveedor\Artiprov;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -57,7 +56,7 @@ class LimportacionArticuloAct extends Model
      */
     public function limportacionArticuloAct()
     {
-        return $this->belongsTo(LimportacionArticuloAct::class, 'idlimportacion_articulo_act', 'idlimportacion_articulo_act');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\LimportacionArticuloAct::class, 'idlimportacion_articulo_act', 'idlimportacion_articulo_act');
     }
 
     /**
@@ -66,7 +65,7 @@ class LimportacionArticuloAct extends Model
      */
     public function importacionArticulo()
     {
-        return $this->belongsTo(ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
     }
 
     /**
@@ -75,6 +74,6 @@ class LimportacionArticuloAct extends Model
      */
     public function artiprov()
     {
-        return $this->belongsTo(Artiprov::class, 'idartiprov', 'idartiprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Artiprov::class, 'idartiprov', 'idartiprov');
     }
 }

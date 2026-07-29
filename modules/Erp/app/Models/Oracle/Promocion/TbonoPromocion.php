@@ -84,6 +84,6 @@ class TbonoPromocion extends Model
      */
     public function tbonoPromocion()
     {
-        return $this->belongsTo(TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\TbonoPromocion::class, 'idtbono_promocion', 'idtbono_promocion');
     }
 }

@@ -9,21 +9,19 @@ use Modules\Health\Http\Controllers\HealthController;
 |--------------------------------------------------------------------------
 |
 | Health monitoring and system diagnostics routes
-| Prefix: /panel/settings/health
+| Prefix: /backups/health (applied by ServiceProvider)
 | Name: backups.health.* (applied by ServiceProvider)
-| Middleware: web, auth, settings
+| Middleware: web, auth, role:super-admin
 |
 */
 
-Route::middleware(['web', 'auth', 'settings'])
-    ->prefix('panel/settings/health')
+Route::middleware(['web', 'auth', 'role:super-admin'])
+    ->prefix('settings/health')
     ->name('settings.health.')
     ->group(function () {
         Route::get('/', [HealthController::class, 'index'])->name('index');
         Route::get('/check', [HealthController::class, 'check'])->name('check');
         Route::get('/history', [HealthController::class, 'history'])->name('history');
-        Route::delete('/history/{id}', [HealthController::class, 'destroyHistoryRecord'])->name('history.destroy');
-        Route::post('/history/bulk', [HealthController::class, 'bulkDestroyHistory'])->name('history.bulk');
 
         // System management actions
         Route::post('/schedule/run', [HealthController::class, 'runSchedule'])->name('schedule.run');
@@ -36,15 +34,10 @@ Route::middleware(['web', 'auth', 'settings'])
         Route::get('/supervisor/download', [HealthController::class, 'downloadSupervisorConfig'])->name('supervisor.download');
     });
 
-// Legacy redirects (singular → plural). TODO remove after 2026-12-31
-Route::middleware(['web'])->group(function () {
-    Route::redirect('panel/setting/health/{any}', 'panel/settings/health/{any}', 301)->where('any', '.*');
-    Route::redirect('panel/setting/health', 'panel/settings/health', 301);
-});
-
-// Health Check API Routes (rate limited, no authentication - for external monitoring)
-Route::prefix('api/health')->middleware(['throttle:30,1'])->group(function () {
-    Route::get('ping', [HealthController::class, 'ping']);
-    Route::get('/', [HealthController::class, 'health']);
-    Route::get('detailed', [HealthController::class, 'detailed']);
+// Health Check API Routes (no authentication, no rate limiting - for external monitoring)
+Route::prefix('api/health')->group(function () {
+    Route::get('ping', [HealthController::class, 'ping']);           // Ping simple
+    Route::get('/', [HealthController::class, 'health']);            // Health check completo
+    Route::get('documents', [HealthController::class, 'documentsHealth']); // Health específico documentos
+    Route::get('detailed', [HealthController::class, 'detailed']);   // Detallado (solo debug)
 });

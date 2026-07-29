@@ -51,6 +51,6 @@ class Tipoalbarancli extends Model
      */
     public function tipoalbarancli()
     {
-        return $this->belongsTo(Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
     }
 }

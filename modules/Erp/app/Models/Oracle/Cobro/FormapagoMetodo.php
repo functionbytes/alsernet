@@ -47,6 +47,6 @@ class FormapagoMetodo extends Model
      */
     public function formapagoMetodo()
     {
-        return $this->belongsTo(FormapagoMetodo::class, 'idformapago_metodo', 'idformapago_metodo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\FormapagoMetodo::class, 'idformapago_metodo', 'idformapago_metodo');
     }
 }

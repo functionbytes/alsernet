@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Modules\Document\Entities\DocumentValidationHistory;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Enums\ValidationAction;
-use Modules\Document\Notifications\DocumentStageAdvanced;
-use Modules\Document\Services\ValidationPermissionService;
 
 /**
  * Trait HasValidationWorkflow
@@ -201,8 +199,8 @@ trait HasValidationWorkflow
             return false;
         }
 
-        // Check if REJECT action is allowed at current stage (skip when no workflow group is configured)
-        if ($this->current_validator_group && ! $this->canPerformValidationAction(ValidationAction::REJECT)) {
+        // Check if REJECT action is allowed at current stage
+        if (! $this->canPerformValidationAction(ValidationAction::REJECT)) {
             return false;
         }
 
@@ -284,9 +282,9 @@ trait HasValidationWorkflow
     /**
      * Get the validation permission service (lazy-loaded singleton).
      */
-    public function getPermissionService(): ValidationPermissionService
+    public function getPermissionService(): \Modules\Document\Services\ValidationPermissionService
     {
-        return app(ValidationPermissionService::class);
+        return app(\Modules\Document\Services\ValidationPermissionService::class);
     }
 
     /**
@@ -471,7 +469,7 @@ trait HasValidationWorkflow
     {
         $this->validationHistory()->create([
             'stage_number' => $this->current_stage,
-            'validator_group' => $this->current_validator_group ?? 'manual',
+            'validator_group' => $this->current_validator_group,
             'validator_user_id' => $validator->id,
             'action' => $action,
             'comments' => $comments,
@@ -531,7 +529,7 @@ trait HasValidationWorkflow
 
             // Send notification to all users in the group
             foreach ($users as $user) {
-                $user->notify(new DocumentStageAdvanced(
+                $user->notify(new \Modules\Document\Notifications\DocumentStageAdvanced(
                     $this,
                     $previousStage,
                     $currentStage,

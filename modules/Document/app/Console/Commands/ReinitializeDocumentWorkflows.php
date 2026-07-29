@@ -61,7 +61,6 @@ class ReinitializeDocumentWorkflows extends Command
 
         if ($total === 0) {
             $this->warn('No documents found matching the criteria.');
-
             return 0;
         }
 
@@ -70,9 +69,8 @@ class ReinitializeDocumentWorkflows extends Command
         $this->newLine();
 
         // Confirm action
-        if (! $this->confirm('This will reinitialize workflows for all matching documents. Continue?')) {
+        if (!$this->confirm('This will reinitialize workflows for all matching documents. Continue?')) {
             $this->info('Operation cancelled.');
-
             return 0;
         }
 
@@ -104,7 +102,6 @@ class ReinitializeDocumentWorkflows extends Command
                         'error' => 'No stages found for this document type',
                     ];
                     $progressBar->advance();
-
                     continue;
                 }
 
@@ -158,7 +155,7 @@ class ReinitializeDocumentWorkflows extends Command
         }
 
         // Show errors if any
-        if (! empty($statistics['errors'])) {
+        if (!empty($statistics['errors'])) {
             $this->newLine();
             $this->info('─────────────────────────────────────────────────────────');
             $this->info('ERRORS');

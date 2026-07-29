@@ -3,10 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Proveedor\Proveedor;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -58,7 +54,7 @@ class PedidoproCentral extends Model
      */
     public function pedidopro()
     {
-        return $this->belongsTo(PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCapthaya::class, 'idpedidopro', 'idpedidopro');
     }
 
     /**
@@ -67,7 +63,7 @@ class PedidoproCentral extends Model
      */
     public function pedidoproCentral()
     {
-        return $this->belongsTo(PedidoproCentral::class, 'idpedidopro_central', 'idpedidopro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\PedidoproCentral::class, 'idpedidopro_central', 'idpedidopro_central');
     }
 
     /**
@@ -76,7 +72,7 @@ class PedidoproCentral extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -85,7 +81,7 @@ class PedidoproCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -94,7 +90,7 @@ class PedidoproCentral extends Model
      */
     public function seriepedidopro()
     {
-        return $this->belongsTo(SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\SeriepedidoproCapthaya::class, 'idseriepedidopro', 'idseriepedidopro');
     }
 
     /**
@@ -103,7 +99,7 @@ class PedidoproCentral extends Model
      */
     public function seriepedidoproCentral()
     {
-        return $this->belongsTo(SeriepedidoproCentral::class, 'idseriepedidopro_central', 'idseriepedidopro_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\SeriepedidoproCentral::class, 'idseriepedidopro_central', 'idseriepedidopro_central');
     }
 
     /**
@@ -112,7 +108,7 @@ class PedidoproCentral extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -121,7 +117,7 @@ class PedidoproCentral extends Model
      */
     public function tipopedidoprov()
     {
-        return $this->belongsTo(Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Tipopedidoproveedor::class, 'idtipopedidoprov', 'idtipopedidoprov');
     }
 
     /**
@@ -130,6 +126,6 @@ class PedidoproCentral extends Model
      */
     public function conversionmoneda()
     {
-        return $this->belongsTo(Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Conversionmoneda::class, 'idconversionmoneda', 'idconversionmoneda');
     }
 }

@@ -3,12 +3,6 @@
 namespace Modules\Erp\Models\Oracle\Pedido;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Configuracion\Tipomedida;
-use Modules\Erp\Models\Oracle\Lote\Lote;
-use Modules\Erp\Models\Oracle\Promocion\BonoPromocion;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -71,7 +65,7 @@ class LpedidocliCentral extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -90,7 +84,7 @@ class LpedidocliCentral extends Model
      */
     public function lpedidocliCentral()
     {
-        return $this->belongsTo(LpedidocliCentral::class, 'idlpedidocli_central', 'idlpedidocli_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCentral::class, 'idlpedidocli_central', 'idlpedidocli_central');
     }
 
     /**
@@ -99,7 +93,7 @@ class LpedidocliCentral extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -108,7 +102,7 @@ class LpedidocliCentral extends Model
      */
     public function tipomedida()
     {
-        return $this->belongsTo(Tipomedida::class, 'idtipomedida', 'idtipomedida');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipomedida::class, 'idtipomedida', 'idtipomedida');
     }
 
     /**
@@ -117,7 +111,7 @@ class LpedidocliCentral extends Model
      */
     public function lote()
     {
-        return $this->belongsTo(Lote::class, 'idlote', 'idlote');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Lote\Lote::class, 'idlote', 'idlote');
     }
 
     /**
@@ -126,7 +120,7 @@ class LpedidocliCentral extends Model
      */
     public function lalbaranpro()
     {
-        return $this->belongsTo(LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\LalbaranproCapthaya::class, 'idlalbaranpro', 'idlalbaranpro');
     }
 
     /**
@@ -135,7 +129,7 @@ class LpedidocliCentral extends Model
      */
     public function bonoPromocion()
     {
-        return $this->belongsTo(BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\BonoPromocion::class, 'idbono_promocion', 'idbono_promocion');
     }
 
     /**
@@ -144,6 +138,6 @@ class LpedidocliCentral extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 }

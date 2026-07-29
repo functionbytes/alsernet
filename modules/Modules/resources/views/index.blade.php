@@ -20,9 +20,6 @@
                         <p class="small mb-0 text-muted">Administra, habilita, deshabilita e instala módulos del sistema</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('settings.modules.menu-features.index') }}" class="btn btn-outline-secondary">
-                            Funcionalidades de menú
-                        </a>
                         <a href="{{ route('settings.modules.uploadForm') }}" class="btn btn-primary">
                             Instalar módulo
                         </a>
@@ -84,7 +81,7 @@
                                 <span class="input-group-text bg-white border-end-1">
                                     <i class="fas fa-search text-muted"></i>
                                 </span>
-                                <input type="search" name="search" class="form-control -0 ps-0"
+                                <input type="search" name="search" class="form-control border-start-0 ps-0"
                                        placeholder="Buscar por nombre, alias o descripción..."
                                        value="{{ request('search') }}">
                             </div>

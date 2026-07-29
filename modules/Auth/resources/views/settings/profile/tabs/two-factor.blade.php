@@ -36,7 +36,7 @@
                         </ol>
                         <div class="d-grid">
                             <button type="button" class="btn btn-primary" id="btnStartSetup">
-                                <i class="fas fa-qrcode me-2"></i>Activar 2FA
+                               Activar 2FA
                             </button>
                         </div>
                     </div>
@@ -76,7 +76,7 @@
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-success flex-grow-1">
-                                    <i class="fas fa-check me-2"></i>Confirmar y activar
+                                    Confirmar y activar
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" id="btnCancelSetup">
                                     Cancelar
@@ -93,7 +93,7 @@
                         </div>
                         <div id="recovery-codes-list" class="row g-2 mb-4"></div>
                         <button type="button" class="btn btn-primary" onclick="window.location.reload()">
-                            <i class="fas fa-check me-2"></i>Listo, los guardé
+                            Listo, los guardé
                         </button>
                     </div>
 
@@ -138,7 +138,7 @@
                         </div>
 
                         {{-- Disable 2FA --}}
-                        <div class="card border ">
+                        <div class="card border border-danger">
                             <div class="card-body p-3">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -146,7 +146,7 @@
                                         <small class="text-muted">Tu cuenta quedará menos protegida</small>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger" id="btnShowDisableForm">
-                                        <i class="fas fa-shield-xmark me-1"></i>Desactivar
+                                       Desactivar
                                     </button>
                                 </div>
                                 <div id="disable-form" class="d-none mt-3">

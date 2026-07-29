@@ -1,0 +1,179 @@
+[
+    {
+        "title": "Racchette da Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 71,
+        "column": "1",
+        "position_category": "1",
+        "position": "1",
+        "items": [
+            {
+                "title": "Livello avanzato",
+                "url": "\/it\/padel\/racchette_da_padel-livello_avanzato",
+                "visible": "1"
+            },
+            {
+                "title": "Livello medio",
+                "url": "\/it\/padel\/racchette_da_padel-livello_medio",
+                "visible": "1"
+            },
+            {
+                "title": "Principiante",
+                "url": "\/it\/padel\/racchette_da_padel-principiante",
+                "visible": "1"
+            },
+            {
+                "title": "Pagaie junior",
+                "url": "\/it\/padel\/racchette_da_padel-pagaie_junior",
+                "visible": "0"
+            },
+            {
+                "title": "Racchette da Padel (Scopri di pi\u00f9)",
+                "url": "\/it\/padel\/racchette_da_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Borse e Porta Racchette Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 72,
+        "column": "1",
+        "position_category": "2",
+        "position": "2",
+        "items": [
+            {
+                "title": "Borse e Porta Racchette Padel (Scopri di pi\u00f9)",
+                "url": "\/it\/padel\/borse_e_porta_racchette_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Accessori Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 73,
+        "column": "2",
+        "position_category": "3",
+        "position": "1",
+        "items": [
+            {
+                "title": "Protezioni",
+                "url": "\/it\/padel\/accessori_padel-protezioni",
+                "visible": "0"
+            },
+            {
+                "title": "Manopole",
+                "url": "\/it\/padel\/accessori_padel-manopole",
+                "visible": "1"
+            },
+            {
+                "title": "Cappellini",
+                "url": "\/it\/padel\/accessori_padel-cappellini",
+                "visible": "1"
+            },
+            {
+                "title": "Braccialetti",
+                "url": "\/it\/padel\/accessori_padel-braccialetti",
+                "visible": "1"
+            },
+            {
+                "title": "Borse da toilette",
+                "url": "\/it\/padel\/accessori_padel-borse_da_toilette",
+                "visible": "0"
+            },
+            {
+                "title": "Portachiavi",
+                "url": "\/it\/padel\/accessori_padel-portachiavi",
+                "visible": "0"
+            },
+            {
+                "title": "Accessori Padel (Scopri di pi\u00f9)",
+                "url": "\/it\/padel\/accessori_padel",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Palline da Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 74,
+        "column": "3",
+        "position_category": "4",
+        "position": "1",
+        "items": [
+            {
+                "title": "Palloni",
+                "url": "\/it\/padel\/palloni",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Abbigliamento Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 75,
+        "column": "3",
+        "position_category": "5",
+        "position": "3",
+        "items": [
+            {
+                "title": "Uomo",
+                "url": "\/it\/padel\/abbigliamento-uomo",
+                "visible": "1"
+            },
+            {
+                "title": "Donna",
+                "url": "\/it\/padel\/abbigliamento-donna",
+                "visible": "1"
+            },
+            {
+                "title": "Abbigliamento (Scopri di pi\u00f9)",
+                "url": "\/it\/padel\/abbigliamento",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Scarpe da Padel",
+        "action": "",
+        "type": "subcategorie",
+        "id": 76,
+        "column": "4",
+        "position_category": "6",
+        "position": "1",
+        "items": [
+            {
+                "title": "Scarpe sportive",
+                "url": "\/it\/padel\/scarpe_sportive",
+                "visible": "1"
+            }
+        ]
+    },
+    {
+        "title": "Outlet e offerte",
+        "action": "",
+        "type": "subcategorie",
+        "id": 77,
+        "column": "4",
+        "position_category": "8",
+        "position": "2",
+        "items": [
+            {
+                "title": "Outlet e Liquidazioni",
+                "url": "\/it\/padel\/outlet_e_liquidazioni",
+                "visible": "1"
+            },
+            {
+                "title": "Offerta Padel Express",
+                "url": "\/it\/padel\/offerta_padel_express",
+                "visible": "1"
+            }
+        ]
+    }
+]

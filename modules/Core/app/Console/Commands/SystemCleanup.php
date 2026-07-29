@@ -2,10 +2,10 @@
 
 namespace Modules\Core\Console\Commands;
 
+use Modules\Mailing\Models\Log;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log as LaravelLog;
-use Modules\Mailing\Models\Log;
 
 class SystemCleanup extends Command
 {

@@ -371,7 +371,7 @@ $data = json_decode($response->getBody(), true);</code></pre>
 
         <!-- Best Practices Section -->
         <div class="card mt-4">
-            <div class="card-header" style="background-color: #90bb13;">
+            <div class="card-header" style="background-color: #13C672;">
                 <h5 class="mb-0 text-white">
                     Mejores prácticas
                 </h5>

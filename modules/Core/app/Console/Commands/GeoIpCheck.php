@@ -2,13 +2,13 @@
 
 namespace Modules\Core\Console\Commands;
 
+use Modules\Mailing\Library\Lockable;
+use Modules\Mailing\Models\Notification;
+use Modules\Mailing\Models\Setting;
 use App;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log as LaravelLog;
-use Modules\Mailing\Library\Lockable;
-use Modules\Mailing\Models\Notification;
-use Modules\Mailing\Models\Setting;
 
 class GeoIpCheck extends Command
 {

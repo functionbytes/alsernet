@@ -41,14 +41,14 @@
                         <div class="col-md-6 mb-3">
                             <div class="card card-body h-100 bg-light-secondary">
                                 <h5 class="text-dark">Host:</h5>
-                                <p class="text-muted mb-0">{{ config('database.connections.oracle.host') ?? 'N/A' }}</p>
+                                <p class="text-muted mb-0">{{ $settings['oracle_host'] ?? 'N/A' }}</p>
                                 <small class="text-muted">Dirección IP o nombre de host del servidor</small>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="card card-body h-100 bg-light-secondary">
                                 <h5 class="text-dark">Puerto:</h5>
-                                <p class="text-muted mb-0">{{ config('database.connections.oracle.port') ?? 'N/A' }}</p>
+                                <p class="text-muted mb-0">{{ $settings['oracle_port'] ?? 'N/A' }}</p>
                                 <small class="text-muted">Puerto de conexión (por defecto: 1521)</small>
                             </div>
                         </div>

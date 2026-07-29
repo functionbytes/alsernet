@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Cliente;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Articulo\Articulo;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -58,7 +55,7 @@ class Clientecuota extends Model
      */
     public function clientecuota()
     {
-        return $this->belongsTo(Clientecuota::class, 'idclientecuota', 'idclientecuota');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Clientecuota::class, 'idclientecuota', 'idclientecuota');
     }
 
     /**
@@ -67,7 +64,7 @@ class Clientecuota extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -76,7 +73,7 @@ class Clientecuota extends Model
      */
     public function lpedidocli()
     {
-        return $this->belongsTo(LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\LpedidocliCapthaya::class, 'idlpedidocli', 'idlpedidocli');
     }
 
     /**
@@ -85,7 +82,7 @@ class Clientecuota extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -94,7 +91,7 @@ class Clientecuota extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 
     /**
@@ -103,6 +100,6 @@ class Clientecuota extends Model
      */
     public function clientecuenta()
     {
-        return $this->belongsTo(ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClientecuentaCent::class, 'idclientecuenta', 'idclientecuenta');
     }
 }

@@ -8,8 +8,8 @@
     {{-- Header --}}
     <div class="d-flex align-items-center gap-3 mb-4">
         <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-             style="width:48px;height:48px;background:#90bb1322">
-            <i class="fas fa-cogs" style="color:#90bb13;font-size:1.3rem"></i>
+             style="width:48px;height:48px;background:#13C67222">
+            <i class="fas fa-cogs" style="color:#13C672;font-size:1.3rem"></i>
         </div>
         <div>
             <h4 class="mb-0 fw-semibold">Configuración del sistema</h4>
@@ -24,7 +24,7 @@
                 <i class="fas fa-search text-muted"></i>
             </span>
             <input type="text"
-                   class="form-control -0"
+                   class="form-control border-start-0"
                    id="settings-search"
                    placeholder="Buscar configuración..."
                    autocomplete="off">

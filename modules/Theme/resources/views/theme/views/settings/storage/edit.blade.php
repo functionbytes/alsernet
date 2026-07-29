@@ -14,7 +14,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Editar disco de almacenamiento</h5>
-                        <p class="mb-0 text-muted">Modifica la configuración del disco <strong
+                        <p class="mb-0 text-muted small">Modifica la configuración del disco <strong
                                     class="text-primary">{{ $disk['name'] }}</strong></p>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                     </div>
 
                     {{-- Local Driver Fields --}}
-                    <div id="localFields" class="driver-fields row" style="display: none;">
+                    <div id="localFields" class="driver-fields" style="display: none;">
                         <div class="col-12 col-md-12">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">
@@ -259,8 +259,8 @@
                     </div>
 
                     {{-- S3 Driver Fields --}}
-                    <div id="s3Fields" class="driver-fields row" style="display: none;">
-                        <div class="col-6 col-md-6">
+                    <div id="s3Fields" class="driver-fields" style="display: none;">
+                        <div class="col-12 col-md-12">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">
                                     Bucket <span class="text-danger">*</span>
@@ -273,7 +273,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-6 col-md-6">
+                        <div class="col-12 col-md-12">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">
                                     Región <span class="text-danger">*</span>
@@ -287,7 +287,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-6 col-md-6">
+                        <div class="col-12 col-md-12">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">
                                     Access Key ID <span class="text-danger">*</span>
@@ -299,7 +299,7 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="col-6 col-md-6">
+                        <div class="col-12 col-md-6">
                             <div class="mb-3">
                                 <label class="control-label col-form-label">
                                     Secret Access Key <span class="text-danger">*</span>

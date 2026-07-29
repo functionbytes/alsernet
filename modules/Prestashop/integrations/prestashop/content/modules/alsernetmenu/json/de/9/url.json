@@ -1,0 +1,29 @@
+[
+    {
+        "title": "KÖNNTE SIE INTERESSIEREN",
+        "language": "de",
+        "position": 5,
+        "column": 1,
+        "url": "",
+        "action": "",
+        "type": "subcategorie",
+        "items": [
+          {
+            "title": "Unsere Marken anzeigen",
+            "url": "/de/skifahren/marken-liste"
+          },
+          {
+            "title": "Angebote",
+            "url": "/de/skifahren/angebote"
+          },
+          {
+            "title": "Neuheiten",
+            "url": "/de/skifahren/neuen"
+          },
+          {
+            "title": "Bestseller",
+            "url": "/de/skifahren/bestseller"
+          }
+        ]
+    }
+]

@@ -51,6 +51,6 @@ class Tipoprov extends Model
      */
     public function tipoprov()
     {
-        return $this->belongsTo(Tipoprov::class, 'idtipoprov', 'idtipoprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Tipoprov::class, 'idtipoprov', 'idtipoprov');
     }
 }

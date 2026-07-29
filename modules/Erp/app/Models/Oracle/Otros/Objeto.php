@@ -52,6 +52,6 @@ class Objeto extends Model
      */
     public function objeto()
     {
-        return $this->belongsTo(Objeto::class, 'idobjeto', 'idobjeto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Objeto::class, 'idobjeto', 'idobjeto');
     }
 }

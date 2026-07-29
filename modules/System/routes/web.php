@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\System\Http\Controllers\Settings\MantenanceSettingsController;
 use Modules\System\Http\Controllers\Settings\ServerAccessController;
+use Modules\System\Http\Controllers\Settings\SettingsPanelController;
 use Modules\System\Http\Controllers\Settings\SupervisorController;
 use Modules\System\Http\Controllers\Settings\SystemCacheController;
 use Modules\System\Http\Controllers\Settings\SystemSettingsController;
@@ -131,6 +132,11 @@ Route::middleware(['web', 'auth', 'settings'])
                 });
             });
     });
+
+// Settings panel hub
+Route::middleware(['web', 'auth', 'settings'])
+    ->get('panel/settings', [SettingsPanelController::class, 'index'])
+    ->name('settings.panel');
 
 // Legacy redirects (singular → plural). TODO remove after 2026-12-31
 Route::middleware(['web'])->group(function () {

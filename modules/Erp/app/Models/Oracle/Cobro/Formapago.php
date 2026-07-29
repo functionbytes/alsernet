@@ -79,7 +79,7 @@ class Formapago extends Model
      */
     public function formapagoMetodo()
     {
-        return $this->belongsTo(FormapagoMetodo::class, 'idformapago_metodo', 'idformapago_metodo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\FormapagoMetodo::class, 'idformapago_metodo', 'idformapago_metodo');
     }
 
     /**
@@ -88,7 +88,7 @@ class Formapago extends Model
      */
     public function plataformaPago()
     {
-        return $this->belongsTo(PlataformaPago::class, 'idplataforma_pago', 'idplataforma_pago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\PlataformaPago::class, 'idplataforma_pago', 'idplataforma_pago');
     }
 
     /**
@@ -97,6 +97,6 @@ class Formapago extends Model
      */
     public function formapago()
     {
-        return $this->belongsTo(Formapago::class, 'idformapago', 'idformapago');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cobro\Formapago::class, 'idformapago', 'idformapago');
     }
 }

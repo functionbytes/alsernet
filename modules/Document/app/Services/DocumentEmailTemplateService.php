@@ -63,6 +63,87 @@ class DocumentEmailTemplateService
         }
     }
 
+    public static function sendFusilLicenseConfirmation(Document $document, ?int $adminId = null): bool
+    {
+        try {
+            $template = self::resolveTemplate('documents.mail_template_fusil_license_confirmation_id', 'DOCUMENT_FUSIL_LICENSE_CONFIRMATION');
+
+            if (! $template) {
+                return false;
+            }
+
+            $recipient = $document->customer_email;
+            if (! $recipient) {
+                return false;
+            }
+
+            $langId    = $document->lang_id ?? 1;
+            $variables = self::prepareDocumentVariables($document);
+
+            $translation = $template->translate($langId);
+            if (! $translation || ! $translation->subject) {
+                return false;
+            }
+
+            $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
+            $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
+
+            Mail::to($recipient)->queue(new DocumentCustomMail($document, $subject, $content));
+
+            self::logEmail($document, 'fusil_license_confirmation', $subject, $content, $template, [], true, null, $adminId);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error sending fusil license confirmation email', [
+                'document_uid' => $document->uid,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public static function sendFusilLicenseRequest(Document $document, ?int $adminId = null): bool
+    {
+        try {
+            $template = self::resolveTemplate('documents.mail_template_fusil_license_id', 'DOCUMENT_FUSIL_LICENSE');
+
+            if (! $template) {
+                return false;
+            }
+
+            $recipient = $document->customer_email;
+            if (! $recipient) {
+                return false;
+            }
+
+            $langId = $document->lang_id ?? 1;
+            $variables = self::prepareDocumentVariables($document);
+
+            $translation = $template->translate($langId);
+            if (! $translation || ! $translation->subject) {
+                return false;
+            }
+
+            $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
+            $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
+
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content));
+
+            self::logEmail($document, 'fusil_license', $subject, $content, $template, [], true, null, $adminId);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error sending fusil license request email', [
+                'document_uid' => $document->uid,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     public static function sendReminder(Document $document, ?int $adminId = null): bool
     {
         try {
@@ -302,7 +383,7 @@ class DocumentEmailTemplateService
     public static function sendApprovalEmail(Document $document, ?int $adminId = null): bool
     {
         try {
-            $template = self::resolveTemplate('documents.mail_template_approval_id', 'document_approved', ['document_approval', 'approval_notification']);
+            $template = self::resolveTemplate('documents.mail_template_approval_id', 'document_approval', ['approval_notification']);
 
             if (! $template) {
                 return false;
@@ -350,7 +431,7 @@ class DocumentEmailTemplateService
     public static function sendRejectionEmail(Document $document, ?string $reason = null, array $rejectedDocs = [], ?int $adminId = null): bool
     {
         try {
-            $template = self::resolveTemplate('documents.mail_template_rejection_id', 'document_rejected', ['document_rejection', 'rejection_notification']);
+            $template = self::resolveTemplate('documents.mail_template_rejection_id', 'document_rejection', ['rejection_notification']);
 
             if (! $template) {
                 return false;
@@ -365,7 +446,7 @@ class DocumentEmailTemplateService
             // Si no, usar todos los documentos requeridos
             if (empty($rejectedDocs)) {
                 $documentTypeSlug = $document->documentType?->slug ?? 'general';
-                $rejectedDocs = DocumentTypeService::getRequiredDocuments($documentTypeSlug);
+                $rejectedDocs = \Modules\Document\Services\DocumentTypeService::getRequiredDocuments($documentTypeSlug);
             }
 
             $variables = self::prepareDocumentVariables($document, $rejectedDocs, $reason);

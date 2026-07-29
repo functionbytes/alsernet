@@ -4,13 +4,6 @@ namespace Modules\Erp\Models\Oracle\Albaran;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Cliente\Cliente;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
-use Modules\Erp\Models\Oracle\Configuracion\Cierre;
-use Modules\Erp\Models\Oracle\Configuracion\Regfiscal;
-use Modules\Erp\Models\Oracle\Configuracion\Regpais;
-use Modules\Erp\Models\Oracle\Factura\FacturacliCentral;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -90,7 +83,7 @@ class AlbarancliCentral extends Model
      */
     public function albarancliCentral()
     {
-        return $this->belongsTo(AlbarancliCentral::class, 'idalbarancli_central', 'idalbarancli_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCentral::class, 'idalbarancli_central', 'idalbarancli_central');
     }
 
     /**
@@ -99,7 +92,7 @@ class AlbarancliCentral extends Model
      */
     public function albarancli()
     {
-        return $this->belongsTo(AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\AlbarancliCapthaya::class, 'idalbarancli', 'idalbarancli');
     }
 
     /**
@@ -108,7 +101,7 @@ class AlbarancliCentral extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 
     /**
@@ -117,7 +110,7 @@ class AlbarancliCentral extends Model
      */
     public function regfiscal()
     {
-        return $this->belongsTo(Regfiscal::class, 'idregfiscal', 'idregfiscal');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regfiscal::class, 'idregfiscal', 'idregfiscal');
     }
 
     /**
@@ -126,7 +119,7 @@ class AlbarancliCentral extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -135,7 +128,7 @@ class AlbarancliCentral extends Model
      */
     public function seriealbarancliCentral()
     {
-        return $this->belongsTo(SeriealbarancliCentral::class, 'idseriealbarancli_central', 'idseriealbarancli_central');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCentral::class, 'idseriealbarancli_central', 'idseriealbarancli_central');
     }
 
     /**
@@ -144,7 +137,7 @@ class AlbarancliCentral extends Model
      */
     public function seriealbarancli()
     {
-        return $this->belongsTo(SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
     }
 
     /**
@@ -153,7 +146,7 @@ class AlbarancliCentral extends Model
      */
     public function cierre()
     {
-        return $this->belongsTo(Cierre::class, 'idcierre', 'idcierre');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Cierre::class, 'idcierre', 'idcierre');
     }
 
     /**
@@ -162,7 +155,7 @@ class AlbarancliCentral extends Model
      */
     public function tipoalbarancli()
     {
-        return $this->belongsTo(Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\Tipoalbarancli::class, 'idtipoalbarancli', 'idtipoalbarancli');
     }
 
     /**
@@ -171,7 +164,7 @@ class AlbarancliCentral extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -180,7 +173,7 @@ class AlbarancliCentral extends Model
      */
     public function regpais()
     {
-        return $this->belongsTo(Regpais::class, 'idregpais', 'idregpais');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Regpais::class, 'idregpais', 'idregpais');
     }
 
     /**
@@ -189,6 +182,6 @@ class AlbarancliCentral extends Model
      */
     public function facturacli()
     {
-        return $this->belongsTo(FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\FacturacliCentral::class, 'idfacturacli', 'idfacturacli');
     }
 }

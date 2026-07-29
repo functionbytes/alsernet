@@ -55,6 +55,6 @@ class Tipofotografia extends Model
      */
     public function tipofotografia()
     {
-        return $this->belongsTo(Tipofotografia::class, 'idtipofotografia', 'idtipofotografia');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Tipofotografia::class, 'idtipofotografia', 'idtipofotografia');
     }
 }

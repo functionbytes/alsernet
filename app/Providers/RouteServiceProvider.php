@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    public const HOME = '/panel/dashboard';
+    public const HOME = '/';
 
     public function boot(): void
     {
@@ -28,23 +28,7 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request) {
-            return $request->user()
-                ? Limit::perMinute(120)->by($request->user()->id)
-                : Limit::perMinute(30)->by($request->ip());
-        });
-
-        RateLimiter::for('api-strict', function (Request $request) {
-            return $request->user()
-                ? Limit::perMinute(30)->by($request->user()->id)
-                : Limit::perMinute(10)->by($request->ip());
-        });
-
-        RateLimiter::for('public-pages', function (Request $request) {
-            return Limit::perMinute(60)->by($request->ip());
-        });
-
-        RateLimiter::for('public-pages-search', function (Request $request) {
-            return Limit::perMinute(20)->by($request->ip());
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

@@ -49,7 +49,7 @@ class Lpromocion extends Model
      */
     public function lpromocion()
     {
-        return $this->belongsTo(Lpromocion::class, 'idlpromocion', 'idlpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Lpromocion::class, 'idlpromocion', 'idlpromocion');
     }
 
     /**
@@ -58,6 +58,6 @@ class Lpromocion extends Model
      */
     public function promocion()
     {
-        return $this->belongsTo(Promocion::class, 'idpromocion', 'idpromocion');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Promocion\Promocion::class, 'idpromocion', 'idpromocion');
     }
 }

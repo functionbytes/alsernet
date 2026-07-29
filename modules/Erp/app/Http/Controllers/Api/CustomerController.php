@@ -481,6 +481,109 @@ class CustomerController extends ApiController
     }
 
     /**
+     * Busca un cliente en el ERP por su ID web, con fallback a email e idcliente.
+     *
+     * GET /api/erp/customer/search/web/{idweb}?email=X&id=Y
+     *
+     * Orden de búsqueda:
+     *   1. CODIGO_INTERNET = idweb  (índice IDX_CLIENTE_CENT_CODIGO_INT)
+     *   2. EMAIL = ?email            (si se pasa y no se encuentra en paso 1)
+     *   3. IDCLIENTE = ?id           (si se pasa y no se encuentra en paso 2)
+     *
+     * Incluye clientes dados de baja (FBAJA no nulo).
+     * El campo `matched_by` indica qué campo resolvió la búsqueda.
+     */
+    public function findByIdWeb(Request $request, int $idweb): JsonResponse
+    {
+        $startTime = microtime(true);
+
+        try {
+            $oci8 = app(OCI8Service::class);
+
+            $cols = 'IDCLIENTE, NOMBRE, APELLIDOS, CIF, EMAIL, CODIGO_INTERNET, IDTARJETA, '.
+                    "ESTADO, TO_CHAR(FCREACION, 'YYYY-MM-DD HH24:MI:SS') AS FCREACION, ".
+                    "TO_CHAR(FMODIFICACION, 'YYYY-MM-DD HH24:MI:SS') AS FMODIFICACION, ".
+                    "TO_CHAR(FBAJA, 'YYYY-MM-DD') AS FBAJA";
+
+            $rows = [];
+            $matchedBy = null;
+
+            // 1. Por CODIGO_INTERNET (idweb)
+            $rows = $oci8->query(
+                "SELECT {$cols} FROM DEVELOPER.CLIENTE_CENT WHERE CODIGO_INTERNET = :idweb AND ROWNUM <= 1",
+                ['idweb' => $idweb]
+            );
+            if (! empty($rows)) {
+                $matchedBy = 'idweb';
+            }
+
+            // 2. Por EMAIL
+            if (empty($rows) && $request->filled('email')) {
+                $email = trim((string) $request->get('email'));
+                $rows = $oci8->query(
+                    "SELECT {$cols} FROM DEVELOPER.CLIENTE_CENT WHERE UPPER(EMAIL) = :email AND ROWNUM <= 1",
+                    ['email' => strtoupper($email)]
+                );
+                if (! empty($rows)) {
+                    $matchedBy = 'email';
+                }
+            }
+
+            // 3. Por IDCLIENTE
+            if (empty($rows) && $request->filled('id')) {
+                $idcliente = (int) $request->get('id');
+                $rows = $oci8->query(
+                    "SELECT {$cols} FROM DEVELOPER.CLIENTE_CENT WHERE IDCLIENTE = :id AND ROWNUM <= 1",
+                    ['id' => $idcliente]
+                );
+                if (! empty($rows)) {
+                    $matchedBy = 'id';
+                }
+            }
+
+            $totalTime = microtime(true) - $startTime;
+            Log::debug('=== TIEMPO Customer findByIdWeb: '.round($totalTime * 1000, 2).'ms, matched_by='.($matchedBy ?? 'none').' ===');
+
+            if (empty($rows)) {
+                return response()->json([
+                    'success' => true,
+                    'exists' => false,
+                    'data' => null,
+                ], 200, [], JSON_UNESCAPED_UNICODE);
+            }
+
+            $c = $rows[0];
+
+            return response()->json([
+                'success'    => true,
+                'exists'     => true,
+                'matched_by' => $matchedBy,
+                'data'       => $this->cleanUtf8Array([
+                    'id'            => $c['idcliente'],
+                    'label'         => $c['nombre'],
+                    'surnames'      => $c['apellidos'],
+                    'cif'           => $c['cif'],
+                    'email'         => $c['email'],
+                    'code_internet' => $c['codigo_internet'],
+                    'card'          => $c['idtarjeta'],
+                    'available'     => (bool) ($c['estado'] ?? false),
+                    'deleted_at'    => $c['fbaja'],
+                    'created'       => $c['fcreacion'],
+                    'updated'       => $c['fmodificacion'],
+                ]),
+            ], 200, [], JSON_UNESCAPED_UNICODE);
+
+        } catch (\Exception $e) {
+            Log::error('Error CustomerController@findByIdWeb', ['idweb' => $idweb, 'error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'error' => $this->sanitizeOracleError($e->getMessage()),
+            ], 500);
+        }
+    }
+
+    /**
      * Resumen ficha helpdesk (cabecera).
      *
      * GET /api/erp/customer/{id}

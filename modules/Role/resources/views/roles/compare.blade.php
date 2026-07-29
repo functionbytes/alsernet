@@ -73,7 +73,7 @@
                     <div class="col-md-3">
                         <div class="card bg-success-subtle h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-2">En ambos</h6>
+                                <h6 class="card-title mb-2">En ambos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $inBoth->count() }}</h4>
                                 <small class="text-muted">Permisos compartidos</small>
                             </div>

@@ -1,0 +1,11 @@
+{
+    "name": "Prestashop",
+    "alias": "prestashop",
+    "description": "Módulo de integración con PrestaShop - Gestión de sincronización de productos, categorías, pedidos y stock",
+    "keywords": ["prestashop", "ecommerce", "sync", "integration"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Prestashop\\Providers\\PrestashopServiceProvider"
+    ],
+    "files": []
+}

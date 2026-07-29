@@ -44,7 +44,7 @@ class LogEvento extends Model
      */
     public function logEvento()
     {
-        return $this->belongsTo(LogEvento::class, 'idlog_evento', 'idlog_evento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\LogEvento::class, 'idlog_evento', 'idlog_evento');
     }
 
     /**
@@ -53,6 +53,6 @@ class LogEvento extends Model
      */
     public function evento()
     {
-        return $this->belongsTo(Evento::class, 'idevento', 'idevento');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Evento::class, 'idevento', 'idevento');
     }
 }

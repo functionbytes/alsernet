@@ -74,6 +74,6 @@ class Vencimientopro extends Model
      */
     public function vencimientopro()
     {
-        return $this->belongsTo(Vencimientopro::class, 'idvencimientopro', 'idvencimientopro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Vencimientopro::class, 'idvencimientopro', 'idvencimientopro');
     }
 }

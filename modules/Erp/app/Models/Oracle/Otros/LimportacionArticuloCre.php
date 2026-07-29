@@ -4,10 +4,6 @@ namespace Modules\Erp\Models\Oracle\Otros;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Catalogo\Catalogo;
-use Modules\Erp\Models\Oracle\Catalogo\Modelo;
-use Modules\Erp\Models\Oracle\Configuracion\Impuesto;
-use Modules\Erp\Models\Oracle\Proveedor\Artiprov;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -63,7 +59,7 @@ class LimportacionArticuloCre extends Model
      */
     public function limportacionArticuloCre()
     {
-        return $this->belongsTo(LimportacionArticuloCre::class, 'idlimportacion_articulo_cre', 'idlimportacion_articulo_cre');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\LimportacionArticuloCre::class, 'idlimportacion_articulo_cre', 'idlimportacion_articulo_cre');
     }
 
     /**
@@ -72,7 +68,7 @@ class LimportacionArticuloCre extends Model
      */
     public function importacionArticulo()
     {
-        return $this->belongsTo(ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\ImportacionArticulo::class, 'idimportacion_articulo', 'idimportacion_articulo');
     }
 
     /**
@@ -81,7 +77,7 @@ class LimportacionArticuloCre extends Model
      */
     public function artiprov()
     {
-        return $this->belongsTo(Artiprov::class, 'idartiprov', 'idartiprov');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Artiprov::class, 'idartiprov', 'idartiprov');
     }
 
     /**
@@ -90,7 +86,7 @@ class LimportacionArticuloCre extends Model
      */
     public function impuesto()
     {
-        return $this->belongsTo(Impuesto::class, 'idimpuesto', 'idimpuesto');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Impuesto::class, 'idimpuesto', 'idimpuesto');
     }
 
     /**
@@ -99,7 +95,7 @@ class LimportacionArticuloCre extends Model
      */
     public function grupoCl()
     {
-        return $this->belongsTo(GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\GrupoCl::class, 'idgrupo_cl', 'idgrupo_cl');
     }
 
     /**
@@ -108,7 +104,7 @@ class LimportacionArticuloCre extends Model
      */
     public function catalogo()
     {
-        return $this->belongsTo(Catalogo::class, 'idcatalogo', 'idcatalogo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Catalogo::class, 'idcatalogo', 'idcatalogo');
     }
 
     /**
@@ -117,6 +113,6 @@ class LimportacionArticuloCre extends Model
      */
     public function modelo()
     {
-        return $this->belongsTo(Modelo::class, 'idmodelo', 'idmodelo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Catalogo\Modelo::class, 'idmodelo', 'idmodelo');
     }
 }

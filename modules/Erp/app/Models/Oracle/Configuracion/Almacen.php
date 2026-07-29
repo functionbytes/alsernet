@@ -4,9 +4,6 @@ namespace Modules\Erp\Models\Oracle\Configuracion;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCapthaya;
-use Modules\Erp\Models\Oracle\Cliente\Cliente;
-use Modules\Erp\Models\Oracle\Otros\Empresa;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -80,7 +77,7 @@ class Almacen extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 
     /**
@@ -89,7 +86,7 @@ class Almacen extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 
     /**
@@ -98,7 +95,7 @@ class Almacen extends Model
      */
     public function talmacen()
     {
-        return $this->belongsTo(Talmacen::class, 'idtalmacen', 'idtalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Talmacen::class, 'idtalmacen', 'idtalmacen');
     }
 
     /**
@@ -107,7 +104,7 @@ class Almacen extends Model
      */
     public function seriealbarancli()
     {
-        return $this->belongsTo(SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Albaran\SeriealbarancliCapthaya::class, 'idseriealbarancli', 'idseriealbarancli');
     }
 
     /**
@@ -116,6 +113,6 @@ class Almacen extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 }

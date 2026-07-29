@@ -52,7 +52,7 @@ class Articulocodbar extends Model
      */
     public function articulocodbar()
     {
-        return $this->belongsTo(Articulocodbar::class, 'idarticulocodbar', 'idarticulocodbar');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulocodbar::class, 'idarticulocodbar', 'idarticulocodbar');
     }
 
     /**
@@ -61,6 +61,6 @@ class Articulocodbar extends Model
      */
     public function articulo()
     {
-        return $this->belongsTo(Articulo::class, 'idarticulo', 'idarticulo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Articulo\Articulo::class, 'idarticulo', 'idarticulo');
     }
 }

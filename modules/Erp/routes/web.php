@@ -53,10 +53,7 @@ Route::prefix('/database')->name('database.')->group(function () {
 });
 
 // ========== Endpoints Management Routes ==========
-// Gestión de endpoints ERP salientes: exige permiso dedicado. Antes solo
-// pedía ['web','auth','verified'] → cualquier usuario autenticado podía crear
-// endpoints, ejecutarlos (SSRF) y generar/ver tokens públicos.
-Route::prefix('/endpoints')->name('endpoints.')->middleware('can:erp.endpoints.manage')->group(function () {
+Route::prefix('/endpoints')->name('endpoints.')->group(function () {
     // Endpoints CRUD
     Route::get('/', [ErpEndpointsController::class, 'index'])->name('index');
     Route::get('/create', [ErpEndpointsController::class, 'create'])->name('create');
@@ -92,11 +89,7 @@ Route::prefix('/endpoints')->name('endpoints.')->middleware('can:erp.endpoints.m
 });
 
 // ========== Top-level Credentials Management Routes (for standalone access) ==========
-// Mismo gate que el grupo hermano /endpoints: sin este middleware, cualquier
-// usuario autenticado+verificado podía crear/rotar/borrar credenciales ERP
-// (el controller no tiene authorize() interno y el ServiceProvider solo aplica
-// ['web','auth','verified']).
-Route::prefix('/credentials')->name('credentials.')->middleware('can:erp.endpoints.manage')->group(function () {
+Route::prefix('/credentials')->name('credentials.')->group(function () {
     // Credentials CRUD
     Route::get('/', [ErpCredentialsController::class, 'index'])->name('index');
     Route::get('/create', [ErpCredentialsController::class, 'create'])->name('create');

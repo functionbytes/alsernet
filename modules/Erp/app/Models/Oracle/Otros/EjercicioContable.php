@@ -60,7 +60,7 @@ class EjercicioContable extends Model
      */
     public function ejercicioContable()
     {
-        return $this->belongsTo(EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\EjercicioContable::class, 'idejercicio_contable', 'idejercicio_contable');
     }
 
     /**
@@ -69,6 +69,6 @@ class EjercicioContable extends Model
      */
     public function empresa()
     {
-        return $this->belongsTo(Empresa::class, 'idempresa', 'idempresa');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Empresa::class, 'idempresa', 'idempresa');
     }
 }

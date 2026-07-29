@@ -30,7 +30,7 @@ class DocumentValidationConditionSeeder extends Seeder
                 'condition_type' => 'sale_type',
                 'name' => 'Requiere solo identificación',
                 'description' => 'Documentos que solo requieren validación de DNI/identificación, sin necesidad de licencias adicionales.',
-                'sale_types' => ['dni', 'balines'],
+                'sale_types' => ['dni','balines'],
                 'is_active' => true,
                 'sort_order' => 2,
             ],

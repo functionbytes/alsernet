@@ -140,7 +140,7 @@
                                     <span class="input-group-text bg-white border-end-1">
                                         <i class="fas fa-search text-muted"></i>
                                     </span>
-                                    <input type="search" class="form-control -0 ps-0" id="failed-search" placeholder="Buscar por trabajo o error...">
+                                    <input type="search" class="form-control border-start-0 ps-0" id="failed-search" placeholder="Buscar por trabajo o error...">
                                 </div>
                             </div>
                             <div class="flex-shrink-0" style="min-width: 180px;">

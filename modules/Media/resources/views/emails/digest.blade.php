@@ -8,7 +8,7 @@
 <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; margin: 0;">
     <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
 
-        <div style="background-color: #90bb13; padding: 20px 30px;">
+        <div style="background-color: #13C672; padding: 20px 30px;">
             <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Gestor de medios</h1>
         </div>
 
@@ -34,7 +34,7 @@
             </div>
 
             <p style="text-align: center; margin: 30px 0;">
-                <a href="{{ route('media.index') }}" style="background-color: #90bb13; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                <a href="{{ route('media.index') }}" style="background-color: #13C672; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
                     Ir al gestor
                 </a>
             </p>

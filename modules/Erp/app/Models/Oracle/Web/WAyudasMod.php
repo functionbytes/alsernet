@@ -76,7 +76,7 @@ class WAyudasMod extends Model
      */
     public function modelo()
     {
-        return $this->belongsTo(WModelo::class, 'id_modelo', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WModelo::class, 'id_modelo', 'id');
     }
 
     /**
@@ -85,7 +85,7 @@ class WAyudasMod extends Model
      */
     public function ayuda()
     {
-        return $this->belongsTo(WAyudas::class, 'id_ayuda', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id_ayuda', 'id');
     }
 
     /**
@@ -94,6 +94,6 @@ class WAyudasMod extends Model
      */
     public function wAyudas()
     {
-        return $this->belongsTo(WAyudas::class, 'id', 'id');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Web\WAyudas::class, 'id', 'id');
     }
 }

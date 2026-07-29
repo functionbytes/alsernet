@@ -172,7 +172,7 @@ class ValidateDocumentsComplete extends Command
             if ($result === 'success') {
                 $this->line("  ✓ <fg=green>$label</fg=green> .......................... PASSED");
             } else {
-                $this->line("  ✗ <fg=red>$label</fg=red> .......................... ".strtoupper($result));
+                $this->line("  ✗ <fg=red>$label</fg=red> .......................... " . strtoupper($result));
                 $allSuccess = false;
             }
         }

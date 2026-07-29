@@ -52,6 +52,6 @@ class Ttarjetaregalo extends Model
      */
     public function ttarjetaregalo()
     {
-        return $this->belongsTo(Ttarjetaregalo::class, 'idttarjetaregalo', 'idttarjetaregalo');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Otros\Ttarjetaregalo::class, 'idttarjetaregalo', 'idttarjetaregalo');
     }
 }

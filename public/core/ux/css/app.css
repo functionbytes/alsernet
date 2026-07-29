@@ -766,7 +766,7 @@ element.style {
   width: 100%;
   top: 0;
   left: 0;
-  background: #f5f6f8;
+  background: #fafafa;
   z-index: 10000;
   display: none;
   overflow: auto;
@@ -1085,8 +1085,8 @@ ul.menu-steps li a.current i, ul.menu-steps li a:hover i {
 
 .alert-secondary {
   color: #464a4e;
-  background-color: #f9f9f9;
-  border-color: #f9f9f9;
+  background-color: #f5f5f5;
+  border-color: #f5f5f5;
 }
 
 .sub-section-header h3 {
@@ -1631,7 +1631,7 @@ ul.inline-infos li {
 }
 
 .modal-content {
-  background: #f5f6f8;
+  background: #fafafa;
 }
 
 .modal-content ul.list-group {
@@ -1837,7 +1837,7 @@ ul.inline-infos li {
 }
 
 .form-control:disabled, .form-control[readonly] {
-  background-color: #f9f9f9;
+  background-color: #f5f5f5;
 }
 
 .file-upload-input {

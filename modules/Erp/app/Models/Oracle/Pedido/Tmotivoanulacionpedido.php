@@ -51,6 +51,6 @@ class Tmotivoanulacionpedido extends Model
      */
     public function tmotivoanulacionpedido()
     {
-        return $this->belongsTo(Tmotivoanulacionpedido::class, 'idtmotivoanulacionpedido', 'idtmotivoanulacionpedido');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Pedido\Tmotivoanulacionpedido::class, 'idtmotivoanulacionpedido', 'idtmotivoanulacionpedido');
     }
 }

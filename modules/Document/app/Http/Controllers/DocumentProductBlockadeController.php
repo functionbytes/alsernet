@@ -3,7 +3,6 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -41,16 +40,16 @@ class DocumentProductBlockadeController extends Controller
             ->value('count') ?? 0;
 
         // Paginated blockades list with search
-        $search = $request->get('search');
+        $search    = $request->get('search');
         $typeFilter = $request->get('type');
 
         $blockades = DocumentProductBlockade::with('documentType')
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('product_id', $search)
-                        ->orWhere('product_attribute_id', $search)
-                        ->orWhere('source_id', $search)
-                        ->orWhere('blockade_type', 'like', "%{$search}%");
+                       ->orWhere('product_attribute_id', $search)
+                       ->orWhere('source_id', $search)
+                       ->orWhere('blockade_type', 'like', "%{$search}%");
                 });
             })
             ->when($typeFilter, fn ($q) => $q->where('blockade_type', $typeFilter))
@@ -63,8 +62,8 @@ class DocumentProductBlockadeController extends Controller
             ->pluck('blockade_type');
 
         return view('documents::settings.blockades.index', [
-            'lastSync' => $lastSync ? Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
-            'syncCount' => (int) $syncCount,
+            'lastSync'      => $lastSync ? \Carbon\Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
+            'syncCount'     => (int) $syncCount,
             'totalBlockades' => $totalBlockades,
             'uniqueProducts' => $uniqueProducts,
             'currentLabels' => $currentLabels,
@@ -82,16 +81,16 @@ class DocumentProductBlockadeController extends Controller
         $totalBlockades = DocumentProductBlockade::count();
 
         // Paginated blockades list with search
-        $search = $request->get('search');
+        $search    = $request->get('search');
         $typeFilter = $request->get('type');
 
         $blockades = DocumentProductBlockade::with('documentType')
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($q2) use ($search) {
                     $q2->where('product_id', $search)
-                        ->orWhere('product_attribute_id', $search)
-                        ->orWhere('source_id', $search)
-                        ->orWhere('blockade_type', 'like', "%{$search}%");
+                       ->orWhere('product_attribute_id', $search)
+                       ->orWhere('source_id', $search)
+                       ->orWhere('blockade_type', 'like', "%{$search}%");
                 });
             })
             ->when($typeFilter, fn ($q) => $q->where('blockade_type', $typeFilter))
@@ -105,10 +104,10 @@ class DocumentProductBlockadeController extends Controller
 
         return view('documents::settings.blockades.products', [
             'totalBlockades' => $totalBlockades,
-            'blockades' => $blockades,
+            'blockades'     => $blockades,
             'blockadeTypes' => $blockadeTypes,
-            'search' => $search,
-            'typeFilter' => $typeFilter,
+            'search'        => $search,
+            'typeFilter'    => $typeFilter,
         ]);
     }
 
@@ -146,7 +145,7 @@ class DocumentProductBlockadeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al sincronizar bloqueos: '.$e->getMessage(),
@@ -165,7 +164,7 @@ class DocumentProductBlockadeController extends Controller
 
         return response()->json([
             'success' => true,
-            'last_sync' => $lastSync ? Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
+            'last_sync' => $lastSync ? \Carbon\Carbon::parse($lastSync)->diffForHumans() : 'Nunca',
             'sync_count' => (int) $syncCount,
             'total_blockades' => $totalBlockades,
         ]);
@@ -227,7 +226,7 @@ class DocumentProductBlockadeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al agregar la etiqueta: '.$e->getMessage(),
@@ -278,7 +277,7 @@ class DocumentProductBlockadeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar la etiqueta: '.$e->getMessage(),
@@ -382,11 +381,11 @@ class DocumentProductBlockadeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error sincronizando producto específico: '.$e->getMessage());
+            Log::error('Error sincronizando producto específico: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error al sincronizar el producto: '.$e->getMessage(),
+                'message' => 'Error al sincronizar el producto: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -500,7 +499,7 @@ class DocumentProductBlockadeController extends Controller
             ]);
 
         } catch (\Exception $e) {
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar el bloqueo: '.$e->getMessage(),

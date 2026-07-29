@@ -14,7 +14,7 @@ class PiiDetectionFactory
         $apiKey = (string) config('media.ai.pii_detection.api_key');
 
         return match ($driver) {
-            '.claude' => new ClaudeDriver($apiKey),
+            'claude' => new ClaudeDriver($apiKey),
             default => new NullDriver,
         };
     }

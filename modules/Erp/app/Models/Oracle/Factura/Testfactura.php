@@ -51,6 +51,6 @@ class Testfactura extends Model
      */
     public function testfactura()
     {
-        return $this->belongsTo(Testfactura::class, 'idtestfactura', 'idtestfactura');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Factura\Testfactura::class, 'idtestfactura', 'idtestfactura');
     }
 }

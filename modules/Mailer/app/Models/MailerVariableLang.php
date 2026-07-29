@@ -5,7 +5,6 @@ namespace Modules\Mailer\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
-use Modules\Core\Models\Lang;
 
 class MailerVariableLang extends Model
 {
@@ -33,7 +32,7 @@ class MailerVariableLang extends Model
      */
     public function language(): BelongsTo
     {
-        return $this->belongsTo(Lang::class, 'lang_id');
+        return $this->belongsTo(\Modules\Core\Models\Lang::class, 'lang_id');
     }
 
     /**

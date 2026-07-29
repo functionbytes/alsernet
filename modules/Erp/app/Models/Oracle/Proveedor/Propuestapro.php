@@ -4,7 +4,6 @@ namespace Modules\Erp\Models\Oracle\Proveedor;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Erp\Models\Oracle\Configuracion\Almacen;
 use Modules\Erp\Traits\UsesOCI8Performance;
 
 /**
@@ -54,7 +53,7 @@ class Propuestapro extends Model
      */
     public function propuestapro()
     {
-        return $this->belongsTo(Propuestapro::class, 'idpropuestapro', 'idpropuestapro');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Propuestapro::class, 'idpropuestapro', 'idpropuestapro');
     }
 
     /**
@@ -63,7 +62,7 @@ class Propuestapro extends Model
      */
     public function proveedor()
     {
-        return $this->belongsTo(Proveedor::class, 'idproveedor', 'idproveedor');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Proveedor\Proveedor::class, 'idproveedor', 'idproveedor');
     }
 
     /**
@@ -72,6 +71,6 @@ class Propuestapro extends Model
      */
     public function almacen()
     {
-        return $this->belongsTo(Almacen::class, 'idalmacen', 'idalmacen');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Configuracion\Almacen::class, 'idalmacen', 'idalmacen');
     }
 }

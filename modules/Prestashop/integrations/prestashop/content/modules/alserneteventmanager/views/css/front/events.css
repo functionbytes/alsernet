@@ -1,0 +1,35 @@
+
+.clock-blackfriday {
+    display: none;
+}
+
+.event-blackfriday .clock-blackfriday {
+    display: block;
+    padding: 20px;
+    background: #000;
+    border-radius: 4px;
+    margin: 15px 0px;
+}
+
+.event-blackfriday .clock-blackfriday h1 {
+    color: #90bb13;
+    font-weight: 700;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.event-blackfriday .clock-blackfriday p {
+    color: #90bb13;
+    font-weight: 700;
+}
+
+.event-blackfriday .clock-blackfriday p strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+@media (min-width: 992px) {
+    .event-blackfriday .clock-blackfriday {
+        width: 70%;
+    }
+}

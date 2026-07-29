@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('document_type_requirement_langs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_type_requirement_id')->constrained('document_type_requirements', indexName: 'dtrl_dtr_id_fk')->cascadeOnDelete();
+            $table->foreignId('document_type_requirement_id')->constrained('document_type_requirements')->cascadeOnDelete();
             $table->foreignId('lang_id')->constrained('langs')->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->text('help_text')->nullable();
             $table->timestamps();
-            $table->unique(['document_type_requirement_id', 'lang_id'], 'dtrl_dtr_lang_unique');
+            $table->unique(['document_type_requirement_id', 'lang_id']);
             $table->index('lang_id');
         });
     }

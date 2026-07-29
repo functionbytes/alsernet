@@ -2,9 +2,10 @@
 
 namespace Modules\Document\Console\Commands;
 
+use App\Jobs\Documents\MailTemplateJob;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Modules\Document\Entities\Document;
-use Modules\Document\Jobs\MailTemplateJob;
 
 class SendDocumentUploadReminders extends Command
 {

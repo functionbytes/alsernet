@@ -183,16 +183,10 @@ class DatabaseServiceProvider extends ServiceProvider
      */
     private function loadDynamicDatabaseConfig(): void
     {
-        // Only load if database is available
-        if ($this->app->runningInConsole() && ! $this->isDatabaseReady()) {
-            return;
-        }
-
-        try {
-            $this->loadDatabaseConfig();
-        } catch (\Exception $e) {
-            // Database config not available yet - silently fail
-        }
+        // The mysql connection config must NOT be overwritten at runtime.
+        // Overwriting it from DB settings creates a circular dependency: the app reads DB
+        // settings to configure the DB connection, but needs the DB connection to read settings.
+        // The DB connection must always come from env vars (.env or Docker env).
     }
 
     /**

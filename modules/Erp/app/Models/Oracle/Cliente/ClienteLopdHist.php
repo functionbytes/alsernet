@@ -45,7 +45,7 @@ class ClienteLopdHist extends Model
      */
     public function clienteLopdHist()
     {
-        return $this->belongsTo(ClienteLopdHist::class, 'idcliente_lopd_hist', 'idcliente_lopd_hist');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\ClienteLopdHist::class, 'idcliente_lopd_hist', 'idcliente_lopd_hist');
     }
 
     /**
@@ -54,6 +54,6 @@ class ClienteLopdHist extends Model
      */
     public function cliente()
     {
-        return $this->belongsTo(Cliente::class, 'idcliente', 'idcliente');
+        return $this->belongsTo(\Modules\Erp\Models\Oracle\Cliente\Cliente::class, 'idcliente', 'idcliente');
     }
 }

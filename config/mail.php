@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => env('MAIL_MAILER', 'sendmail'),
 
     'mailers' => [
         'smtp' => [
@@ -45,6 +45,4 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Laravel'),
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
     ],
-
-    'admin_address' => env('ADMIN_EMAIL', env('MAIL_FROM_ADDRESS', 'admin@example.com')),
 ];

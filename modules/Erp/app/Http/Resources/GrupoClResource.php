@@ -31,7 +31,7 @@ class GrupoClResource extends JsonResource
             // Artículos de este grupo
             'articulos' => $this->when(
                 $this->relationLoaded('articulos'),
-                fn () => $this->articulos->map(fn ($articulo) => [
+                $this->articulos->map(fn ($articulo) => [
                     'id' => $articulo->idarticulo,
                     'codigo' => $this->utf8Clean($articulo->codigo),
                     'descripcion' => $this->utf8Clean($articulo->descripcion),
@@ -42,7 +42,7 @@ class GrupoClResource extends JsonResource
             // Estadísticas
             'estadisticas' => $this->when(
                 $this->relationLoaded('articulos'),
-                fn () => [
+                [
                     'totalArticulos' => $this->articulos->count(),
                     'articulosActivos' => $this->articulos->where('estado', 1)->count(),
                 ]
