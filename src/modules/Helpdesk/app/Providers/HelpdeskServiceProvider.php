@@ -13,9 +13,11 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Broadcasting\ResilientBroadcaster;
+use Modules\Helpdesk\Console\Commands\ChannelMetricsCommand;
 use Modules\Helpdesk\Console\Commands\CheckSlaBreaches;
 use Modules\Helpdesk\Console\Commands\CleanupAgentPresence;
 use Modules\Helpdesk\Console\Commands\FetchEmailTicketsCommand;
+use Modules\Helpdesk\Console\Commands\MetaTokenStatusCommand;
 use Modules\Helpdesk\Console\Commands\ProcessScheduledBroadcasts;
 use Modules\Helpdesk\Console\Commands\PurgeOldGdprDeletes;
 use Modules\Helpdesk\Console\Commands\PurgeSimulatorConversationsCommand;
@@ -255,6 +257,7 @@ class HelpdeskServiceProvider extends ServiceProvider
                 ['label' => 'LiveChat', 'route' => 'settings.helpdesk-livechat.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones sociales', 'route' => 'settings.helpdesk.social-integrations.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Plantillas WhatsApp', 'route' => 'settings.helpdesk.whatsapp-templates.index', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Consumo WhatsApp', 'route' => 'settings.helpdesk.whatsapp-usage.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Slack', 'route' => 'settings.helpdesk.slack-integrations.index', 'permission' => 'helpdesk.settings.view'],
             ],
         ]);
@@ -405,8 +408,8 @@ class HelpdeskServiceProvider extends ServiceProvider
             ProcessScheduledBroadcasts::class,
             PurgeSimulatorConversationsCommand::class,
             PurgeOldGdprDeletes::class,
-            \Modules\Helpdesk\Console\Commands\MetaTokenStatusCommand::class,
-            \Modules\Helpdesk\Console\Commands\ChannelMetricsCommand::class,
+            MetaTokenStatusCommand::class,
+            ChannelMetricsCommand::class,
         ]);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {

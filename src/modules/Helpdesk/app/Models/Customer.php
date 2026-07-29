@@ -229,7 +229,11 @@ class Customer extends Model
      */
     public function scopeForAgent(Builder $query, User $user): Builder
     {
-        if ($user->hasPermissionTo('helpdesk.manage') || $user->hasPermissionTo('helpdesk.customers.manage')) {
+        // can(), no hasPermissionTo(): este scope se invoca directo desde controllers,
+        // sin pasar por Gate::authorize(), asi que hasPermissionTo() se salta el
+        // Gate::before que le da acceso total al rol super-settings (AuthServiceProvider) —
+        // un super admin quedaba tratado como agente restringido sin bandejas asignadas.
+        if ($user->can('helpdesk.manage') || $user->can('helpdesk.customers.manage')) {
             return $query;
         }
 

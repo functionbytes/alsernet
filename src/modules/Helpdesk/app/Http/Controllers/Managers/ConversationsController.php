@@ -25,7 +25,6 @@ use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\ConversationTagAdded;
 use Modules\Helpdesk\Events\MessageReceived;
-use Modules\Helpdesk\Exceptions\WhatsAppHsmException;
 use Modules\Helpdesk\Filters\ConversationFilter;
 use Modules\Helpdesk\Http\Requests\BulkApplyMacroRequest;
 use Modules\Helpdesk\Http\Requests\ConversationAjaxActionRequest;
@@ -42,6 +41,7 @@ use Modules\Helpdesk\Http\Requests\StoreLocationItemRequest;
 use Modules\Helpdesk\Http\Requests\StoreScheduledMessageRequest;
 use Modules\Helpdesk\Http\Requests\UpdateConversationRequest;
 use Modules\Helpdesk\Http\Requests\UploadAttachmentRequest;
+use Modules\Helpdesk\Jobs\SendHsmTemplateJob;
 use Modules\Helpdesk\Jobs\SendScheduledMessageJob;
 use Modules\Helpdesk\Jobs\UnsnoozeConversationJob;
 use Modules\Helpdesk\Mail\CustomerOutboundEmail;
@@ -53,6 +53,7 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\ConversationView;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Group;
+use Modules\Helpdesk\Models\Inbox;
 use Modules\Helpdesk\Models\Macro;
 use Modules\Helpdesk\Services\ConversationMessageService;
 use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
@@ -61,7 +62,6 @@ use Modules\Helpdesk\Services\CsatService;
 use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\Macros\MacroExecutorService;
 use Modules\Helpdesk\Services\OutboundMessageService;
-use Modules\Helpdesk\Services\WhatsAppHsmService;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerTemplateRendererService;
@@ -531,13 +531,61 @@ class ConversationsController extends Controller
     {
         $validated = $request->validated();
 
+        $customer = Customer::findOrFail($validated['customer_id']);
+        $channel = $validated['channel'] ?? 'web';
+
+        // Una conversacion nueva por WhatsApp nunca puede tener la ventana de
+        // 24h abierta: last_customer_message_at es una columna propia de cada
+        // conversacion (no del cliente), asi que en una fila recien creada
+        // siempre es null — el mismo motivo por el que el wizard exige
+        // plantilla HSM en vez de texto libre. Si igual llega first_message
+        // (API directa sin pasar por el wizard) se rechaza aqui, antes de
+        // crear nada, en vez de dejar una conversacion huerfana o un intento
+        // de envio que Meta va a rechazar.
+        if ($channel === 'whatsapp' && filled($validated['first_message'] ?? null)) {
+            $error = [
+                'success' => false,
+                'message' => __('helpdesk::helpdesk.inbox.thread.wa_window_closed'),
+                'wa_window_closed' => true,
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json($error, 422);
+            }
+
+            return back()->withInput()->with('error', $error['message']);
+        }
+
         $conversation = Conversation::create([
-            'customer_id' => $validated['customer_id'],
+            'customer_id' => $customer->id,
             'subject' => $validated['subject'],
             'priority' => $validated['priority'],
+            'channel' => $channel,
+            'external_sender_id' => $this->resolveExternalSenderId($channel, $customer),
+            // Sin esto la conversacion nacia con inbox_id NULL: ConversationPolicy
+            // y AgentInboxCapacity la vuelven invisible para agentes restringidos
+            // por bandeja (incluido el propio creador), y rompe el aislamiento que
+            // sí aplica el flujo real de webhooks (InboundMessageIngestor). Mismo
+            // cache de 30 min por canal, misma key, para no duplicar la consulta.
+            'inbox_id' => Cache::remember(
+                "helpdesk:inbox_id:{$channel}",
+                now()->addMinutes(30),
+                fn () => Inbox::query()->where('channel_type', $channel)->value('id'),
+            ),
         ]);
-        $conversation->status_id = $validated['status_id'];
+        $conversation->status_id = $validated['status_id'] ?? ConversationStatus::getDefault()?->id;
         $conversation->save();
+
+        if ($request->boolean('assign_self')) {
+            $conversation->assignTo(auth()->id());
+        }
+
+        if (filled($validated['first_message'] ?? null)) {
+            app(ConversationMessageService::class)->store($conversation, [
+                'body' => $validated['first_message'],
+                'is_internal' => false,
+            ]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -552,6 +600,24 @@ class ConversationsController extends Controller
 
         return redirect()->route('manager.helpdesk.conversations.show', $conversation)
             ->with('success', __('helpdesk::helpdesk.messages.conversation_created'));
+    }
+
+    /**
+     * Resuelve el identificador externo (wa_id / PSID / IGSID) al que se le
+     * enviarán los mensajes salientes, según el canal elegido y los datos
+     * sociales ya guardados en el contacto. Mismo criterio que usan los
+     * webhooks entrantes (WhatsAppMessageProcessor, FacebookMessageProcessor,
+     * InstagramMessageProcessor) para que ambos flujos casen en la misma
+     * conversación.
+     */
+    private function resolveExternalSenderId(string $channel, Customer $customer): ?string
+    {
+        return match ($channel) {
+            'whatsapp' => $customer->whatsapp_phone ?: $customer->phone,
+            'facebook' => $customer->facebook_psid,
+            'instagram' => $customer->instagram_id,
+            default => null,
+        };
     }
 
     /**
@@ -773,44 +839,42 @@ class ConversationsController extends Controller
 
         $conversation->loadMissing('customer');
 
-        try {
-            $result = app(WhatsAppHsmService::class)->send(
-                conversation: $conversation,
-                templateName: $validated['template_name'],
-                variables: $validated['variables'] ?? [],
-            );
-        } catch (WhatsAppHsmException $e) {
-            Log::warning('HSM send failed', array_merge(['message' => $e->getMessage()], $e->context()));
+        // Resuelto una sola vez: el idioma real de la plantilla (ej. 'en_US' para
+        // hello_world) es obligatorio para Meta — mandar 'es' fijo cuando la
+        // plantilla está en otro idioma también dispara el error 132001.
+        $template = WhatsAppTemplate::query()->where('external_id', $validated['template_name'])->first();
+        $languageCode = $template?->language ?: ($validated['language'] ?? 'es');
+        $body = $this->renderHsmBody($template, $validated['template_name'], $validated['variables'] ?? []);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'No se pudo enviar la plantilla: '.$e->getMessage(),
-            ], 422);
-        }
+        // El item se crea de inmediato (UI optimista, mismo patrón que las
+        // respuestas de texto normales vía ConversationMessageService) y el
+        // envío real a Meta se encola: la Cloud API usa timeouts de 15s con
+        // reintentos (hasta ~45s en el peor caso), que bloquearían un worker
+        // PHP-FPM si se hicieran aquí. SendHsmTemplateJob completa
+        // wa_message_id/mocked o marca el item como no entregado.
+        $item = $conversation->items()->create([
+            'user_id' => auth()->id(),
+            'type' => 'message',
+            'body' => $body,
+            'is_internal' => false,
+            'metadata' => [
+                'hsm_template' => $validated['template_name'],
+                'hsm_variables' => $validated['variables'] ?? [],
+            ],
+        ]);
 
-        $waMessageId = $result['id'] ?? null;
-        $isMocked = $result['mocked'] ?? false;
-
-        $item = DB::transaction(function () use ($conversation, $validated, $waMessageId, $isMocked): ConversationItem {
-            return $conversation->items()->create([
-                'user_id' => auth()->id(),
-                'type' => 'message',
-                'body' => "[Plantilla HSM: {$validated['template_name']}]",
-                'is_internal' => false,
-                'metadata' => [
-                    'hsm_template' => $validated['template_name'],
-                    'hsm_variables' => $validated['variables'] ?? [],
-                    'wa_message_id' => $waMessageId,
-                    'mocked' => $isMocked,
-                ],
-            ]);
-        });
+        SendHsmTemplateJob::dispatch(
+            $conversation->id,
+            $item->id,
+            $validated['template_name'],
+            $validated['variables'] ?? [],
+            $languageCode,
+            $template?->category,
+        );
 
         return response()->json([
             'success' => true,
-            'message' => $isMocked
-                ? 'Plantilla registrada (WhatsApp no configurado — modo desarrollo).'
-                : 'Plantilla enviada por WhatsApp.',
+            'message' => 'Plantilla en cola de envío.',
             'item' => [
                 'id' => $item->id,
                 'body' => $item->body,
@@ -819,9 +883,31 @@ class ConversationsController extends Controller
                 'time' => $item->created_at?->format('H:i'),
                 'author' => auth()->user()?->name,
                 'is_outgoing' => true,
-                'wa_message_id' => $waMessageId,
+                'wa_message_id' => null,
             ],
         ], 201);
+    }
+
+    /**
+     * Resuelve el cuerpo real enviado al cliente: el body_template de la
+     * plantilla (buscada por su nombre técnico) con los {{n}} sustituidos por
+     * las variables, para que el hilo muestre el mensaje que efectivamente
+     * llegó por WhatsApp en vez de un placeholder genérico.
+     *
+     * @param  array<int, string>  $variables
+     */
+    private function renderHsmBody(?WhatsAppTemplate $template, string $templateName, array $variables): string
+    {
+        if (! $template || blank($template->body_template)) {
+            return "[Plantilla HSM: {$templateName}]";
+        }
+
+        $body = $template->body_template;
+        foreach (array_values($variables) as $i => $value) {
+            $body = str_replace('{{'.($i + 1).'}}', (string) $value, $body);
+        }
+
+        return $body;
     }
 
     /**
@@ -2244,6 +2330,10 @@ class ConversationsController extends Controller
             ->map(fn (WhatsAppTemplate $t) => [
                 'id' => $t->id,
                 'name' => $t->display_name,
+                // Nombre técnico registrado en Meta (WhatsAppTemplate::external_id) — es
+                // lo que exige la Cloud API en template.name. display_name es solo la
+                // etiqueta amigable para la UI; mandarla a Meta devuelve 132001.
+                'external_id' => $t->external_id,
                 'body' => $t->body_template,
                 'category' => $t->category,
                 'header_type' => $t->header_type,

@@ -35,7 +35,7 @@ class TranslateItemController extends Controller
         $this->enforceDailyCharacterQuota($request, mb_strlen($text));
 
         $target = $request->input('target', 'es');
-        $translated = $this->translator->translate($text, $target);
+        $translated = $this->translator->translate($text, $target, feature: 'manual');
 
         if ($translated === null) {
             return response()->json(
@@ -46,7 +46,7 @@ class TranslateItemController extends Controller
 
         // Detect the source language so source_locale is semantically correct
         // (origin language, not target). Falls back to null when unavailable.
-        $sourceLocale = $this->translator->detectLanguage($text);
+        $sourceLocale = $this->translator->detectLanguage($text, feature: 'manual');
 
         // Persist on the conversation item so the translation survives a page
         // reload and any other agent opening the same conversation sees it.

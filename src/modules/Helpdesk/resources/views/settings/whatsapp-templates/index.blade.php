@@ -16,12 +16,17 @@
                     <p class="small mb-0 text-muted">Templates aprobados por Meta disponibles para enviar en campanas de WhatsApp</p>
                 </div>
                 @can('helpdesk.whatsapp-templates.manage')
-                    <form action="{{ route('settings.helpdesk.whatsapp-templates.sync') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-rotate"></i> Sincronizar desde Meta
-                        </button>
-                    </form>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('settings.helpdesk.whatsapp-templates.create') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Nueva plantilla
+                        </a>
+                        <form action="{{ route('settings.helpdesk.whatsapp-templates.sync') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-rotate"></i> Sincronizar desde Meta
+                            </button>
+                        </form>
+                    </div>
                 @endcan
             </div>
         </div>

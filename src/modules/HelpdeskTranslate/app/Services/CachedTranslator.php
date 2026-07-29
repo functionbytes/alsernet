@@ -6,6 +6,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Models\Setting;
+use Modules\HelpdeskTranslate\Models\TranslateUsage;
 use Modules\HelpdeskTranslate\Models\TranslationCache;
 
 /**
@@ -29,8 +30,11 @@ class CachedTranslator
     /**
      * Translate a single string. Returns the translated text or null when
      * neither cache nor provider could produce a result.
+     *
+     * $feature identifica quién pidió la traducción (manual | auto_incoming |
+     * auto_outgoing) para el reporte de consumo — ver helpdesk_translate_usage.
      */
-    public function translate(string $text, string $targetLang, ?string $sourceLang = null): ?string
+    public function translate(string $text, string $targetLang, ?string $sourceLang = null, string $feature = 'other'): ?string
     {
         $text = trim($text);
         if ($text === '') {
@@ -54,14 +58,14 @@ class CachedTranslator
             return $hit->text_translated;
         }
 
-        $translated = $this->callProvider($provider, $text, $target, $sourceLang);
+        $translated = $this->callProvider($provider, $text, $target, $sourceLang, $feature);
 
         // Fallback: if the configured provider failed (returned null), try the
         // other one before giving up. This makes the system resilient to
         // LibreTranslate container being down or DeepL key missing.
         if ($translated === null) {
             $fallbackProvider = $provider === 'deepl' ? 'libretranslate' : 'deepl';
-            $translated = $this->callProvider($fallbackProvider, $text, $target, $sourceLang);
+            $translated = $this->callProvider($fallbackProvider, $text, $target, $sourceLang, $feature);
             if ($translated !== null) {
                 $provider = $fallbackProvider;
                 $hash = TranslationCache::makeHash($text, $source, $target, $provider);
@@ -120,7 +124,7 @@ class CachedTranslator
      * meant DeepL operators paid the 5s LibreTranslate timeout on every
      * message when their LibreTranslate container was down.
      */
-    public function detectLanguage(string $text): ?string
+    public function detectLanguage(string $text, string $feature = 'other'): ?string
     {
         $text = trim($text);
         if (mb_strlen($text) < 3) {
@@ -130,20 +134,23 @@ class CachedTranslator
         $primary = $this->resolveProvider();
         $fallback = $primary === 'deepl' ? 'libretranslate' : 'deepl';
 
-        $detected = $this->detectViaProvider($primary, $text);
+        $detected = $this->detectViaProvider($primary, $text, $feature);
         if ($detected) {
             return strtolower($detected);
         }
 
-        $detected = $this->detectViaProvider($fallback, $text);
+        $detected = $this->detectViaProvider($fallback, $text, $feature);
 
         return $detected ? strtolower($detected) : null;
     }
 
-    private function detectViaProvider(string $provider, string $text): ?string
+    private function detectViaProvider(string $provider, string $text, string $feature = 'other'): ?string
     {
         if ($provider === 'libretranslate') {
-            return $this->libretranslate->detectLanguage($text);
+            $detected = $this->libretranslate->detectLanguage($text);
+            $this->logUsage($provider, 'detect', $feature, mb_strlen($text), null, null, $detected !== null);
+
+            return $detected;
         }
 
         // DeepL doesn't expose a dedicated /detect endpoint — translating a
@@ -153,11 +160,13 @@ class CachedTranslator
         // reduces billable characters when DeepL is the primary provider.
         $sample = mb_substr($text, 0, 40);
         $result = $this->deepl->translateWithDetection($sample, 'ES');
+        $detected = $result['detected_source_language'] ?? null;
+        $this->logUsage($provider, 'detect', $feature, mb_strlen($sample), null, null, $detected !== null);
 
-        return $result['detected_source_language'] ?? null;
+        return $detected;
     }
 
-    private function callProvider(string $provider, string $text, string $target, ?string $source): ?string
+    private function callProvider(string $provider, string $text, string $target, ?string $source, string $feature = 'other'): ?string
     {
         // Circuit breaker: si el proveedor viene fallando (caído / sin clave),
         // saltarlo al instante en vez de comerse su timeout (10-15s). Con ambos
@@ -174,7 +183,31 @@ class CachedTranslator
             $this->recordSuccess($provider);
         }
 
+        $this->logUsage($provider, 'translate', $feature, mb_strlen($text), $source, $target, $translated !== null);
+
         return $translated;
+    }
+
+    /**
+     * Registra una llamada real confirmada al proveedor — solo se invoca
+     * desde callProvider()/detectViaProvider(), nunca en un cache-hit. Un
+     * fallo al escribir el ledger no debe romper la traducción en sí.
+     */
+    private function logUsage(string $provider, string $operation, string $feature, int $characters, ?string $sourceLang, ?string $targetLang, bool $success): void
+    {
+        try {
+            TranslateUsage::query()->create([
+                'provider' => $provider,
+                'operation' => $operation,
+                'feature' => $feature,
+                'characters' => $characters,
+                'source_lang' => $sourceLang,
+                'target_lang' => $targetLang,
+                'success' => $success,
+            ]);
+        } catch (QueryException) {
+            // Observabilidad, no debe tumbar la traducción real.
+        }
     }
 
     private function invokeProvider(string $provider, string $text, string $target, ?string $source): ?string

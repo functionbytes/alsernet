@@ -60,7 +60,13 @@ class WhatsAppMessageProcessor
                 ]),
             ]);
 
-            $conversation->update(['last_message_at' => now()]);
+            // last_customer_message_at alimenta Conversation::isWhatsAppWindowOpen()
+            // (ventana de 24h de WhatsApp para texto libre vs. plantilla HSM). Sin
+            // esto aquí, cualquier conversación creada/actualizada por este pipeline
+            // aparecía con la ventana cerrada aunque el cliente acabara de escribir —
+            // este processor solo maneja mensajes entrantes del cliente, así que
+            // siempre corresponde actualizarlo junto con last_message_at.
+            $conversation->update(['last_message_at' => now(), 'last_customer_message_at' => now()]);
 
             broadcast(new ConversationMessageCreated($item));
 

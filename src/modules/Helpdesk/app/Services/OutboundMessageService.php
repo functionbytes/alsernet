@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Services;
 
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\Helpdesk\Models\WhatsAppUsage;
 
 class OutboundMessageService
 {
@@ -29,12 +30,18 @@ class OutboundMessageService
         }
 
         try {
-            return match ($channel) {
+            $messageId = match ($channel) {
                 'whatsapp' => $this->whatsapp->sendText($externalId, $text),
                 'facebook' => $this->facebook->sendText($externalId, $text),
                 'instagram' => $this->instagram->sendText($externalId, $text),
                 default => null,
             };
+
+            if ($channel === 'whatsapp') {
+                $this->logWhatsAppUsage($conversation->id, 'text', $messageId !== null);
+            }
+
+            return $messageId;
         } catch (\Throwable $e) {
             Log::error('OutboundMessageService: failed to send reply', [
                 'channel' => $channel,
@@ -43,7 +50,31 @@ class OutboundMessageService
                 'error' => $e->getMessage(),
             ]);
 
+            if ($channel === 'whatsapp') {
+                $this->logWhatsAppUsage($conversation->id, 'text', false);
+            }
+
             return null;
+        }
+    }
+
+    /**
+     * Registra una respuesta de texto por WhatsApp en el ledger de gasto
+     * (categoría "service": gratis, dentro de la ventana de 24h). Un fallo al
+     * escribir el ledger no debe tumbar el envío real ya intentado.
+     */
+    private function logWhatsAppUsage(int $conversationId, string $messageType, bool $success): void
+    {
+        try {
+            WhatsAppUsage::query()->create([
+                'conversation_id' => $conversationId,
+                'template_name' => null,
+                'category' => 'service',
+                'message_type' => $messageType,
+                'success' => $success,
+            ]);
+        } catch (\Throwable) {
+            // Observabilidad, no debe tumbar el envío real.
         }
     }
 

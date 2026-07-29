@@ -22,6 +22,7 @@ class TranslateController
             text: $data['text'],
             targetLang: $data['to'],
             sourceLang: $from === 'auto' ? null : $from,
+            feature: 'manual',
         );
 
         if ($translated === null) {

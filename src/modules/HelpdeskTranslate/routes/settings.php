@@ -14,6 +14,12 @@ use Modules\HelpdeskTranslate\Http\Controllers\Settings\TranslateSettingsControl
 
 Route::get('/', [TranslateSettingsController::class, 'index'])->name('index');
 Route::put('/', [TranslateSettingsController::class, 'update'])->name('update');
+Route::get('/usage', [TranslateSettingsController::class, 'usage'])
+    ->middleware('throttle:30,1')
+    ->name('usage');
+Route::get('/usage/export', [TranslateSettingsController::class, 'usageExport'])
+    ->middleware('throttle:10,1')
+    ->name('usage.export');
 Route::post('/test', [TranslateSettingsController::class, 'test'])
     ->middleware('throttle:5,1')
     ->name('test');

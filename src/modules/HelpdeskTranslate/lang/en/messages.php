@@ -85,6 +85,9 @@ return [
         'libretranslate_endpoint_unsafe' => 'The LibreTranslate endpoint cannot point to an internal or private network address.',
         'detect_text_required' => 'The text is required.',
         'detect_text_max' => 'The text cannot exceed 2000 characters.',
+        'usage_from_date' => 'The "from" date is not valid.',
+        'usage_to_date' => 'The "to" date is not valid.',
+        'usage_to_after_from' => 'The "to" date must be on or after the "from" date.',
     ],
 
     'attributes' => [
@@ -99,6 +102,8 @@ return [
         'deepl_key' => 'DeepL API key',
         'deepl_url' => 'DeepL URL',
         'libretranslate_endpoint' => 'LibreTranslate endpoint',
+        'usage_from' => 'from date',
+        'usage_to' => 'to date',
     ],
 
 ];

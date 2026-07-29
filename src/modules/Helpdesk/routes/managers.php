@@ -209,7 +209,7 @@ Route::group(['prefix' => ''], function () {
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1'])
         ->name('manager.helpdesk.conversations.audit-log');
     Route::post('/conversations/{conversation}/send-hsm', [HelpdeskConversationsController::class, 'sendHsm'])
-        ->middleware('throttle:30,1')
+        ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.send-hsm');
     Route::get('/conversations/{conversation}/merge-candidates', [HelpdeskConversationsController::class, 'mergeCandidates'])->name('manager.helpdesk.conversations.merge-candidates')->middleware('throttle:30,1');
     Route::post('/conversations/{conversation}/merge', [HelpdeskConversationsController::class, 'merge'])->name('manager.helpdesk.conversations.merge')->middleware('throttle:10,1');

@@ -4,7 +4,7 @@ namespace Modules\HelpdeskTranslate\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
-use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -46,11 +46,11 @@ class TranslateOutgoingMessageListenerTest extends TestCase
     {
         Setting::set('helpdesktranslate.auto_translate_outgoing', false, 'helpdesktranslate');
 
-        [$conversation, $item] = $this->scenario(agentLocale: 'es', customerLang: 'en');
+        [, $item] = $this->scenario(agentLocale: 'es', customerLang: 'en');
 
         Http::fake([]); // no stubs — any HTTP call would error
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->outgoing_translated_body);
@@ -72,7 +72,7 @@ class TranslateOutgoingMessageListenerTest extends TestCase
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->outgoing_translated_body);
@@ -80,11 +80,11 @@ class TranslateOutgoingMessageListenerTest extends TestCase
 
     public function test_skips_internal_notes(): void
     {
-        [$conversation, $item] = $this->scenario(agentLocale: 'es', customerLang: 'en', isInternal: true);
+        [, $item] = $this->scenario(agentLocale: 'es', customerLang: 'en', isInternal: true);
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->outgoing_translated_body);
@@ -93,11 +93,11 @@ class TranslateOutgoingMessageListenerTest extends TestCase
     public function test_skips_when_customer_language_matches_agent_locale(): void
     {
         // Agent writes in ES, customer reads in ES → no translation needed.
-        [$conversation, $item] = $this->scenario(agentLocale: 'es', customerLang: 'es');
+        [, $item] = $this->scenario(agentLocale: 'es', customerLang: 'es');
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->outgoing_translated_body);
@@ -109,7 +109,7 @@ class TranslateOutgoingMessageListenerTest extends TestCase
      */
     public function test_translates_when_agent_locale_is_not_spanish_and_customer_is(): void
     {
-        [$conversation, $item] = $this->scenario(
+        [, $item] = $this->scenario(
             agentLocale: 'en',
             customerLang: 'es',
             body: 'Hello, how can I help you?',
@@ -122,7 +122,7 @@ class TranslateOutgoingMessageListenerTest extends TestCase
             ], 200),
         ]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertSame('Hola, ¿cómo puedo ayudarte?', $item->outgoing_translated_body);
@@ -131,7 +131,7 @@ class TranslateOutgoingMessageListenerTest extends TestCase
 
     public function test_translates_when_agent_writes_in_es_and_customer_reads_in_en(): void
     {
-        [$conversation, $item] = $this->scenario(
+        [, $item] = $this->scenario(
             agentLocale: 'es',
             customerLang: 'en',
             body: 'Hola, ¿en qué puedo ayudarte?',
@@ -144,7 +144,7 @@ class TranslateOutgoingMessageListenerTest extends TestCase
             ], 200),
         ]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertSame('Hello, how can I help you?', $item->outgoing_translated_body);

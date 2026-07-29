@@ -5,8 +5,8 @@ namespace Modules\HelpdeskTranslate\Listeners;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\CustomerLanguageDetected;
-use Modules\Helpdesk\Events\MessageReceived;
 use Modules\HelpdeskTranslate\Concerns\TranslatesMessage;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
 use Throwable;
@@ -35,14 +35,14 @@ class TranslateIncomingMessage implements ShouldQueue
         private readonly CachedTranslator $translator,
     ) {}
 
-    public function handle(MessageReceived $event): void
+    public function handle(ConversationMessageCreated $event): void
     {
         if (! $this->passesCommonGuards($event, 'helpdesktranslate.auto_translate_incoming', ['translated_body', 'source_locale'])) {
             return;
         }
 
-        $item = $event->message;
-        $conversation = $event->conversation;
+        $item = $event->item;
+        $conversation = $item->conversation;
 
         if ($item->user_id !== null) {
             return; // Outbound (agent) messages skip auto-translation.
@@ -60,7 +60,7 @@ class TranslateIncomingMessage implements ShouldQueue
             return;
         }
 
-        $translated = $this->translator->translate($body, $agentLocale, $sourceLocale);
+        $translated = $this->translator->translate($body, $agentLocale, $sourceLocale, feature: 'auto_incoming');
 
         if ($translated && $translated !== $body) {
             $item->forceFill([
@@ -70,11 +70,11 @@ class TranslateIncomingMessage implements ShouldQueue
         }
     }
 
-    public function failed(MessageReceived $event, Throwable $exception): void
+    public function failed(ConversationMessageCreated $event, Throwable $exception): void
     {
         Log::warning('TranslateIncomingMessage failed', [
-            'item_id' => $event->message?->id,
-            'conversation_id' => $event->conversation?->id,
+            'item_id' => $event->item?->id,
+            'conversation_id' => $event->item?->conversation_id,
             'error' => $exception->getMessage(),
         ]);
     }
@@ -90,7 +90,7 @@ class TranslateIncomingMessage implements ShouldQueue
             return $stored;
         }
 
-        $detected = $this->translator->detectLanguage($body);
+        $detected = $this->translator->detectLanguage($body, feature: 'auto_incoming');
         if (! $detected) {
             return $stored; // fallback to whatever we had (likely 'es')
         }

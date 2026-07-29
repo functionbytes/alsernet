@@ -4,14 +4,19 @@ namespace Modules\Helpdesk\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Database\Seeders\PermissionsSeeder;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
+use Modules\Helpdesk\Jobs\SendOutboundMessageJob;
 use Modules\Helpdesk\Mail\CustomerOutboundEmail;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
+use Modules\Helpdesk\Models\Campaigns\WhatsAppTemplate;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -154,7 +159,224 @@ class ConversationsControllerTest extends TestCase
     {
         $this->actingAs($this->manager)
             ->post(route('manager.helpdesk.conversations.store'), [])
-            ->assertSessionHasErrors(['customer_id', 'subject', 'priority', 'status_id']);
+            ->assertSessionHasErrors(['customer_id', 'subject', 'priority']);
+    }
+
+    /**
+     * status_id es nullable desde que el modal "Nueva conversación" del inbox
+     * (newconv.js) empezó a llamar a este mismo endpoint sin mandarlo — el
+     * controller cae al estado default en vez de devolver 422.
+     */
+    public function test_store_uses_default_status_when_status_id_missing(): void
+    {
+        $customer = Customer::factory()->create();
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Sin status_id',
+                'priority' => 'normal',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'customer_id' => $customer->id,
+            'subject' => 'Sin status_id',
+            'status_id' => $this->openStatus->id,
+        ], 'helpdesk');
+    }
+
+    /**
+     * El modal "Nueva conversación" manda 'channel' (antes se descartaba en
+     * validated() y la conversación quedaba con channel='web' por defecto,
+     * rompiendo el envío saliente vía OutboundMessageService::supports()).
+     */
+    public function test_store_persists_channel_and_resolves_whatsapp_external_sender_id(): void
+    {
+        $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación nueva por whatsapp',
+                'priority' => 'normal',
+                'channel' => 'whatsapp',
+            ])
+            ->assertCreated();
+
+        $conversationId = $response->json('conversation.id');
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $conversationId,
+            'channel' => 'whatsapp',
+            'external_sender_id' => '573183908707',
+        ], 'helpdesk');
+    }
+
+    public function test_store_falls_back_to_phone_when_customer_has_no_whatsapp_phone(): void
+    {
+        $customer = Customer::factory()->create(['whatsapp_phone' => null, 'phone' => '+34600111222']);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación nueva por whatsapp',
+                'priority' => 'normal',
+                'channel' => 'whatsapp',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $response->json('conversation.id'),
+            'channel' => 'whatsapp',
+            'external_sender_id' => '+34600111222',
+        ], 'helpdesk');
+    }
+
+    /**
+     * Checkbox "Asignar conversación al agente actual" del modal "Nueva
+     * conversación" — usa Conversation::assignTo(), el mismo método que la
+     * asignación manual desde el panel derecho.
+     */
+    public function test_store_assigns_conversation_to_current_agent_when_requested(): void
+    {
+        $customer = Customer::factory()->create();
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación asignada a mí',
+                'priority' => 'normal',
+                'assign_self' => 1,
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $response->json('conversation.id'),
+            'assignee_id' => $this->manager->id,
+        ], 'helpdesk');
+    }
+
+    public function test_store_leaves_conversation_unassigned_by_default(): void
+    {
+        $customer = Customer::factory()->create();
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación sin asignar',
+                'priority' => 'normal',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $response->json('conversation.id'),
+            'assignee_id' => null,
+        ], 'helpdesk');
+    }
+
+    public function test_store_with_first_message_dispatches_outbound_job(): void
+    {
+        Queue::fake();
+
+        // Canal 'facebook', no 'whatsapp': una conversacion nueva por WhatsApp
+        // nunca tiene la ventana de 24h abierta (ver test de abajo), asi que
+        // el texto libre en first_message solo es valido en canales sin esa
+        // restriccion de ventana de servicio.
+        $customer = Customer::factory()->create(['facebook_psid' => 'psid-123']);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación nueva por facebook',
+                'priority' => 'normal',
+                'channel' => 'facebook',
+                'first_message' => 'Hola, soy del equipo de soporte.',
+            ])
+            ->assertCreated();
+
+        Queue::assertPushed(SendOutboundMessageJob::class);
+    }
+
+    public function test_store_rejects_whatsapp_first_message_outside_window(): void
+    {
+        Queue::fake();
+
+        $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación nueva por whatsapp',
+                'priority' => 'normal',
+                'channel' => 'whatsapp',
+                'first_message' => 'Hola, soy del equipo de soporte.',
+            ]);
+
+        $response->assertStatus(422)->assertJson(['wa_window_closed' => true]);
+
+        $this->assertDatabaseMissing('helpdesk_conversations', [
+            'customer_id' => $customer->id,
+        ], 'helpdesk');
+        Queue::assertNotPushed(SendOutboundMessageJob::class);
+    }
+
+    /**
+     * customer_id solo se validaba con 'exists', no con pertenencia — un agente
+     * restringido a su bandeja podia mandar el customer_id de un cliente ajeno
+     * y la conversacion (con envio real incluido) se creaba igual.
+     */
+    public function test_agent_cannot_create_conversation_for_customer_outside_their_inbox(): void
+    {
+        $inboxA = Inbox::create(['name' => 'Inbox A', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
+        $inboxB = Inbox::create(['name' => 'Inbox B', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
+
+        $foreignCustomer = Customer::factory()->create();
+        $this->createConversation(['customer_id' => $foreignCustomer->id, 'inbox_id' => $inboxB->id]);
+
+        $agent = User::factory()->create();
+        $agent->givePermissionTo(['helpdesk.view', 'helpdesk.conversations.create']);
+        AgentInboxCapacity::create(['user_id' => $agent->id, 'inbox_id' => $inboxA->id, 'max_concurrent' => 5, 'accepts_new' => true]);
+
+        $this->actingAs($agent)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $foreignCustomer->id,
+                'subject' => 'Conversación nueva por widget',
+                'priority' => 'normal',
+                'channel' => 'web',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['customer_id']);
+
+        $this->assertDatabaseMissing('helpdesk_conversations', [
+            'customer_id' => $foreignCustomer->id,
+            'inbox_id' => null,
+        ], 'helpdesk');
+    }
+
+    public function test_store_sets_inbox_id_matching_the_channel(): void
+    {
+        // Mismo cache key de 30 min que usa InboundMessageIngestor (Cache::remember
+        // no se revierte con DatabaseTransactions) — se limpia para que el inbox
+        // creado en este test sea el que efectivamente se resuelva.
+        Cache::forget('helpdesk:inbox_id:whatsapp');
+
+        $inbox = Inbox::create(['name' => 'WhatsApp Soporte', 'channel_type' => Inbox::CHANNEL_WHATSAPP, 'is_active' => true]);
+        $customer = Customer::factory()->create();
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.store'), [
+                'customer_id' => $customer->id,
+                'subject' => 'Conversación nueva por whatsapp',
+                'priority' => 'normal',
+                'channel' => 'whatsapp',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_conversations', [
+            'id' => $response->json('conversation.id'),
+            'inbox_id' => $inbox->id,
+        ], 'helpdesk');
     }
 
     public function test_store_validation_rejects_invalid_priority(): void
@@ -657,6 +879,125 @@ class ConversationsControllerTest extends TestCase
         $this->actingAs($this->manager)
             ->getJson(route('manager.helpdesk.conversations.email-templates.preview', $conversation).'?template_id='.$internal->id)
             ->assertNotFound();
+    }
+
+    // ─── HSM (plantillas WhatsApp) ──────────────────────────────────────────────
+
+    /**
+     * external_id es el nombre técnico registrado en Meta — el frontend debe
+     * mandarlo como template_name en /send-hsm. display_name es solo la
+     * etiqueta amigable de la UI; confundirlos hace que Meta rechace el envío
+     * con "Template name does not exist" (132001).
+     */
+    public function test_hsm_templates_endpoint_exposes_external_id(): void
+    {
+        WhatsAppTemplate::create([
+            'external_id' => 'bienvenida_cliente_v1',
+            'display_name' => 'Bienvenida al cliente',
+            'language' => 'es',
+            'category' => 'utility',
+            'status' => 'approved',
+            'body_template' => 'Hola {{1}}, gracias por escribirnos.',
+        ]);
+
+        $this->actingAs($this->manager)
+            ->getJson(route('manager.helpdesk.hsm-templates'))
+            ->assertOk()
+            ->assertJsonFragment(['external_id' => 'bienvenida_cliente_v1', 'name' => 'Bienvenida al cliente']);
+    }
+
+    /**
+     * El body guardado en el hilo debe ser el texto real enviado al cliente
+     * (plantilla con variables sustituidas), no un placeholder genérico —
+     * así el agente ve exactamente lo que le llegó al cliente por WhatsApp.
+     */
+    public function test_send_hsm_stores_rendered_template_body_with_variables(): void
+    {
+        WhatsAppTemplate::create([
+            'external_id' => 'bienvenida_cliente_v1',
+            'display_name' => 'Bienvenida al cliente',
+            'language' => 'es',
+            'category' => 'utility',
+            'status' => 'approved',
+            'body_template' => 'Hola {{1}}, tu numero de caso es {{2}}.',
+        ]);
+
+        Http::fake(['graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST123']]], 200)]);
+
+        $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $customer->id,
+            'channel' => 'whatsapp',
+            'external_sender_id' => '573183908707',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.send-hsm', $conversation), [
+                'template_name' => 'bienvenida_cliente_v1',
+                'variables' => ['Ana', 'CASE-42'],
+            ])
+            ->assertCreated();
+
+        $this->assertSame('Hola Ana, tu numero de caso es CASE-42.', $response->json('item.body'));
+
+        $this->assertDatabaseHas('helpdesk_conversation_items', [
+            'conversation_id' => $conversation->id,
+            'body' => 'Hola Ana, tu numero de caso es CASE-42.',
+        ], 'helpdesk');
+    }
+
+    /**
+     * Meta rechaza el envío si el "language.code" del payload no coincide EXACTO
+     * con el idioma real con que la plantilla quedó registrada (ej. 'en_US' para
+     * hello_world) — mandar 'es' fijo, sin importar el idioma real, es 132001.
+     */
+    public function test_send_hsm_sends_the_templates_real_language_to_meta(): void
+    {
+        Http::fake(['graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST123']]], 200)]);
+
+        WhatsAppTemplate::create([
+            'external_id' => 'hello_world',
+            'display_name' => 'hello_world',
+            'language' => 'en_US',
+            'category' => 'utility',
+            'status' => 'approved',
+            'body_template' => 'Welcome!',
+        ]);
+
+        $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $customer->id,
+            'channel' => 'whatsapp',
+            'external_sender_id' => '573183908707',
+        ]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.send-hsm', $conversation), [
+                'template_name' => 'hello_world',
+            ])
+            ->assertCreated();
+
+        Http::assertSent(fn ($request) => $request['template']['language']['code'] === 'en_US');
+    }
+
+    public function test_send_hsm_falls_back_to_placeholder_when_template_not_found_locally(): void
+    {
+        Http::fake(['graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST123']]], 200)]);
+
+        $customer = Customer::factory()->create(['whatsapp_phone' => '573183908707']);
+        $conversation = Conversation::factory()->create([
+            'customer_id' => $customer->id,
+            'channel' => 'whatsapp',
+            'external_sender_id' => '573183908707',
+        ]);
+
+        $response = $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.conversations.send-hsm', $conversation), [
+                'template_name' => 'plantilla_inexistente_v1',
+            ])
+            ->assertCreated();
+
+        $this->assertSame('[Plantilla HSM: plantilla_inexistente_v1]', $response->json('item.body'));
     }
 
     // ─── merge (inbox scoping) ─────────────────────────────────────────────────
