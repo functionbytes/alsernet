@@ -357,6 +357,7 @@ return [
             'newconv_channel_web_desc' => 'Embedded widget',
             'newconv_channel_email_desc' => 'SMTP inbox',
             'newconv_channel_sms_desc' => 'MasVoz carrier',
+            'newconv_channel_not_active' => 'Channel not available yet',
             'newconv_hsm_warning_pre' => 'When starting from WhatsApp you must use an',
             'newconv_hsm_warning_bold' => 'approved template (HSM)',
             'newconv_hsm_warning_post' => 'if more than 24h have passed since the customer\'s last message.',

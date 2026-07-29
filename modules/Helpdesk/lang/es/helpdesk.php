@@ -320,6 +320,7 @@ return [
             'newconv_channel_web_desc' => 'Widget integrado',
             'newconv_channel_email_desc' => 'Bandeja SMTP',
             'newconv_channel_sms_desc' => 'Operador MasVoz',
+            'newconv_channel_not_active' => 'Canal no disponible todavía',
             'newconv_hsm_warning_pre' => 'Al iniciar desde WhatsApp deberás usar una',
             'newconv_hsm_warning_bold' => 'plantilla aprobada (HSM)',
             'newconv_hsm_warning_post' => 'si han pasado más de 24h desde el último mensaje del cliente.',

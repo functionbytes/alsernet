@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTranslate\Concerns;
 
 use Illuminate\Support\Facades\Schema;
-use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Setting;
 
 /**
@@ -13,12 +13,12 @@ use Modules\Helpdesk\Models\Setting;
  * otherwise duplicated across TranslateIncomingMessage and
  * TranslateOutgoingMessage.
  *
- * Nota sobre el evento: ambos listeners escuchan MessageReceived porque en
- * este proyecto ese evento es en la práctica "conversation item creado"
- * (broadcast `message.received` hacia el widget) y transporta tanto mensajes
- * del cliente como respuestas del agente — no existe un evento MessageSent
- * de salida en Modules\Helpdesk\Events. La dirección se distingue por
- * `$item->user_id` (null = cliente entrante, con valor = agente saliente).
+ * Nota sobre el evento: ambos listeners escuchan ConversationMessageCreated,
+ * el evento que TODOS los canales disparan al crear un conversation item
+ * (WhatsApp/redes via InboundMessageIngestor, widget de live chat, respuestas
+ * de agente) — no existe un evento MessageSent de salida separado en
+ * Modules\Helpdesk\Events. La dirección se distingue por `$item->user_id`
+ * (null = cliente entrante, con valor = agente saliente).
  */
 trait TranslatesMessage
 {
@@ -38,7 +38,7 @@ trait TranslatesMessage
      *
      * @param  array<int, string>  $requiredColumns  columns on helpdesk_conversation_items
      */
-    protected function passesCommonGuards(MessageReceived $event, string $toggleKey, array $requiredColumns): bool
+    protected function passesCommonGuards(ConversationMessageCreated $event, string $toggleKey, array $requiredColumns): bool
     {
         if (! helpdesk_translate_enabled()) {
             return false;
@@ -52,7 +52,7 @@ trait TranslatesMessage
             return false;
         }
 
-        return ($event->message ?? null) !== null && ($event->conversation ?? null) !== null;
+        return ($event->item ?? null) !== null && $event->item->conversation !== null;
     }
 
     /**

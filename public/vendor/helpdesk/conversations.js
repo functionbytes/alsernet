@@ -419,6 +419,11 @@
             $tab.siblings().removeClass('on');
             $tab.addClass('on');
             $('#bv-composer-box').toggleClass('note', target === 'note');
+            // El textarea de texto libre no aporta nada mientras se elige una
+            // plantilla HSM o se traduce — mostrarlo a la vez solo comprimia el
+            // area de mensajes de arriba a una franja minima (parecia que el
+            // panel "chocaba" con los tabs y el composer).
+            $('#bv-composer-box').toggle(target !== 'hsm' && target !== 'translate');
 
             if (target === 'hsm') {
                 $('#bv-translate-panel').removeClass('on');
@@ -437,7 +442,7 @@
             const $reply = $('.bv-composer-tab[data-bv-tab="reply"]');
             $reply.siblings().removeClass('on');
             $reply.addClass('on');
-            $('#bv-composer-box').removeClass('note');
+            $('#bv-composer-box').removeClass('note').show();
         }
 
         $(document).on('click', '#bv-hsm-close, #bv-hsm-close-2', function () {
@@ -448,9 +453,17 @@
         // ─── HSM Templates ────────────────────────────────────────────
         var hsmTemplates = [];
         var hsmSelectedId = null;
+        var hsmPreviewBody = '';
+
+        function hsmListStatus(cls, icon, text) {
+            var $list = $('#bv-hsm-list');
+            $list.find('.bv-hsm-row, .bv-hsm-list-status').remove();
+            $list.append('<div class="bv-hsm-list-status' + (cls ? ' ' + cls : '') + '"><i class="' + icon + '"></i>' + text + '</div>');
+        }
 
         function loadHsmTemplates() {
             if (hsmTemplates.length) { renderHsmList(hsmTemplates); return; }
+            hsmListStatus('', 'fas fa-spinner fa-spin', 'Cargando plantillas…');
             $.ajax({
                 url: '/panel/helpdesk/hsm-templates',
                 method: 'GET',
@@ -459,32 +472,80 @@
                 hsmTemplates = resp.templates || [];
                 renderHsmList(hsmTemplates);
             }).fail(function () {
-                $('#bv-hsm-list').append('<div style="padding:12px;color:#9aa0ab;font-size:12px">Error al cargar plantillas</div>');
+                hsmListStatus('is-error', 'fas fa-triangle-exclamation', 'Error al cargar plantillas');
             });
         }
 
-        function renderHsmList(list) {
+        var HSM_CATEGORY_LABELS = { marketing: 'Marketing', utility: 'Utility', authentication: 'Auth' };
+        var HSM_HEADER_ICONS = { image: 'fa-image', video: 'fa-video', document: 'fa-file' };
+
+        function renderHsmList(list, query) {
             var $list = $('#bv-hsm-list');
-            $list.find('.bv-hsm-row').remove();
+            $list.find('.bv-hsm-row, .bv-hsm-list-status').remove();
             if (!list.length) {
-                $list.append('<div style="padding:12px;color:#9aa0ab;font-size:12px">Sin plantillas aprobadas</div>');
+                // Distinguimos "no hay ninguna plantilla" de "tu busqueda no
+                // encontro nada" — antes ambos casos mostraban el mismo texto
+                // y un agente buscando algo mal escrito podia creer que el
+                // canal no tiene ninguna plantilla aprobada.
+                if (query) {
+                    hsmListStatus('', 'fas fa-magnifying-glass', 'Sin resultados para "' + escapeHtml(query) + '"');
+                } else {
+                    hsmListStatus('', 'fas fa-inbox', 'Sin plantillas aprobadas');
+                }
                 return;
             }
             list.forEach(function (t, i) {
-                var badge = '<span class="bv-hsm-badge-approved">APPROVED</span>';
+                var catLabel = HSM_CATEGORY_LABELS[t.category] || '';
+                var catBadge = catLabel
+                    ? '<span class="bv-hsm-badge-category bv-hsm-badge-category--' + t.category + '">' + catLabel + '</span>'
+                    : '';
                 var html = '<div class="bv-hsm-row' + (i === 0 ? ' on' : '') + '" data-hsm-id="' + t.id + '">' +
                     '<div class="nm">' + escapeHtml(t.name) + '</div>' +
-                    '<div class="meta">' + badge + '</div></div>';
+                    '<div class="meta">' + catBadge + '<span class="bv-hsm-badge-approved">APPROVED</span></div></div>';
                 $list.append(html);
             });
             if (list.length) selectHsmTemplate(list[0].id);
+        }
+
+        var HSM_GREETING_RE = /\b(hola|hi|hello)\s*\{\{(\d+)\}\}/i;
+        // El hueco entre "caso" y "{{n}}" solo puede ser espacios/":#*" (ej.
+        // "caso *#{{2}}*", "caso es: *{{2}}*") — NO letras. Con [^{}]{0,20}
+        // (sin restringir a puntuacion) "✅ Caso resuelto\nHola {{1}}" hacia
+        // falso positivo: "resuelto" tambien caia dentro de la ventana de 20
+        // caracteres y el {{1}} del saludo (nombre del cliente) se marcaba
+        // por error como "numero de caso", pisando el hint correcto.
+        var HSM_CASE_RE = /\bcaso\b(?:\s+es)?[\s:#*]{0,10}\{\{(\d+)\}\}/i;
+
+        // Best-effort: detecta que variable es "el nombre del cliente" o "el
+        // numero de caso" mirando el texto que las rodea en la propia
+        // plantilla (no hay metadata de tipo por variable, solo {{n}}
+        // posicionales) y las prellena con datos que ya tenemos en pantalla
+        // (nombre del cliente del panel derecho, id de la conversacion). El
+        // agente sigue pudiendo editarlas — es un punto de partida, no un
+        // valor confirmado (por eso se resaltan y llevan tooltip).
+        function hsmAutoFillHints(t) {
+            var hints = {};
+            var fullText = ((t.header_type === 'text' ? t.header_value : '') || '') + '\n' + (t.body || '');
+
+            var customerName = ($('.bv-right').data('customer-name') || '').toString().trim();
+            var greetingMatch = fullText.match(HSM_GREETING_RE);
+            if (customerName && greetingMatch) { hints[greetingMatch[2]] = customerName; }
+
+            var conversationId = $('.bv-composer').data('bv-conversation-id');
+            var caseMatch = fullText.match(HSM_CASE_RE);
+            if (conversationId && caseMatch && !hints[caseMatch[1]]) { hints[caseMatch[1]] = '#' + conversationId; }
+
+            return hints;
         }
 
         function selectHsmTemplate(id) {
             var t = hsmTemplates.find(function (x) { return x.id == id; });
             if (!t) return;
             hsmSelectedId = id;
-            $('#bv-hsm-preview-text').text(t.body || 'Sin contenido');
+            // Algunas plantillas quedaron guardadas con la secuencia literal "\n"
+            // (backslash + n) en vez de un salto de linea real — se veian tal
+            // cual en la vista previa. Normalizamos ambos casos antes de pintar.
+            hsmPreviewBody = (t.body || 'Sin contenido').replace(/\\n/g, '\n');
             var varsHtml = '';
             for (var i = 1; i <= (t.param_count || 0); i++) {
                 varsHtml += '<div class="bv-hsm-var-row">' +
@@ -492,9 +553,68 @@
                     '<input type="text" class="bv-hsm-var-input" data-hsm-var-idx="' + i + '" placeholder="Variable ' + i + '">' +
                 '</div>';
             }
-            if (!varsHtml) varsHtml = '<div style="font-size:12px;color:#9aa0ab;padding:4px 0">Sin variables</div>';
+            if (!varsHtml) varsHtml = '<div class="bv-hsm-list-status">Sin variables</div>';
             $('#bv-hsm-vars-list').html(varsHtml);
+
+            // .val() en vez de meter el valor en el HTML de arriba: el nombre
+            // del cliente es dato de usuario y podria traer comillas u otros
+            // caracteres que rompan el atributo value="..." si se concatenan
+            // como string (escapeHtml no escapa comillas, solo &<>).
+            var hints = hsmAutoFillHints(t);
+            Object.keys(hints).forEach(function (idx) {
+                $('.bv-hsm-var-input[data-hsm-var-idx="' + idx + '"]')
+                    .val(hints[idx])
+                    .addClass('bv-hsm-var-input--auto')
+                    .attr('title', 'Prellenado automáticamente — revisa antes de enviar');
+            });
+
+            renderHsmPreview();
         }
+
+        // Sustituye {{n}} por el valor tecleado en cada variable (o lo deja tal
+        // cual si aun esta vacia) para que la "VISTA PREVIA" muestre exactamente
+        // lo que va a recibir el cliente, no placeholders genericos. El header
+        // de la plantilla puede traer su propia variable (ej. "Hola {{1}} 👋")
+        // — antes no se pintaba en absoluto y esos {{n}} quedaban invisibles.
+        function renderHsmPreview() {
+            var t = hsmTemplates.find(function (x) { return x.id == hsmSelectedId; });
+            if (!t) return;
+
+            var values = {};
+            $('.bv-hsm-var-input').each(function () {
+                var val = ($(this).val() || '').trim();
+                if (val) { values[$(this).data('hsm-var-idx')] = val; }
+            });
+            function substitute(raw) {
+                var text = raw || '';
+                Object.keys(values).forEach(function (idx) {
+                    text = text.split('{{' + idx + '}}').join(values[idx]);
+                });
+                return text;
+            }
+
+            var $header = $('#bv-hsm-preview-header');
+            if (t.header_type === 'text' && t.header_value) {
+                $header.html(escapeHtml(substitute(t.header_value))).show();
+            } else if (t.header_type && HSM_HEADER_ICONS[t.header_type]) {
+                var label = t.header_type.charAt(0).toUpperCase() + t.header_type.slice(1);
+                $header.html('<i class="fas ' + HSM_HEADER_ICONS[t.header_type] + '"></i> ' + label).show();
+            } else {
+                $header.hide().empty();
+            }
+
+            $('#bv-hsm-preview-text').html(escapeHtml(substitute(hsmPreviewBody)).replace(/\n/g, '<br>'));
+
+            var $footer = $('#bv-hsm-preview-footer');
+            if (t.footer_text) { $footer.text(t.footer_text).show(); } else { $footer.hide().empty(); }
+        }
+
+        $(document).on('input', '.bv-hsm-var-input', function () {
+            // El agente edito manualmente un valor prellenado — deja de ser
+            // una sugerencia sin revisar, ya la reviso (o la corrigio) el.
+            $(this).removeClass('is-invalid bv-hsm-var-input--auto').removeAttr('title');
+            renderHsmPreview();
+        });
 
         $(document).on('click', '.bv-composer-tab[data-bv-tab="hsm"]', function () {
             loadHsmTemplates();
@@ -511,25 +631,63 @@
             var filtered = hsmTemplates.filter(function (t) {
                 return !q || (t.name && t.name.toLowerCase().includes(q));
             });
-            renderHsmList(filtered);
+            renderHsmList(filtered, q);
+        });
+
+        // Navegacion por teclado: flechas para moverse por la lista filtrada,
+        // Enter para saltar directo al primer campo de variable (o al boton
+        // de insertar si la plantilla no tiene variables) sin soltar el teclado.
+        $(document).on('keydown', '#bv-hsm-search', function (e) {
+            var $rows = $('#bv-hsm-list .bv-hsm-row');
+            if (!$rows.length) return;
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                var $firstVar = $('.bv-hsm-var-input').first();
+                ($firstVar.length ? $firstVar : $('#bv-hsm-insert')).trigger('focus');
+                return;
+            }
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            e.preventDefault();
+
+            var idx = $rows.index($rows.filter('.on'));
+            idx = e.key === 'ArrowDown' ? (idx + 1) % $rows.length : (idx - 1 + $rows.length) % $rows.length;
+
+            var $next = $rows.eq(idx);
+            $rows.removeClass('on');
+            $next.addClass('on');
+            selectHsmTemplate($next.data('hsm-id'));
+            $next[0].scrollIntoView({ block: 'nearest' });
         });
 
         $(document).on('click', '#bv-hsm-insert', function () {
             var t = hsmTemplates.find(function (x) { return x.id == hsmSelectedId; });
             if (!t) { if (window.toastr) toastr.warning('Selecciona una plantilla'); return; }
-            var convId = $('.bv-composer').data('bv-conversation-id');
             var sendUrl = $('.bv-composer').data('bv-send-hsm-url');
             if (!sendUrl) { if (window.toastr) toastr.error('No hay conversación activa'); return; }
+
             var variables = [];
+            var $firstInvalid = null;
             $('.bv-hsm-var-input').each(function () {
-                variables.push($(this).val() || '');
+                var val = ($(this).val() || '').trim();
+                $(this).toggleClass('is-invalid', !val);
+                if (!val && !$firstInvalid) { $firstInvalid = $(this); }
+                variables.push(val);
             });
+            if ($firstInvalid) {
+                if (window.toastr) toastr.warning('Completa todas las variables de la plantilla');
+                $firstInvalid.trigger('focus');
+                return;
+            }
+
             var $btn = $(this).prop('disabled', true);
             $.ajax({
                 url: sendUrl,
                 method: 'POST',
                 dataType: 'json',
-                data: { template_name: t.name, variables: variables },
+                // external_id es el nombre tecnico registrado en Meta; t.name es solo la
+                // etiqueta amigable — mandarla rompe el envio real (132001 en Meta).
+                data: { template_name: t.external_id, variables: variables },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
                     'Accept': 'application/json',
@@ -546,9 +704,26 @@
             });
         });
 
-        $(document).on('click', '#bv-translate-close, #bv-translate-close-2', function () {
+        // La "x" del header solo cierra el panel sin decidir nada (como
+        // cancelar). "#bv-translate-close-2" es el boton "Desactivar" del
+        // footer — antes hacia exactamente lo mismo que la "x" (solo cerrar),
+        // sin tocar sessionStorage, asi que la traduccion seguia activa para
+        // los siguientes mensajes aunque el agente creyera haberla apagado.
+        $(document).on('click', '#bv-translate-close', function () {
             $('#bv-translate-panel').removeClass('on');
             activateReplyTab();
+        });
+
+        $(document).on('click', '#bv-translate-close-2', function () {
+            // mode:'off' explicito (no solo "sin preferencia") para que
+            // tambien anule el ajuste global "Traducir mensajes salientes"
+            // de Settings mientras dure esta sesion de navegador — quitar la
+            // key directamente habria vuelto a caer en ese default global.
+            sessionStorage.setItem('inbox_translation_settings', JSON.stringify({ mode: 'off' }));
+            $('.bv-tp-mode').removeClass('on');
+            $('#bv-translate-panel').removeClass('on');
+            activateReplyTab();
+            if (window.toastr) toastr.info('Traducción desactivada para esta conversación.');
         });
 
         // ─── More menu toggle ─────────────────────────────────────────
@@ -674,12 +849,6 @@
         // ─── Selección de modo en panel traducción ────────────────────
         $(document).on('click', '.bv-tp-mode', function () {
             $(this).siblings('.bv-tp-mode').removeClass('on');
-            $(this).addClass('on');
-        });
-
-        // ─── Selección de plantilla HSM ───────────────────────────────
-        $(document).on('click', '.bv-hsm-row', function () {
-            $(this).siblings('.bv-hsm-row').removeClass('on');
             $(this).addClass('on');
         });
 
@@ -1270,11 +1439,71 @@
 
             const isInternal = $composer.find('.bv-composer-tab.on').data('bv-tab') === 'note';
 
-            // UX-02: burbuja optimista + textarea vacío pero activo y enfocado.
-            const $pending = appendPendingBubble(text, isInternal);
-            $textarea.val('').css('height', 'auto').focus();
+            // Panel "Traducción de conversación", modo Salientes/Ambos: lo que
+            // se envía al cliente es la traducción de lo que escribió el
+            // agente, no el texto original. Notas internas nunca se traducen.
+            //
+            // Si el agente activó el panel manualmente en esta sesión de
+            // navegador, esa preferencia manda. Si no lo ha tocado, cae al
+            // ajuste global "Traducir mensajes salientes" de
+            // /panel/settings/helpdesk-translate (data-bv-auto-translate-outgoing)
+            // — así el agente no tiene que activar nada por conversación.
+            const storedSettings = sessionStorage.getItem('inbox_translation_settings');
+            const tSettings = storedSettings ? JSON.parse(storedSettings) : null;
+            const globalAutoOutgoing = $composer.data('bv-auto-translate-outgoing') === 1 || $composer.data('bv-auto-translate-outgoing') === '1';
+            const translateBeforeSend = !isInternal && (
+                tSettings ? (tSettings.mode === 'outgoing' || tSettings.mode === 'both') : globalAutoOutgoing
+            );
 
-            sendMessage({ text, isInternal, url, $btn, $pending });
+            if (!translateBeforeSend) {
+                // UX-02: burbuja optimista + textarea vacío pero activo y enfocado.
+                const $pending = appendPendingBubble(text, isInternal);
+                $textarea.val('').css('height', 'auto').focus();
+
+                sendMessage({ text, isInternal, url, $btn, $pending });
+                return;
+            }
+
+            const $icon = $btn.find('i').first();
+            const iconCls = $icon.attr('class');
+            $btn.prop('disabled', true);
+            if (iconCls) { $icon.attr('class', 'fas fa-spinner fa-spin'); }
+
+            // "IDIOMA DESTINO" del panel sirve para la dirección Entrantes
+            // (traducir al agente). Para Salientes el destino correcto es el
+            // idioma real del cliente, no ese mismo select — si no, en modo
+            // "Ambos" ambas direcciones apuntarían al mismo idioma y una de
+            // las dos quedaría mal traducida (o sin traducir).
+            const customerLang = ($('.bv-right').data('customer-language') || '').toString().trim();
+            const outgoingTo = customerLang || tSettings?.to || 'es';
+
+            $.ajax({
+                url: '/panel/helpdesk/translate',
+                method: 'POST',
+                dataType: 'json',
+                data: { text: text, from: tSettings?.from || 'auto', to: outgoingTo },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                    'Accept': 'application/json',
+                },
+            })
+                .done(function (resp) {
+                    const translated = (resp && resp.translated) ? resp.translated : text;
+                    const $pending = appendPendingBubble(translated, isInternal);
+                    if (translated !== text) {
+                        $pending.find('.bv-bubble').append(
+                            '<div class="bv-bubble-translation"><span class="bv-bubble-translation-lbl">&#8627; escrito como: </span>'
+                            + escape(text) + '</div>'
+                        );
+                    }
+                    $textarea.val('').css('height', 'auto').focus();
+                    sendMessage({ text: translated, isInternal, url, $btn, $pending });
+                })
+                .fail(function () {
+                    if (window.toastr) toastr.error('No se pudo traducir el mensaje antes de enviar');
+                    $btn.prop('disabled', false);
+                    if (iconCls) { $icon.attr('class', iconCls); }
+                });
         });
 
         // UX-02: reintentar el envío de una burbuja fallida.

@@ -778,6 +778,13 @@ body:has(.conversations) .mc-content {
     flex: 1;
     overflow-y: auto;
     padding: 24px 0;
+    /* Sin esto, cuando el composer crece (panel HSM/traducción abierto) en
+       ventanas de poca altura, este flex:1 se comprime hasta casi 0px (medido
+       48px con el panel HSM + aviso de ventana WhatsApp) — el último mensaje
+       queda cortado justo encima del panel, dando la sensación de que ambos
+       se superponen. Un mínimo deja siempre algo de contexto visible; el
+       propio composer.bv-hsm-mode ya scrollea internamente si le falta alto. */
+    min-height: 140px;
 }
 .bv-th-inner {
     max-width: 800px;
@@ -1790,6 +1797,9 @@ body:has(.conversations) .mc-content {
 .nc-channel.sms .logo { background: var(--bv-channel-sms); }
 .nc-channel .t { font-size: 12.5px; font-weight: 600; }
 .nc-channel .s { font-size: 11px; color: var(--bv-text-muted); line-height: 1.35; }
+.nc-channel.disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.nc-channel.disabled:hover { border-color: var(--bv-border); transform: none; box-shadow: none; }
+.nc-channel.disabled .logo { filter: grayscale(1); }
 
 /* Contacto card (nueva conv paso 2) */
 .nc-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
@@ -2253,6 +2263,12 @@ body:has(.conversations) .mc-content {
 /* ── Composer panels (HSM, traducción, adjuntar) ─────────────────── */
 .bv-composer {
     position: relative;
+    /* El ancho de esta columna depende del layout de 3 paneles de la bandeja
+       (lista de conversaciones + panel derecho), no solo del viewport — puede
+       quedar angosto incluso en pantallas anchas. container-type permite que
+       .bv-hsm-body reaccione a SU ancho real via @container más abajo, en vez
+       de un @media basado en el viewport que no vería este caso. */
+    container-type: inline-size;
 }
 .bv-hsm-picker {
     border-bottom: 1px solid var(--bv-border);
@@ -2261,6 +2277,15 @@ body:has(.conversations) .mc-content {
 }
 .bv-hsm-picker { display: none; }
 .bv-hsm-picker.on { display: block; }
+/* Con el panel HSM abierto el composer (flex:0 1 auto dentro de .bv-thread)
+   crecia sin tope y comprimia el area de mensajes (flex:1) a una franja minima
+   — visualmente parecia que el panel "chocaba" con los tabs y el textarea de
+   respuesta. Limitamos su alto maximo y dejamos que el propio composer
+   scrollee, para que siempre quede espacio visible para los mensajes. */
+.bv-composer.bv-hsm-mode {
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+}
 /* .bv-translate-panel rules live in modules/HelpdeskTranslate/resources/css */
 
 @keyframes bv-pop-in {
@@ -2288,9 +2313,39 @@ body:has(.conversations) .mc-content {
 /* HSM list/detail split */
 .bv-hsm-body {
     display: grid;
-    grid-template-columns: 220px 1fr;
+    /* minmax(160px, 1fr) evita que la columna de detalle se comprima por
+       debajo de 160px cuando el composer es angosto — con "1fr" a secas el
+       grid la reducia hasta unos pocos px (texto y botones superpuestos e
+       ilegibles) porque una pista 1fr tiene min-width:auto (= min-content)
+       por defecto y aun asi puede terminar mas chica que su contenido si la
+       otra columna es de ancho fijo. */
+    grid-template-columns: minmax(140px, 220px) minmax(160px, 1fr);
+    /* Sin grid-template-rows la fila crece con el contenido (auto) e ignora
+       este max-height — la lista de plantillas se desbordaba por debajo del
+       panel en vez de scrollear dentro de .bv-hsm-list. minmax(0, 1fr) fuerza
+       la fila a caber en el alto disponible para que min-height:0 (abajo)
+       pueda encogerla. */
+    grid-template-rows: minmax(0, 1fr);
     max-height: 320px;
 }
+/* Aun con los minmax de arriba, por debajo de ~380px de composer las dos
+   columnas ya no caben lado a lado sin comprimirse. Apilamos verticalmente:
+   lista arriba (con su propio scroll, 40% del alto) y detalle abajo. */
+@container (max-width: 380px) {
+    .bv-hsm-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(120px, 40%) minmax(0, 1fr);
+        max-height: 420px;
+    }
+    .bv-hsm-list {
+        border-right: 0;
+        border-bottom: 1px solid var(--bv-border);
+    }
+}
+/* Sin min-height:0 los grid items no respetan el max-height del padre cuando su
+   contenido (lista de plantillas larga) es más alto — se desbordaban por debajo
+   del composer, empujando/tapando los tabs y el textarea de respuesta. */
+.bv-hsm-list, .bv-hsm-detail { min-height: 0; }
 .bv-hsm-list {
     border-right: 1px solid var(--bv-border);
     overflow-y: auto;
@@ -2301,9 +2356,25 @@ body:has(.conversations) .mc-content {
     cursor: pointer; transition: background .1s;
 }
 .bv-hsm-row:hover { background: var(--bv-bg-subtle); }
-.bv-hsm-row.on { background: var(--bv-bg-subtle); }
+/* Acento de marca a la izquierda para distinguir "seleccionada" de solo
+   "hover" — antes ambos estados usaban el mismo fondo y eran indistinguibles. */
+.bv-hsm-row.on { background: var(--bv-bg-subtle); box-shadow: inset 3px 0 0 #90bb13; }
 .bv-hsm-row .nm { font-size: 11.5px; font-weight: 500; color: var(--bv-text); margin-bottom: 3px; }
 .bv-hsm-row .meta { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--bv-text-muted); }
+
+/* Estado de la lista de plantillas: cargando / error / vacío */
+.bv-hsm-list-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 24px 10px;
+    text-align: center;
+    color: var(--bv-text-muted);
+    font-size: 12px;
+}
+.bv-hsm-list-status i { font-size: 16px; }
+.bv-hsm-list-status.is-error { color: #dc3545; }
 .bv-hsm-detail {
     padding: 12px; display: flex;
     flex-direction: column; overflow-y: auto;
@@ -2709,6 +2780,23 @@ body:has(.conversations) .mc-content {
     color: #78716c;
     text-align: right;
     margin-top: 6px;
+}
+
+/* ── HSM chat header/footer (backend ya mandaba header_type/header_value
+   y footer_text pero la vista previa los ignoraba por completo) ────── */
+.bv-hsm-chat-header {
+    display: none;
+    font-weight: 700;
+    font-size: 12.5px;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+.bv-hsm-chat-header i { color: #6b7280; margin-right: 4px; }
+.bv-hsm-chat-footer {
+    display: none;
+    font-size: 10.5px;
+    color: #78716c;
+    margin-top: 4px;
 }
 
 /* ── HSM vars section title ─────────────────────────────────────── */
@@ -3234,6 +3322,20 @@ body:has(.conversations) .mc-content {
     font-weight: 700;
 }
 
+/* Badge de categoria (marketing/utility/authentication) en la lista HSM —
+   el backend ya la mandaba (t.category) pero la UI no la mostraba; ayuda al
+   agente a distinguir plantillas con restricciones de envio distintas. */
+.bv-hsm-badge-category {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-right: 4px;
+}
+.bv-hsm-badge-category--marketing { background: #eef2ff; color: #4338ca; }
+.bv-hsm-badge-category--utility { background: #f1f5f9; color: #475569; }
+.bv-hsm-badge-category--authentication { background: #fff1f2; color: #be123c; }
+
 /* Badge de estado PENDING (amarillo) en HSM */
 .bv-hsm-badge-pending {
     background: #fffbeb;
@@ -3297,6 +3399,18 @@ body:has(.conversations) .mc-content {
     font-family: inherit;
     background: var(--bv-bg-panel);
     color: var(--bv-text);
+}
+/* Variable vacía al intentar insertar — se limpia sola en el próximo input. */
+.bv-hsm-var-input.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 1px #dc3545;
+}
+/* Prellenada automaticamente (nombre del cliente / num. de caso detectado
+   por contexto) — distinta a "escrita a mano" para que el agente sepa que
+   es una sugerencia sin confirmar, no un dato ya verificado. */
+.bv-hsm-var-input--auto {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
 }
 
 /* Botón cancelar en footer HSM / Translate */
@@ -13162,6 +13276,17 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     letter-spacing: .01em;
     text-transform: uppercase;
 }
+/* Variante en minúsculas/sentence-case (mockup #31B "ve-new-conv-wizard-2":
+   "Buscar contacto", "Plantilla aprobada (HSM)"...) — .bv-form-label en
+   mayúsculas es el estilo por defecto usado en el resto de modales del sistema,
+   no lo tocamos para no afectarlos. */
+.bv-form-label--plain {
+    text-transform: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--bv-text, #18181b);
+    letter-spacing: normal;
+}
 .bv-form-input {
     display: block;
     width: 100%;
@@ -13728,7 +13853,7 @@ textarea.bv-form-input { resize: vertical; }
 
 /* ─── Channel picker grid (new-conv-wizard) ─────────────────────────────────── */
 .bv-ch-pick-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px;
 }
 .bv-ch-pick {
     display: flex; align-items: center; gap: 10px;
@@ -13740,6 +13865,9 @@ textarea.bv-form-input { resize: vertical; }
     border-color: var(--bv-primary, #90bb13);
     background: rgba(144,187,19,.07);
 }
+.bv-ch-pick.disabled { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.bv-ch-pick.disabled:hover { border-color: var(--bv-border, #e4e4e7); }
+.bv-ch-pick.disabled .bv-ch-pick__ic { filter: grayscale(1); }
 .bv-ch-pick__ic { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; color: var(--bv-text-muted); }
 .bv-ch-pick.on .bv-ch-pick__ic { color: var(--bv-primary, #90bb13); }
 .bv-ch-pick__body { min-width: 0; }
@@ -13773,6 +13901,10 @@ textarea.bv-form-input { resize: vertical; }
 .bv-list-item__body { flex: 1; min-width: 0; }
 .bv-list-item__t { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bv-list-item__s { display: block; font-size: 11.5px; color: var(--bv-text-muted); }
+.bv-list-item__check {
+    width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+    border: 1.5px solid var(--bv-border-strong, #d4d4d8);
+}
 
 /* ─── av--sm variant ────────────────────────────────────────────────────────── */
 .bv-av--sm {
@@ -13780,6 +13912,21 @@ textarea.bv-form-input { resize: vertical; }
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--bv-primary, #90bb13); color: #fff;
     font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+
+/* ─── HSM template variables (new-conv-wizard paso 2) ──────────────────────── */
+.nc-vars-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.nc-var-field { min-width: 0; }
+.nc-var-lbl {
+    display: block; font-family: monospace; font-size: 11px;
+    color: var(--bv-text-muted, #71717a); margin-bottom: 4px;
+}
+.nc-preview {
+    background: var(--bv-bg-subtle, #f4f4f5);
+    border-radius: 8px; padding: 12px;
+    font-size: 13px; line-height: 1.5; color: var(--bv-text, #18181b);
 }
 
 /* ─── Document gallery (docs-viewer) ───────────────────────────────────────── */

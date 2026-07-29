@@ -33,6 +33,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\TeamController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\ViewsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\WebhooksController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\WhatsAppTemplatesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\WhatsAppUsageController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\WorkflowsController;
 use Modules\Helpdesk\Http\Controllers\Managers\SocialIntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Settings\ApiTokensController;
@@ -350,7 +351,21 @@ Route::prefix('brands')->name('brands.')->group(function () {
 // WhatsApp Templates
 Route::prefix('whatsapp-templates')->name('whatsapp-templates.')->group(function () {
     Route::get('/', [WhatsAppTemplatesController::class, 'index'])->name('index');
+    Route::get('create', [WhatsAppTemplatesController::class, 'create'])->name('create');
+    Route::post('/', [WhatsAppTemplatesController::class, 'store'])->name('store');
     Route::post('sync', [WhatsAppTemplatesController::class, 'sync'])->name('sync');
+});
+
+// WhatsApp Usage (reporte de gasto — plantillas HSM + respuestas de servicio)
+Route::prefix('whatsapp-usage')->name('whatsapp-usage.')->group(function () {
+    Route::get('/', [WhatsAppUsageController::class, 'index'])->name('index');
+    Route::get('data', [WhatsAppUsageController::class, 'data'])
+        ->middleware('throttle:30,1')
+        ->name('data');
+    Route::get('export', [WhatsAppUsageController::class, 'export'])
+        ->middleware('throttle:10,1')
+        ->name('export');
+    Route::post('pricing', [WhatsAppUsageController::class, 'updatePricing'])->name('pricing');
 });
 
 // Custom Fields

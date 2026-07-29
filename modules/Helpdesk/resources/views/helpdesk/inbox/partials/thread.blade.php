@@ -513,7 +513,8 @@
          data-bv-attach-url="{{ $convo ? route('manager.helpdesk.conversations.attachments.store', $convo) : '' }}"
          data-bv-contact-url="{{ $convo ? route('manager.helpdesk.conversations.contact.store', $convo) : '' }}"
          data-bv-link-customer-url="{{ $convo ? route('manager.helpdesk.conversations.link-customer', $convo) : '' }}"
-         data-bv-location-url="{{ $convo ? route('manager.helpdesk.conversations.location.store', $convo) : '' }}">
+         data-bv-location-url="{{ $convo ? route('manager.helpdesk.conversations.location.store', $convo) : '' }}"
+         data-bv-auto-translate-outgoing="{{ (helpdesk_translate_enabled() && \Modules\Helpdesk\Models\Setting::get('helpdesktranslate.auto_translate_outgoing')) ? '1' : '0' }}">
 
         {{-- Panel HSM (se muestra/oculta con el tab) --}}
         <div class="bv-hsm-picker" id="bv-hsm-picker">
@@ -534,7 +535,9 @@
                     <div class="bv-hsm-preview-label">{{ __('helpdesk::helpdesk.inbox.thread.preview_label') }}</div>
                     <div class="bv-hsm-chat" id="bv-hsm-preview">
                         <div class="bv-hsm-chat-bubble" id="bv-hsm-preview-bubble">
+                            <div class="bv-hsm-chat-header" id="bv-hsm-preview-header"></div>
                             <span id="bv-hsm-preview-text">{{ __('helpdesk::helpdesk.inbox.thread.select_template_placeholder') }}</span>
+                            <div class="bv-hsm-chat-footer" id="bv-hsm-preview-footer"></div>
                             <div class="bv-hsm-chat-time">09:42 ✓✓</div>
                         </div>
                     </div>

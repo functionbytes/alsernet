@@ -98,6 +98,35 @@ class CustomersControllerTest extends HelpdeskTestCase
             ->assertSessionHasErrors(['name', 'email']);
     }
 
+    /**
+     * El modal "Nueva conversación" del inbox (newconv.js) crea contactos de
+     * WhatsApp con solo nombre + teléfono — email debe ser opcional en ese caso.
+     */
+    public function test_manager_can_create_customer_with_only_phone_and_no_email(): void
+    {
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.customers.store'), [
+                'name' => 'Solo WhatsApp',
+                'phone' => '573183908707',
+                'whatsapp_phone' => '573183908707',
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_customers', [
+            'name' => 'Solo WhatsApp',
+            'phone' => '573183908707',
+            'whatsapp_phone' => '573183908707',
+            'email' => null,
+        ], 'helpdesk');
+    }
+
+    public function test_store_validation_rejects_customer_with_neither_email_nor_phone(): void
+    {
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.customers.store'), ['name' => 'Sin contacto'])
+            ->assertSessionHasErrors(['email', 'phone']);
+    }
+
     public function test_store_validation_rejects_duplicate_email(): void
     {
         Customer::factory()->create(['email' => 'existing@example.com']);

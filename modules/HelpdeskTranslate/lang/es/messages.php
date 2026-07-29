@@ -78,6 +78,33 @@ return [
         'js_test_usage' => ' — Uso: :count / :limit caracteres',
         'js_test_ok_default' => 'Conexión OK',
         'js_error_default' => 'Error de conexión',
+
+        'usage_section' => 'Consumo de caracteres',
+        'usage_from_label' => 'Desde',
+        'usage_to_label' => 'Hasta',
+        'usage_btn_filter' => 'Filtrar',
+        'usage_btn_export' => 'Exportar CSV',
+        'usage_trend' => 'Tendencia diaria',
+        'usage_stat_characters' => 'Caracteres traducidos',
+        'usage_stat_calls' => 'Llamadas al proveedor',
+        'usage_stat_failed' => 'Llamadas fallidas',
+        'usage_stat_cost' => 'Gasto estimado (DeepL)',
+        'usage_stat_quota' => 'Cuota DeepL (periodo actual)',
+        'usage_quota_unavailable' => 'No disponible',
+        'usage_by_feature' => 'Por origen',
+        'usage_by_operation' => 'Por operación',
+        'usage_by_provider' => 'Por proveedor',
+        'usage_col_characters' => 'Caracteres',
+        'usage_col_calls' => 'Llamadas',
+        'usage_empty' => 'Sin consumo registrado en este rango de fechas.',
+        'usage_feature_manual' => 'Manual (botón Traducir)',
+        'usage_feature_auto_incoming' => 'Automática (entrantes)',
+        'usage_feature_auto_outgoing' => 'Automática (salientes)',
+        'usage_feature_other' => 'Otro',
+        'usage_operation_translate' => 'Traducción',
+        'usage_operation_detect' => 'Detección de idioma',
+        'usage_js_loading' => 'Cargando…',
+        'usage_js_error' => 'No se pudo cargar el consumo.',
     ],
 
     'panel' => [
@@ -139,6 +166,10 @@ return [
         // DetectLanguageRequest
         'detect_text_required' => 'El texto es obligatorio.',
         'detect_text_max' => 'El texto no puede superar los 2000 caracteres.',
+        // UsageReportRequest
+        'usage_from_date' => 'La fecha "desde" no es válida.',
+        'usage_to_date' => 'La fecha "hasta" no es válida.',
+        'usage_to_after_from' => 'La fecha "hasta" debe ser posterior o igual a la fecha "desde".',
     ],
 
     'attributes' => [
@@ -156,6 +187,9 @@ return [
         'deepl_key' => 'API key DeepL',
         'deepl_url' => 'URL DeepL',
         'libretranslate_endpoint' => 'endpoint LibreTranslate',
+        // UsageReportRequest
+        'usage_from' => 'fecha desde',
+        'usage_to' => 'fecha hasta',
     ],
 
 ];

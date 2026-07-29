@@ -61,6 +61,125 @@
             </div>
         </div>
 
+        {{-- Usage / consumption report --}}
+        <div class="card-body border-bottom">
+            <h6 class="text-uppercase fw-bold text-muted mb-3 small">{{ __('helpdesktranslate::messages.settings.usage_section') }}</h6>
+
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-auto">
+                    <label for="ht-usage-from" class="form-label small mb-1">{{ __('helpdesktranslate::messages.settings.usage_from_label') }}</label>
+                    <input type="date" class="form-control form-control-sm" id="ht-usage-from">
+                </div>
+                <div class="col-auto">
+                    <label for="ht-usage-to" class="form-label small mb-1">{{ __('helpdesktranslate::messages.settings.usage_to_label') }}</label>
+                    <input type="date" class="form-control form-control-sm" id="ht-usage-to">
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="ht-usage-filter">
+                        <i class="fas fa-filter me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_btn_filter') }}
+                    </button>
+                </div>
+                <div class="col-auto ms-auto">
+                    <a href="#" id="ht-usage-export" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-download me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_btn_export') }}
+                    </a>
+                </div>
+            </div>
+
+            <div id="ht-usage-loading" class="text-muted small">
+                <i class="fas fa-spinner fa-spin"></i> {{ __('helpdesktranslate::messages.settings.usage_js_loading') }}
+            </div>
+
+            <div id="ht-usage-content" class="d-none">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="ht-stat-card">
+                            <div class="ht-stat-label"><i class="fas fa-font me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_stat_characters') }}</div>
+                            <div class="ht-stat-value" id="ht-usage-characters">0</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="ht-stat-card">
+                            <div class="ht-stat-label"><i class="fas fa-arrow-right-arrow-left me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_stat_calls') }}</div>
+                            <div class="ht-stat-value" id="ht-usage-calls">0</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="ht-stat-card">
+                            <div class="ht-stat-label"><i class="fas fa-triangle-exclamation me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_stat_failed') }}</div>
+                            <div class="ht-stat-value" id="ht-usage-failed">0</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="ht-stat-card ht-stat-card-success">
+                            <div class="ht-stat-label"><i class="fas fa-coins me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_stat_cost') }}</div>
+                            <div class="ht-stat-value" id="ht-usage-cost">€0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <div class="ht-stat-card ht-stat-card-success">
+                            <div class="ht-stat-label"><i class="fas fa-gauge me-1"></i> {{ __('helpdesktranslate::messages.settings.usage_stat_quota') }}</div>
+                            <div class="ht-stat-value" id="ht-usage-quota">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h6 class="small fw-bold text-muted mb-2">{{ __('helpdesktranslate::messages.settings.usage_trend') }}</h6>
+                    <canvas id="ht-usage-chart" height="80"></canvas>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <h6 class="small fw-bold text-muted mb-2">{{ __('helpdesktranslate::messages.settings.usage_by_feature') }}</h6>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_characters') }}</th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_calls') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ht-usage-by-feature"></tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="small fw-bold text-muted mb-2">{{ __('helpdesktranslate::messages.settings.usage_by_operation') }}</h6>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_characters') }}</th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_calls') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ht-usage-by-operation"></tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="small fw-bold text-muted mb-2">{{ __('helpdesktranslate::messages.settings.usage_by_provider') }}</h6>
+                        <table class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_characters') }}</th>
+                                    <th class="text-end">{{ __('helpdesktranslate::messages.settings.usage_col_calls') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ht-usage-by-provider"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ht-usage-empty" class="text-muted small d-none">
+                {{ __('helpdesktranslate::messages.settings.usage_empty') }}
+            </div>
+        </div>
+
         <div class="card-body">
             <form method="POST" action="{{ route('settings.helpdesk-translate.update') }}" id="ht-settings-form">
                 @csrf
@@ -227,6 +346,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 $(function () {
     // Toggle visibility of API key
@@ -303,6 +423,118 @@ $(function () {
             }
         });
     });
+
+    // Usage / consumption report
+    var htFeatureLabels = {
+        manual: "{{ __('helpdesktranslate::messages.settings.usage_feature_manual') }}",
+        auto_incoming: "{{ __('helpdesktranslate::messages.settings.usage_feature_auto_incoming') }}",
+        auto_outgoing: "{{ __('helpdesktranslate::messages.settings.usage_feature_auto_outgoing') }}",
+        other: "{{ __('helpdesktranslate::messages.settings.usage_feature_other') }}"
+    };
+    var htOperationLabels = {
+        translate: "{{ __('helpdesktranslate::messages.settings.usage_operation_translate') }}",
+        detect: "{{ __('helpdesktranslate::messages.settings.usage_operation_detect') }}"
+    };
+
+    function htFillUsageTable(selector, rows, key, labels) {
+        var $tbody = $(selector).empty();
+        (rows || []).forEach(function (row) {
+            var label = (labels && labels[row[key]]) || row[key];
+            $tbody.append(
+                $('<tr>').append(
+                    $('<td>').text(label),
+                    $('<td class="text-end">').text(Number(row.characters).toLocaleString()),
+                    $('<td class="text-end">').text(Number(row.calls).toLocaleString())
+                )
+            );
+        });
+    }
+
+    var htChart = null;
+
+    function htRenderUsage(data) {
+        $('#ht-usage-characters').text(Number(data.totals.characters).toLocaleString());
+        $('#ht-usage-calls').text(Number(data.totals.calls).toLocaleString());
+        $('#ht-usage-failed').text(Number(data.totals.failed_calls).toLocaleString());
+        $('#ht-usage-cost').text('€' + Number(data.totals.estimated_cost_eur).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }));
+
+        if (data.quota && data.quota.character_count !== null && data.quota.character_count !== undefined) {
+            var limit = data.quota.character_limit ? Number(data.quota.character_limit).toLocaleString() : '∞';
+            $('#ht-usage-quota').text(Number(data.quota.character_count).toLocaleString() + ' / ' + limit);
+        } else {
+            $('#ht-usage-quota').text('{{ __('helpdesktranslate::messages.settings.usage_quota_unavailable') }}');
+        }
+
+        htFillUsageTable('#ht-usage-by-feature', data.by_feature, 'feature', htFeatureLabels);
+        htFillUsageTable('#ht-usage-by-operation', data.by_operation, 'operation', htOperationLabels);
+        htFillUsageTable('#ht-usage-by-provider', data.by_provider, 'provider', {});
+
+        var daily = data.daily || [];
+        if (htChart) {
+            htChart.destroy();
+            htChart = null;
+        }
+        htChart = new Chart(document.getElementById('ht-usage-chart'), {
+            type: 'line',
+            data: {
+                labels: daily.map(function (d) { return d.date; }),
+                datasets: [
+                    { label: '{{ __('helpdesktranslate::messages.settings.usage_stat_characters') }}', data: daily.map(function (d) { return d.characters; }), borderColor: '#90bb13', tension: 0.3 },
+                ],
+            },
+            options: { responsive: true, maintainAspectRatio: false },
+        });
+
+        var isEmpty = data.totals.calls === 0;
+        $('#ht-usage-content').toggleClass('d-none', isEmpty);
+        $('#ht-usage-empty').toggleClass('d-none', !isEmpty);
+    }
+
+    function htCurrentRange() {
+        return { from: $('#ht-usage-from').val(), to: $('#ht-usage-to').val() };
+    }
+
+    function htLoadUsage() {
+        $('#ht-usage-loading').removeClass('d-none');
+        $('#ht-usage-content, #ht-usage-empty').addClass('d-none');
+
+        $.ajax({
+            url: "{{ route('settings.helpdesk-translate.usage') }}",
+            method: 'GET',
+            data: htCurrentRange(),
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (resp) {
+                htRenderUsage(resp);
+            },
+            error: function () {
+                if (window.toastr) {
+                    toastr.error('{{ __('helpdesktranslate::messages.settings.usage_js_error') }}');
+                }
+            },
+            complete: function () {
+                $('#ht-usage-loading').addClass('d-none');
+            }
+        });
+    }
+
+    function htUpdateExportLink() {
+        $('#ht-usage-export').attr('href', "{{ route('settings.helpdesk-translate.usage.export') }}?" + $.param(htCurrentRange()));
+    }
+
+    $('#ht-usage-filter').on('click', function () {
+        htUpdateExportLink();
+        htLoadUsage();
+    });
+
+    (function () {
+        var today = new Date();
+        var from = new Date();
+        from.setDate(today.getDate() - 29);
+        $('#ht-usage-to').val(today.toISOString().slice(0, 10));
+        $('#ht-usage-from').val(from.toISOString().slice(0, 10));
+        htUpdateExportLink();
+        htLoadUsage();
+    })();
 });
 </script>
 @endpush

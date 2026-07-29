@@ -9,7 +9,7 @@ use Modules\Helpdesk\Models\Conversation;
 
 class WhatsAppHsmService
 {
-    public function send(Conversation $conversation, string $templateName, array $variables): array
+    public function send(Conversation $conversation, string $templateName, array $variables, string $languageCode = 'es'): array
     {
         $accessToken = config('helpdesk.integrations.whatsapp.access_token');
         $phoneNumberId = config('helpdesk.integrations.whatsapp.phone_number_id');
@@ -53,7 +53,10 @@ class WhatsAppHsmService
             'type' => 'template',
             'template' => [
                 'name' => $templateName,
-                'language' => ['code' => 'es'],
+                // Debe coincidir con el idioma exacto con el que la plantilla está
+                // registrada en Meta (ej. 'en_US' para hello_world, no solo 'en')
+                // — un idioma incorrecto también dispara 132001.
+                'language' => ['code' => $languageCode],
                 'components' => $components,
             ],
         ];

@@ -6,15 +6,18 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\Helpdesk\Exceptions\WhatsAppTemplateException;
+use Modules\Helpdesk\Http\Requests\Managers\Settings\StoreWhatsAppTemplateRequest;
 use Modules\Helpdesk\Jobs\SyncWhatsAppTemplatesJob;
 use Modules\Helpdesk\Models\Campaigns\WhatsAppTemplate;
+use Modules\Helpdesk\Services\WhatsAppTemplateCreationService;
 
 class WhatsAppTemplatesController extends Controller
 {
     public function __construct()
     {
         $this->middleware('can:helpdesk.whatsapp-templates.view')->only(['index']);
-        $this->middleware('can:helpdesk.whatsapp-templates.manage')->only(['sync']);
+        $this->middleware('can:helpdesk.whatsapp-templates.manage')->only(['sync', 'create', 'store']);
     }
 
     public function index(Request $request): View
@@ -57,5 +60,34 @@ class WhatsAppTemplatesController extends Controller
         return redirect()
             ->route('settings.helpdesk.whatsapp-templates.index')
             ->with('success', 'Sincronizacion iniciada. Los templates se actualizaran en breve.');
+    }
+
+    public function create(): View
+    {
+        return view('helpdesk::settings.whatsapp-templates.create');
+    }
+
+    public function store(StoreWhatsAppTemplateRequest $request, WhatsAppTemplateCreationService $service): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        try {
+            $service->create(
+                name: $validated['name'],
+                language: $validated['language'],
+                category: $validated['category'],
+                body: $validated['body'],
+                bodyExamples: $request->parsedBodyExamples(),
+            );
+        } catch (WhatsAppTemplateException $e) {
+            return redirect()
+                ->route('settings.helpdesk.whatsapp-templates.create')
+                ->withInput()
+                ->with('error', 'No se pudo crear la plantilla en Meta: '.$e->getMessage());
+        }
+
+        return redirect()
+            ->route('settings.helpdesk.whatsapp-templates.index')
+            ->with('success', 'Plantilla enviada a Meta para revisión. Aparecerá como "Aprobado" cuando Meta la revise (sincroniza para ver el estado actualizado).');
     }
 }

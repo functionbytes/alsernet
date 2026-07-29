@@ -4,7 +4,7 @@ namespace Modules\HelpdeskTranslate\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
-use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
@@ -47,11 +47,11 @@ class TranslateIncomingMessageListenerTest extends TestCase
     {
         Setting::set('helpdesktranslate.auto_translate_incoming', false, 'helpdesktranslate');
 
-        [$conversation, $item] = $this->incomingScenario(customerLang: 'en');
+        [, $item] = $this->incomingScenario(customerLang: 'en');
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->translated_body);
@@ -74,7 +74,7 @@ class TranslateIncomingMessageListenerTest extends TestCase
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->translated_body);
@@ -83,11 +83,11 @@ class TranslateIncomingMessageListenerTest extends TestCase
     public function test_skips_when_customer_language_matches_agent_locale(): void
     {
         // Customer writes in ES, agent reads in ES → nothing to translate.
-        [$conversation, $item] = $this->incomingScenario(customerLang: 'es');
+        [, $item] = $this->incomingScenario(customerLang: 'es');
 
         Http::fake([]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertNull($item->translated_body);
@@ -95,7 +95,7 @@ class TranslateIncomingMessageListenerTest extends TestCase
 
     public function test_translates_when_customer_speaks_a_different_language(): void
     {
-        [$conversation, $item] = $this->incomingScenario(
+        [, $item] = $this->incomingScenario(
             customerLang: 'en',
             body: 'Hello, I need help with my order.',
         );
@@ -107,7 +107,7 @@ class TranslateIncomingMessageListenerTest extends TestCase
             ], 200),
         ]);
 
-        $this->listener()->handle(new MessageReceived($conversation, $item));
+        $this->listener()->handle(new ConversationMessageCreated($item));
 
         $item->refresh();
         $this->assertSame('Hola, necesito ayuda con mi pedido.', $item->translated_body);
