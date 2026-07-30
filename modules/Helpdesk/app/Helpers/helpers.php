@@ -209,30 +209,6 @@ if (! function_exists('helpdesk_translate_enabled')) {
     }
 }
 
-if (! function_exists('helpdesk_translate_item')) {
-    /**
-     * Synchronously translate a conversation item (both directions self-guard
-     * on $item->user_id) BEFORE the caller broadcasts ConversationMessageCreated,
-     * so the bubble paints already translated instead of a few seconds later
-     * via the queued listener fallback. No-ops safely if HelpdeskTranslate
-     * isn't installed/enabled — Helpdesk has no hard dependency on it.
-     */
-    function helpdesk_translate_item(\Modules\Helpdesk\Models\ConversationItem $item): void
-    {
-        if (! helpdesk_translate_enabled()) {
-            return;
-        }
-
-        if (class_exists(\Modules\HelpdeskTranslate\Listeners\TranslateIncomingMessage::class)) {
-            app(\Modules\HelpdeskTranslate\Listeners\TranslateIncomingMessage::class)->translateItem($item);
-        }
-
-        if (class_exists(\Modules\HelpdeskTranslate\Listeners\TranslateOutgoingMessage::class)) {
-            app(\Modules\HelpdeskTranslate\Listeners\TranslateOutgoingMessage::class)->translateItem($item);
-        }
-    }
-}
-
 if (! function_exists('helpdesk_agents_enabled')) {
     /**
      * Check whether the HelpdeskAgents integration is active: module

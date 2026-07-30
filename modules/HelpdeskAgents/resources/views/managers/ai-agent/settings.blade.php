@@ -6,6 +6,10 @@
     <link rel="stylesheet" href="{{ asset('modules/helpdeskagents/css/agents.css') }}">
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración - Agente IA'])
+@endsection
+
 @section('content')
 <div>
     <!-- Breadcrumb -->

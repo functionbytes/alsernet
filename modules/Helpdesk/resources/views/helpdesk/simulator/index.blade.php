@@ -12,6 +12,10 @@
 </style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Banco de pruebas · Helpdesk'])
+@endsection
+
 @section('content')
 <div class="container-fluid py-3">
     <div class="d-flex align-items-center justify-content-between mb-3">

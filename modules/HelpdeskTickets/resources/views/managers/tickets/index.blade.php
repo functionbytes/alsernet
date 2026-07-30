@@ -87,6 +87,10 @@
     })->values();
 @endphp
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Tickets'])
+@endsection
+
 @section('content')
 <div class="helpdesk-tickets-page">
 

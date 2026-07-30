@@ -1,10 +1,11 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Importar Documentos'])
+@endsection
+
 @section('content')
 
-
-
-    @include('core::components.card', ['title' => 'Importar Documentos'])
 
     @if ($message = session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">

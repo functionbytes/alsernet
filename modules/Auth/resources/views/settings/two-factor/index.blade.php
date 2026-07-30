@@ -2,6 +2,10 @@
 
 @section('title', 'Autenticación de Dos Factores')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Autenticación de Dos Factores'])
+@endsection
+
 @section('content')
 <div class="px-3">
     <div class="card">

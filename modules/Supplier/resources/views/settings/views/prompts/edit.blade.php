@@ -2,10 +2,11 @@
 
 @section('title', 'Editar Prompt - ' . $prompt->label)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar prompt de IA'])
+@endsection
 
+@section('content')
     <form id="promptEditForm" action="{{ route('settings.suppliers.prompts.update', $prompt->uid) }}" method="POST">
         @csrf
         @method('PUT')

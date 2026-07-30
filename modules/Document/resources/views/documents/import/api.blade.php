@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Importar desde PrestaShop'])
+@endsection
+
 @section('content')
 
     @if (!auth()->user()->canDocument('import-documents') &&
@@ -13,8 +17,6 @@
             <i class="fas fa-arrow-left me-2"></i> Volver a opciones de importación
         </a>
     @else
-
-    @include('core::components.card', ['title' => 'Importar desde PrestaShop'])
 
     <div class="widget-content">
         <div class="card card-body">

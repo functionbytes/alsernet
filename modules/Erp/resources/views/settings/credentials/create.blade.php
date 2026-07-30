@@ -2,6 +2,10 @@
 
 @section('title', 'Crear Credencial ERP')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear Credencial ERP'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

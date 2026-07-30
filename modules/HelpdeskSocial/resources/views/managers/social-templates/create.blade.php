@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Crear plantilla social')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear plantilla social'])
+@endsection
+
 @section('content')
     <div class="card">
         <div class="card-header">

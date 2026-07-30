@@ -2,6 +2,10 @@
 
 @section('title', 'Leaderboard del equipo · Helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Leaderboard del equipo · Helpdesk'])
+@endsection
+
 @section('content')
 
     {{-- Header --}}

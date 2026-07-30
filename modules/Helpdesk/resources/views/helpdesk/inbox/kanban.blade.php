@@ -274,6 +274,10 @@
     </style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Kanban · Conversaciones'])
+@endsection
+
 @section('content')
 <div class="hd-kanban-wrap">
 

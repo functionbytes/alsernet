@@ -2,6 +2,10 @@
 
 @section('title', 'Responder comentario')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Responder comentario'])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-lg-8">

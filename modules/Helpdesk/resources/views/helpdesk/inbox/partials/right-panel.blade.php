@@ -20,6 +20,9 @@
     $_rpHasErp       = helpdesk_erp_enabled() && ($_rpIntegrations->contains('platform', 'erp') || ! empty($_rpErpId));
     $_rpEmail        = $_rpCustEarly?->email ?? '';
     $_rpPsStoreUrl   = $_rpIntegrations->firstWhere('platform', 'prestashop')?->store_url ?? '';
+    $_rpLookupUrl    = \Illuminate\Support\Facades\Route::has('manager.engagement.customer-data.lookup')
+        ? route('manager.engagement.customer-data.lookup')
+        : '';
 @endphp
 <aside class="bv-right"
     data-customer-id="{{ $_rpConvoEarly?->customer_id ?? '' }}"
@@ -29,7 +32,7 @@
     data-lookup-email="{{ $_rpEmail }}"
     data-lookup-ps-id="{{ $_rpPsId }}"
     data-lookup-erp-id="{{ $_rpErpId }}"
-    data-lookup-url="{{ \Illuminate\Support\Facades\Route::has('manager.engagement.customer-data.lookup') ? route('manager.engagement.customer-data.lookup') : '' }}"
+    data-lookup-url="{{ $_rpLookupUrl }}"
     data-ps-store-url="{{ $_rpPsStoreUrl }}"
     data-customer-name="{{ $_rpCustEarly?->name }}"
     data-customer-email="{{ $_rpEmail }}"

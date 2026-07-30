@@ -2,6 +2,10 @@
 
 @section('title', 'GDPR — Gestión de datos')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'GDPR — Gestión de datos'])
+@endsection
+
 @section('content')
 
     {{-- Header --}}

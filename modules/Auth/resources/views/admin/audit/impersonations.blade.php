@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Auditoría: impersonaciones')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Auditoría: impersonaciones'])
+@endsection
+
 @section('content')
 <div class="px-3">
 

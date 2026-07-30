@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 @section('title', 'Heatmap horas pico · Helpdesk')
+@section('page_header')
+    @include('core::components.card', ['title' => 'Heatmap horas pico · Helpdesk'])
+@endsection
+
 @section('content')
     <h1 class="h3 mb-4"><i class="fas fa-fire text-danger me-2"></i>Heatmap de horas pico</h1>
     <p class="text-muted">Mensajes recibidos por día de la semana y hora (últimos 30 días).</p>

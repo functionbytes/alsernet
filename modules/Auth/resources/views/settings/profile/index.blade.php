@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Mi perfil')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Mi perfil'])
+@endsection
+
 @section('content')
 
     <div class="widget-content searchable-container list">

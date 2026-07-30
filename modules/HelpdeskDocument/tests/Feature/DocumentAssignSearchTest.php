@@ -12,6 +12,7 @@ use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class DocumentAssignSearchTest extends TestCase
@@ -28,7 +29,7 @@ class DocumentAssignSearchTest extends TestCase
         // La caché de permisos Spatie (Redis) no hace rollback entre tests y queda
         // desincronizada con la BD (DatabaseTransactions); la olvidamos para que
         // findOrCreate/can() lean el estado real.
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         // CustomerPolicy / sharesInboxWith consultan estos permisos: deben existir
         // o Spatie lanza PermissionDoesNotExist (en prod están sembrados).

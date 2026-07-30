@@ -2,10 +2,11 @@
 
 @section('title', 'Plantillas de Prompts')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Biblioteca de plantillas de prompts'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')

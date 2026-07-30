@@ -2,6 +2,10 @@
 
 @section('title', 'Agentes del helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Agentes del helpdesk'])
+@endsection
+
 @section('content')
 
     <div class="d-flex justify-content-between align-items-center mb-4">

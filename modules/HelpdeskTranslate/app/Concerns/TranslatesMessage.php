@@ -3,7 +3,7 @@
 namespace Modules\HelpdeskTranslate\Concerns;
 
 use Illuminate\Support\Facades\Schema;
-use Modules\Helpdesk\Models\ConversationItem;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Models\Setting;
 
 /**
@@ -32,16 +32,13 @@ trait TranslatesMessage
     private static array $columnsExistCache = [];
 
     /**
-     * Common guard clauses both listeners run before doing any work: feature
-     * enabled, per-direction toggle on, translation columns migrated, and the
-     * item actually carrying a conversation. Takes the item directly (not the
-     * ConversationMessageCreated event) so it works both from the queued
-     * handle() and a synchronous translateItem() call made before that event
-     * even exists.
+     * Common guard clauses both listeners run before doing any work:
+     * feature enabled, per-direction toggle on, translation columns migrated,
+     * and the event actually carrying a message + conversation.
      *
      * @param  array<int, string>  $requiredColumns  columns on helpdesk_conversation_items
      */
-    protected function passesCommonGuards(?ConversationItem $item, string $toggleKey, array $requiredColumns): bool
+    protected function passesCommonGuards(ConversationMessageCreated $event, string $toggleKey, array $requiredColumns): bool
     {
         if (! helpdesk_translate_enabled()) {
             return false;
@@ -55,7 +52,7 @@ trait TranslatesMessage
             return false;
         }
 
-        return $item !== null && $item->conversation !== null;
+        return ($event->item ?? null) !== null && $event->item->conversation !== null;
     }
 
     /**

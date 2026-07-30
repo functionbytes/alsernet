@@ -2,6 +2,10 @@
 
 @section('title', 'Configuracion de agente')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuracion de agente'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

@@ -19,8 +19,8 @@ use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
-use Nwidart\Modules\Facades\Module;
 use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
+use Nwidart\Modules\Facades\Module;
 use Tests\TestCase;
 
 /**

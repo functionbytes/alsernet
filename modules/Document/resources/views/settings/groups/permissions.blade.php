@@ -2,10 +2,7 @@
 
 @section('page_title', 'Permisos del grupo: ' . $group->name)
 
-@section('content')
-<div class="container-fluid">
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
         'title' => 'Permisos del grupo',
         'breadcrumbs' => [
@@ -16,7 +13,12 @@
             ['label' => 'Permisos', 'active' => true]
         ]
     ])
+@endsection
 
+@section('content')
+<div class="container-fluid">
+
+    {{-- Breadcrumb Card --}}
     <div class="widget-content searchable-container list">
 
         {{-- Main Card --}}

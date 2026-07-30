@@ -148,6 +148,10 @@
 </style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración de LiveChat'])
+@endsection
+
 @section('content')
 
 

@@ -2,6 +2,10 @@
 
 @section('title', 'Editar Política SLA de Documentos')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar Política SLA de Documentos'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

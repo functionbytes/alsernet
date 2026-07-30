@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="{{ asset('vendor/helpdesk/conversations.css') }}"/>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Contactos · Helpdesk'])
+@endsection
+
 @section('content')
 <div class="bv-page">
 

@@ -2,6 +2,10 @@
 
 @section('title', 'Configuracion de email')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuracion de email'])
+@endsection
+
 @section('content')
 
 <div class="row g-4 align-items-start">

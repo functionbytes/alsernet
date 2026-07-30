@@ -12,7 +12,6 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
-use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
 use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;

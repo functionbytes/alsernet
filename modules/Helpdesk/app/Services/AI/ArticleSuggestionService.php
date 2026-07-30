@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Conversation;
+use Modules\HelpdeskAgents\Models\AiAgent;
+use Modules\HelpdeskAgents\Services\KnowledgeRetrievalService;
+use Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService;
 
 /**
  * Sugiere artículos de conocimiento relevantes al último mensaje del cliente
@@ -113,12 +116,12 @@ class ArticleSuggestionService
     {
         if (! function_exists('helpdesk_helpcenter_enabled')
             || ! helpdesk_helpcenter_enabled()
-            || ! class_exists(\Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService::class)) {
+            || ! class_exists(HelpcenterWidgetService::class)) {
             return [];
         }
 
         try {
-            $articles = app(\Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService::class)
+            $articles = app(HelpcenterWidgetService::class)
                 ->searchArticles($query);
         } catch (\Throwable $e) {
             Log::warning('ArticleSuggestionService: helpcenter search failed', ['error' => $e->getMessage()]);
@@ -144,19 +147,19 @@ class ArticleSuggestionService
      */
     private function fromKnowledgeBase(string $query): array
     {
-        if (! class_exists(\Modules\HelpdeskAgents\Models\AiAgent::class)
-            || ! class_exists(\Modules\HelpdeskAgents\Services\KnowledgeRetrievalService::class)) {
+        if (! class_exists(AiAgent::class)
+            || ! class_exists(KnowledgeRetrievalService::class)) {
             return [];
         }
 
         try {
-            $agent = \Modules\HelpdeskAgents\Models\AiAgent::query()->active()->first();
+            $agent = AiAgent::query()->active()->first();
 
             if (! $agent) {
                 return [];
             }
 
-            $docs = app(\Modules\HelpdeskAgents\Services\KnowledgeRetrievalService::class)
+            $docs = app(KnowledgeRetrievalService::class)
                 ->findRelevant($agent, $query, self::MAX_SUGGESTIONS);
         } catch (\Throwable $e) {
             Log::warning('ArticleSuggestionService: knowledge base search failed', ['error' => $e->getMessage()]);

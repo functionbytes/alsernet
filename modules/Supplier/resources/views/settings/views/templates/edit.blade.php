@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar plantilla de prompt'])
+@endsection
 
+@section('content')
     <form id="formTemplate" method="POST" action="{{ route('settings.suppliers.templates.update', $template->uid) }}">
         @csrf
         @method('PUT')

@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Remarketing\Models\Cart;
 use Modules\Remarketing\Models\Customer as RemarketingCustomer;
@@ -20,6 +21,15 @@ class CustomerEcommerceController extends Controller
     public function show(Customer $customer): JsonResponse
     {
         $this->authorize('view', $customer);
+
+        if (! class_exists(RemarketingCustomer::class)) {
+            return response()->json([
+                'success' => true,
+                'orders' => [],
+                'carts' => [],
+                'stats' => null,
+            ]);
+        }
 
         $remarketingCustomers = $this->resolveRemarketingCustomerIds($customer);
 
@@ -96,9 +106,9 @@ class CustomerEcommerceController extends Controller
      * cambios/reutilización de email); fallback el email en minúsculas, que era
      * el único criterio anterior.
      *
-     * @return \Illuminate\Support\Collection<int, int>
+     * @return Collection<int, int>
      */
-    private function resolveRemarketingCustomerIds(Customer $customer): \Illuminate\Support\Collection
+    private function resolveRemarketingCustomerIds(Customer $customer): Collection
     {
         $externalIds = $customer->externalIds()
             ->whereIn('platform', self::ECOMMERCE_PLATFORMS)

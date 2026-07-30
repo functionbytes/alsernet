@@ -2,6 +2,10 @@
 
 @section('title', 'Workflows')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Workflows'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

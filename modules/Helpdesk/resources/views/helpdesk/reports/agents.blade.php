@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 @section('title', 'Performance agentes · Helpdesk')
+@section('page_header')
+    @include('core::components.card', ['title' => 'Performance agentes · Helpdesk'])
+@endsection
+
 @section('content')
     <h1 class="h3 mb-4"><i class="fas fa-user-tie text-primary me-2"></i>Performance por agente</h1>
     <p class="text-muted">Métricas del último mes.</p>

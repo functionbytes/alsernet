@@ -2,11 +2,11 @@
 
 use Modules\Theme\Helpers\ThemeAssetHelper;
 
-if (!function_exists('themeAsset')) {
+if (! function_exists('themeAsset')) {
     /**
      * Get URL to a theme asset
      *
-     * @param string $path Path relative to modules/Theme/public/theme/
+     * @param  string  $path  Path relative to modules/Theme/public/theme/
      * @return string Full URL to the asset
      *
      * @example themeAsset('libs/select2/dist/css/select2.min.css')
@@ -19,15 +19,15 @@ if (!function_exists('themeAsset')) {
     }
 }
 
-if (!function_exists('themeAssets')) {
+if (! function_exists('nav_item_enabled')) {
     /**
-     * Get multiple theme asset URLs
-     *
-     * @param array $paths Array of paths relative to modules/Theme/public/theme/
-     * @return array Array of URLs
+     * Este proyecto no trae el módulo "Modules" (gestor de on/off por item de
+     * nav) de system, así que no hay tabla NavItemSetting para consultar.
+     * Siempre visible, que es el mismo default documentado allá cuando no
+     * existe una fila explícita.
      */
-    function themeAssets(array $paths): array
+    function nav_item_enabled(string $key): bool
     {
-        return ThemeAssetHelper::urls($paths);
+        return true;
     }
 }

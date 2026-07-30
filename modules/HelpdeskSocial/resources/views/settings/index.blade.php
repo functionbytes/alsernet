@@ -2,6 +2,10 @@
 
 @section('title', 'Configuración Social')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración Social'])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-12">

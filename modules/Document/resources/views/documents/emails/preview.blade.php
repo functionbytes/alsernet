@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Documento #' . $document->order_id, 'url' => route('documents.manage', $document->uid)])
+@endsection
+
+@section('content')
 
     {{-- Preview Content --}}
     <div class="row g-3">

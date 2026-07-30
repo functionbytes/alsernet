@@ -2,8 +2,8 @@
 
 namespace Modules\HelpdeskLivechat\Services\Catalog\Drivers;
 
-use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
+use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 
 /**
  * Driver nulo para canales sin catálogo configurado (cms_type=custom y sin feed).

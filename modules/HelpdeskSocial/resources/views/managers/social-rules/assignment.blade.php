@@ -2,6 +2,10 @@
 
 @section('title', 'Reglas de asignación')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Reglas de asignación'])
+@endsection
+
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Reglas de asignación</h1>

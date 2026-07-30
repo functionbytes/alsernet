@@ -5,6 +5,10 @@ namespace Modules\HelpdeskTickets\Services;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Modules\Helpdesk\Models\Webhook;
+use Modules\Helpdesk\Models\WebhookDelivery;
+use Modules\HelpdeskAgents\Services\AiUsageRecorder;
+use Modules\HelpdeskSla\Models\ConversationSlaBreach;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -142,12 +146,12 @@ class OpsHealthService
 
     private function failingWebhookEndpoints(): ?int
     {
-        if (! class_exists(\Modules\Helpdesk\Models\Webhook::class)) {
+        if (! class_exists(Webhook::class)) {
             return null;
         }
 
         try {
-            return (int) \Modules\Helpdesk\Models\Webhook::query()
+            return (int) Webhook::query()
                 ->where('is_active', true)
                 ->whereNotNull('last_error')
                 ->count();
@@ -158,14 +162,14 @@ class OpsHealthService
 
     private function failedWebhookDeliveriesLastHour(): ?int
     {
-        if (! class_exists(\Modules\Helpdesk\Models\WebhookDelivery::class)) {
+        if (! class_exists(WebhookDelivery::class)) {
             return null;
         }
 
         try {
             // No hay tabla dead-letter de webhooks: una entrega fallida es una
             // fila sin delivered_at o con response_status >= 400.
-            return (int) \Modules\Helpdesk\Models\WebhookDelivery::query()
+            return (int) WebhookDelivery::query()
                 ->where('created_at', '>=', now()->subHour())
                 ->where(function ($q) {
                     $q->whereNull('delivered_at')
@@ -179,12 +183,12 @@ class OpsHealthService
 
     private function slaBreachesLastHour(): ?int
     {
-        if (! class_exists(\Modules\HelpdeskSla\Models\ConversationSlaBreach::class)) {
+        if (! class_exists(ConversationSlaBreach::class)) {
             return null;
         }
 
         try {
-            return (int) \Modules\HelpdeskSla\Models\ConversationSlaBreach::query()
+            return (int) ConversationSlaBreach::query()
                 ->where('breached_at', '>=', now()->subHour())
                 ->count();
         } catch (\Throwable) {
@@ -212,12 +216,12 @@ class OpsHealthService
      */
     private function aiUsageToday(): ?array
     {
-        if (! class_exists(\Modules\HelpdeskAgents\Services\AiUsageRecorder::class)) {
+        if (! class_exists(AiUsageRecorder::class)) {
             return null;
         }
 
         try {
-            return app(\Modules\HelpdeskAgents\Services\AiUsageRecorder::class)->todayTotals();
+            return app(AiUsageRecorder::class)->todayTotals();
         } catch (\Throwable) {
             return null;
         }

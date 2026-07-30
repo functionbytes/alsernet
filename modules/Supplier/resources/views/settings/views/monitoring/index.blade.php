@@ -2,8 +2,7 @@
 
 @section('title', $pageTitle)
 
-@section('content')
-<div class="widget-content searchable-container list">
+@section('page_header')
     @can('suppliers.monitoring.manage')
         @include('core::components.card', [
             'title'   => $pageTitle,
@@ -12,7 +11,10 @@
     @else
         @include('core::components.card', ['title' => $pageTitle])
     @endcan
+@endsection
 
+@section('content')
+<div class="widget-content searchable-container list">
     @include('core::components.alerts')
 
     {{-- Banner de alertas de presupuesto (servidor — se muestra si algún budget supera el 80%) --}}

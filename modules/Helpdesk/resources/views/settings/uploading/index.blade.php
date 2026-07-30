@@ -2,6 +2,10 @@
 
 @section('title', 'Configuracion de subida de archivos')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuracion de subida de archivos'])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

@@ -2,6 +2,10 @@
 
 @section('title', 'Editar agente - ' . ($agent->firstname ?? '') . ' ' . ($agent->lastname ?? ''))
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar agente - ' . ($agent->firstname ?? '') . ' ' . ($agent->lastname ?? '')])
+@endsection
+
 @section('content')
 
     <div class="d-flex justify-content-between align-items-center mb-4">

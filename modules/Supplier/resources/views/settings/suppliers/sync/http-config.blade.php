@@ -2,10 +2,11 @@
 
 @section('title', $pageTitle)
 
+@section('page_header')
+    @include('core::components.card', ['title' => $pageTitle])
+@endsection
+
 @section('content')
-
-@include('core::components.card', ['title' => $pageTitle])
-
 <div class="widget-content">
     @include('core::components.alerts')
 

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
 use Modules\HelpdeskAgents\Services\TicketAiContextBuilder;
@@ -118,7 +119,7 @@ class ClassifyTicketJob implements ShouldQueue
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, TicketCategory>  $categories
+     * @param  Collection<int, TicketCategory>  $categories
      * @return array{category_id: int|null, priority: string|null, confidence: float}|null
      */
     private function askLlm(AgentLlmService $llm, TicketAiContextBuilder $contextBuilder, Ticket $ticket, $categories): ?array

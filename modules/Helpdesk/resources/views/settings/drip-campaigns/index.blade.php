@@ -2,6 +2,10 @@
 
 @section('title', 'Drip Campaigns')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Drip Campaigns'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

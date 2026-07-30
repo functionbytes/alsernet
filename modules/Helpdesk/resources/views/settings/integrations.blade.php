@@ -2,6 +2,10 @@
 
 @section('title', 'Integraciones del helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Integraciones del helpdesk'])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

@@ -2,6 +2,10 @@
 
 @section('title', 'Reportes - Helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Reportes - Helpdesk'])
+@endsection
+
 @section('content')
 
         {{-- Page Header --}}

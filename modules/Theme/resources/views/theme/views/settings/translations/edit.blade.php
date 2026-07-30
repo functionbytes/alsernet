@@ -1,11 +1,13 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', [
-        'title' => 'Editar Traducciones',
-        'subtitle' => $locale_label . ' - ' . $file_label
+    'title' => 'Editar Traducciones',
+    'subtitle' => $locale_label . ' - ' . $file_label
     ])
+@endsection
+
+@section('content')
 
     <style>
         .field-input,
@@ -87,13 +89,13 @@
                     </div>
                     <div class="col-12 col-lg-6">
                         <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white border-end-0">
+                        <span class="input-group-text bg-white border-end-1">
                             <i class="fas fa-search text-muted"></i>
                         </span>
                             <input
                                     type="text"
                                     id="searchInput"
-                                    class="form-control border-start-0"
+                                    class="form-control -0"
                                     placeholder="Buscar claves..."
                             />
                         </div>

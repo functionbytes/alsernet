@@ -2,6 +2,10 @@
 
 @section('title', 'Nueva drip campaign')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nueva drip campaign'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

@@ -2,6 +2,10 @@
 
 @section('title', 'Etiquetas sociales')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Etiquetas sociales'])
+@endsection
+
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Etiquetas sociales</h1>

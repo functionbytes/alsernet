@@ -217,8 +217,6 @@ class PublicSimulatorController extends Controller
 
         $conversation->touch('last_message_at');
 
-        helpdesk_translate_item($item);
-
         broadcast(new ConversationMessageCreated($item));
 
         return response()->json(['ok' => true, 'item' => $this->simulator->present($item)]);
@@ -239,8 +237,6 @@ class PublicSimulatorController extends Controller
         ]);
 
         $conversation->touch('last_message_at');
-
-        helpdesk_translate_item($item);
 
         broadcast(new ConversationMessageCreated($item));
 

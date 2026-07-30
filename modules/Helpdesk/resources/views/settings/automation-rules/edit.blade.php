@@ -3,6 +3,10 @@
 @section('title', 'Editar regla de automatizacion')
 
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar regla de automatizacion'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

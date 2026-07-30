@@ -2,12 +2,14 @@
 
 namespace Modules\HelpdeskLivechat\Services\Catalog\Drivers;
 
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
+use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 
 /**
  * Driver de catálogo EN VIVO contra la base de datos de una tienda PrestaShop
@@ -100,7 +102,7 @@ final class PrestashopCatalogDriver implements CatalogDriver
     /**
      * Consulta base: product_shop + nombre + imagen de portada, por idioma/tienda.
      */
-    private function baseQuery(): \Illuminate\Database\Query\Builder
+    private function baseQuery(): Builder
     {
         $prefix = $this->prefix();
         $lang = (int) ($this->config['id_lang'] ?? 1);
@@ -128,7 +130,7 @@ final class PrestashopCatalogDriver implements CatalogDriver
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, object>  $rows
+     * @param  Collection<int, object>  $rows
      * @return array<int, CatalogProduct>
      */
     private function mapRows($rows): array

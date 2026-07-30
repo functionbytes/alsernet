@@ -30,6 +30,10 @@
 
 @section('title', $title)
 
+@section('page_header')
+    @include('core::components.card', ['title' => $title])
+@endsection
+
 @push('styles')
 <style>.hd-embed-pre { white-space: pre-wrap; word-break: break-all; }</style>
 @endpush

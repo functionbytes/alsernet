@@ -334,7 +334,7 @@
     --color-ai-indigo-fg:   #A5B4FC;
 
     --color-overlay:        rgba(0, 0, 0, 0.65);
-    --color-overlay-heavy:  rgba(0, 0, 0, 0.75);
+    --color-overlay-heavy:  #000000;
 
     /* Chart colors — vibrant but not neon */
     --chart-1:              #34D399;

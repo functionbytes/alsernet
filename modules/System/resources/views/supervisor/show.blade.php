@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', \$processName)
+
+@section('page_header')
+    @include('core::components.card', ['title' => \$processName])
+@endsection
+
 @section('content')
 
     <div class="row">

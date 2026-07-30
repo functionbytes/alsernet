@@ -2,6 +2,10 @@
 
 @section('title', 'Nueva politica SLA')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nueva politica SLA'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Crear condición de validación')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear condición de validación'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

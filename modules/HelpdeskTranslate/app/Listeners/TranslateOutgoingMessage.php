@@ -6,9 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
-use Modules\Helpdesk\Models\ConversationItem;
 use Modules\HelpdeskTranslate\Concerns\TranslatesMessage;
-use Modules\HelpdeskTranslate\Events\ItemTranslated;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
 use Throwable;
 
@@ -40,28 +38,11 @@ class TranslateOutgoingMessage implements ShouldQueue
 
     public function handle(ConversationMessageCreated $event): void
     {
-        if (($event->item ?? null) !== null) {
-            $this->translateItem($event->item);
-        }
-    }
-
-    /**
-     * Translate an outgoing (agent) item in place. Called synchronously by
-     * ConversationMessagesController BEFORE it broadcasts
-     * ConversationMessageCreated, so the bubble paints already translated on
-     * first render. handle() above stays as a queued fallback for any reply
-     * path that doesn't call this directly.
-     */
-    public function translateItem(ConversationItem $item): void
-    {
-        if (filled($item->outgoing_translated_body)) {
-            return; // Already translated (e.g. the sync call already ran).
-        }
-
-        if (! $this->passesCommonGuards($item, 'helpdesktranslate.auto_translate_outgoing', ['outgoing_translated_body', 'outgoing_target_locale'])) {
+        if (! $this->passesCommonGuards($event, 'helpdesktranslate.auto_translate_outgoing', ['outgoing_translated_body', 'outgoing_target_locale'])) {
             return;
         }
 
+        $item = $event->item;
         $conversation = $item->conversation;
 
         // Only translate agent (outbound) messages, not customer messages or internal notes.
@@ -97,8 +78,6 @@ class TranslateOutgoingMessage implements ShouldQueue
                 'outgoing_translated_body' => $translated,
                 'outgoing_target_locale' => $customerLang,
             ])->saveQuietly();
-
-            broadcast(new ItemTranslated($item->id, $item->conversation_id, 'outgoing_translated_body', $translated));
         }
     }
 

@@ -2,6 +2,10 @@
 
 @section('title', 'Plantillas de respuesta')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Plantillas de respuesta'])
+@endsection
+
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Plantillas de respuesta</h1>

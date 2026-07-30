@@ -2,6 +2,10 @@
 
 @section('title', 'Nuevo ticket')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nuevo ticket'])
+@endsection
+
 @section('content')
     <div class="d-flex align-items-center gap-2 mb-4">
         <a href="{{ route('agent.helpdesk.tickets.index') }}" class="btn btn-sm btn-outline-secondary">

@@ -2,6 +2,10 @@
 
 @section('title', 'Dispositivos Autorizados')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Dispositivos Autorizados'])
+@endsection
+
 @section('content')
 <div class="px-3">
     <div class="card">

@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración PrestaShop'])
+@endsection
+
 @section('content')
-
-  @include('core::components.card', ['title' => 'Configuración PrestaShop'])
-
   <div class="widget-content searchable-container list">
 
     <!-- Main Card -->

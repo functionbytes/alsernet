@@ -2,9 +2,11 @@
 
 @section('title', 'Email test — Dev tools')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Email test — Dev tools'])
+@endsection
 
+@section('content')
     <div class="row g-3">
 
         {{-- Left card: send email --}}

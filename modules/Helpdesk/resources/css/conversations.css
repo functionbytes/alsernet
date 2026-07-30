@@ -335,6 +335,114 @@ body:has(.conversations) .mc-content {
     opacity: .9;
 }
 
+/* Bulk action bar — flota sobre la parte superior de la columna "list" cuando
+   hay una o mas conversaciones marcadas. Comparte grid-area con .bv-list
+   (align-self: start la deja con su altura de contenido, sin estirarse a
+   toda la celda) para que siga la columna sin depender del ancho del nav ni
+   de si el panel derecho esta activo. */
+#bv-bulk-bar {
+    grid-area: list;
+    align-self: start;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px;
+    padding: 8px 10px;
+    background: var(--bv-bg-panel);
+    border: 1px solid var(--bv-border);
+    border-radius: var(--bv-radius-md);
+    box-shadow: var(--bv-shadow-card);
+}
+.bv-bulk-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--bv-text-base);
+    font-weight: var(--bv-weight-medium);
+    color: var(--bv-text);
+    white-space: nowrap;
+}
+#bv-bulk-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--bv-primary);
+    color: #fff;
+    font-size: var(--bv-text-sm);
+    font-weight: var(--bv-weight-bold);
+    border-radius: var(--bv-radius-pill);
+}
+.bv-bulk-deselect {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: var(--bv-radius-sm);
+    color: var(--bv-text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all .14s;
+}
+.bv-bulk-deselect:hover {
+    background: var(--bv-bg-subtle);
+    color: var(--bv-text);
+}
+.bv-bulk-bar-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.bv-bulk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    background: transparent;
+    border: 1px solid var(--bv-border);
+    border-radius: var(--bv-radius-sm);
+    color: var(--bv-text-soft);
+    font-size: var(--bv-text-sm);
+    font-weight: var(--bv-weight-medium);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all .14s;
+}
+.bv-bulk-btn i {
+    font-size: 11px;
+}
+.bv-bulk-btn:hover {
+    background: var(--bv-bg-subtle);
+    border-color: var(--bv-text-muted);
+    color: var(--bv-text);
+}
+.bv-bulk-btn:focus-visible {
+    outline: 2px solid var(--bv-primary);
+    outline-offset: 1px;
+}
+.bv-bulk-btn.dropdown-toggle::after {
+    margin-left: 4px;
+    vertical-align: 1px;
+}
+#bv-bulk-macro-menu {
+    min-width: 220px;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid var(--bv-border);
+    border-radius: var(--bv-radius-md);
+    box-shadow: var(--bv-shadow-popover);
+}
+
 /* Channel pills */
 .bv-list-channels {
     display: flex;

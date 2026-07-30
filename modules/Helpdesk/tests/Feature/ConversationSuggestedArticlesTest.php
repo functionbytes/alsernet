@@ -7,6 +7,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Tests\HelpdeskTestCase;
+use Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService;
 
 /**
  * Endpoint de artículos sugeridos para el composer del inbox
@@ -133,7 +134,7 @@ class ConversationSuggestedArticlesTest extends HelpdeskTestCase
      */
     private function mockHelpcenter(array $articles, ?int $expectedCalls = null): void
     {
-        if (! class_exists(\Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService::class)) {
+        if (! class_exists(HelpcenterWidgetService::class)) {
             $this->markTestSkipped('HelpdeskHelpcenter module is not installed.');
         }
 
@@ -141,13 +142,13 @@ class ConversationSuggestedArticlesTest extends HelpdeskTestCase
             $this->markTestSkipped('HelpdeskHelpcenter is not enabled in this environment.');
         }
 
-        $mock = \Mockery::mock(\Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService::class);
+        $mock = \Mockery::mock(HelpcenterWidgetService::class);
         $expectation = $mock->shouldReceive('searchArticles')->andReturn($articles);
 
         if ($expectedCalls !== null) {
             $expectation->times($expectedCalls);
         }
 
-        $this->app->instance(\Modules\HelpdeskHelpcenter\Services\HelpcenterWidgetService::class, $mock);
+        $this->app->instance(HelpcenterWidgetService::class, $mock);
     }
 }

@@ -15,6 +15,7 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
@@ -40,7 +41,7 @@ class TicketLanguageRoutingTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
         Role::findOrCreate('helpdesk-agent', 'web');
 
         Setting::query()->where('key', 'like', 'auto_assign.%')->delete();

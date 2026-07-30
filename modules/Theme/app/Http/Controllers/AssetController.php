@@ -3,7 +3,6 @@
 namespace Modules\Theme\Http\Controllers;
 
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -20,7 +19,7 @@ class AssetController extends Controller
         $fullPath = module_path('Theme', "public/theme/{$cleanPath}");
 
         // Verify file exists and is within theme directory
-        if (!file_exists($fullPath) || !str_starts_with(realpath($fullPath), realpath(module_path('Theme', 'public/theme')))) {
+        if (! file_exists($fullPath) || ! str_starts_with(realpath($fullPath), realpath(module_path('Theme', 'public/theme')))) {
             return response('Asset not found', 404);
         }
 

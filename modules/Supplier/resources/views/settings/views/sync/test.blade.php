@@ -2,10 +2,11 @@
 
 @section('title', 'Panel de pruebas — Sincronización')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Panel de pruebas — Sincronización'])
+@endsection
+
 @section('content')
-
-@include('core::components.card', ['title' => 'Panel de pruebas — Sincronización'])
-
 <div class="widget-content searchable-container list">
 
     <div class="card">

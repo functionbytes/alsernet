@@ -6,6 +6,10 @@
 <style>.hd-website-link { max-width: 160px; }</style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Empresas'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

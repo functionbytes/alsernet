@@ -2,6 +2,10 @@
 
 @section('title', 'Mis tickets')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Mis tickets'])
+@endsection
+
 @section('content')
     <div class="d-flex align-items-center justify-content-between mb-4">
         <h4 class="mb-0 fw-bold"><i class="fas fa-ticket-alt me-2 text-primary"></i>Mis tickets</h4>

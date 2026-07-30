@@ -2,6 +2,10 @@
 
 @section('title', 'Editar Email Endpoint')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar Email Endpoint'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

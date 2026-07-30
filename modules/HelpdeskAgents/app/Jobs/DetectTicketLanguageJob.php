@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTranslate\Services\TranslationService;
 
 /**
  * Detects the language of a ticket's first customer message and stamps it on
@@ -37,7 +38,7 @@ class DetectTicketLanguageJob implements ShouldQueue
         }
 
         // Soft dependency: HelpdeskTranslate may be absent/disabled.
-        if (! class_exists(\Modules\HelpdeskTranslate\Services\TranslationService::class)) {
+        if (! class_exists(TranslationService::class)) {
             return;
         }
 
@@ -53,7 +54,7 @@ class DetectTicketLanguageJob implements ShouldQueue
             return;
         }
 
-        $detected = app(\Modules\HelpdeskTranslate\Services\TranslationService::class)
+        $detected = app(TranslationService::class)
             ->detectLanguage($text);
 
         if (! $detected) {

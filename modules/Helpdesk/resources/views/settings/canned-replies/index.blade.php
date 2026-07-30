@@ -2,6 +2,10 @@
 
 @section('title', 'Respuestas predefinidas')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Respuestas predefinidas'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

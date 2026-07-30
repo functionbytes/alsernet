@@ -2,6 +2,10 @@
 
 @section('title', 'Rendimiento de agentes')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Rendimiento de agentes'])
+@endsection
+
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Rendimiento de agentes</h1>

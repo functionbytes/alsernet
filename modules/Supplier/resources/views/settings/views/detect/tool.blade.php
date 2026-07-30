@@ -30,6 +30,10 @@
 </style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Detector de Plataforma'])
+@endsection
+
 @section('content')
 
 <div class="card w-100">

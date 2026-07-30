@@ -2,10 +2,11 @@
 
 @section('title', 'Editar categoría')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Proveedores'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
     <div class="card w-100">

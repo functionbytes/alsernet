@@ -2,12 +2,11 @@
 
 @section('title', 'Importar proveedores')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Proveedores'])
+@endsection
 
-
-
+@section('content')
     <div class="widget-content searchable-container list">
 
 

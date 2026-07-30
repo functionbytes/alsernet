@@ -2,6 +2,10 @@
 
 @section('title', 'Cuentas sociales conectadas')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Cuentas sociales conectadas'])
+@endsection
+
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Cuentas sociales conectadas</h1>

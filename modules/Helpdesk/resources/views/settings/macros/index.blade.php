@@ -2,6 +2,10 @@
 
 @section('title', 'Macros')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Macros'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

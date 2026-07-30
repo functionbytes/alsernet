@@ -2,6 +2,10 @@
 
 @section('title', 'Ticket #' . $ticket->ticket_number . ' - Helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Ticket #' . $ticket->ticket_number . ' - Helpdesk'])
+@endsection
+
 @section('content')
     {{-- Helpdesk header --}}
     <div class="bg-white border-bottom sticky-top z-10">

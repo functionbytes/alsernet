@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Crear nuevo atributo')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear nuevo atributo'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

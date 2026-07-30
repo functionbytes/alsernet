@@ -7,6 +7,12 @@
 </style>
 @endpush
 
+@section('title', 'Editar grupo')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar grupo'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

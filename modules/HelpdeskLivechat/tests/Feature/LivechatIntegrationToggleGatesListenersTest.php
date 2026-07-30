@@ -15,8 +15,8 @@ use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Listeners\EngagementBridgeListener;
 use Modules\HelpdeskLivechat\Providers\HelpdeskLivechatServiceProvider;
-use ReflectionMethod;
 use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
+use ReflectionMethod;
 use Tests\TestCase;
 
 /**

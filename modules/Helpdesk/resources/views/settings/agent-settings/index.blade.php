@@ -6,6 +6,10 @@
 <style>.hd-avatar-sm { width: 36px; height: 36px; font-size: 14px; font-weight: 600; }</style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuracion de agentes'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

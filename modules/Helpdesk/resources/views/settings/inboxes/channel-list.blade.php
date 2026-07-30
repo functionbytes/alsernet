@@ -6,6 +6,10 @@
 <style>.hd-inbox-icon { width: 36px; height: 36px; background: var(--bs-secondary-bg); color: var(--bs-secondary-color); }</style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Bandejas — ' . ($channelLabels[$type] ?? $type)])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

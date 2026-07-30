@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AutoAssignmentTest extends TestCase
@@ -30,7 +31,7 @@ class AutoAssignmentTest extends TestCase
 
         // No dependas del seeding de la BD de tests: crea el rol on-the-fly.
         // Limpia antes la cache de Spatie (roles de tests anteriores revertidos).
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
         Role::findOrCreate('helpdesk-agent', 'web');
 
         $this->openStatus = TicketStatus::firstOrCreate(

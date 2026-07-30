@@ -2,6 +2,10 @@
 
 @section('title', 'Tokens API')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Tokens API'])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

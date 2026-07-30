@@ -53,27 +53,28 @@ Route::post('/customers/{customer}/ps/orders/{order}/email', [PsOrderActionsCont
     ->middleware('throttle:20,1')
     ->name('manager.helpdesk.ps.orders.email');
 
-// Carrito asistido (construido por el agente desde el chat) — módulo HelpdeskPrestashop
-Route::prefix('customers/{customer}/cart')
-    ->name('manager.helpdesk.customers.cart.')
-    ->group(function () {
-        Route::get('/', [AssistedCartController::class, 'show'])->name('show');
-        Route::post('/items', [AssistedCartController::class, 'addItem'])->name('items.store');
-        Route::patch('/items/{item}', [AssistedCartController::class, 'updateItem'])->whereNumber('item')->name('items.update');
-        Route::delete('/items/{item}', [AssistedCartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
-        Route::post('/discount', [AssistedCartController::class, 'applyDiscount'])->name('discount');
-        Route::post('/clear', [AssistedCartController::class, 'clear'])->name('clear');
-        Route::post('/cancel', [AssistedCartController::class, 'cancel'])->name('cancel');
-        Route::post('/generate-order', [AssistedCartController::class, 'generateOrder'])->name('generate-order');
-        Route::post('/send-payment-link', [AssistedCartController::class, 'sendPaymentLink'])->name('send-payment-link');
-    });
-
-// Carritos asistidos del cliente — listar y ver detalle
-Route::get('/customers/{customer}/carts', [AssistedCartController::class, 'index'])
-    ->name('manager.helpdesk.customers.carts.index');
-Route::get('/customers/{customer}/carts/{cart}', [AssistedCartController::class, 'showCart'])
-    ->whereNumber('cart')
-    ->name('manager.helpdesk.customers.carts.show');
+// Carrito asistido (construido por el agente desde el chat) — DESHABILITADO en
+// este proyecto: AssistedCartController depende de Modules\Ecommerce\Services\
+// OrderService, y el módulo Ecommerce no se trae a este proyecto.
+// Route::prefix('customers/{customer}/cart')
+//     ->name('manager.helpdesk.customers.cart.')
+//     ->group(function () {
+//         Route::get('/', [AssistedCartController::class, 'show'])->name('show');
+//         Route::post('/items', [AssistedCartController::class, 'addItem'])->name('items.store');
+//         Route::patch('/items/{item}', [AssistedCartController::class, 'updateItem'])->whereNumber('item')->name('items.update');
+//         Route::delete('/items/{item}', [AssistedCartController::class, 'removeItem'])->whereNumber('item')->name('items.destroy');
+//         Route::post('/discount', [AssistedCartController::class, 'applyDiscount'])->name('discount');
+//         Route::post('/clear', [AssistedCartController::class, 'clear'])->name('clear');
+//         Route::post('/cancel', [AssistedCartController::class, 'cancel'])->name('cancel');
+//         Route::post('/generate-order', [AssistedCartController::class, 'generateOrder'])->name('generate-order');
+//         Route::post('/send-payment-link', [AssistedCartController::class, 'sendPaymentLink'])->name('send-payment-link');
+//     });
+//
+// Route::get('/customers/{customer}/carts', [AssistedCartController::class, 'index'])
+//     ->name('manager.helpdesk.customers.carts.index');
+// Route::get('/customers/{customer}/carts/{cart}', [AssistedCartController::class, 'showCart'])
+//     ->whereNumber('cart')
+//     ->name('manager.helpdesk.customers.carts.show');
 
 // Direcciones PS del cliente
 Route::get('/customers/{customer}/ps/addresses', [ProductSearchController::class, 'addresses'])

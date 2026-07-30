@@ -3,6 +3,10 @@
 @section('title', 'Nueva respuesta predefinida')
 
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nueva respuesta predefinida'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

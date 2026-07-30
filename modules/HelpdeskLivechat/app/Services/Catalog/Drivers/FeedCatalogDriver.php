@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 use Modules\HelpdeskLivechat\Services\Catalog\CatalogProduct;
+use Modules\HelpdeskLivechat\Services\Catalog\Contracts\CatalogDriver;
 
 /**
  * Driver de catálogo basado en un product feed remoto (JSON), el mismo modelo
@@ -80,7 +80,7 @@ final class FeedCatalogDriver implements CatalogDriver
                 return $b['score'] <=> $a['score'];
             }
 
-            return ($b['product']->available <=> $a['product']->available);
+            return $b['product']->available <=> $a['product']->available;
         });
 
         return array_map(

@@ -4,6 +4,7 @@ namespace Modules\Helpdesk\Tests\Feature\Inbox;
 
 use App\Models\User;
 use Modules\Helpdesk\Models\Conversation;
+use Spatie\Permission\Models\Permission;
 
 class BulkActionsTest extends InboxTestCase
 {
@@ -32,7 +33,7 @@ class BulkActionsTest extends InboxTestCase
         $agent = User::factory()->create();
         // El asignatario debe poder acceder al inbox: bulkAssign() salta a los
         // agentes sin capacidad salvo que tengan helpdesk.manage (gate de seguridad).
-        $agent->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('helpdesk.manage', 'web'));
+        $agent->givePermissionTo(Permission::findOrCreate('helpdesk.manage', 'web'));
 
         $conversations = collect(range(1, 3))->map(fn () => $this->createConversation());
 

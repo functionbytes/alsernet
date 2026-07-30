@@ -2,12 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskHelpcenter\Http\Controllers\Api\HelpcenterWidgetController;
-use Modules\HelpdeskLivechat\Http\Middleware\ThrottleByWebsiteToken;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\LivestreamController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WebRtcSignalingController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetConversationController;
 use Modules\HelpdeskLivechat\Http\Controllers\Api\WidgetSessionController;
 use Modules\HelpdeskLivechat\Http\Controllers\Pages\WidgetController as WidgetPageController;
+use Modules\HelpdeskLivechat\Http\Middleware\ThrottleByWebsiteToken;
 use Modules\HelpdeskTickets\Http\Controllers\Api\WidgetTicketsController;
 
 /*

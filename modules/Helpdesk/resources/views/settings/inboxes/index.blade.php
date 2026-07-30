@@ -10,6 +10,10 @@
 </style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Bandejas'])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

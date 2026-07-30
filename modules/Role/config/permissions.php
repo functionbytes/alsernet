@@ -261,6 +261,7 @@ return [
                 'auth' => 'Ver módulo de Seguridad',
                 'backups' => 'Ver módulo de Copias de Seguridad',
                 'campaigns' => 'Ver módulo de Campañas',
+                'contacts' => 'Ver módulo de Contactos',
                 'dashboard' => 'Ver módulo de Dashboard',
                 'events' => 'Ver módulo de Eventos',
                 'helpdesk' => 'Ver módulo de Helpdesk',

@@ -2,6 +2,10 @@
 
 @section('title', 'Notificaciones')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Notificaciones'])
+@endsection
+
 @section('content')
 
 @include('core::components.alerts')

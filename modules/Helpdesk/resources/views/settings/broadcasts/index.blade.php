@@ -2,6 +2,10 @@
 
 @section('title', 'Broadcasts')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Broadcasts'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

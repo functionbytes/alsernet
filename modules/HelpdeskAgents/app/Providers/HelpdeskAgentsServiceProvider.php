@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\HelpdeskAgents\Console\Commands\AiUsageReportCommand;
 use Modules\HelpdeskAgents\Listeners\QueueTicketAiOnTicketCreated;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnAssigned;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnEscalation;
@@ -31,6 +32,9 @@ use Modules\HelpdeskAgents\Services\KnowledgeRetrievalService;
 use Modules\HelpdeskAgents\Services\LlmConnectionTesterService;
 use Modules\HelpdeskAgents\Services\PromptSanitizer;
 use Modules\HelpdeskAgents\Services\ToolExecutionService;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketCreated;
+use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -69,7 +73,7 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                \Modules\HelpdeskAgents\Console\Commands\AiUsageReportCommand::class,
+                AiUsageReportCommand::class,
             ]);
         }
     }
@@ -116,15 +120,15 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
         // routing). Registered here — not in HelpdeskTickets — so the ticket
         // module stays untouched; each queued job re-checks its own feature
         // flag, and a broken LLM can never affect ticket flows.
-        if (class_exists(\Modules\HelpdeskTickets\Events\TicketCreated::class)) {
-            Event::listen(\Modules\HelpdeskTickets\Events\TicketCreated::class, QueueTicketAiOnTicketCreated::class);
-            Event::listen(\Modules\HelpdeskTickets\Events\TicketAssigned::class, QueueTicketSummaryOnAssigned::class);
+        if (class_exists(TicketCreated::class)) {
+            Event::listen(TicketCreated::class, QueueTicketAiOnTicketCreated::class);
+            Event::listen(TicketAssigned::class, QueueTicketSummaryOnAssigned::class);
 
             // El motor de escalado no emite evento propio: su rastro estable es
             // la fila `escalated` en el historial, así que escuchamos el evento
             // Eloquent de creación de TicketHistory.
             Event::listen(
-                'eloquent.created: '.\Modules\HelpdeskTickets\Models\TicketHistory::class,
+                'eloquent.created: '.TicketHistory::class,
                 QueueTicketSummaryOnEscalation::class
             );
         }

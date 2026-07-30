@@ -62,6 +62,12 @@ input[name="extraction_mode"]:checked + .extraction-mode-card {
 </style>
 @endpush
 
+@section('title', 'Editar fuente de datos')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar fuente de datos'])
+@endsection
+
 @section('content')
 
 <div class="card w-100">

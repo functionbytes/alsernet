@@ -18,6 +18,7 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
@@ -44,7 +45,7 @@ class AutoAssignNewTicketTest extends TestCase
         // No dependas del seeding: crea el rol on-the-fly. Limpia antes la cache
         // de Spatie: el rol de un test anterior se revierte con la transacción
         // pero seguiría cacheado con un id ya inexistente.
-        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
         Role::findOrCreate('helpdesk-agent', 'web');
 
         // Estado limpio de los ajustes runtime de auto-asignación (rollback al final).

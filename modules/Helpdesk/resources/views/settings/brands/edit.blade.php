@@ -2,6 +2,10 @@
 
 @section('title', 'Editar marca')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar marca'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

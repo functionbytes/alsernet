@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Configuración de Oracle Database')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración de Oracle Database'])
+@endsection
+
 @section('content')
 
     <div class="row">

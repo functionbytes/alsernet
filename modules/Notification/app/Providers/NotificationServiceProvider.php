@@ -62,11 +62,6 @@ class NotificationServiceProvider extends ServiceProvider
         // Observe database notifications to broadcast real-time events
         DatabaseNotification::observe(DatabaseNotificationObserver::class);
 
-        // Configure WebSocket/Pusher settings (deferred to avoid boot issues)
-        $this->app->booted(function () {
-            $this->configureWebSocketSettings();
-        });
-
         // Register authorization policies (Gates)
         $this->registerPolicies();
 
@@ -74,9 +69,6 @@ class NotificationServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $this->loadNotificationSettings();
         });
-
-        // Register notification types
-        $this->registerNotificationTypes();
 
         // Register scheduled tasks
         $this->registerSchedules();
@@ -157,53 +149,17 @@ class NotificationServiceProvider extends ServiceProvider
         ];
 
         try {
-            $stored = cache()->remember('settings_notification_bundle', now()->addMinutes(10), function () use ($keys) {
-                return Setting::query()
-                    ->whereIn('key', $keys)
-                    ->pluck('value', 'key')
-                    ->all();
-            });
+            $settings = Setting::query()
+                ->whereIn('key', $keys)
+                ->pluck('value', 'key');
 
-            foreach ($stored as $key => $value) {
+            foreach ($settings as $key => $value) {
                 if ($value !== null) {
                     config([$key => $value]);
                 }
             }
         } catch (\Exception) {
             // Database not ready — silently skip
-        }
-    }
-
-    /**
-     * Configure WebSocket and Pusher settings from database
-     */
-    protected function configureWebSocketSettings(): void
-    {
-        $settings = $this->getSettings();
-        if ($settings) {
-            config([
-                'websockets.dashboard.port' => $settings->liveChatPort ?? env('LIVE_CHAT_PORT', 6001),
-                'broadcasting.connections.pusher.options.port' => $settings->liveChatPort ?? env('LIVE_CHAT_PORT', 6001),
-                'broadcasting.connections.pusher.options.host' => parse_url(url('/'))['host'] ?? env('PUSHER_HOST', 'localhost'),
-            ]);
-        }
-    }
-
-    /**
-     * Get settings from database
-     */
-    private function getSettings(): ?Setting
-    {
-        try {
-            return cache()->remember('notification_settings', now()->addMinutes(10), function () {
-                // Use fully qualified class name to ensure correct model resolution
-                $settingClass = Setting::class;
-
-                return $settingClass::query()->first();
-            });
-        } catch (\Exception $e) {
-            // Database not ready yet, return null gracefully
-            return null;
         }
     }
 
@@ -228,30 +184,6 @@ class NotificationServiceProvider extends ServiceProvider
                 ['label' => 'Todas las notificaciones', 'route' => 'notifications.index'],
             ],
         ]);
-    }
-
-    /**
-     * Register all known notification types in the registry
-     */
-    protected function registerNotificationTypes(): void
-    {
-        $this->app->booted(function () {
-            $registry = $this->app->make(NotificationTypeRegistry::class);
-
-            $registry->register('reviews.new_review', 'Nueva reseña', 'Cuando se recibe cualquier reseña nueva', ['mail', 'database']);
-            $registry->register('reviews.negative_review', 'Reseña negativa', 'Reseñas con calificación baja (1-3 estrellas)', ['mail', 'database']);
-            $registry->register('reviews.positive_review', 'Reseña positiva', 'Reseñas con calificación alta (4-5 estrellas)', ['database']);
-            $registry->register('reviews.export_ready', 'Exportación lista', 'Cuando una exportación de reseñas está disponible', ['database']);
-            $registry->register('reviews.connection_expiring', 'Conexión expirando', 'Cuando una conexión de Google está por expirar', ['mail', 'database']);
-            $registry->register('reviews.daily_digest', 'Resumen diario de reseñas', 'Resumen diario de actividad de reseñas', ['mail']);
-            $registry->register('attention.status_changed', 'Estado de PQRSF actualizado', 'Cuando cambia el estado de una solicitud de atención', ['database']);
-            $registry->register('backup.success', 'Backup exitoso', 'Cuando un backup del sistema se completa correctamente', ['mail']);
-            $registry->register('backup.failed', 'Backup fallido', 'Cuando un backup del sistema falla', ['mail']);
-            $registry->register('alerts.threshold_triggered', 'Alerta por umbral', 'Cuando se dispara una alerta del sistema', ['database']);
-            $registry->register('blog.new_comment', 'Nuevo comentario en blog', 'Cuando alguien comenta en un post', ['mail', 'database']);
-            $registry->register('forms.new_submission', 'Nueva respuesta de formulario', 'Cuando se envía un formulario del sitio', ['mail', 'database']);
-            $registry->register('page.published', 'Página publicada', 'Cuando una página es publicada en el sistema', ['mail', 'database']);
-        });
     }
 
     /**

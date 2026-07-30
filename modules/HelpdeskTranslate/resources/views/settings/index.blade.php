@@ -6,6 +6,10 @@
 <link rel="stylesheet" href="{{ asset('vendor/helpdesktranslate/settings.css') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/settings.css')) }}">
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => __('helpdesktranslate::messages.settings.page_title')])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

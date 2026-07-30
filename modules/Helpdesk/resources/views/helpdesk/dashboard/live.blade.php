@@ -2,6 +2,10 @@
 
 @section('title', 'Dashboard en vivo · Helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Dashboard en vivo · Helpdesk'])
+@endsection
+
 @section('content')
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>

@@ -2,6 +2,10 @@
 
 @section('title', 'Dashboard Helpdesk')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Dashboard Helpdesk'])
+@endsection
+
 @section('content')
 
     {{-- Filters bar --}}

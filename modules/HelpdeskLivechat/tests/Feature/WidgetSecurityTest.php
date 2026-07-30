@@ -9,15 +9,15 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\Setting;
 use Modules\HelpdeskLivechat\Database\Factories\WebFactory;
 use Modules\HelpdeskLivechat\Models\Channels\Web;
-use Tests\Concerns\SeedsHelpdeskRoles;
 use Modules\HelpdeskLivechat\Tests\Concerns\SeedsOpenConversationStatus;
+use Tests\Concerns\SeedsHelpdeskRoles;
 use Tests\TestCase;
 
 class WidgetSecurityTest extends TestCase
 {
     use DatabaseTransactions;
-    use SeedsOpenConversationStatus;
     use SeedsHelpdeskRoles;
+    use SeedsOpenConversationStatus;
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
 

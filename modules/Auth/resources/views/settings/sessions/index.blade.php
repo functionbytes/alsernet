@@ -2,6 +2,10 @@
 
 @section('title', 'Sesiones Activas')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Sesiones Activas'])
+@endsection
+
 @section('content')
 <div class="px-3">
     <div class="card">

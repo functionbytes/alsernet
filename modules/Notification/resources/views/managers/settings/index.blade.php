@@ -3,6 +3,10 @@
 
 @section('title', 'Configuración de notificaciones')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración de notificaciones'])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-12">

@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Endpoints / Integraciones'])
+@endsection
 
+@section('content')
     @if ($message = session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle me-2"></i> {{ $message }}

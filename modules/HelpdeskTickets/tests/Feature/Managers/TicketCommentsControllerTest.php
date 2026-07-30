@@ -17,6 +17,7 @@ use Tests\TestCase;
 class TicketCommentsControllerTest extends TestCase
 {
     use SeedsHelpdeskRoles;
+
     // mariadb y helpdesk apuntan a la misma BD: PDO compartido evita
     // auto-interbloqueos de FK y garantiza rollback de AMBAS conexiones
     // (antes solo se transaccionaba mariadb y los tickets se filtraban).

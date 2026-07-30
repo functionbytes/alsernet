@@ -3,6 +3,10 @@
 @section('title', 'Editar macro')
 
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar macro'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Auditoría: intentos de inicio de sesión')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Auditoría: intentos de inicio de sesión'])
+@endsection
+
 @section('content')
 <div class="px-3">
 

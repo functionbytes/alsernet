@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 @section('title', 'Festivos · SLA')
+@section('page_header')
+    @include('core::components.card', ['title' => 'Festivos · SLA'])
+@endsection
+
 @section('content')
 
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">

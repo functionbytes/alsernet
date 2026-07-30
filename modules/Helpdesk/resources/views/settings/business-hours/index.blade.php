@@ -2,6 +2,10 @@
 
 @section('title', 'Horarios de atención')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Horarios de atención'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

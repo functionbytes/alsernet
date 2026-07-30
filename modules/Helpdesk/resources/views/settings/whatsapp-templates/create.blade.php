@@ -2,6 +2,10 @@
 
 @section('title', 'Nueva plantilla de WhatsApp')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nueva plantilla de WhatsApp'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

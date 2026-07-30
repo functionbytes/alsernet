@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Editar tipo de documento')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar tipo de documento'])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">

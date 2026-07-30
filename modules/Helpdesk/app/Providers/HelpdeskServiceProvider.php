@@ -316,6 +316,13 @@ class HelpdeskServiceProvider extends ServiceProvider
         ]);
 
         NavService::registerSidebar('helpdesk', [
+            'title' => 'Bandeja',
+            'items' => [
+                ['label' => 'Conversaciones', 'route' => 'manager.helpdesk.conversations.index', 'icon' => 'fas fa-inbox', 'permission' => 'helpdesk.conversations.view'],
+            ],
+        ]);
+
+        NavService::registerSidebar('helpdesk', [
             'title' => 'Reportes',
             'items' => [
                 ['label' => 'Satisfacción (CSAT)', 'route' => 'manager.helpdesk.reports.csat', 'permission' => 'helpdesk.reports.view'],

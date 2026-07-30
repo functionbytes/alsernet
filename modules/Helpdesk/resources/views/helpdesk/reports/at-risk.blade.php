@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 @section('title', 'Clientes en riesgo · Helpdesk')
+@section('page_header')
+    @include('core::components.card', ['title' => 'Clientes en riesgo · Helpdesk'])
+@endsection
+
 @section('content')
 
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">

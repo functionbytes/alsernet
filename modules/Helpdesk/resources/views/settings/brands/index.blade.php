@@ -6,6 +6,10 @@
 <style>.hd-color-swatch { width: 24px; height: 24px; display: inline-block; }</style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Marcas'])
+@endsection
+
 @section('content')
 
     @include('core::components.alerts')

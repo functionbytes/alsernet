@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Almacenamiento'])
+@endsection
 
+@section('content')
     <!-- Mensajes de estado -->
     @if ($message = session('success'))
         <div class="alert bg-light-secondary text-black alert-dismissible fade show" role="alert">

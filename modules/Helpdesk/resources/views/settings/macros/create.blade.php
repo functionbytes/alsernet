@@ -6,6 +6,10 @@
 <style>.hd-icon-dot { font-size: 0.5rem; }</style>
 @endpush
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Nuevo macro'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

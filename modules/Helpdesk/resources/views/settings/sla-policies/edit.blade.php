@@ -3,6 +3,10 @@
 @section('title', 'Editar politica SLA')
 
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar politica SLA'])
+@endsection
+
 @section('content')
 
     <div class="row g-3">

@@ -41,7 +41,7 @@ class AgentLlmService
      *
      * @param  array<int, array{role: string, content: string}>  $messages
      * @param  array{temperature?: float, max_tokens?: int, timeout?: int, feature?: string}  $options
-     *                                                                                                 `feature` tags the row in helpdesk_ai_usage (summary|classification|...).
+     *                                                                                                  `feature` tags the row in helpdesk_ai_usage (summary|classification|...).
      * @return string|null Trimmed completion text, or null on any failure.
      */
     public function chat(array $messages, array $options = []): ?string

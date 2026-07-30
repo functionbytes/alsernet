@@ -2,10 +2,11 @@
 
 @section('title', 'Configuración - ' . $group->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Grupo: ' . $group->name])
+@endsection
 
+@section('content')
     <div class="widget-content">
         @include('core::components.alerts')
 

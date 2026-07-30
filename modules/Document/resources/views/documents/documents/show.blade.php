@@ -2,10 +2,11 @@
 
 @section('title', 'Ver Documento')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Ver Documento'])
+@endsection
 
+@section('content')
     <div class="row">
         <div class="col-lg-8">
             <!-- Order Details (Permission-Controlled) -->
