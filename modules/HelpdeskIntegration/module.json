@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskIntegration",
+    "alias": "helpdeskintegration",
+    "description": "Motor de integraciones externas del cliente para el Helpdesk: catalogo configurable de proveedores (PrestaShop, ERP y proveedores custom) con drivers de busqueda/vinculacion y credenciales cifradas",
+    "keywords": ["helpdesk", "integrations", "prestashop", "erp", "providers"],
+    "priority": 0,
+    "providers": [
+        "Modules\\HelpdeskIntegration\\Providers\\HelpdeskIntegrationServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

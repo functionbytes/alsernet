@@ -1,0 +1,2289 @@
+/**
+ * Document Module – Modales reutilizables
+ *
+ *  - docs-viewer        Visualizar documentacion del cliente
+ *  - doc-manage         Gestionar documento individual
+ *  - doc-view           Ver documento detalle (2 columnas)
+ *  - doc-from-chat      Cargar desde galeria del chat
+ *
+ * Convencion: todas las clases prefijadas con `docs-` para evitar
+ * colisiones con el tema base (Bootstrap 5.3 + Font Awesome 6).
+ */
+
+/* ── Tokens locales del modulo ───────────────────────────────── */
+:root {
+    --docs-text: #111827;
+    --docs-text-soft: #374151;
+    --docs-text-muted: #6b7280;
+    --docs-border: #e5e7eb;
+    --docs-border-strong: #d1d5db;
+    --docs-bg-subtle: #f5f6f8;
+    --docs-bg-hover: #f3f4f6;
+    --docs-primary: #90bb13;
+    --docs-success: #16a34a;
+    --docs-warning: #f59e0b;
+    --docs-danger: #dc2626;
+    --docs-radius: 12px;
+    --docs-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+/* ── Backdrop + dialog ───────────────────────────────────────── */
+.docs-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.45);
+    z-index: 1080;
+    display: none;
+    animation: docs-fade-in .15s ease;
+}
+.docs-backdrop.open { display: block; }
+@keyframes docs-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.docs-modal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(.97);
+    background: #fff;
+    border-radius: var(--docs-radius);
+    box-shadow: var(--docs-shadow);
+    z-index: 1081;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    width: 92vw;
+    max-width: 560px;
+    max-height: 88vh;
+    animation: docs-pop-in .16s ease;
+}
+.docs-modal.open { display: flex; transform: translate(-50%, -50%) scale(1); }
+@keyframes docs-pop-in {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.docs-modal.docs-modal-md { max-width: 560px; }
+.docs-modal.docs-modal-lg { max-width: 760px; max-height: 92vh; }
+.docs-modal.docs-modal-xl { max-width: 980px; height: min(90vh, 720px); max-height: 92vh; }
+
+/* ── Cabecera ───────────────────────────────────────────────── */
+.docs-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--docs-border);
+    flex-shrink: 0;
+}
+.docs-head-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+}
+.docs-head-text { flex: 1; min-width: 0; }
+.docs-head-label {
+    font-size: 10px; font-weight: 700;
+    letter-spacing: .06em;
+    color: var(--docs-text-muted);
+    text-transform: uppercase;
+    line-height: 1; margin-bottom: 3px;
+}
+.docs-head-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--docs-text);
+    line-height: 1.25;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+}
+.docs-head-order {
+    font-size: 13px; font-weight: 700;
+    color: var(--docs-text);
+    line-height: 1.25;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+.docs-head-title .docs-chip {
+    font-size: 10px; font-weight: 500;
+    padding: 1px 6px;
+    background: var(--docs-text);
+    color: #fff;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+.docs-breadcrumb {
+    font-weight: 400;
+    color: var(--docs-text-muted);
+    font-size: 11px;
+    margin-left: 4px;
+}
+.docs-breadcrumb i { font-size: 7px; margin: 0 4px; }
+/* Los botones de volver de los paneles comparten el aspecto del botón de cerrar,
+   pero NO su clase: .docs-close lleva el handler que cierra el modal entero
+   (modals.js), así que aplicársela los haría salir del expediente en vez de
+   retroceder. Por eso van aquí como selectores propios. */
+.docs-close,
+.docs-file-detail-back,
+.docs-inline-email-back,
+.docs-inline-import-back,
+.docs-inline-confirm-back,
+.docs-cust-edit-detail-back {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: none;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; cursor: pointer; flex-shrink: 0;
+    padding: 0;
+    margin-right: 10px;
+    transition: background .12s, color .12s;
+}
+.docs-close:hover,
+.docs-file-detail-back:hover,
+.docs-inline-email-back:hover,
+.docs-inline-import-back:hover,
+.docs-inline-confirm-back:hover,
+.docs-cust-edit-detail-back:hover {
+    background: var(--docs-border);
+    color: var(--docs-text);
+}
+
+/* Volver es una acción de navegación, no un descarte como cerrar: la flecha va en
+   el gris fuerte del texto (#374151) porque en muted (#6b7280) sobre el fondo casi
+   blanco del botón quedaba lavada y apenas se leía. */
+.docs-file-detail-back,
+.docs-inline-email-back,
+.docs-inline-import-back,
+.docs-inline-confirm-back,
+.docs-cust-edit-detail-back {
+    color: var(--docs-text-soft);
+}
+
+/* ── Cuerpo ─────────────────────────────────────────────────── */
+.docs-body {
+    padding: 14px;
+    display: flex; flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+.docs-body.pad-0 { padding: 0; }
+.docs-body::-webkit-scrollbar { width: 6px; }
+.docs-body::-webkit-scrollbar-thumb {
+    background: var(--docs-border-strong);
+    border-radius: 3px;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.docs-foot {
+    padding: 12px 14px;
+    border-top: 1px solid var(--docs-border);
+    background: #fafafa;
+    display: flex; flex-direction: column; gap: 8px;
+    flex-shrink: 0;
+}
+.docs-foot .btn { width: 100%; justify-content: center; padding: 9px 14px; font-size: 13px; }
+.docs-foot .btn-primary { background: #18181b; border-color: #18181b; color: #fff; }
+.docs-foot .btn-primary:hover, .docs-foot .btn-primary:focus { background: #000; border-color: #000; color: #fff; }
+.docs-foot .btn-outline-secondary { background: #fff; color: #18181b; border-color: #e5e7eb; }
+.docs-foot .btn-outline-secondary:hover { border-color: #18181b; color: #18181b; background: #fafafa; }
+
+/* ── Acciones destructivas (reemplaza estilos inline por color) ─ */
+.docs-action-danger { color: var(--docs-danger); }
+.docs-action-danger:hover, .docs-action-danger:focus { color: var(--docs-danger); border-color: var(--docs-danger); }
+
+/* ── Tabla informativa key/value ────────────────────────────── */
+.docs-info-table {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    font-size: 11.5px;
+}
+.docs-info-table .lbl {
+    color: var(--docs-text-muted);
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--docs-border);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    display: flex;
+    align-items: center;
+}
+.docs-info-table .val {
+    color: var(--docs-text);
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--docs-border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+.docs-info-table .val.mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 10.5px;
+}
+.docs-info-table .lbl:last-of-type,
+.docs-info-table .val:last-of-type { border-bottom: none; }
+/* Rounded corners via cells (overflow:hidden removed to prevent flex-item height collapse) */
+.docs-info-table > *:first-child  { border-radius: 7px 0 0 0; }
+.docs-info-table > *:nth-child(2) { border-radius: 0 7px 0 0; }
+.docs-info-table > *:nth-last-child(2) { border-radius: 0 0 0 7px; }
+.docs-info-table > *:last-child   { border-radius: 0 0 7px 0; }
+
+/* ── Filtros (pills) ─────────────────────────────────────────── */
+.docs-filter-row {
+    display: flex; gap: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--docs-border);
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+}
+.docs-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background .12s, color .12s;
+}
+.docs-pill:hover { background: var(--docs-bg-hover); color: var(--docs-text); }
+.docs-pill.on { background: var(--docs-text); color: #fff; }
+.docs-pill .c {
+    background: rgba(0,0,0,.08);
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+}
+.docs-pill.on .c { background: rgba(255,255,255,.18); }
+
+/* ── Estado pill (Aprobado / Pendiente / Rechazado) ─────────── */
+.docs-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+}
+.docs-status i { font-size: 9px; }
+.docs-status.approved { background: #eaf3d3; color: #5f7d0c; }
+.docs-status.pending { background: #fef3c7; color: #92400e; }
+.docs-status.rejected { background: #fee2e2; color: #991b1b; }
+
+/* ── Galeria de documentos (cards) ──────────────────────────── */
+.docs-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.docs-card {
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 9px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .12s, box-shadow .12s;
+    text-align: left;
+    padding: 0;
+    width: 100%;
+}
+.docs-card:hover {
+    border-color: var(--docs-text);
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+}
+.docs-card .thumb {
+    position: relative;
+    aspect-ratio: 4/3;
+    background: var(--docs-bg-subtle);
+    display: grid;
+    place-items: center;
+}
+.docs-card .thumb i { font-size: 30px; color: var(--docs-text-muted); }
+.docs-card .thumb .badge-tp {
+    position: absolute; top: 6px; left: 6px;
+    background: rgba(0,0,0,.7); color: #fff;
+    font-size: 9px; font-weight: 700;
+    padding: 2px 6px; border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.docs-card .thumb .docs-status {
+    position: absolute; top: 6px; right: 6px;
+}
+.docs-card .info {
+    padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+}
+.docs-card .nm {
+    font-size: 11.5px; font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.docs-card .meta {
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ── Secciones de "gestionar documento" ─────────────────────── */
+.docs-section {
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 9px;
+    padding: 11px 13px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.docs-section .h {
+    display: flex; flex-direction: column; gap: 1px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-section .h .t { font-size: 12px; font-weight: 700; color: var(--docs-text); }
+.docs-section .h .s { font-size: 10.5px; color: var(--docs-text-muted); }
+
+.docs-action-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-action-row:last-child { border-bottom: none; }
+.docs-action-row .body { flex: 1; min-width: 0; }
+.docs-action-row .body .nm { font-size: 11.5px; font-weight: 600; color: var(--docs-text); }
+.docs-action-row .body .ds { font-size: 10.5px; color: var(--docs-text-muted); line-height: 1.4; }
+
+.docs-validation {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px;
+    padding: 6px 9px;
+    background: var(--docs-bg-subtle);
+    border-radius: 6px;
+    color: var(--docs-text);
+}
+.docs-validation .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--docs-success);
+}
+.docs-validation .dot.pending { background: var(--docs-warning); }
+.docs-validation .dot.rejected { background: var(--docs-danger); }
+
+.docs-history {
+    font-size: 11px;
+    color: var(--docs-text-soft);
+    line-height: 1.7;
+}
+.docs-history .ts {
+    color: var(--docs-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ── Form fields (locales para no chocar con Bootstrap) ─────── */
+.docs-field { display: flex; flex-direction: column; gap: 5px; }
+.docs-field .flabel {
+    display: flex; align-items: center;
+    font-size: 10.5px; font-weight: 500;
+    color: var(--docs-text-soft);
+}
+.docs-field .flabel .hint {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    font-weight: 400;
+}
+.docs-field .finput,
+.docs-field .fselect,
+.docs-field .ftextarea {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--docs-border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--docs-text);
+    background: #fff;
+    font-family: inherit;
+    outline: none;
+}
+.docs-field .finput:focus,
+.docs-field .fselect:focus,
+.docs-field .ftextarea:focus {
+    border-color: var(--docs-text);
+    box-shadow: 0 0 0 3px rgba(0,0,0,.06);
+}
+.docs-frow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.docs-check {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px;
+    color: var(--docs-text-soft);
+    cursor: pointer;
+    margin: 0;
+}
+.docs-check input { accent-color: var(--docs-primary); }
+
+/* Bloque de casillas con fondo, como en los modales del gestor de documentos:
+   sueltas sobre el fondo blanco se confundian con el resto del texto del
+   formulario y no se leian como un grupo. */
+.docs-check-group {
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    background: var(--docs-bg-subtle);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* "(opcional)" va dentro de la etiqueta, no alineado a la derecha como .hint:
+   así se lee como parte del nombre del campo. */
+.docs-field .flabel .fopt {
+    font-size: 10.5px;
+    font-weight: 400;
+    color: var(--docs-text-muted);
+    margin-left: 4px;
+}
+
+/* Asterisco de campo obligatorio. */
+.docs-field .flabel .freq {
+    color: var(--docs-danger, #dc2626);
+    font-weight: 700;
+    margin-left: 3px;
+}
+
+/* Nota de apoyo bajo un campo (equivale al .form-text de los modales). */
+.docs-fhint {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    line-height: 1.45;
+    margin-top: 5px;
+}
+.docs-fhint i { margin-right: 3px; }
+
+/* ── Buscador de expedientes con resultados tipo card ────────── */
+.docs-search-field {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid var(--docs-border);
+    border-radius: 6px;
+    background: #fff;
+    transition: border-color .12s;
+}
+.docs-search-field:focus-within { border-color: var(--docs-text); box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+.docs-search-field i { font-size: 11px; color: var(--docs-text-muted); flex-shrink: 0; }
+.docs-search-field input {
+    flex: 1; min-width: 0;
+    border: none; outline: none;
+    font-size: 12px; color: var(--docs-text);
+    background: transparent; font-family: inherit;
+}
+.docs-search-field input::placeholder { color: var(--docs-text-muted); }
+
+.docs-opt-list {
+    display: flex; flex-direction: column; gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.docs-opt {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    width: 100%; text-align: left;
+    font-family: inherit;
+    transition: background .12s, border-color .12s;
+}
+.docs-opt:hover { background: var(--docs-bg-hover); }
+.docs-opt.on { border-color: var(--docs-text); background: var(--docs-bg-subtle); }
+
+.docs-opt .icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+}
+.docs-opt.on .icon { background: var(--docs-text); color: #fff; }
+
+.docs-opt .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.docs-opt .body .name {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.docs-opt .body .sub {
+    font-size: 11px; color: var(--docs-text-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.docs-opt .radio {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--docs-border-strong);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent;
+    font-size: 8px;
+    transition: background .12s, border-color .12s, color .12s;
+}
+.docs-opt.on .radio { background: var(--docs-text); border-color: var(--docs-text); color: #fff; }
+
+.docs-opt-empty {
+    padding: 16px 10px;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Info banner ─────────────────────────────────────────────── */
+.docs-minfo {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 12px;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    font-size: 11.5px;
+    color: var(--docs-text-soft);
+    line-height: 1.45;
+}
+.docs-minfo i {
+    font-size: 11px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    color: var(--docs-text-muted);
+}
+.docs-minfo b { font-weight: 600; color: var(--docs-text); }
+
+/* ── Chat gallery picker ─────────────────────────────────────── */
+.docs-cg-gallery { display: flex; flex-direction: column; gap: 8px; }
+.docs-cg-loading {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--docs-text-muted); font-size: 13px; padding: 20px 0;
+    justify-content: center;
+}
+.docs-cg-count {
+    font-size: 10px; font-weight: 600;
+    background: var(--docs-bg-subtle); color: var(--docs-text-muted);
+    border: 1px solid var(--docs-border); border-radius: 20px;
+    padding: 1px 7px; margin-left: 4px;
+}
+.docs-cg-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+.docs-cg-pick,
+.docs-inline-pick {
+    background: #fff;
+    border: 2px solid var(--docs-border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    transition: border-color .12s;
+    padding: 0;
+}
+.docs-cg-pick:hover,
+.docs-inline-pick:hover { border-color: var(--docs-border-strong); }
+.docs-cg-pick.on,
+.docs-inline-pick.on { border-color: var(--docs-primary); }
+.docs-cg-pick .check,
+.docs-inline-pick .check {
+    position: absolute; top: 6px; right: 6px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1.5px solid var(--docs-border-strong);
+    display: grid; place-items: center;
+    color: #fff;
+    font-size: 9px;
+}
+.docs-cg-pick.on .check,
+.docs-inline-pick.on .check {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+.docs-cg-pick i.preview,
+.docs-inline-pick i.preview {
+    font-size: 24px;
+    color: var(--docs-text-muted);
+}
+.docs-cg-pick img.preview,
+.docs-inline-pick img.preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.docs-cg-pick .lbl,
+.docs-inline-pick .lbl {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 4px 7px;
+    font-size: 9px;
+    background: rgba(0,0,0,.7);
+    color: #fff;
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Vista detalle (2 columnas: main + side) ────────────────── */
+.docs-rp {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+.docs-vd-grid {
+    display: grid;
+    grid-template-columns: 1fr 344px;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+.docs-vd-main {
+    overflow-y: auto;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 14px;
+    border-right: 1px solid var(--docs-border);
+}
+.docs-vd-side {
+    overflow-y: auto;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 14px;
+    background: #fafafa;
+}
+/* Panel desacoplado, hermano de la tarjeta de documentación dentro de
+   .docs-vd-main (no anidado en ella). Lo comparten los correos y el importador. */
+.docs-detached-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Los tres componentes del panel desacoplado (correo, importador y edición de
+   ficha) acompanan a .docs-vd-card en estos grupos porque comparten su aspecto,
+   pero no son tarjetas del expediente: van fuera de esa clase para no heredar
+   nada más de ella. */
+.docs-vd-card,
+.docs-inline-email,
+.docs-inline-import,
+.docs-inline-confirm,
+.docs-cust-edit-detail {
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 9px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.docs-vd-card .h,
+.docs-inline-email .h,
+.docs-inline-import .h,
+.docs-inline-confirm .h,
+.docs-cust-edit-detail .h {
+    display: flex; flex-direction: column; gap: 1px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-vd-card .h .t,
+.docs-inline-email .h .t,
+.docs-inline-import .h .t,
+.docs-inline-confirm .h .t,
+.docs-cust-edit-detail .h .t { font-size: 12.5px; font-weight: 700; color: var(--docs-text); margin-bottom: 0; }
+.docs-vd-card .h .s,
+.docs-inline-email .h .s,
+.docs-inline-import .h .s,
+.docs-cust-edit-detail .h .s { font-size: 10.5px; color: var(--docs-text-muted); }
+
+.docs-vd-kv {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 12px;
+}
+.docs-vd-kv .k {
+    font-size: 9.5px; font-weight: 600;
+    color: var(--docs-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 2px;
+}
+.docs-vd-kv .v {
+    font-size: 12px;
+    color: var(--docs-text);
+    word-break: break-word;
+}
+.docs-vd-kv .v.mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+}
+.docs-vd-kv .v.muted { color: var(--docs-text-muted); }
+
+.docs-vd-prod-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--docs-border);
+    font-size: 11.5px;
+}
+.docs-vd-prod-row:last-child { border-bottom: none; }
+.docs-vd-prod-row .nm { font-weight: 600; color: var(--docs-text); }
+.docs-vd-prod-row .sku {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    margin-top: 1px;
+}
+.docs-vd-prod-row .qty {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    background: var(--docs-bg-subtle);
+    padding: 3px 9px;
+    border-radius: 5px;
+    align-self: start;
+    font-weight: 600;
+}
+
+.docs-vd-status-list { display: flex; flex-direction: column; gap: 6px; }
+.docs-vd-status-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px;
+    background: var(--docs-bg-subtle);
+    border-radius: 6px;
+    font-size: 11.5px;
+}
+.docs-vd-status-row .k {
+    color: var(--docs-text-muted);
+    font-size: 10.5px;
+    flex: 1;
+}
+.docs-vd-status-row .v {
+    font-weight: 600;
+    color: var(--docs-text);
+    font-size: 11.5px;
+}
+
+.docs-vd-empty {
+    padding: 18px;
+    text-align: center;
+    color: var(--docs-text-muted);
+    font-size: 11.5px;
+    background: var(--docs-bg-subtle);
+    border-radius: 6px;
+}
+.docs-vd-empty i {
+    font-size: 18px;
+    display: block;
+    margin-bottom: 6px;
+    opacity: .5;
+}
+
+.docs-attach-dropzone {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 18px 12px;
+    border: 1px dashed var(--docs-border);
+    border-radius: 10px;
+    background: var(--docs-bg-subtle);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.docs-attach-dropzone:hover,
+.docs-attach-dropzone.dragover {
+    border-color: var(--docs-primary);
+    background: #f7faef;
+}
+.docs-attach-dropzone i { font-size: 20px; color: var(--docs-text-muted); }
+.docs-attach-dropzone .dz-title { font-size: 12px; font-weight: 600; color: var(--docs-text); }
+.docs-attach-dropzone .dz-sub { font-size: 10.5px; color: var(--docs-text-muted); }
+.docs-attach-dropzone .dz-file { font-size: 11px; font-weight: 600; color: var(--docs-primary); margin-top: 2px; }
+
+/* La cabecera por defecto de .docs-vd-card apila en columna; estos paneles la
+   necesitan en línea para que el botón de volver quede junto al título. Los
+   formularios de correo usan su propio nombre en vez de docs-file-detail-*,
+   porque no son la ficha de un archivo. */
+.docs-file-detail-head,
+.docs-inline-email-head,
+.docs-inline-import-head,
+.docs-inline-confirm-head,
+.docs-cust-edit-detail-head {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+}
+/* Va con la misma forma que la regla base (.docs-inline-email .h) y después de
+   ella: con .docs-inline-email-head a secas perdia por especificidad. */
+.docs-inline-email > .h,
+.docs-inline-import > .h,
+.docs-inline-confirm > .h,
+.docs-cust-edit-detail > .h {
+    padding-bottom: 10px;
+}
+/* Sin margen inferior: la separacion con el título la pone el gap de .h-grow. */
+.docs-file-detail-head .docs-head-label,
+.docs-inline-email-head .docs-head-label,
+.docs-inline-import-head .docs-head-label,
+.docs-inline-confirm-head .docs-head-label,
+.docs-cust-edit-detail-head .docs-head-label {
+    margin-bottom: 0;
+}
+.docs-file-preview {
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    background: var(--docs-bg-subtle);
+    aspect-ratio: 16 / 10;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    color: var(--docs-text-muted);
+    text-decoration: none;
+}
+.docs-file-preview:hover {
+    border-color: var(--docs-border-strong);
+    color: var(--docs-text-soft);
+}
+.docs-file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.docs-file-preview i {
+    font-size: 46px;
+    opacity: .55;
+}
+.docs-file-detail-actions,
+.docs-inline-email-actions,
+.docs-inline-import-actions,
+.docs-inline-confirm-actions {
+    display: flex;
+    gap: 8px;
+    /* Los campos y el botón van dentro de un mismo div sin clase, así que el
+       gap de .docs-inline-email no los separa: el botón quedaba pegado al
+       último campo. */
+    margin-top: 14px;
+}
+
+.docs-vd-meta-block {
+    display: flex; flex-direction: column;
+    gap: 7px;
+}
+.docs-vd-meta-block .item .k {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--docs-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 2px;
+    display: block;
+}
+.docs-vd-meta-block .item .v {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+    color: var(--docs-text);
+    word-break: break-all;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .docs-modal { width: 96vw; max-height: 92vh; }
+    .docs-vd-grid { grid-template-columns: 1fr; }
+    .docs-vd-main { border-right: none; border-bottom: 1px solid var(--docs-border); }
+    .docs-gallery { grid-template-columns: 1fr; }
+    .docs-cg-grid { grid-template-columns: repeat(3, 1fr); }
+    .docs-frow { grid-template-columns: 1fr; }
+}
+
+/* ── Right-panel tab content (resumen del documento) ───────────── */
+.docs-rp-card {
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px 0;
+}
+.docs-rp-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-rp-head-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.docs-rp-head-text { flex: 1; min-width: 0; }
+.docs-rp-meta {
+    display: flex; flex-direction: column;
+    gap: 4px;
+    background: var(--docs-bg-subtle);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+}
+.docs-rp-meta .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    margin: 0;
+}
+.docs-rp-meta .row .k {
+    color: var(--docs-text-muted);
+    font-size: 10.5px;
+}
+.docs-rp-meta .row .v {
+    color: var(--docs-text);
+    font-weight: 600;
+    text-align: right;
+}
+.docs-rp-meta .row .v.mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    font-size: 11px;
+}
+
+.docs-rp-actions {
+    display: flex; flex-direction: column;
+    gap: 6px;
+}
+.docs-rp-actions .btn-primary {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+    color: #fff;
+}
+.docs-rp-actions .btn-primary:hover,
+.docs-rp-actions .btn-primary:focus {
+    background: #7ea310;
+    border-color: #7ea310;
+    color: #fff;
+}
+
+.docs-rp-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--docs-text-muted);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-rp-product {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--docs-border);
+    font-size: 11.5px;
+}
+.docs-rp-product:last-child { border-bottom: none; }
+.docs-rp-product .nm {
+    font-weight: 600;
+    color: var(--docs-text);
+    line-height: 1.35;
+}
+.docs-rp-product .sub {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+.docs-rp-product .ref {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+.docs-rp-product .qty {
+    font-size: 10.5px;
+    background: var(--docs-bg-subtle);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--docs-text);
+    font-weight: 600;
+}
+.docs-rp-more {
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    text-align: center;
+    padding: 8px 0 0;
+}
+
+/* ── Galería de archivos (doc-gallery + doc-card) ────────────── */
+.docs-rp .doc-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.docs-rp .doc-card {
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow .15s;
+    position: relative;
+}
+.docs-rp .doc-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.docs-rp .doc-card.doc-card-pending { cursor: pointer; opacity: .75; }
+.docs-rp .doc-card.doc-card-pending:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.docs-rp .doc-card .thumb {
+    background: var(--docs-bg-subtle);
+    height: 110px;
+    display: grid;
+    align-items: center;
+    justify-items: center;
+    position: relative;
+    overflow: hidden;
+}
+.docs-rp .doc-card .thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.docs-rp .doc-card .thumb i {
+    font-size: 30px;
+    color: var(--docs-text-muted);
+    opacity: .5;
+}
+.docs-rp .doc-card .thumb .badge-tp {
+    position: absolute;
+    top: 6px; right: 6px;
+    background: rgba(0,0,0,.7);
+    color: #fff;
+    font-size: 8.5px;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 2px 5px;
+    letter-spacing: .04em;
+    line-height: 1;
+}
+.docs-rp .doc-card .thumb .status-pill {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    font-size: 8.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border-radius: 3px;
+    padding: 2px 6px;
+    line-height: 1;
+}
+.docs-rp .doc-card .thumb .status-pill.approved { background: #dcfce7; color: #166534; }
+.docs-rp .doc-card .thumb .status-pill.rejected  { background: #fee2e2; color: #991b1b; }
+.docs-rp .doc-card .thumb .status-pill.pending   { background: #fef3c7; color: #92400e; }
+.docs-rp .doc-card .thumb .status-pill.received  { background: #dbeafe; color: #1e40af; }
+.docs-rp .doc-card .thumb .doc-del {
+    position: absolute;
+    top: 6px; left: 6px;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    width: 22px; height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+    transition: background .12s;
+}
+.docs-rp .doc-card:hover .doc-del { display: flex; }
+.docs-rp .doc-card .thumb .doc-del:hover { background: rgba(239,68,68,.85); }
+.docs-rp .doc-card .info {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.docs-rp .doc-card .info .nm {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.docs-rp .doc-card .info .meta {
+    font-size: 10px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Inbox slot: documentacion (ver/cargar/validar) ───────────── */
+.docs-rp .docs-file-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+.docs-rp .docs-file-wrap .docs-file {
+    flex: 1;
+    min-width: 0;
+    margin-bottom: 0;
+}
+.docs-rp .docs-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    text-decoration: none;
+    color: var(--docs-text);
+    transition: background .15s, border-color .15s;
+}
+.docs-rp .docs-file:hover {
+    background: var(--docs-bg-hover);
+    border-color: var(--docs-primary);
+}
+.docs-rp .docs-file-thumb {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex: 0 0 auto;
+    background: var(--docs-bg-subtle);
+}
+.docs-rp .docs-file-ic {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-danger);
+    font-size: 20px;
+    flex: 0 0 auto;
+}
+.docs-rp .docs-file-info { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.docs-rp .docs-file-info .nm { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.docs-rp .docs-file-info .sub { font-size: 11px; color: var(--docs-text-muted); }
+.docs-rp .docs-file-go { color: var(--docs-text-muted); font-size: 12px; flex: 0 0 auto; }
+.docs-rp .docs-rp-empty-mini { color: var(--docs-text-muted); font-size: 13px; padding: 6px 2px; }
+.docs-rp .docs-up-row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.docs-rp .docs-up-label { font-size: 12px; font-weight: 600; color: var(--docs-text-soft); }
+.docs-card .docs-card-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: block;
+}
+.docs-card { text-decoration: none; color: inherit; display: block; }
+
+/* ── Boton icono pequeño ─────────────────────────────────────── */
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--docs-text-muted);
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background .12s, color .12s;
+}
+.btn-icon:hover { background: var(--docs-bg-hover); color: var(--docs-danger); }
+
+/* ── Notas internas ──────────────────────────────────────────── */
+.docs-notes-list { display: flex; flex-direction: column; gap: 6px; }
+.docs-note-item {
+    background: var(--docs-bg-subtle);
+    border-radius: 7px;
+    padding: 9px 11px;
+}
+.docs-note-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.docs-note-ts { font-size: 10px; color: var(--docs-text-muted); }
+.docs-note-text { font-size: 12px; color: var(--docs-text); line-height: 1.45; }
+
+/* ── Adjuntos adicionales ────────────────────────────────────── */
+.docs-attach-list { display: flex; flex-direction: column; }
+.docs-attach-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-attach-item:last-child { border-bottom: none; }
+.docs-attach-link {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--docs-text);
+    flex: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-decoration: none;
+}
+.docs-attach-link:hover { color: var(--docs-primary); }
+.docs-attach-meta { font-size: 10.5px; color: var(--docs-text-muted); white-space: nowrap; }
+
+/* ── Timeline de acciones ────────────────────────────────────── */
+.docs-timeline { display: flex; flex-direction: column; }
+.docs-tl-item {
+    display: flex;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-tl-item:last-child { border-bottom: none; }
+.docs-tl-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--docs-primary);
+    margin-top: 4px;
+    flex-shrink: 0;
+}
+.docs-tl-body { flex: 1; min-width: 0; }
+.docs-tl-label { font-size: 12px; font-weight: 600; color: var(--docs-text); }
+.docs-tl-ts { font-size: 10.5px; color: var(--docs-text-muted); }
+
+/* ── Emails enviados ─────────────────────────────────────────── */
+.docs-mail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 26px 8px 0;   /* hueco a la derecha para el icono de abrir */
+    border-bottom: 1px solid var(--docs-border);
+    position: relative;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color .12s ease;
+}
+.docs-mail-item:last-child { border-bottom: none; }
+.docs-mail-item:hover,
+.docs-mail-item:focus-visible {
+    background: var(--docs-bg-subtle);
+    text-decoration: none;
+    color: inherit;
+}
+.docs-mail-item:focus-visible {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+    border-radius: 6px;
+}
+.docs-mail-item:hover .docs-mail-subject { color: var(--docs-primary); }
+/* El indicador de "abre fuera" solo aparece al apuntar la fila: en reposo
+   ensuciaba una lista que casi siempre tiene varias entradas. */
+.docs-mail-go {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    opacity: 0;
+    transition: opacity .12s ease;
+}
+.docs-mail-item:hover .docs-mail-go,
+.docs-mail-item:focus-visible .docs-mail-go { opacity: 1; }
+.docs-mail-type {
+    font-size: 10px; font-weight: 700;
+    color: var(--docs-primary);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.docs-mail-subject { font-size: 12px; font-weight: 500; color: var(--docs-text); }
+.docs-mail-ts { font-size: 10.5px; color: var(--docs-text-muted); }
+
+/* ── Búsqueda y orden en la lista de expedientes ─────────────── */
+.tk-search-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px 16px 4px;
+}
+.tk-search-wrap {
+    flex: 1;
+    position: relative;
+}
+.tk-search-icon {
+    position: absolute;
+    left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    pointer-events: none;
+}
+.tk-search-input {
+    width: 100%;
+    padding: 8px 28px 8px 30px;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--docs-text);
+    background: #fafafa;
+    outline: none;
+    font-family: inherit;
+}
+.tk-search-input:focus {
+    border-color: var(--docs-primary);
+    box-shadow: 0 0 0 3px rgba(144,187,19,.14);
+}
+
+/* ── Barra de progreso en tarjeta de expediente ──────────────── */
+.docs-list-progress {
+    height: 3px;
+    background: var(--docs-bg-subtle);
+    border-radius: 99px;
+    overflow: hidden;
+    margin: 2px 0;
+}
+.docs-list-progress-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .3s ease;
+}
+
+/* ── Footer del modal en fila ────────────────────────────────── */
+.docs-foot[style*="flex-direction:row"] {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+}
+.docs-foot[style*="flex-direction:row"] .btn {
+    width: auto;
+    white-space: nowrap;
+}
+
+/* ── Workspace side panel tabs ───────────────────────────────── */
+.docs-ws-tabs {
+    display: flex;
+    gap: 0;
+    background: #fafafa;
+    border-bottom: 1px solid var(--docs-border);
+    padding: 10px 6px 0;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.docs-ws-tabs::-webkit-scrollbar { display: none; }
+.docs-ws-tab {
+    flex: 1;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 2px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    color: var(--docs-text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    cursor: pointer;
+    transition: color .12s, border-color .12s;
+    line-height: 1;
+    font-family: inherit;
+}
+/* Solo ícono + tooltip nativo (title=""), como el mockup Alvarez */
+.docs-ws-tab span { display: none; }
+.docs-ws-tab i { font-size: 16px; }
+.docs-ws-tab:hover { color: var(--docs-text-soft); }
+/* El anillo de foco se dibuja HACIA DENTRO. Con el offset positivo por defecto
+   sobresalía 4px del botón, y .docs-ws-tabs solo deja 1px libre por abajo
+   (padding: 10px 6px 0) además de recortar: al declarar overflow-x el navegador
+   fuerza también overflow-y, así que el anillo salía cortado por la mitad. */
+.docs-ws-tab:focus-visible {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -3px;
+    border-radius: 6px;
+}
+.docs-ws-tab.on {
+    color: var(--docs-text);
+    border-bottom-color: var(--docs-primary);
+}
+.docs-ws-tab.on i { color: var(--docs-primary); }
+.docs-ws-pane {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    padding: 12px;
+}
+.docs-ws-pane.on { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.docs-ws-pane-scroll { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+
+/* ── Gallery toolbar (filtros + acciones) ────────────────────── */
+.docs-gallery-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.docs-gallery-filters { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.docs-gallery-actions { display: flex; gap: 4px; }
+
+/* ── Side panel: tab pane overflow para el flex container ────── */
+.docs-vd-side {
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden;
+}
+
+/* ── Lista de expedientes: contenedor con posición relativa ───── */
+.docs-list-view { position: relative; }
+
+/* ── Tarjeta de expediente ────────────────────────────────────── */
+.docs-list-card {
+    border-left-width: 1px !important;
+    border-left-style: solid;
+    border-left-color: var(--bv-border, #e4e4e7);
+    gap: 7px;
+    padding: 11px 13px;
+}
+.docs-card-header { display: flex; align-items: flex-start; gap: 8px; }
+.docs-card-info   { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.docs-card-desc   {
+    font-size: 11.5px;
+    color: var(--bv-text-soft, #3f3f46);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.docs-card-prog       { display: flex; align-items: center; gap: 8px; margin-top: 1px; }
+.docs-card-prog-track { flex: 1; height: 5px; border-radius: 99px; background: var(--bv-bg-subtle, #f4f4f5); overflow: hidden; }
+.docs-card-prog-fill  { height: 100%; width: var(--pct); border-radius: 99px; }
+.docs-card-docs-lbl   { font-size: 10px; color: var(--bv-text-muted, #71717a); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.docs-list-card .foot { border-top: 1px solid var(--bv-border, #e4e4e7); padding-top: 7px; margin-top: 1px; }
+.docs-list-card .title { font-size: 13px; }
+.docs-list-card .id { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.docs-card-time { margin-left: auto; }
+
+/* ── Sort dropdown del listado ────────────────────────────────── */
+.sort-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 16px 10px;
+}
+.sort-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--docs-text-muted);
+    letter-spacing: .01em;
+}
+.sort-dd {
+    position: relative;
+    margin-left: auto;
+}
+.sort-trigger {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--docs-text);
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: border-color .12s, box-shadow .12s;
+}
+.sort-trigger:hover { border-color: #cdd3da; }
+.sort-trigger.open {
+    border-color: var(--docs-primary);
+    box-shadow: 0 0 0 3px rgba(144,187,19,.14);
+}
+.sort-trigger i.lead { font-size: 10.5px; color: var(--docs-primary); }
+.sort-trigger i.chev {
+    font-size: 9px;
+    color: var(--docs-text-muted);
+    transition: transform .15s;
+    margin-left: 1px;
+}
+.sort-trigger.open i.chev { transform: rotate(180deg); }
+.sort-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+}
+.sort-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px -8px rgba(16,24,40,.22), 0 2px 6px rgba(16,24,40,.06);
+    padding: 5px;
+    animation: sort-pop .13s ease;
+}
+@keyframes sort-pop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}
+.sort-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--docs-text);
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    padding: 7px 9px;
+    cursor: pointer;
+    text-align: left;
+}
+.sort-item:hover { background: var(--docs-bg-subtle); }
+.sort-item.sel { color: #4f6e0c; font-weight: 600; }
+.sort-item .ck { width: 14px; display: flex; justify-content: center; font-size: 10px; color: var(--docs-primary); }
+.sort-item .ico { width: 15px; display: flex; justify-content: center; font-size: 11px; color: var(--docs-text-muted); }
+.sort-item.sel .ico { color: var(--docs-primary); }
+.sort-item-lbl { flex: 1; }
+
+/* ── Stepper de validación por etapas ─────────────────────────── */
+.docs-ws-step { display: flex; align-items: center; gap: 0; }
+.docs-ws-step .node {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.docs-ws-step .node.done { background: var(--docs-primary); color: #fff; }
+.docs-ws-step .node.curr { background: #fff; border: 2px solid var(--docs-primary); color: var(--docs-primary); }
+.docs-ws-step .node.todo { background: var(--docs-bg-subtle); border: 1px solid var(--docs-border); color: var(--docs-text-muted); }
+.docs-ws-step .node.rejected { background: #fee2e2; border: 1px solid var(--docs-danger); color: var(--docs-danger); }
+.docs-ws-step .bar { height: 2px; flex: 1; background: var(--docs-border); }
+.docs-ws-step .bar.fill { background: var(--docs-primary); }
+.docs-ws-step .bar.rej { background: var(--docs-danger); }
+
+/* ── Icono circular de comunicaciones (correos automáticos) ───── */
+.docs-ws-comm-ic {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.docs-ws-comm-ic.on { background: #eaf3d3; color: #6f9410; }
+/* ═══════════════════════════════════════════════════════════════════════
+   Componentes del catálogo Alvarez · Fase 3 (jul-2026)
+   Toggle galería/lista, selección múltiple, timeline unificada, checklist
+   de requeridos, CTA contextual, estados vacíos con acción, toast deshacer,
+   atajos de teclado y acentos de progreso por estado (sin hex inline).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Botones de marca (sustituye style="background:#90bb13" inline) ── */
+.docs-modal .btn-primary,
+.docs-rp .btn-primary {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+.docs-modal .btn-primary:hover,
+.docs-rp .btn-primary:hover {
+    background: #7da310;
+    border-color: #7da310;
+}
+
+/* ── Acento de progreso por grupo de estado ── */
+.docs-card-prog-fill.approved { background: var(--docs-primary); }
+.docs-card-prog-fill.rejected { background: #FA896B; }
+.docs-card-prog-fill.pending  { background: #FEC90F; }
+
+/* ── Cabecera de card en fila (sustituye flex inline repetido) ── */
+.docs-vd-card > .h.h-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+/* Los paneles desacoplados son formularios cortos: respiran menos que la tarjeta
+   del expediente, que agrupa muchas secciones. */
+.docs-inline-email,
+.docs-inline-import,
+.docs-inline-confirm,
+.docs-cust-edit-detail {
+    gap: 8px;
+}
+
+.docs-vd-card > .h .h-grow,
+.docs-inline-email > .h .h-grow,
+.docs-inline-import > .h .h-grow,
+.docs-inline-confirm > .h .h-grow,
+.docs-cust-edit-detail > .h .h-grow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    /* Separacion entre antetitulo y título ("DOCUMENTOS · IMPORTAR" y "Cargar
+       desde galeria del chat"): con 1px quedaban pegados. Mismo valor que el
+       margen del antetitulo en .docs-head, el encabezado de referencia. */
+    gap: 3px;
+}
+
+/* ── Fila de acciones bajo el título (título nunca compite por espacio
+     con los botones, así no se envuelve a 2 líneas) ── */
+.docs-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+/* ── Toggle galería ↔ lista ── */
+.dg-toggle {
+    display: inline-flex;
+    border: 1px solid var(--docs-border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.dg-toggle button {
+    width: 30px;
+    height: 28px;
+    border: none;
+    background: #fff;
+    color: var(--docs-text-muted);
+    cursor: pointer;
+    font-size: 11px;
+}
+.dg-toggle button.on {
+    background: var(--docs-bg-subtle);
+    color: var(--docs-primary);
+}
+
+/* ── Vista compacta (lista) de documentos ── */
+.doc-list-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.doc-listrow {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 9px 11px;
+    border: 1px solid var(--docs-border);
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+}
+.doc-listrow:hover { border-color: var(--docs-border-strong); }
+.doc-listrow.is-pending {
+    opacity: .6;
+    cursor: default;
+}
+.doc-listrow .lic {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: var(--docs-bg-subtle);
+    display: grid;
+    place-items: center;
+    color: var(--docs-text-muted);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+.doc-listrow .lb {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.doc-listrow .lb .n {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--docs-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.doc-listrow .lb .m {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Selección múltiple de documentos ── */
+.doc-card.selmode { cursor: pointer; }
+.doc-card.sel {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+}
+.doc-card .doc-check {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .85);
+    background: rgba(0, 0, 0, .25);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 4;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+/* El check solo debe verse cuando la tarjeta está realmente seleccionada —
+   antes se dibujaba siempre en blanco, incluso sobre el círculo "vacío". */
+.doc-card .doc-check i {
+    display: none;
+}
+.doc-card.sel .doc-check {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+.doc-card.sel .doc-check i {
+    display: block;
+}
+.docs-bulkbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    background: #18181b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+.docs-bulkbar .sp { flex: 1; }
+.docs-bulkbar .bb-btn {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+}
+.docs-bulkbar .bb-btn:hover { background: rgba(255, 255, 255, .1); }
+
+/* ── Timeline unificada (historial + correos) ── */
+.docs-utl {
+    position: relative;
+    padding-left: 22px;
+}
+.docs-utl::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--docs-border);
+}
+.docs-utl-item {
+    position: relative;
+    padding: 0 0 15px;
+}
+.docs-utl-item:last-child { padding-bottom: 0; }
+.docs-utl-dot {
+    position: absolute;
+    left: -19px;
+    top: 2px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--docs-text-muted);
+}
+.docs-utl-dot.mail { border-color: var(--docs-text-soft); }
+.docs-utl-dot.ok {
+    border-color: var(--docs-primary);
+    background: var(--docs-primary);
+}
+.docs-utl-dot.rej {
+    border-color: #3f3f46;
+    background: #3f3f46;
+}
+.docs-utl-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--docs-text);
+    letter-spacing: -.01em;
+}
+.docs-utl-sub {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    margin-top: 1px;
+}
+.docs-utl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+    margin-left: 6px;
+    vertical-align: 1px;
+}
+
+/* ── Checklist de documentos requeridos ── */
+.docs-req-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.docs-req-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--docs-border);
+}
+.docs-req-item:last-child { border-bottom: none; }
+.docs-req-ic {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+.docs-req-ic.done {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-req-ic.miss {
+    background: #f4f4f5;
+    color: #a1a1aa;
+    border: 1px dashed #d4d4d8;
+}
+.docs-req-nm {
+    flex: 1;
+    font-size: 12px;
+    color: var(--docs-text);
+    font-weight: 500;
+}
+.docs-req-item.pending .docs-req-nm { color: var(--docs-text-muted); }
+.docs-req-tag {
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+}
+.docs-req-tag.done {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-req-tag.miss {
+    background: #f4f4f5;
+    color: #a1a1aa;
+}
+.docs-req-link {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--docs-text-soft);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    font-family: inherit;
+    text-decoration: underline;
+}
+
+/* ── Acción principal contextual (banner CTA) ── */
+.docs-cta {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 12px 13px;
+    border-radius: 11px;
+    border: 1px solid var(--docs-border);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+}
+.docs-cta.warn {
+    border-color: #e0e2e6;
+    background: #f6f7f9;
+}
+.docs-cta.ok {
+    border-color: #dbe8bd;
+    background: #f7faef;
+}
+.docs-cta .ic {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    background: var(--docs-bg-subtle);
+    color: var(--docs-text-soft);
+}
+.docs-cta.warn .ic {
+    background: #e9ebee;
+    color: #5b6572;
+}
+.docs-cta.ok .ic {
+    background: #eaf3d3;
+    color: #5f7d0c;
+}
+.docs-cta .tx {
+    flex: 1;
+    min-width: 0;
+    padding-top: 1px;
+}
+.docs-cta .tx .t {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--docs-text);
+    line-height: 1.3;
+}
+.docs-cta .tx .s {
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+}
+.docs-cta .btn {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* ── Estado vacío con acción ── */
+.docs-es-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-align: center;
+    padding: 26px 18px;
+}
+.docs-es-empty .eic {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--docs-bg-subtle);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    color: var(--docs-text-muted);
+}
+.docs-es-empty .et {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--docs-text);
+}
+.docs-es-empty .esb {
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    line-height: 1.5;
+    max-width: 240px;
+}
+
+/* Centra el estado de carga del expediente dentro del alto disponible del
+   modal (.docs-body es flex column; sin esto el mensaje quedaba pegado
+   arriba con todo el resto del modal en blanco debajo). */
+.docs-loading-center {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Toast con deshacer ── */
+.docs-undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    z-index: 2100;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px 11px 16px;
+    background: #18181b;
+    color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .28);
+    font-size: 12.5px;
+    font-weight: 500;
+    animation: docs-toast-in .18s ease;
+}
+@keyframes docs-toast-in {
+    from { transform: translate(-50%, 12px); opacity: 0; }
+    to   { transform: translate(-50%, 0); opacity: 1; }
+}
+.docs-undo-toast > i { color: #a1a1aa; }
+.docs-undo-toast .ub {
+    background: none;
+    border: none;
+    color: #a3e635;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+.docs-undo-toast .ux {
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* ── Navegación por teclado en la lista ── */
+.docs-list-card.kb-active {
+    outline: 2px solid var(--docs-primary);
+    outline-offset: -2px;
+    background: #f6faec !important;
+}
+.docs-kbd-hints {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--docs-border);
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+}
+.docs-kbd-hints .kh {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.docs-kbd-hints kbd {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    background: #fff;
+    border: 1px solid var(--docs-border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--docs-text-soft);
+}
+
+/* ── Stepper de validación con etiquetas (mockup .wv-steps) ── */
+.docs-wv-steps {
+    display: flex;
+    gap: 0;
+    margin: 4px 0 6px;
+}
+.docs-wv-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    text-align: center;
+}
+.docs-wv-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--docs-border);
+    z-index: 0;
+}
+.docs-wv-step.done::after { background: var(--docs-primary); }
+.docs-wv-step.rejected::after { background: var(--docs-danger); }
+.docs-wv-node {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    z-index: 1;
+    position: relative;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+    color: var(--docs-text-muted);
+}
+.docs-wv-step.done .docs-wv-node {
+    background: var(--docs-primary);
+    border-color: var(--docs-primary);
+    color: #fff;
+}
+.docs-wv-step.curr .docs-wv-node {
+    background: #fff;
+    border: 2px solid var(--docs-primary);
+    color: var(--docs-primary);
+    box-shadow: 0 0 0 4px rgba(144, 187, 19, .14);
+}
+.docs-wv-step.rejected .docs-wv-node {
+    background: #fee2e2;
+    border-color: var(--docs-danger);
+    color: var(--docs-danger);
+}
+.docs-wv-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--docs-text);
+    letter-spacing: -.01em;
+}
+.docs-wv-step.todo .docs-wv-lbl { color: var(--docs-text-muted); }
+.docs-wv-sub {
+    font-size: 9.5px;
+    color: var(--docs-text-muted);
+}
+
+/* ── Fila de progreso de subida (mockup sección 8) ── */
+.docs-upload-progress { cursor: default; }
+.docs-upload-progress .lic {
+    background: #eef3df;
+    color: #5f7d0c;
+}
+.docs-upload-progress-track {
+    margin-top: 5px;
+    width: 100%;
+}
+.docs-upload-progress-pct {
+    font-size: 10px;
+    color: var(--docs-text-muted);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* docs-viewer · empty state must span both gallery columns
+   (movido desde Helpdesk core conversations-commerce.css) */
+.docs-gallery .docs-gallery-empty {
+    grid-column: 1 / -1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Accesibilidad + eliminación de estilos inline · auditoría jul-2026
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Correo del cliente: permite partir emails largos ── */
+.docs-break-all { word-break: break-all; }
+
+/* ── Barra de progreso de la galería (cabecera del panel) ── */
+.docs-gallery-progress { display: flex; align-items: center; gap: 10px; }
+.docs-gallery-progress-track {
+    flex: 1;
+    height: 7px;
+    border-radius: 99px;
+    background: var(--docs-bg-subtle);
+    overflow: hidden;
+}
+.docs-gallery-progress-fill {
+    height: 100%;
+    width: var(--pct);
+    background: var(--docs-primary);
+    border-radius: 99px;
+}
+.docs-gallery-progress-label {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--docs-text-muted);
+    white-space: nowrap;
+}
+
+/* ── Banner de estado del expediente (vista detalle) ── */
+.docs-vd-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 9px;
+    background: var(--docs-bg-subtle);
+    border: 1px solid var(--docs-border);
+}
+.docs-vd-status-banner-badge { font-size: 8.5px; padding: 4px 11px; }
+.docs-vd-status-banner-stage {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--docs-text-muted);
+    white-space: nowrap;
+}
+.docs-vd-status-banner-stage-value {
+    color: var(--docs-text);
+    font-size: 12.5px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.docs-vd-order-ref { font-size: 11px; }
+
+/* ── Fila de botones genérica (acciones de la etapa) ── */
+.docs-btn-row-8 { display: flex; gap: 8px; }
+
+/* ── Modificador de docs-action-row para filas de comunicaciones ── */
+.docs-action-row--comm { gap: 10px; }
+
+/* El botón de la derecha ("Enviar" o "Reenviar") no se comprime: el texto de la
+   izquierda es el que cede ancho. */
+.docs-action-row--comm .btn {
+    flex-shrink: 0;
+}
+.docs-action-row--comm .btn i {
+    margin-right: 5px;
+    font-size: 10.5px;
+}
+
+/* ── Divisor entre envíos automáticos y acciones manuales (redactar) ── */
+.docs-action-divider { height: 1px; background: var(--docs-border); margin: 4px 0; }
+
+/* ── Separación del badge de estado en la cabecera del panel ── */
+.docs-status-spacer { margin-right: 6px; }
+
+/* Confirmación en panel (.docs-inline-confirm). Reutiliza el aspecto de las
+   demás subvistas vía los selectores agrupados de arriba; solo necesita estilo
+   propio la línea de apoyo bajo el aviso. */
+.docs-inline-confirm-hint {
+    font-size: 10.5px;
+    color: var(--docs-text-muted);
+    line-height: 1.45;
+}

@@ -134,12 +134,12 @@ a.ui-button:active,
 .ui-widget-content .ui-state-highlight,
 .ui-widget-header .ui-state-highlight {
 	border: 1px solid #ffdb1f;
-	background: #fafafa;
+	background: #f5f6f8;
 	color: #333333;
 }
 .ui-state-checked {
 	border: 1px solid #ffdb1f;
-	background: #fafafa;
+	background: #f5f6f8;
 }
 .ui-state-highlight a,
 .ui-widget-content .ui-state-highlight a,

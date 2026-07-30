@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('erp_endpoints')) {
+            return;
+        }
+
         Schema::create('erp_endpoints', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('account_id')->nullable(); // Multi-tenant support (optional)

@@ -1,0 +1,922 @@
+/* ==========================================================================
+   F9.1 — AI OBSERVABILITY ADMIN PRIMITIVES
+   --------------------------------------------------------------------------
+   Surfaces:
+     · /rui/admin/ai-conversations          (audit message wrapper)
+     · /rui/admin/ai-feedback               (sentiment pills)
+     · /rui/admin/ai-self-improve  (F9.6)   (self-improve cards)
+
+   Design rule: TOKENS ONLY — no hex literals, no banned color tokens
+   (--color-primary*, --color-info-border, --color-accent). Inner bubble
+   styling lives in ai-chatbox.css and is reused verbatim per Option A+
+   (audit replay fidelity). This file only defines the admin-only chrome.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------
+   1. AUDIT MESSAGE WRAPPER (mc-ai-audit-message)
+   --------------------------------------------------------------- */
+.mc-ai-audit-message {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-card);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    margin-bottom: var(--space-3);
+    scroll-margin-top: var(--space-8);
+}
+
+.mc-ai-audit-message-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    line-height: 1.4;
+}
+
+.mc-ai-audit-message-seq {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-secondary);
+}
+
+.mc-ai-audit-message-time {
+    color: var(--color-text-muted);
+}
+
+.mc-ai-audit-message-trace {
+    color: var(--color-teal);
+    text-decoration: none;
+    font-size: var(--text-xs);
+    word-break: break-all;
+}
+
+.mc-ai-audit-message-trace:hover,
+.mc-ai-audit-message-trace:focus-visible {
+    color: var(--color-teal-hover);
+    text-decoration: underline;
+}
+
+.mc-ai-audit-message-tokens {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+}
+
+.mc-ai-audit-message-feedback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-full);
+}
+
+.mc-ai-audit-message-feedback-up {
+    background: var(--chart-2-bg);
+    color: var(--color-success);
+}
+
+.mc-ai-audit-message-feedback-down {
+    background: var(--chart-5-bg);
+    color: var(--color-error);
+}
+
+.mc-ai-audit-message-body {
+    min-width: 0;
+}
+
+/* User row — replay user-side (right-aligned via inner bubble) */
+.mc-ai-audit-message-user {
+    background: var(--color-bg-subtle);
+}
+
+/* Assistant row — replay assistant-side */
+.mc-ai-audit-message-assistant {
+    background: var(--color-card-bg);
+}
+
+/* Tool row — collapsible accordion via <details>/<summary> */
+.mc-ai-audit-message-tool {
+    background: var(--color-bg-subtle);
+    padding: 0;
+}
+
+.mc-ai-audit-message-tool > .mc-ai-audit-message-tool-summary {
+    list-style: none;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+}
+
+.mc-ai-audit-message-tool > .mc-ai-audit-message-tool-summary::-webkit-details-marker {
+    display: none;
+}
+
+.mc-ai-audit-message-tool .mc-ai-audit-message-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.mc-ai-audit-message-tool-key {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    font-family: var(--font-mono);
+}
+
+.mc-ai-audit-message-tool-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    font-family: var(--font-mono);
+    text-transform: lowercase;
+}
+
+.mc-ai-audit-message-tool-status-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.mc-ai-audit-message-tool-status-failure {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.mc-ai-audit-message-tool-status-blocked,
+.mc-ai-audit-message-tool-status-forbidden {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.mc-ai-audit-message-tool-duration {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+.mc-ai-audit-message-destructive {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.mc-ai-audit-message-tool-chevron {
+    font-size: 18px;
+    color: var(--color-text-muted);
+    transition: transform 150ms ease-out;
+}
+
+.mc-ai-audit-message-tool[open] > .mc-ai-audit-message-tool-summary .mc-ai-audit-message-tool-chevron {
+    transform: rotate(180deg);
+}
+
+.mc-ai-audit-message-tool-body {
+    padding: 0 var(--space-4) var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-1);
+    padding-top: var(--space-3);
+}
+
+.mc-ai-audit-message-tool-section-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: var(--space-1);
+}
+
+.mc-ai-audit-message-tool-pre {
+    background: var(--color-active-bg);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--color-text);
+    overflow-x: auto;
+    margin: 0;
+}
+
+/* System row — context note, no inner bubble */
+.mc-ai-audit-message-system {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    background: var(--color-banner-bg);
+    border-style: dashed;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    padding: var(--space-2) var(--space-4);
+}
+
+.mc-ai-audit-message-system-icon {
+    font-size: 16px;
+    color: var(--color-info);
+}
+
+.mc-ai-audit-message-system-text code {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    background: var(--color-active-bg);
+    padding: 1px var(--space-1);
+    border-radius: var(--radius-sm);
+}
+
+/* Error row — failed turn */
+.mc-ai-audit-message-error {
+    border-left: 3px solid var(--color-error);
+    background: var(--color-error-bg);
+}
+
+.mc-ai-audit-message-error-class {
+    color: var(--color-error);
+    font-weight: var(--weight-semibold);
+    font-family: var(--font-mono);
+}
+
+.mc-ai-audit-message-error-text {
+    color: var(--color-error-dark);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+/* Loading row — replay-in-flight */
+.mc-ai-audit-message-loading {
+    background: var(--color-card-bg);
+}
+
+.mc-ai-audit-message-loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-border-strong);
+    border-top-color: var(--color-teal);
+    animation: mc-ai-audit-spin 700ms linear infinite;
+    margin-right: var(--space-2);
+    vertical-align: middle;
+}
+
+.mc-ai-audit-message-loading-text {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+    font-style: italic;
+}
+
+@keyframes mc-ai-audit-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile collapse — meta row above body at <640px */
+@media (max-width: 640px) {
+    .mc-ai-audit-message {
+        grid-template-columns: 1fr;
+        gap: var(--space-2);
+    }
+    .mc-ai-audit-message-meta {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+    }
+    .mc-ai-audit-message-system {
+        grid-template-columns: auto 1fr;
+    }
+    .mc-ai-audit-message-tool > .mc-ai-audit-message-tool-summary {
+        grid-template-columns: 1fr auto;
+    }
+}
+
+/* ---------------------------------------------------------------
+   2. SENTIMENT PILLS (mc-ai-sentiment — composes onto .mc-badge)
+   --------------------------------------------------------------- */
+.mc-ai-sentiment {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.mc-ai-sentiment-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Five admin-only categories — chart palette */
+.mc-ai-sentiment-kb-gap {
+    background: var(--chart-1-bg);
+    color: var(--color-text);
+    box-shadow: inset 2px 0 0 var(--chart-1);
+}
+
+.mc-ai-sentiment-hallucination {
+    background: var(--chart-5-bg);
+    color: var(--color-error-dark);
+    box-shadow: inset 2px 0 0 var(--chart-5);
+}
+
+.mc-ai-sentiment-wrong-tool {
+    background: var(--chart-4-bg);
+    color: var(--color-warning-dark);
+    box-shadow: inset 2px 0 0 var(--chart-4);
+}
+
+.mc-ai-sentiment-latency {
+    background: var(--chart-3-bg);
+    color: var(--color-info-dark);
+    box-shadow: inset 2px 0 0 var(--chart-3);
+}
+
+.mc-ai-sentiment-other {
+    background: var(--chart-6-bg);
+    color: var(--color-text-secondary);
+    box-shadow: inset 2px 0 0 var(--chart-6);
+}
+
+/* Three fallbacks — semantic colors */
+.mc-ai-sentiment-positive {
+    background: var(--color-success-bg);
+    color: var(--color-success-dark);
+    box-shadow: inset 2px 0 0 var(--color-success);
+}
+
+.mc-ai-sentiment-negative {
+    background: var(--color-error-bg);
+    color: var(--color-error-dark);
+    box-shadow: inset 2px 0 0 var(--color-error);
+}
+
+.mc-ai-sentiment-neutral {
+    background: var(--color-bg-subtle);
+    color: var(--color-text-muted);
+    box-shadow: inset 2px 0 0 var(--color-border-strong);
+}
+
+/* Icon-only variant — collapse label, square box */
+.mc-ai-sentiment-icon-only {
+    padding: var(--space-1);
+    aspect-ratio: 1 / 1;
+    justify-content: center;
+}
+
+.mc-ai-sentiment-icon-only > *:not(.mc-ai-sentiment-icon) {
+    display: none;
+}
+
+/* ---------------------------------------------------------------
+   3. SELF-IMPROVE CARD (mc-ai-self-improve-card)
+   --------------------------------------------------------------- */
+.mc-ai-self-improve-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+
+.mc-ai-self-improve-card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-sm);
+}
+
+.mc-ai-self-improve-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.mc-ai-self-improve-card-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.mc-ai-self-improve-card-state-label {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.mc-ai-self-improve-card-count {
+    margin-left: auto;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    background: var(--color-bg-subtle);
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.mc-ai-self-improve-card-title {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    line-height: 1.4;
+}
+
+.mc-ai-self-improve-card-title code {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    background: var(--color-active-bg);
+    padding: 1px var(--space-1);
+    border-radius: var(--radius-sm);
+}
+
+.mc-ai-self-improve-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.mc-ai-self-improve-card-domain {
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.mc-ai-self-improve-card-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+}
+
+/* State-specific accents */
+.mc-ai-self-improve-card-discovered {
+    border-left: 3px solid var(--color-info);
+}
+.mc-ai-self-improve-card-discovered .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-discovered .mc-ai-self-improve-card-state-label {
+    color: var(--color-info);
+}
+
+.mc-ai-self-improve-card-investigating {
+    border-left: 3px solid var(--chart-3);
+}
+.mc-ai-self-improve-card-investigating .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-investigating .mc-ai-self-improve-card-state-label {
+    color: var(--color-info-dark);
+}
+
+.mc-ai-self-improve-card-drafted {
+    border-left: 3px solid var(--color-warning);
+}
+.mc-ai-self-improve-card-drafted .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-drafted .mc-ai-self-improve-card-state-label {
+    color: var(--color-warning-dark);
+}
+
+.mc-ai-self-improve-card-applied {
+    border-left: 3px solid var(--color-success);
+}
+.mc-ai-self-improve-card-applied .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-applied .mc-ai-self-improve-card-state-label {
+    color: var(--color-success);
+}
+
+.mc-ai-self-improve-card-verified {
+    border-left: 3px solid var(--color-teal);
+    background: var(--color-bg-subtle);
+}
+.mc-ai-self-improve-card-verified .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-verified .mc-ai-self-improve-card-state-label {
+    color: var(--color-teal);
+}
+
+.mc-ai-self-improve-card-rolled-back {
+    border-left: 3px solid var(--chart-4);
+}
+.mc-ai-self-improve-card-rolled-back .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-rolled-back .mc-ai-self-improve-card-state-label {
+    color: var(--color-warning-dark);
+}
+
+.mc-ai-self-improve-card-stale {
+    border-left: 3px solid var(--color-border-strong);
+    opacity: .85;
+}
+.mc-ai-self-improve-card-stale .mc-ai-self-improve-card-icon,
+.mc-ai-self-improve-card-stale .mc-ai-self-improve-card-state-label {
+    color: var(--color-text-muted);
+}
+
+.mc-ai-self-improve-card-loading {
+    border-left: 3px dashed var(--color-border-strong);
+}
+
+.mc-ai-self-improve-card-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-full);
+    border: 2px solid var(--color-border-strong);
+    border-top-color: var(--color-teal);
+    animation: mc-ai-self-improve-spin 700ms linear infinite;
+}
+
+@keyframes mc-ai-self-improve-spin {
+    to { transform: rotate(360deg); }
+}
+
+.mc-ai-self-improve-card-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.mc-ai-self-improve-card-skeleton-line {
+    height: 12px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg,
+        var(--color-bg-subtle) 0%,
+        var(--color-active-bg) 50%,
+        var(--color-bg-subtle) 100%);
+    background-size: 200% 100%;
+    animation: mc-ai-self-improve-skeleton 1400ms ease-in-out infinite;
+}
+
+@keyframes mc-ai-self-improve-skeleton {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ---------------------------------------------------------------
+   4. PREFERS-REDUCED-MOTION — kill all motion
+   --------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .mc-ai-audit-message-tool-chevron,
+    .mc-ai-self-improve-card {
+        transition: none;
+    }
+    .mc-ai-audit-message-loading-spinner,
+    .mc-ai-self-improve-card-spinner {
+        animation: none;
+        border-top-color: var(--color-text-muted);
+    }
+    .mc-ai-self-improve-card-skeleton-line {
+        animation: none;
+        background: var(--color-bg-subtle);
+    }
+}
+
+/* ---------------------------------------------------------------
+   5. DARK MODE — re-tint surfaces, keep contrast WCAG AA
+   --------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    .mc-ai-audit-message,
+    .mc-ai-audit-message-assistant,
+    .mc-ai-audit-message-loading,
+    .mc-ai-self-improve-card {
+        background: var(--color-card-bg);
+    }
+    .mc-ai-audit-message-user,
+    .mc-ai-audit-message-tool {
+        background: var(--color-bg-subtle);
+    }
+    .mc-ai-audit-message-error {
+        background: var(--color-error-bg);
+    }
+    .mc-ai-audit-message-system {
+        background: var(--color-banner-bg);
+    }
+    .mc-ai-audit-message-tool-pre,
+    .mc-ai-audit-message-system-text code,
+    .mc-ai-self-improve-card-title code {
+        background: var(--color-active-bg);
+    }
+}
+
+/* ---------------------------------------------------------------
+   6. FOCUS-VISIBLE — keyboard a11y consistent with mc-* primitives
+   --------------------------------------------------------------- */
+.mc-ai-audit-message-tool > .mc-ai-audit-message-tool-summary:focus-visible,
+.mc-ai-audit-message-trace:focus-visible,
+.mc-ai-self-improve-card:focus-within {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------
+   F9.1.D-fix — CONVERSATION DRILL-DOWN TIMELINE (mc-conv-*)
+   Used by /rui/admin/ai-conversations/{uid} only. Vertical-rail
+   layout with role avatars + connector line + flat content cards
+   + nested tool accordions. Replaces the live-chatbox bubble
+   replay (which dominated the wide admin layout). Pure design
+   tokens — no chatbox CSS reuse so chatbox styles never see
+   these rules.
+   --------------------------------------------------------------- */
+
+.mc-conv-timeline {
+    position: relative;
+    padding: var(--space-4) var(--space-5);
+}
+
+.mc-conv-timeline::before {
+    content: '';
+    position: absolute;
+    /* center on 40px avatar (20px) - 1px line offset */
+    left: calc(var(--space-5) + 19px);
+    top: var(--space-6);
+    bottom: var(--space-6);
+    width: 2px;
+    background: var(--color-border);
+    z-index: 0;
+}
+
+.mc-conv-turn {
+    position: relative;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: var(--space-3);
+    padding-bottom: var(--space-5);
+}
+
+.mc-conv-turn:last-child {
+    padding-bottom: 0;
+}
+
+.mc-conv-avatar {
+    position: relative;
+    z-index: 1;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-card-bg);
+    outline: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.mc-conv-avatar .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.mc-conv-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.mc-conv-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    line-height: 1.4;
+}
+
+.mc-conv-role {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.mc-conv-card {
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-text);
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+.mc-conv-card.is-error {
+    background: var(--color-error-bg);
+    border-color: var(--color-error);
+    color: var(--color-error-dark);
+}
+
+.mc-conv-card p:first-child { margin-top: 0; }
+.mc-conv-card p:last-child { margin-bottom: 0; }
+.mc-conv-card p { margin: var(--space-2) 0; }
+
+.mc-conv-card a {
+    color: var(--color-teal);
+    text-decoration: underline;
+}
+
+.mc-conv-card a:hover {
+    color: var(--color-teal-hover, var(--color-teal));
+}
+
+.mc-conv-card code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--color-bg-subtle);
+    padding: 1px 5px;
+    border-radius: 3px;
+}
+
+.mc-conv-card pre {
+    background: var(--color-bg-subtle);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    margin: var(--space-2) 0;
+}
+
+.mc-conv-card pre code {
+    background: transparent;
+    padding: 0;
+}
+
+.mc-conv-card ul,
+.mc-conv-card ol {
+    padding-left: var(--space-5);
+    margin: var(--space-2) 0;
+}
+
+.mc-conv-card li {
+    margin: 4px 0;
+}
+
+.mc-conv-card strong {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.mc-conv-card h1,
+.mc-conv-card h2,
+.mc-conv-card h3,
+.mc-conv-card h4 {
+    font-weight: var(--weight-semibold);
+    margin: var(--space-3) 0 var(--space-2);
+}
+
+.mc-conv-card h1 { font-size: var(--text-base); }
+.mc-conv-card h2,
+.mc-conv-card h3,
+.mc-conv-card h4 { font-size: var(--text-sm); }
+
+.mc-conv-tools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.mc-conv-tool {
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-family: var(--font-mono);
+}
+
+.mc-conv-tool > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: var(--space-2) var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-muted);
+}
+
+.mc-conv-tool > summary::-webkit-details-marker {
+    display: none;
+}
+
+.mc-conv-tool > summary::before {
+    content: '▶';
+    font-size: 9px;
+    color: var(--color-text-muted);
+    transition: transform 150ms ease-out;
+}
+
+.mc-conv-tool[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.mc-conv-tool-key {
+    font-weight: var(--weight-semibold);
+    color: var(--color-text);
+}
+
+.mc-conv-tool-status {
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: var(--weight-medium);
+}
+
+.mc-conv-tool-status.is-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.mc-conv-tool-status.is-warn {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.mc-conv-tool-status.is-error {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.mc-conv-tool-body {
+    padding: 0 var(--space-3) var(--space-3);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.mc-conv-tool-section-label {
+    font-size: 10px;
+    font-weight: var(--weight-semibold);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: var(--space-2) 0 4px;
+}
+
+.mc-conv-tool-pre {
+    margin: 0;
+    background: var(--color-card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-2) var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--color-text);
+    overflow-x: auto;
+}
+
+.mc-conv-feedback-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-full);
+}
+
+.mc-conv-feedback-pill.is-up {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.mc-conv-feedback-pill.is-down {
+    background: var(--color-error-bg);
+    color: var(--color-error);
+}
+
+.mc-conv-trace-link {
+    color: var(--color-teal);
+    text-decoration: none;
+}
+
+.mc-conv-trace-link:hover {
+    text-decoration: underline;
+}
+
+.mc-conv-engine-pill {
+    padding: 1px 6px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+    .mc-conv-timeline {
+        padding: var(--space-3);
+    }
+    .mc-conv-timeline::before {
+        left: calc(var(--space-3) + 19px);
+    }
+}

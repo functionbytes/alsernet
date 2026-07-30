@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('document_types', 'associated_labels')) {
+            return;
+        }
+
         Schema::table('document_types', function (Blueprint $table) {
             $table->json('associated_labels')->nullable()->after('sort_order')->comment('JSON array of PrestaShop labels that map to this document type');
         });

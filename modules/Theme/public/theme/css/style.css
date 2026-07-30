@@ -18390,7 +18390,7 @@ progress {
     --bs-body-bg-rgb: 255, 255, 255;
     --bs-emphasis-color: #000;
     --bs-emphasis-color-rgb: 0, 0, 0;
-    --bs-secondary-color: #000000;
+    --bs-secondary-color: rgb(0 0 0 / 75%);
     --bs-secondary-color-rgb: 152, 164, 174;
     --bs-secondary-bg: #f6f7f9;
     --bs-secondary-bg-rgb: 239, 244, 250;

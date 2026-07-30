@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('erp_endpoint_logs')) {
+            return;
+        }
+
         Schema::create('erp_endpoint_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('endpoint_id')->constrained('erp_endpoints')->onDelete('cascade');

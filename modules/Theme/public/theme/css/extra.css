@@ -1739,16 +1739,16 @@ body .select2-container--classic .select2-selection--single, body .select2-conta
    ======================================== */
 
 /* Generic ul lists - remove default bullets */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]),
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]),
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]),
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]),
 ul.small {
     list-style: none;
     padding-left: 0;
 }
 
 /* List items with Font Awesome icon as bullet */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li,
 ul.small li {
     position: relative;
     padding-left: 1.5rem;
@@ -1757,8 +1757,8 @@ ul.small li {
 }
 
 /* Font Awesome Duotone icon as bullet */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:before,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:before,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:before,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:before,
 ul.small li:before {
     content: "\f058";
     font-family: "Font Awesome 6 Duotone";
@@ -1773,8 +1773,8 @@ ul.small li:before {
 }
 
 /* Last item no margin */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:last-child,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:last-child,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
 ul.small li:last-child {
     /* margin-bottom: 0; */
 }
@@ -2199,36 +2199,3 @@ ul.small li:last-child {
 .container-lg, html[data-boxed-layout="boxed"]
 .container-md, html[data-boxed-layout="boxed"]
 .container-sm, html[data-boxed-layout="boxed"] .container-xl, html[data-boxed-layout="boxed"] .container-xxl { max-width: 1200px; margin: 0px auto; }
-
-/* ========================================
-   LIST FILTER CARD SPACING
-   ======================================== */
-
-.card.card-body:has(.form-search) {
-    margin-bottom: 30px;
-}
-
-/* ========================================
-   STAT CARDS — consistent typography scale
-   Covers both markup conventions used across the app:
-   .stat-card and plain .card.bg-light-secondary mini metric cards
-   ======================================== */
-
-.stat-card .card-title,
-.card.bg-light-secondary .card-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 10px;
-}
-
-.stat-card .card-body h4,
-.card.bg-light-secondary .card-body h4 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 6px;
-}
-
-.stat-card .card-body small,
-.card.bg-light-secondary .card-body small {
-    font-size: 13px;
-}

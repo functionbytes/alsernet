@@ -101,6 +101,56 @@ class NavService
     }
 
     /**
+     * Agregar items a una sección específica de un sidebar, buscando por título.
+     *
+     * Si el sidebar no existe, lo crea. Si la sección con ese título no existe, la crea.
+     * Si ya existe una sección con ese título, fusiona los items en ella.
+     *
+     * Uso recomendado cuando un módulo quiere aportar items a una sección ya definida
+     * por otro módulo, sin depender del orden de carga de los ServiceProviders.
+     */
+    public static function addItemsToSection(string $sidebarId, string $sectionTitle, array $items): void
+    {
+        if (! isset(self::$menus['sidebar'])) {
+            self::$menus['sidebar'] = [];
+        }
+
+        // Si el sidebar no existe, crearlo con la sección directamente
+        if (! isset(self::$menus['sidebar'][$sidebarId])) {
+            self::$menus['sidebar'][$sidebarId] = [
+                'sections' => [
+                    ['title' => $sectionTitle, 'items' => $items],
+                ],
+            ];
+
+            return;
+        }
+
+        $sidebar = &self::$menus['sidebar'][$sidebarId];
+
+        // Normalizar a estructura de secciones si está en formato legacy
+        if (! isset($sidebar['sections'])) {
+            $legacyItems = $sidebar['items'] ?? [];
+            $legacyTitle = $sidebar['title'] ?? 'Menu';
+            $sidebar['sections'] = [['title' => $legacyTitle, 'items' => $legacyItems]];
+            unset($sidebar['items'], $sidebar['title']);
+        }
+
+        // Buscar una sección existente con el mismo título
+        foreach ($sidebar['sections'] as &$section) {
+            if ($section['title'] === $sectionTitle) {
+                $section['items'] = array_merge($section['items'], $items);
+
+                return;
+            }
+        }
+        unset($section);
+
+        // No se encontró la sección: crear una nueva
+        $sidebar['sections'][] = ['title' => $sectionTitle, 'items' => $items];
+    }
+
+    /**
      * Agregar items a un sidebar existente
      * Agrega items a la última sección. Útil cuando múltiples módulos quieren contribuir items al mismo sidebar
      */

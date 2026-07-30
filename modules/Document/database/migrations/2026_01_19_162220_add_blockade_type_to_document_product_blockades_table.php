@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('document_product_blockades', 'blockade_type')) {
+            return;
+        }
+
         Schema::table('document_product_blockades', function (Blueprint $table) {
             $table->string('blockade_type')->nullable()->after('document_type_id')->comment('PrestaShop label that triggered this blockade (DNI, CORTA, BALINES45, etc.)');
         });

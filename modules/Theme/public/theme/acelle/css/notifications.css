@@ -2,10 +2,27 @@
  * Notification Module Styles
  */
 
+/* ── Header layout: fix overflow (left = sidebar width + width:100% = desborde) ── */
+:has(.app-menubar-tabs.no-sidebar-open) .app-header {
+    width: calc(100vw - 80px) !important;
+}
+:has(.app-menubar-tabs:not(.no-sidebar-open)) .app-header {
+    width: calc(100vw - var(--app-menubar-tabs)) !important;
+}
 .app-header-inner {
     position: relative !important;
     padding-right: 24px !important;
     overflow: visible !important;
+}
+/* Center search absolutely inside the header */
+.app-header-start {
+    position: absolute !important;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0 !important;
+    flex: unset !important;
+    height: auto !important;
 }
 .app-header-end {
     margin-left: auto !important;

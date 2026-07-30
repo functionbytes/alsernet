@@ -1,0 +1,12 @@
+{
+    "name": "A-alvarez",
+    "short_name": "A-alvarez",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#90bb13",
+    "lang": "es-ES",
+    "icons": [
+        { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
+    ]
+}

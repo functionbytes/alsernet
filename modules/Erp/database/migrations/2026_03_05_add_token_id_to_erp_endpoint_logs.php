@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('erp_endpoint_logs', 'token_id')) {
+            return;
+        }
+
         Schema::table('erp_endpoint_logs', function (Blueprint $table) {
             $table->foreignId('token_id')
                 ->nullable()

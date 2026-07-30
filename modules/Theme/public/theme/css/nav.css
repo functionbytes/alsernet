@@ -8,7 +8,6 @@
     z-index: 3;
     height: var(--app-header-height);
     top: 0;
-    left: 0;
     border-bottom: 1px solid var(--bs-border-color);
     width: 100%;
     display: flex;
@@ -21,19 +20,6 @@
     .app-header {
         padding-left: 0;
     }
-}
-
-/* Global search modal overlay — must not participate in the header's flex
-   layout, otherwise these empty placeholder divs eat gap/space-between slots
-   and misalign the search box against the notification/avatar icons. */
-.gs-backdrop,
-.gs-dialog {
-    position: fixed;
-    display: none;
-}
-.gs-backdrop.open,
-.gs-dialog.open {
-    display: block;
 }
 
 .app-navbar {
@@ -153,7 +139,7 @@
 .app-header-inner {
     width: 100%;
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     padding-right: 50px;
 }
 @media (max-width: 1480px) {
@@ -170,12 +156,10 @@
 .app-header-start {
     display: flex;
     align-items: center;
+    margin-right: auto;
     gap: 30px;
+    align-items: center;
     height: var(--app-header-height);
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
 }
 
 .app-header-end {
@@ -189,7 +173,7 @@
     padding: 0;
     height: 28px;
     width: 28px;
-    margin: 24px 10px 24px 20px;
+    margin: 24px 10px;
     display: inline-block;
     background: #FFFFFF;
     border: 1px solid var(--bs-border-color);
