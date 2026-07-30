@@ -2,6 +2,10 @@
 
 @section('title', 'Crear Credencial')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear Credencial'])
+@endsection
+
 @section('content')
 <div class="container-fluid">
     <div class="row">

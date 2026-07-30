@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar Configuración PrestaShop'])
+@endsection
+
 @section('content')
-
-  @include('core::components.card', ['title' => 'Editar Configuración PrestaShop'])
-
   <div class="widget-content searchable-container list">
 
       <form action="{{ route('settings.prestashop.update') }}" method="POST">

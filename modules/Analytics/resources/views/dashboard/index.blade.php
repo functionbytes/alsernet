@@ -2,6 +2,10 @@
 
 @section('title', 'Analytics Dashboard')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Analytics Dashboard'])
+@endsection
+
 @section('content')
 
     @include('analytics::dashboard.partials._filters-bar')

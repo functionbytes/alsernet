@@ -11,11 +11,10 @@ return [
     'time_format' => 'H:i',
 
     // Minimum recommended PHP version
-    // which is required by Laravel 8
-    'php_recommended' => '7.3.0',
+    'php_recommended' => '8.4.0',
 
     // Minimum supported PHP version
-    'php' => '7.3.0',
+    'php' => '8.4.0',
 
     // Branding
     'default_logo_light' => env('APP_DEFAULT_LOGO_LIGHT', 'images/logo_light.svg'),

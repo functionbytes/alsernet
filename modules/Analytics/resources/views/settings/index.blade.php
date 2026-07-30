@@ -2,9 +2,11 @@
 
 @section('title', 'Configuración de Analytics')
 
-@section('content')
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de Google Analytics GA4'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         <div class="row g-4 align-items-start">

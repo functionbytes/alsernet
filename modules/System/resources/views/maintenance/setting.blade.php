@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Modo de mantenimiento')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Modo de mantenimiento'])
+@endsection
+
 @section('content')
 
     <div class="row">

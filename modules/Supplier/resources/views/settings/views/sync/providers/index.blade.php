@@ -1,7 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
+@section('page_header')
+    @include('core::components.card', ['title' => $pageTitle])
+@endsection
 
+@section('content')
 
 
 <div class="row">

@@ -2,10 +2,11 @@
 
 @section('title', 'Grupos ERP excluidos')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Grupos ERP excluidos del sync'])
+@endsection
+
 @section('content')
-
-@include('core::components.card', ['title' => 'Grupos ERP excluidos del sync'])
-
 <div class="widget-content searchable-container list">
 
     @if($affectedProductCount > 0)

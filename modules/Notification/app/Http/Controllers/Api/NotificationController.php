@@ -5,6 +5,7 @@ namespace Modules\Notification\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Modules\Notification\Http\Requests\Api\RegisterPushTokenRequest;
 use Modules\Notification\Http\Requests\Api\UpdatePreferencesRequest;
 use Modules\Notification\Http\Resources\NotificationResource;
@@ -173,7 +174,9 @@ class NotificationController extends Controller
         $weekEnd = now()->endOfWeek()->toDateTimeString();
         $today = today()->toDateString();
 
-        $row = $user->notifications()
+        $row = DB::table('notifications')
+            ->where('notifiable_type', get_class($user))
+            ->where('notifiable_id', $user->id)
             ->selectRaw(
                 'COUNT(*) as total,
                  SUM(read_at IS NULL) as unread,

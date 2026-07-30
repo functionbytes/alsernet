@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', \$provider->name)
+
+@section('page_header')
+    @include('core::components.card', ['title' => \$provider->name])
+@endsection
+
 @section('content')
 
 

@@ -15,5 +15,5 @@
 
     <livewire:pulse.slow-jobs cols="6" />
 
-    <livewire:pulse.slow-outgoing-requests cols="6" />php artisan install:broadcasting
+    <livewire:pulse.slow-outgoing-requests cols="6" />
 </x-pulse>

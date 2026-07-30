@@ -2,10 +2,11 @@
 
 @section('title', 'Importar desde ERP')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Importar desde ERP'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         <div class="card w-100">

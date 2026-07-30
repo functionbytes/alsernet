@@ -4,6 +4,7 @@ namespace Modules\Theme\Providers;
 
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Modules\Theme\Console\Commands\AuditA11yCommand;
 
 class ThemeServiceProvider extends ServiceProvider
 {
@@ -29,7 +30,7 @@ class ThemeServiceProvider extends ServiceProvider
         // to the 334+ files that use it
         View::addLocation(__DIR__.'/../../resources/views');
 
-        // Register 'theme::' namespace for views that use theme::layouts.theme etc.
+        // Register theme:: namespace for modules that reference views with the prefix
         $this->loadViewsFrom(__DIR__.'/../../resources/views', 'theme');
 
         // Register helper functions
@@ -43,6 +44,10 @@ class ThemeServiceProvider extends ServiceProvider
         // Load routes if they exist
         if (file_exists(__DIR__.'/../../routes/web.php')) {
             $this->loadRoutesFrom(__DIR__.'/../../routes/web.php');
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([AuditA11yCommand::class]);
         }
     }
 

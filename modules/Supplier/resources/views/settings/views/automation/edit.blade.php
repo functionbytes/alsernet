@@ -2,10 +2,11 @@
 
 @section('title', 'Editar Workflow de Automatización')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Editar Workflow de Automatización'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')

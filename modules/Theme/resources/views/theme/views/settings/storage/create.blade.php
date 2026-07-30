@@ -13,7 +13,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Agregar disco de almacenamiento</h5>
-                        <p class="mb-0 text-muted small">Configura un nuevo disco de almacenamiento personalizado</p>
+                        <p class="mb-0 text-muted">Configura un nuevo disco de almacenamiento personalizado</p>
                     </div>
                 </div>
             </div>

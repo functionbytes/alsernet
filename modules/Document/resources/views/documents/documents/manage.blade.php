@@ -2,10 +2,11 @@
 
 @section('title', 'Gestionar Documento')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Gestionar Documento'])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <!-- Read-Only Notice for Fully Approved Documents -->

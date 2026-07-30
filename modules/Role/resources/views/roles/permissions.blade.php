@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Gestionar permisos para el rol: ' . \$role->name)
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Gestionar permisos para el rol: ' . \$role->name])
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-lg-12 d-flex align-items-stretch">

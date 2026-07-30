@@ -3,7 +3,7 @@
     div#notification-badge {
         width: 14px !important;
         height: 14px !important;
-        background-color: #13C672 !important;
+        background-color: #90bb13 !important;
         border-radius: 50% !important;
         position: absolute !important;
         top: -4px !important;

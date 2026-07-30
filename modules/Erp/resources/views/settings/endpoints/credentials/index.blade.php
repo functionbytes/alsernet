@@ -2,6 +2,10 @@
 
 @section('title', 'Credenciales del Endpoint')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Credenciales del Endpoint'])
+@endsection
+
 @section('content')
 <div class="container-fluid">
     <div class="row">

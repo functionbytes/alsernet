@@ -1,0 +1,505 @@
+/* ==========================================================================
+   Acelle Mail — Design Tokens
+   Single source of truth for the entire UI system.
+   All CSS files reference ONLY these variables.
+   ========================================================================== */
+
+:root {
+    /* ================================================================
+       COLORS
+       ================================================================ */
+
+    /* Neutrals */
+    --color-white:          #FFFFFF;
+    --color-black:          #000000;
+
+    /* Text hierarchy — high contrast, near-black */
+    --color-text:           #111111;     /* headings, body, labels — near black */
+    --color-text-secondary: #222222;     /* secondary body text */
+    --color-text-muted:     #555555;     /* helper text, icons */
+    --color-text-disabled:  #999999;     /* disabled, placeholder, footer */
+
+    /* Backgrounds */
+    --color-page-bg:        #F7F7F7;     /* page background — neutral gray */
+    --color-card-bg:        #FFFFFF;     /* cards, panels, modals */
+    --color-hover-bg:       #F5F5F5;     /* hover state background */
+    --color-active-bg:      #EFEFEF;     /* active/pressed state */
+    --color-subtle-bg:      #f5f6f8;     /* subtle sections */
+    --color-bg-subtle:      #f5f6f8;     /* alias for --color-subtle-bg */
+    --color-banner-bg:      #F0F0F0;     /* announcement banners — neutral grey */
+
+    /* Borders */
+    --color-border:         #E8E8E8;     /* cards, dividers, sections */
+    --color-border-strong:  #D5D5D5;     /* inputs, selects, buttons secondary */
+    --color-border-focus:   #007C89;     /* focus ring border */
+
+    /* Brand / Primary action */
+    --color-teal:           #007C89;     /* primary buttons, links, active */
+    --color-teal-hover:     #005F69;     /* hover */
+    --color-teal-active:    #004D54;     /* pressed */
+    --color-teal-ring:      rgba(0, 124, 137, 0.15);  /* focus ring */
+    --color-teal-light:     #F0F0F0;     /* light neutral bg (was teal-tinted) */
+
+    /* Status — Success */
+    --color-success:        #2E7D32;
+    --color-success-dark:   #1B5E20;
+    --color-success-bg:     #F0F0F0;     /* neutral gray bg */
+
+    /* Status — Error */
+    --color-error:          #D32F2F;
+    --color-error-dark:     #B71C1C;
+    --color-error-bg:       #F0F0F0;     /* neutral gray bg */
+    --color-error-ring:     rgba(211, 47, 47, 0.15);
+
+    /* Status — Warning */
+    --color-warning:        #E65100;
+    --color-warning-dark:   #BF360C;
+    --color-warning-bg:     #F0F0F0;     /* neutral gray bg */
+
+    /* Status — Info */
+    --color-info:           #1565C0;
+    --color-info-dark:      #0D47A1;
+    --color-info-bg:        #F0F0F0;     /* neutral gray bg */
+
+    /* Chart colors — pastel palette (Mailchimp-inspired, works in light + dark) */
+    --chart-1:              #69B7BE;     /* soft teal */
+    --chart-2:              #7DCEA0;     /* soft green */
+    --chart-3:              #85A9D6;     /* soft blue */
+    --chart-4:              #E8A87C;     /* soft orange */
+    --chart-5:              #D4A5A5;     /* soft rose */
+    --chart-6:              #C3B1E1;     /* soft purple */
+    --chart-7:              #A8D8EA;     /* light cyan */
+    --chart-8:              #CBCB9D;     /* soft olive */
+
+    /* Chart background tints (icon boxes, badges — neutral gray for all) */
+    --chart-1-bg:           #F0F0F0;     /* neutral gray bg */
+    --chart-2-bg:           #F0F0F0;     /* neutral gray bg */
+    --chart-3-bg:           #F0F0F0;     /* neutral gray bg */
+    --chart-4-bg:           #F0F0F0;     /* neutral gray bg */
+    --chart-5-bg:           #F0F0F0;     /* neutral gray bg */
+    --chart-6-bg:           #F0F0F0;     /* neutral gray bg */
+
+    /* SVG Illustration tokens — high contrast gray tones */
+    --illust-stroke:        #999999;     /* wireframe lines — darker for clarity */
+    --illust-stroke-bold:   #777777;     /* heading/primary lines — bold gray */
+    --illust-fill:          #E0E0E0;     /* card/panel fills — neutral gray */
+    --illust-bg:            #EBEBEB;     /* background areas — neutral gray */
+    --illust-teal:          rgba(0, 0, 0, 0.12);      /* neutral gray fills */
+    --illust-teal-bold:     rgba(0, 0, 0, 0.22);      /* darker accent fills */
+    --illust-chart-1:       rgba(0, 0, 0, 0.10);      /* chart-1 fill — gray */
+    --illust-chart-2:       rgba(0, 0, 0, 0.10);      /* chart-2 fill — gray */
+    --illust-chart-3:       rgba(0, 0, 0, 0.10);      /* chart-3 fill — gray */
+    --illust-chart-4:       rgba(0, 0, 0, 0.10);      /* chart-4 fill — gray */
+    --illust-chart-5:       rgba(0, 0, 0, 0.10);      /* chart-5 fill — gray */
+    --illust-chart-6:       rgba(0, 0, 0, 0.10);      /* chart-6 fill — gray */
+
+    /* Overlay */
+    --color-overlay:        rgba(0, 0, 0, 0.4);
+    --color-overlay-heavy:  rgba(0, 0, 0, 0.5);
+
+    /* ================================================================
+       AI ACCENT PALETTE — pastel-bg + same-hue-dark-fg pairs
+       ----------------------------------------------------------------
+       Used by every AI surface (chatbox launcher, sparkle button, AI
+       admin previews). Each colour is a light pastel TINT for the
+       background paired with a CRISP dark same-hue colour for the
+       glyph/text. Generalised pattern (matches the "Coming Soon"
+       badge style) — softer than solid-bg + white-fg, fits the rest
+       of the app's pastel/neutral aesthetic.
+
+       Default theme = violet (`--color-ai-violet-bg/-fg`). Five hue
+       pairs ship in F2.6: violet · teal · orange · green · indigo.
+       Each pair has a light-mode + dark-mode variant tuned for
+       contrast and ambient feel.
+
+       Showcase: `/rui/ui#ai-palette`.
+       ================================================================ */
+    --color-ai-violet-bg:   #EAE3F8;
+    --color-ai-violet-fg:   #6D28D9;
+    --color-ai-teal-bg:     #CCFBF1;
+    --color-ai-teal-fg:     #0F766E;
+    --color-ai-orange-bg:   #FFEDD5;
+    --color-ai-orange-fg:   #C2410C;
+    --color-ai-green-bg:    #DCFCE7;
+    --color-ai-green-fg:    #15803D;
+    --color-ai-indigo-bg:   #E0E7FF;
+    --color-ai-indigo-fg:   #3730A3;
+
+    /* ================================================================
+       TYPOGRAPHY
+       ================================================================ */
+
+    --font-family:          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono:            "SF Mono", "Fira Code", "Roboto Mono", monospace;
+
+    /* Size scale */
+    --text-xs:              11px;
+    --text-sm:              12px;
+    --text-base:            14px;
+    --text-md:              16px;
+    --text-lg:              18px;
+    --text-xl:              22px;
+    --text-2xl:             28px;
+    --text-3xl:             36px;
+
+    /* Weights */
+    --weight-normal:        400;
+    --weight-medium:        500;
+    --weight-semibold:      600;
+    --weight-bold:          600;
+    --weight-black:         700;
+
+    /* Line heights */
+    --leading-tight:        1.25;
+    --leading-normal:       1.5;
+    --leading-relaxed:      1.625;
+
+    /* ================================================================
+       SPACING — 4px base, Bootstrap-like scale
+       ================================================================ */
+
+    --space-0:     0;
+    --space-px:    1px;
+    --space-0-5:   2px;
+    --space-1:     4px;
+    --space-1-5:   6px;
+    --space-2:     8px;
+    --space-2-5:   10px;
+    --space-3:     12px;
+    --space-3-5:   14px;
+    --space-4:     16px;
+    --space-5:     20px;
+    --space-6:     24px;
+    --space-7:     28px;
+    --space-8:     32px;
+    --space-9:     36px;
+    --space-10:    40px;
+    --space-11:    44px;
+    --space-12:    48px;
+    --space-14:    56px;
+    --space-16:    64px;
+
+    /* ================================================================
+       BORDER RADIUS
+       ================================================================ */
+
+    --radius-sm:            4px;      /* small badges, tags */
+    --radius-input:         6px;      /* inputs, buttons, alerts */
+    --radius-card:          12px;     /* cards, modals, dropdowns */
+    --radius-lg:            16px;     /* large panels */
+    --radius-full:          9999px;   /* pills, avatars, circles */
+
+    /* ================================================================
+       SHADOWS — Mailchimp: very subtle, almost invisible
+       ================================================================ */
+
+    --shadow-sm:            0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-card:          0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-dropdown:      0 2px 8px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.06);
+    --shadow-modal:         0 4px 24px rgba(0, 0, 0, 0.12);
+
+    /* ================================================================
+       LAYOUT
+       ================================================================ */
+
+    --input-height:         44px;
+    --sidebar-width:        240px;
+    --sidebar-collapsed:    60px;
+    --topbar-height:        56px;
+    --content-max-width:    1200px;
+
+    /* ================================================================
+       TRANSITIONS
+       ================================================================ */
+
+    --transition-fast:      150ms ease;
+    --transition-base:      250ms ease;
+    --transition-slow:      350ms ease;
+
+    /* ================================================================
+       Z-INDEX
+       ================================================================ */
+
+    --z-dropdown:           100;
+    --z-sidebar:            200;
+    --z-topbar:             300;
+    --z-side-panel-backdrop: 350;
+    --z-side-panel:         360;
+    --z-modal-backdrop:     400;
+    --z-modal:              500;
+    --z-toast:              600;
+    /* El tooltip se sale de la progresión a propósito. Módulos anteriores a
+       esta escala usan valores propios muy altos para sus modales (.docs-modal
+       1081, .hd-overlay 10500, .hd-liveview-modal 10800), así que con 700 el
+       tooltip flotante quedaba tapado por ellos: se activaba, pero se dibujaba
+       por detrás del modal y no se veía. Un tooltip debe quedar sobre todo lo
+       demás; este valor supera esos modales sin llegar a los widgets embebidos
+       (99999+), que sí deben permanecer por encima. */
+    --z-tooltip:            11000;
+}
+
+/* ==========================================================================
+   THEME-AWARE LOGO
+   mc-logo-light = shown in light theme (dark logo on light bg)
+   mc-logo-dark  = shown in dark theme (light logo on dark bg)
+   ========================================================================== */
+
+.mc-logo-dark { display: none; }
+.mc-logo-light { display: inline; }
+
+[data-theme="dark"] .mc-logo-dark { display: inline; }
+[data-theme="dark"] .mc-logo-light { display: none; }
+
+/* ==========================================================================
+   DARK MODE
+   ========================================================================== */
+
+[data-theme="dark"] {
+    /* True black/dark grey palette — no blue tint */
+    --color-white:          #161616;
+    --color-black:          #E8E8E8;
+
+    /* Text — high contrast for readability */
+    --color-text:           #F0F0F3;
+    --color-text-secondary: #C0C0C6;
+    --color-text-muted:     #8B8B93;
+    --color-text-disabled:  #505058;
+
+    /* Surfaces — pure dark grey, near-black */
+    --color-page-bg:        #0A0A0A;
+    --color-card-bg:        #161616;
+    --color-hover-bg:       #1E1E1E;
+    --color-active-bg:      #262626;
+    --color-subtle-bg:      #111111;
+    --color-bg-subtle:      #111111;
+    --color-banner-bg:      #1A1B1C;     /* neutral dark grey for dark */
+
+    /* Borders — bolder, Mailchimp-style (#21262A tone) */
+    --color-border:         #2E3338;
+    --color-border-strong:  #3D444A;
+    --color-border-focus:   #34D399;
+
+    /* SVG Illustration tokens — dark mode */
+    --illust-stroke:        #3D444A;
+    --illust-stroke-bold:   #505860;
+    --illust-fill:          #1E2228;
+    --illust-bg:            #141618;
+    --illust-teal:          rgba(52, 211, 153, 0.25);
+    --illust-teal-bold:     rgba(52, 211, 153, 0.45);
+    --illust-chart-1:       rgba(105, 183, 190, 0.3);
+    --illust-chart-2:       rgba(125, 206, 160, 0.3);
+    --illust-chart-3:       rgba(133, 169, 214, 0.3);
+    --illust-chart-4:       rgba(232, 168, 124, 0.3);
+    --illust-chart-5:       rgba(212, 165, 165, 0.3);
+    --illust-chart-6:       rgba(195, 177, 225, 0.3);
+
+    /* Primary — emerald-green (subtle, classy) */
+    --color-teal:           #34D399;
+    --color-teal-hover:     #2CC08A;
+    --color-teal-active:    #25A978;
+    --color-teal-ring:      rgba(52, 211, 153, 0.18);
+    --color-teal-light:     rgba(52, 211, 153, 0.08);
+
+    /* Status — softer tones for dark bg */
+    --color-success:        #4ADE80;
+    --color-success-dark:   #6EE7A0;
+    --color-success-bg:     rgba(74, 222, 128, 0.08);
+
+    --color-error:          #F87171;
+    --color-error-dark:     #FCA5A5;
+    --color-error-bg:       rgba(248, 113, 113, 0.08);
+    --color-error-ring:     rgba(248, 113, 113, 0.18);
+
+    --color-warning:        #FBBF24;
+    --color-warning-dark:   #FCD34D;
+    --color-warning-bg:     rgba(251, 191, 36, 0.08);
+
+    --color-info:           #60A5FA;
+    --color-info-dark:      #93C5FD;
+    --color-info-bg:        rgba(96, 165, 250, 0.08);
+
+    /* AI accent palette — dark-mode variants. Pastel bg becomes a low-alpha
+     * tint over the dark surface (so the same-hue character is preserved
+     * without burning brightness). Crisp fg flips to a lighter tint so it
+     * still reads as "this hue" against the dark bg. */
+    --color-ai-violet-bg:   rgba(139, 92, 246, 0.16);
+    --color-ai-violet-fg:   #C4B5FD;
+    --color-ai-teal-bg:     rgba(45, 212, 191, 0.16);
+    --color-ai-teal-fg:     #5EEAD4;
+    --color-ai-orange-bg:   rgba(251, 146, 60, 0.16);
+    --color-ai-orange-fg:   #FDBA74;
+    --color-ai-green-bg:    rgba(74, 222, 128, 0.16);
+    --color-ai-green-fg:    #86EFAC;
+    --color-ai-indigo-bg:   rgba(129, 140, 248, 0.16);
+    --color-ai-indigo-fg:   #A5B4FC;
+
+    --color-overlay:        rgba(0, 0, 0, 0.65);
+    --color-overlay-heavy:  #000000;
+
+    /* Chart colors — vibrant but not neon */
+    --chart-1:              #34D399;
+    --chart-2:              #4ADE80;
+    --chart-3:              #60A5FA;
+    --chart-4:              #FBBF24;
+    --chart-5:              #F87171;
+    --chart-6:              #A78BFA;
+    --chart-7:              #22D3EE;
+    --chart-8:              #A3E635;
+
+    /* Chart background tints — dark-adapted (low opacity on dark bg) */
+    --chart-1-bg:           rgba(52, 211, 153, 0.10);
+    --chart-2-bg:           rgba(74, 222, 128, 0.10);
+    --chart-3-bg:           rgba(96, 165, 250, 0.10);
+    --chart-4-bg:           rgba(251, 191, 36, 0.10);
+    --chart-5-bg:           rgba(248, 113, 113, 0.10);
+    --chart-6-bg:           rgba(167, 139, 250, 0.10);
+
+    /* Shadows — deeper for true dark */
+    --shadow-sm:            0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-card:          0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    --shadow-dropdown:      0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-modal:         0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ==========================================================================
+   COLOR SCHEMES — override --color-teal* per scheme
+   data-color-scheme on <html> alongside data-theme for light/dark.
+   "default" uses :root teal values — no override needed.
+   ========================================================================== */
+
+/* --- Smooth transition helper (applied briefly during scheme switch) --- */
+html.mc-scheme-transitioning,
+html.mc-scheme-transitioning *,
+html.mc-scheme-transitioning *::before,
+html.mc-scheme-transitioning *::after {
+    transition: color 300ms ease,
+                background-color 300ms ease,
+                border-color 300ms ease,
+                box-shadow 300ms ease !important;
+}
+
+/* --- Blue / Ocean --- */
+[data-color-scheme="blue"] {
+    --color-teal:           #00698F;
+    --color-teal-hover:     #005473;
+    --color-teal-active:    #00435C;
+    --color-teal-ring:      rgba(0, 105, 143, 0.15);
+    --color-teal-light:     #F0F0F0;
+    --color-border-focus:   #00698F;
+}
+[data-theme="dark"][data-color-scheme="blue"] {
+    --color-teal:           #5FA0DD;
+    --color-teal-hover:     #4A8DC8;
+    --color-teal-active:    #3A7AB3;
+    --color-teal-ring:      rgba(95, 160, 221, 0.18);
+    --color-teal-light:     rgba(95, 160, 221, 0.08);
+    --color-border-focus:   #5FA0DD;
+    --color-page-bg:        #090B0E;     /* near-black with blue undertone */
+    --color-subtle-bg:      #0C0E12;
+    --color-bg-subtle:      #0C0E12;
+}
+
+/* --- Green / Forest --- */
+[data-color-scheme="green"] {
+    --color-teal:           #098547;
+    --color-teal-hover:     #067038;
+    --color-teal-active:    #055A2D;
+    --color-teal-ring:      rgba(9, 133, 71, 0.15);
+    --color-teal-light:     #F0F0F0;
+    --color-border-focus:   #098547;
+}
+[data-theme="dark"][data-color-scheme="green"] {
+    --color-teal:           #4ADE80;
+    --color-teal-hover:     #3ECB70;
+    --color-teal-active:    #32B860;
+    --color-teal-ring:      rgba(74, 222, 128, 0.18);
+    --color-teal-light:     rgba(74, 222, 128, 0.08);
+    --color-border-focus:   #4ADE80;
+    --color-page-bg:        #090C0A;     /* near-black with green undertone */
+    --color-subtle-bg:      #0B0E0C;
+    --color-bg-subtle:      #0B0E0C;
+}
+
+/* --- Brown / Amber --- */
+[data-color-scheme="brown"] {
+    --color-teal:           #81430F;
+    --color-teal-hover:     #6B3A11;
+    --color-teal-active:    #553010;
+    --color-teal-ring:      rgba(129, 67, 15, 0.15);
+    --color-teal-light:     #F0F0F0;
+    --color-border-focus:   #81430F;
+}
+[data-theme="dark"][data-color-scheme="brown"] {
+    --color-teal:           #DD975F;
+    --color-teal-hover:     #C88450;
+    --color-teal-active:    #B37242;
+    --color-teal-ring:      rgba(221, 151, 95, 0.18);
+    --color-teal-light:     rgba(221, 151, 95, 0.08);
+    --color-border-focus:   #DD975F;
+    --color-page-bg:        #0C0A08;     /* near-black with warm undertone */
+    --color-subtle-bg:      #0E0C09;
+    --color-bg-subtle:      #0E0C09;
+}
+
+/* --- Pink / Rose --- */
+[data-color-scheme="pink"] {
+    --color-teal:           #BE4C89;
+    --color-teal-hover:     #A43D75;
+    --color-teal-active:    #8A3162;
+    --color-teal-ring:      rgba(190, 76, 137, 0.15);
+    --color-teal-light:     #F0F0F0;
+    --color-border-focus:   #BE4C89;
+}
+[data-theme="dark"][data-color-scheme="pink"] {
+    --color-teal:           #D660A6;
+    --color-teal-hover:     #C44F96;
+    --color-teal-active:    #B23F86;
+    --color-teal-ring:      rgba(214, 96, 166, 0.18);
+    --color-teal-light:     rgba(214, 96, 166, 0.08);
+    --color-border-focus:   #D660A6;
+    --color-page-bg:        #0C090B;     /* near-black with rose undertone */
+    --color-subtle-bg:      #0E0B0D;
+    --color-bg-subtle:      #0E0B0D;
+}
+
+/* --- Grey / High Contrast --- */
+[data-color-scheme="grey"] {
+    --color-teal:           #221C17;
+    --color-teal-hover:     #1A1510;
+    --color-teal-active:    #110E0B;
+    --color-teal-ring:      rgba(34, 28, 23, 0.15);
+    --color-teal-light:     #EBEBEB;
+    --color-border-focus:   #221C17;
+}
+[data-theme="dark"][data-color-scheme="grey"] {
+    --color-teal:           #B4B4B4;
+    --color-teal-hover:     #A0A0A0;
+    --color-teal-active:    #8C8C8C;
+    --color-teal-ring:      rgba(180, 180, 180, 0.18);
+    --color-teal-light:     rgba(180, 180, 180, 0.08);
+    --color-border-focus:   #B4B4B4;
+    --color-page-bg:        #0B0B0B;     /* pure dark grey */
+    --color-subtle-bg:      #0D0D0D;
+    --color-bg-subtle:      #0D0D0D;
+}
+
+/* --- White / Neutral --- */
+[data-color-scheme="white"] {
+    --color-teal:           #4A4A4A;
+    --color-teal-hover:     #333333;
+    --color-teal-active:    #222222;
+    --color-teal-ring:      rgba(74, 74, 74, 0.12);
+    --color-teal-light:     #F5F5F5;
+    --color-border-focus:   #4A4A4A;
+}
+[data-theme="dark"][data-color-scheme="white"] {
+    --color-teal:           #C8C8C8;
+    --color-teal-hover:     #B0B0B0;
+    --color-teal-active:    #989898;
+    --color-teal-ring:      rgba(200, 200, 200, 0.15);
+    --color-teal-light:     rgba(200, 200, 200, 0.06);
+    --color-border-focus:   #C8C8C8;
+    --color-page-bg:        #0C0C0C;     /* slightly lighter dark */
+    --color-subtle-bg:      #0E0E0E;
+    --color-bg-subtle:      #0E0E0E;
+}

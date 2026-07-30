@@ -2,6 +2,10 @@
 
 @section('title', 'Configuración importación Excel')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración importación Excel'])
+@endsection
+
 @section('content')
 
     <div class="row">

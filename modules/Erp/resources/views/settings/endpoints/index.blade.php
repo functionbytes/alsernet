@@ -2,9 +2,7 @@
 
 @section('page_title', 'Endpoints ERP')
 
-@section('content')
-
-    {{-- Breadcrumb Card --}}
+@section('page_header')
     @include('core::components.card', [
         'title' => 'Endpoints ERP',
         'breadcrumbs' => [
@@ -14,7 +12,11 @@
             ['label' => 'Endpoints', 'active' => true]
         ]
     ])
+@endsection
 
+@section('content')
+
+    {{-- Breadcrumb Card --}}
     <div class="widget-content searchable-container list">
 
         {{-- Main Card --}}

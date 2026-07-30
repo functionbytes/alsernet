@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Detalle del usuario: ' . \$user->firstname . ' ' . \$user->lastname)
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Detalle del usuario: ' . \$user->firstname . ' ' . \$user->lastname])
+@endsection
+
 @section('content')
 
     <div class="widget-content searchable-container list">

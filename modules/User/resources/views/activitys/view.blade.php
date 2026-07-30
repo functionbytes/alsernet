@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Actividad del usuario')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Actividad del usuario'])
+@endsection
+
 @section('content')
 
 

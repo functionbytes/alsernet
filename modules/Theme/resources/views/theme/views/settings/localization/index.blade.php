@@ -1,8 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de localización'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -34,7 +36,7 @@
                                     <div class="mb-3">
                                         <label for="defaultLanguage" class="form-label fw-semibold">Idioma
                                             predeterminado <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="defaultLanguage" name="default_language"
+                                        <select class="form-select select2" id="defaultLanguage" name="default_language"
                                                 required>
                                             <option value="">Seleccionar idioma...</option>
                                             @foreach($languages as $lang)
@@ -49,7 +51,7 @@
                                     <div class="mb-0">
                                         <label for="timezone" class="form-label fw-semibold">Zona horaria <span
                                                     class="text-danger">*</span></label>
-                                        <select class="form-select" id="timezone" name="timezone" required>
+                                        <select class="form-select select2" id="timezone" name="timezone" required>
                                             @php
                                                 $timezones = [
                                                     'America/New_York' => 'New York (UTC-5)',
@@ -98,7 +100,7 @@
                                     <div class="mb-3">
                                         <label for="dateFormat" class="form-label fw-semibold">Formato de fecha <span
                                                     class="text-danger">*</span></label>
-                                        <select class="form-select" id="dateFormat" name="date_format" required>
+                                        <select class="form-select select2" id="dateFormat" name="date_format" required>
                                             <option value="d/m/Y" {{ $settings['date_format'] === 'd/m/Y' ? 'selected' : '' }}>
                                                 DD/MM/AAAA (31/12/2024)
                                             </option>
@@ -121,7 +123,7 @@
                                     <div class="mb-0">
                                         <label for="timeFormat" class="form-label fw-semibold">Formato de hora <span
                                                     class="text-danger">*</span></label>
-                                        <select class="form-select" id="timeFormat" name="time_format" required>
+                                        <select class="form-select select2" id="timeFormat" name="time_format" required>
                                             <option value="H:i" {{ $settings['time_format'] === 'H:i' ? 'selected' : '' }}>
                                                 24 horas (14:30)
                                             </option>
@@ -150,7 +152,7 @@
                                     <div class="mb-3">
                                         <label for="currency" class="form-label fw-semibold">Moneda <span
                                                     class="text-danger">*</span></label>
-                                        <select class="form-select" id="currency" name="currency" required>
+                                        <select class="form-select select2" id="currency" name="currency" required>
                                             @php
                                                 $currencies = [
                                                     'USD' => 'Dólar estadounidense ($)',
@@ -177,7 +179,7 @@
                                     <div class="mb-0">
                                         <label for="currencyPosition" class="form-label fw-semibold">Posición de símbolo
                                             <span class="text-danger">*</span></label>
-                                        <select class="form-select" id="currencyPosition" name="currency_position"
+                                        <select class="form-select select2" id="currencyPosition" name="currency_position"
                                                 required>
                                             <option value="before" {{ $settings['currency_position'] === 'before' ? 'selected' : '' }}>
                                                 Antes del monto ($100.00)
@@ -236,7 +238,7 @@
                 </div>
 
                 <div class="card-footer">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Guardar</button>
+                    <button type="submit" class="btn btn-primary w-100 mb-1">Guardar</button>
                     <a href="{{ route('manager.backups') }}" class="btn btn-secondary w-100">Cancelar</a>
                 </div>
 

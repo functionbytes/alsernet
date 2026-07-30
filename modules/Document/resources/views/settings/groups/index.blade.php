@@ -2,10 +2,11 @@
 
 @section('title', 'Grupos de Validación')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Grupos de Validación'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')

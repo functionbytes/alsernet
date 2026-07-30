@@ -1,0 +1,13 @@
+{
+    "name": "HelpdeskSla",
+    "alias": "helpdesksla",
+    "description": "Motor central de SLA para conversaciones del Helpdesk: aplica policies por prioridad, calcula vencimientos de primera respuesta y resolucion respetando horario laboral, detecta incumplimientos y persiste el historico de breaches",
+    "keywords": ["helpdesk", "sla", "service-level-agreement", "breaches"],
+    "priority": 0,
+    "providers": [
+        "Modules\\HelpdeskSla\\Providers\\HelpdeskSlaServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

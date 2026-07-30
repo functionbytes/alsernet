@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Seguridad de la API ERP')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Seguridad de la API ERP'])
+@endsection
+
 @section('content')
 
     <div class="row">

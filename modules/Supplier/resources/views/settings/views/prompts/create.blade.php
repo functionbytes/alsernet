@@ -1,9 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Crear prompt de IA'])
+@endsection
 
+@section('content')
     <form id="promptCreateForm" action="{{ route('settings.suppliers.prompts.store') }}" method="POST">
         @csrf
 

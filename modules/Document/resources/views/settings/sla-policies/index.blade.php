@@ -2,10 +2,11 @@
 
 @section('title', 'Políticas SLA de Documentos')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Políticas SLA de Documentos'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')

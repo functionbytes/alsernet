@@ -2,10 +2,11 @@
 
 @section('title', $credential->name)
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => $credential->name])
+@endsection
 
+@section('content')
     @include('core::components.alerts')
 
     <div class="row">

@@ -2,6 +2,10 @@
 
 @section('title', 'Crear Endpoint ERP')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear Endpoint ERP'])
+@endsection
+
 @section('content')
 
     <div class="row">

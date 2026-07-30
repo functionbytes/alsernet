@@ -2,6 +2,10 @@
 
 @section('title', 'Editar Credencial ERP')
 
+@section('page_header')
+    @include('core::components.card', ['title' => 'Editar Credencial ERP'])
+@endsection
+
 @section('content')
 
     <div class="card w-100">

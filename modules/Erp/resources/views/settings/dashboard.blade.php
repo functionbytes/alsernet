@@ -2,6 +2,12 @@
 
 @section('page_title', 'Dashboard ERP')
 
+@section('title', 'Panel de Control ERP')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Panel de Control ERP'])
+@endsection
+
 @section('content')
 
     {{-- Header --}}

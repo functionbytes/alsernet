@@ -2,6 +2,12 @@
 
 @section('page_title', 'Preferencias de notificación')
 
+@section('title', 'Preferencias de notificación')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Preferencias de notificación'])
+@endsection
+
 @section('content')
 
 <div class="widget-content searchable-container list">

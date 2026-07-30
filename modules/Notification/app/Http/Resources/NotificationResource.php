@@ -16,22 +16,19 @@ class NotificationResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'type' => $this->type,
-            'data' => [
-                'type' => $data['type'] ?? null,
-                'title' => $data['title'] ?? 'Notificación',
-                'message' => $data['message'] ?? '',
-                'icon' => $data['icon'] ?? 'fas fa-bell',
-                'color' => $data['color'] ?? 'primary',
-                'actionUrl' => $data['action_url'] ?? null,
-                'actionText' => $data['action_text'] ?? 'Ver',
-                'priority' => $data['priority'] ?? 'normal',
-                'entityId' => $data['entity_id'] ?? null,
-            ],
-            'read' => $this->read_at !== null,
-            'readAt' => $this->read_at?->toIso8601String(),
-            'createdAt' => $this->created_at?->toIso8601String(),
-            'createdAtHuman' => $this->created_at?->diffForHumans(),
+            'type' => $data['type'] ?? null,
+            'title' => $data['title'] ?? 'Notificación',
+            'message' => $data['message'] ?? '',
+            'icon' => $data['icon'] ?? 'fas fa-bell',
+            'color' => $data['color'] ?? 'primary',
+            'action_url' => $data['action_url'] ?? null,
+            'action_text' => $data['action_text'] ?? 'Ver',
+            'priority' => $data['priority'] ?? 'normal',
+            'entity_id' => $data['entity_id'] ?? null,
+            'is_read' => $this->read_at !== null,
+            'read_at' => $this->read_at?->toIso8601String(),
+            'created_at' => $this->created_at?->diffForHumans(),
+            'created_at_full' => $this->created_at?->toIso8601String(),
         ];
     }
 }

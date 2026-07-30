@@ -1,0 +1,124 @@
+/* ========================================================================
+   HelpdeskTranslate — chat composer translate panel
+   Loaded by partials/translate-panel.blade.php via @push('styles').
+   Uses the same CSS variables defined by Helpdesk's conversations.css
+   (--bv-border, --bv-bg-panel, --bv-accent, etc.) — those vars are theme
+   tokens, not translate-specific.
+   ======================================================================== */
+
+.bv-translate-panel {
+    border-bottom: 1px solid var(--bv-border);
+    background: var(--bv-bg-panel);
+    animation: bv-pop-in .18s ease;
+    display: none;
+}
+.bv-translate-panel.on { display: block; }
+
+.bv-tp-body {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bv-tp-lbl {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--bv-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+.bv-tp-mode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bv-tp-mode {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--bv-border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .1s;
+}
+.bv-tp-mode:hover { border-color: var(--bv-border-soft, var(--bv-border)); }
+.bv-tp-mode.on    { border-color: var(--bv-accent); background: var(--bv-bg-subtle); }
+.bv-tp-mode i     { font-size: 13px; color: var(--bv-text-soft); width: 18px; text-align: center; flex-shrink: 0; }
+.bv-tp-mode .t    { font-size: 12px; font-weight: 500; color: var(--bv-text); }
+.bv-tp-mode .s    { font-size: 10.5px; color: var(--bv-text-muted); margin-top: 1px; }
+
+.bv-tp-lang-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+.bv-tp-lang-col { flex: 1; }
+.bv-tp-lang-arrow {
+    color: var(--bv-text-muted);
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
+.bv-tp-sel {
+    width: 100%;
+    padding: 6px 9px;
+    border: 1px solid var(--bv-border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--bv-text);
+    background: var(--bv-bg-panel);
+    font-family: inherit;
+}
+.bv-tp-sel:focus { border-color: var(--bv-accent); outline: none; }
+
+.bv-tp-foot {
+    padding: 10px 14px;
+    border-top: 1px solid var(--bv-border);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    background: var(--bv-bg-subtle);
+}
+
+/* Per-message translation rendered under the bubble body */
+.bv-bubble-translation {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--bv-border);
+    font-size: 12px;
+    color: var(--bv-text-muted);
+    line-height: 1.45;
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.bv-bubble-translation-lbl {
+    color: var(--bv-text-soft, #888);
+    flex-shrink: 0;
+}
+.bv-bubble-translation-toggle {
+    margin-left: auto;
+    background: transparent;
+    border: 0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--bv-text-muted);
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.6;
+    transition: all 0.15s;
+}
+.bv-bubble-translation-toggle:hover {
+    background: var(--bv-bg-subtle);
+    color: var(--bv-accent);
+    opacity: 1;
+}
+.bv-bubble-translation.showing-original {
+    color: var(--bv-text);
+    font-style: italic;
+}

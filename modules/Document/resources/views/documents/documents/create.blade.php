@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Crear pregunta frecuente')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Crear pregunta frecuente'])
+@endsection
+
 @section('content')
 
     <div class="row">

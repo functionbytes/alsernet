@@ -1,5 +1,11 @@
 @extends('layouts.theme')
 
+@section('title', 'Configuración API del ERP')
+
+@section('page_header')
+    @include('core::components.card', ['title' => 'Configuración API del ERP'])
+@endsection
+
 @section('content')
 
     <div class="row">

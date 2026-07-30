@@ -1,8 +1,10 @@
 @extends('layouts.theme')
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Configuración de búsqueda'])
+@endsection
+
+@section('content')
 
     <div class="widget-content searchable-container list">
 
@@ -47,7 +49,7 @@
                                     <div class="mb-3">
                                         <label for="searchDriver" class="form-label fw-semibold">Driver de
                                             búsqueda</label>
-                                        <select class="form-select" id="searchDriver" name="search_driver" required>
+                                        <select class="form-select select2" id="searchDriver" name="search_driver" required>
                                             <option value="database" {{ $settings['search_driver'] === 'database' ? 'selected' : '' }}>
                                                 Base de datos (LIKE)
                                             </option>
@@ -105,7 +107,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="mb-3 fw-bold">Módulos de búsqueda</h6>
-                                    <p class="text-muted small mb-3">Selecciona los módulos donde se permite realizar
+                                    <p class="text-muted mb-3">Selecciona los módulos donde se permite realizar
                                         búsquedas</p>
 
                                     @php
@@ -137,7 +139,7 @@
 
                                     <div class="alert alert-info border-0 bg-info-subtle text-info mt-3 mb-0">
                                         <div class="d-flex align-items-start gap-2">
-                                            <i class="ti ti-info-circle fs-5"></i>
+                                            <i class="fas fa-info-circle fs-5"></i>
                                             <div>
                                                 <strong>Nota:</strong> Deseleccionar módulos puede mejorar el
                                                 rendimiento de búsqueda reduciendo el alcance.
