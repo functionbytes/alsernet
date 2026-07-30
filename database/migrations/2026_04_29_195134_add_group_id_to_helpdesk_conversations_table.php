@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::connection('helpdesk')->hasColumn('helpdesk_conversations', 'group_id')) {
+            return;
+        }
+
         Schema::connection('helpdesk')->table('helpdesk_conversations', function (Blueprint $table) {
             $table->unsignedBigInteger('group_id')->nullable()->after('assignee_id');
             $table->index('group_id');
