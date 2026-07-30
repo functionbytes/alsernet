@@ -8,13 +8,15 @@
     .btn-validate-green:hover, .btn-validate-green:focus { background-color: #6a9817; border-color: #6a9817; }
     .btn-action-black { background-color: #111; border-color: #111; border-radius: 8px; }
     .btn-action-black:hover, .btn-action-black:focus { background-color: #2a2a2a; border-color: #2a2a2a; }
+    .stat-card-active { border: 2px solid #111 !important; }
 </style>
 @endpush
 
-@section('content')
-
+@section('page_header')
     @include('core::components.card', ['title' => 'Revisión de Contenido'])
+@endsection
 
+@section('content')
     <div class="widget-content searchable-container list">
 
         @include('core::components.alerts')
@@ -38,9 +40,9 @@
                     <div class="col-3">
                         <a href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['status', 'page']), [])) }}"
                            class="text-decoration-none d-block h-100">
-                            <div class="card bg-light-secondary stat-card h-100 {{ !request('status') ? 'border-primary border-2' : '' }}">
+                            <div class="card bg-light-secondary stat-card h-100 {{ !request('status') ? 'stat-card-active' : '' }}">
                                 <div class="card-body">
-                                    <h6 class="card-title text-primary mb-2">Total</h6>
+                                    <h6 class="card-title mb-2">Total</h6>
                                     <h4 class="mb-1 fw-bold">{{ $stats['total'] }}</h4>
                                     <small class="text-muted">Contenidos generados</small>
                                 </div>

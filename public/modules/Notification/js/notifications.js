@@ -22,6 +22,9 @@
         refreshTimer: null,
         notificationPermission: 'default', // 'granted', 'denied', or 'default'
         shownNotifications: new Set(), // Track which notifications have been shown as desktop notifications
+        retryCount: 0,
+        maxRetries: 3,
+        baseRetryDelay: 2000,
     };
 
     /**
@@ -232,6 +235,7 @@
             },
             success: function(response) {
                 console.log('✅ API Response received:', response);
+                state.retryCount = 0;
                 state.unreadCount = response.unread_count;
                 console.log('📊 Unread count: ' + state.unreadCount);
 
@@ -245,9 +249,21 @@
                 updateUnreadCountText(state.unreadCount);
                 updateRemainingText(state.unreadCount);
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
                 console.error('❌ Error loading notifications:', xhr.status, xhr.statusText);
                 console.error('Response:', xhr.responseText);
+
+                if (xhr.status === 0 || xhr.status >= 500) {
+                    if (state.retryCount < state.maxRetries) {
+                        var delay = state.baseRetryDelay * Math.pow(2, state.retryCount);
+                        state.retryCount++;
+                        console.log('🔄 Retrying in ' + delay + 'ms (attempt ' + state.retryCount + '/' + state.maxRetries + ')');
+                        setTimeout(loadNotifications, delay);
+                        return;
+                    }
+                }
+
+                state.retryCount = 0;
                 handleLoadError();
             },
         });
@@ -294,7 +310,7 @@
      */
     function updateBadge(count) {
         const $badge = $('#notification-badge');
-        const $notificationIcon = $('#notifications-dropdown .nav-link');
+        const $notificationIcon = $('#notifications-dropdown button[data-bs-toggle="dropdown"]');
 
         console.log('🔔 updateBadge() called with count:', count);
         console.log('Badge element found:', $badge.length > 0 ? 'YES' : 'NO');
@@ -314,33 +330,27 @@
     }
 
     /**
-     * Update the unread count text in the header
+     * Update the unread count chip in the panel header
      */
     function updateUnreadCountText(count) {
-        const $text = $('#unread-count-text');
+        var $chip = $('#unread-count-text');
         if (count > 0) {
-            const label = count > 1 ? ' nuevas' : ' nueva';
-            $text.text(count + label).show();
+            $chip.text(count).show();
         } else {
-            $text.hide();
+            $chip.hide();
         }
     }
 
     /**
-     * Update the "additional notifications" text
+     * Update the "additional notifications" overflow text
      */
     function updateRemainingText(count) {
-        const $totalText = $('#total-notifications-text');
+        var $extra = $('#notif-extra');
         if (count > config.limit) {
-            const remaining = count - config.limit;
-            const plural = remaining > 1;
-            const itemLabel = plural ? 'notificaciones' : 'notificación';
-            const label = plural ? 'adicionales' : 'adicional';
-            $totalText.text(`+${remaining} ${itemLabel} ${label}`).show();
-        } else if (count > 0) {
-            $totalText.text('Ver historial completo').show();
+            var remaining = count - config.limit;
+            $extra.text('+' + remaining + ' notificaciones adicionales').show();
         } else {
-            $totalText.hide();
+            $extra.hide();
         }
     }
 
@@ -348,8 +358,8 @@
      * Render notifications in the dropdown
      */
     function renderNotifications(notifications) {
-        const $list = $('#notifications-list');
-        const $empty = $('#notifications-empty');
+        var $list = $('#notifications-list');
+        var $empty = $('#notifications-empty');
 
         if (notifications.length === 0) {
             $list.hide();
@@ -360,85 +370,32 @@
         $list.empty().show();
         $empty.hide();
 
-        notifications.forEach(function(notification, index) {
-            const isUnread = !notification.is_read;
-            const colorClass = getColorClass(notification.color);
-            const iconClass = notification.icon || 'fas fa-bell';
-            const borderBottom = index < notifications.length - 1 ? 'border-bottom' : '';
-            const unreadBadge = isUnread ? '<span class="badge bg-primary px-2" style="font-size: 9px; padding: 2px 6px;">NUEVO</span>' : '';
+        notifications.forEach(function(notification) {
+            var isUnread = !notification.is_read;
+            var iconClass = notification.icon || 'fas fa-bell';
+            var unreadBadge = isUnread ? '<span class="badge-new">Nuevo</span>' : '';
+            var unreadClass = isUnread ? ' unread' : '';
 
-            const notificationHtml = `
-                <a href="javascript:void(0)"
-                   class="notification-item d-block text-decoration-none ${borderBottom} ${isUnread ? 'bg-light-subtle' : ''}"
-                   data-notification-id="${notification.id}"
-                   data-action-url="${notification.action_url || '#'}"
-                   style="transition: all 0.2s ease;">
-                    <div class="d-flex align-items-start gap-3 py-3 px-4">
-                        <div class="flex-shrink-0">
-                            <span class="bg-${colorClass}-subtle rounded-circle d-flex align-items-center justify-content-center text-${colorClass}"
-                                  style="width: 42px; height: 42px; font-size: 16px;">
-                                <i class="${iconClass}"></i>
-                            </span>
-                        </div>
-                        <div class="flex-grow-1" style="min-width: 0;">
-                            <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                <h6 class="mb-0 fw-semibold" style="font-size: 13px; line-height: 1.4;">${notification.title}</h6>
-                                ${unreadBadge}
-                            </div>
-                            <p class="mb-1 text-muted" style="font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                                ${notification.message}
-                            </p>
-                            <div class="d-flex align-items-center gap-2 mt-1">
-                                <small class="text-muted" style="font-size: 11px;">
-                                    <i class="fas fa-clock me-1" style="font-size: 10px;"></i>${notification.created_at}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            `;
+            var html = '<button class="notif-item' + unreadClass + '"'
+                + ' data-notification-id="' + notification.id + '"'
+                + ' data-action-url="' + (notification.action_url || '#') + '"'
+                + ' type="button">'
+                + '<div class="ico"><i class="' + iconClass + '"></i></div>'
+                + '<div class="body">'
+                + '<div class="head"><span class="title">' + notification.title + '</span>' + unreadBadge + '</div>'
+                + '<div class="desc">' + notification.message + '</div>'
+                + '<div class="meta"><i class="far fa-clock"></i> ' + notification.created_at + '</div>'
+                + '</div>'
+                + '</button>';
 
-            $list.append(notificationHtml);
+            $list.append(html);
 
-            // Show desktop notification for unread notifications that haven't been shown yet
             if (isUnread && !state.shownNotifications.has(notification.id)) {
-                console.log('🆕 New unread notification detected, showing desktop notification for:', notification.title);
                 showDesktopNotification(notification);
-                playNotificationSound(); // Play sound when new notification arrives
+                playNotificationSound();
                 state.shownNotifications.add(notification.id);
             }
         });
-
-        // Add hover effects
-        setupNotificationItemHovers();
-    }
-
-    /**
-     * Set up hover effects for notification items
-     */
-    function setupNotificationItemHovers() {
-        $('.notification-item').off('mouseenter mouseleave').on('mouseenter', function() {
-            $(this).addClass('bg-light');
-        }).on('mouseleave', function() {
-            if (!$(this).hasClass('bg-light-subtle')) {
-                $(this).removeClass('bg-light');
-            }
-        });
-    }
-
-    /**
-     * Get Bootstrap color class from notification color value
-     */
-    function getColorClass(color) {
-        const colorMap = {
-            'primary': 'primary',
-            'success': 'success',
-            'danger': 'danger',
-            'warning': 'warning',
-            'info': 'info',
-            'secondary': 'secondary',
-        };
-        return colorMap[color] || 'primary';
     }
 
     /**
@@ -448,28 +405,70 @@
         $('#notifications-loading').html(
             '<div class="text-center py-5">' +
             '<i class="fas fa-exclamation-triangle text-warning fs-1 mb-3"></i>' +
-            '<p class="text-muted mb-0 small">Error al cargar notificaciones</p>' +
+            '<p class="text-muted mb-0">Error al cargar notificaciones</p>' +
             '</div>'
         );
     }
 
     /**
-     * Set up event listeners for notification interactions
+     * Set up event listeners for notification interactions and user dock
      */
     function setupEventListeners() {
-        // Click handler for notification items
-        $(document).off('click', '.notification-item').on('click', '.notification-item', function(e) {
+        // Click on notification item
+        $(document).off('click', '.notif-item').on('click', '.notif-item', function(e) {
             e.preventDefault();
-            const $item = $(this);
-            const notificationId = $item.data('notification-id');
-            const actionUrl = $item.data('action-url');
+            var $item = $(this);
+            var notificationId = $item.data('notification-id');
+            var actionUrl = $item.data('action-url');
 
             markAsRead(notificationId, function() {
-                // Redirect if action URL is available
                 if (actionUrl && actionUrl !== '#') {
                     window.location.href = actionUrl;
                 }
             });
+        });
+
+        // Close button for notification panel
+        $(document).off('click', '#btn-notif-close').on('click', '#btn-notif-close', function() {
+            var $toggle = $('#notifications-dropdown [data-bs-toggle="dropdown"]');
+            if ($toggle.length) {
+                var instance = bootstrap.Dropdown.getInstance($toggle[0]);
+                if (instance) { instance.hide(); }
+            }
+        });
+
+        // Mark all read
+        $(document).off('click', '#btn-mark-all-read').on('click', '#btn-mark-all-read', function() {
+            var markAllUrl = config.markAllReadRoute;
+            if (!markAllUrl) { return; }
+
+            $.ajax({
+                url: markAllUrl,
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                },
+                success: function() {
+                    state.unreadCount = 0;
+                    updateBadge(0);
+                    updateUnreadCountText(0);
+                    loadNotifications();
+                },
+            });
+        });
+
+        // User dock toggle
+        $(document).off('click', '#user-dock-trigger').on('click', '#user-dock-trigger', function(e) {
+            e.stopPropagation();
+            $('#user-dock').toggleClass('open');
+        });
+
+        // Close dock when clicking outside
+        $(document).off('click.dock').on('click.dock', function(e) {
+            if (!$(e.target).closest('#user-dock-wrap').length) {
+                $('#user-dock').removeClass('open');
+            }
         });
     }
 
@@ -495,28 +494,26 @@
             if (window.Echo) {
                 const userId = $('meta[name="user-id"]').attr('content');
                 if (userId) {
-                    console.log('📧 Listening for real-time notifications on public channel');
-                    // Use public channel instead of private to avoid WebSocket auth issues
-                    // Public channel: no session cookies needed for WebSocket auth
-                    window.Echo.channel(`public-notifications.${userId}`)
-                        .notification((notification) => {
-                            console.log('🔔 Real-time notification received:', notification);
-
-                            // Show desktop notification (if permission granted)
-                            showDesktopNotification(notification);
-
-                            // Play sound for real-time notifications
+                    // Private channel: NewNotificationEvent broadcasts on user.{id}
+                    window.Echo.private(`user.${userId}`)
+                        .listen('.notification.new', (data) => {
+                            showDesktopNotification({
+                                title: data.title,
+                                message: data.message,
+                                action_url: data.action_url,
+                            });
                             playNotificationSound();
-
-                            // Refresh notifications dropdown
                             window.NotificationManager.refresh();
                         })
                         .error((error) => {
-                            console.warn('⚠️  Notification channel error:', error);
+                            // Private channel auth failed — fall back to public channel polling
+                            console.warn('Private channel unavailable, using public channel fallback');
+                            window.Echo.channel(`public-notifications.${userId}`)
+                                .notification(() => {
+                                    window.NotificationManager.refresh();
+                                });
                         });
                 }
-            } else {
-                console.warn('⚠️  Laravel Echo not initialized');
             }
         }
     });

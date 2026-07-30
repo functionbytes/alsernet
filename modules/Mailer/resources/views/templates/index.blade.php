@@ -110,7 +110,7 @@
                                         <td>
                                             <strong class="d-block">{{ $template->name }}</strong>
                                             @if($template->description)
-                                                <small class="text-muted">{{ Str::limit($template->description, 50) }}</small>
+                                                <small class="text-muted d-block text-truncate">{{ Str::limit($template->description, 50) }}</small>
                                             @endif
                                         </td>
                                         <td><code class="text-muted">{{ $template->key }}</code></td>
