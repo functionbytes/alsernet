@@ -4,17 +4,19 @@ namespace Modules\HelpdeskIntegration\Http\Requests\Managers;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Modules\HelpdeskIntegration\Services\CustomerIdentityVerificationService;
 
 class SearchCustomerIntegrationRequest extends FormRequest
 {
+    /**
+     * A diferencia de link()/unlink()/sync(), esta búsqueda no persiste
+     * nada — solo consulta la plataforma remota — así que deliberadamente
+     * NO exige identidad verificada. La usa el buscador de PrestaShop/ERP
+     * del gate de identidad para ayudar a confirmar quién es el cliente
+     * antes de verificarlo.
+     */
     public function authorize(): bool
     {
-        if (! $this->user()?->can('view', $this->route('customer'))) {
-            return false;
-        }
-
-        return app(CustomerIdentityVerificationService::class)->isVerified($this->route('customer'));
+        return (bool) $this->user()?->can('view', $this->route('customer'));
     }
 
     public function rules(): array
