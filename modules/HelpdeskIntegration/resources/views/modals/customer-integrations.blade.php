@@ -81,6 +81,7 @@
             {{-- Footer: gate de identidad (delega al modal verify-customer-identity) --}}
             <div id="ciFootGate">
                 <button class="btn-primary w-100 mb-2" id="ciOpenVerify" type="button">Verificar identidad</button>
+                <button class="btn-secondary w-100 mb-2" id="ciOpenSearch" type="button" style="display:none">Buscar cliente en plataformas</button>
                 <button class="btn-secondary w-100" data-bv-close>Cerrar</button>
             </div>
             {{-- Footer vista principal --}}

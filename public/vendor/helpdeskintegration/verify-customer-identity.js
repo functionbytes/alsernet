@@ -53,9 +53,10 @@
 
     // ── Punto de entrada publico ────────────────────────────────────────────
 
-    window.openCustomerIdentityVerification = function (customerId, onVerified) {
+    window.openCustomerIdentityVerification = function (customerId, onVerified, options) {
         if (!customerId) { return; }
-        S = { customerId: customerId, onVerified: typeof onVerified === 'function' ? onVerified : function () {}, channel: 'email', smsEnabled: false, customerName: '', hasEmail: false, linkablePlatforms: [] };
+        options = options || {};
+        S = { customerId: customerId, onVerified: typeof onVerified === 'function' ? onVerified : function () {}, channel: 'email', smsEnabled: false, customerName: '', hasEmail: false, linkablePlatforms: [], startAt: options.startAt };
         HDCommerce.open('verify-customer-identity');
         loadStatus();
     };
@@ -73,7 +74,11 @@
                 // del cliente) para poder ofrecer el buscador de PrestaShop/ERP.
                 S.linkablePlatforms = resp.linkable_platforms || [];
                 if (identity.verified) {
+                    // Ya verificada tiene prioridad sobre startAt: no tiene
+                    // sentido abrir el buscador si ya se sabe quién es.
                     renderAlready(identity);
+                } else if (S.startAt === 'search' && S.linkablePlatforms.length) {
+                    renderPlatformSearch();
                 } else {
                     renderMethod();
                 }

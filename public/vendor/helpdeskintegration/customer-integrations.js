@@ -52,12 +52,16 @@
                 $('#ciGateCustomerName').text(c.name || '—');
                 $('#ciGateCustomerContact').text(c.email || c.phone || '—');
 
+                // Catalogo de plataformas: llega también sin verificar (no es
+                // dato del cliente), así que la vista de bloqueo ya lo conoce
+                // para decidir si ofrece "Buscar cliente en plataformas".
+                linkablePlatforms = resp.linkable_platforms || [];
+
                 if (!resp.identity || !resp.identity.verified) {
                     showGateView();
                     return;
                 }
 
-                linkablePlatforms = resp.linkable_platforms || [];
                 lastIntegrations = resp.integrations || [];
                 confirmPlatform = null;
                 showMainView();
@@ -90,19 +94,31 @@
         $('#ciFootSearch').hide();
         $('#ciModalTitle').text(t('verify_identity_title', 'Verificar identidad'));
         setHeadIcon('fa-plug', false);
+        // Solo consulta (no vincula) — mismo buscador que ofrece el modal de
+        // identidad, sin esperar a que el agente entre ahí primero.
+        $('#ciOpenSearch').toggle(linkablePlatforms.length > 0);
+    }
+
+    function onIdentityResolved(resp) {
+        linkablePlatforms = resp.linkable_platforms || [];
+        lastIntegrations = resp.integrations || [];
+        confirmPlatform = null;
+        showMainView();
+        renderList(lastIntegrations, resp.last_activity);
     }
 
     $(document).on('click', '#ciOpenVerify', function () {
         var customerId = HDCommerce.customerId();
         if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
 
-        window.openCustomerIdentityVerification(customerId, function (resp) {
-            linkablePlatforms = resp.linkable_platforms || [];
-            lastIntegrations = resp.integrations || [];
-            confirmPlatform = null;
-            showMainView();
-            renderList(lastIntegrations, resp.last_activity);
-        });
+        window.openCustomerIdentityVerification(customerId, onIdentityResolved);
+    });
+
+    $(document).on('click', '#ciOpenSearch', function () {
+        var customerId = HDCommerce.customerId();
+        if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
+
+        window.openCustomerIdentityVerification(customerId, onIdentityResolved, { startAt: 'search' });
     });
 
     // ── Lista de integraciones (secciones Conectadas / Disponibles) ─────────
