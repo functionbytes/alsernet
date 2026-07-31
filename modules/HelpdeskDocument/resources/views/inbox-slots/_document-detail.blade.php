@@ -6,6 +6,7 @@
     $docId          = $doc['id']              ?? null;
     $docUid         = $doc['uid']             ?? null;
     $orderRef       = $doc['order_reference'] ?? '—';
+    $orderId        = $doc['order_id']        ?? '—';
     $typeLabel      = $doc['type_label']      ?? 'Documento';
     $statusLabel    = $doc['status_label']    ?? 'Pendiente';
     $statusKey      = $doc['status_key']      ?? 'pending';
@@ -605,6 +606,7 @@
                                 <button type="button" class="docs-req-link docs-goto-cust-edit">Editar</button>
                             </div>
                             <div class="docs-vd-status-row"><span class="k">Orden</span><span class="v mono docs-vd-order-ref">{{ $orderRef }}</span></div>
+                            <div class="docs-vd-status-row"><span class="k">Nº de pedido</span><span class="v mono">{{ $orderId }}</span></div>
                             @if($assignedUserId)
                                 <div class="docs-vd-status-row"><span class="k">Asignado</span><span class="v">Usuario #{{ $assignedUserId }}</span></div>
                             @endif

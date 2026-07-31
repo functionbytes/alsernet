@@ -124,12 +124,12 @@
                     data-doc-tags="all {{ $grp }}"
                     data-doc-status="{{ $grp }}"
                     data-doc-name="{{ strtolower($d['type_label']) }}"
-                    data-doc-ref="{{ strtolower($d['order_reference']) }}"
+                    data-doc-ref="{{ strtolower($d['order_id'] ?? $d['order_reference']) }}"
                     data-doc-date="{{ $d['created_human'] ?? '' }}">
                 <div class="docs-card-header">
                     <div class="docs-card-info">
                         <span class="title">{{ $d['customer_name'] ?: $d['type_label'] }}</span>
-                        <span class="id">#{{ $d['order_reference'] }} · {{ $d['type_label'] }}</span>
+                        <span class="id">#{{ $d['order_id'] ?? $d['order_reference'] }} · {{ $d['type_label'] }}</span>
                     </div>
                     <span class="docs-status {{ $grp }}">{{ $d['status_label'] }}</span>
                 </div>

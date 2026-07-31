@@ -14,6 +14,7 @@ class HelpdeskContactsPermissionsSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $permissions = [
+            'modules.view.contacts',
             'contacts.view',
             'contacts.update',
             'contacts.commerce',

@@ -114,7 +114,8 @@ class DocumentCreateController extends Controller
                     ->orWhere('customer_lastname', 'like', "%{$q}%");
 
                 if (ctype_digit($q)) {
-                    $sub->orWhere('id', (int) $q);
+                    $sub->orWhere('id', (int) $q)
+                        ->orWhere('order_id', (int) $q);
                 }
             })
             ->latest('id')

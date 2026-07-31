@@ -80,6 +80,9 @@ return Application::configure(basePath: dirname(__DIR__))
             // Document permission middleware
             'document.permission' => \Modules\Document\Http\Middleware\DocumentPermissionMiddleware::class,
 
+            // Toggle de "Settings > Integraciones" para módulos satélite de Helpdesk
+            'integration.enabled' => \Modules\Helpdesk\Http\Middleware\EnsureIntegrationEnabled::class,
+
             // Settings section access
             'settings' => \Modules\Core\Http\Middleware\CheckSettings::class,
 
