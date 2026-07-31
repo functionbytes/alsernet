@@ -76,6 +76,7 @@ class EnsureModuleIsActive
                     'campaigns' => 'Campaign',
                     'returns' => 'Return',
                     'helpdesk' => 'Helpdesk',
+                    'helpdeskintegration' => 'HelpdeskIntegration',
                     'faq' => 'Faq',
                 ];
 
