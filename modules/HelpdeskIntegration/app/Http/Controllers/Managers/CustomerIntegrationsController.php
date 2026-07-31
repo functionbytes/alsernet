@@ -49,7 +49,11 @@ class CustomerIntegrationsController extends Controller
             ],
             'identity' => $this->identityPayload($customer, $verified),
             'integrations' => [],
-            'linkable_platforms' => [],
+            // Catalogo de plataformas (label/icono/tipos de busqueda) — no es
+            // dato del cliente, así que se expone también sin verificar: lo usa
+            // el buscador de PrestaShop/ERP del modal de identidad (solo
+            // consulta, no vincula) para ayudar a confirmar quién es el cliente.
+            'linkable_platforms' => $this->integrations->linkablePlatforms(),
         ];
 
         if ($verified) {
@@ -231,8 +235,14 @@ class CustomerIntegrationsController extends Controller
         ]);
     }
 
+    /**
+     * Solo consulta la plataforma remota — no vincula nada, así que se
+     * permite antes de verificar identidad (a diferencia de link()/unlink()).
+     */
     public function search(SearchCustomerIntegrationRequest $request, Customer $customer): JsonResponse
     {
+        $this->authorize('view', $customer);
+
         $data = $request->validated();
 
         $search = $this->integrations->search(

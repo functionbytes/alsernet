@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskIntegration\Services;
 
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\CustomerExternalId;
@@ -70,17 +71,33 @@ class CustomerIntegrationService
             ];
         }
 
-        $linkablePlatforms = $providers
+        return [
+            'integrations' => $integrations,
+            'linkable_platforms' => $this->linkablePlatforms($providers),
+            'last_activity' => $this->lastActivity($customer),
+        ];
+    }
+
+    /**
+     * Catalogo de plataformas vinculables (label/icono/color/tipos de busqueda).
+     * A diferencia de buildPayload(), no depende de $customer — es informacion
+     * de catalogo, no del vinculo de un cliente concreto — por eso es seguro
+     * exponerlo antes de verificar identidad (lo usa el buscador de
+     * PrestaShop/ERP del modal de identidad, que solo consulta y no vincula).
+     */
+    public function linkablePlatforms(?Collection $providers = null): array
+    {
+        if (! helpdesk_integration_enabled()) {
+            return [];
+        }
+
+        $providers ??= IntegrationProvider::query()->orderBy('sort_order')->get();
+
+        return $providers
             ->filter(fn (IntegrationProvider $provider) => $provider->is_active && $provider->is_linkable)
             ->map(fn (IntegrationProvider $provider) => $this->presentLinkable($provider))
             ->values()
             ->all();
-
-        return [
-            'integrations' => $integrations,
-            'linkable_platforms' => $linkablePlatforms,
-            'last_activity' => $this->lastActivity($customer),
-        ];
     }
 
     /**

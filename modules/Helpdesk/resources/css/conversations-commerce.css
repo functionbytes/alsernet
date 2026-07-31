@@ -1529,6 +1529,15 @@
     color: var(--bv-danger, #b91c1c);
 }
 
+/* Fila con varios enlaces tipo texto (buscar/reasignar cliente) */
+.bv-modal .bv-vi-actions-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
 /* Enlaces tipo texto (reenviar / cambiar metodo) */
 .bv-modal .bv-vi-linkbtn {
     background: none;

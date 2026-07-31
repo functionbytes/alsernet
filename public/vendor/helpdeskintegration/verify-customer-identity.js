@@ -55,7 +55,7 @@
 
     window.openCustomerIdentityVerification = function (customerId, onVerified) {
         if (!customerId) { return; }
-        S = { customerId: customerId, onVerified: typeof onVerified === 'function' ? onVerified : function () {}, channel: 'email', smsEnabled: false, customerName: '', hasEmail: false };
+        S = { customerId: customerId, onVerified: typeof onVerified === 'function' ? onVerified : function () {}, channel: 'email', smsEnabled: false, customerName: '', hasEmail: false, linkablePlatforms: [] };
         HDCommerce.open('verify-customer-identity');
         loadStatus();
     };
@@ -69,6 +69,9 @@
                 S.customerName = (resp.customer && resp.customer.name) || '';
                 S.hasEmail = !!(resp.customer && resp.customer.email);
                 S.channel = S.hasEmail ? 'email' : (S.smsEnabled ? 'sms' : 'manual');
+                // Catalogo de plataformas: llega también sin verificar (no es dato
+                // del cliente) para poder ofrecer el buscador de PrestaShop/ERP.
+                S.linkablePlatforms = resp.linkable_platforms || [];
                 if (identity.verified) {
                     renderAlready(identity);
                 } else {
@@ -135,7 +138,12 @@
                 methodBtn('manual', t('verify_manual_method', 'Marcar como verificado manualmente'), false) +
             '</div>' +
             noticeHtml +
-            '<button type="button" class="bv-vi-linkbtn" id="viOpenLinkCustomer">' + t('open_link_customer_button', 'Buscar y vincular cliente') + '</button>'
+            '<div class="bv-vi-actions-row">' +
+                '<button type="button" class="bv-vi-linkbtn" id="viOpenLinkCustomer">' + t('open_link_customer_button', '¿Es otro cliente? Buscar y reasignar') + '</button>' +
+                (S.linkablePlatforms.length
+                    ? '<button type="button" class="bv-vi-linkbtn" id="viOpenPlatformSearch">' + t('open_platform_search_button', 'Buscar en PrestaShop / ERP') + '</button>'
+                    : '') +
+            '</div>'
         );
         $('#viFoot').html(
             '<button class="btn-primary w-100 mb-2" id="viSend" type="button">' + (isManual ? t('confirm_manual_button', 'Confirmar identidad verificada') : t('send_code_button', 'Enviar código')) + '</button>' +
@@ -146,6 +154,136 @@
     $(document).on('click', '#viOpenLinkCustomer', function () {
         HDCommerce.close('verify-customer-identity');
         if (typeof window.openLinkCustomerModal === 'function') { window.openLinkCustomerModal(); }
+    });
+
+    // ── Buscar en plataformas (PrestaShop/ERP) — solo consulta, no vincula ──
+    // Disponible antes de verificar identidad: el catálogo de plataformas no
+    // es dato del cliente, y esta búsqueda no persiste nada — ayuda al agente
+    // a confirmar que está hablando con el cliente correcto antes de elegir
+    // el canal del código o de marcarlo como verificado manualmente.
+
+    $(document).on('click', '#viOpenPlatformSearch', renderPlatformSearch);
+
+    function renderPlatformSearch() {
+        clearTimers();
+        $('#viTitle').text(t('platform_search_title', 'Buscar en plataformas'));
+        $('#viBody').html(
+            '<div class="vi-lead">' + t('platform_search_lead', 'Busca al cliente en las plataformas conectadas para confirmar sus datos. Esto no vincula nada, solo consulta.') + '</div>' +
+            '<div class="field">' +
+                '<div class="search-field">' +
+                    '<i class="fas fa-magnifying-glass"></i>' +
+                    '<input type="text" id="viPlatformSearchQ" placeholder="' + t('search_placeholder', 'Email, teléfono o identificador…') + '">' +
+                '</div>' +
+            '</div>' +
+            '<div id="viPlatformSearchResults">' +
+                '<div class="bv-oc-empty"><i class="fas fa-magnifying-glass"></i><div>' + t('search_prompt', 'Introduce un email, teléfono o identificador para buscar al cliente.') + '</div></div>' +
+            '</div>'
+        );
+        $('#viFoot').html(
+            '<button class="btn-secondary w-100" id="viPlatformSearchBack" type="button">' + t('back_button', 'Volver') + '</button>'
+        );
+        setTimeout(function () { $('#viPlatformSearchQ').trigger('focus'); }, 40);
+    }
+
+    $(document).on('click', '#viPlatformSearchBack', renderMethod);
+
+    function guessPlatformSearchType(q) {
+        if (q.indexOf('@') !== -1) { return 'email'; }
+        if (/^[0-9\s+()-]+$/.test(q)) { return 'phone'; }
+        return 'name';
+    }
+
+    function renderPlatformSearchResults(results, failedPlatforms) {
+        failedPlatforms = failedPlatforms || [];
+
+        var failNote = failedPlatforms.length
+            ? '<div class="minfo danger"><i class="fas fa-triangle-exclamation"></i>' +
+              '<div>' + t('platforms_no_response_prefix', 'No respondieron: ') + '<strong>' + failedPlatforms.map(esc).join(', ') + '</strong>' + t('platforms_no_response_suffix', '. Los resultados pueden estar incompletos; inténtalo de nuevo en unos minutos.') + '</div></div>'
+            : '';
+
+        if (!results.length) {
+            if (failedPlatforms.length) {
+                $('#viPlatformSearchResults').html(
+                    failNote +
+                    '<div class="bv-oc-empty"><i class="fas fa-plug-circle-exclamation"></i>' +
+                    '<div class="title">' + t('search_incomplete_title', 'No se pudo completar la búsqueda') + '</div>' +
+                    '<div>' + t('search_incomplete_body', 'Las plataformas indicadas no respondieron. No significa que el cliente no exista.') + '</div>' +
+                    '</div>'
+                );
+                return;
+            }
+
+            $('#viPlatformSearchResults').html(
+                '<div class="bv-oc-empty"><i class="fas fa-user-slash"></i>' +
+                '<div class="title">' + t('no_results_title', 'Sin resultados') + '</div></div>'
+            );
+            return;
+        }
+
+        var html = results.map(function (r) {
+            var icoStyle = r.color ? ' style="color:' + esc(r.color) + '"' : '';
+            var badgeStyle = r.color ? ' style="color:' + esc(r.color) + ';border-color:' + esc(r.color) + '"' : '';
+            return '<div class="bv-intg-row">' +
+                '<div class="ico"' + icoStyle + '><i class="' + esc(r.icon || 'fas fa-plug') + '"></i></div>' +
+                '<div class="meta">' +
+                    '<span class="name">' + esc(r.name || '—') + ' <span class="badge bg-white border ms-1"' + badgeStyle + '>' + esc(r.platformLabel || '') + '</span></span>' +
+                    '<span class="det">' + esc(r.email || r.meta || '') + '</span>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+
+        $('#viPlatformSearchResults').html(failNote + html);
+    }
+
+    function doPlatformSearch(q, type) {
+        $('#viPlatformSearchResults').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> ' + t('searching_all_platforms', 'Buscando en todas las plataformas…') + '</div>');
+
+        var searches = S.linkablePlatforms.map(function (p) {
+            return HDCommerce.ajax({
+                url: base() + '/integrations/search',
+                method: 'GET',
+                data: { platform: p.platform, q: q, type: type },
+            }).then(function (resp) {
+                if (resp.platform_error) { return { failed: p.label, results: [] }; }
+
+                return {
+                    results: (resp.results || []).map(function (r) {
+                        r.platform = p.platform;
+                        r.platformLabel = p.label;
+                        r.icon = p.icon;
+                        r.color = p.color;
+                        return r;
+                    }),
+                };
+            }, function () { return { failed: p.label, results: [] }; });
+        });
+
+        Promise.all(searches).then(function (outcomes) {
+            var results = [], failed = [];
+            outcomes.forEach(function (o) {
+                results = results.concat(o.results);
+                if (o.failed) { failed.push(o.failed); }
+            });
+            renderPlatformSearchResults(results, failed);
+        });
+    }
+
+    var viPlatformSearchDebounce = null;
+    $(document).on('input', '#viPlatformSearchQ', function () {
+        clearTimeout(viPlatformSearchDebounce);
+        var q = $.trim($(this).val());
+        if (q.length < 2) {
+            $('#viPlatformSearchResults').html('<div class="bv-oc-empty"><i class="fas fa-magnifying-glass"></i><div>' + t('search_prompt', 'Introduce un email, teléfono o identificador para buscar al cliente.') + '</div></div>');
+            return;
+        }
+        viPlatformSearchDebounce = setTimeout(function () { doPlatformSearch(q, guessPlatformSearchType(q)); }, 650);
+    });
+    $(document).on('keydown', '#viPlatformSearchQ', function (e) {
+        var q = $.trim($(this).val());
+        if (e.key === 'Enter' && q.length >= 2) {
+            clearTimeout(viPlatformSearchDebounce);
+            doPlatformSearch(q, guessPlatformSearchType(q));
+        }
     });
 
     function methodBtn(value, label, disabled) {
