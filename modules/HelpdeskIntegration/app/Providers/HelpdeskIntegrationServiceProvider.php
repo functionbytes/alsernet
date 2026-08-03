@@ -2,8 +2,11 @@
 
 namespace Modules\HelpdeskIntegration\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Http\Middleware\Require2FA;
@@ -48,9 +51,36 @@ class HelpdeskIntegrationServiceProvider extends ServiceProvider
         Gate::policy(IntegrationProvider::class, IntegrationProviderPolicy::class);
 
         $this->registerDrivers();
+        $this->registerRateLimiters();
         $this->registerRoutes();
         $this->registerNav();
         $this->registerCommands();
+    }
+
+    /**
+     * Named limiters (en vez de throttle:X,1 crudo en las rutas) para poder
+     * desactivar el throttle en local sin tocar producción — las pruebas
+     * manuales repetidas (buscar/sincronizar/verificar identidad) agotaban
+     * el límite constantemente durante el desarrollo, con un 429 silencioso
+     * que el modal no distingue de "la plataforma no respondió".
+     */
+    protected function registerRateLimiters(): void
+    {
+        $limits = [
+            'helpdeskintegration-show' => 60,
+            'helpdeskintegration-sync' => 20,
+            'helpdeskintegration-search' => 30,
+            'helpdeskintegration-audit' => 30,
+            'helpdeskintegration-link' => 10,
+            'helpdeskintegration-identity-request' => 20,
+            'helpdeskintegration-identity-verify' => 10,
+        ];
+
+        foreach ($limits as $name => $perMinute) {
+            RateLimiter::for($name, fn (Request $request) => app()->environment('local')
+                ? Limit::none()
+                : Limit::perMinute($perMinute)->by($request->user()?->id ?: $request->ip()));
+        }
     }
 
     /**
