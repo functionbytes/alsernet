@@ -115,6 +115,7 @@ return [
         'platform_search_lead' => 'Busca al cliente en las plataformas conectadas para confirmar sus datos. Esto no vincula nada, solo consulta.',
         'search_placeholder' => 'Email, teléfono o identificador…',
         'back_button' => 'Volver',
+        'load_failed_retry_hint' => 'Puede que el sistema esté ocupado. Inténtalo de nuevo en unos segundos.',
         'send_email_method' => 'Enviar código por email',
         'send_sms_method' => 'Enviar código por SMS',
         'coming_soon_suffix' => ' (próximamente)',

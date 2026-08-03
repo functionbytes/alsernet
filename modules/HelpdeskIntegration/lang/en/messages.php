@@ -115,6 +115,7 @@ return [
         'platform_search_lead' => 'Search for the customer on the connected platforms to confirm their details. This does not link anything, search only.',
         'search_placeholder' => 'Email, phone number, or identifier…',
         'back_button' => 'Back',
+        'load_failed_retry_hint' => 'The system might be busy. Please try again in a few seconds.',
         'send_email_method' => 'Send code by email',
         'send_sms_method' => 'Send code by SMS',
         'coming_soon_suffix' => ' (coming soon)',

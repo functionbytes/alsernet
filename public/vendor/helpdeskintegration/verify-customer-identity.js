@@ -83,8 +83,30 @@
                     renderMethod();
                 }
             })
-            .fail(function () { renderMethod(); });
+            .fail(function () { renderLoadError(); });
     }
+
+    // Antes esto caía silenciosamente en renderMethod() con S vacío (sin
+    // nombre, sin email, sin plataformas) — el agente veía la pantalla de
+    // método "rota" (todo deshabilitado, sin buscador) sin ningún aviso de
+    // que la carga había fallado. Con un fallo transitorio (ej. throttle)
+    // parecía que la función simplemente "había desaparecido".
+    function renderLoadError() {
+        clearTimers();
+        $('#viTitle').text(t('verify_identity_title', 'Verificar identidad'));
+        $('#viBody').html(
+            '<div class="bv-oc-empty"><i class="fas fa-triangle-exclamation"></i>' +
+            '<div class="title">' + t('load_failed', 'No se pudieron cargar las integraciones') + '</div>' +
+            '<div>' + t('load_failed_retry_hint', 'Puede que el sistema esté ocupado. Inténtalo de nuevo en unos segundos.') + '</div>' +
+            '</div>'
+        );
+        $('#viFoot').html(
+            '<button class="btn-primary w-100 mb-2" id="viRetryLoad" type="button">' + t('retry', 'Reintentar') + '</button>' +
+            '<button class="btn-secondary w-100" data-bv-close>' + t('cancel', 'Cancelar') + '</button>'
+        );
+    }
+
+    $(document).on('click', '#viRetryLoad', loadStatus);
 
     function renderLoading(title, msg) {
         clearTimers();
