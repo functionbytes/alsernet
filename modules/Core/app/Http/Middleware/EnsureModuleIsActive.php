@@ -77,6 +77,7 @@ class EnsureModuleIsActive
                     'returns' => 'Return',
                     'helpdesk' => 'Helpdesk',
                     'helpdeskintegration' => 'HelpdeskIntegration',
+                    'helpdeskemaillog' => 'HelpdeskEmailLog',
                     'faq' => 'Faq',
                 ];
 
