@@ -1348,6 +1348,16 @@
 .bv-modal .bv-intg-mini:hover {
     background: var(--bv-primary-strong, #5e7a0d);
 }
+.bv-modal .bv-intg-mini:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+.bv-modal .bv-intg-mini.linked {
+    border-color: var(--bv-border, #e4e4e7);
+    background: #fff;
+    color: var(--bv-text-soft, #3f3f46);
+    opacity: 1;
+}
 .bv-modal .bv-intg-mini-outline {
     border: 1px solid var(--bv-border, #e4e4e7);
     background: #fff;

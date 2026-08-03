@@ -5,10 +5,17 @@ namespace Modules\HelpdeskIntegration\Http\Requests\Managers;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\HelpdeskIntegration\Models\IntegrationProvider;
-use Modules\HelpdeskIntegration\Services\CustomerIdentityVerificationService;
 
 class LinkCustomerIntegrationRequest extends FormRequest
 {
+    /**
+     * Decisión explícita del usuario (ago-2026): vincular ya no exige
+     * identidad verificada — el buscador de plataformas del gate de
+     * identidad permite vincular directamente, antes de verificar, para
+     * no bloquear al agente que ya confirmó visualmente el match. sync()/
+     * unlink() siguen exigiendo verificación (acciones sobre un vínculo ya
+     * establecido, no sobre un candidato recién encontrado).
+     */
     public function authorize(): bool
     {
         // Permiso dedicado: poder editar el cliente ya no basta para
@@ -17,11 +24,7 @@ class LinkCustomerIntegrationRequest extends FormRequest
             return false;
         }
 
-        if (! $this->user()->can('update', $this->route('customer'))) {
-            return false;
-        }
-
-        return app(CustomerIdentityVerificationService::class)->isVerified($this->route('customer'));
+        return (bool) $this->user()?->can('update', $this->route('customer'));
     }
 
     public function rules(): array

@@ -11,10 +11,13 @@ use Modules\Core\Models\Lang;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Setting;
 use Modules\Helpdesk\Tests\HelpdeskTestCase;
+use Modules\HelpdeskIntegration\Database\Seeders\HelpdeskIntegrationProvidersSeeder;
 use Modules\HelpdeskIntegration\Jobs\SendIdentityCodeSmsJob;
 use Modules\HelpdeskIntegration\Mail\CustomerIdentityCodeMail;
 use Modules\HelpdeskIntegration\Models\CustomerIdentityVerification;
 use Modules\HelpdeskIntegration\Services\CustomerIdentityVerificationService;
+use Modules\HelpdeskIntegration\Support\IntegrationDriverRegistry;
+use Modules\HelpdeskIntegration\Tests\Support\FakeIntegrationDriver;
 use Modules\Locales\Models\Locale;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Models\MailerTemplateLang;
@@ -245,13 +248,31 @@ class CustomerIdentityVerificationTest extends HelpdeskTestCase
             ->assertJsonStructure(['integrations', 'linkable_platforms']);
     }
 
-    public function test_mutating_actions_blocked_until_identity_verified(): void
+    /**
+     * Decisión explícita (ago-2026): vincular ya NO exige identidad
+     * verificada — antes esta prueba comprobaba justo lo contrario
+     * (assertForbidden). sync()/unlink() sí la siguen exigiendo, ver
+     * PlatformSyncTest y CustomerIntegrationsControllerTest::test_unlink_*.
+     */
+    public function test_link_no_longer_requires_identity_verified(): void
     {
+        $this->seed(HelpdeskIntegrationProvidersSeeder::class);
+
+        FakeIntegrationDriver::reset();
+        app(IntegrationDriverRegistry::class)->register('prestashop', FakeIntegrationDriver::class);
+
         $this->actingAs($this->manager)
             ->postJson(route('manager.helpdesk.customers.integrations.link', $this->customer), [
                 'platform' => 'prestashop',
                 'external_id' => '123',
-            ])->assertForbidden();
+            ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('helpdesk_customer_external_ids', [
+            'customer_id' => $this->customer->id,
+            'platform' => 'prestashop',
+            'external_id' => '123',
+        ], 'helpdesk');
     }
 
     // ─── verify manual ──────────────────────────────────────────────────────────

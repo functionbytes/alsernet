@@ -183,11 +183,15 @@
         if (typeof window.openLinkCustomerModal === 'function') { window.openLinkCustomerModal(); }
     });
 
-    // ── Buscar en plataformas (PrestaShop/ERP) — solo consulta, no vincula ──
+    // ── Buscar en plataformas (PrestaShop/ERP) — y vincular desde aquí ──────
     // Disponible antes de verificar identidad: el catálogo de plataformas no
-    // es dato del cliente, y esta búsqueda no persiste nada — ayuda al agente
-    // a confirmar que está hablando con el cliente correcto antes de elegir
-    // el canal del código o de marcarlo como verificado manualmente.
+    // es dato del cliente. Vincular SÍ persiste (decisión explícita del
+    // usuario, ago-2026): antes solo dejaba consultar, pero obligar a cerrar
+    // este buscador y volver a verificar identidad primero era más fricción
+    // de la que aportaba seguridad real, dado que la búsqueda ya expone al
+    // agente el mismo dato (id/nombre/email) que necesitaría para vincular
+    // después. LinkCustomerIntegrationRequest ya no exige identidad
+    // verificada (ver su docblock); unlink()/sync() sí la siguen exigiendo.
 
     $(document).on('click', '#viOpenPlatformSearch', renderPlatformSearch);
 
@@ -195,7 +199,7 @@
         clearTimers();
         $('#viTitle').text(t('platform_search_title', 'Buscar en plataformas'));
         $('#viBody').html(
-            '<div class="vi-lead">' + t('platform_search_lead', 'Busca al cliente en las plataformas conectadas para confirmar sus datos. Esto no vincula nada, solo consulta.') + '</div>' +
+            '<div class="vi-lead">' + t('platform_search_lead', 'Busca al cliente en las plataformas conectadas y vincula el identificador correcto.') + '</div>' +
             '<div class="field">' +
                 '<div class="search-field">' +
                     '<i class="fas fa-magnifying-glass"></i>' +
@@ -256,11 +260,42 @@
                     '<span class="name">' + esc(r.name || '—') + ' <span class="badge bg-white border ms-1"' + badgeStyle + '>' + esc(r.platformLabel || '') + '</span></span>' +
                     '<span class="det">' + esc(r.email || r.meta || '') + '</span>' +
                 '</div>' +
+                '<button type="button" class="bv-intg-mini vi-link-result" ' +
+                    'data-id="' + esc(r.id) + '" ' +
+                    'data-platform="' + esc(r.platform) + '" ' +
+                    'data-name="' + esc(r.name || '') + '">' +
+                    t('link_button', 'Vincular') +
+                '</button>' +
             '</div>';
         }).join('');
 
         $('#viPlatformSearchResults').html(failNote + html);
     }
+
+    $(document).on('click', '.vi-link-result', function () {
+        var $btn = $(this).prop('disabled', true);
+        // .attr() (no .data()) a propósito: mismo motivo que en
+        // customer-integrations.js — jQuery castearía un data-id numérico
+        // a Number, y el backend exige 'external_id' como string.
+        var externalId = $btn.attr('data-id');
+        var platform = $btn.attr('data-platform');
+        var name = $btn.attr('data-name');
+
+        HDCommerce.ajax({
+            url: base() + '/integrations/link',
+            method: 'POST',
+            data: JSON.stringify({ platform: platform, external_id: externalId }),
+            contentType: 'application/json',
+        })
+            .done(function () {
+                toastr.success(t('linked_success', 'Vinculado correctamente: :name', { name: esc(name) }));
+                $btn.text(t('linked_label', 'Vinculado')).addClass('linked');
+            })
+            .fail(function (xhr) {
+                toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
+                $btn.prop('disabled', false);
+            });
+    });
 
     function doPlatformSearch(q, type) {
         $('#viPlatformSearchResults').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> ' + t('searching_all_platforms', 'Buscando en todas las plataformas…') + '</div>');
