@@ -111,6 +111,7 @@
         var customerId = HDCommerce.customerId();
         if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
 
+        HDCommerce.close('customer-integrations');
         window.openCustomerIdentityVerification(customerId, onIdentityResolved);
     });
 
@@ -118,6 +119,7 @@
         var customerId = HDCommerce.customerId();
         if (!customerId || typeof window.openCustomerIdentityVerification !== 'function') { return; }
 
+        HDCommerce.close('customer-integrations');
         window.openCustomerIdentityVerification(customerId, onIdentityResolved, { startAt: 'search' });
     });
 
