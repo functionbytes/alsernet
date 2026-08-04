@@ -230,6 +230,7 @@ class ProductsController extends ApiController
                         'name' => $apDefault?->descripcion ?: $a->descripcion,
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
+                        'web_status' => (int) $a->getRawOriginal('estado_publicado_web'),
                         'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
                         'grupo'        => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
@@ -258,6 +259,7 @@ class ProductsController extends ApiController
                     'description' => $modelo->descripcion,
                     'available' => $modelo->estado,
                     'web' => $modelo->estado_publicado_web,
+                    'web_status' => (int) $modelo->getRawOriginal('estado_publicado_web'),
                     'marca' => $modelo->idmarca,
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,
@@ -571,6 +573,7 @@ class ProductsController extends ApiController
                         'name' => $apDefault?->descripcion ?: $a->descripcion,
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
+                        'web_status' => (int) $a->getRawOriginal('estado_publicado_web'),
                         'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
                         'grupo'        => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
@@ -605,6 +608,7 @@ class ProductsController extends ApiController
                     'description' => $modelo->descripcion,
                     'available' => $modelo->estado,
                     'web' => $modelo->estado_publicado_web,
+                    'web_status' => (int) $modelo->getRawOriginal('estado_publicado_web'),
                     'marca' => $modelo->idmarca,
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,

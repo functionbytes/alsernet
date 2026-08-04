@@ -1,10 +1,14 @@
-const CACHE_NAME = 'helpdesk-v1';
-const STATIC_ASSETS = ['/'];
+const CACHE_NAME = 'helpdesk-v2';
+// '/' se sacó de STATIC_ASSETS: el fetch de instalación sigue el 302 a /login
+// cuando el usuario no está autenticado, y cachea una Response marcada como
+// "redirected". Chrome rechaza servir esa Response cacheada para una
+// navegación (net::ERR_FAILED) — por eso "/" fallaba siempre pero las demás
+// URLs no (nunca se cacheaban). CACHE_NAME subió de versión para que
+// activate() purgue la caché vieja con la entrada rota en los clientes ya
+// instalados.
+const STATIC_ASSETS = [];
 
 self.addEventListener('install', event => {
-    // addAll() rejects the whole batch if any single request fails (e.g. when
-    // the user is logged out and '/' returns a 302). Use Promise.allSettled
-    // with put() so a single failure doesn't abort install.
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache =>
             Promise.allSettled(
@@ -31,6 +35,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
     if (event.request.url.includes('/panel/') || event.request.url.includes('/api/')) return;
+    // La raíz redirige (302 a /login o al dashboard) según sesión — nunca debe
+    // servirse desde caché, un Service Worker no puede responder una
+    // navegación con una Response "redirected" cacheada (Chrome la rechaza
+    // con net::ERR_FAILED). Ver nota en STATIC_ASSETS más arriba.
+    if (new URL(event.request.url).pathname === '/') return;
 
     event.respondWith(
         caches.match(event.request).then(cached => cached || fetch(event.request))
