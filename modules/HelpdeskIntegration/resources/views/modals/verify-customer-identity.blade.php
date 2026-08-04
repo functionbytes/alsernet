@@ -24,10 +24,16 @@
 </div>
 
 @once
+@push('css')
+<style>
+    .nc-platform-group { padding: 10px; }
+    .nc-platform-group .bv-modal-label { padding: 10px; }
+</style>
+@endpush
 @push('scripts')
 <script>
     window.HelpdeskIntegrationLang = Object.assign(window.HelpdeskIntegrationLang || {}, @json(__('helpdeskintegration::messages.js')));
 </script>
-<script src="{{ asset('vendor/helpdeskintegration/verify-customer-identity.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/verify-customer-identity.js')) }}"></script>
+<script src="{{ asset('vendor/helpdeskintegration/verify-customer-identity.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/verify-customer-identity.js')) }}" defer></script>
 @endpush
 @endonce

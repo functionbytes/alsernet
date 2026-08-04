@@ -39,7 +39,8 @@ class PrestashopIntegrationDriver implements IntegrationDriverContract
         return [
             ['value' => 'email', 'label' => 'Email'],
             ['value' => 'name', 'label' => 'Nombre'],
-            ['value' => 'id', 'label' => 'ID numérico'],
+            ['value' => 'id', 'label' => 'ID de PrestaShop'],
+            ['value' => 'nif', 'label' => 'NIF / DNI'],
         ];
     }
 

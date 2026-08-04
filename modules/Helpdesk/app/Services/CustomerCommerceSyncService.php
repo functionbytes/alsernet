@@ -145,26 +145,75 @@ class CustomerCommerceSyncService
             return [];
         }
 
+        // 'auto': el modal de búsqueda externa ya no obliga a elegir "Buscar
+        // por" — se infiere el tipo por el contenido, igual que ya hace el
+        // manager Oracle del lado ERP (ver ErpIntegrationDriver::search()).
+        if ($type === 'auto') {
+            $type = match (true) {
+                str_contains($query, '@') => 'email',
+                ctype_digit($query) => 'id',
+                default => 'name_or_nif',
+            };
+        }
+
+        // Dirección más reciente del cliente (subquery determinista por
+        // id_address, evita el problema de ONLY_FULL_GROUP_BY de un JOIN +
+        // GROUP BY simple) — de ahí salen DNI/teléfono/ciudad, que no viven
+        // en aalv_customer.
+        $addressJoin = "LEFT JOIN `{$db}`.aalv_address a
+                           ON a.id_address = (
+                                SELECT a2.id_address FROM `{$db}`.aalv_address a2
+                                 WHERE a2.id_customer = c.id_customer AND a2.deleted = 0
+                                 ORDER BY a2.date_add DESC LIMIT 1
+                           )";
+        $cols = 'c.id_customer, c.firstname, c.lastname, c.email, c.date_add, c.active, '.
+                'a.dni, a.phone, a.phone_mobile, a.city';
+
         $rows = match ($type) {
             'id' => DB::connection('mysql')->select(
-                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+                "SELECT {$cols}
                    FROM `{$db}`.aalv_customer c
+                   {$addressJoin}
                   WHERE c.deleted = 0 AND c.id_customer = ?
                   LIMIT 5",
                 [(int) $query]
             ),
             'name' => DB::connection('mysql')->select(
-                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+                "SELECT {$cols}
                    FROM `{$db}`.aalv_customer c
+                   {$addressJoin}
                   WHERE c.deleted = 0
                     AND CONCAT(c.firstname, ' ', c.lastname) LIKE ?
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
                 [$query.'%']
             ),
-            default => DB::connection('mysql')->select(
-                "SELECT c.id_customer, c.firstname, c.lastname, c.email
+            'nif' => DB::connection('mysql')->select(
+                "SELECT {$cols}
                    FROM `{$db}`.aalv_customer c
+                   {$addressJoin}
+                  WHERE c.deleted = 0 AND a.dni = ?
+                  ORDER BY c.id_customer DESC
+                  LIMIT 10",
+                [$query]
+            ),
+            // Texto que no es email ni solo dígitos (búsqueda "auto"): puede
+            // ser un NIF/DNI o un nombre, no hay forma de saberlo de antemano
+            // — se prueban ambos y se combinan resultados.
+            'name_or_nif' => DB::connection('mysql')->select(
+                "SELECT {$cols}
+                   FROM `{$db}`.aalv_customer c
+                   {$addressJoin}
+                  WHERE c.deleted = 0
+                    AND (a.dni = ? OR CONCAT(c.firstname, ' ', c.lastname) LIKE ?)
+                  ORDER BY c.id_customer DESC
+                  LIMIT 10",
+                [$query, $query.'%']
+            ),
+            default => DB::connection('mysql')->select(
+                "SELECT {$cols}
+                   FROM `{$db}`.aalv_customer c
+                   {$addressJoin}
                   WHERE c.deleted = 0 AND c.email = ?
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
@@ -177,6 +226,11 @@ class CustomerCommerceSyncService
             'name' => trim($row->firstname.' '.$row->lastname),
             'email' => $row->email,
             'meta' => 'PS-#'.$row->id_customer,
+            'nif' => $row->dni ?: null,
+            'phone' => $row->phone ?: $row->phone_mobile ?: null,
+            'city' => $row->city ?: null,
+            'active' => (bool) $row->active,
+            'created_at' => $row->date_add,
         ], $rows);
     }
 

@@ -13,7 +13,7 @@ perezosa (lazy-load).
 
 ## Rutas (`routes/web.php`)
 
-Montadas con prefix `panel/contacts`, name `contacts.`, middleware `['web','auth','can:contacts.view']`.
+Montadas con prefix `panel/helpdesk/contacts` (redirect 301 desde el antiguo `panel/contacts`), name `contacts.`, middleware `['web','auth','can:contacts.view']`.
 `{customer}` es el id de `helpdesk_customers` (binding `Modules\Helpdesk\Models\Customer`,
 conexión `helpdesk`).
 

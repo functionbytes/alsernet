@@ -10,11 +10,24 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Modules\Helpdesk\Jobs\SendBulkHsmTemplateJob;
 use Modules\Helpdesk\Models\AgentInboxCapacity;
+use Modules\Helpdesk\Models\Campaigns\WhatsAppTemplate;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Services\HsmConversationService;
+use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskContacts\Http\Requests\Managers\BulkContactActionRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\BulkSendHsmRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\ExternalIntegrationRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\ExternalPreviewRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\ExternalSearchRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\ImportContactsRequest;
+use Modules\HelpdeskContacts\Http\Requests\Managers\SendHsmRequest;
 use Modules\HelpdeskContacts\Http\Requests\Managers\UpdateContactRequest;
+use Modules\HelpdeskErp\Services\ErpContextService;
+use Modules\HelpdeskIntegration\Services\CustomerIntegrationService;
+use Modules\HelpdeskPrestashop\Services\PrestashopContextService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ContactsController extends Controller
@@ -27,13 +40,12 @@ class ContactsController extends Controller
     {
         abort_if(! helpdesk_contacts_enabled(), 404);
 
-        $allowedSorts = ['name', 'last_seen_at', 'total_conversations', 'created_at'];
-        $sort = in_array($request->input('sort'), $allowedSorts) ? $request->input('sort') : 'last_seen_at';
-        $direction = $request->input('direction') === 'asc' ? 'asc' : 'desc';
         $perPage = in_array((int) $request->input('per_page'), [15, 25, 50, 100]) ? (int) $request->input('per_page') : 25;
 
+        // Orden fijo (sin sorting por columna en la UI) — mismo patrón que
+        // UsersController::index(), que usa latest() sin parámetros de sort.
         $customers = $this->applyFilters(Customer::query()->forAgent($request->user()), $request)
-            ->orderBy($sort, $direction)
+            ->orderByDesc('last_seen_at')
             ->paginate($perPage)
             ->appends($request->query());
 
@@ -41,14 +53,24 @@ class ContactsController extends Controller
             ? Customer::query()->forAgent($request->user())->whereKey($request->integer('selected'))->first()
             : null;
 
+        // Totales globales del alcance del agente (no del resultado filtrado/
+        // paginado) — mismo criterio que UsersController::index(), y mismas
+        // queries que ya usa reports() para "verificados"/"suspendidos".
+        $scoped = fn () => Customer::query()->forAgent($request->user());
+        $stats = [
+            'total' => $scoped()->count(),
+            'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
+            'banned' => $scoped()->whereNotNull('banned_at')->count(),
+            'new' => $scoped()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+        ];
+
         return view('contacts::contacts.index', [
             'customers' => $customers,
             'selected' => $selected,
             'q' => $request->string('q')->trim()->toString(),
             'filters' => $request->only(['q', 'channel', 'last_seen', 'verified', 'banned']),
-            'sort' => $sort,
-            'direction' => $direction,
             'perPage' => $perPage,
+            'stats' => $stats,
         ]);
     }
 
@@ -125,6 +147,7 @@ class ContactsController extends Controller
         $nameCol = array_search('name', $headers) !== false ? array_search('name', $headers) : array_search('nombre', $headers);
         $emailCol = array_search('email', $headers) !== false ? array_search('email', $headers) : array_search('correo', $headers);
         $phoneCol = array_search('phone', $headers) !== false ? array_search('phone', $headers) : array_search('telefono', $headers);
+        $whatsappCol = array_search('whatsapp_phone', $headers) !== false ? array_search('whatsapp_phone', $headers) : array_search('whatsapp', $headers);
 
         if ($nameCol === false && $emailCol === false) {
             fclose($handle);
@@ -138,7 +161,7 @@ class ContactsController extends Controller
             ->pluck('inbox_id')
             ->all();
 
-        $counters = ['created' => 0, 'updated' => 0, 'skipped' => 0, 'invalid_email' => 0];
+        $counters = ['created' => 0, 'updated' => 0, 'restored' => 0, 'skipped' => 0, 'invalid_email' => 0, 'invalid_whatsapp' => 0];
 
         $chunk = [];
 
@@ -146,22 +169,26 @@ class ContactsController extends Controller
             $chunk[] = $row;
 
             if (count($chunk) >= self::IMPORT_CHUNK_SIZE) {
-                $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, $counters);
+                $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters);
                 $chunk = [];
             }
         }
 
         if ($chunk !== []) {
-            $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, $counters);
+            $this->importChunk($chunk, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $counters);
         }
 
         fclose($handle);
 
         $summary = "Importación completada: {$counters['created']} creados, "
-            ."{$counters['updated']} actualizados, {$counters['skipped']} omitidos";
+            ."{$counters['updated']} actualizados, {$counters['restored']} restaurados, {$counters['skipped']} omitidos";
 
         if ($counters['invalid_email'] > 0) {
             $summary .= " ({$counters['invalid_email']} con email inválido)";
+        }
+
+        if ($counters['invalid_whatsapp'] > 0) {
+            $summary .= " ({$counters['invalid_whatsapp']} con WhatsApp inválido, contacto igualmente importado)";
         }
 
         return redirect()->route('contacts.index')->with('success', $summary.'.');
@@ -174,23 +201,28 @@ class ContactsController extends Controller
      * @param  int|false  $nameCol
      * @param  int|false  $emailCol
      * @param  int|false  $phoneCol
+     * @param  int|false  $whatsappCol
      * @param  array<int, int>  $agentInboxIds
-     * @param  array{created: int, updated: int, skipped: int, invalid_email: int}  $counters
+     * @param  array{created: int, updated: int, skipped: int, invalid_email: int, invalid_whatsapp: int}  $counters
      */
     private function importChunk(
         array $rows,
         $nameCol,
         $emailCol,
         $phoneCol,
+        $whatsappCol,
         User $agent,
         array $agentInboxIds,
         array &$counters
     ): void {
-        DB::connection('helpdesk')->transaction(function () use ($rows, $nameCol, $emailCol, $phoneCol, $agent, $agentInboxIds, &$counters): void {
+        $phoneNormalizer = app(PhoneNormalizerService::class);
+
+        DB::connection('helpdesk')->transaction(function () use ($rows, $nameCol, $emailCol, $phoneCol, $whatsappCol, $agent, $agentInboxIds, $phoneNormalizer, &$counters): void {
             foreach ($rows as $row) {
                 $name = ($nameCol !== false && isset($row[$nameCol])) ? trim((string) $row[$nameCol]) : null;
                 $email = ($emailCol !== false && isset($row[$emailCol])) ? trim((string) $row[$emailCol]) : null;
                 $phone = ($phoneCol !== false && isset($row[$phoneCol])) ? trim((string) $row[$phoneCol]) : null;
+                $whatsappRaw = ($whatsappCol !== false && isset($row[$whatsappCol])) ? trim((string) $row[$whatsappCol]) : null;
 
                 if (! $name && ! $email) {
                     $counters['skipped']++;
@@ -205,13 +237,29 @@ class ContactsController extends Controller
                     continue;
                 }
 
+                // toWhatsappE164() acepta tanto formato internacional como
+                // móvil español sin prefijo ("615490503" → "+34615490503");
+                // no confirma que exista de verdad en WhatsApp (Meta no lo
+                // permite sin coste), solo descarta formatos imposibles.
+                $whatsapp = null;
+                if ($whatsappRaw !== null && $whatsappRaw !== '') {
+                    $whatsapp = $phoneNormalizer->toWhatsappE164($whatsappRaw);
+
+                    if ($whatsapp === null) {
+                        $counters['invalid_whatsapp']++;
+                    }
+                }
+
                 // Match SOLO dentro del alcance del agente (aislamiento por inbox).
                 $existing = $email
                     ? Customer::query()->forAgent($agent)->where('email', $email)->first()
                     : null;
 
                 if ($existing) {
-                    $existing->update(array_filter(compact('name', 'phone'), fn ($v) => $v !== null && $v !== ''));
+                    $existing->update(array_filter(
+                        ['name' => $name, 'phone' => $phone, 'whatsapp_phone' => $whatsapp],
+                        fn ($v) => $v !== null && $v !== ''
+                    ));
                     $counters['updated']++;
 
                     continue;
@@ -225,7 +273,32 @@ class ContactsController extends Controller
                     continue;
                 }
 
-                $customer = Customer::create(array_filter(compact('name', 'email', 'phone'), fn ($v) => $v !== null && $v !== ''));
+                // Un contacto eliminado (soft-delete) sigue ocupando su email en
+                // el índice único de la BD — sin esto, re-importar la misma
+                // dirección tras "Eliminar" chocaba con una violación de
+                // constraint en vez de restaurar el registro existente.
+                $trashed = $email ? Customer::withTrashed()->onlyTrashed()->where('email', $email)->first() : null;
+
+                if ($trashed) {
+                    $trashed->restore();
+                    $trashed->update(array_filter(
+                        ['name' => $name, 'phone' => $phone, 'whatsapp_phone' => $whatsapp],
+                        fn ($v) => $v !== null && $v !== ''
+                    ));
+
+                    if ($agentInboxIds !== []) {
+                        $trashed->inboxes()->syncWithoutDetaching($agentInboxIds);
+                    }
+
+                    $counters['restored']++;
+
+                    continue;
+                }
+
+                $customer = Customer::create(array_filter(
+                    ['name' => $name, 'email' => $email, 'phone' => $phone, 'whatsapp_phone' => $whatsapp],
+                    fn ($v) => $v !== null && $v !== ''
+                ));
 
                 // Asocia el contacto nuevo a las bandejas asignadas del agente
                 // (mismo pivot que usa el alta vía livechat) para que quede
@@ -285,6 +358,19 @@ class ContactsController extends Controller
     }
 
     /**
+     * Delete a single contact — same permission gate as the bulk 'delete'
+     * action (no dedicated contacts.delete permission exists).
+     */
+    public function destroy(Customer $customer): RedirectResponse
+    {
+        $this->assertVisible($customer);
+
+        $customer->delete();
+
+        return redirect()->route('contacts.index')->with('success', 'Contacto eliminado');
+    }
+
+    /**
      * Suspend a customer account.
      */
     public function ban(Customer $customer): JsonResponse
@@ -306,6 +392,236 @@ class ContactsController extends Controller
         $customer->unban();
 
         return response()->json(['success' => true, 'message' => 'Contacto reactivado']);
+    }
+
+    /**
+     * List approved WhatsApp templates for the send-template modal.
+     *
+     * Duplicated on purpose from ConversationsController::hsmTemplates()
+     * instead of reused: that route sits behind `can:helpdesk.view`
+     * (Helpdesk's own permission domain), which a contacts-only agent may
+     * not have — same reasoning as the cart proxy routes re-gating under
+     * contacts.* instead of depending on Helpdesk's gate.
+     */
+    public function hsmTemplates(): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
+        $templates = WhatsAppTemplate::query()
+            ->where('status', 'approved')
+            ->orderBy('display_name')
+            ->get()
+            ->map(fn (WhatsAppTemplate $t) => [
+                'id' => $t->id,
+                'name' => $t->display_name,
+                'external_id' => $t->external_id,
+                'body' => $t->body_template,
+                'category' => $t->category,
+                'header_type' => $t->header_type,
+                'header_value' => $t->header_value,
+                'footer_text' => $t->footer_text,
+                'language' => $t->language,
+                'param_count' => $t->param_count,
+            ]);
+
+        return response()->json(['success' => true, 'templates' => $templates]);
+    }
+
+    /**
+     * Send a WhatsApp HSM template to a single contact — creates or reuses
+     * their open WhatsApp conversation (a fresh conversation never has the
+     * 24h window open, so a template is required either way).
+     */
+    public function sendHsm(Customer $customer, SendHsmRequest $request, HsmConversationService $hsmConversations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled(), 404);
+
+        $this->assertVisible($customer);
+
+        abort_if(
+            ! $customer->whatsapp_phone,
+            422,
+            'El contacto no tiene número de WhatsApp.'
+        );
+
+        $validated = $request->validated();
+
+        $conversation = $hsmConversations->findOrCreateWhatsAppConversation($customer);
+        $hsmConversations->sendToConversation(
+            $conversation,
+            $validated['template_name'],
+            $validated['variables'] ?? [],
+            $validated['language'] ?? null,
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Plantilla en cola de envío.',
+            'conversation_id' => $conversation->id,
+        ], 201);
+    }
+
+    /**
+     * Catalogue of platforms searchable for the external-search modal
+     * (ERP/PrestaShop) — separate call from the search itself since it
+     * doesn't depend on a query string.
+     */
+    public function externalPlatforms(CustomerIntegrationService $integrations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        return response()->json(['success' => true, 'platforms' => $integrations->linkablePlatforms()]);
+    }
+
+    /**
+     * Search a customer on an external platform (ERP/PrestaShop). Each
+     * result is enriched with whether it's already linked to a Customer, or
+     * whether its email matches one — so the modal can offer "ver ficha" /
+     * "vincular a existente" / "crear contacto" without a second round-trip.
+     */
+    public function externalSearch(ExternalSearchRequest $request, CustomerIntegrationService $integrations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        $data = $request->validated();
+
+        // Sin plataforma explícita, busca en todas las vinculables a la vez
+        // ("Buscar en ERP/PrestaShop" es una búsqueda general, no obliga a
+        // elegir una primero) — cada resultado queda etiquetado con su
+        // platform de origen para que crear/vincular sepan a cuál pertenece.
+        $platforms = filled($data['platform'] ?? null)
+            ? [$data['platform']]
+            : collect($integrations->linkablePlatforms())->pluck('platform')->all();
+
+        $anyOk = false;
+        $failedPlatforms = [];
+        $results = [];
+
+        foreach ($platforms as $platform) {
+            $result = $integrations->search($platform, $data['query'], $data['type']);
+
+            if (! $result['ok']) {
+                $failedPlatforms[] = $platform;
+
+                continue;
+            }
+
+            $anyOk = true;
+
+            foreach ($result['results'] as $r) {
+                $linked = Customer::findByExternalId($platform, (string) $r['id']);
+
+                $r['platform'] = $platform;
+                $r['linked_customer_id'] = $linked?->id;
+                $r['matched_customer_id'] = ! $linked && filled($r['email'] ?? null)
+                    ? Customer::query()->where('email', $r['email'])->value('id')
+                    : null;
+
+                $results[] = $r;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'ok' => $anyOk || $platforms === [],
+            'failed_platforms' => $failedPlatforms,
+            'results' => $results,
+        ]);
+    }
+
+    /**
+     * Create a new contact from an external search result that has no
+     * matching Customer yet ("generar la ficha de contacto").
+     */
+    public function externalCreate(ExternalIntegrationRequest $request, CustomerIntegrationService $integrations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        $data = $request->validated();
+
+        try {
+            $customer = $integrations->createFromResult($data['platform'], $data['external_id'], $data['phone'] ?? null);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'No se pudo crear el contacto.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'customer_id' => $customer->id,
+            'redirect' => route('contacts.show', $customer),
+            // La ficha ERP/PrestaShop puede no traer teléfono — el JS lo usa
+            // para no ofrecer el paso de enviar WhatsApp si de entrada no hay
+            // forma de mandarlo, en vez de dejar rellenar la plantilla entera
+            // y recién ahí toparse con el error.
+            'has_phone' => filled($customer->phone) || filled($customer->whatsapp_phone),
+        ], 201);
+    }
+
+    /**
+     * Full customer profile (address, orders, invoices/carts) from ERP or
+     * PrestaShop for an external search result — keyed by email, same as
+     * ContactAggregatorService::erp()/prestashop() use for an already-linked
+     * Customer, but callable before any Customer exists.
+     */
+    public function externalPreview(ExternalPreviewRequest $request): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        $data = $request->validated();
+        $email = $data['email'] ?? '';
+
+        // ERP soporta fallback por teléfono cuando no hay email (frecuente en
+        // resultados encontrados por búsqueda telefónica) — PrestaShop no
+        // tiene ese fallback implementado, sigue exigiendo email.
+        $context = match ($data['platform']) {
+            'erp' => app(ErpContextService::class)->getCustomerContext($email, $data['phone'] ?? null),
+            'prestashop' => app(PrestashopContextService::class)->getCustomerContext($email),
+        };
+
+        return response()->json(['success' => true, ...$context]);
+    }
+
+    /**
+     * Link an external search result to an already-existing contact
+     * ("unirla") — used from the ficha 360, not the index search.
+     */
+    public function externalLink(Customer $customer, ExternalIntegrationRequest $request, CustomerIntegrationService $integrations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        $this->assertVisible($customer);
+
+        $data = $request->validated();
+
+        try {
+            $integrations->link($customer, $data['platform'], $data['external_id']);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'No se pudo vincular.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Integración vinculada correctamente.',
+            'has_phone' => filled($customer->phone) || filled($customer->whatsapp_phone),
+        ]);
+    }
+
+    /**
+     * Platforms already linked to a contact, for the ficha 360 "Integraciones" section.
+     */
+    public function externalIntegrations(Customer $customer, CustomerIntegrationService $integrations): JsonResponse
+    {
+        abort_if(! helpdesk_contacts_enabled() || ! helpdesk_integration_enabled(), 404);
+
+        $this->assertVisible($customer);
+
+        return response()->json(['success' => true, ...$integrations->buildPayload($customer)]);
     }
 
     /**
@@ -334,6 +650,46 @@ class ContactsController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Acción aplicada a '.count($ids).' contactos',
+            'count' => count($ids),
+        ]);
+    }
+
+    /**
+     * Rows per chunk job when sending a WhatsApp template to many contacts —
+     * same reasoning as SendBroadcastJob::CHUNK_SIZE, kept smaller since this
+     * is an ad-hoc send (no persisted campaign entity to resume from).
+     */
+    private const HSM_BULK_CHUNK_SIZE = 50;
+
+    /**
+     * Send a WhatsApp HSM template to a batch of contacts, chunked across
+     * SendBulkHsmTemplateJob — each contact gets its own conversation/item,
+     * a per-contact failure doesn't abort the rest of the batch.
+     */
+    public function bulkSendHsm(BulkSendHsmRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        // Restringe el envío a los contactos que el agente puede ver
+        // (aislamiento por inbox), mismo criterio que bulkAction().
+        $ids = Customer::query()
+            ->forAgent($request->user())
+            ->whereIn('id', $data['customer_ids'])
+            ->pluck('id')
+            ->all();
+
+        foreach (array_chunk($ids, self::HSM_BULK_CHUNK_SIZE) as $chunk) {
+            SendBulkHsmTemplateJob::dispatch(
+                $chunk,
+                $data['template_name'],
+                $data['variables'] ?? [],
+                $data['language'] ?? null,
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Envío en cola para '.count($ids).' contactos',
             'count' => count($ids),
         ]);
     }

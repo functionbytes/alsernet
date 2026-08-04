@@ -566,12 +566,25 @@
                 linkablePlatforms = resp.linkable_platforms || linkablePlatforms;
                 showMainView();
                 renderList(lastIntegrations, resp.last_activity);
+                refreshRightPanelIntegrations();
             })
             .fail(function (xhr) {
                 toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
                 $btn.prop('disabled', false);
             });
     });
+
+    // El widget "INTEGRACIONES" del panel derecho se renderiza en servidor al
+    // cargar la conversación — sin esto, vincular/desvincular aquí no se
+    // reflejaba ahí hasta recargar la página entera. bvLoadConversationPane
+    // ya existe (conversations.js) para el cambio de conversación; se
+    // reutiliza para refrescar el panel completo con datos frescos.
+    function refreshRightPanelIntegrations() {
+        var convId = $('.bv-sync-commerce').attr('data-conv-id');
+        if (convId && typeof window.bvLoadConversationPane === 'function') {
+            window.bvLoadConversationPane(convId, null, { push: false });
+        }
+    }
 
     // ── Desvincular plataforma (confirmacion inline) ────────────────────────
 
@@ -613,6 +626,7 @@
                 lastIntegrations = resp.integrations || lastIntegrations;
                 linkablePlatforms = resp.linkable_platforms || linkablePlatforms;
                 renderList(lastIntegrations, resp.last_activity);
+                refreshRightPanelIntegrations();
             })
             .fail(function (xhr) {
                 toastr.error(HDCommerce.errorMessage(xhr, t('unlink_failed', 'No se pudo desvincular.')));

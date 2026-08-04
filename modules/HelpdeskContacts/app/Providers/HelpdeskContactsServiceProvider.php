@@ -41,8 +41,14 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
         }
 
         Route::middleware(['web', 'auth'])
-            ->prefix('panel/contacts')
+            ->prefix('panel/helpdesk/contacts')
             ->group($web);
+
+        // Redirect 301 catch-all: conserva enlaces/bookmarks al prefix
+        // anterior (panel/contacts) tras moverlo bajo panel/helpdesk/*.
+        Route::middleware(['web'])
+            ->get('panel/contacts/{path?}', fn (string $path = '') => redirect('panel/helpdesk/contacts/'.$path, 301))
+            ->where('path', '.*');
     }
 
     protected function registerNav(): void
@@ -64,6 +70,22 @@ class HelpdeskContactsServiceProvider extends ServiceProvider
 
         NavService::registerSidebar('contacts', [
             'title' => 'CRM',
+            'items' => [
+                [
+                    'label' => 'Contactos',
+                    'route' => 'contacts.index',
+                    'icon' => 'fas fa-address-book',
+                    'permission' => 'contacts.view',
+                ],
+            ],
+        ]);
+
+        // Se fusiona en la sección "Bandeja" ya registrada por
+        // HelpdeskServiceProvider (mismo sidebar_id 'helpdesk' + mismo
+        // título) — acceso directo a Contactos sin cambiar de icono en
+        // el rail, ademas del propio icono/sidebar dedicado de arriba.
+        NavService::registerSidebar('helpdesk', [
+            'title' => 'Bandeja',
             'items' => [
                 [
                     'label' => 'Contactos',

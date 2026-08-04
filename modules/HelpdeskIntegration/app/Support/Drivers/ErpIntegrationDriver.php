@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskIntegration\Support\Drivers;
 
+use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskErp\Services\ErpContextService;
 use Modules\HelpdeskIntegration\Contracts\IntegrationDriverContract;
 use Modules\HelpdeskIntegration\Support\DriverResult;
@@ -34,7 +35,9 @@ class ErpIntegrationDriver implements IntegrationDriverContract
         return [
             ['value' => 'email', 'label' => 'Email'],
             ['value' => 'phone', 'label' => 'Teléfono'],
-            ['value' => 'id', 'label' => 'NIF / DNI'],
+            ['value' => 'nif', 'label' => 'NIF / DNI'],
+            ['value' => 'customer_id', 'label' => 'ID de gestión'],
+            ['value' => 'name', 'label' => 'Nombre o apellido'],
         ];
     }
 
@@ -53,9 +56,16 @@ class ErpIntegrationDriver implements IntegrationDriverContract
             return DriverResult::failed();
         }
 
+        // El manager decide internamente por el contenido de $query (email si
+        // lleva '@', numérico → IDCLIENTE/IDTARJETA/CODIGO_INTERNET/teléfono,
+        // texto → CIF/apellidos/nombre) — $type es solo una pista informativa
+        // que el manager ignora, pero se pasa explícita en vez de forzar
+        // 'email' por defecto para no mentir sobre lo que se está buscando.
         $erpType = match ($type) {
-            'id' => 'nif',
+            'nif' => 'nif',
+            'customer_id' => 'customer_id',
             'phone' => 'phone',
+            'name' => 'name',
             default => 'email',
         };
 
@@ -65,16 +75,35 @@ class ErpIntegrationDriver implements IntegrationDriverContract
             return DriverResult::failed();
         }
 
+        // El manager (CustomerController@search) trae cif/tarjeta/código
+        // internet/estado/fechas por fila, pero el teléfono NO viaja en esa
+        // fila — solo se usa como filtro interno contra CLIENTETELEFONO_CENT
+        // (join oculto). Cuando la búsqueda fue por teléfono, se sabe que el
+        // número tecleado es el del cliente encontrado, así que se expone
+        // normalizado (misma limpieza de formato que usa el resto de la app
+        // para guardar teléfonos — PhoneNormalizerService::normalize()) en
+        // vez de dejarlo vacío en la ficha de confirmación. Para búsquedas
+        // por nombre/email/NIF no hay teléfono disponible desde aquí.
+        $phone = $type === 'phone'
+            ? app(PhoneNormalizerService::class)->normalize($query)
+            : null;
+
         return DriverResult::ok(array_map(fn ($r) => [
             'id' => (string) ($r['id'] ?? ''),
             'name' => trim(($r['label'] ?? '').' '.($r['surnames'] ?? '')),
             'email' => $r['email'] ?? '',
             'meta' => 'ERP-'.($r['id'] ?? ''),
+            'nif' => $r['cif'] ?? null,
+            'phone' => $phone,
+            'card' => $r['card'] ?? null,
+            'code_internet' => $r['code_internet'] ?? null,
+            'active' => $r['available'] ?? null,
+            'created_at' => $r['created'] ?? null,
         ], array_values(array_filter($results, fn ($r) => ! empty($r['id'])))));
     }
 
     public function resync(string $externalId): DriverResult
     {
-        return $this->search($externalId, 'id');
+        return $this->search($externalId, 'customer_id');
     }
 }

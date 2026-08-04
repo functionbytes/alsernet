@@ -41,7 +41,6 @@ use Modules\Helpdesk\Http\Requests\StoreLocationItemRequest;
 use Modules\Helpdesk\Http\Requests\StoreScheduledMessageRequest;
 use Modules\Helpdesk\Http\Requests\UpdateConversationRequest;
 use Modules\Helpdesk\Http\Requests\UploadAttachmentRequest;
-use Modules\Helpdesk\Jobs\SendHsmTemplateJob;
 use Modules\Helpdesk\Jobs\SendScheduledMessageJob;
 use Modules\Helpdesk\Jobs\UnsnoozeConversationJob;
 use Modules\Helpdesk\Mail\CustomerOutboundEmail;
@@ -59,6 +58,7 @@ use Modules\Helpdesk\Services\ConversationMessageService;
 use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CsatService;
+use Modules\Helpdesk\Services\HsmConversationService;
 use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\Macros\MacroExecutorService;
 use Modules\Helpdesk\Services\OutboundMessageService;
@@ -169,7 +169,10 @@ class ConversationsController extends Controller
         $sidebarCounters = $this->inboxMetrics->sidebarCounters($userId, $userInboxIds);
         $inboxes = $this->inboxMetrics->sidebarInboxes($userId, $userInboxIds);
 
-        $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
+        // Sin ?selected= explícito no se auto-selecciona la primera
+        // conversación: se deja el estado vacío "elige un chat" ya diseñado
+        // en thread.blade.php/right-panel.blade.php en vez de abrir una al azar.
+        $selectedId = $request->integer('selected') ?: null;
 
         // Carga del hilo seleccionado + borrador del composer. Compartido con el
         // endpoint pane() para que el cambio de conversación vía SPA renderice
@@ -444,7 +447,7 @@ class ConversationsController extends Controller
 
         $conversations = $query->paginate(50)->appends($request->query());
 
-        $selectedId = $request->integer('selected') ?: $conversations->first()?->id;
+        $selectedId = $request->integer('selected') ?: null;
 
         $inboxGroups = $this->groupConversationsForInbox($conversations->getCollection(), $selectedId);
 
@@ -836,43 +839,15 @@ class ConversationsController extends Controller
     /**
      * Send a WhatsApp HSM template to the customer.
      */
-    public function sendHsm(SendHsmRequest $request, Conversation $conversation): JsonResponse
+    public function sendHsm(SendHsmRequest $request, Conversation $conversation, HsmConversationService $hsmConversations): JsonResponse
     {
         $validated = $request->validated();
 
-        $conversation->loadMissing('customer');
-
-        // Resuelto una sola vez: el idioma real de la plantilla (ej. 'en_US' para
-        // hello_world) es obligatorio para Meta — mandar 'es' fijo cuando la
-        // plantilla está en otro idioma también dispara el error 132001.
-        $template = WhatsAppTemplate::query()->where('external_id', $validated['template_name'])->first();
-        $languageCode = $template?->language ?: ($validated['language'] ?? 'es');
-        $body = $this->renderHsmBody($template, $validated['template_name'], $validated['variables'] ?? []);
-
-        // El item se crea de inmediato (UI optimista, mismo patrón que las
-        // respuestas de texto normales vía ConversationMessageService) y el
-        // envío real a Meta se encola: la Cloud API usa timeouts de 15s con
-        // reintentos (hasta ~45s en el peor caso), que bloquearían un worker
-        // PHP-FPM si se hicieran aquí. SendHsmTemplateJob completa
-        // wa_message_id/mocked o marca el item como no entregado.
-        $item = $conversation->items()->create([
-            'user_id' => auth()->id(),
-            'type' => 'message',
-            'body' => $body,
-            'is_internal' => false,
-            'metadata' => [
-                'hsm_template' => $validated['template_name'],
-                'hsm_variables' => $validated['variables'] ?? [],
-            ],
-        ]);
-
-        SendHsmTemplateJob::dispatch(
-            $conversation->id,
-            $item->id,
+        $item = $hsmConversations->sendToConversation(
+            $conversation,
             $validated['template_name'],
             $validated['variables'] ?? [],
-            $languageCode,
-            $template?->category,
+            $validated['language'] ?? null,
         );
 
         return response()->json([
@@ -889,28 +864,6 @@ class ConversationsController extends Controller
                 'wa_message_id' => null,
             ],
         ], 201);
-    }
-
-    /**
-     * Resuelve el cuerpo real enviado al cliente: el body_template de la
-     * plantilla (buscada por su nombre técnico) con los {{n}} sustituidos por
-     * las variables, para que el hilo muestre el mensaje que efectivamente
-     * llegó por WhatsApp en vez de un placeholder genérico.
-     *
-     * @param  array<int, string>  $variables
-     */
-    private function renderHsmBody(?WhatsAppTemplate $template, string $templateName, array $variables): string
-    {
-        if (! $template || blank($template->body_template)) {
-            return "[Plantilla HSM: {$templateName}]";
-        }
-
-        $body = $template->body_template;
-        foreach (array_values($variables) as $i => $value) {
-            $body = str_replace('{{'.($i + 1).'}}', (string) $value, $body);
-        }
-
-        return $body;
     }
 
     /**

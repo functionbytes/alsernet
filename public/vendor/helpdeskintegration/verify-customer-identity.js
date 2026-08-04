@@ -251,53 +251,182 @@
             return;
         }
 
-        var html = results.map(function (r) {
-            var icoStyle = r.color ? ' style="color:' + esc(r.color) + '"' : '';
-            var badgeStyle = r.color ? ' style="color:' + esc(r.color) + ';border-color:' + esc(r.color) + '"' : '';
-            return '<div class="bv-intg-row">' +
-                '<div class="ico"' + icoStyle + '><i class="' + esc(r.icon || 'fas fa-plug') + '"></i></div>' +
-                '<div class="meta">' +
-                    '<span class="name">' + esc(r.name || '—') + ' <span class="badge bg-white border ms-1"' + badgeStyle + '>' + esc(r.platformLabel || '') + '</span></span>' +
-                    '<span class="det">' + esc(r.email || r.meta || '') + '</span>' +
-                '</div>' +
-                '<button type="button" class="bv-intg-mini vi-link-result" ' +
-                    'data-id="' + esc(r.id) + '" ' +
-                    'data-platform="' + esc(r.platform) + '" ' +
-                    'data-name="' + esc(r.name || '') + '">' +
-                    t('link_button', 'Vincular') +
-                '</button>' +
+        // Agrupados por plataforma (ERP vs PrestaShop, etc.) en vez de una
+        // lista plana mezclada — más fácil identificar de dónde viene cada
+        // resultado, sobre todo con nombres de prueba repetidos entre plataformas.
+        var order = [];
+        var groups = {};
+        results.forEach(function (r) {
+            if (!groups[r.platform]) {
+                groups[r.platform] = { label: r.platformLabel, color: r.color, icon: r.icon, items: [] };
+                order.push(r.platform);
+            }
+            groups[r.platform].items.push(r);
+        });
+
+        var html = order.map(function (platform, idx) {
+            var g = groups[platform];
+            var groupStyle = idx > 0 ? ' style="margin-top:22px;padding-top:14px;padding-bottom:2px;border-top:1px solid var(--bv-border, #e4e4e7)"' : '';
+            // Sin color por plataforma: icono e header siempre en gris neutro
+            // (.ico y .bv-modal-label ya lo son por defecto) — antes cada
+            // plataforma pintaba su propio color (rojo PrestaShop, ámbar ERP),
+            // demasiado ruidoso para una lista de resultados de búsqueda.
+            var rows = g.items.map(function (r) {
+                var detParts = [];
+                if (r.id) { detParts.push(esc(r.id)); }
+                if (r.email) { detParts.push(esc(r.email)); }
+                else if (r.meta) { detParts.push(esc(r.meta)); }
+
+                return '<div class="bv-intg-row">' +
+                    '<div class="ico"><i class="' + esc(r.icon || 'fas fa-plug') + '"></i></div>' +
+                    '<div class="meta">' +
+                        '<span class="name">' + esc(r.name || '—') + '</span>' +
+                        '<span class="det">' + detParts.join(' · ') + '</span>' +
+                    '</div>' +
+                    '<button type="button" class="bv-intg-mini-outline vi-link-result" title="' + t('link_button', 'Vincular') + '" ' +
+                        'data-id="' + esc(r.id) + '" ' +
+                        'data-platform="' + esc(r.platform) + '" ' +
+                        'data-name="' + esc(r.name || '') + '">' +
+                        '<i class="fas fa-link"></i>' +
+                    '</button>' +
+                '</div>';
+            }).join('');
+
+            return '<div class="nc-platform-group"' + groupStyle + '>' +
+                '<span class="bv-modal-label">' + esc(g.label || platform) + ' (' + g.items.length + ')</span>' +
+                '<div class="bv-intg-list">' + rows + '</div>' +
             '</div>';
         }).join('');
 
         $('#viPlatformSearchResults').html(failNote + html);
     }
 
+    // Click en "Vincular" ya no vincula directo — primero muestra la ficha
+    // del resultado elegido (nombre, email, plataforma, identificador) para
+    // que el agente confirme que es la persona correcta antes de persistir
+    // el vínculo (antes no había ningún paso intermedio, un click de más
+    // sobre la fila equivocada vinculaba sin poder revisar).
     $(document).on('click', '.vi-link-result', function () {
+        var externalId = $(this).attr('data-id');
+        var platform = $(this).attr('data-platform');
+        var result = lastSearchResults.filter(function (r) {
+            return String(r.id) === String(externalId) && r.platform === platform;
+        })[0];
+        if (result) { renderLinkConfirm(result); }
+    });
+
+    function renderLinkConfirm(result) {
+        clearTimers();
+        $('#viTitle').text(t('confirm_link_title', 'Confirmar vínculo'));
+        var icoStyle = result.color ? ' style="color:' + esc(result.color) + '"' : '';
+
+        // La ficha solo muestra los campos que realmente trae cada
+        // plataforma (ERP: NIF/tarjeta/código internet · PrestaShop:
+        // DNI/teléfono/ciudad) — validado por presencia de dato, no por un
+        // if/else por plataforma que habría que mantener a mano si mañana
+        // se añade una tercera integración.
+        var rows = '';
+        function addRow(label, value) {
+            if (value === null || value === undefined || value === '') { return; }
+            rows += '<div class="bv-info-table__row"><span class="bv-info-table__k">' + esc(label) + '</span><span class="bv-info-table__v">' + esc(value) + '</span></div>';
+        }
+        addRow(t('platform_label', 'Plataforma'), result.platformLabel || result.platform);
+        addRow(t('external_id_label', 'ID cliente'), result.id);
+        addRow(t('email_label', 'Correo electrónico'), result.email);
+        addRow(t('nif_label', 'Identificación (NIF/DNI)'), result.nif);
+        addRow(t('phone_label', 'Teléfono'), result.phone);
+        addRow(t('city_label', 'Ciudad'), result.city);
+        addRow(t('card_label', 'Nº tarjeta'), result.card);
+        addRow(t('code_internet_label', 'Código internet'), result.code_internet);
+        addRow(t('created_label', 'Fecha de alta'), result.created_at);
+        addRow(t('active_label', 'Estado'), result.active === true ? t('active_yes', 'Activo') : (result.active === false ? t('active_no', 'Inactivo') : null));
+
+        $('#viBody').html(
+            '<div class="vi-lead">' + t('confirm_link_lead', 'Revisa la ficha antes de vincular — esta acción queda registrada.') + '</div>' +
+            '<div class="bv-intg-row">' +
+                '<div class="ico"' + icoStyle + '><i class="' + esc(result.icon || 'fas fa-plug') + '"></i></div>' +
+                '<div class="meta">' +
+                    '<span class="name">' + esc(result.name || '—') + '</span>' +
+                    '<span class="det">' + esc(result.email || result.meta || '') + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="bv-info-table bv-info-table--rich">' + rows + '</div>'
+        );
+        $('#viFoot').html(
+            '<button class="btn-primary w-100 mb-2" id="viLinkConfirmBtn" type="button">' + t('confirm_link_button', 'Confirmar vinculación') + '</button>' +
+            '<button class="btn-secondary w-100" id="viLinkCancelBtn" type="button">' + t('back_button', 'Volver') + '</button>'
+        );
+
+        $('#viLinkConfirmBtn').off('click').on('click', function () {
+            var $btn = $(this).prop('disabled', true);
+
+            HDCommerce.ajax({
+                url: base() + '/integrations/link',
+                method: 'POST',
+                data: JSON.stringify({ platform: result.platform, external_id: String(result.id) }),
+                contentType: 'application/json',
+            })
+                .done(function () {
+                    toastr.success(t('linked_success', 'Vinculado correctamente: :name', { name: esc(result.name || '') }));
+                    refreshRightPanelIntegrations();
+                    renderPlatformSearch();
+                })
+                .fail(function (xhr) {
+                    toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
+                    $btn.prop('disabled', false);
+                });
+        });
+
+        $('#viLinkCancelBtn').off('click').on('click', function () {
+            renderPlatformSearch();
+            $('#viPlatformSearchQ').val(lastSearchQuery);
+            renderPlatformSearchResults(lastSearchResults, lastSearchFailed);
+        });
+    }
+
+    // El widget "INTEGRACIONES" del panel derecho se renderiza en servidor al
+    // cargar la conversación — sin esto, vincular aquí no se reflejaba ahí
+    // hasta recargar la página entera. bvLoadConversationPane ya existe
+    // (conversations.js) para el cambio de conversación; se reutiliza para
+    // refrescar el panel completo con datos frescos.
+    function refreshRightPanelIntegrations() {
+        var convId = $('.bv-sync-commerce').attr('data-conv-id');
+        if (convId && typeof window.bvLoadConversationPane === 'function') {
+            window.bvLoadConversationPane(convId, null, { push: false });
+        }
+    }
+
+    // Botón de refresco manual del panel "INTEGRACIONES" (icono de recargar) —
+    // no tenía ningún handler enganchado, así que no hacía nada al pulsarlo.
+    $(document).on('click', '.bv-sync-commerce', function () {
         var $btn = $(this).prop('disabled', true);
-        // .attr() (no .data()) a propósito: mismo motivo que en
-        // customer-integrations.js — jQuery castearía un data-id numérico
-        // a Number, y el backend exige 'external_id' como string.
-        var externalId = $btn.attr('data-id');
-        var platform = $btn.attr('data-platform');
-        var name = $btn.attr('data-name');
+        var customerId = $btn.attr('data-customer-id');
+        if (!customerId) { $btn.prop('disabled', false); return; }
 
         HDCommerce.ajax({
-            url: base() + '/integrations/link',
+            url: '/panel/helpdesk/customers/' + customerId + '/integrations/sync',
             method: 'POST',
-            data: JSON.stringify({ platform: platform, external_id: externalId }),
-            contentType: 'application/json',
         })
-            .done(function () {
-                toastr.success(t('linked_success', 'Vinculado correctamente: :name', { name: esc(name) }));
-                $btn.text(t('linked_label', 'Vinculado')).addClass('linked');
+            .done(function (resp) {
+                toastr.success(resp.message || t('sync_completed', 'Sincronización completada.'));
+                refreshRightPanelIntegrations();
             })
             .fail(function (xhr) {
-                toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
+                toastr.error(HDCommerce.errorMessage(xhr, t('sync_failed', 'No se pudo sincronizar.')));
+            })
+            .always(function () {
                 $btn.prop('disabled', false);
             });
     });
 
+    // Resultados de la última búsqueda — permite reabrir la lista tal cual
+    // estaba al cancelar una confirmación de vínculo, sin repetir la llamada.
+    var lastSearchResults = [];
+    var lastSearchFailed = [];
+    var lastSearchQuery = '';
+
     function doPlatformSearch(q, type) {
+        lastSearchQuery = q;
         $('#viPlatformSearchResults').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> ' + t('searching_all_platforms', 'Buscando en todas las plataformas…') + '</div>');
 
         var searches = S.linkablePlatforms.map(function (p) {
@@ -326,6 +455,8 @@
                 results = results.concat(o.results);
                 if (o.failed) { failed.push(o.failed); }
             });
+            lastSearchResults = results;
+            lastSearchFailed = failed;
             renderPlatformSearchResults(results, failed);
         });
     }

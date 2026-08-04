@@ -123,6 +123,6 @@
 <script>
     window.HelpdeskIntegrationLang = Object.assign(window.HelpdeskIntegrationLang || {}, @json(__('helpdeskintegration::messages.js')));
 </script>
-<script src="{{ asset('vendor/helpdeskintegration/customer-integrations.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/customer-integrations.js')) }}"></script>
+<script src="{{ asset('vendor/helpdeskintegration/customer-integrations.js') }}?v={{ @filemtime(public_path('vendor/helpdeskintegration/customer-integrations.js')) }}" defer></script>
 @endpush
 @endonce

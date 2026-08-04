@@ -66,7 +66,7 @@ class ContactsControllerTest extends TestCase
 
     public function test_unauthenticated_user_is_redirected_from_index(): void
     {
-        $this->get('/panel/contacts')
+        $this->get('/panel/helpdesk/contacts')
             ->assertRedirect();
     }
 
@@ -74,7 +74,7 @@ class ContactsControllerTest extends TestCase
     {
         $customer = Customer::factory()->create();
 
-        $this->get('/panel/contacts/'.$customer->id)
+        $this->get('/panel/helpdesk/contacts/'.$customer->id)
             ->assertRedirect();
     }
 
@@ -83,7 +83,7 @@ class ContactsControllerTest extends TestCase
         $noPerm = User::factory()->create();
 
         $this->actingAs($noPerm)
-            ->get('/panel/contacts')
+            ->get('/panel/helpdesk/contacts')
             ->assertForbidden();
     }
 
@@ -93,7 +93,7 @@ class ContactsControllerTest extends TestCase
         $customer = Customer::factory()->create();
 
         $this->actingAs($noPerm)
-            ->get('/panel/contacts/'.$customer->id)
+            ->get('/panel/helpdesk/contacts/'.$customer->id)
             ->assertForbidden();
     }
 
@@ -106,7 +106,7 @@ class ContactsControllerTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get('/panel/contacts')
+            ->get('/panel/helpdesk/contacts')
             ->assertOk()
             ->assertViewIs('contacts::contacts.index')
             ->assertViewHas('customers')
@@ -120,7 +120,7 @@ class ContactsControllerTest extends TestCase
         Customer::factory()->create(['name' => 'Otro Contacto']);
 
         $this->actingAs($this->user)
-            ->get('/panel/contacts?q='.$needle)
+            ->get('/panel/helpdesk/contacts?q='.$needle)
             ->assertOk()
             ->assertViewHas('q', $needle)
             ->assertSee($customer->name);
@@ -133,7 +133,7 @@ class ContactsControllerTest extends TestCase
         $customer = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->get('/panel/contacts/'.$customer->id)
+            ->get('/panel/helpdesk/contacts/'.$customer->id)
             ->assertOk()
             ->assertViewIs('contacts::contacts.show')
             ->assertViewHas('customer');
@@ -142,7 +142,7 @@ class ContactsControllerTest extends TestCase
     public function test_show_returns_404_for_missing_customer(): void
     {
         $this->actingAs($this->user)
-            ->get('/panel/contacts/999999999')
+            ->get('/panel/helpdesk/contacts/999999999')
             ->assertNotFound();
     }
 
@@ -154,7 +154,7 @@ class ContactsControllerTest extends TestCase
         ]);
 
         $this->actingAs($this->user)
-            ->get('/panel/contacts/'.$customer->id)
+            ->get('/panel/helpdesk/contacts/'.$customer->id)
             ->assertOk()
             ->assertSee('34600111222');
     }
@@ -233,14 +233,14 @@ class ContactsControllerTest extends TestCase
 
         // La lista solo muestra el cliente de su inbox.
         $this->actingAs($agent)
-            ->get('/panel/contacts')
+            ->get('/panel/helpdesk/contacts')
             ->assertOk()
             ->assertSee($mine->name)
             ->assertDontSee($theirs->name);
 
         // El detalle de un cliente de otro inbox → 403; el propio → 200.
-        $this->actingAs($agent)->get('/panel/contacts/'.$theirs->id)->assertForbidden();
-        $this->actingAs($agent)->get('/panel/contacts/'.$mine->id)->assertOk();
+        $this->actingAs($agent)->get('/panel/helpdesk/contacts/'.$theirs->id)->assertForbidden();
+        $this->actingAs($agent)->get('/panel/helpdesk/contacts/'.$mine->id)->assertOk();
     }
 
     public function test_manager_sees_contacts_of_any_inbox(): void
@@ -251,7 +251,7 @@ class ContactsControllerTest extends TestCase
 
         // $this->user tiene helpdesk.manage → sin restricción de inbox.
         $this->actingAs($this->user)
-            ->get('/panel/contacts/'.$theirs->id)
+            ->get('/panel/helpdesk/contacts/'.$theirs->id)
             ->assertOk();
     }
 

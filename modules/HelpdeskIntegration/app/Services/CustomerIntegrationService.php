@@ -2,10 +2,12 @@
 
 namespace Modules\HelpdeskIntegration\Services;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\CustomerExternalId;
+use Modules\Helpdesk\Services\PhoneNormalizerService;
 use Modules\HelpdeskIntegration\Contracts\IntegrationDriverContract;
 use Modules\HelpdeskIntegration\Jobs\ResyncCustomerIntegrationsJob;
 use Modules\HelpdeskIntegration\Models\IntegrationAuditLog;
@@ -239,6 +241,88 @@ class CustomerIntegrationService
         $this->logAudit($customer, $platform, 'linked', $externalId);
 
         return $this->buildPayload($customer);
+    }
+
+    /**
+     * Crea un Customer nuevo a partir de un resultado de búsqueda externa y
+     * lo vincula de una — usado por HelpdeskContacts cuando el agente busca
+     * en ERP/PrestaShop desde el listado de contactos (sin un Customer
+     * previo abierto) y no hay ninguno existente para vincular. Mismo
+     * patrón de verificación contra la plataforma remota que link() (línea
+     * 212), para no crear una ficha a partir de un id que ya no resuelve.
+     */
+    public function createFromResult(string $platform, string $externalId, ?string $phone = null): Customer
+    {
+        $driver = $this->driverFor($platform);
+        $result = $driver?->resync($externalId);
+
+        if (! $driver || ! $result->ok) {
+            throw ValidationException::withMessages([
+                'external_id' => __('helpdeskintegration::messages.link.platform_error'),
+            ]);
+        }
+
+        if (! $result->found($externalId)) {
+            throw ValidationException::withMessages([
+                'external_id' => __('helpdeskintegration::messages.link.not_found'),
+            ]);
+        }
+
+        $match = collect($result->results)->firstWhere('id', $externalId);
+
+        // El ERP/PrestaShop suele devolver el móvil en formato local sin
+        // prefijo de país ("615490503"); se deriva a E.164 para poder
+        // habilitar el envío de plantillas WhatsApp sin esperar a que el
+        // cliente escriba primero por ese canal.
+        $whatsapp = filled($phone) ? app(PhoneNormalizerService::class)->toWhatsappE164($phone) : null;
+
+        $email = filled($match['email'] ?? null) ? $match['email'] : null;
+
+        // Un contacto eliminado (soft-delete) sigue ocupando su email en el
+        // índice único de la BD — sin esto, recrearlo con la misma dirección
+        // tras "Eliminar" chocaba con una violación de constraint en vez de
+        // restaurar el registro existente.
+        $customer = $email ? Customer::withTrashed()->where('email', $email)->first() : null;
+
+        if ($customer) {
+            $customer->restore();
+            $customer->update([
+                'name' => $match['name'] ?? $customer->name,
+                'phone' => filled($phone) ? $phone : $customer->phone,
+                'whatsapp_phone' => $whatsapp ?: $customer->whatsapp_phone,
+            ]);
+        } else {
+            try {
+                $customer = Customer::create([
+                    'name' => $match['name'] ?? null,
+                    'email' => $email,
+                    'phone' => filled($phone) ? $phone : null,
+                    'whatsapp_phone' => $whatsapp,
+                ]);
+            } catch (QueryException $e) {
+                // Carrera entre el SELECT de arriba y este INSERT (p. ej. un
+                // webhook entrante crea el mismo email justo en medio): en
+                // vez de un 500, se reutiliza el contacto que ganó la carrera.
+                if ($e->getCode() !== '23000' || ! $email) {
+                    throw $e;
+                }
+
+                $customer = Customer::withTrashed()->where('email', $email)->firstOrFail();
+                $customer->restore();
+                $customer->update([
+                    'name' => $match['name'] ?? $customer->name,
+                    'phone' => filled($phone) ? $phone : $customer->phone,
+                    'whatsapp_phone' => $whatsapp ?: $customer->whatsapp_phone,
+                ]);
+            }
+        }
+
+        $customer->linkExternalId($platform, $externalId, ['linked_via' => 'created_from_search']);
+        $customer->load('externalIds');
+
+        $this->logAudit($customer, $platform, 'linked', $externalId);
+
+        return $customer;
     }
 
     public function unlink(Customer $customer, string $platform): array

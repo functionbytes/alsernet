@@ -41,11 +41,45 @@ Route::name('contacts.')
             ->middleware('can:contacts.update')
             ->name('bulk-action');
 
+        // Plantillas HSM aprobadas para el modal de envío WhatsApp
+        Route::get('/hsm-templates', [ContactsController::class, 'hsmTemplates'])
+            ->name('hsm-templates');
+
+        // Envío masivo de plantilla HSM a varios contactos seleccionados
+        Route::post('/bulk-send-hsm', [ContactsController::class, 'bulkSendHsm'])
+            ->middleware('can:contacts.update')
+            ->name('bulk-send-hsm');
+
+        // Búsqueda ERP/PrestaShop → crear ficha nueva o vincular a un contacto
+        // existente. Llama a CustomerIntegrationService directo (HelpdeskIntegration)
+        // en vez de sus rutas propias, que exigen can:helpdesk.view — un agente
+        // de solo-contactos no lo tendría (mismo criterio que hsm-templates).
+        Route::get('/external-platforms', [ContactsController::class, 'externalPlatforms'])
+            ->name('external-platforms');
+
+        Route::get('/external-search', [ContactsController::class, 'externalSearch'])
+            ->name('external-search');
+
+        // Ficha completa (direccion, pedidos, facturas) de un resultado de
+        // búsqueda antes de decidir importarlo — keyed por email, sin crear nada.
+        Route::get('/external-preview', [ContactsController::class, 'externalPreview'])
+            ->name('external-preview');
+
+        Route::post('/external-create', [ContactsController::class, 'externalCreate'])
+            ->middleware('can:contacts.update')
+            ->name('external-create');
+
         // Actualizar datos del contacto
         Route::put('/{customer}', [ContactsController::class, 'update'])
             ->whereNumber('customer')
             ->middleware('can:contacts.update')
             ->name('update');
+
+        // Eliminar contacto individual (mismo permiso que el borrado masivo)
+        Route::delete('/{customer}', [ContactsController::class, 'destroy'])
+            ->whereNumber('customer')
+            ->middleware('can:contacts.update')
+            ->name('destroy');
 
         // Merge de contactos duplicados
         Route::prefix('/{customer}/merge')
@@ -89,6 +123,23 @@ Route::name('contacts.')
             ->whereNumber('customer')
             ->middleware('can:contacts.update')
             ->name('unban');
+
+        // Enviar plantilla HSM de WhatsApp (crea o reusa la conversación del contacto)
+        Route::post('/{customer}/send-hsm', [ContactsController::class, 'sendHsm'])
+            ->whereNumber('customer')
+            ->middleware('can:contacts.update')
+            ->name('send-hsm');
+
+        // Vincular un resultado de búsqueda ERP/PrestaShop a este contacto ("unirla")
+        Route::post('/{customer}/external-link', [ContactsController::class, 'externalLink'])
+            ->whereNumber('customer')
+            ->middleware('can:contacts.update')
+            ->name('external-link');
+
+        // Plataformas ya vinculadas, para la sección "Integraciones" de la ficha 360
+        Route::get('/{customer}/external-integrations', [ContactsController::class, 'externalIntegrations'])
+            ->whereNumber('customer')
+            ->name('external-integrations');
 
         Route::post('/{customer}/sync', [ContactTabsController::class, 'sync'])
             ->whereNumber('customer')

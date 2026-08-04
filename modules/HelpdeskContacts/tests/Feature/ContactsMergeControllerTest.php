@@ -45,7 +45,7 @@ class ContactsMergeControllerTest extends TestCase
         $winner = Customer::factory()->create();
         $loser = Customer::factory()->create();
 
-        $this->postJson("/panel/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
+        $this->postJson("/panel/helpdesk/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
             ->assertUnauthorized();
     }
 
@@ -58,7 +58,7 @@ class ContactsMergeControllerTest extends TestCase
         $loser = Customer::factory()->create();
 
         $this->actingAs($user)
-            ->postJson("/panel/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
+            ->postJson("/panel/helpdesk/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
             ->assertForbidden();
     }
 
@@ -69,7 +69,7 @@ class ContactsMergeControllerTest extends TestCase
         $customer = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->postJson("/panel/contacts/{$customer->id}/merge", ['loser_id' => $customer->id])
+            ->postJson("/panel/helpdesk/contacts/{$customer->id}/merge", ['loser_id' => $customer->id])
             ->assertUnprocessable()
             ->assertJsonPath('success', false);
     }
@@ -84,7 +84,7 @@ class ContactsMergeControllerTest extends TestCase
         $winner = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->postJson("/panel/contacts/{$winner->id}/merge", ['loser_id' => 999999999])
+            ->postJson("/panel/helpdesk/contacts/{$winner->id}/merge", ['loser_id' => 999999999])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('loser_id');
     }
@@ -101,7 +101,7 @@ class ContactsMergeControllerTest extends TestCase
         $loser->delete();
 
         $this->actingAs($this->user)
-            ->postJson("/panel/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
+            ->postJson("/panel/helpdesk/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
             ->assertNotFound()
             ->assertJsonPath('success', false);
     }
@@ -111,7 +111,7 @@ class ContactsMergeControllerTest extends TestCase
         $winner = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->getJson("/panel/contacts/{$winner->id}/merge/preview")
+            ->getJson("/panel/helpdesk/contacts/{$winner->id}/merge/preview")
             ->assertUnprocessable();
     }
 
@@ -120,7 +120,7 @@ class ContactsMergeControllerTest extends TestCase
         $winner = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->getJson("/panel/contacts/{$winner->id}/merge/preview?loser_id=999999999")
+            ->getJson("/panel/helpdesk/contacts/{$winner->id}/merge/preview?loser_id=999999999")
             ->assertNotFound();
     }
 
@@ -132,7 +132,7 @@ class ContactsMergeControllerTest extends TestCase
         $loser = Customer::factory()->create();
 
         $this->actingAs($this->user)
-            ->postJson("/panel/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
+            ->postJson("/panel/helpdesk/contacts/{$winner->id}/merge", ['loser_id' => $loser->id])
             ->assertOk()
             ->assertJsonPath('success', true);
 
@@ -145,7 +145,7 @@ class ContactsMergeControllerTest extends TestCase
         $loser = Customer::factory()->create(['name' => 'Perdedor']);
 
         $this->actingAs($this->user)
-            ->getJson("/panel/contacts/{$winner->id}/merge/preview?loser_id={$loser->id}")
+            ->getJson("/panel/helpdesk/contacts/{$winner->id}/merge/preview?loser_id={$loser->id}")
             ->assertOk()
             ->assertJsonPath('data.winner.name', 'Ganador')
             ->assertJsonPath('data.loser.name', 'Perdedor');
