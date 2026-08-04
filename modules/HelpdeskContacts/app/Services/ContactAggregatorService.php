@@ -52,6 +52,8 @@ class ContactAggregatorService
 
     private const ECOMMERCE_PRODUCT = 'Modules\\Ecommerce\\Models\\Product';
 
+    private const CUSTOMER_INTEGRATION_SERVICE = 'Modules\\HelpdeskIntegration\\Services\\CustomerIntegrationService';
+
     public function __construct(
         private readonly CustomerInsightsService $insights,
     ) {}
@@ -544,7 +546,7 @@ class ContactAggregatorService
     /**
      * Re-link a customer to its external ERP / PrestaShop IDs by email.
      *
-     * @return array{integrations: array<int, array{platform: string, connected: bool, externalId: ?string}>}
+     * @return array{integrations: array<int, array{platform: string, label: string, connected: bool, externalId: ?string, syncStatus: ?string, lastSyncedAt: ?string}>}
      */
     public function syncIntegrations(Customer $customer): array
     {
@@ -690,19 +692,54 @@ class ContactAggregatorService
     }
 
     /**
-     * Integration connection statuses derived from stored external IDs.
+     * Integration connection statuses.
      *
-     * @return array<int, array{platform: string, connected: bool, externalId: ?string}>
+     * Cuando el módulo HelpdeskIntegration está activo se delega en
+     * CustomerIntegrationService::buildPayload() — el mismo servicio que usa
+     * el panel derecho del inbox — para traer TODAS las plataformas del
+     * catálogo (no solo erp/prestashop) con su estado real de sync
+     * (ok/not_found/pending/error) y última sincronización. Si el módulo
+     * está desactivado se degrada al criterio anterior (solo erp/prestashop
+     * desde los vínculos ya guardados, sin estado de sync) — esos vínculos
+     * viven en el core (Customer::externalIds) y no dependen de que
+     * HelpdeskIntegration esté activo.
+     *
+     * @return array<int, array{platform: string, label: string, connected: bool, externalId: ?string, syncStatus: ?string, lastSyncedAt: ?string}>
      */
     private function integrationStatuses(Customer $customer): array
     {
+        if ($this->integrationModuleAvailable()) {
+            $payload = app(self::CUSTOMER_INTEGRATION_SERVICE)->buildPayload($customer);
+
+            return collect($payload['integrations'] ?? [])
+                ->map(fn (array $it): array => [
+                    'platform' => $it['platform'],
+                    'label' => $it['label'],
+                    'connected' => $it['connected'],
+                    'externalId' => $it['external_id'],
+                    'syncStatus' => $it['sync_status'],
+                    'lastSyncedAt' => $it['last_synced_at'],
+                ])
+                ->values()
+                ->all();
+        }
+
         $erpId = $customer->externalIdFor('erp');
         $prestashopId = $customer->externalIdFor('prestashop');
 
         return [
-            ['platform' => 'erp', 'connected' => $erpId !== null, 'externalId' => $erpId],
-            ['platform' => 'prestashop', 'connected' => $prestashopId !== null, 'externalId' => $prestashopId],
+            ['platform' => 'erp', 'label' => 'Gestión (ERP)', 'connected' => $erpId !== null, 'externalId' => $erpId, 'syncStatus' => null, 'lastSyncedAt' => null],
+            ['platform' => 'prestashop', 'label' => 'PrestaShop', 'connected' => $prestashopId !== null, 'externalId' => $prestashopId, 'syncStatus' => null, 'lastSyncedAt' => null],
         ];
+    }
+
+    private function integrationModuleAvailable(): bool
+    {
+        $enabled = function_exists('helpdesk_integration_enabled')
+            ? helpdesk_integration_enabled()
+            : $this->moduleEnabled('HelpdeskIntegration');
+
+        return $enabled && class_exists(self::CUSTOMER_INTEGRATION_SERVICE);
     }
 
     /* ── Actividad helpers ────────────────────────────────────────────────── */

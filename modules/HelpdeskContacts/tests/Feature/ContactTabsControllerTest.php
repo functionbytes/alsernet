@@ -81,7 +81,7 @@ class ContactTabsControllerTest extends TestCase
 
     private function tabUrl(string $tab): string
     {
-        return '/panel/contacts/'.$this->customer->id.'/tab/'.$tab;
+        return '/panel/helpdesk/contacts/'.$this->customer->id.'/tab/'.$tab;
     }
 
     // ── Authorization ──────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ class ContactTabsControllerTest extends TestCase
 
         foreach (['resumen', 'erp', 'prestashop', 'tienda', 'actividad', 'tickets'] as $tab) {
             $this->actingAs($agent)
-                ->getJson('/panel/contacts/'.$foreign->id.'/tab/'.$tab)
+                ->getJson('/panel/helpdesk/contacts/'.$foreign->id.'/tab/'.$tab)
                 ->assertForbidden();
         }
     }
@@ -149,7 +149,7 @@ class ContactTabsControllerTest extends TestCase
         ])->id]);
 
         $this->actingAs($agent)
-            ->getJson('/panel/contacts/'.$foreign->id.'/cart')
+            ->getJson('/panel/helpdesk/contacts/'.$foreign->id.'/cart')
             ->assertForbidden();
     }
 
@@ -248,7 +248,7 @@ class ContactTabsControllerTest extends TestCase
         $customer = Customer::factory()->create(['email' => null]);
 
         $this->actingAs($this->user)
-            ->getJson('/panel/contacts/'.$customer->id.'/tab/erp')
+            ->getJson('/panel/helpdesk/contacts/'.$customer->id.'/tab/erp')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.available', false);
@@ -270,7 +270,7 @@ class ContactTabsControllerTest extends TestCase
         $customer = Customer::factory()->create(['email' => null]);
 
         $this->actingAs($this->user)
-            ->getJson('/panel/contacts/'.$customer->id.'/tab/prestashop')
+            ->getJson('/panel/helpdesk/contacts/'.$customer->id.'/tab/prestashop')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.available', false);
@@ -292,7 +292,7 @@ class ContactTabsControllerTest extends TestCase
         $customer = Customer::factory()->create(['email' => null]);
 
         $this->actingAs($this->user)
-            ->getJson('/panel/contacts/'.$customer->id.'/tab/tienda')
+            ->getJson('/panel/helpdesk/contacts/'.$customer->id.'/tab/tienda')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.available', false);
@@ -327,7 +327,7 @@ class ContactTabsControllerTest extends TestCase
 
     public function test_sync_requires_authentication(): void
     {
-        $this->postJson('/panel/contacts/'.$this->customer->id.'/sync')
+        $this->postJson('/panel/helpdesk/contacts/'.$this->customer->id.'/sync')
             ->assertUnauthorized();
     }
 
@@ -337,14 +337,14 @@ class ContactTabsControllerTest extends TestCase
         $viewer->givePermissionTo('contacts.view');
 
         $this->actingAs($viewer)
-            ->postJson('/panel/contacts/'.$this->customer->id.'/sync')
+            ->postJson('/panel/helpdesk/contacts/'.$this->customer->id.'/sync')
             ->assertForbidden();
     }
 
     public function test_sync_succeeds_with_update_permission(): void
     {
         $this->actingAs($this->user)
-            ->postJson('/panel/contacts/'.$this->customer->id.'/sync')
+            ->postJson('/panel/helpdesk/contacts/'.$this->customer->id.'/sync')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonStructure(['success', 'data' => ['integrations']]);

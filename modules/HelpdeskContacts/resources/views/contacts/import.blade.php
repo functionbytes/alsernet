@@ -81,15 +81,17 @@
                         <tr><td>name</td><td>nombre</td></tr>
                         <tr><td>email</td><td>correo</td></tr>
                         <tr><td>phone</td><td>telefono</td></tr>
+                        <tr><td>whatsapp_phone</td><td>whatsapp</td></tr>
                     </tbody>
                 </table>
                 <p class="card-text text-muted small mb-1">
                     <strong>Lógica de importación:</strong>
                 </p>
                 <ul class="text-muted small ps-3">
-                    <li>Si el email coincide con un contacto existente, se actualizan nombre y teléfono.</li>
+                    <li>Si el email coincide con un contacto existente, se actualizan nombre, teléfono y WhatsApp.</li>
                     <li>Si no hay coincidencia, se crea un contacto nuevo.</li>
                     <li>Las filas sin nombre ni email se omiten.</li>
+                    <li><code>whatsapp_phone</code> debe tener formato internacional válido (ej. <code>+34600000001</code>); si no, se importa el contacto igual pero sin ese número, y solo entonces se habilita "Enviar plantilla".</li>
                 </ul>
             </div>
         </div>
@@ -101,9 +103,9 @@
                     Plantilla de ejemplo
                 </h6>
                 <p class="card-text text-muted small">Estructura mínima del CSV:</p>
-                <pre class="bg-light rounded p-2 small mb-0">name,email,phone
-Juan García,juan@ejemplo.com,+34 600 000 001
-Ana López,ana@ejemplo.com,</pre>
+                <pre class="bg-light rounded p-2 small mb-0">name,email,phone,whatsapp_phone
+Juan García,juan@ejemplo.com,+34 600 000 001,+34600000001
+Ana López,ana@ejemplo.com,,</pre>
             </div>
         </div>
     </div>

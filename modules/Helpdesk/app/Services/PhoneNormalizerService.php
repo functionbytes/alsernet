@@ -77,4 +77,48 @@ class PhoneNormalizerService
 
         return $da !== null && $db !== null && $da === $db;
     }
+
+    /**
+     * Comprueba que un teléfono tiene forma de número de WhatsApp válido
+     * (E.164: '+' seguido de 8 a 15 dígitos, sin letras ni símbolos sueltos).
+     *
+     * No confirma que el número exista de verdad en WhatsApp — Meta no ofrece
+     * un endpoint gratuito para eso (solo se sabe al enviar un mensaje/HSM) —
+     * esto solo descarta entradas con formato imposible (ej. "abc123").
+     */
+    public function isValidWhatsapp(?string $phone): bool
+    {
+        $normalized = $this->normalize($phone);
+
+        return $normalized !== null && preg_match('/^\+[1-9]\d{7,14}$/', $normalized) === 1;
+    }
+
+    /**
+     * Deriva un número de WhatsApp en E.164 a partir de un teléfono que
+     * puede venir sin prefijo de país (caso típico del ERP/PrestaShop:
+     * "615490503"). Mismo criterio español que toDigits() (móvil/fijo ES
+     * empieza por 6/7/8/9 y tiene 9 dígitos) pero en sentido inverso: en vez
+     * de quitar el +34 lo añade. Devuelve null si no se puede derivar con
+     * confianza (evita adivinar el país de números ya internacionales raros).
+     */
+    public function toWhatsappE164(?string $phone): ?string
+    {
+        $normalized = $this->normalize($phone);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        if ($this->isValidWhatsapp($normalized)) {
+            return $normalized;
+        }
+
+        if (preg_match('/^[6789]\d{8}$/', $normalized) === 1) {
+            $candidate = '+34'.$normalized;
+
+            return $this->isValidWhatsapp($candidate) ? $candidate : null;
+        }
+
+        return null;
+    }
 }

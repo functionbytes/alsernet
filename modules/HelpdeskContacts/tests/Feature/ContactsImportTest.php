@@ -158,7 +158,7 @@ class ContactsImportTest extends TestCase
         );
 
         $this->actingAs($agent)
-            ->get('/panel/contacts?q=nuevo@example.test')
+            ->get('/panel/helpdesk/contacts?q=nuevo@example.test')
             ->assertOk()
             ->assertSee('Contacto Importado');
     }
