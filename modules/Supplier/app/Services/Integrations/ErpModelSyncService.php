@@ -157,7 +157,6 @@ class ErpModelSyncService
                 url: "{$this->erpBaseUrl}/products/filter",
                 params: $filterParams,
                 timeout: 120,
-                startOffset: 1,
                 maxItems: $limit,
                 processModel: function (array $modelData) use ($batch, $force, $limit, $circuitBreakerThreshold, $skipAi, $dryRun, $registerOnly, &$stats, &$logBuffer, &$registeredErpIds, &$consecutiveErrors, &$circuitBroken): bool {
                     return $this->processSingleModel($modelData, $batch, $force, $stats, $logBuffer, $registeredErpIds, $limit, $consecutiveErrors, $circuitBreakerThreshold, $circuitBroken, $skipAi, $dryRun, $registerOnly);
@@ -300,14 +299,35 @@ class ErpModelSyncService
                 'error' => $e->getMessage(),
             ]);
 
-            $consecutiveErrors++;
-            if ($consecutiveErrors >= $circuitBreakerThreshold) {
-                $circuitBroken = true;
-                Log::warning('Circuit breaker triggered during batch sync', [
-                    'consecutive_errors' => $consecutiveErrors,
-                    'threshold' => $circuitBreakerThreshold,
-                    'batch_id' => $batch?->id,
-                ]);
+            // Los fallos de calidad de datos (sin proveedor/categoría/artículos en ERP)
+            // son por-item y no indican que el ERP o el pipeline estén caídos: si se
+            // cuentan igual que un error transitorio, un lote de items con datos
+            // incompletos dispara el circuit breaker y aborta el resto del batch,
+            // incluyendo items válidos que venían después (visto con H315470: quedaba
+            // atrapado detrás de 10 modelos "sin_proveedor" consecutivos).
+            if ($this->isTransientFailure($e->getMessage())) {
+                $consecutiveErrors++;
+                if ($consecutiveErrors >= $circuitBreakerThreshold) {
+                    $circuitBroken = true;
+                    Log::warning('Circuit breaker triggered during batch sync', [
+                        'consecutive_errors' => $consecutiveErrors,
+                        'threshold' => $circuitBreakerThreshold,
+                        'batch_id' => $batch?->id,
+                    ]);
+
+                    // Visible en el panel (antes solo quedaba en laravel.log): que quede
+                    // registrado en el propio batch por qué se cortó la sincronización.
+                    if ($batch) {
+                        $logBuffer[] = $this->buildLogRow($batch, [
+                            'entity_type' => 'model',
+                            'erp_id' => $erpModelId,
+                            'action' => 'abort',
+                            'result' => 'failed',
+                            'message' => "Circuit breaker: {$consecutiveErrors} errores transitorios consecutivos (umbral {$circuitBreakerThreshold}) — sincronización cortada, items restantes del ERP sin evaluar",
+                            'error_message' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
 
             if ($batch) {
@@ -707,7 +727,12 @@ class ErpModelSyncService
 
         $existingMeta = $product->exists ? ($product->metadata ?? []) : [];
         $rawDescription = $data['description'] ?? $data['descripcion'] ?? null;
-        $rawWebStatus = $data['web'] ?? $data['estado_publicado_web'] ?? null;
+        // 'web_status' es el valor numérico crudo de MODELO.ESTADO_PUBLICADO_WEB
+        // (0 = no publicar, 1 = publicar, 2 = pendiente de revisión). 'web' es un
+        // booleano derivado en el endpoint ERP que colapsa 1 y 2 en `true` — usarlo
+        // aquí perdía la distinción y marcaba items "pendientes de revisión" como
+        // publicados. Fallback a 'web' solo si el endpoint todavía no manda el raw.
+        $rawWebStatus = $data['web_status'] ?? $data['estado_publicado_web'] ?? $data['web'] ?? null;
 
         $metaUpdates = [];
         if (is_string($rawDescription) && trim($rawDescription) !== '') {
@@ -740,7 +765,9 @@ class ErpModelSyncService
             'name'            => ($data['nombre'] ?? null) ?: ($data['name'] ?? null) ?: ($data['description'] ?? null),
             'available'       => (bool) ($data['estado'] ?? $data['available'] ?? true),
             'is_default'      => (bool) ($data['default'] ?? false),
-            'web_published'   => (bool) ($data['web'] ?? false),
+            // Solo web_status=1 ("publicar") cuenta como publicado; 2 ("pendiente de
+            // revisión") no debe marcarse como publicado aunque sea "truthy".
+            'web_published'   => (int) ($rawWebStatus ?? 0) === 1,
             'last_sync_at'    => now(),
             'metadata'        => $metaUpdates ? array_merge($existingMeta, $metaUpdates) : ($existingMeta ?: null),
         ]);
@@ -793,7 +820,8 @@ class ErpModelSyncService
             'upc'             => $data['upc'] ?? null,
             'name'            => $data['description'] ?? $data['nombre'] ?? $data['name'] ?? null,
             'available'       => (bool) ($data['available'] ?? $data['estado'] ?? true),
-            'web_published'   => (bool) ($data['web'] ?? false),
+            // Ver nota en upsertProduct(): solo web_status=1 es "publicado".
+            'web_published'   => (int) ($data['web_status'] ?? $data['estado_publicado_web'] ?? $data['web'] ?? 0) === 1,
             'erp_created_at'  => $data['created'] ?? null,
             'erp_updated_at'  => $data['updated'] ?? null,
             'last_sync_at'    => now(),
@@ -962,6 +990,30 @@ class ErpModelSyncService
     }
 
     /**
+     * Distingue errores transitorios (API/BD caídos, indican que el pipeline
+     * está roto) de fallos de calidad de datos (item puntual sin proveedor/
+     * categoría/artículos en ERP). Solo los primeros deben alimentar el
+     * circuit breaker del batch — ver processSingleModel().
+     */
+    private function isTransientFailure(string $errorMessage): bool
+    {
+        return $this->classifyFailureType($errorMessage) === 'error_api'
+            || $this->classifyFailureType($errorMessage) === 'error_db';
+    }
+
+    private function classifyFailureType(string $errorMessage): string
+    {
+        return match (true) {
+            str_contains($errorMessage, 'sin proveedor')  => 'sin_proveedor',
+            str_contains($errorMessage, 'sin categoría')  => 'sin_categoria',
+            str_contains($errorMessage, 'sin artículos')  => 'sin_articulos',
+            str_contains($errorMessage, 'ERP API error')  => 'error_api',
+            str_contains($errorMessage, 'SQLSTATE')       => 'error_db',
+            default                                       => 'datos_invalidos',
+        };
+    }
+
+    /**
      * Registra un fallo de sincronización en supplier_sync_failures.
      */
     protected function recordSyncFailure(
@@ -970,14 +1022,7 @@ class ErpModelSyncService
         string $errorMessage,
         array $modelData = [],
     ): void {
-        $failureType = match (true) {
-            str_contains($errorMessage, 'sin proveedor')  => 'sin_proveedor',
-            str_contains($errorMessage, 'sin categoría')  => 'sin_categoria',
-            str_contains($errorMessage, 'sin artículos')  => 'sin_articulos',
-            str_contains($errorMessage, 'ERP API error')  => 'error_api',
-            str_contains($errorMessage, 'SQLSTATE')       => 'error_db',
-            default                                       => 'datos_invalidos',
-        };
+        $failureType = $this->classifyFailureType($errorMessage);
 
         $existing = SyncFailure::where('erp_id', $erpModelId)
             ->whereIn('failure_status', ['pending', 'acknowledged'])

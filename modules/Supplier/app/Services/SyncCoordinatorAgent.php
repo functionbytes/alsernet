@@ -212,9 +212,32 @@ class SyncCoordinatorAgent
                     'filter_criteria' => $filterCriteria,
                 ]);
 
-                // Dispatch sync job (constructor now accepts only SyncBatch)
+                // Dispatch sync job. 'model' recibe los criterios de filtro completos
+                // (date_from/date_field/web_filter/etc) — antes se ignoraban por
+                // completo acá, así que cualquier sync manual traía TODO el histórico
+                // sin importar lo configurado en el panel (causó una sincronización de
+                // ~1500 items en vez de solo los pendientes recientes).
                 $jobClass = $this->getSyncJobClass($syncType);
-                $jobClass::dispatch($batch, $supplierId)->onQueue('sync');
+                if ($syncType === 'model') {
+                    $criteria = $filterCriteria ?? [];
+                    $jobClass::dispatch(
+                        $batch,
+                        $supplierId,
+                        $criteria['limit'] ?? null,
+                        (bool) ($criteria['force'] ?? false),
+                        $criteria['mode'] ?? 'filter',
+                        $criteria['date_from'] ?? null,
+                        (bool) ($criteria['skip_ai'] ?? false),
+                        (bool) ($criteria['dry_run'] ?? false),
+                        $criteria['erp_model_id'] ?? null,
+                        (bool) ($criteria['description_empty'] ?? false),
+                        $criteria['web_filter'] ?? '2',
+                        (bool) ($criteria['register_only'] ?? false),
+                        $criteria['date_field'] ?? 'creation',
+                    )->onQueue('sync');
+                } else {
+                    $jobClass::dispatch($batch, $supplierId)->onQueue('sync');
+                }
 
                 $this->activeAgents[$syncType] = [
                     'batch_id' => $batch->id,
