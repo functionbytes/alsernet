@@ -46,6 +46,6 @@
 </style>
 @endpush
 @push('scripts')
-<script src="{{ asset('vendor/helpdesk/kb-suggestions.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/kb-suggestions.js')) }}"></script>
+<script src="{{ asset('vendor/helpdesk/kb-suggestions.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/kb-suggestions.js')) }}" defer></script>
 @endpush
 @endonce

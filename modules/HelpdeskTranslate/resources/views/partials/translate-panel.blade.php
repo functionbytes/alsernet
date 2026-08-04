@@ -21,7 +21,7 @@ window.HelpdeskTranslateI18n = {
     btnTranslate: @json(__('helpdesktranslate::messages.thread.btn_translate')),
 };
 </script>
-<script src="{{ asset('vendor/helpdesktranslate/translate-thread.js') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/translate-thread.js')) }}"></script>
+<script src="{{ asset('vendor/helpdesktranslate/translate-thread.js') }}?v={{ @filemtime(public_path('vendor/helpdesktranslate/translate-thread.js')) }}" defer></script>
 @endpush
 @endonce
 <div class="bv-translate-panel" id="bv-translate-panel">

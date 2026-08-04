@@ -64,6 +64,6 @@
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
          en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/resolve.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/resolve.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/resolve.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/resolve.js')) }}" defer></script>
 @endpush
 @endonce

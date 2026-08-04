@@ -12,7 +12,7 @@
      DESPUÉS de jQuery/conversations.js (un <script> directo aquí correría antes y
      saldría por el guard `typeof jQuery === undefined`). Guard idempotente en el JS. --}}
 @push('scripts')
-    <script src="{{ asset('modules/helpdeskerp/js/erp-inbox.js') }}?v={{ @filemtime(public_path('modules/helpdeskerp/js/erp-inbox.js')) }}"></script>
+    <script src="{{ asset('modules/helpdeskerp/js/erp-inbox.js') }}?v={{ @filemtime(public_path('modules/helpdeskerp/js/erp-inbox.js')) }}" defer></script>
 @endpush
 
 <div class="bv-modal" data-bv-modal-name="erp-order-workspace">

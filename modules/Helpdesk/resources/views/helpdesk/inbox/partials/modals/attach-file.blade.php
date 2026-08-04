@@ -51,6 +51,6 @@
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
          en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/attach-file.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/attach-file.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/attach-file.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/attach-file.js')) }}" defer></script>
 @endpush
 @endonce

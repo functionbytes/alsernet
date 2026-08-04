@@ -151,6 +151,6 @@
     {{-- JS extraido a fichero propio: se cachea en el navegador en vez de
          re-descargarse en cada render del inbox. Fuente en
          modules/HelpdeskPrestashop/public/js/ — copiar a public/modules/ tras editar. --}}
-    <script src="{{ asset('modules/helpdeskprestashop/js/product-recommend.js') }}?v={{ @filemtime(base_path('modules/HelpdeskPrestashop/public/js/product-recommend.js')) }}"></script>
+    <script src="{{ asset('modules/helpdeskprestashop/js/product-recommend.js') }}?v={{ @filemtime(base_path('modules/HelpdeskPrestashop/public/js/product-recommend.js')) }}" defer></script>
 @endpush
 @endonce

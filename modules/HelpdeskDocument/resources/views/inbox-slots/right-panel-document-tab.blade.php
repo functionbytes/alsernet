@@ -113,6 +113,6 @@
          asi se cachea en el navegador, se versiona por mtime y es editable sin
          tocar el Blade. Fuente en modules/HelpdeskDocument/public/js/ — recuerda
          copiarlo a public/modules/helpdeskdocument/js/ tras editarlo. --}}
-    <script src="{{ asset('modules/helpdeskdocument/js/document-panel.js') }}?v={{ @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.js')) }}"></script>
+    <script src="{{ asset('modules/helpdeskdocument/js/document-panel.js') }}?v={{ @filemtime(base_path('modules/HelpdeskDocument/public/js/document-panel.js')) }}" defer></script>
 @endpush
 @endonce

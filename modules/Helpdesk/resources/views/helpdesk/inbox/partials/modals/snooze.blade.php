@@ -96,6 +96,6 @@
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
          en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/snooze.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/snooze.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/snooze.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/snooze.js')) }}" defer></script>
 @endpush
 @endonce

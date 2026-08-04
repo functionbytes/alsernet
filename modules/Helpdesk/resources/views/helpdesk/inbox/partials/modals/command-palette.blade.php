@@ -28,6 +28,6 @@
 @once
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/command-palette.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/command-palette.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/command-palette.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/command-palette.js')) }}" defer></script>
 @endpush
 @endonce

@@ -73,11 +73,11 @@
 
             <div class="field">
                 <label class="check">
-                    <input type="checkbox" id="close-csat" checked>
+                    <input type="checkbox" id="close-csat">
                     {{ __('helpdesk::helpdesk.inbox.modals.close_conv_send_csat') }}
                 </label>
                 <label class="check">
-                    <input type="checkbox" id="close-notify" checked>
+                    <input type="checkbox" id="close-notify">
                     {{ __('helpdesk::helpdesk.inbox.modals.close_conv_notify_template') }}
                 </label>
             </div>

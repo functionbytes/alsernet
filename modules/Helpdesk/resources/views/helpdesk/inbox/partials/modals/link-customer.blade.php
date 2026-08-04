@@ -62,6 +62,6 @@
 @once
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/link-customer.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/link-customer.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/link-customer.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/link-customer.js')) }}" defer></script>
 @endpush
 @endonce

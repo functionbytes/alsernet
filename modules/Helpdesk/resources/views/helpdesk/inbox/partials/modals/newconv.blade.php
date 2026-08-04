@@ -155,6 +155,6 @@
 @once
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/newconv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/newconv.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/newconv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/newconv.js')) }}" defer></script>
 @endpush
 @endonce

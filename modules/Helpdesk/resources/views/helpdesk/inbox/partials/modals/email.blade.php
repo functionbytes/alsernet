@@ -97,6 +97,6 @@
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/: se cachea en el navegador
          en vez de re-descargarse en cada render del inbox. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/email.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/email.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/email.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/email.js')) }}" defer></script>
 @endpush
 @endonce

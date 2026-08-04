@@ -377,7 +377,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('vendor/helpdesk/conversations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/conversations.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/conversations.js')) }}" defer></script>
 
     {{-- Listener global de la bandeja: nuevas conversaciones / nuevos mensajes --}}
     <script>

@@ -11,6 +11,6 @@
     <link rel="stylesheet" href="{{ asset('modules/document/css/modals.css') }}?v={{ filemtime(base_path('modules/Document/public/css/modals.css')) }}">
 
     @push('scripts')
-        <script src="{{ asset('modules/document/js/modals.js') }}?v={{ filemtime(base_path('modules/Document/public/js/modals.js')) }}"></script>
+        <script src="{{ asset('modules/document/js/modals.js') }}?v={{ filemtime(base_path('modules/Document/public/js/modals.js')) }}" defer></script>
     @endpush
 @endonce

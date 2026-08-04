@@ -94,5 +94,5 @@
 </li>
 
 @push('scripts')
-    <script src="{{ asset('modules/Notification/js/notifications.js') }}?v={{ md5_file(base_path('modules/Notification/public/js/notifications.js')) }}"></script>
+    <script src="{{ asset('modules/Notification/js/notifications.js') }}?v={{ md5_file(base_path('modules/Notification/public/js/notifications.js')) }}" defer></script>
 @endpush

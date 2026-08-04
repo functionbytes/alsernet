@@ -90,6 +90,6 @@
 @once
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/export-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/export-conv.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/export-conv.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/export-conv.js')) }}" defer></script>
 @endpush
 @endonce

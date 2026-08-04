@@ -70,6 +70,6 @@
 @once
 @push('scripts')
     {{-- JS extraido a public/vendor/helpdesk/modals/. --}}
-    <script src="{{ asset('vendor/helpdesk/modals/customer-search.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/customer-search.js')) }}"></script>
+    <script src="{{ asset('vendor/helpdesk/modals/customer-search.js') }}?v={{ @filemtime(public_path('vendor/helpdesk/modals/customer-search.js')) }}" defer></script>
 @endpush
 @endonce
