@@ -205,7 +205,8 @@ class Customer extends Model
     }
 
     /**
-     * Scope: Search by name or email
+     * Scope: search by name, email, phone/WhatsApp, or a linked ERP/PrestaShop
+     * external id (helpdesk_customer_external_ids, e.g. "10932" o "PS-4521").
      */
     public function scopeSearch($query, $term)
     {
@@ -213,7 +214,10 @@ class Customer extends Model
             $q->where('name', 'like', "%{$term}%")
                 ->orWhere('email', 'like', "%{$term}%")
                 ->orWhere('phone', 'like', "%{$term}%")
-                ->orWhere('whatsapp_phone', 'like', "%{$term}%");
+                ->orWhere('whatsapp_phone', 'like', "%{$term}%")
+                ->orWhereHas('externalIds', function ($eq) use ($term) {
+                    $eq->where('external_id', 'like', "%{$term}%");
+                });
         });
     }
 

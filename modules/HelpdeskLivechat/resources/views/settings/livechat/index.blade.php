@@ -188,7 +188,12 @@
     </div>
     @endif
 
-    {{-- Quick access cards --}}
+    {{-- Quick access cards: enlazan a páginas del módulo Engagement, que no
+         está instalado en este entorno (Module::find('Engagement') en
+         HelpdeskLivechatServiceProvider) — sin este guard, cualquier usuario
+         con los permisos engagement.* revienta la página con
+         "Route [settings.engagement.*.page] not defined.". --}}
+    @if($engagement_active ?? false)
     <div class="row g-3 mb-3">
         @can('engagement.triggers.view')
         <div class="col-md-4">
@@ -303,6 +308,7 @@
         </div>
         @endcan
     </div>
+    @endif
 
     <div class="row g-3 align-items-start">
 

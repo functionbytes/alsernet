@@ -142,3 +142,9 @@
     gap: 10px;
     pointer-events: none;
 }
+
+/* ── Toast success background (toastr) ──────────────────────── */
+#toast-container > .toast-success,
+.toast-success {
+    background-color: #000000 !important;
+}

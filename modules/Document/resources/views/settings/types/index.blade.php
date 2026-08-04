@@ -15,12 +15,12 @@
         <div class="card">
             <!-- Header Section -->
             <div class="card-header p-4 border-bottom border-light">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
+                <div class="d-flex justify-content-between align-items-center gap-3">
+                    <div class="me-3">
                         <h5 class="mb-1 fw-bold">Tipos de documentos</h5>
                         <p class="small mb-0 text-muted">Gestiona los tipos de documentos con soporte multi-idioma y requisitos personalizados</p>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-shrink-0">
                         @if(request('search') || request('status'))
                             <a href="{{ route('settings.documents.types.index') }}" class="btn btn-secondary">
                                 Limpiar búsqueda

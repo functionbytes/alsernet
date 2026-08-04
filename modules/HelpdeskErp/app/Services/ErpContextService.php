@@ -30,7 +30,11 @@ class ErpContextService
     public function getCustomerContext(string $email, ?string $phone = null, ?int $helpdeskCustomerId = null): array
     {
         $start = microtime(true);
-        $key = $this->cacheKey($email);
+        // Sin email (cliente encontrado solo por teléfono) cacheKey('') sería
+        // la misma clave para cualquier cliente sin email — el segundo
+        // recibiría el contexto cacheado del primero. Se incorpora el
+        // teléfono a la clave en ese caso.
+        $key = $this->cacheKey($email ?: 'phone:'.$phone);
         $cached = Cache::get($key);
 
         if ($cached !== null) {
@@ -231,9 +235,16 @@ class ErpContextService
 
     private function fetchFromErp(string $email, ?string $phone = null): array
     {
-        // Cuando el módulo Erp está en la misma app, usar ErpCustomerDataService directamente
-        // para evitar la llamada HTTP circular que genera deadlock en PHP-FPM.
-        if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')) {
+        // Cuando el módulo Erp está en la misma app, usar ErpCustomerDataService
+        // directamente para evitar la llamada HTTP circular que genera deadlock
+        // en PHP-FPM. Pero esa vía necesita credenciales Oracle directas
+        // (ORACLE_USERNAME) configuradas — el binario oci8 puede estar
+        // compilado sin que este entorno tenga acceso directo a Oracle
+        // (probado 2026-08: da ORA-24415/12170 y esta rama lo camuflaba como
+        // "cliente no encontrado" sin caer al manager HTTP, que sí funciona
+        // aquí). Solo se toma el atajo directo si hay credenciales de verdad.
+        if (class_exists(ErpCustomerDataService::class) && extension_loaded('oci8')
+            && filled(config('database.connections.oracle.username'))) {
             return $this->fetchDirectFromOracle($email, $phone);
         }
 

@@ -12,6 +12,7 @@ use Modules\Auth\Traits\HasUserAttributes;
 use Modules\Auth\Traits\HasUserScopes;
 use Modules\Core\Traits\HasQuotaManagement;
 use Modules\Document\Traits\HasDocumentPermissions;
+use Modules\Helpdesk\Traits\HasHelpdeskRelations;
 use Modules\Notification\Traits\HasNotificationSystem;
 use Modules\Storage\Traits\HasFileSystemPaths;
 use Spatie\Activitylog\LogOptions;
@@ -33,6 +34,7 @@ class User extends Authenticatable
     use HasBasicRelations;
     use HasDocumentPermissions;
     use HasFileSystemPaths;
+    use HasHelpdeskRelations;
 
     // Notifiable and HasNotificationSystem - resolve method conflicts
     use HasNotificationSystem, Notifiable {
@@ -148,11 +150,11 @@ class User extends Authenticatable
     {
         return [
             'mail_verified_at' => 'datetime',
-            'last_login_at'    => 'datetime',
-            'locked_until'     => 'datetime',
-            'deleted_at'       => 'datetime',
-            'active'           => 'boolean',
-            'confirmed'        => 'boolean',
+            'last_login_at' => 'datetime',
+            'locked_until' => 'datetime',
+            'deleted_at' => 'datetime',
+            'active' => 'boolean',
+            'confirmed' => 'boolean',
         ];
     }
 }

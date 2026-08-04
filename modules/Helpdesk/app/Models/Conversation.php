@@ -651,14 +651,14 @@ class Conversation extends Model
             $first = is_array($atts) ? ($atts[0] ?? null) : null;
             $firstObj = is_array($first) ? $first : ['url' => is_string($first) ? $first : ''];
             $url = $firstObj['url'] ?? '';
-            $name = (string) ($firstObj['name'] ?? '');
+            $attName = (string) ($firstObj['name'] ?? '');
             $mime = (string) ($firstObj['mime_type'] ?? $firstObj['mime'] ?? '');
             $ext = $url ? strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION)) : '';
             $mimeType = explode('/', $mime)[0] ?? '';
 
             // Voice notes — names like "voz-", "audio-", "voice-" or "recording-"
             // are recorded as audio even if the mime/ext is webm (browser bug).
-            $looksLikeVoiceNote = (bool) preg_match('/^(voz|audio|voice|recording|grabaci[oó]n)[-_]/iu', $name);
+            $looksLikeVoiceNote = (bool) preg_match('/^(voz|audio|voice|recording|grabaci[oó]n)[-_]/iu', $attName);
 
             $type = match (true) {
                 $looksLikeVoiceNote => 'audio',

@@ -217,7 +217,12 @@
                 @php
                     $itemDay = optional($item->created_at)->format('Y-m-d');
                     $isActivity = $item->type === 'activity';
-                    $isOut = ! empty($item->user_id);
+                    // Antes solo miraba user_id: un item de sistema/bot (ChatFlow,
+                    // auto-reply fuera de horario…) sin user_id NI author_id caía en
+                    // "in" y se pintaba como si lo hubiera escrito el propio cliente.
+                    // Mismo criterio que ConversationItem::isFromCustomer()/is_incoming
+                    // (eventos + broadcast en vivo): solo es "in" si tiene author_id.
+                    $isOut = empty($item->author_id);
                     $isInternal = (bool) $item->is_internal;
                     $bubbleClass = $isInternal ? 'bv-bubble note' : 'bv-bubble';
                     $msgClass = ($isOut && ! $isInternal) ? 'bv-msg out' : 'bv-msg in';
@@ -548,8 +553,8 @@
                         </div>
                     </div>
                     <div class="bv-hsm-foot">
-                        <button class="bv-panel-btn bv-panel-btn-cancel" id="bv-hsm-close-2"><i class="fas fa-xmark"></i> {{ __('helpdesk::helpdesk.inbox.thread.cancel') }}</button>
-                        <button class="bv-panel-btn bv-panel-btn-confirm" id="bv-hsm-insert"><i class="fas fa-check"></i> {{ __('helpdesk::helpdesk.inbox.thread.insert_template') }}</button>
+                        <button class="bv-panel-btn bv-panel-btn-confirm" id="bv-hsm-insert">{{ __('helpdesk::helpdesk.inbox.thread.insert_template') }}</button>
+                        <button class="bv-panel-btn bv-panel-btn-cancel" id="bv-hsm-close-2">{{ __('helpdesk::helpdesk.inbox.thread.cancel') }}</button>
                     </div>
                 </div>
             </div>
@@ -575,7 +580,7 @@
             @endif
             @if(helpdesk_feature_enabled('composer_hsm'))
             <button class="bv-composer-tab" data-bv-tab="hsm">
-                <i class="fab fa-whatsapp bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}
+                <i class="fas fa-rectangle-list bv-tab-icon"></i>{{ __('helpdesk::helpdesk.inbox.thread.hsm_templates') }}
             </button>
             @endif
             {{-- Pestaña Traducir — provided by HelpdeskTranslate module --}}

@@ -2,7 +2,10 @@
 
 namespace Modules\Helpdesk\Http\Requests\Settings;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
+use Modules\Helpdesk\Models\Skill;
 
 class StoreSkillRequest extends FormRequest
 {
@@ -26,6 +29,21 @@ class StoreSkillRequest extends FormRequest
             'name.max' => 'El nombre no puede superar los 100 caracteres.',
             'description.max' => 'La descripcion no puede superar los 500 caracteres.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if (! $this->filled('name')) {
+                return;
+            }
+
+            $slug = Str::slug($this->name);
+
+            if (Skill::query()->where('slug', $slug)->exists()) {
+                $validator->errors()->add('name', 'Ya existe un skill con un nombre que genera el mismo slug.');
+            }
+        });
     }
 
     public function attributes(): array
