@@ -308,6 +308,14 @@
             }
         });
 
+        // Soporte de teclado para triggers no-<button> (ej. filas con role="button").
+        $(document).on('keydown', '[data-bv-modal][role="button"]', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                $(this).trigger('click');
+            }
+        });
+
         // Cerrar modal por click en data-bv-close o backdrop
         // (soporta data-bv-open="{name}" para encadenar la apertura de otro modal, ej. "Volver al historial")
         $(document).on('click', '[data-bv-close]', function () {
@@ -389,7 +397,7 @@
         // y restauración del tab activo (rtab). Se ejecuta al cargar la página y de
         // nuevo tras cada swap de pane (SPA) porque ese markup se inyecta sin scripts.
         function initRightPanelTabs() {
-            document.querySelectorAll('.bv-right-tab[data-bs-toggle="tooltip"]').forEach(function (el) {
+            document.querySelectorAll('.bv-right-tab[data-bs-toggle="tooltip"], .bv-right .r-tag[data-bs-toggle="tooltip"]').forEach(function (el) {
                 try {
                     if (!bootstrap.Tooltip.getInstance(el)) {
                         new bootstrap.Tooltip(el, { trigger: 'hover' });
@@ -553,8 +561,10 @@
                     '<input type="text" class="bv-hsm-var-input" data-hsm-var-idx="' + i + '" placeholder="Variable ' + i + '">' +
                 '</div>';
             }
-            if (!varsHtml) varsHtml = '<div class="bv-hsm-list-status">Sin variables</div>';
             $('#bv-hsm-vars-list').html(varsHtml);
+            // Plantilla sin variables: no tiene sentido mostrar el bloque
+            // "VARIABLES / Sin variables" vacío, solo ocupa espacio.
+            $('#bv-hsm-vars').toggleClass('d-none', !varsHtml);
 
             // .val() en vez de meter el valor en el HTML de arriba: el nombre
             // del cliente es dato de usuario y podria traer comillas u otros
@@ -2202,18 +2212,20 @@
                     'Accept': 'application/json',
                 },
             })
-                .done(function (resp) {
-                    updateThreadPill('status', 'Cerrada', 'muted', resp);
-                    closeModal($modal);
-                    // Remove closed conversation from list
-                    $('.bv-conv.on').fadeOut(300, function () { $(this).remove(); });
-                    // Swap Close → Reopen button in thread header
-                    const reopenUrl = urls.updateUrl.replace(/\/?$/, '/reopen');
-                    $('[data-bv-modal="close-conv"]').replaceWith(
-                        '<button class="bv-th-action bv-th-action--reopen" id="bv-btn-reopen"' +
-                        ' data-bv-tip="Reabrir conversación" data-reopen-url="' + reopenUrl + '">' +
-                        '<i class="fas fa-rotate-left"></i></button>'
-                    );
+                .done(function () {
+                    // Full reload back to the inbox with no `selected` param: the
+                    // conversation we just closed is no longer open, so we don't stay
+                    // on its pane nor auto-pick another one — Blade's own empty state
+                    // ("Selecciona una conversación", thread.blade.php/right-panel.blade.php)
+                    // takes over, and the sidebar list re-renders server-side without it.
+                    // There's no AJAX endpoint for that empty state (`.../pane` requires
+                    // a real conversation id), so a full navigation is the correct way
+                    // to reach it — same pattern already used when the last conversation
+                    // in a filtered view gets closed.
+                    const listFilters = readInboxFiltersFromUrl();
+                    delete listFilters.selected;
+                    const qs = $.param(listFilters);
+                    window.location.href = '/panel/helpdesk/conversations' + (qs ? '?' + qs : '');
                 })
                 .fail(function (xhr) {
                     const msg = xhr?.responseJSON?.message || 'No se pudo cerrar la conversación';

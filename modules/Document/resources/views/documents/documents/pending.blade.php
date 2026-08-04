@@ -87,7 +87,7 @@
                         <th>Origen</th>
                         <th>Estado</th>
                         <th>Fecha</th>
-                        <th>Acciones</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -125,12 +125,12 @@
                             <td>
                                 <span class="usr-ph-no">{{ $document->created_at->format('Y-m-d H:i') }}</span>
                             </td>
-                            <td class="text-left">
-                                <div class="dropdown dropstart">
-                                    <a href="#" class="text-muted" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <td class="text-center">
+                                <div class="dropdown">
+                                    <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fa-duotone fa-solid fa-ellipsis"></i>
                                     </a>
-                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <ul class="dropdown-menu dropdown-menu-end">
                                         @if($document->status->label = "pending")
                                             <li>
                                                 <a class="dropdown-item d-flex align-items-center gap-3 cursor-pointer"

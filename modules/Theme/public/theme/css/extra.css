@@ -1747,8 +1747,8 @@ ul.small {
 }
 
 /* List items with Font Awesome icon as bullet */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li,
 ul.small li {
     position: relative;
     padding-left: 1.5rem;
@@ -1757,8 +1757,8 @@ ul.small li {
 }
 
 /* Font Awesome Duotone icon as bullet */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:before,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:before,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:before,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:before,
 ul.small li:before {
     content: "\f058";
     font-family: "Font Awesome 6 Duotone";
@@ -1773,8 +1773,8 @@ ul.small li:before {
 }
 
 /* Last item no margin */
-.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
-.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]) li:last-child,
+.card-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:last-child,
+.modal-body ul:not([class*="nav"]):not([class*="dropdown"]):not([class*="list-unstyled"]):not([class*="pagination"]) li:last-child,
 ul.small li:last-child {
     /* margin-bottom: 0; */
 }

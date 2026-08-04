@@ -84,30 +84,30 @@
             </div>
 
             {{-- Tabs --}}
-            <ul class="nav nav-pills user-profile-tab" role="tablist">
+            <ul class="nav nav-pills user-profile-tab border-bottom border-light" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'familias' ? 'active' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'familias' ? 'active text-primary' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}">
                         <span class="d-none d-md-block">Familias</span>
                         <span class="badge bg-primary ms-2">{{ $stats['familias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'categorias' ? 'active' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'categorias' ? 'active text-primary' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=categorias">
                         <span class="d-none d-md-block">Categorías</span>
                         <span class="badge bg-secondary ms-2">{{ $stats['categorias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'subfamilias' ? 'active' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'subfamilias' ? 'active text-primary' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=subfamilias">
                         <span class="d-none d-md-block">Subfamilias</span>
                         <span class="badge bg-secondary ms-2">{{ $stats['subfamilias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'sports' ? 'active' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'sports' ? 'active text-primary' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=sports">
                         <span class="d-none d-md-block">Deportes</span>
                         <span class="badge bg-secondary ms-2">{{ $stats['sports'] }}</span>

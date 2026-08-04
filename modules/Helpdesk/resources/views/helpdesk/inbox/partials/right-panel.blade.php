@@ -509,7 +509,12 @@
             {{-- Estado de la conversación --}}
             @if(helpdesk_feature_enabled('rp_status'))
             <div class="rsp-section">
-                <div class="lbl"><i class="fa-solid fa-circle-info"></i> {{ __('helpdesk::helpdesk.inbox.right.conversation_state') }}</div>
+                <div class="lbl">
+                    <i class="fa-solid fa-circle-info"></i> {{ __('helpdesk::helpdesk.inbox.right.conversation_state') }}
+                    @can('helpdesk.settings.view')
+                        <i class="far fa-calendar add" role="button" data-bv-modal="business-hours" title="{{ __('helpdesk::helpdesk.inbox.modals.business_hours_title') }}" aria-label="{{ __('helpdesk::helpdesk.inbox.modals.business_hours_title') }}"></i>
+                    @endcan
+                </div>
                 <div class="rsp-kv rsp-kv-ctrl">
                     <span class="k">{{ __('helpdesk::helpdesk.inbox.right.status_label') }}</span>
                     <span class="v">
@@ -694,30 +699,43 @@
                             <i class="fa-solid fa-circle-check"></i> {{ __('helpdesk::helpdesk.inbox.right.verified_label') }}
                         </span>
                     @else
-                        <button type="button" class="r-tag r-tag-btn bv-identity-verify-trigger ms-auto" data-customer-id="{{ $rpCust->id }}">
-                            {{ __('helpdesk::helpdesk.inbox.right.verify_identity') }}
+                        <button type="button" class="r-tag r-tag-btn r-tag-icon bv-identity-verify-trigger ms-auto"
+                                data-customer-id="{{ $rpCust->id }}"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.verify_identity') }}">
+                            <i class="fa-solid fa-user-check" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ __('helpdesk::helpdesk.inbox.right.verify_identity') }}</span>
                         </button>
-                        <button type="button" class="r-tag r-tag-btn" data-bv-modal="link-customer">
-                            {{ __('helpdesk::helpdesk.inbox.right.link_customer_short') }}
+                        <button type="button" class="r-tag r-tag-btn r-tag-icon" data-bv-modal="link-customer"
+                                data-bs-toggle="tooltip" data-bs-placement="bottom"
+                                data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.link_customer_short') }}">
+                            <i class="fa-solid fa-link" aria-hidden="true"></i>
+                            <span class="visually-hidden">{{ __('helpdesk::helpdesk.inbox.right.link_customer_short') }}</span>
                         </button>
                     @endif
                 </div>
             </div>
             @endif
             @if(helpdesk_feature_enabled('rp_integrations'))
+            @php
+                // Mismo gate que el botón de "abrir integraciones" del encabezado —
+                // si el modal no está disponible, las filas no deben parecer clicables.
+                $rpIntegrationsModalAvailable = $rpCust && helpdesk_integration_enabled() && view()->exists('helpdeskintegration::modals.customer-integrations');
+            @endphp
             <div class="rsp-section">
                 <div class="lbl">
                     <i class="fa-solid fa-plug"></i> {{ __('helpdesk::helpdesk.inbox.right.integrations_heading') }}
                     @if($rpConvo?->id)
                         <button type="button" class="btn btn-sm btn-link p-0 ms-auto bv-sync-commerce"
                                 data-conv-id="{{ $rpConvo->id }}"
+                                data-customer-id="{{ $rpCust?->id }}"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
                                 data-bs-title="{{ __('helpdesk::helpdesk.inbox.right.resync_title') }}"
                                 aria-label="{{ __('helpdesk::helpdesk.inbox.right.resync_aria') }}">
                             <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
                         </button>
                     @endif
-                    @if($rpCust && helpdesk_integration_enabled() && view()->exists('helpdeskintegration::modals.customer-integrations'))
+                    @if($rpIntegrationsModalAvailable)
                         <button type="button" class="btn btn-sm btn-link p-0 @if(! $rpConvo?->id) ms-auto @endif bv-integrations-trigger"
                                 data-bv-modal="customer-integrations"
                                 data-bs-toggle="tooltip" data-bs-placement="bottom"
@@ -733,7 +751,11 @@
                 @if(! empty($rpIntegrationsList))
                     <div class="rsp-integrations">
                         @foreach($rpIntegrationsList as $intg)
-                            <div class="rsp-integration @if(!$intg['connected']) is-disconnected @endif">
+                            <div class="rsp-integration @if(!$intg['connected']) is-disconnected @endif @if($rpIntegrationsModalAvailable) is-clickable @endif"
+                                 @if($rpIntegrationsModalAvailable)
+                                     role="button" tabindex="0" data-bv-modal="customer-integrations"
+                                     title="{{ __('helpdesk::helpdesk.inbox.right.view_customer_integrations') }}"
+                                 @endif>
                                 <div class="ico"><i class="{{ $intg['icon'] }}"></i></div>
                                 <div class="meta">
                                     <span class="name">{{ $intg['name'] }}</span>

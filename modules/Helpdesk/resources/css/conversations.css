@@ -1242,6 +1242,7 @@ body:has(.conversations) .mc-content {
     display: flex;
     gap: 4px;
     margin-bottom: 8px;
+    margin-top: 8px;
 }
 .bv-composer-tab {
     padding: 6px 12px;
@@ -2499,9 +2500,14 @@ body:has(.conversations) .mc-content {
 [data-theme="dark"] .bv-hsm-chat { background: #111b21; }
 .bv-hsm-vars { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
 .bv-hsm-foot {
-    display: flex; gap: 8px; justify-content: flex-end;
+    display: flex; flex-direction: column; gap: 8px;
     margin-top: auto; padding-top: 8px;
     border-top: 1px solid var(--bv-border);
+}
+.bv-hsm-foot .bv-panel-btn {
+    width: 100%;
+    height: 35px;
+    font-size: 12.5px;
 }
 
 /* Translate panel styles live in modules/HelpdeskTranslate/resources/css/translate-panel.css */
@@ -12897,6 +12903,14 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     opacity: .55;
     margin-left: 2px;
 }
+.bv-right .r-tag-icon {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 11px;
+}
 .bv-right .r-tag-muted {
     color: var(--bv-text-muted, #71717a);
 }
@@ -13019,6 +13033,16 @@ textarea.bv-finput { resize: vertical; min-height: 60px; line-height: 1.5; }
     background: transparent;
     color: var(--bv-text-muted, #71717a);
     font-weight: 500;
+}
+.bv-right .rsp-integration.is-clickable {
+    cursor: pointer;
+    transition: border-color .12s, background .12s;
+}
+.bv-right .rsp-integration.is-clickable:hover,
+.bv-right .rsp-integration.is-clickable:focus-visible {
+    border-color: var(--bv-primary, #90bb13);
+    background: var(--bv-bg-subtle, #f4f4f5);
+    outline: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -13730,6 +13754,33 @@ textarea.bv-form-input { resize: vertical; }
     color: var(--bv-text, #18181b);
     font-weight: 500;
 }
+
+/* Variante para fichas con más filas (p. ej. confirmar vínculo ERP/PrestaShop
+   en verify-customer-identity.js) — la base (arriba) es compacta a propósito
+   para 1-2 filas del modal de recordatorio; con 5-8 filas el mismo bloque
+   gris sólido y columna angosta apelmazaba la lectura. */
+.bv-info-table--rich {
+    margin-top: 12px;
+    padding: 2px 14px;
+    gap: 0;
+}
+.bv-info-table--rich .bv-info-table__row {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--bv-border, #e4e4e7);
+    font-size: 12.5px;
+}
+.bv-info-table--rich .bv-info-table__row:last-child {
+    border-bottom: none;
+}
+.bv-info-table--rich .bv-info-table__k {
+    min-width: 130px;
+    font-size: 12px;
+}
+.bv-info-table--rich .bv-info-table__v {
+    font-size: 13px;
+    text-align: right;
+    margin-left: auto;
+}
 .bv-form-hint {
     font-weight: 400;
     color: var(--bv-text-muted, #a1a1aa);
@@ -14223,30 +14274,26 @@ textarea.bv-form-input { resize: vertical; }
 }
 .bv-tk-card__unassigned { font-style: italic; color: var(--bv-text-muted); }
 
-/* ─── Calendar grid (business-hours) ───────────────────────────────────────── */
-.bv-cal-grid {
-    display: grid; grid-template-columns: 52px repeat(7, 1fr);
-    gap: 2px; font-size: 10px;
-}
-.bv-cal-grid__head {
-    text-align: center; font-weight: 700; padding: 3px 0;
-    color: var(--bv-text-muted); text-transform: uppercase; letter-spacing: .05em;
-}
-.bv-cal-grid__time {
-    font-family: monospace; font-size: 10px;
-    color: var(--bv-text-muted); display: flex; align-items: center;
-    justify-content: flex-end; padding-right: 6px;
-}
-.bv-cal-grid__slot {
-    border-radius: 3px; height: 22px; cursor: pointer;
-    background: var(--bv-bg-subtle, #f4f4f5);
+/* ─── Business hours day list (business-hours modal) ────────────────────────── */
+.bv-bh-days { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.bv-bh-days__loading { text-align: center; padding: 12px 0; color: var(--bv-text-muted); font-size: 12.5px; }
+.bv-bh-day {
+    display: grid; grid-template-columns: 18px 1fr 92px 12px 92px;
+    align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 7px;
     border: 1px solid var(--bv-border, #e4e4e7);
-    transition: background .1s, border-color .1s; user-select: none;
+    background: var(--bv-bg-panel, #fff);
+    transition: opacity .1s;
 }
-.bv-cal-grid__slot.on {
-    background: rgba(144,187,19,.25); border-color: var(--bv-primary, #90bb13);
+.bv-bh-day--off { opacity: .55; }
+.bv-bh-day__check { cursor: pointer; }
+.bv-bh-day__name { font-size: 12.5px; font-weight: 600; }
+.bv-bh-day__time {
+    font-size: 12px; padding: 3px 5px; border-radius: 5px;
+    border: 1px solid var(--bv-border, #e4e4e7); background: var(--bv-bg-subtle, #f4f4f5);
 }
-.bv-cal-grid__slot:hover { background: rgba(144,187,19,.12); }
+.bv-bh-day__time:disabled { opacity: .5; cursor: not-allowed; }
+.bv-bh-day__sep { text-align: center; color: var(--bv-text-muted); font-size: 11px; }
 
 /* ─── Permission matrix (role-perms) ────────────────────────────────────────── */
 .bv-perm-matrix {
