@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\InboxItemChanged;
 use Modules\Helpdesk\Models\Conversation;
@@ -318,6 +319,14 @@ class PublicSimulatorService
             $conversation->update(['last_message_at' => now()]);
 
             broadcast(new ConversationMessageCreated($item));
+
+            // El widget real (WidgetConversationService::createConversation) dispara
+            // este evento en la conversación nueva; sin él, ninguna automatización
+            // enganchada a ConversationCreated (auto-asignación, respuesta fuera de
+            // horario, workflows) corría al simular por el canal web.
+            if ($conversation->wasRecentlyCreated) {
+                ConversationCreated::dispatch($conversation);
+            }
 
             if ($conversation->assignee_id) {
                 event(new InboxItemChanged($conversation->id, $conversation->assignee_id, 'message_added'));

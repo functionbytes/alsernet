@@ -2,10 +2,6 @@
 
 @section('title', 'Etiquetas')
 
-@push('styles')
-<style>.hd-color-dot { width: 12px; height: 12px; display: inline-block; }</style>
-@endpush
-
 @section('page_header')
     @include('core::components.card', ['title' => 'Etiquetas'])
 @endsection
@@ -111,11 +107,7 @@
                                 @foreach($tags as $tag)
                                     <tr>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="hd-color-dot rounded-circle d-inline-block flex-shrink-0"
-                                                      data-color="{{ $tag->color ?? '#90bb13' }}"></span>
-                                                <span class="fw-semibold">{{ $tag->name }}</span>
-                                            </div>
+                                            <span class="fw-semibold">{{ $tag->name }}</span>
                                         </td>
                                         <td>
                                             <code class="bg-light px-2 py-1 rounded small">{{ $tag->slug }}</code>
@@ -213,10 +205,6 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    $('.hd-color-dot[data-color]').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-
     @if(session('success'))
         toastr.success('{{ session('success') }}', 'Exito');
     @endif

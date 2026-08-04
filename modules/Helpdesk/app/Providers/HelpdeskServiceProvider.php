@@ -241,7 +241,10 @@ class HelpdeskServiceProvider extends ServiceProvider
             'items' => [
                 ['label' => 'Funcionalidades', 'route' => 'settings.helpdesk.features.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Notificaciones', 'route' => 'settings.helpdesk.notifications', 'permission' => 'helpdesk.settings.view'],
-                ['label' => 'Horarios de atención', 'route' => 'settings.helpdesk.business-hours', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Horarios de atención', 'route' => 'settings.helpdesk.business.hours', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Fuera de horario', 'route' => 'settings.helpdesk.business.off-hours', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Bienvenida', 'route' => 'settings.helpdesk.business.greeting', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Despedida', 'route' => 'settings.helpdesk.business.farewell', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Subida de archivos', 'route' => 'settings.helpdesk.uploading', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Integraciones', 'route' => 'settings.helpdesk.integrations.index', 'permission' => 'helpdesk.settings.view'],
             ],

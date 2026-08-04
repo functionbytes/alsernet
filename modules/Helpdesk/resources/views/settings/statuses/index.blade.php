@@ -2,13 +2,6 @@
 
 @section('title', 'Estados de tickets')
 
-@push('styles')
-<style>
-.hd-drag-handle { cursor: grab; }
-.hd-color-dot { width: 12px; height: 12px; display: inline-block; }
-</style>
-@endpush
-
 @section('page_header')
     @include('core::components.card', ['title' => 'Estados de tickets'])
 @endsection
@@ -112,7 +105,6 @@
                         <table class="table table-hover align-middle text-nowrap" id="statuses-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col"></th>
                                     <th scope="col">Nombre</th>
                                     <th scope="col">Slug</th>
                                     <th scope="col">Descripcion</th>
@@ -120,29 +112,20 @@
                                     <th scope="col" class="text-center">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="statuses-sortable">
+                            <tbody>
                                 @foreach($statuses as $status)
                                     <tr data-id="{{ $status->id }}">
-                                        <td class="text-center hd-drag-handle">
-                                            <i class="fas fa-grip-vertical text-muted"></i>
-                                        </td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="hd-color-dot rounded-circle d-inline-block flex-shrink-0"
-                                                      data-color="{{ $status->color }}"></span>
-                                                <div>
-                                                    <span class="fw-semibold">{{ $status->name }}</span>
-                                                    <div class="d-flex gap-1 mt-1">
-                                                        @if($status->is_default)
-                                                            <span class="badge bg-primary-subtle text-primary">Por defecto</span>
-                                                        @endif
-                                                        @if($status->is_open)
-                                                            <span class="badge bg-success-subtle text-success">Abierto</span>
-                                                        @else
-                                                            <span class="badge bg-secondary-subtle text-secondary">Cerrado</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
+                                            <span class="fw-semibold">{{ $status->name }}</span>
+                                            <div class="d-flex gap-1 mt-1">
+                                                @if($status->is_default)
+                                                    <span class="badge bg-primary-subtle text-primary">Por defecto</span>
+                                                @endif
+                                                @if($status->is_open)
+                                                    <span class="badge bg-success-subtle text-success">Abierto</span>
+                                                @else
+                                                    <span class="badge bg-secondary-subtle text-secondary">Cerrado</span>
+                                                @endif
                                             </div>
                                         </td>
                                         <td>
@@ -241,14 +224,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script>
 $(document).ready(function () {
-    // Init color dots
-    $('.hd-color-dot[data-color]').each(function () {
-        $(this).css('background-color', $(this).data('color'));
-    });
-
     @if(session('success'))
         toastr.success('{{ session('success') }}', 'Exito');
     @endif
@@ -261,35 +238,6 @@ $(document).ready(function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
     });
-
-    // Drag-drop reorder (jQuery UI sortable)
-    if (document.getElementById('statuses-sortable')) {
-        $('#statuses-sortable').sortable({
-            handle: 'td:first-child',
-            axis: 'y',
-            cursor: 'grabbing',
-            start: function (e, ui) {
-                ui.item.addClass('table-active');
-            },
-            stop: function (e, ui) {
-                ui.item.removeClass('table-active');
-            },
-            update: function () {
-                const ids = $('#statuses-sortable tr').map(function () {
-                    return $(this).data('id');
-                }).get();
-
-                $.post('{{ route('settings.helpdesk.statuses.reorder') }}', {
-                    _token: '{{ csrf_token() }}',
-                    ids: ids,
-                }).done(function (res) {
-                }).fail(function () {
-                    toastr.error('Error al actualizar el orden', 'Error');
-                    $('#statuses-sortable').sortable('cancel');
-                });
-            },
-        });
-    }
 });
 </script>
 @endpush

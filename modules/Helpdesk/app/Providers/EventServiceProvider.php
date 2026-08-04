@@ -33,9 +33,12 @@ use Modules\Helpdesk\Listeners\LogActivityOnConversationUpdated;
 use Modules\Helpdesk\Listeners\LogConversationCreated;
 use Modules\Helpdesk\Listeners\LogConversationUpdated;
 use Modules\Helpdesk\Listeners\NotifySlackOnSlaBreached;
+use Modules\Helpdesk\Listeners\RespondOffHoursOnConversationCreated;
 use Modules\Helpdesk\Listeners\SendAwayAutoReply;
 use Modules\Helpdesk\Listeners\SendConversationAssignedNotification;
 use Modules\Helpdesk\Listeners\SendEscalationNotification;
+use Modules\Helpdesk\Listeners\SendFarewellOnConversationClosed;
+use Modules\Helpdesk\Listeners\SendGreetingOnConversationCreated;
 use Modules\Helpdesk\Listeners\SendMentionNotification;
 use Modules\Helpdesk\Listeners\SendMessageReceivedNotification;
 use Modules\Helpdesk\Listeners\SendNewConversationNotification;
@@ -56,6 +59,12 @@ class EventServiceProvider extends ServiceProvider
             AutoAssignNewConversation::class,
             // Workflow engine — inert unless an active Workflow matches the trigger.
             TriggerWorkflowsOnConversationCreated::class,
+            // Off-hours auto-reply — inert salvo que haya un OffHoursResponse activo
+            // para el canal y estemos fuera de horario (ver BusinessHoursService).
+            RespondOffHoursOnConversationCreated::class,
+            // Bienvenida — mutuamente excluyente con el de arriba: solo actúa EN
+            // horario, para no mandar dos mensajes automáticos a la vez.
+            SendGreetingOnConversationCreated::class,
         ],
         ConversationAssigned::class => [
             SendConversationAssignedNotification::class,
@@ -95,6 +104,9 @@ class EventServiceProvider extends ServiceProvider
         ConversationClosed::class => [
             EnrollCustomerToDripCampaigns::class,
             TriggerWorkflowsOnConversationClosed::class,
+            // Despedida — inert salvo que haya un ConversationFarewell activo para
+            // el canal (no depende del horario: cerrar es acción del agente).
+            SendFarewellOnConversationClosed::class,
         ],
         CsatRatingAnswered::class => [
             EnrollCustomerDripOnCsat::class,

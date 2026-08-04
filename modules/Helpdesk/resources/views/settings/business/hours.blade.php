@@ -10,7 +10,7 @@
 
     @include('core::components.alerts')
 
-    <form action="{{ route('settings.helpdesk.business-hours.update') }}" method="POST">
+    <form action="{{ route('settings.helpdesk.business.hours.update') }}" method="POST">
             @csrf
             @method('PUT')
 
@@ -23,9 +23,9 @@
                             <h5 class="mb-1 fw-bold">Horarios de atención</h5>
                             <p class="small mb-0 text-muted">Define los días y horas en que tu equipo está disponible para atender solicitudes</p>
                         </div>
-                        <a href="{{ route('settings.helpdesk.business-hours.reset') }}"
+                        <a href="{{ route('settings.helpdesk.business.hours.reset') }}"
                             class="btn btn-outline-secondary btn-sm"
-                            onclick="event.preventDefault(); window.__confirm('¿Restablecer los horarios a los valores predeterminados?', function () { window.location.href = '{{ route('settings.helpdesk.business-hours.reset') }}'; });">
+                            onclick="event.preventDefault(); window.__confirm('¿Restablecer los horarios a los valores predeterminados?', function () { window.location.href = '{{ route('settings.helpdesk.business.hours.reset') }}'; });">
                             <i class="fas fa-rotate-left me-1"></i> Restablecer
                         </a>
                     </div>
@@ -75,6 +75,10 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="form-check form-switch d-flex justify-content-center mb-0">
+                                                {{-- El checkbox destildado no envia nada: sin este hidden, un dia
+                                                     cerrado desaparece del array "hours" y la validacion size:7
+                                                     lo rechaza en silencio (el guardado parecia no hacer nada). --}}
+                                                <input type="hidden" name="hours[{{ $hour->day_of_week }}][is_open]" value="0">
                                                 <input
                                                     class="form-check-input day-toggle"
                                                     type="checkbox"

@@ -3,10 +3,14 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\BusinessHour;
+use Modules\Helpdesk\Services\BusinessHoursService;
+use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 
 class BusinessHoursController extends Controller
 {
@@ -16,7 +20,7 @@ class BusinessHoursController extends Controller
         $this->middleware('can:helpdesk.settings.update')->only(['update', 'reset']);
     }
 
-    public function index(): View
+    public function index(Request $request): View|JsonResponse
     {
         BusinessHour::initializeDefaults();
 
@@ -45,10 +49,17 @@ class BusinessHoursController extends Controller
             'UTC' => 'UTC',
         ];
 
-        return view('helpdesk::settings.business-hours.index', compact('hours', 'timezones'));
+        if ($request->wantsJson()) {
+            return response()->json([
+                'hours' => $hours,
+                'timezones' => $timezones,
+            ]);
+        }
+
+        return view('helpdesk::settings.business.hours', compact('hours', 'timezones'));
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'hours' => ['required', 'array', 'size:7'],
@@ -81,18 +92,45 @@ class BusinessHoursController extends Controller
                 ]);
         }
 
+        $this->forgetBusinessHoursCaches();
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Horarios de atención actualizados correctamente.']);
+        }
+
         return redirect()
-            ->route('settings.helpdesk.business-hours')
+            ->route('settings.helpdesk.business.hours')
             ->with('success', 'Horarios de atención actualizados correctamente.');
     }
 
-    public function reset(): RedirectResponse
+    public function reset(Request $request): RedirectResponse|JsonResponse
     {
         BusinessHour::query()->delete();
         BusinessHour::initializeDefaults();
 
+        $this->forgetBusinessHoursCaches();
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Horarios restablecidos a los valores predeterminados.']);
+        }
+
         return redirect()
-            ->route('settings.helpdesk.business-hours')
+            ->route('settings.helpdesk.business.hours')
             ->with('success', 'Horarios restablecidos a los valores predeterminados.');
+    }
+
+    /**
+     * isOpenNow() (1 min) y el calendario de horas hábiles de HelpdeskSla (5 min)
+     * cachean el estado guardado aquí; sin esto, un cambio de horario tarda hasta
+     * 5 min en reflejarse en la respuesta automática fuera de horario y en los
+     * vencimientos SLA.
+     */
+    private function forgetBusinessHoursCaches(): void
+    {
+        app(BusinessHoursService::class)->forgetCache();
+
+        if (class_exists(BusinessHoursCalculator::class)) {
+            Cache::forget(BusinessHoursCalculator::CACHE_KEY);
+        }
     }
 }

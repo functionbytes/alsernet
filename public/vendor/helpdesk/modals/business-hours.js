@@ -7,101 +7,113 @@
  *
  * Convencion del modulo core: su JS se sirve desde public/vendor/helpdesk/ y no
  * tiene copia fuente aparte (igual que conversations.js y kb-suggestions.js).
+ *
+ * Consume las mismas rutas y el mismo modelo de datos que la pagina de ajustes
+ * /panel/settings/helpdesk/business-hours (BusinessHoursController): un rango
+ * abre/cierra por dia + una zona horaria global. El guardado usa POST (alias
+ * .update.ajax) en vez de PUT real por el 405 conocido de PUT via AJAX en Docker.
  */
 (function ($) {
     'use strict';
 
-    var HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
-    var DAYS  = 7;
-    var _slots = {};
+    var _hours = [];
+    var _$modal = null;
 
     function closeBvModal(name) {
         $('[data-bv-modal-name="' + name + '"]').removeClass('on');
         if ($('.bv-modal.on').length === 0) { $('body').css('overflow', ''); }
     }
 
-    function buildGrid() {
-        var html = '<div class="bv-cal-grid__h"></div>';
-        ['L','M','X','J','V','S','D'].forEach(function (d) {
-            html += '<div class="bv-cal-grid__h">' + d + '</div>';
+    function escapeHtml(value) {
+        return $('<div>').text(value == null ? '' : value).html();
+    }
+
+    function buildTimezoneOptions(timezones, selected) {
+        var html = '';
+        $.each(timezones, function (value, label) {
+            var sel = value === selected ? ' selected' : '';
+            html += '<option value="' + escapeHtml(value) + '"' + sel + '>' + escapeHtml(label) + '</option>';
         });
-        HOURS.forEach(function (hr) {
-            html += '<div class="bv-cal-grid__hr">' + hr + '</div>';
-            for (var d = 0; d < DAYS; d++) {
-                var key = hr + '_' + d;
-                var on  = _slots[key] ? ' on' : '';
-                html += '<div class="bv-cal-grid__slot' + on + '" data-slot="' + key + '"></div>';
-            }
+        $('#bhTimezone').html(html);
+    }
+
+    function buildDaysList(hours) {
+        var html = '';
+
+        hours.forEach(function (hour) {
+            var opensAt = (hour.opens_at || '09:00').substring(0, 5);
+            var closesAt = (hour.closes_at || '18:00').substring(0, 5);
+            var isOpen = !!hour.is_open;
+
+            html += '<div class="bv-bh-day' + (isOpen ? '' : ' bv-bh-day--off') + '" data-day="' + hour.day_of_week + '">'
+                + '  <input type="checkbox" class="bv-bh-day__check" data-role="is_open"' + (isOpen ? ' checked' : '') + '>'
+                + '  <span class="bv-bh-day__name">' + escapeHtml(hour.day_name) + '</span>'
+                + '  <input type="time" class="bv-bh-day__time" data-role="opens_at" value="' + opensAt + '"' + (isOpen ? '' : ' disabled') + '>'
+                + '  <span class="bv-bh-day__sep">–</span>'
+                + '  <input type="time" class="bv-bh-day__time" data-role="closes_at" value="' + closesAt + '"' + (isOpen ? '' : ' disabled') + '>'
+                + '</div>';
         });
-        $('#bhCalGrid').html(html);
+
+        $('#bhDaysList').html(html);
     }
 
     $(document).on('bv:modal:open', function (e, name) {
         if (name !== 'business-hours') { return; }
-        _slots = {};
-        $('#bhOffMessage').val('Estamos fuera de horario. Te responderemos en cuanto abramos.');
+
+        _$modal = $('[data-bv-modal-name="business-hours"]');
+        $('#bhTimezone').empty();
+        $('#bhDaysList').html('<div class="bv-bh-days__loading">…</div>');
 
         $.ajax({
-            url: '/panel/helpdesk/settings/business-hours',
+            url: _$modal.data('bh-index-url'),
             method: 'GET',
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
         }).done(function (resp) {
-            var d = resp.data || resp;
-            _slots = d.slots || {};
-            if (d.timezone) { $('#bhTimezone').val(d.timezone); }
-            if (d.apply_to) { $('#bhApplyTo').val(d.apply_to); }
-            if (d.off_message) { $('#bhOffMessage').val(d.off_message); }
-        }).always(function () {
-            buildGrid();
+            _hours = (resp.hours || []).slice().sort(function (a, b) { return a.day_of_week - b.day_of_week; });
+            var currentTimezone = (_hours[0] && _hours[0].timezone) || 'America/Mexico_City';
+            buildTimezoneOptions(resp.timezones || {}, currentTimezone);
+            buildDaysList(_hours);
+        }).fail(function () {
+            $('#bhDaysList').html('<div class="bv-bh-days__loading">Error al cargar el horario</div>');
         });
     });
 
-    var _dragging = false;
-    var _dragOn   = false;
+    $(document).on('change', '.bv-bh-day__check', function () {
+        var $day = $(this).closest('.bv-bh-day');
+        var open = $(this).is(':checked');
 
-    $(document).on('mousedown', '.bv-cal-grid__slot', function (e) {
-        _dragging = true;
-        _dragOn   = !$(this).hasClass('on');
-        toggleSlot($(this));
-        e.preventDefault();
+        $day.toggleClass('bv-bh-day--off', !open);
+        $day.find('.bv-bh-day__time').prop('disabled', !open);
     });
-
-    $(document).on('mouseover', '.bv-cal-grid__slot', function () {
-        if (_dragging) { toggleSlot($(this)); }
-    });
-
-    $(document).on('mouseup', function () { _dragging = false; });
-
-    function toggleSlot($el) {
-        var key = $el.data('slot');
-        if (_dragOn) {
-            $el.addClass('on');
-            _slots[key] = true;
-        } else {
-            $el.removeClass('on');
-            delete _slots[key];
-        }
-    }
 
     $(document).on('click', '#bv-bh-save', function () {
         var $btn = $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Guardando…');
+        var timezone = $('#bhTimezone').val();
+        var hours = {};
+
+        $('#bhDaysList .bv-bh-day').each(function () {
+            var $day = $(this);
+            var day = $day.data('day');
+            var isOpen = $day.find('[data-role="is_open"]').is(':checked');
+
+            hours[day] = {
+                is_open: isOpen,
+                opens_at: $day.find('[data-role="opens_at"]').val(),
+                closes_at: $day.find('[data-role="closes_at"]').val(),
+            };
+        });
 
         $.ajax({
-            url: '/panel/helpdesk/settings/business-hours',
-            method: 'PUT',
+            url: _$modal.data('bh-update-url'),
+            method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({
-                slots:       _slots,
-                timezone:    $('#bhTimezone').val(),
-                apply_to:    $('#bhApplyTo').val(),
-                off_message: $('#bhOffMessage').val().trim(),
-            }),
+            data: JSON.stringify({ hours: hours, timezone: timezone }),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
         }).done(function () {
             closeBvModal('business-hours');
             if (window.toastr) { toastr.success('Horario guardado'); }
         }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al guardar horario';
+            var msg = xhr && xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error al guardar horario';
             if (window.toastr) { toastr.error(msg); }
         }).always(function () {
             $btn.prop('disabled', false).text('Guardar horario');

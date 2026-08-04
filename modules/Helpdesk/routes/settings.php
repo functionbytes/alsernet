@@ -11,6 +11,8 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\BroadcastsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BusinessHoursController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CannedRepliesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CompaniesController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\ConversationFarewellsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\ConversationGreetingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CustomFieldsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\DripCampaignsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\EmailSettingsController;
@@ -20,6 +22,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\IntegrationsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\LookupController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\MacrosController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\NotificationSettingsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\OffHoursResponsesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\RoutingRulesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SettingsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\SkillsController;
@@ -173,10 +176,40 @@ Route::prefix('views')->name('views.')->group(function () {
     Route::post('bulk-action', [ViewsController::class, 'bulkAction'])->name('bulk-action');
 });
 
-// Business Hours
-Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours');
-Route::put('business-hours', [BusinessHoursController::class, 'update'])->name('business-hours.update');
-Route::post('business-hours/reset', [BusinessHoursController::class, 'reset'])->name('business-hours.reset');
+// Horario de atención (grilla de días/horas) y los 3 mensajes automáticos
+// (fuera de horario / bienvenida / despedida) — cada uno en su propia página,
+// bajo el mismo prefijo "business".
+Route::prefix('business')->name('business.')->group(function () {
+    Route::get('hours', [BusinessHoursController::class, 'index'])->name('hours');
+    Route::put('hours', [BusinessHoursController::class, 'update'])->name('hours.update');
+    // Alias en POST: el modal del inbox lo consume por AJAX y un PUT real da 405 en Docker.
+    Route::post('hours', [BusinessHoursController::class, 'update'])->name('hours.update.ajax');
+    Route::post('hours/reset', [BusinessHoursController::class, 'reset'])->name('hours.reset');
+
+    Route::get('off-hours', [OffHoursResponsesController::class, 'index'])->name('off-hours');
+    Route::get('greeting', [ConversationGreetingsController::class, 'index'])->name('greeting');
+    Route::get('farewell', [ConversationFarewellsController::class, 'index'])->name('farewell');
+});
+
+// CRUD (store/update/destroy) de los mensajes automáticos "fuera de horario" /
+// bienvenida / despedida — el index de cada uno vive en el grupo "business" de arriba.
+Route::prefix('off-hours-responses')->name('off-hours-responses.')->group(function () {
+    Route::post('/', [OffHoursResponsesController::class, 'store'])->name('store');
+    Route::put('{off_hours_response}', [OffHoursResponsesController::class, 'update'])->name('update');
+    Route::delete('{off_hours_response}', [OffHoursResponsesController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('conversation-greetings')->name('conversation-greetings.')->group(function () {
+    Route::post('/', [ConversationGreetingsController::class, 'store'])->name('store');
+    Route::put('{conversation_greeting}', [ConversationGreetingsController::class, 'update'])->name('update');
+    Route::delete('{conversation_greeting}', [ConversationGreetingsController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('conversation-farewells')->name('conversation-farewells.')->group(function () {
+    Route::post('/', [ConversationFarewellsController::class, 'store'])->name('store');
+    Route::put('{conversation_farewell}', [ConversationFarewellsController::class, 'update'])->name('update');
+    Route::delete('{conversation_farewell}', [ConversationFarewellsController::class, 'destroy'])->name('destroy');
+});
 
 // SLA Policies
 Route::prefix('sla-policies')->name('sla-policies.')->group(function () {

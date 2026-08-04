@@ -26,16 +26,26 @@ class BusinessHoursService
                 return false;
             }
 
-            $timezone = $hour->timezone ?? 'Europe/Madrid';
+            $timezone = $hour->timezone ?? config('app.timezone', 'UTC');
 
             try {
                 $now = Carbon::now($timezone);
             } catch (\Throwable) {
-                $now = Carbon::now('Europe/Madrid');
+                $now = Carbon::now(config('app.timezone', 'UTC'));
             }
 
             $opens = Carbon::parse($now->format('Y-m-d').' '.$hour->opens_at, $timezone);
             $closes = Carbon::parse($now->format('Y-m-d').' '.$hour->closes_at, $timezone);
+
+            // Horario nocturno que cruza medianoche (p. ej. 22:00-02:00): closes_at
+            // cae "antes" que opens_at al parsearlos sobre el mismo día calendario.
+            if ($closes->lessThanOrEqualTo($opens)) {
+                if ($now->greaterThanOrEqualTo($opens)) {
+                    $closes->addDay();
+                } else {
+                    $opens->subDay();
+                }
+            }
 
             return $now->between($opens, $closes);
         });

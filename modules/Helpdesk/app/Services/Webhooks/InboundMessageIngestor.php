@@ -12,17 +12,15 @@ use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationStatus;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\Inbox;
-use Modules\Helpdesk\Models\OffHoursResponse;
-use Modules\Helpdesk\Services\BusinessHoursService;
-use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Support\ChannelMetrics;
 
 /**
  * Pipeline compartido de ingesta de un mensaje ENTRANTE del cliente
  * (WhatsApp / Facebook / Instagram y el simulador): resuelve/crea la
  * conversación, deduplica por external_id, crea el ConversationItem, reabre la
- * ventana de servicio, emite el broadcast en tiempo real (resiliente), lanza las
- * automatizaciones de conversación nueva y encola la descarga de adjuntos.
+ * ventana de servicio, emite el broadcast en tiempo real (resiliente), dispara
+ * el evento de conversación nueva (auto-asignación, off-hours, workflows... via
+ * ConversationCreated) y encola la descarga de adjuntos.
  *
  * La parte específica de cada canal (resolver el cliente y construir el cuerpo,
  * adjuntos y metadata del ítem) la hace quien llama; aquí vive lo común, que
@@ -30,11 +28,6 @@ use Modules\Helpdesk\Support\ChannelMetrics;
  */
 class InboundMessageIngestor
 {
-    public function __construct(
-        private readonly OutboundMessageService $outbound,
-        private readonly BusinessHoursService $businessHours,
-    ) {}
-
     /**
      * @param  array<string, mixed>  $itemAttributes  body, external_id, attachment_urls, metadata…
      * @param  array<int, array<string, mixed>>  $downloadAttachments  para DownloadConversationAttachmentsJob
@@ -70,7 +63,6 @@ class InboundMessageIngestor
 
         if ($conversation->wasRecentlyCreated) {
             ConversationCreated::dispatch($conversation);
-            $this->handleNewConversationAutomations($conversation);
         }
 
         if ($downloadAttachments !== []) {
@@ -132,31 +124,6 @@ class InboundMessageIngestor
             ->where('conversation_id', $conversationId)
             ->where('external_id', $externalId)
             ->exists();
-    }
-
-    /**
-     * Automatizaciones tras crear una conversación nueva: por ahora, la respuesta
-     * automática fuera de horario. El auto-assignment lo dispara el evento
-     * ConversationCreated (listener AutoAssignNewConversation), no aquí.
-     */
-    private function handleNewConversationAutomations(Conversation $conversation): void
-    {
-        if ($this->businessHours->isOpenNow()) {
-            return;
-        }
-
-        try {
-            $response = OffHoursResponse::findForChannel($conversation->channel);
-
-            if ($response) {
-                $this->outbound->sendReply($conversation, $response->message);
-            }
-        } catch (\Throwable $e) {
-            Log::warning('InboundMessageIngestor: off-hours reply failed', [
-                'conversation_id' => $conversation->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
     }
 
     /**

@@ -5,13 +5,13 @@ namespace Modules\Helpdesk\Models;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Helpdesk\Concerns\FindsLocalizedAutoReply;
 
-class OffHoursResponse extends Model
+class ConversationGreeting extends Model
 {
     use FindsLocalizedAutoReply;
 
     protected $connection = 'helpdesk';
 
-    protected $table = 'helpdesk_off_hours_responses';
+    protected $table = 'helpdesk_conversation_greetings';
 
     protected $fillable = [
         'channel',
