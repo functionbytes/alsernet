@@ -202,6 +202,7 @@
         filter: 'open',
         selected: null,
         bulk: new Set(),
+        bulkModalMode: false,
         currentUserId: null,
         tickets: [],
         statuses: [],
@@ -255,6 +256,35 @@
     function formatDate(iso) {
         if (!iso) { return '—'; }
         try { return new Date(iso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return iso; }
+    }
+
+    // Cuenta atrás compacta hasta la fecha de vencimiento del SLA.
+    function slaCountdown(iso) {
+        if (!iso) { return ''; }
+        var due = new Date(iso).getTime();
+        var diff = Math.round((due - Date.now()) / 60000);
+        var overdue = diff < 0;
+        var mins = Math.abs(diff);
+        var label;
+        if (mins < 60) { label = mins + 'm'; }
+        else if (mins < 1440) { label = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm'; }
+        else { label = Math.floor(mins / 1440) + 'd ' + Math.floor((mins % 1440) / 60) + 'h'; }
+        return overdue ? ('hace ' + label) : ('en ' + label);
+    }
+
+    // Badge de estado SLA (Bootstrap 5.3 + FA6). 'none' => oculto.
+    function slaBadge(status, iso) {
+        var map = {
+            on_track: { cls: 'bg-success', text: 'En plazo' },
+            warning: { cls: 'bg-warning text-dark', text: 'Por vencer' },
+            breached: { cls: 'bg-danger', text: 'Vencido' }
+        };
+        var cfg = map[status];
+        if (!cfg) { return ''; }
+        var cd = slaCountdown(iso);
+        var cdHtml = cd ? (' <span class="htk-sla-cd">' + escapeHtml(cd) + '</span>') : '';
+        return '<span class="badge ' + cfg.cls + ' htk-sla-badge" data-sla-due="' + escapeHtml(iso || '') + '">' +
+            '<i class="fas fa-gauge me-1"></i>' + cfg.text + cdHtml + '</span>';
     }
 
     // ═══════════ Filtering ═══════════
@@ -322,6 +352,7 @@
 
             var slaKind = t.sla_kind || 'ok';
             var slaTxt = t.sla_text || '—';
+            var slaBadgeHtml = slaBadge(t.sla_status, t.sla_due_at);
 
             var custEmail = t.customer ? (t.customer.email || '') : '';
             var $tr = $(
@@ -346,7 +377,7 @@
                 '</td>' +
                 '<td style="width:90px"><span class="htk-badge ' + (t.status_slug || 'open') + '">' + escapeHtml(t.status_name || stLabel(t.status_slug)) + '</span></td>' +
                 '<td style="width:100px"><span class="htk-prio ' + t.priority + '"><span class="d"></span>' + prLabel(t.priority) + '</span></td>' +
-                '<td style="width:110px"><span class="htk-sla ' + slaKind + '"><i class="far fa-clock"></i>' + escapeHtml(slaTxt) + '</span></td>' +
+                '<td style="width:130px"><div class="htk-sla-cell">' + slaBadgeHtml + '<span class="htk-sla ' + slaKind + '"><i class="far fa-clock"></i>' + escapeHtml(slaTxt) + '</span></div></td>' +
                 '<td style="width:60px;text-align:center">' + assigneeHtml + '</td>' +
                 '<td style="width:120px;color:#a1a1aa;font-size:11px;font-family:JetBrains Mono,monospace">' + timeAgo(t.updated_at) + '</td>' +
                 '</tr>'
@@ -384,6 +415,7 @@
                     '<span class="id">' + escapeHtml(t.ticket_number) + '</span>' +
                     '<span class="htk-prio ' + t.priority + '" title="' + prLabel(t.priority) + '"><span class="d"></span></span>' +
                     (t.unread_count > 0 ? '<span style="width:6px;height:6px;border-radius:50%;background:#2563eb"></span>' : '') +
+                    slaBadge(t.sla_status, t.sla_due_at) +
                     '<span class="htk-sla ' + (t.sla_kind || 'ok') + '">' + escapeHtml(t.sla_text || '—') + '</span>' +
                     '</div>' +
                     '<div class="ts">' + escapeHtml(t.subject || t.title || '—') + '</div>' +
@@ -457,7 +489,7 @@
         $('#htkd-channel').html('<span class="htk-tag-ch ' + channel + '"><span class="htk-ch-dot ' + channel + '"></span>' + chLabel(channel) + '</span>');
         $('#htkd-status').html('<span class="htk-badge ' + (t.status_slug || 'open') + '">' + escapeHtml(t.status_name || stLabel(t.status_slug)) + '</span>');
         $('#htkd-priority').html('<span class="htk-prio ' + t.priority + '"><span class="d"></span>' + prLabel(t.priority) + '</span>');
-        $('#htkd-sla').html('<span class="htk-sla ' + (t.sla_kind || 'ok') + '"><i class="far fa-clock"></i>' + escapeHtml(t.sla_text || '—') + '</span>');
+        $('#htkd-sla').html(slaBadge(t.sla_status, t.sla_due_at) + '<span class="htk-sla ' + (t.sla_kind || 'ok') + '"><i class="far fa-clock"></i>' + escapeHtml(t.sla_text || '—') + '</span>');
         $('#htkd-subj').text(t.subject || t.title || '—');
 
         var custColor = colorFor(t.customer ? t.customer.id : 0);
@@ -489,7 +521,7 @@
         loadConversation(t);
         renderActivity(t);
 
-        $('#htkd-detail-link').attr('href', t.url || '#');
+        $('#htkd-detail-link').attr('href', t.url_full || t.url || '#');
 
         $('#htkd-overlay').addClass('show');
         $('#htkd').addClass('show');
@@ -613,8 +645,6 @@
 
         $('#htk-contact-pop')
             .data('email', c.email || '')
-            .data('phone', c.phone || c.whatsapp_phone || '')
-            .data('customer-id', c.id || '')
             .addClass('show');
 
         // Resetear lazy-load state al abrir nuevo contacto
@@ -671,27 +701,33 @@
     }
 
     // ═══════════ Modal system ═══════════
-    function openHtkModal(name) {
+    function openHtkModal(name, bulk) {
         closeAllHtkModals();
+        HTK.state.bulkModalMode = !!bulk;
         $('[data-bv-modal-name="' + name + '"]').addClass('on');
-        if (name === 'htk-assign')   { populateAssignModal(); }
+        if (name === 'htk-assign')   { populateAssignModal(HTK.state.bulkModalMode); }
         if (name === 'htk-priority') { syncPriorityModal(); }
+        if (name === 'htk-bulk-tag') { $('#htk-bulk-tag-input').val('').focus(); }
     }
 
     function closeAllHtkModals() {
         $('.bv-modal').removeClass('on');
     }
 
-    function populateAssignModal() {
+    function populateAssignModal(bulk) {
         var t = HTK.state.tickets.find(function (x) { return x.id == HTK.state.selected; });
         var agents = $('#htk-data').data('agents') || [];
-        var currentId = t && t.assignee ? t.assignee.id : null;
+        // En modo bulk no hay "asignación actual" única que preseleccionar
+        // (los tickets elegidos pueden tener assignees distintos).
+        var currentId = (!bulk && t && t.assignee) ? t.assignee.id : null;
 
-        var unassignItem = '<button type="button" class="bv-opt' + (!currentId ? ' on' : '') + '" data-agent-id="">' +
+        // La acción bulk "assign" exige un agent_id (no admite desasignar en
+        // lote), así que el botón "Sin asignar" solo aparece en modo individual.
+        var unassignItem = bulk ? '' : ('<button type="button" class="bv-opt' + (!currentId ? ' on' : '') + '" data-agent-id="">' +
             '<div style="width:32px;height:32px;border-radius:8px;background:#f4f4f5;display:grid;place-items:center;flex-shrink:0">' +
             '<i class="fas fa-user-slash" style="font-size:12px;color:#71717a"></i></div>' +
             '<div class="body"><div class="name">Sin asignar</div><div class="sub">Quitar la asignación actual</div></div>' +
-            '<i class="fas fa-check check"></i></button>';
+            '<i class="fas fa-check check"></i></button>');
 
         var agentItems = agents.map(function (a) {
             var on = a.id == currentId ? ' on' : '';
@@ -866,7 +902,7 @@
     }
 
     // ═══════════ Bulk actions ═══════════
-    function bulkAction(action) {
+    function bulkAction(action, extra) {
         if (HTK.state.bulk.size === 0) { return; }
 
         if (action === 'delete') {
@@ -884,11 +920,14 @@
             url: url,
             method: 'POST',
             dataType: 'json',
-            data: {action: action, ticket_ids: ids},
+            data: $.extend({action: action, ticket_ids: ids}, extra || {}),
             headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
         })
             .done(function (resp) {
                 if (window.toastr) { toastr.success(resp.message || 'Acción ejecutada'); }
+                if (window.toastr && resp.skipped_ticket_ids && resp.skipped_ticket_ids.length) {
+                    toastr.warning(resp.skipped_ticket_ids.length + ' ticket(s) omitidos: sin permiso para esta acción.');
+                }
 
                 if (action === 'delete') {
                     HTK.state.bulk.forEach(function (id) {
@@ -1160,9 +1199,7 @@
             var tab  = $btn.data('cntTab');
             setContactTab(tab);
 
-            var email      = $('#htk-contact-pop').data('email') || $('#htk-cnt-email').text().trim();
-            var phone      = $('#htk-contact-pop').data('phone') || '';
-            var customerId = $('#htk-contact-pop').data('customer-id') || '';
+            var email = $('#htk-contact-pop').data('email') || $('#htk-cnt-email').text().trim();
             if (!email || email === '—') { return; }
 
             if (tab === 'pedidos' && !$btn.data('ps-loaded')) {
@@ -1172,7 +1209,7 @@
 
             if (tab === 'erp' && !$btn.data('erp-loaded')) {
                 $btn.data('erp-loaded', true);
-                loadErpContext(email, phone, customerId);
+                loadErpContext(email);
             }
 
             // [6] Timeline lazy-load
@@ -1221,11 +1258,18 @@
                 $(this).toggle(!q || $(this).find('.name').text().toLowerCase().indexOf(q) !== -1);
             });
         });
-        // Assign — aplicar
+        // Assign — aplicar (individual o bulk según cómo se abrió el modal)
         $('#htk-assign-apply').on('click', function () {
             var $sel = $('[data-bv-modal-name="htk-assign"] .bv-opt.on');
             var agentId = $sel.data('agentId');
-            doUpdateTicket({assignee_id: agentId || null}, 'Asignado correctamente');
+
+            if (HTK.state.bulkModalMode) {
+                if (!agentId) { return; }
+                bulkAction('assign', {agent_id: agentId});
+            } else {
+                doUpdateTicket({assignee_id: agentId || null}, 'Asignado correctamente');
+            }
+
             closeAllHtkModals();
         });
 
@@ -1252,6 +1296,17 @@
             closeAllHtkModals();
         });
 
+        // Etiquetar (bulk) — aplicar
+        $('#htk-bulk-tag-apply').on('click', function () {
+            var tag = $.trim($('#htk-bulk-tag-input').val());
+            if (!tag) { $('#htk-bulk-tag-input').focus(); return; }
+            bulkAction('add_tag', {tag: tag});
+            closeAllHtkModals();
+        });
+        $('#htk-bulk-tag-input').on('keydown', function (e) {
+            if (e.key === 'Enter') { $('#htk-bulk-tag-apply').click(); }
+        });
+
         $(document).on('input', '#htkd-macro-search', function () {
             var q = $(this).val().toLowerCase();
             $('#htkd-macro-list .htk-macro-item').each(function () {
@@ -1264,7 +1319,12 @@
         });
 
         $('.htk-bulk-action').on('click', function () {
-            bulkAction($(this).data('action'));
+            var action = $(this).data('action');
+            // assign/add_tag necesitan un dato adicional (agente/etiqueta):
+            // se piden en un modal en vez de disparar la acción a ciegas.
+            if (action === 'assign')  { openHtkModal('htk-assign', true); return; }
+            if (action === 'add_tag') { openHtkModal('htk-bulk-tag'); return; }
+            bulkAction(action);
         });
 
         $('#htk-apply-filters').on('click', applyFiltersModal);
@@ -1402,8 +1462,7 @@
         try { window.Echo.leave(channelName); } catch (e) { /* ignore */ }
     }
 
-    function loadErpContext(email, phone, customerId, attempt) {
-        if (typeof phone === 'number') { attempt = phone; phone = ''; customerId = ''; }
+    function loadErpContext(email, attempt) {
         attempt = attempt || 1;
 
         var $loading = $('#htk-cnt-erp-loading');
@@ -1429,11 +1488,7 @@
             });
         }
 
-        var erpParams = {};
-        if (phone) { erpParams.phone = phone; }
-        if (customerId) { erpParams.customer_id = customerId; }
-
-        return $.get('/api/helpdeskErp/customers/' + encodeURIComponent(email) + '/context', erpParams)
+        return $.get('/api/helpdeskErp/customers/' + encodeURIComponent(email) + '/context')
             .done(function (resp) {
                 lsPut(email, 'erp', resp);
                 IdbCache.put('erp_' + email, resp);
@@ -1457,7 +1512,7 @@
                             done = true;
                             clearTimeout(timeoutId);
                             leaveErpBroadcastChannel(channelName);
-                            loadErpContext(email, phone, customerId);
+                            loadErpContext(email);
                         });
 
                         timeoutId = setTimeout(function () {
@@ -1466,7 +1521,7 @@
                             leaveErpBroadcastChannel(channelName);
                             if (attempt < ERP_MAX_ATTEMPTS) {
                                 showErpOrdersSpinner('Cargando pedidos desde Oracle… (intento ' + attempt + '/' + ERP_MAX_ATTEMPTS + ')');
-                                setTimeout(function () { loadErpContext(email, phone, customerId, attempt + 1); }, ERP_RETRY_MS);
+                                setTimeout(function () { loadErpContext(email, attempt + 1); }, ERP_RETRY_MS);
                             }
                         }, ERP_BROADCAST_TIMEOUT_MS);
                     } catch (e) {
@@ -1474,7 +1529,7 @@
                         leaveErpBroadcastChannel(channelName);
                         if (attempt < ERP_MAX_ATTEMPTS) {
                             showErpOrdersSpinner('Cargando pedidos desde Oracle… (intento ' + attempt + '/' + ERP_MAX_ATTEMPTS + ')');
-                            setTimeout(function () { loadErpContext(email, phone, customerId, attempt + 1); }, ERP_RETRY_MS);
+                            setTimeout(function () { loadErpContext(email, attempt + 1); }, ERP_RETRY_MS);
                         }
                     }
 
@@ -1483,7 +1538,7 @@
 
                 if (attempt < ERP_MAX_ATTEMPTS) {
                     showErpOrdersSpinner('Cargando pedidos desde Oracle… (intento ' + attempt + '/' + ERP_MAX_ATTEMPTS + ')');
-                    setTimeout(function () { loadErpContext(email, phone, customerId, attempt + 1); }, ERP_RETRY_MS);
+                    setTimeout(function () { loadErpContext(email, attempt + 1); }, ERP_RETRY_MS);
                 }
             })
             .fail(function () {
@@ -1512,6 +1567,12 @@
         bindEcho($data);
         maybeRequestNotificationPermission();
         initDebugPanel();
+
+        // Ticket preseleccionado (?ticket= en la URL, típicamente desde el
+        // redirect de la URL corta /tickets/{id}): se antepuso al payload en
+        // el servidor si no estaba ya en la página/filtro actual.
+        var selectedId = parseInt($data.data('selectedId'), 10);
+        if (selectedId) { openDetail(selectedId); }
     }
 
     function bindEcho($data) {
@@ -1558,7 +1619,10 @@
                 unread_count: 1,
                 sla_kind: 'ok',
                 sla_text: '—',
+                sla_status: 'none',
+                sla_due_at: null,
                 url: urlBase + '/' + t.id,
+                url_full: urlBase + '/' + t.id + '/full',
                 url_message_store: urlBase + '/' + t.id + '/messages',
             };
         }

@@ -76,6 +76,7 @@ class SendCustomerReplyNotification implements ShouldQueue
         TicketMail::create([
             'ticket_id' => $ticket->id,
             'ticket_item_id' => $item->id,
+            'user_id' => $item->user_id,
             'direction' => 'outbound',
             'from' => config('mail.from.address'),
             'to' => $ticket->customer->email,

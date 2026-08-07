@@ -2,91 +2,137 @@
 
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 class BulkTicketsController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('can:helpdesk.tickets.manage');
-    }
+    /**
+     * Ability de TicketPolicy que autoriza cada acción masiva. La
+     * autorización real es por ticket (igual que
+     * TicketMessagingController::bulkReply): los tickets que el usuario no
+     * puede actuar se omiten en vez de abortar toda la operación.
+     *
+     * @var array<string, string>
+     */
+    private const ABILITY_BY_ACTION = [
+        'assign' => 'assign',
+        'close' => 'close',
+        'resolve' => 'resolve',
+        'reopen' => 'reopen',
+        'change_status' => 'update',
+        'delete' => 'delete',
+        'add_tag' => 'update',
+        'assign_group' => 'update',
+    ];
 
     /**
      * Handle bulk ticket operations.
      *
-     * Actions: assign, close, reopen, change_status, delete, add_tag, assign_group
+     * Actions: assign, close, resolve, reopen, change_status, delete, add_tag, assign_group
+     *
+     * Este endpoint solo se consume por AJAX desde tickets.js (bulk-bar del
+     * listado), por eso responde siempre en JSON en vez de redirect: un
+     * redirect aquí rompe el `dataType: 'json'` del cliente (jQuery sigue la
+     * redirección, intenta parsear el HTML resultante como JSON y dispara
+     * `.fail()` aunque la operación haya tenido éxito en el servidor).
      */
-    public function handle(BulkTicketRequest $request): RedirectResponse
+    public function handle(BulkTicketRequest $request): JsonResponse
     {
-        $validated = $request->validated();
+        $this->authorize('viewAny', Ticket::class);
 
+        $validated = $request->validated();
         $ids = $validated['ticket_ids'];
+        $action = $validated['action'];
+
+        $tickets = Ticket::whereIn('id', $ids)->get();
+
+        [$authorized, $skipped] = $tickets->partition(
+            fn (Ticket $ticket) => $request->user()->can(self::ABILITY_BY_ACTION[$action], $ticket)
+        );
+
+        if ($authorized->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permiso para actuar sobre los tickets seleccionados.',
+                'skipped_ticket_ids' => $skipped->pluck('id')->values(),
+            ], 403);
+        }
 
         try {
             // Todas las ramas iteran modelos (no mass update/delete del builder)
             // para que TicketObserver registre historial y bumpee la caché de
             // reportes igual que en las acciones individuales.
-            $count = DB::transaction(function () use ($validated, $ids): int {
-                return match ($validated['action']) {
-                    'assign' => Ticket::whereIn('id', $ids)
-                        ->get()
+            $count = DB::transaction(function () use ($action, $validated, $authorized): int {
+                return match ($action) {
+                    'assign' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([
                             'assignee_id' => $validated['agent_id'],
                             'assigned_at' => now(),
                         ]))
                         ->count(),
-                    'close' => Ticket::whereIn('id', $ids)
+                    'close' => $authorized
                         ->whereNull('closed_at')
-                        ->get()
                         ->each(fn (Ticket $ticket) => $ticket->close())
                         ->count(),
-                    'reopen' => Ticket::whereIn('id', $ids)
+                    'resolve' => $authorized
+                        ->each(function (Ticket $ticket): void {
+                            $ticket->resolve();
+                            TicketResolved::dispatch($ticket);
+                        })
+                        ->count(),
+                    'reopen' => $authorized
                         ->whereNotNull('closed_at')
-                        ->get()
                         ->each(fn (Ticket $ticket) => $ticket->reopen())
                         ->count(),
-                    'change_status' => Ticket::whereIn('id', $ids)
-                        ->get()
+                    'change_status' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([
                             'status_id' => $validated['status_id'],
                         ]))
                         ->count(),
-                    'delete' => Ticket::whereIn('id', $ids)
-                        ->get()
+                    'delete' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->delete())
                         ->count(),
-                    'add_tag' => Ticket::whereIn('id', $ids)
-                        ->get()
+                    'add_tag' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([
                             'tags' => array_values(array_unique(array_merge($ticket->tags ?? [], [$validated['tag']]))),
                         ]))
                         ->count(),
-                    'assign_group' => Ticket::whereIn('id', $ids)
-                        ->get()
+                    'assign_group' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([
                             'group_id' => $validated['group_id'],
                         ]))
                         ->count(),
                 };
             });
-
-            session()->flash('success', "{$count} tickets updated successfully.");
         } catch (\Throwable $e) {
             Log::error('Bulk ticket operation failed', [
-                'action' => $validated['action'],
+                'action' => $action,
                 'ids' => $ids,
                 'error' => $e->getMessage(),
             ]);
-            session()->flash('error', 'The bulk operation could not be completed. Please try again.');
 
-            return redirect()->back();
+            return response()->json([
+                'success' => false,
+                'message' => 'The bulk operation could not be completed. Please try again.',
+            ], 500);
         }
 
-        return redirect()->route('manager.helpdesk.tickets.index');
+        $message = "{$count} tickets updated successfully.";
+        if ($skipped->isNotEmpty()) {
+            $message .= " {$skipped->count()} omitidos por falta de permiso.";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'updated_count' => $count,
+            'skipped_ticket_ids' => $skipped->pluck('id')->values(),
+        ]);
     }
 }

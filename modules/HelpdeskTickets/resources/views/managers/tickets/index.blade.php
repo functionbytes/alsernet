@@ -47,7 +47,7 @@
         return $hours . 'h ' . ($minutes % 60) . 'm';
     };
 
-    $ticketsPayload = $tickets->getCollection()->map(function ($t) use ($statusSlug, $sourceSlug, $slaKind, $slaText) {
+    $mapTicket = function ($t) use ($statusSlug, $sourceSlug, $slaKind, $slaText) {
         $assignee = null;
         if ($t->assignee) {
             $name = trim(($t->assignee->firstname ?? '') . ' ' . ($t->assignee->lastname ?? '')) ?: 'Agente';
@@ -82,9 +82,18 @@
             'sla_status' => $t->sla_status,
             'sla_due_at' => optional($t->slaEffectiveDueDate())->toIso8601String(),
             'url' => route('manager.helpdesk.tickets.show', $t),
+            'url_full' => route('manager.helpdesk.tickets.show-full', $t),
             'url_message_store' => route('manager.helpdesk.tickets.messages.store', $t),
         ];
-    })->values();
+    };
+
+    $ticketsPayload = $tickets->getCollection()->map($mapTicket)->values();
+
+    // El ticket preseleccionado (?ticket=) puede no estar en la página/filtro
+    // actual del listado: se antepone al payload para que el JS lo encuentre.
+    if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
+        $ticketsPayload->prepend($mapTicket($selectedTicket));
+    }
 @endphp
 
 @section('page_header')
@@ -101,6 +110,7 @@
          data-user-id="{{ auth()->id() }}"
          data-initial-filter="{{ request('quick_filter', 'open') }}"
          data-initial-view="{{ request('view', 'list') }}"
+         data-selected-id="{{ $selectedTicket?->id }}"
          data-bulk-url="{{ route('manager.helpdesk.tickets.bulk') }}"
          data-tickets-url-base="{{ rtrim(route('manager.helpdesk.tickets.index'), '/') }}"
          data-macros-url="{{ route('manager.helpdesk.macros.list') }}"

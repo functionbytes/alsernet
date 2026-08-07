@@ -11,6 +11,7 @@ use Modules\HelpdeskTickets\Mail\TicketReplyMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 class TicketCommentsController extends Controller
@@ -78,6 +79,24 @@ class TicketCommentsController extends Controller
 
             Mail::to($ticket->customer->email, $ticket->customer->name)
                 ->queue(new TicketReplyMail($ticket, $subject, $content));
+
+            // Registrar en TicketMail para trazabilidad — esta ruta (comentario
+            // externo) enviaba el correo sin dejar rastro en la bandeja de
+            // "Emails enviados", a diferencia de la vía TicketItem/MessageAdded
+            // (ver SendCustomerReplyNotification), que sí lo hace.
+            TicketMail::create([
+                'ticket_id' => $ticket->id,
+                'ticket_comment_id' => $comment->id,
+                'user_id' => auth()->id(),
+                'direction' => 'outbound',
+                'from' => config('mail.from.address'),
+                'to' => $ticket->customer->email,
+                'subject' => $subject,
+                'body_html' => $content,
+                'body_text' => strip_tags($content),
+                'status' => 'sent',
+                'sent_at' => now(),
+            ]);
         }
 
         return response()->json($comment->load(['user', 'author']), 201);

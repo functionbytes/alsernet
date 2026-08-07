@@ -219,7 +219,7 @@
                     </div>
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary w-100 mb-1">Guardar cambios</button>
-                        <a href="{{ route('manager.helpdesk.tickets.show', $ticket->id) }}" class="btn btn-light w-100">Cancelar</a>
+                        <a href="{{ route('manager.helpdesk.tickets.show-full', $ticket->id) }}" class="btn btn-light w-100">Cancelar</a>
                     </div>
                 </div>
 

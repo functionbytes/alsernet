@@ -35,10 +35,7 @@ class TicketServiceTest extends TestCase
 
     private function makeService(): TicketService
     {
-        $slaService = $this->createMock(SlaService::class);
-        $slaService->method('calculateDueDate')->willReturn(null);
-
-        return new TicketService($slaService);
+        return new TicketService($this->createMock(SlaService::class));
     }
 
     private function ticketData(array $overrides = []): array

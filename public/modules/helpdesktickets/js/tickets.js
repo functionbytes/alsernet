@@ -202,6 +202,7 @@
         filter: 'open',
         selected: null,
         bulk: new Set(),
+        bulkModalMode: false,
         currentUserId: null,
         tickets: [],
         statuses: [],
@@ -520,7 +521,7 @@
         loadConversation(t);
         renderActivity(t);
 
-        $('#htkd-detail-link').attr('href', t.url || '#');
+        $('#htkd-detail-link').attr('href', t.url_full || t.url || '#');
 
         $('#htkd-overlay').addClass('show');
         $('#htkd').addClass('show');
@@ -700,27 +701,33 @@
     }
 
     // ═══════════ Modal system ═══════════
-    function openHtkModal(name) {
+    function openHtkModal(name, bulk) {
         closeAllHtkModals();
+        HTK.state.bulkModalMode = !!bulk;
         $('[data-bv-modal-name="' + name + '"]').addClass('on');
-        if (name === 'htk-assign')   { populateAssignModal(); }
+        if (name === 'htk-assign')   { populateAssignModal(HTK.state.bulkModalMode); }
         if (name === 'htk-priority') { syncPriorityModal(); }
+        if (name === 'htk-bulk-tag') { $('#htk-bulk-tag-input').val('').focus(); }
     }
 
     function closeAllHtkModals() {
         $('.bv-modal').removeClass('on');
     }
 
-    function populateAssignModal() {
+    function populateAssignModal(bulk) {
         var t = HTK.state.tickets.find(function (x) { return x.id == HTK.state.selected; });
         var agents = $('#htk-data').data('agents') || [];
-        var currentId = t && t.assignee ? t.assignee.id : null;
+        // En modo bulk no hay "asignación actual" única que preseleccionar
+        // (los tickets elegidos pueden tener assignees distintos).
+        var currentId = (!bulk && t && t.assignee) ? t.assignee.id : null;
 
-        var unassignItem = '<button type="button" class="bv-opt' + (!currentId ? ' on' : '') + '" data-agent-id="">' +
+        // La acción bulk "assign" exige un agent_id (no admite desasignar en
+        // lote), así que el botón "Sin asignar" solo aparece en modo individual.
+        var unassignItem = bulk ? '' : ('<button type="button" class="bv-opt' + (!currentId ? ' on' : '') + '" data-agent-id="">' +
             '<div style="width:32px;height:32px;border-radius:8px;background:#f4f4f5;display:grid;place-items:center;flex-shrink:0">' +
             '<i class="fas fa-user-slash" style="font-size:12px;color:#71717a"></i></div>' +
             '<div class="body"><div class="name">Sin asignar</div><div class="sub">Quitar la asignación actual</div></div>' +
-            '<i class="fas fa-check check"></i></button>';
+            '<i class="fas fa-check check"></i></button>');
 
         var agentItems = agents.map(function (a) {
             var on = a.id == currentId ? ' on' : '';
@@ -895,7 +902,7 @@
     }
 
     // ═══════════ Bulk actions ═══════════
-    function bulkAction(action) {
+    function bulkAction(action, extra) {
         if (HTK.state.bulk.size === 0) { return; }
 
         if (action === 'delete') {
@@ -913,11 +920,14 @@
             url: url,
             method: 'POST',
             dataType: 'json',
-            data: {action: action, ticket_ids: ids},
+            data: $.extend({action: action, ticket_ids: ids}, extra || {}),
             headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')},
         })
             .done(function (resp) {
                 if (window.toastr) { toastr.success(resp.message || 'Acción ejecutada'); }
+                if (window.toastr && resp.skipped_ticket_ids && resp.skipped_ticket_ids.length) {
+                    toastr.warning(resp.skipped_ticket_ids.length + ' ticket(s) omitidos: sin permiso para esta acción.');
+                }
 
                 if (action === 'delete') {
                     HTK.state.bulk.forEach(function (id) {
@@ -1248,11 +1258,18 @@
                 $(this).toggle(!q || $(this).find('.name').text().toLowerCase().indexOf(q) !== -1);
             });
         });
-        // Assign — aplicar
+        // Assign — aplicar (individual o bulk según cómo se abrió el modal)
         $('#htk-assign-apply').on('click', function () {
             var $sel = $('[data-bv-modal-name="htk-assign"] .bv-opt.on');
             var agentId = $sel.data('agentId');
-            doUpdateTicket({assignee_id: agentId || null}, 'Asignado correctamente');
+
+            if (HTK.state.bulkModalMode) {
+                if (!agentId) { return; }
+                bulkAction('assign', {agent_id: agentId});
+            } else {
+                doUpdateTicket({assignee_id: agentId || null}, 'Asignado correctamente');
+            }
+
             closeAllHtkModals();
         });
 
@@ -1279,6 +1296,17 @@
             closeAllHtkModals();
         });
 
+        // Etiquetar (bulk) — aplicar
+        $('#htk-bulk-tag-apply').on('click', function () {
+            var tag = $.trim($('#htk-bulk-tag-input').val());
+            if (!tag) { $('#htk-bulk-tag-input').focus(); return; }
+            bulkAction('add_tag', {tag: tag});
+            closeAllHtkModals();
+        });
+        $('#htk-bulk-tag-input').on('keydown', function (e) {
+            if (e.key === 'Enter') { $('#htk-bulk-tag-apply').click(); }
+        });
+
         $(document).on('input', '#htkd-macro-search', function () {
             var q = $(this).val().toLowerCase();
             $('#htkd-macro-list .htk-macro-item').each(function () {
@@ -1291,7 +1319,12 @@
         });
 
         $('.htk-bulk-action').on('click', function () {
-            bulkAction($(this).data('action'));
+            var action = $(this).data('action');
+            // assign/add_tag necesitan un dato adicional (agente/etiqueta):
+            // se piden en un modal en vez de disparar la acción a ciegas.
+            if (action === 'assign')  { openHtkModal('htk-assign', true); return; }
+            if (action === 'add_tag') { openHtkModal('htk-bulk-tag'); return; }
+            bulkAction(action);
         });
 
         $('#htk-apply-filters').on('click', applyFiltersModal);
@@ -1534,6 +1567,12 @@
         bindEcho($data);
         maybeRequestNotificationPermission();
         initDebugPanel();
+
+        // Ticket preseleccionado (?ticket= en la URL, típicamente desde el
+        // redirect de la URL corta /tickets/{id}): se antepuso al payload en
+        // el servidor si no estaba ya en la página/filtro actual.
+        var selectedId = parseInt($data.data('selectedId'), 10);
+        if (selectedId) { openDetail(selectedId); }
     }
 
     function bindEcho($data) {
@@ -1583,6 +1622,7 @@
                 sla_status: 'none',
                 sla_due_at: null,
                 url: urlBase + '/' + t.id,
+                url_full: urlBase + '/' + t.id + '/full',
                 url_message_store: urlBase + '/' + t.id + '/messages',
             };
         }

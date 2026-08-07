@@ -157,6 +157,29 @@
     </div>
 </div>
 
+{{-- Modal: Etiquetar tickets (acción masiva) --}}
+<div class="bv-modal" data-bv-modal-name="htk-bulk-tag">
+    <div class="bv-modal-dialog sm">
+        <div class="bv-modal-head">
+            <div>
+                <span class="bv-modal-label">Tickets · Acción masiva</span>
+                <div class="bv-modal-title"><i class="fas fa-tag me-2 text-secondary"></i>Etiquetar tickets</div>
+            </div>
+            <button type="button" class="bv-modal-close" data-htk-close><i class="fas fa-xmark"></i></button>
+        </div>
+        <div class="bv-modal-body">
+            <div class="bv-modal-search">
+                <i class="fas fa-tag"></i>
+                <input id="htk-bulk-tag-input" type="text" placeholder="Nombre de la etiqueta…" maxlength="50" autocomplete="off">
+            </div>
+        </div>
+        <div class="bv-modal-foot">
+            <button type="button" class="btn-primary" id="htk-bulk-tag-apply">Etiquetar</button>
+            <button type="button" class="btn-secondary" data-htk-close>Cancelar</button>
+        </div>
+    </div>
+</div>
+
 {{-- Modal: Cambiar prioridad --}}
 <div class="bv-modal" data-bv-modal-name="htk-priority">
     <div class="bv-modal-dialog sm">

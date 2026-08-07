@@ -6,7 +6,7 @@
             <button type="button" class="b htk-bulk-action" data-action="assign">
                 <i class="fas fa-user-plus"></i> Asignar
             </button>
-            <button type="button" class="b htk-bulk-action" data-action="tag">
+            <button type="button" class="b htk-bulk-action" data-action="add_tag">
                 <i class="fas fa-tag"></i> Etiquetar
             </button>
         @endcan

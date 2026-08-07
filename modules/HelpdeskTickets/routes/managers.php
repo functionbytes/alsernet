@@ -24,6 +24,7 @@ use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketCommentsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketExportController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketFollowupsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketLifecycleController;
+use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketMailsController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketMessagingController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketNotesController;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketPresenceController;
@@ -77,11 +78,29 @@ Route::group(['prefix' => ''], function () {
     // Tickets export
     Route::get('/tickets/export/{format}', [TicketExportController::class, 'export'])->name('manager.helpdesk.tickets.export');
 
-    // Tickets CRUD
-    Route::get('/tickets', [TicketsCrudController::class, 'index'])->name('manager.helpdesk.tickets.index');
+    // Emails enviados — bandeja global (todos los tickets), no confundir con
+    // el widget de hasta 30 filas dentro de la ficha de un ticket concreto.
+    // Ocupa la URL /tickets "pelada" a petición explícita (sustituye al
+    // listado de tickets ahí); el listado se mudó a /tickets/list. Los
+    // nombres de ruta NO cambian, así que todo lo que ya llama a
+    // route('manager.helpdesk.tickets.emails.*') / route('...tickets.index')
+    // sigue funcionando igual sin tocar nada más.
+    Route::get('/tickets', [TicketMailsController::class, 'index'])->name('manager.helpdesk.tickets.emails.index');
+    Route::get('/tickets/emails/export', [TicketMailsController::class, 'export'])->name('manager.helpdesk.tickets.emails.export');
+    Route::post('/tickets/emails', [TicketMailsController::class, 'store'])->name('manager.helpdesk.tickets.emails.store');
+    Route::post('/tickets/emails/bulk', [TicketMailsController::class, 'bulk'])->name('manager.helpdesk.tickets.emails.bulk');
+    Route::get('/tickets/emails/{mail}', [TicketMailsController::class, 'data'])->name('manager.helpdesk.tickets.emails.data');
+    Route::post('/tickets/emails/{mail}/resend', [TicketMailsController::class, 'resend'])->name('manager.helpdesk.tickets.emails.resend');
+    Route::delete('/tickets/emails/{mail}', [TicketMailsController::class, 'destroy'])->name('manager.helpdesk.tickets.emails.destroy');
+
+    // Tickets CRUD (listado movido a /tickets/list — ver comentario arriba)
+    Route::get('/tickets/list', [TicketsCrudController::class, 'index'])->name('manager.helpdesk.tickets.index');
     Route::get('/tickets/create', [TicketsCrudController::class, 'create'])->name('manager.helpdesk.tickets.create');
     Route::post('/tickets', [TicketsCrudController::class, 'store'])->name('manager.helpdesk.tickets.store');
     Route::get('/tickets/{ticket}', [TicketsCrudController::class, 'show'])->name('manager.helpdesk.tickets.show');
+    // Ficha completa (side-conversations, registro de horas, fusión, enlaces,
+    // historial): funciones que el panel superpuesto de /tickets aún no cubre.
+    Route::get('/tickets/{ticket}/full', [TicketsCrudController::class, 'showFull'])->name('manager.helpdesk.tickets.show-full');
     Route::get('/tickets/{ticket}/edit', [TicketsCrudController::class, 'edit'])->name('manager.helpdesk.tickets.edit');
     Route::put('/tickets/{ticket}', [TicketsCrudController::class, 'update'])->name('manager.helpdesk.tickets.update');
     Route::delete('/tickets/{ticket}', [TicketsCrudController::class, 'destroy'])->name('manager.helpdesk.tickets.destroy');

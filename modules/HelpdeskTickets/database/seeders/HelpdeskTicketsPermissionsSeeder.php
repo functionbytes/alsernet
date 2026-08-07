@@ -23,6 +23,10 @@ class HelpdeskTicketsPermissionsSeeder extends Seeder
             ['name' => 'helpdesk.tickets.resolve',  'description' => 'Resolver tickets del helpdesk'],
             ['name' => 'helpdesk.tickets.merge',    'description' => 'Fusionar tickets del helpdesk'],
             ['name' => 'helpdesk.tickets.settings', 'description' => 'Gestionar configuracion de tickets (categorias, SLA, estados)'],
+            ['name' => 'helpdesk.tickets.emails.view',   'description' => 'Ver la bandeja de emails enviados del helpdesk'],
+            ['name' => 'helpdesk.tickets.emails.send',   'description' => 'Redactar y enviar emails desde el helpdesk'],
+            ['name' => 'helpdesk.tickets.emails.resend', 'description' => 'Reenviar emails del helpdesk'],
+            ['name' => 'helpdesk.tickets.emails.delete', 'description' => 'Eliminar emails de la bandeja del helpdesk'],
         ];
 
         foreach ($permissions as $permission) {

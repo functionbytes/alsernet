@@ -72,6 +72,24 @@ class TicketsCrudController extends Controller
         $groups = CatalogCacheService::groups();
         $agents = CatalogCacheService::agents();
 
+        // Ticket preseleccionado (llega vía ?ticket=, típicamente del redirect
+        // de show()): se busca aparte porque puede no estar en la página/filtro
+        // actual, igual que ConversationsController::buildConversationPaneData().
+        $selectedTicket = null;
+        if ($selectedId = $request->integer('ticket')) {
+            $selectedTicket = Ticket::query()
+                ->with(['customer', 'status', 'category', 'assignee'])
+                ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
+                    'reads',
+                    fn ($q2) => $q2->where('user_id', $userId)
+                )])
+                ->find($selectedId);
+
+            if ($selectedTicket) {
+                $this->authorize('view', $selectedTicket);
+            }
+        }
+
         return view('helpdesktickets::managers.tickets.index', [
             'tickets' => $tickets,
             'statuses' => $statuses,
@@ -80,6 +98,7 @@ class TicketsCrudController extends Controller
             'agents' => $agents,
             'views' => $views,
             'currentView' => $currentView,
+            'selectedTicket' => $selectedTicket,
             'filters' => $request->only(['status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status', 'search', 'archived']),
         ]);
     }
@@ -167,7 +186,23 @@ class TicketsCrudController extends Controller
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_created', ['number' => $ticket->ticket_number]));
     }
 
-    public function show(Request $request, Ticket $ticket)
+    /**
+     * URL corta /tickets/{ticket} — redirige al listado con el ticket
+     * preseleccionado, igual que ConversationsController::show() hace con el
+     * inbox de conversaciones. La ficha completa (side-conversations, horas,
+     * fusión, enlaces, historial) sigue disponible en showFull().
+     */
+    public function show(Request $request, Ticket $ticket): RedirectResponse
+    {
+        $this->authorize('view', $ticket);
+
+        return redirect()->route('manager.helpdesk.tickets.index', array_merge(
+            ['ticket' => $ticket->id],
+            $request->only(['viewId', 'status', 'search'])
+        ));
+    }
+
+    public function showFull(Request $request, Ticket $ticket)
     {
         $this->authorize('view', $ticket);
 
@@ -279,8 +314,10 @@ class TicketsCrudController extends Controller
             ]);
         }
 
+        // edit.blade.php (form #ticketForm, sin interceptar por JS) solo se
+        // llega desde la ficha completa — se vuelve ahí, no al listado.
         return redirect()
-            ->route('manager.helpdesk.tickets.show', $ticket)
+            ->route('manager.helpdesk.tickets.show-full', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_updated'));
     }
 

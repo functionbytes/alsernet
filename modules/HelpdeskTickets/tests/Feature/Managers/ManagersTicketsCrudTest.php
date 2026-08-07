@@ -162,12 +162,24 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_manager_can_view_ticket_detail(): void
+    public function test_show_redirects_to_index_with_ticket_preselected(): void
     {
+        // La URL corta /tickets/{id} ya no renderiza una página aparte: redirige
+        // al listado con el ticket preseleccionado, igual que el inbox de
+        // conversaciones (ConversationsController::show).
         $ticket = $this->createTicket();
 
         $this->actingAs($this->manager)
             ->get(route('manager.helpdesk.tickets.show', $ticket))
+            ->assertRedirect(route('manager.helpdesk.tickets.index', ['ticket' => $ticket->id]));
+    }
+
+    public function test_manager_can_view_ticket_full_detail_page(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.tickets.show-full', $ticket))
             ->assertOk();
     }
 
