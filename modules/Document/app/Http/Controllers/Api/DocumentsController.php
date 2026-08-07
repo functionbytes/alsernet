@@ -1847,6 +1847,22 @@ class DocumentsController extends Controller
     }
 
     /**
+     * Campos que update() tiene permitido tocar — solo contacto del
+     * cliente. Antes se aplicaba el array `data` completo como
+     * mass-assignment sobre todo $fillable, permitiendo cambiar
+     * status_id/validation_status/assigned_user_id (y cualquier otro campo
+     * fillable) sin pasar por el workflow de validación.
+     */
+    private const UPDATABLE_FIELDS = [
+        'customer_firstname',
+        'customer_lastname',
+        'customer_email',
+        'customer_cellphone',
+        'customer_dni',
+        'customer_company',
+    ];
+
+    /**
      * Actualizar documento
      */
     public function update(Request $request)
@@ -1858,8 +1874,10 @@ class DocumentsController extends Controller
 
         try {
             $document = Document::where('uid', $validated['uid'])->firstOrFail();
-            if ($validated['data'] ?? null) {
-                $document->update($validated['data']);
+            $data = array_intersect_key($validated['data'] ?? [], array_flip(self::UPDATABLE_FIELDS));
+
+            if ($data) {
+                $document->update($data);
             }
 
             return response()->json([

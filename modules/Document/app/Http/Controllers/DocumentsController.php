@@ -7,6 +7,7 @@ use App\Models\Lang;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -45,6 +46,12 @@ class DocumentsController extends Controller
 
     public function index(Request $request)
     {
+        // /panel/documents solo exigía ['web','auth'] — cualquier autenticado
+        // (agente, portal, etc.) podía listar cualquier documento (DNI,
+        // licencias de armas) sin ningún chequeo de rol. Mismo gate que ya
+        // usan las rutas api.php via 'can:view-documents-panel'.
+        Gate::authorize('view-documents-panel');
+
         $search = trim(strtolower($request->get('search')));
         $statusId = $request->get('status_id');
         $loadId = $request->get('load_id');
@@ -80,6 +87,8 @@ class DocumentsController extends Controller
      */
     public function pending(Request $request)
     {
+        Gate::authorize('view-documents-panel');
+
         $search = trim(strtolower($request->get('search')));
         $loadId = $request->get('load_id');
         $dateFrom = $request->get('date_from');
