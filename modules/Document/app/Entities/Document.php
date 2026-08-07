@@ -262,20 +262,11 @@ class Document extends Model implements HasMedia
         return $media ? $media->getUrl() : null;
     }
 
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo('Modules\Prestashop\Entities\Orders\Order', 'order_id', 'id_order');
-    }
-
-    public function customer(): BelongsTo
-    {
-        return $this->belongsTo('Modules\Prestashop\Entities\Customer', 'customer_id', 'id_customer');
-    }
-
-    public function cart(): BelongsTo
-    {
-        return $this->belongsTo('Modules\Prestashop\Entities\Cart', 'cart_id', 'id_cart');
-    }
+    // order()/customer()/cart(): relaciones Eloquent hacia el módulo Prestashop
+    // (conexión directa a su BD) declaradas pero nunca invocadas — eliminadas
+    // al migrar Document al bridge de PrestaShop (ver PrestashopOrderLookupService).
+    // Los datos de pedido/cliente ya viven denormalizados en las columnas
+    // order_reference/customer_* de este mismo modelo.
 
     public function lang(): BelongsTo
     {

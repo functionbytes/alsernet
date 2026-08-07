@@ -8,13 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentLang;
-// Los 3 lookups de este controller buscan por `reference` (no por order_id
-// numérico) — PrestashopOrderLookupService/el bridge solo soportan lookup
-// por id (order.detail), no hay endpoint de búsqueda por referencia. Se
-// deja en acceso directo a la BD hasta que exista esa capacidad en el
-// bridge (mismo caso que DocumentsController::getAvailableOrders()).
 use Modules\Document\Entities\DocumentProduct;
-use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
+use Modules\Document\Services\PrestashopOrderLookupService;
 use Modules\Supplier\Services\Integrations\ErpService;
 
 /**
@@ -23,6 +18,10 @@ use Modules\Supplier\Services\Integrations\ErpService;
  */
 class DocumentSyncController extends Controller
 {
+    public function __construct(
+        private readonly PrestashopOrderLookupService $prestashopOrders,
+    ) {}
+
     /**
      * Show import index page
      */
@@ -247,7 +246,7 @@ class DocumentSyncController extends Controller
 
             foreach ($documents as $document) {
                 try {
-                    $order = PrestashopOrder::where('reference', $document->order_reference)->first();
+                    $order = $this->prestashopOrders->findByReference((string) $document->order_reference);
 
                     if ($order) {
                         if ($this->syncDocumentWithOrder($document, $order)) {
@@ -301,9 +300,9 @@ class DocumentSyncController extends Controller
 
             $orderId = $request->input('order_id');
 
-            $order = PrestashopOrder::where('reference', $orderId)
-                ->orWhere('id_order', $orderId)
-                ->first();
+            $order = ctype_digit((string) $orderId)
+                ? $this->prestashopOrders->find((int) $orderId)
+                : $this->prestashopOrders->findByReference((string) $orderId);
 
             if (! $order) {
                 return response()->json([
@@ -312,7 +311,7 @@ class DocumentSyncController extends Controller
                 ], 404);
             }
 
-            $document = Document::where('order_reference', $order->reference)->first();
+            $document = Document::where('order_reference', $order['reference'])->first();
 
             if (! $document) {
                 return response()->json([
@@ -362,7 +361,7 @@ class DocumentSyncController extends Controller
 
             foreach ($documents as $document) {
                 try {
-                    $order = PrestashopOrder::where('reference', $document->order_reference)->first();
+                    $order = $this->prestashopOrders->findByReference((string) $document->order_reference);
 
                     if ($order && $this->syncDocumentWithOrder($document, $order)) {
                         $updated++;
@@ -464,21 +463,21 @@ class DocumentSyncController extends Controller
     /**
      * Sync document with PrestaShop order
      * Private helper method
+     *
+     * @param  array  $order  Shape normalizado de PrestashopOrderLookupService::find()/findByReference()
      */
-    private function syncDocumentWithOrder(Document $document, PrestashopOrder $order): bool
+    private function syncDocumentWithOrder(Document $document, array $order): bool
     {
         try {
-            $customer = $order->customer;
-
-            if (! $customer) {
+            if (! $order['customer_id']) {
                 return false;
             }
 
             $langId = null;
 
             // Map language from order
-            if (isset($order->lang?->iso_code) && ! empty($order->lang?->iso_code)) {
-                $isoCode = strtolower(trim($order->lang?->iso_code));
+            if (! empty($order['lang_iso'])) {
+                $isoCode = strtolower(trim($order['lang_iso']));
                 $laravelLang = DocumentLang::iso($isoCode);
 
                 if ($laravelLang) {
@@ -491,19 +490,16 @@ class DocumentSyncController extends Controller
 
             // Update document fields
             $document->lang_id = $langId;
-            $document->order_reference = $order->reference ?? $document->order_reference;
-            $document->order_date = $order->date_add ?? $document->order_date;
-            $document->cart_id = $order->id_cart ?? $document->cart_id;
-            $document->customer_id = $customer->id_customer;
+            $document->order_reference = $order['reference'] ?? $document->order_reference;
+            $document->order_date = $order['date_add'] ?? $document->order_date;
+            $document->cart_id = $order['cart_id'] ?: $document->cart_id;
+            $document->customer_id = $order['customer_id'];
 
-            $deliveryAddress = $order->deliveryAddress;
-
-            if ($deliveryAddress) {
-                $document->customer_name = $deliveryAddress->firstname ?? $document->customer_name;
-                $document->customer_lastname = $deliveryAddress->lastname ?? $document->customer_lastname;
-            }
-
-            $document->customer_email = $customer->email ?? $document->customer_email;
+            // customer_name (no customer_firstname) tal cual el original —
+            // no se corrige aquí para no mezclar el fix con la migración.
+            $document->customer_name = $order['customer_firstname'] ?? $document->customer_name;
+            $document->customer_lastname = $order['customer_lastname'] ?? $document->customer_lastname;
+            $document->customer_email = $order['customer_email'] ?? $document->customer_email;
             $document->save();
 
             return true;

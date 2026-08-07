@@ -26,21 +26,17 @@ use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentUploadType;
 use Modules\Document\Entities\DocumentValidationHistory;
 use Modules\Document\Entities\DocumentValidatorGroup;
-// getAvailableOrders() sigue en acceso directo (::query() para el Select2 de
-// búsqueda por id/reference); el bridge no tiene un endpoint de búsqueda de
-// pedidos, solo lookup por id — ver PrestashopOrderLookupService.
 use Modules\Document\Jobs\MailTemplateJob;
-// OrderSendErp::create() (línea ~777) sigue en acceso directo: es una
-// ESCRITURA (marca el pedido para el envío a ERP que hace el propio
-// PrestaShop) sin endpoint de escritura equivalente en el bridge — fuera del
-// alcance de esta migración (solo se migraron lecturas).
 use Modules\Document\Services\DocumentActionService;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentMailService;
 use Modules\Document\Services\DocumentTypeService;
 use Modules\Document\Services\PrestashopOrderLookupService;
 use Modules\Mailer\Models\MailerTemplate;
-use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
+// OrderSendErp::create() (línea ~777) sigue en acceso directo: es una
+// ESCRITURA (marca el pedido para el envío a ERP que hace el propio
+// PrestaShop) sin endpoint de escritura equivalente en el bridge — fuera del
+// alcance de esta migración (solo se migraron lecturas).
 use Modules\Prestashop\Entities\Orders\OrderSendErp;
 use Modules\Supplier\Services\Integrations\ErpService;
 use setasign\Fpdi\Fpdi;
@@ -493,20 +489,10 @@ class DocumentsController extends Controller
         $search = $request->query('search', '');
 
         try {
-            $query = PrestashopOrder::query();
-
-            if (! empty($search)) {
-                $query->where('id_order', 'LIKE', "%{$search}%")
-                    ->orWhere('reference', 'LIKE', "%{$search}%");
-            }
-
-            $orders = $query->select('id_order', 'reference')
-                ->orderBy('id_order', 'DESC')
-                ->limit(50)
-                ->get()
-                ->map(fn ($order) => [
-                    'id' => $order->id_order,
-                    'text' => "#{$order->id_order} - {$order->reference}",
+            $orders = collect($this->prestashopOrders->search((string) $search, 50))
+                ->map(fn (array $order) => [
+                    'id' => $order['id'],
+                    'text' => "#{$order['id']} - {$order['reference']}",
                 ]);
 
             return response()->json([

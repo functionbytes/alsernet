@@ -123,6 +123,36 @@ class PrestashopContextService
     }
 
     /**
+     * Variante de getOrderDetailUnscoped() por reference en vez de id — para
+     * llamadores que solo conocen la reference del pedido (ej. documentos
+     * denormalizados que guardaron order_reference pero no order_id).
+     * Mismo alcance de seguridad: sin ownership-email, ver el aviso en
+     * getOrderDetailUnscoped().
+     */
+    public function getOrderDetailByReferenceUnscoped(string $reference): ?array
+    {
+        return $this->callApi('order.detail', [
+            'reference' => $reference,
+        ]);
+    }
+
+    /**
+     * Búsqueda de pedidos por id/reference (coincidencia parcial) — para
+     * autocompletados internos del panel (Select2).
+     *
+     * @return array<int, array{id: int, reference: string}>
+     */
+    public function searchOrders(string $query, int $limit = 50): array
+    {
+        $data = $this->callApi('order.search', [
+            'query' => $query,
+            'limit' => $limit,
+        ]);
+
+        return $data['orders'] ?? [];
+    }
+
+    /**
      * Lista paginada de pedidos del cliente vía la accion dedicada `customer.orders`.
      * Es la fuente fiable de pedidos: `customer.helpdesk_context` puede devolver el
      * array `orders` vacio para algunos clientes aunque `orders_count` sea > 0.

@@ -64,6 +64,63 @@ class PrestashopOrderLookupService
             return null;
         }
 
+        return $this->normalize($detail);
+    }
+
+    /**
+     * Igual que find(), pero busca por reference en vez de order_id — para
+     * flujos que solo conocen la reference (ej. documentos que guardaron
+     * order_reference denormalizado pero no order_id).
+     */
+    public function findByReference(string $reference): ?array
+    {
+        if (! $this->available() || trim($reference) === '') {
+            return null;
+        }
+
+        try {
+            $detail = app(self::SERVICE_CLASS)->getOrderDetailByReferenceUnscoped($reference);
+        } catch (\Throwable $e) {
+            Log::warning('Document: fallo consultando order.detail por reference en el bridge PrestaShop', [
+                'reference' => $reference,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        return $this->normalize($detail);
+    }
+
+    /**
+     * Búsqueda por id/reference (coincidencia parcial) — para el Select2 de
+     * búsqueda de pedidos del panel.
+     *
+     * @return array<int, array{id: int, reference: string}>
+     */
+    public function search(string $query, int $limit = 50): array
+    {
+        if (! $this->available()) {
+            return [];
+        }
+
+        try {
+            return app(self::SERVICE_CLASS)->searchOrders($query, $limit);
+        } catch (\Throwable $e) {
+            Log::warning('Document: fallo consultando order.search en el bridge PrestaShop', [
+                'query' => $query,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $detail  Respuesta cruda de order.detail
+     */
+    private function normalize(?array $detail): ?array
+    {
         if ($detail === null) {
             return null;
         }
@@ -71,7 +128,7 @@ class PrestashopOrderLookupService
         $address = $detail['shipping_address'] ?? null;
 
         return [
-            'order_id' => (int) ($detail['id'] ?? $orderId),
+            'order_id' => (int) ($detail['id'] ?? 0),
             'reference' => $detail['reference'] ?? null,
             'date_add' => $detail['created_at'] ?? null,
             'cart_id' => (int) ($detail['cart_id'] ?? 0),
@@ -90,6 +147,7 @@ class PrestashopOrderLookupService
             'lang_iso' => $detail['lang_iso'] ?? null,
             'products' => array_map(fn (array $line) => [
                 'product_id' => $line['product_id'] ?? null,
+                'product_attribute_id' => $line['product_attribute_id'] ?? null,
                 'product_name' => $line['name'] ?? null,
                 'product_reference' => $line['reference'] ?? null,
                 'product_quantity' => $line['quantity'] ?? null,
