@@ -962,27 +962,13 @@
     });
 
     // ── CREAR TICKET ────────────────────────────────────────
-    $(document).on('click', '#bv-btn-create-ticket', function() {
-        var url = $(this).data('ticket-url');
-        if (!url) { toastr.error('No hay conversación seleccionada'); return; }
-        var $btn = $(this).prop('disabled', true);
-        $.ajax({
-            url: url,
-            method: 'POST',
-            dataType: 'json',
-            headers: { 'X-CSRF-TOKEN': hdCsrf, 'Accept': 'application/json' },
-        }).done(function(resp) {
-            if (resp.ticket_url) {
-                window.open(resp.ticket_url, '_blank');
-            }
-        }).fail(function(xhr) {
-            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se pudo crear el ticket';
-            toastr.error(msg);
-        }).always(function() {
-            $btn.prop('disabled', false);
-            $('#bv-more-menu').removeClass('open');
-        });
-    });
+    // El handler real vive en conversations.js (línea ~6014): construye la
+    // URL desde la conversación activa (.bv-composer data-bv-conversation-id)
+    // y envía subject/description/priority/category_id/assignee_id. Este
+    // handler duplicado leía un atributo data-ticket-url que nadie escribía
+    // nunca — disparaba "No hay conversación seleccionada" en cada clic
+    // (el otro handler seguía ejecutándose después y sí creaba el ticket,
+    // pero con un toast de error espurio de por medio).
 
     // ── Integración con el slash-menu de conversations.js ───────
     // conversations.js ya incluye su propio slash menu (#bv-slash-menu).

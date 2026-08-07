@@ -45,6 +45,11 @@ class NullTicketService implements TicketServiceContract
         return collect();
     }
 
+    public function getAssignableAgents(): Collection
+    {
+        return collect();
+    }
+
     public function getTicketDetail(int $ticketId): ?array
     {
         return null;

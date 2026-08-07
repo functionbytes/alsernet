@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskTickets\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
 class HelpdeskTicketCategorySeeder extends Seeder
@@ -24,99 +23,99 @@ class HelpdeskTicketCategorySeeder extends Seeder
      * - Complaint: Service complaints and issues
      *
      * Depends on: None (independent)
+     *
+     * NOTA: la versión anterior de este seeder usaba columnas ('uid', 'key',
+     * 'is_active', 'position') que no existen en la tabla real
+     * (helpdesk_ticket_categories solo tiene name/slug/description/icon/
+     * color/order/active) — firstOrCreate(['key' => ...]) lanzaba
+     * QueryException "Unknown column 'key'" en cada ejecución, por lo que
+     * nunca llegó a sembrar ninguna fila. Se corrige usando las columnas
+     * reales; idempotente vía 'slug' (columna única).
      */
     public function run(): void
     {
         $categories = [
             [
-                'uid' => Str::ulid(),
                 'name' => 'Soporte Técnico',
-                'key' => 'technical_support',
+                'slug' => 'soporte-tecnico',
                 'description' => 'Problemas técnicos, bugs del sistema y cuestiones de software',
                 'color' => '#0d6efd', // primary blue
                 'icon' => 'fa-duotone fa-tools',
-                'is_active' => true,
-                'position' => 1,
+                'active' => true,
+                'order' => 1,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Consulta de Facturación',
-                'key' => 'billing_inquiry',
+                'slug' => 'consulta-facturacion',
                 'description' => 'Preguntas sobre pagos, facturas y suscripciones',
                 'color' => '#0dcaf0', // info cyan
                 'icon' => 'fa-duotone fa-receipt',
-                'is_active' => true,
-                'position' => 2,
+                'active' => true,
+                'order' => 2,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Solicitud de Función',
-                'key' => 'feature_request',
+                'slug' => 'solicitud-funcion',
                 'description' => 'Solicitudes de nuevas funcionalidades y mejoras',
                 'color' => '#198754', // success green
                 'icon' => 'fa-duotone fa-lightbulb',
-                'is_active' => true,
-                'position' => 3,
+                'active' => true,
+                'order' => 3,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Gestión de Cuenta',
-                'key' => 'account_management',
+                'slug' => 'gestion-cuenta',
                 'description' => 'Perfil de usuario, contraseña, problemas de acceso',
                 'color' => '#ffc107', // warning yellow
                 'icon' => 'fa-duotone fa-user-circle',
-                'is_active' => true,
-                'position' => 4,
+                'active' => true,
+                'order' => 4,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Información de Producto',
-                'key' => 'product_information',
+                'slug' => 'informacion-producto',
                 'description' => 'Detalles y características de productos y servicios',
                 'color' => '#0d6efd', // primary blue
                 'icon' => 'fa-duotone fa-box',
-                'is_active' => true,
-                'position' => 5,
+                'active' => true,
+                'order' => 5,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Estado del Pedido',
-                'key' => 'order_status',
+                'slug' => 'estado-pedido',
                 'description' => 'Seguimiento y consultas de entrega de pedidos',
                 'color' => '#0dcaf0', // info cyan
                 'icon' => 'fa-duotone fa-shipping-fast',
-                'is_active' => true,
-                'position' => 6,
+                'active' => true,
+                'order' => 6,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Reclamación',
-                'key' => 'complaint',
-                'description' => 'Quejas sobre el servicio y problemas experienciados',
+                'slug' => 'reclamacion',
+                'description' => 'Quejas sobre el servicio y problemas experimentados',
                 'color' => '#dc3545', // danger red
                 'icon' => 'fa-duotone fa-exclamation-triangle',
-                'is_active' => true,
-                'position' => 7,
+                'active' => true,
+                'order' => 7,
             ],
             [
-                'uid' => Str::ulid(),
                 'name' => 'Otro',
-                'key' => 'other',
+                'slug' => 'otro',
                 'description' => 'Otras consultas que no encajan en las categorías anteriores',
                 'color' => '#6c757d', // secondary gray
                 'icon' => 'fa-duotone fa-question-circle',
-                'is_active' => true,
-                'position' => 8,
+                'active' => true,
+                'order' => 8,
             ],
         ];
 
         foreach ($categories as $category) {
             TicketCategory::firstOrCreate(
-                ['key' => $category['key']],
+                ['slug' => $category['slug']],
                 $category
             );
         }
 
-        $this->command->info('✅ Helpdesk ticket categories seeded successfully');
+        $this->command?->info('✅ Helpdesk ticket categories seeded successfully');
     }
 }

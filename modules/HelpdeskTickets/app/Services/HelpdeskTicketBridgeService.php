@@ -135,6 +135,22 @@ class HelpdeskTicketBridgeService implements TicketServiceContract
             ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]);
     }
 
+    public function getAssignableAgents(): Collection
+    {
+        // Antes: query inline en el blade con roles 'agent'/'admin'/'manager'
+        // (no existen — los reales son helpdesk-agent/helpdesk-admin/
+        // helpdesk-manager, lanzaban RoleDoesNotExist) + un fallback por
+        // permisos directos "like %ticket%" que enganchaba ~99 usuarios sin
+        // relación real con ser agente de Helpdesk. Cacheado 5 min: es una
+        // lista de staff que cambia poco, y el modal de escalar a ticket
+        // puede abrirse varias veces por sesión de un agente.
+        return Cache::remember('helpdesktickets:assignable-agents', 300, fn () => User::query()
+            ->whereHas('roles', fn ($q) => $q->whereIn('name', ['helpdesk-agent', 'helpdesk-admin', 'helpdesk-manager']))
+            ->orderBy('firstname')
+            ->get(['id', 'firstname', 'lastname'])
+            ->map(fn (User $u) => ['id' => $u->id, 'name' => trim("{$u->firstname} {$u->lastname}")]));
+    }
+
     public function getTicketDetail(int $ticketId): ?array
     {
         $ticket = Ticket::with(['status', 'category', 'assignee', 'customer', 'items'])

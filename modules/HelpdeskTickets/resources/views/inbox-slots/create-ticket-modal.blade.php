@@ -68,19 +68,9 @@
                     <div class="flabel">Agente</div>
                     <select class="fselect" id="bv-ticket-assignee">
                         <option value="">Sin asignar</option>
-                        @php
-                            $ticketAgents = [];
-                            try {
-                                $ticketAgents = \App\Models\User::query()
-                                    ->whereHas('roles', fn($q) => $q->whereIn('name', ['agent', 'admin', 'manager']))
-                                    ->orWhereHas('permissions', fn($q) => $q->where('name', 'like', '%ticket%'))
-                                    ->limit(50)
-                                    ->get();
-                            } catch (\Throwable $e) {}
-                        @endphp
-                        @foreach($ticketAgents as $agent)
-                            <option value="{{ $agent->id }}" {{ $convo?->assignee_id == $agent->id ? 'selected' : '' }}>
-                                {{ $agent->name }}
+                        @foreach(app(\Modules\Helpdesk\Contracts\TicketServiceContract::class)->getAssignableAgents() as $agent)
+                            <option value="{{ $agent['id'] }}" {{ $convo?->assignee_id == $agent['id'] ? 'selected' : '' }}>
+                                {{ $agent['name'] }}
                             </option>
                         @endforeach
                     </select>
