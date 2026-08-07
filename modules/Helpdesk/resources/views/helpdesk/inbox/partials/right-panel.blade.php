@@ -123,8 +123,8 @@
             }
         }
 
-        // Activity events
-        $rpEvents = $rpConvo ? $rpConvo->events()->with(['author', 'user'])->latest()->limit(20)->get() : collect();
+        // Activity events: cargado bajo demanda por RightPanelTabController@activity
+        // (ver pestaña "Actividad" más abajo) — antes se consultaba en cada render.
 
         // Widget technology + visited pages (HelpdeskLivechat module).
         // Show the tab for web-channel conversations (and as fallback for any
@@ -196,79 +196,12 @@
         // Backwards-compat alias for places that already check $rpHasWidgetData
         $rpHasWidgetData = $rpShowTechnologyTab;
 
-        // Archivos: extraer attachments de los items de TODAS las conversaciones del cliente
-        $rpFiles = collect();
-        if ($rpCust) {
-            $convIds = \Modules\Helpdesk\Models\Conversation::where('customer_id', $rpCust->id)->pluck('id');
-            $items = \Modules\Helpdesk\Models\ConversationItem::query()
-                ->whereIn('conversation_id', $convIds)
-                ->whereNotNull('attachment_urls')
-                ->with(['user:id,firstname,lastname'])
-                ->latest('created_at')
-                ->limit(60)
-                ->get();
-            foreach ($items as $item) {
-                $urls = $item->attachment_urls ?? [];
-                $metas = $item->metadata['attachments'] ?? [];
-                foreach ($urls as $idx => $url) {
-                    // attachment_urls may be a plain URL string or an object {url, name, size, mime_type}
-                    $urlEntry = is_array($url) ? $url : ['url' => $url];
-                    $url      = $urlEntry['url'] ?? $url;
-                    $meta = $metas[$idx] ?? [];
-                    $mimeMain = isset($urlEntry['mime_type']) ? explode('/', $urlEntry['mime_type'])[0] : null;
-                    $meta = array_merge([
-                        'name' => $urlEntry['name'] ?? null,
-                        'size' => $urlEntry['size'] ?? null,
-                        'type' => $mimeMain && in_array($mimeMain, ['image', 'video', 'audio']) ? $mimeMain : null,
-                    ], $meta ?: []);
-                    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-                    $type = $meta['type'] ?? (
-                        in_array($ext, ['jpg','jpeg','png','gif','webp','svg','bmp','tiff','tif','heic','heif','avif','ico','jfif']) ? 'image'
-                        : (in_array($ext, ['mp4','mov','webm','avi','mkv','ogv','3gp','flv','wmv','m4v']) ? 'video'
-                        : (in_array($ext, ['mp3','ogg','wav','oga','m4a','aac','flac','opus','wma','aiff']) ? 'audio'
-                        : 'document'))
-                    );
-                    // Determine author display:
-                    // - if item has user_id (agent), use agent name
-                    // - else if author_id matches customer, use customer name
-                    // - else "Sistema"
-                    $authorName = 'Sistema';
-                    $authorIsAgent = false;
-                    if ($item->user) {
-                        $authorName = trim(($item->user->firstname ?? '').' '.($item->user->lastname ?? '')) ?: 'Agente';
-                        $authorIsAgent = true;
-                    } elseif ($item->author_id && $rpCust && $item->author_id === $rpCust->id) {
-                        $authorName = $rpCust->name ?? 'Cliente';
-                    }
-                    $rpFiles->push((object) [
-                        'url' => $url,
-                        'name' => $meta['name'] ?? basename(parse_url($url, PHP_URL_PATH)),
-                        'size' => $meta['size'] ?? null,
-                        'type' => $type,
-                        'ext' => $ext,
-                        'created_at' => $item->created_at,
-                        'conversation_id' => $item->conversation_id,
-                        'author_name' => $authorName,
-                        'author_is_agent' => $authorIsAgent,
-                    ]);
-                }
-            }
-        }
+        // Archivos: cargado bajo demanda por RightPanelTabController@files
+        // (ver pestaña "Archivos" más abajo) — antes se consultaban hasta 60
+        // ConversationItem por cliente en cada render del panel derecho.
 
-        // Event icon map
-        $rpEventIcons = [
-            'status_change'   => 'fas fa-circle-dot',
-            'assigned'        => 'fas fa-user-check',
-            'unassigned'      => 'fas fa-user-minus',
-            'closed'          => 'fas fa-circle-xmark',
-            'reopened'        => 'fas fa-rotate-left',
-            'archived'        => 'fas fa-box-archive',
-            'unarchived'      => 'fas fa-box-open',
-            'priority_changed'=> 'fas fa-flag',
-            'internal_note'   => 'fas fa-note-sticky',
-            'attachment_added'=> 'fas fa-paperclip',
-            'customer_replied'=> 'fas fa-reply',
-        ];
+        // Event icon map: movido a right-panel-tabs/activity.blade.php (pestaña
+        // "Actividad" cargada bajo demanda).
 
         // Ticket priority / status helpers
         $rpTicketPriorityColors = ['low' => 'muted', 'normal' => 'info', 'high' => 'warning', 'urgent' => 'danger'];
@@ -604,9 +537,11 @@
                     // catálogo dinámico.
                     $rpCust->loadMissing('externalIds');
                     $rpLinkedByPlatform = $rpCust->externalIds->keyBy('platform');
-                    $rpProviders = \Modules\HelpdeskIntegration\Models\IntegrationProvider::query()
-                        ->orderBy('sort_order')
-                        ->get();
+                    // Catálogo cacheado (ver IntegrationProvider::allCached) — antes
+                    // era una query SQL sin caché en cada apertura/cambio de
+                    // conversación del inbox, duplicando además la misma consulta
+                    // que ya hacía CustomerIntegrationService::buildPayload().
+                    $rpProviders = \Modules\HelpdeskIntegration\Models\IntegrationProvider::allCached();
 
                     foreach ($rpProviders as $rpProvider) {
                         $rpLink = $rpLinkedByPlatform->get($rpProvider->platform);
@@ -621,6 +556,7 @@
                             'name'      => $rpProvider->label ?: ucfirst($rpProvider->platform),
                             'id'        => $rpLink?->external_id ?: 'sin vincular',
                             'connected' => (bool) $rpLink,
+                            'platform'  => $rpProvider->platform,
                         ];
                     }
 
@@ -635,6 +571,7 @@
                             'name'      => ucfirst($rpPlatform),
                             'id'        => (string) $rpLink->external_id,
                             'connected' => true,
+                            'platform'  => $rpPlatform,
                         ];
                     }
                 } else {
@@ -649,6 +586,7 @@
                             'name'  => 'PrestaShop',
                             'id'    => $rpExternalPsId ? 'PS-#'.$rpExternalPsId : 'sin vincular',
                             'connected' => (bool) $rpExternalPsId,
+                            'platform'  => 'prestashop',
                         ];
 
                         $rpIntegrationsList[] = [
@@ -656,6 +594,7 @@
                             'name'  => 'Gestión (ERP)',
                             'id'    => $rpExternalErpId ? 'ERP-'.$rpExternalErpId : 'sin vincular',
                             'connected' => (bool) $rpExternalErpId,
+                            'platform'  => 'erp',
                         ];
                     }
 
@@ -753,7 +692,12 @@
                         @foreach($rpIntegrationsList as $intg)
                             <div class="rsp-integration @if(!$intg['connected']) is-disconnected @endif @if($rpIntegrationsModalAvailable) is-clickable @endif"
                                  @if($rpIntegrationsModalAvailable)
-                                     role="button" tabindex="0" data-bv-modal="customer-integrations"
+                                     role="button" tabindex="0"
+                                     @if(! empty($intg['platform']))
+                                         data-platform="{{ $intg['platform'] }}"
+                                     @else
+                                         data-bv-modal="customer-integrations"
+                                     @endif
                                      title="{{ __('helpdesk::helpdesk.inbox.right.view_customer_integrations') }}"
                                  @endif>
                                 <div class="ico"><i class="{{ $intg['icon'] }}"></i></div>
@@ -776,259 +720,11 @@
         {{-- ── Tab: Carritos ── (contenido movido al módulo HelpdeskPrestashop,
              ver inbox-slots/right-panel-prestashop-tabs.blade.php) --}}
 
-        {{-- ── Tab: Archivos ── --}}
-        @php
-            $rpFileCounts = [
-                'all'      => $rpFiles->count(),
-                'image'    => $rpFiles->where('type', 'image')->count(),
-                'audio'    => $rpFiles->where('type', 'audio')->count(),
-                'video'    => $rpFiles->where('type', 'video')->count(),
-                'document' => $rpFiles->where('type', 'document')->count(),
-            ];
-            $rpFileSizes = [
-                'all'      => $rpFiles->sum('size'),
-                'image'    => $rpFiles->where('type', 'image')->sum('size'),
-                'audio'    => $rpFiles->where('type', 'audio')->sum('size'),
-                'video'    => $rpFiles->where('type', 'video')->sum('size'),
-                'document' => $rpFiles->where('type', 'document')->sum('size'),
-            ];
-            $rpFormatSize = function ($bytes) {
-                if (! $bytes) { return '0 B'; }
-                if ($bytes < 1024) { return $bytes.' B'; }
-                if ($bytes < 1048576) { return round($bytes / 1024, 1).' KB'; }
-                if ($bytes < 1073741824) { return round($bytes / 1048576, 1).' MB'; }
-                return round($bytes / 1073741824, 1).' GB';
-            };
-            $rpDocIcons = [
-                // PDF
-                'pdf'  => ['icon' => 'fa-file-pdf',        'color' => '#dc2626'],
-                // Word
-                'doc'  => ['icon' => 'fa-file-word',       'color' => '#475569'],
-                'docx' => ['icon' => 'fa-file-word',       'color' => '#475569'],
-                'rtf'  => ['icon' => 'fa-file-word',       'color' => '#64748b'],
-                'odt'  => ['icon' => 'fa-file-word',       'color' => '#64748b'],
-                // Excel
-                'xls'  => ['icon' => 'fa-file-excel',      'color' => '#059669'],
-                'xlsx' => ['icon' => 'fa-file-excel',      'color' => '#059669'],
-                'ods'  => ['icon' => 'fa-file-excel',      'color' => '#059669'],
-                // PowerPoint
-                'ppt'  => ['icon' => 'fa-file-powerpoint', 'color' => '#e67000'],
-                'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => '#e67000'],
-                'odp'  => ['icon' => 'fa-file-powerpoint', 'color' => '#e67000'],
-                // Archives
-                'zip'  => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                'rar'  => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                '7z'   => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                'gz'   => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                'tar'  => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                'bz2'  => ['icon' => 'fa-file-zipper',     'color' => '#71717a'],
-                // Text / data
-                'csv'  => ['icon' => 'fa-file-csv',        'color' => '#059669'],
-                'txt'  => ['icon' => 'fa-file-lines',      'color' => '#71717a'],
-                'md'   => ['icon' => 'fa-file-lines',      'color' => '#71717a'],
-                // Code / markup
-                'json' => ['icon' => 'fa-file-code',       'color' => '#f59e0b'],
-                'xml'  => ['icon' => 'fa-file-code',       'color' => '#f59e0b'],
-                'html' => ['icon' => 'fa-file-code',       'color' => '#f97316'],
-                'htm'  => ['icon' => 'fa-file-code',       'color' => '#f97316'],
-                'css'  => ['icon' => 'fa-file-code',       'color' => '#06b6d4'],
-                'js'   => ['icon' => 'fa-file-code',       'color' => '#eab308'],
-                'php'  => ['icon' => 'fa-file-code',       'color' => '#8b5cf6'],
-                // Images shown as doc (svg, bmp, tif when not renderable)
-                'svg'  => ['icon' => 'fa-file-image',      'color' => '#10b981'],
-                'bmp'  => ['icon' => 'fa-file-image',      'color' => '#71717a'],
-                'tiff' => ['icon' => 'fa-file-image',      'color' => '#71717a'],
-                'tif'  => ['icon' => 'fa-file-image',      'color' => '#71717a'],
-                // Audio (fallback if typed as document)
-                'mp3'  => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'wav'  => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'ogg'  => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'aac'  => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'flac' => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'm4a'  => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                'opus' => ['icon' => 'fa-file-audio',      'color' => '#7c3aed'],
-                // Video (fallback if typed as document)
-                'avi'  => ['icon' => 'fa-file-video',      'color' => '#ef4444'],
-                'mkv'  => ['icon' => 'fa-file-video',      'color' => '#ef4444'],
-                'flv'  => ['icon' => 'fa-file-video',      'color' => '#ef4444'],
-                'wmv'  => ['icon' => 'fa-file-video',      'color' => '#ef4444'],
-            ];
-            $rpTypeColors = [
-                'image'    => '#b10100',
-                'video'    => '#dc2626',
-                'audio'    => '#f87171',
-                'document' => '#7b0000',
-            ];
-            $rpTypeLabels = [
-                'image'    => 'Imágenes',
-                'video'    => 'Vídeo',
-                'audio'    => 'Audio',
-                'document' => 'Docs',
-            ];
-        @endphp
+        {{-- ── Tab: Archivos — cargado bajo demanda (RightPanelTabController@files) ── --}}
         @if(helpdesk_feature_enabled('tab_files'))
-        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="files">
-
-            @if($rpFiles->isEmpty())
-                <div class="bv-tab-empty">
-                    <i class="far fa-folder-open"></i>
-                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_files_title') }}</div>
-                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_files_sub') }}</div>
-                </div>
-            @else
-
-                {{-- Section header --}}
-                <div class="media-sec-head">
-                    @if($rpFileSizes['all'])
-                        <div class="media-size">{{ $rpFormatSize($rpFileSizes['all']) }}</div>
-                    @endif
-                </div>
-
-                {{-- Progress bar --}}
-                @if($rpFileSizes['all'] > 0)
-                    <div class="media-progress">
-                        @foreach($rpTypeColors as $t => $color)
-                            @if($rpFileSizes[$t] > 0)
-                                @php $pct = ($rpFileSizes[$t] / $rpFileSizes['all']) * 100; @endphp
-                                <div class="seg {{ $t }}"
-                                     style="width:{{ round($pct, 2) }}%;background:{{ $color }};"
-                                     data-tooltip="{{ $rpTypeLabels[$t] }}: {{ $rpFileCounts[$t] }} · {{ $rpFormatSize($rpFileSizes[$t]) }}"
-                                     aria-label="{{ $rpTypeLabels[$t] }}: {{ $rpFileCounts[$t] }} · {{ $rpFormatSize($rpFileSizes[$t]) }}"></div>
-                            @endif
-                        @endforeach
-                    </div>
-                    <div class="media-legend">
-                        @foreach($rpTypeColors as $t => $color)
-                            @if($rpFileCounts[$t] > 0)
-                                <span class="item">
-                                    <span class="d {{ $t }}" style="background:{{ $color }};"></span>
-                                    {{ $rpTypeLabels[$t] }}
-                                    <strong>{{ $rpFormatSize($rpFileSizes[$t]) }}</strong>
-                                </span>
-                            @endif
-                        @endforeach
-                    </div>
-                @endif
-
-                <div class="media-divider"></div>
-
-                {{-- Filter + sort + view toolbar --}}
-                <div class="media-filter-row">
-                    <span class="media-pill bv-files-filter on" data-bv-files-filter="all">
-                        {{ __('helpdesk::helpdesk.inbox.right.all_label') }} <span class="c">{{ $rpFileCounts['all'] }}</span>
-                    </span>
-                    @if($rpFileCounts['image'] > 0)
-                        <span class="media-pill bv-files-filter" data-bv-files-filter="image">
-                            <i class="far fa-image"></i> <span class="c">{{ $rpFileCounts['image'] }}</span>
-                        </span>
-                    @endif
-                    @if($rpFileCounts['audio'] > 0)
-                        <span class="media-pill bv-files-filter" data-bv-files-filter="audio">
-                            <i class="fas fa-volume-high"></i> <span class="c">{{ $rpFileCounts['audio'] }}</span>
-                        </span>
-                    @endif
-                    @if($rpFileCounts['video'] > 0)
-                        <span class="media-pill bv-files-filter" data-bv-files-filter="video">
-                            <i class="fas fa-video"></i> <span class="c">{{ $rpFileCounts['video'] }}</span>
-                        </span>
-                    @endif
-                    @if($rpFileCounts['document'] > 0)
-                        <span class="media-pill bv-files-filter" data-bv-files-filter="document">
-                            <i class="far fa-file-lines"></i> <span class="c">{{ $rpFileCounts['document'] }}</span>
-                        </span>
-                    @endif
-
-                    <span class="spacer"></span>
-
-                    <select class="fselect bv-files-sort" id="bv-files-sort" aria-label="{{ __('helpdesk::helpdesk.inbox.right.sort_aria_label') }}">
-                        <option value="recent">{{ __('helpdesk::helpdesk.inbox.right.sort_recent') }}</option>
-                        <option value="oldest">{{ __('helpdesk::helpdesk.inbox.right.sort_oldest') }}</option>
-                        <option value="size-desc">{{ __('helpdesk::helpdesk.inbox.right.sort_size_desc') }}</option>
-                        <option value="size-asc">{{ __('helpdesk::helpdesk.inbox.right.sort_size_asc') }}</option>
-                        <option value="name">{{ __('helpdesk::helpdesk.inbox.right.sort_name') }}</option>
-                    </select>
-
-                    <div class="media-view-toggle">
-                        <button class="bv-files-vt on" data-bv-view="grid" title="{{ __('helpdesk::helpdesk.inbox.right.view_grid_title') }}">
-                            <i class="fas fa-grip"></i>
-                        </button>
-                        <button class="bv-files-vt" data-bv-view="list" title="{{ __('helpdesk::helpdesk.inbox.right.view_list_title') }}">
-                            <i class="fas fa-list"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <hr class="bv-files-divider">
-
-                {{-- File grid --}}
-                <div class="media-grid bv-files-grid" id="bv-files-grid" data-view="grid">
-                    @foreach($rpFiles as $f)
-                        @php
-                            $fileMeta    = $rpDocIcons[$f->ext] ?? ['icon' => 'fa-file', 'color' => '#71717a'];
-                            $fileTooltip = $f->name.($f->size ? ' · '.$rpFormatSize($f->size) : '');
-                        @endphp
-                        <a href="{{ $f->url }}"
-                           target="_blank" rel="noopener"
-                           class="media-card bv-file-card"
-                           data-bv-file-type="{{ $f->type }}"
-                           data-bv-file-size="{{ $f->size ?: 0 }}"
-                           data-bv-file-name="{{ strtolower($f->name) }}"
-                           data-bv-file-ts="{{ $f->created_at?->timestamp ?? 0 }}"
-                           data-bv-file-url="{{ $f->url }}"
-                           data-tooltip="{{ $fileTooltip }}"
-                           aria-label="{{ $fileTooltip }}">
-                            <label class="bv-file-select" onclick="event.stopPropagation();">
-                                <input type="checkbox" class="bv-file-cb" onclick="event.stopPropagation();">
-                                <span class="bv-file-check"></span>
-                            </label>
-                            <div class="media-thumb{{ $f->type === 'video' ? ' video' : '' }}">
-                                @if($f->type === 'image')
-                                    <img src="{{ $f->url }}" alt="{{ $f->name }}" loading="lazy"
-                                         onerror="this.parentElement.classList.add('placeholder'); this.style.display='none';">
-                                    <i class="fa-regular fa-image bv-img-placeholder"></i>
-                                    <span class="bv-file-overlay"><i class="fas fa-magnifying-glass-plus"></i></span>
-                                @elseif($f->type === 'video')
-                                    <div class="play"><i class="fas fa-play"></i></div>
-                                @elseif($f->type === 'audio')
-                                    <div class="bv-file-icon-wrap bv-x25">
-                                        <i class="fas fa-volume-high"></i>
-                                    </div>
-                                    <span class="bv-file-overlay"><i class="fas fa-play"></i></span>
-                                @else
-                                    <div class="bv-file-icon-wrap" style="color:{{ $fileMeta['color'] }};">
-                                        <i class="fas {{ $fileMeta['icon'] }}"></i>
-                                    </div>
-                                    <span class="bv-file-overlay"><i class="fas fa-download"></i></span>
-                                @endif
-                                @if($f->ext)
-                                    <span class="type-badge">{{ strtoupper($f->ext) }}</span>
-                                @endif
-                            </div>
-                            <div class="media-info">
-                                <span class="name">{{ \Illuminate\Support\Str::limit($f->name, 24) }}</span>
-                                <span class="author" title="{{ $f->author_name }}">
-                                    {{ \Illuminate\Support\Str::limit($f->author_name, 16) }}
-                                </span>
-                                <div class="bv-file-row">
-                                    @if($f->size)<span class="size">{{ $rpFormatSize($f->size) }}</span>@endif
-                                    @if($f->created_at)<span class="date">{{ $f->created_at->diffForHumans(['short' => true]) }}</span>@endif
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-
-                {{-- Footer: descarga y cierre (solo visible con selección activa) --}}
-                <div class="bv-files-footer" id="bv-files-footer" style="display:none;">
-                    <button type="button" class="bv-files-dl-btn" id="bv-files-dl-btn">
-                        {{ __('helpdesk::helpdesk.inbox.right.download_selection') }}
-                    </button>
-                    <button type="button" class="bv-files-close-btn" id="bv-files-close-btn">
-                        {{ __('helpdesk::helpdesk.inbox.right.cancel_button') }}
-                    </button>
-                </div>
-
-            @endif
+        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="files" id="bv-files-tab"
+             data-conv-id="{{ $rpConvo?->id ?? '' }}">
+            <div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
         @endif
 
@@ -1045,149 +741,19 @@
             ])
         @endif
 
-        {{-- ── Tab: Anteriores ── --}}
+        {{-- ── Tab: Anteriores — cargado bajo demanda (RightPanelTabController@previous) ── --}}
         @if(helpdesk_feature_enabled('tab_previous'))
-        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="previous">
-            @php
-                $rpPrevious = collect();
-                if ($rpCust) {
-                    $rpPrevious = \Modules\Helpdesk\Models\Conversation::where('customer_id', $rpCust->id)
-                        ->where('id', '!=', $rpConvo?->id)
-                        ->with(['status', 'assignee', 'inbox', 'lastMessage'])
-                        ->withCount(['items as messages_count'])
-                        ->latest('last_message_at')
-                        ->limit(20)
-                        ->get();
-                }
-                $prevChannelIcons = [
-                    'whatsapp'  => ['icon' => 'fab fa-whatsapp',     'color' => '#25d366'],
-                    'facebook'  => ['icon' => 'fab fa-facebook-f',   'color' => '#1877f2'],
-                    'instagram' => ['icon' => 'fab fa-instagram',    'color' => '#e4405f'],
-                    'email'     => ['icon' => 'far fa-envelope',     'color' => '#52525b'],
-                    'twitter'   => ['icon' => 'fab fa-twitter',      'color' => '#1da1f2'],
-                    'web'       => ['icon' => 'far fa-comment-dots', 'color' => '#14b8a6'],
-                ];
-            @endphp
-
-            @if($rpPrevious->isEmpty())
-                <div class="bv-tab-empty">
-                    <i class="fas fa-clock-rotate-left"></i>
-                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_previous_title') }}</div>
-                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_previous_sub') }}</div>
-                </div>
-            @else
-                {{-- Search --}}
-                <div class="bv-prev-search">
-                    <i class="fas fa-magnifying-glass"></i>
-                    <input type="text" class="bv-prev-search-input" placeholder="{{ __('helpdesk::helpdesk.inbox.right.search_history_placeholder') }}">
-                </div>
-
-                {{-- Filter pills --}}
-                @php
-                    $prevAll    = $rpPrevious->count();
-                    $prevOpen   = $rpPrevious->filter(fn($c) => (bool)($c->status?->is_open ?? true))->count();
-                    $prevClosed = $prevAll - $prevOpen;
-                @endphp
-                <div class="bv-prev-filter-row">
-                    <span class="bv-media-pill bv-prev-pill on" data-bv-prev-filter="all">
-                        {{ __('helpdesk::helpdesk.inbox.right.filter_all_fem') }} <span class="c">{{ $prevAll }}</span>
-                    </span>
-                    <span class="bv-media-pill bv-prev-pill" data-bv-prev-filter="open">
-                        {{ __('helpdesk::helpdesk.inbox.right.filter_open') }} <span class="c">{{ $prevOpen }}</span>
-                    </span>
-                    <span class="bv-media-pill bv-prev-pill" data-bv-prev-filter="closed">
-                        {{ __('helpdesk::helpdesk.inbox.right.filter_closed') }} <span class="c">{{ $prevClosed }}</span>
-                    </span>
-                </div>
-
-                {{-- Conversation cards --}}
-                <div class="bv-prev-list" id="bvPrevList">
-                    @foreach($rpPrevious as $prev)
-                        @php
-                            $ch         = $prevChannelIcons[$prev->channel ?? 'web'] ?? $prevChannelIcons['web'];
-                            $isOpen     = (bool)($prev->status?->is_open ?? true);
-                            $statusName = $prev->status?->name ?? 'Abierta';
-                            $custName   = $rpCust?->name ?? 'Cliente';
-                            $initials   = mb_strtoupper(
-                                collect(preg_split('/\s+/', trim($custName)))
-                                    ->take(2)->map(fn($w) => mb_substr($w,0,1))->implode('')
-                            );
-                            $msgCount   = $prev->messages_count ?? 0;
-                            $dateLabel  = optional($prev->last_message_at ?? $prev->created_at)->diffForHumans(['short' => true]) ?? '—';
-                            $preview    = $prev->lastMessage?->body ?? '';
-                            if (!$preview && $prev->subject) { $preview = $prev->subject; }
-                        @endphp
-                        <button class="bv-conv-card"
-                                data-bv-prev-open="{{ $isOpen ? '1' : '0' }}"
-                                data-bv-prev-text="{{ strtolower($statusName . ' ' . ($prev->subject ?? '')) }}"
-                                data-conv-id="{{ $prev->id }}"
-                                data-conv-subject="{{ e($prev->subject ?? 'Conversación') }}"
-                                data-conv-status="{{ e($statusName) }}"
-                                data-conv-is-open="{{ $isOpen ? '1' : '0' }}"
-                                data-conv-channel="{{ $prev->channel ?? 'web' }}"
-                                data-viewer-url="{{ route('manager.helpdesk.conversations.viewer-items', $prev->id) }}">
-                            <div class="bv-conv-av">
-                                {{ $initials ?: '?' }}
-                                <span class="bv-ch-badge">
-                                    <i class="{{ $ch['icon'] }}"></i>
-                                </span>
-                            </div>
-                            <div class="bv-conv-body">
-                                <div class="bv-conv-head">
-                                    <span class="bv-conv-nm">{{ $custName }}</span>
-                                    <span class="bv-conv-time">{{ $dateLabel }}</span>
-                                </div>
-                                @if($preview)
-                                    <div class="bv-conv-preview">{{ \Illuminate\Support\Str::limit($preview, 80) }}</div>
-                                @endif
-                                <div class="bv-conv-foot">
-                                    @if($msgCount > 0)
-                                        <span class="bv-conv-seg">
-                                            <i class="fas fa-message"></i> {{ $msgCount }} mensaje{{ $msgCount !== 1 ? 's' : '' }}
-                                        </span>
-                                    @endif
-                                    <span class="bv-conv-status-badge {{ $isOpen ? 'open' : '' }}">
-                                        {{ $statusName }}
-                                    </span>
-                                </div>
-                            </div>
-                        </button>
-                    @endforeach
-                </div>
-            @endif
+        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="previous" id="bv-previous-tab"
+             data-conv-id="{{ $rpConvo?->id ?? '' }}">
+            <div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
         @endif
 
-        {{-- ── Tab: Actividad ── --}}
+        {{-- ── Tab: Actividad — cargado bajo demanda (RightPanelTabController@activity) ── --}}
         @if(helpdesk_feature_enabled('tab_activity'))
-        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="activity">
-            @if($rpEvents->isEmpty())
-                <div class="bv-tab-empty">
-                    <i class="fas fa-clock-rotate-left"></i>
-                    <div class="bv-tab-empty-title">{{ __('helpdesk::helpdesk.inbox.right.no_activity_title') }}</div>
-                    <div class="bv-tab-empty-sub">{{ __('helpdesk::helpdesk.inbox.right.no_activity_sub') }}</div>
-                </div>
-            @else
-                <div class="rsp-section bv-x49">
-                    <div class="lbl"><i class="fas fa-bolt-lightning"></i> {{ __('helpdesk::helpdesk.inbox.right.activity_timeline') }}</div>
-                    <div class="rsp-timeline">
-                        @foreach($rpEvents as $event)
-                        <div class="rsp-tl-item">
-                            <div class="ic">
-                                <i class="{{ $rpEventIcons[$event->type] ?? 'fas fa-circle-info' }}"></i>
-                            </div>
-                            <div class="body">
-                                <div class="t">{{ $event->event_label }}</div>
-                                <div class="s">
-                                    {{ $event->created_at?->diffForHumans() }}
-                                    @if($event->sender_name !== 'Sistema') · {{ $event->sender_name }} @endif
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+        <div class="bv-right-tab-content bv-tab-hidden" data-bv-tab-content="activity" id="bv-activity-tab"
+             data-conv-id="{{ $rpConvo?->id ?? '' }}">
+            <div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>
         </div>
         @endif
 
@@ -2142,6 +1708,69 @@ $(document).on('click', '.bv-sync-commerce', function () {
         $btn.prop('disabled', false).find('i').removeClass('fa-spin');
     });
 });
+</script>
+@endpush
+@endonce
+
+{{-- ── Carga perezosa: Archivos / Anteriores / Actividad ──────────────
+     Mismo patrón que la pestaña "Emails" (ver más abajo): el servidor
+     devuelve el fragmento HTML ya renderizado (mismas vistas que antes se
+     incluían inline) y el JS solo lo inyecta — así no hay que reimplementar
+     el renderizado de tarjetas/listas en JS. Se dispara al hacer click en
+     la pestaña, y de nuevo tras cada swap de pane porque
+     bvInitRightPanelTabs() vuelve a "clicar" la pestaña que estaba activa. --}}
+@once
+@push('scripts')
+<script>
+(function () {
+    var RP_LAZY_TABS = {
+        files: { url: 'right-panel/files' },
+        previous: { url: 'right-panel/previous' },
+        activity: { url: 'right-panel/activity' },
+    };
+    var rpLazyState = {};
+
+    function rpLoadLazyTab(tabName) {
+        var cfg = RP_LAZY_TABS[tabName];
+        if (!cfg) { return; }
+        var container = document.getElementById('bv-' + tabName + '-tab');
+        if (!container) { return; }
+        var convId = container.dataset.convId;
+        if (!convId) { return; }
+
+        var state = rpLazyState[tabName] || (rpLazyState[tabName] = {});
+        if (state.loaded && state.convId === convId) { return; }
+
+        container.innerHTML = '<div class="bv-em-loading"><i class="fas fa-spinner fa-spin"></i></div>';
+        $.ajax({
+            url: '/panel/helpdesk/conversations/' + convId + '/' + cfg.url,
+            method: 'GET',
+        }).done(function (html) {
+            container.innerHTML = html;
+            state.loaded = true;
+            state.convId = convId;
+        }).fail(function () {
+            container.innerHTML = '<div class="bv-tab-empty"><div class="bv-tab-empty-sub">No se pudo cargar el contenido.</div></div>';
+            state.loaded = false;
+        });
+    }
+
+    $(document).on('click', '.bv-right-tab', function () {
+        var tabName = $(this).data('bv-tab');
+        if (RP_LAZY_TABS[tabName]) { rpLoadLazyTab(tabName); }
+    });
+
+    // Recargar al cambiar de conversación aun si la pestaña ya estaba activa
+    // (mismo mecanismo de MutationObserver que usa la pestaña "Emails").
+    Object.keys(RP_LAZY_TABS).forEach(function (tabName) {
+        var node = document.getElementById('bv-' + tabName + '-tab');
+        if (!node) { return; }
+        (new MutationObserver(function () {
+            var state = rpLazyState[tabName];
+            if (state) { state.loaded = false; }
+        })).observe(node, { attributes: true, attributeFilter: ['data-conv-id'] });
+    });
+})();
 </script>
 @endpush
 @endonce

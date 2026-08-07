@@ -30,6 +30,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\HelpdeskSimulatorController;
 use Modules\Helpdesk\Http\Controllers\Managers\LeaderboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\LiveDashboardController;
 use Modules\Helpdesk\Http\Controllers\Managers\RemindersController;
+use Modules\Helpdesk\Http\Controllers\Managers\RightPanelTabController;
 use Modules\Helpdesk\Http\Controllers\Managers\SearchController;
 use Modules\Helpdesk\Http\Controllers\Managers\SlaBreachesReportController;
 use Modules\Helpdesk\Http\Controllers\Managers\SuggestedArticlesController;
@@ -195,6 +196,17 @@ Route::group(['prefix' => ''], function () {
     Route::get('/conversations/{conversation}/emails/{emailLog}', [HelpdeskConversationsController::class, 'emailLogShow'])
         ->middleware('throttle:60,1')
         ->name('manager.helpdesk.conversations.emails.show');
+    // Carga perezosa de pestañas del panel derecho (ver RightPanelTabController) —
+    // antes se consultaban de forma eager en cada render de right-panel.blade.php.
+    Route::get('/conversations/{conversation}/right-panel/files', [RightPanelTabController::class, 'files'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.right-panel.files');
+    Route::get('/conversations/{conversation}/right-panel/previous', [RightPanelTabController::class, 'previous'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.right-panel.previous');
+    Route::get('/conversations/{conversation}/right-panel/activity', [RightPanelTabController::class, 'activity'])
+        ->middleware('throttle:120,1')
+        ->name('manager.helpdesk.conversations.right-panel.activity');
     Route::get('/conversations/{conversation}/viewer-items', [HelpdeskConversationsController::class, 'conversationViewerItems'])
         ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:60,1'])
         ->name('manager.helpdesk.conversations.viewer-items');
