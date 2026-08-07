@@ -10,6 +10,7 @@ use Modules\Erp\Models\ErpCredential;
 use Modules\Erp\Models\ErpEndpoint;
 use Modules\Erp\Models\ErpEndpointLog;
 use Modules\Erp\Models\ErpEndpointToken;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class ErpEndpointsController extends Controller
 {
@@ -217,6 +218,13 @@ class ErpEndpointsController extends Controller
      */
     public function test(ErpEndpoint $endpoint)
     {
+        // Defensa en profundidad: valida también aquí, no solo al guardar —
+        // cubre endpoints creados antes de este guard y cualquier caso donde
+        // full_url difiera del campo url ya validado.
+        if (! ErpEndpointUrlGuard::isAllowed($endpoint->full_url)) {
+            return back()->with('error', 'La URL de este endpoint no está permitida (localhost, metadata de nube, o esquema no soportado).');
+        }
+
         $startTime = microtime(true);
 
         try {

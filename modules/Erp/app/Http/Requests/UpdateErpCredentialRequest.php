@@ -8,7 +8,7 @@ class UpdateErpCredentialRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user()?->can('erp.endpoints.manage');
     }
 
     public function rules(): array

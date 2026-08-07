@@ -11,6 +11,7 @@ use Modules\Erp\Http\Requests\UpdateErpEndpointRequest;
 use Modules\Erp\Http\Resources\ErpEndpointLogResource;
 use Modules\Erp\Http\Resources\ErpEndpointResource;
 use Modules\Erp\Models\ErpEndpoint;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class ErpEndpointsApiController extends Controller
 {
@@ -101,6 +102,14 @@ class ErpEndpointsApiController extends Controller
 
     public function test(ErpEndpoint $endpoint): JsonResponse
     {
+        // Defensa en profundidad: valida también aquí, no solo al guardar —
+        // cubre endpoints creados antes de este guard.
+        if (! ErpEndpointUrlGuard::isAllowed($endpoint->url)) {
+            return response()->json([
+                'message' => 'La URL de este endpoint no está permitida (localhost, metadata de nube, o esquema no soportado).',
+            ], 422);
+        }
+
         $start = microtime(true);
         $statusCode = null;
         $success = false;

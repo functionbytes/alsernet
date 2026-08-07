@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Modules\Core\Models\Setting;
 use Modules\Erp\Services\ErpService;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class ErpSettingsController extends Controller
 {
@@ -44,11 +45,20 @@ class ErpSettingsController extends Controller
      */
     public function update(Request $request)
     {
+        // Misma protección SSRF que ErpEndpointUrlGuard aplica a los ERP
+        // Endpoints — estas 4 URLs también las pega el servidor (checkServices()
+        // y el resto de ErpService), así que necesitan el mismo guard.
+        $urlRule = ['url', function ($attribute, $value, $fail) {
+            if ($value && ! ErpEndpointUrlGuard::isAllowed($value)) {
+                $fail('La URL no está permitida (localhost, metadata de nube, o esquema no soportado).');
+            }
+        }];
+
         $rules = [
-            'erp_api_url' => 'required|url',
-            'erp_sync_url' => 'required|url',
-            'erp_xmlrpc_url' => 'nullable|url',
-            'erp_sms_url' => 'nullable|url',
+            'erp_api_url' => array_merge(['required'], $urlRule),
+            'erp_sync_url' => array_merge(['required'], $urlRule),
+            'erp_xmlrpc_url' => array_merge(['nullable'], $urlRule),
+            'erp_sms_url' => array_merge(['nullable'], $urlRule),
             'erp_connect_timeout' => 'nullable|numeric|min:1|max:300',
         ];
 
@@ -140,6 +150,14 @@ class ErpSettingsController extends Controller
 
             foreach ($urls as $name => $url) {
                 if (! $url) {
+                    $services[$name] = false;
+                    $allOnline = false;
+
+                    continue;
+                }
+
+                // Defensa en profundidad: valores guardados antes de este guard.
+                if (! ErpEndpointUrlGuard::isAllowed($url)) {
                     $services[$name] = false;
                     $allOnline = false;
 
