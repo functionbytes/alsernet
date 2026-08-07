@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWidgetStore } from '../widget-store';
-import { apiUrl, conversationAuthHeaders, setConversationToken, clearConversationToken } from '../api';
+import { apiUrl, conversationAuthHeaders, getWebsiteToken, websiteTokenHeaders, setConversationToken, clearConversationToken } from '../api';
 import { ImageLightbox } from '../components/ImageLightbox';
 import { getVisitorIdentity } from '../widget-identity';
 import { isScreenShareAvailable } from '../webrtc';
@@ -185,6 +185,9 @@ export function ConversationScreen() {
                     'Accept': 'application/json',
                     ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {}),
                     ...conversationAuthHeaders(),
+                    // Activa la cuota por tienda de ThrottleByWebsiteToken — antes
+                    // faltaba aquí y solo quedaba el límite genérico por IP.
+                    ...websiteTokenHeaders(),
                 },
                 body: JSON.stringify({
                     ...(customerId ? { customer_id: customerId } : {}),
@@ -224,8 +227,7 @@ export function ConversationScreen() {
         setAttachedFiles([]);
         setIsSending(true);
 
-        const token = (window as any).HELPDESK_WIDGET_CONFIG?.websiteToken
-            ?? new URLSearchParams(window.location.search).get('website_token');
+        const token = getWebsiteToken();
         const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
         const baseHeaders: Record<string, string> = {
             'Accept': 'application/json',
@@ -234,6 +236,11 @@ export function ConversationScreen() {
             // Sending an existing message requires the per-conversation token.
             // On the first message (conversation creation) it is empty and ignored.
             ...conversationAuthHeaders(),
+            // Activa la cuota por tienda de ThrottleByWebsiteToken (ver también
+            // el header de /typing más arriba) — antes solo se mandaba
+            // website_token en el body (para la creación de la conversación),
+            // que el middleware de throttle no lee.
+            ...websiteTokenHeaders(),
         };
 
         const identity = getVisitorIdentity();
