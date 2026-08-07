@@ -41,6 +41,10 @@ class SendFarewellOnConversationClosed implements ShouldQueue
 
     public function handle(ConversationClosed $event): void
     {
+        if (! helpdesk_farewell_feature_enabled()) {
+            return;
+        }
+
         $conversation = $event->conversation;
         $source = strtolower(substr((string) config('app.locale', 'es'), 0, 2));
         $customerLanguage = $this->resolveCustomerLanguage($conversation, $source);
