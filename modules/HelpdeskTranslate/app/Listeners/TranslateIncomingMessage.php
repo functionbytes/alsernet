@@ -60,6 +60,10 @@ class TranslateIncomingMessage implements ShouldQueue
             return;
         }
 
+        // El cupo diario (compartido con el resto de traducciones
+        // automáticas) se comprueba y descuenta DENTRO de translate(), solo
+        // en el cache-miss real contra el proveedor — así un mensaje
+        // repetido que ya está en caché no cuenta contra el cupo.
         $translated = $this->translator->translate($body, $agentLocale, $sourceLocale, feature: 'auto_incoming');
 
         if ($translated && $translated !== $body) {

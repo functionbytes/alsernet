@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Setting;
@@ -291,6 +292,13 @@ class TranslateSettingsController extends Controller
     }
 
     /**
+     * Cuota mensual de DeepL — no cambia en tiempo real (DeepL la actualiza
+     * con retraso propio), así que no necesita la frescura de un fetch en
+     * vivo en cada apertura/refresco del dashboard. Antes cada carga de
+     * `usage()` pegaba a `/v2/usage` con timeout(10) síncrono; con el
+     * proveedor lento, el dashboard entero esperaba hasta 10s por un dato
+     * que puede quedarse en caché unos minutos sin que nadie lo note.
+     *
      * @return array{character_count: int|null, character_limit: int|null}|null
      */
     private function fetchLiveDeeplQuota(): ?array
@@ -303,28 +311,40 @@ class TranslateSettingsController extends Controller
             return null;
         }
 
-        $baseUrl = Setting::get('helpdesktranslate.deepl.url')
-            ?: config('helpdesktranslate.deepl.url')
-            ?: 'https://api-free.deepl.com';
+        $cacheKey = 'helpdesktranslate:deepl-quota';
 
-        try {
-            $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
-                ->timeout(10)
-                ->get("{$baseUrl}/v2/usage");
+        $result = Cache::remember($cacheKey, 300, function () use ($apiKey) {
+            $baseUrl = Setting::get('helpdesktranslate.deepl.url')
+                ?: config('helpdesktranslate.deepl.url')
+                ?: 'https://api-free.deepl.com';
 
-            if ($response->failed()) {
+            try {
+                $response = Http::withHeaders(['Authorization' => "DeepL-Auth-Key {$apiKey}"])
+                    ->timeout(10)
+                    ->get("{$baseUrl}/v2/usage");
+
+                if ($response->failed()) {
+                    return null;
+                }
+
+                $usage = $response->json();
+
+                return [
+                    'character_count' => $usage['character_count'] ?? null,
+                    'character_limit' => $usage['character_limit'] ?? null,
+                ];
+            } catch (\Throwable) {
                 return null;
             }
+        });
 
-            $usage = $response->json();
-
-            return [
-                'character_count' => $usage['character_count'] ?? null,
-                'character_limit' => $usage['character_limit'] ?? null,
-            ];
-        } catch (\Throwable) {
-            return null;
+        // No dejar un fallo puntual "atascado" 5 minutos — el próximo
+        // refresco del dashboard reintenta en vez de esperar al TTL completo.
+        if ($result === null) {
+            Cache::forget($cacheKey);
         }
+
+        return $result;
     }
 
     /**
