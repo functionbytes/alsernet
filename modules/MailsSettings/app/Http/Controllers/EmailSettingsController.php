@@ -13,6 +13,11 @@ class EmailSettingsController extends Controller
      */
     public function index(): View
     {
+        abort_unless(
+            auth()->user()?->canAny(['mails-settings.outgoing.view', 'mails-settings.incoming.view']),
+            403
+        );
+
         $pageTitle = 'Configuración de Email';
         $breadcrumb = 'Configuración / Email';
 

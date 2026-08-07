@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
+use Modules\MailsSettings\Support\MailsSettingsUrlGuard;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class OutgoingEmailSettingsController extends Controller
@@ -19,6 +20,8 @@ class OutgoingEmailSettingsController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()?->can('mails-settings.outgoing.view'), 403);
+
         $settings = Setting::getEmailSettings();
         $pageTitle = 'Configuración de Correo Saliente';
         $breadcrumb = 'Configuración / Email / Saliente';
@@ -31,7 +34,14 @@ class OutgoingEmailSettingsController extends Controller
      */
     public function edit(): View
     {
+        abort_unless(auth()->user()?->can('mails-settings.outgoing.view'), 403);
+
         $settings = Setting::getEmailSettings();
+        // El valor real nunca se manda a la vista — se renderiza en blanco con
+        // placeholder "dejar en blanco para mantener la actual" (ver update()),
+        // porque antes se volcaba tal cual en value="" del <input type="password">,
+        // visible con "ver código fuente" para cualquiera que cargase la página.
+        $settings['mail_password'] = '';
         $rules = Setting::getEmailRules();
         $pageTitle = 'Editar Correo Saliente';
         $breadcrumb = 'Configuración / Email / Saliente / Editar';
@@ -44,8 +54,23 @@ class OutgoingEmailSettingsController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.outgoing.update'), 403);
+
         try {
-            $validated = $request->validate(Setting::getEmailRules());
+            $validated = $request->validate(array_merge(Setting::getEmailRules(), [
+                'mail_host' => ['required', 'string', function ($attribute, $value, $fail) {
+                    if (! MailsSettingsUrlGuard::isHostAllowed($value)) {
+                        $fail('El servidor SMTP no está permitido (apunta a una IP interna/reservada no válida).');
+                    }
+                }],
+            ]));
+
+            // El formulario manda la contraseña en blanco cuando el usuario no
+            // quiere cambiarla (ya no se precarga el valor real, ver edit()) —
+            // una sumisión vacía no debe machacar la contraseña ya guardada.
+            if (($validated['mail_password'] ?? '') === '') {
+                unset($validated['mail_password']);
+            }
 
             Setting::setEmailSettings($validated);
 
@@ -65,6 +90,8 @@ class OutgoingEmailSettingsController extends Controller
      */
     public function testConnection(): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.outgoing.test'), 403);
+
         try {
             $settings = Setting::getEmailSettings();
 
@@ -72,6 +99,17 @@ class OutgoingEmailSettingsController extends Controller
             $host = $settings['mail_host'];
             $port = (int) $settings['mail_port'];
             $timeout = 10;
+
+            // Defensa en profundidad: el host ya se valida al guardar (update()),
+            // pero una fila guardada antes de ese fix podría seguir apuntando a
+            // localhost/metadata cloud.
+            if (! MailsSettingsUrlGuard::isHostAllowed($host)) {
+                return response()->json([
+                    'success' => false,
+                    'status' => 'blocked',
+                    'message' => 'El servidor SMTP configurado no está permitido.',
+                ], 422);
+            }
 
             $startTime = microtime(true);
             $connection = @fsockopen($host, $port, $errno, $errstr, $timeout);
@@ -130,6 +168,8 @@ class OutgoingEmailSettingsController extends Controller
      */
     public function sendTestEmail(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.outgoing.test'), 403);
+
         try {
             $validated = $request->validate([
                 'test_email' => 'required|email',

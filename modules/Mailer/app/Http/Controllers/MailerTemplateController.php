@@ -3,6 +3,7 @@
 namespace Modules\Mailer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -328,6 +329,7 @@ class MailerTemplateController extends Controller
     public function preview(Request $request, $uid): View|RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+        $this->authorize('preview', $template);
 
         // Obtener idioma actual (del request o default a 1)
         $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
@@ -365,6 +367,7 @@ class MailerTemplateController extends Controller
 
         try {
             $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+            $this->authorize('preview', $template);
             $langId = (int) $request->input('lang_id', MailerLang::resolveDefaultId());
             $overrideLayoutId = $request->input('layout_id');
             $customContent = $request->input('content');
@@ -388,6 +391,8 @@ class MailerTemplateController extends Controller
             $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
             return $this->jsonSuccess(['html' => $html], 200, ['html' => $html]);
+        } catch (AuthorizationException $e) {
+            return $this->jsonError('forbidden', 'No tienes permiso para previsualizar esta plantilla.', 403);
         } catch (\Exception $e) {
             Log::error('Error en previewAjax: '.$e->getMessage());
 
@@ -538,13 +543,18 @@ class MailerTemplateController extends Controller
      */
     public function bulkAction(Request $request): JsonResponse
     {
-        $this->authorize('viewAny', MailerTemplate::class);
-
         $request->validate([
             'action' => ['required', 'in:activate,deactivate,delete'],
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'exists:mailer_templates,id'],
         ]);
+
+        // Antes autorizaba solo viewAny (mailer.templates.view) para las 3 acciones —
+        // dejaba que un usuario de solo-lectura activase/desactivase/borrase plantillas
+        // en bloque (BFLA). Cada acción exige ahora el permiso específico que ya mapea
+        // su Policy: delete → mailer.templates.delete, activate/deactivate → .update.
+        $ability = $request->input('action') === 'delete' ? 'mailer.templates.delete' : 'mailer.templates.update';
+        abort_unless($request->user()?->can($ability), 403);
 
         $templates = MailerTemplate::whereIn('id', $request->ids)->get();
         $count = $templates->count();
@@ -656,6 +666,7 @@ class MailerTemplateController extends Controller
     public function sendTest(Request $request, string $uid): RedirectResponse
     {
         $template = MailerTemplate::where('uid', $uid)->firstOrFail();
+        $this->authorize('update', $template);
 
         $validated = $request->validate([
             'test_email' => 'required|email',

@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
@@ -101,7 +102,11 @@ class FetchTicketEmailsJob implements ShouldQueue
      */
     protected function incomingConnections(): array
     {
-        $raw = DB::table('settings')->where('key', 'incoming_email')->value('value');
+        // El blob 'incoming_email' se guarda cifrado (Setting::setEncrypted) desde
+        // el fix de seguridad de MailsSettings — leerlo directo por DB::table()
+        // devolvía el ciphertext crudo en vez del JSON. Setting::getDecrypted()
+        // desencripta y también sirve las filas legacy sin cifrar tal cual.
+        $raw = Setting::getDecrypted('incoming_email', '{}');
 
         if (! $raw) {
             return [];

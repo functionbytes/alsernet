@@ -549,7 +549,11 @@ $(document).ready(function() {
             success: function(data) {
                 if (data.success) {
                     const $container = $('#previewContainer');
-                    const $iframe = $('<iframe>').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'overflow': 'hidden' });
+                    // sandbox="allow-same-origin" (sin allow-scripts): sin esto, un <script>
+                    // en el HTML de la plantilla se ejecuta con el origen del panel (srcdoc
+                    // sin sandbox hereda el origen del padre) — mismo tratamiento que ya
+                    // llevan las páginas de preview estáticas (templates/preview.blade.php).
+                    const $iframe = $('<iframe>').attr('sandbox', 'allow-same-origin').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'overflow': 'hidden' });
 
                     $container.empty().append($iframe);
                     $iframe[0].srcdoc = data.html;

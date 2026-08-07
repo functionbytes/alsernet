@@ -76,7 +76,7 @@
                                 <label class="form-label fw-semibold">Contraseña SMTP</label>
                                 <input type="password" class="form-control @error('mail_password') is-invalid @enderror"
                                        name="mail_password" value="{{ old('mail_password', $settings['mail_password']) }}"
-                                       placeholder="Dejar vacío si no se requiere">
+                                       placeholder="Dejar en blanco para mantener la contraseña actual" autocomplete="new-password">
                                 @error('mail_password')<small class="text-danger">{{ $message }}</small>@enderror
                             </div>
 
