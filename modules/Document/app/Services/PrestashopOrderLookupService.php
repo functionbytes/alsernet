@@ -117,6 +117,58 @@ class PrestashopOrderLookupService
     }
 
     /**
+     * Marca un pedido como candidato a envío al ERP — reemplaza el
+     * OrderSendErp::create() que escribía aalv_orders_envio_gestion directo.
+     */
+    public function flagForErpSend(int $orderId): bool
+    {
+        if (! $this->available()) {
+            return false;
+        }
+
+        try {
+            $result = app(self::SERVICE_CLASS)->flagOrderForErpSend($orderId);
+        } catch (\Throwable $e) {
+            Log::warning('Document: fallo marcando pedido para envío a ERP en el bridge PrestaShop', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return $result !== null;
+    }
+
+    /**
+     * Corrige nombre/email de un cliente anónimo (email placeholder anon_*)
+     * con datos reales — reemplaza el UPDATE directo a aalv_customer que
+     * hacía ValidateAndCreateDocumentsFromPaidOrders::fetchRealCustomerData().
+     * Devuelve false también cuando el bridge rechaza el cambio porque el
+     * cliente ya no es anónimo (re-chequeo server-side, ver
+     * alsernet_customer_fix_anonymous_profile).
+     */
+    public function fixAnonymousCustomer(int $customerId, string $firstname, string $lastname, string $email): bool
+    {
+        if (! $this->available()) {
+            return false;
+        }
+
+        try {
+            $result = app(self::SERVICE_CLASS)->fixAnonymousCustomerProfile($customerId, $firstname, $lastname, $email);
+        } catch (\Throwable $e) {
+            Log::warning('Document: fallo corrigiendo cliente anónimo en el bridge PrestaShop', [
+                'customer_id' => $customerId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        return (bool) ($result['updated'] ?? false);
+    }
+
+    /**
      * @param  array<string, mixed>|null  $detail  Respuesta cruda de order.detail
      */
     private function normalize(?array $detail): ?array

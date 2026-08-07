@@ -33,11 +33,6 @@ use Modules\Document\Services\DocumentMailService;
 use Modules\Document\Services\DocumentTypeService;
 use Modules\Document\Services\PrestashopOrderLookupService;
 use Modules\Mailer\Models\MailerTemplate;
-// OrderSendErp::create() (línea ~777) sigue en acceso directo: es una
-// ESCRITURA (marca el pedido para el envío a ERP que hace el propio
-// PrestaShop) sin endpoint de escritura equivalente en el bridge — fuera del
-// alcance de esta migración (solo se migraron lecturas).
-use Modules\Prestashop\Entities\Orders\OrderSendErp;
 use Modules\Supplier\Services\Integrations\ErpService;
 use setasign\Fpdi\Fpdi;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -774,16 +769,7 @@ class DocumentsController extends Controller
         }
 
         if ($request->proccess == 1) {
-            OrderSendErp::create([
-                'id_order' => $document->order_id,
-                'posible_enviar' => 1,
-                'motivo_no_enviar' => '',
-                'fecha_envio' => null,
-                'error_gestion' => '',
-                'id_pedido_gestion' => '',
-                'id_usuario_gestion' => '',
-                'force_type' => 0,
-            ]);
+            $this->prestashopOrders->flagForErpSend((int) $document->order_id);
         }
 
         $response = [

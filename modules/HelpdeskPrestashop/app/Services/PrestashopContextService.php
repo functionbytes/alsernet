@@ -308,6 +308,38 @@ class PrestashopContextService
     }
 
     /**
+     * Marca un pedido como candidato a envío al ERP (Gestión) — sin
+     * ownership-email deliberadamente: es una acción interna del panel de
+     * staff (Document), no de cara al cliente, sobre un order_id ya
+     * confiable. Requiere idempotencyKey por ser acción de escritura.
+     */
+    public function flagOrderForErpSend(int $orderId, ?string $idempotencyKey = null): ?array
+    {
+        return $this->callApi('order.flag_for_erp_send', [
+            'order_id' => $orderId,
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Corrige nombre/email de un cliente ANÓNIMO de PrestaShop (email
+     * placeholder anon_*) con datos reales hallados en las direcciones de
+     * sus pedidos — usado por el comando de validación de documentos
+     * pagados. Sin ownership-email: el propio email del cliente es el dato
+     * roto que se está corrigiendo, no algo para verificar contra sí mismo.
+     * El bridge re-verifica server-side que el email actual es anon_* antes
+     * de escribir (ver alsernet_customer_fix_anonymous_profile).
+     */
+    public function fixAnonymousCustomerProfile(int $customerId, string $firstname, string $lastname, string $email, ?string $idempotencyKey = null): ?array
+    {
+        return $this->callApi('customer.fix_anonymous_profile', [
+            'customer_id' => $customerId,
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'email' => $email,
+        ], $idempotencyKey);
+    }
+
+    /**
      * Catálogo de estados de pedido de PrestaShop (id, name, color + flags) para
      * el desplegable de "Cambiar estado" del workspace. Cacheado 1h (cambian raras
      * veces). El id es el `id_order_state` real que espera changeOrderStatus().
@@ -551,7 +583,11 @@ class PrestashopContextService
         $timestamp = time();
         $signature = HmacSigner::sign($secret, $timestamp, $bodyJson);
 
-        $writeActions = ['customer.add_message', 'order.add_note', 'order.start_return'];
+        // NOTA: esta lista está incompleta respecto a la del bridge (le faltan
+        // order.change_status/set_tracking/set_address/send_email) — no se
+        // toca aquí, fuera de alcance; se añaden solo las 2 acciones nuevas
+        // que este cambio introduce, para que sí generen su idempotency key.
+        $writeActions = ['customer.add_message', 'order.add_note', 'order.start_return', 'order.flag_for_erp_send', 'customer.fix_anonymous_profile'];
         $headers = [
             'X-Alsernet-Signature' => $signature,
             'X-Alsernet-Timestamp' => (string) $timestamp,
