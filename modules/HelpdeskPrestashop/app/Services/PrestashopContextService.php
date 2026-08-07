@@ -718,6 +718,41 @@ class PrestashopContextService
     }
 
     /**
+     * Precio+stock de un producto/combinación/país concretos — usado por el
+     * job de validación de precio de Erp (ValidatePriceFromGestion) para
+     * comparar contra el precio de Gestión. Sin caché deliberadamente (la
+     * validación de precio necesita el dato fresco, no una copia de hasta
+     * varios minutos), y sin ownership-email (no es un dato de cliente).
+     *
+     * @return array{price_with_tax: float, stock: int}|null
+     */
+    public function getProductPriceDetail(int $productId, int $productAttributeId, int $countryId): ?array
+    {
+        return $this->callApi('product.price_detail', [
+            'product_id' => $productId,
+            'product_attribute_id' => $productAttributeId,
+            'country_id' => $countryId,
+        ]);
+    }
+
+    /**
+     * Lista specific_price activos (o todos sin expirar) — usado por
+     * Erp\Console\Commands\SyncSpecificPrices para descubrir qué productos
+     * necesitan una validación de precio programada.
+     *
+     * @return array<int, array{id_specific_price:int, id_product:int, id_product_attribute:int, id_country:int, from:?string, to:?string, reference:?string}>
+     */
+    public function listSpecificPrices(string $scope = 'active', int $limit = 500): array
+    {
+        $data = $this->callApi('specific_price.list', [
+            'scope' => $scope,
+            'limit' => $limit,
+        ]);
+
+        return $data['items'] ?? [];
+    }
+
+    /**
      * Núcleo compartido para búsqueda exacta de producto por un campo concreto.
      *
      * @return array<string, mixed>|null

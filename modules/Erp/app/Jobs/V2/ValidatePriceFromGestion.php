@@ -7,11 +7,11 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Erp\Models\Core\PriceValidation;
 use Modules\Erp\Models\Core\ScheduledPriceValidation;
 use Modules\Erp\Services\GestionPriceService;
+use Modules\Erp\Services\PrestashopPriceLookupService;
 
 class ValidatePriceFromGestion implements ShouldQueue
 {
@@ -26,6 +26,15 @@ class ValidatePriceFromGestion implements ShouldQueue
     protected ScheduledPriceValidation $scheduledValidation;
 
     /**
+     * Último price_detail resuelto por el bridge — cacheado en memoria para
+     * que getStock() no dispare una segunda llamada al bridge tras
+     * calculatePrestashopPrice() dentro del mismo job.
+     *
+     * @var array{price_with_tax: float, stock: int}|null
+     */
+    private ?array $lastPriceDetail = null;
+
+    /**
      * Create a new job instance.
      */
     public function __construct(ScheduledPriceValidation $scheduledValidation)
@@ -36,7 +45,7 @@ class ValidatePriceFromGestion implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(GestionPriceService $gestionService): void
+    public function handle(GestionPriceService $gestionService, PrestashopPriceLookupService $prestashopPrices): void
     {
         try {
             Log::info('Iniciando validación automática de precio', [
@@ -66,6 +75,7 @@ class ValidatePriceFromGestion implements ShouldQueue
 
             // 2. Calcular precio de Prestashop
             $prestashopPrice = $this->calculatePrestashopPrice(
+                $prestashopPrices,
                 $this->scheduledValidation->id_product,
                 $this->scheduledValidation->id_product_attribute,
                 $this->scheduledValidation->id_country
@@ -109,107 +119,23 @@ class ValidatePriceFromGestion implements ShouldQueue
     }
 
     /**
-     * Calcular precio de Prestashop
+     * Calcular precio de Prestashop vía el bridge (product.price_detail) —
+     * ver Modules\Erp\Services\PrestashopPriceLookupService. El cálculo
+     * exacto (combinación, specific_price por país, impuestos) vive ahora
+     * en alsernetbridge/helpers/product.php::alsernet_product_price_detail(),
+     * replicado 1:1 desde este método, no reimplementado.
      */
-    protected function calculatePrestashopPrice(int $idProduct, int $idProductAttribute, int $idCountry): float
+    protected function calculatePrestashopPrice(PrestashopPriceLookupService $prestashopPrices, int $idProduct, int $idProductAttribute, int $idCountry): float
     {
-        // Obtener precio base
-        $product = DB::connection('prestashop')
-            ->table('aalv_product')
-            ->where('id_product', $idProduct)
-            ->first();
+        $detail = $prestashopPrices->priceDetail($idProduct, $idProductAttribute, $idCountry);
 
-        if (! $product) {
+        if ($detail === null) {
             throw new \Exception("Producto {$idProduct} no encontrado en Prestashop");
         }
 
-        $priceBase = (float) $product->price;
+        $this->lastPriceDetail = $detail;
 
-        // Si tiene combinación, sumar el impacto
-        if ($idProductAttribute > 0) {
-            $combination = DB::connection('prestashop')
-                ->table('aalv_product_attribute')
-                ->where('id_product_attribute', $idProductAttribute)
-                ->first();
-
-            if ($combination) {
-                $priceBase += (float) $combination->price;
-            }
-        }
-
-        // Buscar precio específico activo
-        $specificPrice = DB::connection('prestashop')
-            ->table('aalv_specific_price')
-            ->where('id_product', $idProduct)
-            ->where(function ($query) use ($idProductAttribute) {
-                $query->where('id_product_attribute', $idProductAttribute)
-                    ->orWhere('id_product_attribute', 0);
-            })
-            ->where(function ($query) use ($idCountry) {
-                $query->where('id_country', $idCountry)
-                    ->orWhere('id_country', 0);
-            })
-            ->where(function ($query) {
-                $query->where('from', '<=', now())
-                    ->orWhere('from', '0000-00-00 00:00:00')
-                    ->orWhereNull('from');
-            })
-            ->where(function ($query) {
-                $query->where('to', '>=', now())
-                    ->orWhere('to', '0000-00-00 00:00:00')
-                    ->orWhereNull('to');
-            })
-            ->orderByRaw('id_country DESC, id_product_attribute DESC, from_quantity ASC')
-            ->first();
-
-        if ($specificPrice) {
-            // Aplicar precio específico
-            if ($specificPrice->price >= 0) {
-                $priceBase = (float) $specificPrice->price;
-            }
-
-            // Aplicar reducción si existe
-            if ($specificPrice->reduction > 0) {
-                if ($specificPrice->reduction_type === 'amount') {
-                    $priceBase -= (float) $specificPrice->reduction;
-                } elseif ($specificPrice->reduction_type === 'percentage') {
-                    $priceBase -= $priceBase * ((float) $specificPrice->reduction / 100);
-                }
-            }
-        }
-
-        // Aplicar impuestos
-        $taxRate = $this->getTaxRate($product->id_tax_rules_group, $idCountry);
-        $priceWithTax = $priceBase * (1 + $taxRate / 100);
-
-        return round($priceWithTax, 2);
-    }
-
-    /**
-     * Obtener tasa de impuesto
-     */
-    protected function getTaxRate(?int $idTaxRulesGroup, int $idCountry): float
-    {
-        if (! $idTaxRulesGroup) {
-            return 0;
-        }
-
-        $taxRule = DB::connection('prestashop')
-            ->table('aalv_tax_rule')
-            ->where('id_tax_rules_group', $idTaxRulesGroup)
-            ->where('id_country', $idCountry)
-            ->first();
-
-        if (! $taxRule) {
-            return 0;
-        }
-
-        $tax = DB::connection('prestashop')
-            ->table('aalv_tax')
-            ->where('id_tax', $taxRule->id_tax)
-            ->first();
-
-        return $tax ? (float) $tax->rate : 0;
+        return (float) $detail['price_with_tax'];
     }
 
     /**
@@ -268,14 +194,9 @@ class ValidatePriceFromGestion implements ShouldQueue
      */
     protected function getStock(): int
     {
-        $stock = DB::connection('prestashop')
-            ->table('aalv_stock_available')
-            ->where('id_product', $this->scheduledValidation->id_product)
-            ->where('id_product_attribute', $this->scheduledValidation->id_product_attribute)
-            ->where('id_shop', 1)
-            ->first();
-
-        return $stock ? (int) $stock->quantity : 0;
+        // Ya resuelto por calculatePrestashopPrice() en la misma llamada al
+        // bridge (product.price_detail) — evita una segunda petición.
+        return (int) ($this->lastPriceDetail['stock'] ?? 0);
     }
 
     /**
