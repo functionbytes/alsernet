@@ -91,6 +91,10 @@ class ConversationItemsController extends Controller
         $item->metadata = $meta;
         $item->save();
 
+        // SendOutboundMessageJob resuelve la traducción de salida (si aplica)
+        // internamente a partir de $item->body — mismo texto/idioma que el
+        // primer intento, vía caché de traducción (normalmente sin volver a
+        // pegarle al proveedor).
         SendOutboundMessageJob::dispatch(
             $item->conversation_id,
             $item->id,

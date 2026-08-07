@@ -14,9 +14,17 @@ class BusinessHoursService
      * Determine if the business is open right now based on stored hours.
      * Returns true when open, false when outside hours or no records found.
      * Result is cached for 1 minute to avoid repeated DB queries on every webhook.
+     *
+     * When the "Horarios de atención" panel toggle (Settings → Business →
+     * Features) is OFF, the business is considered always open — no
+     * restrictive schedule applies, so off-hours auto-replies never fire.
      */
     public function isOpenNow(): bool
     {
+        if (! helpdesk_business_hours_feature_enabled()) {
+            return true;
+        }
+
         return Cache::remember('helpdesk:business_hours_open', self::CACHE_TTL, function () {
             $hour = BusinessHour::query()
                 ->where('day_of_week', now()->dayOfWeek)

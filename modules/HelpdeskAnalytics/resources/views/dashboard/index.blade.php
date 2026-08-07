@@ -86,8 +86,17 @@
             <div class="card-body pb-0"><h6 class="fw-semibold mb-0">{{ __('helpdeskanalytics::messages.agent_performance') }}</h6></div>
             <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0">
-                    <thead><tr><th>{{ __('helpdeskanalytics::messages.agent') }}</th><th>{{ __('helpdeskanalytics::messages.closed') }}</th><th>CSAT</th><th>{{ __('helpdeskanalytics::messages.first_response_short') }}</th><th>{{ __('helpdeskanalytics::messages.messages') }}</th></tr></thead>
-                    <tbody id="agent-rows"><tr><td colspan="5" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.loading') }}</td></tr></tbody>
+                    <thead><tr>
+                        <th>{{ __('helpdeskanalytics::messages.agent') }}</th>
+                        <th>{{ __('helpdeskanalytics::messages.closed') }}</th>
+                        <th>CSAT</th>
+                        <th>{{ __('helpdeskanalytics::messages.first_response_short') }}</th>
+                        <th>{{ __('helpdeskanalytics::messages.messages') }}</th>
+                        <th>{{ __('helpdeskanalytics::messages.agent_tickets_closed') }}</th>
+                        <th>{{ __('helpdeskanalytics::messages.agent_tickets_frt') }}</th>
+                        <th>{{ __('helpdeskanalytics::messages.agent_tickets_resolution') }}</th>
+                    </tr></thead>
+                    <tbody id="agent-rows"><tr><td colspan="8" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.loading') }}</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -176,7 +185,7 @@ $(function () {
 
     function renderAgents(rows) {
         if (!rows.length) {
-            $('#agent-rows').html('<tr><td colspan="5" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.no_data_range') }}</td></tr>');
+            $('#agent-rows').html('<tr><td colspan="8" class="text-center text-muted py-3">{{ __('helpdeskanalytics::messages.no_data_range') }}</td></tr>');
             return;
         }
         $('#agent-rows').html(rows.map(function (a) {
@@ -186,6 +195,9 @@ $(function () {
                 '<td>' + (a.csat_avg || '—') + '</td>' +
                 '<td>' + secs(a.avg_response_seconds) + '</td>' +
                 '<td>' + a.message_count + '</td>' +
+                '<td>' + (a.ticket_closed_count || 0) + '</td>' +
+                '<td>' + minutes(a.ticket_avg_first_response_minutes) + '</td>' +
+                '<td>' + minutes(a.ticket_avg_resolution_minutes) + '</td>' +
                 '</tr>';
         }).join(''));
     }

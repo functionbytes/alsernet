@@ -78,6 +78,9 @@ class ConversationMessageService
             // al job, que correlaciona el id externo en metadata al volver.
             $externalBody = $this->mentionParser->stripForExternal(strip_tags($data['body'] ?? ''));
 
+            // La auto-traducción saliente (si aplica) se resuelve DENTRO del
+            // job, no aquí — ver SendOutboundMessageJob::resolveOutboundBody().
+
             $outboundAttachments = [];
             foreach ($attachmentUrls as $att) {
                 $absUrl = $this->absoluteUrl((string) ($att['url'] ?? ''));

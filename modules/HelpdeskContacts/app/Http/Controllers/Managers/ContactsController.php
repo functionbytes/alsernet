@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Jobs\SendBulkHsmTemplateJob;
@@ -56,13 +57,23 @@ class ContactsController extends Controller
         // Totales globales del alcance del agente (no del resultado filtrado/
         // paginado) — mismo criterio que UsersController::index(), y mismas
         // queries que ya usa reports() para "verificados"/"suspendidos".
-        $scoped = fn () => Customer::query()->forAgent($request->user());
-        $stats = [
-            'total' => $scoped()->count(),
-            'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
-            'banned' => $scoped()->whereNotNull('banned_at')->count(),
-            'new' => $scoped()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
-        ];
+        // Cacheado 2 min por agente: forAgent() añade un WHERE EXISTS contra
+        // conversations/inboxes que se repetía 4 veces en cada carga de la
+        // página más visitada del módulo, sin necesitar frescura al segundo.
+        $stats = Cache::remember(
+            "helpdeskcontacts:index-stats:{$request->user()->id}",
+            120,
+            function () use ($request): array {
+                $scoped = fn () => Customer::query()->forAgent($request->user());
+
+                return [
+                    'total' => $scoped()->count(),
+                    'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
+                    'banned' => $scoped()->whereNotNull('banned_at')->count(),
+                    'new' => $scoped()->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
+                ];
+            },
+        );
 
         return view('contacts::contacts.index', [
             'customers' => $customers,
@@ -701,36 +712,47 @@ class ContactsController extends Controller
     {
         abort_if(! helpdesk_contacts_enabled(), 404);
 
-        $scoped = fn (): Builder => Customer::query()->forAgent($request->user());
+        // Cacheado 2 min por agente: las 6 queries de este dashboard reevalúan
+        // forAgent() (WHERE EXISTS contra conversations/inboxes) cada vez sin
+        // necesitar frescura al segundo — mismo criterio que index().
+        $payload = Cache::remember(
+            "helpdeskcontacts:reports:{$request->user()->id}",
+            120,
+            function () use ($request): array {
+                $scoped = fn (): Builder => Customer::query()->forAgent($request->user());
 
-        $atRisk = $scoped()
-            ->where(fn (Builder $q) => $q
-                ->where('last_seen_at', '<', now()->subDays(30))
-                ->orWhereNull('last_seen_at')
-            )
-            ->orderByRaw('last_seen_at IS NULL DESC, last_seen_at ASC')
-            ->limit(50)
-            ->get();
+                $atRisk = $scoped()
+                    ->where(fn (Builder $q) => $q
+                        ->where('last_seen_at', '<', now()->subDays(30))
+                        ->orWhereNull('last_seen_at')
+                    )
+                    ->orderByRaw('last_seen_at IS NULL DESC, last_seen_at ASC')
+                    ->limit(50)
+                    ->get();
 
-        $topActive = $scoped()
-            ->where('total_conversations', '>', 0)
-            ->orderByDesc('total_conversations')
-            ->limit(10)
-            ->get();
+                $topActive = $scoped()
+                    ->where('total_conversations', '>', 0)
+                    ->orderByDesc('total_conversations')
+                    ->limit(10)
+                    ->get();
 
-        $stats = [
-            'total' => $scoped()->whereNull('banned_at')->count(),
-            'banned' => $scoped()->whereNotNull('banned_at')->count(),
-            'inactive' => $scoped()
-                ->where(fn (Builder $q) => $q
-                    ->where('last_seen_at', '<', now()->subDays(30))
-                    ->orWhereNull('last_seen_at')
-                )
-                ->count(),
-            'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
-        ];
+                $stats = [
+                    'total' => $scoped()->whereNull('banned_at')->count(),
+                    'banned' => $scoped()->whereNotNull('banned_at')->count(),
+                    'inactive' => $scoped()
+                        ->where(fn (Builder $q) => $q
+                            ->where('last_seen_at', '<', now()->subDays(30))
+                            ->orWhereNull('last_seen_at')
+                        )
+                        ->count(),
+                    'verified' => $scoped()->whereNotNull('email_verified_at')->count(),
+                ];
 
-        return view('contacts::contacts.reports', compact('atRisk', 'topActive', 'stats'));
+                return ['atRisk' => $atRisk, 'topActive' => $topActive, 'stats' => $stats];
+            },
+        );
+
+        return view('contacts::contacts.reports', $payload);
     }
 
     /**

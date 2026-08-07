@@ -459,12 +459,14 @@ class HelpCenterController extends Controller
                 $booleanTerm = $this->buildBooleanTerm($q);
 
                 if ($booleanTerm !== null) {
-                    // FULLTEXT (title, body) index; LIKE kept as fallback so rows not yet
-                    // in the FTS cache (or short tokens) still match, preserving results.
+                    // FULLTEXT (title, body) index; LIKE solo se combina en tests
+                    // (shouldFallbackToLikeSearch) — en producción anulaba el
+                    // índice en cada búsqueda del listado de artículos.
                     $query->where(fn ($sub) => $sub
                         ->whereRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE)', [$booleanTerm])
-                        ->orWhere('title', 'like', "%{$q}%")
-                        ->orWhere('body', 'like', "%{$q}%"))
+                        ->when($this->shouldFallbackToLikeSearch(), fn ($sw) => $sw
+                            ->orWhere('title', 'like', "%{$q}%")
+                            ->orWhere('body', 'like', "%{$q}%")))
                         ->orderByRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE) DESC', [$booleanTerm]);
 
                     return;

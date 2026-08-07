@@ -110,25 +110,52 @@ class AnalyticsAggregatorService
      * Con usuario restringido solo aparecen agentes con actividad en sus
      * bandejas (las conversaciones/mensajes/CSAT se filtran por inbox).
      *
-     * @return array<int, array{name: string, closed_count: int, csat_avg: float, avg_response_seconds: int, message_count: int}>
+     * Cruza conversaciones (bandeja) y tickets (sin bandeja) por agente en un
+     * único ranking — antes eran comparativas separadas (AgentPerformanceController
+     * y este mismo método solo veían conversaciones; TicketReportsService::topAgents
+     * solo veía tickets cerrados, sin tiempos). Los tickets no tienen inbox_id, así
+     * que su lado del cruce sigue el mismo fail-closed que ticketMetrics(): solo se
+     * suman con usuario sin restricción de bandeja (managers).
+     *
+     * @return array<int, array{name: string, closed_count: int, csat_avg: float, avg_response_seconds: int, message_count: int, ticket_closed_count: int, ticket_avg_first_response_minutes: int, ticket_avg_resolution_minutes: int, total_closed: int}>
      */
     public function agentPerformance(Carbon $from, Carbon $to, ?User $user = null): array
     {
         $inboxIds = $this->accessibleInboxIds($user);
 
         return $this->remember('agents', $from, $to, $inboxIds, function () use ($from, $to, $inboxIds): array {
-            $agentRows = DB::connection('helpdesk')
+            $conversationRows = DB::connection('helpdesk')
                 ->table('helpdesk_conversations as c')
                 ->whereBetween('c.closed_at', [$from, $to])
                 ->whereNotNull('c.assignee_id')
                 ->when($inboxIds !== null, fn ($q) => $q->whereIn('c.inbox_id', $inboxIds))
                 ->selectRaw('c.assignee_id, COUNT(*) as closed_count, AVG(CASE WHEN c.first_response_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, c.created_at, c.first_response_at) END) as avg_response_sec')
                 ->groupBy('c.assignee_id')
-                ->get();
+                ->get()
+                ->keyBy('assignee_id');
 
-            $agentIds = $agentRows->pluck('assignee_id')->filter()->all();
+            $ticketRows = collect();
+            if ($this->ticketsAvailable() && $inboxIds === null) {
+                /** @var class-string<Model> $ticketClass */
+                $ticketClass = self::TICKET;
 
-            if ($agentIds === []) {
+                $ticketRows = $ticketClass::query()
+                    ->whereBetween('closed_at', [$from, $to])
+                    ->whereNotNull('assignee_id')
+                    ->selectRaw('
+                        assignee_id,
+                        COUNT(*) as ticket_closed_count,
+                        AVG(CASE WHEN first_response_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, created_at, first_response_at) END) as ticket_avg_first_response,
+                        AVG(TIMESTAMPDIFF(MINUTE, created_at, closed_at)) as ticket_avg_resolution
+                    ')
+                    ->groupBy('assignee_id')
+                    ->get()
+                    ->keyBy('assignee_id');
+            }
+
+            $agentIds = $conversationRows->keys()->merge($ticketRows->keys())->unique()->values();
+
+            if ($agentIds->isEmpty()) {
                 return [];
             }
 
@@ -160,15 +187,26 @@ class AnalyticsAggregatorService
 
             $users = User::whereIn('id', $agentIds)->get(['id', 'firstname', 'lastname'])->keyBy('id');
 
-            return $agentRows->map(fn ($row): array => [
-                'name' => ($u = $users->get($row->assignee_id))
-                    ? (trim("{$u->firstname} {$u->lastname}") ?: "Agente #{$row->assignee_id}")
-                    : "Agente #{$row->assignee_id}",
-                'closed_count' => (int) $row->closed_count,
-                'csat_avg' => round((float) ($csatByAgent[$row->assignee_id] ?? 0), 2),
-                'avg_response_seconds' => (int) round((float) ($row->avg_response_sec ?? 0)),
-                'message_count' => (int) ($messagesByAgent[$row->assignee_id] ?? 0),
-            ])->sortByDesc('closed_count')->values()->all();
+            return $agentIds->map(function ($agentId) use ($conversationRows, $ticketRows, $csatByAgent, $messagesByAgent, $users): array {
+                $convRow = $conversationRows->get($agentId);
+                $ticketRow = $ticketRows->get($agentId);
+                $closedCount = (int) ($convRow->closed_count ?? 0);
+                $ticketClosedCount = (int) ($ticketRow->ticket_closed_count ?? 0);
+
+                return [
+                    'name' => ($u = $users->get($agentId))
+                        ? (trim("{$u->firstname} {$u->lastname}") ?: "Agente #{$agentId}")
+                        : "Agente #{$agentId}",
+                    'closed_count' => $closedCount,
+                    'csat_avg' => round((float) ($csatByAgent[$agentId] ?? 0), 2),
+                    'avg_response_seconds' => (int) round((float) ($convRow->avg_response_sec ?? 0)),
+                    'message_count' => (int) ($messagesByAgent[$agentId] ?? 0),
+                    'ticket_closed_count' => $ticketClosedCount,
+                    'ticket_avg_first_response_minutes' => (int) round((float) ($ticketRow->ticket_avg_first_response ?? 0)),
+                    'ticket_avg_resolution_minutes' => (int) round((float) ($ticketRow->ticket_avg_resolution ?? 0)),
+                    'total_closed' => $closedCount + $ticketClosedCount,
+                ];
+            })->sortByDesc('total_closed')->values()->all();
         });
     }
 

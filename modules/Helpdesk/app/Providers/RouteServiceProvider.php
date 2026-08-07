@@ -69,18 +69,26 @@ class RouteServiceProvider extends ServiceProvider
         Route::middleware(['web', 'auth'])
             ->prefix('panel/helpdesk')
             ->group(function () {
-                Route::view('/inbox', 'helpdesk::helpdesk.inbox.index', [
-                    'selectedConversation' => null,
-                    'selectedConversationId' => null,
-                    'conversations' => collect(),
-                    'agents' => collect(),
-                    'tags' => collect(),
-                    'inboxTags' => collect(),
-                    'statuses' => collect(),
-                    'cannedReplies' => collect(),
-                    'view' => null,
-                    'currentFolder' => 'inbox',
-                ])->name('manager.helpdesk.inbox.index');
+                // Nota: Route::view() no vale aquí porque guarda el array de datos como
+                // "defaults" de la ruta para poder cachearla (route:cache), y las Collection
+                // vacías de abajo no son var_export-ables (rompen bootstrap/cache/routes-v7.php
+                // con "Collection::__set_state does not exist" al cargar el caché). Con una
+                // closure normal, las Collection se crean en tiempo de petición, no se
+                // serializan como metadatos de la ruta.
+                Route::get('/inbox', function () {
+                    return view('helpdesk::helpdesk.inbox.index', [
+                        'selectedConversation' => null,
+                        'selectedConversationId' => null,
+                        'conversations' => collect(),
+                        'agents' => collect(),
+                        'tags' => collect(),
+                        'inboxTags' => collect(),
+                        'statuses' => collect(),
+                        'cannedReplies' => collect(),
+                        'view' => null,
+                        'currentFolder' => 'inbox',
+                    ]);
+                })->name('manager.helpdesk.inbox.index');
 
                 Route::get('/api/agents-autocomplete', [AgentsController::class, 'search'])
                     ->middleware('throttle:120,1')

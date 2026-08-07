@@ -36,4 +36,7 @@ return [
     'tickets_resolution_avg' => 'Resolution (avg)',
     'tickets_by_priority' => 'Tickets by priority',
     'priority' => 'Priority',
+    'agent_tickets_closed' => 'Tickets closed',
+    'agent_tickets_frt' => 'First resp. (tickets)',
+    'agent_tickets_resolution' => 'Resolution (tickets)',
 ];

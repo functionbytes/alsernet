@@ -11,6 +11,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Support\ChannelMetrics;
+use Modules\HelpdeskTranslate\Services\OutboundMessageTranslator;
 
 /**
  * Send an agent reply (text + attachments) to the customer's external channel
@@ -77,7 +78,7 @@ class SendOutboundMessageJob implements ShouldQueue
         $externalId = $this->correlation === 'external_id' ? $item->external_id : null;
 
         if (filled($this->body) && blank($externalId)) {
-            $externalId = $outbound->sendReply($conversation, $this->body);
+            $externalId = $outbound->sendReply($conversation, $this->resolveOutboundBody($item, $this->body));
 
             // Persistir de inmediato: si un paso posterior falla y el job
             // reintenta, no se reenvía el texto.
@@ -126,6 +127,29 @@ class SendOutboundMessageJob implements ShouldQueue
         $item->external_id = $externalId;
         $item->metadata = $meta;
         $item->save();
+    }
+
+    /**
+     * Si la auto-traducción saliente (módulo HelpdeskTranslate) está activa y
+     * el idioma del cliente difiere del del agente, devuelve la traducción en
+     * vez del texto original — dependencia opcional vía helper
+     * (helpdesk_translate_enabled) + class_exists para no acoplar el core a
+     * un módulo satélite que puede estar desinstalado/desactivado.
+     *
+     * Se resuelve AQUÍ, dentro del job, y no en el controller que despacha el
+     * envío: DeepL/LibreTranslate tienen el mismo perfil de I/O externo (15s +
+     * reintentos) que este job existe para sacar del hilo HTTP — resolverlo
+     * antes de encolar reintroducía ese mismo bloqueo de un worker FPM justo
+     * en el camino crítico de "enviar mensaje".
+     */
+    private function resolveOutboundBody(ConversationItem $item, string $body): string
+    {
+        if (! helpdesk_translate_enabled() || ! class_exists(OutboundMessageTranslator::class)) {
+            return $body;
+        }
+
+        return app(OutboundMessageTranslator::class)
+            ->resolveOutboundText($item, $body);
     }
 
     /**

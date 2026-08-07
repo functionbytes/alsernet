@@ -5,6 +5,7 @@ namespace Modules\Helpdesk\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Events\ConversationMessageCreated;
 use Modules\Helpdesk\Events\MessageReceived;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Services\LinkPreviewService;
@@ -13,9 +14,14 @@ use Modules\Helpdesk\Services\LinkPreviewService;
  * Genera la vista previa OpenGraph de un enlace FUERA del hilo HTTP: la descarga
  * (hasta 6s / 2MB) bloqueaba el request del agente al enviar un mensaje con URL.
  *
- * Al terminar re-emite MessageReceived para que el widget del cliente muestre la
- * tarjeta; el widget deduplica por id, así que actualiza el mensaje en vez de
- * duplicarlo (patrón fast-path: el mensaje aparece ya, el preview llega después).
+ * Al terminar re-emite MessageReceived (widget del cliente) Y ConversationMessageCreated
+ * (hilo del agente en el panel manager) — ambos lados deduplican/reemplazan por id
+ * de item (conversations.js: "If bubble already exists... replace it", mismo
+ * patrón ya usado para la descarga de adjuntos), así que actualizan el mensaje
+ * en vez de duplicarlo (patrón fast-path: el mensaje aparece ya, el preview
+ * llega después). Antes solo se re-notificaba al widget; el panel del agente
+ * dependía de un fetch síncrono duplicado en el controller para ver el
+ * preview en la primera pintura — ver ConversationMessagesController::store().
  */
 class GenerateLinkPreviewJob implements ShouldQueue
 {
@@ -55,7 +61,9 @@ class GenerateLinkPreviewJob implements ShouldQueue
         $item->saveQuietly();
 
         if ($item->conversation) {
-            broadcast(new MessageReceived($item->conversation, $item->fresh()));
+            $fresh = $item->fresh();
+            broadcast(new MessageReceived($item->conversation, $fresh));
+            broadcast(new ConversationMessageCreated($fresh, false));
         }
     }
 

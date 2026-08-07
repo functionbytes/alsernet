@@ -327,6 +327,50 @@ if (! function_exists('helpdesk_integration_identity_sms_enabled')) {
     }
 }
 
+if (! function_exists('helpdesk_business_hours_feature_enabled')) {
+    /**
+     * Check whether the "Horarios de atención" panel toggle is active
+     * (Settings → Business → Features). Defaults to ON.
+     */
+    function helpdesk_business_hours_feature_enabled(): bool
+    {
+        return helpdesk_setting_bool('business.business_hours_enabled', '1');
+    }
+}
+
+if (! function_exists('helpdesk_off_hours_feature_enabled')) {
+    /**
+     * Check whether the "Fuera de horario" panel toggle is active
+     * (Settings → Business → Features). Defaults to ON.
+     */
+    function helpdesk_off_hours_feature_enabled(): bool
+    {
+        return helpdesk_setting_bool('business.off_hours_enabled', '1');
+    }
+}
+
+if (! function_exists('helpdesk_greeting_feature_enabled')) {
+    /**
+     * Check whether the "Bienvenida" panel toggle is active
+     * (Settings → Business → Features). Defaults to ON.
+     */
+    function helpdesk_greeting_feature_enabled(): bool
+    {
+        return helpdesk_setting_bool('business.greeting_enabled', '1');
+    }
+}
+
+if (! function_exists('helpdesk_farewell_feature_enabled')) {
+    /**
+     * Check whether the "Despedida" panel toggle is active
+     * (Settings → Business → Features). Defaults to ON.
+     */
+    function helpdesk_farewell_feature_enabled(): bool
+    {
+        return helpdesk_setting_bool('business.farewell_enabled', '1');
+    }
+}
+
 if (! function_exists('safe_route')) {
     /**
      * Generate a route URL, returning '#' if the route does not exist.

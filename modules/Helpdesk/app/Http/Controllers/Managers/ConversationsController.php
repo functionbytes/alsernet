@@ -59,7 +59,6 @@ use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
 use Modules\Helpdesk\Services\ConversationTagService;
 use Modules\Helpdesk\Services\CsatService;
 use Modules\Helpdesk\Services\HsmConversationService;
-use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\Macros\MacroExecutorService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
@@ -1326,28 +1325,15 @@ class ConversationsController extends Controller
         }
 
         if ($request->wantsJson()) {
-            // Read back to pick up metadata.link_preview enriched by the
-            // ConversationItemLinkPreviewObserver (and add it inline as a
-            // fallback so the agent panel always renders the unfurl card on
-            // first paint without waiting for a follow-up broadcast).
+            // Preview OpenGraph (si hay URL): GenerateLinkPreviewJob lo genera
+            // fuera del hilo HTTP y re-emite ConversationMessageCreated al
+            // terminar (el panel reemplaza la burbuja existente por id) —
+            // antes había aquí un fetch síncrono de hasta 6s como fallback,
+            // reintroduciendo el mismo bloqueo que ese job existe para evitar.
             if ($item) {
                 $reloaded = ConversationItem::with('user')->find($item->id);
                 if ($reloaded) {
                     $item = $reloaded;
-                }
-
-                $existingMeta = $item->metadata ?? [];
-                if (
-                    ! ($validated['is_internal'] ?? false)
-                    && ! isset($existingMeta['link_preview'])
-                    && filled($item->body)
-                ) {
-                    $preview = app(LinkPreviewService::class)
-                        ->previewFromBody((string) $item->body);
-                    if ($preview !== null) {
-                        $item->metadata = array_merge($existingMeta, ['link_preview' => $preview]);
-                        $item->saveQuietly();
-                    }
                 }
             }
 

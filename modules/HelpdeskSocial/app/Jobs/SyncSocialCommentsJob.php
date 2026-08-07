@@ -85,14 +85,26 @@ class SyncSocialCommentsJob implements ShouldQueue
     {
         $comments = $apiClient->getComments($postId, $account->page_access_token, 100);
 
+        if ($comments === []) {
+            return;
+        }
+
+        // Antes: 1 SELECT de existencia por comentario (hasta 100 por post,
+        // hasta 2000 en una sola ejecución de syncKnownPosts() con 20 posts) —
+        // ahora un único whereIn() precarga los external_comment_id ya
+        // existentes de ESTE lote, usando el mismo índice único
+        // (platform, external_comment_id) en una sola ida a BD.
+        $externalIds = array_column($comments, 'id');
+        $existingIds = SocialComment::where('platform', $account->platform)
+            ->whereIn('external_comment_id', $externalIds)
+            ->pluck('external_comment_id')
+            ->all();
+        $existingIds = array_flip($existingIds);
+
         foreach ($comments as $commentData) {
             $externalId = $commentData['id'];
 
-            $existing = SocialComment::where('platform', $account->platform)
-                ->where('external_comment_id', $externalId)
-                ->first();
-
-            if ($existing) {
+            if (isset($existingIds[$externalId])) {
                 continue;
             }
 
