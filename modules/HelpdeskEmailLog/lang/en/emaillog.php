@@ -111,6 +111,8 @@ return [
         'queued' => 'Queued',
         'sent' => 'Sent',
         'failed' => 'Failed',
+        'bounced' => 'Bounced',
+        'complained' => 'Marked as spam',
     ],
 
     'preview' => [

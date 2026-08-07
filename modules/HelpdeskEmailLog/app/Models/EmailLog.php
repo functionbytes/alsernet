@@ -89,6 +89,8 @@ class EmailLog extends Model
         'error_message',
         'sent_at',
         'failed_at',
+        'bounced_at',
+        'complained_at',
         'metadata',
     ];
 
@@ -105,6 +107,8 @@ class EmailLog extends Model
             'status' => EmailStatus::class,
             'sent_at' => 'datetime',
             'failed_at' => 'datetime',
+            'bounced_at' => 'datetime',
+            'complained_at' => 'datetime',
         ];
     }
 
@@ -168,6 +172,29 @@ class EmailLog extends Model
     }
 
     /**
+     * Marca el envío como rebotado (DSN recibido en la bandeja de rebotes, ver
+     * Modules\Document\Console\Commands\ProcessEmailBouncesCommand). No pisa un
+     * status ya 'bounced'/'complained' anterior con uno menos específico.
+     */
+    public function markAsBounced(?string $reason = null): void
+    {
+        $this->update([
+            'status' => EmailStatus::Bounced,
+            'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
+            'bounced_at' => now(),
+        ]);
+    }
+
+    public function markAsComplained(?string $reason = null): void
+    {
+        $this->update([
+            'status' => EmailStatus::Complained,
+            'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
+            'complained_at' => now(),
+        ]);
+    }
+
+    /**
      * The stored body was redacted (sensitive mailable or purged manually),
      * so it no longer represents what was originally sent.
      */
@@ -224,6 +251,11 @@ class EmailLog extends Model
     public function scopeFailed(Builder $query): Builder
     {
         return $query->where('status', EmailStatus::Failed->value);
+    }
+
+    public function scopeBounced(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Bounced->value);
     }
 
     public function scopeForModule(Builder $query, string $module): Builder

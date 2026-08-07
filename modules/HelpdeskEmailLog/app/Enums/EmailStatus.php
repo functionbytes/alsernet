@@ -7,6 +7,8 @@ enum EmailStatus: string
     case Queued = 'queued';
     case Sent = 'sent';
     case Failed = 'failed';
+    case Bounced = 'bounced';
+    case Complained = 'complained';
 
     public function label(): string
     {
@@ -14,6 +16,8 @@ enum EmailStatus: string
             self::Queued => __('helpdeskemaillog::emaillog.status.queued'),
             self::Sent => __('helpdeskemaillog::emaillog.status.sent'),
             self::Failed => __('helpdeskemaillog::emaillog.status.failed'),
+            self::Bounced => __('helpdeskemaillog::emaillog.status.bounced'),
+            self::Complained => __('helpdeskemaillog::emaillog.status.complained'),
         };
     }
 
@@ -23,6 +27,8 @@ enum EmailStatus: string
             self::Queued => 'warning',
             self::Sent => 'success',
             self::Failed => 'danger',
+            self::Bounced => 'danger',
+            self::Complained => 'danger',
         };
     }
 

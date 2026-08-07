@@ -4,8 +4,10 @@ namespace Modules\Document\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentLang;
 use Modules\Document\Entities\DocumentLoad;
@@ -14,9 +16,9 @@ use Modules\Document\Entities\DocumentStatus;
 use Modules\Document\Entities\DocumentSync;
 use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentUploadType;
-use Modules\Document\Events\DocumentCreated;
 use Modules\Document\Jobs\MailTemplateJob;
 use Modules\Document\Services\DocumentEmailService;
+use Modules\Document\Services\DocumentEmailTemplateService;
 use Modules\Document\Services\DocumentTypeService;
 use Modules\Document\Traits\SendsDocumentEmails;
 use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
@@ -25,6 +27,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class DocumentsController extends Controller
 {
     use SendsDocumentEmails;
+
     /**
      * Sincroniza un documento con los datos de su orden e importa productos
      * Método helper reutilizable para sincronización de datos y productos
@@ -77,7 +80,6 @@ class DocumentsController extends Controller
      */
     public function process(Request $request)
     {
-       
 
         $action = $request->input('action');
         $data = $request->all();
@@ -115,7 +117,7 @@ class DocumentsController extends Controller
      *
      * Endpoint RESTful: GET /api/documents/verify?order_id={order_id}
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function verify(Request $request)
     {
@@ -150,6 +152,57 @@ class DocumentsController extends Controller
     }
 
     /**
+     * Obtiene la información completa de documentos para una orden de PrestaShop
+     *
+     * Endpoint RESTful: GET /api/documents/order/{orderId}
+     *
+     * Devuelve estado, tipo, documentos requeridos/subidos (con URL)/faltantes
+     * a partir del order_id de PrestaShop, sin necesidad de conocer el uid.
+     *
+     * @param  int|string  $orderId  ID de la orden en Prestashop
+     * @return JsonResponse
+     */
+    public function orderInfo(Request $request, $orderId)
+    {
+        $document = Document::where('order_id', $orderId)->first();
+
+        if (! $document) {
+            return response()->json([
+                'status' => 'not_found',
+                'message' => 'No document found for this order',
+                'data' => [
+                    'order_id' => $orderId,
+                ],
+            ], 404);
+        }
+
+        if (empty($document->required_documents)) {
+            $document->updateRequiredDocumentsJson();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Document found',
+            'data' => [
+                'uid' => $document->uid,
+                'order_id' => $document->order_id,
+                'reference' => $document->order_reference,
+                'type' => $document->type,
+                'label' => $document->documentType?->getLabel() ?? 'N/A',
+                'document_status' => $document->status?->key,
+                'can_upload' => ! $document->confirmed_at,
+                'confirmed_at' => $document->confirmed_at?->toIso8601String(),
+                // URL del portal público que recibe el cliente por email para subir sus documentos
+                // (misma que genera DocumentEmailTemplateService para los correos de solicitud/recordatorio)
+                'upload_url' => DocumentEmailTemplateService::buildUploadUrl($document),
+                'required_documents' => $document->getRequiredDocumentsWithLabels(),
+                'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
+                'missing_documents' => $document->getMissingDocuments(),
+            ],
+        ], 200);
+    }
+
+    /**
      * Obtiene información de validación de un documento
      *
      * Endpoint RESTful: GET /api/documents/{uid}/validation
@@ -158,7 +211,7 @@ class DocumentsController extends Controller
      * Valida si el documento puede recibir uploads según su estado.
      *
      * @param  string  $uid  UID del documento
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function validation($uid)
     {
@@ -200,17 +253,17 @@ class DocumentsController extends Controller
             'status' => 'success',
             'message' => 'Document validation successful',
             'data' => [
-                    'uid' => $document->uid,
-                    'type' => $document->type,
-                    'order_id' => $document->order_id,
-                    'reference' => $document->order_reference,
-                    'label' => $document->documentType?->getLabel() ?? 'N/A',
-                    'validation_status' => $validationStatus,
-                    'document_status' => $currentStatusKey,
-                    'can_upload' => ! $document->confirmed_at,
-                    'required_documents' => $document->getRequiredDocumentsWithLabels(),
-                    'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
-                    'missing_documents' => $document->getMissingDocuments(),
+                'uid' => $document->uid,
+                'type' => $document->type,
+                'order_id' => $document->order_id,
+                'reference' => $document->order_reference,
+                'label' => $document->documentType?->getLabel() ?? 'N/A',
+                'validation_status' => $validationStatus,
+                'document_status' => $currentStatusKey,
+                'can_upload' => ! $document->confirmed_at,
+                'required_documents' => $document->getRequiredDocumentsWithLabels(),
+                'uploaded_documents' => $document->getUploadedDocumentsWithDetails(),
+                'missing_documents' => $document->getMissingDocuments(),
             ],
         ], 200);
     }
@@ -220,19 +273,18 @@ class DocumentsController extends Controller
      *
      * Endpoint RESTful: POST /api/documents
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request)
-    { 
-        
+    {
+
         // Delegar al método existente documentRequests (mantiene lógica existente)
         return $this->documentRequests($request->all());
     }
 
     public function documentRequests($data)
     {
-       
-        
+
         try {
             // Obtener order_id (compatible con múltiples formatos)
             $orderId = $data['order_id'] ?? $data['order'] ?? null;
@@ -470,7 +522,7 @@ class DocumentsController extends Controller
      * Endpoint RESTful: POST /api/documents/{uid}/files
      *
      * @param  string  $uid  UID del documento
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function uploadFiles(Request $request, $uid)
     {
@@ -677,7 +729,7 @@ class DocumentsController extends Controller
      *
      * @param  string  $uid  UID del documento
      * @param  string  $docType  Tipo de documento a eliminar
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function deleteFile($uid, $docType)
     {
@@ -800,7 +852,7 @@ class DocumentsController extends Controller
      * Obtiene datos de la orden y cliente para llenar el documento
      * Consulta los datos en Prestashop y los devuelve para desnormalización
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getOrderData(Request $request)
     {
@@ -857,7 +909,7 @@ class DocumentsController extends Controller
      * Llena automáticamente los datos desnormalizados de un documento
      * usando los datos de la orden y cliente de Prestashop
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function fillDocumentWithOrderData(Request $request)
     {
@@ -937,7 +989,7 @@ class DocumentsController extends Controller
      * Sincroniza todos los documentos existentes con los datos de sus órdenes
      * Busca documentos sin datos desnormalizados y los llena desde Prestashop
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function syncAllDocumentsWithOrders()
     {
@@ -1025,7 +1077,7 @@ class DocumentsController extends Controller
      * Sincroniza documentos de una orden específica por query parameter
      * Recibe order_id como parámetro query e importa todos los datos y productos
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function syncDocumentsByOrderQuery(Request $request)
     {
@@ -1112,7 +1164,7 @@ class DocumentsController extends Controller
      * Sincroniza un documento específico con los datos de su orden
      * Busca por order_id y llena todos los datos desnormalizados
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function syncDocumentByOrderId(Request $request)
     {
@@ -1149,7 +1201,7 @@ class DocumentsController extends Controller
 
             // Asignar campos básicos si es nuevo
             if ($isNew) {
-                $document->uid = (string) \Illuminate\Support\Str::uuid();
+                $document->uid = (string) Str::uuid();
                 $document->status_id = DocumentStatus::where('key', 'pending')->value('id') ?? 1;
                 $document->source_id = DocumentSource::where('key', 'prestashop')->first()?->id;
                 $document->load_id = DocumentLoad::where('key', 'manual')->first()?->id;
@@ -1218,7 +1270,7 @@ class DocumentsController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Error syncing document by order ID: ' . $e->getMessage());
+            Log::error('Error syncing document by order ID: '.$e->getMessage());
 
             return response()->json([
                 'status' => 'failed',
@@ -1663,7 +1715,7 @@ class DocumentsController extends Controller
             ]);
 
         } catch (\Exception $e) {
-           
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to process webhook',
@@ -1869,7 +1921,6 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
-        
 
             return response()->json([
                 'success' => false,
@@ -1920,7 +1971,6 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
-            
 
             return response()->json([
                 'success' => false,
@@ -1960,7 +2010,7 @@ class DocumentsController extends Controller
                 'html' => $html,
             ]);
         } catch (\Exception $e) {
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al refrescar el historial: '.$e->getMessage(),
@@ -1986,11 +2036,11 @@ class DocumentsController extends Controller
         }
 
         $firstname = trim($request->input('firstname', ''));
-        $lastname  = trim($request->input('lastname', ''));
-        $dni       = trim($request->input('dni', ''));
-        $phone     = trim($request->input('phone', ''));
-        $email     = trim($request->input('email', ''));
-        $address   = trim($request->input('address', ''));
+        $lastname = trim($request->input('lastname', ''));
+        $dni = trim($request->input('dni', ''));
+        $phone = trim($request->input('phone', ''));
+        $email = trim($request->input('email', ''));
+        $address = trim($request->input('address', ''));
 
         $noteLines = ["Licencia federativa aportada por el cliente: {$licenseNumber}"];
         if ($firstname || $lastname) {
@@ -2010,11 +2060,11 @@ class DocumentsController extends Controller
         }
 
         $document->notes()->create([
-            'content'     => implode("\n", $noteLines),
+            'content' => implode("\n", $noteLines),
             'is_internal' => false,
         ]);
 
-        $pendingStatus = \Modules\Document\Entities\DocumentStatus::where('key', 'pending')->first();
+        $pendingStatus = DocumentStatus::where('key', 'pending')->first();
         if ($pendingStatus && $document->status?->key === 'awaiting_documents') {
             $document->status_id = $pendingStatus->id;
             $document->save();
@@ -2023,7 +2073,7 @@ class DocumentsController extends Controller
         MailTemplateJob::dispatch($document, 'fusil_license_confirmation');
 
         return response()->json([
-            'status'  => 'success',
+            'status' => 'success',
             'message' => 'Hunting license submitted successfully',
         ]);
     }

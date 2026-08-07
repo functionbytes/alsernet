@@ -3,9 +3,11 @@
 namespace Modules\Document\Entities;
 
 use App\Models\User;
-use Modules\Document\Traits\HasUid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Document\Traits\HasUid;
+use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\Mailer\Models\MailerTemplate;
 
 class DocumentMail extends Model
@@ -13,6 +15,12 @@ class DocumentMail extends Model
     use HasUid;
 
     protected $table = 'document_mails';
+
+    /**
+     * delivery_status se añade siempre al JSON (accesor más abajo); consulta emailLog()
+     * bajo el capó, así que en listados usar ->with('emailLog') para evitar N+1.
+     */
+    protected $appends = ['delivery_status'];
 
     protected $fillable = [
         'uid',
@@ -70,6 +78,28 @@ class DocumentMail extends Model
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sent_by');
+    }
+
+    /**
+     * Fila correlacionada en el log central de emails (modules/HelpdeskEmailLog),
+     * fuente de verdad del estado de entrega REAL (queued/sent/failed y, cuando exista,
+     * bounced). Correlación exacta 1:1 vía external_id = this->uid, fijado por
+     * DocumentCustomMail::getEmailLogExternalId(). Null en envíos previos a esta
+     * correlación (uid no coincide con ningún external_id) o si HelpdeskEmailLog
+     * está desactivado (helpdesk_emaillog_enabled() = false, no se crea ninguna fila).
+     */
+    public function emailLog(): HasOne
+    {
+        return $this->hasOne(EmailLog::class, 'external_id', 'uid')->latestOfMany();
+    }
+
+    /**
+     * Estado real de entrega: el de EmailLog si hay correlación, si no cae al status
+     * optimista de esta misma tabla (marcado 'sent' al encolar, no al entregar de verdad).
+     */
+    public function getDeliveryStatusAttribute(): string
+    {
+        return $this->emailLog?->status?->value ?? $this->status;
     }
 
     /**
