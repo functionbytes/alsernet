@@ -5,6 +5,7 @@ namespace Modules\HelpdeskAgents\Services;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Modules\HelpdeskAgents\Models\AiAgentSession;
 use Modules\HelpdeskAgents\Models\AiAgentTool;
 
@@ -81,7 +82,7 @@ class ToolExecutionService
             $url = str_replace(["{{{$key}}}", "{{$key}}"], [$encoded, $encoded], $url);
         }
 
-        $this->validateApiUrl($url);
+        $resolvedIps = $this->validateApiUrl($url);
 
         // Defensa en profundidad: la URL final debe conservar exactamente el
         // esquema/host/puerto de la plantilla validada.
@@ -97,7 +98,8 @@ class ToolExecutionService
         // Sin esto, validateApiUrl() solo protege la URL inicial: un host HTTPS
         // externo podría responder 3xx hacia una IP interna (metadata/loopback)
         // y Guzzle seguiría el redirect, bypaseando el guard SSRF.
-        $client = Http::timeout($timeout)->withoutRedirecting()->acceptJson();
+        $client = Http::timeout($timeout)->withoutRedirecting()->acceptJson()
+            ->withOptions(['curl' => $this->pinResolvedIps($finalParts, $resolvedIps)]);
 
         match ($authConfig['type'] ?? '') {
             'bearer' => $client = $client->withToken($authConfig['token'] ?? ''),
@@ -120,12 +122,21 @@ class ToolExecutionService
     /**
      * Validate that a URL is safe to call (SSRF prevention).
      * - Must use HTTPS scheme
-     * - Must not resolve to a private/loopback/link-local IP
+     * - Must not resolve to a private/loopback/link-local IP (ALL A/AAAA
+     *   records, not just the first — OutboundUrlGuard::publicIps())
      * - If allowed_hosts is configured, host must be in the allowlist
+     *
+     * @return array<int, string> the validated public IPs, for pinning the
+     *                            real request via CURLOPT_RESOLVE (ver
+     *                            pinResolvedIps()) — sin esto, un host HTTPS
+     *                            cuyo DNS el atacante controle podía devolver
+     *                            una IP pública aquí y una interna al hacer la
+     *                            petición real (DNS rebinding), bypaseando
+     *                            este mismo guard.
      *
      * @throws \RuntimeException
      */
-    private function validateApiUrl(string $url): void
+    private function validateApiUrl(string $url): array
     {
         $parsed = parse_url($url);
 
@@ -144,20 +155,34 @@ class ToolExecutionService
             throw new \RuntimeException("Host '{$host}' is not in the allowed hosts list");
         }
 
-        $ip = @gethostbyname($host);
+        $ips = OutboundUrlGuard::publicIps($url);
 
-        if ($ip && $this->isPrivateIp($ip)) {
+        if ($ips === []) {
             throw new \RuntimeException('API tool URL resolves to a private or reserved IP address');
         }
+
+        return $ips;
     }
 
-    private function isPrivateIp(string $ip): bool
+    /**
+     * Curl options that pin the connection to the already-validated IPs —
+     * mismo patrón que Modules\HelpdeskChatFlow\Services\Concerns\GuardsAgainstSsrf.
+     *
+     * @param  array<string, mixed>  $urlParts
+     * @param  array<int, string>  $ips
+     * @return array<int, array<int, string>>
+     */
+    private function pinResolvedIps(array $urlParts, array $ips): array
     {
-        return filter_var(
-            $ip,
-            FILTER_VALIDATE_IP,
-            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-        ) === false;
+        $host = $urlParts['host'] ?? '';
+        $port = $urlParts['port'] ?? (($urlParts['scheme'] ?? '') === 'https' ? 443 : 80);
+
+        $pinned = implode(',', array_map(
+            fn (string $ip): string => str_contains($ip, ':') ? '['.$ip.']' : $ip,
+            $ips
+        ));
+
+        return [CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"]];
     }
 
     /**
