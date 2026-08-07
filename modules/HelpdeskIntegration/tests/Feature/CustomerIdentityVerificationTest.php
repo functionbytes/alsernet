@@ -299,6 +299,23 @@ class CustomerIdentityVerificationTest extends HelpdeskTestCase
             ->assertUnauthorized();
     }
 
+    /**
+     * Ver identidad de un cliente no basta para poder confirmarla sin
+     * código: verify-manual desbloquea de inmediato los datos sensibles de
+     * integraciones, así que exige el mismo permiso reforzado que
+     * link()/unlink() (helpdesk.integrations.manage), no solo poder ver la
+     * ficha del cliente.
+     */
+    public function test_user_who_can_view_customer_but_lacks_integrations_permission_cannot_verify_manually(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('helpdesk.customers.manage');
+
+        $this->actingAs($user)
+            ->postJson(route('manager.helpdesk.customers.identity.verify-manual', $this->customer))
+            ->assertForbidden();
+    }
+
     public function test_user_without_permission_cannot_verify_identity_manually(): void
     {
         $user = User::factory()->create();

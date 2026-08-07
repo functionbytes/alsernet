@@ -4,6 +4,7 @@ namespace Modules\HelpdeskIntegration\Services;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Modules\Helpdesk\Models\Customer;
 use Modules\Helpdesk\Models\CustomerExternalId;
@@ -44,7 +45,7 @@ class CustomerIntegrationService
 
         $customer->loadMissing('externalIds');
 
-        $providers = IntegrationProvider::query()->orderBy('sort_order')->get();
+        $providers = IntegrationProvider::allCached();
         $linked = $customer->externalIds->keyBy('platform');
 
         $integrations = $providers
@@ -93,7 +94,7 @@ class CustomerIntegrationService
             return [];
         }
 
-        $providers ??= IntegrationProvider::query()->orderBy('sort_order')->get();
+        $providers ??= IntegrationProvider::allCached();
 
         return $providers
             ->filter(fn (IntegrationProvider $provider) => $provider->is_active && $provider->is_linkable)
@@ -189,6 +190,11 @@ class CustomerIntegrationService
             'sync_status' => $status,
         ]);
 
+        // Esta llamada YA es una consulta fresca a la plataforma — no dejar
+        // que la caché corta de detail() (60s) devuelva un resultado más
+        // viejo que el que este resync acaba de confirmar.
+        Cache::forget($this->detailCacheKey($link->platform, (string) $link->external_id));
+
         $this->logAudit($customer, $link->platform, 'synced', $link->external_id);
     }
 
@@ -209,6 +215,91 @@ class CustomerIntegrationService
         $result = $driver->search($query, $type);
 
         return ['ok' => $result->ok, 'results' => $result->results];
+    }
+
+    /**
+     * Ficha completa (nombre/email/NIF/teléfono/ciudad/...) de una plataforma
+     * YA vinculada al cliente — reutiliza resync() (mismo driver, mismo shape
+     * de datos que search()) en vez de duplicar la llamada remota. A
+     * diferencia de link()/unlink(), esto solo consulta y no persiste nada,
+     * así que sigue el mismo criterio que search(): no exige identidad
+     * verificada (ver LinkCustomerIntegrationRequest).
+     *
+     * @return array{platform: string, label: string, icon: string, color: ?string, external_id: string, is_critical: bool, available: bool, record: ?array}
+     */
+    public function detail(Customer $customer, string $platform): array
+    {
+        $customer->loadMissing('externalIds');
+        $link = $customer->externalIds->firstWhere('platform', $platform);
+
+        if (! $link) {
+            throw ValidationException::withMessages([
+                'platform' => __('helpdeskintegration::messages.link.not_found'),
+            ]);
+        }
+
+        $provider = $this->providerFor($platform);
+        $driver = $this->driverFor($platform);
+        $record = $this->fetchDetailRecord($platform, (string) $link->external_id, $driver);
+
+        return [
+            'platform' => $platform,
+            'label' => $provider?->label ?: ($driver?->defaultLabel() ?? ucfirst($platform)),
+            'icon' => $provider?->icon ?? $driver?->defaultIcon() ?? 'fas fa-plug',
+            'color' => $provider?->color ?? $driver?->defaultColor(),
+            'external_id' => (string) $link->external_id,
+            'is_critical' => $provider?->is_critical ?? false,
+            'available' => (bool) $record,
+            'record' => $record,
+        ];
+    }
+
+    /**
+     * Caché corta (60s) del registro remoto para la ficha de detalle — mismo
+     * patrón que ErpContextService::getOrderDetail() para el mismo motivo:
+     * un agente que abre/cierra el modal repetidamente sobre el mismo
+     * cliente (patrón habitual mientras atiende una conversación) pagaba la
+     * latencia completa de la plataforma remota (ERP: hasta 15s de timeout;
+     * PrestaShop: hasta 10s) en CADA clic, para un dato que apenas cambia en
+     * ese margen. Cache::remember no persiste null aquí a propósito (no se
+     * envuelve en un try/gestión especial): una consulta fallida se
+     * reintenta en la próxima apertura en vez de quedar "atascada" el resto
+     * del minuto.
+     */
+    private function fetchDetailRecord(string $platform, string $externalId, ?IntegrationDriverContract $driver): ?array
+    {
+        if (! $driver) {
+            return null;
+        }
+
+        $cacheKey = $this->detailCacheKey($platform, $externalId);
+        $cached = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached === self::NO_RECORD_SENTINEL ? null : $cached;
+        }
+
+        $result = $driver->resync($externalId);
+        $record = ($result && $result->ok)
+            ? collect($result->results)->firstWhere('id', $externalId)
+            : null;
+
+        // No cachear un fallo de plataforma (result no ok) — solo un "sigue
+        // sin registro" confirmado (respuesta ok, pero sin match) merece el
+        // mismo TTL que un hit real, para no reintentar en cada clic durante
+        // una caída puntual pero tampoco fingir 60s de disponibilidad falsa.
+        if ($result && $result->ok) {
+            Cache::put($cacheKey, $record ?? self::NO_RECORD_SENTINEL, now()->addSeconds(60));
+        }
+
+        return $record;
+    }
+
+    /** Distingue "sin registro confirmado" (cacheable) de "sin cachear todavía" (Cache::get devuelve null en ambos casos). */
+    private const NO_RECORD_SENTINEL = '__helpdeskintegration_no_record__';
+
+    private function detailCacheKey(string $platform, string $externalId): string
+    {
+        return "helpdeskintegration:detail:{$platform}:{$externalId}";
     }
 
     public function link(Customer $customer, string $platform, string $externalId): array
@@ -235,8 +326,33 @@ class CustomerIntegrationService
             }
         }
 
-        $customer->linkExternalId($platform, $externalId, ['linked_via' => 'manual']);
+        // linkExternalId() hace updateOrCreate scopeado a ESTE customer_id,
+        // pero la restricción única real es (platform, external_id) SIN
+        // customer_id (migración helpdesk_customer_external_ids) — si el id
+        // remoto ya está vinculado a OTRO cliente, el lookup interno no lo ve
+        // (busca con customer_id=$customer->id) y el INSERT choca con esa
+        // restricción. Antes esto era un QueryException 23000 sin capturar →
+        // 500 genérico en vez de un mensaje claro, a diferencia de
+        // createFromResult() (línea ~347), que sí lo captura.
+        try {
+            $customer->linkExternalId($platform, $externalId, ['linked_via' => 'manual']);
+        } catch (QueryException $e) {
+            if ($e->getCode() !== '23000') {
+                throw $e;
+            }
+
+            throw ValidationException::withMessages([
+                'external_id' => __('helpdeskintegration::messages.link.already_linked_elsewhere'),
+            ]);
+        }
+
         $customer->load('externalIds');
+
+        // Por si se re-vincula el mismo external_id que tuvo un vínculo
+        // previo (desvinculado y vuelto a vincular) — no dejar que la caché
+        // corta de detail() sirva un resultado de la sesión de vínculo
+        // anterior.
+        Cache::forget($this->detailCacheKey($platform, $externalId));
 
         $this->logAudit($customer, $platform, 'linked', $externalId);
 
@@ -327,8 +443,15 @@ class CustomerIntegrationService
 
     public function unlink(Customer $customer, string $platform): array
     {
+        $link = $customer->externalIds->firstWhere('platform', $platform)
+            ?? $customer->externalIds()->where('platform', $platform)->first();
+
         $customer->externalIds()->where('platform', $platform)->delete();
         $customer->load('externalIds');
+
+        if ($link) {
+            Cache::forget($this->detailCacheKey($platform, (string) $link->external_id));
+        }
 
         $this->logAudit($customer, $platform, 'unlinked');
 

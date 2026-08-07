@@ -15,6 +15,7 @@ return [
         'not_linkable' => 'This platform is not available for linking.',
         'not_found' => 'No customer was found with that identifier on the platform.',
         'platform_error' => 'The platform did not respond: the identifier could not be verified. Please try again in a few minutes.',
+        'already_linked_elsewhere' => 'This identifier is already linked to another customer in the system.',
     ],
     'unlink' => [
         'success' => 'Integration unlinked.',

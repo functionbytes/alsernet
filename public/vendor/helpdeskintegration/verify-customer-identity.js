@@ -366,10 +366,14 @@
                 data: JSON.stringify({ platform: result.platform, external_id: String(result.id) }),
                 contentType: 'application/json',
             })
-                .done(function () {
+                .done(function (resp) {
                     toastr.success(t('linked_success', 'Vinculado correctamente: :name', { name: esc(result.name || '') }));
-                    refreshRightPanelIntegrations();
-                    renderPlatformSearch();
+                    refreshRightPanelIntegrations(resp && resp.integrations);
+                    // Antes volvía a renderPlatformSearch() y el modal se quedaba
+                    // abierto con el buscador vacío — ya vinculado, no hay nada más
+                    // que hacer aquí, así que se cierra solo (petición explícita
+                    // del usuario, ago-2026).
+                    HDCommerce.close('verify-customer-identity');
                 })
                 .fail(function (xhr) {
                     toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
@@ -384,12 +388,18 @@
         });
     }
 
-    // El widget "INTEGRACIONES" del panel derecho se renderiza en servidor al
-    // cargar la conversación — sin esto, vincular aquí no se reflejaba ahí
-    // hasta recargar la página entera. bvLoadConversationPane ya existe
-    // (conversations.js) para el cambio de conversación; se reutiliza para
-    // refrescar el panel completo con datos frescos.
-    function refreshRightPanelIntegrations() {
+    // Pinta el widget "INTEGRACIONES" del panel derecho directamente con los
+    // datos ya devueltos por link() (customer-integrations.js expone el
+    // renderer en HDCommerce para no duplicarlo aquí). Si por lo que sea no
+    // está disponible (orden de carga inesperado), recae en el recargado
+    // completo del pane como red de seguridad.
+    function refreshRightPanelIntegrations(integrations) {
+        if (integrations && window.HDCommerce && typeof window.HDCommerce.renderIntegrationsWidget === 'function') {
+            window.HDCommerce.renderIntegrationsWidget(integrations);
+
+            return;
+        }
+
         var convId = $('.bv-sync-commerce').attr('data-conv-id');
         if (convId && typeof window.bvLoadConversationPane === 'function') {
             window.bvLoadConversationPane(convId, null, { push: false });
@@ -409,7 +419,7 @@
         })
             .done(function (resp) {
                 toastr.success(resp.message || t('sync_completed', 'Sincronización completada.'));
-                refreshRightPanelIntegrations();
+                refreshRightPanelIntegrations(resp && resp.integrations);
             })
             .fail(function (xhr) {
                 toastr.error(HDCommerce.errorMessage(xhr, t('sync_failed', 'No se pudo sincronizar.')));

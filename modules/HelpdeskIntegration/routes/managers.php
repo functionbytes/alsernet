@@ -25,6 +25,10 @@ Route::get('/customers/{customer}/integrations/audit-log', [CustomerIntegrations
     ->middleware('throttle:helpdeskintegration-audit')
     ->name('manager.helpdesk.customers.integrations.audit-log');
 
+Route::get('/customers/{customer}/integrations/{platform}/detail', [CustomerIntegrationsController::class, 'detail'])
+    ->middleware('throttle:helpdeskintegration-search')
+    ->name('manager.helpdesk.customers.integrations.detail');
+
 Route::post('/customers/{customer}/integrations/link', [CustomerIntegrationsController::class, 'link'])
     ->middleware('throttle:helpdeskintegration-link')
     ->name('manager.helpdesk.customers.integrations.link');

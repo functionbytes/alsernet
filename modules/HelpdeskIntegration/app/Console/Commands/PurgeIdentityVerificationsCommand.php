@@ -38,7 +38,14 @@ class PurgeIdentityVerificationsCommand extends Command
             return self::SUCCESS;
         }
 
-        $deleted = $query->delete();
+        // Borrado en lotes (DELETE ... LIMIT), no una sola sentencia masiva —
+        // mismo motivo que PurgeIntegrationAuditLogCommand: evitar un lock
+        // largo de tabla con volumen alto de histórico.
+        $deleted = 0;
+        do {
+            $affected = CustomerIdentityVerification::query()->olderThan($days)->limit(1000)->delete();
+            $deleted += $affected;
+        } while ($affected > 0);
 
         $this->info("Eliminadas {$deleted} verificaciones de identidad anteriores a {$days} días.");
 

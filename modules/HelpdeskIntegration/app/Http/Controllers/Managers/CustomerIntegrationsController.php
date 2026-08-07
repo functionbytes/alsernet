@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Modules\Auth\Services\AuthRateLimiter;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskIntegration\Http\Requests\Managers\DetailCustomerIntegrationRequest;
 use Modules\HelpdeskIntegration\Http\Requests\Managers\LinkCustomerIntegrationRequest;
 use Modules\HelpdeskIntegration\Http\Requests\Managers\RequestIdentityCodeRequest;
 use Modules\HelpdeskIntegration\Http\Requests\Managers\SearchCustomerIntegrationRequest;
@@ -257,6 +258,20 @@ class CustomerIntegrationsController extends Controller
             'success' => true,
             'results' => $search['results'],
             'platform_error' => ! $search['ok'],
+        ]);
+    }
+
+    /**
+     * Ficha completa de una plataforma ya vinculada (widget del panel
+     * derecho) — mismo criterio de identidad que search(): solo consulta.
+     */
+    public function detail(DetailCustomerIntegrationRequest $request, Customer $customer): JsonResponse
+    {
+        $platform = $request->validated('platform');
+
+        return response()->json([
+            'success' => true,
+            ...$this->integrations->detail($customer, $platform),
         ]);
     }
 
