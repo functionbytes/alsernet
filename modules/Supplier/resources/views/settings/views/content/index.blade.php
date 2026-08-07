@@ -9,6 +9,27 @@
     .btn-action-black { background-color: #111; border-color: #111; border-radius: 8px; }
     .btn-action-black:hover, .btn-action-black:focus { background-color: #2a2a2a; border-color: #2a2a2a; }
     .stat-card-active { border: 2px solid #111 !important; }
+
+    /*
+     * Estados del pipeline de contenido IA — paleta de marca (verde/gris/
+     * negro), no las utilities bg-*/text-bg-* de Bootstrap: este theme
+     * reasigna --bs-secondary-rgb/--bs-danger-rgb por esquema de color (en
+     * el esquema por defecto salen teal y rosa, no gris ni rojo), y
+     * bg-warning/bg-success sueltas no fijan color de texto — quedaban
+     * blanco sobre amarillo/verde claro, casi ilegible. bg-teal/bg-orange
+     * directamente no existen (badge sin fondo, invisible). Valores fijos
+     * aquí, sin depender de esas variables, siguiendo el mismo verde/negro
+     * que ya usan los botones de esta página.
+     */
+    .badge-content-pending    { background-color: #D9E8B8; color: #3C5211; border: 1px solid #C3D896; }
+    .badge-content-generating { background-color: #7cb01a; color: #FFFFFF; }
+    .badge-content-review     { background-color: #9A9A9A; color: #FFFFFF; }
+    .badge-content-inreview   { background-color: #6B6B6B; color: #FFFFFF; }
+    .badge-content-revision   { background-color: #4A4A4A; color: #FFFFFF; }
+    .badge-content-validated  { background-color: #90BB13; color: #111111; }
+    .badge-content-published  { background-color: #111111; color: #FFFFFF; }
+    .badge-content-hidden     { background-color: #B9CC8D; color: #38460F; }
+    .badge-content-danger     { background-color: #BF3E1B; color: #FFFFFF; }
 </style>
 @endpush
 
@@ -364,7 +385,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge badge-status {{ $content->contentStatus?->badge_class ?? 'bg-primary' }}">
+                                        <span class="badge badge-status {{ $content->contentStatus?->badge_class ?? 'badge-content-pending' }}">
                                             {{ $content->contentStatus?->label ?? $content->status }}
                                         </span>
                                     </td>
@@ -523,7 +544,7 @@
                     <div class="d-flex flex-column gap-3">
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-secondary mt-1" style="min-width:110px;text-align:center;">Pendiente gen.</span>
+                            <span class="badge badge-content-pending mt-1" style="min-width:110px;text-align:center;">Pendiente gen.</span>
                             <div>
                                 <div class="fw-semibold small">Pendiente de generación</div>
                                 <div class="text-muted small">El producto está en cola. La IA aún no ha generado ningún texto.</div>
@@ -531,7 +552,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-info mt-1" style="min-width:110px;text-align:center;">Generando</span>
+                            <span class="badge badge-content-generating mt-1" style="min-width:110px;text-align:center;">Generando</span>
                             <div>
                                 <div class="fw-semibold small">Generando</div>
                                 <div class="text-muted small">La IA está procesando el contenido en este momento. No se puede editar.</div>
@@ -539,7 +560,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-primary mt-1" style="min-width:110px;text-align:center;">Por validar</span>
+                            <span class="badge badge-content-review mt-1" style="min-width:110px;text-align:center;">Por validar</span>
                             <div>
                                 <div class="fw-semibold small">Pendiente de validación</div>
                                 <div class="text-muted small">La IA finalizó la generación. Está listo para que un revisor lo apruebe o rechace.</div>
@@ -547,7 +568,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-warning text-dark mt-1" style="min-width:110px;text-align:center;">En revisión</span>
+                            <span class="badge badge-content-inreview mt-1" style="min-width:110px;text-align:center;">En revisión</span>
                             <div>
                                 <div class="fw-semibold small">En revisión</div>
                                 <div class="text-muted small">Un revisor lo ha tomado y está evaluando el contenido actualmente.</div>
@@ -555,7 +576,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-success mt-1" style="min-width:110px;text-align:center;">Validado</span>
+                            <span class="badge badge-content-validated mt-1" style="min-width:110px;text-align:center;">Validado</span>
                             <div>
                                 <div class="fw-semibold small">Validado</div>
                                 <div class="text-muted small">El contenido ha sido aprobado por un revisor y sincronizado con el ERP. Puede publicarse en tienda.</div>
@@ -563,7 +584,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-success mt-1" style="min-width:110px;text-align:center;">Publicado</span>
+                            <span class="badge badge-content-published mt-1" style="min-width:110px;text-align:center;">Publicado</span>
                             <div>
                                 <div class="fw-semibold small">Publicado</div>
                                 <div class="text-muted small">El contenido está validado y visible en la tienda online.</div>
@@ -571,7 +592,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge bg-danger mt-1" style="min-width:110px;text-align:center;">Rechazado</span>
+                            <span class="badge badge-content-danger mt-1" style="min-width:110px;text-align:center;">Rechazado</span>
                             <div>
                                 <div class="fw-semibold small">Rechazado</div>
                                 <div class="text-muted small">El contenido no superó la revisión. Debe regenerarse o corregirse antes de volver al flujo.</div>
@@ -579,7 +600,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start border-top pt-3">
-                            <span class="badge bg-danger mt-1" style="min-width:110px;text-align:center;white-space:normal;">Error</span>
+                            <span class="badge badge-content-danger mt-1" style="min-width:110px;text-align:center;white-space:normal;">Error</span>
                             <div>
                                 <div class="fw-semibold small">Errores de generación</div>
                                 <div class="text-muted small">
