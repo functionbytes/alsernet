@@ -329,13 +329,25 @@ class ChatFlowNodeExecutor
         $orderVar = $data['order_variable'] ?? 'numero_pedido';
         $orderId = $session->getContextValue($orderVar);
 
-        $customer = [
-            'erp_id' => $session->getContextValue('customer_erp_id'),
-            'ps_id' => $session->getContextValue('customer_ps_id'),
-            'email' => $session->getContextValue('customer_email'),
-        ];
+        // Exige identidad verificada por OTP, no solo customer_identified — un
+        // nodo identify_customer con require_otp=false deja ese contexto con
+        // el email que haya escrito el usuario en texto libre, sin verificar
+        // que sea suyo de verdad. Mismo guard que
+        // ChatFlowAgentService::executeTool('lookup_order', ...); antes este
+        // nodo (a diferencia del tool de IA) no comprobaba nada — un flow que
+        // encadenara identify_customer(require_otp=false) → order_lookup
+        // exponía el pedido de cualquiera con solo teclear su email.
+        if (! $session->getContextValue('customer_identified_via_otp')) {
+            $order = ['found' => false];
+        } else {
+            $customer = [
+                'erp_id' => $session->getContextValue('customer_erp_id'),
+                'ps_id' => $session->getContextValue('customer_ps_id'),
+                'email' => $session->getContextValue('customer_email'),
+            ];
 
-        $order = $this->orderLookup->lookup($orderId, $customer, $data['source'] ?? 'auto');
+            $order = $this->orderLookup->lookup($orderId, $customer, $data['source'] ?? 'auto');
+        }
 
         if ($order['found']) {
             // Seed every field a found_message template might interpolate, including

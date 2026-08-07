@@ -382,7 +382,7 @@ class ChatFlowEngine
                 return;
             }
 
-            $this->markIdentified($session, $node, $customer, $data);
+            $this->markIdentified($session, $node, $customer, $data, viaOtp: false);
 
             return;
         }
@@ -413,7 +413,7 @@ class ChatFlowEngine
         if ($result === 'ok') {
             $customer = $this->identityOtp->pendingCustomer($session) ?? [];
             $this->identityOtp->clear($session);
-            $this->markIdentified($session, $node, $customer, $data);
+            $this->markIdentified($session, $node, $customer, $data, viaOtp: true);
 
             return;
         }
@@ -441,10 +441,18 @@ class ChatFlowEngine
      * @param  array<string, mixed>  $node
      * @param  array<string, mixed>  $customer
      * @param  array<string, mixed>  $data
+     * @param  bool  $viaOtp  true solo cuando esta identificación pasó por la
+     *                        verificación OTP real — customer_identified por
+     *                        sí solo NO basta para exponer datos sensibles
+     *                        (pedidos): un flow con require_otp=false deja
+     *                        "identificado" a cualquiera que escriba el email
+     *                        de un tercero, sin verificar que sea suyo de
+     *                        verdad. customer_identified_via_otp es el flag
+     *                        que ChatFlowAgentService::lookup_order exige.
      */
-    private function markIdentified(ChatFlowSession $session, array $node, array $customer, array $data): void
+    private function markIdentified(ChatFlowSession $session, array $node, array $customer, array $data, bool $viaOtp): void
     {
-        $values = ['customer_identified' => true];
+        $values = ['customer_identified' => true, 'customer_identified_via_otp' => $viaOtp];
         foreach ($customer as $key => $value) {
             $values['customer_'.$key] = $value;
         }
@@ -554,6 +562,7 @@ class ChatFlowEngine
     private function handleIdentificationFailure(ChatFlowSession $session, array $node, array $data): void
     {
         $session->setContextValue('customer_identified', false);
+        $session->setContextValue('customer_identified_via_otp', false);
 
         // Look for an else branchItem sibling if the next node is a branches container
         $nextNodeId = $this->getFirstChildId($session, $node['id']);
