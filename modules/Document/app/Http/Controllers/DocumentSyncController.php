@@ -5,10 +5,15 @@ namespace Modules\Document\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Modules\Document\Entities\Document;
-use Modules\Document\Entities\DocumentProduct;
 use Modules\Document\Entities\DocumentLang;
+// Los 3 lookups de este controller buscan por `reference` (no por order_id
+// numérico) — PrestashopOrderLookupService/el bridge solo soportan lookup
+// por id (order.detail), no hay endpoint de búsqueda por referencia. Se
+// deja en acceso directo a la BD hasta que exista esa capacidad en el
+// bridge (mismo caso que DocumentsController::getAvailableOrders()).
+use Modules\Document\Entities\DocumentProduct;
 use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
 use Modules\Supplier\Services\Integrations\ErpService;
 
@@ -172,7 +177,7 @@ class DocumentSyncController extends Controller
             ]);
 
         } catch (\Exception $e) {
-           
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al sincronizar desde ERP: '.$e->getMessage(),
@@ -366,7 +371,7 @@ class DocumentSyncController extends Controller
                     }
                 } catch (\Exception $e) {
                     $failed++;
-                   
+
                 }
             }
 
@@ -400,13 +405,13 @@ class DocumentSyncController extends Controller
             // Check if document already exists
             $existingDocument = Document::where('order_reference', $orderIdentifier)->first();
 
-            if ($existingDocument) {                
+            if ($existingDocument) {
                 return $existingDocument;
             }
 
             // Create new document
             $document = Document::create([
-                'uid' => \Illuminate\Support\Str::uuid(),
+                'uid' => Str::uuid(),
                 'order_reference' => $orderIdentifier,
                 'order_date' => $orderData['date'] ?? now(),
                 'customer_email' => $orderData['customer_email'] ?? null,
@@ -451,7 +456,7 @@ class DocumentSyncController extends Controller
                     'price' => $productData['price'] ?? 0,
                 ]);
             } catch (\Exception $e) {
-               
+
             }
         }
     }
@@ -504,7 +509,6 @@ class DocumentSyncController extends Controller
             return true;
 
         } catch (\Exception $e) {
-           
 
             return false;
         }

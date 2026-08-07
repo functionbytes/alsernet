@@ -2,6 +2,7 @@
 
 namespace Modules\Prestashop\Tests\Feature;
 
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class PrestashopModuleTest extends TestCase
@@ -35,17 +36,9 @@ class PrestashopModuleTest extends TestCase
         );
     }
 
-    public function test_supplier_sync_service_exists(): void
-    {
-        $this->assertTrue(
-            class_exists('modules\Prestashop\Services\SupplierSyncService'),
-            'SupplierSyncService exists in Prestashop module'
-        );
-    }
-
     public function test_routes_are_registered(): void
     {
-        $routes = collect(\Illuminate\Support\Facades\Route::getRoutes());
+        $routes = collect(Route::getRoutes());
         $prestashopRoutes = $routes->filter(fn ($route) => str_contains($route->getName() ?? '', 'prestashop'));
 
         $this->assertGreaterThan(

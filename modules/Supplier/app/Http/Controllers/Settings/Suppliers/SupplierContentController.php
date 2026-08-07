@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Http\Requests\Content\ActionContentRequest;
 use Modules\Supplier\Http\Requests\Content\BulkActionContentRequest;
 use Modules\Supplier\Http\Requests\Content\BulkApproveContentRequest;
@@ -19,18 +20,17 @@ use Modules\Supplier\Http\Requests\Content\EditContentRequest;
 use Modules\Supplier\Http\Requests\Content\RejectContentRequest;
 use Modules\Supplier\Http\Requests\Content\TranslateContentRequest;
 use Modules\Supplier\Http\Resources\AiContentResource;
+use Modules\Supplier\Jobs\RegenerateAiContentJob;
+use Modules\Supplier\Jobs\TranslateAiContentJob;
 use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Ai\AiContentStatus;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
-use Modules\Supplier\Models\Prompt\Prompt;
 use Modules\Supplier\Models\Product\Product;
+use Modules\Supplier\Models\Prompt\Prompt;
 use Modules\Supplier\Models\Supplier\Supplier;
 use Modules\Supplier\Presenters\AiContentPresenter;
-use Modules\Core\Models\Setting;
-use Modules\Supplier\Jobs\RegenerateAiContentJob;
-use Modules\Supplier\Jobs\TranslateAiContentJob;
 use Modules\Supplier\Services\ContentGenerationService;
 use Modules\Supplier\Services\Filters\ContentFilterService;
 use Modules\Supplier\Services\PromptSelectionService;
@@ -43,27 +43,6 @@ class SupplierContentController extends Controller
         protected ContentFilterService $filters,
         protected PromptSelectionService $promptSelectionService,
     ) {}
-
-    /**
-     * Lazily resolve the optional Prestashop sync service. Returns null when
-     * the Prestashop module is not installed/enabled.
-     */
-    protected function prestashopSyncService(): ?object
-    {
-        $class = 'Modules\\Prestashop\\Services\\SupplierSyncService';
-
-        if (! class_exists($class)) {
-            return null;
-        }
-
-        try {
-            return app($class);
-        } catch (\Throwable $e) {
-            Log::warning('Prestashop SupplierSyncService unavailable', ['error' => $e->getMessage()]);
-
-            return null;
-        }
-    }
 
     /**
      * Display pending content review list
@@ -95,16 +74,16 @@ class SupplierContentController extends Controller
 
         $myCount = AiContent::where('assigned_to', $userId)->count();
 
-        $suppliers     = Supplier::orderBy('label')->get(['id', 'label']);
-        $sports        = Sport::active()->orderBy('name')->get(['id', 'name']);
+        $suppliers = Supplier::orderBy('label')->get(['id', 'label']);
+        $sports = Sport::active()->orderBy('name')->get(['id', 'name']);
         $erpcategorias = Category::whereNotNull('erp_categoria_id')
             ->select('erp_categoria_id', 'erp_categoria_name', 'sport_id')
             ->groupBy('erp_categoria_id', 'erp_categoria_name', 'sport_id')
             ->orderBy('erp_categoria_name')
             ->get();
-        $categories    = Category::orderBy('name')->get(['id', 'name', 'erp_categoria_id', 'erp_categoria_name', 'sport_id']);
-        $subfamilies   = Subfamily::active()->orderBy('name')->get(['id', 'name', 'category_id']);
-        $prompts       = Prompt::orderBy('label')->get(['id', 'label']);
+        $categories = Category::orderBy('name')->get(['id', 'name', 'erp_categoria_id', 'erp_categoria_name', 'sport_id']);
+        $subfamilies = Subfamily::active()->orderBy('name')->get(['id', 'name', 'category_id']);
+        $prompts = Prompt::orderBy('label')->get(['id', 'label']);
 
         $contentStatuses = AiContentStatus::ordered()->get()->keyBy('key');
 
@@ -140,8 +119,8 @@ class SupplierContentController extends Controller
         $pageTitle = "Revisión de Contenido: {$content->generated_name}";
         $breadcrumb = 'Configuración / Proveedores / Contenido / Detalle';
 
-        $erpModeloUrl  = Setting::get('supplier.erp_modelo_url', 'http://interges:8080/api-gestion/modelo/');
-        $erpIdModelo   = $content->supplierProduct?->erp_id
+        $erpModeloUrl = Setting::get('supplier.erp_modelo_url', 'http://interges:8080/api-gestion/modelo/');
+        $erpIdModelo = $content->supplierProduct?->erp_id
             ?? ($content->source_attributes['id'] ?? null)
             ?? $content->erp_reference;
 
@@ -267,25 +246,17 @@ class SupplierContentController extends Controller
                 ], 400);
             }
 
-            $syncService = $this->prestashopSyncService();
-
-            if (! $syncService) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'El servicio de sincronización con PrestaShop no está disponible',
-                ], 503);
-            }
-
-            $result = $syncService->publishContentToPrestaShop($content, [
-                'update_existing' => $request->boolean('update_existing', false),
-                'published_by' => auth()->id(),
-            ]);
-
+            // No hay mecanismo de publicación de producto hacia PrestaShop hoy:
+            // el bridge (alsernetbridge) solo expone lectura de catálogo
+            // (product.get/search/categories), sin endpoints de escritura, y el
+            // antiguo SupplierSyncService (sync directo a la BD de PrestaShop)
+            // se eliminó por estar roto — importaba un namespace Entities\* que
+            // ya no existe en el módulo Supplier. Publicar productos requeriría
+            // construir endpoints de escritura nuevos en el bridge.
             return response()->json([
-                'success' => $result['success'],
-                'message' => $result['message'],
-                'prestashop_id' => $result['prestashop_id'] ?? null,
-            ]);
+                'success' => false,
+                'message' => 'La publicación automática a PrestaShop no está disponible todavía.',
+            ], 503);
 
         } catch (\Throwable $e) {
             Log::error('Error publishing content: '.$e->getMessage());
@@ -426,12 +397,12 @@ class SupplierContentController extends Controller
     public function regenerateByQuantity(Request $request): JsonResponse
     {
         $request->validate([
-            'ids'      => ['required', 'array', 'min:1', 'max:500'],
-            'ids.*'    => ['required', 'string'],
+            'ids' => ['required', 'array', 'min:1', 'max:500'],
+            'ids.*' => ['required', 'string'],
             'quantity' => ['required', 'integer', 'min:1', 'max:500'],
         ]);
 
-        $uids   = array_slice($request->input('ids'), 0, (int) $request->input('quantity'));
+        $uids = array_slice($request->input('ids'), 0, (int) $request->input('quantity'));
         $userId = (int) auth()->id();
 
         foreach ($uids as $uid) {
@@ -441,7 +412,7 @@ class SupplierContentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Se encoló la regeneración de '.count($uids).' contenido(s)',
-            'queued'  => count($uids),
+            'queued' => count($uids),
         ]);
     }
 
@@ -501,16 +472,16 @@ class SupplierContentController extends Controller
         $users = User::query()
             ->where(function ($q) {
                 $q->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                  ->orWhereHas('roles', function ($r) {
-                      $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                        ->orWhere('name', 'super-admin');
-                  });
+                    ->orWhereHas('roles', function ($r) {
+                        $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
+                            ->orWhere('name', 'super-admin');
+                    });
             })
             ->orderBy('firstname')
             ->get(['id', 'firstname', 'lastname', 'email'])
             ->map(fn ($u) => [
-                'id'    => $u->id,
-                'name'  => trim("{$u->firstname} {$u->lastname}"),
+                'id' => $u->id,
+                'name' => trim("{$u->firstname} {$u->lastname}"),
                 'email' => $u->email,
             ]);
 
@@ -525,10 +496,10 @@ class SupplierContentController extends Controller
         $users = User::query()
             ->where(function ($q) {
                 $q->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                  ->orWhereHas('roles', function ($r) {
-                      $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                        ->orWhere('name', 'super-admin');
-                  });
+                    ->orWhereHas('roles', function ($r) {
+                        $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
+                            ->orWhere('name', 'super-admin');
+                    });
             })
             ->orderBy('firstname')
             ->get(['id', 'firstname', 'lastname', 'email']);
@@ -556,12 +527,13 @@ class SupplierContentController extends Controller
 
         $users = $users->map(function ($u) use ($assignedCounts) {
             $counts = $assignedCounts->get($u->id);
-            $u->assigned_count  = $counts ? (int) $counts->total     : 0;
-            $u->pending_count   = $counts ? (int) $counts->pending   : 0;
-            $u->approved_count  = $counts ? (int) $counts->approved  : 0;
-            $u->rejected_count  = $counts ? (int) $counts->rejected  : 0;
+            $u->assigned_count = $counts ? (int) $counts->total : 0;
+            $u->pending_count = $counts ? (int) $counts->pending : 0;
+            $u->approved_count = $counts ? (int) $counts->approved : 0;
+            $u->rejected_count = $counts ? (int) $counts->rejected : 0;
             $u->published_count = $counts ? (int) $counts->published : 0;
-            $u->full_name       = trim("{$u->firstname} {$u->lastname}");
+            $u->full_name = trim("{$u->firstname} {$u->lastname}");
+
             return $u;
         });
 
@@ -570,7 +542,7 @@ class SupplierContentController extends Controller
             ->count();
         $totalContent = AiContent::count();
 
-        $pageTitle  = 'Revisores de contenido';
+        $pageTitle = 'Revisores de contenido';
         $breadcrumb = 'Configuración / Proveedores / Contenido / Revisores';
 
         return view('supplier::settings.views.content.assignable', compact(
@@ -591,7 +563,7 @@ class SupplierContentController extends Controller
         if ($search = $request->input('search')) {
             $contentQuery->where(function ($q) use ($search) {
                 $q->where('generated_name', 'like', "%{$search}%")
-                  ->orWhere('erp_reference', 'like', "%{$search}%");
+                    ->orWhere('erp_reference', 'like', "%{$search}%");
             });
         }
 
@@ -599,7 +571,7 @@ class SupplierContentController extends Controller
             $contentQuery->where('supplier_id', $supplierId);
         }
 
-        $perPage  = in_array((int) $request->input('per_page', 20), [10, 20, 50, 100])
+        $perPage = in_array((int) $request->input('per_page', 20), [10, 20, 50, 100])
             ? (int) $request->input('per_page', 20)
             : 20;
 
@@ -615,19 +587,20 @@ class SupplierContentController extends Controller
         $users = User::query()
             ->where(function ($q) {
                 $q->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                  ->orWhereHas('roles', function ($r) {
-                      $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
-                        ->orWhere('name', 'super-admin');
-                  });
+                    ->orWhereHas('roles', function ($r) {
+                        $r->whereHas('permissions', fn ($p) => $p->where('name', 'suppliers.view.content'))
+                            ->orWhere('name', 'super-admin');
+                    });
             })
             ->orderBy('firstname')
             ->get(['id', 'firstname', 'lastname', 'email'])
             ->map(function ($u) {
                 $u->full_name = trim("{$u->firstname} {$u->lastname}");
+
                 return $u;
             });
 
-        $pageTitle  = 'Contenido sin asignar';
+        $pageTitle = 'Contenido sin asignar';
         $breadcrumb = 'Configuración / Proveedores / Contenido / Sin asignar';
 
         return view('supplier::settings.views.content.unassigned', compact(
@@ -642,9 +615,9 @@ class SupplierContentController extends Controller
     public function assignBatch(Request $request): JsonResponse
     {
         $request->validate([
-            'user_id'  => ['required', 'integer', 'exists:users,id'],
-            'ids'      => ['nullable', 'array', 'min:1', 'max:500'],
-            'ids.*'    => ['string'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'ids' => ['nullable', 'array', 'min:1', 'max:500'],
+            'ids.*' => ['string'],
             'quantity' => ['nullable', 'integer', 'min:1', 'max:500'],
         ]);
 
@@ -688,8 +661,8 @@ class SupplierContentController extends Controller
         $name = trim("{$targetUser->firstname} {$targetUser->lastname}");
 
         return response()->json([
-            'success'  => true,
-            'message'  => "Se asignaron {$assigned} contenido(s) a {$name}",
+            'success' => true,
+            'message' => "Se asignaron {$assigned} contenido(s) a {$name}",
             'assigned' => $assigned,
         ]);
     }
@@ -735,17 +708,17 @@ class SupplierContentController extends Controller
             ->with('contentStatus')
             ->get(['uid', 'status', 'prompt_id', 'error_message'])
             ->map(fn ($c) => [
-                'uid'         => $c->uid,
-                'status'      => $c->status,
-                'status_label'=> $c->contentStatus?->label ?? $c->status,
+                'uid' => $c->uid,
+                'status' => $c->status,
+                'status_label' => $c->contentStatus?->label ?? $c->status,
                 'badge_class' => $c->contentStatus?->badge_class ?? 'bg-secondary',
-                'done'        => ! in_array($c->status, ['generating', 'pending_generation']),
-                'success'     => $c->status === 'pending_validation',
-                'error'       => str_starts_with($c->status, 'error_'),
-                'error_msg'   => $c->error_message ?: match($c->status) {
-                    'error_generation_failed'   => 'Error al generar con la IA',
-                    'error_insufficient_info'   => 'Información insuficiente para generar',
-                    'error_source_unavailable'  => 'Fuente de datos no disponible',
+                'done' => ! in_array($c->status, ['generating', 'pending_generation']),
+                'success' => $c->status === 'pending_validation',
+                'error' => str_starts_with($c->status, 'error_'),
+                'error_msg' => $c->error_message ?: match ($c->status) {
+                    'error_generation_failed' => 'Error al generar con la IA',
+                    'error_insufficient_info' => 'Información insuficiente para generar',
+                    'error_source_unavailable' => 'Fuente de datos no disponible',
                     default => null,
                 },
             ]);
@@ -753,7 +726,7 @@ class SupplierContentController extends Controller
         $allDone = $items->every(fn ($i) => $i['done']);
 
         return response()->json([
-            'items'    => $items,
+            'items' => $items,
             'all_done' => $allDone,
         ]);
     }
@@ -785,10 +758,10 @@ class SupplierContentController extends Controller
             $publicar = (int) $request->input('publicar', 0);
 
             $results = match ($action) {
-                'approve'    => $this->approveMany($uids, $publicar),
-                'reject'     => $this->rejectMany($uids, 'Bulk rejection'),
+                'approve' => $this->approveMany($uids, $publicar),
+                'reject' => $this->rejectMany($uids, 'Bulk rejection'),
                 'regenerate' => $this->regenerateMany($uids),
-                'publish'    => $this->publishMany($uids),
+                'publish' => $this->publishMany($uids),
             };
 
             $successCount = collect($results)->where('success', true)->count();
@@ -929,9 +902,9 @@ class SupplierContentController extends Controller
                 return response()->json(['success' => false, 'message' => 'Solo se puede publicar contenido aprobado'], 400);
             }
 
-            $publicar  = (int) ($request->input('publicar', 1));
+            $publicar = (int) ($request->input('publicar', 1));
             $nombreOverride = $request->filled('nombre') ? trim($request->input('nombre')) : null;
-            $marcaOverride  = $request->has('marca') ? trim($request->input('marca') ?? '') : null;
+            $marcaOverride = $request->has('marca') ? trim($request->input('marca') ?? '') : null;
             $erpResult = $this->syncToErp($content, $publicar, $nombreOverride, $marcaOverride);
 
             if ($publicar === 1) {
@@ -941,9 +914,9 @@ class SupplierContentController extends Controller
             }
 
             return response()->json([
-                'success'    => $erpResult['success'],
-                'message'    => $erpResult['success'] ? 'Publicado y sincronizado con ERP' : ($erpResult['message'] ?? 'Error al sincronizar con ERP'),
-                'content'    => new AiContentResource($content->refresh()),
+                'success' => $erpResult['success'],
+                'message' => $erpResult['success'] ? 'Publicado y sincronizado con ERP' : ($erpResult['message'] ?? 'Error al sincronizar con ERP'),
+                'content' => new AiContentResource($content->refresh()),
                 'erp_result' => $erpResult,
             ]);
         }
@@ -975,9 +948,9 @@ class SupplierContentController extends Controller
         $erpResult = null;
 
         if ($action === 'approve' && $request->has('publicar')) {
-            $publicar  = (int) $request->input('publicar', 0);
+            $publicar = (int) $request->input('publicar', 0);
             $nombreOverride = $request->filled('nombre') ? trim($request->input('nombre')) : null;
-            $marcaOverride  = $request->has('marca') ? trim($request->input('marca') ?? '') : null;
+            $marcaOverride = $request->has('marca') ? trim($request->input('marca') ?? '') : null;
             $erpResult = $this->syncToErp($content, $publicar, $nombreOverride, $marcaOverride);
 
             if ($publicar === 1) {
@@ -988,9 +961,9 @@ class SupplierContentController extends Controller
         }
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Acción completada',
-            'content'    => new AiContentResource($content->refresh()),
+            'success' => true,
+            'message' => 'Acción completada',
+            'content' => new AiContentResource($content->refresh()),
             'erp_result' => $erpResult,
         ]);
     }
@@ -1002,8 +975,8 @@ class SupplierContentController extends Controller
      */
     private function syncToErp(AiContent $content, int $publicar, ?string $nombreOverride = null, ?string $marcaOverride = null): array
     {
-        $erpUrl   = Setting::get('supplier.erp_modelo_url', 'http://interges:8080/api-gestion/modelo/');
-        $erpId    = $content->supplierProduct?->erp_id
+        $erpUrl = Setting::get('supplier.erp_modelo_url', 'http://interges:8080/api-gestion/modelo/');
+        $erpId = $content->supplierProduct?->erp_id
             ?? ($content->source_attributes['id'] ?? null)
             ?? $content->erp_reference;
 
@@ -1026,7 +999,7 @@ class SupplierContentController extends Controller
             // (el filter no la devolvía). Consultarla directamente del modelo en Oracle.
             if ($marca === null && $erpId) {
                 try {
-                    $marca = \Illuminate\Support\Facades\DB::connection('oracle')
+                    $marca = DB::connection('oracle')
                         ->table('modelo')
                         ->where('idmodelo', $erpId)
                         ->value('idmarca');
@@ -1039,10 +1012,10 @@ class SupplierContentController extends Controller
         }
 
         $payload = [
-            'idmodelo'    => (string) $erpId,
-            'nombre'      => $nombre,
+            'idmodelo' => (string) $erpId,
+            'nombre' => $nombre,
             'descripcion' => $content->long_description ?? '',
-            'publicar'    => $publicar,
+            'publicar' => $publicar,
         ];
         if ($marca !== null) {
             $payload['marca'] = (string) $marca;
@@ -1053,14 +1026,14 @@ class SupplierContentController extends Controller
 
             return [
                 'success' => $response->successful(),
-                'status'  => $response->status(),
-                'message' => $response->successful() ? null : 'ERP respondió con error ' . $response->status(),
+                'status' => $response->status(),
+                'message' => $response->successful() ? null : 'ERP respondió con error '.$response->status(),
             ];
         } catch (\Throwable $e) {
             Log::error('ERP sync failed from action', [
                 'content_uid' => $content->uid,
-                'erp_id'      => $erpId,
-                'error'       => $e->getMessage(),
+                'erp_id' => $erpId,
+                'error' => $e->getMessage(),
             ]);
 
             return ['success' => false, 'message' => $e->getMessage()];
@@ -1120,11 +1093,13 @@ class SupplierContentController extends Controller
 
             if (! $content) {
                 $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No encontrado'];
+
                 continue;
             }
 
             if ($content->status !== AiContent::STATUS_VALIDATED) {
                 $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No está en estado validado'];
+
                 continue;
             }
 
@@ -1206,6 +1181,7 @@ class SupplierContentController extends Controller
         foreach ($uids as $uid) {
             if (! $contents->has($uid)) {
                 $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No encontrado'];
+
                 continue;
             }
 
@@ -1214,10 +1190,11 @@ class SupplierContentController extends Controller
             // Bloquear estados no regenerables
             if (! in_array($content->status, $regenerableStatuses)) {
                 $results[] = [
-                    'uid'     => $uid,
+                    'uid' => $uid,
                     'success' => false,
                     'message' => "Estado '{$content->status}' no permite regeneración",
                 ];
+
                 continue;
             }
 
@@ -1225,7 +1202,7 @@ class SupplierContentController extends Controller
             if (! $content->prompt_id) {
                 $subfamilyId = $content->supplierProduct?->subfamily_id;
                 $prompt = $this->promptSelectionService->selectPrompt(
-                    supplierId:  $content->supplier_id,
+                    supplierId: $content->supplier_id,
                     subfamilyId: $subfamilyId,
                 );
 
@@ -1233,10 +1210,11 @@ class SupplierContentController extends Controller
                     $content->update(['prompt_id' => $prompt->id]);
                 } else {
                     $results[] = [
-                        'uid'     => $uid,
+                        'uid' => $uid,
                         'success' => false,
                         'message' => 'Sin prompt asignado — configura un prompt para esta subfamilia',
                     ];
+
                     continue;
                 }
             }
@@ -1265,7 +1243,7 @@ class SupplierContentController extends Controller
      */
     public function export(Request $request): HttpResponse
     {
-        $tab    = $request->input('tab', 'available');
+        $tab = $request->input('tab', 'available');
         $userId = (int) auth()->id();
 
         $query = AiContent::query()
@@ -1294,13 +1272,13 @@ class SupplierContentController extends Controller
 
         $query->orderBy('created_at', 'desc')->limit(5000);
 
-        $filename = 'contenido_ia_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'contenido_ia_'.now()->format('Ymd_His').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Cache-Control'       => 'no-store, no-cache',
-            'Pragma'              => 'no-cache',
+            'Cache-Control' => 'no-store, no-cache',
+            'Pragma' => 'no-cache',
         ];
 
         $csvHeaders = [
@@ -1330,6 +1308,7 @@ class SupplierContentController extends Controller
                     if (is_string($src)) {
                         return $src;
                     }
+
                     return $src['url'] ?? $src['source'] ?? '';
                 })->filter()->implode('|');
 
@@ -1373,22 +1352,22 @@ class SupplierContentController extends Controller
             ->with('supplier:id,label')
             ->get()
             ->map(fn ($row) => [
-                'supplier_id'    => $row->supplier_id,
+                'supplier_id' => $row->supplier_id,
                 'supplier_label' => $row->supplier?->label ?? "Proveedor #{$row->supplier_id}",
-                'count'          => (int) $row->count,
+                'count' => (int) $row->count,
             ])
             ->sortByDesc('count')
             ->values();
 
         if ($request->expectsJson()) {
             return response()->json([
-                'success'     => true,
-                'total'       => $total,
+                'success' => true,
+                'total' => $total,
                 'by_supplier' => $bySupplier,
             ]);
         }
 
-        $pageTitle  = 'Cobertura de contenido';
+        $pageTitle = 'Cobertura de contenido';
         $breadcrumb = 'Configuración / Proveedores / Contenido / Cobertura';
 
         return view('supplier::settings.views.content.coverage', compact(
@@ -1420,18 +1399,18 @@ class SupplierContentController extends Controller
                 ]
             )->first();
 
-            $validated        = (int) $row->validated;
-            $published        = (int) $row->published;
+            $validated = (int) $row->validated;
+            $published = (int) $row->published;
             $published_hidden = (int) $row->published_hidden;
 
             return [
-                'total'            => (int) $row->total,
-                'pending'          => (int) $row->pending,
-                'validated'        => $validated,
-                'validated_total'  => $validated + $published + $published_hidden,
-                'published'        => $published,
+                'total' => (int) $row->total,
+                'pending' => (int) $row->pending,
+                'validated' => $validated,
+                'validated_total' => $validated + $published + $published_hidden,
+                'published' => $published,
                 'published_hidden' => $published_hidden,
-                'rejected'         => (int) $row->rejected,
+                'rejected' => (int) $row->rejected,
             ];
         });
     }

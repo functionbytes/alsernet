@@ -5,41 +5,40 @@ namespace Modules\Supplier\Tests\Unit\Controllers;
 use Tests\TestCase;
 
 /**
- * Verifies that SupplierContentController no longer hard-imports the
- * Prestashop module's class. Hard imports break the supplier module if
- * Prestashop is disabled or absent — the controller now resolves the
- * service lazily via class_exists() + app() in prestashopSyncService().
+ * SupplierContentController::publish() ya no delega en un servicio de
+ * PrestaShop: el antiguo SupplierSyncService (modules/Prestashop) estaba
+ * muerto y roto — importaba `Modules\Supplier\Entities\*`, un namespace que
+ * ya no existe en el módulo Supplier tras su reestructuración a
+ * `Models\Ai\AiContent` — y el bridge (alsernetbridge) no expone ningún
+ * endpoint de escritura de productos con el que reemplazarlo. El endpoint
+ * queda expuesto pero responde siempre "no disponible" hasta que exista un
+ * mecanismo real de publicación.
  */
 class SupplierContentControllerPublishTest extends TestCase
 {
-    public function test_controller_does_not_hard_import_prestashop_class(): void
+    public function test_controller_does_not_reference_prestashop_module(): void
     {
         $source = file_get_contents(
             __DIR__.'/../../../app/Http/Controllers/Settings/Suppliers/SupplierContentController.php'
         );
 
         $this->assertStringNotContainsString(
-            'use Modules\\Prestashop\\Services\\SupplierSyncService;',
+            'Modules\\Prestashop',
             $source,
-            'The controller must not hard-import a class from the Prestashop module; resolution must stay lazy.'
+            'The controller must not reference the Prestashop module — there is no working sync mechanism to call.'
         );
     }
 
-    public function test_controller_resolves_prestashop_service_via_class_exists(): void
+    public function test_controller_does_not_expose_dead_sync_resolver(): void
     {
         $source = file_get_contents(
             __DIR__.'/../../../app/Http/Controllers/Settings/Suppliers/SupplierContentController.php'
         );
 
-        $this->assertStringContainsString(
+        $this->assertStringNotContainsString(
             'prestashopSyncService',
             $source,
-            'The controller must expose a lazy resolver method.'
-        );
-        $this->assertStringContainsString(
-            'class_exists',
-            $source,
-            'The controller must guard the cross-module class lookup with class_exists().'
+            'The dead lazy-resolver method should not come back without a real, working sync mechanism behind it.'
         );
     }
 }

@@ -100,6 +100,29 @@ class PrestashopContextService
     }
 
     /**
+     * Variante de getOrderDetail() SIN el chequeo de propiedad por email —
+     * consulta el pedido solo por su id, sin verificar a qué cliente
+     * pertenece. Existe para llamadores que aún no conocen el email del
+     * cliente y necesitan descubrirlo a partir del order_id (p. ej. el
+     * módulo Document poblando el formulario de solicitud de documentos
+     * desde un webhook `order-paid` firmado, o desde el panel interno de
+     * staff ya autenticado) — no para flujos de cara al cliente.
+     *
+     * SEGURIDAD: NO exponer directa ni indirectamente a un endpoint donde
+     * un visitante no autenticado pueda elegir el order_id libremente; el
+     * bridge, al no recibir lookup.email/external_id, salta su propio
+     * chequeo de propiedad (ver alsernetbridge/api.php, case 'order.detail').
+     * El llamador es responsable de garantizar que el order_id viene de una
+     * fuente confiable (webhook firmado, panel autenticado con permiso).
+     */
+    public function getOrderDetailUnscoped(int $orderId): ?array
+    {
+        return $this->callApi('order.detail', [
+            'order_id' => $orderId,
+        ]);
+    }
+
+    /**
      * Lista paginada de pedidos del cliente vía la accion dedicada `customer.orders`.
      * Es la fuente fiable de pedidos: `customer.helpdesk_context` puede devolver el
      * array `orders` vacio para algunos clientes aunque `orders_count` sea > 0.

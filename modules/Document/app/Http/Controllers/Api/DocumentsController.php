@@ -13,6 +13,7 @@ use Modules\Document\Entities\DocumentLang;
 use Modules\Document\Entities\DocumentLoad;
 use Modules\Document\Entities\DocumentSource;
 use Modules\Document\Entities\DocumentStatus;
+use Modules\Document\Entities\DocumentStatusHistory;
 use Modules\Document\Entities\DocumentSync;
 use Modules\Document\Entities\DocumentType;
 use Modules\Document\Entities\DocumentUploadType;
@@ -20,45 +21,41 @@ use Modules\Document\Jobs\MailTemplateJob;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentEmailTemplateService;
 use Modules\Document\Services\DocumentTypeService;
+use Modules\Document\Services\PrestashopOrderLookupService;
 use Modules\Document\Traits\SendsDocumentEmails;
-use Modules\Prestashop\Entities\Orders\Order as PrestashopOrder;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class DocumentsController extends Controller
 {
     use SendsDocumentEmails;
 
+    public function __construct(
+        private readonly PrestashopOrderLookupService $prestashopOrders,
+    ) {}
+
     /**
      * Sincroniza un documento con los datos de su orden e importa productos
      * Método helper reutilizable para sincronización de datos y productos
+     *
+     * @param  array  $order  Shape normalizado de PrestashopOrderLookupService::find()
      */
-    private function syncDocumentWithOrder(Document $document, PrestashopOrder $order): bool
+    private function syncDocumentWithOrder(Document $document, array $order): bool
     {
-        // Obtener el cliente
-        $customer = $order->customer;
-
-        if (! $customer) {
+        if (! $order['customer_id']) {
             return false;
         }
 
         // Llenar los datos desnormalizados de la orden y cliente
-        $document->order_reference = $order->reference ?? $document->order_reference;
-        $document->order_date = $order->date_add ?? $document->order_date;
+        $document->order_reference = $order['reference'] ?? $document->order_reference;
+        $document->order_date = $order['date_add'] ?? $document->order_date;
 
-        // Obtener dirección de envío
-        $deliveryAddress = $order->deliveryAddress;
-
-        $document->customer_id = $customer->id_customer;
-        // Nombre y apellido vienen de la dirección de envío
-        $document->customer_firstname = $deliveryAddress?->firstname ?? $customer->firstname;
-        $document->customer_lastname = $deliveryAddress?->lastname ?? $customer->lastname;
-        $document->customer_email = $customer->email;
-        // DNI/SIRET vienen de la dirección de envío
-        $document->customer_dni = $deliveryAddress?->dni ?? $deliveryAddress?->vat_number ?? null;
-        // Empresa viene de la dirección de envío
-        $document->customer_company = $deliveryAddress?->company ?? null;
-        // Teléfono celular viene de la dirección de envío
-        $document->customer_cellphone = $deliveryAddress?->phone_mobile ?? null;
+        $document->customer_id = $order['customer_id'];
+        $document->customer_firstname = $order['customer_firstname'];
+        $document->customer_lastname = $order['customer_lastname'];
+        $document->customer_email = $order['customer_email'];
+        $document->customer_dni = $order['customer_dni'];
+        $document->customer_company = $order['customer_company'];
+        $document->customer_cellphone = $order['customer_cellphone'];
 
         $document->save();
 
@@ -862,8 +859,8 @@ class DocumentsController extends Controller
 
         $orderId = $request->input('order_id');
 
-        // Obtener la orden de Prestashop
-        $order = PrestashopOrder::find($orderId);
+        // Obtener la orden vía el bridge de PrestaShop
+        $order = $this->prestashopOrders->find((int) $orderId);
 
         if (! $order) {
             return response()->json([
@@ -872,10 +869,7 @@ class DocumentsController extends Controller
             ], 404);
         }
 
-        // Obtener el cliente
-        $customer = $order->customer;
-
-        if (! $customer) {
+        if (! $order['customer_id']) {
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Customer associated with order not found.',
@@ -888,19 +882,19 @@ class DocumentsController extends Controller
             'message' => 'Order data retrieved successfully.',
             'data' => [
                 // Datos de la orden
-                'order_id' => $order->id_order,
-                'order_reference' => $order->reference,
-                'order_date' => $order->date_add,
-                'order_cart_id' => $order->id_cart,
+                'order_id' => $order['order_id'],
+                'order_reference' => $order['reference'],
+                'order_date' => $order['date_add'],
+                'order_cart_id' => $order['cart_id'],
 
                 // Datos del cliente
-                'customer_id' => $customer->id_customer,
-                'customer_firstname' => $order->deliveryAddress?->firstname ?? $customer->firstname,
-                'customer_lastname' => $order->deliveryAddress?->lastname ?? $customer->lastname,
-                'customer_email' => $customer->email,
-                'customer_dni' => $order->deliveryAddress?->dni ?? $order->deliveryAddress?->vat_number ?? null,
-                'customer_company' => $order->deliveryAddress?->company ?? null,
-                'customer_cellphone' => $order->deliveryAddress?->phone_mobile ?? null,
+                'customer_id' => $order['customer_id'],
+                'customer_firstname' => $order['customer_firstname'],
+                'customer_lastname' => $order['customer_lastname'],
+                'customer_email' => $order['customer_email'],
+                'customer_dni' => $order['customer_dni'],
+                'customer_company' => $order['customer_company'],
+                'customer_cellphone' => $order['customer_cellphone'],
             ],
         ], 200);
     }
@@ -931,8 +925,8 @@ class DocumentsController extends Controller
             ], 404);
         }
 
-        // Obtener la orden
-        $order = PrestashopOrder::find($orderId);
+        // Obtener la orden vía el bridge de PrestaShop
+        $order = $this->prestashopOrders->find((int) $orderId);
 
         if (! $order) {
             return response()->json([
@@ -941,10 +935,7 @@ class DocumentsController extends Controller
             ], 404);
         }
 
-        // Obtener el cliente
-        $customer = $order->customer;
-
-        if (! $customer) {
+        if (! $order['customer_id']) {
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Customer not found.',
@@ -952,23 +943,16 @@ class DocumentsController extends Controller
         }
 
         // Llenar los datos desnormalizados
-        $document->order_reference = $order->reference;
-        $document->order_id = $order->id_order;
-        $document->order_date = $order->date_add;
-
-        // Obtener dirección de envío
-        $deliveryAddress = $order->deliveryAddress;
-        $document->customer_id = $customer->id_customer;
-        // Nombre y apellido vienen de la dirección de envío
-        $document->customer_firstname = $deliveryAddress?->firstname ?? $customer->firstname;
-        $document->customer_lastname = $deliveryAddress?->lastname ?? $customer->lastname;
-        $document->customer_email = $customer->email;
-        // DNI/SIRET vienen de la dirección de envío
-        $document->customer_dni = $deliveryAddress?->dni ?? $deliveryAddress?->vat_number ?? null;
-        // Empresa viene de la dirección de envío
-        $document->customer_company = $deliveryAddress?->company ?? null;
-        // Teléfono celular viene de la dirección de envío
-        $document->customer_cellphone = $deliveryAddress?->phone_mobile ?? null;
+        $document->order_reference = $order['reference'];
+        $document->order_id = $order['order_id'];
+        $document->order_date = $order['date_add'];
+        $document->customer_id = $order['customer_id'];
+        $document->customer_firstname = $order['customer_firstname'];
+        $document->customer_lastname = $order['customer_lastname'];
+        $document->customer_email = $order['customer_email'];
+        $document->customer_dni = $order['customer_dni'];
+        $document->customer_company = $order['customer_company'];
+        $document->customer_cellphone = $order['customer_cellphone'];
         $document->save();
 
         MailTemplateJob::dispatch($document, 'request');
@@ -1016,8 +1000,8 @@ class DocumentsController extends Controller
 
             foreach ($documents as $document) {
                 try {
-                    // Obtener la orden
-                    $order = PrestashopOrder::find($document->order_id);
+                    // Obtener la orden vía el bridge de PrestaShop
+                    $order = $this->prestashopOrders->find((int) $document->order_id);
 
                     if (! $order) {
                         $failed++;
@@ -1102,8 +1086,8 @@ class DocumentsController extends Controller
                 ], 404);
             }
 
-            // Obtener la orden
-            $order = PrestashopOrder::find($orderId);
+            // Obtener la orden vía el bridge de PrestaShop
+            $order = $this->prestashopOrders->find((int) $orderId);
 
             if (! $order) {
                 return response()->json([
@@ -1146,8 +1130,8 @@ class DocumentsController extends Controller
                     'synced' => $synced,
                     'failed' => $failed,
                     'total' => $documents->count(),
-                    'order_reference' => $order->reference,
-                    'customer_name' => $order->customer ? "{$order->customer->firstname} {$order->customer->lastname}" : null,
+                    'order_reference' => $order['reference'],
+                    'customer_name' => $order['customer_id'] ? "{$order['customer_firstname']} {$order['customer_lastname']}" : null,
                     'errors' => $failed > 0 ? $errors : [],
                 ],
             ], 200);
@@ -1175,8 +1159,8 @@ class DocumentsController extends Controller
         $orderId = $request->input('order_id');
 
         try {
-            // Obtener la orden de PrestaShop
-            $order = PrestashopOrder::find($orderId);
+            // Obtener la orden vía el bridge de PrestaShop
+            $order = $this->prestashopOrders->find((int) $orderId);
 
             if (! $order) {
                 return response()->json([
@@ -1185,10 +1169,7 @@ class DocumentsController extends Controller
                 ], 404);
             }
 
-            // Obtener el cliente
-            $customer = $order->customer;
-
-            if (! $customer) {
+            if (! $order['customer_id']) {
                 return response()->json([
                     'status' => 'failed',
                     'message' => 'Customer not found.',
@@ -1196,7 +1177,7 @@ class DocumentsController extends Controller
             }
 
             // Buscar o crear el documento
-            $document = Document::firstOrNew(['order_id' => $order->id_order]);
+            $document = Document::firstOrNew(['order_id' => $order['order_id']]);
             $isNew = ! $document->exists;
 
             // Asignar campos básicos si es nuevo
@@ -1210,31 +1191,22 @@ class DocumentsController extends Controller
             }
 
             // Detectar idioma del pedido
-            if (! empty($order->lang?->iso_code)) {
-                $isoCode = strtolower(trim($order->lang->iso_code));
+            if (! empty($order['lang_iso'])) {
+                $isoCode = strtolower(trim($order['lang_iso']));
                 $lang = DocumentLang::iso($isoCode) ?? DocumentLang::iso('es');
                 $document->lang_id = $lang?->id ?? $document->lang_id;
             }
 
-            $document->order_reference = $order->reference ?? $document->order_reference;
-            $document->order_date = $order->date_add ?? $document->order_date;
-            $document->customer_id = $customer->id_customer;
-            $document->cart_id = $order->id_cart ?? $document->cart_id;
-
-            // Obtener dirección de envío
-            $deliveryAddress = $order->deliveryAddress;
-
-            // Nombre y apellido vienen de la dirección de envío
-            $document->customer_firstname = $deliveryAddress?->firstname ?? $customer->firstname;
-            $document->customer_lastname = $deliveryAddress?->lastname ?? $customer->lastname;
-            $document->customer_email = $customer->email;
-            // vat_number es el campo principal en PS (439k registros), dni es residual (916)
-            $rawDni = $deliveryAddress?->vat_number ?: $deliveryAddress?->dni ?: null;
-            $document->customer_dni = ($rawDni && $rawDni !== '-') ? $rawDni : null;
-            // Empresa viene de la dirección de envío
-            $document->customer_company = $deliveryAddress?->company ?? null;
-            // Teléfono celular viene de la dirección de envío
-            $document->customer_cellphone = $deliveryAddress?->phone_mobile ?? null;
+            $document->order_reference = $order['reference'] ?? $document->order_reference;
+            $document->order_date = $order['date_add'] ?? $document->order_date;
+            $document->customer_id = $order['customer_id'];
+            $document->cart_id = $order['cart_id'] ?: $document->cart_id;
+            $document->customer_firstname = $order['customer_firstname'];
+            $document->customer_lastname = $order['customer_lastname'];
+            $document->customer_email = $order['customer_email'];
+            $document->customer_dni = $order['customer_dni'];
+            $document->customer_company = $order['customer_company'];
+            $document->customer_cellphone = $order['customer_cellphone'];
 
             $document->save();
 
@@ -1263,8 +1235,8 @@ class DocumentsController extends Controller
                     'order_id' => $orderId,
                     'synced' => 1,
                     'products_count' => $productsCount,
-                    'order_reference' => $order->reference,
-                    'customer_name' => "{$customer->firstname} {$customer->lastname}",
+                    'order_reference' => $order['reference'],
+                    'customer_name' => "{$order['customer_firstname']} {$order['customer_lastname']}",
                     'is_new' => $isNew,
                 ],
             ], 200);
@@ -1287,7 +1259,7 @@ class DocumentsController extends Controller
             'force_reminder' => 'sometimes|boolean',
         ]);
 
-        $order = PrestashopOrder::find($payload['order_id']);
+        $order = $this->prestashopOrders->find((int) $payload['order_id']);
 
         if (! $order) {
             return response()->json([
@@ -1296,10 +1268,10 @@ class DocumentsController extends Controller
             ], 404);
         }
 
-        $document = Document::firstOrNew(['order_id' => $order->id_order]);
-        $document->customer_id = $document->customer_id ?? $order->id_customer;
-        $document->cart_id = $document->cart_id ?? $order->id_cart;
-        $document->reference = $order->reference ?? $document->reference;
+        $document = Document::firstOrNew(['order_id' => $order['order_id']]);
+        $document->customer_id = $document->customer_id ?? $order['customer_id'];
+        $document->cart_id = $document->cart_id ?? $order['cart_id'];
+        $document->reference = $order['reference'] ?? $document->reference;
 
         // Ensure document is saved to establish relationships
         if (! $document->exists) {
@@ -1677,6 +1649,10 @@ class DocumentsController extends Controller
      */
     public function prestashopOrderPaid(Request $request)
     {
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.prestashop_secret', ''))) {
+            return $response;
+        }
+
         try {
 
             $orderId = $request->input('order_id') ?? $request->input('id_order');
@@ -1688,8 +1664,8 @@ class DocumentsController extends Controller
                 ], 400);
             }
 
-            // Fetch order from Prestashop
-            $order = PrestashopOrder::find($orderId);
+            // Fetch order via el bridge de PrestaShop
+            $order = $this->prestashopOrders->find((int) $orderId);
             if (! $order) {
                 return response()->json([
                     'status' => 'error',
@@ -1702,7 +1678,7 @@ class DocumentsController extends Controller
             if (! $document) {
                 $document = Document::create([
                     'order_id' => $orderId,
-                    'customer_id' => $order->id_customer,
+                    'customer_id' => $order['customer_id'],
                     'document_status_id' => DocumentStatus::where('slug', 'pending')->first()?->id,
                     'source_id' => DocumentSource::where('slug', 'prestashop')->first()?->id,
                 ]);
@@ -1721,6 +1697,153 @@ class DocumentsController extends Controller
                 'message' => 'Failed to process webhook',
             ], 500);
         }
+    }
+
+    /**
+     * Handle ERP webhook to update document status
+     * Receives order data + target status from ERP and updates the document accordingly
+     */
+    public function erpOrderStatus(Request $request)
+    {
+        if ($response = $this->rejectUnsignedWebhook($request, (string) config('documents.webhooks.erp_secret', ''))) {
+            return $response;
+        }
+
+        $validated = $request->validate([
+            'order_id' => ['required'],
+            'status' => ['required', 'string', 'exists:document_statuses,key'],
+            'erp_status' => ['nullable', 'string', 'max:100'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+            'customer_name' => ['nullable', 'string', 'max:200'],
+            'customer_email' => ['nullable', 'email', 'max:200'],
+            'customer_phone' => ['nullable', 'string', 'max:50'],
+            'customer_dni' => ['nullable', 'string', 'max:50'],
+            'reference' => ['nullable', 'string', 'max:255'],
+            'metadata' => ['nullable', 'array'],
+        ]);
+
+        try {
+            $newStatus = DocumentStatus::getByKey($validated['status']);
+            if (! $newStatus) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Status not found: '.$validated['status'],
+                ], 422);
+            }
+
+            $erpSource = DocumentSource::firstOrCreate(
+                ['key' => 'erp'],
+                ['label' => 'ERP', 'description' => 'Webhook desde ERP']
+            );
+
+            $document = Document::where('order_id', $validated['order_id'])->first();
+
+            if (! $document) {
+                $pendingStatus = DocumentStatus::getByKey('pending');
+
+                $nameParts = isset($validated['customer_name'])
+                    ? explode(' ', $validated['customer_name'], 2)
+                    : [];
+
+                $document = Document::create([
+                    'order_id' => $validated['order_id'],
+                    'source_id' => $erpSource->id,
+                    'status_id' => $pendingStatus?->id,
+                    'order_reference' => $validated['reference'] ?? null,
+                    'customer_email' => $validated['customer_email'] ?? null,
+                    'customer_firstname' => $nameParts[0] ?? null,
+                    'customer_lastname' => $nameParts[1] ?? null,
+                    'customer_cellphone' => $validated['customer_phone'] ?? null,
+                    'customer_dni' => $validated['customer_dni'] ?? null,
+                ]);
+            }
+
+            $fromStatusId = $document->status_id;
+
+            $document->status_id = $newStatus->id;
+            $document->save();
+
+            DocumentStatusHistory::create([
+                'document_id' => $document->id,
+                'from_status_id' => $fromStatusId,
+                'to_status_id' => $newStatus->id,
+                'changed_by' => null,
+                'reason' => $validated['reason'] ?? null,
+                'metadata' => array_merge(
+                    $validated['metadata'] ?? [],
+                    array_filter([
+                        'source' => 'erp_webhook',
+                        'erp_status' => $validated['erp_status'] ?? null,
+                        'order_id' => $validated['order_id'],
+                    ])
+                ),
+            ]);
+
+            Log::info('[ERP Webhook] Estado actualizado', [
+                'order_id' => $validated['order_id'],
+                'document_id' => $document->id,
+                'from_status' => $fromStatusId,
+                'to_status' => $newStatus->key,
+                'erp_status' => $validated['erp_status'] ?? null,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Estado del documento actualizado',
+                'document_uid' => $document->uid,
+                'new_status' => $newStatus->key,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('[ERP Webhook] Error al procesar', [
+                'order_id' => $request->input('order_id'),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al procesar el webhook',
+            ], 500);
+        }
+    }
+
+    /**
+     * Verifica HMAC-SHA256 sobre "{timestamp}:{raw_body}" (mismo patrón que
+     * HelpdeskErp\WebhookController::ordersReady). Fail-closed: sin secreto
+     * configurado responde 503 en vez de aceptar sin verificar — antes,
+     * ambos webhooks aceptaban cualquier petición cuando el secreto no
+     * estaba puesto.
+     *
+     * @return JsonResponse|null null si la firma es válida (continuar)
+     */
+    private function rejectUnsignedWebhook(Request $request, string $secret): ?JsonResponse
+    {
+        if ($secret === '') {
+            static $logged = false;
+            if (! $logged) {
+                $logged = true;
+                Log::warning('Document webhook: secret not configured.', ['path' => $request->path()]);
+            }
+
+            return response()->json(['status' => 'error', 'message' => 'webhook not configured'], 503);
+        }
+
+        $timestamp = (int) $request->header('X-Webhook-Timestamp', 0);
+
+        if ($timestamp === 0 || abs(time() - $timestamp) > 300) {
+            return response()->json(['status' => 'error', 'message' => 'invalid timestamp'], 401);
+        }
+
+        $expected = hash_hmac('sha256', $timestamp.':'.$request->getContent(), $secret);
+        $signature = (string) $request->header('X-Webhook-Signature', '');
+
+        if (! hash_equals($expected, $signature)) {
+            Log::warning('Document webhook: invalid HMAC signature.', ['ip' => $request->ip(), 'path' => $request->path()]);
+
+            return response()->json(['status' => 'error', 'message' => 'invalid signature'], 401);
+        }
+
+        return null;
     }
 
     /**

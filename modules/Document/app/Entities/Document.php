@@ -2,17 +2,19 @@
 
 namespace Modules\Document\Entities;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Modules\Core\Models\Setting;
 use Modules\Document\Services\DocumentMailService;
+use Modules\Document\Services\PrestashopOrderLookupService;
 use Modules\Document\Traits\HasUid;
 use Modules\Document\Traits\HasValidationWorkflow;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Modules\Core\Models\Setting;
 
 class Document extends Model implements HasMedia
 {
@@ -81,23 +83,23 @@ class Document extends Model implements HasMedia
     // MUTATORS - Automatic field transformations
     // =========================================================================
 
-    protected function customerFirstname(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function customerFirstname(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
 
-    protected function customerLastname(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function customerLastname(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
 
-    protected function customerCompany(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function customerCompany(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             set: fn ($value) => $value !== null ? strtoupper($value) : null
         );
     }
@@ -130,9 +132,9 @@ class Document extends Model implements HasMedia
     /**
      * Filtra documentos por estado de carga (con o sin media)
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  int|null  $hasMedia  1 = con media, 0 = sin media, null = todos
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterByUploadStatus($query, $hasMedia = null)
     {
@@ -151,9 +153,9 @@ class Document extends Model implements HasMedia
      * Busca documentos por nombre de cliente, ID de orden u orden reference
      * Busca tanto en datos denormalizados como en relaciones
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $search  Término de búsqueda
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeSearchByCustomerOrOrder($query, $search = '')
     {
@@ -180,8 +182,8 @@ class Document extends Model implements HasMedia
     /**
      * Ordena documentos por prioridad (sin carga primero), fecha de creación y agrupa por día
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param  Builder  $query
+     * @return Builder
      */
     public function scopeOrderByUploadPriority($query)
     {
@@ -197,16 +199,16 @@ class Document extends Model implements HasMedia
     /**
      * Filtra documentos por rango de fechas
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string|null  $dateFrom  Fecha inicial en formato Y-m-d
      * @param  string|null  $dateTo  Fecha final en formato Y-m-d
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterByDateRange($query, $dateFrom = null, $dateTo = null)
     {
         if ($dateFrom) {
             try {
-                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay();
+                $startDate = Carbon::createFromFormat('Y-m-d', $dateFrom)->startOfDay();
                 $query->whereDate('created_at', '>=', $startDate);
             } catch (\Exception $e) {
                 // Si la fecha es inválida, ignorar el filtro
@@ -215,7 +217,7 @@ class Document extends Model implements HasMedia
 
         if ($dateTo) {
             try {
-                $endDate = \Carbon\Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay();
+                $endDate = Carbon::createFromFormat('Y-m-d', $dateTo)->endOfDay();
                 $query->whereDate('created_at', '<=', $endDate);
             } catch (\Exception $e) {
                 // Si la fecha es inválida, ignorar el filtro
@@ -230,12 +232,12 @@ class Document extends Model implements HasMedia
      * Combina filtrado, búsqueda, filtrado por fechas y ordenamiento
      * Nota: Usa datos denormalizados sin cargar relaciones para mejor performance
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  Builder  $query
      * @param  string  $search  Término de búsqueda
      * @param  int|null  $uploadStatus  1 = con media, 0 = sin media, null = todos
      * @param  string|null  $dateFrom  Fecha inicial en formato Y-m-d
      * @param  string|null  $dateTo  Fecha final en formato Y-m-d
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     public function scopeFilterListing($query, $search = '', $uploadStatus = null, $dateFrom = null, $dateTo = null)
     {
@@ -721,13 +723,12 @@ class Document extends Model implements HasMedia
             // Limpiar productos previos
             $this->products()->delete();
 
-            // Obtener productos directamente de la BD de Prestashop
-            $orderProducts = DB::connection('prestashop')
-                ->table('aalv_order_detail')
-                ->where('id_order', $this->order_id)
-                ->get();
+            // Vía el bridge de PrestaShop (alsernetbridge), no consulta directa
+            // a la BD — ver Modules\Document\Services\PrestashopOrderLookupService.
+            $order = app(PrestashopOrderLookupService::class)->find((int) $this->order_id);
+            $orderProducts = $order['products'] ?? [];
 
-            if ($orderProducts->isEmpty()) {
+            if (empty($orderProducts)) {
                 return false;
             }
 
@@ -735,11 +736,11 @@ class Document extends Model implements HasMedia
             foreach ($orderProducts as $orderProduct) {
                 DocumentProduct::create([
                     'document_id' => $this->id,
-                    'product_id' => $orderProduct->product_id ?? null,
-                    'product_name' => $orderProduct->product_name ?? null,
-                    'product_reference' => $orderProduct->product_reference ?? null,
-                    'quantity' => $orderProduct->product_quantity ?? 0,
-                    'price' => $orderProduct->unit_price_tax_incl ?? 0,
+                    'product_id' => $orderProduct['product_id'] ?? null,
+                    'product_name' => $orderProduct['product_name'] ?? null,
+                    'product_reference' => $orderProduct['product_reference'] ?? null,
+                    'quantity' => $orderProduct['product_quantity'] ?? 0,
+                    'price' => $orderProduct['unit_price_tax_incl'] ?? 0,
                 ]);
             }
 
@@ -1282,5 +1283,4 @@ class Document extends Model implements HasMedia
         // Reemplazar el placeholder {uid} con el UID real del documento
         return str_replace('{uid}', $this->uid, $fullUrl);
     }
-
 }
