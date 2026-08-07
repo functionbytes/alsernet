@@ -17,10 +17,19 @@ class OutboundMessageService
     /**
      * Send a plain-text reply from an agent to the customer via the conversation's channel.
      *
-     * Returns the external message ID (wamid / message_id) or null if not applicable
-     * (widget conversations, disabled channels, or errors).
+     * @param  bool  $fast  true para las auto-respuestas (bienvenida/fuera de
+     *                      horario/despedida): corren dentro de un job de cola
+     *                      compartido, así que el envío por WhatsApp usa un
+     *                      timeout corto y sin reintentos en vez de los 15s×2
+     *                      reintentos por defecto — un fallo aquí ya se
+     *                      registra y no bloquea nada más, no vale la pena
+     *                      pagar el timeout largo. Los envíos manuales de un
+     *                      agente (false, por defecto) conservan la resiliencia
+     *                      completa.
+     * @return ?string the external message ID (wamid / message_id) or null if not applicable
+     *                 (widget conversations, disabled channels, or errors).
      */
-    public function sendReply(Conversation $conversation, string $text): ?string
+    public function sendReply(Conversation $conversation, string $text, bool $fast = false): ?string
     {
         $channel = $conversation->channel ?? 'web';
         $externalId = $conversation->external_sender_id;
@@ -31,7 +40,9 @@ class OutboundMessageService
 
         try {
             $messageId = match ($channel) {
-                'whatsapp' => $this->whatsapp->sendText($externalId, $text),
+                'whatsapp' => $fast
+                    ? $this->whatsapp->sendText($externalId, $text, timeoutSeconds: 5, retries: 0)
+                    : $this->whatsapp->sendText($externalId, $text),
                 'facebook' => $this->facebook->sendText($externalId, $text),
                 'instagram' => $this->instagram->sendText($externalId, $text),
                 default => null,

@@ -71,7 +71,7 @@ class SendGreetingOnConversationCreated implements ShouldQueue
             : $this->localize($response->message, $customerLanguage, $source);
 
         try {
-            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message);
+            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message, fast: true);
 
             ConversationItem::create([
                 'conversation_id' => $conversation->id,
