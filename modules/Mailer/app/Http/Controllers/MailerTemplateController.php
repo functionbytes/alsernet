@@ -525,8 +525,13 @@ class MailerTemplateController extends Controller
      */
     public function formatHtml(Request $request): JsonResponse
     {
+        // Reachable por cualquier autenticado sin comprobación alguna, y sin
+        // límite de tamaño en el HTML enviado (vector de DoS menor sobre el
+        // beautifier de DOMDocument).
+        abort_unless($request->user()?->can('mailer.templates.update'), 403);
+
         $validated = $request->validate([
-            'html' => 'required|string',
+            'html' => 'required|string|max:500000',
         ]);
 
         try {

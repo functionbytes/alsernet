@@ -139,11 +139,19 @@ class MailerEndpointController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        // El token en texto plano solo existe aquí — se guarda hasheado
+        // (ver MailerEndpoint::hashToken()) y se flashea a la sesión para
+        // mostrarlo una única vez en la vista de edición inmediatamente
+        // después de crear el endpoint.
+        $plainToken = MailerEndpoint::generateToken();
+        $validated['api_token'] = MailerEndpoint::hashToken($plainToken);
+
         $endpoint = MailerEndpoint::create($validated);
 
         return redirect()
             ->route('mailers.endpoints.edit', $endpoint)
-            ->with('success', 'Email endpoint created successfully');
+            ->with('success', 'Email endpoint created successfully')
+            ->with('new_api_token', $plainToken);
     }
 
     /**
@@ -300,13 +308,15 @@ class MailerEndpointController extends Controller
     {
         $this->authorize('regenerateToken', $emailEndpoint);
 
+        $plainToken = MailerEndpoint::generateToken();
         $emailEndpoint->update([
-            'api_token' => MailerEndpoint::generateToken(),
+            'api_token' => MailerEndpoint::hashToken($plainToken),
         ]);
 
         return redirect()
             ->route('mailers.endpoints.edit', $emailEndpoint)
-            ->with('success', 'API token regenerated successfully');
+            ->with('success', 'API token regenerated successfully')
+            ->with('new_api_token', $plainToken);
     }
 
     /**
@@ -317,19 +327,18 @@ class MailerEndpointController extends Controller
     {
         $payloadMax = (int) config('mailer-module.limits.payload_max_bytes', 262144);
 
-        $endpoint = MailerEndpoint::where('slug', $slug)->first();
+        // Mismo helper que info()/status(): respuesta uniforme (401) tanto si
+        // el slug no existe como si el token es inválido, para no permitir
+        // enumerar slugs por la diferencia de status code (antes send() sí
+        // distinguía 404 vs 401, a diferencia de info()/status()).
+        $endpoint = $this->findAuthenticatedEndpoint($request, $slug);
 
-        if (! $endpoint) {
-            return $this->jsonError('endpoint_not_found', 'Endpoint not found', 404);
+        if ($endpoint instanceof JsonResponse) {
+            return $endpoint;
         }
 
         if (! $endpoint->is_active) {
             return $this->jsonError('endpoint_inactive', 'Endpoint is inactive', 403);
-        }
-
-        $providedToken = $request->header('X-API-Token');
-        if (! $providedToken || ! hash_equals($endpoint->api_token, $providedToken)) {
-            return $this->jsonError('invalid_token', 'Invalid API token', 401);
         }
 
         if (strlen((string) $request->getContent()) > $payloadMax) {
@@ -455,7 +464,7 @@ class MailerEndpointController extends Controller
 
         $providedToken = (string) $request->header('X-API-Token');
 
-        if ($providedToken === '' || ! hash_equals($endpoint->api_token, $providedToken)) {
+        if (! $endpoint->tokenMatches($providedToken)) {
             return $unauthorized;
         }
 

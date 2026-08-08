@@ -105,20 +105,17 @@
                                     </div>
                                 </div>
 
-                                {{-- API Token --}}
+                                {{-- API Token: se guarda hasheado, no se puede mostrar/copiar desde aquí. --}}
                                 <div class="mb-3">
                                     <h6 class="fw-bold text-primary mb-2">
                                         <i class="fas fa-key me-1"></i>Token API
                                     </h6>
-                                    <div class="bg-black text-light p-3 rounded d-flex justify-content-between align-items-center" style="font-family: monospace; font-size: 10px; word-break: break-all;">
-                                        <span class="text-warning">{{ substr($endpoint->api_token, 0, 20) }}...</span>
-                                        <button class="btn btn-sm btn-outline-light btn-copy-token" data-token="{{ $endpoint->api_token }}" title="Copiar token completo">
-                                            <i class="fas fa-copy"></i>
-                                        </button>
+                                    <div class="bg-black text-light p-3 rounded" style="font-family: monospace; font-size: 10px; word-break: break-all;">
+                                        <span class="text-warning">YOUR_API_TOKEN</span>
                                     </div>
                                     <small class="text-muted d-block mt-1">
                                         <i class="fas fa-info-circle me-1"></i>
-                                        Usar en header: <code>X-API-Token: &lt;token&gt;</code>
+                                        Cópialo desde la pantalla de edición del endpoint (solo visible al crearlo o regenerarlo) y sustituye <code>YOUR_API_TOKEN</code>. Usar en header: <code>X-API-Token: &lt;token&gt;</code>
                                     </small>
                                 </div>
 
@@ -245,7 +242,7 @@
                                 <div class="bg-black text-light p-3 rounded copy-code-block" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-x: auto;">
                                     <pre style="margin: 0;"><code>curl -X POST {{ $appUrl }}/api/email-endpoints/{{ $endpoint->slug }}/send \
   -H "Content-Type: application/json" \
-  -H "X-API-Token: {{ substr($endpoint->api_token, 0, 20) }}..." \
+  -H "X-API-Token: YOUR_API_TOKEN" \
   -d '{
     @if($endpoint->required_variables && count($endpoint->required_variables) > 0)
 @php
@@ -270,7 +267,7 @@ $vars = $endpoint->required_variables;
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'X-API-Token': '{{ substr($endpoint->api_token, 0, 20) }}...'
+    'X-API-Token': 'YOUR_API_TOKEN'
   },
   body: JSON.stringify({
     @if($endpoint->required_variables && count($endpoint->required_variables) > 0)
@@ -301,7 +298,7 @@ curl_setopt_array($curl, [
   CURLOPT_CUSTOMREQUEST => 'POST',
   CURLOPT_HTTPHEADER => [
     'Content-Type: application/json',
-    'X-API-Token: {{ substr($endpoint->api_token, 0, 20) }}...'
+    'X-API-Token: YOUR_API_TOKEN'
   ],
   CURLOPT_POSTFIELDS => json_encode([
     @if($endpoint->required_variables && count($endpoint->required_variables) > 0)
@@ -334,7 +331,7 @@ url = '{{ $appUrl }}/api/email-endpoints/{{ $endpoint->slug }}/send'
 
 headers = {
     'Content-Type': 'application/json',
-    'X-API-Token': '{{ substr($endpoint->api_token, 0, 20) }}...'
+    'X-API-Token': 'YOUR_API_TOKEN'
 }
 
 payload = {
