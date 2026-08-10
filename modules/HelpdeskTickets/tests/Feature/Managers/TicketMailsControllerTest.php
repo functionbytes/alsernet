@@ -8,6 +8,8 @@ use Illuminate\Mail\SendQueuedMailable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -63,6 +65,103 @@ class TicketMailsControllerTest extends TestCase
         $this->customer = Customer::factory()->create();
     }
 
+    public function test_data_includes_trace_from_matching_email_log(): void
+    {
+        // TicketMail.message_id se guarda con <ángulos>; EmailLog.message_id
+        // se guarda sin ellos (ver LogEmailQueued::ensureMessageId()) — el
+        // cruce por message_id debe normalizar eso o nunca encuentra nada
+        // (bug real que se coló hasta probarlo con un envío de verdad).
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+        $mail = $this->createMail($ticket, ['message_id' => '<abc123@alvarez.mx>', 'status' => 'sent']);
+
+        $log = EmailLog::create([
+            'module' => 'HelpdeskTickets',
+            'from_address' => 'soporte@alvarez.mx',
+            'to_addresses' => ['cliente@example.com'],
+            'subject' => $mail->subject,
+            'message_id' => 'abc123@alvarez.mx',
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+        $log->opens()->create(['ip' => '127.0.0.1', 'user_agent' => 'test', 'opened_at' => now()]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.data', $mail))
+            ->assertOk();
+
+        $trace = $response->json('data.trace');
+        $types = collect($trace)->pluck('type');
+
+        $this->assertTrue($types->contains('queued'));
+        $this->assertTrue($types->contains('sent'));
+        $this->assertTrue($types->contains('opened'));
+    }
+
+    public function test_update_tags_adds_and_removes_a_tag(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.update']);
+        $ticket = $this->createTicket();
+        $mail = $this->createMail($ticket, ['tags' => ['pedido']]);
+
+        $this->actingAs($manager)
+            ->patchJson(route('manager.helpdesk.tickets.emails.tags', $mail), ['add' => 'urgente'])
+            ->assertOk()
+            ->assertJson(['success' => true, 'tags' => ['pedido', 'urgente']]);
+
+        $this->actingAs($manager)
+            ->patchJson(route('manager.helpdesk.tickets.emails.tags', $mail), ['remove' => 'pedido'])
+            ->assertOk()
+            ->assertJson(['success' => true, 'tags' => ['urgente']]);
+
+        $this->assertDatabaseHas('helpdesk_ticket_mails', ['id' => $mail->id], 'helpdesk');
+        $this->assertSame(['urgente'], $mail->fresh()->tags);
+    }
+
+    public function test_related_tickets_includes_other_tickets_from_same_customer(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+        $otherTicket = $this->createTicket(['subject' => 'Otro ticket del mismo cliente']);
+        $mail = $this->createMail($ticket);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.data', $mail))
+            ->assertOk();
+
+        $related = collect($response->json('data.related'))->pluck('id');
+
+        $this->assertTrue($related->contains($otherTicket->id));
+        $this->assertFalse($related->contains($ticket->id));
+    }
+
+    public function test_templates_lists_only_macros_with_a_reply_action(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+
+        Macro::create([
+            'name' => 'Con reply',
+            'actions' => [['type' => 'reply', 'body' => 'Hola {{customer_name}}']],
+            'is_shared' => true,
+            'is_active' => true,
+        ]);
+        Macro::create([
+            'name' => 'Sin reply',
+            'actions' => [['type' => 'set_priority', 'value' => 'high']],
+            'is_shared' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.templates'))
+            ->assertOk();
+
+        $names = collect($response->json('templates'))->pluck('name');
+
+        $this->assertTrue($names->contains('Con reply'));
+        $this->assertFalse($names->contains('Sin reply'));
+    }
+
     public function test_index_requires_authentication(): void
     {
         $this->getJson(route('manager.helpdesk.tickets.emails.index'))
@@ -116,6 +215,106 @@ class TicketMailsControllerTest extends TestCase
         $ids = collect($response->json('data'))->pluck('id');
 
         $this->assertSame([$scheduled->id], $ids->all());
+    }
+
+    public function test_index_outbound_view_excludes_internal_mails(): void
+    {
+        // Fase A: "Internos" es su propio tab — no debe mezclarse con "Enviados".
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+
+        $external = $this->createMail($ticket, ['status' => 'sent', 'is_internal' => false]);
+        $internal = $this->createMail($ticket, ['status' => 'sent', 'is_internal' => true]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.index'))
+            ->assertOk();
+
+        // La bandeja global no está vacía en un entorno con datos reales —
+        // se verifica presencia/ausencia, no un total exacto (mismo motivo
+        // que las pruebas de filtro de abajo).
+        $ids = collect($response->json('data'))->pluck('id');
+
+        $this->assertTrue($ids->contains($external->id));
+        $this->assertFalse($ids->contains($internal->id));
+    }
+
+    public function test_index_internal_view_filters_by_is_internal(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+
+        $internal = $this->createMail($ticket, ['status' => 'sent', 'is_internal' => true]);
+        $this->createMail($ticket, ['status' => 'sent', 'is_internal' => false]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.index', ['view' => 'internal']))
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id');
+
+        $this->assertSame([$internal->id], $ids->all());
+    }
+
+    public function test_index_filters_by_origin(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $prestaTicket = $this->createTicket(['source' => 'presta']);
+        $webTicket = $this->createTicket(['source' => 'web']);
+
+        $prestaMail = $this->createMail($prestaTicket, ['status' => 'sent']);
+        $webMail = $this->createMail($webTicket, ['status' => 'sent']);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.index', ['origin' => 'presta']))
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id');
+
+        $this->assertTrue($ids->contains($prestaMail->id));
+        $this->assertFalse($ids->contains($webMail->id));
+    }
+
+    public function test_index_filters_by_tag(): void
+    {
+        $manager = $this->makeUser(['helpdesk.tickets.emails.view']);
+        $ticket = $this->createTicket();
+
+        $tagged = $this->createMail($ticket, ['status' => 'sent', 'tags' => ['urgente', 'pedido']]);
+        $untagged = $this->createMail($ticket, ['status' => 'sent', 'tags' => ['otro']]);
+
+        $response = $this->actingAs($manager)
+            ->getJson(route('manager.helpdesk.tickets.emails.index', ['tag' => 'urgente']))
+            ->assertOk();
+
+        $ids = collect($response->json('data'))->pluck('id');
+
+        $this->assertTrue($ids->contains($tagged->id));
+        $this->assertFalse($ids->contains($untagged->id));
+    }
+
+    public function test_store_creates_internal_mail_when_flagged(): void
+    {
+        Queue::fake();
+
+        $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view']);
+        $ticket = $this->createTicket();
+
+        $this->actingAs($manager)
+            ->postJson(route('manager.helpdesk.tickets.emails.store'), [
+                'ticket_id' => $ticket->id,
+                'to' => 'soporte-n2@alvarez.mx',
+                'subject' => 'Escalado a nivel 2',
+                'body' => '<p>SLA en riesgo.</p>',
+                'is_internal' => true,
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('helpdesk_ticket_mails', [
+            'ticket_id' => $ticket->id,
+            'subject' => 'Escalado a nivel 2',
+            'is_internal' => true,
+        ], 'helpdesk');
     }
 
     public function test_store_creates_mail_and_queues_it_immediately(): void

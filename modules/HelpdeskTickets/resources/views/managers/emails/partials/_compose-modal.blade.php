@@ -1,5 +1,6 @@
 {{-- Redactar / responder / reenviar — mismo componente bv-modal que el resto
-     del módulo (ver managers/tickets/partials/_detail-modal.blade.php). --}}
+     del módulo (mismo patrón data-bv-modal-name/data-htk-close documentado
+     en el proyecto). --}}
 <div class="bv-modal" data-bv-modal-name="eml-compose">
     <div class="bv-modal-dialog md">
         <div class="bv-modal-head">
@@ -55,6 +56,11 @@
                 <label class="eml-flabel">Adjuntos</label>
                 <input type="file" name="attachments[]" id="eml-compose-attachments" multiple>
             </div>
+
+            <label class="eml-check">
+                <input type="checkbox" name="is_internal" id="eml-compose-internal" value="1">
+                Aviso interno (no llega al cliente)
+            </label>
 
             <p id="eml-compose-error" class="text-danger small mb-0" style="display:none"></p>
         </form>

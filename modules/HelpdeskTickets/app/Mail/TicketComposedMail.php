@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
 use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
@@ -28,7 +29,17 @@ use Modules\HelpdeskTickets\Models\Ticket;
  */
 class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
 {
-    use AddsEmailLogHeaders, Queueable, SerializesModels;
+    // headers() propio abajo necesita añadir el messageId — un trait no
+    // soporta parent::, así que se alias-ea el método del trait para poder
+    // llamarlo y solo complementarlo (el comentario del propio trait avisa de
+    // esto: "If the Mailable already defines headers(), call parent or merge
+    // manually"). Sobrescribirlo sin más — como se hizo aquí la primera vez —
+    // pierde X-Email-Module/X-Entity-Type/X-Entity-Id en silencio; ver bug
+    // real encontrado en QA manual (Trazabilidad no enlazaba el ticket).
+    use AddsEmailLogHeaders {
+        headers as private emailLogHeaders;
+    }
+    use Queueable, SerializesModels;
 
     /**
      * Nombres $ccAddresses/$bccAddresses (no $cc/$bcc): Mailable ya declara
@@ -48,6 +59,11 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
         public readonly array $ccAddresses = [],
         public readonly array $bccAddresses = [],
         public readonly array $attachmentFiles = [],
+        // Sin esto, Symfony genera su propio Message-ID y el que ya
+        // guardamos en TicketMail.message_id queda huérfano — el tab
+        // "Trazabilidad" cruza EmailLog por este valor exacto, así que tienen
+        // que coincidir sí o sí.
+        public readonly ?string $existingMessageId = null,
     ) {
         $this->onQueue('emails');
     }
@@ -84,6 +100,14 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
     public function content(): Content
     {
         return new Content(htmlString: $this->emailContent);
+    }
+
+    public function headers(): Headers
+    {
+        $headers = $this->emailLogHeaders();
+        $headers->messageId = $this->existingMessageId ? trim($this->existingMessageId, '<>') : null;
+
+        return $headers;
     }
 
     /**

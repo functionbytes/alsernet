@@ -3,6 +3,8 @@
 namespace Modules\HelpdeskTickets\Models;
 
 use App\Models\User;
+use HTMLPurifier;
+use HTMLPurifier_Config;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,6 +27,7 @@ class TicketMail extends Model
         'ticket_comment_id',
         'ticket_item_id',
         'direction',
+        'is_internal',
         'message_id',
         'in_reply_to',
         'references',
@@ -51,6 +54,7 @@ class TicketMail extends Model
             'attachments' => 'array',
             'headers' => 'array',
             'tags' => 'array',
+            'is_internal' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'sent_at' => 'datetime',
@@ -180,6 +184,16 @@ class TicketMail extends Model
     public function scopeDueForDelivery($query)
     {
         return $query->scheduled()->where('scheduled_at', '<=', now());
+    }
+
+    /**
+     * Avisos internos (p.ej. "Escalado a nivel 2") — nunca visibles para el
+     * cliente. Se marca explícitamente al componer, no se infiere del dominio
+     * del destinatario.
+     */
+    public function scopeInternal($query)
+    {
+        return $query->where('is_internal', true);
     }
 
     /**
@@ -501,6 +515,7 @@ class TicketMail extends Model
             'status_label' => $this->status_label,
             'status_color' => $this->status_color,
             'direction' => $this->direction,
+            'is_internal' => (bool) $this->is_internal,
             'origin' => $ticket?->source,
             'category' => $this->category?->name,
             'agent' => $this->user ? trim("{$this->user->firstname} {$this->user->lastname}") : null,
@@ -515,7 +530,55 @@ class TicketMail extends Model
             'has_attachments' => $this->hasAttachments(),
             'url_data' => route('manager.helpdesk.tickets.emails.data', $this),
             'url_resend' => route('manager.helpdesk.tickets.emails.resend', $this),
+            'url_summary' => route('manager.helpdesk.tickets.emails.summary', $this),
+            'url_translate' => route('manager.helpdesk.tickets.emails.translate', $this),
+            'url_tags' => route('manager.helpdesk.tickets.emails.tags', $this),
         ];
+    }
+
+    private static ?HTMLPurifier $htmlPurifier = null;
+
+    /**
+     * body_html crudo, sin sanitizar, es contenido de un correo ENTRANTE —
+     * cualquiera que le escriba a la dirección de soporte controla ese HTML.
+     * Bug de seguridad real encontrado en QA (ago-2026): tanto
+     * TicketsCrudController::data() como TicketMailsController::show()
+     * exponían $mail->body_html tal cual en el JSON, y tickets-app.js lo
+     * inyectaba directo vía jQuery .html() (renderMailPane) — un email con
+     * `<img src=x onerror="...">` habría ejecutado JS en la sesión del
+     * agente al abrir el ticket (XSS almacenado). clean_html()/clean() del
+     * Core no están disponibles (no cargados vía composer autoload.files,
+     * verificado con function_exists()), así que se sanea aquí mismo con
+     * HTMLPurifier directo — mismo criterio de allowlist conservador que
+     * Modules\Supplier\Helpers\HtmlSanitizer::clean() y Core\Helper::clean_html().
+     */
+    public function safeBodyHtml(): string
+    {
+        return self::purifyHtml($this->body_html);
+    }
+
+    public static function purifyHtml(?string $html): string
+    {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+
+        if (self::$htmlPurifier === null) {
+            $config = HTMLPurifier_Config::createDefault();
+            $config->set('HTML.Allowed', 'p,br,b,strong,i,em,u,s,del,ins,a[href|title],ul,ol,li,blockquote,pre,code,'
+                .'h1,h2,h3,h4,h5,h6,img[src|alt|title|width|height],table,thead,tbody,tr,th,td,span[style],div,hr,sub,sup');
+            $config->set('HTML.TargetBlank', true);
+            $config->set('HTML.Nofollow', true);
+            $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+            $config->set('CSS.AllowedProperties', ['color', 'background-color', 'font-weight', 'font-style', 'text-decoration', 'text-align']);
+            $config->set('AutoFormat.AutoParagraph', false);
+            $config->set('AutoFormat.RemoveEmpty', false);
+            $config->set('Cache.DefinitionImpl', null);
+
+            self::$htmlPurifier = new HTMLPurifier($config);
+        }
+
+        return self::$htmlPurifier->purify($html);
     }
 
     /**

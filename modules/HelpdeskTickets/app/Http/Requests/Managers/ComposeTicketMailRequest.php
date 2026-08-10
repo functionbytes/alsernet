@@ -28,6 +28,7 @@ class ComposeTicketMailRequest extends FormRequest
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:50'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'is_internal' => ['nullable', 'boolean'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['file', 'max:10240', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,gif,zip,rar'],
         ];

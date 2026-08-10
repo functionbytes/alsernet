@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Mail\TicketComposedMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
@@ -22,6 +23,15 @@ class TicketMailDispatcher
      */
     public function send(TicketMail $mail, Ticket $ticket, array $cc = [], array $bcc = [], array $attachmentFiles = []): void
     {
+        // store()/createResendCopy() no fijan message_id (a diferencia de
+        // TicketMail::createOutbound()) — sin esto, cada envío real quedaba
+        // sin Message-ID propio y el tab "Trazabilidad" (que cruza contra
+        // EmailLog por este valor) no podía enlazar nada.
+        if (! $mail->message_id) {
+            $mail->message_id = '<'.Str::uuid().'@'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost').'>';
+            $mail->save();
+        }
+
         Mail::to($mail->to)
             ->cc($cc)
             ->bcc($bcc)
@@ -32,6 +42,7 @@ class TicketMailDispatcher
                 $cc,
                 $bcc,
                 $attachmentFiles,
+                $mail->message_id,
             ));
 
         $mail->markAsSent();

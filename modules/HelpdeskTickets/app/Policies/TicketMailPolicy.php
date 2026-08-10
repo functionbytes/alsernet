@@ -27,6 +27,14 @@ class TicketMailPolicy
             || $user->hasPermissionTo('helpdesk.tickets.manage');
     }
 
+    public function update(User $user, TicketMail $mail): bool
+    {
+        return $user->hasPermissionTo('helpdesk.tickets.emails.send')
+            || $user->hasPermissionTo('helpdesk.tickets.update')
+            || $user->hasPermissionTo('helpdesk.tickets.manage')
+            || $mail->ticket?->assignee_id === $user->id;
+    }
+
     public function resend(User $user, TicketMail $mail): bool
     {
         return $user->hasPermissionTo('helpdesk.tickets.emails.resend')
