@@ -2,7 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskEmailLog\Http\Controllers\EmailLogController;
+use Modules\HelpdeskEmailLog\Http\Controllers\EmailOpenTrackingController;
 use Modules\HelpdeskEmailLog\Http\Controllers\Settings\EmailLogSettingsController;
+
+// Pixel de apertura — SIN auth a propósito: lo carga el cliente de correo del
+// destinatario, no un usuario logueado del panel. Fuera del prefix
+// panel/helpdeskemaillog (que exige auth) y del throttle agresivo del resto
+// del módulo (un cliente de correo puede reintentar la carga varias veces).
+Route::get('/e/{emailLog:uid}.gif', [EmailOpenTrackingController::class, 'pixel'])
+    ->whereUuid('emailLog')
+    ->name('helpdeskemaillog.pixel');
 
 // The `web` middleware group is applied by the service provider.
 Route::middleware('auth')
