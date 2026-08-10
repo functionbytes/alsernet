@@ -10,7 +10,6 @@ use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
-use Modules\HelpdeskTickets\Models\SlaPolicy; // TODO: migrate to TicketSlaPolicy
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketAttachment;
 use Modules\HelpdeskTickets\Models\TicketHistory;
@@ -195,6 +194,7 @@ class TicketService
                     'status_id' => $closedStatus?->id ?? $ticket->status_id,
                     'closed_at' => now(),
                     'closed_by' => auth()->id(),
+                    'close_reason' => $reason ?: $ticket->close_reason,
                 ]);
 
                 TicketHistory::logFieldChange(
@@ -347,25 +347,5 @@ class TicketService
         }
 
         return $message;
-    }
-
-    /**
-     * Get applicable SLA policy for a ticket
-     */
-    public function getApplicablePolicy(Ticket $ticket): ?SlaPolicy
-    {
-        $policy = SlaPolicy::where('priority_id', $ticket->priority_id)
-            ->where('category_id', $ticket->category_id)
-            ->where('is_active', true)
-            ->first();
-
-        if (! $policy) {
-            $policy = SlaPolicy::where('priority_id', $ticket->priority_id)
-                ->whereNull('category_id')
-                ->where('is_active', true)
-                ->first();
-        }
-
-        return $policy;
     }
 }

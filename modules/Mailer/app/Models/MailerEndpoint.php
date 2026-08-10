@@ -46,11 +46,39 @@ class MailerEndpoint extends Model
     }
 
     /**
-     * Generate a unique API token
+     * Generate a unique API token (plaintext — el llamador es responsable de
+     * hashearlo con hashToken() antes de guardarlo y de mostrárselo al
+     * usuario una única vez, ya que no se puede recuperar después).
      */
     public static function generateToken(): string
     {
         return bin2hex(random_bytes(32));
+    }
+
+    /**
+     * Hash de un token en texto plano para guardarlo en api_token. Nunca se
+     * persiste en texto plano desde este cambio — solo se conoce en el
+     * momento de generarlo (ver MailerEndpointController::store()/regenerateToken()).
+     */
+    public static function hashToken(string $plainToken): string
+    {
+        return hash('sha256', $plainToken);
+    }
+
+    /**
+     * Compara el token recibido contra el guardado. Compatible con
+     * endpoints creados antes de este cambio, cuyo api_token en BD sigue
+     * siendo el texto plano original (mismos 64 hex que un hash SHA-256,
+     * no se puede distinguir por formato) hasta que se regenere.
+     */
+    public function tokenMatches(?string $providedToken): bool
+    {
+        if (! $providedToken || ! $this->api_token) {
+            return false;
+        }
+
+        return hash_equals($this->api_token, $providedToken)
+            || hash_equals($this->api_token, self::hashToken($providedToken));
     }
 
     /**
@@ -60,7 +88,7 @@ class MailerEndpoint extends Model
     {
         static::creating(function ($model) {
             if (empty($model->api_token)) {
-                $model->api_token = self::generateToken();
+                $model->api_token = self::hashToken(self::generateToken());
             }
         });
     }

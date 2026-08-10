@@ -105,9 +105,11 @@ Route::middleware(['api'])->group(function () {
 
     // Endpoints management API — exposed at both `/api/erp/endpoints/*` (current
     // panel callers) and `/api/erp/v2/endpoints/*` (test suite + future versioned
-    // path). Same controllers, same auth.
+    // path). Same controllers, same auth. 'erp.endpoints.manage' añadido junto
+    // a auth:sanctum — mismo hueco que en el grupo web (ver ErpServiceProvider),
+    // esta API no comprobaba ningún permiso más allá de tener sesión Sanctum.
     foreach (['erp/endpoints', 'erp/v2/endpoints'] as $endpointsPrefix) {
-        Route::prefix($endpointsPrefix)->middleware('auth:sanctum')->group(function () {
+        Route::prefix($endpointsPrefix)->middleware(['auth:sanctum', 'can:erp.endpoints.manage'])->group(function () {
             Route::get('/', [ErpEndpointsApiController::class, 'index']);
             Route::post('/', [ErpEndpointsApiController::class, 'store']);
             Route::get('/{endpoint}', [ErpEndpointsApiController::class, 'show']);

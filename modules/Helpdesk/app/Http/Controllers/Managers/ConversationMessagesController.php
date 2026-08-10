@@ -17,14 +17,12 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\ConversationItem;
 use Modules\Helpdesk\Models\ConversationRead;
 use Modules\Helpdesk\Services\Conversations\ConversationInboxMetricsService;
-use Modules\Helpdesk\Services\LinkPreviewService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 
 class ConversationMessagesController extends Controller
 {
     public function __construct(
         private readonly OutboundMessageService $outbound,
-        private readonly LinkPreviewService $linkPreview,
         private readonly ConversationInboxMetricsService $inboxMetrics,
     ) {}
 
@@ -71,17 +69,12 @@ class ConversationMessagesController extends Controller
         }
 
         // Link preview (OG metadata) for URLs in the agent's body — shown in the
-        // visitor widget like a WhatsApp/Instagram link unfurl. Only attached
-        // when the agent sends (this controller is agent-side) and only on
-        // public messages (skip internal notes).
-        $metadata = null;
-        if (! ($validated['is_internal'] ?? false) && filled($validated['body'])) {
-            $preview = $this->linkPreview->previewFromBody($validated['body']);
-            if ($preview !== null) {
-                $metadata = ['link_preview' => $preview];
-            }
-        }
-
+        // visitor widget (and this panel) like a WhatsApp/Instagram link unfurl.
+        // Fetched OFF the request thread by GenerateLinkPreviewJob (dispatched
+        // from ConversationItemLinkPreviewObserver::created() below) — a
+        // synchronous fetch here (up to 6s / 2MB) used to block every message
+        // with a URL, and duplicated the fetch the observer's job was already
+        // going to make.
         $item = $conversation->items()->create([
             'type' => 'message',
             'body' => $validated['body'],
@@ -91,7 +84,6 @@ class ConversationMessagesController extends Controller
             'user_id' => auth()->id(),
             'is_internal' => $validated['is_internal'] ?? false,
             'attachment_urls' => $attachmentUrls,
-            'metadata' => $metadata,
         ]);
 
         $item->load(['user']);
@@ -117,6 +109,11 @@ class ConversationMessagesController extends Controller
 
             $bodyText = (string) $item->body;
 
+            // La auto-traducción saliente (si aplica) se resuelve DENTRO del
+            // job, no aquí — ver SendOutboundMessageJob::resolveOutboundBody().
+            // Resolverla en el hilo HTTP repetía exactamente el bloqueo de
+            // FPM que este job existe para evitar (DeepL: timeout 15s ×2
+            // reintentos, más el fallback a LibreTranslate si falla).
             SendOutboundMessageJob::dispatch(
                 $conversation->id,
                 $item->id,
@@ -129,34 +126,19 @@ class ConversationMessagesController extends Controller
         // inbox channel — sidebar updates without a second round-trip.
         broadcast(new ConversationMessageCreated($item, false))->toOthers();
 
-        // NOTE: MessageReceived (widget channel) is broadcast by the
-        // ConversationItemLinkPreviewObserver after metadata is enriched, to
-        // avoid a race where the widget receives the message twice (once
-        // without preview, once with) and dedupes the second.
-
-        // The ConversationItemLinkPreviewObserver runs synchronously on the
-        // `created` event and mutates $item->metadata in place. Read it back
-        // explicitly to make sure the response carries the enriched metadata.
+        // NOTE: el preview OpenGraph (si el body trae una URL) lo genera
+        // GenerateLinkPreviewJob FUERA del hilo HTTP (fetch de hasta 6s) —
+        // antes había aquí un fetch síncrono "belt-and-suspenders" que
+        // reintroducía exactamente ese bloqueo en cada mensaje con URL,
+        // duplicando además la descarga que el job ya iba a hacer. Al
+        // terminar, el job re-emite MessageReceived (widget) Y
+        // ConversationMessageCreated (este panel), y ambos lados reemplazan
+        // la burbuja existente por id en vez de duplicarla — el agente ve el
+        // mensaje al instante y la tarjeta de preview aparece un instante
+        // después, en vez de esperar hasta 6s por ella.
         $reloaded = ConversationItem::with('user')->find($item->id);
         if ($reloaded) {
             $item = $reloaded;
-        }
-
-        // Belt-and-suspenders: if for any reason metadata.link_preview is still
-        // missing (e.g. observer not registered, OPcache lag, etc.), generate
-        // it inline so the agent panel always renders the unfurl card on the
-        // first paint.
-        $existingMeta = $item->metadata ?? [];
-        if (
-            ! ($validated['is_internal'] ?? false)
-            && ! isset($existingMeta['link_preview'])
-            && filled($item->body)
-        ) {
-            $preview = $this->linkPreview->previewFromBody((string) $item->body);
-            if ($preview !== null) {
-                $item->metadata = array_merge($existingMeta, ['link_preview' => $preview]);
-                $item->saveQuietly();
-            }
         }
 
         $payload = [

@@ -1752,6 +1752,22 @@ body:has(.conversations) .mc-content {
     cursor: pointer;
     width: 100%;
 }
+/*
+ * app.css define un .btn-secondary global (fondo #716b67, casi negro) para
+ * botones sueltos fuera de modal. Aquí .bv-modal-foot .btn-secondary ya gana
+ * por especificidad (2 clases vs 1), pero #ciFootDetail se inyecta por JS
+ * dentro de un contenedor que estuvo en display:none desde la carga de la
+ * página — en esa primera pintura se vio el fondo oscuro de app.css antes de
+ * que se recalculase el estilo correcto. Fijar aquí valores explícitos (no
+ * var(), que depende de que la cascada de custom properties ya se haya
+ * resuelto) con un selector por id asegura el color correcto desde el primer
+ * frame, sin depender de timing de carga/recalculo.
+ */
+#ciFootDetail .btn-secondary {
+    background-color: transparent;
+    color: #71717a;
+    border-color: #e4e4e7;
+}
 .bv-modal-foot .btn-success,
 .bv-modal-foot .btn-danger,
 .bv-modal-foot .btn-danger-solid,

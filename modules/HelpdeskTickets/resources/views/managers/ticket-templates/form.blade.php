@@ -28,9 +28,9 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
-                        <p class="text-muted small mb-3">Nombre interno de la plantilla y descripcion de su proposito</p>
+                        {{-- Información básica --}}
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Información básica</h6>
+                        <p class="text-muted small mb-3">Nombre interno de la plantilla y descripción de su propósito</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -38,7 +38,7 @@
                                 <input type="text" name="name"
                                        class="form-control @error('name') is-invalid @enderror"
                                        value="{{ old('name', $template->name ?? '') }}"
-                                       placeholder="Ej: Soporte tecnico general"
+                                       placeholder="Ej: Soporte técnico general"
                                        required>
                                 @error('name')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -46,11 +46,11 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripcion</label>
+                                <label class="form-label">Descripción</label>
                                 <input type="text" name="description"
                                        class="form-control @error('description') is-invalid @enderror"
                                        value="{{ old('description', $template->description ?? '') }}"
-                                       placeholder="Breve descripcion del uso de esta plantilla">
+                                       placeholder="Breve descripción del uso de esta plantilla">
                                 @error('description')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                 @enderror
@@ -60,7 +60,7 @@
 
                         {{-- Contenido --}}
                         <h6 class="fw-semibold mb-1 border-bottom pb-2">Contenido</h6>
-                        <p class="text-muted small mb-3">Asunto y cuerpo del ticket que se creara al aplicar la plantilla. Acepta variables como {cliente}, {fecha}</p>
+                        <p class="text-muted small mb-3">Asunto y cuerpo del ticket que se creará al aplicar la plantilla. Acepta variables como {cliente}, {fecha}</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
@@ -88,15 +88,15 @@
 
                         </div>
 
-                        {{-- Clasificacion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Clasificacion</h6>
-                        <p class="text-muted small mb-3">Categoria y prioridad predeterminadas al aplicar la plantilla</p>
+                        {{-- Clasificación --}}
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Clasificación</h6>
+                        <p class="text-muted small mb-3">Categoría y prioridad predeterminadas al aplicar la plantilla</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoria</label>
+                                <label class="form-label">Categoría</label>
                                 <select name="category_id" class="form-select @error('category_id') is-invalid @enderror">
-                                    <option value="">Sin categoria</option>
+                                    <option value="">Sin categoría</option>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat->id }}"
                                             {{ old('category_id', $template->category_id ?? '') == $cat->id ? 'selected' : '' }}>
@@ -127,8 +127,8 @@
 
                         </div>
 
-                        {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        {{-- Configuración --}}
+                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuración</h6>
                         <p class="text-muted small mb-3">Disponibilidad de la plantilla para uso</p>
                         <div class="row g-3">
 
@@ -167,16 +167,16 @@
                 <div class="card-body">
                     <h6 class="card-title mb-3">Sobre las plantillas</h6>
                     <p class="card-text text-muted">
-                        Las plantillas permiten crear tickets con informacion predefinida, agilizando la gestion de solicitudes recurrentes.
+                        Las plantillas permiten crear tickets con información predefinida, agilizando la gestión de solicitudes recurrentes.
                     </p>
                 </div>
                 <hr class="my-0">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas practicas</h6>
+                    <h6 class="card-title mb-3">Buenas prácticas</h6>
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que indiquen el tipo de solicitud</li>
                         <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Incluye variables como {cliente} o {fecha} para personalizar el contenido</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna categoria y prioridad para que los tickets se clasifiquen automaticamente</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna categoría y prioridad para que los tickets se clasifiquen automáticamente</li>
                         <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Desactiva las plantillas obsoletas en lugar de eliminarlas</li>
                     </ul>
                 </div>

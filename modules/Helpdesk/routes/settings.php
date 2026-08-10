@@ -8,6 +8,7 @@ use Modules\Helpdesk\Http\Controllers\Managers\Settings\AutomationRulesControlle
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BannersController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BrandsController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BroadcastsController;
+use Modules\Helpdesk\Http\Controllers\Managers\Settings\BusinessFeaturesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\BusinessHoursController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CannedRepliesController;
 use Modules\Helpdesk\Http\Controllers\Managers\Settings\CompaniesController;
@@ -189,6 +190,11 @@ Route::prefix('business')->name('business.')->group(function () {
     Route::get('off-hours', [OffHoursResponsesController::class, 'index'])->name('off-hours');
     Route::get('greeting', [ConversationGreetingsController::class, 'index'])->name('greeting');
     Route::get('farewell', [ConversationFarewellsController::class, 'index'])->name('farewell');
+
+    // Panel de administración: página propia con los 4 toggles (separada de
+    // las 4 páginas de contenido de arriba, no incrustada en cada una).
+    Route::get('features', [BusinessFeaturesController::class, 'index'])->name('features');
+    Route::post('features', [BusinessFeaturesController::class, 'update'])->name('features.update');
 });
 
 // CRUD (store/update/destroy) de los mensajes automáticos "fuera de horario" /

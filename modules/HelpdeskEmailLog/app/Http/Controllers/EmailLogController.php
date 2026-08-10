@@ -381,6 +381,20 @@ class EmailLogController extends Controller
             $search = trim((string) $request->input('search'));
             $like = '%'.addcslashes($search, '%_\\').'%';
 
+            // Nota (revisión de rendimiento, ago-2026): se evaluó quitar el
+            // `orWhere('recipients_index', 'like', $like)` por parecer
+            // redundante con el MATCH...AGAINST de la misma columna — pero se
+            // revirtió tras comprobar en vivo que MATCH en modo lenguaje
+            // natural es mucho MENOS preciso que el LIKE (coincide con
+            // cualquier fila que comparta un token suelto, p.ej. "example"/
+            // "test" de un dominio de prueba, devolviendo decenas de
+            // resultados no relacionados) — el LIKE es el que de verdad
+            // garantiza la coincidencia exacta de subcadena que el buscador
+            // de destinatarios necesita. La query sigue sin poder usar
+            // índice en esta rama del OR (LIKE con comodín inicial); una
+            // solución real requeriría MATCH en modo booleano con todos los
+            // tokens como obligatorios, un cambio de comportamiento mayor
+            // fuera del alcance de este arreglo puntual.
             $query->where(function (Builder $q) use ($search, $like) {
                 $q->where('subject', 'like', $like)
                     ->orWhere('from_address', 'like', $like)

@@ -105,7 +105,13 @@ class ContactAggregatorService
                 'totalConversations' => (int) ($customer->total_conversations ?? $lifetime['conversations']),
                 'totalPageVisits' => (int) ($customer->total_page_visits ?? 0),
                 'healthScore' => $healthScore,
-                'avgCsat' => (float) ($lifetime['csat_avg'] ?? 0.0),
+                // null real (nunca encuestado) preservado, no colapsado a
+                // 0.0 — contacts-360.js YA esperaba avgCsat nullable
+                // (`!= null ? ... : '—'`) y Customer360Service::avg_csat
+                // usa el mismo patrón; el cast (float)(... ?? 0.0) de aquí
+                // rompía esa nulabilidad y mostraba "0.0"/"CSAT 0" para
+                // clientes sin ninguna valoración real.
+                'avgCsat' => $lifetime['csat_avg'] ?? null,
                 'ticketsCount' => $this->countTickets($customer),
                 'lifetime' => $this->lifetimeOrders($customer),
             ],

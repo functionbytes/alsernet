@@ -50,6 +50,10 @@ class IntegrationsController extends Controller
             'key' => 'erp',
             'description' => 'Datos del cliente en el ERP (facturacion, pedidos) en el panel lateral de la conversacion.',
         ],
+        'Forms' => [
+            'key' => 'forms',
+            'description' => 'Recibe los formularios del sitio Alvarez (modulo alsernetforms) como tickets, uno por categoria de formulario.',
+        ],
         'HelpdeskSocial' => [
             'key' => 'social',
             'description' => 'Gestiona comentarios y mensajes de redes sociales como conversaciones, con auto-asignacion y analisis de sentimiento.',

@@ -84,9 +84,15 @@ Broadcast::channel('helpdesk-widget-conversation.{conversationId}.{pubsubToken}'
 |    access to via the existing helpdesk policies.
 |  - Visitors do not subscribe to this channel — they receive typing events on
 |    the per-conversation pubsub channel above.
+|
+| helpdesk.conversations.view exigido explícitamente (antes solo pedía "estar
+| logueado") — mismo permiso que ya exigen los canales hermanos livestream./
+| webrtc. de abajo; sin él, cualquier cuenta autenticada del panel (sin
+| importar su permiso/alcance) podía suscribirse al indicador de "está
+| escribiendo" de cualquier conversación adivinando el id numérico.
 */
 Broadcast::channel('helpdesk.conversation.{conversationId}.typing', function ($user, string $conversationId) {
-    if (! $user) {
+    if (! $user || ! $user->can('helpdesk.conversations.view')) {
         return false;
     }
 

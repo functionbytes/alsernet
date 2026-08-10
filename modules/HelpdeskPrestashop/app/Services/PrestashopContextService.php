@@ -100,6 +100,59 @@ class PrestashopContextService
     }
 
     /**
+     * Variante de getOrderDetail() SIN el chequeo de propiedad por email —
+     * consulta el pedido solo por su id, sin verificar a qué cliente
+     * pertenece. Existe para llamadores que aún no conocen el email del
+     * cliente y necesitan descubrirlo a partir del order_id (p. ej. el
+     * módulo Document poblando el formulario de solicitud de documentos
+     * desde un webhook `order-paid` firmado, o desde el panel interno de
+     * staff ya autenticado) — no para flujos de cara al cliente.
+     *
+     * SEGURIDAD: NO exponer directa ni indirectamente a un endpoint donde
+     * un visitante no autenticado pueda elegir el order_id libremente; el
+     * bridge, al no recibir lookup.email/external_id, salta su propio
+     * chequeo de propiedad (ver alsernetbridge/api.php, case 'order.detail').
+     * El llamador es responsable de garantizar que el order_id viene de una
+     * fuente confiable (webhook firmado, panel autenticado con permiso).
+     */
+    public function getOrderDetailUnscoped(int $orderId): ?array
+    {
+        return $this->callApi('order.detail', [
+            'order_id' => $orderId,
+        ]);
+    }
+
+    /**
+     * Variante de getOrderDetailUnscoped() por reference en vez de id — para
+     * llamadores que solo conocen la reference del pedido (ej. documentos
+     * denormalizados que guardaron order_reference pero no order_id).
+     * Mismo alcance de seguridad: sin ownership-email, ver el aviso en
+     * getOrderDetailUnscoped().
+     */
+    public function getOrderDetailByReferenceUnscoped(string $reference): ?array
+    {
+        return $this->callApi('order.detail', [
+            'reference' => $reference,
+        ]);
+    }
+
+    /**
+     * Búsqueda de pedidos por id/reference (coincidencia parcial) — para
+     * autocompletados internos del panel (Select2).
+     *
+     * @return array<int, array{id: int, reference: string}>
+     */
+    public function searchOrders(string $query, int $limit = 50): array
+    {
+        $data = $this->callApi('order.search', [
+            'query' => $query,
+            'limit' => $limit,
+        ]);
+
+        return $data['orders'] ?? [];
+    }
+
+    /**
      * Lista paginada de pedidos del cliente vía la accion dedicada `customer.orders`.
      * Es la fuente fiable de pedidos: `customer.helpdesk_context` puede devolver el
      * array `orders` vacio para algunos clientes aunque `orders_count` sea > 0.
@@ -251,6 +304,38 @@ class PrestashopContextService
             'note' => $note,
             'agent_name' => $agentName,
             'lookup' => ['email' => $this->normalizeEmail($customerEmail)],
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Marca un pedido como candidato a envío al ERP (Gestión) — sin
+     * ownership-email deliberadamente: es una acción interna del panel de
+     * staff (Document), no de cara al cliente, sobre un order_id ya
+     * confiable. Requiere idempotencyKey por ser acción de escritura.
+     */
+    public function flagOrderForErpSend(int $orderId, ?string $idempotencyKey = null): ?array
+    {
+        return $this->callApi('order.flag_for_erp_send', [
+            'order_id' => $orderId,
+        ], $idempotencyKey);
+    }
+
+    /**
+     * Corrige nombre/email de un cliente ANÓNIMO de PrestaShop (email
+     * placeholder anon_*) con datos reales hallados en las direcciones de
+     * sus pedidos — usado por el comando de validación de documentos
+     * pagados. Sin ownership-email: el propio email del cliente es el dato
+     * roto que se está corrigiendo, no algo para verificar contra sí mismo.
+     * El bridge re-verifica server-side que el email actual es anon_* antes
+     * de escribir (ver alsernet_customer_fix_anonymous_profile).
+     */
+    public function fixAnonymousCustomerProfile(int $customerId, string $firstname, string $lastname, string $email, ?string $idempotencyKey = null): ?array
+    {
+        return $this->callApi('customer.fix_anonymous_profile', [
+            'customer_id' => $customerId,
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'email' => $email,
         ], $idempotencyKey);
     }
 
@@ -498,7 +583,11 @@ class PrestashopContextService
         $timestamp = time();
         $signature = HmacSigner::sign($secret, $timestamp, $bodyJson);
 
-        $writeActions = ['customer.add_message', 'order.add_note', 'order.start_return'];
+        // NOTA: esta lista está incompleta respecto a la del bridge (le faltan
+        // order.change_status/set_tracking/set_address/send_email) — no se
+        // toca aquí, fuera de alcance; se añaden solo las 2 acciones nuevas
+        // que este cambio introduce, para que sí generen su idempotency key.
+        $writeActions = ['customer.add_message', 'order.add_note', 'order.start_return', 'order.flag_for_erp_send', 'customer.fix_anonymous_profile'];
         $headers = [
             'X-Alsernet-Signature' => $signature,
             'X-Alsernet-Timestamp' => (string) $timestamp,
@@ -692,6 +781,41 @@ class PrestashopContextService
     public function getProductByReference(string $reference, ?string $lang = null): ?array
     {
         return $this->fetchProductByKey('reference', $reference, $lang);
+    }
+
+    /**
+     * Precio+stock de un producto/combinación/país concretos — usado por el
+     * job de validación de precio de Erp (ValidatePriceFromGestion) para
+     * comparar contra el precio de Gestión. Sin caché deliberadamente (la
+     * validación de precio necesita el dato fresco, no una copia de hasta
+     * varios minutos), y sin ownership-email (no es un dato de cliente).
+     *
+     * @return array{price_with_tax: float, stock: int}|null
+     */
+    public function getProductPriceDetail(int $productId, int $productAttributeId, int $countryId): ?array
+    {
+        return $this->callApi('product.price_detail', [
+            'product_id' => $productId,
+            'product_attribute_id' => $productAttributeId,
+            'country_id' => $countryId,
+        ]);
+    }
+
+    /**
+     * Lista specific_price activos (o todos sin expirar) — usado por
+     * Erp\Console\Commands\SyncSpecificPrices para descubrir qué productos
+     * necesitan una validación de precio programada.
+     *
+     * @return array<int, array{id_specific_price:int, id_product:int, id_product_attribute:int, id_country:int, from:?string, to:?string, reference:?string}>
+     */
+    public function listSpecificPrices(string $scope = 'active', int $limit = 500): array
+    {
+        $data = $this->callApi('specific_price.list', [
+            'scope' => $scope,
+            'limit' => $limit,
+        ]);
+
+        return $data['items'] ?? [];
     }
 
     /**

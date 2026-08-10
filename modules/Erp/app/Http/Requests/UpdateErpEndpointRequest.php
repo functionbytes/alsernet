@@ -3,12 +3,13 @@
 namespace Modules\Erp\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class UpdateErpEndpointRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user()?->can('erp.endpoints.manage');
     }
 
     public function rules(): array
@@ -16,7 +17,11 @@ class UpdateErpEndpointRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:erp_endpoints,slug,'.$this->endpoint->id,
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'url', 'max:500', function ($attribute, $value, $fail) {
+                if (! ErpEndpointUrlGuard::isAllowed($value)) {
+                    $fail('La URL del endpoint no está permitida (localhost, metadata de nube, o esquema no soportado).');
+                }
+            }],
             'method' => 'required|in:GET,POST,PUT,PATCH,DELETE',
             'credential_id' => 'nullable|exists:erp_credentials,id',
             'description' => 'nullable|string|max:1000',

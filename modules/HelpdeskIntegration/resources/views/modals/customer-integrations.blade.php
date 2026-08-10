@@ -53,6 +53,16 @@
                 </div>
             </div>
 
+            {{-- Vista: ficha completa de una plataforma ya vinculada (clic en el
+                 widget del panel derecho) — nombre/email/NIF/teléfono/ciudad/...,
+                 mismos campos que la ficha "Confirmar vínculo" del buscador, pero
+                 para revisar un vínculo existente en vez de crear uno nuevo. --}}
+            <div id="ciDetailView" style="display:none">
+                <div id="ciDetailBody">
+                    <div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> Cargando…</div>
+                </div>
+            </div>
+
             {{-- Vista de búsqueda/vinculación --}}
             <div id="ciLinkPanel" style="display:none">
                 <div class="field">
@@ -103,6 +113,11 @@
                 <button class="btn-secondary w-100" id="ciAuditBackBtn" type="button">
                     <i class="fas fa-arrow-left"></i> Volver a integraciones
                 </button>
+            </div>
+            {{-- Footer vista de detalle de una plataforma vinculada --}}
+            <div id="ciFootDetail" style="display:none">
+                <button class="btn-secondary w-100 mb-2" id="ciDetailUnlinkBtn" type="button">Desvincular</button>
+                <button class="btn-secondary w-100" data-bv-close>Cerrar</button>
             </div>
         </div>
     </div>

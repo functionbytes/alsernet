@@ -29,6 +29,12 @@ use Throwable;
  *
  * Mutuamente excluyente con SendGreetingOnConversationCreated: este solo actúa
  * fuera de horario, aquel solo dentro — nunca se envían los dos a la vez.
+ *
+ * Respeta customerRecentlyContacted() (ver LocalizesAutoReplyMessage): si el
+ * cliente reabrió el chat momentos después de cerrarlo, no se repite el aviso
+ * de fuera de horario — pasada esa ventana corta sí se vuelve a enviar,
+ * porque un cliente recurrente escribiendo de madrugada igual necesita saber
+ * que está cerrado.
  */
 class RespondOffHoursOnConversationCreated implements ShouldQueue
 {
@@ -43,11 +49,20 @@ class RespondOffHoursOnConversationCreated implements ShouldQueue
 
     public function handle(ConversationCreated $event): void
     {
+        if (! helpdesk_off_hours_feature_enabled()) {
+            return;
+        }
+
         if (app(BusinessHoursService::class)->isOpenNow()) {
             return;
         }
 
         $conversation = $event->conversation;
+
+        if ($this->customerRecentlyContacted($conversation)) {
+            return;
+        }
+
         $source = strtolower(substr((string) config('app.locale', 'es'), 0, 2));
         $customerLanguage = $this->resolveCustomerLanguage($conversation, $source);
 
@@ -68,7 +83,7 @@ class RespondOffHoursOnConversationCreated implements ShouldQueue
             // En canales externos (WhatsApp/FB/IG) empuja por la API; en web/widget
             // devuelve null y el cliente recibe el mensaje a través del
             // ConversationItem (el widget lo recoge por su propio canal/polling).
-            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message);
+            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message, fast: true);
 
             ConversationItem::create([
                 'conversation_id' => $conversation->id,

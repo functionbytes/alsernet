@@ -66,7 +66,10 @@ Route::middleware(['web', 'auth', 'settings'])
             Route::post('/bulk-action', [MailerTemplateController::class, 'bulkAction'])->name('bulk-action');
             Route::post('/{uid}/versions/{version}/restore', [MailerTemplateController::class, 'restoreVersion'])->name('versions.restore');
 
-            Route::post('/send-test/{uid}', [MailerTemplateController::class, 'sendTest'])->name('send-test');
+            // throttle: envía un email real a un destinatario arbitrario; sin límite,
+            // cualquier autorizado podía usarlo como relay de spam/phishing con la
+            // infraestructura legítima de la app.
+            Route::post('/send-test/{uid}', [MailerTemplateController::class, 'sendTest'])->name('send-test')->middleware('throttle:5,1');
         });
 
         // ====================================================================

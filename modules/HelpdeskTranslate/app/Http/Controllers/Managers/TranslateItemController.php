@@ -32,10 +32,16 @@ class TranslateItemController extends Controller
             );
         }
 
-        $this->enforceDailyCharacterQuota($request, mb_strlen($text));
+        $this->enforceDailyCharacterQuota($this->translator);
 
         $target = $request->input('target', 'es');
-        $translated = $this->translator->translate($text, $target, feature: 'manual');
+
+        // Traducción + detección de idioma de origen en UNA sola llamada al
+        // proveedor (antes: translate() + detectLanguage() por separado, dos
+        // round-trips HTTP para un solo clic de "Traducir").
+        $result = $this->translator->translateWithDetectedSource($text, $target, feature: 'manual');
+        $translated = $result['translated'];
+        $sourceLocale = $result['detected_source_language'];
 
         if ($translated === null) {
             return response()->json(
@@ -43,10 +49,6 @@ class TranslateItemController extends Controller
                 503,
             );
         }
-
-        // Detect the source language so source_locale is semantically correct
-        // (origin language, not target). Falls back to null when unavailable.
-        $sourceLocale = $this->translator->detectLanguage($text, feature: 'manual');
 
         // Persist on the conversation item so the translation survives a page
         // reload and any other agent opening the same conversation sees it.

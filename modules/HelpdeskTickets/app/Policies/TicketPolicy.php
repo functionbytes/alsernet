@@ -51,13 +51,15 @@ class TicketPolicy
 
     public function close(User $user, Ticket $ticket): bool
     {
-        return $user->hasPermissionTo('helpdesk.tickets.update')
+        return $user->hasPermissionTo('helpdesk.tickets.close')
+            || $user->hasPermissionTo('helpdesk.tickets.update')
             || $ticket->assignee_id === $user->id;
     }
 
     public function resolve(User $user, Ticket $ticket): bool
     {
-        return $this->close($user, $ticket);
+        return $user->hasPermissionTo('helpdesk.tickets.resolve')
+            || $this->close($user, $ticket);
     }
 
     public function reopen(User $user, Ticket $ticket): bool

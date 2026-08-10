@@ -57,11 +57,13 @@ class MailerEndpointApiTest extends TestCase
             ->assertUnauthorized();
     }
 
-    public function test_send_returns_404_for_unknown_slug(): void
+    public function test_send_returns_401_for_unknown_slug(): void
     {
+        // send() usa ahora el mismo helper que info()/status(): respuesta
+        // uniforme (401), no 404, para no poder enumerar slugs por status code.
         $this->postJson('/api/email-endpoints/nonexistent/send', [], [
             'X-API-Token' => $this->token,
-        ])->assertNotFound();
+        ])->assertUnauthorized();
     }
 
     public function test_send_rejects_inactive_endpoint(): void

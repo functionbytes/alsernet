@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Erp\Models\ErpEndpoint;
 use Modules\Erp\Models\ErpEndpointLog;
 use Modules\Erp\Models\ErpEndpointToken;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class PublicEndpointController extends Controller
 {
@@ -22,6 +23,17 @@ class PublicEndpointController extends Controller
 
         /** @var ErpEndpoint $endpoint */
         $endpoint = $request->attributes->get('endpoint');
+
+        // Defensa en profundidad: este endpoint es invocable sin sesión (solo
+        // token), así que un endpoint creado antes del guard de creación (o
+        // manipulado directamente en BD) no debe poder usarse como oráculo SSRF.
+        if (! ErpEndpointUrlGuard::isAllowed($endpoint->url)) {
+            Log::warning('PublicEndpointController: endpoint con URL no permitida bloqueado', [
+                'endpoint_id' => $endpoint->id,
+            ]);
+
+            return response()->json(['message' => 'Endpoint no disponible'], 422);
+        }
 
         $startTime = microtime(true);
 

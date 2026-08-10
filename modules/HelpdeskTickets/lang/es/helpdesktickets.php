@@ -87,6 +87,14 @@ return [
         'widget' => 'Widget',
         'phone' => 'Telefono',
         'manual' => 'Manual',
+        'formulario' => 'Formulario',
+        'web_form' => 'Formulario',
+        'conversation' => 'Conversacion',
+        'social' => 'Redes sociales',
+        'chatflow' => 'Chatbot',
+        'contacts' => 'Contactos',
+        'manager' => 'Panel interno',
+        'portal' => 'Portal cliente',
     ],
 
     'actions' => [

@@ -28,6 +28,14 @@
     // Plataformas con sync en vuelo: la fila muestra "Sincronizando…" con
     // spinner (mockup 50) en vez de solo deshabilitar el botón.
     var syncingPlatforms = {};
+    // Plataforma pedida por el widget del panel derecho (clic en una fila ya
+    // vinculada) — se consume una sola vez en el próximo bv:modal:open para
+    // abrir directo la ficha de detalle en vez de la lista general.
+    var pendingDetailPlatform = null;
+    // Plataforma/ficha actualmente mostrada en #ciDetailView — la necesita el
+    // flujo de "Desvincular" propio de esa vista (self-contained, no reutiliza
+    // confirmPlatform/renderList de la lista para no chocar con ese flujo).
+    var currentDetailItem = null;
 
     function findLinkablePlatform(platform) {
         var matches = linkablePlatforms.filter(function (p) { return p.platform === platform; });
@@ -407,12 +415,171 @@
     }
 
     $(document).on('click', '#ciHeadIcon', function () {
-        if ($('#ciLinkPanel').is(':visible') || $('#ciAuditView').is(':visible')) { showMainView(); }
+        if ($('#ciLinkPanel').is(':visible') || $('#ciAuditView').is(':visible') || $('#ciDetailView').is(':visible')) { showMainView(); }
     });
 
     $(document).on('click', '#ciLink', function () { showLinkPanel(); });
     $(document).on('click', '.ci-link-open-btn', function () { showLinkPanel(); });
     $(document).on('click', '#ciBackBtn', showMainView);
+
+    // ── Detalle de una plataforma ya vinculada (clic en el widget del panel
+    // derecho) ───────────────────────────────────────────────────────────
+    //
+    // Reutiliza el mismo shape de datos que la ficha "Confirmar vínculo" del
+    // buscador (verify-customer-identity.js → renderLinkConfirm): nombre,
+    // email, NIF, teléfono, ciudad, tarjeta, código internet, fecha de alta,
+    // estado — pero para revisar un vínculo YA existente, con "Desvincular"
+    // en vez de "Confirmar vinculación".
+
+    function detailInfoRowsHtml(record) {
+        var rows = '';
+        function addRow(label, value) {
+            if (value === null || value === undefined || value === '') { return; }
+            rows += '<div class="bv-info-table__row"><span class="bv-info-table__k">' + esc(label) + '</span><span class="bv-info-table__v">' + esc(value) + '</span></div>';
+        }
+        addRow(t('external_id_label', 'ID cliente'), record.id);
+        addRow(t('email_label', 'Correo electrónico'), record.email);
+        addRow(t('nif_label', 'Identificación (NIF/DNI)'), record.nif);
+        addRow(t('phone_label', 'Teléfono'), record.phone);
+        addRow(t('city_label', 'Ciudad'), record.city);
+        addRow(t('card_label', 'Nº tarjeta'), record.card);
+        addRow(t('code_internet_label', 'Código internet'), record.code_internet);
+        addRow(t('created_label', 'Fecha de alta'), record.created_at);
+        addRow(t('active_label', 'Estado'), record.active === true ? t('active_yes', 'Activo') : (record.active === false ? t('active_no', 'Inactivo') : null));
+        return rows;
+    }
+
+    function renderDetailView(resp) {
+        currentDetailItem = resp;
+
+        $('#ciGateView, #ciMainView, #ciLinkPanel, #ciAuditView').hide();
+        $('#ciDetailView').show();
+        $('#ciFootGate, #ciFootMain, #ciFootSearch, #ciFootAudit').hide();
+        $('#ciFootDetail').show();
+        $('#ciModalTitle').text(resp.label || t('integrations_title', 'Integraciones del cliente'));
+        setHeadIcon('fa-arrow-left', true);
+
+        // Icono siempre neutro (sin color por plataforma) — mismo criterio ya
+        // establecido para .rsp-integration del panel derecho: el color de
+        // marca aquí era ruido visual sin aportar nada.
+        var critBadge = resp.is_critical
+            ? ' <i class="fas fa-shield-halved intg-crit" title="' + t('critical_integration', 'Integración crítica') + '"></i>'
+            : '';
+
+        // La plataforma no respondió o el id ya no resuelve ahí — el vínculo
+        // se conserva (igual que un sync fallido en la lista), simplemente no
+        // hay ficha que mostrar ahora mismo.
+        if (!resp.record) {
+            $('#ciDetailBody').html(
+                '<div class="bv-intg-row">' +
+                    '<div class="ico"><i class="' + esc(resp.icon || 'fas fa-plug') + '"></i></div>' +
+                    '<div class="meta"><span class="name">' + esc(resp.label) + critBadge + '</span><span class="det mono">' + esc(resp.external_id) + '</span></div>' +
+                '</div>' +
+                '<div class="minfo danger" style="margin-top:12px"><i class="fas fa-triangle-exclamation"></i><div>' +
+                    t('detail_unavailable', 'La plataforma no respondió o el identificador ya no existe ahí. El vínculo se conserva, pero no se puede mostrar su ficha ahora mismo.') +
+                '</div></div>'
+            );
+            return;
+        }
+
+        var record = resp.record;
+        $('#ciDetailBody').html(
+            '<div class="bv-intg-row">' +
+                '<div class="ico"><i class="' + esc(resp.icon || 'fas fa-plug') + '"></i></div>' +
+                '<div class="meta"><span class="name">' + esc(record.name || '—') + critBadge + '</span><span class="det">' + esc(record.email || record.meta || '') + '</span></div>' +
+            '</div>' +
+            '<div class="bv-info-table bv-info-table--rich" style="margin-top:12px">' + detailInfoRowsHtml(record) + '</div>'
+        );
+    }
+
+    function loadDetail(platform) {
+        var base = HDCommerce.base();
+        if (!base) { return; }
+
+        $('#ciGateView, #ciMainView, #ciLinkPanel, #ciAuditView').hide();
+        $('#ciDetailView').show();
+        $('#ciFootGate, #ciFootMain, #ciFootSearch, #ciFootAudit, #ciFootDetail').hide();
+        $('#ciModalTitle').text(t('integrations_title', 'Integraciones del cliente'));
+        setHeadIcon('fa-arrow-left', true);
+        $('#ciDetailBody').html('<div class="bv-oc-loading"><i class="fas fa-spinner fa-spin"></i> ' + t('loading', 'Cargando…') + '</div>');
+
+        HDCommerce.ajax({ url: base + '/integrations/' + platform + '/detail', method: 'GET' })
+            .done(function (resp) { renderDetailView(resp); })
+            .fail(function (xhr) {
+                toastr.error(HDCommerce.errorMessage(xhr, t('load_failed', 'No se pudieron cargar las integraciones')));
+                load();
+            });
+    }
+
+    // Clic en un widget `.rsp-integration` YA vinculado del panel derecho —
+    // ver right-panel.blade.php (data-platform). Las filas sin plataforma
+    // real (Widget Web, plataformas custom detectadas) no llevan
+    // data-platform y siguen abriendo la lista general vía data-bv-modal, sin
+    // pasar por aquí.
+    $(document).on('click', '.rsp-integration[data-platform]', function (e) {
+        e.preventDefault();
+        pendingDetailPlatform = $(this).hasClass('is-disconnected') ? null : $(this).data('platform');
+        HDCommerce.open('customer-integrations');
+    });
+
+    function detailUnlinkConfirmHtml(it) {
+        return '<div class="bv-intg-confirm" style="flex-direction:column;align-items:stretch;margin-top:12px">' +
+            '<div class="ct">' + t('unlink_confirm_title', 'Desvincular «:label»', { label: esc(it.label) }) + (it.is_critical ? t('critical_suffix', ' · integración crítica') : '') + '</div>' +
+            '<div class="cs">' + t('unlink_confirm_body', 'Se dejarán de sincronizar sus datos.') +
+                (it.is_critical ? ' ' + t('unlink_confirm_type_label', 'Escribe <strong>:label</strong> para confirmar.', { label: esc(it.label) }) : '') +
+            '</div>' +
+            (it.is_critical
+                ? '<input type="text" class="finput ci-detail-confirm-input" style="margin-top:7px" placeholder="' + esc(it.label) + '" autocomplete="off">'
+                : '') +
+            '<div class="bv-intg-confirm-actions" style="margin-top:10px">' +
+                '<button type="button" class="bv-intg-mini-danger ci-detail-confirm-unlink-btn"' + (it.is_critical ? ' disabled' : '') + '>' + t('desync_button', 'Desincronizar') + '</button>' +
+                '<button type="button" class="bv-intg-mini-outline ci-detail-cancel-confirm-btn">' + t('cancel', 'Cancelar') + '</button>' +
+            '</div>' +
+        '</div>';
+    }
+
+    $(document).on('click', '#ciDetailUnlinkBtn', function () {
+        if (!currentDetailItem) { return; }
+        $('#ciDetailBody').append(detailUnlinkConfirmHtml(currentDetailItem));
+        $('#ciFootDetail').hide();
+    });
+
+    $(document).on('click', '.ci-detail-cancel-confirm-btn', function () {
+        if (currentDetailItem) { loadDetail(currentDetailItem.platform); }
+    });
+
+    $(document).on('input', '.ci-detail-confirm-input', function () {
+        var expected = (currentDetailItem || {}).label || '';
+        var ok = $.trim($(this).val()).toLowerCase() === String(expected).toLowerCase();
+        $('.ci-detail-confirm-unlink-btn').prop('disabled', !ok);
+    });
+
+    $(document).on('click', '.ci-detail-confirm-unlink-btn', function () {
+        var base = HDCommerce.base();
+        if (!base || !currentDetailItem) { return; }
+        var $btn = $(this).prop('disabled', true);
+        var platform = currentDetailItem.platform;
+        var label = currentDetailItem.label;
+
+        HDCommerce.ajax({
+            url: base + '/integrations/unlink',
+            method: 'POST',
+            data: JSON.stringify({ platform: platform }),
+            contentType: 'application/json',
+        })
+            .done(function (resp) {
+                toastr.success(resp.message || t('unlinked_success', '«:label» desvinculado.', { label: esc(label) }));
+                lastIntegrations = resp.integrations || lastIntegrations;
+                linkablePlatforms = resp.linkable_platforms || linkablePlatforms;
+                currentDetailItem = null;
+                HDCommerce.close('customer-integrations');
+                renderRightPanelIntegrationsWidget(resp.integrations);
+            })
+            .fail(function (xhr) {
+                toastr.error(HDCommerce.errorMessage(xhr, t('unlink_failed', 'No se pudo desvincular.')));
+                $btn.prop('disabled', false);
+            });
+    });
 
     // ── Búsqueda unificada (todas las plataformas vinculables a la vez) ────
 
@@ -566,7 +733,7 @@
                 linkablePlatforms = resp.linkable_platforms || linkablePlatforms;
                 showMainView();
                 renderList(lastIntegrations, resp.last_activity);
-                refreshRightPanelIntegrations();
+                renderRightPanelIntegrationsWidget(resp.integrations);
             })
             .fail(function (xhr) {
                 toastr.error(HDCommerce.errorMessage(xhr, t('link_failed', 'No se pudo vincular.')));
@@ -574,16 +741,60 @@
             });
     });
 
-    // El widget "INTEGRACIONES" del panel derecho se renderiza en servidor al
-    // cargar la conversación — sin esto, vincular/desvincular aquí no se
-    // reflejaba ahí hasta recargar la página entera. bvLoadConversationPane
-    // ya existe (conversations.js) para el cambio de conversación; se
-    // reutiliza para refrescar el panel completo con datos frescos.
-    function refreshRightPanelIntegrations() {
-        var convId = $('.bv-sync-commerce').attr('data-conv-id');
-        if (convId && typeof window.bvLoadConversationPane === 'function') {
-            window.bvLoadConversationPane(convId, null, { push: false });
+    // El widget "INTEGRACIONES" del panel derecho pinta directamente con los
+    // datos que YA trae la respuesta de link()/unlink() (resp.integrations),
+    // en vez de recargar el pane completo (thread + right-panel, ~3500
+    // líneas de Blade + 4-5 relaciones) solo para refrescar unas filas
+    // pequeñas. Antes: cada vinculación/desvinculación pagaba el coste
+    // completo de un cambio de conversación por un cambio de estado que la
+    // propia respuesta AJAX ya conocía.
+    function renderRightPanelIntegrationsWidget(integrations) {
+        var $section = $('.bv-sync-commerce').closest('.rsp-section');
+        if (!$section.length || !integrations) { return; }
+
+        var connectedCount = 0;
+        var rowsHtml = '';
+
+        integrations.forEach(function (intg) {
+            if (intg.connected) { connectedCount++; }
+
+            var classes = 'rsp-integration is-clickable' + (intg.connected ? '' : ' is-disconnected');
+            var idValue = intg.connected ? esc(intg.external_id) : 'sin vincular';
+
+            rowsHtml += '<div class="' + classes + '" role="button" tabindex="0" ' +
+                'data-platform="' + esc(intg.platform) + '" title="Ver integraciones del cliente">' +
+                '<div class="ico"><i class="' + esc(intg.icon || 'fas fa-plug') + '"></i></div>' +
+                '<div class="meta">' +
+                '<span class="name">' + esc(intg.label) + '</span>' +
+                '<span class="id">ID: ' + idValue + '</span>' +
+                '</div>' +
+                '<span class="status">' + (intg.connected ? 'Conectado' : 'Desconectado') + '</span>' +
+                '</div>';
+        });
+
+        $section.find('.r-tag').first().text(connectedCount);
+
+        var $existingList = $section.find('.rsp-integrations');
+        var $existingEmpty = $section.find('.rsp-empty');
+
+        if (rowsHtml === '') {
+            if ($existingList.length) { $existingList.replaceWith('<div class="rsp-empty">Sin integraciones detectadas</div>'); }
+            else if (!$existingEmpty.length) { $section.append('<div class="rsp-empty">Sin integraciones detectadas</div>'); }
+        } else if ($existingList.length) {
+            $existingList.html(rowsHtml);
+        } else {
+            var $html = $('<div class="rsp-integrations">' + rowsHtml + '</div>');
+            if ($existingEmpty.length) { $existingEmpty.replaceWith($html); }
+            else { $section.append($html); }
         }
+    }
+
+    // Expuesta en HDCommerce (namespace compartido definido por el core, ver
+    // public/vendor/helpdesk/modals/_commerce-js.js) para que
+    // verify-customer-identity.js (mismo módulo, vincula desde el buscador
+    // del gate de identidad) pueda reutilizarla sin duplicar el render.
+    if (window.HDCommerce) {
+        window.HDCommerce.renderIntegrationsWidget = renderRightPanelIntegrationsWidget;
     }
 
     // ── Desvincular plataforma (confirmacion inline) ────────────────────────
@@ -626,7 +837,7 @@
                 lastIntegrations = resp.integrations || lastIntegrations;
                 linkablePlatforms = resp.linkable_platforms || linkablePlatforms;
                 renderList(lastIntegrations, resp.last_activity);
-                refreshRightPanelIntegrations();
+                renderRightPanelIntegrationsWidget(resp.integrations);
             })
             .fail(function (xhr) {
                 toastr.error(HDCommerce.errorMessage(xhr, t('unlink_failed', 'No se pudo desvincular.')));
@@ -640,6 +851,17 @@
     $(document).on('bv:modal:open', function (e, name) {
         if (name !== 'customer-integrations') { return; }
         confirmPlatform = null;
+
+        // Clic en un widget ya vinculado del panel derecho: abre directo su
+        // ficha de detalle en vez de la lista general (ver handler de
+        // .rsp-integration[data-platform] más arriba).
+        if (pendingDetailPlatform) {
+            var platform = pendingDetailPlatform;
+            pendingDetailPlatform = null;
+            loadDetail(platform);
+            return;
+        }
+
         load();
     });
 

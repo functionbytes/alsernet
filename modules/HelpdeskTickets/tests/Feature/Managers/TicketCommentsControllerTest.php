@@ -75,6 +75,16 @@ class TicketCommentsControllerTest extends TestCase
 
         // Mail was queued (TicketReplyMail uses Mail::queue)
         Queue::assertPushed(SendQueuedMailable::class);
+
+        // Regresión: esta vía (comentario externo) enviaba el correo sin dejar
+        // rastro en TicketMail — a diferencia de la vía TicketItem/MessageAdded.
+        $this->assertDatabaseHas('helpdesk_ticket_mails', [
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->agent->id,
+            'direction' => 'outbound',
+            'to' => $ticket->customer->email,
+            'status' => 'sent',
+        ], 'helpdesk');
     }
 
     public function test_internal_comment_does_not_queue_customer_email(): void

@@ -59,6 +59,7 @@ return [
         'Modules\\Helpdesk\\Models\\Customer' => 'Cliente',
         'Modules\\HelpdeskTickets\\Models\\Ticket' => 'Ticket',
         'Modules\\Helpdesk\\Models\\Conversation' => 'Conversación',
+        'Modules\\Document\\Entities\\Document' => 'Documento',
     ],
 
     /*

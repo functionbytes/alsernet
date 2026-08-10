@@ -3,10 +3,10 @@
 namespace Modules\Document\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentProductBlockade;
 use Modules\Document\Entities\DocumentType;
+use Modules\Document\Services\PrestashopOrderLookupService;
 
 class RevalidateDocumentTypes extends Command
 {
@@ -25,9 +25,17 @@ class RevalidateDocumentTypes extends Command
     protected $description = 'Revalidate and update document_type_id for all documents based on product blockades';
 
     /**
+     * Caché en memoria de productos por order_id, para no repetir la
+     * llamada al bridge si varios documentos comparten pedido.
+     *
+     * @var array<int, array<int, array{product_id: ?int, attribute_id: ?int}>>
+     */
+    private array $orderProductsCache = [];
+
+    /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(PrestashopOrderLookupService $prestashopOrders): int
     {
         try {
             $this->info('🔍 Starting document type revalidation...');
@@ -56,23 +64,15 @@ class RevalidateDocumentTypes extends Command
             $this->info("✓ Loaded {$blockades['total']} blockade records");
             $this->line('');
 
-            // Step 2: Load order products from PrestaShop
+            // Step 2: Process documents (los productos de cada pedido se piden
+            // al bridge de PrestaShop bajo demanda, por documento — antes se
+            // precargaban todos de golpe con una consulta directa a la BD)
             $this->line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            $this->info('📍 STEP 2: Loading order products from PrestaShop');
-            $this->line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            $this->line('');
-
-            $orderProductMap = $this->loadOrderProducts();
-            $this->info("✓ Loaded products for ".count($orderProductMap)." orders");
-            $this->line('');
-
-            // Step 3: Process documents
-            $this->line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            $this->info('📍 STEP 3: Processing documents');
+            $this->info('📍 STEP 2: Processing documents');
             $this->line('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             $this->line('');
 
-            $stats = $this->processDocuments($blockades, $orderProductMap);
+            $stats = $this->processDocuments($blockades, $prestashopOrders);
 
             // Summary
             $this->line('');
@@ -152,39 +152,33 @@ class RevalidateDocumentTypes extends Command
     }
 
     /**
-     * Load order products from PrestaShop
+     * Productos de un pedido vía el bridge de PrestaShop, con caché en
+     * memoria para esta ejecución del comando.
+     *
+     * @return array<int, array{product_id: ?int, attribute_id: ?int}>
      */
-    private function loadOrderProducts(): array
+    private function productsForOrder(PrestashopOrderLookupService $prestashopOrders, int $orderId): array
     {
-        $query = DB::connection('prestashop')
-            ->table('aalv_order_detail')
-            ->select('id_order', 'product_id', 'product_attribute_id');
-
-        // Filter by specific order if provided
-        if ($orderId = $this->option('order-id')) {
-            $query->where('id_order', $orderId);
+        if (isset($this->orderProductsCache[$orderId])) {
+            return $this->orderProductsCache[$orderId];
         }
 
-        $orderProducts = $query->get();
+        $order = $prestashopOrders->find($orderId);
 
-        $orderProductMap = [];
-        foreach ($orderProducts as $item) {
-            if (! isset($orderProductMap[$item->id_order])) {
-                $orderProductMap[$item->id_order] = [];
-            }
-            $orderProductMap[$item->id_order][] = [
-                'product_id' => $item->product_id,
-                'attribute_id' => $item->product_attribute_id,
-            ];
-        }
+        $products = collect($order['products'] ?? [])
+            ->map(fn (array $line) => [
+                'product_id' => $line['product_id'],
+                'attribute_id' => $line['product_attribute_id'],
+            ])
+            ->all();
 
-        return $orderProductMap;
+        return $this->orderProductsCache[$orderId] = $products;
     }
 
     /**
      * Process all documents and update their type_id based on blockades
      */
-    private function processDocuments(array $blockades, array $orderProductMap): array
+    private function processDocuments(array $blockades, PrestashopOrderLookupService $prestashopOrders): array
     {
         $stats = [
             'total' => 0,
@@ -224,19 +218,22 @@ class RevalidateDocumentTypes extends Command
                 if (! $document->order_id) {
                     $stats['skipped_no_order']++;
                     $bar->advance();
+
                     continue;
                 }
 
                 // Skip if order has no products in PrestaShop
-                if (! isset($orderProductMap[$document->order_id])) {
+                $orderProducts = $this->productsForOrder($prestashopOrders, (int) $document->order_id);
+                if (empty($orderProducts)) {
                     $stats['skipped_no_products']++;
                     $bar->advance();
+
                     continue;
                 }
 
                 // Determine correct document_type_id based on product blockades
                 $correctTypeId = $this->determineDocumentType(
-                    $orderProductMap[$document->order_id],
+                    $orderProducts,
                     $blockades['by_product']
                 );
 
@@ -244,6 +241,7 @@ class RevalidateDocumentTypes extends Command
                 if ($correctTypeId === null) {
                     $stats['skipped_no_blockades']++;
                     $bar->advance();
+
                     continue;
                 }
 
@@ -251,6 +249,7 @@ class RevalidateDocumentTypes extends Command
                 if ($document->type_id == $correctTypeId) {
                     $stats['skipped_same_type']++;
                     $bar->advance();
+
                     continue;
                 }
 

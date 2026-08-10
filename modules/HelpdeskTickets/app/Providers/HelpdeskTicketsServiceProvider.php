@@ -16,6 +16,7 @@ use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledRepliesCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SendScheduledTicketMailsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
 use Modules\HelpdeskTickets\Http\Controllers\Dev\EmailTestController;
 use Modules\HelpdeskTickets\Jobs\AutoAssignUnassignedTickets;
@@ -32,6 +33,7 @@ use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketGroup;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -47,6 +49,7 @@ use Modules\HelpdeskTickets\Policies\TicketCannedReplyPolicy;
 use Modules\HelpdeskTickets\Policies\TicketCategoryPolicy;
 use Modules\HelpdeskTickets\Policies\TicketCommentPolicy;
 use Modules\HelpdeskTickets\Policies\TicketGroupPolicy;
+use Modules\HelpdeskTickets\Policies\TicketMailPolicy;
 use Modules\HelpdeskTickets\Policies\TicketNotePolicy;
 use Modules\HelpdeskTickets\Policies\TicketPolicy;
 use Modules\HelpdeskTickets\Policies\TicketStatusPolicy;
@@ -103,6 +106,14 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             'title' => 'Tickets',
             'items' => [
                 [
+                    // /tickets "pelada" — a petición explícita, la bandeja de
+                    // emails ocupa la URL corta; el listado se mudó a /list.
+                    'label' => 'Emails enviados',
+                    'route' => 'manager.helpdesk.tickets.emails.index',
+                    'icon' => 'fas fa-paper-plane',
+                    'permission' => 'helpdesk.tickets.emails.view',
+                ],
+                [
                     'label' => 'Listado de tickets',
                     'route' => 'manager.helpdesk.tickets.index',
                     'icon' => 'fas fa-ticket',
@@ -153,6 +164,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             TicketSlaPolicy::class => SlaPolicyPolicy::class,
             TicketCannedReply::class => TicketCannedReplyPolicy::class,
             TicketView::class => TicketViewPolicy::class,
+            TicketMail::class => TicketMailPolicy::class,
         ];
 
         foreach ($map as $model => $policy) {
@@ -179,6 +191,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             class_exists(SendDueTicketFollowupsCommand::class) ? SendDueTicketFollowupsCommand::class : null,
             class_exists(SendScheduledRepliesCommand::class) ? SendScheduledRepliesCommand::class : null,
             class_exists(SendScheduledReportsCommand::class) ? SendScheduledReportsCommand::class : null,
+            class_exists(SendScheduledTicketMailsCommand::class) ? SendScheduledTicketMailsCommand::class : null,
         ]));
 
         if ($commands) {
@@ -199,6 +212,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $schedule->command('trashedticket:autodelete')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:send-followups')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:send-scheduled-replies')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+            $schedule->command('helpdesk:send-scheduled-emails')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
 
             // Observabilidad operativa: snapshot de colas/webhooks/SLA en cache
             // + evaluación de alertas (mail a managers, OFF por defecto).

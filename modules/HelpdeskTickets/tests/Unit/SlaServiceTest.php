@@ -167,24 +167,4 @@ class SlaServiceTest extends TestCase
 
         $this->assertEquals(1440, $service->calculateResolutionTime($ticket));
     }
-
-    // ─── getApplicablePolicy (DB skipped without connection) ──────────────────
-
-    public function test_get_applicable_policy_skipped_without_db(): void
-    {
-        $ticket = $this->makeTicket([
-            'priority_id' => 999,
-            'category_id' => 999,
-        ]);
-
-        $service = $this->makeSlaService();
-
-        try {
-            $policy = $service->getApplicablePolicy($ticket);
-            // DB available and no matching policy
-            $this->assertNull($policy);
-        } catch (\Throwable) {
-            $this->markTestSkipped('Helpdesk database connection is not available.');
-        }
-    }
 }

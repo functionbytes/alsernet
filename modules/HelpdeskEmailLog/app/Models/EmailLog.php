@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -89,6 +90,8 @@ class EmailLog extends Model
         'error_message',
         'sent_at',
         'failed_at',
+        'bounced_at',
+        'complained_at',
         'metadata',
     ];
 
@@ -105,6 +108,8 @@ class EmailLog extends Model
             'status' => EmailStatus::class,
             'sent_at' => 'datetime',
             'failed_at' => 'datetime',
+            'bounced_at' => 'datetime',
+            'complained_at' => 'datetime',
         ];
     }
 
@@ -153,6 +158,11 @@ class EmailLog extends Model
         return $this->morphTo();
     }
 
+    public function opens(): HasMany
+    {
+        return $this->hasMany(EmailLogOpen::class);
+    }
+
     public function markAsSent(): void
     {
         $this->update(['status' => EmailStatus::Sent, 'sent_at' => now()]);
@@ -164,6 +174,29 @@ class EmailLog extends Model
             'status' => EmailStatus::Failed,
             'error_message' => Str::limit($error, 2000),
             'failed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Marca el envío como rebotado (DSN recibido en la bandeja de rebotes, ver
+     * Modules\Document\Console\Commands\ProcessEmailBouncesCommand). No pisa un
+     * status ya 'bounced'/'complained' anterior con uno menos específico.
+     */
+    public function markAsBounced(?string $reason = null): void
+    {
+        $this->update([
+            'status' => EmailStatus::Bounced,
+            'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
+            'bounced_at' => now(),
+        ]);
+    }
+
+    public function markAsComplained(?string $reason = null): void
+    {
+        $this->update([
+            'status' => EmailStatus::Complained,
+            'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
+            'complained_at' => now(),
         ]);
     }
 
@@ -224,6 +257,11 @@ class EmailLog extends Model
     public function scopeFailed(Builder $query): Builder
     {
         return $query->where('status', EmailStatus::Failed->value);
+    }
+
+    public function scopeBounced(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Bounced->value);
     }
 
     public function scopeForModule(Builder $query, string $module): Builder

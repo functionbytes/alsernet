@@ -44,7 +44,7 @@ class LogEmailQueued
         }
 
         try {
-            EmailLog::create([
+            $emailLog = EmailLog::create([
                 ...$context,
                 ...$this->currentCauser(),
                 'from_address' => $from?->getAddress() ?: config('mail.from.address') ?: 'unknown@localhost',
@@ -61,8 +61,32 @@ class LogEmailQueued
                 'metadata' => $this->metaOf($message, $context),
                 'status' => EmailStatus::Queued,
             ]);
+
+            // Solo "Emails enviados" (HelpdeskTickets) pidió trazabilidad de
+            // apertura — no se activa para el resto de módulos que ya usan
+            // este mismo listener (notificaciones, resets de contraseña,
+            // campañas...) sin que nadie lo haya pedido para ellos.
+            if (($context['module'] ?? null) === 'HelpdeskTickets') {
+                $this->injectOpenTrackingPixel($message, $emailLog);
+            }
         } catch (Throwable $e) {
             Log::warning('HelpdeskEmailLog: failed to record queued email', ['exception' => $e]);
+        }
+    }
+
+    private function injectOpenTrackingPixel(Email $message, EmailLog $emailLog): void
+    {
+        $html = $message->getHtmlBody();
+
+        if (! is_string($html) || $html === '') {
+            return;
+        }
+
+        try {
+            $pixel = '<img src="'.route('helpdeskemaillog.pixel', $emailLog).'" width="1" height="1" alt="" style="display:none" />';
+            $message->html($html.$pixel);
+        } catch (Throwable $e) {
+            Log::warning('HelpdeskEmailLog: failed to inject open-tracking pixel', ['exception' => $e]);
         }
     }
 

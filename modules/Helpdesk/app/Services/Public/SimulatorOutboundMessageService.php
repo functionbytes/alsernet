@@ -28,9 +28,9 @@ class SimulatorOutboundMessageService extends OutboundMessageService
         return parent::supports($conversation);
     }
 
-    public function sendReply(Conversation $conversation, string $text): ?string
+    public function sendReply(Conversation $conversation, string $text, bool $fast = false): ?string
     {
-        return $this->isSimulated($conversation) ? null : parent::sendReply($conversation, $text);
+        return $this->isSimulated($conversation) ? null : parent::sendReply($conversation, $text, $fast);
     }
 
     public function sendAttachment(Conversation $conversation, string $type, string $url, ?string $caption = null, ?string $filename = null): ?string

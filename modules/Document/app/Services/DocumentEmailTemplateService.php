@@ -46,11 +46,12 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
+            $mail = self::openMail($document, 'request', $subject, $content, $template, [], $adminId);
 
-            // Log the email
-            self::logEmail($document, 'request', $subject, $content, $template, [], true, null, $adminId);
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -77,7 +78,7 @@ class DocumentEmailTemplateService
                 return false;
             }
 
-            $langId    = $document->lang_id ?? 1;
+            $langId = $document->lang_id ?? 1;
             $variables = self::prepareDocumentVariables($document);
 
             $translation = $template->translate($langId);
@@ -88,15 +89,17 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)->queue(new DocumentCustomMail($document, $subject, $content));
+            $mail = self::openMail($document, 'fusil_license_confirmation', $subject, $content, $template, [], $adminId);
 
-            self::logEmail($document, 'fusil_license_confirmation', $subject, $content, $template, [], true, null, $adminId);
+            Mail::to($recipient)->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
             Log::error('Error sending fusil license confirmation email', [
                 'document_uid' => $document->uid,
-                'error'        => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             return false;
@@ -128,10 +131,12 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
+            $mail = self::openMail($document, 'fusil_license', $subject, $content, $template, [], $adminId);
 
-            self::logEmail($document, 'fusil_license', $subject, $content, $template, [], true, null, $adminId);
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -188,12 +193,14 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
-
-            self::logEmail($document, 'reminder', $subject, $content, $template, [
+            $mail = self::openMail($document, 'reminder', $subject, $content, $template, [
                 'days_since_request' => $daysSinceRequest,
-            ], true, null, $adminId);
+            ], $adminId);
+
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -235,14 +242,15 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
-
-            // Log the email
-            self::logEmail($document, 'missing', $subject, $content, $template, [
+            $mail = self::openMail($document, 'missing', $subject, $content, $template, [
                 'missing_docs' => $missingDocs,
                 'notes' => $notes,
-            ], true, null, $adminId);
+            ], $adminId);
+
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -305,14 +313,15 @@ class DocumentEmailTemplateService
                 $finalContent = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
             }
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $processedSubject, $finalContent));
-
-            // Log the email
-            self::logEmail($document, 'custom', $processedSubject, $finalContent, $template ?? null, [
+            $mail = self::openMail($document, 'custom', $processedSubject, $finalContent, $template ?? null, [
                 'original_subject' => $subject,
                 'original_content' => $content,
-            ], true, null, $adminId);
+            ], $adminId);
+
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $processedSubject, $finalContent, $template ?? null, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -360,11 +369,12 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
+            $mail = self::openMail($document, 'upload', $subject, $content, $template, [], $adminId);
 
-            // Log the email
-            self::logEmail($document, 'upload', $subject, $content, $template, [], true, null, $adminId);
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -408,11 +418,12 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
+            $mail = self::openMail($document, 'approval', $subject, $content, $template, [], $adminId);
 
-            // Log the email
-            self::logEmail($document, 'approval', $subject, $content, $template, [], true, null, $adminId);
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -446,7 +457,7 @@ class DocumentEmailTemplateService
             // Si no, usar todos los documentos requeridos
             if (empty($rejectedDocs)) {
                 $documentTypeSlug = $document->documentType?->slug ?? 'general';
-                $rejectedDocs = \Modules\Document\Services\DocumentTypeService::getRequiredDocuments($documentTypeSlug);
+                $rejectedDocs = DocumentTypeService::getRequiredDocuments($documentTypeSlug);
             }
 
             $variables = self::prepareDocumentVariables($document, $rejectedDocs, $reason);
@@ -466,14 +477,15 @@ class DocumentEmailTemplateService
             $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
             $content = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-            Mail::to($recipient)
-                ->queue(new DocumentCustomMail($document, $subject, $content));
-
-            // Log the email
-            self::logEmail($document, 'rejection', $subject, $content, $template, [
+            $mail = self::openMail($document, 'rejection', $subject, $content, $template, [
                 'reason' => $reason,
                 'rejected_docs' => $rejectedDocs,
-            ], true, null, $adminId);
+            ], $adminId);
+
+            Mail::to($recipient)
+                ->queue(new DocumentCustomMail($document, $subject, $content, $template, $mail?->uid));
+
+            self::closeMail($mail);
 
             return true;
         } catch (\Exception $e) {
@@ -491,7 +503,7 @@ class DocumentEmailTemplateService
      * - Español (es): sin prefijo -> /solicitud-documentos
      * - Otros idiomas: con prefijo -> /pt/solicitud-documentos, /fr/solicitud-documentos
      */
-    private static function buildUploadUrl(Document $document): ?string
+    public static function buildUploadUrl(Document $document): ?string
     {
         $uploadPortalTemplate = Setting::get('documents.upload_portal_url');
 
@@ -752,21 +764,22 @@ class DocumentEmailTemplateService
     }
 
     /**
-     * Log email to document_mails table
+     * Crea la fila document_mails ANTES de encolar el correo (status inicial 'queued',
+     * el default de DocumentMail::logEmail()). Se hace antes del Mail::queue() para poder
+     * pasar su uid a DocumentCustomMail y así correlacionar 1:1 con el EmailLog central
+     * (ver DocumentCustomMail::getEmailLogExternalId()).
      */
-    private static function logEmail(
+    private static function openMail(
         Document $document,
         string $emailType,
         string $subject,
         string $content,
         ?MailerTemplate $template = null,
         array $metadata = [],
-        bool $success = true,
-        ?string $errorMessage = null,
         ?int $adminId = null
     ): ?DocumentMail {
         try {
-            $mail = DocumentMail::logEmail(
+            return DocumentMail::logEmail(
                 $document,
                 $emailType,
                 $subject,
@@ -776,14 +789,6 @@ class DocumentEmailTemplateService
                 $adminId,
                 $metadata
             );
-
-            if ($success) {
-                $mail->markAsSent();
-            } else {
-                $mail->markAsFailed($errorMessage ?? 'Unknown error');
-            }
-
-            return $mail;
         } catch (\Exception $e) {
             Log::error('Failed to log document email', [
                 'document_uid' => $document->uid,
@@ -792,6 +797,24 @@ class DocumentEmailTemplateService
             ]);
 
             return null;
+        }
+    }
+
+    /**
+     * Cierra la fila document_mails abierta por openMail() tras el Mail::queue().
+     * Nota: 'sent' aquí solo confirma que se encoló sin error, no que el transporte
+     * ya la entregó de verdad (eso lo refleja EmailLog::status, ver DocumentMail::emailLog()).
+     */
+    private static function closeMail(?DocumentMail $mail, bool $success = true, ?string $errorMessage = null): void
+    {
+        if (! $mail) {
+            return;
+        }
+
+        if ($success) {
+            $mail->markAsSent();
+        } else {
+            $mail->markAsFailed($errorMessage ?? 'Unknown error');
         }
     }
 

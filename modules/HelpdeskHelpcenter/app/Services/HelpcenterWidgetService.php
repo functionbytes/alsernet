@@ -106,12 +106,14 @@ class HelpcenterWidgetService
             ->where(fn ($q) => $q
                 ->when($booleanTerm !== null, fn ($qb) => $qb
                     ->whereRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE)', [$booleanTerm]))
-                ->orWhere('title', 'like', "%{$query}%")
-                ->orWhere('body', 'like', "%{$query}%")
-                ->orWhere('content', 'like', "%{$query}%")
-                ->orWhereHas('translations', fn ($qt) => $qt
-                    ->when($locale, fn ($ql) => $ql->where('locale', $locale))
-                    ->where(fn ($qtt) => $qtt->where('title', 'like', "%{$query}%")->orWhere('body', 'like', "%{$query}%"))
+                ->when($booleanTerm === null || $this->shouldFallbackToLikeSearch(), fn ($qb) => $qb
+                    ->orWhere('title', 'like', "%{$query}%")
+                    ->orWhere('body', 'like', "%{$query}%")
+                    ->orWhere('content', 'like', "%{$query}%")
+                    ->orWhereHas('translations', fn ($qt) => $qt
+                        ->when($locale, fn ($ql) => $ql->where('locale', $locale))
+                        ->where(fn ($qtt) => $qtt->where('title', 'like', "%{$query}%")->orWhere('body', 'like', "%{$query}%"))
+                    )
                 )
             )
             ->when($booleanTerm !== null, fn ($q) => $q

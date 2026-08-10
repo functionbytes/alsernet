@@ -19,6 +19,13 @@ use Throwable;
  * RespondOffHoursOnConversationCreated (que solo actúa fuera de horario), para
  * no mandar dos mensajes automáticos a la vez en una conversación nueva.
  *
+ * "Primera conversación" es literal a nivel de fila (una por cada vez que se
+ * crea/reabre un hilo), no del cliente entero: cerrar y reabrir SIEMPRE crea
+ * una Conversation nueva en cualquier canal, así que sin el guard de
+ * customerRecentlyContacted() (ver LocalizesAutoReplyMessage) un cliente
+ * recurrente que reabre el chat momentos después de cerrarlo recibía la
+ * bienvenida de nuevo, como si fuera la primera vez.
+ *
  * Mismo patrón que RespondOffHoursOnConversationCreated (sendReply externo +
  * ConversationItem propio); ver esa clase para el porqué de no usar
  * ConversationMessageService::store().
@@ -36,11 +43,20 @@ class SendGreetingOnConversationCreated implements ShouldQueue
 
     public function handle(ConversationCreated $event): void
     {
+        if (! helpdesk_greeting_feature_enabled()) {
+            return;
+        }
+
         if (! app(BusinessHoursService::class)->isOpenNow()) {
             return;
         }
 
         $conversation = $event->conversation;
+
+        if ($this->customerRecentlyContacted($conversation)) {
+            return;
+        }
+
         $source = strtolower(substr((string) config('app.locale', 'es'), 0, 2));
         $customerLanguage = $this->resolveCustomerLanguage($conversation, $source);
 
@@ -55,7 +71,7 @@ class SendGreetingOnConversationCreated implements ShouldQueue
             : $this->localize($response->message, $customerLanguage, $source);
 
         try {
-            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message);
+            $externalId = app(OutboundMessageService::class)->sendReply($conversation, $message, fast: true);
 
             ConversationItem::create([
                 'conversation_id' => $conversation->id,

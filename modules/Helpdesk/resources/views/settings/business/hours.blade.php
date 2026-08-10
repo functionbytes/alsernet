@@ -18,26 +18,15 @@
 
                 {{-- Header --}}
                 <div class="card-header p-4 border-bottom border-light">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1 fw-bold">Horarios de atención</h5>
-                            <p class="small mb-0 text-muted">Define los días y horas en que tu equipo está disponible para atender solicitudes</p>
-                        </div>
-                        <a href="{{ route('settings.helpdesk.business.hours.reset') }}"
-                            class="btn btn-outline-secondary btn-sm"
-                            onclick="event.preventDefault(); window.__confirm('¿Restablecer los horarios a los valores predeterminados?', function () { window.location.href = '{{ route('settings.helpdesk.business.hours.reset') }}'; });">
-                            <i class="fas fa-rotate-left me-1"></i> Restablecer
-                        </a>
-                    </div>
+                    <h5 class="mb-1 fw-bold">Horarios de atención</h5>
+                    <p class="small mb-0 text-muted">Define los días y horas en que tu equipo está disponible para atender solicitudes</p>
                 </div>
 
                 {{-- Timezone selector --}}
                 <div class="card-body border-bottom">
                     <div class="row g-3 align-items-center">
                         <div class="col-md-4">
-                            <label for="timezone" class="form-label fw-semibold">
-                                <i class="fas fa-globe me-1 text-muted"></i> Zona horaria
-                            </label>
+                            <label for="timezone" class="form-label fw-semibold">Zona horaria</label>
                             <p class="small text-muted mb-0">Se aplica a todos los días configurados</p>
                         </div>
                         <div class="col-md-8">
@@ -123,10 +112,15 @@
                 {{-- Footer --}}
                 <div class="card-footer bg-white border-top p-3">
                     <button type="submit" class="btn btn-primary w-100 mb-2">
-                        <i class="fas fa-save me-1"></i> Guardar horarios
+                        Guardar horarios
                     </button>
-                    <a href="{{ route('manager.helpdesk.settings.tickets.general') }}" class="btn btn-light w-100">
+                    <a href="{{ route('manager.helpdesk.settings.tickets.general') }}" class="btn btn-light w-100 mb-2">
                         Cancelar
+                    </a>
+                    <a href="{{ route('settings.helpdesk.business.hours.reset') }}"
+                        class="btn btn-outline-secondary w-100"
+                        onclick="event.preventDefault(); window.__confirm('¿Restablecer los horarios a los valores predeterminados?', function () { window.location.href = '{{ route('settings.helpdesk.business.hours.reset') }}'; });">
+                        Restablecer
                     </a>
                 </div>
 
@@ -134,6 +128,28 @@
     </form>
 
 @endsection
+
+@push('styles')
+<style>
+    /* Día cerrado: gris neutro en vez del cian de .table-secondary del tema
+       (choca con la paleta verde/gris del resto de la app). */
+    .bh-row-closed {
+        --bs-table-bg: #f1f3f5;
+        --bs-table-color: #6c757d;
+        --bs-table-border-color: #dee2e6;
+    }
+
+    /* Anillo de foco gris en vez del azul/morado por defecto del tema
+       (--bs-focus-ring-color) al hacer clic en los inputs de hora y en el
+       selector de zona horaria — mismo gris que las filas de día cerrado
+       de arriba, para que la página sea consistente. */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #adb5bd;
+        box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -144,9 +160,9 @@ $(document).ready(function () {
         $row.find('.time-input').prop('disabled', !isOpen);
 
         if (isOpen) {
-            $row.removeClass('table-secondary');
+            $row.removeClass('bh-row-closed');
         } else {
-            $row.addClass('table-secondary');
+            $row.addClass('bh-row-closed');
         }
     }
 

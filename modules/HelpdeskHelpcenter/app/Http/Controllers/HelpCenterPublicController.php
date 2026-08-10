@@ -27,12 +27,14 @@ class HelpCenterPublicController extends Controller
             $booleanTerm = $this->buildBooleanTerm($term);
 
             if ($booleanTerm !== null) {
-                // InnoDB FULLTEXT does not see uncommitted rows; include LIKE so tests inside
-                // transactions and edge cases where the FTS cache is cold still return results.
+                // InnoDB FULLTEXT does not see uncommitted rows, so the LIKE
+                // fallback only combines in tests (shouldFallbackToLikeSearch) —
+                // in production it anulaba el índice FULLTEXT en cada búsqueda.
                 $query->where(fn ($q) => $q
                     ->whereRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE)', [$booleanTerm])
-                    ->orWhere('title', 'like', "%{$term}%")
-                    ->orWhere('body', 'like', "%{$term}%"));
+                    ->when($this->shouldFallbackToLikeSearch(), fn ($qb) => $qb
+                        ->orWhere('title', 'like', "%{$term}%")
+                        ->orWhere('body', 'like', "%{$term}%")));
                 $query->orderByRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE) DESC', [$booleanTerm]);
             } else {
                 $query->where(fn ($q) => $q->where('title', 'like', "%{$term}%")->orWhere('body', 'like', "%{$term}%"));
@@ -104,8 +106,9 @@ class HelpCenterPublicController extends Controller
         if ($booleanTerm !== null) {
             $query->where(fn ($qb) => $qb
                 ->whereRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE)', [$booleanTerm])
-                ->orWhere('title', 'like', "%{$q}%")
-                ->orWhere('body', 'like', "%{$q}%"));
+                ->when($this->shouldFallbackToLikeSearch(), fn ($qw) => $qw
+                    ->orWhere('title', 'like', "%{$q}%")
+                    ->orWhere('body', 'like', "%{$q}%")));
             $query->orderByRaw('MATCH(title, body) AGAINST(? IN BOOLEAN MODE) DESC', [$booleanTerm]);
         } else {
             $query->where(fn ($qb) => $qb->where('title', 'like', "%{$q}%")->orWhere('body', 'like', "%{$q}%"))

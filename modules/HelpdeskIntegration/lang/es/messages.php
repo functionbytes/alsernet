@@ -15,6 +15,7 @@ return [
         'not_linkable' => 'Esta plataforma no está disponible para vincular.',
         'not_found' => 'No se encontró ningún cliente con ese identificador en la plataforma.',
         'platform_error' => 'La plataforma no respondió: no se pudo verificar el identificador. Inténtalo de nuevo en unos minutos.',
+        'already_linked_elsewhere' => 'Este identificador ya está vinculado a otro cliente en el sistema.',
     ],
     'unlink' => [
         'success' => 'Integración desvinculada.',

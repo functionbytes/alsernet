@@ -49,7 +49,6 @@
             "Laravel\\Pulse\\": "modules/Pulse/vendor/laravel/pulse/src/",
             "Laravel\\Telescope\\": "modules/Telescope/vendor/laravel/telescope/src/",
             "Modules\\Activity\\": "modules/Activity/app/",
-            "Modules\\Analytics\\": "modules/Analytics/app/",
             "Modules\\Auth\\": "modules/Auth/app/",
             "Modules\\Backup\\": "modules/Backup/app/",
             "Modules\\Core\\": "modules/Core/app/",

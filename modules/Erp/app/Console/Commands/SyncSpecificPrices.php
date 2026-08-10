@@ -2,10 +2,11 @@
 
 namespace Modules\Erp\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Modules\Erp\Jobs\V2\ValidatePriceFromGestion;
 use Modules\Erp\Models\Core\ScheduledPriceValidation;
+use Modules\Erp\Services\PrestashopPriceLookupService;
 
 class SyncSpecificPrices extends Command
 {
@@ -40,12 +41,12 @@ class SyncSpecificPrices extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(PrestashopPriceLookupService $prestashopPrices)
     {
         $this->info('🔄 Sincronizando Specific Prices de Prestashop...');
         $this->newLine();
 
-        $specificPrices = $this->getSpecificPrices();
+        $specificPrices = $this->getSpecificPrices($prestashopPrices);
 
         if ($specificPrices->isEmpty()) {
             $this->warn('No se encontraron specific_price para procesar.');
@@ -86,45 +87,26 @@ class SyncSpecificPrices extends Command
     }
 
     /**
-     * Obtener specific_price de Prestashop
+     * Obtener specific_price vía el bridge de PrestaShop (specific_price.list)
+     * — ver Modules\Erp\Services\PrestashopPriceLookupService. El filtro
+     * --new (excluir ya programados) sigue resolviéndose aquí, contra la
+     * tabla local scheduled_price_validations.
      */
-    protected function getSpecificPrices()
+    protected function getSpecificPrices(PrestashopPriceLookupService $prestashopPrices)
     {
-        $query = DB::connection('prestashop')
-            ->table('aalv_specific_price as sp');
+        $scope = $this->option('all') ? 'all' : 'active';
+        $limit = (int) ($this->option('limit') ?: 500);
+
+        $items = collect($prestashopPrices->listSpecificPrices($scope, $limit))
+            ->map(fn (array $row) => (object) $row);
 
         if ($this->option('new')) {
             // Solo los que NO existen en scheduled_price_validations
             $existingIds = ScheduledPriceValidation::pluck('id_specific_price')->toArray();
-            $query->whereNotIn('sp.id_specific_price', $existingIds);
+            $items = $items->reject(fn ($sp) => in_array($sp->id_specific_price, $existingIds, true));
         }
 
-        if ($this->option('all')) {
-            // Todos los activos (que no hayan expirado)
-            $query->where(function ($q) {
-                $q->whereNull('sp.to')
-                    ->orWhere('sp.to', '=', '0000-00-00 00:00:00')
-                    ->orWhere('sp.to', '>=', now());
-            });
-        } else {
-            // Solo los que están en periodo válido AHORA
-            $query->where(function ($q) {
-                $q->whereNull('sp.from')
-                    ->orWhere('sp.from', '=', '0000-00-00 00:00:00')
-                    ->orWhere('sp.from', '<=', now());
-            })
-                ->where(function ($q) {
-                    $q->whereNull('sp.to')
-                        ->orWhere('sp.to', '=', '0000-00-00 00:00:00')
-                        ->orWhere('sp.to', '>=', now());
-                });
-        }
-
-        if ($limit = $this->option('limit')) {
-            $query->limit($limit);
-        }
-
-        return $query->get();
+        return $items->values();
     }
 
     /**
@@ -135,11 +117,8 @@ class SyncSpecificPrices extends Command
         // Verificar si ya existe
         $existing = ScheduledPriceValidation::where('id_specific_price', $specificPrice->id_specific_price)->first();
 
-        // Obtener referencia del producto
-        $reference = $this->getProductReference(
-            $specificPrice->id_product,
-            $specificPrice->id_product_attribute ?? 0
-        );
+        // La referencia ya viene resuelta desde el bridge (specific_price.list).
+        $reference = $specificPrice->reference ?? null;
 
         // Calcular next_execution_at
         $nextExecution = $this->calculateNextExecution($specificPrice);
@@ -182,33 +161,9 @@ class SyncSpecificPrices extends Command
     }
 
     /**
-     * Obtener referencia del producto
-     */
-    protected function getProductReference(int $idProduct, int $idProductAttribute = 0): ?string
-    {
-        if ($idProductAttribute > 0) {
-            $combination = DB::connection('prestashop')
-                ->table('aalv_product_attribute')
-                ->where('id_product_attribute', $idProductAttribute)
-                ->first();
-
-            if ($combination && ! empty($combination->reference)) {
-                return $combination->reference;
-            }
-        }
-
-        $product = DB::connection('prestashop')
-            ->table('aalv_product')
-            ->where('id_product', $idProduct)
-            ->first();
-
-        return $product->reference ?? null;
-    }
-
-    /**
      * Calcular próxima ejecución
      */
-    protected function calculateNextExecution($specificPrice): ?\Carbon\Carbon
+    protected function calculateNextExecution($specificPrice): ?Carbon
     {
         $from = $this->parseDate($specificPrice->from);
         $to = $this->parseDate($specificPrice->to);
@@ -250,14 +205,14 @@ class SyncSpecificPrices extends Command
     /**
      * Parsear fecha de Prestashop
      */
-    protected function parseDate($date): ?\Carbon\Carbon
+    protected function parseDate($date): ?Carbon
     {
         if (empty($date) || $date === '0000-00-00 00:00:00') {
             return null;
         }
 
         try {
-            return \Carbon\Carbon::parse($date);
+            return Carbon::parse($date);
         } catch (\Exception $e) {
             return null;
         }

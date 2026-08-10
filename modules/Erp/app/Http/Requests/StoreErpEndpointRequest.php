@@ -3,12 +3,20 @@
 namespace Modules\Erp\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Erp\Support\ErpEndpointUrlGuard;
 
 class StoreErpEndpointRequest extends FormRequest
 {
+    /**
+     * Antes devolvía true a secas — con las rutas solo exigiendo auth+verified
+     * (sin ningún can:), cualquier usuario autenticado podía crear un endpoint
+     * ERP con la URL que quisiera y ejecutarlo desde el servidor (SSRF). El
+     * permiso erp.endpoints.manage ya existía sembrado para admin/super-admin,
+     * pero nunca se comprobaba en ningún sitio.
+     */
     public function authorize(): bool
     {
-        return true;
+        return (bool) $this->user()?->can('erp.endpoints.manage');
     }
 
     public function rules(): array
@@ -16,7 +24,11 @@ class StoreErpEndpointRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:erp_endpoints,slug',
-            'url' => 'required|url|max:500',
+            'url' => ['required', 'url', 'max:500', function ($attribute, $value, $fail) {
+                if (! ErpEndpointUrlGuard::isAllowed($value)) {
+                    $fail('La URL del endpoint no está permitida (localhost, metadata de nube, o esquema no soportado).');
+                }
+            }],
             'method' => 'required|in:GET,POST,PUT,PATCH,DELETE',
             'credential_id' => 'nullable|exists:erp_credentials,id',
             'description' => 'nullable|string|max:1000',

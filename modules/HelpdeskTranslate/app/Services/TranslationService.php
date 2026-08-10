@@ -37,7 +37,7 @@ class TranslationService
      * Returns an ISO 639-1 code or null when detection is disabled/unavailable.
      * Caches successful results to avoid burning quota on repeated snippets.
      */
-    public function detectLanguage(string $text): ?string
+    public function detectLanguage(string $text, ?int $timeoutSeconds = null, ?int $retries = null): ?string
     {
         if (empty($this->endpoint) || trim($text) === '') {
             return null;
@@ -50,14 +50,14 @@ class TranslationService
 
             $cacheKey = 'helpdesk:translate:detect:'.md5($text.$base);
 
-            $detected = Cache::remember($cacheKey, now()->addHours(24), function () use ($text, $base) {
+            $detected = Cache::remember($cacheKey, now()->addHours(24), function () use ($text, $base, $timeoutSeconds, $retries) {
                 $payload = ['q' => $text];
                 if ($this->apiKey !== '') {
                     $payload['api_key'] = $this->apiKey;
                 }
 
-                $resp = Http::timeout(5)
-                    ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
+                $resp = Http::timeout($timeoutSeconds ?? 5)
+                    ->retry($retries ?? self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                     ->asForm()
                     ->post("{$base}/detect", $payload)
                     ->json();
@@ -82,19 +82,19 @@ class TranslationService
      *
      * @return array{translated: string, detected: string, mocked?: bool, failed?: bool}
      */
-    public function translate(string $text, string $from = 'auto', string $to = 'es'): array
+    public function translate(string $text, string $from = 'auto', string $to = 'es', ?int $timeoutSeconds = null, ?int $retries = null): array
     {
         if (empty($this->endpoint)) {
             return $this->mockResponse($text, $from, $to);
         }
 
-        return $this->callLibreTranslate($text, $from, $to);
+        return $this->callLibreTranslate($text, $from, $to, $timeoutSeconds, $retries);
     }
 
     /**
      * @return array{translated: string, detected: string, failed?: bool}
      */
-    private function callLibreTranslate(string $text, string $from, string $to): array
+    private function callLibreTranslate(string $text, string $from, string $to, ?int $timeoutSeconds = null, ?int $retries = null): array
     {
         $payload = [
             'q' => $text,
@@ -108,8 +108,8 @@ class TranslationService
         }
 
         try {
-            $response = Http::timeout(10)
-                ->retry(self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
+            $response = Http::timeout($timeoutSeconds ?? 10)
+                ->retry($retries ?? self::RETRY_TIMES, self::RETRY_SLEEP_MS, fn (\Throwable $e) => $e instanceof ConnectionException, false)
                 ->post($this->endpoint, $payload);
             $resp = $response->json();
 

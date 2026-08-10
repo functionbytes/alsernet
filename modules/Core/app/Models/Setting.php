@@ -3,6 +3,7 @@
 namespace Modules\Core\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
@@ -161,6 +162,47 @@ class Setting extends Model implements HasMedia
         cache()->forget("setting_{$name}");
 
         return $option;
+    }
+
+    /**
+     * Store a sensitive value encrypted at rest (SMTP/IMAP passwords, OAuth
+     * client secrets/tokens, third-party API keys). Uses the app key via
+     * Laravel's Crypt facade, prefixed so getDecrypted() can tell an
+     * encrypted row apart from a legacy plaintext one written before this
+     * existed (upgrade-safe: old rows keep working, just aren't re-encrypted
+     * until the next save).
+     *
+     * @return object
+     */
+    public static function setEncrypted($name, ?string $value)
+    {
+        $value = (string) $value;
+
+        return self::set($name, $value === '' ? '' : 'enc:'.Crypt::encryptString($value));
+    }
+
+    /**
+     * Read a value written via setEncrypted(). Falls back to returning the
+     * raw stored value when it has no 'enc:' prefix (legacy plaintext row)
+     * or when it fails to decrypt (e.g. APP_KEY rotated), so callers never
+     * hard-fail — worst case the caller sees the raw/undecryptable string.
+     */
+    public static function getDecrypted(string $name, $default = null)
+    {
+        return self::decryptIfEncrypted(self::get($name, $default));
+    }
+
+    private static function decryptIfEncrypted($raw)
+    {
+        if (! is_string($raw) || ! str_starts_with($raw, 'enc:')) {
+            return $raw;
+        }
+
+        try {
+            return Crypt::decryptString(substr($raw, 4));
+        } catch (\Throwable $e) {
+            return $raw;
+        }
     }
 
     /**
@@ -1377,6 +1419,12 @@ class Setting extends Model implements HasMedia
                 $result[$key] = $stored[$key] ?? $defaults[$key];
             }
 
+            // mail_password se guarda cifrado (ver setEmailSettings/setEncrypted);
+            // filas antiguas sin el prefijo 'enc:' pasan tal cual (legacy plaintext).
+            if (isset($stored['mail_password'])) {
+                $result['mail_password'] = self::decryptIfEncrypted($stored['mail_password']);
+            }
+
             return $result;
         });
     }
@@ -1392,6 +1440,13 @@ class Setting extends Model implements HasMedia
     public static function setEmailSettings(array $data): void
     {
         foreach ($data as $key => $value) {
+            if ($key === 'mail_password') {
+                // Cifrado en reposo — antes se guardaba en texto plano y encima se
+                // volcaba tal cual en el HTML del formulario de edición.
+                self::setEncrypted($key, $value);
+
+                continue;
+            }
             if (str_starts_with($key, 'mail_')) {
                 self::set($key, $value);
             }
@@ -1421,7 +1476,11 @@ class Setting extends Model implements HasMedia
      */
     public static function getIncomingEmailSettings(): array
     {
-        $rawSettings = self::get('incoming_email', '{}');
+        // El blob completo se guarda cifrado (contiene contraseñas IMAP, secrets/
+        // tokens OAuth de Gmail y API keys de Mailgun/phpList) — ver setEncrypted().
+        // getDecrypted() devuelve filas legacy sin cifrar tal cual, así que sigue
+        // funcionando con configuraciones guardadas antes de este fix.
+        $rawSettings = self::getDecrypted('incoming_email', '{}');
         $settings = is_string($rawSettings) ? json_decode($rawSettings, true) : $rawSettings;
 
         return [
@@ -1522,7 +1581,7 @@ class Setting extends Model implements HasMedia
             $current['phplist']['default_list'] = $data['phplist_default_list'];
         }
 
-        self::set('incoming_email', json_encode($current));
+        self::setEncrypted('incoming_email', json_encode($current));
     }
 
     /**

@@ -24,6 +24,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Motivos de cierre
+    |--------------------------------------------------------------------------
+    | Mismas claves/etiquetas que el modal "Cerrar conversación" del módulo
+    | Helpdesk (close-conv.blade.php) — se reutilizan tal cual para que un
+    | motivo signifique lo mismo en Conversaciones y en Tickets.
+    */
+    'close_reasons' => [
+        'resolved' => 'Resuelto',
+        'duplicated' => 'Duplicado',
+        'spam' => 'Spam / no procede',
+        'unresponsive' => 'Sin respuesta del cliente',
+        'other' => 'Otro motivo',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Motor de escalado de tickets (EscalateTicketsJob / EscalationService)
     |--------------------------------------------------------------------------
     | Los umbrales base por prioridad y el interruptor global viven en

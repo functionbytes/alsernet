@@ -1,0 +1,509 @@
+/* ══════════════════════════════════════════════════════════════
+   Helpdesk · Gestión de tickets — pantalla /panel/helpdesk/tickets/list
+   Adaptado del mockup Alvarez "Gestión de tickets"
+   (helpdesk-tickets.css) al módulo Laravel. Todo prefijado con
+   .tkt-/--tkt- para no colisionar con Bootstrap 5.3 del tema base
+   (mismo criterio que emails.css para la bandeja de correo) — el
+   mockup original usa nombres genéricos (.btn, .split, .modal,
+   .chip...) que sí chocarían con el tema.
+   Fuente: modules/HelpdeskTickets/public/css/tickets-app.css
+   Publicado en: public/modules/helpdesktickets/css/tickets-app.css
+   ══════════════════════════════════════════════════════════════ */
+
+/* Igual que la Bandeja de Conversaciones (conversations.css): sin los
+   paddings del área de contenido del tema, para aprovechar todo el
+   viewport en vez de quedar como una tarjeta flotando en una página con
+   scroll propio. El blade usa @section('content_full_width', true) y ya
+   no define page_header (ver index.blade.php). */
+body:has(.tkt) .mc-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    height: calc(100vh - 80px) !important;
+    max-height: calc(100vh - 80px) !important;
+}
+
+.tkt {
+  height: 100%;
+  overflow: hidden;
+  /* superficies */
+  --tkt-bg: #fafafa;
+  --tkt-panel: #fff;
+  --tkt-subtle: #f4f4f5;
+  --tkt-hover: #f0f0f1;
+  --tkt-border: #e8e8e8;
+  --tkt-border-soft: #f4f4f5;
+  --tkt-border-strong: #d4d4d8;
+  /* texto */
+  --tkt-text: #18181b;
+  --tkt-text-soft: #52525b;
+  --tkt-text-mute: #71717a;
+  --tkt-text-faint: #a1a1aa;
+  /* estados */
+  --tkt-ok: #16a34a;      --tkt-ok-bg: #dcfce7;   --tkt-ok-fg: #166534;
+  --tkt-warn: #f59e0b;    --tkt-warn-bg: #fef3c7; --tkt-warn-fg: #92400e;
+  --tkt-warn-soft: #fffbeb; --tkt-warn-line: #fde68a;
+  --tkt-danger: #dc2626;  --tkt-danger-bg: #fee2e2; --tkt-danger-fg: #991b1b;
+  --tkt-danger-soft: #fef2f2;
+  --tkt-info: #1e3a8a;    --tkt-info-bg: #dbeafe;
+  --tkt-purple: #5b21b6;  --tkt-purple-bg: #ede9fe;
+  /* forma */
+  --tkt-r-sm: 4px;
+  --tkt-r: 7px;
+  --tkt-r-md: 8px;
+  --tkt-r-lg: 10px;
+  --tkt-r-xl: 14px;
+  --tkt-shadow: 0 4px 16px rgba(0,0,0,.06);
+  --tkt-shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+  --tkt-shadow-modal: 0 20px 50px rgba(0,0,0,.45);
+  /* tipografía */
+  --tkt-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --tkt-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --tkt-t-xs: 9.5px;
+  --tkt-t-sm: 10.5px;
+  --tkt-t-md: 11.5px;
+  --tkt-t: 12px;
+  --tkt-t-lg: 12.5px;
+  --tkt-t-xl: 16px;
+
+  font-family: var(--tkt-font); font-size: 13px; color: var(--tkt-text); letter-spacing: -.005em; -webkit-font-smoothing: antialiased;
+}
+.tkt *, .tkt *::before, .tkt *::after { box-sizing: border-box; }
+.tkt button { font-family: inherit; cursor: pointer; }
+.tkt input, .tkt textarea, .tkt select { font-family: inherit; font-size: var(--tkt-t); color: var(--tkt-text); }
+.tkt a { color: var(--tkt-text); text-decoration: none; }
+.tkt a:hover { color: var(--tkt-text-soft); }
+/* .tkt a tiene más especificidad que .tkt-btn-primary (clase+etiqueta vs
+   clase) y le ganaba el color de texto a los botones <a> — reafirmar aquí. */
+.tkt a.tkt-btn { color: var(--tkt-text); }
+.tkt a.tkt-btn-primary { color: #fff; }
+.tkt a.tkt-btn-primary:hover { color: #fff; }
+.tkt a.tkt-btn:hover { color: var(--tkt-text); }
+.tkt .mono { font-family: var(--tkt-mono); font-variant-numeric: tabular-nums; }
+
+/* ── Utilidades ──────────────────────────────────────────── */
+.tkt-w-100 { width: 100% !important; }
+.tkt-row { display: flex; align-items: center; gap: 8px; }
+.tkt-spacer { margin-left: auto; }
+.tkt-trunc { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tkt-divider-v { width: 1px; height: 10px; background: var(--tkt-border); flex-shrink: 0; }
+
+/* ── Botones ─────────────────────────────────────────────── */
+.tkt-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 6px 11px; border-radius: var(--tkt-r); border: 1px solid var(--tkt-border);
+  font-size: var(--tkt-t); font-weight: 600; background: var(--tkt-panel); color: var(--tkt-text);
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.tkt-btn:hover { background: var(--tkt-subtle); }
+.tkt-btn-primary { background: var(--tkt-text); color: #fff; border-color: var(--tkt-text); }
+.tkt-btn-primary:hover { background: #27272a; }
+.tkt-btn-ghost { background: transparent; border-color: transparent; color: var(--tkt-text-soft); }
+.tkt-btn-ghost:hover { background: var(--tkt-subtle); }
+.tkt-btn-icon { width: 30px; height: 30px; padding: 0; display: grid; place-items: center; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); color: var(--tkt-text-soft); }
+.tkt-btn-icon-dark { border-color: transparent; background: var(--tkt-text); color: #fff; }
+.tkt-btn[disabled] { opacity: .5; cursor: not-allowed; }
+/* grupo segmentado (modos de vista) */
+.tkt-seg { display: flex; gap: 2px; padding: 2px; background: var(--tkt-subtle); border-radius: var(--tkt-r-md); flex-wrap: wrap; }
+.tkt-seg > button { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 6px; font-size: var(--tkt-t-md); font-weight: 600; color: var(--tkt-text-soft); background: transparent; border: none; }
+.tkt-seg > button > i { font-size: 10px; color: var(--tkt-text-mute); }
+.tkt-seg > button.on { background: var(--tkt-panel); color: var(--tkt-text); box-shadow: var(--tkt-shadow-sm); }
+
+/* ── Shell de la aplicación ──────────────────────────────── */
+/* height:100% en cada nivel — .tkt ya viene acotado a la altura del
+   viewport (regla body:has(.tkt) .mc-content de arriba); sin esto el
+   contenido crecía con su propio contenido y hacía scroll la PÁGINA
+   entera en vez de solo cada columna por dentro, como en Conversaciones. */
+.tkt-app-scroll { height: 100%; display: flex; flex-direction: column; overflow-x: auto; overflow-y: hidden; }
+.tkt-app-card { flex: 1; min-height: 0; width: 100%; min-width: 1180px; display: flex; flex-direction: column; background: var(--tkt-panel); overflow: hidden; }
+.tkt-app-bar { display: flex; align-items: center; gap: 12px; row-gap: 8px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
+.tkt-crumbs { display: flex; align-items: center; gap: 7px; font-size: var(--tkt-t-md); color: var(--tkt-text-faint); }
+.tkt-crumbs .on { color: var(--tkt-text); font-weight: 600; }
+.tkt-crumbs i { font-size: 8px; }
+
+.tkt-search { flex: 1 1 200px; min-width: 0; max-width: 340px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); }
+.tkt-search input { flex: 1; border: none; background: transparent; outline: none; }
+.tkt-search i { font-size: 11px; color: var(--tkt-text-faint); }
+.tkt-kbd { padding: 1px 5px; border-radius: 3px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); font-family: var(--tkt-mono); font-size: 9px; color: var(--tkt-text-soft); }
+
+/* pestañas de estado */
+.tkt-state-tabs { display: flex; align-items: center; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); overflow-x: auto; }
+.tkt-state-tab { padding: 10px 12px; font-size: var(--tkt-t); font-weight: 600; color: var(--tkt-text-soft); white-space: nowrap; border: none; background: transparent; }
+.tkt-state-tab.on { font-weight: 700; color: var(--tkt-text); box-shadow: inset 0 -2px 0 var(--tkt-text); }
+.tkt-state-tab .c { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); margin-left: 4px; }
+.tkt-state-tab[data-filter="unassigned"] .c { color: var(--tkt-danger-fg); }
+.tkt-state-tab[data-filter="pending"] .c { color: var(--tkt-warn-fg); }
+.tkt-queue-hint { margin-left: auto; display: flex; align-items: center; gap: 6px; font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); white-space: nowrap; }
+
+/* barra de filtros */
+.tkt-filter-bar { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-wrap: wrap; }
+.tkt-fselect, .tkt-finput { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); color: var(--tkt-text); }
+.tkt-clear-link { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-soft); text-decoration: underline; background: none; border: none; }
+
+/* vistas guardadas */
+.tkt-views-bar { display: flex; align-items: center; gap: 14px; row-gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); flex-wrap: wrap; }
+.tkt-cap { font-size: var(--tkt-t-xs); font-weight: 700; color: var(--tkt-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.tkt-view-pill { padding: 3px 9px; border-radius: 20px; border: 1px solid var(--tkt-border); background: var(--tkt-panel); color: var(--tkt-text-soft); font-size: 11px; font-weight: 600; }
+.tkt-view-pill.on { background: var(--tkt-text); border-color: var(--tkt-text); color: #fff; }
+.tkt-view-pill.add { border-style: dashed; border-color: var(--tkt-border-strong); color: var(--tkt-text-faint); }
+
+/* ── Rejilla de 3 columnas ───────────────────────────────── */
+/* El wrap conserva el scroll horizontal de seguridad para viewports muy
+   estrechos (min-width de .tkt-app-card); el alto lo fija .tkt-split. */
+.tkt-split-wrap { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+.tkt-split { display: grid; grid-template-columns: minmax(320px, 380px) minmax(430px, 1fr) minmax(290px, 316px); height: 100%; }
+.tkt-split-list { border-right: 1px solid var(--tkt-border); background: var(--tkt-panel); display: flex; flex-direction: column; min-width: 0; height: 100%; min-height: 0; }
+.tkt-split-detail { display: flex; flex-direction: column; background: var(--tkt-bg); border-right: 1px solid var(--tkt-border); min-width: 0; height: 100%; min-height: 0; }
+
+/* ── Listado de tickets ──────────────────────────────────── */
+.tkt-list-head { display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); font-size: 11px; color: var(--tkt-text-mute); }
+.tkt-list-foot { margin-top: auto; padding: 10px 14px; border-top: 1px solid var(--tkt-border); background: var(--tkt-bg); display: flex; align-items: center; gap: 8px; font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+.tkt-list { display: flex; flex-direction: column; overflow-y: auto; flex: 1; min-height: 0; }
+
+.tkt-ticket-row {
+  display: flex; gap: 12px; padding: 12px 14px 12px 12px;
+  border-bottom: 1px solid var(--tkt-border-soft); border-left: 3px solid var(--tkt-border-strong);
+  cursor: pointer; transition: background .12s ease;
+}
+.tkt-ticket-row:hover { background: var(--tkt-hover); }
+.tkt-ticket-row.on { background: var(--tkt-subtle); box-shadow: inset 3px 0 0 var(--tkt-text); }
+.tkt-ticket-row.s-open, .tkt-ticket-row.s-progress { border-left-color: var(--tkt-info); }
+.tkt-ticket-row.s-pending { border-left-color: var(--tkt-warn-fg); }
+.tkt-ticket-row.s-resolved { border-left-color: var(--tkt-ok-fg); }
+.tkt-ticket-row.s-closed { border-left-color: var(--tkt-text-soft); }
+.tkt-ticket-row.s-unassigned { border-left-color: var(--tkt-danger-fg); }
+
+.tkt-ticket-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tkt-ticket-subject { font-size: var(--tkt-t-lg); font-weight: 600; line-height: 1.35; display: block; }
+.tkt-ticket-row.on .tkt-ticket-subject { font-weight: 700; }
+.tkt-ticket-sub { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 11px; color: var(--tkt-text-mute); }
+.tkt-ticket-id { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); flex-shrink: 0; }
+.tkt-ticket-meta { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+.tkt-ticket-state { color: var(--tkt-text); font-weight: 600; flex-shrink: 0; }
+.tkt-ticket-side { width: 76px; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.tkt-ticket-time { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); }
+.tkt-ticket-check { width: 13px; height: 13px; margin-top: 2px; flex-shrink: 0; }
+
+.tkt-origin { padding: 1px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-subtle); color: var(--tkt-text-soft); font-size: var(--tkt-t-xs); font-weight: 700; flex-shrink: 0; }
+
+.tkt-sla { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; }
+.tkt-sla-dot { width: 6px; height: 6px; border-radius: 50%; }
+.tkt-sla-ok      { color: var(--tkt-text-mute); }   .tkt-sla-ok .tkt-sla-dot      { background: var(--tkt-ok); }
+.tkt-sla-warn    { color: var(--tkt-warn-fg); }     .tkt-sla-warn .tkt-sla-dot    { background: var(--tkt-warn); }
+.tkt-sla-breach  { color: var(--tkt-danger-fg); }   .tkt-sla-breach .tkt-sla-dot  { background: var(--tkt-danger); }
+.tkt-prio { display: inline-flex; align-items: center; gap: 4px; font-size: var(--tkt-t-xs); font-weight: 700; color: var(--tkt-text-mute); }
+.tkt-prio-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--tkt-text-faint); }
+.tkt-prio-high .tkt-prio-dot { background: var(--tkt-warn); }
+.tkt-prio-urgent .tkt-prio-dot { background: var(--tkt-danger); }
+
+/* selección múltiple */
+.tkt-bulk-bar { display: none; align-items: center; gap: 9px; padding: 8px 14px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-text); color: #fff; flex-wrap: wrap; }
+.tkt-bulk-bar.on { display: flex; }
+.tkt-bulk-bar .tkt-btn { width: auto; padding: 4px 9px; background: rgba(255,255,255,.14); color: #fff; border-color: transparent; }
+
+/* carga y vacíos */
+.tkt-skeleton-list { display: none; flex-direction: column; gap: 12px; padding: 14px; }
+.tkt-skeleton-list.on { display: flex; }
+.tkt-skeleton { height: 44px; border-radius: var(--tkt-r-md); background: var(--tkt-subtle); animation: tkt-pulse 1.2s ease-in-out infinite; }
+@keyframes tkt-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .55 } }
+
+/* foco breve al llegar por scroll desde un botón "ir a" (cabecera de detalle) */
+.tkt-highlight-flash { animation: tkt-flash 1s ease-out; }
+@keyframes tkt-flash {
+    0% { box-shadow: 0 0 0 2px var(--tkt-warn); }
+    100% { box-shadow: 0 0 0 2px transparent; }
+}
+.tkt-empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 30px; text-align: center; }
+.tkt-empty-icon { width: 52px; height: 52px; border-radius: var(--tkt-r-xl); background: var(--tkt-panel); border: 1px solid var(--tkt-border); display: grid; place-items: center; color: var(--tkt-text-faint); font-size: 19px; }
+.tkt-empty-icon.danger { background: var(--tkt-danger-soft); border-color: transparent; color: var(--tkt-danger-fg); }
+.tkt-empty-title { font-size: 14px; font-weight: 700; }
+.tkt-empty-text { font-size: var(--tkt-t); color: var(--tkt-text-soft); max-width: 320px; line-height: 1.6; }
+.tkt-hint-key { padding: 2px 7px; border-radius: var(--tkt-r-sm); background: var(--tkt-panel); border: 1px solid var(--tkt-border); font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-soft); }
+
+/* ── Detalle del ticket ──────────────────────────────────── */
+.tkt-detail-head { padding: 16px 20px 0; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-panel); display: flex; flex-direction: column; gap: 11px; }
+.tkt-detail-head-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; row-gap: 10px; }
+.tkt-detail-title-col { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 5px; }
+.tkt-detail-title { font-size: var(--tkt-t-xl); font-weight: 700; letter-spacing: -.02em; }
+.tkt-detail-chips { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.tkt-detail-actions { display: flex; gap: 7px; flex-shrink: 0; }
+.tkt-chip-id { font-family: var(--tkt-mono); font-size: 10px; padding: 2px 7px; background: var(--tkt-text); color: #fff; border-radius: var(--tkt-r-sm); }
+.tkt-chip-mono { font-family: var(--tkt-mono); font-size: 10px; padding: 2px 7px; background: var(--tkt-subtle); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); color: var(--tkt-text-soft); }
+.tkt-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 5px; font-size: var(--tkt-t-sm); font-weight: 700; }
+.tkt-chip-ok { background: var(--tkt-ok-bg); color: var(--tkt-ok-fg); }
+.tkt-chip-warn { background: var(--tkt-warn-bg); color: var(--tkt-warn-fg); }
+.tkt-chip-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); }
+.tkt-chip-info { background: var(--tkt-info-bg); color: var(--tkt-info); }
+.tkt-chip-muted { background: var(--tkt-subtle); color: var(--tkt-text-soft); }
+
+/* riel de iconos (detalle y panel derecho) */
+.tkt-icon-rail { display: flex; align-items: stretch; border-top: 1px solid var(--tkt-border-soft); }
+.tkt-icon-rail.top { border-top: none; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
+.tkt-icon-tab { flex: 1; display: grid; place-items: center; padding: 11px 0; font-size: 13px; color: var(--tkt-text-faint); position: relative; transition: color .12s ease; border: none; background: transparent; }
+.tkt-icon-tab:hover { color: var(--tkt-text-soft); }
+.tkt-icon-tab.on { color: var(--tkt-text); box-shadow: inset 0 -2px 0 var(--tkt-text); }
+.tkt-icon-tab .badge { position: absolute; transform: translate(14px, -9px); font-family: var(--tkt-mono); font-size: 8.5px; color: var(--tkt-text-faint); }
+.tkt-icon-tab[disabled] { color: var(--tkt-border-strong); cursor: not-allowed; }
+.tkt-icon-tab[disabled]:hover { color: var(--tkt-border-strong); }
+.tkt-btn-icon[disabled] { opacity: .45; cursor: not-allowed; }
+
+.tkt-pane { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; flex: 1; min-height: 0; overflow-y: auto; }
+.tkt-pane[hidden] { display: none; }
+/* #tkt-detail arranca oculto (inline style="display:none" en el blade);
+   al mostrarse, tickets-app.js usa .css('display','flex') — no .show(),
+   que ignoraría este flex-column y volvería a "block". Cabecera/rail/
+   banners quedan fijos por tamaño natural; el .tkt-pane activo es el
+   único que crece y escrolea. */
+#tkt-detail { flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+
+.tkt-mail-meta { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; font-size: var(--tkt-t-md); padding: 11px 13px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; }
+.tkt-mail-meta > span:nth-child(odd) { color: var(--tkt-text-faint); }
+.tkt-mail-body-card { background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; overflow: hidden; }
+.tkt-mail-body-head { display: flex; align-items: center; gap: 8px; padding: 8px 13px; border-bottom: 1px solid var(--tkt-border); background: var(--tkt-bg); }
+.tkt-mail-body-head .view-toggle { display: flex; gap: 4px; margin-left: auto; }
+.tkt-mail-body-head .view-toggle > span { padding: 2px 8px; border-radius: 5px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); color: var(--tkt-text-soft); font-size: var(--tkt-t-sm); font-weight: 600; cursor: pointer; }
+.tkt-mail-body-head .view-toggle > span.on { background: var(--tkt-text); border-color: var(--tkt-text); color: #fff; }
+.tkt-mail-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 11px; font-size: var(--tkt-t-lg); line-height: 1.65; color: #27272a; }
+.tkt-attach-bar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-top: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-wrap: wrap; }
+.tkt-attach { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); font-size: var(--tkt-t-md); cursor: pointer; }
+
+/* hilo de conversación */
+.tkt-thread-day { display: flex; align-items: center; gap: 10px; }
+.tkt-thread-day::before, .tkt-thread-day::after { content: ""; flex: 1; height: 1px; background: var(--tkt-border); }
+.tkt-thread-day span { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); }
+.tkt-msg { display: flex; gap: 11px; }
+.tkt-msg.mine { flex-direction: row-reverse; }
+.tkt-msg-avatar { width: 28px; height: 28px; border-radius: var(--tkt-r-md); display: grid; place-items: center; font-size: 10px; font-weight: 700; flex-shrink: 0; background: var(--tkt-subtle); color: var(--tkt-text-soft); }
+.tkt-msg-col { flex: 1; max-width: 74%; display: flex; flex-direction: column; gap: 4px; }
+.tkt-msg.mine .tkt-msg-col { align-items: flex-end; }
+.tkt-msg-head { display: flex; align-items: center; gap: 7px; font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+.tkt-msg-bubble { background: var(--tkt-panel); color: #27272a; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); padding: 11px 13px; font-size: var(--tkt-t); line-height: 1.6; }
+.tkt-msg.mine .tkt-msg-bubble { background: var(--tkt-text); border-color: var(--tkt-text); color: #fff; }
+.tkt-note-internal { display: flex; gap: 11px; padding: 10px 12px; background: var(--tkt-warn-soft); border: 1px solid var(--tkt-warn-line); border-radius: var(--tkt-r-lg); color: var(--tkt-warn-fg); font-size: var(--tkt-t); line-height: 1.6; }
+.tkt-reply-bar { display: flex; gap: 8px; padding: 11px 12px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); align-items: center; }
+
+/* trazabilidad y actividad */
+.tkt-timeline { display: flex; flex-direction: column; }
+.tkt-timeline-item { display: flex; gap: 11px; padding: 9px 0; border-top: 1px solid var(--tkt-border-soft); }
+.tkt-timeline-item:first-child { border-top: none; }
+.tkt-timeline-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; background: var(--tkt-border-strong); flex-shrink: 0; }
+.tkt-timeline-dot.done { background: var(--tkt-ok); }
+.tkt-banner-warn { display: flex; align-items: center; gap: 9px; padding: 9px 11px; background: var(--tkt-warn-soft); border: 1px solid var(--tkt-warn-line); border-radius: 9px; font-size: var(--tkt-t-md); color: var(--tkt-warn-fg); }
+.tkt-banner-ai { display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; font-size: var(--tkt-t-md); line-height: 1.6; color: var(--tkt-text-soft); }
+
+/* ── Panel derecho ───────────────────────────────────────── */
+.tkt-side { background: var(--tkt-panel); display: flex; flex-direction: column; min-width: 0; height: 100%; min-height: 0; }
+.tkt-side-pane { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; min-height: 0; }
+.tkt-side-pane[hidden] { display: none; }
+/* Bug real de layout encontrado en QA visual (ago-2026): overflow:hidden en
+   un hijo flex hace que su "automatic minimum size" pase a 0 (spec CSS
+   flexbox) — .tkt-side-pane (columna flex con overflow-y:auto) encogía las
+   tarjetas por debajo de su contenido en vez de dejarlas crecer y scrollear
+   el panel, recortando filas silenciosamente (ej: Categoría/Equipo de
+   "Gestión del ticket" desaparecían sin overflow visible). flex-shrink:0
+   fuerza que cada tarjeta respete su altura de contenido; el panel ya tenía
+   el scroll correcto, solo faltaba esto. */
+.tkt-side-card { background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); overflow: hidden; flex-shrink: 0; }
+.tkt-side-card-head { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-bottom: 1px solid var(--tkt-border-soft); font-size: var(--tkt-t-md); font-weight: 700; }
+.tkt-side-card-body { padding: 10px 11px; display: flex; flex-direction: column; gap: 8px; }
+.tkt-kv { display: flex; align-items: center; gap: 10px; padding: 7px 9px; background: var(--tkt-bg); border-radius: var(--tkt-r); }
+.tkt-kv > .k { font-size: var(--tkt-t-md); color: var(--tkt-text-mute); }
+.tkt-kv > .v { margin-left: auto; font-size: var(--tkt-t-md); font-weight: 600; text-align: right; }
+.tkt-kv > .v.mono { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); }
+.tkt-kv-select { display: flex; align-items: center; gap: 10px; padding: 6px 9px; background: var(--tkt-bg); border-radius: var(--tkt-r); }
+.tkt-kv-select select { margin-left: auto; max-width: 60%; padding: 4px 6px; border: 1px solid var(--tkt-border); border-radius: 6px; background: var(--tkt-panel); font-size: var(--tkt-t-md); font-weight: 600; }
+.tkt-person { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); width: 100%; background: var(--tkt-panel); }
+.tkt-person-avatar { width: 26px; height: 26px; border-radius: var(--tkt-r); display: grid; place-items: center; font-size: 10px; font-weight: 700; background: var(--tkt-subtle); color: var(--tkt-text-soft); flex-shrink: 0; }
+.tkt-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; background: var(--tkt-subtle); font-size: 11px; font-weight: 600; color: var(--tkt-text-soft); }
+.tkt-tag i { font-size: 8px; color: var(--tkt-text-faint); cursor: pointer; }
+.tkt-tag-add { padding: 3px 8px; border-radius: 20px; border: 1px dashed var(--tkt-border-strong); font-size: 11px; color: var(--tkt-text-faint); cursor: pointer; background: none; }
+.tkt-empty-box { padding: 14px; background: var(--tkt-bg); border: 1px dashed var(--tkt-border-strong); border-radius: 9px; font-size: var(--tkt-t-md); color: var(--tkt-text-mute); line-height: 1.55; }
+.tkt-note-card { display: flex; gap: 8px; padding: 9px 10px; background: var(--tkt-bg); border: 1px solid var(--tkt-border-soft); border-radius: var(--tkt-r-md); }
+.tkt-note-card.pinned { background: var(--tkt-warn-soft); border-color: var(--tkt-warn-line); color: var(--tkt-warn-fg); }
+.tkt-note-color-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); cursor: pointer; display: inline-block; }
+.tkt-note-color-dot.on { outline: 2px solid var(--tkt-text); outline-offset: 1px; }
+
+/* ── Kanban ──────────────────────────────────────────────── */
+.tkt-kanban { display: none; gap: 14px; padding: 16px; background: var(--tkt-panel); overflow-x: auto; flex: 1; min-height: 0; overflow-y: auto; }
+.tkt-kanban.on { display: flex; }
+.tkt-kcol { display: flex; flex-direction: column; gap: 9px; min-width: 250px; flex: 1; }
+.tkt-kcol-head { display: flex; align-items: center; gap: 8px; padding: 0 2px; font-size: var(--tkt-t-md); font-weight: 700; }
+.tkt-kcol-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tkt-border-strong); }
+.tkt-kcol-dot.unassigned { background: var(--tkt-danger); }
+.tkt-kcol-dot.open { background: var(--tkt-info); }
+.tkt-kcol-dot.pending { background: var(--tkt-warn); }
+.tkt-kcol-dot.resolved { background: var(--tkt-ok); }
+.tkt-kcol-dot.closed { background: var(--tkt-text-faint); }
+.tkt-kcol-count { font-family: var(--tkt-mono); font-size: 10px; color: var(--tkt-text-faint); }
+.tkt-kcol-drop { display: flex; flex-direction: column; gap: 9px; background: var(--tkt-bg); border: 1px solid var(--tkt-border); border-radius: 12px; padding: 9px; min-height: 320px; transition: background .12s ease; }
+.tkt-kcol-drop.over { background: var(--tkt-subtle); }
+.tkt-kcard { background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-lg); padding: 10px 11px; display: flex; flex-direction: column; gap: 7px; box-shadow: var(--tkt-shadow-sm); cursor: grab; }
+.tkt-kcard.dragging { opacity: .4; }
+
+/* ── Botones (variantes que faltaban del mockup) ────────── */
+.tkt-btn-outline { background: var(--tkt-panel); border-color: var(--tkt-border-strong); }
+.tkt-btn-outline:hover { background: var(--tkt-subtle); }
+.tkt-btn-soft { background: var(--tkt-panel); border-color: var(--tkt-border); }
+.tkt-btn-soft:hover { background: var(--tkt-subtle); }
+.tkt-btn-danger { background: var(--tkt-danger-bg); color: var(--tkt-danger-fg); border-color: var(--tkt-danger-bg); }
+.tkt-btn-start { justify-content: flex-start; }
+.tkt-btn-inline { width: auto; padding: 6px 11px; }
+.tkt-btn-sm { padding: 5px 10px; font-size: var(--tkt-t-md); }
+
+/* ── Filtros: chips activos + dropdowns ─────────────────── */
+.tkt-filter-btn { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r); background: var(--tkt-panel); font-size: var(--tkt-t-md); }
+.tkt-filter-btn i { font-size: 10px; }
+.tkt-filter-btn .val { color: var(--tkt-text-faint); }
+/* .tkt a { color: var(--tkt-text) } (línea ~75) tiene más especificidad
+   (clase+tag) que .tkt-filter-chip sola (solo clase) y le ganaba, dejando
+   texto negro sobre fondo negro — invisible. El propio archivo ya resuelve
+   el mismo problema para .tkt-btn-primary con ".tkt a.tkt-btn-primary";
+   mismo criterio aquí. */
+.tkt-filter-chip, .tkt a.tkt-filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 20px; background: var(--tkt-text); color: #fff; font-size: 11px; font-weight: 600; }
+.tkt-filter-chip i { font-size: 9px; cursor: pointer; }
+.tkt-filter-count { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+.tkt-drop { position: absolute; z-index: 9000; min-width: 190px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.16); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.tkt-drop-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; font-size: var(--tkt-t); width: 100%; background: transparent; border: none; text-align: left; }
+.tkt-drop-item:hover { background: var(--tkt-subtle); }
+.tkt-drop-item.on { background: var(--tkt-subtle); font-weight: 700; }
+
+/* ── Piezas sueltas usadas dentro de paneles/modales ────── */
+.tkt-list-empty { padding: 40px 20px; text-align: center; font-size: var(--tkt-t); color: var(--tkt-text-faint); line-height: 1.6; }
+.tkt-trace { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); line-height: 1.8; color: var(--tkt-text-soft); }
+.tkt-tag-suggested { padding: 3px 9px; border-radius: 20px; background: var(--tkt-bg); border: 1px solid var(--tkt-border); font-size: 11px; font-weight: 600; color: var(--tkt-text-soft); }
+.tkt-load-bar { height: 6px; border-radius: 20px; background: var(--tkt-subtle); overflow: hidden; }
+.tkt-load-bar > span { display: block; height: 100%; border-radius: 20px; background: var(--tkt-ok); }
+.tkt-load-bar.warn > span { background: var(--tkt-warn); }
+.tkt-load-bar.danger > span { background: var(--tkt-danger); }
+/* fila informativa con acción a la derecha (conversación paralela,
+   tickets relacionados) — ya se usaba en tickets-app.js sin definir
+   aquí: filas sin caja ni padding hasta este fix. */
+.tkt-line { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); }
+.tkt-line-title { font-size: var(--tkt-t); font-weight: 600; }
+.tkt-line-sub { font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+
+/* ══════════════════ Modales (sistema genérico) ═══════════ */
+.tkt-modal-backdrop { position: fixed; inset: 0; z-index: 9999; background: rgba(24,24,27,.58); display: none; align-items: flex-start; justify-content: center; padding: 44px 20px; overflow: auto; }
+.tkt-modal-backdrop.on { display: flex; }
+.tkt-modal {
+  width: 100%;
+  max-width: 380px;
+  max-height: calc(100vh - 88px);
+  margin: 0 auto;
+  background: var(--tkt-panel);
+  border-radius: 12px;
+  box-shadow: var(--tkt-shadow-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tkt-modal.w-sm { max-width: 340px; }
+.tkt-modal.w-md { max-width: 380px; }
+.tkt-modal.w-lg { max-width: 400px; }
+.tkt-modal.w-xl { max-width: 430px; }
+.tkt-modal-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--tkt-border); flex-shrink: 0; }
+.tkt-modal-icon { width: 28px; height: 28px; border-radius: var(--tkt-r); background: var(--tkt-subtle); display: grid; place-items: center; font-size: 12px; }
+.tkt-modal-icon.danger { background: var(--tkt-danger-soft); color: var(--tkt-danger-fg); }
+.tkt-modal-icon.warn { background: var(--tkt-warn-soft); color: var(--tkt-warn-fg); }
+.tkt-modal-kicker { font-size: 9px; font-weight: 600; color: var(--tkt-text-faint); text-transform: uppercase; letter-spacing: .08em; }
+.tkt-modal-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.tkt-modal-close { width: 24px; height: 24px; border-radius: 5px; display: grid; place-items: center; color: var(--tkt-text-faint); border: none; background: transparent; }
+.tkt-modal-close:hover { background: var(--tkt-subtle); }
+/* el cuerpo scrollea; cabecera y pie quedan fijos */
+.tkt-modal-body { padding: 14px; display: flex; flex-direction: column; gap: 11px; overflow-y: auto; min-height: 0; flex: 1 1 auto; }
+.tkt-modal-foot { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--tkt-border); background: var(--tkt-bg); flex-shrink: 0; }
+.tkt-modal-foot .tkt-btn { width: 100%; }
+.tkt-modal-foot.two-col { grid-template-columns: 1fr 1fr; }
+
+/* ── Formularios (dentro de modales) ────────────────────── */
+.tkt-field { display: flex; flex-direction: column; gap: 5px; }
+.tkt-field-row { display: flex; gap: 10px; }
+.tkt-field-row > .tkt-field { flex: 1; }
+.tkt-label { font-size: 11px; font-weight: 600; color: var(--tkt-text-soft); display: flex; }
+.tkt-label .req { color: var(--tkt-danger); margin-left: 3px; }
+.tkt-label .hint { margin-left: auto; font-size: 10px; color: var(--tkt-text-faint); font-weight: 400; }
+.tkt-input, .tkt-select { width: 100%; padding: 7px 10px; background: var(--tkt-panel); border: 1px solid var(--tkt-border); border-radius: 6px; font-size: var(--tkt-t); }
+textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
+.tkt-check { display: inline-flex; align-items: center; gap: 7px; font-size: var(--tkt-t); color: var(--tkt-text-soft); }
+.tkt-dropzone { border: 2px dashed var(--tkt-border-strong); border-radius: var(--tkt-r-lg); padding: 24px; text-align: center; background: var(--tkt-bg); }
+
+/* opción seleccionable dentro de un modal (prioridad/aplazar/estado/exportar) */
+.tkt-option { display: flex; align-items: center; gap: 10px; padding: 10px 11px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-md); background: var(--tkt-panel); width: 100%; }
+.tkt-option.on { border-color: var(--tkt-text); background: var(--tkt-bg); }
+.tkt-option-title { font-size: var(--tkt-t-lg); font-weight: 600; }
+.tkt-option-sub { font-size: var(--tkt-t-sm); color: var(--tkt-text-faint); }
+/* bloque clave/valor gris de los modales */
+.tkt-kv-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: var(--tkt-t-md); padding: 10px 11px; background: var(--tkt-subtle); border-radius: var(--tkt-r-md); }
+.tkt-kv-grid > span:nth-child(odd) { color: var(--tkt-text-faint); }
+.tkt-kv-grid > span:nth-child(even) { font-family: var(--tkt-mono); font-size: var(--tkt-t-sm); }
+/* aviso dentro de un modal */
+.tkt-note { display: flex; gap: 9px; padding: 10px 11px; background: var(--tkt-subtle); border-radius: var(--tkt-r-md); font-size: var(--tkt-t-md); color: var(--tkt-text-soft); }
+.tkt-note.warn { background: var(--tkt-warn-soft); color: var(--tkt-warn-fg); }
+.tkt-note.danger { background: var(--tkt-danger-soft); color: var(--tkt-danger-fg); }
+.tkt-note.ok { background: var(--tkt-ok-bg); color: var(--tkt-ok-fg); }
+/* trío de métricas */
+.tkt-kpi3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tkt-kpi3 > div { background: var(--tkt-subtle); border-radius: var(--tkt-r-md); padding: 10px; text-align: center; }
+.tkt-kpi3 .v { font-size: 17px; font-weight: 800; font-family: var(--tkt-mono); }
+.tkt-kpi3 .l { font-size: 10px; color: var(--tkt-text-faint); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .tkt-app-card { min-width: 0; }
+  .tkt-split { grid-template-columns: 1fr; min-height: 0; }
+  .tkt-split-list, .tkt-split-detail { border-right: none; border-bottom: 1px solid var(--tkt-border); }
+  .tkt-ticket-side { width: auto; flex-direction: row; align-items: center; gap: 8px; }
+  .tkt-detail-title-col { min-width: 0; }
+}
+@media (max-width: 640px) {
+  .tkt-state-tabs, .tkt-filter-bar, .tkt-views-bar { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .tkt-modal { max-width: 100%; }
+  .tkt-modal-backdrop { padding: 16px 10px; }
+}
+
+/* ── select2 (todo <select> de la pantalla usa select2 — bug real de QA:
+   el filtro "Agente" era un <select> nativo con decenas de opciones sin
+   buscador). select2 oculta el <select> original y monta un elemento
+   NUEVO al lado (.select2-container), que no hereda ninguna regla CSS de
+   .tkt-fselect/.tkt-select/.tkt-kv-select select (esas apuntan al tag
+   <select> directamente) — sin esto, el widget se veía sin borde/fondo,
+   casi como texto plano. ────────────────────────────────────────── */
+.tkt .select2-container--default .select2-selection--single {
+  height: auto; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r);
+  background: var(--tkt-panel); display: flex; align-items: center;
+}
+.tkt .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding: 0; padding-right: 18px; color: var(--tkt-text); font-size: var(--tkt-t-md); font-weight: 600; line-height: 1.3;
+}
+.tkt .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 100%; right: 6px;
+}
+.tkt .select2-container--default.select2-container--open .select2-selection--single {
+  border-color: var(--tkt-border-strong);
+}
+.tkt .select2-dropdown {
+  border-color: var(--tkt-border); border-radius: var(--tkt-r-md); overflow: hidden;
+  box-shadow: 0 10px 30px rgba(24,24,27,.12); font-size: var(--tkt-t-md);
+}
+.tkt .select2-search--dropdown .select2-search__field {
+  border: 1px solid var(--tkt-border); border-radius: var(--tkt-r-sm); font-size: var(--tkt-t-md); padding: 5px 8px;
+}
+.tkt .select2-results__option--highlighted[aria-selected] { background: var(--tkt-text) !important; }
+.tkt .select2-container--default .select2-results__option[aria-selected="true"] { background: var(--tkt-subtle); }
+
+/* Ancho por contexto: la barra de filtros y el panel Gestión quieren un
+   ancho compacto ajustado al contenido; los campos de los modales
+   (.tkt-field, ya block-level a ancho completo) quieren llenar la fila.
+   width:'style' (initSelect2 en tickets-app.js) copia el estilo INLINE del
+   <select> original — pero estos <select> nunca tuvieron uno (solo reglas
+   CSS por clase), así que select2 caía a su auto-ancho por contenido
+   (~104px), sin mínimo garantizado: bug real de QA visual — la caja
+   "encogía" de forma inconsistente según el texto seleccionado y la
+   etiqueta ("Estado"/"Prioridad"...) quedaba con un hueco enorme al lado.
+   Ancho fijo aquí, ya no delegado a select2. */
+.tkt-filter-bar .select2-container { width: 150px !important; }
+.tkt-kv-select .select2-container { margin-left: auto; width: 60% !important; }
+.tkt-kv-select .select2-selection--single { background: var(--tkt-panel) !important; }
+.tkt-field .select2-container, .tkt-modal-body .select2-container { width: 100% !important; }
+}

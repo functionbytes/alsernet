@@ -59,6 +59,16 @@ interface TicketServiceContract
     public function getCategories(): Collection;
 
     /**
+     * Agentes asignables al crear un ticket desde una conversación (agentes,
+     * managers y admins de Helpdesk por rol Spatie — no agentes de otros
+     * módulos ni usuarios con permisos sueltos tipo "*ticket*").
+     * Each item: ['id' => int, 'name' => string].
+     *
+     * @return Collection<int, array{id:int,name:string}>
+     */
+    public function getAssignableAgents(): Collection;
+
+    /**
      * Detail payload for a ticket linked to a conversation.
      * Returns null if not found / not accessible / integration unavailable.
      */

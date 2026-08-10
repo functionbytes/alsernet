@@ -2,6 +2,9 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
+use App\Models\User;
+use HTMLPurifier;
+use HTMLPurifier_Config;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -18,9 +21,13 @@ class TicketMail extends Model
 
     protected $fillable = [
         'ticket_id',
+        'user_id',
+        'category_id',
+        'tags',
         'ticket_comment_id',
         'ticket_item_id',
         'direction',
+        'is_internal',
         'message_id',
         'in_reply_to',
         'references',
@@ -37,6 +44,7 @@ class TicketMail extends Model
         'delivery_error',
         'sent_at',
         'delivered_at',
+        'scheduled_at',
         'raw_email',
     ];
 
@@ -45,10 +53,13 @@ class TicketMail extends Model
         return [
             'attachments' => 'array',
             'headers' => 'array',
+            'tags' => 'array',
+            'is_internal' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
+            'scheduled_at' => 'datetime',
             'deleted_at' => 'datetime',
         ];
     }
@@ -71,6 +82,23 @@ class TicketMail extends Model
     public function comment(): BelongsTo
     {
         return $this->belongsTo(TicketComment::class, 'ticket_comment_id');
+    }
+
+    /**
+     * Agent who sent this mail. Sin FK real: users vive en la conexión por
+     * defecto (mariadb), no en 'helpdesk' — mismo patrón que Ticket::assignee().
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Category of this mail (independent from the ticket's own category).
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(TicketCategory::class, 'category_id');
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -139,6 +167,33 @@ class TicketMail extends Model
     public function scopeFailed($query)
     {
         return $query->where('status', 'failed');
+    }
+
+    /**
+     * Get emails scheduled for future delivery (not yet sent).
+     */
+    public function scopeScheduled($query)
+    {
+        return $query->where('status', 'scheduled')->whereNotNull('scheduled_at');
+    }
+
+    /**
+     * Get scheduled emails due for delivery now (consumed by the scheduled
+     * send command).
+     */
+    public function scopeDueForDelivery($query)
+    {
+        return $query->scheduled()->where('scheduled_at', '<=', now());
+    }
+
+    /**
+     * Avisos internos (p.ej. "Escalado a nivel 2") — nunca visibles para el
+     * cliente. Se marca explícitamente al componer, no se infiere del dominio
+     * del destinatario.
+     */
+    public function scopeInternal($query)
+    {
+        return $query->where('is_internal', true);
     }
 
     /**
@@ -262,6 +317,17 @@ class TicketMail extends Model
     // ────────────────────────────────────────────────────────────────
     // Status Management
     // ────────────────────────────────────────────────────────────────
+
+    /**
+     * Mark email as scheduled for future delivery.
+     */
+    public function markAsScheduled(\DateTimeInterface $when): void
+    {
+        $this->update([
+            'status' => 'scheduled',
+            'scheduled_at' => $when,
+        ]);
+    }
 
     /**
      * Mark email as sent
@@ -392,10 +458,12 @@ class TicketMail extends Model
     {
         return match ($this->status) {
             'pending' => 'Pendiente',
+            'scheduled' => 'Programado',
             'sent' => 'Enviado',
             'delivered' => 'Entregado',
             'bounced' => 'Rebotado',
             'failed' => 'Falló',
+            'received' => 'Recibido',
             default => $this->status,
         };
     }
@@ -407,12 +475,128 @@ class TicketMail extends Model
     {
         return match ($this->status) {
             'pending' => 'warning',
+            'scheduled' => 'warning',
             'sent' => 'info',
             'delivered' => 'success',
             'bounced' => 'danger',
             'failed' => 'danger',
+            'received' => 'info',
             default => 'secondary',
         };
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Presentation (bandeja "Emails enviados")
+    // ────────────────────────────────────────────────────────────────
+
+    /**
+     * Forma de fila para la bandeja global de emails — usado tanto por la
+     * hidratación SSR inicial (index.blade.php) como por el JSON de
+     * TicketMailsController::index()/data() cuando se filtra/pagina por
+     * AJAX. Vive aquí (no duplicado en el controller y en la vista) porque
+     * ya se detectaron dos inconsistencias reales por tener el mapeo en dos
+     * sitios (status_pill vs status_color, origin ya traducido vs slug
+     * crudo) — un único punto de verdad evita que se repita.
+     *
+     * @return array<string, mixed>
+     */
+    public function toListRow(): array
+    {
+        $ticket = $this->ticket;
+
+        return [
+            'id' => $this->id,
+            'ticket_id' => $ticket?->id,
+            'ticket_number' => $ticket?->ticket_number,
+            'subject' => $this->subject,
+            'to' => $this->to,
+            'snippet' => Str::limit(strip_tags($this->body_text ?: $this->body_html ?: ''), 140),
+            'status' => $this->status,
+            'status_label' => $this->status_label,
+            'status_color' => $this->status_color,
+            'direction' => $this->direction,
+            'is_internal' => (bool) $this->is_internal,
+            'origin' => $ticket?->source,
+            'category' => $this->category?->name,
+            'agent' => $this->user ? trim("{$this->user->firstname} {$this->user->lastname}") : null,
+            'tags' => $this->tags ?? [],
+            'customer_name' => $ticket?->customer?->name,
+            'initials' => self::initialsFor($ticket?->customer?->name ?? $this->to),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at_human' => $this->created_at?->diffForHumans(),
+            'time_short' => ($this->sent_at ?? $this->created_at)?->format('H:i'),
+            'sent_at' => $this->sent_at?->toIso8601String(),
+            'scheduled_at' => $this->scheduled_at?->toIso8601String(),
+            'has_attachments' => $this->hasAttachments(),
+            'url_data' => route('manager.helpdesk.tickets.emails.data', $this),
+            'url_resend' => route('manager.helpdesk.tickets.emails.resend', $this),
+            'url_summary' => route('manager.helpdesk.tickets.emails.summary', $this),
+            'url_translate' => route('manager.helpdesk.tickets.emails.translate', $this),
+            'url_tags' => route('manager.helpdesk.tickets.emails.tags', $this),
+        ];
+    }
+
+    private static ?HTMLPurifier $htmlPurifier = null;
+
+    /**
+     * body_html crudo, sin sanitizar, es contenido de un correo ENTRANTE —
+     * cualquiera que le escriba a la dirección de soporte controla ese HTML.
+     * Bug de seguridad real encontrado en QA (ago-2026): tanto
+     * TicketsCrudController::data() como TicketMailsController::show()
+     * exponían $mail->body_html tal cual en el JSON, y tickets-app.js lo
+     * inyectaba directo vía jQuery .html() (renderMailPane) — un email con
+     * `<img src=x onerror="...">` habría ejecutado JS en la sesión del
+     * agente al abrir el ticket (XSS almacenado). clean_html()/clean() del
+     * Core no están disponibles (no cargados vía composer autoload.files,
+     * verificado con function_exists()), así que se sanea aquí mismo con
+     * HTMLPurifier directo — mismo criterio de allowlist conservador que
+     * Modules\Supplier\Helpers\HtmlSanitizer::clean() y Core\Helper::clean_html().
+     */
+    public function safeBodyHtml(): string
+    {
+        return self::purifyHtml($this->body_html);
+    }
+
+    public static function purifyHtml(?string $html): string
+    {
+        if ($html === null || trim($html) === '') {
+            return '';
+        }
+
+        if (self::$htmlPurifier === null) {
+            $config = HTMLPurifier_Config::createDefault();
+            $config->set('HTML.Allowed', 'p,br,b,strong,i,em,u,s,del,ins,a[href|title],ul,ol,li,blockquote,pre,code,'
+                .'h1,h2,h3,h4,h5,h6,img[src|alt|title|width|height],table,thead,tbody,tr,th,td,span[style],div,hr,sub,sup');
+            $config->set('HTML.TargetBlank', true);
+            $config->set('HTML.Nofollow', true);
+            $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
+            $config->set('CSS.AllowedProperties', ['color', 'background-color', 'font-weight', 'font-style', 'text-decoration', 'text-align']);
+            $config->set('AutoFormat.AutoParagraph', false);
+            $config->set('AutoFormat.RemoveEmpty', false);
+            $config->set('Cache.DefinitionImpl', null);
+
+            self::$htmlPurifier = new HTMLPurifier($config);
+        }
+
+        return self::$htmlPurifier->purify($html);
+    }
+
+    /**
+     * Iniciales para el avatar de la fila (2 letras a partir del nombre del
+     * cliente, o del destinatario si no hay cliente asociado).
+     */
+    public static function initialsFor(?string $name): string
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return '—';
+        }
+
+        $parts = preg_split('/\s+/', $name);
+        $letters = mb_strtoupper(mb_substr($parts[0], 0, 1).mb_substr($parts[1] ?? '', 0, 1));
+
+        return $letters ?: '—';
     }
 
     // ────────────────────────────────────────────────────────────────

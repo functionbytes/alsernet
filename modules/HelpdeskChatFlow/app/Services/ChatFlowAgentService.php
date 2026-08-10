@@ -164,10 +164,16 @@ class ChatFlowAgentService
     {
         try {
             if ($name === 'lookup_order') {
-                // Defensa en profundidad: solo tras verificar la identidad
-                // (OTP) el contexto marca customer_identified; sin ella no se
-                // exponen pedidos aunque el prompt intente forzar la consulta.
-                if (empty($context['customer_identified'])) {
+                // Defensa en profundidad: exige customer_identified_via_otp,
+                // no el customer_identified genérico — un nodo identify_customer
+                // con require_otp=false (footgun de configuración documentado
+                // en ChatFlowIdentityOtp) también marca customer_identified,
+                // pero solo a partir de un email/teléfono/NIF escrito en texto
+                // libre por el usuario, sin verificar que sea realmente suyo.
+                // Sin este distingo, cualquiera podía "identificarse" como un
+                // tercero y este tool le exponía sus pedidos (mismo IDOR que
+                // el OTP existe para cerrar).
+                if (empty($context['customer_identified_via_otp'])) {
                     return 'El cliente aún no ha verificado su identidad, no puedo consultar sus pedidos.';
                 }
 

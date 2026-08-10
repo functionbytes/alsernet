@@ -63,7 +63,7 @@ class TicketMergeTest extends TestCase
             ->post(route('manager.helpdesk.tickets.merge', $source), [
                 'merge_into_id' => $target->id,
             ])
-            ->assertRedirect(route('manager.helpdesk.tickets.show', $target));
+            ->assertRedirect(route('manager.helpdesk.tickets.show-full', $target));
     }
 
     public function test_merge_moves_messages_to_target_ticket(): void
@@ -169,7 +169,7 @@ class TicketMergeTest extends TestCase
             ->post(route('manager.helpdesk.tickets.merge', $source), [
                 'merge_into_id' => $target->id,
             ])
-            ->assertRedirect(route('manager.helpdesk.tickets.show', $target));
+            ->assertRedirect(route('manager.helpdesk.tickets.show-full', $target));
 
         $this->assertSame($target->id, $note->fresh()->ticket_id);
         $this->assertSame($target->id, $comment->fresh()->ticket_id);

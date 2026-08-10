@@ -55,7 +55,7 @@
             <ul class="list-group list-group-flush ticket-slim-scroll" data-simplebar>
                 @foreach($tickets as $t)
                     <li class="list-group-item list-group-item-action p-2 border-bottom {{ $t->id == $ticket->id ? 'active' : '' }}">
-                        <a href="{{ route('manager.helpdesk.tickets.show', $t->id) }}" class="text-decoration-none d-block">
+                        <a href="{{ route('manager.helpdesk.tickets.show-full', $t->id) }}" class="text-decoration-none d-block">
                             <div class="d-flex justify-content-between align-items-start mb-1">
                                 <small class="fw-semibold {{ $t->id == $ticket->id ? 'text-white' : 'text-dark' }}">
                                     #{{ $t->ticket_number }}
@@ -327,7 +327,7 @@
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="flex-grow-1 me-2">
                             <span class="badge bg-secondary-subtle text-secondary me-1">{{ $link->link_type }}</span>
-                            <a href="{{ route('manager.helpdesk.tickets.show', $link->linkedTicket) }}" class="fw-semibold">
+                            <a href="{{ route('manager.helpdesk.tickets.show-full', $link->linkedTicket) }}" class="fw-semibold">
                                 #{{ $link->linkedTicket->ticket_number }}
                             </a>
                             <small class="text-muted d-block">{{ Str::limit($link->linkedTicket->subject, 40) }}</small>
@@ -450,6 +450,8 @@
                             'chatflow'     => 'fas fa-robot',
                             'social'       => 'fas fa-share-nodes',
                             'contacts'     => 'fas fa-address-book',
+                            'web_form'     => 'fas fa-file-lines',
+                            'formulario'   => 'fas fa-file-lines',
                         ];
                         $sourceIcon = $sourceIcons[$ticket->source] ?? 'fas fa-question-circle';
                     @endphp

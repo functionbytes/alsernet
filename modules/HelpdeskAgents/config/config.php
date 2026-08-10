@@ -42,8 +42,16 @@ return [
     | Ventana deslizante de historial enviada al LLM por turno: se toman los N
     | mensajes MÁS RECIENTES de la sesión (no los primeros), para que las
     | conversaciones largas no pierdan el contexto reciente.
+    |
+    | Bajado de 100 a 20 (revisión de rendimiento, ago-2026): con 100, cada
+    | turno reenvía el historial COMPLETO de sesiones largas — el coste/
+    | latencia de la llamada al proveedor crece linealmente con la duración
+    | de la sesión (turno 50 podía costar ~10× más tokens de entrada que el
+    | turno 5). 20 mensajes (~10 intercambios) es un contexto conversacional
+    | razonable para la mayoría de flujos de soporte sin ese crecimiento sin
+    | límite; ajustable por instalación si un flujo concreto necesita más.
     */
-    'history_window' => 100,
+    'history_window' => 20,
 
     'prompt_injection_patterns' => [
         '/ignore\s+(all\s+)?previous\s+instructions/i',

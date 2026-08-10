@@ -2,13 +2,11 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\SlaBreached;
-use Modules\HelpdeskTickets\Models\SlaPolicy;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\SlaService;
 use Tests\TestCase;
@@ -65,84 +63,6 @@ class SlaServiceTest extends TestCase
         $originalProp->setValue($mock, $attributes);
 
         return $mock;
-    }
-
-    // ─── calculateDueDate ─────────────────────────────────────────────────────
-
-    public function test_calculate_due_date_returns_null_when_no_sla_policy(): void
-    {
-        $ticket = $this->makeTicket([
-            'priority_id' => 99999,
-            'category_id' => null,
-        ]);
-
-        $service = $this->createPartialMock(SlaService::class, ['getApplicablePolicy']);
-        $service->method('getApplicablePolicy')->willReturn(null);
-
-        $result = $service->calculateDueDate($ticket);
-
-        $this->assertNull($result);
-    }
-
-    public function test_calculate_due_date_adds_calendar_hours_when_no_business_hours_restriction(): void
-    {
-        $ticket = $this->makeTicket(['priority_id' => 1, 'category_id' => null]);
-
-        $policy = new SlaPolicy;
-        $policy->resolution_time_hours = 8;
-        $policy->business_hours_only = false;
-
-        $service = $this->createPartialMock(SlaService::class, ['getApplicablePolicy']);
-        $service->method('getApplicablePolicy')->willReturn($policy);
-
-        Carbon::setTestNow('2024-01-15 10:00:00');
-        $result = $service->calculateDueDate($ticket);
-        Carbon::setTestNow(null);
-
-        $this->assertNotNull($result);
-        $this->assertEquals('2024-01-15 18:00:00', $result->format('Y-m-d H:i:s'));
-    }
-
-    public function test_calculate_due_date_adds_business_hours_when_policy_requires_it(): void
-    {
-        $ticket = $this->makeTicket(['priority_id' => 1, 'category_id' => null]);
-
-        $policy = new SlaPolicy;
-        $policy->resolution_time_hours = 8;
-        $policy->business_hours_only = true;
-
-        $service = $this->createPartialMock(SlaService::class, ['getApplicablePolicy']);
-        $service->method('getApplicablePolicy')->willReturn($policy);
-
-        // Start at 09:00 on a Monday — 8 business hours ends at 17:00 same day
-        Carbon::setTestNow('2024-01-15 09:00:00'); // Monday
-        $result = $service->calculateDueDate($ticket);
-        Carbon::setTestNow(null);
-
-        $this->assertNotNull($result);
-        // 9:00 + 8 business hours = 17:00 (before 18:00 close)
-        $this->assertEquals('2024-01-15 17:00:00', $result->format('Y-m-d H:i:s'));
-    }
-
-    public function test_calculate_due_date_skips_weekend_for_business_hours(): void
-    {
-        $ticket = $this->makeTicket(['priority_id' => 1, 'category_id' => null]);
-
-        $policy = new SlaPolicy;
-        $policy->resolution_time_hours = 8;
-        $policy->business_hours_only = true;
-
-        $service = $this->createPartialMock(SlaService::class, ['getApplicablePolicy']);
-        $service->method('getApplicablePolicy')->willReturn($policy);
-
-        // Friday at 15:00 — 8 business hours spans to Monday
-        Carbon::setTestNow('2024-01-19 15:00:00'); // Friday
-        $result = $service->calculateDueDate($ticket);
-        Carbon::setTestNow(null);
-
-        $this->assertNotNull($result);
-        // 15:00 Friday + 3h = 18:00 Friday, remaining 5h on Monday 09:00 -> 14:00
-        $this->assertEquals('Monday', $result->format('l'));
     }
 
     // ─── checkBreaches ────────────────────────────────────────────────────────

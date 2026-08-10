@@ -41,20 +41,39 @@
 
                     <div class="col-12 col-lg-8">
                         <div class="mb-3">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">
-                                    <i class="fas fa-lock text-primary"></i>
-                                </span>
-                                <input type="text" class="form-control font-monospace bg-light" id="tokenInput"
-                                       value="{{ $endpoint->api_token }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" id="copyTokenBtn" title="Copiar token">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Header: <code>X-API-Token: {{ Str::limit($endpoint->api_token, 20) }}</code>
-                            </small>
+                            @if (session('new_api_token'))
+                                {{-- Se guarda hasheado — este es el único momento en que se puede ver/copiar el token real. --}}
+                                <div class="alert alert-warning py-2 mb-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Cópialo ahora: no se volverá a mostrar completo.
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                    <input type="text" class="form-control font-monospace bg-light" id="tokenInput"
+                                           value="{{ session('new_api_token') }}" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" id="copyTokenBtn" title="Copiar token">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Header: <code>X-API-Token: {{ session('new_api_token') }}</code>
+                                </small>
+                            @else
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-lock text-primary"></i>
+                                    </span>
+                                    <input type="text" class="form-control font-monospace bg-light"
+                                           value="••••••••••••••••••••••••••••••••" readonly disabled>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    El token no se puede volver a mostrar. Usa «Regenerar token» si lo perdiste.
+                                </small>
+                            @endif
                         </div>
                     </div>
 

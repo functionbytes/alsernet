@@ -42,7 +42,20 @@ class WhatsAppBusinessService
     /**
      * Send a plain text message.
      */
-    public function sendText(string $to, string $body, bool $previewUrl = false): ?string
+    /**
+     * @param  ?int  $timeoutSeconds  Override del timeout por defecto (15s) —
+     *                                usado por las auto-respuestas (bienvenida/
+     *                                fuera de horario/despedida), que corren
+     *                                dentro de un job de cola compartido: un
+     *                                timeout largo + reintentos ahí retrasa en
+     *                                fila el resto de mensajes reales. Los
+     *                                envíos manuales de un agente conservan el
+     *                                timeout largo (valores null).
+     * @param  ?int  $retries  Override de reintentos (2 por defecto) — 0 en
+     *                         las auto-respuestas, cada intento adicional
+     *                         multiplica el peor caso por su timeout.
+     */
+    public function sendText(string $to, string $body, bool $previewUrl = false, ?int $timeoutSeconds = null, ?int $retries = null): ?string
     {
         return $this->send($to, [
             'type' => 'text',
@@ -50,7 +63,7 @@ class WhatsAppBusinessService
                 'preview_url' => $previewUrl,
                 'body' => $body,
             ],
-        ]);
+        ], $timeoutSeconds, $retries);
     }
 
     /**
@@ -416,7 +429,7 @@ class WhatsAppBusinessService
     /**
      * Core send method. Returns the WhatsApp message ID (wamid) or null on failure.
      */
-    private function send(string $to, array $messageFields): ?string
+    private function send(string $to, array $messageFields, ?int $timeoutSeconds = null, ?int $retries = null): ?string
     {
         if (! $this->isEnabled()) {
             Log::debug('WhatsApp not enabled — message not sent', ['to' => $to]);
@@ -437,7 +450,7 @@ class WhatsAppBusinessService
         ], $messageFields);
 
         try {
-            $response = $this->client()->post("{$this->apiUrl}/{$this->phoneNumberId}/messages", $body);
+            $response = $this->client($timeoutSeconds, $retries)->post("{$this->apiUrl}/{$this->phoneNumberId}/messages", $body);
 
             if (! $response->successful()) {
                 $this->circuitBreaker->recordFailure();
@@ -480,11 +493,11 @@ class WhatsAppBusinessService
         }
     }
 
-    private function client(): PendingRequest
+    private function client(?int $timeoutSeconds = null, ?int $retries = null): PendingRequest
     {
         return Http::withToken($this->accessToken)
-            ->timeout(15)
-            ->retry(2, 500, fn (\Exception $e) => $e instanceof RequestException && $e->response?->status() >= 500);
+            ->timeout($timeoutSeconds ?? 15)
+            ->retry($retries ?? 2, 500, fn (\Exception $e) => $e instanceof RequestException && $e->response?->status() >= 500);
     }
 
     private function isMediaId(string $value): bool

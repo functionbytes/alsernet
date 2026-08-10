@@ -108,8 +108,15 @@ class ErpServiceProvider extends ServiceProvider
     {
         $webPath = module_path($this->name, 'routes/web.php');
 
-        // ERP Settings and Management routes (web)
-        Route::middleware(['web', 'auth', 'verified'])
+        // ERP Settings and Management routes (web).
+        // 'can:erp.endpoints.manage' añadido — antes solo exigía auth+verified,
+        // así que cualquier usuario autenticado (con cualquier rol) podía crear
+        // endpoints ERP con URL arbitraria y ejecutarlos desde el servidor
+        // (SSRF), generar tokens públicos para repetir esa SSRF sin sesión, y
+        // sobrescribir las credenciales de Oracle en el .env vivo. El permiso
+        // ya existía sembrado para admin/super-admin (ErpPermissionsSeeder)
+        // pero nunca se comprobaba en ninguna ruta.
+        Route::middleware(['web', 'auth', 'verified', 'can:erp.endpoints.manage'])
             ->prefix('panel/settings/erp')
             ->name('settings.erp.')
             ->group(function () use ($webPath) {

@@ -65,3 +65,30 @@ export function conversationAuthHeaders(): Record<string, string> {
 
     return token ? { 'X-Conversation-Token': token } : {};
 }
+
+/**
+ * Per-tenant token (the embedding site's website_token), same 3-level
+ * fallback already used by NewTicketScreen/TicketListScreen/livestream/webrtc.
+ */
+export function getWebsiteToken(): string {
+    return (
+        (window as any).HELPDESK_WIDGET_CONFIG?.websiteToken
+        ?? (window as any).helpdeskSettings?.websiteToken
+        ?? new URLSearchParams(window.location.search).get('website_token')
+        ?? ''
+    );
+}
+
+/**
+ * X-Website-Token header for the per-tenant throttle bucket
+ * (ThrottleByWebsiteToken) — sin él, esa cuota nunca se activaba en
+ * /messages y /typing (silenciosamente ignorada por el middleware cuando el
+ * token falta), dejando solo el límite genérico por IP. Ya se enviaba en
+ * livestream/webrtc; faltaba aquí. Empty object cuando no hay token
+ * disponible, para poder spreadearlo sin comprobar antes.
+ */
+export function websiteTokenHeaders(): Record<string, string> {
+    const token = getWebsiteToken();
+
+    return token ? { 'X-Website-Token': token } : {};
+}

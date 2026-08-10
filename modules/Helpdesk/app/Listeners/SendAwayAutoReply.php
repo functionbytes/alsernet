@@ -76,7 +76,7 @@ class SendAwayAutoReply implements ShouldQueue
         // En canales externos (WhatsApp/FB/IG) empuja por la API; en web/widget
         // devuelve null y el cliente recibe el mensaje a través del ConversationItem
         // (el widget lo recoge por su propio canal en tiempo real / polling).
-        $externalId = app(OutboundMessageService::class)->sendReply($conversation, $awayMessage);
+        $externalId = app(OutboundMessageService::class)->sendReply($conversation, $awayMessage, fast: true);
 
         ConversationItem::create([
             'conversation_id' => $conversation->id,

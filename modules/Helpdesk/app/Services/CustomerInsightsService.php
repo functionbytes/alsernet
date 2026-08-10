@@ -154,7 +154,7 @@ class CustomerInsightsService
     /**
      * Return lifetime engagement metrics for a customer.
      *
-     * @return array{conversations: int, messages: int, first_contact: ?string, last_contact: ?string, csat_avg: float, avg_response_time_seconds: int, channels_used: array<string>}
+     * @return array{conversations: int, messages: int, first_contact: ?string, last_contact: ?string, csat_avg: ?float, avg_response_time_seconds: int, channels_used: array<string>}
      */
     public function lifetimeMetrics(Customer $customer): array
     {
@@ -175,10 +175,16 @@ class CustomerInsightsService
             ->where('ci.type', 'message')
             ->count();
 
+        // null real (nunca respondió ninguna encuesta) distinto de 0.0 (un
+        // promedio real de valoraciones bajas) — bug de honestidad de datos
+        // encontrado en QA visual: al colapsar "sin datos" en 0.0 aquí, el
+        // panel "Cliente" de Tickets (vía ContactAggregatorService) mostraba
+        // el chip "CSAT 0" para clientes que nunca fueron encuestados, como
+        // si tuvieran la peor valoración posible.
         $csatAvg = CsatRating::query()
             ->where('customer_id', $customer->id)
             ->whereNotNull('answered_at')
-            ->avg('rating') ?? 0.0;
+            ->avg('rating');
 
         $avgResponseSeconds = DB::connection('helpdesk')
             ->table('helpdesk_conversations')
@@ -201,7 +207,7 @@ class CustomerInsightsService
             'messages' => $messageCount,
             'first_contact' => $convStats->first_contact ?? null,
             'last_contact' => $convStats->last_contact ?? null,
-            'csat_avg' => round((float) $csatAvg, 2),
+            'csat_avg' => $csatAvg !== null ? round((float) $csatAvg, 2) : null,
             'avg_response_time_seconds' => (int) round($avgResponseSeconds),
             'channels_used' => $channels,
         ];

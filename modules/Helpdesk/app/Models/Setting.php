@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
@@ -13,14 +14,36 @@ class Setting extends Model
     protected $fillable = ['key', 'value', 'group'];
 
     /**
+     * Ajustes prácticamente estáticos (solo cambian cuando un admin guarda un
+     * formulario de configuración) pero leídos con `get()` en el camino
+     * crítico de decenas de módulos satélite — un mensaje saliente con
+     * auto-traducción activa, por ejemplo, hacía 7-8 SELECTs a esta tabla en
+     * el mismo request sin ningún beneficio de frescura. TTL corto (5 min)
+     * como red de seguridad además de la invalidación explícita en set().
+     */
+    private const CACHE_TTL_SECONDS = 300;
+
+    /**
      * Get a setting value by key.
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        $setting = static::where('key', $key)->first();
+        $value = Cache::remember(
+            self::cacheKey($key),
+            self::CACHE_TTL_SECONDS,
+            fn () => static::where('key', $key)->value('value') ?? self::MISSING_SENTINEL,
+        );
 
-        return $setting ? $setting->value : $default;
+        return $value === self::MISSING_SENTINEL ? $default : $value;
     }
+
+    /**
+     * Sentinel distinguible de un valor real guardado como null/''/false —
+     * Cache::remember no puede diferenciar "no cacheado" de "cacheado como
+     * null" si se cachea null directamente, así que se cachea este marcador
+     * en su lugar cuando la clave no existe en BD.
+     */
+    private const MISSING_SENTINEL = '__helpdesk_setting_missing__';
 
     /**
      * Set (upsert) a setting value.
@@ -31,6 +54,13 @@ class Setting extends Model
             ['key' => $key],
             ['value' => $value, 'group' => $group]
         );
+
+        Cache::forget(self::cacheKey($key));
+    }
+
+    private static function cacheKey(string $key): string
+    {
+        return 'helpdesk:setting:'.$key;
     }
 
     /**

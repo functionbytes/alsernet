@@ -9,6 +9,7 @@
     "Erp": true,
     "Event": false,
     "Faq": false,
+    "Forms": true,
     "Helpdesk": true,
     "HelpdeskAgents": true,
     "HelpdeskAnalytics": false,

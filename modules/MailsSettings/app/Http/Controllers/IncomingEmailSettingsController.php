@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
+use Modules\MailsSettings\Support\MailsSettingsUrlGuard;
 
 class IncomingEmailSettingsController extends Controller
 {
@@ -22,6 +23,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function index(): View
     {
+        abort_unless(auth()->user()?->can('mails-settings.incoming.view'), 403);
+
         $settings = Setting::getIncomingEmailSettings();
         $pageTitle = 'Configuración de Correo Entrante';
         $breadcrumb = 'Configuración / Email / Entrante';
@@ -34,6 +37,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function updatePipe(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.incoming.update'), 403);
+
         try {
             $validated = $request->validate([
                 'pipe_enabled' => 'nullable|boolean',
@@ -60,6 +65,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function updateApi(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.incoming.update'), 403);
+
         try {
             $validated = $request->validate([
                 'api_enabled' => 'nullable|boolean',
@@ -86,6 +93,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function generateApiKey(): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.api-key.generate'), 403);
+
         try {
             $apiKey = bin2hex(random_bytes(32)); // Generate 64-char hex string
 
@@ -113,6 +122,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function updateMailgun(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.mailgun.update'), 403);
+
         try {
             $validated = $request->validate([
                 'mailgun_enabled' => 'nullable|boolean',
@@ -140,10 +151,16 @@ class IncomingEmailSettingsController extends Controller
      */
     public function storeImapConnection(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.imap.create'), 403);
+
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'host' => 'required|string',
+                'host' => ['required', 'string', function ($attribute, $value, $fail) {
+                    if (! MailsSettingsUrlGuard::isHostAllowed($value)) {
+                        $fail('El servidor IMAP no está permitido (apunta a una IP interna/reservada no válida).');
+                    }
+                }],
                 'port' => 'required|integer|min:1|max:65535',
                 'username' => 'required|string',
                 'password' => 'required|string',
@@ -165,7 +182,7 @@ class IncomingEmailSettingsController extends Controller
             $connections[] = $validated;
 
             // Save
-            Setting::set('incoming_email', json_encode([
+            Setting::setEncrypted('incoming_email', json_encode([
                 'imap' => [
                     'connections' => $connections,
                 ],
@@ -191,6 +208,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function deleteImapConnection(string $id): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.imap.delete'), 403);
+
         try {
             $settings = Setting::getIncomingEmailSettings();
             $connections = $settings['imap']['connections'] ?? [];
@@ -202,7 +221,7 @@ class IncomingEmailSettingsController extends Controller
             $connections = array_values($connections);
 
             // Save
-            Setting::set('incoming_email', json_encode([
+            Setting::setEncrypted('incoming_email', json_encode([
                 'imap' => [
                     'connections' => $connections,
                 ],
@@ -228,6 +247,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function testImapConnection(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.imap.test'), 403);
+
         try {
             $validated = $request->validate([
                 'host' => 'required|string',
@@ -241,6 +262,16 @@ class IncomingEmailSettingsController extends Controller
             $host = $validated['host'];
             $port = (int) $validated['port'];
             $timeout = 10;
+
+            // host/puerto vienen directos del request — sin este guard, cualquier
+            // autorizado podía usar este endpoint como oráculo connect/refuse
+            // (escaneo de puertos internos, SSRF hacia 169.254.169.254, etc.)
+            if (! MailsSettingsUrlGuard::isHostAllowed($host)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El servidor IMAP no está permitido.',
+                ], 422);
+            }
 
             $startTime = microtime(true);
             $connection = @fsockopen($host, $port, $errno, $errstr, $timeout);
@@ -283,6 +314,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function apiDocumentation(): View
     {
+        abort_unless(auth()->user()?->can('mails-settings.api-docs.view'), 403);
+
         $pageTitle = 'Documentación REST API - Incoming Email';
         $breadcrumb = 'Configuración / Email / Entrante / Documentación API';
 
@@ -294,6 +327,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function updateGmail(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.gmail.connect'), 403);
+
         try {
             $validated = $request->validate([
                 'gmail_enabled' => 'nullable|boolean',
@@ -322,6 +357,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function gmailAuthorize(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.gmail.connect'), 403);
+
         try {
             $settings = Setting::getIncomingEmailSettings();
             $gmailSettings = $settings['gmail'] ?? [];
@@ -358,6 +395,10 @@ class IncomingEmailSettingsController extends Controller
      */
     public function gmailCallback(Request $request): RedirectResponse
     {
+        // Misma sesión autenticada que inició gmailAuthorize() — Google redirige
+        // aquí al navegador del propio usuario, no llega de servidor a servidor.
+        abort_unless(auth()->user()?->can('mails-settings.gmail.connect'), 403);
+
         try {
             $code = $request->input('code');
 
@@ -400,7 +441,7 @@ class IncomingEmailSettingsController extends Controller
             $connections[] = $connection;
 
             // Save
-            Setting::set('incoming_email', json_encode([
+            Setting::setEncrypted('incoming_email', json_encode([
                 'gmail' => array_merge($gmailSettings, ['connections' => $connections]),
                 'imap' => $settings['imap'] ?? ['connections' => []],
                 'pipe' => $settings['pipe'] ?? ['enabled' => false],
@@ -425,6 +466,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function deleteGmailConnection(string $id): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.gmail.disconnect'), 403);
+
         try {
             $settings = Setting::getIncomingEmailSettings();
             $connections = $settings['gmail']['connections'] ?? [];
@@ -437,7 +480,7 @@ class IncomingEmailSettingsController extends Controller
 
             // Save
             $gmailSettings = $settings['gmail'] ?? [];
-            Setting::set('incoming_email', json_encode([
+            Setting::setEncrypted('incoming_email', json_encode([
                 'gmail' => array_merge($gmailSettings, ['connections' => $connections]),
                 'imap' => $settings['imap'] ?? ['connections' => []],
                 'pipe' => $settings['pipe'] ?? ['enabled' => false],
@@ -463,10 +506,16 @@ class IncomingEmailSettingsController extends Controller
      */
     public function updatePhplist(Request $request): RedirectResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.phplist.update'), 403);
+
         try {
             $validated = $request->validate([
                 'phplist_enabled' => 'nullable|boolean',
-                'phplist_api_url' => 'nullable|string|url',
+                'phplist_api_url' => ['nullable', 'string', 'url', function ($attribute, $value, $fail) {
+                    if ($value && ! MailsSettingsUrlGuard::isUrlAllowed($value)) {
+                        $fail('La URL de phpList no está permitida (apunta a una IP interna/reservada no válida).');
+                    }
+                }],
                 'phplist_api_key' => 'nullable|string',
                 'phplist_default_list' => 'nullable|integer',
             ]);
@@ -491,11 +540,22 @@ class IncomingEmailSettingsController extends Controller
      */
     public function testPhplistConnection(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.phplist.test'), 403);
+
         try {
             $validated = $request->validate([
                 'api_url' => 'required|string|url',
                 'api_key' => 'required|string',
             ]);
+
+            // api_url viene directo del request — sin este guard es un SSRF con
+            // reflexión de la respuesta (se devuelve el body al llamador más abajo).
+            if (! MailsSettingsUrlGuard::isUrlAllowed($validated['api_url'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La URL de phpList no está permitida.',
+                ], 422);
+            }
 
             $client = new GuzzleClient;
 
@@ -552,6 +612,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function getPhplistLists(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.phplist.test'), 403);
+
         try {
             $settings = Setting::getIncomingEmailSettings();
             $phplistSettings = $settings['phplist'] ?? [];
@@ -561,6 +623,16 @@ class IncomingEmailSettingsController extends Controller
                     'success' => false,
                     'message' => 'Configure primero la URL y API Key de phpList',
                 ], 400);
+            }
+
+            // Defensa en profundidad: la URL ya se valida al guardar (updatePhplist()),
+            // pero una fila guardada antes de ese fix podría seguir siendo peligrosa —
+            // este endpoint además refleja la respuesta cruda al llamador.
+            if (! MailsSettingsUrlGuard::isUrlAllowed($phplistSettings['api_url'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La URL de phpList configurada no está permitida.',
+                ], 422);
             }
 
             $client = new GuzzleClient;
@@ -596,6 +668,8 @@ class IncomingEmailSettingsController extends Controller
      */
     public function phplistSubscribe(Request $request): JsonResponse
     {
+        abort_unless(auth()->user()?->can('mails-settings.phplist.update'), 403);
+
         try {
             $validated = $request->validate([
                 'email' => 'required|email',
@@ -611,6 +685,13 @@ class IncomingEmailSettingsController extends Controller
                     'success' => false,
                     'message' => 'Configure primero la URL y API Key de phpList',
                 ], 400);
+            }
+
+            if (! MailsSettingsUrlGuard::isUrlAllowed($phplistSettings['api_url'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La URL de phpList configurada no está permitida.',
+                ], 422);
             }
 
             $client = new GuzzleClient;

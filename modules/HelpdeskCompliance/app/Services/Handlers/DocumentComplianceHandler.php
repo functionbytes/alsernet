@@ -47,6 +47,7 @@ class DocumentComplianceHandler
         $mediaFiles = 0;
 
         Document::query()
+            ->with('media')
             ->where(function ($query) use ($email, $normalizedPhones): void {
                 if ($email !== '') {
                     // customer_email es case-insensitive (utf8mb4_unicode_ci) e
@@ -58,9 +59,13 @@ class DocumentComplianceHandler
                     $query->orWhereIn('customer_cellphone_normalized', $normalizedPhones);
                 }
             })
+            // ->with('media') precarga la relación una vez por lote de 100 en
+            // vez de 2 queries por documento (count()+get()) — con un cliente
+            // de muchos expedientes esto se acercaba al timeout del job
+            // (ProcessComplianceCascadeJob, 120s).
             ->chunkById(100, function ($chunk) use (&$documents, &$mediaFiles, $hard): void {
                 foreach ($chunk as $document) {
-                    $mediaFiles += $document->media()->count();
+                    $mediaFiles += $document->media->count();
 
                     if ($hard) {
                         // delete() dispara el hook de InteractsWithMedia que borra
@@ -69,7 +74,7 @@ class DocumentComplianceHandler
                     } else {
                         // Borra TODOS los adjuntos (colecciones 'documents',
                         // 'additional_attachments' y cualquier otra): son PII.
-                        foreach ($document->media()->get() as $media) {
+                        foreach ($document->media as $media) {
                             $media->delete();
                         }
 

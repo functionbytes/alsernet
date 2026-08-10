@@ -3,8 +3,10 @@
 namespace Modules\HelpdeskIntegration\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Modules\HelpdeskIntegration\Database\Factories\IntegrationProviderFactory;
 
 /**
@@ -47,6 +49,31 @@ class IntegrationProvider extends Model
             'config' => 'array',
             'sort_order' => 'integer',
         ];
+    }
+
+    private const CACHE_KEY = 'helpdeskintegration:providers:all';
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget(self::CACHE_KEY));
+        static::deleted(fn () => Cache::forget(self::CACHE_KEY));
+    }
+
+    /**
+     * Catálogo completo ordenado (mismo criterio que usaban por separado
+     * CustomerIntegrationService::buildPayload() y el panel derecho del
+     * inbox), cacheado sin TTL — tabla de tamaño fijo (~5-15 filas) que solo
+     * cambia cuando un admin guarda algo en Settings → Integraciones, y se
+     * invalida explícitamente arriba (saved/deleted) en vez de expirar sola.
+     * Antes se re-consultaba por SQL en cada apertura/cambio de conversación
+     * del inbox, sin ningún beneficio de frescura.
+     */
+    public static function allCached(): Collection
+    {
+        return Cache::rememberForever(
+            self::CACHE_KEY,
+            fn () => static::query()->orderBy('sort_order')->get(),
+        );
     }
 
     public function isNative(): bool

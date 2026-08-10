@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
@@ -48,7 +49,10 @@ class TicketLifecycleController extends Controller
             }
         }
 
-        $ticket->close();
+        // reason: key de close_reasons, o el texto libre del campo "Otro
+        // motivo" del modal — se recorta a 100 (columna string(100)) para no
+        // reventar en modo estricto si alguien pega texto largo.
+        $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -58,8 +62,11 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
+        // Esta rama solo la usa el form clásico de la ficha completa (el panel
+        // superpuesto de /tickets pasa por la rama JSON de arriba vía
+        // execQuickAction) — se vuelve a la ficha completa, no al listado.
         return redirect()
-            ->route('manager.helpdesk.tickets.show', $ticket)
+            ->route('manager.helpdesk.tickets.show-full', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_closed'));
     }
 
@@ -79,8 +86,9 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
+        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
         return redirect()
-            ->route('manager.helpdesk.tickets.show', $ticket)
+            ->route('manager.helpdesk.tickets.show-full', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_resolved'));
     }
 
@@ -98,8 +106,9 @@ class TicketLifecycleController extends Controller
             ]);
         }
 
+        // Ver comentario en close(): solo la usa el form clásico de la ficha completa.
         return redirect()
-            ->route('manager.helpdesk.tickets.show', $ticket)
+            ->route('manager.helpdesk.tickets.show-full', $ticket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_reopened'));
     }
 
@@ -190,24 +199,39 @@ class TicketLifecycleController extends Controller
             $ticket->delete();
         });
 
-        return redirect()->route('manager.helpdesk.tickets.show', $targetTicket)
+        // merge() solo se dispara desde el form de la ficha completa.
+        return redirect()->route('manager.helpdesk.tickets.show-full', $targetTicket)
             ->with('success', __('helpdesktickets::helpdesktickets.messages.ticket_merged', ['source' => $ticket->ticket_number, 'target' => $targetTicket->ticket_number]));
     }
 
-    public function watch(Ticket $ticket): JsonResponse
+    public function watch(Request $request, Ticket $ticket): JsonResponse
     {
         $this->authorize('watch', $ticket);
 
-        TicketWatcher::addWatcher($ticket->id, auth()->id());
+        // Por defecto uno se auto-sigue; añadir a OTRO compañero (modal
+        // "Seguidores" del panel Gestión) exige permiso de gestión del
+        // ticket, igual que asignar o vincular — TicketWatcher::addWatcher()
+        // ya aceptaba cualquier user_id, solo faltaba el punto de entrada.
+        $userId = $request->integer('user_id') ?: auth()->id();
+        if ($userId !== auth()->id()) {
+            $this->authorize('update', $ticket);
+        }
+
+        TicketWatcher::addWatcher($ticket->id, $userId);
 
         return response()->json(['watching' => true, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_watched')]);
     }
 
-    public function unwatch(Ticket $ticket): JsonResponse
+    public function unwatch(Request $request, Ticket $ticket): JsonResponse
     {
         $this->authorize('watch', $ticket);
 
-        TicketWatcher::removeWatcher($ticket->id, auth()->id());
+        $userId = $request->integer('user_id') ?: auth()->id();
+        if ($userId !== auth()->id()) {
+            $this->authorize('update', $ticket);
+        }
+
+        TicketWatcher::removeWatcher($ticket->id, $userId);
 
         return response()->json(['watching' => false, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_unwatched')]);
     }

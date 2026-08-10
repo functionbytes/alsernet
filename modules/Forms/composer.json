@@ -1,0 +1,15 @@
+{
+    "name": "inoqualab/forms",
+    "description": "Recibe los formularios del sitio Alvarez (alsernetforms) como tickets de Helpdesk.",
+    "type": "laravel-module",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Forms\\": "app/",
+            "Modules\\Forms\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Forms\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "nwidart/laravel-modules": "^12.0"
+    }
+}

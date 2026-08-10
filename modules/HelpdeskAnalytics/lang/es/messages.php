@@ -36,4 +36,7 @@ return [
     'tickets_resolution_avg' => 'Resolución (media)',
     'tickets_by_priority' => 'Tickets por prioridad',
     'priority' => 'Prioridad',
+    'agent_tickets_closed' => 'Tickets cerr.',
+    'agent_tickets_frt' => '1ª resp. (tickets)',
+    'agent_tickets_resolution' => 'Resolución (tickets)',
 ];

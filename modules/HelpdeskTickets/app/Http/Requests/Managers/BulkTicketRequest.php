@@ -8,7 +8,10 @@ class BulkTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.tickets.manage') ?? false;
+        // La autorización real es por ticket y por acción en el controlador
+        // (viewAny + policy específica de cada acción para cada ticket
+        // seleccionado), igual que BulkReplyTicketRequest.
+        return $this->user() !== null;
     }
 
     public function rules(): array
@@ -16,7 +19,7 @@ class BulkTicketRequest extends FormRequest
         return [
             'ticket_ids' => ['required', 'array', 'min:1', 'max:100'],
             'ticket_ids.*' => ['integer'],
-            'action' => ['required', 'string', 'in:assign,close,reopen,change_status,delete,add_tag,assign_group'],
+            'action' => ['required', 'string', 'in:assign,close,resolve,reopen,change_status,delete,add_tag,assign_group'],
             'agent_id' => ['required_if:action,assign', 'nullable', 'integer', 'exists:users,id'],
             'status_id' => ['required_if:action,change_status', 'nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_statuses,id'],
             'group_id' => ['required_if:action,assign_group', 'nullable', 'integer', 'exists:helpdesk.helpdesk_groups,id'],

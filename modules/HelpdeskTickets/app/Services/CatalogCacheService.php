@@ -39,15 +39,29 @@ class CatalogCacheService
     }
 
     /**
-     * Available + verified users shown as assignable agents in the tickets
-     * CRUD (index/create/edit/show). Cached briefly to avoid re-querying on
-     * every request.
+     * Usuarios asignables como agente en el CRUD de tickets (index/create/
+     * edit/show/filtro). Cacheado brevemente para no re-consultar en cada
+     * request.
+     *
+     * Bug real encontrado en QA visual (ago-2026), en dos partes:
+     * 1) el filtro solo exigía available+verified, sin exigir el rol
+     *    helpdesk-agent — en un sistema con ~1000 usuarios (fixtures de
+     *    otros módulos) el selector "Agente" mostraba prácticamente a todo
+     *    el mundo en vez de a los agentes reales del equipo (limpiados de
+     *    la base de datos aparte). Mismo criterio de rol que ya usa
+     *    AssignmentService::getAvailableAgents().
+     * 2) el propio requisito verified=true dejaba la lista VACÍA: las
+     *    cuentas de agentes reales se crean directamente (no vía registro
+     *    público con verificación de email) y tienen verified=0. Ninguna
+     *    otra fuente de "quién es agente" de este módulo (AssignmentService,
+     *    ConversationInboxMetricsService::agentWorkload() en Conversaciones)
+     *    exige verified — se retira aquí para la misma consistencia.
      */
     public static function agents(): Collection
     {
         return Cache::remember('helpdesk:catalogs:agents', self::AGENTS_TTL, fn () => User::select(['id', 'firstname', 'lastname', 'email'])
+            ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
             ->where('available', true)
-            ->where('verified', true)
             ->orderBy('firstname')
             ->get());
     }

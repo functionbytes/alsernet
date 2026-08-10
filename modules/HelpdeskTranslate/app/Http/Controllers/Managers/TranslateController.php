@@ -16,7 +16,7 @@ class TranslateController
         $data = $request->validated();
         $from = $data['from'] ?? 'auto';
 
-        $this->enforceDailyCharacterQuota($request, mb_strlen($data['text']));
+        $this->enforceDailyCharacterQuota($translator);
 
         $translated = $translator->translate(
             text: $data['text'],

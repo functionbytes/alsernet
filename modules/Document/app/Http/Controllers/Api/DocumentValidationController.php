@@ -16,6 +16,7 @@ use Modules\Document\Services\DocumentActionService;
 use Modules\Document\Services\DocumentEmailService;
 use Modules\Document\Services\DocumentTypeService;
 use Modules\Document\Traits\SendsDocumentEmails;
+use Modules\Mailer\Models\MailerTemplate;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
@@ -235,7 +236,7 @@ class DocumentValidationController extends Controller
             $request,
             $uid,
             fn ($doc, $adminId) => $this->emailService->sendApprovalEmail($doc, $adminId)
-        // Sin verificación de autorización
+            // Sin verificación de autorización
         );
     }
 
@@ -258,7 +259,7 @@ class DocumentValidationController extends Controller
                 $validated['rejected_docs'] ?? [],
                 $adminId
             )
-        // Sin verificación de autorización
+            // Sin verificación de autorización
         );
     }
 
@@ -404,6 +405,7 @@ class DocumentValidationController extends Controller
         // $this->authorize('view', $document);
 
         $emails = $document->mails()
+            ->with('emailLog')
             ->orderBy('sent_at', 'desc')
             ->get();
 
@@ -577,6 +579,7 @@ class DocumentValidationController extends Controller
         // $this->authorize('view', $document);
 
         $emails = $document->mails()
+            ->with('emailLog')
             ->orderBy('sent_at', 'desc')
             ->get();
 
@@ -658,7 +661,7 @@ class DocumentValidationController extends Controller
      */
     public function getCustomEmailTemplate(): JsonResponse
     {
-        $template = \Modules\Mailer\Models\MailerTemplate::where('key', 'custom_document')->first();
+        $template = MailerTemplate::where('key', 'custom_document')->first();
 
         if (! $template) {
             return response()->json([
@@ -1081,14 +1084,14 @@ class DocumentValidationController extends Controller
             if (! $response->successful()) {
                 Log::warning('ERP documentacion-ok respondió con error', [
                     'order_id' => $orderId,
-                    'status'   => $response->status(),
-                    'body'     => $response->body(),
+                    'status' => $response->status(),
+                    'body' => $response->body(),
                 ]);
             }
         } catch (\Exception $e) {
             Log::error('Error al notificar ERP documentacion-ok', [
                 'order_id' => $orderId,
-                'error'    => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

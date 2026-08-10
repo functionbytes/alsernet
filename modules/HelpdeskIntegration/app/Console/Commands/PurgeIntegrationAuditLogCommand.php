@@ -38,7 +38,16 @@ class PurgeIntegrationAuditLogCommand extends Command
             return self::SUCCESS;
         }
 
-        $deleted = $query->delete();
+        // Borrado en lotes (DELETE ... LIMIT), no una sola sentencia masiva:
+        // con retención de 180 días y alto volumen (cada link/unlink/sync/
+        // verificación de identidad crea una fila), un DELETE de cientos de
+        // miles de filas de una vez bloquearía la tabla y con ella el INSERT
+        // de auditoría concurrente que dispara cada acción de un agente.
+        $deleted = 0;
+        do {
+            $affected = IntegrationAuditLog::query()->olderThan($days)->limit(1000)->delete();
+            $deleted += $affected;
+        } while ($affected > 0);
 
         $this->info("Eliminadas {$deleted} entradas de auditoría anteriores a {$days} días.");
 

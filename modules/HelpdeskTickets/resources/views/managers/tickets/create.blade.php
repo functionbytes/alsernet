@@ -15,11 +15,11 @@
             <form action="{{ route('manager.helpdesk.tickets.store') }}" method="POST" enctype="multipart/form-data" id="ticketForm">
                 @csrf
 
-                {{-- Informacion del ticket --}}
+                {{-- Información del ticket --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Informacion del ticket</h5>
-                        <small class="text-muted">Asunto y descripcion inicial del ticket</small>
+                        <h5 class="mb-0 fw-bold">Información del ticket</h5>
+                        <small class="text-muted">Asunto y descripción inicial del ticket</small>
                     </div>
                     <div class="card-body">
                         @include('core::components.alerts')
@@ -30,7 +30,7 @@
                                 <input type="text" name="subject"
                                        class="form-control @error('subject') is-invalid @enderror"
                                        value="{{ old('subject') }}"
-                                       placeholder="Breve descripcion del problema"
+                                       placeholder="Breve descripción del problema"
                                        required>
                                 @error('subject')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -39,7 +39,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripcion <span class="text-danger">*</span></label>
+                                <label class="form-label">Descripción <span class="text-danger">*</span></label>
                                 <textarea name="description" rows="8"
                                           class="form-control @error('description') is-invalid @enderror"
                                           placeholder="Describa el problema en detalle..."
@@ -53,7 +53,7 @@
                                 <label class="form-label">Archivos adjuntos</label>
                                 <input type="file" name="attachments[]" class="form-control" multiple
                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.zip,.rar">
-                                <small class="text-muted">Maximo 10MB por archivo. Formatos: PDF, DOC, DOCX, XLS, XLSX, imagenes, ZIP, RAR</small>
+                                <small class="text-muted">Máximo 10MB por archivo. Formatos: PDF, DOC, DOCX, XLS, XLSX, imágenes, ZIP, RAR</small>
                             </div>
 
                             {{-- Dynamic custom fields injected here --}}
@@ -62,21 +62,21 @@
                     </div>
                 </div>
 
-                {{-- Clasificacion --}}
+                {{-- Clasificación --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Clasificacion</h5>
-                        <small class="text-muted">Estado, prioridad, categoria y SLA aplicable</small>
+                        <h5 class="mb-0 fw-bold">Clasificación</h5>
+                        <small class="text-muted">Estado, prioridad, categoría y SLA aplicable</small>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                                <label class="form-label">Categoría <span class="text-danger">*</span></label>
                                 <select name="category_id"
                                         class="form-select @error('category_id') is-invalid @enderror"
                                         required
                                         id="categorySelect">
-                                    <option value="">Seleccione una categoria...</option>
+                                    <option value="">Seleccione una categoría...</option>
                                     @foreach($categories as $category)
                                         <option value="{{ $category->id }}"
                                                 data-fields="{{ json_encode($category->custom_form_fields ?? []) }}"
@@ -95,7 +95,11 @@
                                 <label class="form-label">Prioridad <span class="text-danger">*</span></label>
                                 <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                     <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Baja</option>
-                                    <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Media</option>
+                                    {{-- value="normal": StoreTicketRequest valida in:low,normal,high,urgent —
+                                         bug real encontrado en QA (ago-2026), esta opción usaba "medium" y
+                                         el formulario rechazaba CUALQUIER creación que dejara la prioridad
+                                         por defecto sin tocar ("priority es inválido"). --}}
+                                    <option value="normal" {{ old('priority', 'normal') == 'normal' ? 'selected' : '' }}>Media</option>
                                     <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>Alta</option>
                                     <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgente</option>
                                 </select>
@@ -117,25 +121,25 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Politica SLA</label>
+                                <label class="form-label">Política SLA</label>
                                 <select name="sla_policy_id" class="form-select">
-                                    <option value="">Por defecto (de la categoria)</option>
+                                    <option value="">Por defecto (de la categoría)</option>
                                     @foreach($slaPolicies as $policy)
                                         <option value="{{ $policy->id }}" {{ old('sla_policy_id') == $policy->id ? 'selected' : '' }}>
                                             {{ $policy->name }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="text-muted">Si no selecciona, se usara la politica de la categoria</small>
+                                <small class="text-muted">Si no selecciona, se usará la política de la categoría</small>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Asignacion --}}
+                {{-- Asignación --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Asignacion</h5>
+                        <h5 class="mb-0 fw-bold">Asignación</h5>
                         <small class="text-muted">Cliente y agente asignado</small>
                     </div>
                     <div class="card-body">
@@ -153,7 +157,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="text-muted">El cliente recibira notificaciones sobre este ticket</small>
+                                <small class="text-muted">El cliente recibirá notificaciones sobre este ticket</small>
                                 @error('customer_id')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                 @enderror
@@ -186,10 +190,10 @@
                     </div>
                 </div>
 
-                {{-- Configuracion --}}
+                {{-- Configuración --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Configuracion</h5>
+                        <h5 class="mb-0 fw-bold">Configuración</h5>
                         <small class="text-muted">Visibilidad y opciones adicionales</small>
                     </div>
                     <div class="card-body">
@@ -225,10 +229,10 @@
                 </div>
                 <hr class="my-0">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas practicas</h6>
+                    <h6 class="card-title mb-3">Buenas prácticas</h6>
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa un asunto claro y descriptivo</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Selecciona la categoria correcta para aplicar el SLA adecuado</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Selecciona la categoría correcta para aplicar el SLA adecuado</li>
                         <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna al agente responsable desde el inicio</li>
                         <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Adjunta capturas o documentos relevantes</li>
                     </ul>
@@ -347,7 +351,7 @@ $(document).ready(function () {
                 const $alert = $('<div class="alert alert-info p-2 mb-0">').append(
                     $('<strong class="small">').append(
                         $('<i class="fas fa-lightbulb me-1">'),
-                        document.createTextNode(' ¿Esto podria resolverlo?')
+                        document.createTextNode(' ¿Esto podría resolverlo?')
                     ),
                     $list
                 );

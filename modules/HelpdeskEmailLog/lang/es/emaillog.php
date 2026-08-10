@@ -111,6 +111,8 @@ return [
         'queued' => 'En cola',
         'sent' => 'Enviado',
         'failed' => 'Fallido',
+        'bounced' => 'Rebotado',
+        'complained' => 'Marcado como spam',
     ],
 
     'preview' => [

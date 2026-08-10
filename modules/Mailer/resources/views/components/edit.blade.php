@@ -478,8 +478,12 @@ $(document).ready(function() {
                     const $containerTab = $('#previewContainerTab');
                     const height = isPreviewExpanded ? '800px' : '400px';
 
-                    const $iframe = $('<iframe>').css({ 'width': '100%', 'min-height': height, 'border': 'none', 'display': 'block', 'background': 'white' });
-                    const $iframeTab = $('<iframe>').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'min-height': '500px' });
+                    // sandbox="allow-same-origin" (sin allow-scripts): sin esto, un <script>
+                    // en el HTML del componente se ejecuta con el origen del panel (srcdoc
+                    // sin sandbox hereda el origen del padre) — mismo tratamiento que ya
+                    // llevan las páginas de preview estáticas (components/preview.blade.php).
+                    const $iframe = $('<iframe>').attr('sandbox', 'allow-same-origin').css({ 'width': '100%', 'min-height': height, 'border': 'none', 'display': 'block', 'background': 'white' });
+                    const $iframeTab = $('<iframe>').attr('sandbox', 'allow-same-origin').css({ 'width': '100%', 'border': 'none', 'display': 'block', 'background': 'white', 'min-height': '500px' });
 
                     $container.empty().append($iframe);
                     $containerTab.empty().append($iframeTab);
