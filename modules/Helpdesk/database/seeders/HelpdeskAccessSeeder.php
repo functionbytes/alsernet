@@ -61,6 +61,17 @@ class HelpdeskAccessSeeder extends Seeder
         'modules.view.contacts',
         'contacts.view',
         'contacts.insights',
+        // Sin esto la búsqueda externa ERP/PrestaShop (modal "CLIENTE ·
+        // BÚSQUEDA EXTERNA") se puede ver pero no crear/vincular el
+        // resultado, y tampoco se puede enviar plantilla HSM a un contacto.
+        'contacts.update',
+        // Import/sync de plantillas WhatsApp desde Meta y envío de HSM.
+        'helpdesk.whatsapp-templates.view',
+        'helpdesk.whatsapp-templates.manage',
+        // Confirmar vínculo en el modal "CLIENTE · IDENTIDAD" (LinkCustomerIntegrationRequest::authorize).
+        // syncPermissions() pisa cualquier givePermissionTo externo (ej. el
+        // backfill de HelpdeskIntegrationPermissionsSeeder) si no está acá.
+        'helpdesk.integrations.manage',
     ];
 
     public function run(): void
