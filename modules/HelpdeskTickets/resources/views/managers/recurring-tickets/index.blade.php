@@ -64,7 +64,7 @@
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Proximos</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['upcoming']) }}</h4>
-                                <small class="text-muted">Con proxima ejecucion futura</small>
+                                <small class="text-muted">Con próxima ejecución futura</small>
                             </div>
                         </div>
                     </div>
@@ -81,7 +81,7 @@
                                     <th>Nombre</th>
                                     <th>Asunto</th>
                                     <th>Frecuencia</th>
-                                    <th>Proxima ejecucion</th>
+                                    <th>Próxima ejecución</th>
                                     <th class="text-center">Estado</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>

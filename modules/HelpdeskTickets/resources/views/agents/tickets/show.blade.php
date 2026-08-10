@@ -45,7 +45,7 @@
                         @endif
                         <small class="text-muted ms-auto">{{ $item->created_at?->diffForHumans() }}</small>
                     </div>
-                    <div>{!! clean_html($item->html_body) ?: nl2br(e($item->body)) !!}</div>
+                    <div>{!! $item->html_body ? $item->safeHtmlBody() : nl2br(e($item->body)) !!}</div>
                 </div>
             </div>
             @endforeach

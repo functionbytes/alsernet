@@ -310,6 +310,23 @@ class TicketItem extends Model
     }
 
     /**
+     * html_body de un item de tipo "message" puede venir de un correo
+     * ENTRANTE (controlado por quien escriba al ticket) — bug de seguridad
+     * real encontrado en QA (ago-2026): agents/tickets/show.blade.php
+     * llamaba a clean_html($item->html_body), una función global que no
+     * está cargada (no figura en composer.json autoload.files pese al
+     * comentario que dice lo contrario — confirmado con function_exists()),
+     * así que la vista clásica del agente reventaba con "Call to undefined
+     * function clean_html()" en cualquier ticket con html_body real. Se
+     * reutiliza el mismo purificador ya centralizado en TicketMail (mismo
+     * origen de riesgo: HTML de un correo entrante).
+     */
+    public function safeHtmlBody(): string
+    {
+        return TicketMail::purifyHtml($this->html_body);
+    }
+
+    /**
      * Check if message has attachments
      */
     public function hasAttachments(): bool

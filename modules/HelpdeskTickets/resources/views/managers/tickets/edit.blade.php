@@ -23,18 +23,18 @@
                 @csrf
                 @method('PUT')
 
-                {{-- Informacion del ticket --}}
+                {{-- Información del ticket --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Informacion del ticket</h5>
-                        <small class="text-muted">Asunto y descripcion inicial del ticket</small>
+                        <h5 class="mb-0 fw-bold">Información del ticket</h5>
+                        <small class="text-muted">Asunto y descripción inicial del ticket</small>
                     </div>
                     <div class="card-body">
                         @include('core::components.alerts')
 
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Numero de ticket</label>
+                                <label class="form-label">Número de ticket</label>
                                 <input type="text" class="form-control" value="{{ $ticket->ticket_number }}" disabled>
                             </div>
 
@@ -59,7 +59,7 @@
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label">Descripcion <span class="text-danger">*</span></label>
+                                <label class="form-label">Descripción <span class="text-danger">*</span></label>
                                 @if($ticket->isClosed())
                                     <textarea class="form-control" rows="6" disabled>{{ $ticket->description }}</textarea>
                                 @else
@@ -78,18 +78,18 @@
                     </div>
                 </div>
 
-                {{-- Clasificacion --}}
+                {{-- Clasificación --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Clasificacion</h5>
-                        <small class="text-muted">Estado, prioridad, categoria y SLA aplicable</small>
+                        <h5 class="mb-0 fw-bold">Clasificación</h5>
+                        <small class="text-muted">Estado, prioridad, categoría y SLA aplicable</small>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Categoria <span class="text-danger">*</span></label>
+                                <label class="form-label">Categoría <span class="text-danger">*</span></label>
                                 @if($ticket->isClosed())
-                                    <input type="text" class="form-control" value="{{ $ticket->category?->name ?? "Sin categoria" }}" disabled>
+                                    <input type="text" class="form-control" value="{{ $ticket->category?->name ?? "Sin categoría" }}" disabled>
                                 @else
                                     <select name="category_id"
                                             class="form-select @error('category_id') is-invalid @enderror"
@@ -117,7 +117,12 @@
                                 @else
                                     <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                         <option value="low" {{ old('priority', $ticket->priority) == 'low' ? 'selected' : '' }}>Baja</option>
-                                        <option value="medium" {{ old('priority', $ticket->priority) == 'medium' ? 'selected' : '' }}>Media</option>
+                                        {{-- value="normal": mismo bug real que create.blade.php — "medium" no
+                                             coincide ni con el valor validado (in:low,normal,high,urgent) ni
+                                             con el que de verdad guarda un ticket con prioridad normal, así
+                                             que este option ni se marcaba seleccionado al editar ni pasaba
+                                             la validación al guardar. --}}
+                                        <option value="normal" {{ old('priority', $ticket->priority) == 'normal' ? 'selected' : '' }}>Media</option>
                                         <option value="high" {{ old('priority', $ticket->priority) == 'high' ? 'selected' : '' }}>Alta</option>
                                         <option value="urgent" {{ old('priority', $ticket->priority) == 'urgent' ? 'selected' : '' }}>Urgente</option>
                                     </select>
@@ -142,9 +147,9 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Politica SLA</label>
+                                <label class="form-label">Política SLA</label>
                                 <select name="sla_policy_id" class="form-select">
-                                    <option value="">Sin politica SLA</option>
+                                    <option value="">Sin política SLA</option>
                                     @foreach($slaPolicies as $policy)
                                         <option value="{{ $policy->id }}" {{ old('sla_policy_id', $ticket->sla_policy_id) == $policy->id ? 'selected' : '' }}>
                                             {{ $policy->name }}
@@ -156,10 +161,10 @@
                     </div>
                 </div>
 
-                {{-- Asignacion --}}
+                {{-- Asignación --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Asignacion</h5>
+                        <h5 class="mb-0 fw-bold">Asignación</h5>
                         <small class="text-muted">Cliente y agente asignado</small>
                     </div>
                     <div class="card-body">
@@ -191,10 +196,10 @@
                     </div>
                 </div>
 
-                {{-- Configuracion --}}
+                {{-- Configuración --}}
                 <div class="card mb-3">
                     <div class="card-header border-bottom p-3">
-                        <h5 class="mb-0 fw-bold">Configuracion</h5>
+                        <h5 class="mb-0 fw-bold">Configuración</h5>
                         <small class="text-muted">Visibilidad y opciones adicionales</small>
                     </div>
                     <div class="card-body">
@@ -260,12 +265,12 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre la edicion</h6>
+                    <h6 class="card-title mb-3">Sobre la edición</h6>
                     <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> El cliente recibira notificacion si cambias el estado</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> Cambiar categoria puede alterar el SLA aplicable</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> El cliente recibirá notificación si cambias el estado</li>
+                        <li class="mb-2 text-muted small"><i class="fas fa-info-circle text-primary me-2"></i> Cambiar categoría puede alterar el SLA aplicable</li>
                         @if($ticket->isClosed())
-                            <li class="text-muted small"><i class="fas fa-lock text-warning me-2"></i> Ticket cerrado: algunos campos estan bloqueados</li>
+                            <li class="text-muted small"><i class="fas fa-lock text-warning me-2"></i> Ticket cerrado: algunos campos están bloqueados</li>
                         @endif
                     </ul>
                 </div>

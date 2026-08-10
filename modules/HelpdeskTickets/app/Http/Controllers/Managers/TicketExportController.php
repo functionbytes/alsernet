@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Modules\Helpdesk\Filters\TicketFilter;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -18,14 +19,13 @@ class TicketExportController extends Controller
             ->with(['customer', 'status', 'category', 'assignee'])
             ->latest();
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(fn ($q) => $q
-                ->where('subject', 'like', "%{$search}%")
-                ->orWhere('description', 'like', "%{$search}%")
-                ->orWhere('ticket_number', 'like', "%{$search}%")
-            );
-        }
+        // Antes solo aplicaba "search" — el botón "Exportar" del listado
+        // pasaba el querystring completo (origen/categoría/agente/
+        // prioridad) creyendo que se respetaba, y en realidad se exportaban
+        // los 1000 tickets más recientes sin filtrar. Mismo TicketFilter que
+        // usa TicketsCrudController::index(), para que "exportar" exporte
+        // de verdad lo que se está viendo.
+        (new TicketFilter($request))->apply($query);
 
         $tickets = $query->take(1000)->cursor();
 

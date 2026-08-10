@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Database\Factories\TicketStatusFactory;
 
 class TicketStatus extends Model
@@ -24,13 +25,17 @@ class TicketStatus extends Model
 
     protected $fillable = [
         'name',
+        'key',
         'slug',
         'color',
+        'icon',
         'description',
         'order',
+        'position',
         'is_default',
         'is_system',
         'is_open',
+        'is_closed',
         'stops_sla_timer',
         'active',
     ];
@@ -57,6 +62,13 @@ class TicketStatus extends Model
             if (is_null($status->order)) {
                 $maxOrder = static::max('order') ?? 0;
                 $status->order = $maxOrder + 1;
+            }
+
+            // `slug` es NOT NULL/UNIQUE en la tabla pero ningún seeder ni
+            // formulario lo rellena explícitamente — se deriva de 'key' (ya
+            // suele venir en formato slug) o, si falta, del nombre.
+            if (empty($status->slug)) {
+                $status->slug = Str::slug($status->key ?: $status->name);
             }
 
             // Ensure only one default status exists

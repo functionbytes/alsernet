@@ -450,6 +450,8 @@
                             'chatflow'     => 'fas fa-robot',
                             'social'       => 'fas fa-share-nodes',
                             'contacts'     => 'fas fa-address-book',
+                            'web_form'     => 'fas fa-file-lines',
+                            'formulario'   => 'fas fa-file-lines',
                         ];
                         $sourceIcon = $sourceIcons[$ticket->source] ?? 'fas fa-question-circle';
                     @endphp

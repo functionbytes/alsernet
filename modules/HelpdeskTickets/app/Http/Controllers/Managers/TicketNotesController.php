@@ -7,9 +7,14 @@ use Illuminate\Http\JsonResponse;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketNoteRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketNote;
+use Modules\HelpdeskTickets\Services\MentionService;
 
 class TicketNotesController extends Controller
 {
+    public function __construct(
+        private readonly MentionService $mentionService,
+    ) {}
+
     /**
      * Store a newly created note in storage.
      */
@@ -25,6 +30,11 @@ class TicketNotesController extends Controller
             'color' => $request->input('color', 'yellow'),
             'is_pinned' => $request->boolean('is_pinned', false),
         ]);
+
+        // Mismo servicio ya usado en mensajes del hilo
+        // (TicketMessagingController::storeMessage) — antes solo
+        // funcionaba ahí; una nota interna con @Nombre nunca notificaba.
+        $this->mentionService->notifyMentions($note->body, $ticket);
 
         return response()->json($note, 201);
     }

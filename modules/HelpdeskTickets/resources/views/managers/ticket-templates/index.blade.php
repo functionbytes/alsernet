@@ -62,7 +62,7 @@
                     <div class="col-6 col-md-3">
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <h6 class="card-title mb-2">Con categoria</h6>
+                                <h6 class="card-title mb-2">Con categoría</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['with_category']) }}</h4>
                                 <small class="text-muted">Clasificadas</small>
                             </div>
@@ -80,7 +80,7 @@
                                 <tr>
                                     <th>Nombre</th>
                                     <th>Asunto</th>
-                                    <th>Categoria</th>
+                                    <th>Categoría</th>
                                     <th>Prioridad</th>
                                     <th class="text-center">Estado</th>
                                     <th class="text-center">Acciones</th>

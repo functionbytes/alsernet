@@ -17,6 +17,7 @@ use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Group;
 use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Database\Factories\TicketFactory;
+use Modules\HelpdeskTickets\Http\Controllers\SharedTicketController;
 use Modules\HelpdeskTickets\Models\Concerns\HasCustomAttributes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -60,6 +61,7 @@ class Ticket extends Model
         'tags',
         'assigned_at',
         'closed_at',
+        'close_reason',
         'resolved_at',
         'first_response_at',
         'last_message_at',
@@ -164,8 +166,15 @@ class Ticket extends Model
         $year = now()->year;
         $prefix = "TCK-{$year}-";
 
-        // Get the last ticket number for this year
-        $lastTicket = static::where('ticket_number', 'like', "{$prefix}%")
+        // Get the last ticket number for this year. withTrashed() es
+        // obligatorio: el índice UNIQUE de ticket_number es a nivel de BD y
+        // no distingue soft-deleted — un ticket fusionado/archivado-y-
+        // eliminado (Ticket::merge()/destroy()) sigue ocupando su número.
+        // Sin esto, generateTicketNumber() podía "retroceder" tras el
+        // primer soft-delete y chocar con UniqueConstraintViolationException
+        // (bug real encontrado probando la ingesta de emails).
+        $lastTicket = static::withTrashed()
+            ->where('ticket_number', 'like', "{$prefix}%")
             ->orderBy('ticket_number', 'desc')
             ->lockForUpdate()
             ->first();
@@ -765,14 +774,26 @@ class Ticket extends Model
 
     /**
      * Close ticket
+     *
+     * $reason es una key de config('helpdesktickets.close_reasons') (o texto
+     * libre si viene del "Otro motivo" del modal) — puede venir vacío cuando
+     * se cierra desde bulk actions o el flujo de un agente IA, que no piden
+     * motivo.
+     *
+     * Bug real encontrado al probar el modal "Cerrar ticket" (ago-2026): la
+     * caché resolvía el status por is_open=false + order ASC, que da "En
+     * Espera" (order=4, is_open=false) en vez de "Cerrado" (order=8, slug
+     * closed) — "Cerrar ticket" dejaba el ticket en En Espera, no Cerrado.
+     * Mismo criterio por slug que ya usa resolve() (ver su docblock).
      */
-    public function close(): self
+    public function close(?string $reason = null): self
     {
-        $closedStatus = Cache::remember('helpdesk:closed-status', 3600, fn () => TicketStatus::where('is_open', false)->orderBy('order')->first());
+        $closedStatus = Cache::remember('helpdesk:closed-status', 3600, fn () => TicketStatus::where('slug', 'closed')->first());
 
         $this->update([
             'status_id' => $closedStatus->id ?? $this->status_id,
             'closed_at' => now(),
+            'close_reason' => $reason ?: $this->close_reason,
         ]);
 
         // Create system event
@@ -785,11 +806,22 @@ class Ticket extends Model
     }
 
     /**
-     * Resolve ticket
+     * Resolve ticket.
+     *
+     * Bug real encontrado en QA de la pantalla "Gestión de tickets" (ago-2026):
+     * este método solo marcaba resolved_at sin tocar status_id — a diferencia
+     * de close()/reopen(), que sí resuelven y asignan el TicketStatus real.
+     * Resultado: el botón "Resolver" (bulk y ficha) respondía success:true
+     * pero el ticket seguía apareciendo "Abierto" en cualquier listado, porque
+     * el estado visible se deriva de status_id, no de resolved_at. Mismo
+     * patrón de caché que close()/reopen().
      */
     public function resolve(): self
     {
+        $resolvedStatus = Cache::remember('helpdesk:resolved-status', 3600, fn () => TicketStatus::where('slug', 'resolved')->first());
+
         $this->update([
+            'status_id' => $resolvedStatus->id ?? $this->status_id,
             'resolved_at' => now(),
         ]);
 
@@ -996,6 +1028,201 @@ class Ticket extends Model
         }
 
         return 'ok';
+    }
+
+    /**
+     * Slug "lógico" de estado para el frontend, a partir del TicketStatus
+     * real. Mapea a los slugs canónicos que usa el JS (open, progress,
+     * pending, resolved, closed) — antes vivía como closure inline en
+     * index.blade.php; se extrae aquí para que SSR y el futuro JSON de
+     * refetch (TicketsCrudController::index() con wantsJson()) no diverjan,
+     * mismo patrón que TicketMail::toListRow().
+     */
+    public function statusSlug(): string
+    {
+        $status = $this->status;
+        if (! $status) {
+            return 'open';
+        }
+        $raw = $status->slug ?? str($status->name ?? '')->slug()->toString();
+        $known = ['open', 'progress', 'pending', 'resolved', 'closed'];
+        if (in_array($raw, $known, true)) {
+            return $raw;
+        }
+
+        // El catálogo real (HelpdeskTicketStatusSeeder / gestión de estados
+        // en Settings) admite más estados que los 5 "canónicos" que usan las
+        // tabs/kanban del listado — se agrupan aquí para no perder ninguno
+        // en un bucket erróneo (antes cualquier slug no reconocido caía
+        // ciegamente en open/closed según is_open, metiendo "en espera del
+        // cliente"/"en pausa" dentro de "Abiertos" en vez de "Pendientes").
+        $aliases = [
+            'waiting-customer' => 'pending',
+            'waiting_customer' => 'pending',
+            'on-hold' => 'pending',
+            'on_hold' => 'pending',
+            'escalated' => 'open',
+            'reopened' => 'open',
+            'new' => 'open',
+        ];
+        if (isset($aliases[$raw])) {
+            return $aliases[$raw];
+        }
+
+        return ($status->is_open ?? true) ? 'open' : 'closed';
+    }
+
+    /**
+     * Slug de origen normalizado para el badge de canal. Cualquier source no
+     * reconocido se deja tal cual (nunca cae silenciosamente en 'email' —
+     * bug real que hubo antes de extraer esto).
+     */
+    public function sourceSlug(): string
+    {
+        $known = ['email', 'widget', 'wa', 'fb', 'ig', 'whatsapp', 'facebook', 'instagram', 'agent', 'formulario', 'web_form'];
+        $aliases = ['whatsapp' => 'wa', 'facebook' => 'fb', 'instagram' => 'ig'];
+        $s = strtolower((string) $this->source);
+
+        return $aliases[$s] ?? $s;
+    }
+
+    /**
+     * Categoría cualitativa de urgencia SLA para colorear la fila (ok/warn/
+     * breach) — distinta de getSlaStatusAttribute() (on_track/warning/
+     * breached/none), que es la usada por el panel lateral; esta es más
+     * simple y pensada solo para el punto de color de la lista.
+     */
+    public function slaRowKind(): string
+    {
+        if ($this->sla_resolution_breached || $this->sla_first_response_breached) {
+            return 'breach';
+        }
+        $due = $this->sla_resolution_due_at;
+        if (! $due) {
+            return 'ok';
+        }
+        $minutes = now()->diffInMinutes($due, false);
+        if ($minutes < 0) {
+            return 'breach';
+        }
+
+        return $minutes < 60 ? 'warn' : 'ok';
+    }
+
+    /**
+     * Texto corto de SLA para la fila de la lista ("2h 10m", "12m vencido").
+     */
+    public function slaRowText(): string
+    {
+        $due = $this->sla_resolution_due_at;
+        if (! $due) {
+            return $this->resolved_at ? 'resuelto' : '—';
+        }
+        // (int) es obligatorio aquí: en esta versión de Carbon,
+        // diffInMinutes() devuelve float (p. ej. 29.767743866667) en vez de
+        // minutos enteros — bug real que expuso el QA con datos de prueba
+        // realistas ("29.767743866667m" en la fila del listado).
+        $minutes = (int) now()->diffInMinutes($due, false);
+        if ($minutes < 0) {
+            return abs($minutes).'m vencido';
+        }
+        if ($minutes < 60) {
+            return $minutes.'m';
+        }
+        $hours = intdiv($minutes, 60);
+
+        return $hours.'h '.($minutes % 60).'m';
+    }
+
+    /**
+     * Contrato único de fila para el listado — lo usan tanto la hidratación
+     * SSR de index.blade.php como el futuro JSON de refetch
+     * (TicketsCrudController::index() con wantsJson()), igual que
+     * TicketMail::toListRow() para la bandeja de emails. Tenerlo en un solo
+     * sitio evita que SSR y AJAX diverjan en los nombres de campo.
+     *
+     * @return array<string, mixed>
+     */
+    public function toListRow(): array
+    {
+        $assignee = null;
+        if ($this->assignee) {
+            $name = trim(($this->assignee->firstname ?? '').' '.($this->assignee->lastname ?? '')) ?: 'Agente';
+            $assignee = ['id' => $this->assignee->id, 'name' => $name];
+        }
+
+        return [
+            'id' => $this->id,
+            'ticket_number' => $this->ticket_number,
+            'subject' => $this->subject ?? $this->title,
+            'title' => $this->title,
+            'description' => $this->description,
+            'priority' => $this->priority ?? 'normal',
+            'source' => $this->sourceSlug(),
+            'tags' => is_array($this->tags) ? array_values($this->tags) : [],
+            'status_id' => $this->status_id,
+            'status_slug' => $this->statusSlug(),
+            'status_name' => $this->status?->name,
+            'category_id' => $this->category_id,
+            'category_name' => $this->category?->name,
+            'group_id' => $this->group_id,
+            'group_name' => $this->group?->name,
+            'customer' => $this->customer ? [
+                'id' => $this->customer->id,
+                'name' => $this->customer->name,
+                'email' => $this->customer->email,
+            ] : null,
+            'assignee' => $assignee,
+            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at_human' => $this->created_at?->diffForHumans(),
+            'updated_at' => $this->updated_at?->toIso8601String(),
+            'assigned_at' => $this->assigned_at?->toIso8601String(),
+            'closed_at' => $this->closed_at?->toIso8601String(),
+            'close_reason' => $this->close_reason,
+            'close_reason_label' => $this->close_reason
+                ? ((array) config('helpdesktickets.close_reasons', []))[$this->close_reason] ?? $this->close_reason
+                : null,
+            'unread_count' => (int) ($this->unread_count ?? $this->getUnreadCountForUser(auth()->id())),
+            // Contador total de mensajes (mockup: 💬 N) — distinto del
+            // punto rojo de "no leído", que se conserva porque transmite
+            // algo que el conteo no dice (hay algo nuevo que mirar).
+            'message_count' => $this->message_count ?? null,
+            'sla_kind' => $this->slaRowKind(),
+            'sla_text' => $this->slaRowText(),
+            'sla_status' => $this->sla_status,
+            'sla_due_at' => $this->slaEffectiveDueDate()?->toIso8601String(),
+            'url' => route('manager.helpdesk.tickets.show', $this),
+            'url_full' => route('manager.helpdesk.tickets.show-full', $this),
+            'url_data' => route('manager.helpdesk.tickets.data', $this),
+            'url_message_store' => route('manager.helpdesk.tickets.messages.store', $this),
+            'url_update' => route('manager.helpdesk.tickets.update', $this),
+            'url_close' => route('manager.helpdesk.tickets.close', $this),
+            'url_resolve' => route('manager.helpdesk.tickets.resolve', $this),
+            'url_reopen' => route('manager.helpdesk.tickets.reopen', $this),
+            'url_tags' => route('manager.helpdesk.tickets.tags', $this),
+            'url_snooze' => route('manager.helpdesk.tickets.snooze', $this),
+            'url_link' => route('manager.helpdesk.tickets.link', $this),
+            'url_merge' => route('manager.helpdesk.tickets.merge', $this),
+            'url_side_conversations_store' => route('manager.helpdesk.tickets.side-conversations.store', $this),
+            'url_side_conversations_message_template' => route('manager.helpdesk.tickets.side-conversations.messages.store', [$this, '__SIDE__']),
+            'url_macro_apply_template' => route('manager.helpdesk.tickets.macros.apply', [$this, '__MACRO__']),
+            'url_followups_store' => route('manager.helpdesk.tickets.followups.store', $this),
+            'url_followup_destroy_template' => route('manager.helpdesk.tickets.followups.destroy', [$this, '__FOLLOWUP__']),
+            'url_ai_apply' => route('manager.helpdesk.tickets.apply-ai-suggestion', $this),
+            'url_note_destroy_template' => route('manager.helpdesk.tickets.notes.destroy', [$this, '__NOTE__']),
+            'url_note_pin_template' => route('manager.helpdesk.tickets.notes.pin', [$this, '__NOTE__']),
+            'url_note_color_template' => route('manager.helpdesk.tickets.notes.color', [$this, '__NOTE__']),
+            'url_summary' => route('manager.helpdesk.tickets.summary', $this),
+            'url_watch' => route('manager.helpdesk.tickets.watch', $this),
+            'url_unwatch' => route('manager.helpdesk.tickets.unwatch', $this),
+            'url_destroy' => route('manager.helpdesk.tickets.destroy', $this),
+            'url_archive' => route('manager.helpdesk.tickets.archive', $this),
+            'url_send_csat' => route('manager.helpdesk.tickets.csat.send', $this),
+            // "Ver como el cliente" del mockup, versión segura: enlace
+            // firmado de solo lectura (SharedTicketController), no
+            // suplantación de sesión — ver su docblock para el porqué.
+            'url_shared_ticket' => SharedTicketController::signedShowUrl($this),
+        ];
     }
 
     /**

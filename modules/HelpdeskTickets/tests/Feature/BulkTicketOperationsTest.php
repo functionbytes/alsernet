@@ -102,6 +102,31 @@ class BulkTicketOperationsTest extends TestCase
         $this->assertNotNull(Ticket::find($ticket->id)->resolved_at);
     }
 
+    /**
+     * Bug real encontrado en QA de "Gestión de tickets" (ago-2026):
+     * Ticket::resolve() marcaba resolved_at pero nunca cambiaba status_id, a
+     * diferencia de close()/reopen(). El ticket seguía apareciendo "Abierto"
+     * en cualquier listado (el estado visible se deriva de status_id). El
+     * test anterior (test_bulk_resolve_marks_tickets_as_resolved) no lo
+     * detectó porque solo comprobaba resolved_at, nunca el status.
+     */
+    public function test_bulk_resolve_updates_the_ticket_status_to_resolved(): void
+    {
+        $resolvedStatus = TicketStatus::firstOrCreate(
+            ['slug' => 'resolved'],
+            ['name' => 'Resuelto', 'color' => '#16a34a', 'is_open' => false, 'order' => 4]
+        );
+        $ticket = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'resolve',
+            ])->assertOk()->assertJson(['success' => true, 'updated_count' => 1]);
+
+        $this->assertSame($resolvedStatus->id, Ticket::find($ticket->id)->status_id);
+    }
+
     public function test_bulk_add_tag_appends_tag_to_all_tickets(): void
     {
         $ticketA = $this->createTestTicket();

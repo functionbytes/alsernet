@@ -194,6 +194,7 @@ class TicketService
                     'status_id' => $closedStatus?->id ?? $ticket->status_id,
                     'closed_at' => now(),
                     'closed_by' => auth()->id(),
+                    'close_reason' => $reason ?: $ticket->close_reason,
                 ]);
 
                 TicketHistory::logFieldChange(
