@@ -237,6 +237,12 @@ class ConversationInboxMetricsService
                 ->all()
         );
 
+        // Bug real encontrado en QA visual (ago-2026): sin el filtro por rol,
+        // esta query devolvía TODOS los usuarios del sistema (~1000, la
+        // mayoría fixtures de otros módulos) — el selector "Agente" del
+        // inbox era una lista casi infinita en vez de los agentes reales del
+        // equipo. Mismo rol que ya usa HelpdeskTickets\Services\
+        // AssignmentService::getAvailableAgents()/CatalogCacheService::agents().
         return User::query()
             ->leftJoin('helpdesk_agent_settings', 'helpdesk_agent_settings.user_id', '=', 'users.id')
             ->select([
@@ -244,6 +250,7 @@ class ConversationInboxMetricsService
                 'helpdesk_agent_settings.presence_state as helpdesk_status',
             ])
             ->whereNull('users.deleted_at')
+            ->whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
             ->get()
             ->each(fn (User $agent) => $agent->setAttribute('open_count', (int) ($openCounts[$agent->id] ?? 0)))
             ->sortBy([['open_count', 'asc'], ['firstname', 'asc']])

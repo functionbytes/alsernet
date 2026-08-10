@@ -131,7 +131,13 @@ class ChatFlowsController extends Controller
 
         $inboxes = Inbox::query()->orderBy('name')->get();
 
-        $agents = User::role(['administrative', 'manager', 'settings', 'super-settings'])
+        // Bug real encontrado en QA (ago-2026): 'settings' no existe como rol
+        // (solo 'super-settings', un permiso genérico no ligado a soporte) —
+        // User::role() con un rol inexistente lanza RoleDoesNotExist, así que
+        // esta pantalla no podía ni cargar. Mismo criterio de rol que ya usa
+        // AssignmentService::getAvailableAgents()/CatalogCacheService::agents()
+        // para "quién es agente real" en el resto de Helpdesk.
+        $agents = User::role(['helpdesk-agent', 'helpdesk-admin', 'helpdesk-manager'])
             ->orderBy('firstname')
             ->get(['id', 'firstname', 'lastname'])
             ->map(fn ($u) => ['id' => $u->id, 'name' => trim($u->firstname.' '.$u->lastname) ?: $u->email]);

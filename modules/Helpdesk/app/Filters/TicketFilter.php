@@ -12,37 +12,48 @@ class TicketFilter
 
     public function apply(Builder $query): Builder
     {
+        // filled() en vez de has(): el <form> de filtros de Tickets manda
+        // TODOS los campos a la vez (source/category/assignee/priority/
+        // tag...), no solo el que el agente acaba de tocar — con has(), un
+        // solo <select> vacío en "Todos" (name="priority" value="") ya
+        // contaba como "hay que filtrar por priority=''", que no matchea
+        // ningún ticket y dejaba la lista en 0 resultados. Bug real
+        // encontrado al portar el modal de "Más filtros" al design system.
         return $query
             ->when(
-                $this->request->has('status') && $this->request->status !== 'all',
+                $this->request->filled('status') && $this->request->status !== 'all',
                 fn ($q) => $this->applyStatus($q)
             )
             ->when(
-                $this->request->has('category') && $this->request->category !== 'all',
+                $this->request->filled('category') && $this->request->category !== 'all',
                 fn ($q) => $this->applyCategory($q)
             )
             ->when(
-                $this->request->has('assignee') && $this->request->assignee !== 'all',
+                $this->request->filled('assignee') && $this->request->assignee !== 'all',
                 fn ($q) => $this->applyAssignee($q)
             )
             ->when(
-                $this->request->has('group') && $this->request->group !== 'all',
+                $this->request->filled('group') && $this->request->group !== 'all',
                 fn ($q) => $this->applyGroup($q)
             )
             ->when(
-                $this->request->has('priority') && $this->request->priority !== 'all',
+                $this->request->filled('priority') && $this->request->priority !== 'all',
                 fn ($q) => $this->applyPriority($q)
             )
             ->when(
-                $this->request->has('source') && $this->request->source !== 'all',
+                $this->request->filled('source') && $this->request->source !== 'all',
                 fn ($q) => $this->applySource($q)
             )
             ->when(
-                $this->request->has('sla_status'),
+                $this->request->filled('sla_status'),
                 fn ($q) => $this->applySlaStatus($q)
             )
             ->when(
-                $this->request->has('search') && ! empty($this->request->search),
+                $this->request->filled('created_from') || $this->request->filled('created_to'),
+                fn ($q) => $this->applyCreatedRange($q)
+            )
+            ->when(
+                $this->request->filled('search'),
                 fn ($q) => $this->applySearch($q)
             )
             ->when(
@@ -95,10 +106,11 @@ class TicketFilter
 
     protected function applyAssignee(Builder $query): Builder
     {
-        $userId = auth()->id();
-
-        if ($this->request->assignee === 'mine') {
-            return $query->where('assignee_id', $userId);
+        // El frontend de Tickets manda 'me' (ver _filters-modal.blade.php /
+        // index.blade.php); 'mine' se acepta como alias por compatibilidad
+        // con otros consumidores históricos de este mismo valor.
+        if (in_array($this->request->assignee, ['me', 'mine'], true)) {
+            return $query->where('assignee_id', auth()->id());
         }
 
         if ($this->request->assignee === 'unassigned') {
@@ -136,11 +148,32 @@ class TicketFilter
             return $query->slaBreach();
         }
 
-        if ($this->request->sla_status === 'warning') {
+        // El modal de filtros manda 'warn' (mismo valor que Ticket::slaRowKind()
+        // y tickets-app.js usan en todo el frontend); 'warning' se conserva
+        // como alias por si algún otro consumidor ya lo usaba.
+        if (in_array($this->request->sla_status, ['warn', 'warning'], true)) {
             return $query->slaWarning();
         }
 
         return $query;
+    }
+
+    protected function applyCreatedRange(Builder $query): Builder
+    {
+        $this->request->validate([
+            'created_from' => 'nullable|date',
+            'created_to' => 'nullable|date',
+        ]);
+
+        return $query
+            ->when(
+                $this->request->filled('created_from'),
+                fn ($q) => $q->whereDate('created_at', '>=', $this->request->created_from)
+            )
+            ->when(
+                $this->request->filled('created_to'),
+                fn ($q) => $q->whereDate('created_at', '<=', $this->request->created_to)
+            );
     }
 
     protected function applySearch(Builder $query): Builder
