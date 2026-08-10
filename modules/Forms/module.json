@@ -1,0 +1,13 @@
+{
+    "name": "Forms",
+    "alias": "forms",
+    "description": "Recibe los formularios del sitio Alvarez (módulo alsernetforms) como tickets de Helpdesk, uno por categoría de formulario.",
+    "keywords": ["helpdesk", "forms", "tickets", "webhook", "alsernetforms"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Forms\\Providers\\FormsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": ["Helpdesk", "HelpdeskTickets"]
+}

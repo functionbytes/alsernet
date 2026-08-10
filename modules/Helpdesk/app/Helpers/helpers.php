@@ -89,6 +89,21 @@ if (! function_exists('helpdesk_prestashop_enabled')) {
     }
 }
 
+if (! function_exists('helpdesk_forms_enabled')) {
+    /**
+     * Check whether the Forms integration is active: module
+     * installed+enabled and the admin toggle in Settings → Integraciones.
+     */
+    function helpdesk_forms_enabled(): bool
+    {
+        if (! (Module::find('Forms')?->isEnabled() ?? false)) {
+            return false;
+        }
+
+        return helpdesk_setting_bool('forms.integration_enabled', '1');
+    }
+}
+
 if (! function_exists('helpdesk_erp_enabled')) {
     /**
      * Check whether the HelpdeskErp integration is active: module
