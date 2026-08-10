@@ -15,6 +15,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Secretos de webhooks entrantes
+    |--------------------------------------------------------------------------
+    |
+    | HMAC-SHA256 sobre "{timestamp}:{raw_body}". Sin secreto configurado el
+    | endpoint responde 503 (fail-closed), nunca acepta sin verificar.
+    |
+    */
+    'webhooks' => [
+        'prestashop_secret' => env('DOCUMENTS_PRESTASHOP_WEBHOOK_SECRET', ''),
+        'erp_secret' => env('DOCUMENTS_ERP_WEBHOOK_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Estados pagados de Prestashop
     |--------------------------------------------------------------------------
     |

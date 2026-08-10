@@ -26,6 +26,7 @@ Route::middleware(['api', 'throttle:60,1'])->group(function () {
     Route::get('/verify', [DocumentsController::class, 'verify'])->name('verify');
     Route::get('/order/{orderId}', [DocumentsController::class, 'orderInfo'])->name('order.info');
     Route::post('/webhooks/prestashop/order-paid', [DocumentsController::class, 'prestashopOrderPaid'])->name('webhooks.prestashop.order-paid');
+    Route::post('/webhooks/erp/order-status', [DocumentsController::class, 'erpOrderStatus'])->name('webhooks.erp.order-status');
 });
 
 // Authenticated routes - requires user authentication with session

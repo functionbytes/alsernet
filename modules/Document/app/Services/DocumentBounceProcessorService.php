@@ -19,15 +19,25 @@ use Webklex\PHPIMAP\Message;
  * servidor (no Mailrelay/SES/Postmark) — los rebotes solo pueden detectarse
  * leyendo esa bandeja.
  *
- * Estrategia de correlación: no se parsea el DSN según RFC 3464 completo (no hay
- * librería de DSN instalada en el proyecto). En su lugar se busca, dentro del
- * cuerpo crudo del bounce, el header "Message-ID: <...>" del mensaje ORIGINAL que
- * el MTA suele reinsertar (como parte adjunta message/rfc822 o como texto citado).
- * Se descarta el primer Message-ID que coincide con el del propio DSN (para no
- * confundirlo con el mensaje original) y se usa el primero de los siguientes.
- * Si no aparece ningún Message-ID ajeno al del DSN, el mensaje se cuenta como
- * "sin correlacionar" — no se intenta adivinar por destinatario para evitar falsos
- * positivos (marcar como rebotado un envío que no lo fue).
+ * Estrategia de correlación (dos pasos, por orden de confianza):
+ *
+ * 1) Message-ID: no se parsea el DSN según RFC 3464 completo (no hay librería de
+ *    DSN instalada en el proyecto). En su lugar se busca, dentro del cuerpo crudo
+ *    del bounce, el header "Message-ID: <...>" del mensaje ORIGINAL que el MTA
+ *    suele reinsertar (como parte adjunta message/rfc822 o como texto citado). Se
+ *    descarta el primer Message-ID que coincide con el del propio DSN y se usa el
+ *    primero de los siguientes. Correlación exacta, se usa siempre que esté.
+ *
+ * 2) Destinatario (fallback, solo si (1) no encontró nada): algunos MTAs de
+ *    destino no reinsertan las cabeceras originales en el DSN. Se extrae el
+ *    destinatario fallido de los campos "Final-Recipient:"/"X-Failed-Recipients:"
+ *    (semi-estándar en DSN) y se busca el EmailLog 'sent' más reciente a ese
+ *    destinatario dentro de una ventana de 7 días. SOLO se marca si hay
+ *    exactamente UN candidato — con más de uno, es ambiguo (qué envío rebotó
+ *    exactamente) y se deja sin correlacionar antes que arriesgar un falso
+ *    positivo (mismo criterio que LogEmailSent::findQueued para el caso
+ *    queued→sent). Se anota en el motivo que fue una correlación heurística, no
+ *    exacta, para que quede trazable en el log.
  */
 class DocumentBounceProcessorService
 {
@@ -102,29 +112,82 @@ class DocumentBounceProcessorService
     {
         $ownMessageId = $this->normalizeMessageId((string) ($message->getMessageId()?->first() ?? ''));
         $rawBody = $message->getRawBody();
+        $subject = (string) ($message->getSubject()?->first() ?? 'Bounce recibido');
 
         $originalMessageId = $this->findOriginalMessageId($rawBody, $ownMessageId);
 
-        if (! $originalMessageId) {
+        if ($originalMessageId) {
+            $emailLog = EmailLog::where('message_id', $originalMessageId)->first();
+
+            if ($emailLog) {
+                $this->markBounced($emailLog, $subject);
+
+                return true;
+            }
+        }
+
+        // Fallback: sin Message-ID original, intentar por destinatario.
+        return $this->processMessageByRecipient($rawBody, $subject);
+    }
+
+    /**
+     * Fallback cuando no hay Message-ID original en el DSN: correlaciona por
+     * destinatario fallido, solo si es inequívoco (ver docblock de la clase).
+     */
+    private function processMessageByRecipient(string $rawBody, string $subject): bool
+    {
+        $recipient = $this->findFailedRecipient($rawBody);
+
+        if (! $recipient) {
             return false;
         }
 
-        $emailLog = EmailLog::where('message_id', $originalMessageId)->first();
+        $candidates = EmailLog::where('module', 'Document')
+            ->sent()
+            ->whereJsonContains('to_addresses', $recipient)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->get();
 
-        if (! $emailLog) {
+        if ($candidates->count() !== 1) {
             return false;
         }
 
+        $this->markBounced($candidates->first(), $subject, heuristic: true);
+
+        return true;
+    }
+
+    private function markBounced(EmailLog $emailLog, string $reason, bool $heuristic = false): void
+    {
         // No degradar un estado ya terminal más específico si por lo que sea el
         // mismo bounce llega dos veces (aunque ya se marca Seen para evitarlo).
         if (in_array($emailLog->status, [EmailStatus::Bounced, EmailStatus::Complained], true)) {
-            return true;
+            return;
         }
 
-        $reason = (string) ($message->getSubject()?->first() ?? 'Bounce recibido');
-        $emailLog->markAsBounced($reason);
+        if ($heuristic) {
+            $reason = '[correlación por destinatario, sin Message-ID en el DSN] '.$reason;
+        }
 
-        return true;
+        $emailLog->markAsBounced($reason);
+    }
+
+    /**
+     * Extrae el destinatario fallido de los campos semi-estándar de un DSN.
+     * "Final-Recipient:" es RFC 3464; "X-Failed-Recipients:" lo añaden algunos
+     * MTAs (Postfix entre ellos) de forma no estándar pero habitual.
+     */
+    private function findFailedRecipient(string $rawBody): ?string
+    {
+        if (preg_match('/Final-Recipient:\s*rfc822;\s*([^\s<>]+@[^\s<>]+)/i', $rawBody, $m)) {
+            return strtolower(trim($m[1]));
+        }
+
+        if (preg_match('/X-Failed-Recipients:\s*([^\s<>]+@[^\s<>]+)/i', $rawBody, $m)) {
+            return strtolower(trim($m[1]));
+        }
+
+        return null;
     }
 
     /**

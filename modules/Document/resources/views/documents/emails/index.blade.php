@@ -80,11 +80,21 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @if($mail->status === 'sent')
+                                        {{-- delivery_status: refleja EmailLog cuando hay correlación (incluye
+                                        'bounced' real, no solo el 'sent' optimista que se marca al encolar) --}}
+                                        @if($mail->delivery_status === 'sent')
                                             <span class="badge bg-success-subtle text-success">
                                                Enviado
                                             </span>
-                                        @elseif($mail->status === 'failed')
+                                        @elseif($mail->delivery_status === 'bounced')
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                Rebotado
+                                            </span>
+                                        @elseif($mail->delivery_status === 'complained')
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                Marcado como spam
+                                            </span>
+                                        @elseif($mail->delivery_status === 'failed')
                                             <span class="badge bg-danger-subtle text-white">
                                                 Fallido
                                             </span>
