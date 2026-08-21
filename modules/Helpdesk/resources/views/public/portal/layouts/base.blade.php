@@ -53,7 +53,7 @@
             border-bottom-left-radius: 2px;
         }
         .message-bubble.event-item {
-            background: #f8f9fa;
+            background: #f5f6f8;
             border: 1px dashed #dee2e6;
             color: #6c757d;
             font-size: .85rem;

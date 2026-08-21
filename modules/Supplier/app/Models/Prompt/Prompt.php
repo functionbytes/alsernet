@@ -64,9 +64,9 @@ class Prompt extends Model
             'version' => 'integer',
             'supplier_id' => 'integer',
             'category_id' => 'integer',
-            'subfamily_id'  => 'integer',
+            'subfamily_id' => 'integer',
             'subfamily_ids' => 'array',
-            'source_id'     => 'integer',
+            'source_id' => 'integer',
             'cloned_from_template_id' => 'integer',
         ];
     }
@@ -286,7 +286,9 @@ class Prompt extends Model
                 ->where('source_id', $sourceId)
                 ->where('scope', 'source')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 2. Proveedor + subfamilia
@@ -296,7 +298,9 @@ class Prompt extends Model
                 ->where('subfamily_id', $subfamilyId)
                 ->whereIn('scope', ['supplier_category', 'category'])
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 3. Proveedor + familia + fuente
@@ -307,7 +311,9 @@ class Prompt extends Model
                 ->where('source_id', $sourceId)
                 ->where('scope', 'source')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 4. Proveedor + familia
@@ -317,7 +323,9 @@ class Prompt extends Model
                 ->where('category_id', $categoryId)
                 ->where('scope', 'supplier_category')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 5. Proveedor + fuente
@@ -327,7 +335,9 @@ class Prompt extends Model
                 ->where('source_id', $sourceId)
                 ->where('scope', 'source')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 6. Proveedor
@@ -336,7 +346,9 @@ class Prompt extends Model
                 ->where('supplier_id', $supplierId)
                 ->where('scope', 'supplier')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 7. Subfamilia
@@ -345,7 +357,9 @@ class Prompt extends Model
                 ->where('subfamily_id', $subfamilyId)
                 ->where('scope', 'category')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 8. Familia
@@ -354,7 +368,9 @@ class Prompt extends Model
                 ->where('category_id', $categoryId)
                 ->where('scope', 'category')
                 ->first();
-            if ($prompt) return $prompt;
+            if ($prompt) {
+                return $prompt;
+            }
         }
 
         // 9. Global default
@@ -393,7 +409,15 @@ class Prompt extends Model
             $replacements['{{'.$key.'}}'] = $value;
         }
 
-        return strtr($this->prompt_template, $replacements);
+        $rendered = strtr($this->prompt_template, $replacements);
+
+        // Cualquier variable que la plantilla use pero el caller no haya
+        // proporcionado queda como '{{nombre}}' literal tras el strtr — el
+        // modelo lo lee como un placeholder sin rellenar y se niega a
+        // redactar ("son marcadores de posición, deme datos reales"). Se
+        // vacía en vez de dejarlo literal; una sección vacía es mucho menos
+        // confuso para el modelo que sintaxis de plantilla cruda.
+        return preg_replace('/\{\{\s*[a-zA-Z0-9_]+\s*\}\}/', '', $rendered);
     }
 
     public function createNewVersion(): self

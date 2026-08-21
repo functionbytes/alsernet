@@ -52,8 +52,12 @@
         var detected  = (data && data.detected)  || 'Desconocido';
         var working   = (data && data.working)   || 'Español';
         var sample    = (data && data.sample)    || '';
-        var fromCode  = (data && data.fromCode)  || '';
+        var fromCode  = (data && data.fromCode)  || 'auto';
         var toCode    = (data && data.toCode)    || 'es';
+
+        // Guardados en el propio botón: activateTranslation() los lee al
+        // click sin depender de que `data` siga vivo en ese momento.
+        $('#bv-dl-activate').data('from-code', fromCode).data('to-code', toCode);
 
         $('#dlDetectedText').html(
             'El cliente está escribiendo en <b>' + $('<span>').text(detected).html() + '</b>' +
@@ -69,22 +73,24 @@
         }
     });
 
+    // Reusa la misma lógica de sesión que el botón "Activar traducción" del
+    // panel Traducir (window.bvApplyTranslationSettings, expuesta desde
+    // conversations.js) — antes esto pegaba a POST .../translation, una ruta
+    // que nunca existió (404 siempre), así que el botón no hacía nada.
     function activateTranslation(mode) {
         var convId = getConvId();
         if (!convId) { return; }
-        $.ajax({
-            url: '/panel/helpdesk/conversations/' + convId + '/translation',
-            method: 'POST',
-            data: { mode: mode },
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' }
-        }).done(function () {
-            closeBvModal('detect-lang');
-            if (window.toastr) { toastr.success('Traducción activada'); }
-            $(document).trigger('bv:translation:activated', [convId, mode]);
-        }).fail(function (xhr) {
-            var msg = xhr?.responseJSON?.message || 'Error al activar traducción';
-            if (window.toastr) { toastr.error(msg); }
-        });
+
+        var fromCode = $('#bv-dl-activate').data('from-code') || 'auto';
+        var toCode = $('#bv-dl-activate').data('to-code') || 'es';
+
+        if (typeof window.bvApplyTranslationSettings === 'function') {
+            window.bvApplyTranslationSettings(mode === 'incoming' ? 'incoming' : 'both', fromCode, toCode);
+        }
+
+        closeBvModal('detect-lang');
+        if (window.toastr) { toastr.success('Traducción activada'); }
+        $(document).trigger('bv:translation:activated', [convId, mode]);
     }
 
     $(document).on('click', '#bv-dl-activate',      function () { activateTranslation('bidirectional'); });

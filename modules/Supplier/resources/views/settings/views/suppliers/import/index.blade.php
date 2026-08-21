@@ -18,7 +18,7 @@
                     <div class="card-header border-bottom py-3">
                         <div class="d-flex align-items-center justify-content-between">
                             <h6 class="mb-0 fw-bold text-dark">Gestión ERP</h6>
-                            <span class="badge bg-success">ERP</span>
+                            <span class="badge bg-primary">ERP</span>
                         </div>
                     </div>
 
@@ -71,7 +71,6 @@
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h6 class="fw-bold mb-2">
-                            <i class="fas fa-lightbulb text-warning me-2"></i>
                             Sobre la importación
                         </h6>
                         <p class="text-muted mb-0">

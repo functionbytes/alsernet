@@ -146,6 +146,16 @@ class Source extends Model
     }
 
     /**
+     * URLs de referencia sugeridas a la IA como prioridad de búsqueda al
+     * generar contenido (fichas/páginas del proveedor), distintas de las
+     * URLs de extracción de catálogo.
+     */
+    public function contentUrls(): HasMany
+    {
+        return $this->hasMany(SourceContentUrl::class, 'source_id');
+    }
+
+    /**
      * Scope: Filter active sources
      */
     public function scopeActive($query)

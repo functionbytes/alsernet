@@ -1,6 +1,6 @@
 
 
-:root {--bs-border-color: #EEEEF3;--app-sidebar-width: 250px;--app-header-height: 80px;--app-sidebar-end: 80px;--custom-body-bg: #FDFDFF;--app-sidebar-bg: #ffffff;--app-header-bg: var(--custom-body-bg);--bs-blue: #0d6efd;--bs-indigo: #6610f2;--bs-purple: #6f42c1;--bs-pink: #d63384;--bs-red: #dc3545;--bs-orange: #fd7e14;--bs-yellow: #ffc107;--bs-green: #198754;--bs-teal: #20c997;--bs-cyan: #0dcaf0;--bs-black: #000;--bs-white: #ffffff;--bs-gray: #6c757d;--bs-gray-dark: #343a40;--bs-gray-100: #f8f9fa;--bs-gray-200: #e9ecef;--bs-gray-300: #dee2e6;--bs-gray-400: #ced4da;--bs-gray-500: #adb5bd;--bs-gray-600: #6c757d;--bs-gray-700: #495057;--bs-gray-800: #343a40;--bs-gray-900: #212529;--bs-primary: #000;--bs-secondary: #29294B;--bs-success: #009966;--bs-info: #7008E7;--bs-warning: #F5A70D;--bs-danger: #F83636;--bs-light: #F2F2F6;--bs-dark: #0C243C;--bs-white: #ffffff;--bs-gray: #97A1C0;--bs-primary-rgb: 89, 85, 209;--bs-secondary-rgb: 41, 41, 75;--bs-success-rgb: 0, 153, 102;--bs-info-rgb: 112, 8, 231;--bs-warning-rgb: 245, 167, 13;--bs-danger-rgb: 248, 54, 54;--bs-light-rgb: 242, 242, 246;--bs-dark-rgb: 12, 36, 60;--bs-white-rgb: 255, 255, 255;--bs-gray-rgb: 151, 161, 192;--bs-primary-text-emphasis: #242254;--bs-secondary-text-emphasis: #10101e;--bs-success-text-emphasis: #003d29;--bs-info-text-emphasis: #000000;--bs-warning-text-emphasis: #624305;--bs-danger-text-emphasis: #631616;--bs-light-text-emphasis: #495057;}
+:root {--bs-border-color: #EEEEF3;--app-sidebar-width: 250px;--app-header-height: 80px;--app-sidebar-end: 80px;--custom-body-bg: #FDFDFF;--app-sidebar-bg: #ffffff;--app-header-bg: var(--custom-body-bg);--bs-blue: #0d6efd;--bs-indigo: #6610f2;--bs-purple: #6f42c1;--bs-pink: #d63384;--bs-red: #dc3545;--bs-orange: #fd7e14;--bs-yellow: #ffc107;--bs-green: #198754;--bs-teal: #20c997;--bs-cyan: #0dcaf0;--bs-black: #000;--bs-white: #ffffff;--bs-gray: #6c757d;--bs-gray-dark: #343a40;--bs-gray-100: #f5f6f8;--bs-gray-200: #e9ecef;--bs-gray-300: #dee2e6;--bs-gray-400: #ced4da;--bs-gray-500: #adb5bd;--bs-gray-600: #6c757d;--bs-gray-700: #495057;--bs-gray-800: #343a40;--bs-gray-900: #212529;--bs-primary: #000;--bs-secondary: #29294B;--bs-success: #009966;--bs-info: #7008E7;--bs-warning: #F5A70D;--bs-danger: #F83636;--bs-light: #F2F2F6;--bs-dark: #0C243C;--bs-white: #ffffff;--bs-gray: #97A1C0;--bs-primary-rgb: 89, 85, 209;--bs-secondary-rgb: 41, 41, 75;--bs-success-rgb: 0, 153, 102;--bs-info-rgb: 112, 8, 231;--bs-warning-rgb: 245, 167, 13;--bs-danger-rgb: 248, 54, 54;--bs-light-rgb: 242, 242, 246;--bs-dark-rgb: 12, 36, 60;--bs-white-rgb: 255, 255, 255;--bs-gray-rgb: 151, 161, 192;--bs-primary-text-emphasis: #242254;--bs-secondary-text-emphasis: #10101e;--bs-success-text-emphasis: #003d29;--bs-info-text-emphasis: #000000;--bs-warning-text-emphasis: #624305;--bs-danger-text-emphasis: #631616;--bs-light-text-emphasis: #495057;}
 
 .app-header {
     position: fixed;
@@ -578,8 +578,8 @@
     }
     :has(.app-menubar-tabs) .app-wrapper {
         margin-left: 80px;
-        padding-left: 15px;
-        padding-right: 15px;
+        /* padding-left: 15px; */
+        /* padding-right: 15px; */
     }
     :has(.app-menubar-tabs) .app-toggler::after {
         content: "";

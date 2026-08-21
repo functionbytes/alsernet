@@ -45,15 +45,19 @@ class PromptTest extends TestCase
         $this->assertSame('Hello World, your code is 123', $rendered);
     }
 
-    public function test_render_keeps_unmatched_placeholders(): void
+    public function test_render_blanks_unmatched_placeholders(): void
     {
+        // Un placeholder sin valor conocido se vacía en vez de dejarse
+        // literal — dejarlo como '{{unknown}}' confunde al modelo de IA
+        // (lo interpreta como un marcador de posición sin rellenar y se
+        // niega a redactar contenido).
         $prompt = new Prompt([
             'prompt_template' => 'Hello {{name}}, missing {{unknown}}',
         ]);
 
         $rendered = $prompt->render(['name' => 'World']);
 
-        $this->assertSame('Hello World, missing {{unknown}}', $rendered);
+        $this->assertSame('Hello World, missing ', $rendered);
     }
 
     public function test_create_new_version_prepares_correct_attributes(): void

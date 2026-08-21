@@ -32,6 +32,7 @@ class AiContentStatusSeeder extends Seeder
             ['key' => 'error_insufficient_info',  'label' => 'Info insuficiente',     'badge_class' => 'badge-content-danger',     'sort_order' => 10],
             ['key' => 'error_source_unavailable', 'label' => 'Fuente no disponible',  'badge_class' => 'badge-content-danger',     'sort_order' => 11],
             ['key' => 'error_generation_failed',  'label' => 'Error de generación',   'badge_class' => 'badge-content-danger',     'sort_order' => 12],
+            ['key' => 'on_hold',                  'label' => 'Sin contenido',         'badge_class' => 'badge-content-hold',       'sort_order' => 13],
         ];
 
         foreach ($statuses as $status) {

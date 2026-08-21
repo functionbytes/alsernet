@@ -254,9 +254,9 @@
         const map = {
             running: '<span class="badge bg-warning-subtle text-warning">Ejecutando</span>',
             success: '<span class="badge bg-success-subtle text-success">Completado</span>',
-            error:   '<span class="badge bg-info-subtle text-info">Error</span>',
-            failed:  '<span class="badge bg-info-subtle text-info">Error</span>',
-            stuck:   '<span class="badge bg-info-subtle text-info">Colgado</span>',
+            error:   '<span class="badge bg-danger-subtle text-danger">Error</span>',
+            failed:  '<span class="badge bg-danger-subtle text-danger">Error</span>',
+            stuck:   '<span class="badge bg-danger-subtle text-danger">Colgado</span>',
         };
         return map[status] || '<span class="badge bg-secondary-subtle text-secondary">Sin ejecuciones</span>';
     }
@@ -286,7 +286,7 @@
             <tr data-uid="${s.uid}">
                 <td>${typeBadge(s.sync_type)}</td>
                 <td><strong>${s.label}</strong></td>
-                <td><span class="badge bg-light-secondary text-dark">${s.formatted_time}</span></td>
+                <td><span class="badge bg-secondary-subtle text-dark">${s.formatted_time}</span></td>
                 <td class="enabled-cell">${toggleHtml(s.uid, s.is_enabled)}</td>
                 <td class="text-center lastrun-cell">${formatDate(s.last_run_at)}</td>
                 <td class="text-center status-cell">${statusBadge(s.last_run_status, s.is_enabled)}</td>

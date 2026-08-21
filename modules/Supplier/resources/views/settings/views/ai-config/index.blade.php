@@ -125,9 +125,7 @@
                 {{-- ── Google Gemini ──────────────────────────────── --}}
                 <div class="mb-4">
                     <h6 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                        <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg"
-                             width="18" height="18" alt="Gemini">
-                        Google Gemini
+                        Google
                     </h6>
                     <p class="text-muted small mb-2">
                         Incluye Google Search grounding — las URLs de fuentes se capturan automáticamente.

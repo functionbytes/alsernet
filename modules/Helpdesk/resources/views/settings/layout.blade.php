@@ -11,7 +11,7 @@
         --danger: #FA896B;
         --warning: #FEC90F;
         --info: #5DADE2;
-        --light-bg: #f8f9fa;
+        --light-bg: #f5f6f8;
         --card-border: #e0e0e0;
     }
 

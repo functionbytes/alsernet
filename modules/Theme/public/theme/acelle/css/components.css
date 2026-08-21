@@ -1957,7 +1957,7 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     opacity: 0;
     transform: scale(.98) translateY(8px);
     transition: opacity 240ms cubic-bezier(.4, 0, .2, 1),
-                transform 240ms cubic-bezier(.4, 0, .2, 1);
+    transform 240ms cubic-bezier(.4, 0, .2, 1);
     overflow: hidden;
 }
 .mc-preview-modal.active { opacity: 1; transform: scale(1) translateY(0); }
@@ -2099,8 +2099,8 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
        reads as a real window floating on a design surface. */
     background-color: var(--preview-canvas-bg);
     background-image:
-        linear-gradient(var(--preview-canvas-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--preview-canvas-line) 1px, transparent 1px);
+            linear-gradient(var(--preview-canvas-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--preview-canvas-line) 1px, transparent 1px);
     background-size: 48px 48px;
     background-position: -1px -1px;
     --preview-canvas-bg: #f5f6f8;
@@ -2126,7 +2126,7 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     max-width: 100%;
     height: 100%;
     transition: max-width 320ms cubic-bezier(.4, 0, .2, 1),
-                padding 320ms cubic-bezier(.4, 0, .2, 1);
+    padding 320ms cubic-bezier(.4, 0, .2, 1);
 }
 .mc-preview-modal-frame[data-device="desktop"] { max-width: 100%; }
 .mc-preview-modal-frame[data-device="tablet"]  { max-width: 820px; }
@@ -2153,7 +2153,7 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     flex-shrink: 0;
     box-shadow: 0 -1px 0 0 color-mix(in srgb, var(--color-border) 40%, transparent) inset;
     transition: opacity 260ms cubic-bezier(.4, 0, .2, 1),
-                height 260ms cubic-bezier(.4, 0, .2, 1);
+    height 260ms cubic-bezier(.4, 0, .2, 1);
 }
 .mc-preview-modal-frame[data-device="mobile"] .mc-preview-modal-browser-chrome {
     opacity: 0;
@@ -2215,7 +2215,7 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     background: #fff;
     overflow: hidden;
     transition: border-radius 320ms cubic-bezier(.4, 0, .2, 1),
-                border-color 320ms cubic-bezier(.4, 0, .2, 1);
+    border-color 320ms cubic-bezier(.4, 0, .2, 1);
     border: 1px solid var(--color-border);
     min-height: 0;
 }
@@ -2272,14 +2272,14 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     border-radius: 16px;
     border: 1px solid var(--color-border);
     box-shadow:
-        0 32px 64px -12px rgba(17, 24, 39, 0.22),
-        0 12px 24px -8px rgba(17, 24, 39, 0.12);
+            0 32px 64px -12px rgba(17, 24, 39, 0.22),
+            0 12px 24px -8px rgba(17, 24, 39, 0.12);
 }
 [data-theme="dark"] .mc-preview-modal-frame[data-chassis="popup"] .mc-preview-modal-iframe-wrap {
     border-color: color-mix(in srgb, var(--color-border) 60%, transparent);
     box-shadow:
-        0 32px 64px -12px rgba(0, 0, 0, 0.6),
-        0 12px 24px -8px rgba(0, 0, 0, 0.4);
+            0 32px 64px -12px rgba(0, 0, 0, 0.6),
+            0 12px 24px -8px rgba(0, 0, 0, 0.4);
 }
 
 /* Corner close (popup chassis only) — floating round button anchored to
@@ -2939,8 +2939,8 @@ tr:hover .mc-row-actions, .mc-row-actions:focus-within { opacity: 1; }
     transform: scale(0.96);
     transform-origin: center;
     transition:
-        opacity 120ms ease-out,
-        transform 120ms cubic-bezier(0.2, 0, 0.1, 1.2);
+            opacity 120ms ease-out,
+            transform 120ms cubic-bezier(0.2, 0, 0.1, 1.2);
     word-wrap: break-word;
     overflow-wrap: break-word;
 }
@@ -5171,7 +5171,7 @@ select.mc-select-inline,
 .mc-template-card--picker.is-selected {
     border-color: var(--color-teal);
     box-shadow: 0 0 0 3px var(--color-teal-ring, rgba(0, 175, 169, 0.18)),
-                0 4px 12px rgba(0, 0, 0, 0.08);
+    0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .mc-template-card-check {
     position: absolute;
@@ -5368,8 +5368,8 @@ select.mc-select-inline,
 .mc-template-card--picker.is-selected:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.10),
-                0 0 0 3px var(--color-teal-ring, rgba(0, 175, 169, 0.18)),
-                0 0 0 1px var(--color-teal);
+    0 0 0 3px var(--color-teal-ring, rgba(0, 175, 169, 0.18)),
+    0 0 0 1px var(--color-teal);
 }
 
 /* ----------------------------------------------------------------
@@ -11206,8 +11206,8 @@ label.mc-toggle .mc-toggle-label {
     border-radius: 6px 6px 0 0;
     margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) var(--space-2);
     background-image: radial-gradient(circle at 10px 6px, #ff5f57 3px, transparent 3.5px),
-        radial-gradient(circle at 24px 6px, #febc2e 3px, transparent 3.5px),
-        radial-gradient(circle at 38px 6px, #28c840 3px, transparent 3.5px);
+    radial-gradient(circle at 24px 6px, #febc2e 3px, transparent 3.5px),
+    radial-gradient(circle at 38px 6px, #28c840 3px, transparent 3.5px);
 }
 .mc-ads-device-screen {
     background: var(--color-card-bg);
@@ -13387,8 +13387,8 @@ label.mc-toggle .mc-toggle-label {
 .mc-feature-guide-hero {
     border-radius: var(--radius-lg);
     background: linear-gradient(135deg,
-        var(--color-teal-light) 0%,
-        var(--illust-bg) 100%);
+    var(--color-teal-light) 0%,
+    var(--illust-bg) 100%);
     padding: var(--space-5);
     margin-bottom: var(--space-5);
     overflow: hidden;
@@ -15236,4 +15236,84 @@ a.rui-inv-list-customer-name:hover { color: var(--color-teal); }
     color: var(--color-text-muted);
     margin-top: 2px;
     line-height: 1.5;
+}
+
+/* ── Tabs subrayados (texto plano + línea activa, sin fondo de píldora) ── */
+.nav-tabs-underline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 1.5rem;
+}
+.nav-tabs-underline .nav-item { display: flex; }
+.nav-tabs-underline .nav-link {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: 0 0 .85rem;
+    margin-bottom: -1px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+}
+.nav-tabs-underline .nav-link:hover {
+    color: var(--color-teal);
+}
+.nav-tabs-underline .nav-link.active {
+    color: var(--color-teal);
+    font-weight: var(--weight-semibold);
+    border-bottom-color: var(--color-teal);
+    background: transparent;
+}
+
+/* ── Pills de navegación (.nav-pills.user-profile-tab) ───────────────────
+   El marcado de estas vistas trae utilidades Bootstrap (bg-transparent,
+   rounded-0) con !important que rompían el pill activo: texto blanco sobre
+   fondo transparente (invisible) y esquinas cuadradas. Estas reglas ganan
+   por especificidad (3 clases) y restauran el fondo/redondeo del activo. */
+.nav-pills.user-profile-tab {
+    border-bottom: 1px solid var(--color-border);
+}
+.nav-pills.user-profile-tab .nav-link {
+    /* border-radius: 999px !important; */
+    transition: background-color .15s ease-in-out, color .15s ease-in-out;
+}
+.nav-pills.user-profile-tab .nav-link:hover:not(.active) {
+    background-color: var(--color-border) !important;
+    color: var(--color-text) !important;
+}
+.nav-pills.user-profile-tab .nav-link.active {
+    background-color: #f5f6f8 !important;
+    color: #000000 !important;
+}
+.nav-pills.user-profile-tab .nav-link.active .badge {
+    background-color: rgba(255, 255, 255, .3) !important;
+    color: #fff !important;
+}
+
+/* ── Stat cards de atención (reemplaza el style="" inline de content/index) ── */
+.stat-card-attention {
+    background: #f3f8e2;
+    border-color: #c8dd8f !important;
+}
+.stat-card-attention .card-title,
+.stat-card-attention h4 {
+    color: #5c7a0d;
+}
+.stat-card-danger {
+    background: #fbe9e9;
+    border-color: #eab3b3 !important;
+}
+.stat-card-danger .card-title,
+.stat-card-danger h4 {
+    color: #b10200;
+}
+.stat-card-danger .card-title i {
+    color: #b10200;
 }

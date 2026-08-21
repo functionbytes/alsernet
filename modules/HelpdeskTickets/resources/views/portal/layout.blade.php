@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        body { background-color: #f8f9fa; }
+        body { background-color: #f5f6f8; }
         .navbar-brand { font-weight: 600; }
         .ticket-message { border-left: 4px solid #dee2e6; padding-left: 1rem; margin-bottom: 1rem; }
         .ticket-message.from-customer { border-color: #90bb13; }

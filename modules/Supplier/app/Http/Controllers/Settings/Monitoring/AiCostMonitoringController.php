@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Supplier\Http\Requests\Budget\UpdateBudgetRequest;
@@ -29,10 +30,11 @@ class AiCostMonitoringController extends Controller
             ->keyBy('provider');
 
         $monthlyStats = $this->getMonthlyStats();
+        $sparklines = $this->getSparklineSeries();
         $recentLogs = AiCost::query()
             ->with('supplier')
             ->orderByDesc('created_at')
-            ->limit(15)
+            ->limit(100)
             ->get();
 
         $funnelStats = AiContent::query()
@@ -44,10 +46,10 @@ class AiCostMonitoringController extends Controller
         $contentMetrics = $this->getContentMetrics();
 
         $budgetWarnings = $this->buildBudgetWarnings($budgets);
-        $budgetWarning  = count($budgetWarnings) > 0;
+        $budgetWarning = count($budgetWarnings) > 0;
 
         return view('supplier::settings.views.monitoring.index', compact(
-            'pageTitle', 'breadcrumb', 'budgets', 'monthlyStats', 'recentLogs', 'funnelStats', 'contentMetrics',
+            'pageTitle', 'breadcrumb', 'budgets', 'monthlyStats', 'sparklines', 'recentLogs', 'funnelStats', 'contentMetrics',
             'budgetWarning', 'budgetWarnings'
         ));
     }
@@ -187,11 +189,11 @@ class AiCostMonitoringController extends Controller
             AiBudget::updateOrCreate(
                 ['provider' => $provider],
                 [
-                    'monthly_limit'       => $data['monthly_limit'],
-                    'daily_limit'         => $data['daily_limit'] ?? null,
+                    'monthly_limit' => $data['monthly_limit'],
+                    'daily_limit' => $data['daily_limit'] ?? null,
                     'alert_threshold_pct' => $data['alert_threshold_pct'] ?? 80,
-                    'is_active'           => $data['is_active'],
-                    'block_on_exceed'     => $data['block_on_exceed'],
+                    'is_active' => $data['is_active'],
+                    'block_on_exceed' => $data['block_on_exceed'],
                 ]
             );
         }
@@ -244,10 +246,10 @@ class AiCostMonitoringController extends Controller
     /**
      * Build server-side budget warnings for the page banner (threshold >= 80%).
      *
-     * @param  \Illuminate\Support\Collection<string, AiBudget>  $budgets  keyed by provider
+     * @param  Collection<string, AiBudget>  $budgets  keyed by provider
      * @return array<int, array{level: string, provider: string, monthly_pct: float, daily_pct: float, monthly_usage: float, monthly_limit: float, daily_usage: float, daily_limit: float|null, blocked: bool}>
      */
-    private function buildBudgetWarnings(\Illuminate\Support\Collection $budgets): array
+    private function buildBudgetWarnings(Collection $budgets): array
     {
         $warnings = [];
 
@@ -257,7 +259,7 @@ class AiCostMonitoringController extends Controller
             }
 
             $monthlyPct = $budget->usagePercentage();
-            $dailyPct   = $budget->dailyUsagePercentage();
+            $dailyPct = $budget->dailyUsagePercentage();
 
             if ($monthlyPct < 80 && $dailyPct < 80) {
                 continue;
@@ -267,15 +269,15 @@ class AiCostMonitoringController extends Controller
                 : (($monthlyPct >= 90 || $dailyPct >= 90) ? 'danger' : 'warning');
 
             $warnings[] = [
-                'level'          => $level,
-                'provider'       => $budget->provider,
-                'monthly_pct'    => $monthlyPct,
-                'daily_pct'      => $dailyPct,
-                'monthly_usage'  => $budget->currentMonthUsage(),
-                'monthly_limit'  => (float) $budget->monthly_limit,
-                'daily_usage'    => $budget->currentDayUsage(),
-                'daily_limit'    => $budget->daily_limit ? (float) $budget->daily_limit : null,
-                'blocked'        => $budget->block_on_exceed && ($budget->isExceeded() || $budget->isDailyExceeded()),
+                'level' => $level,
+                'provider' => $budget->provider,
+                'monthly_pct' => $monthlyPct,
+                'daily_pct' => $dailyPct,
+                'monthly_usage' => $budget->currentMonthUsage(),
+                'monthly_limit' => (float) $budget->monthly_limit,
+                'daily_usage' => $budget->currentDayUsage(),
+                'daily_limit' => $budget->daily_limit ? (float) $budget->daily_limit : null,
+                'blocked' => $budget->block_on_exceed && ($budget->isExceeded() || $budget->isDailyExceeded()),
             ];
         }
 
@@ -379,6 +381,54 @@ class AiCostMonitoringController extends Controller
         ];
     }
 
+    /**
+     * Series diarias (últimos 7 días) para las mini-gráficas (sparklines) de
+     * las KPI cards principales del dashboard: costo, solicitudes, tokens y
+     * latencia media. Un único query agrupado por día (getDailyCosts) cubre
+     * las 4 métricas a la vez.
+     *
+     * @return array{labels: array<int,string>, cost: array<int,float>, requests: array<int,int>, tokens: array<int,int>, latency: array<int,int>}
+     */
+    private function getSparklineSeries(): array
+    {
+        return Cache::remember(
+            'supplier:ai:sparklines:'.now()->format('Y-m-d-H'),
+            now()->addMinutes(5),
+            fn () => $this->buildSparklineSeries(),
+        );
+    }
+
+    private function buildSparklineSeries(): array
+    {
+        $from = now()->subDays(6)->startOfDay();
+        $to = now()->endOfDay();
+
+        $rows = collect(AiCost::getDailyCosts($from->toDateTimeString(), $to->toDateTimeString()))
+            ->keyBy(fn (array $r) => (string) $r['date']);
+
+        $labels = [];
+        $cost = [];
+        $requests = [];
+        $tokens = [];
+        $latency = [];
+
+        $cursor = $from->copy();
+        while ($cursor->lte($to)) {
+            $date = $cursor->toDateString();
+            $row = $rows->get($date);
+
+            $labels[] = $date;
+            $cost[] = $row ? round((float) $row['total_cost'], 6) : 0.0;
+            $requests[] = $row ? (int) $row['requests'] : 0;
+            $tokens[] = $row ? (int) $row['total_tokens'] : 0;
+            $latency[] = $row && $row['avg_latency'] ? (int) round((float) $row['avg_latency']) : 0;
+
+            $cursor->addDay();
+        }
+
+        return compact('labels', 'cost', 'requests', 'tokens', 'latency');
+    }
+
     private function percentChange(float|int $previous, float|int $current): ?float
     {
         if ($previous <= 0) {
@@ -433,10 +483,10 @@ class AiCostMonitoringController extends Controller
         $dailyCost = AiCost::getTotalCostForPeriod($dayFrom, $dayTo);
 
         return [
-            'generated_count'  => $generatedCount,
+            'generated_count' => $generatedCount,
             'no_sources_count' => $noSourcesCount,
-            'monthly_cost'     => $monthlyCost,
-            'daily_cost'       => $dailyCost,
+            'monthly_cost' => $monthlyCost,
+            'daily_cost' => $dailyCost,
         ];
     }
 }

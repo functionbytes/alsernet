@@ -21,18 +21,25 @@ use Modules\Supplier\Http\Requests\Content\RejectContentRequest;
 use Modules\Supplier\Http\Requests\Content\TranslateContentRequest;
 use Modules\Supplier\Http\Resources\AiContentResource;
 use Modules\Supplier\Jobs\RegenerateAiContentJob;
+use Modules\Supplier\Jobs\SyncCharacteristicsToErpJob;
 use Modules\Supplier\Jobs\TranslateAiContentJob;
 use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Ai\AiContentStatus;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
+use Modules\Supplier\Models\Characteristic\ErpCharacteristic;
+use Modules\Supplier\Models\Characteristic\ErpCharacteristicValue;
+use Modules\Supplier\Models\Characteristic\ModelCharacteristic;
+use Modules\Supplier\Models\Characteristic\VariantCharacteristic;
 use Modules\Supplier\Models\Product\Product;
+use Modules\Supplier\Models\Product\ProductAttribute;
 use Modules\Supplier\Models\Prompt\Prompt;
 use Modules\Supplier\Models\Supplier\Supplier;
 use Modules\Supplier\Presenters\AiContentPresenter;
 use Modules\Supplier\Services\ContentGenerationService;
 use Modules\Supplier\Services\Filters\ContentFilterService;
+use Modules\Supplier\Services\Integrations\ErpModelSyncService;
 use Modules\Supplier\Services\PromptSelectionService;
 
 class SupplierContentController extends Controller
@@ -42,6 +49,7 @@ class SupplierContentController extends Controller
         protected AiContentPresenter $presenter,
         protected ContentFilterService $filters,
         protected PromptSelectionService $promptSelectionService,
+        protected ErpModelSyncService $erpModelSyncService,
     ) {}
 
     /**
@@ -63,10 +71,15 @@ class SupplierContentController extends Controller
             $query->whereNull('assigned_to');
         }
 
+        // "Sin contenido" (on_hold) queda fuera del listado general salvo que
+        // se esté filtrando explícitamente por ese estado — se seleccionan y
+        // se "mandan para allá" desde Aplicar acción, y ahí quedan aparte.
+        $query->excludeOnHoldByDefault($request->filled('status'));
+
         $this->filters->apply($query, $request);
 
-        $perPage = (int) $request->input('per_page', 15);
-        $perPage = in_array($perPage, [10, 20, 50, 100, 200]) ? $perPage : 15;
+        $perPage = (int) $request->input('per_page', 10);
+        $perPage = in_array($perPage, [10, 20, 50, 100, 200]) ? $perPage : 10;
 
         $contents = $query->orderBy('created_at', 'desc')
             ->paginate($perPage)
@@ -762,6 +775,8 @@ class SupplierContentController extends Controller
                 'reject' => $this->rejectMany($uids, 'Bulk rejection'),
                 'regenerate' => $this->regenerateMany($uids),
                 'publish' => $this->publishMany($uids),
+                'hold' => $this->holdMany($uids, $request->input('notes')),
+                'restore' => $this->restoreMany($uids),
             };
 
             $successCount = collect($results)->where('success', true)->count();
@@ -791,7 +806,7 @@ class SupplierContentController extends Controller
             $field = $request->validated('field');
             $value = $request->validated('value');
 
-            $editableFields = ['generated_name', 'short_description', 'long_description', 'seo_title', 'seo_description', 'seo_keywords'];
+            $editableFields = ['generated_name', 'short_description', 'long_description', 'seo_title', 'seo_description', 'seo_keywords', 'notes'];
             if (in_array($field, $editableFields)) {
                 $content->update([$field => $value]);
 
@@ -890,12 +905,267 @@ class SupplierContentController extends Controller
     }
 
     /**
+     * Panel data: catalog of ERP characteristics plus the assignments already
+     * made at model and variant level for this content's product.
+     */
+    public function characteristicsPanel(string $uid): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)
+            ->with('supplierProduct.attributes')
+            ->firstOrFail();
+
+        $attributeIds = $content->supplierProduct?->attributes->pluck('id') ?? collect();
+        $productId = $content->supplierProduct?->id;
+
+        return response()->json([
+            'success' => true,
+            // Solo características con al menos un valor activo en el catálogo
+            // — una sin valores deja el select de "Valor" siempre vacío, un
+            // callejón sin salida para quien la elige.
+            'catalog' => ErpCharacteristic::active()
+                ->whereHas('values', fn ($q) => $q->where('estado', true))
+                ->orderBy('nombre')
+                ->get(['id', 'nombre']),
+            'model_assignments' => ModelCharacteristic::where('product_id', $productId)
+                ->with('characteristic:id,nombre')
+                ->get(),
+            // Incluye tanto las asignaciones por variante (product_attribute_id)
+            // como las del producto sin variantes tratado como su propio
+            // artículo (product_attribute_id null, product_id = este producto).
+            'variant_assignments' => VariantCharacteristic::where(function ($q) use ($attributeIds, $productId) {
+                $q->whereIn('product_attribute_id', $attributeIds)
+                    ->orWhere(function ($q2) use ($productId) {
+                        $q2->whereNull('product_attribute_id')->where('product_id', $productId);
+                    });
+            })
+                ->with(['characteristic:id,nombre', 'value:id,nombre'])
+                ->get(),
+            'attributes' => $content->supplierProduct?->attributes ?? [],
+        ]);
+    }
+
+    /**
+     * Valores del catálogo local para una característica (fuente remota del
+     * select2 de valor por variante). Soporta `search` para el buscador del
+     * select2 y limita el resultado para características con muchos valores.
+     */
+    public function characteristicValues(Request $request, int $characteristicId): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'values' => ErpCharacteristicValue::where('characteristic_id', $characteristicId)
+                ->active()
+                ->when($request->filled('search'), fn ($q) => $q->where('nombre', 'like', '%'.$request->string('search').'%'))
+                ->orderBy('nombre')
+                ->limit(50)
+                ->get(['id', 'erp_id', 'nombre', 'estado', 'last_sync_at']),
+        ]);
+    }
+
+    /**
+     * Assign one or more catalog characteristics to the model (product) level.
+     */
+    public function saveModelCharacteristics(Request $request, string $uid): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)->with('supplierProduct')->firstOrFail();
+
+        if (! $content->supplierProduct) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este contenido no tiene un producto ERP vinculado',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'characteristic_ids' => ['required', 'array', 'min:1'],
+            'characteristic_ids.*' => ['integer', 'exists:supplier_erp_characteristics,id'],
+        ]);
+
+        // Mismo idmodelo que usa syncToErp()/SyncContentToErpJob para este contenido.
+        $erpModelId = $content->supplierProduct->erp_id
+            ?? ($content->source_attributes['id'] ?? null)
+            ?? $content->erp_reference;
+
+        if (! $erpModelId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo determinar el ID de modelo ERP de este contenido',
+            ], 422);
+        }
+
+        foreach ($validated['characteristic_ids'] as $characteristicId) {
+            ModelCharacteristic::firstOrCreate(
+                [
+                    'product_id' => $content->supplierProduct->id,
+                    'characteristic_id' => $characteristicId,
+                ],
+                [
+                    'erp_model_id' => $erpModelId,
+                    'sync_status' => 'pending',
+                    'created_by' => auth()->id(),
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Assign a characteristic value to a specific variant (product attribute),
+     * o al producto directamente cuando no tiene variantes (se trata como su
+     * propio artículo: erp_article_id = erp_id del producto). Re-queues for
+     * sync (pending) when the value changes on an existing assignment.
+     */
+    public function saveVariantCharacteristic(Request $request, string $uid): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)->with('supplierProduct')->firstOrFail();
+
+        if (! $content->supplierProduct) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Este contenido no tiene un producto ERP vinculado',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'product_attribute_id' => ['nullable', 'integer', 'exists:supplier_product_attributes,id'],
+            'characteristic_id' => ['required', 'integer', 'exists:supplier_erp_characteristics,id'],
+            'value_id' => ['required', 'integer', 'exists:supplier_erp_characteristic_values,id'],
+        ]);
+
+        // Mismo idmodelo que usa syncToErp()/SyncContentToErpJob para este contenido.
+        $erpModelId = $content->supplierProduct->erp_id
+            ?? ($content->source_attributes['id'] ?? null)
+            ?? $content->erp_reference;
+
+        if ($validated['product_attribute_id'] ?? null) {
+            $attribute = ProductAttribute::findOrFail($validated['product_attribute_id']);
+
+            VariantCharacteristic::updateOrCreate(
+                [
+                    'product_attribute_id' => $validated['product_attribute_id'],
+                    'characteristic_id' => $validated['characteristic_id'],
+                ],
+                [
+                    'product_id' => null,
+                    'erp_article_id' => $attribute->erp_id,
+                    'erp_model_id' => $erpModelId,
+                    'value_id' => $validated['value_id'],
+                    'sync_status' => 'pending',
+                    'created_by' => auth()->id(),
+                ]
+            );
+        } else {
+            // Sin variantes: el propio producto hace de "artículo" en ERP.
+            VariantCharacteristic::updateOrCreate(
+                [
+                    'product_attribute_id' => null,
+                    'product_id' => $content->supplierProduct->id,
+                    'characteristic_id' => $validated['characteristic_id'],
+                ],
+                [
+                    'erp_article_id' => $erpModelId,
+                    'erp_model_id' => $erpModelId,
+                    'value_id' => $validated['value_id'],
+                    'sync_status' => 'pending',
+                    'created_by' => auth()->id(),
+                ]
+            );
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Quita una característica de modelo todavía no enviada al ERP.
+     */
+    public function destroyModelCharacteristic(string $uid, int $modelCharacteristicId): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)->with('supplierProduct')->firstOrFail();
+
+        $item = ModelCharacteristic::where('id', $modelCharacteristicId)
+            ->where('product_id', $content->supplierProduct?->id)
+            ->firstOrFail();
+
+        if ($item->sync_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede quitar: ya se envió al ERP',
+            ], 422);
+        }
+
+        $item->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Quita un valor de variante todavía no enviado al ERP.
+     */
+    public function destroyVariantCharacteristic(string $uid, int $variantCharacteristicId): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)->with('supplierProduct.attributes')->firstOrFail();
+
+        $attributeIds = $content->supplierProduct?->attributes->pluck('id') ?? collect();
+        $productId = $content->supplierProduct?->id;
+
+        $item = VariantCharacteristic::where('id', $variantCharacteristicId)
+            ->where(function ($q) use ($attributeIds, $productId) {
+                $q->whereIn('product_attribute_id', $attributeIds)
+                    ->orWhere(function ($q2) use ($productId) {
+                        $q2->whereNull('product_attribute_id')->where('product_id', $productId);
+                    });
+            })
+            ->firstOrFail();
+
+        if ($item->sync_status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede quitar: ya se envió al ERP',
+            ], 422);
+        }
+
+        $item->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Envío manual y explícito de las características pendientes al ERP.
+     * Nunca se dispara solo: guardar una característica siempre la deja en
+     * "pending" — hace falta este botón (o aprobar el contenido) para
+     * enviarla de verdad.
+     */
+    public function syncCharacteristicsNow(string $uid): JsonResponse
+    {
+        $content = AiContent::where('uid', $uid)->firstOrFail();
+
+        SyncCharacteristicsToErpJob::dispatch($content->uid);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Envío al ERP iniciado en segundo plano',
+        ]);
+    }
+
+    /**
      * Perform action on single content (approve, reject, regenerate, etc.)
      */
     public function action(ActionContentRequest $request, string $uid): JsonResponse
     {
         $content = AiContent::where('uid', $uid)->firstOrFail();
         $action = $request->validated('action');
+
+        // "Regenerar volviendo a coger los datos de Gestión": antes de regenerar,
+        // refresca el snapshot ERP (source_attributes) del que se leen las variables
+        // del prompt. Si falla, se aborta sin tocar el contenido actual.
+        if ($action === 'regenerate' && $request->boolean('full_update')) {
+            $refresh = $this->refreshSourceAttributesFromErp($content);
+            if (! $refresh['success']) {
+                return response()->json(['success' => false, 'message' => $refresh['message']], 400);
+            }
+            $content->refresh();
+        }
 
         if ($action === 'publish_erp') {
             if (! in_array($content->status, [AiContent::STATUS_VALIDATED, AiContent::STATUS_PUBLISHED_HIDDEN])) {
@@ -1022,7 +1292,13 @@ class SupplierContentController extends Controller
         }
 
         try {
-            $response = Http::timeout(10)->asForm()->post($erpUrl, $payload);
+            // El servidor de escritura del ERP usa name-based virtual hosting: sin forzar
+            // el header Host exacto (sin puerto), Apache enruta a un vhost por defecto que
+            // responde 200/404 falsos según la ruta en vez del vhost real de api-gestion.
+            $response = Http::timeout(10)
+                ->withHeaders(['Host' => parse_url($erpUrl, PHP_URL_HOST)])
+                ->asForm()
+                ->post($erpUrl, $payload);
 
             return [
                 'success' => $response->successful(),
@@ -1038,6 +1314,40 @@ class SupplierContentController extends Controller
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Vuelve a traer del ERP (Gestión) los datos del modelo vinculado a este contenido
+     * y refresca tanto el producto/artículos locales como el snapshot `source_attributes`
+     * del propio contenido — de ahí lee `regenerateContent()` las variables del prompt.
+     * Usado por la opción "actualización completa" del botón Regenerar.
+     *
+     * @return array{success: bool, message?: string}
+     */
+    private function refreshSourceAttributesFromErp(AiContent $content): array
+    {
+        $erpId = $content->supplierProduct?->erp_id
+            ?? ($content->source_attributes['id'] ?? null)
+            ?? $content->erp_reference;
+
+        if (! $erpId) {
+            return ['success' => false, 'message' => 'No se pudo determinar el ID de modelo ERP de este contenido'];
+        }
+
+        $stats = $this->erpModelSyncService->syncAllModelsFromFilter(
+            force: true,
+            skipAi: true,
+            erpModelId: (int) $erpId,
+        );
+
+        if (! $stats['success']) {
+            return [
+                'success' => false,
+                'message' => 'Error al traer los datos desde el ERP: '.(implode('; ', $stats['errors']) ?: 'error desconocido'),
+            ];
+        }
+
+        return ['success' => true];
     }
 
     /**
@@ -1139,6 +1449,78 @@ class SupplierContentController extends Controller
 
             try {
                 $this->contentService->rejectContent($content, (int) auth()->id(), $reason);
+                $results[] = ['uid' => $uid, 'success' => true];
+            } catch (\Throwable $e) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Park a batch of content records in the "Sin contenido" holding area.
+     * Not allowed for content already sent to the store (published/published_hidden)
+     * — that requires unpublishing from the ERP first, out of scope here.
+     *
+     * @param  array<int, string>  $uids
+     * @return array<int, array{uid: string, success: bool, message?: string}>
+     */
+    private function holdMany(array $uids, ?string $notes = null): array
+    {
+        $contents = AiContent::whereIn('uid', $uids)->get()->keyBy('uid');
+        $results = [];
+        $userId = (int) auth()->id();
+
+        foreach ($uids as $uid) {
+            $content = $contents->get($uid);
+
+            if (! $content) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No encontrado'];
+
+                continue;
+            }
+
+            if (in_array($content->status, [AiContent::STATUS_PUBLISHED, AiContent::STATUS_PUBLISHED_HIDDEN])) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => 'Ya está publicado en el ERP, no se puede marcar sin contenido'];
+
+                continue;
+            }
+
+            try {
+                $content->holdWithNote($notes, $userId);
+                $results[] = ['uid' => $uid, 'success' => true];
+            } catch (\Throwable $e) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => $e->getMessage()];
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Take a batch of content records out of "Sin contenido" back to Por validar.
+     *
+     * @param  array<int, string>  $uids
+     * @return array<int, array{uid: string, success: bool, message?: string}>
+     */
+    private function restoreMany(array $uids): array
+    {
+        $contents = AiContent::whereIn('uid', $uids)->get()->keyBy('uid');
+        $results = [];
+        $userId = (int) auth()->id();
+
+        foreach ($uids as $uid) {
+            $content = $contents->get($uid);
+
+            if (! $content) {
+                $results[] = ['uid' => $uid, 'success' => false, 'message' => 'No encontrado'];
+
+                continue;
+            }
+
+            try {
+                $content->restoreFromHold($userId);
                 $results[] = ['uid' => $uid, 'success' => true];
             } catch (\Throwable $e) {
                 $results[] = ['uid' => $uid, 'success' => false, 'message' => $e->getMessage()];
@@ -1268,6 +1650,8 @@ class SupplierContentController extends Controller
             $query->whereNull('assigned_to');
         }
 
+        $query->excludeOnHoldByDefault($request->filled('status'));
+
         $this->filters->apply($query, $request);
 
         $query->orderBy('created_at', 'desc')->limit(5000);
@@ -1389,13 +1773,15 @@ class SupplierContentController extends Controller
                 .'SUM(status = ?) as validated, '
                 .'SUM(status = ?) as published, '
                 .'SUM(status = ?) as published_hidden, '
-                .'SUM(status = ?) as rejected',
+                .'SUM(status = ?) as rejected, '
+                .'SUM(status = ?) as on_hold',
                 [
                     AiContent::STATUS_PENDING_VALIDATION,
                     AiContent::STATUS_VALIDATED,
                     AiContent::STATUS_PUBLISHED,
                     AiContent::STATUS_PUBLISHED_HIDDEN,
                     AiContent::STATUS_REJECTED,
+                    AiContent::STATUS_ON_HOLD,
                 ]
             )->first();
 
@@ -1411,6 +1797,7 @@ class SupplierContentController extends Controller
                 'published' => $published,
                 'published_hidden' => $published_hidden,
                 'rejected' => (int) $row->rejected,
+                'on_hold' => (int) $row->on_hold,
             ];
         });
     }

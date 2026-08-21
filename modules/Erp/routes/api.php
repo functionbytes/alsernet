@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Erp\Http\Controllers\Api\CaracteristicasController;
 use Modules\Erp\Http\Controllers\Api\CustomerController;
 use Modules\Erp\Http\Controllers\Api\ErpCredentialsApiController;
 use Modules\Erp\Http\Controllers\Api\ErpEndpointsApiController;
@@ -80,6 +81,19 @@ Route::middleware(['api'])->group(function () {
             Route::prefix('groups')->group(function () {
                 Route::get('/', [JerarquiaController::class, 'indexGrupos']);
                 Route::get('/{id}', [JerarquiaController::class, 'showGrupo']);
+            });
+
+            Route::prefix('characteristics')->group(function () {
+                Route::get('/', [CaracteristicasController::class, 'indexCaracteristicas']);
+            });
+            Route::prefix('characteristic-values')->group(function () {
+                Route::get('/', [CaracteristicasController::class, 'indexValores']);
+            });
+            Route::prefix('model-characteristics')->group(function () {
+                Route::get('/', [CaracteristicasController::class, 'indexModeloCaracteristicas']);
+            });
+            Route::prefix('variant-characteristics')->group(function () {
+                Route::get('/', [CaracteristicasController::class, 'indexVarianteCaracteristicas']);
             });
 
             Route::prefix('suppliers')->group(function () {

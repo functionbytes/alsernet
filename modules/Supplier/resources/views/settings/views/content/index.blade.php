@@ -3,34 +3,6 @@
 @section('title', 'Revisión de Contenido')
 
 @push('css')
-<style>
-    .btn-validate-green { background-color: #7cb01a; border-color: #7cb01a; border-radius: 8px; }
-    .btn-validate-green:hover, .btn-validate-green:focus { background-color: #6a9817; border-color: #6a9817; }
-    .btn-action-black { background-color: #111; border-color: #111; border-radius: 8px; }
-    .btn-action-black:hover, .btn-action-black:focus { background-color: #2a2a2a; border-color: #2a2a2a; }
-    .stat-card-active { border: 2px solid #111 !important; }
-
-    /*
-     * Estados del pipeline de contenido IA — paleta de marca (verde/gris/
-     * negro), no las utilities bg-*/text-bg-* de Bootstrap: este theme
-     * reasigna --bs-secondary-rgb/--bs-danger-rgb por esquema de color (en
-     * el esquema por defecto salen teal y rosa, no gris ni rojo), y
-     * bg-warning/bg-success sueltas no fijan color de texto — quedaban
-     * blanco sobre amarillo/verde claro, casi ilegible. bg-teal/bg-orange
-     * directamente no existen (badge sin fondo, invisible). Valores fijos
-     * aquí, sin depender de esas variables, siguiendo el mismo verde/negro
-     * que ya usan los botones de esta página.
-     */
-    .badge-content-pending    { background-color: #D9E8B8; color: #3C5211; border: 1px solid #C3D896; }
-    .badge-content-generating { background-color: #7cb01a; color: #FFFFFF; }
-    .badge-content-review     { background-color: #9A9A9A; color: #FFFFFF; }
-    .badge-content-inreview   { background-color: #6B6B6B; color: #FFFFFF; }
-    .badge-content-revision   { background-color: #4A4A4A; color: #FFFFFF; }
-    .badge-content-validated  { background-color: #90BB13; color: #111111; }
-    .badge-content-published  { background-color: #111111; color: #FFFFFF; }
-    .badge-content-hidden     { background-color: #B9CC8D; color: #38460F; }
-    .badge-content-danger     { background-color: #BF3E1B; color: #FFFFFF; }
-</style>
 @endpush
 
 @section('page_header')
@@ -73,9 +45,9 @@
                     <div class="col-3">
                         <a href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['status', 'page']), ['status' => 'pending_validation'])) }}"
                            class="text-decoration-none d-block h-100">
-                            <div class="card bg-light-secondary stat-card h-100 {{ request('status') === 'pending_validation' ? 'border-warning border-2' : '' }}">
+                            <div class="card bg-light-secondary stat-card h-100 {{ request('status') === 'pending_validation' ? 'border-success border-2' : '' }}">
                                 <div class="card-body">
-                                    <h6 class="card-title text-warning mb-2">Por validar</h6>
+                                    <h6 class="card-title mb-2">Por validar</h6>
                                     <h4 class="mb-1 fw-bold">{{ $stats['pending'] }}</h4>
                                     <small class="text-muted">Requiere revisión</small>
                                 </div>
@@ -135,54 +107,50 @@
                     </div>
                     <div class="col-3">
                         <a href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['status', 'page']), ['status' => 'pending_generation'])) }}"
-                           class="text-decoration-none d-block h-100">
-                            <div class="card stat-card h-100 {{ $limboCounts > 0 ? '' : 'bg-light-secondary' }}"
-                                 style="{{ $limboCounts > 0 ? 'background:#fff8e1;border-color:#ffe082;' : '' }}">
+                           class="text-decoration-none d-block">
+                            <div class="card stat-card {{ $limboCounts > 0 ? 'stat-card-attention' : 'bg-light-secondary' }}">
                                 <div class="card-body">
-                                    <h6 class="card-title mb-2" style="{{ $limboCounts > 0 ? 'color:#856404;' : '' }}">Sin generar</h6>
-                                    <h4 class="mb-1 fw-bold" style="{{ $limboCounts > 0 ? 'color:#856404;' : '' }}">{{ $limboCounts }}</h4>
+                                    <h6 class="card-title mb-2">Sin generar</h6>
+                                    <h4 class="mb-1 fw-bold">{{ $limboCounts }}</h4>
                                     <small class="text-muted">Sin prompt activo</small>
                                 </div>
                             </div>
                         </a>
                     </div>
                     <div class="col-3">
-                        <div class="card stat-card h-100 {{ $productsWithoutContent > 0 ? '' : 'bg-light-secondary' }}"
-                             style="{{ $productsWithoutContent > 0 ? 'background:#fce4ec;border-color:#f48fb1;' : '' }}">
-                            <div class="card-body">
-                                <h6 class="card-title mb-2" style="{{ $productsWithoutContent > 0 ? 'color:#880e4f;' : '' }}">
-                                    @if($productsWithoutContent > 0)
-                                        <i class="fas fa-circle-exclamation me-1" style="color:#e91e63;"></i>
-                                    @endif
-                                    Sin contenido
-                                </h6>
-                                <h4 class="mb-1 fw-bold" style="{{ $productsWithoutContent > 0 ? 'color:#880e4f;' : '' }}">{{ $productsWithoutContent }}</h4>
-                                <small class="text-muted">Productos sin cobertura —
-                                    <a href="{{ route('settings.suppliers.content.coverage') }}" class="text-muted" style="text-decoration:underline dotted;">ver lista</a>
-                                </small>
+                        <a href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['status', 'page']), ['status' => 'on_hold'])) }}"
+                           class="text-decoration-none d-block h-100">
+                            <div class="card stat-card h-100 {{ request('status') === 'on_hold' ? 'border-secondary border-2' : 'bg-light-secondary' }}">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-2">Sin contenido</h6>
+                                    <h4 class="mb-1 fw-bold">{{ $stats['on_hold'] }}</h4>
+                                    <small class="text-muted">Retenidos manualmente — no subir aún</small>
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
 
             <!-- Tabs -->
-            <div class="card-body border-bottom pb-0">
-                <ul class="nav nav-tabs border-0" id="content-tabs">
-                    <li class="nav-item">
-                        <a class="nav-link {{ $tab === 'available' ? 'active' : '' }}"
+            <div class="card-body p-0 d-flex align-items-center justify-content-between flex-wrap">
+                <ul class="nav nav-pills user-profile-tab" id="content-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'available' ? 'active' : '' }}"
                            href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['tab', 'page']), ['tab' => 'available'])) }}">
-                            Disponibles
-                            <span class="badge bg-secondary ms-1">{{ $stats['total'] - $myCount }}</span>
+                            <span class="d-none d-md-block">Disponibles</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {{ $tab === 'mine' ? 'active' : '' }}"
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'mine' ? 'active' : '' }}"
                            href="{{ route('settings.suppliers.content.index', array_merge(request()->except(['tab', 'page']), ['tab' => 'mine'])) }}">
-                            Mis asignados
-                            @if($myCount > 0)
-                                <span class="badge bg-primary ms-1">{{ $myCount }}</span>
-                            @endif
+                            <span class="d-none d-md-block">Mis asignados</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3"
+                           href="{{ route('settings.suppliers.content.coverage') }}">
+                            <span class="d-none d-md-block">Productos sin ficha</span>
                         </a>
                     </li>
                 </ul>
@@ -253,8 +221,9 @@
                     @if($activeFilterCount > 0)
                         <div class="d-flex gap-2 flex-wrap mt-2">
                             @if(request('status'))
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2">
-                                    Estado: {{ $contentStatuses->get(request('status'))?->label ?? request('status') }}
+                                @php $statusChip = $contentStatuses->get(request('status')); @endphp
+                                <span class="badge badge-status {{ $statusChip?->badge_class ?? 'badge-content-pending' }} py-1 px-2">
+                                    Estado: {{ $statusChip?->label ?? request('status') }}
                                 </span>
                             @endif
                             @if(request('supplier_id'))
@@ -306,7 +275,7 @@
                             @endif
                             @if(request('older_than_days'))
                                 @php $olderLabels = ['30'=>'30 días','60'=>'60 días','90'=>'90 días']; @endphp
-                                <span class="badge bg-warning-subtle text-warning border border-warning-subtle py-1 px-2">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-1 px-2">
                                     Generado hace más de: {{ $olderLabels[request('older_than_days')] ?? request('older_than_days').' días' }}
                                 </span>
                             @endif
@@ -329,6 +298,9 @@
                                 <th>Prompt</th>
                                 <th width="10%" class="text-center">Estado</th>
                                 <th width="15%">Fecha</th>
+                                @if(request('status') === 'on_hold')
+                                    <th width="20%">Notas</th>
+                                @endif
                                 <th width="10%" class="text-center">Acciones</th>
                             </tr>
                             </thead>
@@ -338,7 +310,7 @@
                                     <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $content->uid }}"></td>
                                     <td>
                                         <div>
-                                            <a href="{{ route('settings.suppliers.content.show', $content->uid) }}" class="text-body text-decoration-none">
+                                            <a href="{{ route('settings.suppliers.content.show', $content->uid) }}">
                                                 <strong>{{ $content->supplierProduct?->name ?? $content->generated_name ?? $content->model_id ?? 'Sin nombre' }}</strong>
                                             </a>
                                             @if($content->erp_reference)
@@ -392,9 +364,16 @@
                                     <td>
                                         <span class="text-muted">{{ $content->created_at?->format('d/m/Y H:i') ?? 'N/A' }}</span>
                                         @if($content->created_at && $content->created_at->lt(now()->subDays(90)))
-                                            <br><span class="badge bg-warning text-dark" style="font-size:.65rem;" title="Generado hace más de 90 días">Desactualizado</span>
+                                            <br><span class="badge bg-secondary" style="font-size:.65rem;" title="Generado hace más de 90 días">Desactualizado</span>
                                         @endif
                                     </td>
+                                    @if(request('status') === 'on_hold')
+                                        <td>
+                                            <textarea class="form-control form-control-sm content-notes-input" rows="2"
+                                                      data-uid="{{ $content->uid }}"
+                                                      placeholder="Ej: No subir hasta Septiembre">{{ $content->notes }}</textarea>
+                                        </td>
+                                    @endif
                                     <td class="text-center">
                                         <div class="dropdown">
                                             <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
@@ -413,7 +392,7 @@
                                                 </li>
                                                 @if($tab === 'mine')
                                                     <li>
-                                                        <button type="button" class="dropdown-item text-warning unassign-btn"
+                                                        <button type="button" class="dropdown-item unassign-btn"
                                                                 data-uid="{{ $content->uid }}">
                                                             Desasignarme
                                                         </button>
@@ -455,6 +434,21 @@
                                                         Chat ai
                                                     </a>
                                                 </li>
+                                                @endif
+                                                @if($content->status === 'on_hold')
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item hold-restore-btn" data-uid="{{ $content->uid }}">
+                                                            Quitar de Sin contenido
+                                                        </button>
+                                                    </li>
+                                                @elseif(! in_array($content->status, ['published', 'published_hidden']))
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button type="button" class="dropdown-item hold-content-btn" data-uid="{{ $content->uid }}">
+                                                            Marcar como sin contenido
+                                                        </button>
+                                                    </li>
                                                 @endif
                                             </ul>
                                         </div>
@@ -514,7 +508,7 @@
                             <label class="text-muted small mb-0">Por página:</label>
                             <select name="per_page" class="form-select form-select-sm d-inline-block w-auto" onchange="this.form.submit()">
                                 @foreach([10, 20, 50, 100] as $opt)
-                                    <option value="{{ $opt }}" {{ request('per_page', 15) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                    <option value="{{ $opt }}" {{ request('per_page', 10) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
                                 @endforeach
                                 <option value="200" {{ request('per_page') == '200' ? 'selected' : '' }}>200</option>
                             </select>
@@ -544,7 +538,7 @@
                     <div class="d-flex flex-column gap-3">
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-pending mt-1" style="min-width:110px;text-align:center;">Pendiente gen.</span>
+                            <span class="badge badge-content-pending badge-content-guide mt-1">Pendiente gen.</span>
                             <div>
                                 <div class="fw-semibold small">Pendiente de generación</div>
                                 <div class="text-muted small">El producto está en cola. La IA aún no ha generado ningún texto.</div>
@@ -552,7 +546,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-generating mt-1" style="min-width:110px;text-align:center;">Generando</span>
+                            <span class="badge badge-content-generating badge-content-guide mt-1">Generando</span>
                             <div>
                                 <div class="fw-semibold small">Generando</div>
                                 <div class="text-muted small">La IA está procesando el contenido en este momento. No se puede editar.</div>
@@ -560,7 +554,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-review mt-1" style="min-width:110px;text-align:center;">Por validar</span>
+                            <span class="badge badge-content-review badge-content-guide mt-1">Por validar</span>
                             <div>
                                 <div class="fw-semibold small">Pendiente de validación</div>
                                 <div class="text-muted small">La IA finalizó la generación. Está listo para que un revisor lo apruebe o rechace.</div>
@@ -568,7 +562,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-inreview mt-1" style="min-width:110px;text-align:center;">En revisión</span>
+                            <span class="badge badge-content-inreview badge-content-guide mt-1">En revisión</span>
                             <div>
                                 <div class="fw-semibold small">En revisión</div>
                                 <div class="text-muted small">Un revisor lo ha tomado y está evaluando el contenido actualmente.</div>
@@ -576,7 +570,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-validated mt-1" style="min-width:110px;text-align:center;">Validado</span>
+                            <span class="badge badge-content-validated badge-content-guide mt-1">Validado</span>
                             <div>
                                 <div class="fw-semibold small">Validado</div>
                                 <div class="text-muted small">El contenido ha sido aprobado por un revisor y sincronizado con el ERP. Puede publicarse en tienda.</div>
@@ -584,7 +578,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-published mt-1" style="min-width:110px;text-align:center;">Publicado</span>
+                            <span class="badge badge-content-published badge-content-guide mt-1">Publicado</span>
                             <div>
                                 <div class="fw-semibold small">Publicado</div>
                                 <div class="text-muted small">El contenido está validado y visible en la tienda online.</div>
@@ -592,7 +586,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start">
-                            <span class="badge badge-content-danger mt-1" style="min-width:110px;text-align:center;">Rechazado</span>
+                            <span class="badge badge-content-danger badge-content-guide mt-1">Rechazado</span>
                             <div>
                                 <div class="fw-semibold small">Rechazado</div>
                                 <div class="text-muted small">El contenido no superó la revisión. Debe regenerarse o corregirse antes de volver al flujo.</div>
@@ -600,7 +594,7 @@
                         </div>
 
                         <div class="d-flex gap-3 align-items-start border-top pt-3">
-                            <span class="badge badge-content-danger mt-1" style="min-width:110px;text-align:center;white-space:normal;">Error</span>
+                            <span class="badge badge-content-danger badge-content-guide-wrap mt-1">Error</span>
                             <div>
                                 <div class="fw-semibold small">Errores de generación</div>
                                 <div class="text-muted small">
@@ -608,6 +602,14 @@
                                     <strong>Sin fuente:</strong> No se pudo acceder a las fuentes web necesarias.<br>
                                     <strong>Error generación:</strong> La IA falló al procesar. Usa <em>Regenerar</em> para reintentar.
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 align-items-start border-top pt-3">
+                            <span class="badge badge-content-hold badge-content-guide mt-1">Sin contenido</span>
+                            <div>
+                                <div class="fw-semibold small">Sin contenido (retenido manualmente)</div>
+                                <div class="text-muted small">El equipo lo marcó a propósito para no subirlo todavía, tenga o no contenido generado por la IA. Queda fuera del listado general hasta que alguien lo quite de aquí. Se pueden dejar notas internas (ej. "No subir hasta Septiembre").</div>
                             </div>
                         </div>
 
@@ -882,6 +884,36 @@
         </div>
     </div>
 
+    {{-- Modal: Marcar como sin contenido (individual) --}}
+    <div class="modal fade" id="hold-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom px-4 py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="d-flex align-items-center justify-content-center rounded-circle bg-secondary-subtle"
+                              style="width:32px;height:32px;flex-shrink:0;">
+                            <i class="fas fa-ban text-secondary" style="font-size:.8rem;"></i>
+                        </span>
+                        <h6 class="modal-title fw-bold mb-0">Marcar como sin contenido</h6>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 py-3">
+                    <p class="text-muted small mb-3">
+                        Este contenido saldrá del listado general hasta que lo quites de "Sin contenido".
+                    </p>
+                    <label class="form-label fw-semibold small mb-1">Nota interna <span class="text-muted fw-normal">(opcional)</span></label>
+                    <textarea id="hold-notes-input" class="form-control" rows="3"
+                              placeholder="Ej: No subir hasta Septiembre"></textarea>
+                </div>
+                <div class="modal-footer border-top px-4 py-3 d-flex flex-column gap-2">
+                    <button id="hold-confirm-btn" type="button" class="btn btn-primary w-100">Marcar sin contenido</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal confirmación publicar --}}
     <div class="modal fade" id="publish-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
@@ -950,6 +982,11 @@
                             <option value="publish">Publicar (solo validados)</option>
                             <option value="reject">Rechazar</option>
                             <option value="regenerate">Regenerar IA</option>
+                            @if(request('status') === 'on_hold')
+                                <option value="restore">Quitar de Sin contenido</option>
+                            @else
+                                <option value="hold">Marcar como sin contenido</option>
+                            @endif
                         </select>
                     </div>
                     @if($canAssignOthers)
@@ -966,6 +1003,10 @@
                             <option value="1">Sí — publicar</option>
                             <option value="0" selected>No — solo aprobar</option>
                         </select>
+                    </div>
+                    <div class="mb-0 d-none" id="bulk-hold-notes-wrap">
+                        <label class="form-label fw-semibold small mb-1">Nota interna (opcional)</label>
+                        <textarea id="bulk-hold-notes" class="form-control" rows="2" placeholder="Ej: No subir hasta Septiembre"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-top px-4 py-3 d-flex flex-column gap-2">
@@ -1366,6 +1407,94 @@ $(document).ready(function() {
         });
     });
 
+    // Notas inline en el listado "Sin contenido" — guarda al perder el foco
+    $(document).on('blur', '.content-notes-input', function () {
+        const $el = $(this);
+        const uid = $el.data('uid');
+        const value = $el.val();
+
+        if (value === $el.data('saved-value')) return;
+
+        const editUrl = '{{ route("settings.suppliers.content.edit", ":uid") }}'.replace(':uid', uid);
+
+        $.ajax({
+            url: editUrl,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            data: { field: 'notes', value: value },
+            success: function (res) {
+                if (res.success) {
+                    $el.data('saved-value', value);
+                    toastr.success('Nota guardada', 'Sin contenido');
+                } else {
+                    toastr.error(res.message || 'Error al guardar la nota', 'Error');
+                }
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar la nota', 'Error');
+            },
+        });
+    });
+
+    // Marcar sin contenido (individual) — misma acción que el bulk, con un solo id
+    let _holdUid = null;
+    const holdModal = new bootstrap.Modal(document.getElementById('hold-modal'));
+
+    $(document).on('click', '.hold-content-btn', function () {
+        _holdUid = $(this).data('uid');
+        $('#hold-notes-input').val('');
+        holdModal.show();
+    });
+
+    $('#hold-confirm-btn').on('click', function () {
+        if (!_holdUid) return;
+        const notes = $('#hold-notes-input').val();
+        const $btn  = $(this).prop('disabled', true).text('Marcando…');
+
+        $.ajax({
+            url: '{{ route("settings.suppliers.content.bulk-action") }}',
+            method: 'POST',
+            data: JSON.stringify({ action: 'hold', ids: [_holdUid], notes: notes || null, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                holdModal.hide();
+                toastr.success('Marcado como sin contenido');
+                setTimeout(() => location.reload(), 600);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al marcar sin contenido.');
+                $btn.prop('disabled', false).text('Marcar sin contenido');
+            },
+        });
+    });
+
+    document.getElementById('hold-modal').addEventListener('hidden.bs.modal', function () {
+        _holdUid = null;
+        $('#hold-notes-input').val('');
+        $('#hold-confirm-btn').prop('disabled', false).text('Marcar sin contenido');
+    });
+
+    // Quitar de "Sin contenido" (individual) — vuelve a Por validar
+    $(document).on('click', '.hold-restore-btn', function () {
+        const uid = $(this).data('uid');
+
+        $.ajax({
+            url: '{{ route("settings.suppliers.content.bulk-action") }}',
+            method: 'POST',
+            data: JSON.stringify({ action: 'restore', ids: [uid], _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                toastr.success('Contenido restaurado a Por validar');
+                setTimeout(() => location.reload(), 600);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al restaurar.');
+            },
+        });
+    });
+
     @if (session('success'))
         toastr.success('{{ session('success') }}', 'Éxito');
     @endif
@@ -1477,11 +1606,18 @@ $(document).ready(function() {
         } else {
             $('#bulk-publicar-wrap').addClass('d-none');
         }
+
+        if (val === 'hold') {
+            $('#bulk-hold-notes-wrap').removeClass('d-none');
+        } else {
+            $('#bulk-hold-notes-wrap').addClass('d-none');
+        }
     });
 
     $('#bulk-modal').on('hide.bs.modal', function () {
         $('#bulk-action-select').val('').trigger('change');
         $('#bulk-publicar').val('0');
+        $('#bulk-hold-notes').val('');
         $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
         bulk.reset();
     });
@@ -1542,6 +1678,9 @@ $(document).ready(function() {
         const payload = { action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') };
         if (action === 'approve') {
             payload.publicar = parseInt($('#bulk-publicar').val(), 10);
+        }
+        if (action === 'hold') {
+            payload.notes = $('#bulk-hold-notes').val();
         }
 
         $.ajax({

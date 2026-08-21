@@ -67,7 +67,7 @@ body { background-color: #f6f7f9; }
 .csat-star-lg { font-size: 2rem; }
 
 .csat-comment {
-    background-color: #f8f9fa;
+    background-color: #f5f6f8;
     border-left: 3px solid #90bb13;
     border-radius: 0.25rem;
     padding: 0.75rem 1rem;

@@ -4,29 +4,41 @@ namespace Modules\Supplier\Services;
 
 use DeepL\Translator;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Contracts\WebhookDispatcherInterface;
 use Modules\Supplier\Helpers\HtmlSanitizer;
+use Modules\Supplier\Jobs\SyncCharacteristicsToErpJob;
+use Modules\Supplier\Jobs\SyncContentToErpJob;
 use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Ai\AiCost;
+use Modules\Supplier\Models\Category\Category;
+use Modules\Supplier\Models\Category\Subfamily;
 use Modules\Supplier\Models\Content\ContentValidation;
 use Modules\Supplier\Models\Extraction\ExtractionResult;
 use Modules\Supplier\Models\Prompt\Prompt;
+use Modules\Supplier\Models\Source\Source;
 use Modules\Supplier\Services\Ai\AiApiClient;
-use Modules\Supplier\Services\PromptSelectionService;
 
 class ContentGenerationService
 {
     public const STATS_CACHE_KEY = 'supplier:ai_content:stats';
 
     protected const QUALITY_EXCELLENT = 85;
+
     protected const QUALITY_GOOD = 70;
+
     protected const QUALITY_ACCEPTABLE = 50;
+
     protected const READABILITY_EASY = 60;
+
     protected const READABILITY_MODERATE = 50;
 
     protected float $dailyBudgetLimit;
+
     protected float $monthlyBudgetLimit;
 
     public function __construct(
@@ -53,12 +65,12 @@ class ContentGenerationService
         }
 
         Log::info('Prompt resolved', [
-            'prompt_id'    => $prompt->id,
+            'prompt_id' => $prompt->id,
             'prompt_scope' => $prompt->scope,
-            'supplier_id'  => $supplierId,
-            'category_id'  => $categoryId,
+            'supplier_id' => $supplierId,
+            'category_id' => $categoryId,
             'subfamily_id' => $subfamilyId,
-            'source_id'    => $sourceId,
+            'source_id' => $sourceId,
         ]);
 
         return $prompt;
@@ -67,7 +79,7 @@ class ContentGenerationService
     public function generateContent(ExtractionResult $result, ?Prompt $prompt = null): AiContent
     {
         if (! $prompt) {
-            $categoryId  = $result->extracted_data['category_id'] ?? null;
+            $categoryId = $result->extracted_data['category_id'] ?? null;
             $subfamilyId = $result->extracted_data['subfamily_id'] ?? null;
 
             if (! $categoryId && ! empty($result->extracted_data['categorie'])) {
@@ -75,15 +87,15 @@ class ContentGenerationService
                     ? ($result->extracted_data['categorie']['id'] ?? null)
                     : $result->extracted_data['categorie'];
                 if ($erpCatId) {
-                    $categoryId = \Modules\Supplier\Models\Category\Category::where('erp_id', $erpCatId)->value('id');
+                    $categoryId = Category::where('erp_id', $erpCatId)->value('id');
                 }
             }
 
             if (! $subfamilyId && ! empty($result->extracted_data['product_attributes'])) {
-                $firstAttr   = $result->extracted_data['product_attributes'][0] ?? [];
+                $firstAttr = $result->extracted_data['product_attributes'][0] ?? [];
                 $erpSubfamId = $firstAttr['subfamily_id'] ?? null;
                 if ($erpSubfamId) {
-                    $subfamilyId = \Modules\Supplier\Models\Category\Subfamily::where('erp_id', $erpSubfamId)->value('id');
+                    $subfamilyId = Subfamily::where('erp_id', $erpSubfamId)->value('id');
                 }
             }
 
@@ -98,41 +110,45 @@ class ContentGenerationService
         $this->checkBudgetLimits();
 
         $content = AiContent::create([
-            'supplier_id'       => $result->supplier_id,
-            'erp_reference'     => $result->reference,
-            'ean'               => $result->ean,
-            'status'            => AiContent::STATUS_GENERATING,
-            'prompt_id'         => $prompt->id,
+            'supplier_id' => $result->supplier_id,
+            'erp_reference' => $result->reference,
+            'ean' => $result->ean,
+            'status' => AiContent::STATUS_GENERATING,
+            'prompt_id' => $prompt->id,
             'source_attributes' => $result->extracted_data,
         ]);
 
         try {
             $renderedPrompt = $this->renderPrompt($prompt, $this->prepareVariables($result));
+            $preferredSourceUrls = $this->preferredSourceUrls($result->supplier_id);
 
             $aiResponse = $this->callAiApi($renderedPrompt, [
-                'model'             => $prompt->ai_model ?: (\Modules\Core\Models\Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
-                'max_tokens'        => 4000,
+                'model' => $prompt->ai_model ?: (Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
+                'max_tokens' => 4000,
                 'enable_web_search' => (bool) $prompt->enable_web_search,
+                'preferred_source_urls' => $preferredSourceUrls,
             ]);
 
             $parsedContent = $this->parseAiResponse($aiResponse['content']);
 
             $content->update([
-                'generated_name'      => $parsedContent['name'] ?? null,
-                'short_description'   => $parsedContent['short_description'] ?? null,
-                'long_description'    => $parsedContent['long_description'] ?? null,
-                'bullet_points'       => $parsedContent['bullet_points'] ?? null,
-                'seo_title'           => $parsedContent['seo_title'] ?? null,
-                'seo_description'     => $parsedContent['seo_description'] ?? null,
-                'seo_keywords'        => $parsedContent['seo_keywords'] ?? null,
-                'sources_used'        => $aiResponse['sources_used'] ?? [],
+                'generated_name' => $parsedContent['name'] ?? null,
+                'short_description' => $parsedContent['short_description'] ?? null,
+                'long_description' => $parsedContent['long_description'] ?? null,
+                'bullet_points' => $parsedContent['bullet_points'] ?? null,
+                'technologies' => $parsedContent['technologies'] ?? null,
+                'seo_title' => $parsedContent['seo_title'] ?? null,
+                'seo_description' => $parsedContent['seo_description'] ?? null,
+                'seo_keywords' => $parsedContent['seo_keywords'] ?? null,
+                'sources_used' => $aiResponse['sources_used'] ?? [],
                 'generation_metadata' => [
-                    'model'            => $aiResponse['model'],
-                    'tokens'           => $aiResponse['tokens'],
-                    'cost'             => $aiResponse['cost'],
-                    'latency_ms'       => $aiResponse['latency_ms'],
-                    'generated_at'     => now()->toIso8601String(),
+                    'model' => $aiResponse['model'],
+                    'tokens' => $aiResponse['tokens'],
+                    'cost' => $aiResponse['cost'],
+                    'latency_ms' => $aiResponse['latency_ms'],
+                    'generated_at' => now()->toIso8601String(),
                     'web_search_query' => $aiResponse['web_search_query'] ?? null,
+                    'preferred_sources_provided' => $preferredSourceUrls,
                 ],
             ]);
 
@@ -155,9 +171,9 @@ class ContentGenerationService
             $content->log(AiContent::ACTION_GENERATION_COMPLETED);
 
             Log::info('Content generated successfully', [
-                'content_id'  => $content->id,
+                'content_id' => $content->id,
                 'supplier_id' => $result->supplier_id,
-                'model'       => $aiResponse['model'],
+                'model' => $aiResponse['model'],
             ]);
 
             return $content->fresh();
@@ -167,8 +183,8 @@ class ContentGenerationService
 
             Log::error('Content generation failed', [
                 'content_id' => $content->id,
-                'error'      => $e->getMessage(),
-                'trace'      => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             throw $e;
@@ -194,33 +210,35 @@ class ContentGenerationService
         $this->checkBudgetLimits();
 
         $content->update([
-            'status'           => AiContent::STATUS_GENERATING,
-            'prompt_id'        => $newPrompt->id,
+            'status' => AiContent::STATUS_GENERATING,
+            'prompt_id' => $newPrompt->id,
             'rejection_reason' => null,
         ]);
 
-        $userId = $requestedByUserId ?? \Illuminate\Support\Facades\Auth::id();
+        $userId = $requestedByUserId ?? Auth::id();
         if ($userId) {
             $content->log('regeneration_requested', null, AiContent::STATUS_GENERATING, [
-                'source'    => 'manual',
+                'source' => 'manual',
                 'prompt_id' => $newPrompt->id,
             ], $userId);
         }
 
         try {
             $previousSourcesUsed = $content->sources_used ?? [];
-            $previousWebQuery    = $content->generation_metadata['web_search_query'] ?? null;
+            $previousWebQuery = $content->generation_metadata['web_search_query'] ?? null;
             $previousGeneratedAt = $content->generation_metadata['regenerated_at']
                 ?? $content->generation_metadata['generated_at']
                 ?? null;
 
-            $variables      = $this->prepareVariablesFromContent($content);
+            $variables = $this->prepareVariablesFromContent($content);
             $renderedPrompt = $this->renderPrompt($newPrompt, $variables);
+            $preferredSourceUrls = $this->preferredSourceUrls($content->supplier_id);
 
             $aiResponse = $this->callAiApi($renderedPrompt, [
-                'model'             => $newPrompt->ai_model ?: (\Modules\Core\Models\Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
-                'max_tokens'        => (int) \Modules\Core\Models\Setting::get('supplier.ai_max_tokens') ?: 4000,
+                'model' => $newPrompt->ai_model ?: (Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
+                'max_tokens' => (int) Setting::get('supplier.ai_max_tokens') ?: 4000,
                 'enable_web_search' => (bool) $newPrompt->enable_web_search,
+                'preferred_source_urls' => $preferredSourceUrls,
             ]);
 
             $parsedContent = $this->parseAiResponse($aiResponse['content']);
@@ -228,10 +246,10 @@ class ContentGenerationService
             $sourcesHistory = $content->sources_history ?? [];
             if (! empty($previousSourcesUsed) || $previousWebQuery) {
                 $sourcesHistory[] = [
-                    'sources_used'     => $previousSourcesUsed,
+                    'sources_used' => $previousSourcesUsed,
                     'web_search_query' => $previousWebQuery,
-                    'generated_at'     => $previousGeneratedAt,
-                    'archived_at'      => now()->toIso8601String(),
+                    'generated_at' => $previousGeneratedAt,
+                    'archived_at' => now()->toIso8601String(),
                 ];
                 if (count($sourcesHistory) > 10) {
                     $sourcesHistory = array_slice($sourcesHistory, -10);
@@ -239,22 +257,24 @@ class ContentGenerationService
             }
 
             $content->update([
-                'sources_history'     => $sourcesHistory,
-                'generated_name'      => $parsedContent['name'] ?? null,
-                'short_description'   => $parsedContent['short_description'] ?? null,
-                'long_description'    => $parsedContent['long_description'] ?? null,
-                'bullet_points'       => $parsedContent['bullet_points'] ?? null,
-                'seo_title'           => $parsedContent['seo_title'] ?? null,
-                'seo_description'     => $parsedContent['seo_description'] ?? null,
-                'seo_keywords'        => $parsedContent['seo_keywords'] ?? null,
-                'sources_used'        => $aiResponse['sources_used'] ?? [],
+                'sources_history' => $sourcesHistory,
+                'generated_name' => $parsedContent['name'] ?? null,
+                'short_description' => $parsedContent['short_description'] ?? null,
+                'long_description' => $parsedContent['long_description'] ?? null,
+                'bullet_points' => $parsedContent['bullet_points'] ?? null,
+                'technologies' => $parsedContent['technologies'] ?? null,
+                'seo_title' => $parsedContent['seo_title'] ?? null,
+                'seo_description' => $parsedContent['seo_description'] ?? null,
+                'seo_keywords' => $parsedContent['seo_keywords'] ?? null,
+                'sources_used' => $aiResponse['sources_used'] ?? [],
                 'generation_metadata' => [
-                    'model'            => $aiResponse['model'],
-                    'tokens'           => $aiResponse['tokens'],
-                    'cost'             => $aiResponse['cost'],
-                    'latency_ms'       => $aiResponse['latency_ms'],
-                    'regenerated_at'   => now()->toIso8601String(),
+                    'model' => $aiResponse['model'],
+                    'tokens' => $aiResponse['tokens'],
+                    'cost' => $aiResponse['cost'],
+                    'latency_ms' => $aiResponse['latency_ms'],
+                    'regenerated_at' => now()->toIso8601String(),
                     'web_search_query' => $aiResponse['web_search_query'] ?? null,
+                    'preferred_sources_provided' => $preferredSourceUrls,
                 ],
             ]);
 
@@ -280,14 +300,14 @@ class ContentGenerationService
 
             Log::info('Content regenerated successfully', [
                 'content_id' => $content->id,
-                'model'      => $aiResponse['model'],
+                'model' => $aiResponse['model'],
             ]);
 
             return $content->fresh();
         } catch (Exception $e) {
             $content->markAsFailed($e->getMessage());
             $content->log(AiContent::ACTION_GENERATION_FAILED, null, null, [
-                'error'                => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'regeneration_attempt' => true,
             ]);
 
@@ -295,7 +315,7 @@ class ContentGenerationService
 
             Log::error('Content regeneration failed', [
                 'content_id' => $content->id,
-                'error'      => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;
@@ -310,35 +330,38 @@ class ContentGenerationService
     {
         $this->checkBudgetLimits();
 
-        $variables      = $this->prepareVariablesFromErpData($erpData);
+        $variables = $this->prepareVariablesFromErpData($erpData);
         $renderedPrompt = $this->renderPrompt($prompt, $variables);
+        $preferredSourceUrls = $this->preferredSourceUrls($content->supplier_id);
 
         $aiResponse = $this->callAiApi($renderedPrompt, [
-            'model'             => $prompt->ai_model ?: (\Modules\Core\Models\Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
-            'max_tokens'        => (int) \Modules\Core\Models\Setting::get('supplier.ai_max_tokens') ?: 4000,
+            'model' => $prompt->ai_model ?: (Setting::get('supplier.ai_default_model') ?: config('supplier.ai.default_model', 'gemini-2.5-flash')),
+            'max_tokens' => (int) Setting::get('supplier.ai_max_tokens') ?: 4000,
             'enable_web_search' => (bool) $prompt->enable_web_search,
+            'preferred_source_urls' => $preferredSourceUrls,
         ]);
 
         $parsedContent = $this->parseAiResponse($aiResponse['content']);
 
         $content->update([
-            'generated_name'      => $parsedContent['name'] ?? null,
-            'short_description'   => $parsedContent['short_description'] ?? null,
-            'long_description'    => $parsedContent['long_description'] ?? null,
-            'bullet_points'       => $parsedContent['bullet_points'] ?? null,
-            'seo_title'           => $parsedContent['seo_title'] ?? null,
-            'seo_description'     => $parsedContent['seo_description'] ?? null,
-            'seo_keywords'        => $parsedContent['seo_keywords'] ?? null,
-            'source_attributes'   => $erpData,
-            'sources_used'        => $aiResponse['sources_used'] ?? [],
+            'generated_name' => $parsedContent['name'] ?? null,
+            'short_description' => $parsedContent['short_description'] ?? null,
+            'long_description' => $parsedContent['long_description'] ?? null,
+            'bullet_points' => $parsedContent['bullet_points'] ?? null,
+            'seo_title' => $parsedContent['seo_title'] ?? null,
+            'seo_description' => $parsedContent['seo_description'] ?? null,
+            'seo_keywords' => $parsedContent['seo_keywords'] ?? null,
+            'source_attributes' => $erpData,
+            'sources_used' => $aiResponse['sources_used'] ?? [],
             'generation_metadata' => [
-                'model'            => $aiResponse['model'],
-                'tokens'           => $aiResponse['tokens'],
-                'cost'             => $aiResponse['cost'],
-                'latency_ms'       => $aiResponse['latency_ms'],
-                'generated_at'     => now()->toIso8601String(),
-                'source'           => 'erp_sync',
+                'model' => $aiResponse['model'],
+                'tokens' => $aiResponse['tokens'],
+                'cost' => $aiResponse['cost'],
+                'latency_ms' => $aiResponse['latency_ms'],
+                'generated_at' => now()->toIso8601String(),
+                'source' => 'erp_sync',
                 'web_search_query' => $aiResponse['web_search_query'] ?? null,
+                'preferred_sources_provided' => $preferredSourceUrls,
             ],
         ]);
 
@@ -384,28 +407,64 @@ class ContentGenerationService
         }
 
         $supplier = $erpData['supplier']['name'] ?? $erpData['supplier']['label'] ?? '';
+        $reference = (string) ($erpData['code'] ?? '');
+
+        return array_merge([
+            'product_name' => $erpData['name'] ?? 'Unknown Product',
+            'reference' => $reference,
+            'ean' => (string) $ean,
+            'short_description' => '',
+            'long_description' => '',
+            'specifications' => '',
+            'features' => $features,
+            'brand' => (string) $brand,
+            'category' => (string) $category,
+            'supplier' => (string) $supplier,
+        ], $this->promptVariableAliases($reference, (string) $category, (string) $supplier, $attrs->all(), []));
+    }
+
+    /**
+     * Alias adicionales que usan las plantillas de prompt "reales" (Global,
+     * específicas por proveedor/categoría) — sus nombres de variable no
+     * coinciden con las claves genéricas de arriba (reference/category/
+     * supplier/...), así que sin este alias quedaban como '{{model_id}}' o
+     * '{{erp_reference}}' literales en el prompt final que le llega al
+     * modelo (ver Prompt::render()).
+     *
+     * @param  array<int, array{name?: string, value?: string}>  $productAttributes
+     * @param  array<int, ?string>  $sourceTextParts  Texto ya conocido del producto (descripciones, etc.) para {{source_data}}
+     * @param  ?string  $modelId  Código de modelo real (ej. "NIKEPULSE-21"), si se conoce — distinto del ID numérico ERP en $reference. Sin esto, {{model_id}} usaba el ID ERP y confundía al modelo ("no encontré el producto 830001").
+     */
+    private function promptVariableAliases(
+        string $reference,
+        string $category,
+        string $supplier,
+        array $productAttributes,
+        array $sourceTextParts,
+        ?string $modelId = null,
+    ): array {
+        $attributesText = collect($productAttributes)
+            ->map(fn ($attr) => trim(($attr['name'] ?? '').': '.($attr['value'] ?? ''), ': '))
+            ->filter()
+            ->implode(', ');
 
         return [
-            'product_name'     => $erpData['name'] ?? 'Unknown Product',
-            'reference'        => $erpData['code'] ?? '',
-            'ean'              => (string) $ean,
-            'short_description'=> '',
-            'long_description' => '',
-            'specifications'   => '',
-            'features'         => $features,
-            'brand'            => (string) $brand,
-            'category'         => (string) $category,
-            'supplier'         => (string) $supplier,
+            'erp_reference' => $reference,
+            'model_id' => $modelId ?: $reference,
+            'category_name' => $category,
+            'supplier_name' => $supplier,
+            'attributes' => $attributesText,
+            'source_data' => collect($sourceTextParts)->filter()->implode("\n\n"),
         ];
     }
 
     public function generateBatch(array $resultIds, ?int $promptId = null): array
     {
         $results = [
-            'total'      => count($resultIds),
+            'total' => count($resultIds),
             'successful' => 0,
-            'failed'     => 0,
-            'details'    => [],
+            'failed' => 0,
+            'details' => [],
         ];
 
         $prompt = $promptId ? Prompt::find($promptId) : null;
@@ -417,21 +476,21 @@ class ContentGenerationService
 
                 $results['successful']++;
                 $results['details'][] = [
-                    'result_id'  => $resultId,
+                    'result_id' => $resultId,
                     'content_id' => $content->id,
-                    'status'     => 'success',
+                    'status' => 'success',
                 ];
             } catch (Exception $e) {
                 $results['failed']++;
                 $results['details'][] = [
                     'result_id' => $resultId,
-                    'status'    => 'failed',
-                    'error'     => $e->getMessage(),
+                    'status' => 'failed',
+                    'error' => $e->getMessage(),
                 ];
 
                 Log::error('Batch generation failed for result', [
                     'result_id' => $resultId,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
             }
 
@@ -450,6 +509,32 @@ class ContentGenerationService
         return $this->apiClient->generate($prompt, $options);
     }
 
+    /**
+     * URLs de referencia sugeridas a la IA como prioridad de búsqueda al
+     * redactar la descripción del producto: páginas del proveedor donde
+     * creemos que hay contenido/fichas (ver Source::contentUrls()). Solo si
+     * el modelo no encuentra el producto ahí, amplía a búsqueda general.
+     *
+     * @return list<string>
+     */
+    protected function preferredSourceUrls(?int $supplierId): array
+    {
+        if (! $supplierId) {
+            return [];
+        }
+
+        return Source::forSupplier($supplierId)->active()
+            ->with(['contentUrls' => fn ($q) => $q->where('is_active', true)->orderBy('priority')])
+            ->get()
+            ->flatMap(fn ($source) => $source->contentUrls)
+            ->pluck('url')
+            ->filter()
+            ->unique()
+            ->take(20)
+            ->values()
+            ->all();
+    }
+
     public function trackAiCost(
         string $model,
         int $inputTokens,
@@ -465,28 +550,28 @@ class ContentGenerationService
     ): AiCost {
         $config = AiApiClient::MODEL_CONFIG[$model] ?? [];
 
-        $inputCost  = ($inputTokens / 1_000_000) * ($config['input_cost_per_1m'] ?? 0);
+        $inputCost = ($inputTokens / 1_000_000) * ($config['input_cost_per_1m'] ?? 0);
         $outputCost = ($outputTokens / 1_000_000) * ($config['output_cost_per_1m'] ?? 0);
 
         return AiCost::create([
-            'supplier_id'      => $supplierId,
-            'content_id'       => $contentId,
-            'batch_id'         => $batchId,
-            'model'            => $model,
-            'operation_type'   => $operationType,
-            'input_tokens'     => $inputTokens,
-            'output_tokens'    => $outputTokens,
-            'input_cost'       => $inputCost,
-            'output_cost'      => $outputCost,
-            'web_search_cost'  => $webSearchCost,
+            'supplier_id' => $supplierId,
+            'content_id' => $contentId,
+            'batch_id' => $batchId,
+            'model' => $model,
+            'operation_type' => $operationType,
+            'input_tokens' => $inputTokens,
+            'output_tokens' => $outputTokens,
+            'input_cost' => $inputCost,
+            'output_cost' => $outputCost,
+            'web_search_cost' => $webSearchCost,
             'web_search_calls' => $webSearchCalls,
-            'latency_ms'       => $latencyMs,
+            'latency_ms' => $latencyMs,
         ]);
     }
 
     public function validateContent(AiContent $content): ContentValidation
     {
-        $qualityScore     = $this->calculateQualityScore($content->long_description ?? '');
+        $qualityScore = $this->calculateQualityScore($content->long_description ?? '');
         $readabilityScore = $this->checkReadability($content->long_description ?? '');
 
         $combinedText = implode(' ', array_filter([
@@ -495,7 +580,7 @@ class ContentGenerationService
             $content->long_description,
         ]));
 
-        $issues      = [];
+        $issues = [];
         $suggestions = [];
 
         if (empty($content->generated_name)) {
@@ -531,32 +616,42 @@ class ContentGenerationService
             : (empty($issues) ? 'needs_review' : 'failed');
 
         return ContentValidation::create([
-            'content_id'            => $content->id,
-            'quality_score'         => $qualityScore,
-            'readability_score'     => $readabilityScore,
+            'content_id' => $content->id,
+            'quality_score' => $qualityScore,
+            'readability_score' => $readabilityScore,
             'has_required_sections' => count($issues) === 0,
-            'validation_status'     => $validationStatus,
-            'issues'                => $issues,
-            'suggestions'           => $suggestions,
-            'validated_at'          => now(),
+            'validation_status' => $validationStatus,
+            'issues' => $issues,
+            'suggestions' => $suggestions,
+            'validated_at' => now(),
         ]);
     }
 
     public function calculateQualityScore(string $content): float
     {
-        if (empty($content)) { return 0.0; }
+        if (empty($content)) {
+            return 0.0;
+        }
 
-        $score     = 50.0;
+        $score = 50.0;
         $wordCount = str_word_count($content);
-        if ($wordCount >= 100) { $score += 10; }
-        if ($wordCount >= 200) { $score += 10; }
+        if ($wordCount >= 100) {
+            $score += 10;
+        }
+        if ($wordCount >= 200) {
+            $score += 10;
+        }
 
         $sentenceCount = count(preg_split('/[.!?]+/', $content, -1, PREG_SPLIT_NO_EMPTY));
-        if ($sentenceCount >= 5) { $score += 10; }
+        if ($sentenceCount >= 5) {
+            $score += 10;
+        }
 
-        $words       = str_word_count(strtolower($content), 1);
+        $words = str_word_count(strtolower($content), 1);
         $uniqueRatio = count(array_unique($words)) / max(count($words), 1);
-        if ($uniqueRatio >= 0.7) { $score += 10; }
+        if ($uniqueRatio >= 0.7) {
+            $score += 10;
+        }
 
         if (preg_match('/\b(specifications|features|benefits|warranty|components)\b/i', $content)) {
             $score += 10;
@@ -567,11 +662,13 @@ class ContentGenerationService
 
     public function checkReadability(string $content): float
     {
-        if (empty($content)) { return 0.0; }
+        if (empty($content)) {
+            return 0.0;
+        }
 
         $sentenceCount = max(count(preg_split('/[.!?]+/', $content, -1, PREG_SPLIT_NO_EMPTY)), 1);
-        $words         = str_word_count($content, 1);
-        $wordCount     = max(count($words), 1);
+        $words = str_word_count($content, 1);
+        $wordCount = max(count($words), 1);
 
         $syllableCount = 0;
         foreach ($words as $word) {
@@ -604,16 +701,20 @@ class ContentGenerationService
         // llaman a syncToErp() con el valor de "publicar" elegido; si además se dispara el
         // job, su publicar=0 asíncrono sobrescribiría la elección del revisor en el ERP.
         if ($syncToErp) {
-            \Modules\Supplier\Jobs\SyncContentToErpJob::dispatch($content->uid);
+            SyncContentToErpJob::dispatch($content->uid);
         }
+
+        // Sincroniza características pendientes (modelo + variantes). Incondicional:
+        // el job es barato si no hay nada pendiente que enviar al ERP.
+        SyncCharacteristicsToErpJob::dispatch($content->uid);
 
         $this->forgetStatsCache();
 
         Log::info('Content approved', ['content_id' => $content->id, 'validated_by' => $userId]);
 
         $this->dispatchWebhooks('content.approved', [
-            'uid'      => $content->uid,
-            'product'  => $content->erp_reference,
+            'uid' => $content->uid,
+            'product' => $content->erp_reference,
             'supplier' => $content->supplier_id,
         ]);
     }
@@ -634,6 +735,7 @@ class ContentGenerationService
     {
         if (! interface_exists(WebhookDispatcherInterface::class) || ! app()->bound(WebhookDispatcherInterface::class)) {
             Log::debug('Webhook dispatch skipped: no dispatcher bound', ['event' => $event]);
+
             return;
         }
 
@@ -668,20 +770,29 @@ class ContentGenerationService
     protected function prepareVariables(ExtractionResult $result): array
     {
         $data = $result->extracted_data;
+        $reference = (string) ($result->reference ?? '');
+        $category = (string) ($data['category'] ?? '');
+        $supplier = (string) ($result->supplier->label ?? '');
 
-        return [
-            'product_name'     => $data['product_name'] ?? 'Unknown Product',
-            'reference'        => $result->reference ?? '',
-            'ean'              => $result->ean ?? '',
-            'short_description'=> $data['short_description'] ?? '',
+        return array_merge([
+            'product_name' => $data['product_name'] ?? 'Unknown Product',
+            'reference' => $reference,
+            'ean' => $result->ean ?? '',
+            'short_description' => $data['short_description'] ?? '',
             'long_description' => $data['long_description'] ?? '',
-            'specifications'   => $data['specifications'] ?? [],
-            'features'         => $data['features'] ?? [],
-            'price'            => $data['price'] ?? '',
-            'brand'            => $data['brand'] ?? '',
-            'category'         => $data['category'] ?? '',
-            'supplier'         => $result->supplier->label ?? '',
-        ];
+            'specifications' => $data['specifications'] ?? [],
+            'features' => $data['features'] ?? [],
+            'price' => $data['price'] ?? '',
+            'brand' => $data['brand'] ?? '',
+            'category' => $category,
+            'supplier' => $supplier,
+        ], $this->promptVariableAliases(
+            $reference,
+            $category,
+            $supplier,
+            $data['product_attributes'] ?? [],
+            [$data['short_description'] ?? '', $data['long_description'] ?? '']
+        ));
     }
 
     protected function prepareVariablesFromContent(AiContent $content): array
@@ -716,44 +827,219 @@ class ContentGenerationService
         }
 
         $str = function (mixed $val, string $fallback = ''): string {
-            if (is_array($val)) return implode(', ', array_filter(array_map('strval', $val)));
-            if (is_null($val))  return $fallback;
+            if (is_array($val)) {
+                return implode(', ', array_filter(array_map('strval', $val)));
+            }
+            if (is_null($val)) {
+                return $fallback;
+            }
+
             return (string) $val;
         };
 
-        return [
-            'product_name'     => $str($data['name'] ?? $data['product_name'] ?? $content->generated_name, 'Unknown Product'),
-            'reference'        => $str($content->erp_reference ?? $data['code'] ?? ''),
-            'ean'              => $str($content->ean ?? $data['ean13'] ?? $data['ean'] ?? ''),
-            'short_description'=> $str($data['short_description'] ?? $content->short_description ?? ''),
+        $reference = $str($content->erp_reference ?? $data['code'] ?? '');
+        $categoryStr = $str($category);
+        $supplierStr = $str($supplier);
+
+        return array_merge([
+            'product_name' => $str($data['name'] ?? $data['product_name'] ?? $content->generated_name, 'Unknown Product'),
+            'reference' => $reference,
+            'ean' => $str($content->ean ?? $data['ean13'] ?? $data['ean'] ?? ''),
+            'short_description' => $str($data['short_description'] ?? $content->short_description ?? ''),
             'long_description' => $str($data['long_description'] ?? $content->long_description ?? ''),
-            'specifications'   => $str($specifications ?? ''),
-            'features'         => $str($features ?? ''),
-            'price'            => $str($data['price'] ?? ''),
-            'brand'            => $str($data['brand'] ?? $data['marca'] ?? ''),
-            'category'         => $str($category),
-            'supplier'         => $str($supplier),
+            'specifications' => $str($specifications ?? ''),
+            'features' => $str($features ?? ''),
+            'price' => $str($data['price'] ?? ''),
+            'brand' => $str($data['brand'] ?? $data['marca'] ?? ''),
+            'category' => $categoryStr,
+            'supplier' => $supplierStr,
+        ], $this->promptVariableAliases(
+            $reference,
+            $categoryStr,
+            $supplierStr,
+            $data['product_attributes'] ?? [],
+            [
+                $str($data['short_description'] ?? $content->short_description ?? ''),
+                $str($data['long_description'] ?? $content->long_description ?? ''),
+            ],
+            $content->model_id,
+        ));
+    }
+
+    /**
+     * Modelos como gemini-2.5-* a veces ignoran el formato "Name:/Description:"
+     * pedido y responden con un bloque JSON (a veces con preámbulo de texto
+     * antes o después, o dentro de una valla ```json). Se intenta extraer y
+     * mapear ese JSON primero; si no hay JSON reconocible, se cae al parser
+     * de líneas de siempre — sin cambios para el formato tradicional.
+     */
+    protected function parseAiResponse(string $response): array
+    {
+        $jsonPayload = $this->extractContentJsonPayload($response);
+
+        $parsed = $jsonPayload !== null
+            ? $this->parseAiResponseFromJson($jsonPayload)
+            : $this->parseAiResponseFromLines($response);
+
+        if (empty($parsed['long_description']) && ! empty($response)) {
+            $parsed['long_description'] = $response;
+        }
+
+        if (! empty($parsed['long_description'])) {
+            $parsed['long_description'] = HtmlSanitizer::clean($parsed['long_description']);
+        }
+        if (! empty($parsed['short_description'])) {
+            $parsed['short_description'] = strip_tags($parsed['short_description']);
+        }
+        if (! empty($parsed['name'])) {
+            // supplier_ai_contents.generated_name es VARCHAR(255) — el modelo
+            // no cuenta caracteres, así que sin este límite un nombre largo
+            // hace fallar el UPDATE completo (visto en vivo con seo_title).
+            $parsed['name'] = Str::limit(strip_tags($parsed['name']), 252, '…');
+        }
+        if (! empty($parsed['seo_title'])) {
+            // Columna VARCHAR(70) — el modelo no respeta ese límite de forma
+            // fiable pese a que se lo pedimos en el prompt.
+            $parsed['seo_title'] = Str::limit(strip_tags($parsed['seo_title']), 67, '…');
+        }
+        if (! empty($parsed['seo_description'])) {
+            // Columna VARCHAR(160), mismo motivo que seo_title.
+            $parsed['seo_description'] = Str::limit(strip_tags($parsed['seo_description']), 157, '…');
+        }
+        if (! empty($parsed['seo_keywords'])) {
+            // Columna VARCHAR(255) — mismo riesgo si el modelo devuelve
+            // muchas keywords separadas por coma.
+            $parsed['seo_keywords'] = Str::limit(strip_tags($parsed['seo_keywords']), 252, '…');
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * Busca un objeto JSON de contenido en la respuesta: primero dentro de
+     * una valla ```json, luego cualquier valla ``` ```, y por último el
+     * primer objeto {...} balanceado en el texto crudo. Solo se acepta si
+     * al decodificar aparecen al menos 2 de las claves de contenido
+     * esperadas — evita falsos positivos con JSON incidental en el texto.
+     */
+    protected function extractContentJsonPayload(string $response): ?array
+    {
+        $candidates = [];
+
+        if (preg_match('/```json\s*(\{.*?\})\s*```/is', $response, $matches)) {
+            $candidates[] = $matches[1];
+        }
+        if (preg_match('/```\s*(\{.*?\})\s*```/is', $response, $matches)) {
+            $candidates[] = $matches[1];
+        }
+        if (($balanced = $this->firstBalancedJsonObject($response)) !== null) {
+            $candidates[] = $balanced;
+        }
+
+        foreach ($candidates as $candidate) {
+            $decoded = json_decode($candidate, true);
+            if (is_array($decoded) && $this->looksLikeContentPayload($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
+    private function firstBalancedJsonObject(string $response): ?string
+    {
+        $start = strpos($response, '{');
+        if ($start === false) {
+            return null;
+        }
+
+        $depth = 0;
+        for ($i = $start, $len = strlen($response); $i < $len; $i++) {
+            if ($response[$i] === '{') {
+                $depth++;
+            } elseif ($response[$i] === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    return substr($response, $start, $i - $start + 1);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function looksLikeContentPayload(array $payload): bool
+    {
+        $expectedKeys = ['generated_name', 'name', 'title', 'short_description', 'long_description', 'bullet_points', 'technologies', 'seo_title', 'seo_description', 'seo_keywords'];
+
+        return count(array_intersect(array_keys($payload), $expectedKeys)) >= 2;
+    }
+
+    /** @return array{name: ?string, short_description: ?string, long_description: ?string, bullet_points: array, technologies: array, seo_title: ?string, seo_description: ?string, seo_keywords: ?string} */
+    protected function parseAiResponseFromJson(array $payload): array
+    {
+        $bulletPoints = $this->normalizeStringList($payload['bullet_points'] ?? []);
+        $technologies = $this->normalizeStringList($payload['technologies'] ?? []);
+
+        $seoKeywords = $payload['seo_keywords'] ?? null;
+        if (is_array($seoKeywords)) {
+            $seoKeywords = implode(', ', array_filter(array_map('strval', $seoKeywords)));
+        }
+
+        $longDescription = $payload['long_description'] ?? null;
+        if (is_array($longDescription)) {
+            $longDescription = implode("\n\n", array_filter(array_map('strval', $longDescription)));
+        }
+
+        return [
+            'name' => $payload['generated_name'] ?? $payload['name'] ?? $payload['title'] ?? null,
+            'short_description' => $payload['short_description'] ?? null,
+            'long_description' => $longDescription,
+            'bullet_points' => $bulletPoints,
+            'technologies' => $technologies,
+            'seo_title' => $payload['seo_title'] ?? null,
+            'seo_description' => $payload['seo_description'] ?? null,
+            'seo_keywords' => $seoKeywords,
         ];
     }
 
-    protected function parseAiResponse(string $response): array
+    /** @return string[] */
+    private function normalizeStringList(mixed $value): array
     {
-        $lines  = explode("\n", $response);
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($item) => is_string($item) ? trim($item) : (is_scalar($item) ? trim((string) $item) : null),
+            $value
+        )));
+    }
+
+    /** @return array{name: ?string, short_description: ?string, long_description: ?string, bullet_points: array, technologies: array, seo_title: ?string, seo_description: ?string, seo_keywords: ?string} */
+    protected function parseAiResponseFromLines(string $response): array
+    {
+        $lines = explode("\n", $response);
         $parsed = [
-            'name'              => null,
+            'name' => null,
             'short_description' => null,
-            'long_description'  => null,
-            'bullet_points'     => [],
-            'seo_title'         => null,
-            'seo_description'   => null,
-            'seo_keywords'      => null,
+            'long_description' => null,
+            'bullet_points' => [],
+            'technologies' => [],
+            'seo_title' => null,
+            'seo_description' => null,
+            'seo_keywords' => null,
         ];
 
         $currentSection = null;
-        $buffer         = [];
+        $buffer = [];
 
         $flushBuffer = function () use (&$buffer, &$parsed, &$currentSection) {
-            if (empty($buffer) || ! $currentSection) { $buffer = []; return; }
+            if (empty($buffer) || ! $currentSection) {
+                $buffer = [];
+
+                return;
+            }
             if ($currentSection === 'short_description') {
                 $parsed['short_description'] = implode(' ', $buffer);
             } elseif ($currentSection === 'long_description') {
@@ -771,30 +1057,45 @@ class ContentGenerationService
                 $flushBuffer();
                 $currentSection = 'name';
                 $parsed['name'] = trim(preg_replace('/^(name|title|product name):\s*/i', '', $line));
+
                 continue;
             }
             if (preg_match('/^short description:/i', $line)) {
-                $flushBuffer(); $currentSection = 'short_description'; continue;
+                $flushBuffer();
+                $currentSection = 'short_description';
+
+                continue;
             }
             if (preg_match('/^(long description|description):/i', $line)) {
-                $flushBuffer(); $currentSection = 'long_description'; continue;
+                $flushBuffer();
+                $currentSection = 'long_description';
+
+                continue;
             }
             if (preg_match('/^(bullet points|features|key features):/i', $line)) {
-                $flushBuffer(); $currentSection = 'bullet_points'; continue;
+                $flushBuffer();
+                $currentSection = 'bullet_points';
+
+                continue;
             }
             if (preg_match('/^seo title:/i', $line)) {
                 $flushBuffer();
-                $currentSection      = 'seo_title';
+                $currentSection = 'seo_title';
                 $parsed['seo_title'] = trim(preg_replace('/^seo title:\s*/i', '', $line));
+
                 continue;
             }
             if (preg_match('/^seo description:/i', $line)) {
-                $flushBuffer(); $currentSection = 'seo_description'; continue;
+                $flushBuffer();
+                $currentSection = 'seo_description';
+
+                continue;
             }
             if (preg_match('/^(seo keywords|keywords):/i', $line)) {
                 $flushBuffer();
-                $currentSection         = 'seo_keywords';
+                $currentSection = 'seo_keywords';
                 $parsed['seo_keywords'] = trim(preg_replace('/^(seo keywords|keywords):\s*/i', '', $line));
+
                 continue;
             }
 
@@ -809,32 +1110,14 @@ class ContentGenerationService
 
         $flushBuffer();
 
-        if (empty($parsed['long_description']) && ! empty($response)) {
-            $parsed['long_description'] = $response;
-        }
-
-        if (! empty($parsed['long_description'])) {
-            $parsed['long_description'] = HtmlSanitizer::clean($parsed['long_description']);
-        }
-        if (! empty($parsed['short_description'])) {
-            $parsed['short_description'] = strip_tags($parsed['short_description']);
-        }
-        if (! empty($parsed['name'])) {
-            $parsed['name'] = strip_tags($parsed['name']);
-        }
-        if (! empty($parsed['seo_title'])) {
-            $parsed['seo_title'] = strip_tags($parsed['seo_title']);
-        }
-        if (! empty($parsed['seo_description'])) {
-            $parsed['seo_description'] = strip_tags($parsed['seo_description']);
-        }
-
         return $parsed;
     }
 
     private function updateContentHashAndWarnDuplicates(AiContent $content): void
     {
-        if (! $content->long_description) { return; }
+        if (! $content->long_description) {
+            return;
+        }
 
         $hash = md5(trim($content->long_description));
         $content->update(['content_hash' => $hash]);
@@ -846,11 +1129,11 @@ class ContentGenerationService
 
         if ($duplicate) {
             Log::warning('Duplicate content hash detected after generation', [
-                'content_id'    => $content->id,
-                'duplicate_id'  => $duplicate->id,
+                'content_id' => $content->id,
+                'duplicate_id' => $duplicate->id,
                 'duplicate_uid' => $duplicate->uid,
                 'erp_reference' => $content->erp_reference,
-                'content_hash'  => $hash,
+                'content_hash' => $hash,
             ]);
         }
     }
@@ -858,9 +1141,12 @@ class ContentGenerationService
     protected function countSyllables(string $word): int
     {
         $word = strtolower(preg_replace('/[^a-z]/', '', $word));
-        if (strlen($word) <= 3) { return 1; }
+        if (strlen($word) <= 3) {
+            return 1;
+        }
         $word = preg_replace('/(?:[^laeiouy]es|ed|[^laeiouy]e)$/', '', $word);
         $word = preg_replace('/^y/', '', $word);
+
         return max(1, preg_match_all('/[aeiouy]{1,2}/', $word));
     }
 
@@ -875,18 +1161,18 @@ class ContentGenerationService
             $translator = new Translator($apiKey);
 
             $fields = array_filter([
-                'generated_name'    => $content->generated_name,
+                'generated_name' => $content->generated_name,
                 'short_description' => $content->short_description,
-                'long_description'  => $content->long_description,
-                'seo_title'         => $content->seo_title,
-                'seo_description'   => $content->seo_description,
+                'long_description' => $content->long_description,
+                'seo_title' => $content->seo_title,
+                'seo_description' => $content->seo_description,
             ]);
 
             if (empty($fields)) {
                 return ['success' => false, 'message' => 'No content to translate'];
             }
 
-            $texts   = array_values($fields);
+            $texts = array_values($fields);
             $results = $translator->translateText($texts, null, $targetLang);
 
             $translated = array_combine(
@@ -894,13 +1180,14 @@ class ContentGenerationService
                 array_map(fn ($r) => $r->text, $results)
             );
 
-            $translations              = $content->translations ?? [];
+            $translations = $content->translations ?? [];
             $translations[$targetLang] = $translated;
             $content->update(['translations' => $translations]);
 
             return ['success' => true, 'message' => "Translated to {$targetLang}"];
         } catch (Exception $e) {
             Log::error('DeepL translation failed', ['lang' => $targetLang, 'error' => $e->getMessage()]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

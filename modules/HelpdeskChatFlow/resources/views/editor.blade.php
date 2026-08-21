@@ -79,7 +79,7 @@
     display: flex;
     flex-direction: column;
 }
-.test-panel-header { background: #f8f9fa; flex-shrink: 0; }
+.test-panel-header { background: #f5f6f8; flex-shrink: 0; }
 
 /* Chat messages area */
 .test-messages {

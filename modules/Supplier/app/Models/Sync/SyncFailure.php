@@ -276,6 +276,21 @@ class SyncFailure extends Model
     }
 
     /**
+     * Scope: Get history entries (resolved and archived).
+     *
+     * Estos registros ya no forman parte de la cola de trabajo activa, pero
+     * se conservan indefinidamente (nunca se borran automáticamente) para
+     * mantener un reporte histórico de todo lo que ha fallado alguna vez.
+     *
+     * @param  Builder  $query
+     * @return Builder
+     */
+    public function scopeHistory($query)
+    {
+        return $query->whereIn('failure_status', ['resolved', 'archived']);
+    }
+
+    /**
      * Scope: Get failures by batch
      *
      * @param  Builder  $query
@@ -339,13 +354,13 @@ class SyncFailure extends Model
     public function getFailureTypeNameAttribute(): string
     {
         return match ($this->failure_type) {
-            'sin_proveedor'  => 'Sin proveedor',
-            'sin_categoria'  => 'Sin categoría',
-            'sin_articulos'  => 'Sin artículos',
-            'error_api'      => 'Error API',
+            'sin_proveedor' => 'Sin proveedor',
+            'sin_categoria' => 'Sin categoría',
+            'sin_articulos' => 'Sin artículos',
+            'error_api' => 'Error API',
             'datos_invalidos' => 'Datos inválidos',
-            'error_db'       => 'Error base de datos',
-            default          => $this->failure_type ?? 'Desconocido',
+            'error_db' => 'Error base de datos',
+            default => $this->failure_type ?? 'Desconocido',
         };
     }
 }

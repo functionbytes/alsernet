@@ -748,7 +748,7 @@
 .ps-copy-btn { background: none; border: none; padding: 2px 6px; color: #bbb; cursor: pointer; font-size: 0.75rem; flex-shrink: 0; }
 .ps-copy-btn:hover { color: #90bb13; }
 .ps-spec { display: flex; align-items: center; gap: 6px; }
-.ps-load-more { width: 100%; padding: 8px; background: #f8f9fa; border: 1px dashed #dee2e6; border-radius: 6px; color: #6c757d; font-size: 0.8rem; cursor: pointer; margin-top: 6px; }
+.ps-load-more { width: 100%; padding: 8px; background: #f5f6f8; border: 1px dashed #dee2e6; border-radius: 6px; color: #6c757d; font-size: 0.8rem; cursor: pointer; margin-top: 6px; }
 .ps-load-more:hover { border-color: #90bb13; color: #90bb13; }
 .ps-qty-wrap { display: flex; align-items: center; gap: 6px; width: 100%; }
 .ps-qty-wrap .btn-primary { flex: 1; }

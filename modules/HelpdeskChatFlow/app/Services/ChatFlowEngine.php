@@ -6,6 +6,7 @@ use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Helpdesk\Events\CustomerLanguageDetected;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCompleted;
 use Modules\HelpdeskChatFlow\Events\ChatFlowCsatRecorded;
@@ -157,6 +158,25 @@ class ChatFlowEngine
             $lang = $this->localizer->detect($message);
             if ($lang) {
                 $session->setContextValue('customer_lang', $lang);
+
+                // Antes esta deteccion se quedaba solo en el contexto del flujo
+                // (customer_lang) y se perdia si un agente humano tomaba la
+                // conversacion: HelpdeskTranslate no se enteraba hasta que el
+                // cliente volvia a escribir. Mismo patron que
+                // TranslateIncomingMessage::handle() — persistir en
+                // customer.language + notificar al widget en vivo.
+                $customer = $session->conversation?->customer;
+                if ($customer && $customer->language !== $lang) {
+                    $customer->forceFill(['language' => $lang])->saveQuietly();
+
+                    try {
+                        broadcast(new CustomerLanguageDetected($session->conversation, $lang))->toOthers();
+                    } catch (\Throwable) {
+                        // El broadcast puede fallar si la cola/Reverb esta caida;
+                        // el idioma ya quedo persistido, solo se pierde el update
+                        // en vivo del widget.
+                    }
+                }
             }
         }
 

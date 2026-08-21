@@ -48,12 +48,12 @@
     <link rel="stylesheet" href="{{ themeAsset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
     <style>
-        body { background: #f8f9fa; }
+        body { background: #f5f6f8; }
         .article-body img { max-width: 100%; height: auto; border-radius: .5rem; }
         .article-body h2, .article-body h3 { margin-top: 1.75rem; margin-bottom: .75rem; }
         .article-body p { line-height: 1.7; }
         .article-body code { background: #f1f3f5; padding: .2rem .4rem; border-radius: .25rem; font-size: .9em; }
-        .article-body pre { background: #1e2329; color: #f8f9fa; padding: 1rem; border-radius: .5rem; overflow-x: auto; }
+        .article-body pre { background: #1e2329; color: #f5f6f8; padding: 1rem; border-radius: .5rem; overflow-x: auto; }
         .article-body pre code { background: transparent; color: inherit; padding: 0; }
         .helpcenter-topbar { background: #90bb13; }
         .helpcenter-vote-extra { display: none; }

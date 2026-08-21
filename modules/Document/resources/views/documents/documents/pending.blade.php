@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="widget-content searchable-container list">
-        <div class="card card-body">
+        <div class="card card-body mb-4">
             <div class="row">
                 <div class="col-md-12 col-xl-12">
                     <form class="form-search" action="{{ route('documents.index') }}" method="GET">
@@ -21,7 +21,7 @@
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <select class="form-select select2 select2" name="status_id">
+                                    <select class="form-select select2" name="status_id">
                                         <option value="">Todos los estados</option>
                                         @foreach($statuses as $status)
                                             <option value="{{ $status->id }}" {{ ($statusId ?? '') == $status->id ? 'selected' : '' }}>
@@ -33,7 +33,7 @@
                             </div>
                             <div class="col-auto">
                                 <div class="input-group">
-                                    <select class="form-select select2 select2" name="load_id">
+                                    <select class="form-select select2" name="load_id">
                                         <option value="">Todos los orígenes</option>
                                         @foreach($loads as $load)
                                             <option value="{{ $load->id }}" {{ ($loadId ?? '') == $load->id ? 'selected' : '' }}>
@@ -235,6 +235,9 @@
 
 
         $(document).ready(function() {
+            // ===== Select2 =====
+            $('.select2').select2({ width: '100%' });
+
             // Permitir que los dropdowns de la tabla se muestren por encima del overflow
             $(document).on('shown.bs.dropdown', function(e) {
                 $(e.target).closest('.table-responsive').css('overflow', 'visible');

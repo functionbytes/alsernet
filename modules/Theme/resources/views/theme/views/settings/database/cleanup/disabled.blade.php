@@ -105,7 +105,7 @@
         }
 
         code {
-            background-color: #f8f9fa;
+            background-color: #f5f6f8;
             padding: 2px 6px;
             border-radius: 3px;
             color: #e83e8c;

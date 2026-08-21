@@ -590,11 +590,6 @@
             </div>
         @endif
 
-        {{-- Analytics KPI Widget --}}
-        @if(app('modules')->isEnabled('Analytics'))
-            @include('analytics::components.dashboard-widget')
-        @endif
-
         {{-- Cookie consent widget --}}
         @if(view()->exists('cookie::components.consent-widget'))
             @include('cookie::components.consent-widget')

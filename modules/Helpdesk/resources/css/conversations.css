@@ -3466,6 +3466,27 @@ body:has(.conversations) .mc-content {
 .bv-hsm-badge-category--utility { background: #f1f5f9; color: #475569; }
 .bv-hsm-badge-category--authentication { background: #fff1f2; color: #be123c; }
 
+/* Badge de idioma de la plantilla HSM — resalta en ambar cuando el idioma
+   registrado en Meta no coincide con el idioma del contacto, para que el
+   agente no elija por error una plantilla en el idioma equivocado (Meta
+   devuelve el error 132001 si el idioma enviado no es el registrado). Las
+   que sí coinciden se ordenan primero en la lista (ver renderHsmList en
+   conversations.js) y llevan esta misma badge en tono neutro. */
+.bv-hsm-badge-lang {
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-right: 4px;
+    background: #f1f5f9;
+    color: #475569;
+}
+.bv-hsm-badge-lang--mismatch {
+    background: #fffbeb;
+    color: #b45309;
+}
+.bv-hsm-row--lang-mismatch { opacity: .72; }
+
 /* Badge de estado PENDING (amarillo) en HSM */
 .bv-hsm-badge-pending {
     background: #fffbeb;
@@ -7922,7 +7943,7 @@ mark.bv-search-hit.bv-search-current {
     padding: 8px 12px; background: #f0fdf4; border-left: 3px solid #4ade80; border-radius: 4px;
 }
 .perm-diag {
-    background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px;
+    background: #f5f6f8; border: 1px solid #e5e7eb; border-radius: 8px;
     padding: 12px 14px; display: flex; flex-direction: column; gap: 5px;
 }
 .perm-diag .h {
@@ -13724,6 +13745,26 @@ textarea.bv-form-input { resize: vertical; }
 }
 .bv-macro-action i { color: var(--bv-primary, #90bb13); font-size: 10px; }
 
+/* Badge de idioma en el picker de macros — mismo criterio visual que
+   .bv-hsm-badge-lang: neutro cuando coincide con el idioma del contacto,
+   ambar cuando el macro esta redactado en otro idioma. */
+.bv-macro-badge-lang {
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-right: 5px;
+    background: #f1f5f9;
+    color: #475569;
+    vertical-align: middle;
+}
+.bv-macro-badge-lang--mismatch {
+    background: #fffbeb;
+    color: #b45309;
+}
+.bv-modal .reason.bv-macro-row--lang-mismatch { opacity: .72; }
+
 /* ─── Danger modal (archive-conv, delete) ─────────────────────────────────── */
 .bv-modal-danger-icon {
     width: 60px;
@@ -14962,7 +15003,7 @@ textarea.bv-form-input { resize: vertical; }
 }
 .hd-liveview-empty,
 .hd-webrtc-empty {
-    background: #f8f9fa;
+    background: #f5f6f8;
     border-radius: 6px;
 }
 .hd-webrtc-wrap {

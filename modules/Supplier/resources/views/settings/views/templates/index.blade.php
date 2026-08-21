@@ -35,7 +35,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-primary mb-2">Total</h6>
+                                        <h6 class="card-title mb-2">Total</h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['total_templates'] }}</h4>
                                         <small class="text-muted">Disponibles para clonar</small>
                                     </div>
@@ -61,7 +61,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Categorías</h6>
+                                        <h6 class="card-title mb-2">Categorías</h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['categories_count'] }}</h4>
                                         <small class="text-muted">De plantillas</small>
                                     </div>
@@ -74,7 +74,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Tipos</h6>
+                                        <h6 class="card-title mb-2">Tipos</h6>
                                         <h4 class="mb-1 fw-bold">{{ count($contentTypes) }}</h4>
                                         <small class="text-muted">De contenido disponibles</small>
                                     </div>
@@ -151,13 +151,13 @@
                                         </td>
                                         <td>
                                             @if($template->template_category)
-                                                <span class="badge bg-info-subtle text-info">{{ $template->template_category }}</span>
+                                                <span class="badge bg-secondary-subtle text-secondary">{{ $template->template_category }}</span>
                                             @else
                                                 <span class="text-muted">—</span>
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-primary-subtle text-primary">
+                                            <span class="badge bg-secondary-subtle text-secondary">
                                                 {{ str_replace('_', ' ', $template->content_type) }}
                                             </span>
                                         </td>

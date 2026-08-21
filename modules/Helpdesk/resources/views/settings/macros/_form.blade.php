@@ -47,6 +47,26 @@
         <div class="form-text">Los macros inactivos no aparecen en la lista de ejecucion</div>
     </div>
 
+    {{-- Idioma: filtra/ordena el macro en el picker del inbox segun el idioma
+         del contacto (helpdesk_customers.language). "Todos los idiomas" = macro
+         generico (acciones, no texto redactado) que siempre aparece arriba. --}}
+    <div class="col-12 col-md-6">
+        <label class="form-label">Idioma</label>
+        <select name="language" class="form-select @error('language') is-invalid @enderror">
+            <option value="" @selected(old('language', $macro->language ?? '') === '')>Todos los idiomas</option>
+            <option value="es" @selected(old('language', $macro->language ?? '') === 'es')>Español</option>
+            <option value="en" @selected(old('language', $macro->language ?? '') === 'en')>Inglés</option>
+            <option value="fr" @selected(old('language', $macro->language ?? '') === 'fr')>Francés</option>
+            <option value="pt" @selected(old('language', $macro->language ?? '') === 'pt')>Portugués</option>
+            <option value="de" @selected(old('language', $macro->language ?? '') === 'de')>Alemán</option>
+            <option value="it" @selected(old('language', $macro->language ?? '') === 'it')>Italiano</option>
+        </select>
+        <div class="form-text">Si el macro redacta texto para el cliente (ej. "Enviar respuesta"), elige el idioma en que esta escrito</div>
+        @error('language')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+
     {{-- Actions builder --}}
     <div class="col-12">
         <label class="form-label">Acciones del macro <span class="text-danger">*</span></label>

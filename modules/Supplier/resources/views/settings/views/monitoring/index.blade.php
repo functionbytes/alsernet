@@ -13,8 +13,91 @@
     @endcan
 @endsection
 
+@push('styles')
+<style>
+/* Estilo tipo "analytics dashboard": sombra sutil + radios más redondeados
+   en las cards, pills de rango de fecha tipo cápsula y KPI cards con icono
+   circular + mini-gráfica de tendencia. Scoped a .ai-dashboard para no
+   afectar el resto del panel. */
+.ai-dashboard .card {
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px -1px rgba(175, 182, 201, .2);
+}
+.ai-dashboard .stat-card {
+    border-radius: 10px;
+}
+
+.ai-dashboard .period-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #f4f6fa;
+    border-radius: 10px;
+    padding: 3px;
+}
+.ai-dashboard .period-pills .period-btn {
+    border: 0;
+    background: transparent;
+    color: #5a6a85;
+    font-weight: 600;
+    font-size: .78rem;
+    padding: 5px 14px;
+    border-radius: 8px;
+    transition: background-color .15s, color .15s;
+}
+.ai-dashboard .period-pills .period-btn:hover:not(.active) {
+    background: rgba(144, 187, 19, .1);
+}
+.ai-dashboard .period-pills .period-btn.active {
+    background: #90bb13;
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(144, 187, 19, .35);
+}
+
+.ai-dashboard .kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(144, 187, 19, .12);
+    color: #90bb13;
+    font-size: .95rem;
+    flex-shrink: 0;
+}
+.ai-dashboard .kpi-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .74rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+.ai-dashboard .kpi-change.up { background: rgba(76, 175, 80, .12); color: #4caf50; }
+.ai-dashboard .kpi-change.down { background: rgba(248, 81, 73, .12); color: #f85149; }
+.ai-dashboard .kpi-sparkline-wrap {
+    position: relative;
+    width: 100%;
+    height: 46px;
+}
+.ai-dashboard .kpi-icon-dyn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    flex-shrink: 0;
+}
+</style>
+@endpush
+
 @section('content')
-<div class="widget-content searchable-container list">
+<div class="widget-content searchable-container list ai-dashboard">
     @include('core::components.alerts')
 
     {{-- Banner de alertas de presupuesto (servidor — se muestra si algún budget supera el 80%) --}}
@@ -84,59 +167,28 @@
         ];
         $funnelTotal = array_sum($funnelStats);
     @endphp
-    <div class="card mb-4">
-        <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <h5 class="card-title fw-semibold mb-1">Distribución de contenido IA</h5>
-                    <p class="card-subtitle text-muted mb-0">Estado actual de los contenidos en el flujo</p>
-                </div>
-                @if($funnelTotal > 0)
-                    <span class="badge bg-light text-muted border fw-normal" style="font-size:.8rem;">
-                        {{ number_format($funnelTotal) }} total
-                    </span>
-                @endif
-            </div>
-            @foreach($statusRows as $row)
-            <div class="row g-3 {{ !$loop->last ? 'mb-3' : '' }}">
-                @foreach($row as $step)
-                    @php $count = $funnelStats[$step['key']] ?? 0; @endphp
-                    <div class="col-lg-3 col-md-6">
-                        <div class="card stat-card h-100" style="border-left: 3px solid {{ $step['color'] }};">
-                            <div class="card-body py-3">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <h6 class="card-title mb-0 small">{{ $step['label'] }}</h6>
-                                    <i class="fas {{ $step['icon'] }}" style="color: {{ $step['color'] }};"></i>
-                                </div>
-                                <h4 class="mb-0 fw-bold {{ $count === 0 ? 'text-muted' : '' }}" style="{{ $count > 0 ? 'color:'.$step['color'].';' : '' }}">
-                                    {{ number_format($count) }}
-                                </h4>
-                                @if($funnelTotal > 0 && $count > 0)
-                                    <small class="text-muted">{{ number_format($count / $funnelTotal * 100, 1) }}%</small>
-                                @else
-                                    <small class="text-muted">contenidos</small>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-            @endforeach
-        </div>
-    </div>
+
 
     {{-- KPI stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-lg col-md-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">Costo del mes</h6>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">Costo del mes</h6>
+                        <span class="kpi-icon"><i class="fas fa-dollar-sign"></i></span>
+                    </div>
                     <h4 class="mb-1 fw-bold">${{ number_format($monthlyStats['total_cost'], 2) }}</h4>
                     @if($monthlyStats['cost_change_pct'] !== null)
-                        <small class="text-muted">{{ abs($monthlyStats['cost_change_pct']) }}% vs mes anterior</small>
+                        @php $up = $monthlyStats['cost_change_pct'] >= 0; @endphp
+                        <span class="kpi-change {{ $up ? 'up' : 'down' }}">
+                            <i class="fas fa-arrow-{{ $up ? 'up' : 'down' }}" style="font-size:.6rem;"></i> {{ abs($monthlyStats['cost_change_pct']) }}%
+                        </span>
+                        <span class="text-muted" style="font-size:.72rem;"> vs mes ant.</span>
                     @else
                         <small class="text-muted">Sin datos previos</small>
                     @endif
+                    <div class="kpi-sparkline-wrap mt-2"><canvas id="spark-cost"></canvas></div>
                 </div>
             </div>
         </div>
@@ -144,13 +196,21 @@
         <div class="col-lg col-md-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">Solicitudes</h6>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">Solicitudes</h6>
+                        <span class="kpi-icon"><i class="fas fa-paper-plane"></i></span>
+                    </div>
                     <h4 class="mb-1 fw-bold">{{ number_format($monthlyStats['request_count']) }}</h4>
                     @if($monthlyStats['request_change_pct'] !== null)
-                        <small class="text-muted">{{ abs($monthlyStats['request_change_pct']) }}% vs mes anterior</small>
+                        @php $up = $monthlyStats['request_change_pct'] >= 0; @endphp
+                        <span class="kpi-change {{ $up ? 'up' : 'down' }}">
+                            <i class="fas fa-arrow-{{ $up ? 'up' : 'down' }}" style="font-size:.6rem;"></i> {{ abs($monthlyStats['request_change_pct']) }}%
+                        </span>
+                        <span class="text-muted" style="font-size:.72rem;"> vs mes ant.</span>
                     @else
                         <small class="text-muted">Sin datos previos</small>
                     @endif
+                    <div class="kpi-sparkline-wrap mt-2"><canvas id="spark-requests"></canvas></div>
                 </div>
             </div>
         </div>
@@ -158,9 +218,13 @@
         <div class="col-lg col-md-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">Tokens consumidos</h6>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">Tokens consumidos</h6>
+                        <span class="kpi-icon"><i class="fas fa-coins"></i></span>
+                    </div>
                     <h4 class="mb-1 fw-bold">{{ number_format($monthlyStats['total_tokens']) }}</h4>
                     <small class="text-muted">Input + Output</small>
+                    <div class="kpi-sparkline-wrap mt-2"><canvas id="spark-tokens"></canvas></div>
                 </div>
             </div>
         </div>
@@ -168,11 +232,15 @@
         <div class="col-lg col-md-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">Latencia media</h6>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">Latencia media</h6>
+                        <span class="kpi-icon"><i class="fas fa-gauge-high"></i></span>
+                    </div>
                     <h4 class="mb-1 fw-bold">
                         {{ $monthlyStats['avg_latency_ms'] > 0 ? number_format($monthlyStats['avg_latency_ms']) . 'ms' : '—' }}
                     </h4>
                     <small class="text-muted">Tiempo promedio de respuesta</small>
+                    <div class="kpi-sparkline-wrap mt-2"><canvas id="spark-latency"></canvas></div>
                 </div>
             </div>
         </div>
@@ -180,7 +248,10 @@
         <div class="col-lg col-md-6">
             <div class="card stat-card h-100">
                 <div class="card-body">
-                    <h6 class="card-title mb-2">OpenAI</h6>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6 class="card-title mb-0">OpenAI</h6>
+                        <span class="kpi-icon"><i class="fas fa-robot"></i></span>
+                    </div>
                     <h4 class="mb-1 fw-bold">{{ number_format($openaiPct, 1) }}%</h4>
                     @if($openaiBudget)
                         <small class="text-muted">${{ number_format($openaiBudget->currentMonthUsage(), 2) }} / ${{ number_format($openaiBudget->monthly_limit, 2) }}</small>
@@ -210,10 +281,10 @@
                                 <input class="form-check-input" type="checkbox" id="byModelToggle">
                                 <label class="form-check-label fs-2" for="byModelToggle">Por modelo</label>
                             </div>
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-outline-secondary period-btn active" data-period="7">7d</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary period-btn" data-period="30">30d</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary period-btn" data-period="90">90d</button>
+                            <div class="period-pills">
+                                <button type="button" class="period-btn active" data-period="7">7d</button>
+                                <button type="button" class="period-btn" data-period="30">30d</button>
+                                <button type="button" class="period-btn" data-period="90">90d</button>
                             </div>
                         </div>
                     </div>
@@ -359,24 +430,28 @@
             </div>
             <div class="row g-3">
                 <div class="col-lg-3 col-md-6">
-                    <div class="card stat-card h-100" style="border-left: 3px solid #13deb9;">
+                    <div class="card stat-card h-100">
                         <div class="card-body py-3">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h6 class="card-title mb-0 small">Contenidos generados</h6>
-                                <i class="fas fa-robot" style="color: #13deb9;"></i>
+                                <span class="kpi-icon-dyn" style="background: #90bb1320; color: #90bb13;">
+                                    <i class="fas fa-robot"></i>
+                                </span>
                             </div>
-                            <h4 class="mb-0 fw-bold" style="color: #13deb9;">{{ number_format($contentMetrics['generated_count']) }}</h4>
+                            <h4 class="mb-0 fw-bold" style="color: #90bb13;">{{ number_format($contentMetrics['generated_count']) }}</h4>
                             <small class="text-muted">pend. validacion + validados + publicados</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="card stat-card h-100" style="border-left: 3px solid #fd7e14;">
+                    <div class="card stat-card h-100">
                         <div class="card-body py-3">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h6 class="card-title mb-0 small">Sin fuentes web</h6>
-                                <i class="fas fa-unlink" style="color: #fd7e14;"></i>
+                                <span class="kpi-icon-dyn" style="background: #fd7e1420; color: #fd7e14;">
+                                    <i class="fas fa-unlink"></i>
+                                </span>
                             </div>
                             <h4 class="mb-0 fw-bold {{ $contentMetrics['no_sources_count'] === 0 ? 'text-muted' : '' }}" style="{{ $contentMetrics['no_sources_count'] > 0 ? 'color:#fd7e14;' : '' }}">
                                 {{ number_format($contentMetrics['no_sources_count']) }}
@@ -391,26 +466,30 @@
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="card stat-card h-100" style="border-left: 3px solid #4caf50;">
+                    <div class="card stat-card h-100">
                         <div class="card-body py-3">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h6 class="card-title mb-0 small">Gasto IA del mes</h6>
-                                <i class="fas fa-calendar-alt" style="color: #4caf50;"></i>
+                                <span class="kpi-icon-dyn" style="background: #90bb1320; color: #90bb13;">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
                             </div>
-                            <h4 class="mb-0 fw-bold" style="color: #4caf50;">${{ number_format($contentMetrics['monthly_cost'], 4) }}</h4>
+                            <h4 class="mb-0 fw-bold" style="color: #90bb13;">${{ number_format($contentMetrics['monthly_cost'], 4) }}</h4>
                             <small class="text-muted">{{ now()->translatedFormat('F Y') }}</small>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-lg-3 col-md-6">
-                    <div class="card stat-card h-100" style="border-left: 3px solid #0dcaf0;">
+                    <div class="card stat-card h-100">
                         <div class="card-body py-3">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h6 class="card-title mb-0 small">Gasto IA hoy</h6>
-                                <i class="fas fa-calendar-day" style="color: #0dcaf0;"></i>
+                                <span class="kpi-icon-dyn" style="background: #5a6a8520; color: #5a6a85;">
+                                    <i class="fas fa-calendar-day"></i>
+                                </span>
                             </div>
-                            <h4 class="mb-0 fw-bold" style="color: #0dcaf0;">${{ number_format($contentMetrics['daily_cost'], 4) }}</h4>
+                            <h4 class="mb-0 fw-bold" style="color: #5a6a85;">${{ number_format($contentMetrics['daily_cost'], 4) }}</h4>
                             <small class="text-muted">{{ now()->translatedFormat('d/m/Y') }}</small>
                         </div>
                     </div>
@@ -434,9 +513,9 @@
         </div>
         <div class="card-body p-0">
             @if($recentLogs->isNotEmpty())
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 560px; overflow-y: auto;">
                     <table class="table table-hover align-middle mb-0">
-                        <thead>
+                        <thead style="position: sticky; top: 0; background: #fff; z-index: 1;">
                             <tr>
                                 <th class="ps-4" style="color: #5a6a85;">Modelo</th>
                                 <th style="color: #5a6a85;">Operacion</th>
@@ -628,6 +707,7 @@ $(document).ready(function () {
 
     loadChartData(7);
     initModelChart();
+    initSparklines();
 
     $('.period-btn').on('click', function () {
         $('.period-btn').removeClass('active');
@@ -778,6 +858,49 @@ $(document).ready(function () {
                 }
             }
         });
+    }
+
+    // ── Sparklines de las KPI cards principales (últimos 7 días) ───────────
+    function initSparklines() {
+        const series = @json($sparklines);
+        if (!series || !series.labels || !series.labels.length) return;
+
+        const sparkOpts = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+                x: { display: false },
+                y: { display: false, beginAtZero: true },
+            },
+            elements: { point: { radius: 0 } },
+        };
+
+        const makeSpark = function (canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: series.labels,
+                    datasets: [{
+                        data: data,
+                        borderColor: '#90bb13',
+                        backgroundColor: 'rgba(144, 187, 19, 0.12)',
+                        borderWidth: 1.5,
+                        tension: 0.4,
+                        fill: true,
+                    }],
+                },
+                options: sparkOpts,
+            });
+        };
+
+        makeSpark('spark-cost', series.cost);
+        makeSpark('spark-requests', series.requests);
+        makeSpark('spark-tokens', series.tokens);
+        makeSpark('spark-latency', series.latency);
     }
 
     setInterval(function () {

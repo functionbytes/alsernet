@@ -25,17 +25,41 @@
 
     function esc(s) { return $('<span>').text(s == null ? '' : String(s)).html(); }
 
+    // Macros sin idioma (null/'') son genéricos — solo ejecutan acciones, no
+    // redactan texto para el cliente — así que cuentan siempre como "coincide".
+    // Los que sí tienen idioma se ordenan primero cuando calzan con el del
+    // contacto (helpdesk_customers.language) y llevan una badge ámbar cuando no.
+    function sortMacrosByCustomerLanguage(macros, customerLang) {
+        if (!customerLang) return macros;
+        var matched = [];
+        var rest = [];
+        macros.forEach(function (m) {
+            var lang = (m.language || '').toString().toLowerCase();
+            (!lang || lang === customerLang ? matched : rest).push(m);
+        });
+        return matched.length ? matched.concat(rest) : macros;
+    }
+
     function renderMacros(macros) {
         if (!macros.length) {
             $('#macroList').html('<div class="bv-cv-loading-msg"><i class="fas fa-inbox"></i> Sin macros disponibles</div>');
             return;
         }
-        var html = macros.map(function (m) {
+        var customerLang = ($('.bv-right').data('customer-language') || '').toString().trim().toLowerCase();
+        var sorted = sortMacrosByCustomerLanguage(macros, customerLang);
+        var html = sorted.map(function (m) {
             var summary = m.actions_summary || '';
-            return '<button type="button" class="reason" data-macro-id="' + m.id + '">' +
+            var lang = (m.language || '').toString().toLowerCase();
+            var isMismatch = !!(customerLang && lang && lang !== customerLang);
+            var langBadge = lang
+                ? '<span class="bv-macro-badge-lang' + (isMismatch ? ' bv-macro-badge-lang--mismatch' : '') + '"' +
+                    (isMismatch ? ' title="El contacto usa \'' + esc(customerLang) + '\', esta macro esta redactada en \'' + esc(lang) + '\'">' : '>') +
+                    lang.toUpperCase() + '</span>'
+                : '';
+            return '<button type="button" class="reason' + (isMismatch ? ' bv-macro-row--lang-mismatch' : '') + '" data-macro-id="' + m.id + '">' +
                 '<div class="ic"><i class="fas fa-bolt"></i></div>' +
                 '<div class="body">' +
-                    '<span class="t">' + esc(m.name) + '</span>' +
+                    '<span class="t">' + langBadge + esc(m.name) + '</span>' +
                     (summary ? '<span class="s">' + esc(summary) + '</span>' : '') +
                 '</div>' +
                 '<div class="radio"></div>' +

@@ -276,7 +276,8 @@ class AiCost extends Model
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as requests'),
                 DB::raw('SUM(input_tokens + output_tokens) as total_tokens'),
-                DB::raw('SUM(COALESCE(input_cost, 0) + COALESCE(output_cost, 0) + COALESCE(web_search_cost, 0)) as total_cost')
+                DB::raw('SUM(COALESCE(input_cost, 0) + COALESCE(output_cost, 0) + COALESCE(web_search_cost, 0)) as total_cost'),
+                DB::raw('AVG(latency_ms) as avg_latency')
             )
             ->whereBetween('created_at', [$from, $to])
             ->groupBy(DB::raw('DATE(created_at)'))

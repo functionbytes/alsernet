@@ -320,7 +320,7 @@
         right: 10px;
         width: 24px;
         height: 24px;
-        background-color: #f8f9fa;
+        background-color: #f5f6f8;
         border: 2px solid #dee2e6;
         border-radius: 50%;
         transition: all 0.2s ease;

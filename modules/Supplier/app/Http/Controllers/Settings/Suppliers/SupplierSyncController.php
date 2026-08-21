@@ -6,27 +6,32 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Http\Requests\Sync\SaveSyncSettingsRequest;
 use Modules\Supplier\Http\Requests\Sync\StartSyncRequest;
 use Modules\Supplier\Http\Requests\Sync\SyncProviderProductsRequest;
 use Modules\Supplier\Jobs\SyncCategoriesFromErpJob;
+use Modules\Supplier\Jobs\SyncCharacteristicsFromErpJob;
 use Modules\Supplier\Jobs\SyncModelsJob;
 use Modules\Supplier\Jobs\SyncProviderProductsJob;
 use Modules\Supplier\Jobs\SyncProvidersFromErpJob;
+use Modules\Supplier\Models\Product\Product;
+use Modules\Supplier\Models\Prompt\Prompt;
+use Modules\Supplier\Models\Sync\ExcludedErpGroup;
 use Modules\Supplier\Models\Sync\SyncBatch;
 use Modules\Supplier\Models\Sync\SyncLog;
 use Modules\Supplier\Models\Sync\SyncSchedule;
 use Modules\Supplier\Models\Sync\SyncSetting;
 use Modules\Supplier\Models\Sync\SyncStatus;
-use Modules\Core\Models\Setting;
-use Modules\Supplier\Models\Sync\ExcludedErpGroup;
+use Modules\Supplier\Services\ContentGenerationService;
 use Modules\Supplier\Services\SyncCoordinatorAgent;
 use Modules\Supplier\Services\SyncStatusService;
-use Illuminate\Support\Facades\DB;
 
 class SupplierSyncController extends Controller
 {
@@ -123,30 +128,30 @@ class SupplierSyncController extends Controller
     {
         $build = function (): array {
             $defaults = [
-                    'default_batch_size'        => 50,
-                    'erp_timeout'               => 60,
-                    'max_retries'               => 3,
-                    'erp_base_url'              => Setting::get('erp_api_url', env('ERP_URL', '')),
-                    'sync_enabled'              => true,
-                    'log_level'                 => 'info',
-                    'filter_date_from'          => config('supplier.erp_sync.filter_date_from', ''),
-                    'default_limit'             => 0,
-                    // Opciones de ejecución por defecto
-                    'default_mode'              => 'filter',
-                    'default_force'             => '0',
-                    'default_description_empty' => '0',
-                    'default_web_filter'        => '2',
-                    'default_skip_ai'           => false,
-                    'default_dry_run'           => false,
-                    'default_register_only'     => false,
-                ];
+                'default_batch_size' => 50,
+                'erp_timeout' => 60,
+                'max_retries' => 3,
+                'erp_base_url' => Setting::get('erp_api_url', env('ERP_URL', '')),
+                'sync_enabled' => true,
+                'log_level' => 'info',
+                'filter_date_from' => config('supplier.erp_sync.filter_date_from', ''),
+                'default_limit' => 0,
+                // Opciones de ejecución por defecto
+                'default_mode' => 'filter',
+                'default_force' => '0',
+                'default_description_empty' => '0',
+                'default_web_filter' => '2',
+                'default_skip_ai' => false,
+                'default_dry_run' => false,
+                'default_register_only' => false,
+            ];
 
-                $stored = SyncSetting::query()
-                    ->whereIn('key', array_keys($defaults))
-                    ->pluck('value', 'key')
-                    ->toArray();
+            $stored = SyncSetting::query()
+                ->whereIn('key', array_keys($defaults))
+                ->pluck('value', 'key')
+                ->toArray();
 
-                return array_replace($defaults, $stored);
+            return array_replace($defaults, $stored);
         };
 
         return $build();
@@ -202,12 +207,19 @@ class SupplierSyncController extends Controller
         $logsQuery = $batch->logs()->orderByDesc('created_at');
 
         if ($logsSearch) {
-            $logsQuery->where(function ($q) use ($logsSearch) {
+            // La "Referencia" (código del producto) no vive en supplier_sync_logs —
+            // se resuelve la lista de entity_id/erp_id de productos que matchean
+            // primero, para poder buscarla igual que cualquier otro campo.
+            [$matchingEntityIds, $matchingErpIds] = $this->matchProductsByCode($logsSearch);
+
+            $logsQuery->where(function ($q) use ($logsSearch, $matchingEntityIds, $matchingErpIds) {
                 $q->where('message', 'LIKE', "%{$logsSearch}%")
                     ->orWhere('error_message', 'LIKE', "%{$logsSearch}%")
                     ->orWhere('entity_type', 'LIKE', "%{$logsSearch}%")
                     ->orWhere('action', 'LIKE', "%{$logsSearch}%")
-                    ->orWhere('erp_id', $logsSearch);
+                    ->orWhere('erp_id', $logsSearch)
+                    ->orWhereIn('entity_id', $matchingEntityIds)
+                    ->orWhereIn('erp_id', $matchingErpIds);
             });
         }
 
@@ -216,6 +228,7 @@ class SupplierSyncController extends Controller
         }
 
         $logs = $logsQuery->paginate($perPage, ['*'], 'logs_page')->withQueryString();
+        $this->attachProductReferences($logs->getCollection());
 
         // ── Failures ──────────────────────────────────────────────────────────
         $failuresSearch = $request->get('failures_search');
@@ -225,9 +238,15 @@ class SupplierSyncController extends Controller
         $failuresQuery = $batch->failures()->orderByDesc('created_at');
 
         if ($failuresSearch) {
-            $failuresQuery->where(function ($q) use ($failuresSearch) {
+            [, $matchingErpIdsForFailures] = $this->matchProductsByCode($failuresSearch);
+
+            $failuresQuery->where(function ($q) use ($failuresSearch, $matchingErpIdsForFailures) {
                 $q->where('error_message', 'LIKE', "%{$failuresSearch}%")
-                    ->orWhere('erp_id', $failuresSearch);
+                    ->orWhere('erp_id', $failuresSearch)
+                    ->orWhereIn('erp_id', $matchingErpIdsForFailures)
+                    // Referencia "fallback": el código que el ERP mandó pero que nunca
+                    // llegó a crear un producto real (ej. fallos "sin proveedor").
+                    ->orWhereRaw("JSON_UNQUOTE(JSON_EXTRACT(changed_data, '$.code')) LIKE ?", ["%{$failuresSearch}%"]);
             });
         }
 
@@ -240,6 +259,7 @@ class SupplierSyncController extends Controller
         }
 
         $failures = $failuresQuery->paginate($perPage, ['*'], 'failures_page')->withQueryString();
+        $this->attachFailureReferences($failures->getCollection());
 
         // Tab badge counters use the unfiltered totals.
         $logsCount = $batch->logs()->count();
@@ -295,8 +315,82 @@ class SupplierSyncController extends Controller
     public function showLog(int $batchId, int $logId): JsonResponse
     {
         $log = SyncLog::where('batch_id', $batchId)->findOrFail($logId);
+        $this->attachProductReferences(collect([$log]));
 
         return response()->json(['success' => true, 'log' => $log]);
+    }
+
+    /**
+     * Busca productos cuyo código coincida con el término de búsqueda y
+     * devuelve [entityIds, erpIds] para poder incluirlos en un WHERE IN,
+     * ya que "Referencia" no es una columna de supplier_sync_logs/_failures.
+     *
+     * @return array{0: Collection<int, int>, 1: Collection<int, int>}
+     */
+    private function matchProductsByCode(string $search): array
+    {
+        $products = Product::where('code', 'LIKE', "%{$search}%")->get(['id', 'erp_id']);
+
+        return [$products->pluck('id'), $products->pluck('erp_id')->filter()];
+    }
+
+    /**
+     * Adjunta ->reference (código del producto) a cada SyncLog de la colección.
+     *
+     * El log en sí no guarda el código/referencia del producto (solo entity_id
+     * y erp_id) — se resuelve en lote contra supplier_products para que la
+     * tabla/modal de detalle lo muestren sin N+1 queries ni que el usuario
+     * tenga que ir a buscar el producto por su cuenta.
+     */
+    private function attachProductReferences(Collection $logs): void
+    {
+        $relevant = $logs->filter(fn (SyncLog $log) => in_array($log->entity_type, ['model', 'product'], true));
+
+        if ($relevant->isEmpty()) {
+            return;
+        }
+
+        $entityIds = $relevant->pluck('entity_id')->filter()->unique()->values();
+        $erpIdsWithoutEntity = $relevant->whereNull('entity_id')->pluck('erp_id')->filter()->unique()->values();
+
+        $productsByEntityId = $entityIds->isNotEmpty()
+            ? Product::whereIn('id', $entityIds)->get(['id', 'erp_id', 'code'])->keyBy('id')
+            : collect();
+
+        $productsByErpId = $erpIdsWithoutEntity->isNotEmpty()
+            ? Product::whereIn('erp_id', $erpIdsWithoutEntity)->get(['id', 'erp_id', 'code'])->keyBy('erp_id')
+            : collect();
+
+        foreach ($logs as $log) {
+            $product = $log->entity_id
+                ? ($productsByEntityId[$log->entity_id] ?? null)
+                : ($log->erp_id ? ($productsByErpId[$log->erp_id] ?? null) : null);
+
+            $log->reference = $product?->code;
+            $log->product_id = $product?->id;
+        }
+    }
+
+    /**
+     * Adjunta ->reference (código del producto) a cada SyncFailure de la
+     * colección: por erp_id contra supplier_products si el producto ya
+     * existe, o desde cambios_data enviados al ERP si nunca llegó a crearse
+     * (p. ej. fallos "sin proveedor" — el dato existe igual).
+     */
+    private function attachFailureReferences(Collection $failures): void
+    {
+        $erpIds = $failures->pluck('erp_id')->filter()->unique()->values();
+
+        $productsByErpId = $erpIds->isNotEmpty()
+            ? Product::whereIn('erp_id', $erpIds)->pluck('code', 'erp_id')
+            : collect();
+
+        foreach ($failures as $failure) {
+            $fromProduct = $failure->erp_id ? ($productsByErpId[$failure->erp_id] ?? null) : null;
+            $fromErpData = $failure->changed_data['code'] ?? $failure->changed_data['codigo'] ?? null;
+
+            $failure->reference = $fromProduct ?? $fromErpData;
+        }
     }
 
     /**
@@ -640,9 +734,9 @@ class SupplierSyncController extends Controller
         $erpProviderId = $criteria['erp_provider_id'] ?? null;
 
         // Preserve all original parameters so the retry is an exact replay.
-        $mode     = $criteria['mode'] ?? ($erpProviderId ? 'legacy' : 'filter');
-        $limit    = isset($criteria['limit']) ? (int) $criteria['limit'] : null;
-        $force    = (bool) ($criteria['force'] ?? false);
+        $mode = $criteria['mode'] ?? ($erpProviderId ? 'legacy' : 'filter');
+        $limit = isset($criteria['limit']) ? (int) $criteria['limit'] : null;
+        $force = (bool) ($criteria['force'] ?? false);
         $dateFrom = $criteria['date_from'] ?? null;
 
         return $this->dispatchSyncRetry(
@@ -652,10 +746,10 @@ class SupplierSyncController extends Controller
             extraBatchFields: ['filter_criteria' => $originalBatch->filter_criteria],
             extraJobArgs: [
                 'erpProviderId' => $erpProviderId,
-                'limit'         => $limit,
-                'force'         => $force,
-                'mode'          => $mode,
-                'dateFrom'      => $dateFrom,
+                'limit' => $limit,
+                'force' => $force,
+                'mode' => $mode,
+                'dateFrom' => $dateFrom,
             ],
         );
     }
@@ -695,17 +789,17 @@ class SupplierSyncController extends Controller
             ->get();
 
         $routes = [
-            'test_run'        => route('settings.suppliers.sync.test.run'),
+            'test_run' => route('settings.suppliers.sync.test.run'),
             'erp_model_count' => route('settings.suppliers.sync.erp-model-count'),
-            'progress'        => route('settings.suppliers.sync.progress', ':batchId'),
-            'cancel'          => route('settings.suppliers.sync.cancel', ':batchId'),
-            'show'            => route('settings.suppliers.sync.show', ':batchId'),
-            'bulk_delete'     => route('settings.suppliers.sync.bulk-delete'),
-            'bulk_retry'      => route('settings.suppliers.sync.bulk-retry'),
-            'bulk_cancel'     => route('settings.suppliers.sync.bulk-cancel'),
+            'progress' => route('settings.suppliers.sync.progress', ':batchId'),
+            'cancel' => route('settings.suppliers.sync.cancel', ':batchId'),
+            'show' => route('settings.suppliers.sync.show', ':batchId'),
+            'bulk_delete' => route('settings.suppliers.sync.bulk-delete'),
+            'bulk_retry' => route('settings.suppliers.sync.bulk-retry'),
+            'bulk_cancel' => route('settings.suppliers.sync.bulk-cancel'),
         ];
 
-        $globalPrompt = \Modules\Supplier\Models\Prompt\Prompt::query()
+        $globalPrompt = Prompt::query()
             ->where('scope', 'global')
             ->where('is_active', true)
             ->orderByDesc('priority')
@@ -775,78 +869,91 @@ class SupplierSyncController extends Controller
         $this->authorize('can_sync_suppliers');
 
         $validated = $request->validate([
-            'sync_type'         => 'required|in:model,provider,product,category',
-            'limit'             => 'nullable|integer|min:1|max:5000',
-            'erp_provider_id'   => 'nullable|integer|min:1',
-            'erp_model_id'      => 'nullable|integer|min:1',
-            'force'             => 'boolean',
-            'mode'              => 'nullable|in:filter,legacy',
-            'date_from'         => 'nullable|date_format:Y-m-d',
-            'skip_ai'           => 'boolean',
-            'dry_run'           => 'boolean',
+            'sync_type' => 'required|in:model,provider,product,category',
+            'limit' => 'nullable|integer|min:1|max:5000',
+            'erp_provider_id' => 'nullable|integer|min:1',
+            'erp_model_id' => 'nullable|integer|min:1',
+            'force' => 'boolean',
+            'mode' => 'nullable|in:filter,legacy',
+            'date_from' => 'nullable|date_format:Y-m-d',
+            'skip_ai' => 'boolean',
+            'dry_run' => 'boolean',
             'description_empty' => 'nullable|boolean',
-            'web_filter'        => 'nullable|string|in:2',
-            'register_only'     => 'boolean',
-            'date_field'        => 'nullable|in:creation,modification',
+            'web_filter' => 'nullable|string|in:2',
+            'register_only' => 'boolean',
+            'date_field' => 'nullable|in:creation,modification',
         ]);
 
-        $syncType         = $validated['sync_type'];
-        $limit            = $validated['limit'] ?? null;
-        $erpProviderId    = $validated['erp_provider_id'] ?? null;
-        $erpModelId       = $validated['erp_model_id'] ?? null;
-        $force            = (bool) ($validated['force'] ?? false);
-        $mode             = $validated['mode'] ?? 'filter';
-        $dateFrom         = $validated['date_from'] ?? null;
-        $skipAi           = (bool) ($validated['skip_ai'] ?? false);
-        $dryRun           = (bool) ($validated['dry_run'] ?? false);
+        $syncType = $validated['sync_type'];
+        $limit = $validated['limit'] ?? null;
+        $erpProviderId = $validated['erp_provider_id'] ?? null;
+        $erpModelId = $validated['erp_model_id'] ?? null;
+        $force = (bool) ($validated['force'] ?? false);
+        $mode = $validated['mode'] ?? 'filter';
+        $dateFrom = $validated['date_from'] ?? null;
+        $skipAi = (bool) ($validated['skip_ai'] ?? false);
+        $dryRun = (bool) ($validated['dry_run'] ?? false);
         // El registro de productos no depende de la descripción ERP: se traen todos (con y sin descripción).
         $descriptionEmpty = isset($validated['description_empty']) ? (bool) $validated['description_empty'] : false;
         // Único estado sincronizable: pendientes de publicar en web (web=2).
-        $webFilter        = '2';
-        $registerOnly     = (bool) ($validated['register_only'] ?? false);
-        $dateField        = $validated['date_field'] ?? 'creation';
+        $webFilter = '2';
+        $registerOnly = (bool) ($validated['register_only'] ?? false);
+        $dateField = $validated['date_field'] ?? 'creation';
 
         $labels = ['model' => 'Modelos', 'provider' => 'Proveedores', 'product' => 'Productos', 'category' => 'Categorías'];
-        $label  = $labels[$syncType] ?? 'Sincronización';
+        $label = $labels[$syncType] ?? 'Sincronización';
 
         $nameParts = ["Test {$label}"];
-        if ($erpModelId)    $nameParts[] = "modelo #{$erpModelId}";
-        elseif ($limit)     $nameParts[] = "limit {$limit}";
-        if ($erpProviderId) $nameParts[] = "prov #{$erpProviderId}";
-        if ($dateFrom)      $nameParts[] = "desde {$dateFrom}";
-        if ($dryRun)       $nameParts[] = '[DRY-RUN]';
-        if ($skipAi)       $nameParts[] = '[sin IA]';
-        if ($registerOnly) $nameParts[] = '[solo registrar]';
+        if ($erpModelId) {
+            $nameParts[] = "modelo #{$erpModelId}";
+        } elseif ($limit) {
+            $nameParts[] = "limit {$limit}";
+        }
+        if ($erpProviderId) {
+            $nameParts[] = "prov #{$erpProviderId}";
+        }
+        if ($dateFrom) {
+            $nameParts[] = "desde {$dateFrom}";
+        }
+        if ($dryRun) {
+            $nameParts[] = '[DRY-RUN]';
+        }
+        if ($skipAi) {
+            $nameParts[] = '[sin IA]';
+        }
+        if ($registerOnly) {
+            $nameParts[] = '[solo registrar]';
+        }
         $name = implode(' ', $nameParts);
 
         try {
             $batch = SyncBatch::create([
-                'batch_name'     => $name,
-                'sync_type'      => $syncType,
-                'status'         => 'pending',
-                'priority'       => 'normal',
-                'batch_size'     => $erpModelId ? 1 : ($limit ?? 100),
-                'total_items'    => 0,
-                'triggered_by'   => 'manual',
-                'trigger_details'=> 'test-panel',
-                'filter_criteria'=> array_filter([
-                    'limit'           => $limit,
+                'batch_name' => $name,
+                'sync_type' => $syncType,
+                'status' => 'pending',
+                'priority' => 'normal',
+                'batch_size' => $erpModelId ? 1 : ($limit ?? 100),
+                'total_items' => 0,
+                'triggered_by' => 'manual',
+                'trigger_details' => 'test-panel',
+                'filter_criteria' => array_filter([
+                    'limit' => $limit,
                     'erp_provider_id' => $erpProviderId,
-                    'erp_model_id'    => $erpModelId,
-                    'force'           => $force ?: null,
-                    'mode'            => $mode,
-                    'date_from'       => $dateFrom,
-                    'skip_ai'         => $skipAi ?: null,
-                    'dry_run'         => $dryRun ?: null,
-                    'register_only'   => $registerOnly ?: null,
-                    'date_field'      => $dateField !== 'creation' ? $dateField : null,
+                    'erp_model_id' => $erpModelId,
+                    'force' => $force ?: null,
+                    'mode' => $mode,
+                    'date_from' => $dateFrom,
+                    'skip_ai' => $skipAi ?: null,
+                    'dry_run' => $dryRun ?: null,
+                    'register_only' => $registerOnly ?: null,
+                    'date_field' => $dateField !== 'creation' ? $dateField : null,
                 ]),
             ]);
 
             match ($syncType) {
-                'model'    => SyncModelsJob::dispatch($batch, $erpProviderId, $erpModelId ? 1 : $limit, $force, $mode, $dateFrom, $skipAi, $dryRun, $erpModelId, $descriptionEmpty, $webFilter, $registerOnly, $dateField)->onQueue('sync'),
+                'model' => SyncModelsJob::dispatch($batch, $erpProviderId, $erpModelId ? 1 : $limit, $force, $mode, $dateFrom, $skipAi, $dryRun, $erpModelId, $descriptionEmpty, $webFilter, $registerOnly, $dateField)->onQueue('sync'),
                 'provider' => SyncProvidersFromErpJob::dispatch($batch)->onQueue('sync'),
-                'product'  => SyncProviderProductsJob::dispatch($batch, $erpProviderId, $limit)->onQueue('sync'),
+                'product' => SyncProviderProductsJob::dispatch($batch, $erpProviderId, $limit)->onQueue('sync'),
                 'category' => SyncCategoriesFromErpJob::dispatch($batch)->onQueue('sync'),
             };
 
@@ -917,6 +1024,23 @@ class SupplierSyncController extends Controller
             triggerDetails: 'User-initiated category hierarchy sync from web UI',
             successMessage: 'Sincronización de categorías iniciada correctamente.',
             errorLabel: 'categorías',
+        );
+    }
+
+    /**
+     * Sincronizar características de productos desde ERP Oracle
+     */
+    public function syncCharacteristicsFromErp(Request $request): JsonResponse
+    {
+        $this->authorize('can_sync_suppliers');
+
+        return $this->dispatchErpSync(
+            syncType: 'characteristic',
+            batchName: 'Sync Characteristics from ERP',
+            jobClass: SyncCharacteristicsFromErpJob::class,
+            triggerDetails: 'User-initiated characteristics sync from web UI',
+            successMessage: 'Sincronización de características iniciada correctamente.',
+            errorLabel: 'características',
         );
     }
 
@@ -1045,6 +1169,7 @@ class SupplierSyncController extends Controller
         foreach ($validated as $key => $value) {
             if ($value === null) {
                 SyncSetting::where('key', $key)->delete();
+
                 continue;
             }
             $type = match ($key) {
@@ -1079,12 +1204,12 @@ class SupplierSyncController extends Controller
                 ->limit(60)
                 ->get(['id', 'erp_id', 'entity_id', 'action', 'result', 'message', 'error_message', 'created_at'])
                 ->map(fn ($l) => [
-                    'id'     => $l->id,
+                    'id' => $l->id,
                     'erp_id' => $l->erp_id,
                     'action' => $l->action,
                     'result' => $l->result,
-                    'msg'    => $l->result === 'failed' ? ($l->error_message ?? $l->message) : $l->message,
-                    'at'     => $l->created_at?->format('H:i:s'),
+                    'msg' => $l->result === 'failed' ? ($l->error_message ?? $l->message) : $l->message,
+                    'at' => $l->created_at?->format('H:i:s'),
                 ])
                 ->reverse()
                 ->values();
@@ -1105,20 +1230,20 @@ class SupplierSyncController extends Controller
             return response()->json([
                 'success' => true,
                 'batch' => [
-                    'id'                 => $batch->id,
-                    'uid'                => $batch->uid,
-                    'batch_name'         => $batch->batch_name,
-                    'sync_type'          => $batch->sync_type,
-                    'status'             => $batch->status,
-                    'total_items'        => $batch->total_items,
-                    'processed_items'    => $batch->processed_items,
-                    'failed_items'       => $batch->failed_items,
-                    'progress_percentage'=> $batch->progress_percentage,
-                    'success_rate'       => $batch->success_rate,
-                    'started_at'         => $batch->started_at?->format('Y-m-d H:i:s'),
-                    'completed_at'       => $batch->completed_at?->format('Y-m-d H:i:s'),
-                    'duration_seconds'   => $batch->duration_seconds,
-                    'ai_cost'            => $aiCost,
+                    'id' => $batch->id,
+                    'uid' => $batch->uid,
+                    'batch_name' => $batch->batch_name,
+                    'sync_type' => $batch->sync_type,
+                    'status' => $batch->status,
+                    'total_items' => $batch->total_items,
+                    'processed_items' => $batch->processed_items,
+                    'failed_items' => $batch->failed_items,
+                    'progress_percentage' => $batch->progress_percentage,
+                    'success_rate' => $batch->success_rate,
+                    'started_at' => $batch->started_at?->format('Y-m-d H:i:s'),
+                    'completed_at' => $batch->completed_at?->format('Y-m-d H:i:s'),
+                    'duration_seconds' => $batch->duration_seconds,
+                    'ai_cost' => $aiCost,
                 ],
                 'recent_logs' => $recentLogs,
             ]);
@@ -1153,91 +1278,91 @@ class SupplierSyncController extends Controller
         $this->authorize('can_sync_suppliers');
 
         $groups = $request->validate([
-            'groups'   => 'required|array|min:1',
+            'groups' => 'required|array|min:1',
             'groups.*' => 'in:content,products,suppliers,categories,history',
         ])['groups'];
 
         $deleted = [];
 
-        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
         foreach ($groups as $group) {
             switch ($group) {
                 case 'content':
                     $deleted['content'] = [
-                        'supplier_ai_audit_logs'        => \Illuminate\Support\Facades\DB::table('supplier_ai_audit_logs')->count(),
-                        'supplier_ai_costs'             => \Illuminate\Support\Facades\DB::table('supplier_ai_costs')->count(),
-                        'supplier_ai_content_versions'  => \Illuminate\Support\Facades\DB::table('supplier_ai_content_versions')->count(),
+                        'supplier_ai_audit_logs' => DB::table('supplier_ai_audit_logs')->count(),
+                        'supplier_ai_costs' => DB::table('supplier_ai_costs')->count(),
+                        'supplier_ai_content_versions' => DB::table('supplier_ai_content_versions')->count(),
                         'supplier_ai_content_statuses_data' => 0,
-                        'supplier_content_validations'  => \Illuminate\Support\Facades\DB::table('supplier_content_validations')->count(),
-                        'supplier_content_logs'         => \Illuminate\Support\Facades\DB::table('supplier_content_logs')->count(),
-                        'supplier_ai_contents'          => \Illuminate\Support\Facades\DB::table('supplier_ai_contents')->count(),
+                        'supplier_content_validations' => DB::table('supplier_content_validations')->count(),
+                        'supplier_content_logs' => DB::table('supplier_content_logs')->count(),
+                        'supplier_ai_contents' => DB::table('supplier_ai_contents')->count(),
                     ];
                     foreach (array_keys($deleted['content']) as $t) {
                         if ($t !== 'supplier_ai_content_statuses_data') {
-                            \Illuminate\Support\Facades\DB::table($t)->truncate();
+                            DB::table($t)->truncate();
                         }
                     }
-                    \Illuminate\Support\Facades\Cache::forget(\Modules\Supplier\Services\ContentGenerationService::STATS_CACHE_KEY);
+                    Cache::forget(ContentGenerationService::STATS_CACHE_KEY);
                     break;
 
                 case 'products':
                     $deleted['products'] = [
-                        'supplier_product_chat_messages' => \Illuminate\Support\Facades\DB::table('supplier_product_chat_messages')->count(),
-                        'supplier_product_chats'         => \Illuminate\Support\Facades\DB::table('supplier_product_chats')->count(),
-                        'supplier_product_translations'  => \Illuminate\Support\Facades\DB::table('supplier_product_translations')->count(),
-                        'supplier_product_prices'        => \Illuminate\Support\Facades\DB::table('supplier_product_prices')->count(),
-                        'supplier_product_attributes'    => \Illuminate\Support\Facades\DB::table('supplier_product_attributes')->count(),
-                        'supplier_products'              => \Illuminate\Support\Facades\DB::table('supplier_products')->count(),
+                        'supplier_product_chat_messages' => DB::table('supplier_product_chat_messages')->count(),
+                        'supplier_product_chats' => DB::table('supplier_product_chats')->count(),
+                        'supplier_product_translations' => DB::table('supplier_product_translations')->count(),
+                        'supplier_product_prices' => DB::table('supplier_product_prices')->count(),
+                        'supplier_product_attributes' => DB::table('supplier_product_attributes')->count(),
+                        'supplier_products' => DB::table('supplier_products')->count(),
                     ];
                     foreach (array_keys($deleted['products']) as $t) {
-                        \Illuminate\Support\Facades\DB::table($t)->truncate();
+                        DB::table($t)->truncate();
                     }
                     break;
 
                 case 'suppliers':
                     $deleted['suppliers'] = [
-                        'supplier_supplier_categories' => \Illuminate\Support\Facades\DB::table('supplier_supplier_categories')->count(),
-                        'supplier_sources'             => \Illuminate\Support\Facades\DB::table('supplier_sources')->count(),
-                        'suppliers'                    => \Illuminate\Support\Facades\DB::table('suppliers')->count(),
+                        'supplier_supplier_categories' => DB::table('supplier_supplier_categories')->count(),
+                        'supplier_sources' => DB::table('supplier_sources')->count(),
+                        'suppliers' => DB::table('suppliers')->count(),
                     ];
                     foreach (array_keys($deleted['suppliers']) as $t) {
-                        \Illuminate\Support\Facades\DB::table($t)->truncate();
+                        DB::table($t)->truncate();
                     }
                     break;
 
                 case 'categories':
                     $deleted['categories'] = [
-                        'supplier_subfamilies'         => \Illuminate\Support\Facades\DB::table('supplier_subfamilies')->count(),
-                        'supplier_categories'          => \Illuminate\Support\Facades\DB::table('supplier_categories')->count(),
-                        'supplier_sports'              => \Illuminate\Support\Facades\DB::table('supplier_sports')->count(),
+                        'supplier_subfamilies' => DB::table('supplier_subfamilies')->count(),
+                        'supplier_categories' => DB::table('supplier_categories')->count(),
+                        'supplier_sports' => DB::table('supplier_sports')->count(),
                     ];
                     foreach (array_keys($deleted['categories']) as $t) {
-                        \Illuminate\Support\Facades\DB::table($t)->truncate();
+                        DB::table($t)->truncate();
                     }
                     break;
 
                 case 'history':
                     $deleted['history'] = [
-                        'supplier_sync_logs'     => \Illuminate\Support\Facades\DB::table('supplier_sync_logs')->count(),
-                        'supplier_sync_failures' => \Illuminate\Support\Facades\DB::table('supplier_sync_failures')->count(),
-                        'supplier_sync_statuses' => \Illuminate\Support\Facades\DB::table('supplier_sync_statuses')->count(),
-                        'supplier_sync_batches'  => \Illuminate\Support\Facades\DB::table('supplier_sync_batches')->count(),
+                        'supplier_sync_logs' => DB::table('supplier_sync_logs')->count(),
+                        'supplier_sync_failures' => DB::table('supplier_sync_failures')->count(),
+                        'supplier_sync_statuses' => DB::table('supplier_sync_statuses')->count(),
+                        'supplier_sync_batches' => DB::table('supplier_sync_batches')->count(),
                     ];
                     // Orden: primero logs/failures/statuses que referencian batches, luego batches
                     foreach (['supplier_sync_logs', 'supplier_sync_failures', 'supplier_sync_statuses', 'supplier_sync_audit', 'supplier_sync_batches'] as $t) {
-                        \Illuminate\Support\Facades\DB::table($t)->truncate();
+                        DB::table($t)->truncate();
                     }
                     break;
             }
         }
 
-        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $totalDeleted = collect($deleted)->flatten()->sum();
 
         Log::warning('Cleanup ejecutado', [
-            'groups'  => $groups,
+            'groups' => $groups,
             'deleted' => $deleted,
             'user_id' => auth()->id(),
         ]);
@@ -1246,7 +1371,7 @@ class SupplierSyncController extends Controller
             'success' => true,
             'message' => "Limpieza completada. {$totalDeleted} registros eliminados.",
             'deleted' => $deleted,
-            'counts'  => $this->getCleanupCounts(),
+            'counts' => $this->getCleanupCounts(),
         ]);
     }
 
@@ -1254,70 +1379,70 @@ class SupplierSyncController extends Controller
     {
         return [
             'content' => [
-                'label'       => 'Contenido generado (IA)',
+                'label' => 'Contenido generado (IA)',
                 'description' => 'Contenidos AI, logs, versiones, validaciones y costos',
-                'icon'        => 'fas fa-robot',
-                'tables'      => [
-                    'Contenidos AI'    => \Illuminate\Support\Facades\DB::table('supplier_ai_contents')->count(),
-                    'Logs contenido'   => \Illuminate\Support\Facades\DB::table('supplier_content_logs')->count(),
-                    'Versiones'        => \Illuminate\Support\Facades\DB::table('supplier_ai_content_versions')->count(),
-                    'Costos IA'        => \Illuminate\Support\Facades\DB::table('supplier_ai_costs')->count(),
+                'icon' => 'fas fa-robot',
+                'tables' => [
+                    'Contenidos AI' => DB::table('supplier_ai_contents')->count(),
+                    'Logs contenido' => DB::table('supplier_content_logs')->count(),
+                    'Versiones' => DB::table('supplier_ai_content_versions')->count(),
+                    'Costos IA' => DB::table('supplier_ai_costs')->count(),
                 ],
-                'total' => \Illuminate\Support\Facades\DB::table('supplier_ai_contents')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_content_logs')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_ai_content_versions')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_ai_costs')->count(),
+                'total' => DB::table('supplier_ai_contents')->count()
+                         + DB::table('supplier_content_logs')->count()
+                         + DB::table('supplier_ai_content_versions')->count()
+                         + DB::table('supplier_ai_costs')->count(),
             ],
             'products' => [
-                'label'       => 'Productos',
+                'label' => 'Productos',
                 'description' => 'Productos, atributos, chats y traducciones',
-                'icon'        => 'fas fa-box',
-                'tables'      => [
-                    'Productos'   => \Illuminate\Support\Facades\DB::table('supplier_products')->count(),
-                    'Atributos'   => \Illuminate\Support\Facades\DB::table('supplier_product_attributes')->count(),
-                    'Chats'       => \Illuminate\Support\Facades\DB::table('supplier_product_chats')->count(),
+                'icon' => 'fas fa-box',
+                'tables' => [
+                    'Productos' => DB::table('supplier_products')->count(),
+                    'Atributos' => DB::table('supplier_product_attributes')->count(),
+                    'Chats' => DB::table('supplier_product_chats')->count(),
                 ],
-                'total' => \Illuminate\Support\Facades\DB::table('supplier_products')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_product_attributes')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_product_chats')->count(),
+                'total' => DB::table('supplier_products')->count()
+                         + DB::table('supplier_product_attributes')->count()
+                         + DB::table('supplier_product_chats')->count(),
             ],
             'suppliers' => [
-                'label'       => 'Proveedores',
+                'label' => 'Proveedores',
                 'description' => 'Proveedores y sus fuentes de datos',
-                'icon'        => 'fas fa-truck',
-                'tables'      => [
-                    'Proveedores' => \Illuminate\Support\Facades\DB::table('suppliers')->count(),
-                    'Fuentes'     => \Illuminate\Support\Facades\DB::table('supplier_sources')->count(),
+                'icon' => 'fas fa-truck',
+                'tables' => [
+                    'Proveedores' => DB::table('suppliers')->count(),
+                    'Fuentes' => DB::table('supplier_sources')->count(),
                 ],
-                'total' => \Illuminate\Support\Facades\DB::table('suppliers')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_sources')->count(),
+                'total' => DB::table('suppliers')->count()
+                         + DB::table('supplier_sources')->count(),
             ],
             'categories' => [
-                'label'       => 'Categorías',
+                'label' => 'Categorías',
                 'description' => 'Deportes, familias y subfamilias',
-                'icon'        => 'fas fa-tags',
-                'tables'      => [
-                    'Deportes'     => \Illuminate\Support\Facades\DB::table('supplier_sports')->count(),
-                    'Familias'     => \Illuminate\Support\Facades\DB::table('supplier_categories')->count(),
-                    'Subfamilias'  => \Illuminate\Support\Facades\DB::table('supplier_subfamilies')->count(),
+                'icon' => 'fas fa-tags',
+                'tables' => [
+                    'Deportes' => DB::table('supplier_sports')->count(),
+                    'Familias' => DB::table('supplier_categories')->count(),
+                    'Subfamilias' => DB::table('supplier_subfamilies')->count(),
                 ],
-                'total' => \Illuminate\Support\Facades\DB::table('supplier_sports')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_categories')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_subfamilies')->count(),
+                'total' => DB::table('supplier_sports')->count()
+                         + DB::table('supplier_categories')->count()
+                         + DB::table('supplier_subfamilies')->count(),
             ],
             'history' => [
-                'label'       => 'Historial de sincronización',
+                'label' => 'Historial de sincronización',
                 'description' => 'Batches, logs de sync, fallos y statuses',
-                'icon'        => 'fas fa-clock-rotate-left',
-                'tables'      => [
-                    'Batches'   => \Illuminate\Support\Facades\DB::table('supplier_sync_batches')->count(),
-                    'Logs sync' => \Illuminate\Support\Facades\DB::table('supplier_sync_logs')->count(),
-                    'Fallos'    => \Illuminate\Support\Facades\DB::table('supplier_sync_failures')->count(),
+                'icon' => 'fas fa-clock-rotate-left',
+                'tables' => [
+                    'Batches' => DB::table('supplier_sync_batches')->count(),
+                    'Logs sync' => DB::table('supplier_sync_logs')->count(),
+                    'Fallos' => DB::table('supplier_sync_failures')->count(),
                 ],
-                'total' => \Illuminate\Support\Facades\DB::table('supplier_sync_batches')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_sync_logs')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_sync_failures')->count()
-                         + \Illuminate\Support\Facades\DB::table('supplier_sync_statuses')->count(),
+                'total' => DB::table('supplier_sync_batches')->count()
+                         + DB::table('supplier_sync_logs')->count()
+                         + DB::table('supplier_sync_failures')->count()
+                         + DB::table('supplier_sync_statuses')->count(),
             ],
         ];
     }

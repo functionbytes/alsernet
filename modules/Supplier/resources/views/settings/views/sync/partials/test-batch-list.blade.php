@@ -81,7 +81,11 @@
                             <span class="text-danger fw-semibold">{{ $batch->failed_items }} err</span>
                         @endif
                         @if($batch->total_items)
-                            <span class="text-muted d-block" style="font-size:.7rem;">de {{ $batch->total_items }}</span>
+                            @if($batch->exceeds_estimated_total)
+                                <span class="text-warning d-block" style="font-size:.7rem;" title="El total estimado ({{ $batch->total_items }}) quedó desactualizado">de ~{{ $batch->total_items }} ⚠</span>
+                            @else
+                                <span class="text-muted d-block" style="font-size:.7rem;">de {{ $batch->total_items }}</span>
+                            @endif
                         @endif
                     </td>
                     <td class="small text-muted text-nowrap">{{ $batch->created_at->format('d/m H:i') }}</td>

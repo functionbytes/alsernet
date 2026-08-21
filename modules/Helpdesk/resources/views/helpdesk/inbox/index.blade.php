@@ -682,9 +682,55 @@
             currentConvId = null;
         };
 
+        // ─── Sugerencia "Detectar idioma" (modal detect-lang.blade.php) ──
+        // El idioma del contacto (helpdesk_customers.language) y el idioma de
+        // trabajo del agente (select #bv-tp-to del panel Traducir, precargado
+        // server-side desde helpdesktranslate.default_target) vivían sin
+        // conectar entre sí: el agente nunca se enteraba de que estaba
+        // respondiendo en un idioma distinto al del cliente salvo que se
+        // fijara él mismo. No depende de Echo/Reverb (no hay tiempo real
+        // fiable en este entorno) — se revisa con lo que ya llegó en el pane.
+        var HD_LANG_LABELS = { es: 'Español', en: 'Inglés', fr: 'Francés', de: 'Alemán', pt: 'Portugués', it: 'Italiano' };
+
+        function maybeSuggestLanguageMismatch(convId) {
+            var seenKey = 'bv_lang_prompt_seen_' + convId;
+            if (sessionStorage.getItem(seenKey)) return;
+
+            var settings = {};
+            try { settings = JSON.parse(sessionStorage.getItem('inbox_translation_settings') || '{}'); } catch (_e) {}
+            if (settings.mode && settings.mode !== 'off') return; // ya hay traducción activa en esta pestaña
+
+            var customerLang = ($('.bv-right').data('customer-language') || '').toString().trim().toLowerCase();
+            var workingLang = ($('#bv-tp-to').val() || '').toString().trim().toLowerCase();
+            if (!customerLang || !workingLang || customerLang === workingLang) return;
+            if (!HD_LANG_LABELS[customerLang] || !HD_LANG_LABELS[workingLang]) return;
+
+            var sample = ($('.bv-msg.in .bv-bubble').last().data('bv-body') || '').toString().trim();
+            if (!sample) return; // sin mensajes entrantes todavía, nada que mostrar como ejemplo
+
+            var $modal = $('[data-bv-modal-name="detect-lang"]');
+            if (!$modal.length) return;
+
+            // No se repite en esta conversación aunque el agente cierre el
+            // modal sin elegir nada — evita que reaparezca en cada mensaje.
+            sessionStorage.setItem(seenKey, '1');
+
+            $modal.addClass('on');
+            $('body').css('overflow', 'hidden');
+            $(document).trigger('bv:modal:open', ['detect-lang', {
+                detected: HD_LANG_LABELS[customerLang],
+                working: HD_LANG_LABELS[workingLang],
+                sample: sample.length > 140 ? sample.slice(0, 140) + '…' : sample,
+                fromCode: customerLang,
+                toCode: workingLang,
+            }]);
+        }
+
         window.bvBindConversation = function (convId) {
             convId = parseInt(convId, 10);
             if (!convId) return;
+
+            maybeSuggestLanguageMismatch(convId);
 
             window.bvUnbindConversation();
             currentConvId = convId;

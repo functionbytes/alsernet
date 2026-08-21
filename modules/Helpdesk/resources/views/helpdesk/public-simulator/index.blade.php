@@ -49,7 +49,7 @@
         .sim-lookup-wrap { position: relative; }
         .sim-lookup-results { background: #fff; border: 1px solid #dee2e6; border-radius: .5rem; box-shadow: 0 4px 12px rgba(0,0,0,.08); position: absolute; z-index: 100; width: 100%; max-height: 220px; overflow-y: auto; top: 100%; left: 0; }
         .sim-lookup-item { padding: .5rem .75rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .sim-lookup-item:hover { background: #f8f9fa; }
+        .sim-lookup-item:hover { background: #f5f6f8; }
         .sim-lookup-item:last-child { border-bottom: none; }
         .sim-lookup-name { font-weight: 600; font-size: .875rem; }
         .sim-lookup-detail { font-size: .75rem; color: #6c757d; }
@@ -59,7 +59,7 @@
         .sim-att-img { max-width: 220px; border-radius: .5rem; cursor: zoom-in; display: block; }
         .sim-att-audio { width: 220px; }
         .sim-att-video { max-width: 250px; border-radius: .5rem; display: block; }
-        .sim-att-file { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: .5rem; padding: .5rem .75rem; color: #495057; font-size: .85rem; }
+        .sim-att-file { background: #f5f6f8; border: 1px solid #dee2e6; border-radius: .5rem; padding: .5rem .75rem; color: #495057; font-size: .85rem; }
         .sim-att-file:hover { background: #e9ecef; }
         .sim-link-preview { border: 1px solid #dee2e6; border-radius: .5rem; overflow: hidden; margin-top: .25rem; max-width: 240px; }
         .sim-lp-img { width: 100%; height: 120px; object-fit: cover; }
@@ -69,7 +69,7 @@
 
         /* Footer action buttons */
         .sim-btn-outline { border: 1px solid #dee2e6; background: #fff; color: #6c757d; border-radius: .375rem; padding: .375rem .6rem; cursor: pointer; }
-        .sim-btn-outline:hover { background: #f8f9fa; }
+        .sim-btn-outline:hover { background: #f5f6f8; }
 
         /* CSAT widget */
         .sim-csat-widget { background: #f8fff0; border-color: #90bb13 !important; }

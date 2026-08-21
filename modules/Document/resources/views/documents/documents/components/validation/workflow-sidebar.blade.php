@@ -291,7 +291,7 @@
     }
 
     .validation-history-scroll::-webkit-scrollbar-track {
-        background: #f8f9fa;
+        background: #f5f6f8;
         border-radius: 3px;
     }
 
@@ -313,7 +313,7 @@
     }
 
     .validation-item:hover {
-        background-color: #f8f9fa;
+        background-color: #f5f6f8;
     }
 
     .validation-item:last-child {

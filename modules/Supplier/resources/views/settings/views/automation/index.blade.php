@@ -20,22 +20,19 @@
                         <h5 class="mb-1 fw-bold">Panel de automatizacion</h5>
                         <p class="small mb-0 text-muted">Gestiona workflows, ejecuciones y disparadores automaticos</p>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="{{ route('settings.suppliers.automation.workflows.create') }}" class="btn btn-primary btn-sm">
-                            Nuevo workflow
-                        </a>
-                        <div class="dropdown">
-                            <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-ellipsis-vertical"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a href="#" class="dropdown-item" id="runAllBtn">Ejecutar todos los workflows</a></li>
-                                <li><a href="#" class="dropdown-item" id="refreshStatsBtn">Actualizar estadisticas</a></li>
-                                <li><a href="{{ route('settings.suppliers.automation.logs') }}" class="dropdown-item">Ver logs del sistema</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a href="#" class="dropdown-item text-danger" id="clearFailedBtn">Limpiar ejecuciones fallidas</a></li>
-                            </ul>
-                        </div>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a href="{{ route('settings.suppliers.automation.workflows.create') }}" class="dropdown-item">+ Nuevo workflow</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a href="#" class="dropdown-item" id="runAllBtn">Ejecutar todos los workflows</a></li>
+                            <li><a href="#" class="dropdown-item" id="refreshStatsBtn">Actualizar estadisticas</a></li>
+                            <li><a href="{{ route('settings.suppliers.automation.logs') }}" class="dropdown-item">Ver logs del sistema</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a href="#" class="dropdown-item " id="clearFailedBtn">Limpiar ejecuciones fallidas</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -65,7 +62,7 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Fallidas hoy</h6>
-                                <h2 class="fw-bold mb-1 text-danger" id="failedExecutions">{{ $stats['failed_executions_today'] ?? 0 }}</h2>
+                                <h2 class="fw-bold mb-1" id="failedExecutions">{{ $stats['failed_executions_today'] ?? 0 }}</h2>
                                 <small class="text-muted">Ejecuciones con error</small>
                             </div>
                         </div>
@@ -88,28 +85,24 @@
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'workflows' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#workflows" type="button" role="tab">
                         <span class="d-none d-md-block">Workflows</span>
-                        <span class="badge bg-info ms-2">{{ $workflows->total() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'executions' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#executions" type="button" role="tab">
                         <span class="d-none d-md-block">Ejecuciones</span>
-                        <span class="badge bg-info ms-2">{{ $executions->total() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'triggers' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#triggers" type="button" role="tab">
                         <span class="d-none d-md-block">Disparadores</span>
-                        <span class="badge bg-info ms-2">{{ $triggers->total() }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'alerts' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#alerts" type="button" role="tab">
                         <span class="d-none d-md-block">Alertas</span>
-                        <span class="badge bg-info ms-2">{{ $alerts->total() }}</span>
                     </button>
                 </li>
             </ul>

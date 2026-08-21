@@ -14,11 +14,11 @@
         .shop-preview ul li, .shop-preview ol li { margin-bottom: 0.25rem; }
         .shop-preview table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; }
         .shop-preview th, .shop-preview td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e5e7eb; text-align: left; }
-        .shop-preview th { background: #f8f9fa; font-weight: 600; }
+        .shop-preview th { background: #f5f6f8; font-weight: 600; }
         .shop-preview a { color: #0c7a64; }
         .shop-preview blockquote { border-left: 3px solid #90bb13; padding-left: 0.75rem; color: #5a6a85; margin: 0.75rem 0; }
         .shop-preview code { background: rgba(0,0,0,0.06); padding: 0.1rem 0.35rem; border-radius: 0.25rem; }
-        .btn-validate-green { background-color: #7cb01a; border-color: #7cb01a; border-radius: 8px; }
+        .btn-validate-green { background-color: #90bb13; border-color: #90bb13; border-radius: 8px; }
         .btn-validate-green:hover, .btn-validate-green:focus { background-color: #6a9817; border-color: #6a9817; }
         .btn-action-black { background-color: #111; border-color: #111; border-radius: 8px; }
         .btn-action-black:hover, .btn-action-black:focus { background-color: #2a2a2a; border-color: #2a2a2a; }
@@ -274,7 +274,7 @@
                                     @if(!empty($t['description']))
                                         <div class="mb-0">
                                             <label class="form-label fw-semibold small text-muted mb-1">Descripción ({{ strtoupper($locale) }})</label>
-                                            <div class="border rounded p-3 bg-white shop-preview" style="max-height:300px; overflow-y:auto;">
+                                            <div class="border rounded p-3 bg-white shop-preview shop-preview-scroll">
                                                 {!! \Modules\Supplier\Helpers\HtmlSanitizer::clean($t['description']) !!}
                                             </div>
                                         </div>
@@ -298,7 +298,7 @@
                             @php $webQuery = $meta['web_search_query'] ?? null; @endphp
                             @if($webQuery)
                                 <div class="mb-2">
-                                    <span class="badge bg-secondary text-white fw-normal" style="font-size:.75rem;">
+                                    <span class="badge bg-secondary text-white fw-normal fs-75">
                                         <i class="fas fa-magnifying-glass me-1"></i>Búsqueda: {{ $webQuery }}
                                     </span>
                                 </div>
@@ -321,14 +321,14 @@
                                             @endphp
                                             @if($srcUrl)
                                                 <tr>
-                                                    <td class="small text-muted" style="width:32px">{{ $srcIdx + 1 }}</td>
+                                                    <td class="small text-muted w-32px">{{ $srcIdx + 1 }}</td>
                                                     <td class="small">
                                                         <a href="{{ $srcUrl }}" target="_blank" rel="noopener noreferrer"
                                                            class="text-decoration-none">
-                                                            <i class="fas fa-arrow-up-right-from-square me-1 opacity-50" style="font-size:.65rem;"></i>{{ $srcLabel }}
+                                                            <i class="fas fa-arrow-up-right-from-square me-1 opacity-50 fs-65"></i>{{ $srcLabel }}
                                                         </a>
                                                         @if($srcTitle && $srcHost && $srcHost !== $srcTitle)
-                                                            <span class="text-muted ms-1" style="font-size:.75rem;">({{ $srcHost }})</span>
+                                                            <span class="text-muted ms-1 fs-75">({{ $srcHost }})</span>
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -371,7 +371,7 @@
                                                 <span class="small text-muted">{{ \Carbon\Carbon::parse($histDate)->format('d/m/Y H:i') }}</span>
                                             @endif
                                             @if($histQuery)
-                                                <span class="badge bg-secondary fw-normal" style="font-size:.72rem;">
+                                                <span class="badge bg-secondary fw-normal fs-72">
                                                     <i class="fas fa-magnifying-glass me-1"></i>{{ $histQuery }}
                                                 </span>
                                             @endif
@@ -386,7 +386,7 @@
                                                         @endphp
                                                         @if($hUrl)
                                                             <li class="mb-1">
-                                                                <i class="fas fa-link text-muted me-1" style="font-size:.7rem;"></i>
+                                                                <i class="fas fa-link text-muted me-1 fs-70"></i>
                                                                 <a href="{{ $hUrl }}" target="_blank" rel="noopener noreferrer"
                                                                    class="text-break text-decoration-none">{{ $hTitle }}</a>
                                                             </li>
@@ -411,7 +411,7 @@
                             <p class="text-muted small mb-0 mt-1">Características principales del producto.</p>
                         </div>
                         <div class="card-body">
-                            <ul class="list-group list-group-flush border rounded">
+                            <ul class="list-group list-unstyled list-group-flush border rounded">
                                 @foreach($content->bullet_points as $point)
                                     <li class="list-group-item bg-light-subtle py-2">
                                         <i class="fas fa-check text-success me-2"></i>{{ $point }}
@@ -550,6 +550,9 @@
                                     'last_sync_at'       => ['label' => 'Última sincronización','desc' => 'Fecha y hora en que los datos fueron sincronizados desde el ERP.'],
                                     'created_at'         => ['label' => 'Fecha de creación',    'desc' => 'Fecha en que el registro fue creado en el sistema.'],
                                     'updated_at'         => ['label' => 'Última actualización', 'desc' => 'Fecha de la última modificación del registro.'],
+                                    'created'            => ['label' => 'Creado en ERP',        'desc' => 'Fecha de creación del registro en el sistema ERP.'],
+                                    'updated'            => ['label' => 'Actualizado en ERP',   'desc' => 'Fecha de la última actualización del registro en el ERP.'],
+                                    'characteristics'    => ['label' => 'Características',      'desc' => 'Características de producto ya asignadas en el ERP a nivel de modelo (ver también la tabla de Variantes / Atributos).'],
                                 ];
                                 @endphp
                                 <label class="form-label fw-semibold mb-2">Atributos de origen</label>
@@ -557,8 +560,8 @@
                                     <table class="table table-sm table-hover mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width:22%">Campo</th>
-                                                <th style="width:30%">Descripción</th>
+                                                <th class="w-22">Campo</th>
+                                                <th class="w-30">Descripción</th>
                                                 <th>Valor</th>
                                             </tr>
                                         </thead>
@@ -567,9 +570,9 @@
                                                 @php $meta = $attrDescriptions[$key] ?? null; @endphp
                                                 <tr>
                                                     <td class="small">
-                                                        <span class="fw-semibold">{{ $meta['label'] ?? $key }}</span>
+                                                        <span class="fw-semibold">{{ $meta['label'] ?? \Illuminate\Support\Str::of($key)->replace('_', ' ')->ucfirst() }}</span>
                                                         @if(! $meta)
-                                                            <br><span class="font-monospace text-muted" style="font-size:.7rem">{{ $key }}</span>
+                                                            <br><span class="font-monospace text-muted fs-70">{{ $key }}</span>
                                                         @endif
                                                     </td>
                                                     <td class="text-muted small">{{ $meta['desc'] ?? '—' }}</td>
@@ -585,26 +588,26 @@
                                                                 @php $sportDesc = $value['sport']['description'] ?? $prodCat?->sport?->name; @endphp
                                                                 @if($sportDesc)
                                                                     <span>
-                                                                        <span class="badge bg-secondary-subtle text-secondary me-1" style="font-size:.65rem">Deporte</span>
-                                                                        <strong>{{ $sportDesc }}</strong>
+                                                                        <span class="badge bg-secondary-subtle text-secondary ">Deporte</span>
+                                                                        <span>{{ $sportDesc }}</span>
                                                                     </span>
                                                                 @endif
                                                                 {{-- 2. Categoría (erp_categoria) --}}
                                                                 @if($prodCat?->erp_categoria_name)
                                                                     <span>
-                                                                        <span class="badge bg-secondary-subtle text-secondary me-1" style="font-size:.65rem">Categoría</span>
+                                                                        <span class="badge bg-secondary-subtle text-secondary ">Categoría</span>
                                                                         {{ $prodCat->erp_categoria_name }}
-                                                                        <span class="text-muted font-monospace ms-1" style="font-size:.7rem">#{{ $prodCat->erp_categoria_id }}</span>
+                                                                        <span class="text-muted font-monospace ms-1 fs-70">#{{ $prodCat->erp_categoria_id }}</span>
                                                                     </span>
                                                                 @endif
                                                                 {{-- 3. Familia --}}
                                                                 @php $familiaDesc = $value['description'] ?? $prodCat?->name; @endphp
                                                                 @if($familiaDesc)
                                                                     <span>
-                                                                        <span class="badge bg-secondary-subtle text-secondary me-1" style="font-size:.65rem">Familia</span>
+                                                                        <span class="badge bg-secondary-subtle text-secondary ">Familia</span>
                                                                         {{ $familiaDesc }}
                                                                         @if(isset($value['id']))
-                                                                            <span class="text-muted font-monospace ms-1" style="font-size:.7rem">#{{ $value['id'] }}</span>
+                                                                            <span class="text-muted font-monospace ms-1 fs-70">#{{ $value['id'] }}</span>
                                                                         @endif
                                                                     </span>
                                                                 @endif
@@ -612,10 +615,10 @@
                                                                 @php $subfamDesc = $prodSubfam?->name; @endphp
                                                                 @if($subfamDesc)
                                                                     <span>
-                                                                        <span class="badge bg-secondary-subtle text-secondary me-1" style="font-size:.65rem">Subfamilia</span>
+                                                                        <span class="badge bg-secondary-subtle text-secondary ">Subfamilia</span>
                                                                         {{ $subfamDesc }}
                                                                         @if($prodSubfam->erp_id)
-                                                                            <span class="text-muted font-monospace ms-1" style="font-size:.7rem">#{{ $prodSubfam->erp_id }}</span>
+                                                                            <span class="text-muted font-monospace ms-1 fs-70">#{{ $prodSubfam->erp_id }}</span>
                                                                         @endif
                                                                     </span>
                                                                 @endif
@@ -636,7 +639,7 @@
                                                         @elseif($key === 'supplier' && is_array($value))
                                                             {{-- Proveedor principal --}}
                                                             <div>
-                                                                <span class="fw-semibold">{{ $value['name'] ?? $value['label'] ?? '—' }}</span>
+                                                                <span>{{ $value['name'] ?? $value['label'] ?? '—' }}</span>
                                                                 @if(!empty($value['cif'])) <span class="text-muted"> · {{ $value['cif'] }}</span> @endif
                                                             </div>
                                                             @if(!empty($value['email'])) <div class="small text-muted">{{ $value['email'] }}</div> @endif
@@ -655,6 +658,18 @@
                                                                     @endif
                                                                 </div>
                                                             @endforeach
+                                                        @elseif($key === 'characteristics' && is_array($value))
+                                                            {{-- Características de modelo ya asignadas en el ERP (nombres vacíos en Oracle se omiten) --}}
+                                                            @php $namedCharacteristics = array_filter($value, fn ($c) => ! empty($c['characteristic_name'])); @endphp
+                                                            @if(count($namedCharacteristics))
+                                                                <div class="d-flex flex-wrap gap-1">
+                                                                    @foreach($namedCharacteristics as $c)
+                                                                        <span class="badge bg-secondary-subtle text-secondary">{{ $c['characteristic_name'] }}</span>
+                                                                    @endforeach
+                                                                </div>
+                                                            @else
+                                                                <span class="text-muted">—</span>
+                                                            @endif
                                                         @elseif(is_array($value))
                                                             {{-- Fallback genérico: tabla clave-valor --}}
                                                             @foreach($value as $vk => $vv)
@@ -683,13 +698,18 @@
                 @php $productAttributes = $content->supplierProduct?->attributes ?? collect(); @endphp
                 @if($productAttributes->isNotEmpty())
                     <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0 fw-bold">Variantes / Atributos</h6>
-                            <p class="text-muted small mb-0 mt-1">{{ $productAttributes->count() }} variante(s) asociadas al producto</p>
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Variantes / Atributos</h6>
+                                <p class="text-muted small mb-0 mt-1">{{ $productAttributes->count() }} variante(s) asociadas al producto — clic en una fila para ver sus características</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnSyncCharacteristicsNow">
+                                Enviar características al ERP
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-sm table-hover mb-0" style="font-size:.82rem">
+                                <table class="table table-sm table-hover mb-0 fs-82">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Nombre</th>
@@ -702,7 +722,10 @@
                                     </thead>
                                     <tbody>
                                         @foreach($productAttributes as $attr)
-                                            <tr>
+                                            <tr class="variant-char-row" role="button"
+                                                data-attribute-id="{{ $attr->id }}"
+                                                data-attribute-name="{{ $attr->name ?? $attr->code ?? '—' }}"
+                                                title="Ver características de esta variante">
                                                 <td>{{ $attr->name ?? '—' }}</td>
                                                 <td class="font-monospace">{{ $attr->code ?? '—' }}</td>
                                                 <td class="font-monospace">{{ $attr->reference ?? '—' }}</td>
@@ -841,13 +864,13 @@
                                 {{ $seo['score'] }}%
                             </span>
                         </div>
-                        <div class="progress mb-3" style="height:6px">
+                        <div class="progress mb-3 progress-thin">
                             <div class="progress-bar bg-{{ $seo['color'] }}" style="width:{{ $seo['score'] }}%"></div>
                         </div>
                         <ul class="list-unstyled mb-0 small">
                             @foreach($seo['checks'] as $check)
                                 <li class="d-flex align-items-center gap-2 py-1">
-                                    <i class="fas fa-{{ $check['pass'] ? 'check text-success' : 'times text-danger' }}" style="width:14px"></i>
+                                    <i class="fas fa-{{ $check['pass'] ? 'check text-success' : 'times text-danger' }} w-14px"></i>
                                     <span class="text-{{ $check['pass'] ? 'body' : 'muted' }}">{{ $check['label'] }}</span>
                                 </li>
                             @endforeach
@@ -953,7 +976,7 @@
                                     <span class="text-muted small">Proveedor</span>
                                     <span class="small fw-semibold text-end">
                                         {{ $supplierLabel }}
-                                        @if($supplierCif)<br><span class="text-muted font-monospace" style="font-size:.7rem">{{ $supplierCif }}</span>@endif
+                                        @if($supplierCif)<br><span class="text-muted font-monospace fs-70">{{ $supplierCif }}</span>@endif
                                     </span>
                                 </li>
                             @endif
@@ -978,7 +1001,7 @@
                                 <div class="d-flex align-items-center gap-1">
                                     <span class="small fw-semibold text-end" id="brandDisplay">{{ $brand ?? '—' }}</span>
                                     <button type="button" class="btn btn-link btn-sm p-0 ms-1 text-muted" id="btnEditBrand" title="Editar marca">
-                                        <i class="fas fa-pen" style="font-size:.7rem"></i>
+                                        <i class="fas fa-pen fs-70"></i>
                                     </button>
                                 </div>
                             </li>
@@ -1020,13 +1043,11 @@
                                 <span class="text-muted small">Sincronizado al ERP</span>
                                 @if($content->synced_to_erp_at)
                                     <span class="small fw-semibold text-end d-flex align-items-center gap-1">
-                                        <i class="fas fa-circle-check text-success" style="font-size:.85rem;" title="Sincronizado"></i>
                                         {{ \Carbon\Carbon::parse($content->synced_to_erp_at)->format('d/m/Y H:i') }}
                                     </span>
                                 @else
                                     <span class="small fw-semibold text-end d-flex align-items-center gap-1">
-                                        <i class="fas fa-clock text-warning" style="font-size:.85rem;" title="Pendiente"></i>
-                                        <span class="text-warning">Pendiente</span>
+                                        <span class="">Pendiente</span>
                                     </span>
                                 @endif
                             </li>
@@ -1141,24 +1162,23 @@
                                     @php $ai = $actionIcons[$log->action] ?? ['icon' => 'fa-circle', 'color' => 'secondary']; @endphp
                                     <li class="timeline-item d-flex align-items-start pb-3 gap-2">
                                         <div class="flex-shrink-0">
-                                            <span class="d-flex align-items-center justify-content-center rounded-circle bg-{{ $ai['color'] }}-subtle text-{{ $ai['color'] }}"
-                                                  style="width:28px;height:28px">
+                                            <span class="d-flex align-items-center justify-content-center rounded-circle bg-{{ $ai['color'] }}-subtle text-{{ $ai['color'] }} icon-circle-28">
                                                 <i class="fas {{ $ai['icon'] }} small"></i>
                                             </span>
                                         </div>
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-start gap-1">
                                                 <span class="small fw-semibold">{{ ucfirst(str_replace('_', ' ', $log->action)) }}</span>
-                                                <span class="text-muted" style="font-size:.7rem;white-space:nowrap">
+                                                <span class="text-muted text-nowrap fs-70">
                                                     {{ $log->created_at->format('d/m H:i') }}
                                                 </span>
                                             </div>
                                             @if(isset($actionDescriptions[$log->action]))
-                                                <div class="text-muted" style="font-size:.72rem">
+                                                <div class="text-muted fs-72">
                                                     {{ $actionDescriptions[$log->action] }}
                                                 </div>
                                             @endif
-                                            <div class="text-muted" style="font-size:.75rem">
+                                            <div class="text-muted fs-75">
                                                 {{ $log->user?->name ?? 'Sistema' }}
                                                 @if($log->previous_status && $log->new_status)
                                                     · {{ $log->new_status }}
@@ -1187,8 +1207,33 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-0">¿Estás seguro de que quieres <strong>regenerar</strong> este contenido con IA?</p>
-                <p class="small text-muted mt-2 mb-0">El contenido actual se reemplazará y volverá al estado <em>Pendiente de validación</em>.</p>
+                <p class="mb-3">El contenido actual se reemplazará y volverá al estado <em>Pendiente de validación</em>.</p>
+
+                <div class="d-flex flex-column gap-2">
+                    <label for="regenerate_mode_existing" class="subfamily-mode-card active">
+                        <input type="radio" name="regenerate_mode" id="regenerate_mode_existing" value="existing"
+                               checked class="visually-hidden">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mode-title mb-0">Regenerar con los datos actuales</p>
+                                <p class="mode-desc">Usa el mismo snapshot de datos ERP ya guardado para este contenido.</p>
+                            </div>
+                            <i class="fas fa-rotate fs-5 ms-3 mode-icon"></i>
+                        </div>
+                    </label>
+
+                    <label for="regenerate_mode_full" class="subfamily-mode-card">
+                        <input type="radio" name="regenerate_mode" id="regenerate_mode_full" value="full"
+                               class="visually-hidden">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mode-title mb-0">Regenerar con datos actualizados</p>
+                                <p class="mode-desc">Vuelve a traer los datos del modelo desde Gestión (ERP) antes de regenerar.</p>
+                            </div>
+                            <i class="fas fa-cloud-arrow-down fs-5 ms-3 mode-icon"></i>
+                        </div>
+                    </label>
+                </div>
             </div>
             <div class="modal-footer d-flex flex-column gap-1">
                 <button type="button" class="btn btn-secondary w-100 fw-semibold" id="btn-regenerate-confirm">
@@ -1317,7 +1362,45 @@
     </div>
 </div>
 
+{{-- Ver características de una variante (solo lectura) --}}
+<div class="modal fade" id="modalVariantCharacteristics" tabindex="-1" aria-labelledby="modalVariantCharacteristicsLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVariantCharacteristicsLabel">
+                    Características — <span id="variantCharModalVariantName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Características ERP asignadas al modelo y a esta variante, con los datos ya sincronizados.</p>
+
+                <h6 class="fw-semibold mb-2">Características del modelo</h6>
+                <p class="text-muted small mb-2">Busca y elige una característica para añadirla a la lista.</p>
+                <select id="variantCharModalModelPicker" class="characteristic-picker-select w-100"></select>
+                <div class="table-responsive mt-2">
+                    <table class="table table-characteristics align-middle mb-0 fs-82">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-2">Característica</th>
+                                <th class="py-2">Valor</th>
+                                <th class="py-2">Estado</th>
+                                <th class="py-2 text-end">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variantCharModalModelBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
+
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
@@ -1469,14 +1552,19 @@ $(document).ready(function () {
 
     $('#btn-regenerate-confirm').on('click', function () {
         const $btn = $('#btn-regenerate-confirm').prop('disabled', true);
+        const fullUpdate = $('input[name="regenerate_mode"]:checked').val() === 'full';
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modalRegenerar')).hide();
         $('#btn-regenerate').prop('disabled', true);
+
+        if (fullUpdate) {
+            toastr.info('Trayendo los datos más recientes desde Gestión…', 'Contenido IA');
+        }
 
         $.ajax({
             url: actionUrl,
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            data: { action: 'regenerate' },
+            data: { action: 'regenerate', full_update: fullUpdate ? 1 : 0 },
             success: function (res) {
                 if (res.success) {
                     toastr.success(res.message || 'Contenido en regeneración', 'Contenido IA');
@@ -1836,6 +1924,274 @@ $(document).ready(function () {
             $('#longDescViewMode').show();
         });
     });
+
+    // ================================================================
+    // Características ERP (modelo + variantes)
+    // ================================================================
+    const characteristicsPanelUrl        = '{{ route("settings.suppliers.content.characteristics.panel", $content->uid) }}';
+    const modelCharacteristicsUrl        = '{{ route("settings.suppliers.content.characteristics.model", $content->uid) }}';
+    const modelCharacteristicDestroyUrl  = '{{ route("settings.suppliers.content.characteristics.model.destroy", [$content->uid, "__ID__"]) }}';
+    const variantCharacteristicUrl       = '{{ route("settings.suppliers.content.characteristics.variant", $content->uid) }}';
+    const variantCharacteristicDestroyUrl = '{{ route("settings.suppliers.content.characteristics.variant.destroy", [$content->uid, "__ID__"]) }}';
+    const characteristicValuesUrl        = '{{ route("settings.suppliers.content.characteristics.values", ["characteristicId" => "__ID__"]) }}';
+    const characteristicsSyncNowUrl      = '{{ route("settings.suppliers.content.characteristics.sync", $content->uid) }}';
+
+    function syncStatusBadge(status) {
+        if (status === 'synced') return '<span class="badge bg-success-subtle text-success">Sincronizado</span>';
+        if (status === 'error') return '<span class="badge bg-danger-subtle text-danger">Error</span>';
+        return '<span class="badge bg-secondary-subtle text-secondary">Pendiente</span>';
+    }
+
+    let __characteristicsCache = null;
+
+    function loadCharacteristicsPanel() {
+        $.getJSON(characteristicsPanelUrl, function (data) {
+            __characteristicsCache = data;
+            // Si el modal de "ver/editar características de variante" está abierto,
+            // refresca también su contenido con los datos recién llegados.
+            if ($('#modalVariantCharacteristics').hasClass('show')) {
+                renderVariantCharModal();
+            }
+        }).fail(function (xhr) {
+            if (xhr.status !== 422) {
+                toastr.error('Error al cargar las características', 'Error');
+            }
+        });
+    }
+
+    function destroySelect2($els) {
+        $els.each(function () {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
+            }
+        });
+    }
+
+    // Modal de "Eliminar" compartido de la plataforma (core::components.delete,
+    // ya incluido globalmente en layouts.theme) — mismo patrón que templates/
+    // prompts/suppliers: el trigger deja la URL y el título en el modal, y
+    // aquí sobreescribimos el submit para refrescar solo el panel (no toda
+    // la página) tras confirmar. Vale para las dos "Quitar" de esta tarjeta
+    // (característica de modelo y valor de variante), comparten modal.
+    $(document).on('click', '.delete-btn', function () {
+        $('#delete-modal .modal-title').text($(this).data('title'));
+        $('#delete-form').data('url', $(this).data('url'));
+    });
+
+    $('#delete-form').on('submit', function (e) {
+        e.preventDefault();
+        const url = $(this).data('url');
+        if (! url || url.indexOf('/characteristics/') === -1) return; // no es de esta tarjeta
+
+        const $btn = $(this).find('[type=submit]');
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: url,
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            success: function () {
+                $('#delete-modal').modal('hide');
+                toastr.success('Quitado correctamente', 'Características');
+                loadCharacteristicsPanel();
+            },
+            error: function (xhr) {
+                $('#delete-modal').modal('hide');
+                toastr.error(xhr.responseJSON?.message || 'Error al quitar', 'Error');
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            },
+        });
+    });
+
+    // Envío manual — nunca automático. Guardar una característica siempre
+    // la deja en "pending"; hace falta este botón (o aprobar el contenido)
+    // para que de verdad se envíe al ERP.
+    $('#btnSyncCharacteristicsNow').on('click', function () {
+        const $btn = $(this).prop('disabled', true);
+
+        $.ajax({
+            url: characteristicsSyncNowUrl,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            success: function (res) {
+                toastr.success(res.message || 'Envío al ERP iniciado', 'Características');
+                setTimeout(loadCharacteristicsPanel, 2000);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al enviar', 'Error');
+            },
+            complete: function () {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    loadCharacteristicsPanel();
+
+    // ----------------------------------------------------------------
+    // Modal de características de una variante concreta, abierto desde la
+    // card "Variantes / Atributos" (clic en una fila). Muestra y permite
+    // AÑADIR/QUITAR características, mismo patrón (buscar y elegir) que la
+    // card "Características" de más abajo — reusa sus mismos endpoints.
+    // ----------------------------------------------------------------
+    function esc(str) {
+        return $('<div>').text(str ?? '').html();
+    }
+
+    let __variantCharModalAttributeId = null;
+    let __variantCharModalAttributeName = null;
+
+    // Misma tabla única (Característica/Valor/Estado/Acción) que usa la card
+    // de abajo cuando el producto tiene una sola variante — aquí el modal
+    // siempre está anclado a la variante en la que se hizo clic, así que se
+    // usa siempre ese modo, sin importar cuántas variantes tenga el producto.
+    function renderVariantCharModal() {
+        const data = __characteristicsCache;
+        const attributeId = __variantCharModalAttributeId;
+
+        $('#variantCharModalVariantName').text(__variantCharModalAttributeName || '—');
+
+        destroySelect2($('#variantCharModalModelPicker'));
+        destroySelect2($('#variantCharModalModelBody .model-row-value-select'));
+
+        const modelUsedIds = new Set(data.model_assignments.map(a => a.characteristic_id));
+        const modelAvailable = data.catalog.filter(c => ! modelUsedIds.has(c.id));
+
+        $('#variantCharModalModelPicker').empty().select2({
+            width: 'resolve',
+            placeholder: 'Buscar característica...',
+            allowClear: true,
+            dropdownParent: $('#modalVariantCharacteristics'),
+            data: [{ id: '', text: '' }].concat(modelAvailable.map(c => ({ id: c.id, text: c.nombre }))),
+        });
+
+        const $body = $('#variantCharModalModelBody').empty();
+        if (!data.model_assignments.length) {
+            $body.append('<tr><td colspan="4" class="text-muted small">Todavía no hay características añadidas.</td></tr>');
+            return;
+        }
+
+        data.model_assignments.forEach(a => {
+            const canRemove = a.sync_status === 'pending';
+            const valueAssignment = data.variant_assignments.find(v => v.product_attribute_id === attributeId && v.characteristic_id === a.characteristic_id);
+            const rowStatus = valueAssignment ? valueAssignment.sync_status : a.sync_status;
+
+            $body.append(`
+                <tr data-id="${a.id}">
+                    <td class="py-2">${esc(a.characteristic?.nombre)}</td>
+                    <td class="py-2">
+                        <select class="model-row-value-select" data-characteristic-id="${a.characteristic_id}" data-attribute-id="${attributeId}">
+                            ${valueAssignment && valueAssignment.value ? `<option value="${valueAssignment.value.id}" selected>${esc(valueAssignment.value.nombre)}</option>` : ''}
+                        </select>
+                    </td>
+                    <td class="py-2">${syncStatusBadge(rowStatus)}</td>
+                    <td class="py-2 text-end">
+                        ${canRemove ? `<button type="button" class="btn btn-sm btn-outline-danger delete-btn"
+                                data-bs-toggle="modal" data-bs-target="#delete-modal"
+                                data-url="${modelCharacteristicDestroyUrl.replace('__ID__', a.id)}"
+                                data-title="Quitar característica: ${esc(a.characteristic?.nombre)}"
+                                title="Quitar"><i class="fas fa-trash"></i></button>` : ''}
+                    </td>
+                </tr>`);
+        });
+
+        $('#variantCharModalModelBody .model-row-value-select').each(function () {
+            const $select = $(this);
+            const characteristicId = $select.data('characteristic-id');
+
+            $select.select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Selecciona un valor...',
+                dropdownParent: $('#modalVariantCharacteristics'),
+                minimumInputLength: 0,
+                ajax: {
+                    url: characteristicValuesUrl.replace('__ID__', characteristicId),
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({ search: params.term || '' }),
+                    processResults: res => ({ results: res.values.map(v => ({ id: v.id, text: v.nombre })) }),
+                },
+            });
+        });
+    }
+
+    function openVariantCharModal(attributeId, attributeName) {
+        __variantCharModalAttributeId = attributeId;
+        __variantCharModalAttributeName = attributeName;
+        renderVariantCharModal();
+        new bootstrap.Modal(document.getElementById('modalVariantCharacteristics'), {
+            backdrop: 'static',
+            keyboard: false,
+        }).show();
+    }
+
+    $(document).on('click', '.variant-char-row', function () {
+        const attributeId = $(this).data('attribute-id');
+        const attributeName = $(this).data('attribute-name');
+
+        if (__characteristicsCache) {
+            openVariantCharModal(attributeId, attributeName);
+        } else {
+            $.getJSON(characteristicsPanelUrl, function (data) {
+                __characteristicsCache = data;
+                openVariantCharModal(attributeId, attributeName);
+            }).fail(function () {
+                toastr.error('No se pudieron cargar las características', 'Error');
+            });
+        }
+    });
+
+    // Añadir característica de modelo
+    $('#variantCharModalModelPicker').on('select2:select', function (e) {
+        const characteristicId = e.params.data.id;
+        if (! characteristicId) return;
+
+        $.ajax({
+            url: modelCharacteristicsUrl,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: { characteristic_ids: [characteristicId] },
+            success: function () {
+                toastr.success('Característica añadida', 'Características');
+                loadCharacteristicsPanel();
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar', 'Error');
+            },
+        });
+    });
+
+    // Guardar valor de esta variante (igual que .model-row-value-select de la card)
+    $('#variantCharModalModelBody').on('select2:select select2:clear', '.model-row-value-select', function () {
+        const $select = $(this);
+        const attributeId = $select.data('attribute-id');
+        const characteristicId = $select.data('characteristic-id');
+        const valueId = $select.val();
+
+        if (! valueId) return;
+
+        $.ajax({
+            url: variantCharacteristicUrl,
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            data: { characteristic_id: characteristicId, value_id: valueId, product_attribute_id: attributeId },
+            success: function () {
+                toastr.success('Valor guardado', 'Características');
+                loadCharacteristicsPanel();
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar', 'Error');
+            },
+        });
+    });
+
+    // El "Quitar" (.delete-btn) ya está cableado al #delete-modal compartido
+    // más arriba en este mismo script; tras confirmar llama a
+    // loadCharacteristicsPanel(), que ya refresca el modal de variante si
+    // está abierto (ver definición de loadCharacteristicsPanel más arriba).
 });
 </script>
 @endpush

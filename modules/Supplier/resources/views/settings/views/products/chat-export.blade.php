@@ -6,7 +6,7 @@
 <style>
 body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #2a3547; line-height: 1.55; }
 h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
-.meta { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+.meta { background: #f5f6f8; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
 .meta dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; margin: 0; }
 .meta dt { font-weight: 600; color: #5a6a85; }
 .msg { border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
@@ -19,7 +19,7 @@ h1 { font-size: 1.75rem; margin-bottom: 0.5rem; }
 .sources a { color: #0c7a64; word-break: break-all; }
 table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
 th, td { padding: 0.35rem 0.6rem; border: 1px solid #e5e7eb; font-size: 0.9rem; }
-th { background: #f8f9fa; }
+th { background: #f5f6f8; }
 code { background: rgba(0,0,0,0.06); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
 pre { background: #000; color: #fff; padding: 0.75rem; border-radius: 6px; overflow-x: auto; }
 </style>

@@ -224,7 +224,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div id="previewContainerTab" style="min-height: 500px; max-height: 700px; overflow-y: auto; background: #f8f9fa; border-radius: 4px;">
+                            <div id="previewContainerTab" style="min-height: 500px; max-height: 700px; overflow-y: auto; background: #f5f6f8; border-radius: 4px;">
                                 <div class="text-center py-5">
                                     <div class="spinner-border text-primary mb-3" role="status">
                                         <span class="visually-hidden">Cargando...</span>
@@ -290,7 +290,7 @@
                         </div>
                     </div>
                     <div class="card-body p-0" id="previewWrapper">
-                        <div id="previewContainer" style="min-height: 400px; max-height: 600px; overflow-y: auto; background: #f8f9fa;">
+                        <div id="previewContainer" style="min-height: 400px; max-height: 600px; overflow-y: auto; background: #f5f6f8;">
                             <div class="text-center py-5">
                                 <div class="spinner-border text-success mb-3" role="status">
                                     <span class="visually-hidden">Cargando...</span>

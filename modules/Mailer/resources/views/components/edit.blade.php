@@ -217,7 +217,7 @@
                                     </button>
                                 </div>
                             </div>
-                            <div id="previewContainerTab" style="min-height: 500px; max-height: 700px; overflow-y: auto; background: #f8f9fa; border-radius: 4px;">
+                            <div id="previewContainerTab" style="min-height: 500px; max-height: 700px; overflow-y: auto; background: #f5f6f8; border-radius: 4px;">
                                 <div class="text-center py-5">
                                     <div class="spinner-border text-primary mb-3" role="status">
                                         <span class="visually-hidden">Cargando...</span>

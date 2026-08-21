@@ -51,7 +51,7 @@
         .hd-kanban-col {
             flex: 0 0 280px;
             min-width: 280px;
-            background: var(--bv-bg-subtle, #f8f9fa);
+            background: var(--bv-bg-subtle, #f5f6f8);
             border-radius: 10px;
             border: 1px solid var(--bv-border, #e5e7eb);
             display: flex;

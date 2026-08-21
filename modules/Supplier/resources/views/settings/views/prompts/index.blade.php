@@ -43,7 +43,7 @@
                         </span>
                     @endif
                     @if($filterCategory)
-                        <span class="badge bg-info-subtle text-info">
+                        <span class="badge bg-secondary-subtle text-secondary">
                             <i class="fas fa-tag me-1"></i>{{ $filterCategory->name }}
                         </span>
                     @endif
@@ -123,17 +123,17 @@
                                     <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $prompt->uid }}"></td>
                                     <td>
                                         <div>
-                                            <a href="{{ route('settings.suppliers.prompts.edit', $prompt->uid) }}" class="text-body fw-semibold text-decoration-none">{{ $prompt->label }}</a>
+                                            <a href="{{ route('settings.suppliers.prompts.edit', $prompt->uid) }}" class="text-dark fw-semibold text-decoration-none">{{ $prompt->label }}</a>
                                         </div>
                                     </td>
                                     <td>
                                         @php
                                             $scopeLabels = [
-                                                'global' => ['label' => 'Global', 'color' => 'info'],
-                                                'supplier' => ['label' => 'Proveedor', 'color' => 'info'],
-                                                'category' => ['label' => 'Categoría', 'color' => 'info'],
-                                                'supplier_category' => ['label' => 'Prov+Cat', 'color' => 'info'],
-                                                'source' => ['label' => 'Fuente', 'color' => 'info']
+                                                'global' => ['label' => 'Global', 'color' => 'secondary'],
+                                                'supplier' => ['label' => 'Proveedor', 'color' => 'secondary'],
+                                                'category' => ['label' => 'Categoría', 'color' => 'secondary'],
+                                                'supplier_category' => ['label' => 'Prov+Cat', 'color' => 'secondary'],
+                                                'source' => ['label' => 'Fuente', 'color' => 'secondary']
                                             ];
                                             $scope = $scopeLabels[$prompt->scope] ?? ['label' => ucfirst($prompt->scope), 'color' => 'light'];
                                         @endphp
@@ -167,7 +167,7 @@
                                                 Activo
                                             </span>
                                         @else
-                                            <span class="badge bg-info-subtle text-info">
+                                            <span class="badge bg-light text-dark">
                                                 Inactivo
                                             </span>
                                         @endif

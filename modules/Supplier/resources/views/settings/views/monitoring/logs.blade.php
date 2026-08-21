@@ -6,6 +6,17 @@
     @include('core::components.card', ['title' => $pageTitle])
 @endsection
 
+@push('styles')
+<style>
+/* Latencia: se distingue por intensidad de gris (claro → oscuro), no por
+   color de severidad (antes: amarillo/rojo) — paleta propia de la app
+   (fondo #f5f6f8 y negro), no los grises genéricos de Bootstrap. */
+.latency-fast   { background: #f5f6f8; color: #333333; }
+.latency-medium { background: #9a9a9a; color: #ffffff; }
+.latency-slow   { background: #000000; color: #ffffff; }
+</style>
+@endpush
+
 @section('content')
     <div class="widget-content searchable-container list">
 
@@ -21,8 +32,8 @@
                         <p class="small mb-0 text-muted">Detalle de cada llamada a los modelos de IA con tokens, costo y latencia</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="{{ route('settings.suppliers.monitoring.index') }}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-arrow-left me-1"></i> Volver al dashboard
+                        <a href="{{ route('settings.suppliers.monitoring.index') }}" class="btn btn-secondary ">
+                            <i class="fas fa-arrow-left me-1"></i>
                         </a>
                     </div>
                 </div>
@@ -40,7 +51,7 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Total registros</h6>
-                                <h2 class="fw-bold mb-1">{{ number_format($logs->total()) }}</h2>
+                                <h4 class="mb-1 fw-bold">{{ number_format($logs->total()) }}</h4>
                                 <small class="text-muted">Llamadas registradas</small>
                             </div>
                         </div>
@@ -49,7 +60,7 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Costo acumulado (página)</h6>
-                                <h2 class="fw-bold mb-1">${{ number_format($totalCost, 4) }}</h2>
+                                <h4 class="mb-1 fw-bold">${{ number_format($totalCost, 4) }}</h4>
                                 <small class="text-muted">Suma de los registros mostrados</small>
                             </div>
                         </div>
@@ -58,7 +69,7 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Tokens (página)</h6>
-                                <h2 class="fw-bold mb-1">{{ number_format($totalTokens) }}</h2>
+                                <h4 class="mb-1 fw-bold">{{ number_format($totalTokens) }}</h4>
                                 <small class="text-muted">Suma de los registros mostrados</small>
                             </div>
                         </div>
@@ -67,13 +78,13 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Latencia media (página)</h6>
-                                <h2 class="fw-bold mb-1">
+                                <h4 class="mb-1 fw-bold">
                                     @if($avgLatency)
-                                        {{ number_format($avgLatency) }} <small class="fs-6 fw-normal text-muted">ms</small>
+                                        {{ number_format($avgLatency) }} <small class="fw-normal text-muted">ms</small>
                                     @else
-                                        <span class="text-muted fs-5">—</span>
+                                        <span class="text-muted">—</span>
                                     @endif
-                                </h2>
+                                </h4>
                                 <small class="text-muted">Promedio de registros con dato</small>
                             </div>
                         </div>
@@ -129,9 +140,9 @@
                         <table class="table table-hover align-middle mb-0" style="font-size:0.85rem;">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-3" style="min-width:140px;">Modelo</th>
+                                    <th class="ps-3" style="min-width:130px;">Proveedor</th>
+                                    <th style="min-width:140px;">Modelo</th>
                                     <th style="min-width:110px;">Operación</th>
-                                    <th style="min-width:130px;">Proveedor</th>
                                     <th class="text-end" style="min-width:160px;" title="Tokens de entrada / salida / total">Tokens (in / out / total)</th>
                                     <th class="text-end" style="min-width:110px;">Costo</th>
                                     <th class="text-center" style="min-width:90px;">Latencia</th>
@@ -142,33 +153,32 @@
                             <tbody>
                                 @foreach($logs as $log)
                                     @php
-                                        $opColor = match($log->operation_type) {
-                                            'generation'    => 'primary',
-                                            'validation'    => 'info',
-                                            'extraction', 'extraction_vision' => 'warning',
-                                            'regeneration'  => 'secondary',
-                                            default         => 'secondary',
-                                        };
-                                        $latColor = $log->latency_ms
-                                            ? ($log->latency_ms < 1000 ? 'success' : ($log->latency_ms < 3000 ? 'warning' : 'danger'))
+                                        // Tipo de operación: solo es una etiqueta de clasificación, no un
+                                        // estado de severidad — un único color evita mezclar colores sin
+                                        // significado real (antes: azul/ámbar dispersos por tipo).
+                                        $opColor = 'secondary';
+                                        // Latencia: se distingue por intensidad de gris (claro → oscuro),
+                                        // no por color de severidad (antes: amarillo/rojo).
+                                        $latClass = $log->latency_ms
+                                            ? ($log->latency_ms < 1000 ? 'latency-fast' : ($log->latency_ms < 3000 ? 'latency-medium' : 'latency-slow'))
                                             : null;
                                         $costPer1k = $log->getCostPer1kTokens();
                                     @endphp
                                     <tr>
                                         <td class="ps-3">
+                                            @if($log->supplier)
+                                                <span>{{ $log->supplier->label }}</span>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             <span class="fw-semibold">{{ $log->model }}</span>
                                         </td>
                                         <td>
                                             <span class="badge bg-{{ $opColor }}-subtle text-{{ $opColor }}">
                                                 {{ ucfirst($log->operation_type) }}
                                             </span>
-                                        </td>
-                                        <td>
-                                            @if($log->supplier)
-                                                <span class="text-body">{{ $log->supplier->label }}</span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
                                         </td>
                                         <td class="text-end font-monospace">
                                             <span class="text-muted">{{ number_format($log->input_tokens) }}</span>
@@ -184,7 +194,7 @@
                                         </td>
                                         <td class="text-center">
                                             @if($log->latency_ms)
-                                                <span class="badge bg-{{ $latColor }}-subtle text-{{ $latColor }}">
+                                                <span class="badge {{ $latClass }}">
                                                     {{ $log->latency_ms >= 1000
                                                         ? number_format($log->latency_ms / 1000, 1) . ' s'
                                                         : $log->latency_ms . ' ms' }}

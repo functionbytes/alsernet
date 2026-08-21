@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Supplier\Http\Controllers\Settings\Categories\CategoriesController;
+use Modules\Supplier\Http\Controllers\Settings\Characteristics\SupplierCharacteristicsController;
 use Modules\Supplier\Http\Controllers\Settings\Monitoring\AiCostMonitoringController;
 use Modules\Supplier\Http\Controllers\Settings\PromptTemplatesController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\Automation\SupplierAutomationExecutionController;
@@ -12,13 +13,14 @@ use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierAutomationContr
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierCategoriesController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierContentController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierEndpointsController;
+use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierExcludedContentSuppliersController;
+use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierExcludedGroupsController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierImportController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierProductChatController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierProductsController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierPromptsController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SuppliersController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierSourcesController;
-use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierExcludedGroupsController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierSyncConfigController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierSyncController;
 use Modules\Supplier\Http\Controllers\Settings\Suppliers\SupplierSyncFailuresController;
@@ -244,6 +246,10 @@ Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/stats', [SupplierContentController::class, 'getStats'])->name('stats');
             Route::get('/preview/{uid}', [SupplierContentController::class, 'preview'])->name('preview');
             Route::get('/show/{uid}', [SupplierContentController::class, 'show'])->name('show');
+            Route::get('/{uid}/characteristics', [SupplierContentController::class, 'characteristicsPanel'])->name('characteristics.panel');
+            Route::get('/characteristics/{characteristicId}/values', [SupplierContentController::class, 'characteristicValues'])
+                ->whereNumber('characteristicId')
+                ->name('characteristics.values');
             Route::get('/assignable-users', [SupplierContentController::class, 'getAssignableUsers'])
                 ->middleware('can:suppliers.content.assign-others')
                 ->name('assignable-users');
@@ -270,6 +276,27 @@ Route::middleware(['web', 'auth'])->group(function () {
                     ->middleware('throttle:ai-bulk')
                     ->name('regenerate-by-quantity');
                 Route::post('/{uid}/unassign', [SupplierContentController::class, 'unassign'])->name('unassign');
+                Route::post('/{uid}/characteristics/model', [SupplierContentController::class, 'saveModelCharacteristics'])->name('characteristics.model');
+                Route::delete('/{uid}/characteristics/model/{modelCharacteristicId}', [SupplierContentController::class, 'destroyModelCharacteristic'])
+                    ->whereNumber('modelCharacteristicId')
+                    ->name('characteristics.model.destroy');
+                Route::post('/{uid}/characteristics/variant', [SupplierContentController::class, 'saveVariantCharacteristic'])->name('characteristics.variant');
+                Route::delete('/{uid}/characteristics/variant/{variantCharacteristicId}', [SupplierContentController::class, 'destroyVariantCharacteristic'])
+                    ->whereNumber('variantCharacteristicId')
+                    ->name('characteristics.variant.destroy');
+                Route::post('/{uid}/characteristics/sync', [SupplierContentController::class, 'syncCharacteristicsNow'])->name('characteristics.sync');
+            });
+
+            // Proveedores excluidos de la generación automática de contenido IA
+            Route::middleware('can:suppliers.content.manage')->prefix('excluded-suppliers')->name('excluded-suppliers.')->group(function () {
+                Route::get('/', [SupplierExcludedContentSuppliersController::class, 'index'])->name('index');
+                Route::post('/', [SupplierExcludedContentSuppliersController::class, 'store'])->name('store');
+                Route::post('/store-by-code', [SupplierExcludedContentSuppliersController::class, 'storeByCode'])->name('store-by-code');
+                Route::post('/import', [SupplierExcludedContentSuppliersController::class, 'import'])->name('import');
+                // POST en vez de PUT: method:'PUT' vía fetch/$.ajax da 405 en este
+                // Docker aunque route:list lo liste correctamente (ver excluded-groups).
+                Route::post('/{id}', [SupplierExcludedContentSuppliersController::class, 'update'])->whereNumber('id')->name('update');
+                Route::delete('/{id}', [SupplierExcludedContentSuppliersController::class, 'destroy'])->whereNumber('id')->name('destroy');
             });
         });
 
@@ -310,12 +337,21 @@ Route::middleware(['web', 'auth'])->group(function () {
         });
 
         // ================================================================
+        // ERP CHARACTERISTICS — suppliers.configure
+        // ================================================================
+        Route::middleware(['can:suppliers.configure'])->prefix('characteristics')->name('characteristics.')->group(function () {
+            Route::get('/', [SupplierCharacteristicsController::class, 'index'])->name('index');
+            Route::post('/sync', [SupplierSyncController::class, 'syncCharacteristicsFromErp'])->name('sync');
+        });
+
+        // ================================================================
         // ERP PRODUCTS — suppliers.view.products
         // ================================================================
         Route::middleware(['can:suppliers.view.products'])->prefix('products')->name('products.')->group(function () {
             // Read-only
             Route::get('/', [SupplierProductsController::class, 'index'])->name('index');
             Route::get('/{id}/edit', [SupplierProductsController::class, 'edit'])->name('edit');
+            Route::get('/{id}/characteristics', [SupplierProductsController::class, 'characteristics'])->name('characteristics');
             Route::get('/{id}', [SupplierProductsController::class, 'show'])->name('show');
             Route::get('/{uid}/chat', [SupplierProductChatController::class, 'show'])->name('chat');
             Route::get('/{uid}/chat/{chatUid}/export', [SupplierProductChatController::class, 'export'])->name('chat.export');

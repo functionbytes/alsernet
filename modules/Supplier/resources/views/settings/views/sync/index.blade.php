@@ -88,7 +88,7 @@
                     <div class="card bg-light-secondary h-100">
                         <div class="card-body">
                             <h6 class="card-title text-muted mb-2">En progreso</h6>
-                            <h4 class="mb-1 fw-bold text-warning">{{ $stats['running'] }}</h4>
+                            <h4 class="mb-1 fw-bold ">{{ $stats['running'] }}</h4>
                             <small class="text-muted">Ejecutándose ahora</small>
                         </div>
                     </div>
@@ -171,12 +171,12 @@
                                         <input type="checkbox" class="form-check-input schedule-bulk-checkbox" value="{{ $s->uid }}">
                                     </td>
                                     <td class="ps-3">
-                                        <span class="badge bg-{{ $s->sync_type === 'model' ? 'primary' : 'info' }}-subtle text-{{ $s->sync_type === 'model' ? 'primary' : 'info' }}">
+                                        <span class="badge bg-secondary-subtle text-secondary">
                                             {{ $s->sync_type === 'model' ? 'Modelos' : 'Productos' }}
                                         </span>
                                     </td>
                                     <td><strong>{{ $s->label }}</strong></td>
-                                    <td><span class="badge bg-light-secondary text-dark">{{ $s->formatted_time }}</span></td>
+                                    <td><span class="badge bg-secondary-subtle text-dark">{{ $s->formatted_time }}</span></td>
                                     <td class="text-center">
                                         <div class="form-check form-switch d-flex justify-content-center mb-0">
                                             <input class="form-check-input schedule-toggle" type="checkbox" data-uid="{{ $s->uid }}" {{ $s->is_enabled ? 'checked' : '' }}>
@@ -191,7 +191,7 @@
                                         @elseif($resolvedStatus === 'running')
                                             <span class="badge bg-warning-subtle text-warning">Ejecutando</span>
                                         @elseif($resolvedStatus === 'stuck')
-                                            <span class="badge bg-info-subtle text-info">Colgado</span>
+                                            <span class="badge bg-danger-subtle text-danger">Colgado</span>
                                         @elseif($resolvedStatus === 'success' || $resolvedStatus === 'completed')
                                             <span class="badge bg-success-subtle text-success">Completado</span>
                                         @elseif($resolvedStatus === 'error' || $resolvedStatus === 'failed')
@@ -298,9 +298,9 @@
                                     $statusClass = match($batch->status) {
                                         'completed' => 'success',
                                         'running' => $isDead ? 'danger' : 'warning',
-                                        'failed'    => 'danger',
+                                        'failed'    => 'secondary',
                                         'cancelled' => 'secondary',
-                                        default     => 'info',
+                                        default     => 'secondary',
                                     };
                                     $statusLabel = match($batch->status) {
                                         'completed' => 'Completado',
@@ -310,10 +310,10 @@
                                         default     => 'Pendiente',
                                     };
                                     $originBadge = match($batch->triggered_by) {
-                                        'manual'   => '<span class="badge bg-light-primary text-primary">Manual</span>',
-                                        'schedule' => '<span class="badge bg-light-info text-info">Programado</span>',
-                                        'retry'    => '<span class="badge bg-light-warning text-warning">Reintento</span>',
-                                        default    => '<span class="badge bg-light-secondary text-secondary">'.e($batch->triggered_by ?? 'Sistema').'</span>',
+                                        'manual'   => '<span class="badge bg-primary-subtle text-primary">Manual</span>',
+                                        'schedule' => '<span class="badge bg-secondary-subtle text-secondary">Programado</span>',
+                                        'retry'    => '<span class="badge bg-warning-subtle text-warning">Reintento</span>',
+                                        default    => '<span class="badge bg-secondary-subtle text-secondary">'.e($batch->triggered_by ?? 'Sistema').'</span>',
                                     };
                                 @endphp
                                 <tr data-batch-id="{{ $batch->id }}" data-status="{{ $batch->status }}">
@@ -326,22 +326,19 @@
                                             <i class="fas fa-exclamation-triangle text-danger ms-1" title="Sin actividad desde {{ $batch->updated_at->format('d/m/Y H:i') }}"></i>
                                         @endif
                                     </td>
-                                    <td><span class="badge bg-light-secondary text-secondary">{{ $batch->sync_type_name ?? $batch->sync_type }}</span></td>
+                                    <td><span class="badge bg-secondary-subtle text-secondary">{{ $batch->sync_type_name ?? $batch->sync_type }}</span></td>
                                     <td>{!! $originBadge !!}</td>
                                     <td class="text-center">
-                                        <span class="badge bg-light-{{ $statusClass }} text-{{ $statusClass }}">{{ $statusLabel }}</span>
+                                        <span class="badge bg-{{ $statusClass }}-subtle text-{{ $statusClass }}">{{ $statusLabel }}</span>
                                     </td>
                                     <td class="text-center sync-progress-cell">
-                                        @if($batch->total_items > 0)
+                                        @if($batch->exceeds_estimated_total)
+                                            <span class="sync-processed">{{ $batch->processed_items + $batch->failed_items }}</span>
+                                            <small class="d-block text-muted" style="font-size:.7rem;">procesados (estimado {{ $batch->total_items }})</small>
+                                        @elseif($batch->total_items > 0)
                                             <span class="sync-processed">{{ $batch->processed_items }}</span> / <span class="sync-total">{{ $batch->total_items }}</span>
-                                            <div class="progress mt-1" style="height:6px;">
-                                                <div class="progress-bar bg-{{ $batch->status === 'failed' ? 'danger' : 'success' }} sync-progress-bar" style="width:{{ $batch->progress_percentage }}%"></div>
-                                            </div>
                                         @else
                                             <span class="sync-processed">{{ $batch->processed_items }}</span>
-                                            <div class="progress mt-1" style="height:6px;">
-                                                <div class="progress-bar bg-secondary sync-progress-bar" style="width:0%"></div>
-                                            </div>
                                         @endif
                                     </td>
                                     <td class="text-center sync-failed-cell">
@@ -1061,21 +1058,23 @@ if (runningRows.length > 0) {
                 if (!data.success) return;
                 const batch = data.batch;
                 const progressCell = row.querySelector('.sync-progress-cell');
-                if (progressCell && batch.total_items > 0) {
+                const exceedsTotal = batch.total_items > 0 && (batch.processed_items + batch.failed_items) > batch.total_items;
+                if (progressCell && exceedsTotal) {
                     progressCell.innerHTML = `
-                        <span class="sync-processed">${batch.processed_items}</span> / <span class="sync-total">${batch.total_items}</span>
-                        <div class="progress mt-1" style="height:6px;">
-                            <div class="progress-bar bg-${batch.status === 'failed' ? 'danger' : 'success'} sync-progress-bar" style="width:${batch.progress_percentage}%"></div>
-                        </div>`;
+                        <span class="sync-processed">${batch.processed_items + batch.failed_items}</span>
+                        <small class="d-block text-muted" style="font-size:.7rem;">procesados (estimado ${batch.total_items})</small>`;
+                } else if (progressCell && batch.total_items > 0) {
+                    progressCell.innerHTML = `
+                        <span class="sync-processed">${batch.processed_items}</span> / <span class="sync-total">${batch.total_items}</span>`;
                 }
                 const failedCell = row.querySelector('.sync-failed-count');
                 if (failedCell) failedCell.textContent = batch.failed_items;
                 const statusBadge = row.querySelector('td:nth-child(5) .badge');
                 if (statusBadge && batch.status !== 'running') {
                     const cfg = {
-                        completed: { cls: 'bg-light-success text-success', lbl: 'Completado' },
-                        failed:    { cls: 'bg-light-danger text-danger',   lbl: 'Fallido' },
-                        cancelled: { cls: 'bg-light-secondary text-secondary', lbl: 'Cancelado' },
+                        completed: { cls: 'bg-success-subtle text-success', lbl: 'Completado' },
+                        failed:    { cls: 'bg-secondary-subtle text-secondary', lbl: 'Fallido' },
+                        cancelled: { cls: 'bg-secondary-subtle text-secondary', lbl: 'Cancelado' },
                     };
                     const c = cfg[batch.status];
                     if (c) { statusBadge.className = `badge ${c.cls}`; statusBadge.textContent = c.lbl; }

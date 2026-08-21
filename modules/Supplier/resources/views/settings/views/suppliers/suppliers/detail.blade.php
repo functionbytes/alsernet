@@ -102,7 +102,6 @@
                             id="products-tab" data-bs-toggle="pill" data-bs-target="#products-pane"
                             type="button" role="tab" aria-selected="true">
                         <span class="d-none d-md-block">Productos</span>
-                        <span class="badge bg-primary ms-2">{{ $stats['total_products'] }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -110,7 +109,6 @@
                             id="categories-tab" data-bs-toggle="pill" data-bs-target="#categories-pane"
                             type="button" role="tab" aria-selected="false">
                         <span class="d-none d-md-block">Categorías</span>
-                        <span class="badge bg-secondary ms-2">{{ $stats['categories'] }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
@@ -118,7 +116,6 @@
                             id="prompts-tab" data-bs-toggle="pill" data-bs-target="#prompts-pane"
                             type="button" role="tab" aria-selected="false">
                         <span class="d-none d-md-block">Prompts</span>
-                        <span class="badge bg-info ms-2" id="prompts-count-badge">{{ $stats['prompts'] }}</span>
                     </button>
                 </li>
             </ul>
@@ -779,7 +776,6 @@ $(document).ready(function () {
             url: promptsUrl,
             success: function (res) {
                 promptsData = res.data;
-                $('#prompts-count-badge').text(res.data.length);
                 filterPrompts();
             },
             error: function () {

@@ -139,7 +139,7 @@
     }
     
     .success-details, .error-help {
-        background: #f8f9fa;
+        background: #f5f6f8;
         border-radius: 10px;
         padding: 25px;
         margin: 30px 0;

@@ -4,8 +4,8 @@ namespace Modules\Supplier\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Modules\Supplier\Models\SupplierProductPrice;
 use Modules\Supplier\Models\Supplier\Supplier;
+use Modules\Supplier\Models\SupplierProductPrice;
 use Modules\Supplier\Models\Sync\SyncFailure;
 use Modules\Supplier\Services\ErpSyncService;
 use Modules\Supplier\Services\Integrations\ErpModelSyncService;
@@ -69,7 +69,9 @@ class RetryTransientFailuresCommand extends Command
             };
 
             if ($result['success']) {
-                $failure->delete();
+                // No se borra: se conserva en el histórico como "resuelto" para
+                // no perder el rastro de qué ha fallado alguna vez.
+                $failure->markAsResolved(null, 'Reintento automático exitoso');
                 $stats['ok']++;
             } else {
                 $failure->update(['error_message' => $result['error'] ?? 'retry failed']);

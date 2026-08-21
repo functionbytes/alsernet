@@ -3,14 +3,17 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\Document\Entities\Document;
@@ -128,7 +131,6 @@ class DocumentConfigurationController extends Controller
                 ->back()
                 ->with('success', 'Disco de almacenamiento actualizado correctamente');
         } catch (\Exception $e) {
-           
 
             return back()
                 ->withInput()
@@ -230,7 +232,7 @@ class DocumentConfigurationController extends Controller
 
             return redirect()->back()->with('success', 'Programación de sincronización guardada correctamente.');
         } catch (\Exception $e) {
-            return back()->withInput()->with('error', 'Error al guardar la configuración: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Error al guardar la configuración: '.$e->getMessage());
         }
     }
 
@@ -250,7 +252,7 @@ class DocumentConfigurationController extends Controller
             $nextRun = $this->calculateNextRun($frequency, $hour, Setting::get('documents.blockade_sync_cron', ''));
         }
 
-        $lastSyncCarbon = $lastSync ? \Carbon\Carbon::parse($lastSync) : null;
+        $lastSyncCarbon = $lastSync ? Carbon::parse($lastSync) : null;
 
         return [
             'blockade_sync_enabled' => $enabled,
@@ -258,11 +260,11 @@ class DocumentConfigurationController extends Controller
             'blockade_sync_hour' => $hour,
             'blockade_sync_cron' => Setting::get('documents.blockade_sync_cron', ''),
             'blockade_sync_fresh' => Setting::get('documents.blockade_sync_fresh', 'no') === 'yes',
-            'last_sync'         => $lastSyncCarbon ? $lastSyncCarbon->diffForHumans() : 'Nunca',
-            'last_sync_full'    => $lastSyncCarbon ? $lastSyncCarbon->format('d/m/Y H:i') : 'Nunca',
-            'sync_count'        => $syncCount ?? '0',
-            'unique_products'   => (string) DocumentProductBlockade::distinct('product_id')->count('product_id'),
-            'next_run'          => $nextRun,
+            'last_sync' => $lastSyncCarbon ? $lastSyncCarbon->diffForHumans() : 'Nunca',
+            'last_sync_full' => $lastSyncCarbon ? $lastSyncCarbon->format('d/m/Y H:i') : 'Nunca',
+            'sync_count' => $syncCount ?? '0',
+            'unique_products' => (string) DocumentProductBlockade::distinct('product_id')->count('product_id'),
+            'next_run' => $nextRun,
         ];
     }
 
@@ -272,12 +274,13 @@ class DocumentConfigurationController extends Controller
     private function calculateNextRun(string $frequency, string $hour, string $cron): string
     {
         try {
-            $now = \Carbon\Carbon::now();
-            [$h, $m] = array_map('intval', explode(':', $hour . ':00'));
+            $now = Carbon::now();
+            [$h, $m] = array_map('intval', explode(':', $hour.':00'));
             $h2 = ($h + 12) % 24;
 
             $nextAt = function (int $targetH, int $targetM) use ($now) {
                 $candidate = $now->copy()->setTime($targetH, $targetM);
+
                 return $candidate->gt($now) ? $candidate : $candidate->addDay();
             };
 
@@ -286,10 +289,10 @@ class DocumentConfigurationController extends Controller
                 'every_2_hours' => $now->copy()->addHours(2)->setMinute($m)->setSecond(0)->format('d/m/Y H:i'),
                 'every_6_hours' => $now->copy()->addHours(6)->setMinute($m)->setSecond(0)->format('d/m/Y H:i'),
                 'every_12_hours' => collect([$nextAt($h, $m), $nextAt($h2, $m)])->sortBy(fn ($d) => $d->timestamp)->first()->format('d/m/Y H:i'),
-                'daily'  => $nextAt($h, $m)->format('d/m/Y H:i'),
-                'weekly' => $now->copy()->next(\Carbon\Carbon::SUNDAY)->setTime($h, $m)->format('d/m/Y H:i'),
-                'custom' => $cron ? 'Según expresión: ' . $cron : 'Expresión no configurada',
-                default  => 'No programado',
+                'daily' => $nextAt($h, $m)->format('d/m/Y H:i'),
+                'weekly' => $now->copy()->next(Carbon::SUNDAY)->setTime($h, $m)->format('d/m/Y H:i'),
+                'custom' => $cron ? 'Según expresión: '.$cron : 'Expresión no configurada',
+                default => 'No programado',
             };
         } catch (\Exception $e) {
             return 'No disponible';
@@ -354,7 +357,7 @@ class DocumentConfigurationController extends Controller
                 ->back()
                 ->with('success', 'Configuración global actualizada correctamente');
         } catch (\Exception $e) {
-           
+
             return back()
                 ->withInput()
                 ->with('error', 'Error al actualizar la configuración: '.$e->getMessage());
@@ -452,7 +455,7 @@ class DocumentConfigurationController extends Controller
                 'pagination' => ['more' => false],
             ]);
         } catch (\Exception $e) {
-           
+
             return response()->json([
                 'results' => [],
                 'error' => 'Error al buscar templates: '.$e->getMessage(),
@@ -576,7 +579,7 @@ class DocumentConfigurationController extends Controller
                 'metadata' => $result['metadata'] ?? null,
             ]);
         } catch (\Exception $e) {
-          
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al probar conexión: '.$e->getMessage(),
@@ -1677,10 +1680,14 @@ class DocumentConfigurationController extends Controller
     {
         $validated = $request->validate([
             'erp_documentacion_ok_url' => 'nullable|url|max:500',
+            'erp_modelo_url' => 'nullable|url|max:500',
+            'erp_caracteristica_url' => 'nullable|url|max:500',
         ]);
 
         try {
             Setting::set('documents.erp_documentacion_ok_url', $validated['erp_documentacion_ok_url'] ?? '');
+            Setting::set('supplier.erp_modelo_url', $validated['erp_modelo_url'] ?? '');
+            Setting::set('supplier.erp_caracteristica_url', $validated['erp_caracteristica_url'] ?? '');
 
             return redirect()
                 ->back()
@@ -1695,34 +1702,45 @@ class DocumentConfigurationController extends Controller
     /**
      * Probar conectividad con un endpoint externo.
      *
-     * Envía el mismo payload que la llamada real al ERP
-     * (`{ "identificadororigen": "<order_id>" }`) usando un ID de pedido de prueba.
+     * Envía el payload indicado por el frontend (varía según el endpoint: "identificadororigen"
+     * para Documentación OK, "idmodelo"+"nombre"+"descripcion"+"publicar" para Modelo,
+     * "id_caracteristica"+"idmodelo" o "id_valor"+"idarticulo" para Asignar característica).
      */
     public function testEndpoint(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'url'      => 'required|url|max:500',
+            'url' => 'required|url|max:500',
             'order_id' => 'nullable|string|max:50',
+            'payload' => 'sometimes|array',
+            'payload.*' => 'nullable|string|max:500',
         ]);
 
-        $url     = $validated['url'];
-        $orderId = (string) ($validated['order_id'] ?? '0');
-        $payload = ['identificadororigen' => $orderId];
+        $url = $validated['url'];
+
+        // 'payload' explícito (Modelo / Asignar característica) tiene prioridad; si no viene,
+        // se mantiene el comportamiento legado de "Documentación OK" con order_id.
+        $payload = $validated['payload'] ?? ['identificadororigen' => (string) ($validated['order_id'] ?? '0')];
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post($url, $payload);
+            // Algunos de estos endpoints (ERP api-gestion) usan name-based virtual
+            // hosting: sin el Host exacto (sin puerto) del vhost real, el servidor
+            // responde con un vhost por defecto (200/404 engañosos según la ruta).
+            $response = Http::timeout(5)
+                ->withHeaders(['Host' => parse_url($url, PHP_URL_HOST)])
+                ->asForm()
+                ->post($url, $payload);
 
             return response()->json([
                 'success' => $response->successful(),
-                'status'  => $response->status(),
-                'sent'    => $payload,
-                'body'    => \Illuminate\Support\Str::limit($response->body(), 300),
+                'status' => $response->status(),
+                'sent' => $payload,
+                'body' => Str::limit($response->body(), 300),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-                'sent'    => $payload,
+                'sent' => $payload,
             ]);
         }
     }
@@ -1735,7 +1753,18 @@ class DocumentConfigurationController extends Controller
         return [
             'erp_documentacion_ok_url' => Setting::get(
                 'documents.erp_documentacion_ok_url',
-                'http://interges:8080/api-gestion/pedido-cliente-documentacion-ok/'
+                'http://223.1.1.8:8080/api-gestion/pedido-cliente-documentacion-ok/'
+            ),
+            // Mismos endpoints ERP de escritura que usa el módulo Supplier (aprobar
+            // contenido → nombre/descripción; añadir característica → asignación),
+            // expuestos aquí también para tener un único punto de configuración/prueba.
+            'erp_modelo_url' => Setting::get(
+                'supplier.erp_modelo_url',
+                'http://interges:8080/api-gestion/modelo/'
+            ),
+            'erp_caracteristica_url' => Setting::get(
+                'supplier.erp_caracteristica_url',
+                'http://interges:8080/api-gestion/asignar-caracteristica/'
             ),
         ];
     }

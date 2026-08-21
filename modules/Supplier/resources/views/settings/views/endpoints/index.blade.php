@@ -161,6 +161,32 @@
                     </div>
                 </div>
 
+                {{-- ── ERP: Asignar característica ───────────────────────── --}}
+                <div class="mb-2">
+                    <h6 class="mb-1 fw-bold text-dark">Asignar característica</h6>
+                    <p class="text-muted small mb-3">
+                        Se llama para asignar una característica a un modelo o a un artículo (variante) en el ERP.
+                        Envía <code>id_caracteristica</code>, <code>idmodelo</code> (o <code>id_valor</code> / <code>idarticulo</code> según el nivel)
+                        como form data (<code>application/x-www-form-urlencoded</code>) via <span class="badge bg-secondary">POST</span>.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold" for="erp_caracteristica_url">URL Asignar Característica (ERP)</label>
+                        <input type="url"
+                               class="form-control @error('erp_caracteristica_url') is-invalid @enderror"
+                               id="erp_caracteristica_url"
+                               name="erp_caracteristica_url"
+                               placeholder="http://servidor:8080/api/ruta/"
+                               value="{{ old('erp_caracteristica_url', $endpoints['erp_caracteristica_url']) }}">
+                        @error('erp_caracteristica_url')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted d-block mt-1">
+                            Ejemplo: <code>http://interges:8080/api-gestion/asignar-caracteristica/</code>
+                        </small>
+                    </div>
+                </div>
+
             </div>
 
             <div class="card-footer">

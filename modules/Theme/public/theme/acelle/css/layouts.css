@@ -745,7 +745,7 @@ html[data-sidebar-collapsed="true"] .mc-sidebar-logo-content {
    ========================================================================== */
 
 .mc-content { flex: 1; padding: var(--space-6); }
-.mc-content-inner { margin: 0 auto; }
+.mc-content-inner { max-width: 1200px; margin: 0 auto; }
 
 /* White background variant — opt-in per page for cleaner listing views */
 .mc-content.mc-page-white-bg { background: var(--color-card-bg); }

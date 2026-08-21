@@ -109,7 +109,7 @@
 }
 
 #missing-vat-modal .current-address-info {
-  background-color: #f8f9fa;
+  background-color: #f5f6f8;
   border: 1px solid #dee2e6;
   border-radius: 0.375rem;
   padding: 15px;
@@ -6350,7 +6350,7 @@ bo.block-modal .blocked-product-item .product-price .product-has-discount .produ
 .block-modal .block-modal .modal-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid #e9ecef;
-  background-color: #f8f9fa;
+  background-color: #f5f6f8;
 }
 
 .block-modal .change-delivery-address {

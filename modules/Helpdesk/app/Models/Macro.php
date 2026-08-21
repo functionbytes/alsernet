@@ -19,6 +19,7 @@ class Macro extends Model
     protected $fillable = [
         'name',
         'description',
+        'language',
         'actions',
         'is_shared',
         'user_id',

@@ -372,7 +372,7 @@ div#notification-badge.badge-pulse {
     border-bottom: 1px solid #f3f4f6;
 }
 .nxl-sr-item:last-child { border-bottom: none; }
-.nxl-sr-item:hover { background: #f8f9fa; color: #111827; text-decoration: none; }
+.nxl-sr-item:hover { background: #f5f6f8; color: #111827; text-decoration: none; }
 .nxl-sr-icon { width: 30px; height: 30px; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
 .nxl-sr-body { flex: 1; min-width: 0; }
 .nxl-sr-title { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

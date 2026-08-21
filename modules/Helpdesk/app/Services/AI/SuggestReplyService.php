@@ -6,6 +6,17 @@ use Modules\Helpdesk\Models\Conversation;
 
 class SuggestReplyService
 {
+    // Mismos 6 idiomas que helpdesk_customers.language / el panel "Traducir"
+    // de HelpdeskTranslate — instrucción en lenguaje natural para el prompt.
+    private const LANGUAGE_NAMES = [
+        'es' => 'español',
+        'en' => 'inglés',
+        'fr' => 'francés',
+        'de' => 'alemán',
+        'pt' => 'portugués',
+        'it' => 'italiano',
+    ];
+
     public function __construct(
         private readonly AiClient $client,
         private readonly PromptSanitizer $sanitizer,
@@ -30,6 +41,15 @@ cortas, claras y directas al cliente. Usa un tono profesional pero cercano.
 Responde SOLO con un array JSON de strings. Sin explicaciones ni texto adicional.
 Ejemplo: ["Respuesta 1", "Respuesta 2", "Respuesta 3"]
 PROMPT;
+
+        // Las sugerencias son borradores para ENVIAR al cliente (a diferencia
+        // del resumen interno del caso, que es solo para el agente) — antes
+        // salían siempre en español aunque el cliente escribiera en otro
+        // idioma. buildContext() ya carga la relación customer más abajo.
+        $customerLang = strtolower((string) ($conversation->customer?->language ?? ''));
+        if (isset(self::LANGUAGE_NAMES[$customerLang]) && $customerLang !== 'es') {
+            $systemPrompt .= "\nEl cliente escribe en ".self::LANGUAGE_NAMES[$customerLang].'. Redacta las respuestas en ese mismo idioma.';
+        }
 
         $systemPrompt .= "\n".$this->sanitizer->systemGuard();
 

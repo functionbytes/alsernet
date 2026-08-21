@@ -22,7 +22,6 @@
 
                     {{-- Warning --}}
                     <div class="alert alert-success d-flex gap-2 align-items-start mb-4 py-3">
-                        <i class="fas fa-triangle-exclamation mt-1 flex-shrink-0"></i>
                         <div>
                             <strong>Acción irreversible.</strong>
                             Los registros eliminados no se pueden recuperar.
@@ -84,7 +83,7 @@
         <div class="col-lg-4">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="mb-3"><i class="fas fa-circle-info me-2 text-muted"></i>¿Qué se elimina?</h6>
+                    <h6 class="mb-3">¿Qué se elimina?</h6>
                     <ul class="small text-muted mb-0 ps-3">
                         <li class="mb-2"><strong>Contenido IA</strong> — textos generados, logs, costos y versiones de contenido</li>
                         <li class="mb-2"><strong>Productos</strong> — modelos sincronizados, atributos, chats y precios</li>
@@ -96,7 +95,7 @@
 
             <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="mb-3"><i class="fas fa-lightbulb me-2 text-muted"></i>Cuándo usarlo</h6>
+                    <h6 class="mb-3">Cuándo usarlo</h6>
                     <p class="small text-muted mb-2">
                         Después de ejecutar pruebas de sincronización con datos reales del ERP,
                         usa este panel para limpiar y empezar desde cero.
@@ -110,7 +109,7 @@
 
             <div class="card">
                 <div class="card-body">
-                    <h6 class="mb-3"><i class="fas fa-arrows-rotate me-2 text-muted"></i>Orden recomendado</h6>
+                    <h6 class="mb-3">Orden recomendado</h6>
                     <ol class="small text-muted mb-0 ps-3">
                         <li class="mb-1">Limpia <strong>Contenido IA</strong> y <strong>Productos</strong></li>
                         <li class="mb-1">Ejecuta la sincronización de categorías</li>
@@ -123,10 +122,10 @@
             <div class="card">
                 <div class="card-body d-flex flex-column gap-2">
                     <a href="{{ route('settings.suppliers.sync.test.index') }}" class="btn btn-secondary w-100">
-                        <i class="fas fa-flask me-2"></i>Panel de pruebas
+                        Panel de pruebas
                     </a>
                     <a href="{{ route('settings.suppliers.sync.index') }}" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-arrow-left me-2"></i>Volver a sincronización
+                        Volver a sincronización
                     </a>
                 </div>
             </div>

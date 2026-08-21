@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Supplier\Http\Requests\Product\BulkActionProductRequest;
 use Modules\Supplier\Http\Requests\Product\BulkGenerateContentRequest;
 use Modules\Supplier\Http\Requests\Product\UpdateProductRequest;
 use Modules\Supplier\Jobs\GenerateBulkProductContentJob;
+use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Category\Category;
+use Modules\Supplier\Models\Characteristic\ModelCharacteristic;
+use Modules\Supplier\Models\Characteristic\VariantCharacteristic;
 use Modules\Supplier\Models\Product\Product;
 use Modules\Supplier\Models\Supplier\Supplier;
 
@@ -73,14 +77,14 @@ class SupplierProductsController extends Controller
             ->withExists(['approvedContent as has_approved_content'])
             ->findOrFail($id);
 
-        $latestContent = \Modules\Supplier\Models\Ai\AiContent::where('supplier_product_id', $id)
+        $latestContent = AiContent::where('supplier_product_id', $id)
             ->with(['contentStatus', 'prompt'])
             ->latest('id')
             ->first();
 
-        $canValidate   = $latestContent && in_array($latestContent->status, ['pending_validation', 'in_review', 'needs_revision']);
-        $canReject     = $canValidate;
-        $canPublish    = $latestContent && $latestContent->status === 'validated';
+        $canValidate = $latestContent && in_array($latestContent->status, ['pending_validation', 'in_review', 'needs_revision']);
+        $canReject = $canValidate;
+        $canPublish = $latestContent && $latestContent->status === 'validated';
 
         $pageTitle = 'Detalle de producto';
         $breadcrumb = 'Configuración / Proveedores / Productos / Detalle';
@@ -89,6 +93,35 @@ class SupplierProductsController extends Controller
             'product', 'pageTitle', 'breadcrumb',
             'latestContent', 'canValidate', 'canReject', 'canPublish'
         ));
+    }
+
+    /**
+     * Características ERP (modelo + variante) de un producto, en solo lectura.
+     *
+     * Mismo shape de datos que characteristicsPanel() de SupplierContentController,
+     * pero parametrizado por product_id directamente (no requiere que exista un
+     * AiContent asociado) y sin el catálogo de características disponibles, ya
+     * que esta vista no permite añadir/editar/eliminar — solo consultar.
+     */
+    public function characteristics(int $id): JsonResponse
+    {
+        $product = Product::with('attributes')->findOrFail($id);
+        $attributeIds = $product->attributes->pluck('id');
+
+        return response()->json([
+            'success' => true,
+            'model_assignments' => ModelCharacteristic::where('product_id', $id)
+                ->with('characteristic:id,nombre')
+                ->get(),
+            'variant_assignments' => VariantCharacteristic::where(function ($q) use ($attributeIds, $id) {
+                $q->whereIn('product_attribute_id', $attributeIds)
+                    ->orWhere(function ($q2) use ($id) {
+                        $q2->whereNull('product_attribute_id')->where('product_id', $id);
+                    });
+            })
+                ->with(['characteristic:id,nombre', 'value:id,nombre'])
+                ->get(),
+        ]);
     }
 
     public function edit(int $id): View
@@ -128,7 +161,7 @@ class SupplierProductsController extends Controller
         $products = Product::whereIn('id', $ids)->get();
 
         if ($action === 'delete') {
-            \Illuminate\Support\Facades\DB::transaction(function () use ($products, &$count) {
+            DB::transaction(function () use ($products, &$count) {
                 foreach ($products as $product) {
                     $product->delete();
                     $count++;

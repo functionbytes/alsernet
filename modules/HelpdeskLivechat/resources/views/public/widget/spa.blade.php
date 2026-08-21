@@ -12,7 +12,7 @@
 
     <style>
         html, body { margin: 0; padding: 0; height: 100%; }
-        body { background: #f8f9fa; }
+        body { background: #f5f6f8; }
         #widget-root { width: 100%; height: 100vh; }
         .widget-not-built {
             max-width: 480px;

@@ -26,7 +26,7 @@
                 <div class="card-body">
 
                     {{-- Config activa --}}
-                    <div class="border rounded p-3 mb-4" style="background:#f8f9fa;">
+                    <div class="border rounded p-3 mb-4" style="background:#f5f6f8;">
                         <p class="small mb-2 fw-semibold text-dark">Configuración activa</p>
                         <div class="row g-2 small text-muted">
                             <div class="col-6 col-md-3">
@@ -69,7 +69,7 @@
                                  role="progressbar" style="width:0%; transition:width .3s ease;"></div>
                         </div>
 
-                        <div class="border rounded mt-3 p-3" style="background:#f8f9fa;">
+                        <div class="border rounded mt-3 p-3" style="background:#f5f6f8;">
                             <div class="row g-0 text-center small">
                                 <div class="col-4 border-end">
                                     <span class="d-block fw-bold fs-5 text-dark" id="cnt-total">—</span>
@@ -239,7 +239,7 @@ $(function () {
                         $('#progress-percent').text('100%');
                         $('#progress-label').text('Completado');
 
-                        let html = '<div class="border rounded p-3 mt-3" style="background:#f8f9fa;">';
+                        let html = '<div class="border rounded p-3 mt-3" style="background:#f5f6f8;">';
                         html += '<p class="small fw-semibold text-dark mb-3">Resultado</p>';
                         html += '<div class="row g-2 text-center small mb-3">';
                         html += '<div class="col-4"><div class="border rounded p-2"><span class="d-block fw-bold fs-5 text-dark">' + data.imported + '</span>Importados</div></div>';

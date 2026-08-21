@@ -25,6 +25,9 @@ class UpdateSourceRequest extends FormRequest
             'is_active' => ['boolean'],
             'extraction_mode' => ['nullable', 'string', 'in:manual,ai'],
             'configuration' => ['nullable', 'array'],
+            'content_urls' => ['nullable', 'array'],
+            'content_urls.*.url' => ['nullable', 'url', 'max:2048'],
+            'content_urls.*.note' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -53,13 +56,20 @@ class UpdateSourceRequest extends FormRequest
             'is_active' => 'estado activo',
             'extraction_mode' => 'modo de extraccion',
             'configuration' => 'configuracion',
+            'content_urls' => 'URLs de referencia de contenido',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'is_active' => $this->boolean('is_active'),
-        ]);
+        // Solo normaliza is_active cuando el formulario lo envía. El formulario de
+        // edición ya no expone este campo (se conserva el valor actual de la
+        // fuente) — si aquí se forzara un default a false, cada guardado
+        // desactivaría la fuente silenciosamente.
+        if ($this->has('is_active')) {
+            $this->merge([
+                'is_active' => $this->boolean('is_active'),
+            ]);
+        }
     }
 }

@@ -7,18 +7,23 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Setting;
 use Modules\Supplier\Models\Ai\AiContent;
 use Modules\Supplier\Models\Category\Category;
 use Modules\Supplier\Models\Category\Sport;
 use Modules\Supplier\Models\Category\Subfamily;
+use Modules\Supplier\Models\Characteristic\ErpCharacteristic;
+use Modules\Supplier\Models\Characteristic\ErpCharacteristicValue;
+use Modules\Supplier\Models\Characteristic\ModelCharacteristic;
+use Modules\Supplier\Models\Characteristic\VariantCharacteristic;
 use Modules\Supplier\Models\Product\Product;
 use Modules\Supplier\Models\Product\ProductAttribute;
 use Modules\Supplier\Models\Supplier\Supplier;
+use Modules\Supplier\Models\Sync\ExcludedContentSupplier;
 use Modules\Supplier\Models\Sync\ExcludedErpGroup;
 use Modules\Supplier\Models\Sync\SyncBatch;
 use Modules\Supplier\Models\Sync\SyncFailure;
 use Modules\Supplier\Models\Sync\SyncLog;
-use Modules\Core\Models\Setting;
 use Modules\Supplier\Services\ContentGenerationService;
 use Modules\Supplier\Services\PromptSelectionService;
 
@@ -140,7 +145,7 @@ class ErpModelSyncService
             ]);
 
             $filterParams = [
-                'date_from'  => $dateFrom ?? config('supplier.erp_sync.filter_date_from'),
+                'date_from' => $dateFrom ?? config('supplier.erp_sync.filter_date_from'),
                 'date_field' => $dateField,
             ];
             if ($descriptionEmpty) {
@@ -206,6 +211,11 @@ class ErpModelSyncService
         bool $registerOnly = false,
     ): bool {
         $erpModelId = $modelData['id'] ?? null;
+        // Medido aquí (y no en el job que dispara todo el batch) para que
+        // "Duración" en cada fila del log refleje el tiempo de ESE ítem, no
+        // el del batch completo — antes quedaba siempre null/"—".
+        $startedAt = microtime(true);
+        $elapsedMs = fn () => (int) round((microtime(true) - $startedAt) * 1000);
 
         try {
             // Fix 3: comprobar grupos excluidos aquí (antes de syncModelFromFilter) para
@@ -215,10 +225,11 @@ class ErpModelSyncService
                 if ($batch) {
                     $logBuffer[] = $this->buildLogRow($batch, [
                         'entity_type' => 'model',
-                        'erp_id'      => $erpModelId,
-                        'action'      => 'skip',
-                        'result'      => 'skipped',
-                        'message'     => 'Grupo ERP excluido — omitido (sin crear producto ni contenido)',
+                        'erp_id' => $erpModelId,
+                        'action' => 'skip',
+                        'result' => 'skipped',
+                        'message' => 'Grupo ERP excluido — omitido (sin crear producto ni contenido)',
+                        'duration_ms' => $elapsedMs(),
                     ]);
 
                     // Fix 4: auto-resolver fallos pendientes del mismo erp_id
@@ -226,9 +237,9 @@ class ErpModelSyncService
                         SyncFailure::where('erp_id', $erpModelId)
                             ->whereIn('failure_status', ['pending', 'acknowledged'])
                             ->update([
-                                'failure_status'   => 'resolved',
+                                'failure_status' => 'resolved',
                                 'resolution_notes' => 'Auto-resuelto: modelo pertenece a grupo ERP excluido',
-                                'resolved_at'      => now(),
+                                'resolved_at' => now(),
                             ]);
                     }
                 }
@@ -249,6 +260,7 @@ class ErpModelSyncService
                         'action' => 'skip',
                         'result' => 'skipped',
                         'message' => $skipReason,
+                        'duration_ms' => $elapsedMs(),
                     ]);
                 }
                 $batch?->incrementProcessedItems();
@@ -278,6 +290,7 @@ class ErpModelSyncService
                         'erp_id' => $erpModelId,
                         'action' => $existsBefore ? 'update' : 'create',
                         'result' => 'success',
+                        'duration_ms' => $elapsedMs(),
                     ]);
 
                     if ($erpModelId) {
@@ -325,6 +338,7 @@ class ErpModelSyncService
                             'result' => 'failed',
                             'message' => "Circuit breaker: {$consecutiveErrors} errores transitorios consecutivos (umbral {$circuitBreakerThreshold}) — sincronización cortada, items restantes del ERP sin evaluar",
                             'error_message' => $e->getMessage(),
+                            'duration_ms' => $elapsedMs(),
                         ]);
                     }
                 }
@@ -337,6 +351,7 @@ class ErpModelSyncService
                     'action' => 'create',
                     'result' => 'failed',
                     'error_message' => $e->getMessage(),
+                    'duration_ms' => $elapsedMs(),
                 ]);
 
                 $this->recordSyncFailure($batch, $erpModelId, $e->getMessage(), $modelData);
@@ -498,11 +513,15 @@ class ErpModelSyncService
 
         // Nivel grupo/subfamilia desde cada artículo
         foreach ($data['product_attributes'] ?? [] as $attr) {
-            $grupoId    = $attr['grupo']       ?? null;
-            $subfamId   = $attr['subfamily_id'] ?? null;
+            $grupoId = $attr['grupo'] ?? null;
+            $subfamId = $attr['subfamily_id'] ?? null;
 
-            if ($grupoId  && isset($excluded[$grupoId]))  return true;
-            if ($subfamId && isset($excluded[$subfamId])) return true;
+            if ($grupoId && isset($excluded[$grupoId])) {
+                return true;
+            }
+            if ($subfamId && isset($excluded[$subfamId])) {
+                return true;
+            }
         }
 
         return false;
@@ -531,11 +550,12 @@ class ErpModelSyncService
                 'erp_model_id' => $erpModelId,
                 'categorie_id' => $data['categorie']['id'] ?? null,
             ]);
+
             return [null, 0];
         }
 
-        $supplier  = $this->resolveSupplierFromFilter($data);
-        $category  = $this->resolveCategoryFromFilter($data);
+        $supplier = $this->resolveSupplierFromFilter($data);
+        $category = $this->resolveCategoryFromFilter($data);
         $subfamily = $this->resolveSubfamilyFromFilter($data);
 
         // Resolver sport directamente del dato ERP (más fiable que via $category->sport_id,
@@ -567,6 +587,11 @@ class ErpModelSyncService
         $product = $this->upsertProduct($erpModelId, $supplier, $category, $sport, $data, $subfamily);
 
         $attributeCount = $this->syncAttributesInline($product, $attributes);
+
+        // Trae las características ya asignadas en el ERP (modelo y por variante) — el
+        // filter/detailed endpoint ya las embebe (ver ProductsController::mapModelCharacteristics
+        // / mapVariantCharacteristics), sin llamadas HTTP extra.
+        $this->syncCharacteristicsInline($product, $data);
 
         // skip_ai=true → registra AiContent como pending_generation sin llamar a la IA
         $this->handleAiContent($product, $supplier, $category, $data, $registerOnly || $skipAi);
@@ -612,7 +637,7 @@ class ErpModelSyncService
      */
     protected function resolveSubfamilyFromFilter(array $data): ?Subfamily
     {
-        $firstAttr   = ($data['product_attributes'] ?? [])[0] ?? [];
+        $firstAttr = ($data['product_attributes'] ?? [])[0] ?? [];
         $erpSubfamId = $firstAttr['subfamily_id'] ?? null;
 
         if (! $erpSubfamId) {
@@ -625,8 +650,8 @@ class ErpModelSyncService
         }
 
         return Subfamily::create([
-            'erp_id'    => $erpSubfamId,
-            'name'      => "Subfamilia {$erpSubfamId}",
+            'erp_id' => $erpSubfamId,
+            'name' => "Subfamilia {$erpSubfamId}",
             'available' => true,
         ]);
     }
@@ -666,7 +691,7 @@ class ErpModelSyncService
             // Actualizar sport_id si no estaba asignado
             if ($sport && ! $category->sport_id) {
                 $category->update([
-                    'sport_id'     => $sport->id,
+                    'sport_id' => $sport->id,
                     'erp_sport_id' => $sport->erp_id,
                 ]);
             }
@@ -675,11 +700,11 @@ class ErpModelSyncService
         }
 
         return Category::create([
-            'erp_id'       => $erpCategoryId,
-            'name'         => $this->stripPrefix($categorieData['description'] ?? null),
-            'short_name'   => $this->stripPrefix($categorieData['description_short'] ?? null),
-            'available'    => $categorieData['available'] ?? true,
-            'sport_id'     => $sport?->id,
+            'erp_id' => $erpCategoryId,
+            'name' => $this->stripPrefix($categorieData['description'] ?? null),
+            'short_name' => $this->stripPrefix($categorieData['description_short'] ?? null),
+            'available' => $categorieData['available'] ?? true,
+            'sport_id' => $sport?->id,
             'erp_sport_id' => $sportData['id'] ?? null,
             'last_sync_at' => now(),
         ]);
@@ -708,6 +733,99 @@ class ErpModelSyncService
                 ->whereNotIn('erp_id', $incomingErpIds)
                 ->whereNull('deleted_at')
                 ->update(['deleted_at' => now()]);
+        }
+
+        return $count;
+    }
+
+    /**
+     * Importa las características ya asignadas en el ERP para este modelo (a nivel modelo,
+     * w_caracteristicas_orden) y para cada una de sus variantes (a nivel artículo,
+     * w_perfiles_prod). El filter/detailed endpoint ya embebe estos datos (nombre incluido)
+     * en 'characteristics' — no hace falta llamar a /api/erp/characteristics por separado.
+     *
+     * Se marcan como sync_status=synced (ya existen en el ERP, no hay que reenviarlas vía
+     * ErpCharacteristicAssignmentService). El catálogo local (ErpCharacteristic/Value) se
+     * upsertea sobre la marcha con los nombres embebidos, así esto funciona aunque el
+     * catálogo no se haya sincronizado nunca manualmente desde Settings → Características.
+     */
+    protected function syncCharacteristicsInline(Product $product, array $data): int
+    {
+        $count = 0;
+
+        foreach ($data['characteristics'] ?? [] as $row) {
+            $erpCharacteristicId = $row['characteristic_id'] ?? null;
+            if (! $erpCharacteristicId || empty($row['characteristic_name'])) {
+                continue;
+            }
+
+            $characteristic = ErpCharacteristic::updateOrCreate(
+                ['erp_id' => $erpCharacteristicId],
+                ['nombre' => $row['characteristic_name'], 'last_sync_at' => now()]
+            );
+
+            ModelCharacteristic::updateOrCreate(
+                ['product_id' => $product->id, 'characteristic_id' => $characteristic->id],
+                [
+                    'erp_id' => $row['id'] ?? null,
+                    'erp_model_id' => $product->erp_id,
+                    'orden' => $row['orden'] ?? null,
+                    'estado' => (bool) ($row['available'] ?? true),
+                    'sync_status' => 'synced',
+                    'last_sync_at' => now(),
+                ]
+            );
+            $count++;
+        }
+
+        if (! empty($data['product_attributes'])) {
+            $attributesByErpId = ProductAttribute::where('product_id', $product->id)->pluck('id', 'erp_id');
+
+            foreach ($data['product_attributes'] as $articuloData) {
+                $erpArticuloId = $articuloData['id'] ?? null;
+                $productAttributeId = $erpArticuloId ? ($attributesByErpId[$erpArticuloId] ?? null) : null;
+
+                foreach ($articuloData['characteristics'] ?? [] as $row) {
+                    $erpCharacteristicId = $row['characteristic_id'] ?? null;
+                    $erpValueId = $row['value_id'] ?? null;
+
+                    if (! $erpCharacteristicId || ! $erpValueId || empty($row['characteristic_name']) || empty($row['value_name'])) {
+                        continue;
+                    }
+
+                    $characteristic = ErpCharacteristic::updateOrCreate(
+                        ['erp_id' => $erpCharacteristicId],
+                        ['nombre' => $row['characteristic_name'], 'last_sync_at' => now()]
+                    );
+
+                    $value = ErpCharacteristicValue::updateOrCreate(
+                        ['erp_id' => $erpValueId],
+                        ['characteristic_id' => $characteristic->id, 'nombre' => $row['value_name'], 'last_sync_at' => now()]
+                    );
+
+                    // Sin variante propia (producto sin artículos diferenciados) el propio
+                    // producto actúa como su "artículo" — product_id desambigua entre
+                    // productos distintos que compartan product_attribute_id=null.
+                    VariantCharacteristic::updateOrCreate(
+                        [
+                            'product_attribute_id' => $productAttributeId,
+                            'product_id' => $productAttributeId ? null : $product->id,
+                            'characteristic_id' => $characteristic->id,
+                        ],
+                        [
+                            'erp_id' => $row['id'] ?? null,
+                            'erp_article_id' => $erpArticuloId,
+                            'erp_model_id' => $product->erp_id,
+                            'value_id' => $value->id,
+                            'orden' => $row['orden'] ?? null,
+                            'estado' => (bool) ($row['available'] ?? true),
+                            'sync_status' => 'synced',
+                            'last_sync_at' => now(),
+                        ]
+                    );
+                    $count++;
+                }
+            }
         }
 
         return $count;
@@ -747,32 +865,46 @@ class ErpModelSyncService
         }
 
         // Obtener erp_subfamily_id y erp_sport_id del primer atributo
-        $firstAttr      = ($data['product_attributes'] ?? [])[0] ?? [];
+        $firstAttr = ($data['product_attributes'] ?? [])[0] ?? [];
         $erpSubfamilyId = $firstAttr['subfamily_id'] ?? null;
-        $erpSportId     = $firstAttr['sport_id'] ?? ($data['categorie']['sport']['id'] ?? null);
+        $erpSportId = $firstAttr['sport_id'] ?? ($data['categorie']['sport']['id'] ?? null);
 
         $product->fill([
-            'erp_id'          => $erpModelId,
-            'supplier_id'     => $supplier?->id,
-            'category_id'     => $category?->id,
+            'erp_id' => $erpModelId,
+            'supplier_id' => $supplier?->id,
+            'category_id' => $category?->id,
             'erp_category_id' => $data['idgrupo_cl'] ?? $data['grupo'] ?? null,
-            'subfamily_id'    => $subfamily?->id,
-            'erp_subfamily_id'=> $erpSubfamilyId,
-            'sport_id'        => $sport?->id,
-            'erp_sport_id'    => $erpSportId,
-            'erp_model_id'    => $erpModelId,
-            'code'            => $data['codigo'] ?? $data['code'] ?? null,
-            'name'            => ($data['nombre'] ?? null) ?: ($data['name'] ?? null) ?: ($data['description'] ?? null),
-            'available'       => (bool) ($data['estado'] ?? $data['available'] ?? true),
-            'is_default'      => (bool) ($data['default'] ?? false),
+            'subfamily_id' => $subfamily?->id,
+            'erp_subfamily_id' => $erpSubfamilyId,
+            'sport_id' => $sport?->id,
+            'erp_sport_id' => $erpSportId,
+            'erp_model_id' => $erpModelId,
+            'code' => $data['codigo'] ?? $data['code'] ?? null,
+            'name' => ($data['nombre'] ?? null) ?: ($data['name'] ?? null) ?: ($data['description'] ?? null),
+            'available' => (bool) ($data['estado'] ?? $data['available'] ?? true),
+            'is_default' => (bool) ($data['default'] ?? false),
             // Solo web_status=1 ("publicar") cuenta como publicado; 2 ("pendiente de
             // revisión") no debe marcarse como publicado aunque sea "truthy".
-            'web_published'   => (int) ($rawWebStatus ?? 0) === 1,
-            'last_sync_at'    => now(),
-            'metadata'        => $metaUpdates ? array_merge($existingMeta, $metaUpdates) : ($existingMeta ?: null),
+            'web_published' => (int) ($rawWebStatus ?? 0) === 1,
+            'last_sync_at' => now(),
+            'metadata' => $metaUpdates ? array_merge($existingMeta, $metaUpdates) : ($existingMeta ?: null),
         ]);
 
-        $product->save();
+        // Evita el loop "traído del ERP → reenviado al ERP": SupplierProductObserver
+        // comprueba esta misma clave antes de disparar SupplierProductUpdated (que
+        // termina reescribiendo en Oracle el dato que acabamos de leer de ahí mismo).
+        $syncInProgressKey = $product->exists ? "sync_in_progress_product_{$product->id}" : null;
+        if ($syncInProgressKey) {
+            Cache::put($syncInProgressKey, true, now()->addMinute());
+        }
+
+        try {
+            $product->save();
+        } finally {
+            if ($syncInProgressKey) {
+                Cache::forget($syncInProgressKey);
+            }
+        }
 
         return $product;
     }
@@ -795,36 +927,36 @@ class ErpModelSyncService
             $attribute->restore();
         }
 
-        $erpCategoryId  = $data['categorie'] ?? $data['idfamilia_cl'] ?? null;
+        $erpCategoryId = $data['categorie'] ?? $data['idfamilia_cl'] ?? null;
         $erpSubfamilyId = $data['subfamily_id'] ?? null;
-        $erpSportId     = $data['sport_id'] ?? null;
+        $erpSportId = $data['sport_id'] ?? null;
 
-        $category  = $erpCategoryId  ? Category::where('erp_id', $erpCategoryId)->first()  : null;
+        $category = $erpCategoryId ? Category::where('erp_id', $erpCategoryId)->first() : null;
         $subfamily = $erpSubfamilyId ? Subfamily::where('erp_id', $erpSubfamilyId)->first() : null;
-        $sport     = $erpSportId     ? Sport::where('erp_id', $erpSportId)->first()         : null;
+        $sport = $erpSportId ? Sport::where('erp_id', $erpSportId)->first() : null;
 
         $attribute->fill([
-            'erp_id'          => $erpArticuloId,
-            'product_id'      => $product->id,
-            'category_id'     => $category?->id,
+            'erp_id' => $erpArticuloId,
+            'product_id' => $product->id,
+            'category_id' => $category?->id,
             'erp_category_id' => $erpCategoryId,
-            'erp_group_id'    => $data['grupo'] ?? $data['idgrupo_cl'] ?? null,
-            'subfamily_id'    => $subfamily?->id,
-            'erp_subfamily_id'=> $erpSubfamilyId,
-            'sport_id'        => $sport?->id,
-            'erp_sport_id'    => $erpSportId,
-            'code'            => $data['code'] ?? $data['codigo'] ?? null,
-            'code_secundary'  => $data['code_secundary'] ?? $data['codigo_secundario'] ?? null,
-            'reference'       => $data['reference'] ?? $data['referencia'] ?? null,
-            'ean13'           => $data['ean13'] ?? null,
-            'upc'             => $data['upc'] ?? null,
-            'name'            => $data['description'] ?? $data['nombre'] ?? $data['name'] ?? null,
-            'available'       => (bool) ($data['available'] ?? $data['estado'] ?? true),
+            'erp_group_id' => $data['grupo'] ?? $data['idgrupo_cl'] ?? null,
+            'subfamily_id' => $subfamily?->id,
+            'erp_subfamily_id' => $erpSubfamilyId,
+            'sport_id' => $sport?->id,
+            'erp_sport_id' => $erpSportId,
+            'code' => $data['code'] ?? $data['codigo'] ?? null,
+            'code_secundary' => $data['code_secundary'] ?? $data['codigo_secundario'] ?? null,
+            'reference' => $data['reference'] ?? $data['referencia'] ?? null,
+            'ean13' => $data['ean13'] ?? null,
+            'upc' => $data['upc'] ?? null,
+            'name' => $data['description'] ?? $data['nombre'] ?? $data['name'] ?? null,
+            'available' => (bool) ($data['available'] ?? $data['estado'] ?? true),
             // Ver nota en upsertProduct(): solo web_status=1 es "publicado".
-            'web_published'   => (int) ($data['web_status'] ?? $data['estado_publicado_web'] ?? $data['web'] ?? 0) === 1,
-            'erp_created_at'  => $data['created'] ?? null,
-            'erp_updated_at'  => $data['updated'] ?? null,
-            'last_sync_at'    => now(),
+            'web_published' => (int) ($data['web_status'] ?? $data['estado_publicado_web'] ?? $data['web'] ?? 0) === 1,
+            'erp_created_at' => $data['created'] ?? null,
+            'erp_updated_at' => $data['updated'] ?? null,
+            'last_sync_at' => now(),
         ]);
 
         $attribute->save();
@@ -842,7 +974,15 @@ class ErpModelSyncService
             return;
         }
 
-        if (AiContent::where('supplier_product_id', $product->id)->exists()) {
+        $existingContent = AiContent::where('supplier_product_id', $product->id)->first();
+        if ($existingContent) {
+            // El producto ya tiene contenido IA: no se toca ni el estado ni el prompt,
+            // pero sí se refresca el snapshot de datos ERP para que una regeneración
+            // posterior ("actualización completa") use los datos más recientes.
+            if ($erpData) {
+                $existingContent->update(['source_attributes' => $erpData]);
+            }
+
             return;
         }
 
@@ -866,6 +1006,11 @@ class ErpModelSyncService
 
         $hasValidPrompt = $prompt && in_array($prompt->scope, ['supplier_category', 'category', 'global']);
 
+        // Proveedor marcado para no generar contenido IA automáticamente (panel
+        // "Proveedores excluidos (IA)"). No afecta al resto del sync: el producto
+        // se crea/actualiza igual, solo se salta el disparo automático de la IA.
+        $isSupplierExcluded = isset(ExcludedContentSupplier::getExcludedSet()[$supplier->id]);
+
         // registerOnly: registrar AiContent como pending_generation sin disparar generación,
         // independientemente de si hay prompt configurado para la subfamilia
         if ($registerOnly) {
@@ -888,23 +1033,26 @@ class ErpModelSyncService
             return;
         }
 
-        if (! $hasValidPrompt) {
-            // Sin prompt aplicable → crear como pending_generation para que aparezca
-            // en la lista de contenido y pueda ser generado manualmente más tarde
+        if (! $hasValidPrompt || $isSupplierExcluded) {
+            // Sin prompt aplicable, o proveedor excluido de generación automática
+            // (panel "Proveedores excluidos (IA)") → crear como pending_generation
+            // para que aparezca en la lista de contenido y pueda generarse
+            // manualmente más tarde.
             AiContent::create([
                 'supplier_id' => $supplier->id,
                 'supplier_product_id' => $product->id,
                 'erp_reference' => $product->code,
                 'status' => AiContent::STATUS_PENDING_GENERATION,
-                'prompt_id' => null,
+                'prompt_id' => $hasValidPrompt ? $prompt->id : null,
                 'source_attributes' => $erpData ?: null,
             ]);
 
-            Log::info('AI content created as pending_generation during ERP sync (no applicable prompt)', [
+            Log::info('AI content created as pending_generation during ERP sync ('.($isSupplierExcluded ? 'proveedor excluido de generación automática' : 'no applicable prompt').')', [
                 'product_id' => $product->id,
                 'supplier_id' => $supplier->id,
                 'category_id' => $category?->id,
                 'prompt_found' => $prompt ? "yes (scope: {$prompt->scope})" : 'no',
+                'supplier_excluded' => $isSupplierExcluded,
             ]);
 
             return;
@@ -1004,12 +1152,12 @@ class ErpModelSyncService
     private function classifyFailureType(string $errorMessage): string
     {
         return match (true) {
-            str_contains($errorMessage, 'sin proveedor')  => 'sin_proveedor',
-            str_contains($errorMessage, 'sin categoría')  => 'sin_categoria',
-            str_contains($errorMessage, 'sin artículos')  => 'sin_articulos',
-            str_contains($errorMessage, 'ERP API error')  => 'error_api',
-            str_contains($errorMessage, 'SQLSTATE')       => 'error_db',
-            default                                       => 'datos_invalidos',
+            str_contains($errorMessage, 'sin proveedor') => 'sin_proveedor',
+            str_contains($errorMessage, 'sin categoría') => 'sin_categoria',
+            str_contains($errorMessage, 'sin artículos') => 'sin_articulos',
+            str_contains($errorMessage, 'ERP API error') => 'error_api',
+            str_contains($errorMessage, 'SQLSTATE') => 'error_db',
+            default => 'datos_invalidos',
         };
     }
 

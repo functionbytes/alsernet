@@ -133,7 +133,7 @@
     }
 
     .timeline-item:hover .timeline-desc {
-        background-color: #f8f9fa;
+        background-color: #f5f6f8;
         border-radius: 3px;
         padding: 0.25rem;
         margin-left: -0.25rem;
@@ -154,7 +154,7 @@
     }
 
     .status-timeline-scroll::-webkit-scrollbar-track {
-        background: #f8f9fa;
+        background: #f5f6f8;
         border-radius: 3px;
     }
 

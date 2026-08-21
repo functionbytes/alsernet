@@ -6,6 +6,13 @@
     @include('core::components.card', ['title' => $pageTitle])
 @endsection
 
+@push('styles')
+    <style>
+        .log-row { cursor: pointer; }
+        .sync-error-message { display: block; white-space: normal; word-break: break-word; }
+    </style>
+@endpush
+
 @section('content')
     <div class="widget-content searchable-container list">
 
@@ -17,7 +24,7 @@
                 'running'   => 'warning',
                 'failed'    => 'danger',
                 'cancelled' => 'secondary',
-                default     => 'info',
+                default     => 'secondary',
             };
             $progressBarColor = match ($batch->status) {
                 'completed' => 'success',
@@ -97,7 +104,14 @@
                                         ? $batch->total_items
                                         : ($batch->processed_items + $batch->failed_items);
                                 @endphp
-                                <small class="text-muted">{{ number_format($batch->processed_items) }} / {{ number_format($displayTotal) }} registros</small>
+                                @if($batch->exceeds_estimated_total)
+                                    <small class="text-muted">{{ number_format($batch->processed_items + $batch->failed_items) }} registros procesados</small>
+                                    <small class="d-block text-warning mt-1">
+                                        Superó el total estimado inicial ({{ number_format($batch->total_items) }}), que quedó desactualizado.
+                                    </small>
+                                @else
+                                    <small class="text-muted">{{ number_format($batch->processed_items) }} / {{ number_format($displayTotal) }} registros</small>
+                                @endif
                                 <div class="progress mt-2" style="height: 4px;">
                                     <div class="progress-bar bg-{{ $progressBarColor }}" style="width: {{ $batch->progress_percentage }}%"></div>
                                 </div>
@@ -111,7 +125,12 @@
                                 <h2 class="fw-bold mb-1 text-{{ $batch->success_rate >= 95 ? 'success' : ($batch->success_rate >= 80 ? 'warning' : 'danger') }}">
                                     {{ $batch->success_rate }}%
                                 </h2>
-                                <small class="text-muted">{{ number_format($batch->failed_items) }} fallidos</small>
+                                <small class="text-muted" title="Total de intentos fallidos durante el batch, incluidos reintentos sobre el mismo registro.">
+                                    {{ number_format($batch->failed_items) }} fallidos
+                                    @if($failuresCount !== $batch->failed_items)
+                                        <span class="d-block">({{ number_format($failuresCount) }} registro(s) distinto(s), ver pestaña "Fallos")</span>
+                                    @endif
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -152,14 +171,12 @@
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'failures' ? '' : 'active' }}"
                             data-bs-toggle="pill" data-bs-target="#logs-pane" type="button" role="tab">
                         <span class="d-none d-md-block">Logs de sincronización</span>
-                        <span class="badge bg-info ms-2">{{ $logsCount }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'failures' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#failures-pane" type="button" role="tab">
                         <span class="d-none d-md-block">Fallos</span>
-                        <span class="badge {{ $failuresCount > 0 ? 'bg-black' : 'bg-info' }} ms-2">{{ $failuresCount }}</span>
                     </button>
                 </li>
             </ul>
@@ -178,7 +195,7 @@
                             <input type="hidden" name="logs_result" id="logs-filter-result" value="{{ $logsResult }}">
                             <div class="d-flex align-items-center gap-2">
                                 <input type="search" name="logs_search" class="form-control flex-grow-1"
-                                       placeholder="Buscar por mensaje, entidad o acción..." value="{{ $logsSearch }}">
+                                       placeholder="Buscar por referencia, ID ERP, mensaje o acción..." value="{{ $logsSearch }}">
                                 <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
                                         data-bs-toggle="modal" data-bs-target="#logs-filter-modal" title="Filtros avanzados">
                                     <i class="fas fa-filter"></i>
@@ -212,8 +229,11 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Entidad</th>
+                                            <th>ID ERP</th>
+                                            <th>Referencia</th>
                                             <th>Acción</th>
                                             <th class="text-center">Resultado</th>
+                                            <th>Fecha</th>
                                             <th class="text-center" style="width:48px;"></th>
                                         </tr>
                                     </thead>
@@ -227,19 +247,34 @@
                                                     default   => 'bg-secondary-subtle text-secondary',
                                                 };
                                             @endphp
-                                            <tr data-log-id="{{ $log->id }}">
+                                            <tr data-log-id="{{ $log->id }}" class="log-row" role="button" onclick="showLogDetail({{ $log->id }})">
                                                 <td>
                                                     <span class="badge bg-secondary-subtle text-secondary">{{ $log->entity_type }}</span>
                                                     @if($log->entity_id)
                                                         <small class="text-muted ms-1">#{{ $log->entity_id }}</small>
                                                     @endif
                                                 </td>
+                                                <td>
+                                                    @if($log->erp_id)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $log->erp_id }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($log->reference)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $log->reference }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ $log->action }}</td>
                                                 <td class="text-center">
                                                     <span class="badge {{ $resultBadge }}">{{ $log->result }}</span>
                                                 </td>
+                                                <td><small class="text-muted">{{ $log->created_at->format('d/m/Y H:i') }}</small></td>
                                                 <td class="text-center">
-                                                    <div class="dropdown">
+                                                    <div class="dropdown" onclick="event.stopPropagation();">
                                                         <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="fas fa-ellipsis-vertical"></i>
                                                         </a>
@@ -288,7 +323,7 @@
                             <input type="hidden" name="failures_type"   id="failures-filter-type"   value="{{ $failuresType }}">
                             <div class="d-flex align-items-center gap-2">
                                 <input type="search" name="failures_search" class="form-control flex-grow-1"
-                                       placeholder="Buscar por ID ERP o mensaje de error..." value="{{ $failuresSearch }}">
+                                       placeholder="Buscar por referencia, ID ERP o mensaje de error..." value="{{ $failuresSearch }}">
                                 <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
                                         data-bs-toggle="modal" data-bs-target="#failures-filter-modal" title="Filtros avanzados">
                                     <i class="fas fa-filter"></i>
@@ -324,6 +359,7 @@
                                             <th width="3%"><input type="checkbox" class="form-check-input" id="select-all"></th>
                                             <th>Tipo de fallo</th>
                                             <th>ID ERP</th>
+                                            <th>Referencia</th>
                                             <th>Error</th>
                                             <th class="text-center">Reintentos</th>
                                             <th class="text-center">Estado</th>
@@ -336,14 +372,14 @@
                                                 $failureTypeColors = [
                                                     'sin_proveedor'   => 'danger',
                                                     'sin_categoria'   => 'warning',
-                                                    'error_api'       => 'info',
+                                                    'error_api'       => 'danger',
                                                     'error_db'        => 'dark',
                                                     'datos_invalidos' => 'secondary',
                                                 ];
                                                 $ftColor = $failureTypeColors[$failure->failure_type] ?? 'secondary';
                                             @endphp
-                                            <tr data-failure-id="{{ $failure->id }}">
-                                                <td>
+                                            <tr data-failure-id="{{ $failure->id }}" class="log-row" role="button" onclick="showFailureDetail({{ $failure->id }})">
+                                                <td onclick="event.stopPropagation();">
                                                     <input type="checkbox" class="form-check-input failure-checkbox" value="{{ $failure->id }}">
                                                 </td>
                                                 <td>
@@ -357,9 +393,14 @@
                                                 </td>
                                                 <td><code class="bg-light px-2 py-1 rounded">{{ $failure->erp_id ?? '—' }}</code></td>
                                                 <td>
-                                                    <span class="small text-danger font-monospace"
-                                                          style="max-width:340px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                                                          title="{{ $failure->error_message }}">
+                                                    @if($failure->reference)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $failure->reference }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="small text-danger font-monospace sync-error-message">
                                                         {{ $failure->error_message }}
                                                     </span>
                                                     <small class="text-muted">{{ $failure->created_at->format('d/m/Y H:i') }}</small>
@@ -378,7 +419,7 @@
                                                         <span class="badge bg-secondary-subtle text-secondary">{{ $failure->failure_status }}</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">
+                                                <td class="text-center" onclick="event.stopPropagation();">
                                                     <div class="dropdown">
                                                         <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="fas fa-ellipsis-vertical"></i>
@@ -556,8 +597,9 @@
                     <div class="p-4 border-bottom">
                         <p class="text-uppercase fw-bold text-muted mb-2" >Error de sincronización</p>
                         <div class="bg-light border rounded py-2 px-3 mb-0 d-flex align-items-start gap-2">
+                            <i class="fas fa-triangle-exclamation mt-1 flex-shrink-0 text-danger"></i>
                             <div>
-                                <strong id="fd-failure-type" class="d-block small mb-1 text-secondary"></strong>
+                                <strong id="fd-failure-type" class="d-block small mb-1 text-danger"></strong>
                                 <span id="fd-error-message" class="small text-muted"></span>
                             </div>
                         </div>
@@ -636,10 +678,10 @@
                     <div class="p-4 border-bottom">
                         <p class="text-uppercase fw-bold text-muted mb-2" style="font-size:.68rem;letter-spacing:.08em;">Resultado de la operación</p>
                         <div class="bg-light border rounded py-2 px-3 d-flex align-items-start gap-2">
-                            <i class="fas fa-circle-dot mt-1 flex-shrink-0 text-muted"></i>
+                            <i id="ld-result-icon" class="fas mt-1 flex-shrink-0"></i>
                             <div>
-                                <strong id="ld-action" class="d-block small mb-1 text-secondary"></strong>
-                                <span id="ld-message" class="small text-muted"></span>
+                                <strong id="ld-action" class="d-block small mb-1"></strong>
+                                <span id="ld-message" class="small text-muted d-none"></span>
                             </div>
                         </div>
                     </div>
@@ -682,9 +724,8 @@
 
                 </div>
             </div>
-            <div class="modal-footer flex-column gap-2 pt-3">
+            <div class="modal-footer pt-3">
                 <button type="button" class="btn btn-primary w-100" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-light w-100 text-muted" data-bs-dismiss="modal">Cancelar</button>
             </div>
         </div>
     </div>
@@ -699,15 +740,21 @@
 $(document).ready(function () {
 
     const csrf            = $('meta[name="csrf-token"]').attr('content');
-    const retryUrl        = '{{ route("settings.suppliers.sync.retry", "__ID__") }}';
-    const destroyUrl      = '{{ route("settings.suppliers.sync.bulk-delete") }}';
-    const failureShowUrl  = '{{ route("settings.suppliers.sync.show", "__ID__") }}';
+    // Acciones sobre un fallo individual (tabla "Fallos") — usan las rutas de
+    // supplier_sync_failures, NO las de batch (antes apuntaban por error a
+    // las rutas de batch usando el ID del fallo, y siempre devolvían 404).
+    const retryUrl        = '{{ route("settings.suppliers.sync.failures.retry", "__ID__") }}';
+    const destroyUrl      = '{{ route("settings.suppliers.sync.failures.destroy", "__ID__") }}';
+    const failureShowUrl  = '{{ route("settings.suppliers.sync.failures.show", "__ID__") }}';
     const logShowUrl      = '{{ route("settings.suppliers.sync.logs.show", ["batchId" => $batch->id, "logId" => "__LOG_ID__"]) }}';
-    const bulkRetryUrl    = '{{ route("settings.suppliers.sync.bulk-retry") }}';
-    const bulkDelUrl      = '{{ route("settings.suppliers.sync.bulk-delete") }}';
+    const bulkRetryUrl    = '{{ route("settings.suppliers.sync.failures.bulk-retry") }}';
+    const bulkDelUrl      = '{{ route("settings.suppliers.sync.failures.bulk-delete") }}';
+    // Acciones sobre el batch completo (cabecera de la página).
     const batchRetryUrl   = '{{ route("settings.suppliers.sync.retry", "__ID__") }}';
     const batchCancelUrl  = '{{ route("settings.suppliers.sync.cancel", "__ID__") }}';
     const syncIndexUrl    = '{{ route("settings.suppliers.sync.index") }}';
+    const productShowUrl  = '{{ route("settings.suppliers.products.show", "__ID__") }}';
+    const canViewProducts = @json(auth()->user()?->can('suppliers.view.products') ?? false);
 
     // ── Select2 dentro de los modales de filtros ─────────────────────────────
     $('#logs-modal-result').select2({ dropdownParent: $('#logs-filter-modal'), width: '100%' });
@@ -1063,8 +1110,22 @@ $(document).ready(function () {
         document.getElementById('ld-erp-id').textContent = l.erp_id ? '#' + l.erp_id : (l.entity_id ? '#' + l.entity_id : '');
 
         // Resultado / acción
+        const resultIcons = {
+            success: 'fa-circle-check text-success',
+            failed:  'fa-circle-xmark text-danger',
+            skipped: 'fa-circle-minus text-warning',
+            warning: 'fa-triangle-exclamation text-warning',
+        };
+        document.getElementById('ld-result-icon').className = 'fas mt-1 flex-shrink-0 ' + (resultIcons[l.result] || 'fa-circle-question text-secondary');
         document.getElementById('ld-action').textContent   = (l.action || '—') + ' — ' + (l.result || '—');
-        document.getElementById('ld-message').textContent  = l.message || '—';
+        document.getElementById('ld-action').className     = 'd-block small mb-1 text-' + (rc === 'secondary' ? 'secondary' : rc);
+        const $ldMessage = document.getElementById('ld-message');
+        if (l.message) {
+            $ldMessage.textContent = l.message;
+            $ldMessage.classList.remove('d-none');
+        } else {
+            $ldMessage.classList.add('d-none');
+        }
 
         // Error
         if (l.error_message || l.error_code) {
@@ -1076,13 +1137,16 @@ $(document).ready(function () {
         }
 
         // Entidad
+        const referenceValue = (l.reference && canViewProducts && l.product_id)
+            ? `<a href="${productShowUrl.replace('__ID__', l.product_id)}" target="_blank">${l.reference} <i class="fas fa-up-right-from-square" style="font-size:.65em;"></i></a>`
+            : l.reference;
         document.getElementById('ld-entity-fields').innerHTML = [
             ldField('Tipo de entidad', l.entity_type),
             ldField('ID entidad', l.entity_id),
             ldField('ID ERP', l.erp_id),
+            ldField('Referencia', referenceValue),
             ldField('Acción', l.action),
             ldField('Resultado', `<span class="badge bg-${rc}-subtle text-${rc}">${l.result || '—'}</span>`, 'col-md-4'),
-            ldField('Duración', l.duration_ms !== null && l.duration_ms !== undefined ? l.duration_ms + ' ms' : null),
         ].join('');
 
         // Cambios
@@ -1104,9 +1168,10 @@ $(document).ready(function () {
         // Info técnica
         const date = l.created_at ? l.created_at.substring(0, 16).replace('T', ' ') : '—';
         document.getElementById('ld-meta-fields').innerHTML = [
-            ldField('Disparado por', l.triggered_by),
-            ldField('Reintentos', l.retry_count),
-            ldField('Fecha', date),
+            ldField('Disparado por', l.triggered_by, 'col-md-3'),
+            ldField('Reintentos', l.retry_count, 'col-md-3'),
+            ldField('Duración', l.duration_ms !== null && l.duration_ms !== undefined ? l.duration_ms + ' ms' : null, 'col-md-3'),
+            ldField('Fecha', date, 'col-md-3'),
         ].join('');
 
         document.getElementById('ld-loading').classList.add('d-none');

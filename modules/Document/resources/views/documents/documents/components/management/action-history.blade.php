@@ -144,7 +144,7 @@
         }
 
         .action-item:hover {
-            background-color: #f8f9fa;
+            background-color: #f5f6f8;
             border-color: #dee2e6 !important;
         }
 

@@ -3,8 +3,12 @@
 namespace Modules\HelpdeskTickets\Tests\Feature\Managers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Database\Seeders\HelpdeskTicketsPermissionsSeeder;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
@@ -102,6 +106,65 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertRedirect();
 
         $this->assertNotNull($ticket->fresh()->closed_at);
+    }
+
+    /**
+     * Bug real (ago-2026): el endpoint real de "Cerrar ticket" nunca disparaba
+     * TicketClosed, así que la encuesta CSAT automática (UpdateTicketOnClose)
+     * y las automatizaciones "al cerrar" no corrían nunca desde la UI.
+     */
+    public function test_closing_a_ticket_dispatches_ticket_closed_event(): void
+    {
+        Event::fake([TicketClosed::class]);
+
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.close', $ticket))
+            ->assertRedirect();
+
+        Event::assertDispatched(TicketClosed::class, fn (TicketClosed $event) => $event->ticket->is($ticket));
+    }
+
+    /**
+     * Mismo bug que el de arriba pero en reopen(): sin TicketReopened,
+     * SendCustomerReopenNotification nunca notificaba al cliente.
+     */
+    public function test_reopening_a_ticket_dispatches_ticket_reopened_event(): void
+    {
+        Event::fake([TicketReopened::class]);
+
+        $ticket = $this->createTicket(['status_id' => $this->closedStatus->id, 'closed_at' => now()]);
+
+        $this->actingAs($this->manager)
+            ->post(route('manager.helpdesk.tickets.reopen', $ticket))
+            ->assertRedirect();
+
+        Event::assertDispatched(TicketReopened::class, fn (TicketReopened $event) => $event->ticket->is($ticket));
+    }
+
+    /**
+     * Bug real: reasignar desde el formulario de edición de la ficha (a
+     * diferencia de AssignmentService::assignTicket()) nunca disparaba
+     * TicketAssigned, así que NotifyAgentOfAssignment/
+     * RunAutomationsOnTicketAssigned no corrían al cambiar el agente aquí.
+     */
+    public function test_reassigning_a_ticket_via_update_dispatches_ticket_assigned_event(): void
+    {
+        Event::fake([TicketAssigned::class]);
+
+        $agent = User::factory()->create();
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->put(route('manager.helpdesk.tickets.update', $ticket), [
+                'priority' => $ticket->priority,
+                'status_id' => $ticket->status_id,
+                'assignee_id' => $agent->id,
+            ])
+            ->assertRedirect();
+
+        Event::assertDispatched(TicketAssigned::class, fn (TicketAssigned $event) => $event->ticket->is($ticket) && $event->agent->is($agent));
     }
 
     public function test_close_requires_authentication(): void

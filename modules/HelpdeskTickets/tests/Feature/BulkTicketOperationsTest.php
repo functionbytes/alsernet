@@ -5,6 +5,10 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Spatie\Permission\Middleware\RoleMiddleware;
@@ -125,6 +129,69 @@ class BulkTicketOperationsTest extends TestCase
             ])->assertOk()->assertJson(['success' => true, 'updated_count' => 1]);
 
         $this->assertSame($resolvedStatus->id, Ticket::find($ticket->id)->status_id);
+    }
+
+    /**
+     * Bug real: el cierre masivo hacía $ticket->close() (que sí fija
+     * status_id correctamente) pero nunca disparaba TicketClosed, así que la
+     * encuesta CSAT automática no se enviaba al cerrar en bloque.
+     */
+    public function test_bulk_close_dispatches_ticket_closed_event_per_ticket(): void
+    {
+        Event::fake([TicketClosed::class]);
+
+        $ticketA = $this->createTestTicket();
+        $ticketB = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticketA->id, $ticketB->id],
+                'action' => 'close',
+            ])->assertOk();
+
+        Event::assertDispatchedTimes(TicketClosed::class, 2);
+    }
+
+    /**
+     * Mismo bug en reopen(): sin TicketReopened, SendCustomerReopenNotification
+     * nunca notificaba al cliente al reabrir en bloque.
+     */
+    public function test_bulk_reopen_dispatches_ticket_reopened_event(): void
+    {
+        Event::fake([TicketReopened::class]);
+
+        $ticket = $this->createTestTicket(['closed_at' => now()]);
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticket->id],
+                'action' => 'reopen',
+            ])->assertOk();
+
+        Event::assertDispatched(TicketReopened::class, fn (TicketReopened $event) => $event->ticket->is($ticket));
+    }
+
+    /**
+     * Bug real: la asignación masiva hacía update() directo (no assignTo()),
+     * sin crear el item de actividad ni disparar TicketAssigned — un agente
+     * no se enteraba de que le habían asignado tickets en bloque.
+     */
+    public function test_bulk_assign_dispatches_ticket_assigned_event_per_ticket(): void
+    {
+        Event::fake([TicketAssigned::class]);
+
+        $agent = User::factory()->create();
+        $ticketA = $this->createTestTicket();
+        $ticketB = $this->createTestTicket();
+
+        $this->actingAs($this->manager)
+            ->postJson(route('manager.helpdesk.tickets.bulk'), [
+                'ticket_ids' => [$ticketA->id, $ticketB->id],
+                'action' => 'assign',
+                'agent_id' => $agent->id,
+            ])->assertOk();
+
+        Event::assertDispatchedTimes(TicketAssigned::class, 2);
     }
 
     public function test_bulk_add_tag_appends_tag_to_all_tickets(): void

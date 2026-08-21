@@ -45,7 +45,7 @@
                             </div>
                         </div>
 
-                        <div class="border rounded p-3 mb-4" style="background:#f8f9fa;">
+                        <div class="border rounded p-3 mb-4" style="background:#f5f6f8;">
                             <p class="small mb-3 fw-semibold text-dark">Instrucciones por nivel</p>
                             <table class="table table-sm small mb-0">
                                 <thead class="table-light">

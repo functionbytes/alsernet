@@ -16,6 +16,7 @@ use Modules\Supplier\Http\Requests\Source\UploadSourceFileRequest;
 use Modules\Supplier\Jobs\ProcessSupplierExtractionJob;
 use Modules\Supplier\Models\Extraction\ExtractionBatch;
 use Modules\Supplier\Models\Source\Source;
+use Modules\Supplier\Models\Source\SourceContentUrl;
 use Modules\Supplier\Models\Source\SourceFile;
 use Modules\Supplier\Models\Supplier\Supplier;
 use Modules\Supplier\Models\Sync\SyncConflict;
@@ -73,9 +74,9 @@ class SupplierSourcesController extends Controller
             ->withQueryString();
 
         $stats = [
-            'total_failures'      => SyncFailure::where('supplier_id', $supplier->id)->count(),
-            'retryable'           => SyncFailure::where('supplier_id', $supplier->id)->retryable()->whereIn('failure_status', ['pending', 'acknowledged'])->count(),
-            'total_conflicts'     => SyncConflict::byEntityType('provider')->where('entity_id', $supplier->id)->count(),
+            'total_failures' => SyncFailure::where('supplier_id', $supplier->id)->count(),
+            'retryable' => SyncFailure::where('supplier_id', $supplier->id)->retryable()->whereIn('failure_status', ['pending', 'acknowledged'])->count(),
+            'total_conflicts' => SyncConflict::byEntityType('provider')->where('entity_id', $supplier->id)->count(),
             'unresolved_conflicts' => SyncConflict::byEntityType('provider')->where('entity_id', $supplier->id)->unresolved()->count(),
         ];
 
@@ -151,10 +152,14 @@ class SupplierSourcesController extends Controller
                 $this->saveSourceConfiguration($source, $validated['configuration']);
             }
 
+            if (isset($validated['content_urls']) && is_array($validated['content_urls'])) {
+                $this->saveContentUrls($source, $validated['content_urls']);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Fuente creada exitosamente',
-                'source' => $source->load('configurations'),
+                'source' => $source->load('configurations', 'contentUrls'),
             ]);
 
         } catch (\Exception $e) {
@@ -173,7 +178,7 @@ class SupplierSourcesController extends Controller
     public function edit(string $supplierUid, string $sourceUid): View
     {
         $supplier = Supplier::byUid($supplierUid)->firstOrFail();
-        $source = $supplier->sources()->with('configurations')->where('uid', $sourceUid)->firstOrFail();
+        $source = $supplier->sources()->with(['configurations', 'contentUrls'])->where('uid', $sourceUid)->firstOrFail();
         $pageTitle = "Editar Fuente: {$source->label}";
         $breadcrumb = "Configuración / Proveedores / {$supplier->label} / Fuentes / Editar";
 
@@ -199,7 +204,7 @@ class SupplierSourcesController extends Controller
                 'trust_level' => $validated['trust_level'] ?? $source->trust_level,
                 'usage_notes' => $validated['usage_notes'] ?? $source->usage_notes,
                 'priority' => $validated['priority'] ?? $source->priority,
-                'is_active' => $validated['is_active'],
+                'is_active' => $validated['is_active'] ?? $source->is_active,
                 'extraction_mode' => $validated['extraction_mode'] ?? $source->extraction_mode,
             ]);
 
@@ -208,10 +213,14 @@ class SupplierSourcesController extends Controller
                 $this->saveSourceConfiguration($source, $validated['configuration']);
             }
 
+            if (isset($validated['content_urls']) && is_array($validated['content_urls'])) {
+                $this->saveContentUrls($source, $validated['content_urls']);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Fuente actualizada exitosamente',
-                'source' => $source->fresh()->load('configurations'),
+                'source' => $source->fresh()->load('configurations', 'contentUrls'),
             ]);
 
         } catch (\Exception $e) {
@@ -563,6 +572,37 @@ class SupplierSourcesController extends Controller
     }
 
     /**
+     * Replace the source's content-reference URLs (páginas donde se espera
+     * encontrar contenido/fichas del proveedor). Distinto de
+     * configuration[urls], que alimenta la extracción de catálogo — estas
+     * solo se sugieren a la IA como prioridad de búsqueda al generar
+     * descripciones (ver ContentGenerationService::preferredSourceUrls()).
+     *
+     * Reemplaza el set completo por simplicidad: bajo volumen esperado, no
+     * necesita diff fino fila a fila.
+     */
+    private function saveContentUrls(Source $source, array $contentUrls): void
+    {
+        $source->contentUrls()->delete();
+
+        $priority = 0;
+        foreach ($contentUrls as $row) {
+            $url = trim($row['url'] ?? '');
+            if ($url === '') {
+                continue;
+            }
+
+            SourceContentUrl::create([
+                'source_id' => $source->id,
+                'url' => $url,
+                'note' => $row['note'] ?? null,
+                'is_active' => true,
+                'priority' => ++$priority,
+            ]);
+        }
+    }
+
+    /**
      * Detect platform type from a URL (AJAX endpoint for the create/edit form).
      */
     public function detectSource(Request $request): JsonResponse
@@ -596,6 +636,7 @@ class SupplierSourcesController extends Controller
     {
         $name = preg_replace('/[\/\\\.\.\x00-\x1F\x7F"\'<>|:*?]/', '', $name);
         $name = preg_replace('/\s+/', ' ', trim($name));
+
         return mb_substr($name, 0, 200) ?: 'file';
     }
 }

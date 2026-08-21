@@ -65,6 +65,7 @@ class MacrosController extends Controller
         $data['is_active'] = $request->boolean('is_active', true);
         $data['is_shared'] = $request->input('visibility') === 'global';
         $data['user_id'] = ! $data['is_shared'] ? $request->user()->id : null;
+        $data['language'] = $data['language'] ?: null;
         unset($data['visibility']);
 
         Macro::create($data);
@@ -89,6 +90,7 @@ class MacrosController extends Controller
         $data['is_active'] = $request->boolean('is_active');
         $data['is_shared'] = $request->input('visibility') === 'global';
         $data['user_id'] = ! $data['is_shared'] ? ($macro->user_id ?? $request->user()->id) : null;
+        $data['language'] = $data['language'] ?: null;
         unset($data['visibility']);
 
         $macro->update($data);

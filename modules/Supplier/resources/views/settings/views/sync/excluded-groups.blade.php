@@ -23,8 +23,8 @@
     <div class="card">
 
         {{-- Header --}}
-        <div class="card-header p-4 border-bottom">
-            <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+        <div class="card-header p-4 border-bottom border-light">
+            <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-1 fw-bold">IDs excluidos del ERP</h5>
                     <p class="small mb-0 text-muted">
@@ -32,113 +32,163 @@
                         coincida con uno de estos IDs se omitirán durante la sincronización.
                     </p>
                 </div>
-                <span class="badge bg-primary-subtle text-primary fw-semibold fs-6 px-3 flex-shrink-0" id="count-badge">
-                    {{ $groups->count() }}
-                </span>
-            </div>
-
-            {{-- Barra de herramientas --}}
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-
-                {{-- Búsqueda --}}
-                <div class="input-group input-group-sm" style="max-width:300px;">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="fas fa-search text-muted" style="font-size:.75rem;"></i>
-                    </span>
-                    <input type="text" id="search-input" class="form-control border-start-0 ps-0"
-                           placeholder="Buscar ID, descripción, motivo…" autocomplete="off">
-                    <button class="btn btn-outline-secondary d-none" type="button" id="search-clear" title="Limpiar">
-                        <i class="fas fa-times" style="font-size:.7rem;"></i>
+                <div class="dropdown">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-vertical"></i>
                     </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="#"
+                               data-bs-toggle="modal" data-bs-target="#modal-add-single">
+                                + Añadir ID
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#"
+                               data-bs-toggle="modal" data-bs-target="#modal-import-bulk">
+                                Importar lista
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" id="btn-export-txt">
+                                Descargar como .txt
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" id="btn-copy-ids">
+                                Copiar IDs al portapapeles
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#"
+                               data-bs-toggle="modal" data-bs-target="#modal-how-it-works">
+                                ¿Cómo funciona?
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" id="btn-clear-all">
+                                Limpiar toda la lista
+                            </a>
+                        </li>
+                    </ul>
                 </div>
-
-                {{-- Acciones bulk (visibles al seleccionar) --}}
-                <div id="bulk-actions" class="d-none d-flex align-items-center gap-2">
-                    <span class="small text-muted" id="selected-count-label"></span>
-                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-bulk-delete">
-                        <i class="fas fa-trash-alt me-1" style="font-size:.7rem;"></i>Eliminar selección
-                    </button>
-                </div>
-
-                {{-- Acciones principales --}}
-                <div class="ms-auto d-flex gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            data-bs-toggle="modal" data-bs-target="#modal-import-bulk"
-                            title="Importar lista de IDs">
-                        <i class="fas fa-file-import me-1"></i>Importar lista
-                    </button>
-                    <button type="button" class="btn btn-sm btn-primary"
-                            data-bs-toggle="modal" data-bs-target="#modal-add-single">
-                        <i class="fas fa-plus me-1"></i>Añadir ID
-                    </button>
-                    <div class="dropdown">
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                data-bs-toggle="dropdown" title="Más opciones">
-                            <i class="fas fa-ellipsis-vertical"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item small" href="#" id="btn-export-txt">
-                                    <i class="fas fa-download me-2 text-muted"></i>Descargar como .txt
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item small" href="#" id="btn-copy-ids">
-                                    <i class="fas fa-copy me-2 text-muted"></i>Copiar IDs al portapapeles
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item small" href="#"
-                                   data-bs-toggle="modal" data-bs-target="#modal-how-it-works">
-                                    <i class="fas fa-circle-info me-2 text-muted"></i>¿Cómo funciona?
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item small text-danger" href="#" id="btn-clear-all">
-                                    <i class="fas fa-ban me-2"></i>Limpiar toda la lista
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
             </div>
         </div>
 
-        {{-- Tabla --}}
-        <div class="card-body p-0">
+        {{-- Stats --}}
+        @php
+            $totalGroups   = $groups->count();
+            $withReason    = $groups->filter(fn ($g) => filled($g->reason))->count();
+            $withoutReason = $totalGroups - $withReason;
+            $lastAdded     = $groups->max('created_at');
+        @endphp
+        <div class="card-body border-bottom">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">Total excluidos</h6>
+                            <h2 class="fw-bold mb-1" id="stat-total">{{ $totalGroups }}</h2>
+                            <small class="text-muted">IDs en la lista</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">Con motivo</h6>
+                            <h2 class="fw-bold mb-1" id="stat-with-reason">{{ $withReason }}</h2>
+                            <small class="text-muted">Tienen motivo indicado</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">Sin motivo</h6>
+                            <h2 class="fw-bold mb-1" id="stat-without-reason">{{ $withoutReason }}</h2>
+                            <small class="text-muted">Sin motivo indicado</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light-secondary stat-card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title mb-2">Excluido más reciente</h6>
+                            <h2 class="fw-bold mb-1" id="stat-last-added">
+                                @if($lastAdded)
+                                    {{ $lastAdded->format('d/m/Y') }}
+                                @else
+                                    <span class="text-muted fs-5">—</span>
+                                @endif
+                            </h2>
+                            <small class="text-muted">Última exclusión añadida</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Filtros --}}
+        <div class="card-body border-bottom">
+            <div class="d-flex align-items-center gap-2">
+                <input type="search" id="search-input" class="form-control flex-grow-1" style="min-width:0;"
+                       placeholder="Buscar ID, descripción, motivo…" autocomplete="off">
+
+                <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                        data-bs-toggle="modal" data-bs-target="#modal-advanced-filters" title="Filtros avanzados">
+                    <i class="fas fa-filter"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary d-none"
+                          id="filter-count-badge" style="font-size:0.6rem;"></span>
+                </button>
+
+                <button type="button" class="btn btn-secondary d-none flex-shrink-0" id="btn-clear-filters" title="Limpiar filtros">
+                    <i class="fas fa-xmark"></i>
+                </button>
+
+                {{-- Acciones bulk (visibles al seleccionar) --}}
+                <div id="bulk-actions" class="d-none d-flex align-items-center gap-2 ms-auto">
+                    <span class="small text-muted" id="selected-count-label"></span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="btn-bulk-delete">
+                        Eliminar selección
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Listado --}}
+        <div class="card-body">
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1 fw-bold">IDs excluidos</h6>
+                    <p class="text-muted small mb-0" id="count-label" data-total="{{ $groups->count() }}">{{ $groups->count() }} ID(s) excluidos</p>
+                </div>
+            </div>
+
             <div id="groups-table-wrap">
                 @if($groups->isEmpty())
                     <div class="text-center py-5 text-muted" id="empty-state">
                         <i class="fas fa-ban fa-2x mb-3 d-block opacity-25"></i>
                         <p class="mb-1 fw-semibold">Sin grupos excluidos</p>
                         <p class="small mb-0 text-muted">
-                            Pulsa <strong>Añadir ID</strong> para registrar el primer grupo.
+                            Pulsa <strong>+ Añadir ID</strong> para registrar el primer grupo.
                         </p>
                     </div>
                 @else
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle" id="groups-table">
-                            <thead class="table-light">
+                        <table class="table search-table align-middle text-nowrap" id="groups-table">
+                            <thead class="header-item">
                                 <tr>
-                                    <th style="width:36px" class="ps-4">
+                                    <th width="3%">
                                         <input type="checkbox" class="form-check-input" id="check-all" title="Seleccionar todos">
                                     </th>
-                                    <th style="width:150px" class="sortable" data-col="erp_id">
-                                        ID ERP <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                                    </th>
-                                    <th class="sortable" data-col="label">
-                                        Descripción <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                                    </th>
-                                    <th class="sortable" data-col="reason">
-                                        Motivo <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                                    </th>
-                                    <th style="width:110px" class="sortable" data-col="date">
-                                        Añadido <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                                    </th>
-                                    <th style="width:56px"></th>
+                                    <th>ID ERP</th>
+                                    <th>Descripción</th>
+                                    <th>Motivo</th>
+                                    <th class="text-center">Añadido</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="groups-tbody">
@@ -147,19 +197,13 @@
                                     data-erp-id="{{ $group->erp_id }}"
                                     data-label="{{ strtolower($group->resolved_label ?? $group->label ?? '') }}"
                                     data-reason="{{ strtolower($group->reason ?? '') }}"
-                                    data-date="{{ $group->created_at->timestamp }}">
-                                    <td class="ps-4">
+                                    data-has-reason="{{ filled($group->reason) ? '1' : '0' }}"
+                                    data-date="{{ $group->created_at->format('Y-m-d') }}">
+                                    <td>
                                         <input type="checkbox" class="form-check-input row-check" value="{{ $group->id }}">
                                     </td>
                                     <td>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <code class="fw-semibold" style="font-size:.875rem;">{{ $group->erp_id }}</code>
-                                            <button type="button" class="btn btn-link p-0 btn-copy-id text-muted opacity-0 ms-1"
-                                                    data-value="{{ $group->erp_id }}" title="Copiar"
-                                                    style="font-size:.65rem; transition:opacity .15s;">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        </div>
+                                        <code class="fw-semibold" style="font-size:.875rem;">{{ $group->erp_id }}</code>
                                     </td>
                                     <td>
                                         <span class="editable-cell" style="cursor:pointer;"
@@ -182,15 +226,42 @@
                                             {{ $group->reason ?: '—' }}
                                         </span>
                                     </td>
-                                    <td class="small text-muted">
-                                        {{ $group->created_at->format('d/m/Y') }}
+                                    <td class="text-center">
+                                        <span class="text-muted small">{{ $group->created_at->format('d/m/Y') }}</span>
                                     </td>
-                                    <td class="pe-3 text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-destroy"
-                                                data-id="{{ $group->id }}" data-erp-id="{{ $group->erp_id }}"
-                                                title="Eliminar">
-                                            <i class="fas fa-trash-alt" style="font-size:.7rem;"></i>
-                                        </button>
+                                    <td class="text-center">
+                                        <div class="dropdown dropstart">
+                                            <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                                            </a>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item btn-copy-id" href="#" data-value="{{ $group->erp_id }}">
+                                                        Copiar ID
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item editable-cell" href="#"
+                                                       data-field="label" data-id="{{ $group->id }}"
+                                                       title="{{ $group->resolved_label ?? $group->label ?? '' }}">
+                                                        Editar descripción
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item editable-cell" href="#"
+                                                       data-field="reason" data-id="{{ $group->id }}"
+                                                       title="{{ $group->reason ?? '' }}">
+                                                        Editar motivo
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item btn-destroy" href="#"
+                                                       data-id="{{ $group->id }}" data-erp-id="{{ $group->erp_id }}">
+                                                        Quitar de la exclusión
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -213,14 +284,48 @@
      MODALES
 ══════════════════════════════════════════════════════════════════════ --}}
 
+{{-- Modal: Filtros avanzados --}}
+<div class="modal fade" id="modal-advanced-filters" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom">
+                <h6 class="modal-title fw-bold">Filtros avanzados</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Motivo</label>
+                    <select id="filter-has-reason" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="1">Con motivo</option>
+                        <option value="0">Sin motivo</option>
+                    </select>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Añadido desde</label>
+                        <input type="date" id="filter-date-from" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Añadido hasta</label>
+                        <input type="date" id="filter-date-to" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top gap-2">
+                <button type="button" class="btn btn-primary w-100 mb-1" id="btn-apply-filters">Aplicar filtros</button>
+                <button type="button" class="btn btn-secondary w-100" id="btn-clear-advanced-filters">Limpiar filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Modal: Añadir ID individual --}}
 <div class="modal fade" id="modal-add-single" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-bottom">
-                <h6 class="modal-title fw-bold">
-                    <i class="fas fa-plus-circle me-2 text-primary"></i>Añadir ID individual
-                </h6>
+                <h6 class="modal-title fw-bold">Añadir ID individual</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -249,9 +354,7 @@
             </div>
             <div class="modal-footer border-top gap-2">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary px-4" id="btn-add">
-                    <i class="fas fa-plus me-2"></i>Añadir
-                </button>
+                <button type="button" class="btn btn-primary px-4" id="btn-add">Añadir</button>
             </div>
         </div>
     </div>
@@ -262,9 +365,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-bottom">
-                <h6 class="modal-title fw-bold">
-                    <i class="fas fa-file-import me-2 text-primary"></i>Importar lista de IDs
-                </h6>
+                <h6 class="modal-title fw-bold">Importar lista de IDs</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -306,9 +407,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-bottom">
-                <h6 class="modal-title fw-bold">
-                    <i class="fas fa-circle-info me-2 text-info"></i>¿Cómo funciona la exclusión?
-                </h6>
+                <h6 class="modal-title fw-bold">¿Cómo funciona la exclusión?</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
@@ -422,11 +521,6 @@
 </div>
 
 <style>
-.sortable { cursor: pointer; user-select: none; }
-.sortable:hover { background-color: rgba(0,0,0,.04); }
-.sortable .fa-sort-up,
-.sortable .fa-sort-down { color: var(--bs-primary) !important; opacity: 1; }
-tr:hover .btn-copy-id { opacity: 1 !important; }
 .editable-cell:hover {
     text-decoration: underline;
     text-decoration-style: dashed;
@@ -445,29 +539,19 @@ const csrf   = document.querySelector('meta[name="csrf-token"]').content;
 let pendingDeleteId  = null;
 let pendingEditId    = null;
 let pendingEditField = null;
-let sortCol          = null;
-let sortDir          = 'asc';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function rowHtml(g) {
     const label     = g.label ? g.label : '<span class="text-muted fst-italic small">Sin descripción</span>';
     const reason    = g.reason || '—';
     const date      = new Date(g.created_at).toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const isoDate   = g.created_at.slice(0, 10);
     const labelVal  = (g.label  || '').toLowerCase();
     const reasonVal = (g.reason || '').toLowerCase();
-    const ts        = Math.floor(Date.parse(g.created_at) / 1000);
     return `<tr id="row-${g.id}" data-id="${g.id}" data-erp-id="${g.erp_id}"
-                data-label="${labelVal}" data-reason="${reasonVal}" data-date="${ts}">
-        <td class="ps-4"><input type="checkbox" class="form-check-input row-check" value="${g.id}"></td>
-        <td>
-            <div class="d-flex align-items-center gap-1">
-                <code class="fw-semibold" style="font-size:.875rem;">${g.erp_id}</code>
-                <button type="button" class="btn btn-link p-0 btn-copy-id text-muted opacity-0 ms-1"
-                        data-value="${g.erp_id}" title="Copiar" style="font-size:.65rem; transition:opacity .15s;">
-                    <i class="fas fa-copy"></i>
-                </button>
-            </div>
-        </td>
+                data-label="${labelVal}" data-reason="${reasonVal}" data-has-reason="${g.reason ? '1' : '0'}" data-date="${isoDate}">
+        <td><input type="checkbox" class="form-check-input row-check" value="${g.id}"></td>
+        <td><code class="fw-semibold" style="font-size:.875rem;">${g.erp_id}</code></td>
         <td>
             <span class="editable-cell" style="cursor:pointer;"
                   data-field="label" data-id="${g.id}" title="${g.label || ''}">${label}</span>
@@ -476,19 +560,64 @@ function rowHtml(g) {
             <span class="editable-cell small text-muted" style="cursor:pointer;"
                   data-field="reason" data-id="${g.id}" title="${g.reason || ''}">${reason}</span>
         </td>
-        <td class="small text-muted">${date}</td>
-        <td class="pe-3 text-end">
-            <button type="button" class="btn btn-sm btn-outline-danger btn-destroy"
-                    data-id="${g.id}" data-erp-id="${g.erp_id}" title="Eliminar">
-                <i class="fas fa-trash-alt" style="font-size:.7rem;"></i>
-            </button>
+        <td class="text-center"><span class="text-muted small">${date}</span></td>
+        <td class="text-center">
+            <div class="dropdown dropstart">
+                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-duotone fa-solid fa-ellipsis"></i>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item btn-copy-id" href="#" data-value="${g.erp_id}">Copiar ID</a></li>
+                    <li>
+                        <a class="dropdown-item editable-cell" href="#"
+                           data-field="label" data-id="${g.id}" title="${g.label || ''}">
+                            Editar descripción
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item editable-cell" href="#"
+                           data-field="reason" data-id="${g.id}" title="${g.reason || ''}">
+                            Editar motivo
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item btn-destroy" href="#" data-id="${g.id}" data-erp-id="${g.erp_id}">
+                            Quitar de la exclusión
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </td>
     </tr>`;
 }
 
 function updateCount(delta) {
-    const badge = document.getElementById('count-badge');
-    badge.textContent = Math.max(0, parseInt(badge.textContent || '0') + delta);
+    const label = document.getElementById('count-label');
+    const n = Math.max(0, parseInt(label.dataset.total || '0') + delta);
+    label.dataset.total = n;
+    applyFilter();
+    refreshStats();
+}
+
+function refreshStats() {
+    const rows = [...document.querySelectorAll('#groups-tbody tr')];
+    const total = rows.length;
+    const withReason = rows.filter(r => r.dataset.hasReason === '1').length;
+    const lastDate = rows.map(r => r.dataset.date).filter(Boolean).sort().pop();
+
+    document.getElementById('stat-total')?.replaceChildren(document.createTextNode(total));
+    document.getElementById('stat-with-reason')?.replaceChildren(document.createTextNode(withReason));
+    document.getElementById('stat-without-reason')?.replaceChildren(document.createTextNode(total - withReason));
+
+    const lastEl = document.getElementById('stat-last-added');
+    if (lastEl) {
+        if (lastDate) {
+            const [y, m, d] = lastDate.split('-');
+            lastEl.textContent = `${d}/${m}/${y}`;
+        } else {
+            lastEl.innerHTML = '<span class="text-muted fs-5">—</span>';
+        }
+    }
 }
 
 function getOrCreateTbody() {
@@ -497,32 +626,23 @@ function getOrCreateTbody() {
 
     document.getElementById('groups-table-wrap').innerHTML = `
         <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle" id="groups-table">
-                <thead class="table-light">
+            <table class="table search-table align-middle text-nowrap" id="groups-table">
+                <thead class="header-item">
                     <tr>
-                        <th style="width:36px" class="ps-4">
+                        <th width="3%">
                             <input type="checkbox" class="form-check-input" id="check-all" title="Seleccionar todos">
                         </th>
-                        <th style="width:150px" class="sortable" data-col="erp_id">
-                            ID ERP <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                        </th>
-                        <th class="sortable" data-col="label">
-                            Descripción <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                        </th>
-                        <th class="sortable" data-col="reason">
-                            Motivo <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                        </th>
-                        <th style="width:110px" class="sortable" data-col="date">
-                            Añadido <i class="fas fa-sort text-muted ms-1" style="font-size:.65rem;"></i>
-                        </th>
-                        <th style="width:56px"></th>
+                        <th>ID ERP</th>
+                        <th>Descripción</th>
+                        <th>Motivo</th>
+                        <th class="text-center">Añadido</th>
+                        <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="groups-tbody"></tbody>
             </table>
         </div>`;
 
-    bindSortHeaders();
     bindCheckAll();
     return document.getElementById('groups-tbody');
 }
@@ -532,39 +652,101 @@ function showEmptyState() {
         `<div class="text-center py-5 text-muted" id="empty-state">
             <i class="fas fa-ban fa-2x mb-3 d-block opacity-25"></i>
             <p class="mb-1 fw-semibold">Sin grupos excluidos</p>
-            <p class="small mb-0 text-muted">Pulsa <strong>Añadir ID</strong> para registrar el primer grupo.</p>
+            <p class="small mb-0 text-muted">Pulsa <strong>+ Añadir ID</strong> para registrar el primer grupo.</p>
         </div>`;
 }
 
-// ── Búsqueda / filtro ──────────────────────────────────────────────────────
+// ── Búsqueda / filtros avanzados ─────────────────────────────────────────────
 const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-const noResults   = document.getElementById('no-results');
+const noResults    = document.getElementById('no-results');
+
+let filterHasReason = '';
+let filterDateFrom  = '';
+let filterDateTo    = '';
+
+function hasActiveAdvancedFilters() {
+    return filterHasReason !== '' || filterDateFrom !== '' || filterDateTo !== '';
+}
 
 function applyFilter() {
     const term = (searchInput?.value || '').toLowerCase().trim();
-    searchClear?.classList.toggle('d-none', !term);
 
     const tbody = document.getElementById('groups-tbody');
-    if (!tbody) return;
+    const total = parseInt(document.getElementById('count-label')?.dataset.total || '0');
+
+    if (!tbody) {
+        const label = document.getElementById('count-label');
+        if (label) label.textContent = `${total} ID(s) excluidos`;
+        return;
+    }
 
     let visible = 0;
     tbody.querySelectorAll('tr').forEach(row => {
-        const match = !term
-            || (row.dataset.erpId  || '').includes(term)
-            || (row.dataset.label  || '').includes(term)
-            || (row.dataset.reason || '').includes(term);
+        const match = (!term
+                || (row.dataset.erpId  || '').includes(term)
+                || (row.dataset.label  || '').includes(term)
+                || (row.dataset.reason || '').includes(term))
+            && (filterHasReason === '' || row.dataset.hasReason === filterHasReason)
+            && (filterDateFrom === '' || row.dataset.date >= filterDateFrom)
+            && (filterDateTo === '' || row.dataset.date <= filterDateTo);
         row.style.display = match ? '' : 'none';
         if (match) visible++;
     });
 
-    noResults?.classList.toggle('d-none', visible > 0 || !term);
+    const anyFilter = !!term || hasActiveAdvancedFilters();
+    const label = document.getElementById('count-label');
+    if (label) {
+        label.textContent = anyFilter
+            ? `${visible} de ${total} ID(s) encontrados`
+            : `${total} ID(s) excluidos`;
+    }
+
+    noResults?.classList.toggle('d-none', visible > 0 || !anyFilter);
     const termEl = document.getElementById('no-results-term');
-    if (termEl) termEl.textContent = term;
+    if (termEl) termEl.textContent = term || '(filtros avanzados)';
+
+    // Badge del botón de filtro + botón "limpiar filtros"
+    const activeCount = (filterHasReason !== '' ? 1 : 0) + (filterDateFrom !== '' ? 1 : 0) + (filterDateTo !== '' ? 1 : 0);
+    const badge = document.getElementById('filter-count-badge');
+    if (badge) {
+        badge.textContent = activeCount;
+        badge.classList.toggle('d-none', activeCount === 0);
+    }
+    document.getElementById('btn-clear-filters')?.classList.toggle('d-none', !anyFilter);
 }
 
 searchInput?.addEventListener('input', applyFilter);
-searchClear?.addEventListener('click', () => { searchInput.value = ''; applyFilter(); searchInput.focus(); });
+
+// ── Filtros avanzados (modal) ────────────────────────────────────────────────
+document.getElementById('modal-advanced-filters')?.addEventListener('show.bs.modal', () => {
+    document.getElementById('filter-has-reason').value = filterHasReason;
+    document.getElementById('filter-date-from').value  = filterDateFrom;
+    document.getElementById('filter-date-to').value    = filterDateTo;
+});
+
+document.getElementById('btn-apply-filters')?.addEventListener('click', () => {
+    filterHasReason = document.getElementById('filter-has-reason').value;
+    filterDateFrom  = document.getElementById('filter-date-from').value;
+    filterDateTo    = document.getElementById('filter-date-to').value;
+    applyFilter();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-advanced-filters')).hide();
+});
+
+document.getElementById('btn-clear-advanced-filters')?.addEventListener('click', () => {
+    filterHasReason = '';
+    filterDateFrom  = '';
+    filterDateTo    = '';
+    applyFilter();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-advanced-filters')).hide();
+});
+
+document.getElementById('btn-clear-filters')?.addEventListener('click', () => {
+    searchInput.value = '';
+    filterHasReason = '';
+    filterDateFrom  = '';
+    filterDateTo    = '';
+    applyFilter();
+});
 
 // ── Contador IDs en textarea de importación ───────────────────────────────
 const bulkIdsInput  = document.getElementById('input-bulk-ids');
@@ -605,46 +787,6 @@ document.getElementById('modal-add-single')?.addEventListener('shown.bs.modal', 
     document.getElementById('input-erp-id').focus();
 });
 
-// ── Ordenar columnas ───────────────────────────────────────────────────────
-function bindSortHeaders() {
-    document.querySelectorAll('.sortable').forEach(th => {
-        th.addEventListener('click', () => {
-            const col = th.dataset.col;
-            sortDir = (sortCol === col && sortDir === 'asc') ? 'desc' : 'asc';
-            sortCol = col;
-
-            document.querySelectorAll('.sortable i').forEach(i => {
-                i.className = 'fas fa-sort text-muted ms-1';
-                i.style.fontSize = '.65rem';
-            });
-            const icon = th.querySelector('i');
-            if (icon) {
-                icon.className = `fas fa-sort-${sortDir === 'asc' ? 'up' : 'down'} ms-1`;
-                icon.style.fontSize = '.65rem';
-            }
-            sortTable(col, sortDir);
-        });
-    });
-}
-
-function sortTable(col, dir) {
-    const tbody = document.getElementById('groups-tbody');
-    if (!tbody) return;
-    [...tbody.querySelectorAll('tr')]
-        .sort((a, b) => {
-            let va, vb;
-            if (col === 'erp_id') { va = parseInt(a.dataset.erpId); vb = parseInt(b.dataset.erpId); }
-            else if (col === 'date') { va = parseInt(a.dataset.date); vb = parseInt(b.dataset.date); }
-            else { va = a.dataset[col] || ''; vb = b.dataset[col] || ''; }
-            if (va < vb) return dir === 'asc' ? -1 :  1;
-            if (va > vb) return dir === 'asc' ?  1 : -1;
-            return 0;
-        })
-        .forEach(r => tbody.appendChild(r));
-}
-
-bindSortHeaders();
-
 // ── Selección múltiple ─────────────────────────────────────────────────────
 function bindCheckAll() {
     document.getElementById('check-all')?.addEventListener('change', e => {
@@ -671,7 +813,7 @@ function updateBulkBar() {
 document.addEventListener('click', e => {
     const btn = e.target.closest('.btn-copy-id');
     if (!btn) return;
-    e.stopPropagation();
+    e.preventDefault();
     navigator.clipboard.writeText(btn.dataset.value)
         .then(() => toastr.info(`ID ${btn.dataset.value} copiado.`, '', { timeOut: 1500 }));
 });
@@ -705,7 +847,7 @@ document.getElementById('btn-export-txt')?.addEventListener('click', e => {
 // ── Limpiar toda la lista ─────────────────────────────────────────────────
 document.getElementById('btn-clear-all')?.addEventListener('click', e => {
     e.preventDefault();
-    const total = parseInt(document.getElementById('count-badge')?.textContent || '0');
+    const total = parseInt(document.getElementById('count-label')?.dataset.total || '0');
     if (total === 0) { toastr.warning('La lista ya está vacía.'); return; }
     const el = document.getElementById('modal-clear-all-count');
     if (el) el.textContent = `los ${total}`;
@@ -721,7 +863,9 @@ document.getElementById('btn-confirm-clear-all')?.addEventListener('click', func
     const deleteNext = remaining => {
         if (!remaining.length) {
             showEmptyState();
-            document.getElementById('count-badge').textContent = '0';
+            const label = document.getElementById('count-label');
+            if (label) { label.dataset.total = '0'; applyFilter(); }
+            refreshStats();
             bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-confirm-clear-all')).hide();
             toastr.success('Lista limpiada correctamente.');
             $btn.prop('disabled', false).html('Sí, limpiar todo');
@@ -810,7 +954,7 @@ document.getElementById('btn-add')?.addEventListener('click', function () {
         }
     })
     .catch(() => toastr.error('Error de red'))
-    .finally(() => $btn.prop('disabled', false).html('<i class="fas fa-plus me-2"></i>Añadir'));
+    .finally(() => $btn.prop('disabled', false).html('Añadir'));
 });
 
 // Enter en campos del modal de añadir
@@ -852,6 +996,7 @@ document.getElementById('btn-bulk')?.addEventListener('click', function () {
 document.addEventListener('click', e => {
     const btn = e.target.closest('.btn-destroy');
     if (!btn) return;
+    e.preventDefault();
     pendingDeleteId = parseInt(btn.dataset.id);
     document.getElementById('modal-erp-id-label').textContent = btn.dataset.erpId;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-confirm-delete')).show();
@@ -886,6 +1031,7 @@ document.getElementById('btn-confirm-delete')?.addEventListener('click', functio
 document.addEventListener('click', e => {
     const cell = e.target.closest('.editable-cell');
     if (!cell) return;
+    e.preventDefault();
 
     pendingEditId    = parseInt(cell.dataset.id);
     pendingEditField = cell.dataset.field;
@@ -909,27 +1055,34 @@ document.getElementById('btn-confirm-edit')?.addEventListener('click', function 
     const body    = { [pendingEditField]: value };
 
     fetch(routes.update.replace(':id', pendingEditId), {
-        method: 'PUT',
+        method: 'POST',
         headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     })
     .then(r => r.json())
     .then(data => {
         if (!data.success) { toastr.error(data.message || 'Error'); return; }
-        const row  = document.getElementById('row-' + pendingEditId);
-        const cell = row?.querySelector(`.editable-cell[data-field="${pendingEditField}"]`);
-        if (cell) {
+        const row = document.getElementById('row-' + pendingEditId);
+        row?.querySelectorAll(`.editable-cell[data-field="${pendingEditField}"]`).forEach(cell => {
             cell.title = value || '';
+            if (!cell.closest('.dropdown-menu')) {
+                if (pendingEditField === 'label') {
+                    cell.innerHTML = value ? value : '<span class="text-muted fst-italic small">Sin descripción</span>';
+                } else {
+                    cell.textContent = value || '—';
+                }
+            }
+        });
+        if (row) {
             if (pendingEditField === 'label') {
-                cell.innerHTML = value
-                    ? value
-                    : '<span class="text-muted fst-italic small">Sin descripción</span>';
-                if (row) row.dataset.label = (value || '').toLowerCase();
+                row.dataset.label = (value || '').toLowerCase();
             } else {
-                cell.textContent = value || '—';
-                if (row) row.dataset.reason = (value || '').toLowerCase();
+                row.dataset.reason = (value || '').toLowerCase();
+                row.dataset.hasReason = value ? '1' : '0';
             }
         }
+        applyFilter();
+        refreshStats();
         toastr.success('Guardado.');
         bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-edit-cell')).hide();
     })

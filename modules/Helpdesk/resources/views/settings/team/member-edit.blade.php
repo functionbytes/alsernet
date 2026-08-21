@@ -67,7 +67,7 @@
 }
 
 .priority-btn.btn-outline-secondary:hover {
-    background-color: #f8f9fa;
+    background-color: #f5f6f8;
     color: #6c757d;
 }
 

@@ -128,7 +128,6 @@
     /* ================================================================
        TYPOGRAPHY
        ================================================================ */
-
     --font-family:          "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono:            "SF Mono", "Fira Code", "Roboto Mono", monospace;
 
@@ -138,7 +137,7 @@
     --text-base:            14px;
     --text-md:              16px;
     --text-lg:              18px;
-    --text-xl:              22px;
+    --text-xl: 18px;
     --text-2xl:             28px;
     --text-3xl:             36px;
 
@@ -157,7 +156,6 @@
     /* ================================================================
        SPACING — 4px base, Bootstrap-like scale
        ================================================================ */
-
     --space-0:     0;
     --space-px:    1px;
     --space-0-5:   2px;
@@ -182,7 +180,6 @@
     /* ================================================================
        BORDER RADIUS
        ================================================================ */
-
     --radius-sm:            4px;      /* small badges, tags */
     --radius-input:         6px;      /* inputs, buttons, alerts */
     --radius-card:          12px;     /* cards, modals, dropdowns */
@@ -192,7 +189,6 @@
     /* ================================================================
        SHADOWS — Mailchimp: very subtle, almost invisible
        ================================================================ */
-
     --shadow-sm:            0 1px 2px rgba(0, 0, 0, 0.03);
     --shadow-card:          0 1px 2px rgba(0, 0, 0, 0.04);
     --shadow-dropdown:      0 2px 8px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.06);
@@ -201,7 +197,6 @@
     /* ================================================================
        LAYOUT
        ================================================================ */
-
     --input-height:         44px;
     --sidebar-width:        240px;
     --sidebar-collapsed:    60px;
@@ -211,7 +206,6 @@
     /* ================================================================
        TRANSITIONS
        ================================================================ */
-
     --transition-fast:      150ms ease;
     --transition-base:      250ms ease;
     --transition-slow:      350ms ease;
@@ -219,7 +213,6 @@
     /* ================================================================
        Z-INDEX
        ================================================================ */
-
     --z-dropdown:           100;
     --z-sidebar:            200;
     --z-topbar:             300;
@@ -373,9 +366,9 @@ html.mc-scheme-transitioning *,
 html.mc-scheme-transitioning *::before,
 html.mc-scheme-transitioning *::after {
     transition: color 300ms ease,
-                background-color 300ms ease,
-                border-color 300ms ease,
-                box-shadow 300ms ease !important;
+    background-color 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease !important;
 }
 
 /* --- Blue / Ocean --- */

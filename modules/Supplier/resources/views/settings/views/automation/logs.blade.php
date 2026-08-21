@@ -6,6 +6,40 @@
     @include('core::components.card', ['title' => 'Logs del Sistema de Automatización'])
 @endsection
 
+@push('styles')
+    <style>
+        .automation-log-search { width: 220px; }
+        .automation-log-output {
+            max-height: 600px;
+            overflow-y: auto;
+            background-color: #f5f6f8;
+        }
+        .automation-log-pre {
+            color: #000;
+            margin: 0;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+        }
+        .automation-log-footer {
+            background: #f5f6f8;
+            border-top: 1px solid #f5f6f8;
+        }
+        .automation-log-meta { color: #6b737b; }
+        .log-status-ok { color: #000; }
+        .log-status-pending { color: #ffc107; }
+        .log-ts { color: #a9dc76; }
+        .log-ctx { color: #636e7b; }
+        .log-level { font-weight: bold; }
+        .log-level-error { color: #ff6b6b; }
+        .log-level-warning { color: #ffd43b; }
+        .log-level-info { color: #74c0fc; }
+        .log-level-debug { color: #a9dc76; }
+        .log-level-default { color: #adb5bd; }
+        .log-highlight { background: #ffd43b44; color: #ffd43b; }
+    </style>
+@endpush
+
 @section('content')
     <div class="widget-content searchable-container list">
 
@@ -32,7 +66,7 @@
                                 <li><a href="#" class="dropdown-item" id="refreshLogsBtn">Refrescar</a></li>
                                 <li><a href="#" class="dropdown-item" id="downloadLogsBtn">Descargar logs</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a href="#" class="dropdown-item text-danger" id="clearLogsBtn">Limpiar vista</a></li>
+                                <li><a href="#" class="dropdown-item" id="clearLogsBtn">Limpiar vista</a></li>
                             </ul>
                         </div>
                     </div>
@@ -127,26 +161,23 @@
                         <span class="text-muted fw-normal ms-1" id="logLineCount">— registros</span>
                     </span>
                     <div class="d-flex gap-2 align-items-center">
-                        <input type="text" class="form-control form-control-sm" style="width:220px;"
+                        <input type="text" class="form-control automation-log-search"
                                id="logSearch" placeholder="Buscar en logs..." autocomplete="off">
                         <small class="text-muted text-nowrap" id="logLastUpdate"></small>
                     </div>
                 </div>
 
                 <div class="rounded overflow-hidden border">
-                    <div id="logsContentWrapper"
-                         style="max-height:600px; overflow-y:auto; background-color:#1a1a1a;">
+                    <div id="logsContentWrapper" class="automation-log-output">
                         <pre id="logsContent"
-                             class="p-3 mb-0"
-                             style="color:#cdd9e5; margin:0; font-size:12px; font-family:'Courier New',monospace; line-height:1.6;">Cargando logs del sistema...</pre>
+                             class="p-3 mb-0 automation-log-pre">Cargando logs del sistema...</pre>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center px-3 py-2"
-                         style="background:#111; border-top:1px solid #2a2a2a;">
-                        <small style="color:#6b737b;">
-                            <i class="fas fa-circle me-1" id="logStatusIcon" style="color:#4caf50;"></i>
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 automation-log-footer">
+                        <small class="automation-log-meta">
+                            <i class="fas fa-circle me-1 log-status-pending" id="logStatusIcon"></i>
                             <span id="logStatusText">Cargando...</span>
                         </small>
-                        <small style="color:#6b737b;">Auto-refresh cada 30s</small>
+                        <small class="automation-log-meta">Auto-refresh cada 30s</small>
                     </div>
                 </div>
             </div>
@@ -281,14 +312,14 @@ $(document).ready(function () {
         const lines = [];
         filtered.forEach(function (log, idx) {
             const num  = showNumbers ? String(idx + 1).padStart(4, ' ') + '  ' : '';
-            const ts   = log.timestamp ? `<span style="color:#a9dc76;">${escapeHtml(log.timestamp)}</span>  ` : '';
+            const ts   = log.timestamp ? `<span class="log-ts">${escapeHtml(log.timestamp)}</span>  ` : '';
             const lvl  = levelBadge(log.level);
             const msg  = highlight(escapeHtml(log.message), search);
             lines.push(num + ts + lvl + '  ' + msg);
 
             if (log.context) {
                 const ctx = highlight(escapeHtml(log.context), search);
-                lines.push((showNumbers ? '         ' : '') + `<span style="color:#636e7b;">${ctx}</span>`);
+                lines.push((showNumbers ? '         ' : '') + `<span class="log-ctx">${ctx}</span>`);
             }
             lines.push('');
         });
@@ -304,16 +335,16 @@ $(document).ready(function () {
     }
 
     function levelBadge(level) {
-        const colors = { error: '#ff6b6b', warning: '#ffd43b', info: '#74c0fc', debug: '#a9dc76' };
-        const color  = colors[level] || '#adb5bd';
-        const label  = (level || 'log').toUpperCase().padEnd(7, ' ');
-        return `<span style="color:${color}; font-weight:bold;">${label}</span>`;
+        const classes = { error: 'log-level-error', warning: 'log-level-warning', info: 'log-level-info', debug: 'log-level-debug' };
+        const cls   = classes[level] || 'log-level-default';
+        const label = (level || 'log').toUpperCase().padEnd(7, ' ');
+        return `<span class="log-level ${cls}">${label}</span>`;
     }
 
     function highlight(text, search) {
         if (!search) { return text; }
         const rx = new RegExp('(' + escapeRegex(search) + ')', 'gi');
-        return text.replace(rx, '<mark style="background:#ffd43b44; color:#ffd43b;">$1</mark>');
+        return text.replace(rx, '<mark class="log-highlight">$1</mark>');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────
@@ -327,7 +358,7 @@ $(document).ready(function () {
 
     function setStatus(text, ok) {
         $('#logStatusText').text(text);
-        $('#logStatusIcon').css('color', ok ? '#4caf50' : '#ffc107');
+        $('#logStatusIcon').toggleClass('log-status-ok', ok).toggleClass('log-status-pending', !ok);
     }
 
     function scrollToBottom() {

@@ -487,6 +487,28 @@
         var HSM_CATEGORY_LABELS = { marketing: 'Marketing', utility: 'Utility', authentication: 'Auth' };
         var HSM_HEADER_ICONS = { image: 'fa-image', video: 'fa-video', document: 'fa-file' };
 
+        // Normaliza "en_US"/"pt_BR"/"ES" -> "en"/"pt"/"es" para comparar con
+        // customer.language (que solo guarda es/en/fr/de/pt/it, sin región).
+        function hsmLangPrefix(lang) {
+            return (lang || '').toString().split(/[_-]/)[0].toLowerCase();
+        }
+
+        // Reordena: primero las plantillas cuyo idioma registrado en Meta
+        // coincide con el idioma del contacto (evita elegir por error una
+        // plantilla en otro idioma — Meta rechaza el envio con error 132001
+        // si el idioma no coincide con el registrado para esa plantilla).
+        // Si ninguna coincide, se deja el orden original (no hay nada mejor
+        // que ofrecer) y el badge ambar avisa igual en cada fila.
+        function sortHsmByCustomerLanguage(list, customerLang) {
+            if (!customerLang) return list;
+            var matched = [];
+            var rest = [];
+            list.forEach(function (t) {
+                (hsmLangPrefix(t.language) === customerLang ? matched : rest).push(t);
+            });
+            return matched.length ? matched.concat(rest) : list;
+        }
+
         function renderHsmList(list, query) {
             var $list = $('#bv-hsm-list');
             $list.find('.bv-hsm-row, .bv-hsm-list-status').remove();
@@ -502,17 +524,26 @@
                 }
                 return;
             }
-            list.forEach(function (t, i) {
+            var customerLang = hsmLangPrefix(($('.bv-right').data('customer-language') || '').toString());
+            var sorted = sortHsmByCustomerLanguage(list, customerLang);
+            sorted.forEach(function (t, i) {
                 var catLabel = HSM_CATEGORY_LABELS[t.category] || '';
                 var catBadge = catLabel
                     ? '<span class="bv-hsm-badge-category bv-hsm-badge-category--' + t.category + '">' + catLabel + '</span>'
                     : '';
-                var html = '<div class="bv-hsm-row' + (i === 0 ? ' on' : '') + '" data-hsm-id="' + t.id + '">' +
+                var tLang = hsmLangPrefix(t.language);
+                var isMismatch = customerLang && tLang && tLang !== customerLang;
+                var langBadge = tLang
+                    ? '<span class="bv-hsm-badge-lang' + (isMismatch ? ' bv-hsm-badge-lang--mismatch' : '') + '"' +
+                        (isMismatch ? ' title="El contacto usa \'' + escapeHtml(customerLang) + '\', esta plantilla esta registrada en \'' + escapeHtml(tLang) + '\'">' : '>') +
+                        tLang.toUpperCase() + '</span>'
+                    : '';
+                var html = '<div class="bv-hsm-row' + (i === 0 ? ' on' : '') + (isMismatch ? ' bv-hsm-row--lang-mismatch' : '') + '" data-hsm-id="' + t.id + '">' +
                     '<div class="nm">' + escapeHtml(t.name) + '</div>' +
-                    '<div class="meta">' + catBadge + '<span class="bv-hsm-badge-approved">APPROVED</span></div></div>';
+                    '<div class="meta">' + langBadge + catBadge + '<span class="bv-hsm-badge-approved">APPROVED</span></div></div>';
                 $list.append(html);
             });
-            if (list.length) selectHsmTemplate(list[0].id);
+            if (sorted.length) selectHsmTemplate(sorted[0].id);
         }
 
         var HSM_GREETING_RE = /\b(hola|hi|hello)\s*\{\{(\d+)\}\}/i;
@@ -2835,20 +2866,33 @@
                 });
         });
 
+        // Guarda el modo/idiomas de traducción en sesión (por pestaña, no
+        // persiste en servidor — ver referencia en el panel "Traducir") y
+        // traduce las burbujas ya visibles si el modo lo pide. Extraído del
+        // handler del panel para que el modal "Detectar idioma" (sugerencia
+        // automática, ver detect-lang.blade.php) pueda activar la traducción
+        // sin duplicar esta lógica ni depender de un endpoint que no existe.
+        function applyTranslationSettings(mode, from, to) {
+            mode = mode || 'incoming';
+            from = from || 'auto';
+            to = to || 'es';
+            sessionStorage.setItem('inbox_translation_settings', JSON.stringify({ mode: mode, from: from, to: to }));
+            if (mode === 'incoming' || mode === 'both') {
+                translateAllIncomingBubbles(to);
+            }
+        }
+        window.bvApplyTranslationSettings = applyTranslationSettings;
+
         // ─── Panel Traducir: "Activar traducción" ────────────────────
         $(document).on('click', '#bv-translate-panel .bv-panel-btn-confirm', function () {
             const mode = $('.bv-tp-mode.on').data('mode') || 'incoming';
             const from = $('#bv-tp-from').val() || 'auto';
             const to = $('#bv-tp-to').val() || 'es';
 
-            sessionStorage.setItem('inbox_translation_settings', JSON.stringify({ mode, from, to }));
+            applyTranslationSettings(mode, from, to);
 
             $('#bv-translate-panel').removeClass('on');
             activateReplyTab();
-
-            if (mode === 'incoming' || mode === 'both') {
-                translateAllIncomingBubbles(to);
-            }
         });
 
         // ─── Traducción de burbuja (reusable desde context menu) ────────

@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="{{ themeAsset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ themeAsset('css/fontawesome.min.css') }}">
     <style>
-        body { background: #f8f9fa; }
+        body { background: #f5f6f8; }
         .helpcenter-hero { background: #90bb13; color: #fff; padding: 64px 0 48px; }
         .helpcenter-hero input { border: none; border-radius: 30px; padding: 12px 20px; font-size: 1rem; }
         .helpcenter-hero .btn { border-radius: 30px; }

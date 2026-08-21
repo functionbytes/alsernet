@@ -245,7 +245,7 @@
                                         </td>
 
                                         <td class="text-center">
-                                            <span class="badge bg-light-secondary text-info">{{ $source->priority }}</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ $source->priority }}</span>
                                         </td>
 
                                         <td>

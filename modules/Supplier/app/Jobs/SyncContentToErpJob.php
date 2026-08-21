@@ -38,6 +38,7 @@ class SyncContentToErpJob implements ShouldQueue
 
         if (! $content) {
             Log::warning('SyncContentToErpJob: content not found', ['uid' => $this->contentUid]);
+
             return;
         }
 
@@ -49,15 +50,22 @@ class SyncContentToErpJob implements ShouldQueue
 
         if (! $erpId || ! $erpUrl) {
             Log::warning('SyncContentToErpJob: missing erpId or erpUrl', ['uid' => $this->contentUid]);
+
             return;
         }
 
-        $response = Http::timeout(15)->asForm()->post($erpUrl, [
-            'idmodelo'    => (string) $erpId,
-            'nombre'      => $content->generated_name ?? $content->supplierProduct?->name ?? '',
-            'descripcion' => $content->long_description ?? '',
-            'publicar'    => 0,
-        ]);
+        // El servidor de escritura del ERP usa name-based virtual hosting: sin forzar
+        // el header Host exacto (sin puerto), Apache enruta a un vhost por defecto que
+        // responde 200/404 falsos según la ruta en vez del vhost real de api-gestion.
+        $response = Http::timeout(15)
+            ->withHeaders(['Host' => parse_url($erpUrl, PHP_URL_HOST)])
+            ->asForm()
+            ->post($erpUrl, [
+                'idmodelo' => (string) $erpId,
+                'nombre' => $content->generated_name ?? $content->supplierProduct?->name ?? '',
+                'descripcion' => $content->long_description ?? '',
+                'publicar' => 0,
+            ]);
 
         if (! $response->successful()) {
             throw new \RuntimeException(
@@ -69,7 +77,7 @@ class SyncContentToErpJob implements ShouldQueue
 
         Log::info('SyncContentToErpJob: description pushed to ERP', [
             'content_uid' => $this->contentUid,
-            'erp_id'      => $erpId,
+            'erp_id' => $erpId,
         ]);
     }
 
@@ -77,7 +85,7 @@ class SyncContentToErpJob implements ShouldQueue
     {
         Log::error('SyncContentToErpJob permanently failed', [
             'content_uid' => $this->contentUid,
-            'error'       => $e->getMessage(),
+            'error' => $e->getMessage(),
         ]);
     }
 }

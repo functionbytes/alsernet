@@ -2,8 +2,12 @@
 
 namespace Modules\HelpdeskTickets\Tests\Unit\Services;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketStatus;
@@ -177,15 +181,20 @@ class AutomationEngineTest extends TestCase
 
     public function test_assign_user_action_sets_assignee(): void
     {
+        // Antes aceptaba cualquier ID (incluso 999, un usuario inexistente) y
+        // lo escribía a ciegas — mismo hueco de validación que StoreTicketRequest/
+        // UpdateTicketRequest (solo exists:users,id, sin exigir rol de agente).
+        // Ahora resuelve un User real vía assignTo(), que es lo que permite
+        // disparar TicketAssigned con el agente correcto (ver test siguiente).
+        $agent = User::factory()->create();
         $ticket = $this->createTicket(['assignee_id' => null]);
-        $agentId = 999;
 
         $automation = Automation::create([
             'name' => 'Auto-assign ticket',
             'trigger_event' => 'ticket.created',
             'conditions' => [],
             'actions' => [
-                ['type' => 'assign_user', 'value' => $agentId],
+                ['type' => 'assign_user', 'value' => $agent->id],
             ],
             'order' => 1,
             'is_active' => true,
@@ -195,7 +204,104 @@ class AutomationEngineTest extends TestCase
 
         $this->engine->handle('ticket.created', $ticket);
 
-        $this->assertEquals($agentId, $ticket->fresh()->assignee_id);
+        $this->assertEquals($agent->id, $ticket->fresh()->assignee_id);
+    }
+
+    /**
+     * Bug real: la acción assign_user hacía update() directo, sin disparar
+     * TicketAssigned — así que NotifyAgentOfAssignment y
+     * RunAutomationsOnTicketAssigned nunca corrían para una asignación hecha
+     * por regla, a diferencia de la asignación manual/AssignmentService.
+     */
+    public function test_assign_user_action_dispatches_ticket_assigned_event(): void
+    {
+        Event::fake([TicketAssigned::class]);
+
+        $agent = User::factory()->create();
+        $ticket = $this->createTicket(['assignee_id' => null]);
+
+        $automation = Automation::create([
+            'name' => 'Auto-assign ticket',
+            'trigger_event' => 'ticket.created',
+            'conditions' => [],
+            'actions' => [
+                ['type' => 'assign_user', 'value' => $agent->id],
+            ],
+            'order' => 1,
+            'is_active' => true,
+            'run_count' => 0,
+        ]);
+        $this->automationIds[] = $automation->id;
+
+        $this->engine->handle('ticket.created', $ticket);
+
+        Event::assertDispatched(TicketAssigned::class, fn (TicketAssigned $event) => $event->ticket->is($ticket) && $event->agent->is($agent));
+    }
+
+    /**
+     * assign_user con un ID inexistente ya no revienta ni asigna un fantasma:
+     * simplemente no hace nada (mismo criterio defensivo que
+     * AutomationEngine::notifyAgent(), que ya comprobaba $agent antes de notificar).
+     */
+    public function test_assign_user_action_with_unknown_user_id_is_a_no_op(): void
+    {
+        $ticket = $this->createTicket(['assignee_id' => null]);
+
+        $automation = Automation::create([
+            'name' => 'Auto-assign to unknown user',
+            'trigger_event' => 'ticket.created',
+            'conditions' => [],
+            'actions' => [
+                ['type' => 'assign_user', 'value' => 999999],
+            ],
+            'order' => 1,
+            'is_active' => true,
+            'run_count' => 0,
+        ]);
+        $this->automationIds[] = $automation->id;
+
+        $this->engine->handle('ticket.created', $ticket);
+
+        $this->assertNull($ticket->fresh()->assignee_id);
+    }
+
+    /**
+     * Bug real: la acción close hacía update(['closed_at' => now()]) sin
+     * tocar status_id — mismo bug ya arreglado para el botón manual "Cerrar
+     * ticket" (ver docblock de Ticket::close()). El ticket quedaba con
+     * closed_at pero seguía "Abierto" en cualquier listado (el estado visible
+     * se deriva de status_id). Tampoco disparaba TicketClosed, así que la
+     * encuesta CSAT automática no se enviaba desde un cierre por regla.
+     */
+    public function test_close_action_sets_closed_status_and_dispatches_ticket_closed_event(): void
+    {
+        Event::fake([TicketClosed::class]);
+
+        $closedStatus = TicketStatus::firstOrCreate(
+            ['slug' => 'closed'],
+            ['name' => 'Closed', 'color' => '#6c757d', 'is_open' => false, 'order' => 8]
+        );
+        $ticket = $this->createTicket();
+
+        $automation = Automation::create([
+            'name' => 'Auto-close ticket',
+            'trigger_event' => 'ticket.created',
+            'conditions' => [],
+            'actions' => [
+                ['type' => 'close'],
+            ],
+            'order' => 1,
+            'is_active' => true,
+            'run_count' => 0,
+        ]);
+        $this->automationIds[] = $automation->id;
+
+        $this->engine->handle('ticket.created', $ticket);
+
+        $fresh = $ticket->fresh();
+        $this->assertNotNull($fresh->closed_at);
+        $this->assertEquals($closedStatus->id, $fresh->status_id);
+        Event::assertDispatched(TicketClosed::class, fn (TicketClosed $event) => $event->ticket->is($ticket));
     }
 
     public function test_inactive_automation_is_ignored(): void

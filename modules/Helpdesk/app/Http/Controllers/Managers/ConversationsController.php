@@ -62,6 +62,7 @@ use Modules\Helpdesk\Services\HsmConversationService;
 use Modules\Helpdesk\Services\Macros\MacroExecutorService;
 use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\Mailer\Models\MailerLang;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Services\MailerTemplateRendererService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -626,6 +627,24 @@ class ConversationsController extends Controller
     }
 
     /**
+     * Resuelve el lang_id de Mailer (langs.id) a partir del idioma guardado
+     * en el contacto (helpdesk_customers.language, ej. "es"/"en"/"pt"). Si el
+     * idioma del cliente no tiene fila en `langs` (iso_code), devuelve null y
+     * MailerTemplateRendererService/translate() caen solos al idioma global
+     * por defecto — nunca rompe el envío, solo deja de traducir.
+     */
+    private function resolveMailerLangIdForCustomer(?Customer $customer): ?int
+    {
+        $locale = $customer?->language;
+
+        if (blank($locale)) {
+            return null;
+        }
+
+        return MailerLang::query()->iso($locale)->value('id');
+    }
+
+    /**
      * List enabled Mailer templates for the helpdesk module.
      */
     public function emailTemplates(): JsonResponse
@@ -680,11 +699,12 @@ class ConversationsController extends Controller
             'COMPANY_NAME' => config('app.name'),
         ];
 
-        $htmlBody = MailerTemplateRendererService::renderEmailTemplate($template, $variables);
+        $langId = $this->resolveMailerLangIdForCustomer($conversation->customer);
+        $htmlBody = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
         $plainBody = strip_tags(html_entity_decode(preg_replace('/<br\s*\/?>/i', "\n", $htmlBody)));
         $plainBody = trim(preg_replace('/[ \t]+/', ' ', preg_replace('/\n{3,}/', "\n\n", $plainBody)));
 
-        $subject = MailerTemplateRendererService::replaceVariables($template->subject ?? '', $variables);
+        $subject = MailerTemplateRendererService::replaceVariables($template->translate($langId)?->subject ?? $template->subject ?? '', $variables);
 
         return response()->json([
             'subject' => $subject,
@@ -776,7 +796,11 @@ class ConversationsController extends Controller
                     'INBOX_NAME' => $conversation->inbox?->name ?? '',
                     'COMPANY_NAME' => config('app.name'),
                 ];
-                $bodyHtml = MailerTemplateRendererService::renderEmailTemplate($template, $variables);
+                $bodyHtml = MailerTemplateRendererService::renderEmailTemplate(
+                    $template,
+                    $variables,
+                    $this->resolveMailerLangIdForCustomer($customer)
+                );
                 $bodyPlain = strip_tags(html_entity_decode(preg_replace('/<br\s*\/?>/i', "\n", $bodyHtml)));
                 $bodyPlain = trim(preg_replace('/[ \t]+/', ' ', preg_replace('/\n{3,}/', "\n\n", $bodyPlain)));
             } else {
@@ -2414,6 +2438,10 @@ class ConversationsController extends Controller
                 'id' => $macro->id,
                 'name' => $macro->name,
                 'description' => $macro->description,
+                // null = generico (aplica a cualquier idioma); el picker del
+                // composer lo usa para ordenar/marcar coincidencia con el
+                // idioma del contacto (helpdesk_customers.language).
+                'language' => $macro->language,
                 'usageCount' => (int) $macro->usage_count,
                 'usados' => (int) $macro->usage_count > 0,
                 'lastUsedAt' => $macro->last_used_at?->toIso8601String(),

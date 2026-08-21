@@ -418,7 +418,7 @@ NETWORK_SHARED_URL=${APP_URL}/network</code>
         }
 
         .comment-row:hover {
-            background-color: #f8f9fa;
+            background-color: #f5f6f8;
         }
     </style>
 @endpush

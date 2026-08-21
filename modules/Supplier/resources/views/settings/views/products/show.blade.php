@@ -4,7 +4,7 @@
 
 @push('css')
     <style>
-        .btn-validate-green { background-color: #7cb01a; border-color: #7cb01a; border-radius: 8px; }
+        .btn-validate-green { background-color: #90bb13; border-color: #90bb13; border-radius: 8px; }
         .btn-validate-green:hover, .btn-validate-green:focus { background-color: #6a9817; border-color: #6a9817; }
         .btn-action-black { background-color: #111; border-color: #111; border-radius: 8px; }
         .btn-action-black:hover, .btn-action-black:focus { background-color: #2a2a2a; border-color: #2a2a2a; }
@@ -44,7 +44,7 @@
                                     <span class="badge bg-light text-dark">Inactivo</span>
                                 @endif
                                 @if($product->web_published)
-                                    <span class="badge bg-info-subtle text-info">Web</span>
+                                    <span class="badge bg-light text-dark">Web</span>
                                 @endif
                                 @if($product->is_default)
                                     <span class="badge bg-warning-subtle text-warning">
@@ -148,7 +148,10 @@
                                     </thead>
                                     <tbody>
                                         @foreach($product->attributes as $attr)
-                                            <tr class="attr-row">
+                                            <tr class="attr-row variant-char-row" role="button"
+                                                data-attribute-id="{{ $attr->id }}"
+                                                data-attribute-name="{{ $attr->name ?? $attr->code ?? '—' }}"
+                                                title="Ver características de este artículo">
                                                 <td><code class="small attr-code">{{ $attr->code ?? '—' }}</code></td>
                                                 <td><code class="small attr-reference">{{ $attr->reference ?? '—' }}</code></td>
                                                 <td><code class="small">{{ $attr->ean13 ?? $attr->upc ?? '—' }}</code></td>
@@ -162,7 +165,7 @@
                                                 </td>
                                                 <td class="text-center">
                                                     @if($attr->web_published)
-                                                        <span class="badge bg-info-subtle text-info">Sí</span>
+                                                        <span class="badge bg-secondary-subtle text-secondary">Sí</span>
                                                     @else
                                                         <span class="text-muted small">No</span>
                                                     @endif
@@ -359,6 +362,37 @@
     </div>
     @endif
 
+    {{-- Ver características de un artículo (solo lectura) --}}
+    <div class="modal fade" id="modalArticleCharacteristics" tabindex="-1" aria-labelledby="modalArticleCharacteristicsLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalArticleCharacteristicsLabel">
+                        Características — <span id="articleCharModalName"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Características ERP asignadas al modelo y a este artículo.</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="py-2">Característica</th>
+                                    <th class="py-2">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="articleCharModalBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -378,6 +412,55 @@ $(document).ready(function () {
             if (matches) visible++;
         });
         $('#attr-count-label').text(term ? `Mostrando ${visible} de ${totalCount} artículo(s)` : `Mostrando ${totalCount} artículo(s)`);
+    });
+
+    // ── Características por artículo (solo lectura) ─────────────────────────
+    const articleCharacteristicsUrl = '{{ route("settings.suppliers.products.characteristics", $product->id) }}';
+    let __articleCharCache = null;
+
+    function esc(str) {
+        return $('<div>').text(str ?? '').html();
+    }
+
+    function renderArticleCharModal(attributeId, attributeName) {
+        const data = __articleCharCache;
+        $('#articleCharModalName').text(attributeName || '—');
+
+        const $body = $('#articleCharModalBody').empty();
+        if (!data.model_assignments.length) {
+            $body.append('<tr><td colspan="2" class="text-muted small">Este producto no tiene características asignadas.</td></tr>');
+            return;
+        }
+
+        data.model_assignments.forEach(a => {
+            const valueAssignment = data.variant_assignments.find(v => v.product_attribute_id === attributeId && v.characteristic_id === a.characteristic_id);
+            const value = valueAssignment?.value?.nombre;
+            $body.append(`
+                <tr>
+                    <td class="py-2">${esc(a.characteristic?.nombre)}</td>
+                    <td class="py-2">${value ? esc(value) : '<span class="text-muted">—</span>'}</td>
+                </tr>`);
+        });
+    }
+
+    $(document).on('click', '.variant-char-row', function () {
+        const attributeId = $(this).data('attribute-id');
+        const attributeName = $(this).data('attribute-name');
+        const modal = new bootstrap.Modal(document.getElementById('modalArticleCharacteristics'));
+
+        if (__articleCharCache) {
+            renderArticleCharModal(attributeId, attributeName);
+            modal.show();
+            return;
+        }
+
+        $.getJSON(articleCharacteristicsUrl, function (data) {
+            __articleCharCache = data;
+            renderArticleCharModal(attributeId, attributeName);
+            modal.show();
+        }).fail(function () {
+            toastr.error('No se pudieron cargar las características', 'Error');
+        });
     });
 
     @if($canValidate && $latestContent)

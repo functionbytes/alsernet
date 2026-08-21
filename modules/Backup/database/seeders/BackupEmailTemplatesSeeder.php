@@ -142,7 +142,7 @@ HTML;
     </table>
 
     <h3 style="font-size: 16px; color: #555;">Mensaje de error</h3>
-    <div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 16px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #555; word-break: break-word;">
+    <div style="background: #f5f6f8; border: 1px solid #e9ecef; padding: 16px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #555; word-break: break-word;">
         {ERROR_MESSAGE}
     </div>
 

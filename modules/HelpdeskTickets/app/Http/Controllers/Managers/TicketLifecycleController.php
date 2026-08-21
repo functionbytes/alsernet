@@ -8,6 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Http\Requests\Managers\LinkTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\MergeTicketRequest;
@@ -54,6 +56,15 @@ class TicketLifecycleController extends Controller
         // reventar en modo estricto si alguien pega texto largo.
         $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null);
 
+        // Bug real (ago-2026): este endpoint es la vía real del botón "Cerrar
+        // ticket" de la UI y nunca disparaba TicketClosed, así que la encuesta
+        // CSAT automática (UpdateTicketOnClose) y las automatizaciones "al
+        // cerrar" (RunAutomationsOnTicketClosed) no corrían nunca desde el
+        // flujo real — solo TicketService::closeTicket() (código muerto, sin
+        // callers) lo disparaba correctamente. Mismo patrón que resolve()
+        // debajo, que sí lo hacía bien.
+        TicketClosed::dispatch($ticket);
+
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
@@ -97,6 +108,10 @@ class TicketLifecycleController extends Controller
         $this->authorize('reopen', $ticket);
 
         $ticket->reopen();
+
+        // Mismo bug que close() arriba: sin esto SendCustomerReopenNotification
+        // nunca notifica al cliente al reabrir desde la ficha real.
+        TicketReopened::dispatch($ticket);
 
         if ($request->wantsJson()) {
             return response()->json([

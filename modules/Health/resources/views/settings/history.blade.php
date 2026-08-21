@@ -215,7 +215,7 @@
 
 <style>
     .bg-light-secondary {
-        background-color: #f8f9fa;
+        background-color: #f5f6f8;
     }
 
     .bg-success-subtle {

@@ -73,7 +73,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Inactivos</h6>
+                                        <h6 class="card-title mb-2">Inactivos</h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['inactive'] }}</h4>
                                         <small class="text-muted">Proveedores deshabilitados</small>
                                     </div>
@@ -86,7 +86,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Sincronizados</h6>
+                                        <h6 class="card-title mb-2">Sincronizados</h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['synced'] }}</h4>
                                         <small class="text-muted">Con al menos una sincronización</small>
                                     </div>

@@ -84,33 +84,29 @@
             </div>
 
             {{-- Tabs --}}
-            <ul class="nav nav-pills user-profile-tab border-bottom border-light" role="tablist">
+            <ul class="nav nav-pills user-profile-tab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'familias' ? 'active text-primary' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'familias' ? 'active' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}">
                         <span class="d-none d-md-block">Familias</span>
-                        <span class="badge bg-primary ms-2">{{ $stats['familias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'categorias' ? 'active text-primary' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'categorias' ? 'active' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=categorias">
                         <span class="d-none d-md-block">Categorías</span>
-                        <span class="badge bg-secondary ms-2">{{ $stats['categorias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'subfamilias' ? 'active text-primary' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'subfamilias' ? 'active' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=subfamilias">
                         <span class="d-none d-md-block">Subfamilias</span>
-                        <span class="badge bg-secondary ms-2">{{ $stats['subfamilias'] }}</span>
                     </a>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'sports' ? 'active text-primary' : '' }}"
+                    <a class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $type === 'sports' ? 'active' : '' }}"
                        href="{{ route('settings.suppliers.categories.index') }}?type=sports">
                         <span class="d-none d-md-block">Deportes</span>
-                        <span class="badge bg-secondary ms-2">{{ $stats['sports'] }}</span>
                     </a>
                 </li>
             </ul>
@@ -228,7 +224,7 @@
                                         <td>
                                             @if($item->erp_categoria_name)
                                                 <a href="{{ route('settings.suppliers.categories.index') }}?type=familias&erp_categoria_id={{ $item->erp_categoria_id }}"
-                                                   class="badge bg-light-info text-info text-decoration-none">
+                                                   class="badge bg-info-subtle text-info text-decoration-none">
                                                     {{ $item->erp_categoria_name }}
                                                 </a>
                                             @else
@@ -238,7 +234,7 @@
                                         <td>
                                             @if($item->sport)
                                                 <a href="{{ route('settings.suppliers.categories.index') }}?type=familias&sport_id={{ $item->sport_id }}"
-                                                   class="badge bg-light-primary text-primary text-decoration-none">
+                                                   class="badge bg-primary-subtle text-primary text-decoration-none">
                                                     {{ $item->sport->name }}
                                                 </a>
                                             @else
@@ -259,7 +255,7 @@
                                             @php $sport = $sports->firstWhere('id', $item->sport_id); @endphp
                                             @if($sport)
                                                 <a href="{{ route('settings.suppliers.categories.index') }}?type=categorias&sport_id={{ $item->sport_id }}"
-                                                   class="badge bg-light-primary text-primary text-decoration-none">
+                                                   class="badge bg-primary-subtle text-primary text-decoration-none">
                                                     {{ $sport->name }}
                                                 </a>
                                             @else
@@ -276,7 +272,7 @@
                                         <td>
                                             @if($item->category)
                                                 <a href="{{ route('settings.suppliers.categories.index') }}?type=subfamilias&familia_id={{ $item->category_id }}"
-                                                   class="badge bg-light-secondary text-dark text-decoration-none">
+                                                   class="badge bg-secondary-subtle text-secondary text-decoration-none">
                                                     {{ $item->category->name }}
                                                 </a>
                                             @else
@@ -310,7 +306,7 @@
                                     <td><span class="text-muted small">{{ $item->erp_id ?? '—' }}</span></td>
                                     <td class="text-center">
                                         @if($item->available)
-                                            <span class="badge bg-light-primary text-primary">Activa</span>
+                                            <span class="badge bg-primary-subtle text-primary">Activa</span>
                                         @else
                                             <span class="badge bg-light text-dark">Inactiva</span>
                                         @endif

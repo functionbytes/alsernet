@@ -17,13 +17,14 @@ class EditContentRequest extends FormRequest
      * with "Data too long" depending on sql_mode.
      */
     private const FIELD_LIMITS = [
-        'generated_name'    => 255,
+        'generated_name' => 255,
         'short_description' => 1000,
-        'long_description'  => 65535,
-        'seo_title'         => 70,
-        'seo_description'   => 160,
-        'seo_keywords'      => 255,
-        'brand'             => 255,
+        'long_description' => 65535,
+        'seo_title' => 70,
+        'seo_description' => 160,
+        'seo_keywords' => 255,
+        'brand' => 255,
+        'notes' => 2000,
     ];
 
     public function rules(): array

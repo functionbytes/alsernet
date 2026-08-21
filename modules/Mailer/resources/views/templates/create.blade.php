@@ -286,7 +286,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div id="previewContainerTab" style="min-height: 550px; overflow-y: auto; background: #f8f9fa; display: flex; justify-content: center; padding: 20px;">
+                                <div id="previewContainerTab" style="min-height: 550px; overflow-y: auto; background: #f5f6f8; display: flex; justify-content: center; padding: 20px;">
                                     <div class="text-center py-5">
                                         <i class="fas fa-code fs-1 text-muted mb-3 d-block"></i>
                                         <p class="text-muted mb-0">Vista previa en vivo</p>

@@ -168,13 +168,26 @@ Route::group(['prefix' => ''], function () {
         ->name('manager.helpdesk.conversations.livestream.history');
 
     // AI reply suggestions for the inbox "ai-suggest" modal
+    //
+    // Bug real encontrado en QA (ago-2026): throttle:N,M sin un tercer
+    // argumento (prefix) calcula la clave del limitador SOLO a partir del
+    // usuario autenticado (ver ThrottleRequests::resolveRequestSignature()),
+    // sin incluir la ruta — así que TODAS las rutas de la app que usan
+    // throttle:N,M sin prefix comparten un único contador por usuario. Un
+    // agente activo agotaba la cuota compartida con cualquier otra llamada
+    // limitada (polling de notificaciones, otro modal, etc.) y "Artículos
+    // sugeridos" devolvía 429 aunque nunca se hubiera llamado antes — se
+    // veía como el panel atascado en "Buscando artículos relevantes…".
+    // Prefix propio aquí para que cada acción tenga su cupo real e
+    // independiente; el resto de rutas de la app con el mismo patrón
+    // (throttle:N,M sin prefix) quedan fuera del alcance de este fix.
     Route::post('/conversations/{conversation}/ai/suggestions', AiSuggestionsController::class)
-        ->middleware(['can:helpdesk.conversations.update', 'throttle:30,1'])
+        ->middleware(['can:helpdesk.conversations.update', 'throttle:30,1,ai-suggestions'])
         ->name('manager.helpdesk.conversations.ai.suggestions');
 
     // Knowledge/helpcenter article suggestions for the inbox composer panel
     Route::get('/conversations/{conversation}/suggested-articles', SuggestedArticlesController::class)
-        ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1'])
+        ->middleware(['can:helpdesk.conversations.view,conversation', 'throttle:30,1,suggested-articles'])
         ->name('manager.helpdesk.conversations.suggested-articles');
 
     Route::post('/conversations/{conversation}/attachments', [HelpdeskConversationsController::class, 'uploadAttachments'])->name('manager.helpdesk.conversations.attachments.store');

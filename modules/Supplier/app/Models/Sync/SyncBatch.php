@@ -136,6 +136,9 @@ class SyncBatch extends Model
     /**
      * Calculate overall progress percentage.
      * Falls back to processed+failed as denominator when total_items is unknown (0).
+     * Capped at 100 — un total_items desactualizado (menor a lo realmente
+     * procesado) no debe producir un porcentaje sin sentido como "232%".
+     * Ver exceedsEstimatedTotal() para detectar ese caso en la vista.
      */
     public function getProgressPercentageAttribute(): float
     {
@@ -147,7 +150,18 @@ class SyncBatch extends Model
             return 0.0;
         }
 
-        return round(($this->processed_items / $total) * 100, 2);
+        return min(100.0, round(($this->processed_items / $total) * 100, 2));
+    }
+
+    /**
+     * True cuando lo ya procesado supera el total_items estimado del batch
+     * (estimación desactualizada, o el job procesó más de lo previsto).
+     * La vista lo usa para avisar en vez de mostrar un % engañoso.
+     */
+    public function getExceedsEstimatedTotalAttribute(): bool
+    {
+        return $this->total_items > 0
+            && ($this->processed_items + $this->failed_items) > $this->total_items;
     }
 
     /**

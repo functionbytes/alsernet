@@ -17,11 +17,12 @@ class BulkActionContentRequest extends FormRequest
         // calls per ID; without a ceiling a single POST could trigger thousands
         // of paid API calls and starve PHP-FPM workers.
         return [
-            'action' => ['required', 'string', 'in:approve,reject,regenerate,assign,unassign,publish'],
+            'action' => ['required', 'string', 'in:approve,reject,regenerate,assign,unassign,publish,hold,restore'],
             'ids' => ['required', 'array', 'min:1', 'max:200'],
             'ids.*' => ['required', 'string'],
-            'user_id'  => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
+            'user_id' => ['sometimes', 'nullable', 'integer', 'exists:users,id'],
             'publicar' => ['sometimes', 'nullable', 'integer', 'in:0,1'],
+            'notes' => ['sometimes', 'nullable', 'string', 'max:2000'],
         ];
     }
 

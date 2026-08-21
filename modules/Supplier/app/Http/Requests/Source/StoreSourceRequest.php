@@ -25,6 +25,9 @@ class StoreSourceRequest extends FormRequest
             'is_active' => ['boolean'],
             'extraction_mode' => ['nullable', 'string', 'in:manual,ai'],
             'configuration' => ['nullable', 'array'],
+            'content_urls' => ['nullable', 'array'],
+            'content_urls.*.url' => ['nullable', 'url', 'max:2048'],
+            'content_urls.*.note' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -53,6 +56,7 @@ class StoreSourceRequest extends FormRequest
             'is_active' => 'estado activo',
             'extraction_mode' => 'modo de extracción',
             'configuration' => 'configuración',
+            'content_urls' => 'URLs de referencia de contenido',
         ];
     }
 

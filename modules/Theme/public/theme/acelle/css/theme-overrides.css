@@ -148,3 +148,9 @@
 .toast-success {
     background-color: #000000 !important;
 }
+
+/* ── Toast warning background (toastr) ──────────────────────── */
+#toast-container > .toast-warning,
+.toast-warning {
+    background-color: #939495 !important;
+}

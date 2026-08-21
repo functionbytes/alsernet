@@ -12,7 +12,7 @@
     }
 
     #configContent pre {
-        background-color: #f8f9fa;
+        background-color: #f5f6f8;
         padding: 1rem;
         border-radius: 0.375rem;
         max-height: 300px;
@@ -186,48 +186,7 @@
             </button>
         </div>
 
-        <!-- Info Card -->
-        <div id="infoCard" class="card border-0 bg-light mt-4">
-            <div class="card-body">
-                <h6 class="card-title mb-1">Tipos de fuente soportados</h6>
-                <p class="text-muted small mb-3">El detector identifica automáticamente los dos primeros tipos. Los demás se configuran manualmente al crear la fuente.</p>
-                <div class="row g-3">
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2">
 
-                            <div>
-                                <small class="fw-500 d-block">API REST <span class="badge bg-success-subtle text-success border border-success ms-1" style="font-size:.65rem;">Auto-detectable</span></small>
-                                <small class="text-muted">Conecta directamente con la API de la tienda. Compatible con <strong>Shopify</strong>, <strong>WooCommerce</strong>, <strong>PrestaShop</strong> y <strong>Magento</strong>. Ofrece la mayor fiabilidad y velocidad de extracción.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2">
-                            <div>
-                                <small class="fw-500 d-block">Web Scraping <span class="badge bg-success-subtle text-success border border-success ms-1" style="font-size:.65rem;">Auto-detectable</span></small>
-                                <small class="text-muted">Extrae productos directamente del HTML de la página web usando IA. Útil cuando el proveedor no expone una API pública. Soporta sitios estáticos y dinámicos (Shopify, WooCommerce, PrestaShop, Magento vía HTML).</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2">
-                            <div>
-                                <small class="fw-500 d-block">FTP / SFTP</small>
-                                <small class="text-muted">Descarga ficheros de catálogo (CSV, XML, Excel) desde un servidor FTP o SFTP del proveedor. Ideal para proveedores que actualizan su catálogo periódicamente mediante transferencia de ficheros.</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2">
-                            <div>
-                                <small class="fw-500 d-block">Archivo manual</small>
-                                <small class="text-muted">Permite subir un fichero de catálogo directamente (CSV, Excel, XML). Pensado para importaciones puntuales o proveedores que envían el catálogo por correo electrónico u otros medios.</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 

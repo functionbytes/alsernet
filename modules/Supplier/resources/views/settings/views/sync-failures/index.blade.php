@@ -6,6 +6,31 @@
     @include('core::components.card', ['title' => $pageTitle])
 @endsection
 
+@push('styles')
+    <style>
+        .failure-row, .conflict-row { cursor: pointer; }
+        .sync-error-message {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            word-break: break-word;
+            max-width: 320px;
+        }
+        /* Mensaje de error en color de texto normal, sin rojo de alerta. */
+        .text-error { color: #212529 !important; }
+        .badge-error-subtle { background: #f8d7da; color: #842029; }
+        .badge-error-solid  { background: #dc3545; color: #fff; }
+        /* Clasificaciones sin severidad real (tipo de fallo, estado pendiente)
+           en gris neutro — sin colores de alerta dispersos. */
+        .badge-neutral { background: #eef0f2; color: #495057; }
+
+        /* Modal de detalle: agrupar en tarjetas para mejor jerarquía visual */
+        .detail-group { background: #f8f9fb; border-radius: 10px; padding: 14px 16px; }
+        .detail-group label { font-size: .72rem; text-transform: uppercase; letter-spacing: .02em; }
+    </style>
+@endpush
+
 @section('content')
     <div class="widget-content searchable-container list">
 
@@ -34,9 +59,9 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title mb-2">Total fallos</h6>
+                                <h6 class="card-title mb-2">Fallos activos</h6>
                                 <h2 class="fw-bold mb-1">{{ number_format($stats['total_failures']) }}</h2>
-                                <small class="text-muted">Errores registrados</small>
+                                <small class="text-muted">Pendientes de resolver</small>
                             </div>
                         </div>
                     </div>
@@ -53,7 +78,7 @@
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
                                 <h6 class="card-title mb-2">Sin proveedor</h6>
-                                <h2 class="fw-bold mb-1 text-danger">{{ number_format($stats['failures_by_type']['sin_proveedor'] ?? 0) }}</h2>
+                                <h2 class="fw-bold mb-1">{{ number_format($stats['failures_by_type']['sin_proveedor'] ?? 0) }}</h2>
                                 <small class="text-muted">Modelos ERP sin supplier</small>
                             </div>
                         </div>
@@ -76,14 +101,18 @@
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'failures' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#failures-pane" type="button" role="tab">
                         <span class="d-none d-md-block">Fallos de sincronización</span>
-                        <span class="badge bg-info ms-2">{{ $stats['total_failures'] }}</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'conflicts' ? 'active' : '' }}"
                             data-bs-toggle="pill" data-bs-target="#conflicts-pane" type="button" role="tab">
                         <span class="d-none d-md-block">Conflictos detectados</span>
-                        <span class="badge bg-black ms-2">{{ $stats['total_conflicts'] }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $tab === 'history' ? 'active' : '' }}"
+                            data-bs-toggle="pill" data-bs-target="#history-pane" type="button" role="tab">
+                        <span class="d-none d-md-block">Histórico ({{ number_format($stats['total_history']) }})</span>
                     </button>
                 </li>
             </ul>
@@ -98,7 +127,7 @@
                     <div class="card-body border-bottom">
                         @if($batchId)
                             <div class="mb-2">
-                                <span class="badge bg-info-subtle text-info">Filtrando por batch #{{ $batchId }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary">Filtrando por batch #{{ $batchId }}</span>
                                 <a href="{{ route('settings.suppliers.sync.show', $batchId) }}" class="small ms-2">Ver batch</a>
                             </div>
                         @endif
@@ -113,7 +142,7 @@
 
                             <div class="d-flex align-items-center gap-2">
                                 <input type="search" name="search" class="form-control flex-grow-1"
-                                       placeholder="Buscar por ID ERP o mensaje de error..."
+                                       placeholder="Buscar por referencia, ID ERP o mensaje de error..."
                                        value="{{ $searchKey }}">
 
                                 <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
@@ -169,7 +198,9 @@
                                             <th>Entidad</th>
                                             <th>Tipo de fallo</th>
                                             <th>ID ERP</th>
-                                            <th>Mensaje</th>
+                                            <th>Referencia</th>
+                                            <th style="min-width:220px;">Mensaje</th>
+                                            <th>Batch</th>
                                             <th class="text-center">Estado</th>
                                             <th class="text-center">Reintentos</th>
                                             <th class="text-center">Acciones</th>
@@ -178,20 +209,17 @@
                                     <tbody>
                                         @foreach($failures as $failure)
                                             @php
-                                                $typeColors = ['price' => 'info', 'product' => 'warning', 'provider' => 'primary'];
+                                                // Clasificación de entidad sincronizada, no severidad — un único
+                                                // color evita mezclar colores sin significado real.
+                                                $typeColors = ['price' => 'secondary', 'product' => 'secondary', 'provider' => 'secondary'];
                                                 $color      = $typeColors[$failure->sync_type] ?? 'secondary';
 
-                                                $failureTypeColors = [
-                                                    'sin_proveedor' => 'danger',
-                                                    'sin_categoria' => 'warning',
-                                                    'error_api' => 'info',
-                                                    'error_db' => 'info',
-                                                    'datos_invalidos' => 'secondary',
-                                                ];
-                                                $ftColor = $failureTypeColors[$failure->failure_type] ?? 'secondary';
+                                                // Tipo de fallo: clasificación, no severidad — gris uniforme
+                                                // (el mensaje de error de abajo ya comunica la urgencia real).
+                                                $ftBadgeClass = 'badge-neutral';
                                             @endphp
-                                            <tr data-failure-id="{{ $failure->id }}">
-                                                <td>
+                                            <tr data-failure-id="{{ $failure->id }}" class="failure-row" role="button" onclick="viewFailureDetails({{ $failure->id }})">
+                                                <td onclick="event.stopPropagation();">
                                                     <input type="checkbox" class="form-check-input failure-checkbox" value="{{ $failure->id }}">
                                                 </td>
                                                 <td>
@@ -201,7 +229,7 @@
                                                 </td>
                                                 <td>
                                                     @if($failure->failure_type)
-                                                        <span class="badge bg-{{ $ftColor }}-subtle text-{{ $ftColor }}">
+                                                        <span class="badge {{ $ftBadgeClass }}">
                                                             {{ $failure->failure_type_name }}
                                                         </span>
                                                     @else
@@ -210,28 +238,40 @@
                                                 </td>
                                                 <td><code class="bg-light px-2 py-1 rounded">{{ $failure->erp_id ?? '—' }}</code></td>
                                                 <td>
-                                                    <span class="small text-danger font-monospace"
-                                                          style="max-width:300px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                                                          title="{{ $failure->error_message }}">
+                                                    @if($failure->reference)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $failure->reference }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="small text-error font-monospace sync-error-message" title="{{ $failure->error_message }}">
                                                         {{ $failure->error_message }}
                                                     </span>
                                                     <small class="text-muted">{{ $failure->created_at->format('d/m/Y H:i') }}</small>
+                                                </td>
+                                                <td onclick="event.stopPropagation();">
+                                                    @if($failure->batch_id)
+                                                        <a href="{{ route('settings.suppliers.sync.show', $failure->batch_id) }}">#{{ $failure->batch_id }}</a>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
                                                 </td>
                                                 <td class="text-center">
                                                     @if($failure->failure_status === 'resolved')
                                                         <span class="badge bg-success-subtle text-success">Resuelto</span>
                                                     @elseif($failure->failure_status === 'pending')
-                                                        <span class="badge bg-warning-subtle text-warning">Pendiente</span>
+                                                        <span class="badge badge-neutral">Pendiente</span>
                                                     @else
                                                         <span class="badge bg-secondary-subtle text-secondary">{{ $failure->failure_status_name }}</span>
                                                     @endif
                                                 </td>
                                                 <td class="text-center">
-                                                    <span class="badge {{ $failure->retry_count >= $failure->max_retries ? 'bg-danger' : 'bg-light text-dark' }}">
+                                                    <span class="badge {{ $failure->retry_count >= $failure->max_retries ? 'badge-error-solid' : 'bg-light text-dark' }}">
                                                         {{ $failure->retry_count }}/{{ $failure->max_retries }}
                                                     </span>
                                                 </td>
-                                                <td class="text-center">
+                                                <td class="text-center" onclick="event.stopPropagation();">
                                                     <div class="dropdown">
                                                         <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="fas fa-ellipsis-vertical"></i>
@@ -249,8 +289,8 @@
                                                             </li>
                                                             <li><hr class="dropdown-divider"></li>
                                                             <li>
-                                                                <a class="dropdown-item text-danger" href="#" onclick="deleteFailure({{ $failure->id }}); return false;">
-                                                                    Eliminar
+                                                                <a class="dropdown-item" href="#" onclick="deleteFailure({{ $failure->id }}); return false;">
+                                                                    Mover al histórico
                                                                 </a>
                                                             </li>
                                                         </ul>
@@ -358,7 +398,8 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>Tipo</th>
-                                            <th>Entity ID</th>
+                                            <th>ID ERP</th>
+                                            <th>Referencia</th>
                                             <th>Estrategia</th>
                                             <th>Detectado</th>
                                             <th>Resuelto</th>
@@ -369,23 +410,38 @@
                                     <tbody>
                                         @foreach($conflicts as $conflict)
                                             @php
-                                                $typeColors = ['price' => 'info', 'product' => 'warning', 'provider' => 'primary'];
+                                                // Clasificación de entidad sincronizada, no severidad — un único
+                                                // color evita mezclar colores sin significado real.
+                                                $typeColors = ['price' => 'secondary', 'product' => 'secondary', 'provider' => 'secondary'];
                                                 $color      = $typeColors[$conflict->entity_type] ?? 'secondary';
                                                 $strategyColors = [
-                                                    'erp_wins'   => 'primary',
-                                                    'local_wins' => 'info',
+                                                    'erp_wins'   => 'secondary',
+                                                    'local_wins' => 'secondary',
                                                     'manual'     => 'warning',
                                                     'merge'      => 'success',
                                                 ];
                                                 $sColor = $strategyColors[$conflict->resolution_strategy] ?? 'secondary';
                                             @endphp
-                                            <tr>
+                                            <tr class="conflict-row" role="button" onclick="viewConflictDetails({{ $conflict->id }})">
                                                 <td>
                                                     <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
                                                         {{ $conflict->entity_type_name }}
                                                     </span>
                                                 </td>
-                                                <td class="text-muted small">{{ $conflict->entity_id }}</td>
+                                                <td>
+                                                    @if($conflict->erp_id)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $conflict->erp_id }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($conflict->reference)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $conflict->reference }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
                                                 <td>
                                                     <span class="badge bg-{{ $sColor }}-subtle text-{{ $sColor }}">
                                                         {{ $conflict->resolution_strategy_name }}
@@ -397,10 +453,10 @@
                                                     @if($conflict->isResolved())
                                                         <span class="badge bg-success-subtle text-success">Resuelto</span>
                                                     @else
-                                                        <span class="badge bg-danger-subtle text-danger">Sin resolver</span>
+                                                        <span class="badge badge-error-subtle">Sin resolver</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">
+                                                <td class="text-center" onclick="event.stopPropagation();">
                                                     <div class="dropdown">
                                                         <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="fas fa-ellipsis-vertical"></i>
@@ -464,6 +520,172 @@
                     </div>
                 </div>
 
+                {{-- Tab Histórico --}}
+                <div class="tab-pane fade {{ $tab === 'history' ? 'show active' : '' }}" id="history-pane" role="tabpanel">
+
+                    <div class="card-body border-bottom">
+                        <p class="small text-muted mb-3">
+                            Reporte permanente de todos los productos que han fallado alguna vez, tanto los resueltos
+                            por reintento (automático o manual) como los descartados manualmente. Estos registros
+                            <strong>no se borran solos</strong> — solo se purgan si se eliminan a mano desde aquí.
+                        </p>
+                        <form method="GET" action="{{ route('settings.suppliers.sync.failures.index') }}">
+                            <input type="hidden" name="tab" value="history">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-7">
+                                    <input type="search" name="search" class="form-control"
+                                           placeholder="Buscar por referencia, ID ERP o mensaje de error..."
+                                           value="{{ $tab === 'history' ? $searchKey : '' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="status" class="form-control select2 w-100" id="history-status">
+                                        <option value="">Todos los estados</option>
+                                        <option value="resolved" {{ ($tab === 'history' && $statusFilter === 'resolved') ? 'selected' : '' }}>Resueltos</option>
+                                        <option value="archived" {{ ($tab === 'history' && $statusFilter === 'archived') ? 'selected' : '' }}>Archivados</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex gap-1">
+                                    <button type="submit" class="btn btn-primary" title="Buscar">
+                                        <i class="fas fa-magnifying-glass"></i>
+                                    </button>
+                                    @if($tab === 'history' && ($searchKey || $statusFilter))
+                                        <a href="{{ route('settings.suppliers.sync.failures.index') }}?tab=history"
+                                           class="btn btn-secondary" title="Limpiar filtros">
+                                            <i class="fas fa-xmark"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card-body">
+
+                        @if($historyFailures->count() > 0)
+
+                            <div class="mb-3">
+                                <h6 class="mb-1 fw-bold">Histórico de fallos</h6>
+                                <p class="text-muted small mb-0">{{ $historyFailures->total() }} registro(s) encontrados</p>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Entidad</th>
+                                            <th>Tipo de fallo</th>
+                                            <th>ID ERP</th>
+                                            <th>Referencia</th>
+                                            <th style="min-width:220px;">Mensaje</th>
+                                            <th class="text-center">Estado final</th>
+                                            <th>Resuelto</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($historyFailures as $failure)
+                                            @php
+                                                // Clasificación de entidad sincronizada, no severidad — un único
+                                                // color evita mezclar colores sin significado real.
+                                                $typeColors = ['price' => 'secondary', 'product' => 'secondary', 'provider' => 'secondary'];
+                                                $color      = $typeColors[$failure->sync_type] ?? 'secondary';
+
+                                                // Tipo de fallo: clasificación, no severidad — gris uniforme
+                                                // (el mensaje de error de abajo ya comunica la urgencia real).
+                                                $ftBadgeClass = 'badge-neutral';
+                                            @endphp
+                                            <tr data-failure-id="{{ $failure->id }}" class="failure-row" role="button" onclick="viewFailureDetails({{ $failure->id }})">
+                                                <td>
+                                                    <span class="badge bg-{{ $color }}-subtle text-{{ $color }}">
+                                                        {{ $failure->type_name }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if($failure->failure_type)
+                                                        <span class="badge {{ $ftBadgeClass }}">
+                                                            {{ $failure->failure_type_name }}
+                                                        </span>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td><code class="bg-light px-2 py-1 rounded">{{ $failure->erp_id ?? '—' }}</code></td>
+                                                <td>
+                                                    @if($failure->reference)
+                                                        <code class="bg-light px-2 py-1 rounded">{{ $failure->reference }}</code>
+                                                    @else
+                                                        <span class="text-muted small">—</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <span class="small text-muted font-monospace sync-error-message" title="{{ $failure->error_message }}">
+                                                        {{ $failure->error_message }}
+                                                    </span>
+                                                    <small class="text-muted d-block">{{ $failure->created_at->format('d/m/Y H:i') }}</small>
+                                                </td>
+                                                <td class="text-center">
+                                                    @if($failure->failure_status === 'resolved')
+                                                        <span class="badge bg-success-subtle text-success">Resuelto</span>
+                                                    @else
+                                                        <span class="badge bg-secondary-subtle text-secondary">Archivado</span>
+                                                    @endif
+                                                </td>
+                                                <td class="text-muted small">
+                                                    {{ $failure->resolved_at?->format('d/m/Y H:i') ?? '—' }}
+                                                    @if($failure->resolution_notes)
+                                                        <small class="text-muted d-block">{{ $failure->resolution_notes }}</small>
+                                                    @endif
+                                                </td>
+                                                <td class="text-center" onclick="event.stopPropagation();">
+                                                    <div class="dropdown">
+                                                        <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fas fa-ellipsis-vertical"></i>
+                                                        </a>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" onclick="viewFailureDetails({{ $failure->id }}); return false;">
+                                                                    Ver datos del ERP
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" onclick="deleteFailure({{ $failure->id }}, true); return false;">
+                                                                    Eliminar definitivamente
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="card-footer bg-white border-top py-2 mt-3">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    @if($historyFailures->total() > 0)
+                                    <span class="text-muted small">
+                                        Mostrando {{ $historyFailures->firstItem() }}–{{ $historyFailures->lastItem() }} de {{ $historyFailures->total() }}
+                                    </span>
+                                    @endif
+                                    @if($historyFailures->hasPages())
+                                    <nav>{{ $historyFailures->appends(request()->query())->links('pagination::bootstrap-5') }}</nav>
+                                    @endif
+                                </div>
+                            </div>
+
+                        @else
+                            <div class="text-center py-5 text-muted">
+                                <i class="fas fa-clock-rotate-left fa-3x text-muted mb-3 d-block"></i>
+                                <h6 class="mb-1">Todavía no hay histórico</h6>
+                                <p class="small mb-0">Aquí se irán acumulando los fallos a medida que se resuelvan o se descarten.</p>
+                            </div>
+                        @endif
+
+                    </div>
+                </div>
+
             </div>{{-- tab-content --}}
 
         </div>{{-- card --}}
@@ -504,7 +726,6 @@
                         <select id="modal-status" class="form-select select2">
                             <option value="">Todos</option>
                             <option value="pending">Pendiente</option>
-                            <option value="resolved">Resuelto</option>
                             <option value="acknowledged">Reconocido</option>
                         </select>
                     </div>
@@ -539,7 +760,7 @@
                         <select id="bulk-action-select" class="form-select">
                             <option value="">Seleccionar acción...</option>
                             <option value="retry">Reintentar</option>
-                            <option value="delete">Eliminar</option>
+                            <option value="delete">Mover al histórico</option>
                         </select>
                     </div>
                 </div>
@@ -621,9 +842,15 @@ $(document).ready(function () {
             + '</label><p class="mb-0">' + value + '</p></div>';
     };
 
+    // Badge de estado para el modal de detalle — misma paleta gris/verde de la tabla.
+    const failureStatusBadge = function (status, name) {
+        const cls = status === 'resolved' ? 'bg-success-subtle text-success' : 'badge-neutral';
+        return '<span class="badge ' + cls + '">' + escHtml(name) + '</span>';
+    };
+
     // ── Select2 ─────────────────────────────────────────────────────────
     const s2opts = { minimumResultsForSearch: Infinity, width: '100%' };
-    $('#conflicts-sync-type, #conflicts-status').select2(s2opts);
+    $('#conflicts-sync-type, #conflicts-status, #history-status').select2(s2opts);
     $('#modal-sync-type, #modal-failure-type, #modal-status').select2({ dropdownParent: $('#failures-filter-modal'), width: '100%' });
     $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
 
@@ -662,7 +889,7 @@ $(document).ready(function () {
                 .done(r => { toastr.success(r.message); setTimeout(() => location.reload(), 800); })
                 .fail(x => { toastr.error(x.responseJSON?.message || 'Error'); $btn.prop('disabled', false).text('Aplicar'); });
         } else if (action === 'delete') {
-            if (!confirm('¿Eliminar ' + ids.length + ' fallo(s)?')) { $btn.prop('disabled', false).text('Aplicar'); return; }
+            if (!confirm('¿Mover ' + ids.length + ' fallo(s) al histórico?')) { $btn.prop('disabled', false).text('Aplicar'); return; }
             fetch(bulkDelUrl, {
                 method: 'DELETE',
                 headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
@@ -676,7 +903,9 @@ $(document).ready(function () {
 
     // ── Retry single ─────────────────────────────────────────────────────
     window.retryFailure = function (id) {
-        const $btn = $('tr[data-failure-id="' + id + '"] .btn-success').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        // El disparador de acciones (⋮) de la fila es lo único clicable que
+        // existe ahí; se usa para dar señal visual de "procesando".
+        const $trigger = $('tr[data-failure-id="' + id + '"] .dropdown > a').html('<i class="fas fa-spinner fa-spin"></i>');
         $.post(retryUrl.replace('__ID__', id), { _token: '{{ csrf_token() }}' })
             .done(r => {
                 toastr.success(r.message);
@@ -684,7 +913,7 @@ $(document).ready(function () {
             })
             .fail(x => {
                 toastr.error(x.responseJSON?.message || 'Error al reintentar');
-                $btn.prop('disabled', false).html('<i class="fas fa-rotate-right"></i>');
+                $trigger.html('<i class="fas fa-ellipsis-vertical"></i>');
             });
     };
 
@@ -698,9 +927,12 @@ $(document).ready(function () {
             .fail(x => { toastr.error(x.responseJSON?.message || 'Error'); });
     };
 
-    // ── Delete single ────────────────────────────────────────────────────
-    window.deleteFailure = function (id) {
-        if (!confirm('¿Eliminar este fallo?')) return;
+    // ── Delete single (activo → se mueve al histórico; histórico → se purga) ──
+    window.deleteFailure = function (id, fromHistory) {
+        const confirmMsg = fromHistory
+            ? '¿Eliminar definitivamente este registro del histórico? Esta acción no se puede deshacer.'
+            : '¿Mover este fallo al histórico?';
+        if (!confirm(confirmMsg)) return;
         fetch(destroyUrl.replace('__ID__', id), {
             method: 'DELETE',
             headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
@@ -726,27 +958,42 @@ $(document).ready(function () {
                 const createdAt = f.created_at ? new Date(f.created_at).toLocaleString() : '—';
                 const lastRetry = f.last_retry_at ? new Date(f.last_retry_at).toLocaleString() : '—';
                 const erpId     = f.erp_id ? '<code class="bg-light px-2 py-1 rounded">' + escHtml(f.erp_id) + '</code>' : '—';
-                const batchCell = f.batch_id ? '#' + escHtml(f.batch_id) : '—';
+                const reference = f.reference ? '<code class="bg-light px-2 py-1 rounded">' + escHtml(f.reference) + '</code>' : '—';
+                const batchCell = f.batch_id ? '<a href="' + syncBase + '/' + f.batch_id + '" class="fw-semibold">#' + escHtml(f.batch_id) + '</a>' : '—';
 
-                let html = '<div class="row g-3">';
-                html += detailRow('Entidad', escHtml(f.type_name || f.sync_type || '—'));
-                html += detailRow('Tipo de fallo', escHtml(f.failure_type_name || '—'));
-                html += detailRow('Estado', escHtml(f.failure_status_name || f.failure_status || '—'));
+                // Fila superior: clasificación como badges (igual que la tabla), no texto plano.
+                let html = '<div class="d-flex flex-wrap gap-2 mb-3">';
+                html += '<span class="badge badge-neutral">' + escHtml(f.type_name || f.sync_type || '—') + '</span>';
+                html += '<span class="badge badge-neutral">' + escHtml(f.failure_type_name || '—') + '</span>';
+                html += failureStatusBadge(f.failure_status, f.failure_status_name || f.failure_status || '—');
+                html += '</div>';
+
+                // Grupo 1: identificación (ID ERP / Referencia / Batch)
+                html += '<div class="detail-group row g-3 mb-3">';
                 html += detailRow('ID ERP', erpId);
-                html += detailRow('ID Supplier', escHtml(f.supplier_id || '—'));
+                html += detailRow('Referencia', reference);
                 html += detailRow('Batch', batchCell);
+                html += '</div>';
+
+                // Grupo 2: seguimiento (reintentos / código / fechas)
+                html += '<div class="detail-group row g-3 mb-3">';
                 html += detailRow('Reintentos', escHtml((f.retry_count ?? 0) + ' / ' + (f.max_retries ?? 0)));
                 html += detailRow('Código de error', escHtml(f.error_code || '—'));
                 html += detailRow('Último reintento', escHtml(lastRetry));
                 html += detailRow('Registrado', escHtml(createdAt));
-                html += '<div class="col-12"><label class="form-label text-muted small mb-1">Mensaje de error</label>'
-                      + '<pre class="bg-light p-3 rounded small text-danger mb-0" style="white-space:pre-wrap;">' + escHtml(f.error_message || '—') + '</pre></div>';
+                html += '</div>';
+
+                html += '<label class="form-label text-muted small mb-1">Mensaje de error</label>'
+                      + '<pre class="bg-light p-3 rounded small text-error mb-3" style="white-space:pre-wrap;">' + escHtml(f.error_message || '—') + '</pre>';
+
+                html += '<div class="row g-3">';
                 html += '<div class="col-md-6"><label class="form-label text-muted small mb-1">Datos enviados al ERP</label>' + renderJsonBlock(f.changed_data) + '</div>';
                 html += '<div class="col-md-6"><label class="form-label text-muted small mb-1">Contexto</label>' + renderJsonBlock(f.context) + '</div>';
-                if (f.batch_id) {
-                    html += '<div class="col-12"><a href="' + syncBase + '/' + f.batch_id + '" class="btn btn-sm btn-secondary">Ver batch asociado</a></div>';
-                }
                 html += '</div>';
+
+                if (f.batch_id) {
+                    html += '<div class="mt-3"><a href="' + syncBase + '/' + f.batch_id + '" class="btn btn-sm btn-secondary">Ver batch asociado</a></div>';
+                }
                 $('#failureDetailsContent').html(html);
             })
             .fail(() => $('#failureDetailsContent').html('<div class="alert alert-danger mb-0">No se pudieron cargar los detalles del fallo.</div>'));
@@ -762,15 +1009,30 @@ $(document).ready(function () {
             .done(r => {
                 if (!r.success) { $('#conflictDetailsContent').html('<div class="alert alert-danger">Error cargando detalles</div>'); return; }
                 const c = r.conflict;
-                $('#conflictDetailsContent').html(
-                    '<div class="row g-3">' +
-                    '<div class="col-md-6"><label class="form-label text-muted">Entidad</label><p class="fw-semibold">' + (c.entity_type || '—') + ' #' + (c.entity_id || '—') + '</p></div>' +
-                    '<div class="col-md-6"><label class="form-label text-muted">Estrategia</label><p class="fw-semibold">' + (c.resolution_strategy || '—') + '</p></div>' +
-                    '<div class="col-md-6"><label class="form-label text-muted">Detectado</label><p>' + (c.conflict_detected_at || '—') + '</p></div>' +
-                    '<div class="col-md-6"><label class="form-label text-muted">Resuelto</label><p>' + (c.resolved_at || '—') + '</p></div>' +
-                    '<div class="col-12"><label class="form-label text-muted">Descripción</label><pre class="bg-light p-3 rounded small">' + (c.description || 'Sin descripción') + '</pre></div>' +
-                    '</div>'
-                );
+
+                let html = '<div class="row g-3">';
+                html += detailRow('Entidad', escHtml(c.entity_type_name || c.entity_type || '—'));
+                html += detailRow('ID ERP', c.erp_id ? '<code class="bg-light px-2 py-1 rounded">' + escHtml(c.erp_id) + '</code>' : '—');
+                html += detailRow('Referencia', c.reference ? '<code class="bg-light px-2 py-1 rounded">' + escHtml(c.reference) + '</code>' : '—');
+                html += detailRow('Estrategia', escHtml(c.resolution_strategy_name || c.resolution_strategy || '—'));
+                html += detailRow('Estado', c.resolved_at
+                    ? '<span class="badge bg-success-subtle text-success">Resuelto</span>'
+                    : '<span class="badge badge-error-subtle">Sin resolver</span>');
+                html += detailRow('Detectado', escHtml(c.conflict_detected_at ? new Date(c.conflict_detected_at).toLocaleString() : '—'));
+                html += detailRow('Resuelto', escHtml(c.resolved_at ? new Date(c.resolved_at).toLocaleString() : '—'));
+                html += detailRow('Resuelto por', escHtml(c.resolved_by?.name || (c.resolved_by_ip ? 'IP ' + c.resolved_by_ip : '—')));
+                if (c.notes) {
+                    html += '<div class="col-12"><label class="form-label text-muted small mb-1">Notas</label>'
+                          + '<p class="mb-0">' + escHtml(c.notes) + '</p></div>';
+                }
+                if (c.changed_fields && Object.keys(c.changed_fields).length) {
+                    html += '<div class="col-12"><label class="form-label text-muted small mb-1">Campos en conflicto</label>' + renderJsonBlock(c.changed_fields) + '</div>';
+                }
+                html += '<div class="col-md-6"><label class="form-label text-muted small mb-1">Datos del ERP</label>' + renderJsonBlock(c.erp_data) + '</div>';
+                html += '<div class="col-md-6"><label class="form-label text-muted small mb-1">Datos locales</label>' + renderJsonBlock(c.local_data) + '</div>';
+                html += '</div>';
+
+                $('#conflictDetailsContent').html(html);
             })
             .fail(() => $('#conflictDetailsContent').html('<div class="alert alert-danger">Error cargando detalles</div>'));
     };

@@ -70,14 +70,6 @@ p {
     margin-bottom: var(--space-4);
 }
 
-a {
-    color: var(--color-teal);
-    text-decoration: none;
-    transition: color var(--transition-fast);
-}
-a:hover {
-    color: var(--color-teal-hover);
-}
 
 small, .text-sm { font-size: var(--text-sm); }
 .text-xs { font-size: var(--text-xs); }

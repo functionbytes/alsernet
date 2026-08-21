@@ -53,7 +53,7 @@
 
                     <div class="form-group mb-3" id="orders_list_container" style="display: none;">
                         <label class="form-label">Pedidos a importar</label>
-                        <div id="orders_list" class="border rounded p-3" style="min-height: 60px; background-color: #f8f9fa;">
+                        <div id="orders_list" class="border rounded p-3" style="min-height: 60px; background-color: #f5f6f8;">
                         </div>
                     </div>
 

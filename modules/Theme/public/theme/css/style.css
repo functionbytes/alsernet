@@ -21241,7 +21241,7 @@ textarea.form-control-lg {
 
 .btn:hover {
     color: var(--bs-btn-hover-color);
-    background-color: #000;
+    background-color: var(--bs-btn-hover-bg);
     border-color: var(--bs-btn-hover-border-color)
 }
 
@@ -28699,22 +28699,22 @@ textarea.form-control-lg {
 
 .text-success {
     --bs-text-opacity: 1;
-    color: var(--bs-secondary-color) !important;
+    color: #90bb13 !important;
 }
 
 .text-info {
     --bs-text-opacity: 1;
-    color: rgb(0 0 0) !important;
+    color: #46caeb !important;
 }
 
 .text-warning {
     --bs-text-opacity: 1;
-    color: rgb(0 0 0) !important;
+    color: #F8C20A !important;
 }
 
 .text-danger {
     --bs-text-opacity: 1;
-    color: #90bb13;
+    color: #ff6692 !important;
 }
 
 .text-light {
@@ -29050,7 +29050,7 @@ textarea.form-control-lg {
 
 .bg-primary {
     --bs-bg-opacity: 1;
-    background-color: var(--bs-primary-rgb,var(--bs-bg-opacity))!important;
+    background-color: var(--bs-primary-rgb,var(--bs-bg-opacity));
 }
 
 .bg-secondary {
@@ -29060,12 +29060,12 @@ textarea.form-control-lg {
 
 .bg-success {
     --bs-bg-opacity: 1;
-    background-color: #90bb13;
+    background-color: #36c76c;
 }
 
 .bg-info {
     --bs-bg-opacity: 1;
-    background-color: #90bb13;
+    background-color: #46caeb;
 }
 
 .bg-warning {
@@ -29075,7 +29075,7 @@ textarea.form-control-lg {
 
 .bg-danger {
     --bs-bg-opacity: 1;
-    background-color: #90bb13;
+    background-color: #ff6692;
 }
 
 .bg-light {
@@ -29182,20 +29182,20 @@ textarea.form-control-lg {
 }
 
 .bg-success-subtle {
-    background-color: #f5f6f8 !important;
+    background-color: #EBFAF0 !important;
 }
 
 .bg-info-subtle {
-    background-color: rgb(245 246 248) !important;
+    background-color: #E8F8FD !important;
 }
 
 .bg-warning-subtle {
-    background-color: #ffffff !important;
+    background-color: #FFF9E5 !important;
 }
 
 .bg-danger-subtle {
-    background-color: #90bb122b !important;
-    color: #90bb13 !important;
+    background-color: #FFCCDB !important;
+    color: #ff6692 !important;
 }
 
 .bg-light-subtle {
@@ -49280,3 +49280,9 @@ pre.code-view code.hljs {
                     padding-right: 0;
                 }
             }
+        }
+    }
+}
+
+
+

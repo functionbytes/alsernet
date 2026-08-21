@@ -5,9 +5,12 @@ namespace Modules\Erp\Http\Controllers\Api;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\Erp\Models\Oracle\Catalogo\Modelo;
 use Modules\Erp\Models\Oracle\Proveedor\Artiprov;
+use Modules\Erp\Models\Oracle\Web\WCaracteristicasOrden;
+use Modules\Erp\Models\Oracle\Web\WPerfilesProd;
 
 /**
  * VERSIÓN ELOQUENT - GESTIÓN DE MODELOS/PRODUCTOS
@@ -203,6 +206,10 @@ class ProductsController extends ApiController
                     ->whereNull('fbaja')
                     ->get();
 
+                // Características (modelo + por artículo), en batch, sin llamadas HTTP extra
+                $modelCharacteristics = $this->modelCharacteristicsByModelo([$id]);
+                $variantCharacteristicsByArticulo = $this->variantCharacteristicsByArticulo($articuloIds);
+
                 // Proveedores únicos del modelo
                 $proveedores = $artiprovs
                     ->map(fn ($ap) => $ap->proveedor)
@@ -215,7 +222,7 @@ class ProductsController extends ApiController
                 $deporteCl = $categoriaCl?->deporteCl;
 
                 // Artículos mapeados con sus artiprovs
-                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovs) {
+                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovs, $variantCharacteristicsByArticulo) {
                     $aps = $artiprovs->where('idarticulo', $a->idarticulo)->values();
 
                     $apDefault = $aps->firstWhere('pordefecto', true) ?? $aps->first();
@@ -231,10 +238,10 @@ class ProductsController extends ApiController
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
                         'web_status' => (int) $a->getRawOriginal('estado_publicado_web'),
-                        'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
-                        'grupo'        => $a->idgrupo_cl,
+                        'categorie' => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
+                        'grupo' => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
-                        'sport_id'     => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
+                        'sport_id' => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
                         'supplier' => $aps->map(fn ($ap) => [
                             'id' => $ap->idartiprov,
                             'supplier_id' => $ap->idproveedor,
@@ -247,6 +254,7 @@ class ProductsController extends ApiController
                             'default' => $ap->pordefecto,
                             'available' => $ap->estado,
                         ])->values(),
+                        'characteristics' => $this->mapVariantCharacteristics($variantCharacteristicsByArticulo->get($a->idarticulo, collect())),
                         'created' => $a->fcreacion?->format('Y-m-d H:i:s'),
                         'updated' => $a->fmodificacion?->format('Y-m-d H:i:s'),
                     ];
@@ -261,6 +269,7 @@ class ProductsController extends ApiController
                     'web' => $modelo->estado_publicado_web,
                     'web_status' => (int) $modelo->getRawOriginal('estado_publicado_web'),
                     'marca' => $modelo->idmarca,
+                    'characteristics' => $this->mapModelCharacteristics($modelCharacteristics->get($id, collect())),
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,
                         'description' => $familiaCl->descripcion,
@@ -421,8 +430,8 @@ class ProductsController extends ApiController
             'brand_id.*' => 'integer|min:1',
             'color_id' => 'sometimes|array',
             'color_id.*' => 'integer|min:1',
-            'date_from'  => 'sometimes|nullable|date',
-            'date_to'    => 'sometimes|nullable|date',
+            'date_from' => 'sometimes|nullable|date',
+            'date_to' => 'sometimes|nullable|date',
             'date_field' => 'sometimes|in:creation,modification',
             'idproveedor' => 'sometimes|nullable|integer|min:1',
             'limit' => 'sometimes|integer|min:1|max:100',
@@ -554,12 +563,17 @@ class ProductsController extends ApiController
                 ->get()
                 ->groupBy('idarticulo');
 
-            $data = $modelos->map(function ($modelo) use ($artiprovsByArticulo) {
+            // Características (modelo + por artículo) para todos los modelos de la página, en batch
+            $modeloIds = $modelos->pluck('idmodelo')->all();
+            $modelCharacteristicsByModelo = $this->modelCharacteristicsByModelo($modeloIds);
+            $variantCharacteristicsByArticulo = $this->variantCharacteristicsByArticulo($articuloIds);
+
+            $data = $modelos->map(function ($modelo) use ($artiprovsByArticulo, $modelCharacteristicsByModelo, $variantCharacteristicsByArticulo) {
                 $familiaCl = $modelo->grupoCl?->subfamiliaCl?->familiaCl;
                 $categoriaCl = $familiaCl?->categoriaCl;
                 $deporteCl = $categoriaCl?->deporteCl;
 
-                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovsByArticulo) {
+                $product_attributes = $modelo->articulos->map(function ($a) use ($artiprovsByArticulo, $variantCharacteristicsByArticulo) {
                     $aps = $artiprovsByArticulo->get($a->idarticulo, collect());
                     $apDefault = $aps->firstWhere('pordefecto', true) ?? $aps->first();
 
@@ -574,10 +588,10 @@ class ProductsController extends ApiController
                         'available' => $a->estado,
                         'web' => $a->estado_publicado_web,
                         'web_status' => (int) $a->getRawOriginal('estado_publicado_web'),
-                        'categorie'    => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
-                        'grupo'        => $a->idgrupo_cl,
+                        'categorie' => $a->grupoCl?->subfamiliaCl?->familiaCl?->idfamilia_cl ?? $a->idgrupo_cl,
+                        'grupo' => $a->idgrupo_cl,
                         'subfamily_id' => $a->grupoCl?->subfamiliaCl?->idsubfamilia_cl,
-                        'sport_id'     => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
+                        'sport_id' => $a->grupoCl?->subfamiliaCl?->familiaCl?->categoriaCl?->iddeporte_cl,
                         'supplier' => $aps->map(fn ($ap) => [
                             'id' => $ap->idartiprov,
                             'supplier_id' => $ap->idproveedor,
@@ -590,6 +604,7 @@ class ProductsController extends ApiController
                             'default' => $ap->pordefecto,
                             'available' => $ap->estado,
                         ])->values(),
+                        'characteristics' => $this->mapVariantCharacteristics($variantCharacteristicsByArticulo->get($a->idarticulo, collect())),
                         'created' => $a->fcreacion?->format('Y-m-d H:i:s'),
                         'updated' => $a->fmodificacion?->format('Y-m-d H:i:s'),
                     ];
@@ -610,6 +625,7 @@ class ProductsController extends ApiController
                     'web' => $modelo->estado_publicado_web,
                     'web_status' => (int) $modelo->getRawOriginal('estado_publicado_web'),
                     'marca' => $modelo->idmarca,
+                    'characteristics' => $this->mapModelCharacteristics($modelCharacteristicsByModelo->get($modelo->idmodelo, collect())),
                     'categorie' => $familiaCl ? [
                         'id' => $familiaCl->idfamilia_cl,
                         'description' => $familiaCl->descripcion,
@@ -659,8 +675,8 @@ class ProductsController extends ApiController
                         'web' => $request->has('web') ? array_map('intval', (array) $request->get('web')) : null,
                         'brand_id' => $request->filled('brand_id') ? array_map('intval', (array) $request->get('brand_id')) : null,
                         'color_id' => $request->filled('color_id') ? array_map('intval', (array) $request->get('color_id')) : null,
-                        'date_from'  => $request->get('date_from'),
-                        'date_to'    => $dateTo ?? null,
+                        'date_from' => $request->get('date_from'),
+                        'date_to' => $dateTo ?? null,
                         'date_field' => $request->get('date_field', 'creation'),
                     ],
                     'execution_time_ms' => round($totalTime * 1000, 2),
@@ -685,6 +701,58 @@ class ProductsController extends ApiController
         cache()->forget("product:suppliers:{$id}");
 
         return response()->json(['success' => true, 'message' => "Caché del modelo {$id} eliminado"]);
+    }
+
+    /**
+     * Características asignadas a nivel modelo (w_caracteristicas_orden + w_caracteristicas_prod),
+     * agrupadas por idmodelo. Batched para N modelos en una sola query (patrón artiprovsByArticulo).
+     */
+    private function modelCharacteristicsByModelo(array $modeloIds): Collection
+    {
+        return WCaracteristicasOrden::select(['id', 'id_caracteristica', 'idmodelo', 'estado', 'orden'])
+            ->with(['caracteristica:id,nombre'])
+            ->whereIn('idmodelo', $modeloIds)
+            ->whereNull('fbaja')
+            ->get()
+            ->groupBy('idmodelo');
+    }
+
+    /**
+     * Características asignadas a nivel artículo/variante (w_perfiles_prod + w_valores_prod +
+     * w_caracteristicas_prod), agrupadas por idarticulo. Batched para N artículos en una sola query.
+     */
+    private function variantCharacteristicsByArticulo(array $articuloIds): Collection
+    {
+        return WPerfilesProd::select(['id', 'id_valor', 'idarticulo', 'estado', 'orden'])
+            ->with(['valor:id,id_caracteristica,nombre', 'valor.caracteristica:id,nombre'])
+            ->whereIn('idarticulo', $articuloIds)
+            ->whereNull('fbaja')
+            ->get()
+            ->groupBy('idarticulo');
+    }
+
+    private function mapModelCharacteristics(Collection $rows): array
+    {
+        return $rows->map(fn ($mc) => [
+            'id' => $mc->id,
+            'characteristic_id' => $mc->id_caracteristica,
+            'characteristic_name' => $mc->caracteristica?->nombre,
+            'available' => $mc->estado,
+            'orden' => $mc->orden,
+        ])->values()->all();
+    }
+
+    private function mapVariantCharacteristics(Collection $rows): array
+    {
+        return $rows->map(fn ($vc) => [
+            'id' => $vc->id,
+            'characteristic_id' => $vc->valor?->id_caracteristica,
+            'characteristic_name' => $vc->valor?->caracteristica?->nombre,
+            'value_id' => $vc->id_valor,
+            'value_name' => $vc->valor?->nombre,
+            'available' => $vc->estado,
+            'orden' => $vc->orden,
+        ])->values()->all();
     }
 
     private function cleanUtf8Array($data)

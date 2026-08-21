@@ -7,6 +7,9 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Modules\Core\Models\Setting;
+use Modules\Supplier\Exceptions\BudgetExceededException;
+use Modules\Supplier\Models\Ai\AiBudget;
 
 /**
  * AI API Client
@@ -102,19 +105,19 @@ class AiApiClient
      */
     protected function openaiApiKey(): string
     {
-        return self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.openai_api_key', ''))
+        return self::decryptApiKey(Setting::get('supplier.openai_api_key', ''))
             ?: (string) config('services.openai.api_key');
     }
 
     protected function anthropicApiKey(): string
     {
-        return self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.anthropic_api_key', ''))
+        return self::decryptApiKey(Setting::get('supplier.anthropic_api_key', ''))
             ?: (string) config('services.anthropic.api_key');
     }
 
     protected function googleApiKey(): string
     {
-        return self::decryptApiKey(\Modules\Core\Models\Setting::get('supplier.google_api_key', ''))
+        return self::decryptApiKey(Setting::get('supplier.google_api_key', ''))
             ?: (string) config('services.google.api_key');
     }
 
@@ -125,7 +128,7 @@ class AiApiClient
         }
         try {
             return decrypt($value);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('AI API key decryption failed; key may be stored in plain text', [
                 'error' => $e->getMessage(),
             ]);
@@ -149,6 +152,7 @@ class AiApiClient
         $maxTokens = $options['max_tokens'] ?? 4000;
         $temperature = $options['temperature'] ?? 0.7;
         $enableWebSearch = $options['enable_web_search'] ?? false;
+        $preferredSourceUrls = array_values(array_filter($options['preferred_source_urls'] ?? []));
 
         // gemini-2.0-flash y gemini-2.0-flash-lite fueron retirados por Google
         $model = match ($model) {
@@ -165,7 +169,7 @@ class AiApiClient
 
         // Block generation if any active budget for this provider is exceeded
         // and configured to block. Prevents runaway spend after alert threshold.
-        $blockingBudget = \Modules\Supplier\Models\Ai\AiBudget::shouldBlock($provider);
+        $blockingBudget = AiBudget::shouldBlock($provider);
         if ($blockingBudget) {
             $isDaily = $blockingBudget->isDailyExceeded();
             $window = $isDaily ? 'daily' : 'monthly';
@@ -182,7 +186,7 @@ class AiApiClient
                 'usage_pct' => $limit > 0 ? round($usage / $limit * 100, 2) : 0,
             ]);
 
-            throw new \Modules\Supplier\Exceptions\BudgetExceededException(
+            throw new BudgetExceededException(
                 provider: $provider,
                 window: $window,
                 usage: $usage,
@@ -202,13 +206,15 @@ class AiApiClient
 
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
-                $response = match ($provider) {
-                    // OpenAI: siempre con web search (Responses API)
-                    'openai'    => $this->callOpenAiWithSearch($prompt, $model, $maxTokens),
-                    // Anthropic: web search con herramienta nativa web_search_20250305
-                    'anthropic' => $this->callAnthropic($prompt, $model, $maxTokens, $temperature),
-                    // Google: siempre con Google Search grounding (sin coste extra)
-                    'google'    => $this->callGeminiWithSearch($prompt, $model, $maxTokens, $temperature),
+                // La bandera enable_web_search del prompt SÍ controla qué variante
+                // se llama: con búsqueda web (más cara, con las fuentes prioritarias
+                // del proveedor) o la simple, sin salir a buscar en internet.
+                $response = match (true) {
+                    $provider === 'openai' && $enableWebSearch => $this->callOpenAiWithSearch($prompt, $model, $maxTokens, $preferredSourceUrls),
+                    $provider === 'openai' => $this->callOpenAi($prompt, $model, $maxTokens, $temperature),
+                    $provider === 'anthropic' => $this->callAnthropic($prompt, $model, $maxTokens, $temperature, $preferredSourceUrls, $enableWebSearch),
+                    $provider === 'google' && $enableWebSearch => $this->callGeminiWithSearch($prompt, $model, $maxTokens, $temperature, $preferredSourceUrls),
+                    $provider === 'google' => $this->callGemini($prompt, $model, $maxTokens, $temperature),
                     default => throw new Exception("Unknown provider: {$provider}"),
                 };
 
@@ -223,32 +229,34 @@ class AiApiClient
                 // OpenAI bills web_search_preview per tool invocation. The Responses
                 // API does not return the call count, so when the tool is enabled we
                 // assume exactly one search per request (the typical case).
-                // Google: gratis. Anthropic: sin búsqueda web. OpenAI: siempre 1 llamada
-                $webSearchCalls = match ($provider) {
-                    'google'    => 0,
-                    'anthropic' => 0,
-                    'openai'    => $response['web_search_calls'] ?? 1,
-                    default     => 0,
+                // Google: gratis. Anthropic: sin coste extra por su tool nativa.
+                // OpenAI: 1 llamada — pero solo cuando la búsqueda estaba activa.
+                $webSearchCalls = match (true) {
+                    ! $enableWebSearch => 0,
+                    $provider === 'google' => 0,
+                    $provider === 'anthropic' => 0,
+                    $provider === 'openai' => $response['web_search_calls'] ?? 1,
+                    default => 0,
                 };
                 $webSearchCost = $webSearchCalls * ($config['web_search_cost_per_call'] ?? self::DEFAULT_WEB_SEARCH_COST);
 
                 return [
-                    'content'          => $response['content'],
-                    'sources_used'     => $response['sources_used'] ?? [],
+                    'content' => $response['content'],
+                    'sources_used' => $response['sources_used'] ?? [],
                     'web_search_query' => $response['web_search_query'] ?? null,
-                    'model'            => $model,
-                    'tokens'        => [
-                        'input'  => $inputTokens,
+                    'model' => $model,
+                    'tokens' => [
+                        'input' => $inputTokens,
                         'output' => $outputTokens,
-                        'total'  => $inputTokens + $outputTokens,
+                        'total' => $inputTokens + $outputTokens,
                     ],
-                    'cost'            => $inputCost + $outputCost + $webSearchCost,
-                    'input_cost'      => $inputCost,
-                    'output_cost'     => $outputCost,
+                    'cost' => $inputCost + $outputCost + $webSearchCost,
+                    'input_cost' => $inputCost,
+                    'output_cost' => $outputCost,
                     'web_search_cost' => $webSearchCost,
                     'web_search_calls' => $webSearchCalls,
-                    'latency_ms'      => $latencyMs,
-                    'request_id'      => $response['request_id'] ?? Str::uuid()->toString(),
+                    'latency_ms' => $latencyMs,
+                    'request_id' => $response['request_id'] ?? Str::uuid()->toString(),
                 ];
             } catch (ConnectionException $e) {
                 // Network-level failure (timeout, DNS, refused connection) — always retryable.
@@ -256,11 +264,11 @@ class AiApiClient
 
                 if ($attempt < $maxAttempts) {
                     Log::warning('AI API connection error, retrying', [
-                        'attempt'  => $attempt,
-                        'model'    => $model,
+                        'attempt' => $attempt,
+                        'model' => $model,
                         'provider' => $provider,
-                        'error'    => $e->getMessage(),
-                        'wait_s'   => $backoffSeconds[$attempt - 1],
+                        'error' => $e->getMessage(),
+                        'wait_s' => $backoffSeconds[$attempt - 1],
                     ]);
                     sleep($backoffSeconds[$attempt - 1]);
 
@@ -279,9 +287,9 @@ class AiApiClient
                 if (! $isRetryable) {
                     // Non-retryable error (auth failure, bad request, rate limit, etc.).
                     Log::error('AI API call failed (non-retryable)', [
-                        'model'    => $model,
+                        'model' => $model,
                         'provider' => $provider,
-                        'error'    => $e->getMessage(),
+                        'error' => $e->getMessage(),
                     ]);
 
                     throw new Exception("AI API call failed: {$e->getMessage()}");
@@ -291,11 +299,11 @@ class AiApiClient
 
                 if ($attempt < $maxAttempts) {
                     Log::warning('AI API transient error, retrying', [
-                        'attempt'  => $attempt,
-                        'model'    => $model,
+                        'attempt' => $attempt,
+                        'model' => $model,
                         'provider' => $provider,
-                        'error'    => $e->getMessage(),
-                        'wait_s'   => $backoffSeconds[$attempt - 1],
+                        'error' => $e->getMessage(),
+                        'wait_s' => $backoffSeconds[$attempt - 1],
                     ]);
                     sleep($backoffSeconds[$attempt - 1]);
 
@@ -306,10 +314,10 @@ class AiApiClient
 
         // All attempts exhausted — log and re-throw the original exception.
         Log::error('AI API call failed after retries', [
-            'model'    => $model,
+            'model' => $model,
             'provider' => $provider,
             'attempts' => $maxAttempts,
-            'error'    => $lastException?->getMessage(),
+            'error' => $lastException?->getMessage(),
         ]);
 
         throw new Exception("AI API call failed: {$lastException?->getMessage()}");
@@ -366,13 +374,57 @@ class AiApiClient
     }
 
     /**
+     * Build the "PASO X — BÚSQUEDA..." steps of the search system prompt
+     * shared by OpenAI and Gemini, plus the step number the caller should
+     * continue numbering from. When $preferredSourceUrls is non-empty,
+     * prepends a "PASO 1 — FUENTES PRIORITARIAS DEL PROVEEDOR" step
+     * instructing the model to check those pages first, falling back to the
+     * general web search (renumbered as PASO 2) only if nothing relevant is
+     * found there.
+     *
+     * @param  string[]  $preferredSourceUrls
+     * @return array{lines: string[], next_step: int}
+     */
+    protected function searchStepLines(array $preferredSourceUrls): array
+    {
+        if (empty($preferredSourceUrls)) {
+            return [
+                'lines' => [
+                    '  PASO 1 — BÚSQUEDA: Busca el producto en internet usando esta prioridad:',
+                    '    a) EAN-13 del artículo (campo ean13 en product_attributes) — resultado exacto.',
+                    '    b) Código del artículo (campo code en product_attributes).',
+                    '    c) Nombre comercial del modelo + marca.',
+                ],
+                'next_step' => 2,
+            ];
+        }
+
+        $urlList = implode("\n", array_map(fn ($url) => "    - {$url}", $preferredSourceUrls));
+
+        return [
+            'lines' => [
+                '  PASO 1 — FUENTES PRIORITARIAS DEL PROVEEDOR: antes de nada, intenta encontrar el producto en estas páginas del proveedor:',
+                $urlList,
+                '    Si encuentras información relevante y suficiente ahí, básate PRINCIPALMENTE en eso.',
+                '    Si no encuentras el producto en esas páginas o la información es insuficiente, continúa con el PASO 2.',
+                '  PASO 2 — BÚSQUEDA GENERAL: Busca el producto en internet usando esta prioridad:',
+                '    a) EAN-13 del artículo (campo ean13 en product_attributes) — resultado exacto.',
+                '    b) Código del artículo (campo code en product_attributes).',
+                '    c) Nombre comercial del modelo + marca.',
+            ],
+            'next_step' => 3,
+        ];
+    }
+
+    /**
      * Call the OpenAI Responses API with the web_search_preview tool.
      *
+     * @param  string[]  $preferredSourceUrls  URLs del proveedor a consultar antes de la búsqueda general
      * @return array{content: string, usage: array{prompt_tokens: int, completion_tokens: int}, request_id: ?string}
      *
      * @throws Exception When the API call fails
      */
-    protected function callOpenAiWithSearch(string $prompt, string $model, int $maxTokens): array
+    protected function callOpenAiWithSearch(string $prompt, string $model, int $maxTokens, array $preferredSourceUrls = []): array
     {
         if (! $this->openaiApiKey()) {
             throw new Exception('OpenAI API key not configured');
@@ -381,6 +433,7 @@ class AiApiClient
         $searchBackoff = [1, 3, 9];
         $searchAttempts = 3;
         $lastSearchException = null;
+        $searchSteps = $this->searchStepLines($preferredSourceUrls);
 
         for ($attempt = 1; $attempt <= $searchAttempts; $attempt++) {
             try {
@@ -397,21 +450,19 @@ class AiApiClient
                         'input' => [
                             [
                                 'role' => 'system',
-                                'content' => implode("\n", [
-                                    'Eres un experto en SEO y copywriter especializado en e-commerce.',
-                                    'PROCESO OBLIGATORIO — sigue estos pasos en orden:',
-                                    '  PASO 1 — BÚSQUEDA: Busca el producto en internet usando esta prioridad:',
-                                    '    a) EAN-13 del artículo (campo ean13 en product_attributes) — resultado exacto.',
-                                    '    b) Código del artículo (campo code en product_attributes).',
-                                    '    c) Nombre comercial del modelo + marca.',
-                                    '  PASO 2 — LEE los resultados y extrae información real del producto.',
-                                    '  PASO 3 — REDACTA el contenido basándote en lo encontrado en la web.',
-                                    '  PASO 4 — Al terminar, añade al final del texto un bloque exactamente así:',
-                                    'SOURCES:',
-                                    'https://url-real-1.com',
-                                    'https://url-real-2.com',
-                                    'Pon las URLs reales que consultaste. Mínimo 1, máximo 5.',
-                                ]),
+                                'content' => implode("\n", array_merge(
+                                    ['Eres un experto en SEO y copywriter especializado en e-commerce.', 'PROCESO OBLIGATORIO — sigue estos pasos en orden:'],
+                                    $searchSteps['lines'],
+                                    [
+                                        "  PASO {$searchSteps['next_step']} — LEE los resultados y extrae información real del producto.",
+                                        '  PASO '.($searchSteps['next_step'] + 1).' — REDACTA el contenido basándote en lo encontrado en la web.',
+                                        '  PASO '.($searchSteps['next_step'] + 2).' — Al terminar, añade al final del texto un bloque exactamente así:',
+                                        'SOURCES:',
+                                        'https://url-real-1.com',
+                                        'https://url-real-2.com',
+                                        'Pon las URLs reales que consultaste. Mínimo 1, máximo 5.',
+                                    ]
+                                )),
                             ],
                             [
                                 'role' => 'user',
@@ -427,9 +478,9 @@ class AiApiClient
                 if ($attempt < $searchAttempts) {
                     Log::warning('callOpenAiWithSearch connection error, retrying', [
                         'attempt' => $attempt,
-                        'model'   => $model,
-                        'error'   => $e->getMessage(),
-                        'wait_s'  => $searchBackoff[$attempt - 1],
+                        'model' => $model,
+                        'error' => $e->getMessage(),
+                        'wait_s' => $searchBackoff[$attempt - 1],
                     ]);
                     sleep($searchBackoff[$attempt - 1]);
 
@@ -463,9 +514,9 @@ class AiApiClient
             foreach ($tracking as $k) {
                 unset($query[$k]);
             }
-            $qs = $query ? '?' . http_build_query($query) : '';
+            $qs = $query ? '?'.http_build_query($query) : '';
 
-            return ($parts['scheme'] ?? 'https') . '://' . $parts['host'] . ($parts['path'] ?? '') . $qs;
+            return ($parts['scheme'] ?? 'https').'://'.$parts['host'].($parts['path'] ?? '').$qs;
         };
 
         foreach ($data['output'] ?? [] as $item) {
@@ -482,7 +533,7 @@ class AiApiClient
                         $key = $normalizeUrl($result['url']);
                         if (! isset($sources[$key])) {
                             $sources[$key] = [
-                                'url'   => $key,
+                                'url' => $key,
                                 'title' => $result['title'] ?? null,
                             ];
                         }
@@ -503,7 +554,7 @@ class AiApiClient
                             $key = $normalizeUrl($annotation['url']);
                             if (! isset($sources[$key])) {
                                 $sources[$key] = [
-                                    'url'   => $key,
+                                    'url' => $key,
                                     'title' => $annotation['title'] ?? null,
                                 ];
                             }
@@ -525,11 +576,11 @@ class AiApiClient
         }
 
         return [
-            'content'           => $text,
-            'sources_used'      => array_values($sources),
-            'web_search_query'  => $webSearchQuery,
-            'usage'             => [
-                'prompt_tokens'     => $data['usage']['input_tokens'] ?? 0,
+            'content' => $text,
+            'sources_used' => array_values($sources),
+            'web_search_query' => $webSearchQuery,
+            'usage' => [
+                'prompt_tokens' => $data['usage']['input_tokens'] ?? 0,
                 'completion_tokens' => $data['usage']['output_tokens'] ?? 0,
             ],
             'request_id' => $data['id'] ?? null,
@@ -539,50 +590,68 @@ class AiApiClient
     /**
      * Call the Anthropic (Claude) Messages API.
      *
+     * @param  string[]  $preferredSourceUrls  URLs del proveedor a consultar antes de la búsqueda general
+     * @param  bool  $enableSearch  Si es false, no se adjunta la tool web_search — respeta el toggle "Habilitar búsqueda web" del prompt
      * @return array{content: string, usage: array{prompt_tokens: int, completion_tokens: int}, request_id: ?string}
      *
      * @throws Exception When the API call fails
      */
-    protected function callAnthropic(string $prompt, string $model, int $maxTokens, float $temperature): array
+    protected function callAnthropic(string $prompt, string $model, int $maxTokens, float $temperature, array $preferredSourceUrls = [], bool $enableSearch = true): array
     {
         if (! $this->anthropicApiKey()) {
             throw new Exception('Anthropic API key not configured');
         }
 
+        $systemLines = [
+            'Eres un experto en SEO y copywriter especializado en e-commerce.',
+        ];
+
+        if ($enableSearch) {
+            if (! empty($preferredSourceUrls)) {
+                $urlList = implode("\n", array_map(fn ($url) => "  - {$url}", $preferredSourceUrls));
+                $systemLines[] = "OBLIGATORIO: antes de nada, intenta encontrar el producto en estas páginas del proveedor:\n{$urlList}\nSi encuentras información relevante y suficiente ahí, básate PRINCIPALMENTE en eso. Solo si no encuentras el producto ahí o la información es insuficiente, busca en internet en general por EAN, código de artículo o nombre comercial.";
+            } else {
+                $systemLines[] = 'OBLIGATORIO: Antes de redactar busca el producto en internet por EAN, código de artículo o nombre comercial.';
+            }
+
+            $systemLines[] = 'Basa el contenido exclusivamente en lo que encuentres en la web.';
+        }
+
+        $payload = [
+            'model' => $model,
+            'max_tokens' => $maxTokens,
+            'temperature' => $temperature,
+            'system' => implode("\n", $systemLines),
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+        ];
+
+        if ($enableSearch) {
+            $payload['tools'] = [[
+                'type' => 'web_search_20250305',
+                'name' => 'web_search',
+                'max_uses' => 5,
+            ]];
+        }
+
         $response = Http::withHeaders([
-            'x-api-key'         => $this->anthropicApiKey(),
+            'x-api-key' => $this->anthropicApiKey(),
             'anthropic-version' => '2023-06-01',
-            'anthropic-beta'    => 'web-search-2025-03-05',
-            'Content-Type'      => 'application/json',
+            'anthropic-beta' => 'web-search-2025-03-05',
+            'Content-Type' => 'application/json',
         ])
             ->timeout(120)
-            ->post('https://api.anthropic.com/v1/messages', [
-                'model'      => $model,
-                'max_tokens' => $maxTokens,
-                'temperature' => $temperature,
-                'tools' => [[
-                    'type'     => 'web_search_20250305',
-                    'name'     => 'web_search',
-                    'max_uses' => 5,
-                ]],
-                'system' => implode("\n", [
-                    'Eres un experto en SEO y copywriter especializado en e-commerce.',
-                    'OBLIGATORIO: Antes de redactar busca el producto en internet por EAN, código de artículo o nombre comercial.',
-                    'Basa el contenido exclusivamente en lo que encuentres en la web.',
-                ]),
-                'messages' => [
-                    ['role' => 'user', 'content' => $prompt],
-                ],
-            ]);
+            ->post('https://api.anthropic.com/v1/messages', $payload);
 
         if (! $response->successful()) {
             throw new Exception("Anthropic API error: {$response->status()} - {$response->body()}");
         }
 
-        $data    = $response->json();
+        $data = $response->json();
         $sources = [];
         $webSearchQuery = null;
-        $text    = '';
+        $text = '';
 
         foreach ($data['content'] ?? [] as $block) {
             if (($block['type'] ?? '') === 'text') {
@@ -606,11 +675,11 @@ class AiApiClient
         }
 
         return [
-            'content'          => $text,
-            'sources_used'     => array_values($sources),
+            'content' => $text,
+            'sources_used' => array_values($sources),
             'web_search_query' => $webSearchQuery,
-            'usage'            => [
-                'prompt_tokens'     => $data['usage']['input_tokens']  ?? 0,
+            'usage' => [
+                'prompt_tokens' => $data['usage']['input_tokens'] ?? 0,
                 'completion_tokens' => $data['usage']['output_tokens'] ?? 0,
             ],
             'request_id' => $response->header('request-id'),
@@ -678,15 +747,17 @@ class AiApiClient
      * Call Google Gemini API with Google Search grounding.
      * The grounding metadata always returns the URLs consulted — more reliable than OpenAI citations.
      *
+     * @param  string[]  $preferredSourceUrls  URLs del proveedor a consultar antes de la búsqueda general
      * @return array{content: string, sources_used: array, web_search_query: ?string, usage: array, request_id: ?string}
      */
-    protected function callGeminiWithSearch(string $prompt, string $model, int $maxTokens, float $temperature): array
+    protected function callGeminiWithSearch(string $prompt, string $model, int $maxTokens, float $temperature, array $preferredSourceUrls = []): array
     {
         if (! $this->googleApiKey()) {
             throw new Exception('Google API key not configured');
         }
 
         $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key={$this->googleApiKey()}";
+        $searchSteps = $this->searchStepLines($preferredSourceUrls);
 
         $response = Http::withHeaders(['Content-Type' => 'application/json'])
             ->timeout(120)
@@ -695,21 +766,19 @@ class AiApiClient
                     ['role' => 'user', 'parts' => [['text' => $prompt]]],
                 ],
                 'systemInstruction' => [
-                    'parts' => [['text' => implode("\n", [
-                        'Eres un experto en SEO y copywriter especializado en e-commerce.',
-                        'PROCESO OBLIGATORIO — sigue estos pasos en orden:',
-                        '  PASO 1 — BÚSQUEDA: Busca el producto en internet usando esta prioridad:',
-                        '    a) EAN-13 del artículo (campo ean13 en product_attributes) — resultado exacto.',
-                        '    b) Código del artículo (campo code en product_attributes).',
-                        '    c) Nombre comercial del modelo + marca.',
-                        '  PASO 2 — LEE los resultados y extrae información real del producto.',
-                        '  PASO 3 — REDACTA el contenido basándote en lo encontrado en la web.',
-                        '  PASO 4 — Al terminar, añade al final del texto un bloque exactamente así:',
-                        'SOURCES:',
-                        'https://url-real-1.com',
-                        'https://url-real-2.com',
-                        'Pon las URLs reales que consultaste. Mínimo 1, máximo 5.',
-                    ])]],
+                    'parts' => [['text' => implode("\n", array_merge(
+                        ['Eres un experto en SEO y copywriter especializado en e-commerce.', 'PROCESO OBLIGATORIO — sigue estos pasos en orden:'],
+                        $searchSteps['lines'],
+                        [
+                            "  PASO {$searchSteps['next_step']} — LEE los resultados y extrae información real del producto.",
+                            '  PASO '.($searchSteps['next_step'] + 1).' — REDACTA el contenido basándote en lo encontrado en la web.',
+                            '  PASO '.($searchSteps['next_step'] + 2).' — Al terminar, añade al final del texto un bloque exactamente así:',
+                            'SOURCES:',
+                            'https://url-real-1.com',
+                            'https://url-real-2.com',
+                            'Pon las URLs reales que consultaste. Mínimo 1, máximo 5.',
+                        ]
+                    ))]],
                 ],
                 'tools' => [['google_search' => new \stdClass]],
                 'generationConfig' => $this->geminiGenerationConfig($model, $maxTokens, $temperature),
@@ -743,7 +812,7 @@ class AiApiClient
         }
 
         foreach ($grounding['groundingChunks'] ?? [] as $chunk) {
-            $uri   = $chunk['web']['uri']   ?? null;
+            $uri = $chunk['web']['uri'] ?? null;
             $title = $chunk['web']['title'] ?? null;
             if ($uri && ! isset($sources[$uri])) {
                 $sources[$uri] = ['url' => $uri, 'title' => $title];
@@ -764,11 +833,11 @@ class AiApiClient
         $usage = $data['usageMetadata'] ?? [];
 
         return [
-            'content'          => $text,
-            'sources_used'     => array_values($sources),
+            'content' => $text,
+            'sources_used' => array_values($sources),
             'web_search_query' => $webSearchQuery,
-            'usage'            => [
-                'prompt_tokens'     => $usage['promptTokenCount']     ?? 0,
+            'usage' => [
+                'prompt_tokens' => $usage['promptTokenCount'] ?? 0,
                 'completion_tokens' => $usage['candidatesTokenCount'] ?? 0,
             ],
             'request_id' => null,

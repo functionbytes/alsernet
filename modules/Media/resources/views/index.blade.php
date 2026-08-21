@@ -77,7 +77,7 @@
         width: 100%;
         overflow: hidden;
         position: relative;
-        background: #f8f9fa;
+        background: #f5f6f8;
     }
 
     .file-image-preview img {
@@ -313,7 +313,7 @@
         transition: all 0.3s ease;
         cursor: pointer;
         text-decoration: none;
-        background: #f8f9fa;
+        background: #f5f6f8;
         border-color: #e8e8e8 !important;
     }
 

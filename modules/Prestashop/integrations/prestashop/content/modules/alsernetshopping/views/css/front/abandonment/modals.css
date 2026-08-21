@@ -140,7 +140,7 @@
 }
 
 .discount-code {
-    background: #f8f9fa;
+    background: #f5f6f8;
     padding: 20px;
     border-radius: 10px;
     margin: 20px 0;
@@ -305,7 +305,7 @@
 }
 
 .welcome-info {
-    background: #f8f9fa;
+    background: #f5f6f8;
     padding: 20px;
     border-radius: 10px;
     margin: 20px 0;
@@ -429,7 +429,7 @@
 .offer-item {
     display: flex;
     align-items: center;
-    background: #f8f9fa;
+    background: #f5f6f8;
     border-radius: 10px;
     padding: 15px;
     margin-bottom: 10px;

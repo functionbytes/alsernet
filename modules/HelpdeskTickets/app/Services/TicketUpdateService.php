@@ -4,7 +4,9 @@ namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketStatusChanged;
+use Modules\HelpdeskTickets\Events\TicketUnassigned;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 class TicketUpdateService
@@ -80,6 +82,16 @@ class TicketUpdateService
         if (isset($data['assignee_id']) && $data['assignee_id'] != $ticket->assignee_id) {
             if ($data['assignee_id']) {
                 $ticket->assignTo($data['assignee_id']);
+
+                // Bug real: reasignar desde el formulario de edición de la
+                // ficha nunca disparaba TicketAssigned (a diferencia de
+                // AssignmentService::assignTicket(), que sí lo hace), así que
+                // NotifyAgentOfAssignment/RunAutomationsOnTicketAssigned no
+                // corrían al cambiar el agente desde aquí.
+                $agent = User::find($data['assignee_id']);
+                if ($agent) {
+                    TicketAssigned::dispatch($ticket, $agent);
+                }
             } else {
                 $ticket->update(['assignee_id' => null, 'assigned_at' => null]);
                 $ticket->items()->create([
@@ -87,6 +99,8 @@ class TicketUpdateService
                     'user_id' => $actor->id,
                     'body' => 'Ticket desasignado',
                 ]);
+
+                TicketUnassigned::dispatch($ticket);
             }
             $changed[] = 'assignee_id';
             unset($data['assignee_id']);

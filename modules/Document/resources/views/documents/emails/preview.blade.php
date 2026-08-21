@@ -323,7 +323,7 @@
         align-items: flex-start;
         width: 100%;
         padding: 30px;
-        background: #f8f9fa;
+        background: #f5f6f8;
         min-height: 500px;
     }
 

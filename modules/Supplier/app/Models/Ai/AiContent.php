@@ -49,6 +49,8 @@ class AiContent extends Model
 
     public const STATUS_ERROR_GENERATION_FAILED = 'error_generation_failed';
 
+    public const STATUS_ON_HOLD = 'on_hold';
+
     public const ACTION_CREATED = 'created';
 
     public const ACTION_GENERATION_STARTED = 'generation_started';
@@ -69,6 +71,10 @@ class AiContent extends Model
 
     public const ACTION_SYNCED_TO_ERP = 'synced_to_erp';
 
+    public const ACTION_HELD = 'held';
+
+    public const ACTION_RESTORED = 'restored';
+
     protected $fillable = [
         'uid',
         'supplier_id',
@@ -82,6 +88,7 @@ class AiContent extends Model
         'short_description',
         'long_description',
         'bullet_points',
+        'technologies',
         'seo_title',
         'seo_description',
         'seo_keywords',
@@ -99,12 +106,14 @@ class AiContent extends Model
         'assigned_to',
         'assigned_at',
         'sources_history',
+        'notes',
     ];
 
     protected function casts(): array
     {
         return [
             'bullet_points' => 'array',
+            'technologies' => 'array',
             'source_attributes' => 'array',
             'sources_used' => 'array',
             'generation_metadata' => 'array',
@@ -247,6 +256,21 @@ class AiContent extends Model
         return $query->where('assigned_to', $userId);
     }
 
+    public function scopeOnHold(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_ON_HOLD);
+    }
+
+    /**
+     * Exclude on_hold content from a query unless a status filter was
+     * explicitly requested — used so the general "Disponibles"/"Mis
+     * asignados" listing doesn't mix in items parked as "Sin contenido".
+     */
+    public function scopeExcludeOnHoldByDefault(Builder $query, bool $hasExplicitStatusFilter): Builder
+    {
+        return $hasExplicitStatusFilter ? $query : $query->where('status', '!=', self::STATUS_ON_HOLD);
+    }
+
     public function log(
         string $action,
         ?string $previousStatus = null,
@@ -320,6 +344,40 @@ class AiContent extends Model
         return true;
     }
 
+    /**
+     * Park content in the "Sin contenido" holding area, out of the normal
+     * review queues, with an optional internal note (ej. "No subir hasta
+     * Septiembre"). Works from any pre-publish status.
+     */
+    public function holdWithNote(?string $notes = null, ?int $userId = null): bool
+    {
+        $previousStatus = $this->status;
+        $this->status = self::STATUS_ON_HOLD;
+        if ($notes !== null && $notes !== '') {
+            $this->notes = $notes;
+        }
+        $this->save();
+
+        $this->log(self::ACTION_HELD, $previousStatus, self::STATUS_ON_HOLD, $notes ? ['notes' => $notes] : null, $userId);
+
+        return true;
+    }
+
+    /**
+     * Take content out of "Sin contenido" and put it back in the review
+     * queue (Por validar).
+     */
+    public function restoreFromHold(?int $userId = null): bool
+    {
+        $previousStatus = $this->status;
+        $this->status = self::STATUS_PENDING_VALIDATION;
+        $this->save();
+
+        $this->log(self::ACTION_RESTORED, $previousStatus, self::STATUS_PENDING_VALIDATION, null, $userId);
+
+        return true;
+    }
+
     public function publishHidden(): bool
     {
         $this->published_at = now();
@@ -374,6 +432,11 @@ class AiContent extends Model
     public function isPublished(): bool
     {
         return $this->status === self::STATUS_PUBLISHED;
+    }
+
+    public function isOnHold(): bool
+    {
+        return $this->status === self::STATUS_ON_HOLD;
     }
 
     public function hasErrors(): bool

@@ -3,9 +3,13 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Events\TicketAssigned;
+use Modules\HelpdeskTickets\Events\TicketClosed;
+use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketResolved;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -70,15 +74,30 @@ class BulkTicketsController extends Controller
             // reportes igual que en las acciones individuales.
             $count = DB::transaction(function () use ($action, $validated, $authorized): int {
                 return match ($action) {
+                    // Antes hacía update() directo: no creaba el item de
+                    // actividad ni disparaba TicketAssigned (a diferencia de
+                    // la asignación individual vía assignTo()), así que una
+                    // reasignación masiva no notificaba a los agentes ni
+                    // encadenaba automatizaciones "al asignar".
                     'assign' => $authorized
-                        ->each(fn (Ticket $ticket) => $ticket->update([
-                            'assignee_id' => $validated['agent_id'],
-                            'assigned_at' => now(),
-                        ]))
+                        ->each(function (Ticket $ticket) use ($validated): void {
+                            $ticket->assignTo($validated['agent_id']);
+
+                            $agent = User::find($validated['agent_id']);
+                            if ($agent) {
+                                TicketAssigned::dispatch($ticket, $agent);
+                            }
+                        })
                         ->count(),
+                    // Mismo bug que el botón individual "Cerrar ticket": sin
+                    // TicketClosed, la encuesta CSAT automática no se enviaba
+                    // al cerrar en bloque.
                     'close' => $authorized
                         ->whereNull('closed_at')
-                        ->each(fn (Ticket $ticket) => $ticket->close())
+                        ->each(function (Ticket $ticket): void {
+                            $ticket->close();
+                            TicketClosed::dispatch($ticket);
+                        })
                         ->count(),
                     'resolve' => $authorized
                         ->each(function (Ticket $ticket): void {
@@ -86,9 +105,14 @@ class BulkTicketsController extends Controller
                             TicketResolved::dispatch($ticket);
                         })
                         ->count(),
+                    // Mismo bug que el botón individual "Reabrir": sin
+                    // TicketReopened no se notifica al cliente al reabrir en bloque.
                     'reopen' => $authorized
                         ->whereNotNull('closed_at')
-                        ->each(fn (Ticket $ticket) => $ticket->reopen())
+                        ->each(function (Ticket $ticket): void {
+                            $ticket->reopen();
+                            TicketReopened::dispatch($ticket);
+                        })
                         ->count(),
                     'change_status' => $authorized
                         ->each(fn (Ticket $ticket) => $ticket->update([

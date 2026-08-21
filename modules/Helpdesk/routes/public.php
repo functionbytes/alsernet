@@ -50,23 +50,36 @@ Route::middleware(['web', 'throttle:5,1'])
 // Public multi-channel conversation simulator.
 // Gated by config('helpdesk.simulator_public_enabled') in the controller (404 in
 // production). No auth: per-conversation writes are authorized by an opaque token.
-Route::middleware(['web', 'throttle:60,1'])
+//
+// Cada ruta lleva su propio prefix (3er argumento de throttle:N,M,prefix).
+// Sin él, ThrottleRequests::resolveRequestSignature() calcula la clave SOLO
+// con dominio+ip (o user id si hay sesión) — sin la ruta — así que todas las
+// rutas throttle:N,M sin prefix del sitio comparten un único contador por IP
+// (mismo bug ya documentado y corregido para ai-suggestions/suggested-articles
+// en managers.php). Aquí el polling de /messages cada 3s (siempre activo,
+// "index.blade.php:1332") por sí solo agotaba el cupo compartido con /start,
+// /inbound, etc., y cualquier otra ruta pública bare-throttle del sitio
+// (status, health, csat, survey…), dando 429 "Too Many Attempts" a los pocos
+// segundos de abrir el simulador.
+Route::middleware(['web', 'throttle:60,1,helpdesk-sim'])
     ->prefix('helpdesk/sim')
     ->name('helpdesk.sim.')
     ->group(function () {
         Route::get('/', [PublicSimulatorController::class, 'index'])->name('index');
         Route::get('/sessions', [PublicSimulatorController::class, 'sessions'])
-            ->middleware('throttle:30,1')->name('sessions');
+            ->middleware('throttle:30,1,helpdesk-sim-sessions')->name('sessions');
         Route::post('/start', [PublicSimulatorController::class, 'start'])
-            ->middleware('throttle:15,1')->name('start');
+            ->middleware('throttle:15,1,helpdesk-sim-start')->name('start');
         Route::post('/{conversation}/inbound', [PublicSimulatorController::class, 'inbound'])
-            ->middleware('throttle:40,1')->name('inbound');
+            ->middleware('throttle:40,1,helpdesk-sim-inbound')->name('inbound');
         Route::post('/{conversation}/inject', [PublicSimulatorController::class, 'inject'])
-            ->middleware('throttle:30,1')->name('inject');
-        Route::get('/{conversation}/messages', [PublicSimulatorController::class, 'messages'])->name('messages');
+            ->middleware('throttle:30,1,helpdesk-sim-inject')->name('inject');
+        Route::get('/{conversation}/messages', [PublicSimulatorController::class, 'messages'])
+            ->middleware('throttle:120,1,helpdesk-sim-messages')->name('messages');
         Route::get('/lookup', [PublicSimulatorController::class, 'lookup'])
-            ->middleware('throttle:30,1')->name('lookup');
+            ->middleware('throttle:30,1,helpdesk-sim-lookup')->name('lookup');
         Route::post('/{conversation}/attachment', [PublicSimulatorController::class, 'attachment'])
-            ->middleware('throttle:20,1')->name('attachment');
-        Route::get('/{conversation}/csat', [PublicSimulatorController::class, 'csat'])->name('csat');
+            ->middleware('throttle:20,1,helpdesk-sim-attachment')->name('attachment');
+        Route::get('/{conversation}/csat', [PublicSimulatorController::class, 'csat'])
+            ->middleware('throttle:30,1,helpdesk-sim-csat')->name('csat');
     });

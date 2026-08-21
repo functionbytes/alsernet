@@ -11,17 +11,17 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Modules\Supplier\Commands\CleanupSyncCacheCommand;
-use Modules\Supplier\Console\Commands\DetectDeadSyncBatchesCommand;
-use Modules\Supplier\Console\Commands\RetryTransientFailuresCommand;
 use Modules\Supplier\Console\Commands\BackfillPendingContentCommand;
+use Modules\Supplier\Console\Commands\DetectDeadSyncBatchesCommand;
 use Modules\Supplier\Console\Commands\GenerateContentCommand;
+use Modules\Supplier\Console\Commands\RetryTransientFailuresCommand;
 use Modules\Supplier\Console\Commands\RunModelSyncCommand;
-use Modules\Supplier\Console\Commands\TestRegisterOnlySync;
+use Modules\Supplier\Console\Commands\RunProductSyncCommand;
 // use Modules\Supplier\Events\SupplierErpProviderUpdated;
 // use Modules\Supplier\Events\SupplierProductPriceChanged;
-use Modules\Supplier\Console\Commands\RunProductSyncCommand;
-// use Modules\Supplier\Listeners\SyncPriceToErpListener;
 use Modules\Supplier\Console\Commands\ShowCategoryTreeCommand;
+// use Modules\Supplier\Listeners\SyncPriceToErpListener;
+use Modules\Supplier\Console\Commands\TestRegisterOnlySync;
 // use Modules\Supplier\Listeners\SyncProviderToErpListener;
 // use Modules\Supplier\Models\SupplierErpProvider;
 use Modules\Supplier\Events\SupplierProductUpdated;
@@ -119,7 +119,7 @@ class SupplierServiceProvider extends ServiceProvider
             ContentGenerationService::class,
             fn ($app) => new ContentGenerationService(
                 $app->make(AiApiClient::class),
-                $app->make(\Modules\Supplier\Services\PromptSelectionService::class),
+                $app->make(PromptSelectionService::class),
             )
         );
 
@@ -424,6 +424,7 @@ class SupplierServiceProvider extends ServiceProvider
                 ['label' => 'Proveedores', 'route' => 'settings.suppliers.index', 'permission' => 'suppliers.view'],
                 ['label' => 'Productos', 'route' => 'settings.suppliers.products.index', 'permission' => 'suppliers.view.products'],
                 ['label' => 'Categorías', 'route' => 'settings.suppliers.categories.index', 'permission' => 'suppliers.configure'],
+                ['label' => 'Características', 'route' => 'settings.suppliers.characteristics.index', 'permission' => 'suppliers.configure'],
                 ['label' => 'Contenido generado', 'route' => 'settings.suppliers.content.index', 'permission' => 'suppliers.view.content'],
             ],
         ]);
@@ -466,6 +467,7 @@ class SupplierServiceProvider extends ServiceProvider
                 ['label' => 'Configuración sync', 'route' => 'settings.suppliers.sync.config.http', 'permission' => 'suppliers.sync.config'],
                 ['label' => 'Endpoints ERP', 'route' => 'settings.suppliers.endpoints.index', 'permission' => 'suppliers.sync.config'],
                 ['label' => 'Configuración IA', 'route' => 'settings.suppliers.ai-config.index', 'permission' => 'suppliers.sync.config'],
+                ['label' => 'Proveedores excluidos', 'route' => 'settings.suppliers.content.excluded-suppliers.index', 'permission' => 'suppliers.content.manage'],
                 ['label' => 'Referencias excluidas', 'route' => 'settings.suppliers.sync.excluded-groups.index', 'permission' => 'suppliers.sync.config'],
                 ['label' => 'Limpiar datos prueba', 'route' => 'settings.suppliers.sync.cleanup.index', 'permission' => 'suppliers.sync.status'],
             ],
