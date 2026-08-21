@@ -58,7 +58,7 @@ class Group extends Model
         $relation = $this->belongsToMany(
             User::class,
             'helpdesk_group_user',
-            'group_id',
+            'helpdesk_group_id',
             'user_id'
         )
             ->withPivot('conversation_priority')
