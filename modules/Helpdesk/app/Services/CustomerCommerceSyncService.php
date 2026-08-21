@@ -138,7 +138,6 @@ class CustomerCommerceSyncService
      */
     public function searchCustomersOrFail(string $query, string $type = 'email'): array
     {
-        $db = (string) config('helpdeskprestashop.ps_db', 'alvarez_cristia');
         $query = trim($query);
 
         if (strlen($query) < 2) {
@@ -156,43 +155,52 @@ class CustomerCommerceSyncService
             };
         }
 
+        // Conexión dedicada 'prestashop' (servidor remoto, ver config/DB_*_PRESTASHOP
+        // en .env) — antes usaba la conexión local 'mysql' con sintaxis de
+        // base de datos cruzada `{db}`.tabla, que solo funciona si ambas bases
+        // viven en el mismo servidor MySQL. No es el caso: PrestaShop está en
+        // un host aparte (213.134.40.101), así que esa consulta fallaba siempre
+        // con "Incorrect database name" en cuanto HELPDESK_PS_DB estaba vacío
+        // (y aunque no lo estuviera, jamás iba a alcanzar la base remota).
+        $ps = DB::connection('prestashop');
+
         // Dirección más reciente del cliente (subquery determinista por
         // id_address, evita el problema de ONLY_FULL_GROUP_BY de un JOIN +
         // GROUP BY simple) — de ahí salen DNI/teléfono/ciudad, que no viven
         // en aalv_customer.
-        $addressJoin = "LEFT JOIN `{$db}`.aalv_address a
+        $addressJoin = 'LEFT JOIN aalv_address a
                            ON a.id_address = (
-                                SELECT a2.id_address FROM `{$db}`.aalv_address a2
+                                SELECT a2.id_address FROM aalv_address a2
                                  WHERE a2.id_customer = c.id_customer AND a2.deleted = 0
                                  ORDER BY a2.date_add DESC LIMIT 1
-                           )";
+                           )';
         $cols = 'c.id_customer, c.firstname, c.lastname, c.email, c.date_add, c.active, '.
                 'a.dni, a.phone, a.phone_mobile, a.city';
 
         $rows = match ($type) {
-            'id' => DB::connection('mysql')->select(
+            'id' => $ps->select(
                 "SELECT {$cols}
-                   FROM `{$db}`.aalv_customer c
+                   FROM aalv_customer c
                    {$addressJoin}
-                  WHERE c.deleted = 0 AND c.id_customer = ?
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.id_customer = ?
                   LIMIT 5",
                 [(int) $query]
             ),
-            'name' => DB::connection('mysql')->select(
+            'name' => $ps->select(
                 "SELECT {$cols}
-                   FROM `{$db}`.aalv_customer c
+                   FROM aalv_customer c
                    {$addressJoin}
-                  WHERE c.deleted = 0
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1
                     AND CONCAT(c.firstname, ' ', c.lastname) LIKE ?
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
                 [$query.'%']
             ),
-            'nif' => DB::connection('mysql')->select(
+            'nif' => $ps->select(
                 "SELECT {$cols}
-                   FROM `{$db}`.aalv_customer c
+                   FROM aalv_customer c
                    {$addressJoin}
-                  WHERE c.deleted = 0 AND a.dni = ?
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND a.dni = ?
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
                 [$query]
@@ -200,21 +208,21 @@ class CustomerCommerceSyncService
             // Texto que no es email ni solo dígitos (búsqueda "auto"): puede
             // ser un NIF/DNI o un nombre, no hay forma de saberlo de antemano
             // — se prueban ambos y se combinan resultados.
-            'name_or_nif' => DB::connection('mysql')->select(
+            'name_or_nif' => $ps->select(
                 "SELECT {$cols}
-                   FROM `{$db}`.aalv_customer c
+                   FROM aalv_customer c
                    {$addressJoin}
-                  WHERE c.deleted = 0
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1
                     AND (a.dni = ? OR CONCAT(c.firstname, ' ', c.lastname) LIKE ?)
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
                 [$query, $query.'%']
             ),
-            default => DB::connection('mysql')->select(
+            default => $ps->select(
                 "SELECT {$cols}
-                   FROM `{$db}`.aalv_customer c
+                   FROM aalv_customer c
                    {$addressJoin}
-                  WHERE c.deleted = 0 AND c.email = ?
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.email = ?
                   ORDER BY c.id_customer DESC
                   LIMIT 10",
                 [$query]
@@ -241,19 +249,17 @@ class CustomerCommerceSyncService
      */
     private function lookupInPrestashop(string $email): ?array
     {
-        $db = (string) config('helpdeskprestashop.ps_db', 'alvarez_cristia');
-
         try {
-            $row = DB::connection('mysql')->selectOne(
-                "SELECT c.id_customer,
+            $row = DB::connection('prestashop')->selectOne(
+                'SELECT c.id_customer,
                         (SELECT MAX(sp.id_cliente_gestion)
-                           FROM `{$db}`.aalv_orders o
-                           JOIN `{$db}`.seguimiento_pedidos sp ON sp.id_internet = o.id_order AND sp.id_cliente_gestion > 0
+                           FROM aalv_orders o
+                           JOIN seguimiento_pedidos sp ON sp.id_internet = o.id_order AND sp.id_cliente_gestion > 0
                           WHERE o.id_customer = c.id_customer) AS gestion_id
-                   FROM `{$db}`.aalv_customer c
-                  WHERE c.deleted = 0 AND c.email = ?
+                   FROM aalv_customer c
+                  WHERE c.deleted = 0 AND c.is_guest = 0 AND c.active = 1 AND c.email = ?
                ORDER BY c.id_customer DESC
-                  LIMIT 1",
+                  LIMIT 1',
                 [$email]
             );
         } catch (\Throwable $e) {
