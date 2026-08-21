@@ -4,6 +4,7 @@ namespace Modules\Notification\Console\Commands;
 
 use App\Models\User;
 use Illuminate\Console\Command;
+use Modules\Helpdesk\Models\Setting;
 use Modules\Notification\Jobs\SendNotificationDigestJob;
 
 class SendNotificationDigestCommand extends Command
@@ -14,6 +15,15 @@ class SendNotificationDigestCommand extends Command
 
     public function handle(): int
     {
+        // Checkbox real: /panel/settings/helpdesk/notifications ("Activar
+        // resumen diario por email"). Antes se guardaba pero nadie lo leía,
+        // así que apagarlo no tenía ningún efecto.
+        if (! Setting::get('notifications.daily_digest_enabled', false)) {
+            $this->info('Resumen diario deshabilitado en Ajustes > Notificaciones. No se envía nada.');
+
+            return self::SUCCESS;
+        }
+
         $dispatched = 0;
 
         User::query()
