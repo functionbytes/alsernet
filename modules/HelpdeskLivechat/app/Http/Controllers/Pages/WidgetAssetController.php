@@ -5,16 +5,50 @@ namespace Modules\HelpdeskLivechat\Http\Controllers\Pages;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Modules\HelpdeskLivechat\Models\Channels\Web;
 use Symfony\Component\HttpFoundation\Response;
 
 class WidgetAssetController extends Controller
 {
+    /**
+     * Whether the widget has anything real to serve: the LiveChat integration
+     * must be on (module enabled + Settings → Integraciones toggle, see
+     * helpdesk_livechat_enabled()) AND at least one Web channel must be
+     * configured. These routes aren't token-scoped, so we can't check a
+     * specific tenant's channel — but with zero Web channels configured
+     * anywhere, the widget would only ever render a launcher with nothing to
+     * connect to, so we keep serving the inert stub in that case too.
+     */
+    private function widgetActive(): bool
+    {
+        return helpdesk_livechat_enabled() && Web::query()->exists();
+    }
+
+    /**
+     * Stub response returned for every widget asset while the LiveChat
+     * widget isn't active — see widgetActive(). Keeps external sites that
+     * embedded the snippet from pulling real widget JS/CSS while it's off.
+     */
+    private function disabled(string $contentType = 'application/javascript'): Response
+    {
+        $body = $contentType === 'text/css' ? '/* Helpdesk widget disabled */' : '// Helpdesk widget disabled';
+
+        return response($body, 200)
+            ->header('Content-Type', $contentType.'; charset=UTF-8')
+            ->header('Cache-Control', 'no-store')
+            ->header('Access-Control-Allow-Origin', '*');
+    }
+
     /**
      * Serve the widget embed entry point.
      * GET /hd/assets/embed.js
      */
     public function embed(Request $request): Response
     {
+        if (! $this->widgetActive()) {
+            return $this->disabled();
+        }
+
         return $this->serve($request, 'build-helpdesklivechat/widget.js', 'application/javascript');
     }
 
@@ -24,6 +58,10 @@ class WidgetAssetController extends Controller
      */
     public function bundle(Request $request): Response
     {
+        if (! $this->widgetActive()) {
+            return $this->disabled();
+        }
+
         return $this->serve($request, 'build-helpdesklivechat/widget/main.js', 'application/javascript');
     }
 
@@ -33,6 +71,10 @@ class WidgetAssetController extends Controller
      */
     public function style(Request $request): Response
     {
+        if (! $this->widgetActive()) {
+            return $this->disabled('text/css');
+        }
+
         return $this->serve($request, 'build-helpdesklivechat/widget/main.css', 'text/css');
     }
 
@@ -48,6 +90,10 @@ class WidgetAssetController extends Controller
 
         $contentType = str_ends_with($file, '.css') ? 'text/css' : 'application/javascript';
 
+        if (! $this->widgetActive()) {
+            return $this->disabled($contentType);
+        }
+
         return $this->serve($request, "build-helpdesklivechat/widget/chunks/{$file}", $contentType);
     }
 
@@ -57,19 +103,11 @@ class WidgetAssetController extends Controller
      */
     public function loader(Request $request): Response
     {
-        $full = public_path('build-helpdesklivechat/widget.js');
-
-        if (! File::exists($full)) {
-            return response(
-                '// Widget bundle not built. Run: cd modules/HelpdeskLivechat && npm run widget:build',
-                503
-            )->header('Content-Type', 'application/javascript; charset=UTF-8');
+        if (! $this->widgetActive()) {
+            return $this->disabled();
         }
 
-        return response(File::get($full), 200)
-            ->header('Content-Type', 'application/javascript; charset=UTF-8')
-            ->header('Cache-Control', 'public, max-age=3600')
-            ->header('Access-Control-Allow-Origin', '*');
+        return $this->serve($request, 'build-helpdesklivechat/widget.js', 'application/javascript');
     }
 
     /**
