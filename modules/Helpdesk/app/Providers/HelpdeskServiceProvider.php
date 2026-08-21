@@ -72,6 +72,7 @@ use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\Public\SimulatorOutboundMessageService;
 use Modules\Helpdesk\Services\Templates\LiquidRenderer;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
+use Modules\Helpdesk\Jobs\SyncWhatsAppTemplatesJob;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -436,6 +437,13 @@ class HelpdeskServiceProvider extends ServiceProvider
             // ("eliminados definitivamente en 90 días") — must actually run.
             $schedule->command('helpdesk:purge-old-gdpr-deletes')
                 ->dailyAt('04:00')
+                ->onOneServer();
+
+            // Antes solo se sincronizaba con un botón manual en Settings — nunca
+            // se había ejecutado, la tabla local quedó con datos de demo (seeder)
+            // en vez de las plantillas reales aprobadas por Meta.
+            $schedule->job(new SyncWhatsAppTemplatesJob())
+                ->dailyAt('05:00')
                 ->onOneServer();
         });
 
