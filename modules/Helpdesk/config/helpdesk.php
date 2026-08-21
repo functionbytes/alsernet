@@ -43,7 +43,13 @@ return [
      * blocked for simulated conversations (see SimulatorOutboundMessageService),
      * so no real messages are emitted even when those channels are enabled.
      */
-    'simulator_public_enabled' => env('HELPDESK_SIMULATOR_PUBLIC', env('APP_ENV', 'production') !== 'production'),
+    // Con `config:cache` activo, HelpdeskServiceProvider::registerConfig() vuelve a leer
+    // este archivo en cada boot (bypass del cache), pero en ese punto Laravel ya saltó la
+    // carga de .env (optimización estándar cuando el config está cacheado), así que
+    // env('APP_ENV', ...) siempre devolvía null → 'production' → false, pisando el valor
+    // real. config('app.env') sí sobrevive el cache (queda resuelto en config/app.php al
+    // cachear), así que lo usamos para el fallback en vez de leer APP_ENV de nuevo.
+    'simulator_public_enabled' => env('HELPDESK_SIMULATOR_PUBLIC', config('app.env', 'production') !== 'production'),
 
     /*
      * Feature gate for the optional HelpdeskTickets module integration.
