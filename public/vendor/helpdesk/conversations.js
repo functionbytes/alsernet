@@ -20,6 +20,18 @@
         return $('<div>').text(s == null ? '' : s).html();
     }
 
+    // Convierte la sintaxis de formato de WhatsApp (*negrita*, _cursiva_,
+    // ~tachado~, ```monoespaciado```) a HTML. Opera sobre texto YA escapado
+    // (escapeHtml) para no reintroducir HTML crudo. Los marcadores deben
+    // pegar a contenido no-espacio para evitar falsos positivos.
+    function renderWhatsAppMarkup(s) {
+        return (s == null ? '' : s)
+            .replace(/```([^\s`][^`]*?)```/g, '<code>$1</code>')
+            .replace(/(^|[^\w*])\*([^\s*][^*]*?)\*(?!\w)/g, '$1<strong>$2</strong>')
+            .replace(/(^|[^\w_])_([^\s_][^_]*?)_(?!\w)/g, '$1<em>$2</em>')
+            .replace(/(^|[^\w~])~([^\s~][^~]*?)~(?!\w)/g, '$1<s>$2</s>');
+    }
+
     $(function () {
         // ─── Browser notification permission ─────────────────────────
         if (window.Notification && Notification.permission === 'default') {
@@ -644,7 +656,7 @@
                 $header.hide().empty();
             }
 
-            $('#bv-hsm-preview-text').html(escapeHtml(substitute(hsmPreviewBody)).replace(/\n/g, '<br>'));
+            $('#bv-hsm-preview-text').html(renderWhatsAppMarkup(escapeHtml(substitute(hsmPreviewBody))).replace(/\n/g, '<br>'));
 
             var $footer = $('#bv-hsm-preview-footer');
             if (t.footer_text) { $footer.text(t.footer_text).show(); } else { $footer.hide().empty(); }

@@ -371,7 +371,8 @@ class ConversationItem extends Model
      */
     public function getBodyHtmlAttribute(): string
     {
-        $body = nl2br(e($this->body ?? ''));
+        $body = static::renderWhatsAppMarkup(e($this->body ?? ''));
+        $body = nl2br($body);
 
         // Auto-linkify URLs (http/https) so the agent can click them. Matches
         // `https?://` followed by anything that is not whitespace or HTML
@@ -396,6 +397,25 @@ class ConversationItem extends Model
             fn ($m) => $m[1].'<span class="bv-mention-chip" data-bv-mention-handle="'.e($m[2]).'">@'.e($m[2]).'</span>',
             $body
         );
+    }
+
+    /**
+     * Convierte la sintaxis de formato de WhatsApp (*negrita*, _cursiva_,
+     * ~tachado~, ```monoespaciado```) a HTML. Opera sobre texto YA escapado
+     * (e($body)) — antes de nl2br/auto-link, para no interferir con las URLs
+     * ya envueltas en <a>. Los marcadores deben pegar a contenido no-espacio
+     * (ej. "*hola*" pero no "* hola *") para evitar falsos positivos con
+     * asteriscos/guiones bajos sueltos en el texto.
+     */
+    private static function renderWhatsAppMarkup(string $body): string
+    {
+        // Monoespaciado primero (para no aplicar negrita/cursiva dentro de código)
+        $body = preg_replace('/```([^\s`][^`]*?)```/s', '<code>$1</code>', $body);
+        $body = preg_replace('/(?<![\w*])\*([^\s*][^*]*?)\*(?![\w*])/su', '<strong>$1</strong>', $body);
+        $body = preg_replace('/(?<![\w_])_([^\s_][^_]*?)_(?![\w_])/su', '<em>$1</em>', $body);
+        $body = preg_replace('/(?<![\w~])~([^\s~][^~]*?)~(?![\w~])/su', '<s>$1</s>', $body);
+
+        return $body;
     }
 
     /**
