@@ -26,6 +26,7 @@ class DocumentValidatorTeamAccessSeeder extends Seeder
         'miguel@a-alvarez.com' => ['documentation_team', 'licenses_team'],
         'contenidosweb@a-alvarez.com' => ['documentation_team', 'licenses_team'],
         'gorka@a-alvarez.com' => ['documentation_team', 'licenses_team'],
+        'clientes@a-alvarez.com' => ['documentation_team', 'licenses_team'],
     ];
 
     private const PRIORITY = 'primary';
