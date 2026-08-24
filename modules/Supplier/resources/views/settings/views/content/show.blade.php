@@ -2111,8 +2111,14 @@ $(document).ready(function () {
                     url: characteristicValuesUrl.replace('__ID__', characteristicId),
                     dataType: 'json',
                     delay: 250,
-                    data: params => ({ search: params.term || '' }),
-                    processResults: res => ({ results: res.values.map(v => ({ id: v.id, text: v.nombre })) }),
+                    data: params => ({ search: params.term || '', page: params.page || 1 }),
+                    // Características con miles de valores (ej. Color, ~3.900) no entran
+                    // en una sola página — pagination.more le dice a select2 que siga
+                    // pidiendo la próxima página al hacer scroll en vez de cortar en 50.
+                    processResults: res => ({
+                        results: res.values.map(v => ({ id: v.id, text: v.nombre })),
+                        pagination: { more: res.pagination?.more ?? false },
+                    }),
                 },
             });
         });

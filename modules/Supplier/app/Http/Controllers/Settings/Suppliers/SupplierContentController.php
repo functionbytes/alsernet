@@ -947,18 +947,43 @@ class SupplierContentController extends Controller
     /**
      * Valores del catálogo local para una característica (fuente remota del
      * select2 de valor por variante). Soporta `search` para el buscador del
-     * select2 y limita el resultado para características con muchos valores.
+     * select2 y pagina de a 50 (características con miles de valores, p.ej.
+     * Color con ~3.900, no entraban en una sola página fija de 50 — el resto
+     * quedaba inalcanzable sin escribir en el buscador. Select2 pide páginas
+     * siguientes con `page`; devolvemos `pagination.more` para que sepa si
+     * hay que seguir ofreciendo scroll infinito).
      */
     public function characteristicValues(Request $request, int $characteristicId): JsonResponse
     {
+        $perPage = 50;
+        $page = max(1, $request->integer('page', 1));
+        $search = trim($request->string('search')->toString());
+
+        $query = ErpCharacteristicValue::where('characteristic_id', $characteristicId)
+            ->active()
+            ->when($search !== '', function ($q) use ($search) {
+                // Con miles de valores por coincidencia parcial (ej. "Verde" matchea
+                // "Amarillo-Verde", "Verde Agua", "Azul-Verde"...), orden alfabético
+                // puro mezcla todo — "Verde" exacto termina página adentro. Se prioriza
+                // coincidencia exacta, luego "empieza con", y recién ahí el resto.
+                $q->where('nombre', 'like', '%'.$search.'%')
+                    ->orderByRaw(
+                        'CASE WHEN nombre = ? THEN 0 WHEN nombre LIKE ? THEN 1 ELSE 2 END',
+                        [$search, $search.'%']
+                    );
+            })
+            ->orderBy('nombre');
+
+        // Pide una fila de más para saber si hay siguiente página sin un COUNT(*) aparte.
+        $rows = $query->skip(($page - 1) * $perPage)->take($perPage + 1)
+            ->get(['id', 'erp_id', 'nombre', 'estado', 'last_sync_at']);
+
+        $hasMore = $rows->count() > $perPage;
+
         return response()->json([
             'success' => true,
-            'values' => ErpCharacteristicValue::where('characteristic_id', $characteristicId)
-                ->active()
-                ->when($request->filled('search'), fn ($q) => $q->where('nombre', 'like', '%'.$request->string('search').'%'))
-                ->orderBy('nombre')
-                ->limit(50)
-                ->get(['id', 'erp_id', 'nombre', 'estado', 'last_sync_at']),
+            'values' => $hasMore ? $rows->slice(0, $perPage)->values() : $rows,
+            'pagination' => ['more' => $hasMore],
         ]);
     }
 
