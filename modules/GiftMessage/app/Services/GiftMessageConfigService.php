@@ -3,7 +3,12 @@
 namespace Modules\GiftMessage\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Imagick;
+use ImagickException;
 use Modules\GiftMessage\Models\GiftMessageConfig;
+use Throwable;
 
 class GiftMessageConfigService
 {
@@ -92,7 +97,37 @@ class GiftMessageConfigService
     private function storeImage(UploadedFile $file, string $prefix): string
     {
         $fileName = $prefix.'_'.now()->timestamp.'.'.$file->getClientOriginalExtension();
+        $path = self::IMAGES_FOLDER.'/'.$fileName;
 
-        return $file->storeAs(self::IMAGES_FOLDER, $fileName, self::DISK);
+        Storage::disk(self::DISK)->put($path, $this->toRgb($file->getRealPath()));
+
+        return $path;
+    }
+
+    /**
+     * Convierte a sRGB si el archivo viene en CMYK — habitual en imagenes
+     * preparadas para imprenta (Photoshop/InDesign). Los navegadores no
+     * decodifican JPEG en CMYK: en vez de la imagen muestran un rectangulo
+     * en blanco/transparente. Si Imagick no esta disponible o falla por
+     * cualquier motivo, se sube el archivo tal cual llego — mejor eso que
+     * bloquear el upload.
+     */
+    private function toRgb(string $path): string
+    {
+        try {
+            $image = new Imagick($path);
+
+            if ($image->getImageColorspace() === Imagick::COLORSPACE_CMYK) {
+                $image->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+            }
+
+            return $image->getImageBlob();
+        } catch (ImagickException|Throwable $e) {
+            Log::warning('GiftMessage: no se pudo normalizar el espacio de color de la imagen subida', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return file_get_contents($path);
+        }
     }
 }
