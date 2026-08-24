@@ -80,7 +80,15 @@ class CaracteristicasController extends Controller
             $offset = (int) $request->get('offset', 0);
 
             $filters = $request->only(['nombre', 'estado']);
-            $result = $this->paginate(WCaracteristicasProd::query(), $filters, $limit, $offset);
+            // withTrashed(): w_caracteristicas_prod.estado es el flag de activo/inactivo
+            // real que usa el ERP — fbaja (mapeado como SoftDeletes) no es un indicador
+            // fiable de "borrado" en esta tabla: hay filas con estado=1 (activas, en uso
+            // real, p.ej. "Color") que igual tienen fbaja seteada de algún momento
+            // anterior, y el scope global de SoftDeletes las ocultaba por completo del
+            // sync sin que ningún filtro lo pidiera. estado sigue viajando en el payload
+            // tal cual, así que las genuinamente inactivas (estado=0) se siguen
+            // sincronizando como inactivas, no se “resucitan”.
+            $result = $this->paginate(WCaracteristicasProd::withTrashed(), $filters, $limit, $offset);
 
             $totalTime = microtime(true) - $startTime;
             Log::debug('=== TIEMPO Caracteristicas: '.round($totalTime * 1000, 2).'ms ===');
