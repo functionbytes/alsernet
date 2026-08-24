@@ -93,7 +93,11 @@ class ErpCharacteristicSyncService
 
                     // 'nombre' es NOT NULL localmente; algunas filas en Oracle
                     // vienen sin nombre — se descartan (no sirven para el selector).
-                    if (empty($row['nombre'])) {
+                    // OJO: empty() trata la string "0" como vacía (gotcha clásico de
+                    // PHP) — un valor/característica literalmente llamado "0" se
+                    // descartaba igual que uno realmente sin nombre. Se compara
+                    // contra null/'' explícitamente para no perder ese caso real.
+                    if (! isset($row['nombre']) || trim((string) $row['nombre']) === '') {
                         $stats['error_count']++;
                         if (count($stats['errors']) < 50) {
                             $stats['errors'][] = "Characteristic {$row['id']}: sin nombre, descartada";
@@ -188,7 +192,10 @@ class ErpCharacteristicSyncService
 
                     // 'nombre' es NOT NULL localmente; algunas filas en Oracle
                     // vienen sin nombre — se descartan (no sirven para el selector).
-                    if (empty($row['nombre'])) {
+                    // OJO: empty() trata la string "0" como vacía (gotcha clásico de
+                    // PHP) — un valor literalmente llamado "0" (p.ej. una talla "0")
+                    // se descartaba igual que uno realmente sin nombre.
+                    if (! isset($row['nombre']) || trim((string) $row['nombre']) === '') {
                         $stats['error_count']++;
                         if (count($stats['errors']) < 50) {
                             $stats['errors'][] = "Value {$erpId}: sin nombre, descartada";
