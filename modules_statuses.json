@@ -10,6 +10,7 @@
     "Event": false,
     "Faq": false,
     "Forms": true,
+    "GiftMessage": true,
     "Helpdesk": true,
     "HelpdeskAgents": true,
     "HelpdeskAnalytics": false,

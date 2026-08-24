@@ -1,0 +1,13 @@
+{
+    "name": "GiftMessage",
+    "alias": "giftmessage",
+    "description": "Gestion y generacion de PDF de mensajes regalo para pedidos",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\GiftMessage\\Providers\\GiftMessageServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

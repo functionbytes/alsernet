@@ -23,6 +23,7 @@ $allProviders = [
     'Modules\Database\Providers\DatabaseServiceProvider' => 'Database',
     'Modules\Document\Providers\DocumentsServiceProvider' => 'Document',
     'Modules\Erp\Providers\ErpServiceProvider' => 'Erp',
+    'Modules\GiftMessage\Providers\GiftMessageServiceProvider' => 'GiftMessage',
     'Modules\Health\Providers\HealthServiceProvider' => 'Health',
     'Modules\Mailer\Providers\MailerServiceProvider' => 'Mailer',
     'Modules\MailsSettings\Providers\MailsSettingsServiceProvider' => 'MailsSettings',
@@ -55,6 +56,7 @@ foreach ($allProviders as $providerClass => $moduleName) {
     // Always load core app provider and critical modules
     if ($moduleName === true) {
         $providers[] = $providerClass;
+
         continue;
     }
 
