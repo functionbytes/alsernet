@@ -24,7 +24,12 @@
     .field {
         position: absolute;
         overflow: hidden;
+        display: table;
+    }
+    .field-inner {
+        display: table-cell;
         text-align: center;
+        vertical-align: middle;
         line-height: 1.2;
     }
     .field img {
@@ -44,22 +49,28 @@
             top: {{ $page['t1']['top'] }}mm;
             width: {{ $page['t1']['width'] }}mm;
             height: {{ $page['t1']['height'] }}mm;
-            font-family: {{ $page['t1']['font_family'] }};
-            font-size: {{ $page['t1']['font_size'] }}pt;
             color: {{ $page['t1']['color'] }};
             opacity: {{ $page['t1']['opacity'] }};
-        ">{!! $page['t1']['html'] !!}</div>
+        "><div class="field-inner" style="
+            width: {{ $page['t1']['width'] }}mm;
+            height: {{ $page['t1']['height'] }}mm;
+            font-family: {{ $page['t1']['font_family'] }};
+            font-size: {{ $page['t1']['font_size'] }}pt;
+        ">{!! $page['t1']['html'] !!}</div></div>
 
         <div class="field" style="
             left: {{ $page['t2']['left'] }}mm;
             top: {{ $page['t2']['top'] }}mm;
             width: {{ $page['t2']['width'] }}mm;
             height: {{ $page['t2']['height'] }}mm;
-            font-family: {{ $page['t2']['font_family'] }};
-            font-size: {{ $page['t2']['font_size'] }}pt;
             color: {{ $page['t2']['color'] }};
             opacity: {{ $page['t2']['opacity'] }};
-        ">{{ $page['t2']['text'] }}</div>
+        "><div class="field-inner" style="
+            width: {{ $page['t2']['width'] }}mm;
+            height: {{ $page['t2']['height'] }}mm;
+            font-family: {{ $page['t2']['font_family'] }};
+            font-size: {{ $page['t2']['font_size'] }}pt;
+        ">{{ $page['t2']['text'] }}</div></div>
     </div>
 @endforeach
 </body>
