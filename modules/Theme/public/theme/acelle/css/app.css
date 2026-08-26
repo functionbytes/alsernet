@@ -50,20 +50,6 @@ body {
    Typography
    ========================================================================== */
 
-h1, h2, h3, h4, h5, h6 {
-    margin-top: 0;
-    margin-bottom: var(--space-2);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text);
-    line-height: var(--leading-tight);
-}
-
-h1 { font-size: var(--text-2xl); }
-h2 { font-size: var(--text-xl); }
-h3 { font-size: var(--text-lg); }
-h4 { font-size: var(--text-md); }
-h5 { font-size: var(--text-base); }
-h6 { font-size: var(--text-sm); }
 
 p {
     margin-top: 0;
