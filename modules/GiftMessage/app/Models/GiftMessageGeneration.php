@@ -18,6 +18,7 @@ class GiftMessageGeneration extends Model
         'rows_count',
         'order_numbers',
         'rows',
+        'warnings',
         'file_path',
         'file_name',
         'generated_by',
@@ -29,6 +30,7 @@ class GiftMessageGeneration extends Model
             'rows_count' => 'integer',
             'order_numbers' => 'array',
             'rows' => 'array',
+            'warnings' => 'array',
         ];
     }
 

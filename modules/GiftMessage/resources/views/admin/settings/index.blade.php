@@ -110,6 +110,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="small mt-2 mb-0 giftmessage-fit-note" data-fit-note="envelope"></p>
                         @include('giftmessage::admin.settings.partials.fine-tune', ['canvas' => 'envelope', 'prefix' => 'env', 'config' => $config])
                         <button type="button" id="save-positions-envelope" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
@@ -248,6 +249,7 @@
                                 </div>
                             </div>
                         </div>
+                        <p class="small mt-2 mb-0 giftmessage-fit-note" data-fit-note="card"></p>
                         @include('giftmessage::admin.settings.partials.fine-tune', ['canvas' => 'card', 'prefix' => 'card', 'config' => $config])
                         <button type="button" id="save-positions-card" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
@@ -317,6 +319,46 @@
                     </div>
                     <button type="button" id="save-fonts-card" class="btn btn-primary w-100 ">Guardar tipografia</button>
                 </div>
+            </div>
+
+            <hr class="my-4">
+
+            {{-- Limites de legibilidad: comunes a sobre y tarjeta --}}
+            <div class="mb-4">
+                <h5 class="mb-1 fw-bold text-dark">Limites del texto</h5>
+                <p class="text-muted small mb-3">
+                    Cuando un mensaje no cabe, primero se aprieta el interlineado y despues se reduce la letra.
+                    Aqui se decide hasta donde puede reducirse y a partir de que longitud avisar.
+                </p>
+                <form action="{{ route('settings.giftmessage.limits.update') }}" method="POST">
+                    @csrf
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-xl-6">
+                            <label class="form-label fw-bold" for="min_font_size">Tamano minimo de letra (pt)</label>
+                            <input type="number" class="form-control" id="min_font_size" name="min_font_size"
+                                   min="5" max="72" value="{{ old('min_font_size', $config->min_font_size) }}">
+                            <small class="form-text text-muted">
+                                El ajuste automatico no baja de aqui. Si aun asi el mensaje no cabe se imprime a este
+                                tamano y se avisa, en vez de recortarlo en silencio.
+                            </small>
+                            @error('min_font_size')
+                                <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="col-12 col-xl-6">
+                            <label class="form-label fw-bold" for="max_message_length">Longitud a partir de la que avisar (caracteres)</label>
+                            <input type="number" class="form-control" id="max_message_length" name="max_message_length"
+                                   min="50" max="5000" value="{{ old('max_message_length', $config->max_message_length) }}">
+                            <small class="form-text text-muted">
+                                Los pedidos que la superen salen marcados en el listado antes de generar el PDF.
+                            </small>
+                            @error('max_message_length')
+                                <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Guardar limites</button>
+                </form>
             </div>
 
             <hr class="my-4">

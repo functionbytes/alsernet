@@ -66,6 +66,25 @@ class GiftMessageConfigController extends Controller
             ->with('success', 'Imagenes actualizadas correctamente.');
     }
 
+    public function saveLimits(Request $request): RedirectResponse
+    {
+        $this->authorize('update', GiftMessageConfig::class);
+
+        $validated = $request->validate([
+            'min_font_size' => ['required', 'integer', 'min:5', 'max:72'],
+            'max_message_length' => ['required', 'integer', 'min:50', 'max:5000'],
+        ], [
+            'min_font_size.min' => 'Por debajo de 5 pt no se lee nada impreso.',
+            'max_message_length.max' => 'El tope son 5.000 caracteres.',
+        ]);
+
+        $this->configService->current()->update($validated);
+
+        return redirect()
+            ->route('settings.giftmessage.index')
+            ->with('success', 'Limites del texto actualizados correctamente.');
+    }
+
     public function saveFonts(SaveGiftMessageFontsRequest $request): RedirectResponse
     {
         $this->configService->saveFonts($request->validated());
@@ -84,7 +103,9 @@ class GiftMessageConfigController extends Controller
         $this->authorize('update', GiftMessageConfig::class);
 
         $validated = $request->validate([
-            'message' => ['nullable', 'string', 'max:2000'],
+            // Mismo tope que al generar (GenerateGiftMessagePdfRequest), para que
+            // la vista previa no rechace un mensaje que si se puede imprimir.
+            'message' => ['nullable', 'string', 'max:5000'],
             'order' => ['nullable', 'string', 'max:50'],
             'boxes' => ['nullable', 'array'],
             'boxes.*.*.w' => ['nullable', 'numeric', 'min:0', 'max:100'],

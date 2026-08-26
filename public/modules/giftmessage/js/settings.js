@@ -204,6 +204,8 @@
                                 lineHeight: metrics.line_height || 1.2,
                             });
                         });
+
+                        showFitNote(scope, response[scope].t1);
                     });
                 },
                 error: function () {
@@ -213,6 +215,33 @@
                 },
             });
         }, 350);
+    }
+
+    // Cartel con el tamano real de impresion: sin esto el ajuste de las cajas se
+    // hacia a ojo y no habia forma de saber si el mensaje iba a salir legible.
+    function showFitNote(scope, metrics) {
+        var $note = $('[data-fit-note="' + scope + '"]');
+
+        if (!$note.length || !metrics) {
+            return;
+        }
+
+        var texto = 'El mensaje se imprimira a ' + metrics.font_size + ' pt';
+        var alerta = false;
+
+        if (!metrics.fits) {
+            texto = 'El mensaje NO cabe ni a ' + metrics.min_font_size + ' pt: se recortara al imprimir. Amplia la caja o acorta el texto.';
+            alerta = true;
+        } else if (metrics.font_size <= metrics.min_font_size) {
+            texto += ' (el minimo configurado). Un mensaje mas largo ya no cabria.';
+            alerta = true;
+        } else if (metrics.font_size < metrics.configured_size) {
+            texto += ', reducido desde los ' + metrics.configured_size + ' pt configurados porque no cabia.';
+        } else {
+            texto += ', el tamano configurado.';
+        }
+
+        $note.text(texto).toggleClass('giftmessage-fit-note-alert', alerta);
     }
 
     // Encogido local, solo como respaldo mientras llega la respuesta del

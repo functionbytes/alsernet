@@ -160,3 +160,14 @@
 .giftmessage-dropzone .dz-preview { display: none; }
 
 .giftmessage-dropzone.is-uploading .dz-message { opacity: 1; }
+
+/* ── Aviso del tamano real de impresion ──────────────────────────────────── */
+.giftmessage-fit-note {
+    color: #555555;
+}
+
+/* Sin rojos: el aviso se marca con el verde oscuro de la paleta y negrita. */
+.giftmessage-fit-note-alert {
+    color: #4f6b0a;
+    font-weight: 600;
+}

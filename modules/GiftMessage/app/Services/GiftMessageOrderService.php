@@ -9,7 +9,8 @@ use Modules\HelpdeskPrestashop\Support\HmacSigner;
 class GiftMessageOrderService
 {
     public function __construct(
-        private readonly GiftMessageGenerationService $generationService
+        private readonly GiftMessageGenerationService $generationService,
+        private readonly GiftMessageConfigService $configService
     ) {}
 
     /**
@@ -38,7 +39,41 @@ class GiftMessageOrderService
 
         $orders = $this->callBridge('giftmessage.search_by_gestion', ['gestion_ids' => $ids])['orders'] ?? [];
 
-        return $this->attachExistingGenerations($orders);
+        return $this->attachPrintPreview($this->attachExistingGenerations($orders));
+    }
+
+    /**
+     * Adelanta a que tamano va a salir el mensaje de cada pedido, para poder
+     * avisar ANTES de mandar a imprimir un lote de doscientas tarjetas y
+     * descubrir luego que varias salieron ilegibles.
+     *
+     * @param  array<int, array<string, mixed>>  $orders
+     * @return array<int, array<string, mixed>>
+     */
+    private function attachPrintPreview(array $orders): array
+    {
+        if ($orders === []) {
+            return $orders;
+        }
+
+        $pdfService = app(GiftMessagePdfService::class);
+        $maxLength = (int) ($this->configService->current()->max_message_length ?: 0);
+
+        return array_map(function (array $order) use ($pdfService, $maxLength) {
+            $message = (string) ($order['gift_message'] ?? '');
+            $envelope = $pdfService->previewMetrics('envelope', $message, (string) ($order['npedidocli'] ?? ''));
+            $card = $pdfService->previewMetrics('card', $message, (string) ($order['npedidocli'] ?? ''));
+
+            $order['print_preview'] = [
+                'length' => mb_strlen($message),
+                'too_long' => $maxLength > 0 && mb_strlen($message) > $maxLength,
+                'envelope' => ['font_size' => $envelope['t1']['font_size'], 'fits' => $envelope['t1']['fits']],
+                'card' => ['font_size' => $card['t1']['font_size'], 'fits' => $card['t1']['fits']],
+                'min_font_size' => $envelope['t1']['min_font_size'],
+            ];
+
+            return $order;
+        }, $orders);
     }
 
     /**

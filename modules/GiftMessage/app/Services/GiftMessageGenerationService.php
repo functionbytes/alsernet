@@ -23,7 +23,7 @@ class GiftMessageGenerationService
      *                                                  cada una para poder identificar el contenido despues,
      *                                                  sin tener que abrir el PDF.
      */
-    public function store(string $type, array $rows, string $pdfContent): GiftMessageGeneration
+    public function store(string $type, array $rows, string $pdfContent, array $warnings = []): GiftMessageGeneration
     {
         $fileName = self::FILE_PREFIXES[$type].'_'.now()->format('Ymd_His').'.pdf';
         $path = self::FOLDER.'/'.$fileName;
@@ -38,6 +38,7 @@ class GiftMessageGenerationService
             'rows_count' => count($rows),
             'order_numbers' => $orderNumbers,
             'rows' => $this->printableRows($rows),
+            'warnings' => $warnings ?: null,
             'file_path' => $path,
             'file_name' => $fileName,
             'generated_by' => auth()->id(),

@@ -41,6 +41,39 @@
         return $wrap;
     }
 
+    // Bajo el mensaje se adelanta a que tamano va a salir impreso: mejor saber
+    // que una tarjeta va a salir al minimo ANTES de mandar el lote entero.
+    function renderMessageCell(order) {
+        var $cell = $('<div>');
+
+        $('<div>').text(order.gift_message || '').appendTo($cell);
+
+        var preview = order.print_preview;
+
+        if (!preview) {
+            return $cell;
+        }
+
+        var noCabe = !preview.envelope.fits || !preview.card.fits;
+        var alMinimo = preview.envelope.font_size <= preview.min_font_size
+            || preview.card.font_size <= preview.min_font_size;
+        var texto = 'Se imprimira a ' + preview.envelope.font_size + ' pt (sobre) y '
+            + preview.card.font_size + ' pt (tarjeta)';
+
+        if (noCabe) {
+            texto = 'Mensaje demasiado largo: no cabe ni al minimo y se recortara al imprimir';
+        } else if (preview.too_long) {
+            texto += ' — mensaje largo (' + preview.length + ' caracteres)';
+        }
+
+        $('<small>', {
+            'class': 'd-block mt-1 gm-print-note' + (noCabe || alMinimo ? ' gm-print-note-alert' : ''),
+            text: texto,
+        }).appendTo($cell);
+
+        return $cell;
+    }
+
     function renderOrderRow(order) {
         var name = ((order.firstname || '') + ' ' + (order.lastname || '')).trim();
         // Tener PDF ya no bloquea la fila: se puede volver a seleccionar para
@@ -70,7 +103,7 @@
         $('<td>').html(order.npedidocli ? escapeHtml(order.npedidocli) : emptyCell()).appendTo($row);
         $('<td>').html(order.id_gestion ? escapeHtml(order.id_gestion) : emptyCell()).appendTo($row);
         $('<td>').text(name).appendTo($row);
-        $('<td>').text(order.gift_message).appendTo($row);
+        $('<td>').append(renderMessageCell(order)).appendTo($row);
         $('<td>').append(renderExistingGenerations(order.existing_generations)).appendTo($row);
 
         return $row;
@@ -204,6 +237,35 @@
         });
     }
 
+    // Los mensajes que no caben se recortan por CSS al imprimir, asi que si el
+    // servidor avisa hay que decirlo: antes se perdia en silencio.
+    function warnAboutTightMessages(results) {
+        var avisos = [];
+
+        results.forEach(function (result) {
+            (result.warnings || []).forEach(function (warning) { avisos.push(warning); });
+        });
+
+        if (!avisos.length) {
+            return;
+        }
+
+        var recortados = avisos.filter(function (w) { return w.truncated; });
+        var numeros = avisos.map(function (w) { return w.order_number; }).filter(function (v, i, a) {
+            return v && a.indexOf(v) === i;
+        });
+
+        if (recortados.length) {
+            toastr.warning('Revisa los pedidos ' + numeros.join(', ') +
+                ': el mensaje no cabe ni al tamano minimo y saldra recortado.', 'Mensajes demasiado largos', { timeOut: 12000 });
+
+            return;
+        }
+
+        toastr.info('Los pedidos ' + numeros.join(', ') + ' se han impreso con la letra reducida para que cupiera el mensaje.',
+            'Letra reducida', { timeOut: 8000 });
+    }
+
     function showFormStep() {
         $('#bulk-step-form, #bulk-step-form-footer').removeClass('d-none');
         $('#bulk-step-result, #bulk-step-result-footer').addClass('d-none');
@@ -255,7 +317,7 @@
 
         var requests = types.map(function (t) {
             return requestPdf(t, rows).done(function (response) {
-                results.push({ type: t, url: response.view_url });
+                results.push({ type: t, url: response.view_url, warnings: response.warnings || [] });
             });
         });
 
@@ -269,6 +331,7 @@
                 });
 
                 toastr.success(results.length > 1 ? 'PDF generados correctamente.' : 'PDF generado correctamente.');
+                warnAboutTightMessages(results);
                 showResultStep(results);
                 refreshRowsAfterGenerate();
             })
