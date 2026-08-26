@@ -66,7 +66,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Asignaciones</h6>
+                                        <h6 class="card-title  mb-2">Asignaciones</h6>
                                         <h4 class="mb-1 fw-bold">{{ $totalAssignments }}</h4>
                                         <small class="text-muted">Permisos asignados</small>
                                     </div>
@@ -79,7 +79,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Cobertura</h6>
+                                        <h6 class="card-title  mb-2">Cobertura</h6>
                                         <h4 class="mb-1 fw-bold">{{ $coveragePercentage }}%</h4>
                                         <small class="text-muted">De asignaciones posibles</small>
                                     </div>

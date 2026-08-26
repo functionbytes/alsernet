@@ -84,7 +84,7 @@
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
                                     <h6 class="text-muted mb-1">Permisos activos</h6>
-                                    <h2 class="mb-0 fw-bold text-success">{{ $role->permissions()->count() }}</h2>
+                                    <h2 class="mb-0 fw-bold">{{ $role->permissions()->count() }}</h2>
                                 </div>
                                 <div class="rounded-circle d-flex align-items-center justify-content-center"
                                      style="width: 50px; height: 50px; background-color: rgba(19, 198, 114, 0.1);">
@@ -107,7 +107,7 @@
                                             ->groupBy(fn($p) => explode('.', $p->name)[0])
                                             ->count();
                                     @endphp
-                                    <h2 class="mb-0 fw-bold text-info">{{ $moduleCount }}</h2>
+                                    <h2 class="mb-0 fw-bold">{{ $moduleCount }}</h2>
                                 </div>
                                 <div class="rounded-circle d-flex align-items-center justify-content-center"
                                      style="width: 50px; height: 50px; background-color: rgba(83, 109, 254, 0.1);">

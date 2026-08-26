@@ -82,7 +82,7 @@
                     <div class="col-md-3">
                         <div class="card bg-info-subtle h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Solo en {{ $roleB->name }}</h6>
+                                <h6 class="card-title  mb-2">Solo en {{ $roleB->name }}</h6>
                                 <h4 class="mb-1 fw-bold">{{ $onlyInB->count() }}</h4>
                                 <small class="text-muted">Permisos exclusivos</small>
                             </div>
@@ -118,7 +118,7 @@
                     <div class="col-md-4">
                         <div class="card border h-100">
                             <div class="card-header bg-success-subtle border-0">
-                                <h6 class="mb-0 fw-bold text-success">En ambos roles</h6>
+                                <h6 class="mb-0 fw-bold">En ambos roles</h6>
                             </div>
                             <div class="card-body">
                                 @forelse($inBoth as $perm)
@@ -132,7 +132,7 @@
                     <div class="col-md-4">
                         <div class="card border h-100">
                             <div class="card-header bg-info-subtle border-0">
-                                <h6 class="mb-0 fw-bold text-info">Solo en {{ $roleB->name }}</h6>
+                                <h6 class="mb-0 fw-bold">Solo en {{ $roleB->name }}</h6>
                             </div>
                             <div class="card-body">
                                 @forelse($onlyInB as $perm)
