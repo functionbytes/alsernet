@@ -36,13 +36,19 @@
                     Texto de muestra para ver como quedaria un mensaje real en las cajas de abajo. Solo es vista previa, no se guarda.
                 </p>
                 <div class="row g-3">
-                    <div class="col-12 col-md-8">
-                        <label class="form-label fw-bold">Mensaje de muestra</label>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-bold" for="preview-message">Mensaje de muestra</label>
                         <input type="text" id="preview-message" class="form-control"
-                               value="¡Feliz cumpleaños, Jaime! 🎉" maxlength="200">
+                               value="¡Feliz cumpleaños, Jaime! 🎉" maxlength="1000">
                     </div>
-                    <div class="col-12 col-md-4">
-                        <label class="form-label fw-bold">N. de pedido de muestra</label>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-bold" for="preview-recipient">Nombre de muestra</label>
+                        <input type="text" id="preview-recipient" class="form-control"
+                               value="Jorge Da Silva Orallo" maxlength="80">
+                        <small class="form-text text-muted">Se usa en la pieza que imprima el nombre.</small>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label fw-bold" for="preview-order">N. de pedido de muestra</label>
                         <input type="text" id="preview-order" class="form-control" value="29394" maxlength="30">
                     </div>
                 </div>
@@ -89,9 +95,30 @@
                 <div class="mb-4">
                     <h6 class="mb-1 fw-bold text-dark">Posicion del texto</h6>
                     <p class="text-muted small mb-3">
-                        Arrastra las cajas T1 (mensaje) y T2 (numero de gestion). Cada caja es el limite maximo
-                        del texto: el ancho fuerza el salto de linea y lo que no entre en el alto se recorta.
+                        Arrastra las cajas T1 (texto principal) y T2 (numero de gestion). Cada caja es el limite
+                        maximo del texto: el ancho fuerza el salto de linea y lo que no entre en el alto se recorta.
                     </p>
+
+                    {{-- Que va en la caja grande de esta pieza: el sobre suele llevar el
+                         nombre de quien recibe el regalo y la tarjeta el mensaje. --}}
+                    <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
+                        @csrf
+                        <input type="hidden" name="scope" value="envelope">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-xl-6">
+                                <label class="form-label fw-bold" for="env_t1_content">Que se imprime en T1</label>
+                                <select class="form-select giftmessage-content-select" id="env_t1_content"
+                                        name="env_t1_content" data-scope="envelope">
+                                    @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::CONTENT_LABELS as $value => $label)
+                                        <option value="{{ $value }}" @selected($config->env_t1_content === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-xl-6">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            </div>
+                        </div>
+                    </form>
                     @if(! $config->envelope_image)
                         <div class="alert alert-warning mb-0">Sube primero la imagen de arriba y guardala para poder posicionar los textos.</div>
                     @else
@@ -228,9 +255,30 @@
                 <div class="mb-4">
                     <h6 class="mb-1 fw-bold text-dark">Posicion del texto</h6>
                     <p class="text-muted small mb-3">
-                        Arrastra las cajas T1 (mensaje) y T2 (numero de gestion). Cada caja es el limite maximo
-                        del texto: el ancho fuerza el salto de linea y lo que no entre en el alto se recorta.
+                        Arrastra las cajas T1 (texto principal) y T2 (numero de gestion). Cada caja es el limite
+                        maximo del texto: el ancho fuerza el salto de linea y lo que no entre en el alto se recorta.
                     </p>
+
+                    {{-- Que va en la caja grande de esta pieza: el sobre suele llevar el
+                         nombre de quien recibe el regalo y la tarjeta el mensaje. --}}
+                    <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
+                        @csrf
+                        <input type="hidden" name="scope" value="card">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-xl-6">
+                                <label class="form-label fw-bold" for="card_t1_content">Que se imprime en T1</label>
+                                <select class="form-select giftmessage-content-select" id="card_t1_content"
+                                        name="card_t1_content" data-scope="card">
+                                    @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::CONTENT_LABELS as $value => $label)
+                                        <option value="{{ $value }}" @selected($config->card_t1_content === $value)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 col-xl-6">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            </div>
+                        </div>
+                    </form>
                     @if(! $config->card_image)
                         <div class="alert alert-warning mb-0">Sube primero la imagen de arriba y guardala para poder posicionar los textos.</div>
                     @else

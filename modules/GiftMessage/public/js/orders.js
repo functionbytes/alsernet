@@ -301,9 +301,25 @@
     // Paso 3: genera el/los PDF via AJAX (Accept: json, ver
     // GiftMessageGenerationController::generate) y pasa el modal a la
     // pantalla con los enlaces.
-    function generatePdf() {
+    // Descarga encadenada: el navegador solo acepta varias descargas seguidas si
+    // salen del mismo gesto y con un respiro entre ellas; con "Ambos" son dos.
+    function downloadAll(results) {
+        results.forEach(function (result, index) {
+            setTimeout(function () {
+                var link = document.createElement('a');
+
+                link.href = result.downloadUrl;
+                link.download = '';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }, index * 700);
+        });
+    }
+
+    function generatePdf(autoDownload, forcedType) {
         var rows = selectedRows();
-        var type = $('#bulk-type-select').val();
+        var type = forcedType || $('#bulk-type-select').val();
 
         if (!rows.length) {
             toastr.warning('Selecciona al menos un pedido.');
@@ -312,12 +328,28 @@
         }
 
         var types = type === 'both' ? ['envelope', 'card'] : [type];
-        var $btn = $('#bulk-apply-btn').prop('disabled', true).text('Generando...');
+        var $btn = forcedType
+            ? $('#bulk-quick-download')
+            : $(autoDownload ? '#bulk-download-btn' : '#bulk-apply-btn');
+
+        $btn.prop('disabled', true);
+        $('#bulk-apply-btn, #bulk-download-btn, #bulk-quick-download').prop('disabled', true);
+
+        if (forcedType) {
+            $btn.data('label', $btn.html()).text('Generando y descargando...');
+        } else {
+            $btn.text(autoDownload ? 'Generando y descargando...' : 'Generando...');
+        }
         var results = [];
 
         var requests = types.map(function (t) {
             return requestPdf(t, rows).done(function (response) {
-                results.push({ type: t, url: response.view_url, warnings: response.warnings || [] });
+                results.push({
+                    type: t,
+                    url: response.view_url,
+                    downloadUrl: response.download_url,
+                    warnings: response.warnings || [],
+                });
             });
         });
 
@@ -330,8 +362,20 @@
                     return types.indexOf(a.type) - types.indexOf(b.type);
                 });
 
-                toastr.success(results.length > 1 ? 'PDF generados correctamente.' : 'PDF generado correctamente.');
                 warnAboutTightMessages(results);
+
+                if (autoDownload) {
+                    downloadAll(results);
+                    toastr.success(results.length > 1
+                        ? 'PDF generados. La descarga empieza sola; si el navegador pide permiso para varias descargas, aceptalo.'
+                        : 'PDF generado. La descarga empieza sola.');
+                    $('#bulk-modal').modal('hide');
+                    refreshRowsAfterGenerate();
+
+                    return;
+                }
+
+                toastr.success(results.length > 1 ? 'PDF generados correctamente.' : 'PDF generado correctamente.');
                 showResultStep(results);
                 refreshRowsAfterGenerate();
             })
@@ -339,7 +383,12 @@
                 toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al generar el PDF.');
             })
             .always(function () {
-                $btn.prop('disabled', false).text('Generar');
+                $('#bulk-apply-btn, #bulk-download-btn, #bulk-quick-download').prop('disabled', false);
+                $('#bulk-download-btn').text('Generar y descargar');
+
+                if (forcedType && $btn.data('label')) {
+                    $btn.html($btn.data('label'));
+                }
             });
     }
 
@@ -389,9 +438,14 @@
                     : conPdf + ' de los pedidos seleccionados ya tienen PDF: los anteriores se reemplazaran por los nuevos.');
             $('#bulk-type-select').val('both').trigger('change');
             $('#bulk-apply-btn').prop('disabled', false).text(conPdf === total && total > 0 ? 'Regenerar' : 'Generar');
+            $('#bulk-download-btn').prop('disabled', false)
+                .text(conPdf === total && total > 0 ? 'Regenerar y descargar' : 'Generar y descargar');
             showFormStep();
         });
 
-        $('#bulk-apply-btn').on('click', generatePdf);
+        $('#bulk-apply-btn').on('click', function () { generatePdf(false); });
+        $('#bulk-download-btn').on('click', function () { generatePdf(true); });
+        // Desde la barra: sobre y tarjeta, generados y descargados de una.
+        $('#bulk-quick-download').on('click', function () { generatePdf(true, 'both'); });
     });
 })(jQuery);

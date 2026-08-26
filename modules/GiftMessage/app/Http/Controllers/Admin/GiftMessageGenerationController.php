@@ -41,6 +41,7 @@ class GiftMessageGenerationController extends Controller
             return response()->json([
                 'success' => true,
                 'view_url' => route('giftmessage.history.view', $generation),
+                'download_url' => route('giftmessage.history.download', $generation),
                 'warnings' => $warnings,
             ]);
         }

@@ -35,6 +35,8 @@ class GiftMessageConfig extends Model
         'card_t2_opacity',
         'min_font_size',
         'max_message_length',
+        'env_t1_content',
+        'card_t1_content',
         'env_t1_w',
         'env_t1_h',
         'env_t2_w',

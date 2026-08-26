@@ -188,6 +188,7 @@
                 data: JSON.stringify({
                     message: $('#preview-message').val(),
                     order: $('#preview-order').val(),
+                    recipient: $('#preview-recipient').val(),
                     boxes: currentBoxes(),
                 }),
                 contentType: 'application/json',
@@ -353,8 +354,16 @@
     function applySampleText() {
         var message = $('#preview-message').val().trim();
         var order = $('#preview-order').val().trim();
+        var recipient = $('#preview-recipient').val().trim();
 
-        $('.giftmessage-drag[data-slot="t1"]').text(message || 'T1 · Mensaje');
+        // Cada pieza puede imprimir el mensaje o el nombre de quien lo recibe.
+        ['envelope', 'card'].forEach(function (scope) {
+            var contenido = $('#' + (scope === 'card' ? 'card' : 'env') + '_t1_content').val();
+            var texto = contenido === 'recipient' ? (recipient || message) : message;
+
+            $('#canvas-' + scope + ' [data-slot="t1"]').text(texto || 'T1 · Texto principal');
+        });
+
         $('.giftmessage-drag[data-slot="t2"]').text(order || 'T2 · Gestion');
 
         $('.giftmessage-drag').each(function () { shrinkToFit($(this)); });
@@ -612,7 +621,8 @@
         initImageDropzones();
         applySampleText();
 
-        $('#preview-message, #preview-order').on('input', applySampleText);
+        $('#preview-message, #preview-order, #preview-recipient').on('input', applySampleText);
+        $('.giftmessage-content-select').on('change', applySampleText);
 
         $('#save-positions-envelope').on('click', function () {
             savePositions('envelope', $(this));

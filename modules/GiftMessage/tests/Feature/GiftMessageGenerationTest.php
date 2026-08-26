@@ -79,6 +79,10 @@ class GiftMessageGenerationTest extends TestCase
 
     public function test_envelope_pdf_prints_the_gift_message_and_not_the_recipient_name(): void
     {
+        // Este caso es el del sobre configurado para imprimir el mensaje; el
+        // que imprime el nombre tiene su propio test.
+        GiftMessageConfig::current()->update(['env_t1_content' => 'message']);
+
         Storage::fake('public');
 
         $captured = null;
@@ -678,6 +682,98 @@ class GiftMessageGenerationTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors('rows.0.gift_message');
+    }
+
+    public function test_envelope_prints_the_recipient_name_and_the_card_the_message(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['env_t1_content' => 'recipient', 'card_t1_content' => 'message']);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        $order = [
+            'gift_message' => 'Feliz comunion Jaime',
+            'firstname' => 'Jorge',
+            'lastname' => 'Da Silva Orallo',
+            'npedidocli' => '29394',
+        ];
+
+        $sobre = $method->invoke($service, 'envelope', $order, $config->fresh());
+        $tarjeta = $method->invoke($service, 'card', $order, $config->fresh());
+
+        $this->assertStringContainsString('Jorge Da Silva Orallo', strip_tags($sobre['t1']['html']));
+        $this->assertStringNotContainsString('Feliz comunion', strip_tags($sobre['t1']['html']));
+        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($tarjeta['t1']['html']));
+    }
+
+    public function test_the_recipient_falls_back_to_the_message_when_there_is_no_name(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['env_t1_content' => 'recipient']);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        // Sin nombre no se imprime un sobre en blanco.
+        $sobre = $method->invoke($service, 'envelope', [
+            'gift_message' => 'Feliz comunion Jaime',
+            'firstname' => '',
+            'lastname' => '',
+            'npedidocli' => '29394',
+        ], $config->fresh());
+
+        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($sobre['t1']['html']));
+    }
+
+    public function test_the_file_name_says_the_order_and_the_piece(): void
+    {
+        Storage::fake('public');
+
+        $service = app(GiftMessageGenerationService::class);
+
+        $uno = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf');
+        $varios = $service->store('card', [
+            ['id_order' => 1, 'npedidocli' => '11111', 'gift_message' => 'Uno'],
+            ['id_order' => 2, 'npedidocli' => '22222', 'gift_message' => 'Dos'],
+        ], 'pdf');
+
+        // Con un pedido, el nombre lo identifica de un vistazo en la carpeta de
+        // descargas; con varios manda la cuenta y la fecha.
+        $this->assertSame('29394-sobre.pdf', $uno->file_name);
+        $this->assertStringStartsWith('tarjetas-2pedidos-', $varios->file_name);
+        $this->assertStringEndsWith('.pdf', $varios->file_name);
+    }
+
+    public function test_regenerating_does_not_delete_the_file_it_just_wrote(): void
+    {
+        Storage::fake('public');
+
+        $service = app(GiftMessageGenerationService::class);
+
+        $primera = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf viejo');
+        $segunda = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf nuevo');
+
+        // Mismo nombre de fichero para el mismo pedido y pieza: si se borrara la
+        // anterior DESPUES de escribir, el PDF recien creado desapareceria.
+        $this->assertDatabaseMissing('gift_message_generations', ['id' => $primera->id]);
+        Storage::disk('public')->assertExists($segunda->file_path);
+        $this->assertSame('pdf nuevo', Storage::disk('public')->get($segunda->file_path));
+    }
+
+    public function test_generate_returns_a_download_url(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'card',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Hola', 'npedidocli' => '1']],
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['success', 'view_url', 'download_url']);
     }
 
     public function test_user_without_permission_cannot_view_history(): void

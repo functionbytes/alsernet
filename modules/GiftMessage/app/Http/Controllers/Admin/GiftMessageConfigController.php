@@ -66,6 +66,27 @@ class GiftMessageConfigController extends Controller
             ->with('success', 'Imagenes actualizadas correctamente.');
     }
 
+    public function saveContent(Request $request): RedirectResponse
+    {
+        $this->authorize('update', GiftMessageConfig::class);
+
+        $validated = $request->validate([
+            'scope' => ['required', 'string', 'in:envelope,card'],
+            'env_t1_content' => ['nullable', 'string', 'in:message,recipient'],
+            'card_t1_content' => ['nullable', 'string', 'in:message,recipient'],
+        ]);
+
+        $column = ($validated['scope'] === 'card' ? 'card' : 'env').'_t1_content';
+
+        $this->configService->current()->update([
+            $column => $validated[$column] ?? GiftMessagePdfService::CONTENT_MESSAGE,
+        ]);
+
+        return redirect()
+            ->route('settings.giftmessage.index')
+            ->with('success', 'Contenido del texto actualizado correctamente.');
+    }
+
     public function saveLimits(Request $request): RedirectResponse
     {
         $this->authorize('update', GiftMessageConfig::class);
@@ -107,6 +128,7 @@ class GiftMessageConfigController extends Controller
             // la vista previa no rechace un mensaje que si se puede imprimir.
             'message' => ['nullable', 'string', 'max:5000'],
             'order' => ['nullable', 'string', 'max:50'],
+            'recipient' => ['nullable', 'string', 'max:120'],
             'boxes' => ['nullable', 'array'],
             'boxes.*.*.w' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'boxes.*.*.h' => ['nullable', 'numeric', 'min:0', 'max:100'],
@@ -116,9 +138,11 @@ class GiftMessageConfigController extends Controller
         $order = (string) ($validated['order'] ?? '');
         $boxes = $validated['boxes'] ?? [];
 
+        $recipient = (string) ($validated['recipient'] ?? '');
+
         return response()->json([
-            'envelope' => $pdfService->previewMetrics('envelope', $message, $order, $boxes['envelope'] ?? []),
-            'card' => $pdfService->previewMetrics('card', $message, $order, $boxes['card'] ?? []),
+            'envelope' => $pdfService->previewMetrics('envelope', $message, $order, $boxes['envelope'] ?? [], $recipient),
+            'card' => $pdfService->previewMetrics('card', $message, $order, $boxes['card'] ?? [], $recipient),
         ]);
     }
 

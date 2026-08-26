@@ -150,6 +150,45 @@ class GiftMessageConfigTest extends TestCase
         $this->assertLessThan($grande, $pequena);
     }
 
+    public function test_saving_the_t1_content_only_touches_its_own_piece(): void
+    {
+        GiftMessageConfig::current()->update(['env_t1_content' => 'message', 'card_t1_content' => 'message']);
+
+        $this->actingAs($this->admin)
+            ->post(route('settings.giftmessage.content.update'), [
+                'scope' => 'envelope',
+                'env_t1_content' => 'recipient',
+            ])
+            ->assertRedirect(route('settings.giftmessage.index'));
+
+        $config = GiftMessageConfig::current()->fresh();
+
+        $this->assertSame('recipient', $config->env_t1_content);
+        $this->assertSame('message', $config->card_t1_content);
+    }
+
+    public function test_preview_metrics_use_the_recipient_when_the_piece_prints_the_name(): void
+    {
+        GiftMessageConfig::current()->update([
+            'env_t1_content' => 'recipient',
+            'env_t1_font' => 'helvetica',
+            'env_t1_size' => 14,
+        ]);
+
+        // El nombre cabe de sobra aunque el mensaje sea larguisimo: la vista
+        // previa del sobre tiene que medir el nombre, no el mensaje.
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.metrics'), [
+                'message' => str_repeat('Muchas felicidades de parte de toda la familia. ', 40),
+                'recipient' => 'Jorge Da Silva',
+                'order' => '29394',
+            ])
+            ->assertOk();
+
+        $this->assertSame(14, $response->json('envelope.t1.font_size'));
+        $this->assertLessThan(14, $response->json('card.t1.font_size'));
+    }
+
     public function test_user_without_permission_cannot_view_index(): void
     {
         $user = User::factory()->create();

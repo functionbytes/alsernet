@@ -41,6 +41,16 @@ class GiftMessagePdfService
     /** Suelo absoluto: por debajo de esto no se imprime nada legible. */
     private const HARD_MIN_FONT_SIZE = 5;
 
+    /** Contenido del texto grande de cada pieza. */
+    public const CONTENT_MESSAGE = 'message';
+
+    public const CONTENT_RECIPIENT = 'recipient';
+
+    public const CONTENT_LABELS = [
+        self::CONTENT_MESSAGE => 'Mensaje regalo',
+        self::CONTENT_RECIPIENT => 'Nombre de quien lo recibe',
+    ];
+
     private const SIZES = [
         'envelope' => ['w' => 220.0, 'h' => 110.0],
         'card' => ['w' => 200.0, 'h' => 90.0],
@@ -109,14 +119,17 @@ class GiftMessagePdfService
      *                                                                           guardado todavia. Sin esto, mover una caja no cambiaba la vista previa.
      * @return array<string, array{font: string, font_family: string, font_size: int}>
      */
-    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = []): array
+    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = [], string $recipient = ''): array
     {
         $config = $this->configService->current();
         $size = self::SIZES[$type];
         $prefix = $type === 'card' ? 'card' : 'env';
         $minSize = $this->minFontSize($config);
 
-        $message = $this->normalizeMessage($message);
+        $message = $this->normalizeMessage($this->t1Text($type, [
+            'gift_message' => $message,
+            'firstname' => $recipient,
+        ], $config));
         $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
         $t2Font = $config->{$prefix.'_t2_font'};
 
@@ -211,7 +224,7 @@ class GiftMessagePdfService
         $prefix = $type === 'card' ? 'card' : 'env';
         $minSize = $this->minFontSize($config);
 
-        $message = $this->normalizeMessage((string) $order['gift_message']);
+        $message = $this->normalizeMessage($this->t1Text($type, $order, $config));
         $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
         $t1Box = $this->box($config, $prefix.'_t1', $size);
 
@@ -246,6 +259,27 @@ class GiftMessagePdfService
                 'opacity' => $this->opacity((int) $config->{$prefix.'_t2_opacity'}),
             ] + $t2Box,
         ];
+    }
+
+    /**
+     * Que va en el texto grande de la pieza. El sobre suele llevar el nombre de
+     * quien recibe el regalo —es lo que se lee al repartir— y la tarjeta el
+     * mensaje, pero cada pieza se configura por separado.
+     *
+     * @param  array<string, mixed>  $order
+     */
+    private function t1Text(string $type, array $order, GiftMessageConfig $config): string
+    {
+        $prefix = $type === 'card' ? 'card' : 'env';
+
+        if (($config->{$prefix.'_t1_content'} ?? 'message') !== self::CONTENT_RECIPIENT) {
+            return (string) ($order['gift_message'] ?? '');
+        }
+
+        $name = trim(((string) ($order['firstname'] ?? '')).' '.((string) ($order['lastname'] ?? '')));
+
+        // Sin nombre no se imprime una pieza en blanco: se cae al mensaje.
+        return $name !== '' ? $name : (string) ($order['gift_message'] ?? '');
     }
 
     /**
