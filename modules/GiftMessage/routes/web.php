@@ -22,6 +22,7 @@ Route::middleware(['web', 'auth'])
         Route::get('/history/{generation}/download', [GiftMessageGenerationController::class, 'download'])->name('history.download');
         Route::delete('/history/{generation}', [GiftMessageGenerationController::class, 'destroy'])->name('history.destroy');
         Route::post('/history/bulk-action', [GiftMessageGenerationController::class, 'bulkAction'])->name('history.bulk-action');
+        Route::post('/history/{generation}/regenerate', [GiftMessageGenerationController::class, 'regenerateOrder'])->name('history.regenerate');
     });
 
 Route::middleware(['web', 'auth'])
