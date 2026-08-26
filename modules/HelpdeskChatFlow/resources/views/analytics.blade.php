@@ -167,7 +167,7 @@
                     </div>
                     <div class="col-6 col-md-3">
                         <h6 class="card-title mb-1 text-muted">Resueltas por el bot</h6>
-                        <h4 class="mb-0 fw-bold text-success">{{ number_format($aiMetrics['resolved']) }}</h4>
+                        <h4 class="mb-0 fw-bold">{{ number_format($aiMetrics['resolved']) }}</h4>
                     </div>
                     <div class="col-6 col-md-3">
                         <h6 class="card-title mb-1 text-muted">Escaladas a agente</h6>
@@ -197,11 +197,11 @@
                     </div>
                     <div class="col-6 col-md-3">
                         <h6 class="card-title mb-1 text-muted">Puntuación media</h6>
-                        <h4 class="mb-0 fw-bold text-info">{{ $csat['average'] }}<small class="text-muted">/{{ $csat['max'] }}</small></h4>
+                        <h4 class="mb-0 fw-bold">{{ $csat['average'] }}<small class="text-muted">/{{ $csat['max'] }}</small></h4>
                     </div>
                     <div class="col-6 col-md-3">
                         <h6 class="card-title mb-1 text-muted">Satisfechos</h6>
-                        <h4 class="mb-0 fw-bold text-success">{{ number_format($csat['satisfied']) }}</h4>
+                        <h4 class="mb-0 fw-bold">{{ number_format($csat['satisfied']) }}</h4>
                     </div>
                     <div class="col-6 col-md-3">
                         <h6 class="card-title mb-1 text-muted">% Satisfacción</h6>
