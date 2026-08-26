@@ -58,31 +58,29 @@
                 {{-- Imagen --}}
                 <div class="mb-4">
                     <h6 class="mb-1 fw-bold text-dark">Imagen de fondo</h6>
-                    <form action="{{ route('settings.giftmessage.images.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row g-3 align-items-start">
-                            <div class="col-12 col-md-4">
-                                <div class="giftmessage-image-preview-wrap mb-2">
-                                    <img id="envelope-image-preview"
-                                         src="{{ $config->envelope_image ? asset('storage/'.$config->envelope_image) : '' }}"
-                                         alt="Imagen del sobre"
-                                         class="giftmessage-image-thumb {{ $config->envelope_image ? '' : 'd-none' }}">
-                                    <small class="d-block text-muted mt-1" data-preview-label>
-                                        {{ $config->envelope_image ? 'Actual: '.basename($config->envelope_image) : 'Sin imagen todavia' }}
-                                    </small>
+                    <p class="text-muted small mb-3">Arrastra la imagen sobre la zona o haz clic para elegirla. Se guarda sola al soltarla.</p>
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6 col-xxl-5">
+                            {{-- La imagen guardada se pinta como fondo de la propia zona (via JS,
+                                 desde data-image) con el ratio real de la pieza: es a la vez la
+                                 vista previa y el sitio donde soltar la sustituta. --}}
+                            <div class="dropzone giftmessage-dropzone giftmessage-dropzone-envelope {{ $config->envelope_image ? 'giftmessage-dropzone-filled' : '' }}"
+                                 id="dropzone-envelope" data-scope="envelope" data-field="envelope_image"
+                                 data-image="{{ $config->envelope_image ? asset('storage/'.$config->envelope_image) : '' }}">
+                                <div class="dz-message">
+                                    <span class="d-block fw-semibold" data-dropzone-title>{{ $config->envelope_image ? 'Arrastra otra imagen para reemplazarla' : 'Arrastra la imagen aqui' }}</span>
+                                    <span class="d-block small">o haz clic para elegirla &middot; JPG o PNG &middot; maximo 5 MB</span>
+                                </div>
+                                <div class="fallback">
+                                    <input type="file" name="envelope_image" accept="image/*">
                                 </div>
                             </div>
-                            <div class="col-12 col-md-8">
-                                <label class="form-label fw-bold">Archivo</label>
-                                <input type="file" class="form-control giftmessage-image-input @error('envelope_image') is-invalid @enderror"
-                                       name="envelope_image" accept="image/*" data-preview-target="envelope-image-preview">
-                                @error('envelope_image')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
-                                @enderror
-                                <button type="submit" class="btn btn-primary btn-sm mt-2">Guardar imagen</button>
+                            <div class="d-flex justify-content-between gap-2 mt-2">
+                                <small class="text-muted text-truncate" data-preview-label>{{ $config->envelope_image ? basename($config->envelope_image) : 'Sin imagen todavia' }}</small>
+                                <small class="text-muted flex-shrink-0">220 x 110 mm</small>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 <hr class="my-3">
@@ -113,7 +111,7 @@
                             </div>
                         </div>
                         @include('giftmessage::admin.settings.partials.fine-tune', ['canvas' => 'envelope', 'prefix' => 'env', 'config' => $config])
-                        <button type="button" id="save-positions-envelope" class="btn btn-primary btn-sm mt-3">
+                        <button type="button" id="save-positions-envelope" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
                         </button>
                     @endif
@@ -179,7 +177,7 @@
                             <input type="number" class="form-control" name="env_t2_opacity" min="0" max="100" step="5" value="{{ $config->env_t2_opacity }}">
                         </div>
                     </div>
-                    <button type="button" id="save-fonts-envelope" class="btn btn-primary btn-sm">Guardar tipografia</button>
+                    <button type="button" id="save-fonts-envelope" class="btn btn-primary w-100 ">Guardar tipografia</button>
                 </div>
             </div>
 
@@ -198,31 +196,29 @@
                 {{-- Imagen --}}
                 <div class="mb-4">
                     <h6 class="mb-1 fw-bold text-dark">Imagen de fondo</h6>
-                    <form action="{{ route('settings.giftmessage.images.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="row g-3 align-items-start">
-                            <div class="col-12 col-md-4">
-                                <div class="giftmessage-image-preview-wrap mb-2">
-                                    <img id="card-image-preview"
-                                         src="{{ $config->card_image ? asset('storage/'.$config->card_image) : '' }}"
-                                         alt="Imagen de la tarjeta"
-                                         class="giftmessage-image-thumb {{ $config->card_image ? '' : 'd-none' }}">
-                                    <small class="d-block text-muted mt-1" data-preview-label>
-                                        {{ $config->card_image ? 'Actual: '.basename($config->card_image) : 'Sin imagen todavia' }}
-                                    </small>
+                    <p class="text-muted small mb-3">Arrastra la imagen sobre la zona o haz clic para elegirla. Se guarda sola al soltarla.</p>
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6 col-xxl-5">
+                            {{-- La imagen guardada se pinta como fondo de la propia zona (via JS,
+                                 desde data-image) con el ratio real de la pieza: es a la vez la
+                                 vista previa y el sitio donde soltar la sustituta. --}}
+                            <div class="dropzone giftmessage-dropzone giftmessage-dropzone-card {{ $config->card_image ? 'giftmessage-dropzone-filled' : '' }}"
+                                 id="dropzone-card" data-scope="card" data-field="card_image"
+                                 data-image="{{ $config->card_image ? asset('storage/'.$config->card_image) : '' }}">
+                                <div class="dz-message">
+                                    <span class="d-block fw-semibold" data-dropzone-title>{{ $config->card_image ? 'Arrastra otra imagen para reemplazarla' : 'Arrastra la imagen aqui' }}</span>
+                                    <span class="d-block small">o haz clic para elegirla &middot; JPG o PNG &middot; maximo 5 MB</span>
+                                </div>
+                                <div class="fallback">
+                                    <input type="file" name="card_image" accept="image/*">
                                 </div>
                             </div>
-                            <div class="col-12 col-md-8">
-                                <label class="form-label fw-bold">Archivo</label>
-                                <input type="file" class="form-control giftmessage-image-input @error('card_image') is-invalid @enderror"
-                                       name="card_image" accept="image/*" data-preview-target="card-image-preview">
-                                @error('card_image')
-                                    <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
-                                @enderror
-                                <button type="submit" class="btn btn-primary btn-sm mt-2">Guardar imagen</button>
+                            <div class="d-flex justify-content-between gap-2 mt-2">
+                                <small class="text-muted text-truncate" data-preview-label>{{ $config->card_image ? basename($config->card_image) : 'Sin imagen todavia' }}</small>
+                                <small class="text-muted flex-shrink-0">200 x 90 mm</small>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
                 <hr class="my-3">
@@ -253,7 +249,7 @@
                             </div>
                         </div>
                         @include('giftmessage::admin.settings.partials.fine-tune', ['canvas' => 'card', 'prefix' => 'card', 'config' => $config])
-                        <button type="button" id="save-positions-card" class="btn btn-primary btn-sm mt-3">
+                        <button type="button" id="save-positions-card" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
                         </button>
                     @endif
@@ -319,7 +315,7 @@
                             <input type="number" class="form-control" name="card_t2_opacity" min="0" max="100" step="5" value="{{ $config->card_t2_opacity }}">
                         </div>
                     </div>
-                    <button type="button" id="save-fonts-card" class="btn btn-primary btn-sm">Guardar tipografia</button>
+                    <button type="button" id="save-fonts-card" class="btn btn-primary w-100 ">Guardar tipografia</button>
                 </div>
             </div>
 
@@ -452,6 +448,7 @@
             urls: {
                 savePositions: "{{ route('settings.giftmessage.positions.save') }}",
                 saveFonts: "{{ route('settings.giftmessage.typography.update') }}",
+                uploadImage: "{{ route('settings.giftmessage.images.store') }}",
             },
             stacks: @json($fontStacks),
             fonts: {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Modules\GiftMessage\Http\Requests\SaveGiftMessageFontsRequest;
 use Modules\GiftMessage\Http\Requests\SaveGiftMessagePositionsRequest;
 use Modules\GiftMessage\Http\Requests\UploadGiftMessageImagesRequest;
@@ -34,12 +35,29 @@ class GiftMessageConfigController extends Controller
         ]);
     }
 
-    public function uploadImages(UploadGiftMessageImagesRequest $request): RedirectResponse
+    public function uploadImages(UploadGiftMessageImagesRequest $request): RedirectResponse|JsonResponse
     {
-        $this->configService->uploadImages([
+        $config = $this->configService->uploadImages([
             'envelope_image' => $request->file('envelope_image'),
             'card_image' => $request->file('card_image'),
         ]);
+
+        // El formulario clasico sigue redirigiendo; la zona de arrastrar y soltar
+        // sube por AJAX y necesita de vuelta la ruta publica de la imagen para
+        // repintar la vista previa y el lienzo sin recargar la pagina.
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'images' => [
+                    'envelope' => $config->envelope_image ? Storage::disk('public')->url($config->envelope_image) : null,
+                    'card' => $config->card_image ? Storage::disk('public')->url($config->card_image) : null,
+                ],
+                'names' => [
+                    'envelope' => $config->envelope_image ? basename($config->envelope_image) : null,
+                    'card' => $config->card_image ? basename($config->card_image) : null,
+                ],
+            ]);
+        }
 
         return redirect()
             ->route('settings.giftmessage.index')

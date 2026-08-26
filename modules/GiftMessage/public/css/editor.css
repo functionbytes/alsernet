@@ -93,3 +93,70 @@
     background: #fafafa;
     display: block;
 }
+
+/* ── Imagen de fondo: zona de arrastrar y soltar ─────────────────────────── */
+/* La zona hace de vista previa y de destino a la vez: cuando ya hay imagen
+   guardada, el JS la pinta de fondo con background-size: 100% 100%, el mismo
+   encuadre estirado que usan el lienzo de posicionamiento y el PDF. */
+.giftmessage-dropzone.dropzone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+    border: 2px dashed #d5d5d5;
+    border-radius: 8px;
+    background-color: #fafafa;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.giftmessage-dropzone-envelope { aspect-ratio: 220 / 110; }
+
+.giftmessage-dropzone-card { aspect-ratio: 200 / 90; }
+
+.giftmessage-dropzone.dropzone:hover,
+.giftmessage-dropzone.dropzone.dz-drag-hover {
+    border-color: #90bb13;
+    background-color: rgba(144, 187, 19, 0.08);
+}
+
+.giftmessage-dropzone .dz-message {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    color: #555555;
+}
+
+/* Con imagen de fondo el borde deja de ser discontinuo y el texto solo aparece
+   al pasar por encima, para no tapar la vista previa. */
+.giftmessage-dropzone-filled.dropzone {
+    border-style: solid;
+    border-color: #dddddd;
+}
+
+.giftmessage-dropzone-filled .dz-message {
+    opacity: 0;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #111111;
+    transition: opacity 0.15s ease;
+}
+
+.giftmessage-dropzone-filled:hover .dz-message,
+.giftmessage-dropzone-filled.dz-drag-hover .dz-message,
+.giftmessage-dropzone-filled:focus-within .dz-message {
+    opacity: 1;
+}
+
+/* Las previews que Dropzone inyecta sobrarian sobre la imagen de fondo: el
+   resultado de la subida ya se ve en la propia zona y en el aviso de toastr. */
+.giftmessage-dropzone .dz-preview { display: none; }
+
+.giftmessage-dropzone.is-uploading .dz-message { opacity: 1; }

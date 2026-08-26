@@ -1,6 +1,9 @@
 (function ($) {
     var FALLBACK_STACK = 'Helvetica, Arial, sans-serif';
 
+    // Mismo suelo que GiftMessagePdfService::MIN_FONT_SIZE.
+    var MIN_FONT_PT = 5;
+
     var dirty = { envelope: false, card: false };
     var fontsDirty = { envelope: false, card: false };
 
@@ -47,6 +50,7 @@
         });
         markDirty($el);
         syncFineTuneInputs($el);
+        shrinkToFit($el);
     }
 
     function initInteractions() {
@@ -111,11 +115,38 @@
     // caja: la caja lleva borde y fondo propios para poder arrastrarla, y deben
     // seguir visibles aunque el texto se configure casi transparente.
     function applyFontStyle(scope, slot, style) {
-        $('#canvas-' + scope + ' [data-slot="' + slot + '"]').css({
+        var $box = $('#canvas-' + scope + ' [data-slot="' + slot + '"]');
+
+        $box.css({
             fontFamily: fontStack(style.font),
             fontSize: ptToPx(style.size) + 'px',
             color: rgba(style.color, style.opacity),
-        });
+        }).data('maxFontPx', ptToPx(style.size));
+
+        shrinkToFit($box);
+    }
+
+    // El PDF reduce el tamano cuando el mensaje no cabe en la caja (ver
+    // GiftMessagePdfService::fitFontSize), asi que la vista previa hace lo mismo:
+    // el tamano configurado es el maximo y desde ahi se baja hasta que el texto
+    // entra entero. Sin esto el editor ensenaba una letra que el PDF no iba a
+    // usar y el ajuste se hacia a ciegas.
+    function shrinkToFit($box) {
+        var maxPx = $box.data('maxFontPx');
+
+        if (!maxPx || !$box.length) {
+            return;
+        }
+
+        var minPx = ptToPx(MIN_FONT_PT);
+        var size = maxPx;
+
+        $box.css('fontSize', size + 'px');
+
+        while (size > minPx && $box[0].scrollHeight > $box[0].clientHeight) {
+            size -= 1;
+            $box.css('fontSize', size + 'px');
+        }
     }
 
     function readSlotStyle(prefix) {
@@ -194,6 +225,7 @@
 
             $box.css(cssProp[$input.data('axis')], value + '%');
             markDirty($box);
+            shrinkToFit($box);
         });
     }
 
@@ -208,6 +240,8 @@
 
         $('.giftmessage-drag[data-slot="t1"]').text(message || 'T1 · Mensaje');
         $('.giftmessage-drag[data-slot="t2"]').text(order || 'T2 · Gestion');
+
+        $('.giftmessage-drag').each(function () { shrinkToFit($(this)); });
     }
 
     // ─── Color + hex sincronizados ──────────────────────────────────────────
@@ -230,23 +264,110 @@
         });
     }
 
-    // ─── Miniatura: previsualiza el archivo elegido antes de guardarlo ──────
-    function bindImagePreviews() {
-        $('.giftmessage-image-input').each(function () {
-            var $input = $(this);
-            var $preview = $('#' + $input.data('previewTarget'));
+    // ─── Imagen de fondo: zona de arrastrar y soltar ────────────────────────
+    // La zona es a la vez vista previa y destino: la imagen guardada se pinta
+    // como fondo suyo. Sube en cuanto se suelta el archivo y repinta el fondo,
+    // la etiqueta y el lienzo de posicionamiento sin recargar. Solo se recarga
+    // cuando antes NO habia imagen, porque en ese caso el lienzo ni siquiera
+    // esta renderizado (la vista muestra el aviso de "sube primero la imagen").
+    function paintDropzone($zone, url) {
+        $zone.css('background-image', url ? 'url("' + url + '")' : 'none')
+            .toggleClass('giftmessage-dropzone-filled', !!url);
+    }
 
-            $input.on('change', function () {
-                var file = this.files && this.files[0];
+    function initImageDropzones() {
+        var config = window.GIFTMESSAGE_SETTINGS;
 
-                if (!file) {
-                    return;
-                }
+        if (typeof Dropzone === 'undefined' || !config) {
+            return;
+        }
 
-                $preview.attr('src', URL.createObjectURL(file)).removeClass('d-none');
-                $preview.closest('.giftmessage-image-preview-wrap')
-                    .find('[data-preview-label]')
-                    .text('Nueva imagen seleccionada (todavia sin guardar)');
+        Dropzone.autoDiscover = false;
+
+        $('.giftmessage-dropzone').each(function () {
+            var element = this;
+            var $zone = $(element);
+            var scope = $zone.data('scope');
+            var field = $zone.data('field');
+            var $block = $zone.closest('.col-12');
+            var hadImage = !!$zone.attr('data-image');
+
+            // El fondo se aplica aqui y no en el HTML para no dejar un style=""
+            // con la URL incrustada en la plantilla.
+            paintDropzone($zone, $zone.attr('data-image'));
+
+            new Dropzone(element, {
+                url: config.urls.uploadImage,
+                paramName: field,
+                acceptedFiles: 'image/*',
+                maxFilesize: 5,
+                maxFiles: 1,
+                uploadMultiple: false,
+                parallelUploads: 1,
+                createImageThumbnails: false,
+                addRemoveLinks: false,
+                timeout: 60000,
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                dictInvalidFileType: 'Ese archivo no es una imagen.',
+                dictFileTooBig: 'La imagen no puede superar los 5 MB.',
+                init: function () {
+                    var dropzone = this;
+
+                    // maxFiles: 1 por pieza — al soltar otra se descarta la anterior
+                    // para que la zona no acumule intentos previos.
+                    dropzone.on('addedfile', function () {
+                        if (dropzone.files.length > 1) {
+                            dropzone.removeFile(dropzone.files[0]);
+                        }
+                    });
+
+                    dropzone.on('sending', function () {
+                        $zone.addClass('is-uploading')
+                            .find('[data-dropzone-title]').text('Subiendo imagen...');
+                    });
+
+                    dropzone.on('success', function (file, response) {
+                        var url = (response.images || {})[scope];
+                        var name = (response.names || {})[scope];
+
+                        if (!hadImage) {
+                            toastr.success('Imagen guardada. Recargando para abrir el editor de posiciones...');
+                            setTimeout(function () { location.reload(); }, 800);
+
+                            return;
+                        }
+
+                        // Cache-busting: el nombre del fichero puede repetirse y el
+                        // navegador serviria la imagen vieja.
+                        var fresh = url + (url.indexOf('?') === -1 ? '?' : '&') + 'v=' + Date.now();
+
+                        $zone.attr('data-image', url);
+                        paintDropzone($zone, fresh);
+                        $block.find('[data-preview-label]').text(name || '');
+                        $('#canvas-' + scope)
+                            .attr('data-bg', url)
+                            .css('background-image', 'url("' + fresh + '")');
+
+                        toastr.success('Imagen actualizada correctamente.');
+                    });
+
+                    dropzone.on('error', function (file, message) {
+                        var text = typeof message === 'string'
+                            ? message
+                            : (message && message.message) || 'No se pudo subir la imagen.';
+
+                        toastr.error(text);
+                    });
+
+                    dropzone.on('complete', function (file) {
+                        $zone.removeClass('is-uploading')
+                            .find('[data-dropzone-title]')
+                            .text($zone.attr('data-image')
+                                ? 'Arrastra otra imagen para reemplazarla'
+                                : 'Arrastra la imagen aqui');
+                        dropzone.removeFile(file);
+                    });
+                },
             });
         });
     }
@@ -371,7 +492,7 @@
         initFontPreview(config.fonts || {});
         bindFontInputs();
         bindColorHexPairs();
-        bindImagePreviews();
+        initImageDropzones();
         applySampleText();
 
         $('#preview-message, #preview-order').on('input', applySampleText);
