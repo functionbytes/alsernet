@@ -63,7 +63,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Con miembros
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['with_members'] }}</h4>
@@ -78,7 +78,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">
+                                        <h6 class="card-title  mb-2">
                                            Vacíos
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['empty'] }}</h4>
@@ -114,13 +114,13 @@
                                     </div>
                                     <div class="col-4">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h5 class="mb-0 fw-bold text-success">{{ $stats['primary_members'] }}</h5>
+                                            <h5 class="mb-0 fw-bold">{{ $stats['primary_members'] }}</h5>
                                             <small class="text-muted">Primarios</small>
                                         </div>
                                     </div>
                                     <div class="col-4">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h5 class="mb-0 fw-bold text-success">{{ $stats['backup_members'] }}</h5>
+                                            <h5 class="mb-0 fw-bold">{{ $stats['backup_members'] }}</h5>
                                             <small class="text-muted">Backup</small>
                                         </div>
                                     </div>

@@ -46,7 +46,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-success mb-2">Saludables</h6>
+                            <h6 class="card-title  mb-2">Saludables</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['healthy'] }}</h4>
                             <small class="text-muted">Health score &ge; 80</small>
                         </div>
@@ -64,7 +64,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-warning mb-2">Con clientes</h6>
+                            <h6 class="card-title  mb-2">Con clientes</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['with_customers'] }}</h4>
                             <small class="text-muted">Tienen clientes asignados</small>
                         </div>

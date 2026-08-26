@@ -117,7 +117,7 @@
             @if($inbox->channel_type === 'web' && $isEdit && $channel !== null)
                 <div class="card mb-3 border-success">
                     <div class="card-header bg-success bg-opacity-10 border-0">
-                        <h6 class="mb-0 fw-bold text-success">
+                        <h6 class="mb-0 fw-bold">
                             <i class="fas fa-code me-2"></i>Código de instalación
                         </h6>
                     </div>

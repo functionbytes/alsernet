@@ -46,7 +46,7 @@
                 <div class="col-md-4">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-success mb-2">Activas</h6>
+                            <h6 class="card-title  mb-2">Activas</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['active'] }}</h4>
                             <small class="text-muted">Marcas en uso</small>
                         </div>
@@ -55,7 +55,7 @@
                 <div class="col-md-4">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-warning mb-2">Con bandejas</h6>
+                            <h6 class="card-title  mb-2">Con bandejas</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['with_inboxes'] }}</h4>
                             <small class="text-muted">Tienen inboxes asignados</small>
                         </div>

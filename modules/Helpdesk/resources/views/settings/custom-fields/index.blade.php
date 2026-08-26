@@ -49,7 +49,7 @@
                     <div class="col-md-4">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Clientes</h6>
+                                <h6 class="card-title  mb-2">Clientes</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['customers'] }}</h4>
                                 <small class="text-muted">Campos de cliente</small>
                             </div>

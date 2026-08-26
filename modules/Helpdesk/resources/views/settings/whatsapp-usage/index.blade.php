@@ -106,7 +106,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-2">Confirmados</h6>
+                                <h6 class="card-title  mb-2">Confirmados</h6>
                                 <h4 class="mb-1 fw-bold" id="wa-usage-success">0</h4>
                                 <small class="text-muted">Aceptados por Meta</small>
                             </div>
@@ -124,7 +124,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-2">Gasto estimado</h6>
+                                <h6 class="card-title  mb-2">Gasto estimado</h6>
                                 <h4 class="mb-1 fw-bold" id="wa-usage-cost">€0.00</h4>
                                 <small class="text-muted">Según tarifas configuradas</small>
                             </div>
