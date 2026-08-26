@@ -61,27 +61,33 @@ class GiftMessageConfigTest extends TestCase
 
     public function test_panel_index_no_longer_shows_the_config_sections(): void
     {
-        $this->mock(GiftMessageOrderService::class, function ($mock) {
-            $mock->shouldReceive('ordersWithGiftMessage')->once()->andReturn([]);
-        });
-
         $this->actingAs($this->admin)
             ->get(route('giftmessage.index'))
             ->assertOk()
             ->assertDontSee('Imagenes base')
             ->assertDontSee('Fuentes y tamanos')
-            ->assertSee('Pedidos con mensaje regalo');
+            ->assertSee('Buscar pedidos');
     }
 
     public function test_index_shows_the_panel(): void
     {
+        $this->actingAs($this->admin)
+            ->get(route('giftmessage.index'))
+            ->assertOk();
+    }
+
+    public function test_index_does_not_preload_any_order(): void
+    {
+        // El listado solo se pinta tras buscar (via AJAX): entrar en la
+        // pantalla no debe consultar los pedidos con mensaje regalo.
         $this->mock(GiftMessageOrderService::class, function ($mock) {
-            $mock->shouldReceive('ordersWithGiftMessage')->once()->andReturn([]);
+            $mock->shouldNotReceive('ordersWithGiftMessage');
         });
 
         $this->actingAs($this->admin)
             ->get(route('giftmessage.index'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('Todavia no hay pedidos en pantalla');
     }
 
     public function test_user_without_permission_cannot_view_index(): void
