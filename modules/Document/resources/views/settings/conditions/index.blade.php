@@ -150,7 +150,7 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <button type="button"
-                                                                class="dropdown-item text-success delete-btn"
+                                                                class="dropdown-item delete-btn"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#delete-modal"
                                                                 data-url="{{ route('settings.documents.conditions.destroy', $condition->uid) }}"

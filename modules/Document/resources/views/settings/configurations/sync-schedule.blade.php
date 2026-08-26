@@ -73,7 +73,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Próxima ejecución</h6>
+                                        <h6 class="card-title  mb-2">Próxima ejecución</h6>
                                         <h6 class="mb-1 fw-bold">{{ $syncSettings['next_run'] ?? 'No programado' }}</h6>
                                         <small class="text-muted">Fecha estimada</small>
                                     </div>
@@ -86,7 +86,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Última sincronización</h6>
+                                        <h6 class="card-title  mb-2">Última sincronización</h6>
                                         <h6 class="mb-1 fw-bold text-truncate" title="{{ $syncSettings['last_sync_full'] ?? '' }}">
                                             {{ $syncSettings['last_sync'] ?? 'Nunca' }}
                                         </h6>

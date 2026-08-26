@@ -65,7 +65,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Inactivas</h6>
+                                        <h6 class="card-title  mb-2">Inactivas</h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['inactive'] }}</h4>
                                         <small class="text-muted">Políticas deshabilitadas</small>
                                     </div>
@@ -187,7 +187,7 @@
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     <button type="button"
-                                                        class="dropdown-item text-success delete-btn"
+                                                        class="dropdown-item delete-btn"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#delete-modal"
                                                         data-url="{{ route('settings.documents.sla-policies.destroy', $policy->id) }}"

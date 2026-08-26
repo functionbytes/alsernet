@@ -173,7 +173,7 @@
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a
-                                                                class="dropdown-item text-success delete-btn"
+                                                                class="dropdown-item delete-btn"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#delete-modal"
                                                                 data-url="{{ route('settings.documents.types.destroy', $type->slug) }}"
