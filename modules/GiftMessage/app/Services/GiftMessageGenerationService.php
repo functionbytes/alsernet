@@ -129,15 +129,24 @@ class GiftMessageGenerationService
         $generation->delete();
     }
 
-    public function bulkAction(array $ids, string $action): void
+    /**
+     * @return int Cuantas filas se borraron de verdad (los ids que ya no existen
+     *             se ignoran, para que una fila borrada por otro usuario no tumbe
+     *             la seleccion entera).
+     */
+    public function bulkAction(array $ids, string $action): int
     {
         $generations = GiftMessageGeneration::query()->whereIn('id', $ids)->get();
+        $deleted = 0;
 
         foreach ($generations as $generation) {
             if ($action === 'delete') {
                 $this->delete($generation);
+                $deleted++;
             }
         }
+
+        return $deleted;
     }
 
     public function pruneOlderThan(int $days): int
