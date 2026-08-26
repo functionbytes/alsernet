@@ -6,13 +6,13 @@
 
 @section('content')
 
-    <div class="widget-content">
+    <div class="widget-content dashboard-page">
 
         {{-- Filters Bar --}}
         <div class="card card-body mb-4 border-0 shadow-sm">
             <div class="row align-items-center g-3">
                 <div class="col-md-auto">
-                    <div class="d-flex align-items-center gap-3 px-3 py-2 rounded-1 p-2 bg-danger-subtle text-white">
+                    <div class="d-flex align-items-center gap-3 px-3 py-2 rounded-1 p-2 dashboard-health-badge">
                         <div class="position-relative d-flex align-items-center justify-content-center rounded-circle" style="width:24px;height:24px;">
                             <span class="position-absolute top-0 end-0 rounded-circle bg-success border border-white pulse-dot"></span>
                         </div>
@@ -622,6 +622,48 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.4; }
     }
+    /* El tema base pinta todo el estado "danger" en rosa (--bs-danger: #ff6692),
+       que no es de la paleta de la casa. Dentro del dashboard esos utilitarios se
+       reasignan al verde de marca; el resto de la app se queda como estaba. */
+    .dashboard-page .text-danger { color: #90bb13 !important; }
+    /* El tema pinta ademas color y borde del propio .bg-danger-subtle, no solo
+       el fondo, asi que hay que reasignar los tres. */
+    .dashboard-page .bg-danger-subtle {
+        background-color: rgba(144, 187, 19, 0.12) !important;
+        color: #90bb13 !important;
+        border-color: #90bb13 !important;
+    }
+    .dashboard-page .border-danger { border-color: #90bb13 !important; }
+    .dashboard-page .bg-danger { background-color: #90bb13 !important; }
+
+    .dashboard-page .text-warning { color: #7d9f10 !important; }
+    .dashboard-page .bg-warning-subtle {
+        background-color: rgba(144, 187, 19, 0.12) !important;
+        color: #7d9f10 !important;
+        border-color: #b6d34a !important;
+    }
+    .dashboard-page .bg-warning { background-color: #b6d34a !important; }
+    .dashboard-page .border-warning { border-color: #b6d34a !important; }
+
+    .dashboard-page .dashboard-health-badge {
+        background-color: rgba(144, 187, 19, 0.12);
+        color: #555555;
+    }
+    .dashboard-page .dashboard-health-badge #health-status-label { color: #90bb13; }
+    .dashboard-page .bg-success-subtle { background-color: rgba(144, 187, 19, 0.12) !important; }
+    .dashboard-page .text-success { color: #90bb13 !important; }
+    .dashboard-page .pulse-dot.bg-success { background-color: #90bb13 !important; }
+
+    /* La alerta de cabecera va en blanco, como las tarjetas: solo el filete
+       lateral marca la severidad. */
+    .dashboard-page .dashboard-alert-banner {
+        background-color: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        border: 0;
+        color: #111111;
+    }
+    .dashboard-page .dashboard-alert-banner .fa-arrow-right { color: #111111; }
+
     .alert-banner-item { transition: all 0.2s ease; }
     .alert-banner-item:hover { transform: translateX(4px); }
     .review-stars { letter-spacing: 2px; }
@@ -694,15 +736,13 @@
                 if (!alerts.length) { $banner.addClass('d-none').empty(); return; }
                 var html = '<div class="d-flex flex-column gap-2">';
                 alerts.forEach(function (a) {
-                    var bg = a.severity === 'danger' ? 'bg-danger-subtle border-danger' : 'bg-warning-subtle border-warning';
-                    var txt = a.severity === 'danger' ? 'text-danger' : 'text-warning';
                     var icon = a.severity === 'danger' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle';
-                    html += `<a href="${a.link}" class="alert-banner-item d-flex align-items-center gap-3 p-3 rounded-3 border-start border-4 ${bg} text-decoration-none">
+                    html += `<a href="${a.link}" class="alert-banner-item dashboard-alert-banner d-flex align-items-center gap-3 p-3 rounded-3 text-decoration-none">
                         <div class="p-2 bg-primary-subtle rounded-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;">
                             <i class="fas ${icon} text-primary"></i>
                         </div>
-                        <div class="flex-grow-1"><span class="fw-semibold small ${txt}">${escHtml(a.message)}</span></div>
-                        <i class="fas fa-arrow-right ${txt} flex-shrink-0"></i>
+                        <div class="flex-grow-1"><span class="fw-semibold small">${escHtml(a.message)}</span></div>
+                        <i class="fas fa-arrow-right flex-shrink-0"></i>
                     </a>`;
                 });
                 html += '</div>';
@@ -799,9 +839,9 @@
 
     function renderSparklines(labels, reviews, attention, forms) {
         const sparks = {
-            '#spark-reviews':   { data: reviews,   color: '#13C672', type: 'area' },
+            '#spark-reviews':   { data: reviews,   color: '#90bb13', type: 'area' },
             '#spark-attention': { data: attention, color: '#333333', type: 'bar'  },
-            '#spark-forms':     { data: forms,     color: '#7b0000', type: 'area' },
+            '#spark-forms':     { data: forms,     color: '#4f6b0a', type: 'area' },
         };
         Object.entries(sparks).forEach(([sel, cfg]) => {
             const el = document.querySelector(sel);
@@ -819,7 +859,7 @@
         activityChart = new ApexCharts(document.querySelector('#activity-chart'), {
             series: [{ name: 'Reseñas', data: reviews }, { name: 'PQRSF', data: attention }, { name: 'Formularios', data: forms }],
             chart: { type: 'area', height: 295, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit' },
-            colors: ['#13C672', '#333333', '#7b0000'],
+            colors: ['#90bb13', '#333333', '#4f6b0a'],
             stroke: { curve: 'smooth', width: 2 },
             fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.15, opacityTo: 0.02, stops: [0, 100] } },
             xaxis: { categories: labels, labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
@@ -846,7 +886,7 @@
                     series: data.series,
                     labels: data.labels,
                     chart: { type: 'donut', height: 200, fontFamily: 'inherit' },
-                    colors: ['#13C672', '#333333', '#7b0000', '#555555'],
+                    colors: ['#90bb13', '#333333', '#4f6b0a', '#555555'],
                     legend: { show: false },
                     dataLabels: { enabled: false },
                     tooltip: { y: { formatter: v => fmt(v) } },
@@ -1004,7 +1044,7 @@
     function renderSecurityScore(score) {
         if (securityScoreChart) { securityScoreChart.destroy(); }
         $('#security-score-chart').html('');
-        var color = score >= 80 ? '#13C672' : score >= 50 ? '#FEC90F' : '#13C672';
+        var color = score >= 80 ? '#90bb13' : score >= 50 ? '#b6d34a' : '#4f6b0a';
         securityScoreChart = new ApexCharts(document.querySelector('#security-score-chart'), {
             series: [score],
             chart: { type: 'radialBar', height: 140, fontFamily: 'inherit' },
@@ -1024,7 +1064,7 @@
             series: [pct],
             chart: { type: 'radialBar', height: 140, fontFamily: 'inherit' },
             plotOptions: { radialBar: { hollow: { size: '55%' }, dataLabels: { show: true, name: { show: false }, value: { fontSize: '22px', fontWeight: 600, color: '#333333', formatter: v => v + '%' } } } },
-            colors: ['#13C672'],
+            colors: ['#90bb13'],
             stroke: { lineCap: 'round' },
         });
         twofaChart.render();
@@ -1057,7 +1097,7 @@
                         { name: 'Bloqueos', data: data.lockout || [] }
                     ],
                     chart: { type: 'bar', height: 260, toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'inherit', stacked: true },
-                    colors: ['#13C672', '#13C672', '#555555'],
+                    colors: ['#90bb13', '#4f6b0a', '#555555'],
                     plotOptions: { bar: { borderRadius: 2, columnWidth: '70%' } },
                     xaxis: { categories: data.labels || [], labels: { style: { fontSize: '11px', colors: '#adb5bd' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                     yaxis: { labels: { style: { fontSize: '11px', colors: '#adb5bd' }, formatter: v => Math.round(v) } },
