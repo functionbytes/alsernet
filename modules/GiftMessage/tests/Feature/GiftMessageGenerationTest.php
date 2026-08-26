@@ -6,12 +6,15 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
 use Modules\GiftMessage\Database\Seeders\GiftMessagePermissionsSeeder;
 use Modules\GiftMessage\Models\GiftMessageConfig;
 use Modules\GiftMessage\Models\GiftMessageGeneration;
+use Modules\GiftMessage\Services\GiftMessageGenerationService;
+use Modules\GiftMessage\Services\GiftMessageOrderService;
 use Tests\TestCase;
 
 class GiftMessageGenerationTest extends TestCase
@@ -420,6 +423,176 @@ class GiftMessageGenerationTest extends TestCase
             ->assertJson(['success' => true, 'deleted' => 1]);
 
         $this->assertDatabaseMissing('gift_message_generations', ['id' => $generation->id]);
+    }
+
+    public function test_regenerating_one_order_creates_a_single_page_pdf(): void
+    {
+        Storage::fake('public');
+
+        $generation = GiftMessageGeneration::factory()->card()->create([
+            'rows_count' => 2,
+            'order_numbers' => ['29394', '29389'],
+            'rows' => [
+                ['id_order' => 833253, 'npedidocli' => '29394', 'id_gestion' => '102204020', 'gift_message' => 'Feliz cumpleanos'],
+                ['id_order' => 833248, 'npedidocli' => '29389', 'id_gestion' => '102204015', 'gift_message' => 'Enhorabuena'],
+            ],
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.history.regenerate', $generation), ['order_number' => '29389'])
+            ->assertOk()
+            ->assertJson(['success' => true, 'order_number' => '29389']);
+
+        // El PDF nuevo lleva solo esa fila y la generacion original no se toca.
+        $new = GiftMessageGeneration::query()->latest('id')->first();
+
+        $this->assertNotSame($generation->id, $new->id);
+        $this->assertSame(1, $new->rows_count);
+        $this->assertSame(['29389'], $new->order_numbers);
+        $this->assertSame('card', $new->type);
+        $this->assertSame('Enhorabuena', $new->rows[0]['gift_message']);
+        $this->assertStringContainsString((string) $new->id, $response->json('view_url'));
+        $this->assertDatabaseHas('gift_message_generations', ['id' => $generation->id]);
+    }
+
+    public function test_generating_again_replaces_the_previous_pdf_of_the_same_order(): void
+    {
+        Storage::fake('public');
+
+        $previous = GiftMessageGeneration::factory()->envelope()->create([
+            'rows_count' => 1,
+            'order_numbers' => ['41234'],
+        ]);
+        Storage::disk('public')->put($previous->file_path, 'pdf viejo');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'envelope',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Feliz cumpleanos', 'npedidocli' => '41234']],
+            ])
+            ->assertOk();
+
+        // El anterior desaparece con su fichero: no se acumulan "Ver sobre"
+        // repetidos en el listado de pedidos.
+        $this->assertDatabaseMissing('gift_message_generations', ['id' => $previous->id]);
+        Storage::disk('public')->assertMissing($previous->file_path);
+    }
+
+    public function test_regenerating_one_order_keeps_the_batch_it_belonged_to(): void
+    {
+        Storage::fake('public');
+
+        // Un lote con tres pedidos es la unica copia de los otros dos, asi que
+        // rehacer uno suelto no puede llevarselo por delante.
+        $batch = GiftMessageGeneration::factory()->envelope()->create([
+            'rows_count' => 3,
+            'order_numbers' => ['41234', '41235', '41236'],
+        ]);
+        Storage::disk('public')->put($batch->file_path, 'pdf del lote');
+
+        $otherType = GiftMessageGeneration::factory()->card()->create([
+            'rows_count' => 1,
+            'order_numbers' => ['41234'],
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'envelope',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Feliz cumpleanos', 'npedidocli' => '41234']],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('gift_message_generations', ['id' => $batch->id]);
+        Storage::disk('public')->assertExists($batch->file_path);
+
+        // Y la tarjeta del mismo pedido tampoco: solo se reemplaza el mismo tipo.
+        $this->assertDatabaseHas('gift_message_generations', ['id' => $otherType->id]);
+    }
+
+    public function test_the_order_list_only_links_the_current_pdf_of_each_type(): void
+    {
+        GiftMessageGeneration::factory()->envelope()->create([
+            'order_numbers' => ['41234'],
+            'created_at' => now()->subDays(2),
+        ]);
+        $newest = GiftMessageGeneration::factory()->envelope()->create([
+            'order_numbers' => ['41234'],
+            'created_at' => now(),
+        ]);
+
+        $index = app(GiftMessageGenerationService::class)->orderNumberIndex();
+
+        $this->assertArrayHasKey('41234', $index);
+
+        // El indice trae todas, pero el listado se queda con una por tipo: la
+        // ultima. Se comprueba a traves del servicio de pedidos.
+        $service = app(GiftMessageOrderService::class);
+        $method = new \ReflectionMethod($service, 'attachExistingGenerations');
+        $method->setAccessible(true);
+
+        $rows = $method->invoke($service, [['id_order' => 1, 'npedidocli' => '41234']]);
+        $generations = $rows[0]['existing_generations'];
+
+        $this->assertCount(1, $generations);
+        $this->assertSame($newest->id, $generations[0]['id']);
+    }
+
+    public function test_regenerating_rejects_an_order_that_is_not_in_the_pdf(): void
+    {
+        $generation = GiftMessageGeneration::factory()->card()->create([
+            'order_numbers' => ['29394'],
+            'rows' => [['npedidocli' => '29394', 'gift_message' => 'Hola']],
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.history.regenerate', $generation), ['order_number' => '11111'])
+            ->assertStatus(422)
+            ->assertJson(['message' => 'Ese pedido no forma parte de este PDF.']);
+    }
+
+    public function test_regenerating_an_old_generation_falls_back_to_the_bridge(): void
+    {
+        Storage::fake('public');
+        Config::set('giftmessage.bridge_url', 'https://ps.test/modules/alsernetbridge/api.php');
+        Config::set('giftmessage.bridge_secret', 'test-secret');
+
+        Http::fake([
+            '*' => Http::response(['ok' => true, 'data' => ['orders' => [[
+                'id_order' => 833253,
+                'npedidocli' => '29394',
+                'gift_message' => 'Mensaje recuperado del bridge',
+            ]]]], 200),
+        ]);
+
+        // Generacion anterior a la columna `rows`: no guarda el mensaje.
+        $generation = GiftMessageGeneration::factory()->card()->create([
+            'order_numbers' => ['29394'],
+            'rows' => null,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.history.regenerate', $generation), ['order_number' => '29394'])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $new = GiftMessageGeneration::query()->latest('id')->first();
+
+        $this->assertSame('Mensaje recuperado del bridge', $new->rows[0]['gift_message']);
+    }
+
+    public function test_regenerating_needs_the_create_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('giftmessage.view');
+
+        $generation = GiftMessageGeneration::factory()->card()->create([
+            'order_numbers' => ['29394'],
+            'rows' => [['npedidocli' => '29394', 'gift_message' => 'Hola']],
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('giftmessage.history.regenerate', $generation), ['order_number' => '29394'])
+            ->assertForbidden();
     }
 
     public function test_user_without_permission_cannot_view_history(): void

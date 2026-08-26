@@ -194,6 +194,16 @@
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li><a class="dropdown-item" href="{{ route('giftmessage.history.view', $generation) }}" target="_blank" rel="noopener">Visualizar</a></li>
                                                     <li><a class="dropdown-item" href="{{ route('giftmessage.history.download', $generation) }}">Descargar</a></li>
+                                                    @if(! empty($generation->order_numbers))
+                                                        <li>
+                                                            <a class="dropdown-item regenerate-btn" href="#"
+                                                               data-url="{{ route('giftmessage.history.regenerate', $generation) }}"
+                                                               data-type="{{ $generation->type === 'card' ? 'tarjeta' : 'sobre' }}"
+                                                               data-orders="{{ json_encode($generation->order_numbers) }}">
+                                                                Reimprimir un pedido
+                                                            </a>
+                                                        </li>
+                                                    @endif
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li>
                                                         <a class="dropdown-item delete-btn" href="#"
@@ -334,6 +344,38 @@
         </div>
     </div>
 
+    {{-- Reimprimir un pedido suelto de un PDF con varios --}}
+    <div class="modal fade" id="regenerate-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="regenerate-title">Reimprimir un pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="regenerate-step-form">
+                    <p class="text-muted mb-3" id="regenerate-intro"></p>
+                    <label class="form-label fw-semibold" for="regenerate-order">Pedido</label>
+                    <select id="regenerate-order" class="form-select"></select>
+                </div>
+
+                <div class="modal-body d-none" id="regenerate-step-result">
+                    <p class="text-muted mb-0" id="regenerate-result-text"></p>
+                </div>
+
+                <div class="modal-footer" id="regenerate-form-footer">
+                    <button type="button" id="regenerate-apply-btn" class="btn btn-primary w-100 mb-2">Reimprimir</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+
+                <div class="modal-footer d-none" id="regenerate-result-footer">
+                    <a href="#" id="regenerate-open-link" target="_blank" rel="noopener" class="btn btn-primary w-100 mb-2">Abrir PDF</a>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @include('core::components.delete')
 
 @endsection
@@ -433,6 +475,77 @@ $(document).ready(function () {
             },
             complete: function () {
                 $submit.prop('disabled', false).text('Confirmar eliminación');
+            },
+        });
+    });
+
+    // ─── Reimprimir un pedido suelto ────────────────────────────────────────
+    // Un PDF puede traer decenas de pedidos y a veces solo hace falta rehacer
+    // uno (se atasco la impresora, se mancho la tarjeta...). Genera un PDF nuevo
+    // con esa unica pagina; el original se queda como estaba.
+    var $regenerateModal = $('#regenerate-modal');
+
+    function regenerateShowForm() {
+        $('#regenerate-step-form, #regenerate-form-footer').removeClass('d-none');
+        $('#regenerate-step-result, #regenerate-result-footer').addClass('d-none');
+        $('#regenerate-title').text('Reimprimir un pedido');
+        $('#regenerate-apply-btn').prop('disabled', false).text('Reimprimir');
+    }
+
+    $(document).on('click', '.regenerate-btn', function (e) {
+        e.preventDefault();
+
+        var $btn = $(this);
+        var orders = $btn.data('orders') || [];
+        var tipo = $btn.data('type');
+        var $select = $('#regenerate-order').empty();
+
+        orders.forEach(function (order) {
+            $select.append($('<option>', { value: order, text: order }));
+        });
+
+        $('#regenerate-intro').text(orders.length === 1
+            ? 'Este PDF (' + tipo + ') tiene 1 pedido. Se generara un PDF nuevo solo con el.'
+            : 'Este PDF (' + tipo + ') tiene ' + orders.length + ' pedidos. Elige cual quieres reimprimir: se generara un PDF nuevo solo con ese.');
+
+        $regenerateModal.data('url', $btn.data('url')).data('tipo', tipo);
+        regenerateShowForm();
+        $regenerateModal.modal('show');
+    });
+
+    $regenerateModal.on('shown.bs.modal', function () {
+        if ($.fn.select2) {
+            $('#regenerate-order').select2({ dropdownParent: $regenerateModal, width: '100%' });
+        }
+    });
+
+    $regenerateModal.on('hidden.bs.modal', function () {
+        if ($.fn.select2 && $('#regenerate-order').data('select2')) {
+            $('#regenerate-order').select2('destroy');
+        }
+    });
+
+    $('#regenerate-apply-btn').on('click', function () {
+        var $btn = $(this).prop('disabled', true).text('Generando...');
+
+        $.ajax({
+            url: $regenerateModal.data('url'),
+            method: 'POST',
+            data: { order_number: $('#regenerate-order').val() },
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+            success: function (response) {
+                $('#regenerate-title').text('PDF generado');
+                $('#regenerate-result-text').text('Listo: PDF del pedido ' + response.order_number +
+                    ' (' + $regenerateModal.data('tipo') + '). Se ha guardado en el historial y puedes abrirlo aqui.');
+                $('#regenerate-open-link').attr('href', response.view_url);
+                $('#regenerate-step-form, #regenerate-form-footer').addClass('d-none');
+                $('#regenerate-step-result, #regenerate-result-footer').removeClass('d-none');
+                toastr.success('Pedido reimpreso correctamente.');
+            },
+            error: function (xhr) {
+                toastr.error(mensajeDeError(xhr));
+                $btn.prop('disabled', false).text('Reimprimir');
             },
         });
     });

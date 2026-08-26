@@ -43,28 +43,28 @@
 
     function renderOrderRow(order) {
         var name = ((order.firstname || '') + ' ' + (order.lastname || '')).trim();
-        // Ya no tiene sentido seleccionar el pedido para generar si ya tiene
-        // algun PDF; "Ver sobre"/"Ver tarjeta" son la via para volver a
-        // verlos. Ni siquiera se pinta el checkbox.
+        // Tener PDF ya no bloquea la fila: se puede volver a seleccionar para
+        // regenerarlo (el anterior del mismo tipo se sustituye). El dato viaja
+        // en el checkbox para poder avisar en el modal.
         var hasPdf = !!(order.existing_generations && order.existing_generations.length);
 
         var $row = $('<tr>');
         var $checkboxCell = $('<td>').appendTo($row);
 
-        if (!hasPdf) {
-            $('<input>', {
-                type: 'checkbox',
-                'class': 'form-check-input order-checkbox',
-                value: order.id_order,
-            }).data({
-                idOrder: order.id_order,
-                giftMessage: order.gift_message || '',
-                firstname: order.firstname || '',
-                lastname: order.lastname || '',
-                idGestion: order.id_gestion || '',
-                npedidocli: order.npedidocli || '',
-            }).appendTo($checkboxCell);
-        }
+        $('<input>', {
+            type: 'checkbox',
+            'class': 'form-check-input order-checkbox',
+            value: order.id_order,
+            title: hasPdf ? 'Ya tiene PDF: al generar se reemplaza' : '',
+        }).data({
+            idOrder: order.id_order,
+            giftMessage: order.gift_message || '',
+            firstname: order.firstname || '',
+            lastname: order.lastname || '',
+            idGestion: order.id_gestion || '',
+            npedidocli: order.npedidocli || '',
+            hasPdf: hasPdf,
+        }).appendTo($checkboxCell);
 
         $('<td>').text(order.id_order).appendTo($row);
         $('<td>').html(order.npedidocli ? escapeHtml(order.npedidocli) : emptyCell()).appendTo($row);
@@ -181,6 +181,29 @@
         });
     }
 
+    // Tras generar, la columna PDF de la tabla apunta a generaciones que quiza
+    // acaban de ser reemplazadas. Se re-consulta la busqueda en curso para dejar
+    // los enlaces al dia, sin recargar la pagina ni cerrar el modal de
+    // resultados (por eso no se toca la seleccion ni el foco).
+    function refreshRowsAfterGenerate() {
+        var config = window.GIFTMESSAGE_ORDERS;
+        var ids = $('#gestion-search').val().trim();
+
+        if (!ids) {
+            return;
+        }
+
+        $.ajax({
+            url: config.urls.ordersSearch,
+            method: 'POST',
+            data: { ids: ids },
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (response) {
+                renderOrders(response.rows || []);
+            },
+        });
+    }
+
     function showFormStep() {
         $('#bulk-step-form, #bulk-step-form-footer').removeClass('d-none');
         $('#bulk-step-result, #bulk-step-result-footer').addClass('d-none');
@@ -247,6 +270,7 @@
 
                 toastr.success(results.length > 1 ? 'PDF generados correctamente.' : 'PDF generado correctamente.');
                 showResultStep(results);
+                refreshRowsAfterGenerate();
             })
             .fail(function (xhr) {
                 toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al generar el PDF.');
@@ -289,9 +313,19 @@
             // deriva del sufijo del toolbar (bulk-toolbar-X -> bulk-X-modal),
             // asi que con los ids "legacy" (#bulk-toolbar / #bulk-modal) el del
             // modal se quedaba siempre a 0.
-            $('#bulk-modal [data-bulk-count]').text(selectedRows().length);
+            var total = selectedRows().length;
+            var conPdf = $('.order-checkbox:checked').filter(function () {
+                return $(this).data('hasPdf') === true;
+            }).length;
+
+            $('#bulk-modal [data-bulk-count]').text(total);
+            $('#bulk-replace-warning')
+                .toggleClass('d-none', conPdf === 0)
+                .text(conPdf === 1
+                    ? '1 de los pedidos seleccionados ya tiene PDF: el anterior se reemplazara por el nuevo.'
+                    : conPdf + ' de los pedidos seleccionados ya tienen PDF: los anteriores se reemplazaran por los nuevos.');
             $('#bulk-type-select').val('both').trigger('change');
-            $('#bulk-apply-btn').prop('disabled', false).text('Generar');
+            $('#bulk-apply-btn').prop('disabled', false).text(conPdf === total && total > 0 ? 'Regenerar' : 'Generar');
             showFormStep();
         });
 

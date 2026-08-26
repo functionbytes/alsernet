@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\GiftMessage\Http\Requests\GenerateGiftMessagePdfRequest;
 use Modules\GiftMessage\Models\GiftMessageGeneration;
 use Modules\GiftMessage\Services\GiftMessageGenerationService;
+use Modules\GiftMessage\Services\GiftMessageOrderService;
 use Modules\GiftMessage\Services\GiftMessagePdfService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -19,7 +20,8 @@ class GiftMessageGenerationController extends Controller
 {
     public function __construct(
         private readonly GiftMessagePdfService $pdfService,
-        private readonly GiftMessageGenerationService $generationService
+        private readonly GiftMessageGenerationService $generationService,
+        private readonly GiftMessageOrderService $orderService
     ) {}
 
     public function generate(GenerateGiftMessagePdfRequest $request): Response|JsonResponse
@@ -45,6 +47,73 @@ class GiftMessageGenerationController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$generation->file_name.'"',
         ]);
+    }
+
+    /**
+     * Reimprime UN pedido de un PDF que salio con varios: genera un PDF nuevo
+     * con esa sola pagina y lo guarda como una generacion mas, sin tocar la
+     * original. Sirve para cuando una unica tarjeta sale mal de la impresora y
+     * no tiene sentido rehacer el lote entero.
+     */
+    public function regenerateOrder(Request $request, GiftMessageGeneration $generation): JsonResponse
+    {
+        $this->authorize('view', $generation);
+
+        // Reimprimir es generar: se pide el permiso de creacion, no el de lectura.
+        if (! $request->user()->can('giftmessage.create')) {
+            abort(403, 'No tienes permiso para generar PDF de mensaje regalo.');
+        }
+
+        $validated = $request->validate([
+            'order_number' => ['required', 'string', 'max:50'],
+        ], [
+            'order_number.required' => 'Indica que pedido quieres reimprimir.',
+        ]);
+
+        $orderNumber = $validated['order_number'];
+
+        if (! in_array($orderNumber, $generation->order_numbers ?? [], true)) {
+            return response()->json([
+                'message' => 'Ese pedido no forma parte de este PDF.',
+            ], 422);
+        }
+
+        $row = $this->resolveRow($generation, $orderNumber);
+
+        if ($row === null) {
+            return response()->json([
+                'message' => 'No se pudo recuperar el mensaje regalo del pedido '.$orderNumber.'. Buscalo en el panel y generalo desde ahi.',
+            ], 422);
+        }
+
+        $pdfContent = $this->pdfService->generate($generation->type, [$row])->output();
+        $new = $this->generationService->store($generation->type, [$row], $pdfContent);
+
+        return response()->json([
+            'success' => true,
+            'view_url' => route('giftmessage.history.view', $new),
+            'order_number' => $orderNumber,
+        ]);
+    }
+
+    /**
+     * La fila guardada en la generacion es la fuente preferente: reimprime
+     * exactamente lo que se imprimio. Las generaciones anteriores a la columna
+     * `rows` no la tienen, asi que para esas se vuelve a preguntar al bridge.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function resolveRow(GiftMessageGeneration $generation, string $orderNumber): ?array
+    {
+        $row = $this->generationService->rowFor($generation, $orderNumber);
+
+        if ($row !== null && trim((string) ($row['gift_message'] ?? '')) !== '') {
+            return $row;
+        }
+
+        $found = $this->orderService->searchByIds([$orderNumber]);
+
+        return $found[0] ?? null;
     }
 
     public function historyIndex(Request $request): View

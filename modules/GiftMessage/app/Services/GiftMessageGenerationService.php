@@ -30,14 +30,96 @@ class GiftMessageGenerationService
 
         Storage::disk(self::DISK)->put($path, $pdfContent);
 
+        $orderNumbers = $this->extractOrderNumbers($rows);
+        $this->deleteSupersededBy($type, $orderNumbers);
+
         return GiftMessageGeneration::query()->create([
             'type' => $type,
             'rows_count' => count($rows),
-            'order_numbers' => $this->extractOrderNumbers($rows),
+            'order_numbers' => $orderNumbers,
+            'rows' => $this->printableRows($rows),
             'file_path' => $path,
             'file_name' => $fileName,
             'generated_by' => auth()->id(),
         ]);
+    }
+
+    /**
+     * Al generar de nuevo, las generaciones anteriores del mismo tipo que queden
+     * cubiertas por la nueva se borran (fichero incluido): de lo contrario el
+     * listado de pedidos acumulaba "Ver tarjeta / Ver sobre" repetidos y no
+     * habia forma de saber cual era el bueno.
+     *
+     * Se borra solo lo que la nueva reemplaza de verdad: una generacion previa
+     * cae si TODOS sus pedidos estan en la nueva. Asi, regenerar un pedido
+     * suelto no se lleva por delante el lote de 20 en el que estaba, que sigue
+     * siendo la unica copia de los otros 19.
+     *
+     * @param  array<int, string>  $orderNumbers
+     */
+    private function deleteSupersededBy(string $type, array $orderNumbers): void
+    {
+        if ($orderNumbers === []) {
+            return;
+        }
+
+        GiftMessageGeneration::query()
+            ->where('type', $type)
+            ->whereNotNull('order_numbers')
+            ->get()
+            ->each(function (GiftMessageGeneration $previous) use ($orderNumbers) {
+                $previousNumbers = $previous->order_numbers ?? [];
+
+                if ($previousNumbers === [] || array_diff($previousNumbers, $orderNumbers) !== []) {
+                    return;
+                }
+
+                $this->delete($previous);
+            });
+    }
+
+    /**
+     * Se guarda solo lo que se imprime, no el payload entero que mando el
+     * navegador: con esto se puede reimprimir un pedido suelto de un PDF con
+     * varios exactamente igual que salio, sin volver a preguntar al bridge.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function printableRows(array $rows): array
+    {
+        return array_values(array_map(fn (array $row) => [
+            'id_order' => $row['id_order'] ?? null,
+            'npedidocli' => $row['npedidocli'] ?? null,
+            'id_gestion' => $row['id_gestion'] ?? null,
+            'gift_message' => (string) ($row['gift_message'] ?? ''),
+            'firstname' => $row['firstname'] ?? null,
+            'lastname' => $row['lastname'] ?? null,
+        ], $rows));
+    }
+
+    /**
+     * Fila guardada de un pedido concreto dentro de una generacion. Se busca por
+     * cualquiera de los tres identificadores porque `order_numbers` guarda el
+     * primero que hubiera disponible (npedidocli, id_gestion o id_order).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function rowFor(GiftMessageGeneration $generation, string $orderNumber): ?array
+    {
+        foreach ($generation->rows ?? [] as $row) {
+            $keys = array_filter([
+                isset($row['npedidocli']) ? (string) $row['npedidocli'] : null,
+                isset($row['id_gestion']) ? (string) $row['id_gestion'] : null,
+                isset($row['id_order']) ? (string) $row['id_order'] : null,
+            ]);
+
+            if (in_array($orderNumber, $keys, true)) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     /**
