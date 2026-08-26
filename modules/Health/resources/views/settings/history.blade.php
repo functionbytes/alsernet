@@ -47,7 +47,7 @@
                         <div class="card bg-light-secondary">
                             <div class="card-body">
                                 <p class="mb-1 text-success small">Exitosos</p>
-                                <h4 class="mb-0 fw-bold text-success" id="successRecords">0</h4>
+                                <h4 class="mb-0 fw-bold" id="successRecords">0</h4>
                             </div>
                         </div>
                     </div>
