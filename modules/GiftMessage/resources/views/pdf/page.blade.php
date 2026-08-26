@@ -24,7 +24,19 @@
     .field {
         position: absolute;
         overflow: hidden;
+    }
+    /* El texto se centra en los dos ejes DENTRO de la caja configurada, no
+       respecto a la pagina: una tabla al 100% de la caja con la celda en
+       vertical-align:middle es la unica forma fiable de centrado vertical en
+       DomPDF (no soporta flexbox ni el truco de line-height con varias lineas). */
+    .field table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .field td {
+        padding: 0;
         text-align: center;
+        vertical-align: middle;
         line-height: 1.2;
     }
     .field img {
@@ -48,7 +60,11 @@
             font-size: {{ $page['t1']['font_size'] }}pt;
             color: {{ $page['t1']['color'] }};
             opacity: {{ $page['t1']['opacity'] }};
-        ">{!! $page['t1']['html'] !!}</div>
+        ">
+            <table>
+                <tr><td style="height: {{ $page['t1']['height'] }}mm;">{!! $page['t1']['html'] !!}</td></tr>
+            </table>
+        </div>
 
         <div class="field" style="
             left: {{ $page['t2']['left'] }}mm;
@@ -59,7 +75,11 @@
             font-size: {{ $page['t2']['font_size'] }}pt;
             color: {{ $page['t2']['color'] }};
             opacity: {{ $page['t2']['opacity'] }};
-        ">{{ $page['t2']['text'] }}</div>
+        ">
+            <table>
+                <tr><td style="height: {{ $page['t2']['height'] }}mm;">{{ $page['t2']['text'] }}</td></tr>
+            </table>
+        </div>
     </div>
 @endforeach
 </body>

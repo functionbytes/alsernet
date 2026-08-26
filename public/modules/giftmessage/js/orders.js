@@ -1,5 +1,4 @@
 (function ($) {
-    var originalOrdersHtml = '';
     var bulk = null;
 
     function escapeHtml(text) {
@@ -10,6 +9,10 @@
     // attributes, so a gift message containing quotes can't break the markup.
     function emptyCell() {
         return '<span class="text-muted">&mdash;</span>';
+    }
+
+    function typeLabel(type) {
+        return type === 'card' ? 'tarjeta' : 'sobre';
     }
 
     // "Ver sobre"/"Ver tarjeta": enlaces a PDFs ya generados antes para este
@@ -31,7 +34,7 @@
                 rel: 'noopener',
                 'class': 'badge bg-secondary-subtle text-secondary text-decoration-none',
                 title: 'Generado el ' + new Date(generation.created_at).toLocaleString(),
-                html: '<i class="fas fa-file-pdf me-1"></i>Ver ' + (generation.type === 'card' ? 'tarjeta' : 'sobre'),
+                html: '<i class="fas fa-file-pdf me-1"></i>Ver ' + typeLabel(generation.type),
             }).appendTo($wrap);
         });
 
@@ -42,8 +45,7 @@
         var name = ((order.firstname || '') + ' ' + (order.lastname || '')).trim();
         // Ya no tiene sentido seleccionar el pedido para generar si ya tiene
         // algun PDF; "Ver sobre"/"Ver tarjeta" son la via para volver a
-        // verlos. Ni siquiera se pinta el checkbox. Mismo criterio que la
-        // fila server-side.
+        // verlos. Ni siquiera se pinta el checkbox.
         var hasPdf = !!(order.existing_generations && order.existing_generations.length);
 
         var $row = $('<tr>');
@@ -148,24 +150,25 @@
         });
     }
 
+    // La pantalla arranca sin listado (el controlador ya no precarga pedidos),
+    // asi que limpiar es volver al estado vacio inicial.
     function resetOrders() {
-        $('#orders-table tbody').html(originalOrdersHtml);
+        $('#orders-table tbody').empty();
         $('#gestion-search').val('');
-        $('#orders-count').text($('#orders-table tbody tr').length);
-        toggleResultsCard($('#orders-table tbody .order-checkbox').length > 0);
+        $('#orders-count').text(0);
+        $('#select-all').prop('checked', false);
+        toggleResultsCard(false);
 
         if (bulk) {
             bulk.reset();
         }
 
-        toastr.success('Listado restaurado.');
+        toastr.success('Busqueda limpiada.');
     }
 
-    // Una petición por tipo (sobre y/o tarjeta comparten el mismo endpoint,
-    // que solo genera un tipo a la vez). El popup correspondiente se le pasa
-    // ya abierto porque se creo de forma sincrona al click, no aqui dentro,
-    // para que el navegador no lo bloquee.
-    function requestPdf(type, rows, pdfWindow) {
+    // Una petición por tipo: sobre y tarjeta comparten el mismo endpoint,
+    // que solo genera un tipo a la vez.
+    function requestPdf(type, rows) {
         var config = window.GIFTMESSAGE_ORDERS;
 
         return $.ajax({
@@ -175,40 +178,44 @@
             contentType: 'application/json',
             data: JSON.stringify({ type: type, rows: rows }),
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        }).done(function (response) {
-            if (pdfWindow) {
-                pdfWindow.location = response.view_url;
-            }
-        }).fail(function (xhr) {
-            if (pdfWindow) {
-                pdfWindow.close();
-            }
-            toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al generar el PDF.');
         });
     }
 
-    // Tras generar, refresca el listado para que la fila muestre "Ver
-    // sobre"/"Ver tarjeta" con los PDF recien creados (fusionados con los
-    // que ya hubiera antes) y pierda su checkbox, igual que cualquier otro
-    // pedido con PDF. Si habia un termino de busqueda activo se re-consulta
-    // solo la tabla; si se genero desde el listado "recientes" (sin buscar)
-    // no hay endpoint AJAX para refrescarlo solo, asi que se recarga la
-    // pagina entera.
-    function refreshOrdersAfterGenerate() {
-        if ($('#gestion-search').val().trim()) {
-            searchOrders();
-        } else {
-            setTimeout(function () { location.reload(); }, 600);
-        }
+    function showFormStep() {
+        $('#bulk-step-form, #bulk-step-form-footer').removeClass('d-none');
+        $('#bulk-step-result, #bulk-step-result-footer').addClass('d-none');
+        $('#bulk-modal-title').text('Generar PDF de mensaje regalo');
+        $('#bulk-result-links').empty();
+    }
+
+    // Segunda pantalla del modal: un boton por PDF generado. Se abren al
+    // pulsarlos (gesto del usuario), no automaticamente, porque Chrome solo
+    // deja abrir un popup por click y con "Ambos" el segundo quedaba
+    // bloqueado. El listado de pedidos se deja tal cual, sin refrescar.
+    function showResultStep(results) {
+        var $links = $('#bulk-result-links').empty();
+
+        results.forEach(function (result) {
+            $('<a>', {
+                href: result.url,
+                target: '_blank',
+                rel: 'noopener',
+                'class': 'btn btn-primary w-100 mb-2',
+                text: 'Abrir ' + typeLabel(result.type),
+            }).appendTo($links);
+        });
+
+        $('#bulk-modal-title').text(results.length > 1 ? 'PDF generados' : 'PDF generado');
+        $('#bulk-result-text').text(results.length > 1
+            ? 'PDF generados correctamente. Abrelos desde los botones de abajo; cada uno se abre en una pestana nueva.'
+            : 'PDF generado correctamente. Abrelo desde el boton de abajo; se abre en una pestana nueva.');
+        $('#bulk-step-form, #bulk-step-form-footer').addClass('d-none');
+        $('#bulk-step-result, #bulk-step-result-footer').removeClass('d-none');
     }
 
     // Paso 3: genera el/los PDF via AJAX (Accept: json, ver
-    // GiftMessageGenerationController::generate). Solo se abre UNA pestana
-    // automatica (la del primer tipo): Chrome permite un unico popup por
-    // gesto de click aunque los dos window.open() se llamen de forma
-    // sincrona antes de cualquier peticion (comprobado: el segundo devuelve
-    // null siempre) — no es evitable desde JS. Con "Ambos", el resto de PDF
-    // quedan accesibles como enlace en la tabla tras refrescar el listado.
+    // GiftMessageGenerationController::generate) y pasa el modal a la
+    // pantalla con los enlaces.
     function generatePdf() {
         var rows = selectedRows();
         var type = $('#bulk-type-select').val();
@@ -221,21 +228,28 @@
 
         var types = type === 'both' ? ['envelope', 'card'] : [type];
         var $btn = $('#bulk-apply-btn').prop('disabled', true).text('Generando...');
-        var firstWindow = window.open('', '_blank');
+        var results = [];
 
-        var requests = types.map(function (t, i) {
-            return requestPdf(t, rows, i === 0 ? firstWindow : null);
+        var requests = types.map(function (t) {
+            return requestPdf(t, rows).done(function (response) {
+                results.push({ type: t, url: response.view_url });
+            });
         });
 
         $.when.apply($, requests)
             .done(function () {
-                toastr.success(
-                    types.length > 1
-                        ? 'PDF generados correctamente. El sobre se abrio en una pestana nueva; la tarjeta ya esta lista en la tabla.'
-                        : 'PDF generado correctamente.'
-                );
-                $('#bulk-modal').modal('hide');
-                refreshOrdersAfterGenerate();
+                // Las peticiones son paralelas, asi que el orden de llegada no
+                // tiene por que ser sobre-tarjeta: se reordena para que los
+                // botones salgan siempre en el orden elegido.
+                results.sort(function (a, b) {
+                    return types.indexOf(a.type) - types.indexOf(b.type);
+                });
+
+                toastr.success(results.length > 1 ? 'PDF generados correctamente.' : 'PDF generado correctamente.');
+                showResultStep(results);
+            })
+            .fail(function (xhr) {
+                toastr.error((xhr.responseJSON && xhr.responseJSON.message) || 'Error al generar el PDF.');
             })
             .always(function () {
                 $btn.prop('disabled', false).text('Generar');
@@ -247,9 +261,15 @@
             return;
         }
 
-        originalOrdersHtml = $('#orders-table tbody').html();
-
         bulk = window.BulkActions.init({ checkbox: '.order-checkbox' });
+
+        if ($.fn.select2) {
+            $('#bulk-type-select').select2({
+                dropdownParent: $('#bulk-modal'),
+                width: '100%',
+                minimumResultsForSearch: Infinity,
+            });
+        }
 
         $('#gestion-search-btn').on('click', searchOrders);
         $('#gestion-search').on('keypress', function (e) {
@@ -260,9 +280,19 @@
         });
         $('#gestion-reset-btn').on('click', resetOrders);
 
-        $('#bulk-modal').on('hide.bs.modal', function () {
-            $('#bulk-type-select').val('envelope');
+        // "Ambos" es el caso habitual, asi que el modal siempre se abre ahi y
+        // en la primera pantalla, aunque la anterior apertura acabara en la
+        // de resultados.
+        $('#bulk-modal').on('show.bs.modal', function () {
+            // El contador del modal se refresca aqui a mano: BulkActions solo
+            // actualiza los [data-bulk-count] del toolbar y de un modal cuyo id
+            // deriva del sufijo del toolbar (bulk-toolbar-X -> bulk-X-modal),
+            // asi que con los ids "legacy" (#bulk-toolbar / #bulk-modal) el del
+            // modal se quedaba siempre a 0.
+            $('#bulk-modal [data-bulk-count]').text(selectedRows().length);
+            $('#bulk-type-select').val('both').trigger('change');
             $('#bulk-apply-btn').prop('disabled', false).text('Generar');
+            showFormStep();
         });
 
         $('#bulk-apply-btn').on('click', generatePdf);

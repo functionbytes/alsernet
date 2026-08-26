@@ -1,0 +1,5 @@
+/* Barra flotante de accion masiva del listado de pedidos. Por encima del
+   contenido pero por debajo de los modales de Bootstrap. */
+.gm-bulk-toolbar {
+    z-index: 1050;
+}
