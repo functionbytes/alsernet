@@ -14,13 +14,6 @@
         page-break-after: always;
     }
     .page:last-child { page-break-after: auto; }
-    .bg {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: {{ $pageWidthMm }}mm;
-        height: {{ $pageHeightMm }}mm;
-    }
     .field {
         position: absolute;
         overflow: hidden;
@@ -46,11 +39,11 @@
 </head>
 <body>
 @foreach ($pages as $page)
+    {{-- Sin imagen de fondo: el sobre y la tarjeta ya vienen impresos de
+         imprenta y aqui solo se deposita el texto. La pagina conserva el tamano
+         real de la pieza, asi que las cajas caen en el mismo sitio que en el
+         editor de ajustes. --}}
     <div class="page">
-        @if ($backgroundPath)
-            <img class="bg" src="{{ $backgroundPath }}">
-        @endif
-
         <div class="field" style="
             left: {{ $page['t1']['left'] }}mm;
             top: {{ $page['t1']['top'] }}mm;
