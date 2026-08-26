@@ -61,7 +61,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Deshabilitados</h6>
+                                        <h6 class="card-title  mb-2">Deshabilitados</h6>
                                         <h4 class="mb-1 fw-bold">{{ $disabledCount }}</h4>
                                         <small class="text-muted">Módulos inactivos</small>
                                     </div>
