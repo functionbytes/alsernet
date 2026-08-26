@@ -91,6 +91,65 @@ class GiftMessageConfigTest extends TestCase
             ->assertSee('Todavia no hay pedidos en pantalla');
     }
 
+    public function test_preview_metrics_match_what_the_pdf_would_use(): void
+    {
+        GiftMessageConfig::current()->update([
+            'card_t1_font' => 'helvetica',
+            'card_t1_size' => 14,
+            'card_t1_w' => 71.64,
+            'card_t1_h' => 55.71,
+        ]);
+
+        // Un mensaje con emoji fuerza DejaVu Sans en el PDF: la vista previa del
+        // editor tiene que ensenar esa misma fuente, no la configurada.
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.metrics'), [
+                'message' => 'Feliz cumpleanos 🎉',
+                'order' => '29394',
+            ])
+            ->assertOk();
+
+        $this->assertSame('dejavusans', $response->json('card.t1.font'));
+        $this->assertSame(14, $response->json('card.t1.font_size'));
+        $this->assertGreaterThan(1.2, $response->json('card.t1.line_height'));
+
+        // Y un mensaje que no cabe se reduce, igual que al generar el PDF.
+        $largo = str_repeat('Muchas felicidades de parte de toda la familia. ', 20);
+
+        $reducido = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.metrics'), ['message' => $largo, 'order' => '29394'])
+            ->assertOk();
+
+        $this->assertLessThan(14, $reducido->json('card.t1.font_size'));
+    }
+
+    public function test_preview_metrics_use_the_box_size_on_screen(): void
+    {
+        GiftMessageConfig::current()->update([
+            'card_t1_font' => 'helvetica',
+            'card_t1_size' => 14,
+            'card_t1_w' => 71.64,
+            'card_t1_h' => 55.71,
+        ]);
+
+        $mensaje = str_repeat('Felicidades y muchos abrazos de toda la familia. ', 6);
+
+        // La caja que manda es la que el usuario tiene en pantalla, aunque no la
+        // haya guardado: si la achica, la letra debe encoger ya.
+        $grande = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.metrics'), ['message' => $mensaje])
+            ->json('card.t1.font_size');
+
+        $pequena = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.metrics'), [
+                'message' => $mensaje,
+                'boxes' => ['card' => ['t1' => ['w' => 30, 'h' => 20]]],
+            ])
+            ->json('card.t1.font_size');
+
+        $this->assertLessThan($grande, $pequena);
+    }
+
     public function test_user_without_permission_cannot_view_index(): void
     {
         $user = User::factory()->create();

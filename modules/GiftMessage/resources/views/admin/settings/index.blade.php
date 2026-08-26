@@ -449,6 +449,7 @@
                 savePositions: "{{ route('settings.giftmessage.positions.save') }}",
                 saveFonts: "{{ route('settings.giftmessage.typography.update') }}",
                 uploadImage: "{{ route('settings.giftmessage.images.store') }}",
+                previewMetrics: "{{ route('settings.giftmessage.preview.metrics') }}",
             },
             stacks: @json($fontStacks),
             fonts: {

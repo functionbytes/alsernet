@@ -79,6 +79,59 @@ class GiftMessagePdfService
     }
 
     /**
+     * Fuente y tamano que usaria el PDF para un texto dado, para que la vista
+     * previa del editor de ajustes ensene exactamente lo mismo. No basta con
+     * encoger por CSS en el navegador: el PDF fuerza DejaVu Sans cuando hay
+     * emojis (mas ancha y un 25% mas alta por linea que Helvetica) y mide con
+     * las metricas de la fuente, asi que el navegador se quedaba corto y
+     * ensenaba una letra mas grande de la que se iba a imprimir.
+     *
+     * @param  array<string, array{w?: float|string, h?: float|string}>  $boxes  Tamano
+     *                                                                           de las cajas tal como estan EN PANTALLA (en %), que puede no ser el
+     *                                                                           guardado todavia. Sin esto, mover una caja no cambiaba la vista previa.
+     * @return array<string, array{font: string, font_family: string, font_size: int}>
+     */
+    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = []): array
+    {
+        $config = $this->configService->current();
+        $size = self::SIZES[$type];
+        $prefix = $type === 'card' ? 'card' : 'env';
+
+        $message = trim($message);
+        $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
+        $t2Font = $config->{$prefix.'_t2_font'};
+
+        return [
+            't1' => [
+                'font' => $t1Font,
+                'font_family' => $this->fontStack($t1Font),
+                // Interlineado efectivo (line-height x altura de la fuente
+                // dividido por el tamano): el navegador usa line-height x
+                // font-size a secas, asi que sin este dato parte el texto en
+                // mas o menos lineas que el PDF.
+                'line_height' => $this->lineHeightRatio($t1Font),
+                'font_size' => $this->fitFontSize(
+                    $message,
+                    (int) $config->{$prefix.'_t1_size'},
+                    $this->box($config, $prefix.'_t1', $size, $boxes['t1'] ?? []),
+                    $t1Font
+                ),
+            ],
+            't2' => [
+                'font' => $t2Font,
+                'font_family' => $this->fontStack($t2Font),
+                'line_height' => $this->lineHeightRatio($t2Font),
+                'font_size' => $this->fitFontSize(
+                    $orderNumber,
+                    (int) $config->{$prefix.'_t2_size'},
+                    $this->box($config, $prefix.'_t2', $size, $boxes['t2'] ?? []),
+                    $t2Font
+                ),
+            ],
+        ];
+    }
+
+    /**
      * DomPDF guarda aqui una copia de cada fuente subida y su fichero de
      * metricas (.ufm) la primera vez que la usa. Si el directorio no existe —y
      * por defecto no viene creado, porque storage/fonts no esta en el repo— la
@@ -221,6 +274,15 @@ class GiftMessagePdfService
      * secas hacia que un mensaje largo con emojis se diera por bueno y luego
      * saliera cortado.
      */
+    /**
+     * Interlineado como multiplo del tamano de letra, que es lo que entiende el
+     * CSS. Se calcula sobre 100 pt para que el redondeo no importe.
+     */
+    private function lineHeightRatio(string $font): float
+    {
+        return round($this->lineHeightPt(100, $font) / 100, 3);
+    }
+
     private function lineHeightPt(int $size, string $font): float
     {
         $metrics = $this->fontMetrics();
@@ -358,13 +420,16 @@ class GiftMessagePdfService
      * @param  array{w: float, h: float}  $size
      * @return array{left: float, top: float, width: float, height: float}
      */
-    private function box(GiftMessageConfig $config, string $slot, array $size): array
+    private function box(GiftMessageConfig $config, string $slot, array $size, array $override = []): array
     {
+        $widthPercent = isset($override['w']) ? (float) $override['w'] : (float) $config->{$slot.'_w'};
+        $heightPercent = isset($override['h']) ? (float) $override['h'] : (float) $config->{$slot.'_h'};
+
         return [
             'left' => $this->toMm((float) $config->{$slot.'_x'}, $size['w']),
             'top' => $this->toMm((float) $config->{$slot.'_y'}, $size['h']),
-            'width' => $this->toMm((float) $config->{$slot.'_w'}, $size['w']),
-            'height' => $this->toMm((float) $config->{$slot.'_h'}, $size['h']),
+            'width' => $this->toMm($widthPercent, $size['w']),
+            'height' => $this->toMm($heightPercent, $size['h']),
         ];
     }
 
