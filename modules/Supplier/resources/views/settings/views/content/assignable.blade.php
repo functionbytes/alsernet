@@ -32,7 +32,7 @@
                     <div class="col-md-4">
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">Sin asignar</h6>
+                                <h6 class="card-title  mb-2">Sin asignar</h6>
                                 <h4 class="mb-1 fw-bold">{{ $unassignedCount }}</h4>
                                 <small class="text-muted">Pendientes sin revisor</small>
                             </div>
