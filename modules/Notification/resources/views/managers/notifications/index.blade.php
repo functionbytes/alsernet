@@ -151,7 +151,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">No leídas</h6>
+                                <h6 class="card-title  mb-2">No leídas</h6>
                                 <h4 class="mb-1 fw-bold">{{ $unreadCount }}</h4>
                                 <small class="text-muted">Pendientes de revisar</small>
                             </div>
@@ -169,7 +169,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Hoy</h6>
+                                <h6 class="card-title  mb-2">Hoy</h6>
                                 <h4 class="mb-1 fw-bold">{{ $todayCount }}</h4>
                                 <small class="text-muted">Recibidas hoy</small>
                             </div>

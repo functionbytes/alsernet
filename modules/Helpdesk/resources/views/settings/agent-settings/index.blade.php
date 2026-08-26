@@ -39,7 +39,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-success mb-2">Disponibles</h6>
+                            <h6 class="card-title  mb-2">Disponibles</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['available'] }}</h4>
                             <small class="text-muted">Listos para recibir conversaciones</small>
                         </div>
@@ -48,7 +48,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-warning mb-2">En vacaciones</h6>
+                            <h6 class="card-title  mb-2">En vacaciones</h6>
                             <h4 class="mb-1 fw-bold">{{ $stats['on_vacation'] }}</h4>
                             <small class="text-muted">Con fecha de vacaciones activa</small>
                         </div>

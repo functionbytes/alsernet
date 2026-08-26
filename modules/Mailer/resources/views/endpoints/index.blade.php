@@ -72,7 +72,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Inactivos
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $inactiveCount }}</h4>
@@ -87,7 +87,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Total requests
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ number_format($totalRequests) }}</h4>

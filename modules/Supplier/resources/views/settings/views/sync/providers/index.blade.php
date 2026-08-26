@@ -48,7 +48,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-info h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Con productos</h6>
+                                <h6 class="card-title  mb-2">Con productos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['with_products'] }}</h4>
                                 <small class="text-muted">Tienen productos asignados</small>
                             </div>

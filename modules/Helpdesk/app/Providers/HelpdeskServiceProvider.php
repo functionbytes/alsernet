@@ -26,6 +26,7 @@ use Modules\Helpdesk\Events\ConversationClosed;
 use Modules\Helpdesk\Events\ConversationCreated;
 use Modules\Helpdesk\Events\ConversationUpdated;
 use Modules\Helpdesk\Events\MessageReceived;
+use Modules\Helpdesk\Jobs\SyncWhatsAppTemplatesJob;
 use Modules\Helpdesk\Listeners\Automation\RunAutomationsOnEventListener;
 use Modules\Helpdesk\Models\CannedReply;
 use Modules\Helpdesk\Models\Conversation;
@@ -72,7 +73,6 @@ use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\Public\SimulatorOutboundMessageService;
 use Modules\Helpdesk\Services\Templates\LiquidRenderer;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
-use Modules\Helpdesk\Jobs\SyncWhatsAppTemplatesJob;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -305,11 +305,27 @@ class HelpdeskServiceProvider extends ServiceProvider
             ],
         ]);
 
+        // Sección 5.5: Tickets — settings de HelpdeskTickets, sin entrada de menú propia hasta ahora
+        // (existían las rutas/controllers pero ningún link las exponía; solo alcanzables por URL directa).
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk — Tickets',
+            'items' => [
+                ['label' => 'Configuración general', 'route' => 'manager.helpdesk.settings.tickets.general', 'permission' => 'helpdesk.settings.view'],
+                ['label' => 'Categorías', 'route' => 'manager.helpdesk.settings.ticket-categories.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Estados', 'route' => 'manager.helpdesk.settings.ticket-statuses.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Grupos', 'route' => 'manager.helpdesk.settings.ticket-groups.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Macros', 'route' => 'manager.helpdesk.settings.macros.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Automatizaciones', 'route' => 'manager.helpdesk.settings.automations.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Respuestas predefinidas', 'route' => 'manager.helpdesk.settings.ticket-canned-replies.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Políticas SLA', 'route' => 'manager.helpdesk.settings.ticket-sla-policies.index', 'permission' => 'helpdesk.tickets.settings'],
+                ['label' => 'Vistas guardadas', 'route' => 'manager.helpdesk.settings.ticket-views.index', 'permission' => 'helpdesk.tickets.settings'],
+            ],
+        ]);
+
         // Sección 6: Sistema
         NavService::registerSidebar('settings', [
             'title' => 'Helpdesk — Sistema',
             'items' => [
-                ['label' => 'Configuración de tickets', 'route' => 'manager.helpdesk.settings.tickets.general', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Atributos personalizados', 'route' => 'settings.helpdesk.attributes.index', 'permission' => 'helpdesk.attributes.view'],
                 ['label' => 'Campos personalizados', 'route' => 'settings.helpdesk.custom-fields.index', 'permission' => 'helpdesk.settings.view'],
                 ['label' => 'Empresas', 'route' => 'settings.helpdesk.companies.index', 'permission' => 'helpdesk.settings.view'],
@@ -442,7 +458,7 @@ class HelpdeskServiceProvider extends ServiceProvider
             // Antes solo se sincronizaba con un botón manual en Settings — nunca
             // se había ejecutado, la tabla local quedó con datos de demo (seeder)
             // en vez de las plantillas reales aprobadas por Meta.
-            $schedule->job(new SyncWhatsAppTemplatesJob())
+            $schedule->job(new SyncWhatsAppTemplatesJob)
                 ->dailyAt('05:00')
                 ->onOneServer();
         });

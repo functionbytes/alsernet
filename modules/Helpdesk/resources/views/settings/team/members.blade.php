@@ -61,7 +61,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-success mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Disponibles
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['available'] }}</h4>
@@ -76,7 +76,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Horario
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['working_hours'] }}</h4>
@@ -91,7 +91,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Inactivos
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $stats['unavailable'] }}</h4>
@@ -118,25 +118,25 @@
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h6 class="mb-0 fw-bold text-info">{{ $stats['admin'] }}</h6>
+                                            <h6 class="mb-0 fw-bold">{{ $stats['admin'] }}</h6>
                                             <small class="text-muted">Admins</small>
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h6 class="mb-0 fw-bold text-info">{{ $stats['manager'] }}</h6>
+                                            <h6 class="mb-0 fw-bold">{{ $stats['manager'] }}</h6>
                                             <small class="text-muted">Managers</small>
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h6 class="mb-0 fw-bold text-info">{{ $stats['support'] }}</h6>
+                                            <h6 class="mb-0 fw-bold">{{ $stats['support'] }}</h6>
                                             <small class="text-muted">Soporte</small>
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <div class="text-center p-2 rounded bg-white">
-                                            <h6 class="mb-0 fw-bold text-info">{{ $stats['callcenter'] }}</h6>
+                                            <h6 class="mb-0 fw-bold">{{ $stats['callcenter'] }}</h6>
                                             <small class="text-muted">Call Center</small>
                                         </div>
                                     </div>
@@ -153,14 +153,14 @@
                                         <h6 class="mb-0">Sin límite</h6>
                                         <small class="text-muted">Tickets ilimitados</small>
                                     </div>
-                                    <h4 class="mb-0 fw-bold text-success">{{ $stats['with_unlimited'] }}</h4>
+                                    <h4 class="mb-0 fw-bold">{{ $stats['with_unlimited'] }}</h4>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <h6 class="mb-0">Con límite</h6>
                                         <small class="text-muted">Asignaciones restringidas</small>
                                     </div>
-                                    <h4 class="mb-0 fw-bold text-info">{{ $stats['with_limit'] }}</h4>
+                                    <h4 class="mb-0 fw-bold">{{ $stats['with_limit'] }}</h4>
                                 </div>
                             </div>
                         </div>
@@ -224,9 +224,6 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <div class="hd-member-avatar rounded-circle d-flex align-items-center justify-content-center">
-                                                    {{ strtoupper(substr($member->firstname, 0, 1) . substr($member->lastname, 0, 1)) }}
-                                                </div>
                                                 <div>
                                                     <strong>{{ $member->full_name }}</strong>
                                                     <div><small class="text-muted">{{ $member->email }}</small></div>

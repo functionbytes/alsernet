@@ -51,7 +51,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-success mb-2">Enviados</h6>
+                            <h6 class="card-title  mb-2">Enviados</h6>
                             <h4 class="mb-1 fw-bold">{{ number_format($stats['sent']) }}</h4>
                             <small class="text-muted">Completados</small>
                         </div>
@@ -71,7 +71,7 @@
                 <div class="col-md-3">
                     <div class="card bg-light-secondary stat-card h-100">
                         <div class="card-body">
-                            <h6 class="card-title text-info mb-2">Destinatarios totales</h6>
+                            <h6 class="card-title  mb-2">Destinatarios totales</h6>
                             <h4 class="mb-1 fw-bold">{{ number_format($stats['recipients_total']) }}</h4>
                             <small class="text-muted">Acumulado de todos los envios</small>
                         </div>

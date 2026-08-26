@@ -121,7 +121,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
-                                            <h6 class="card-title text-info mb-2">Categorías</h6>
+                                            <h6 class="card-title  mb-2">Categorías</h6>
                                             <h4 class="mb-1 fw-bold" id="categoryCount">{{ $permissionsByCategory->count() }}</h4>
                                             <small class="text-muted">Grupos de permisos</small>
                                         </div>
@@ -134,7 +134,7 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
-                                            <h6 class="card-title text-warning mb-2">Usuarios</h6>
+                                            <h6 class="card-title  mb-2">Usuarios</h6>
                                             <h4 class="mb-1 fw-bold" id="userCount">{{ $group->users()->count() }}</h4>
                                             <small class="text-muted">En este grupo</small>
                                         </div>

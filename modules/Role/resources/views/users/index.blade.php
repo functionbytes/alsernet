@@ -48,7 +48,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">Sin permisos</h6>
+                                <h6 class="card-title  mb-2">Sin permisos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $totalWithoutPermissions }}</h4>
                                 <small class="text-muted">Sin permisos directos</small>
                             </div>
@@ -57,7 +57,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Roles</h6>
+                                <h6 class="card-title  mb-2">Roles</h6>
                                 <a href="{{ route('settings.roles.index') }}" class="text-info small">
                                     Ver gestión de roles
                                 </a>

@@ -40,7 +40,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-2">Globales</h6>
+                                <h6 class="card-title  mb-2">Globales</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['shared'] }}</h4>
                                 <small class="text-muted">Disponibles para todos</small>
                             </div>
@@ -49,7 +49,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">Personales</h6>
+                                <h6 class="card-title  mb-2">Personales</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['personal'] }}</h4>
                                 <small class="text-muted">Solo del agente creador</small>
                             </div>
@@ -58,7 +58,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Ejecutados</h6>
+                                <h6 class="card-title  mb-2">Ejecutados</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['total_runs']) }}</h4>
                                 <small class="text-muted">Total de ejecuciones</small>
                             </div>

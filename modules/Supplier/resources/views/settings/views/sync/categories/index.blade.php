@@ -48,7 +48,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-info h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Subfamilias</h6>
+                                <h6 class="card-title  mb-2">Subfamilias</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['subfamilies'] }}</h4>
                                 <small class="text-muted">Nivel 3</small>
                             </div>
@@ -57,7 +57,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-warning h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">Grupos</h6>
+                                <h6 class="card-title  mb-2">Grupos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['groups'] }}</h4>
                                 <small class="text-muted">Nivel 4</small>
                             </div>

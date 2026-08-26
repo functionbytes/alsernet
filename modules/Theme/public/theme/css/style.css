@@ -28704,12 +28704,12 @@ textarea.form-control-lg {
 
 .text-info {
     --bs-text-opacity: 1;
-    color: #46caeb !important;
+    color: #000000 !important;
 }
 
 .text-warning {
     --bs-text-opacity: 1;
-    color: #F8C20A !important;
+    color: #000000 !important;
 }
 
 .text-danger {
@@ -29186,11 +29186,11 @@ textarea.form-control-lg {
 }
 
 .bg-info-subtle {
-    background-color: #E8F8FD !important;
+    background-color: #f5f6f8 !important;
 }
 
 .bg-warning-subtle {
-    background-color: #FFF9E5 !important;
+    background-color: #f5f6f8 !important;
 }
 
 .bg-danger-subtle {

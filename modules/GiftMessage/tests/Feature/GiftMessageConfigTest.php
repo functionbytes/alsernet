@@ -45,8 +45,9 @@ class GiftMessageConfigTest extends TestCase
         $this->actingAs($this->admin)
             ->get(route('settings.giftmessage.index'))
             ->assertOk()
-            ->assertSee('Imagenes base')
-            ->assertSee('Fuentes y tamanos');
+            ->assertSee('Imagen de fondo')
+            ->assertSee('Posicion del texto')
+            ->assertSee('Tipografia');
     }
 
     public function test_user_without_update_permission_cannot_view_settings(): void

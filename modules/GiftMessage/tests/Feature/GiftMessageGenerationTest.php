@@ -314,13 +314,20 @@ class GiftMessageGenerationTest extends TestCase
     public function test_history_index_filters_by_type(): void
     {
         GiftMessageGeneration::factory()->count(2)->envelope()->create();
-        GiftMessageGeneration::factory()->card()->create();
+        $card = GiftMessageGeneration::factory()->card()->create();
 
         $response = $this->actingAs($this->admin)
             ->get(route('giftmessage.history.index', ['type' => 'card']));
 
         $response->assertOk();
-        $response->assertViewHas('generations', fn ($generations) => $generations->total() === 1);
+
+        // Nada de contar el total: en este proyecto los tests corren contra la
+        // BD de desarrollo, que ya trae generaciones reales. Se comprueba que el
+        // filtro deja pasar la tarjeta creada y ninguna de las otras.
+        $response->assertViewHas('generations', function ($generations) use ($card) {
+            return $generations->contains(fn ($row) => $row->id === $card->id)
+                && $generations->every(fn ($row) => $row->type === 'card');
+        });
     }
 
     public function test_download_serves_the_stored_pdf(): void
@@ -388,9 +395,31 @@ class GiftMessageGenerationTest extends TestCase
                 'ids' => $generations->pluck('id')->toArray(),
             ])
             ->assertOk()
-            ->assertJson(['success' => true]);
+            ->assertJson(['success' => true, 'deleted' => 2]);
 
-        $this->assertDatabaseCount('gift_message_generations', 0);
+        foreach ($generations as $generation) {
+            $this->assertDatabaseMissing('gift_message_generations', ['id' => $generation->id]);
+        }
+    }
+
+    public function test_bulk_delete_ignores_ids_that_no_longer_exist(): void
+    {
+        Storage::fake('public');
+
+        $generation = GiftMessageGeneration::factory()->create();
+        Storage::disk('public')->put($generation->file_path, 'fake content');
+
+        // Un id ya borrado (por otro usuario, con el listado abierto) no puede
+        // tumbar la seleccion entera: se ignora y el resto se borra igual.
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.history.bulk-action'), [
+                'action' => 'delete',
+                'ids' => [$generation->id, 999999999],
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true, 'deleted' => 1]);
+
+        $this->assertDatabaseMissing('gift_message_generations', ['id' => $generation->id]);
     }
 
     public function test_user_without_permission_cannot_view_history(): void

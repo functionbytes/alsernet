@@ -39,7 +39,12 @@ class GiftMessageOrderServiceBridgeTest extends TestCase
 
         $rows = app(GiftMessageOrderService::class)->ordersWithGiftMessage();
 
-        $this->assertSame([['id_order' => 1]], $rows);
+        // El servicio anade `existing_generations` a cada fila (los PDF ya
+        // generados para ese pedido), asi que se comprueba la fila del bridge
+        // sin exigir que sea el array entero.
+        $this->assertCount(1, $rows);
+        $this->assertSame(1, $rows[0]['id_order']);
+        $this->assertArrayHasKey('existing_generations', $rows[0]);
     }
 
     public function test_search_by_ids_sends_gestion_ids_in_payload_and_no_idempotency_header(): void

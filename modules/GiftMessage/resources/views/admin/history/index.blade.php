@@ -343,17 +343,42 @@
 $(document).ready(function () {
     const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
 
-    $('#bulk-modal').on('hide.bs.modal', function () {
+    // Traduce el fallo a algo que se entienda: sin esto un 403 o una sesion
+    // caducada salian como "Error al procesar" (o, en el borrado individual,
+    // como la pagina de error a pantalla completa).
+    function mensajeDeError(xhr) {
+        if (xhr.status === 403) {
+            return 'No tienes permiso para eliminar generaciones. Pideselo a un administrador.';
+        }
+        if (xhr.status === 419) {
+            return 'La sesion ha caducado. Recarga la pagina y vuelve a intentarlo.';
+        }
+        if (xhr.status === 422) {
+            return (xhr.responseJSON && xhr.responseJSON.message) || 'Revisa la seleccion.';
+        }
+        if (xhr.status === 0) {
+            return 'No se pudo contactar con el servidor. Revisa la conexion.';
+        }
+
+        return (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo eliminar. Intentalo de nuevo.';
+    }
+
+    $('#bulk-modal').on('show.bs.modal', function () {
+        // BulkActions solo refresca el contador del toolbar y el de un modal cuyo
+        // id deriva de su sufijo (bulk-toolbar-X -> bulk-X-modal), asi que con los
+        // ids legacy este se quedaba siempre a 0.
+        $('#bulk-modal [data-bulk-count]').text(bulk.getIds().length);
         $('#bulk-apply-btn').prop('disabled', false).text('Eliminar');
-        bulk.reset();
     });
 
     $('#bulk-apply-btn').on('click', function () {
         const ids = bulk.getIds();
 
         if (!ids.length) { toastr.warning('Selecciona al menos una generacion.'); return; }
-        if (!confirm('¿Eliminar las ' + ids.length + ' generacion(es)?')) return;
 
+        // Sin confirm() nativo: el propio modal ya es la confirmacion, y si el
+        // navegador tiene bloqueados los dialogos de la pagina el borrado se
+        // quedaba sin hacer nada.
         $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
 
         $.ajax({
@@ -361,14 +386,16 @@ $(document).ready(function () {
             method: 'POST',
             data: JSON.stringify({ action: 'delete', ids: ids }),
             contentType: 'application/json',
-            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-            success: function () {
+            dataType: 'json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'), 'Accept': 'application/json' },
+            success: function (response) {
                 $('#bulk-modal').modal('hide');
-                toastr.success('Generaciones eliminadas correctamente.');
+                const total = (response && response.deleted) || ids.length;
+                toastr.success(total === 1 ? 'Generacion eliminada correctamente.' : total + ' generaciones eliminadas correctamente.');
                 setTimeout(() => location.reload(), 800);
             },
             error: function (xhr) {
-                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                toastr.error(mensajeDeError(xhr));
                 $('#bulk-apply-btn').prop('disabled', false).text('Eliminar');
             },
         });
@@ -379,6 +406,35 @@ $(document).ready(function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
         $('#delete-modal').modal('show');
+    });
+
+    // El borrado individual tambien va por AJAX (el modal de confirmacion es
+    // compartido con el resto del panel, asi que se intercepta su submit aqui y
+    // no se toca el componente comun).
+    $('#delete-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const $form = $(this);
+        const $submit = $form.find('button[type="submit"]').prop('disabled', true).text('Eliminando...');
+
+        $.ajax({
+            url: $form.attr('action'),
+            method: 'POST',
+            data: { _method: 'DELETE', _token: $('meta[name="csrf-token"]').attr('content') },
+            dataType: 'json',
+            headers: { 'Accept': 'application/json' },
+            success: function (response) {
+                $('#delete-modal').modal('hide');
+                toastr.success((response && response.message) || 'Generacion eliminada correctamente.');
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(mensajeDeError(xhr));
+            },
+            complete: function () {
+                $submit.prop('disabled', false).text('Confirmar eliminación');
+            },
+        });
     });
 
     @if(session('success'))

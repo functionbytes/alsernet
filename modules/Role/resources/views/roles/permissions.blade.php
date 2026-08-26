@@ -57,7 +57,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-start justify-content-between">
                                             <div>
-                                                <h6 class="card-title text-warning mb-2">Sin asignar</h6>
+                                                <h6 class="card-title  mb-2">Sin asignar</h6>
                                                 <h4 class="mb-1 fw-bold">{{ $unassignedPermissions }}</h4>
                                                 <small class="text-muted">Permisos disponibles</small>
                                             </div>
@@ -70,7 +70,7 @@
                                     <div class="card-body">
                                         <div class="d-flex align-items-start justify-content-between">
                                             <div>
-                                                <h6 class="card-title text-info mb-2">Grupos</h6>
+                                                <h6 class="card-title  mb-2">Grupos</h6>
                                                 <h4 class="mb-1 fw-bold">{{ $groupedCount }}</h4>
                                                 <small class="text-muted">Categorías de permisos</small>
                                             </div>

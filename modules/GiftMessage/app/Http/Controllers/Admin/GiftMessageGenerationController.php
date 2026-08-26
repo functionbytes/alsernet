@@ -80,11 +80,21 @@ class GiftMessageGenerationController extends Controller
         return Storage::disk('public')->download($generation->file_path, $generation->file_name);
     }
 
-    public function destroy(GiftMessageGeneration $generation): RedirectResponse
+    public function destroy(Request $request, GiftMessageGeneration $generation): RedirectResponse|JsonResponse
     {
         $this->authorize('delete', $generation);
 
         $this->generationService->delete($generation);
+
+        // El historial borra por AJAX para poder explicar el fallo en un toast
+        // (sin permiso, sesion caducada...) en vez de tumbar la pagina entera
+        // con la vista de error; el POST clasico sigue redirigiendo.
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Generacion eliminada correctamente.',
+            ]);
+        }
 
         return redirect()
             ->route('giftmessage.history.index')
@@ -98,11 +108,20 @@ class GiftMessageGenerationController extends Controller
         $validated = $request->validate([
             'action' => ['required', 'string', 'in:delete'],
             'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', 'exists:gift_message_generations,id'],
+            'ids.*' => ['integer'],
+        ], [
+            'ids.required' => 'Selecciona al menos una generacion.',
+            'ids.min' => 'Selecciona al menos una generacion.',
         ]);
 
-        $this->generationService->bulkAction($validated['ids'], $validated['action']);
+        // Sin regla 'exists': si alguien borro una de las filas mientras el
+        // listado estaba abierto, la seleccion entera fallaba con un 422 en vez
+        // de borrar el resto. bulkAction() ya ignora los ids que no encuentra.
+        $deleted = $this->generationService->bulkAction($validated['ids'], $validated['action']);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'success' => true,
+            'deleted' => $deleted,
+        ]);
     }
 }

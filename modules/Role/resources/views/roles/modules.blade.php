@@ -74,7 +74,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Deshabilitados</h6>
+                                        <h6 class="card-title  mb-2">Deshabilitados</h6>
                                         <h4 class="mb-1 fw-bold module-disabled-count">{{ $disabledModules }}</h4>
                                         <small class="text-muted">Módulos inactivos</small>
                                     </div>
@@ -87,7 +87,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Cobertura</h6>
+                                        <h6 class="card-title  mb-2">Cobertura</h6>
                                         <h4 class="mb-1 fw-bold module-percentage">{{ $coveragePercentage }}%</h4>
                                         <small class="text-muted">Módulos asignados</small>
                                     </div>

@@ -68,7 +68,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-warning mb-2">Sincronizaciones</h6>
+                                        <h6 class="card-title  mb-2">Sincronizaciones</h6>
                                         <h4 class="mb-1 fw-bold" id="blockadesSyncCount">{{ $syncCount }}</h4>
                                         <small class="text-muted">Veces ejecutadas</small>
                                     </div>
@@ -81,7 +81,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">Última sincronización</h6>
+                                        <h6 class="card-title  mb-2">Última sincronización</h6>
                                         <h6 class="mb-1 fw-bold text-truncate" id="blockagesLastSync" title="{{ $lastSync }}">{{ $lastSync }}</h6>
                                         <small class="text-muted">Fecha</small>
                                     </div>

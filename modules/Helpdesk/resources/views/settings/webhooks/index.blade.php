@@ -42,7 +42,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-success mb-2">Activos</h6>
+                                <h6 class="card-title  mb-2">Activos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['active'] }}</h4>
                                 <small class="text-muted">Webhooks habilitados</small>
                             </div>
@@ -51,7 +51,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-warning mb-2">Inactivos</h6>
+                                <h6 class="card-title  mb-2">Inactivos</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['inactive'] }}</h4>
                                 <small class="text-muted">Webhooks deshabilitados</small>
                             </div>
@@ -60,7 +60,7 @@
                     <div class="col-md-3">
                         <div class="card bg-light-secondary stat-card h-100">
                             <div class="card-body">
-                                <h6 class="card-title text-info mb-2">Envios hoy</h6>
+                                <h6 class="card-title  mb-2">Envios hoy</h6>
                                 <h4 class="mb-1 fw-bold">{{ $stats['deliveries_today'] }}</h4>
                                 <small class="text-muted">Entregas realizadas</small>
                             </div>
