@@ -96,7 +96,7 @@
                             <div class="card-body">
                                 <div class="d-flex align-items-start justify-content-between">
                                     <div>
-                                        <h6 class="card-title text-info mb-2">
+                                        <h6 class="card-title  mb-2">
                                             Tasa de Éxito
                                         </h6>
                                         <h4 class="mb-1 fw-bold">{{ $successRate }}%</h4>
