@@ -30,15 +30,52 @@ class GiftMessageGenerationService
 
         Storage::disk(self::DISK)->put($path, $pdfContent);
 
+        $orderNumbers = $this->extractOrderNumbers($rows);
+        $this->deleteSupersededBy($type, $orderNumbers);
+
         return GiftMessageGeneration::query()->create([
             'type' => $type,
             'rows_count' => count($rows),
-            'order_numbers' => $this->extractOrderNumbers($rows),
+            'order_numbers' => $orderNumbers,
             'rows' => $this->printableRows($rows),
             'file_path' => $path,
             'file_name' => $fileName,
             'generated_by' => auth()->id(),
         ]);
+    }
+
+    /**
+     * Al generar de nuevo, las generaciones anteriores del mismo tipo que queden
+     * cubiertas por la nueva se borran (fichero incluido): de lo contrario el
+     * listado de pedidos acumulaba "Ver tarjeta / Ver sobre" repetidos y no
+     * habia forma de saber cual era el bueno.
+     *
+     * Se borra solo lo que la nueva reemplaza de verdad: una generacion previa
+     * cae si TODOS sus pedidos estan en la nueva. Asi, regenerar un pedido
+     * suelto no se lleva por delante el lote de 20 en el que estaba, que sigue
+     * siendo la unica copia de los otros 19.
+     *
+     * @param  array<int, string>  $orderNumbers
+     */
+    private function deleteSupersededBy(string $type, array $orderNumbers): void
+    {
+        if ($orderNumbers === []) {
+            return;
+        }
+
+        GiftMessageGeneration::query()
+            ->where('type', $type)
+            ->whereNotNull('order_numbers')
+            ->get()
+            ->each(function (GiftMessageGeneration $previous) use ($orderNumbers) {
+                $previousNumbers = $previous->order_numbers ?? [];
+
+                if ($previousNumbers === [] || array_diff($previousNumbers, $orderNumbers) !== []) {
+                    return;
+                }
+
+                $this->delete($previous);
+            });
     }
 
     /**

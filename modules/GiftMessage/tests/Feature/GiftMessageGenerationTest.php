@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\View;
 use Modules\GiftMessage\Database\Seeders\GiftMessagePermissionsSeeder;
 use Modules\GiftMessage\Models\GiftMessageConfig;
 use Modules\GiftMessage\Models\GiftMessageGeneration;
+use Modules\GiftMessage\Services\GiftMessageGenerationService;
+use Modules\GiftMessage\Services\GiftMessageOrderService;
 use Tests\TestCase;
 
 class GiftMessageGenerationTest extends TestCase
@@ -451,6 +453,88 @@ class GiftMessageGenerationTest extends TestCase
         $this->assertSame('Enhorabuena', $new->rows[0]['gift_message']);
         $this->assertStringContainsString((string) $new->id, $response->json('view_url'));
         $this->assertDatabaseHas('gift_message_generations', ['id' => $generation->id]);
+    }
+
+    public function test_generating_again_replaces_the_previous_pdf_of_the_same_order(): void
+    {
+        Storage::fake('public');
+
+        $previous = GiftMessageGeneration::factory()->envelope()->create([
+            'rows_count' => 1,
+            'order_numbers' => ['41234'],
+        ]);
+        Storage::disk('public')->put($previous->file_path, 'pdf viejo');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'envelope',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Feliz cumpleanos', 'npedidocli' => '41234']],
+            ])
+            ->assertOk();
+
+        // El anterior desaparece con su fichero: no se acumulan "Ver sobre"
+        // repetidos en el listado de pedidos.
+        $this->assertDatabaseMissing('gift_message_generations', ['id' => $previous->id]);
+        Storage::disk('public')->assertMissing($previous->file_path);
+    }
+
+    public function test_regenerating_one_order_keeps_the_batch_it_belonged_to(): void
+    {
+        Storage::fake('public');
+
+        // Un lote con tres pedidos es la unica copia de los otros dos, asi que
+        // rehacer uno suelto no puede llevarselo por delante.
+        $batch = GiftMessageGeneration::factory()->envelope()->create([
+            'rows_count' => 3,
+            'order_numbers' => ['41234', '41235', '41236'],
+        ]);
+        Storage::disk('public')->put($batch->file_path, 'pdf del lote');
+
+        $otherType = GiftMessageGeneration::factory()->card()->create([
+            'rows_count' => 1,
+            'order_numbers' => ['41234'],
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'envelope',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Feliz cumpleanos', 'npedidocli' => '41234']],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('gift_message_generations', ['id' => $batch->id]);
+        Storage::disk('public')->assertExists($batch->file_path);
+
+        // Y la tarjeta del mismo pedido tampoco: solo se reemplaza el mismo tipo.
+        $this->assertDatabaseHas('gift_message_generations', ['id' => $otherType->id]);
+    }
+
+    public function test_the_order_list_only_links_the_current_pdf_of_each_type(): void
+    {
+        GiftMessageGeneration::factory()->envelope()->create([
+            'order_numbers' => ['41234'],
+            'created_at' => now()->subDays(2),
+        ]);
+        $newest = GiftMessageGeneration::factory()->envelope()->create([
+            'order_numbers' => ['41234'],
+            'created_at' => now(),
+        ]);
+
+        $index = app(GiftMessageGenerationService::class)->orderNumberIndex();
+
+        $this->assertArrayHasKey('41234', $index);
+
+        // El indice trae todas, pero el listado se queda con una por tipo: la
+        // ultima. Se comprueba a traves del servicio de pedidos.
+        $service = app(GiftMessageOrderService::class);
+        $method = new \ReflectionMethod($service, 'attachExistingGenerations');
+        $method->setAccessible(true);
+
+        $rows = $method->invoke($service, [['id_order' => 1, 'npedidocli' => '41234']]);
+        $generations = $rows[0]['existing_generations'];
+
+        $this->assertCount(1, $generations);
+        $this->assertSame($newest->id, $generations[0]['id']);
     }
 
     public function test_regenerating_rejects_an_order_that_is_not_in_the_pdf(): void

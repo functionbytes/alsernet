@@ -3,3 +3,8 @@
 .gm-bulk-toolbar {
     z-index: 1050;
 }
+
+/* Aviso de que la generacion va a sustituir PDFs ya existentes. */
+#bulk-replace-warning {
+    color: #7d9f10;
+}

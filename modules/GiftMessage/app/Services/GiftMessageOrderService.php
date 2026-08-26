@@ -71,11 +71,19 @@ class GiftMessageOrderService
                 }
             }
 
-            // Mas reciente primero, para que "Ver PDF" enlace siempre a la
-            // ultima version generada de cada tipo si se genero mas de una vez.
+            // Mas reciente primero y una sola por tipo: aunque queden lotes
+            // antiguos que incluyan este pedido, en el listado solo interesa el
+            // PDF vigente de sobre y el de tarjeta. Sin esto la columna PDF
+            // acumulaba "Ver tarjeta / Ver sobre" repetidos y ninguno se
+            // distinguia del otro.
             usort($matches, fn ($a, $b) => strcmp($b['created_at'], $a['created_at']));
 
-            $order['existing_generations'] = array_values($matches);
+            $latestByType = [];
+            foreach ($matches as $match) {
+                $latestByType[$match['type']] ??= $match;
+            }
+
+            $order['existing_generations'] = array_values($latestByType);
 
             return $order;
         }, $orders);

@@ -51,7 +51,7 @@
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="mb-1 fw-bold">Paso 2 &middot; Selecciona los pedidos</h6>
-                        <p class="text-muted small mb-0"><span id="orders-count">0</span> pedido(s) con mensaje regalo. Marca los que quieras incluir en el PDF.</p>
+                        <p class="text-muted small mb-0"><span id="orders-count">0</span> pedido(s) con mensaje regalo. Marca los que quieras incluir en el PDF; si alguno ya lo tiene, se regenera y el anterior se sustituye.</p>
                     </div>
                 </div>
 
@@ -106,6 +106,7 @@
                 {{-- Pantalla 1: tipo de PDF --}}
                 <div class="modal-body" id="bulk-step-form">
                     <p class="text-muted mb-3">Se generara un PDF con <strong><span data-bulk-count>0</span> pedido(s)</strong>.</p>
+                    <p class="small mb-3 d-none" id="bulk-replace-warning"></p>
                     <div class="mb-3">
                         <label class="form-label fw-semibold" for="bulk-type-select">Tipo de PDF</label>
                         <select id="bulk-type-select" class="form-select">
