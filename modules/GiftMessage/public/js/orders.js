@@ -255,6 +255,19 @@
             return v && a.indexOf(v) === i;
         });
 
+        // Lo primero es lo que sale mal del todo: un caracter sin glifo se
+        // imprime como cuadro vacio y no hay forma de saberlo mirando el PDF en
+        // pantalla si no lo sabes buscar.
+        var sinFuente = avisos.filter(function (w) { return w.unprintable; });
+
+        if (sinFuente.length) {
+            toastr.warning('Los pedidos ' + unprintableOrders(sinFuente).join(', ') + ' llevan caracteres que ninguna fuente instalada puede imprimir (' +
+                unprintableChars(sinFuente).join(' ') + ') y saldran como cuadros vacios. Sube una fuente que los cubra en Configuracion.',
+                'Caracteres sin fuente', { timeOut: 15000 });
+
+            return;
+        }
+
         if (recortados.length) {
             toastr.warning('Revisa los pedidos ' + numeros.join(', ') +
                 ': el mensaje no cabe ni al tamano minimo y saldra recortado.', 'Mensajes demasiado largos', { timeOut: 12000 });
@@ -266,11 +279,55 @@
             'Letra reducida', { timeOut: 8000 });
     }
 
+    /**
+     * Pedidos y caracteres afectados por los avisos de "sin fuente", sin
+     * repetidos: con "Ambos" el mismo pedido llega dos veces (sobre y tarjeta).
+     */
+    function unprintableOrders(avisos) {
+        return avisos.map(function (w) { return w.order_number; }).filter(function (v, i, a) {
+            return v && a.indexOf(v) === i;
+        });
+    }
+
+    function unprintableChars(avisos) {
+        return avisos
+            .map(function (w) { return (w.unprintable || '').split(''); })
+            .reduce(function (all, chars) { return all.concat(chars); }, [])
+            .filter(function (v, i, a) { return a.indexOf(v) === i; });
+    }
+
+    function renderUnprintableNotice(results) {
+        var avisos = [];
+
+        results.forEach(function (result) {
+            (result.warnings || []).forEach(function (warning) {
+                if (warning.unprintable) {
+                    avisos.push(warning);
+                }
+            });
+        });
+
+        var $notice = $('#bulk-result-unprintable');
+
+        if (!avisos.length) {
+            $notice.addClass('d-none').empty();
+
+            return;
+        }
+
+        $notice.removeClass('d-none').html(
+            '<strong>Ojo antes de imprimir:</strong> los pedidos ' + escapeHtml(unprintableOrders(avisos).join(', ')) +
+            ' llevan caracteres que ninguna fuente instalada puede imprimir (' + escapeHtml(unprintableChars(avisos).join(' ')) +
+            '). En el PDF salen como cuadros vacios. Sube una fuente que los cubra en Configuracion &rsaquo; Fuentes.'
+        );
+    }
+
     function showFormStep() {
         $('#bulk-step-form, #bulk-step-form-footer').removeClass('d-none');
         $('#bulk-step-result, #bulk-step-result-footer').addClass('d-none');
         $('#bulk-modal-title').text('Generar PDF de mensaje regalo');
         $('#bulk-result-links').empty();
+        $('#bulk-result-unprintable').addClass('d-none').empty();
     }
 
     // Segunda pantalla del modal: un boton por PDF generado. Se abren al
@@ -294,6 +351,7 @@
         $('#bulk-result-text').text(results.length > 1
             ? 'PDF generados correctamente. Abrelos desde los botones de abajo; cada uno se abre en una pestana nueva.'
             : 'PDF generado correctamente. Abrelo desde el boton de abajo; se abre en una pestana nueva.');
+        renderUnprintableNotice(results);
         $('#bulk-step-form, #bulk-step-form-footer').addClass('d-none');
         $('#bulk-step-result, #bulk-step-result-footer').removeClass('d-none');
     }

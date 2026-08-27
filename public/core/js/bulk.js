@@ -32,7 +32,13 @@ window.BulkActions = (function () {
         // Build count elements: toolbar + corresponding modal (bulk-toolbar-X → bulk-X-modal)
         function getCountEls() {
             const group = toolbarId.replace('bulk-toolbar-', '');
-            const modalEl = document.getElementById('bulk-' + group + '-modal');
+            // Con los ids "legacy" (#bulk-toolbar / #bulk-modal) no hay sufijo de
+            // grupo que quitar, asi que group sigue siendo 'bulk-toolbar' y el id
+            // buscado salia '#bulk-bulk-toolbar-modal': no existia, y como el
+            // toolbar si aporta elementos no se llegaba al fallback, dejando el
+            // contador del modal siempre a 0.
+            const modalId = group === toolbarId ? 'bulk-modal' : 'bulk-' + group + '-modal';
+            const modalEl = document.getElementById(modalId);
             const els = [
                 ...(toolbar  ? Array.from(toolbar.querySelectorAll('[data-bulk-count]'))  : []),
                 ...(modalEl  ? Array.from(modalEl.querySelectorAll('[data-bulk-count]'))  : []),

@@ -30,6 +30,7 @@ $allProviders = [
     'Modules\Media\Providers\MediaServiceProvider' => 'Media',
     'Modules\Modules\Providers\EventServiceProvider' => true, // Always load
     'Modules\Notification\Providers\NotificationServiceProvider' => 'Notification',
+    'Modules\PriceLabels\Providers\PriceLabelsServiceProvider' => 'PriceLabels',
     'Modules\Pulse\Providers\EventServiceProvider' => 'Pulse',
     'Modules\Queue\Providers\QueueServiceProvider' => 'Queue',
     'Modules\Role\Providers\RoleServiceProvider' => true, // Always load

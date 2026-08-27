@@ -79,6 +79,7 @@ class EnsureModuleIsActive
                     'helpdeskintegration' => 'HelpdeskIntegration',
                     'helpdeskemaillog' => 'HelpdeskEmailLog',
                     'giftmessage' => 'GiftMessage',
+                    'pricelabels' => 'PriceLabels',
                     'faq' => 'Faq',
                 ];
 
