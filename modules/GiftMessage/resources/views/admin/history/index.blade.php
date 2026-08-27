@@ -186,14 +186,22 @@
                                             @if(! empty($generation->warnings))
                                                 @php
                                                     $recortados = collect($generation->warnings)->where('truncated', true);
+                                                    $sinImprimir = collect($generation->warnings)->filter(fn ($w) => ! empty($w['unprintable']));
                                                 @endphp
-                                                <small class="d-block gm-history-warning" title="{{ collect($generation->warnings)->pluck('order_number')->implode(', ') }}">
-                                                    @if($recortados->isNotEmpty())
+                                                @if($sinImprimir->isNotEmpty())
+                                                    <small class="d-block gm-history-warning text-danger" title="{{ $sinImprimir->pluck('order_number')->implode(', ') }}: {{ $sinImprimir->pluck('unprintable')->implode(' ') }}">
+                                                        {{ $sinImprimir->count() }} mensaje(s) con caracteres sin imprimir
+                                                    </small>
+                                                @endif
+                                                @if($recortados->isNotEmpty())
+                                                    <small class="d-block gm-history-warning" title="{{ $recortados->pluck('order_number')->implode(', ') }}">
                                                         {{ $recortados->count() }} mensaje(s) recortado(s) al imprimir
-                                                    @else
-                                                        {{ count($generation->warnings) }} mensaje(s) con la letra reducida
-                                                    @endif
-                                                </small>
+                                                    </small>
+                                                @elseif($sinImprimir->count() < count($generation->warnings))
+                                                    <small class="d-block gm-history-warning" title="{{ collect($generation->warnings)->pluck('order_number')->implode(', ') }}">
+                                                        {{ count($generation->warnings) - $sinImprimir->count() }} mensaje(s) con la letra reducida
+                                                    </small>
+                                                @endif
                                             @endif
                                             <div class="small">{{ $generation->created_at->format('d/m/Y H:i') }}</div>
                                             <small class="text-muted">{{ $generation->created_at->diffForHumans() }}</small>

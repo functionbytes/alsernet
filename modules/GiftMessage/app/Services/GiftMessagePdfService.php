@@ -801,9 +801,11 @@ class GiftMessagePdfService
                 continue;
             }
 
-            if ($response->successful() && strlen($response->body()) > 100) {
-                $disk->put($path, $response->body());
-
+            // put() devuelve false en un fallo de escritura (permisos, disco lleno)
+            // en vez de lanzar excepción — sin comprobarlo, se devolvía el path
+            // igual, y el emoji quedaba como cuadro en blanco en el PDF (get()
+            // sobre un archivo que nunca llegó a escribirse).
+            if ($response->successful() && strlen($response->body()) > 100 && $disk->put($path, $response->body())) {
                 return $path;
             }
         }
