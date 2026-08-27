@@ -38,6 +38,7 @@
     "Modules": true,
     "Notification": true,
     "Prestashop": true,
+    "PriceLabels": true,
     "Pulse": false,
     "Return": false,
     "Returns": false,

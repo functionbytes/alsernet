@@ -1,4 +1,9 @@
 vendor/
+# Excepcion: las librerias de terceros que un modulo publica junto a sus assets
+# (interact.js del editor de PriceLabels) viven en un js/vendor/ y si van al
+# repo; si no, cualquier despliegue se queda sin ellas y la vista no funciona.
+!modules/*/public/**/vendor/
+!public/modules/*/**/vendor/
 node_modules/
 stubs/
 

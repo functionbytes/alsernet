@@ -1,0 +1,275 @@
+.pricelabels-canvas-outer {
+    border: 1px solid #ddd;
+    max-width: 100%;
+    overflow: auto;
+}
+
+.pricelabels-canvas {
+    position: relative;
+}
+
+.pricelabels-drag {
+    position: absolute;
+    cursor: move;
+    touch-action: none;
+    padding: 2px 4px;
+    font-size: 10px;
+    line-height: 1.1;
+    border: 1px dashed #90bb13;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 4px;
+    user-select: none;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.pricelabels-drag[data-key="descripcion"] {
+    white-space: normal;
+}
+
+.pricelabels-preview-frame {
+    width: 100%;
+    height: 70vh;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.pricelabels-drag.is-barcode {
+    padding: 0;
+    background: #fff;
+}
+
+.pricelabels-drag.is-barcode img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: fill;
+}
+
+.pricelabels-drag::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 8px;
+    height: 8px;
+    background: #90bb13;
+    border: 1px solid #fff;
+    border-radius: 2px;
+    cursor: nwse-resize;
+}
+
+.snap-guide {
+    position: absolute;
+    background: #90bb13;
+    pointer-events: none;
+    z-index: 50;
+}
+
+.snap-guide-v {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.snap-guide-h {
+    left: 0;
+    right: 0;
+    height: 1px;
+}
+
+.pricelabels-zoom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 380px;
+}
+
+.pricelabels-zoom .form-range {
+    flex: 1;
+}
+
+.pricelabels-subnav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+}
+
+.pricelabels-subnav-link {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: #f3f5f0;
+    color: #333;
+    font-size: 0.85rem;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.pricelabels-subnav-link:hover,
+.pricelabels-subnav-link.is-active {
+    background: #90bb13;
+    color: #fff;
+}
+
+.pricelabels-subnav-link-alt {
+    margin-left: auto;
+    background: #333;
+    color: #fff;
+}
+
+.pricelabels-subnav-link-alt:hover {
+    background: #000;
+    color: #fff;
+}
+
+.pricelabels-drag:focus {
+    outline: 2px solid #333;
+    outline-offset: 1px;
+}
+
+tr[data-field-key].pricelabels-row-highlight {
+    background: rgba(144, 187, 19, 0.15);
+}
+
+tr[data-field-key] {
+    cursor: pointer;
+}
+
+tr[data-field-key].is-pinned {
+    background: rgba(144, 187, 19, 0.25);
+}
+
+.pricelabels-drag.is-pinned {
+    z-index: 30;
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(51, 51, 51, 0.7);
+}
+
+.pricelabels-drag.is-highlighted {
+    border-color: #333;
+    box-shadow: 0 0 0 2px rgba(144, 187, 19, 0.6);
+    z-index: 20;
+}
+
+.pricelabels-drag.is-new {
+    z-index: 30;
+    animation: pricelabels-pulse 1.4s ease-in-out 0s 3;
+}
+
+@keyframes pricelabels-pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(144, 187, 19, 0.9); }
+    50% { box-shadow: 0 0 0 6px rgba(144, 187, 19, 0.3); }
+}
+
+.pricelabels-index-thumb {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+}
+
+.pricelabels-status-badge.status-pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #b98600;
+}
+
+.pricelabels-status-badge.status-completed {
+    background: rgba(144, 187, 19, 0.15);
+    color: #5c7a0d;
+}
+
+.pricelabels-status-badge.status-failed {
+    background: rgba(220, 53, 69, 0.15);
+    color: #a02532;
+}
+
+.pricelabels-error-badge {
+    cursor: pointer;
+}
+
+/* Panel de vista previa del modal "Generar PDF" */
+.pricelabels-preview-panel {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fbfbfb;
+    min-height: 260px;
+}
+
+.pricelabels-preview-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e6e6e6;
+    background: #fff;
+}
+
+.pricelabels-preview-panel-body {
+    flex: 1 1 auto;
+    padding: 12px 14px;
+    overflow-y: auto;
+    max-height: 340px;
+}
+
+.pricelabels-preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+    color: #9a9a9a;
+    text-align: center;
+}
+
+/* Filas de resultado del modal de descarga */
+.pricelabels-result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+}
+
+.pricelabels-result-row + .pricelabels-result-row {
+    margin-top: 10px;
+}
+
+.pricelabels-result-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* Barra flotante de accion masiva (listados de plantillas e historial). Por
+   encima del contenido pero por debajo de los modales de Bootstrap. */
+.pricelabels-bulk-toolbar {
+    z-index: 1050;
+}
+
+/* Anchos fijos de los inputs numericos de la tabla de estilos, para que la
+   tabla no se ensanche con cada columna. */
+.pricelabels-input-narrow {
+    width: 70px;
+}
+
+.pricelabels-input-medium {
+    width: 80px;
+}
