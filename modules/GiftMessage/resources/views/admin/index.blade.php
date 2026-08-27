@@ -87,9 +87,16 @@
 
     {{-- Paso 3: bulk toolbar flotante --}}
     <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none gm-bulk-toolbar">
-        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
-            <span data-bulk-count>0</span> seleccionado(s) &mdash; Generar PDF
-        </button>
+        <div class="d-flex gap-2">
+            {{-- Atajo del dia a dia: genera sobre y tarjeta y los baja sin abrir
+                 el modal. El otro boton queda para cuando hay que elegir tipo. --}}
+            <button type="button" id="bulk-quick-download" class="btn btn-primary shadow-lg px-4">
+                <span data-bulk-count>0</span> seleccionado(s) &mdash; Generar y descargar
+            </button>
+            <button type="button" class="btn btn-secondary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+                Elegir tipo
+            </button>
+        </div>
     </div>
 
     {{-- Paso 3: modal en dos pantallas — configurar el tipo y, tras generar,
@@ -124,6 +131,9 @@
 
                 <div class="modal-footer" id="bulk-step-form-footer">
                     <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-2">Generar</button>
+                    {{-- Atajo para el trabajo en cadena: genera y baja los PDF sin
+                         pasar por la pantalla de enlaces. --}}
+                    <button id="bulk-download-btn" type="button" class="btn btn-primary w-100 mb-2">Generar y descargar</button>
                     <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                 </div>
 

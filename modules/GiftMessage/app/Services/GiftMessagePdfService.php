@@ -30,8 +30,26 @@ class GiftMessagePdfService
     /** Interlineado del .field td de la plantilla del PDF. */
     private const LINE_HEIGHT = 1.2;
 
-    /** Por debajo de esto el mensaje deja de ser legible impreso. */
-    private const MIN_FONT_SIZE = 5;
+    /**
+     * Interlineados a probar, del mas holgado al mas apretado. Antes de encoger
+     * la letra se aprieta el interlineado: pasar de 1.2 a 1.05 gana un 12% de
+     * alto sin tocar el tamano, que se nota mucho mas en el resultado impreso
+     * que dos puntos menos de letra.
+     */
+    private const LINE_HEIGHTS = [1.2, 1.1, 1.05];
+
+    /** Suelo absoluto: por debajo de esto no se imprime nada legible. */
+    private const HARD_MIN_FONT_SIZE = 5;
+
+    /** Contenido del texto grande de cada pieza. */
+    public const CONTENT_MESSAGE = 'message';
+
+    public const CONTENT_RECIPIENT = 'recipient';
+
+    public const CONTENT_LABELS = [
+        self::CONTENT_MESSAGE => 'Mensaje regalo',
+        self::CONTENT_RECIPIENT => 'Nombre de quien lo recibe',
+    ];
 
     private const SIZES = [
         'envelope' => ['w' => 220.0, 'h' => 110.0],
@@ -39,6 +57,15 @@ class GiftMessagePdfService
     ];
 
     private ?FontMetrics $fontMetrics = null;
+
+    /** @var array<string, float> */
+    private array $widthCache = [];
+
+    /** @var array<string, string|null> */
+    private array $fontFileCache = [];
+
+    /** @var array<int, array<string, mixed>> Avisos de la ultima generacion. */
+    private array $warnings = [];
 
     public function __construct(
         private readonly GiftMessageConfigService $configService,
@@ -55,6 +82,7 @@ class GiftMessagePdfService
     {
         $this->ensureFontDirectoryExists();
 
+        $this->warnings = [];
         $config = $this->configService->current();
         $size = self::SIZES[$type];
 
@@ -76,6 +104,58 @@ class GiftMessagePdfService
         // (ancho > alto), dejando la pagina en vertical. El array ya viene con el
         // ancho/alto correctos, asi que se usa la orientacion por defecto.
         return $pdf->setPaper([0, 0, $size['w'] * self::MM_PER_POINT, $size['h'] * self::MM_PER_POINT]);
+    }
+
+    /**
+     * Fuente y tamano que usaria el PDF para un texto dado, para que la vista
+     * previa del editor de ajustes ensene exactamente lo mismo. No basta con
+     * encoger por CSS en el navegador: el PDF fuerza DejaVu Sans cuando hay
+     * emojis (mas ancha y un 25% mas alta por linea que Helvetica) y mide con
+     * las metricas de la fuente, asi que el navegador se quedaba corto y
+     * ensenaba una letra mas grande de la que se iba a imprimir.
+     *
+     * @param  array<string, array{w?: float|string, h?: float|string}>  $boxes  Tamano
+     *                                                                           de las cajas tal como estan EN PANTALLA (en %), que puede no ser el
+     *                                                                           guardado todavia. Sin esto, mover una caja no cambiaba la vista previa.
+     * @return array<string, array{font: string, font_family: string, font_size: int}>
+     */
+    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = [], string $recipient = ''): array
+    {
+        $config = $this->configService->current();
+        $size = self::SIZES[$type];
+        $prefix = $type === 'card' ? 'card' : 'env';
+        $minSize = $this->minFontSize($config);
+
+        $message = $this->normalizeMessage($this->t1Text($type, [
+            'gift_message' => $message,
+            'firstname' => $recipient,
+        ], $config));
+        $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
+        $t2Font = $config->{$prefix.'_t2_font'};
+
+        $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $this->box($config, $prefix.'_t1', $size, $boxes['t1'] ?? []), $t1Font, $minSize);
+        $t2Fit = $this->fitText($orderNumber, (int) $config->{$prefix.'_t2_size'}, $this->box($config, $prefix.'_t2', $size, $boxes['t2'] ?? []), $t2Font, $minSize);
+
+        return [
+            't1' => [
+                'font' => $t1Font,
+                'font_family' => $this->fontStack($t1Font),
+                'line_height' => $this->lineHeightRatio($t1Font, $t1Fit['line_height']),
+                'font_size' => $t1Fit['size'],
+                'configured_size' => (int) $config->{$prefix.'_t1_size'},
+                'min_font_size' => $minSize,
+                'fits' => $t1Fit['fits'],
+            ],
+            't2' => [
+                'font' => $t2Font,
+                'font_family' => $this->fontStack($t2Font),
+                'line_height' => $this->lineHeightRatio($t2Font, $t2Fit['line_height']),
+                'font_size' => $t2Fit['size'],
+                'configured_size' => (int) $config->{$prefix.'_t2_size'},
+                'min_font_size' => $minSize,
+                'fits' => $t2Fit['fits'],
+            ],
+        ];
     }
 
     /**
@@ -142,31 +222,29 @@ class GiftMessagePdfService
     {
         $size = self::SIZES[$type];
         $prefix = $type === 'card' ? 'card' : 'env';
+        $minSize = $this->minFontSize($config);
 
-        $message = trim((string) $order['gift_message']);
+        $message = $this->normalizeMessage($this->t1Text($type, $order, $config));
         $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
         $t1Box = $this->box($config, $prefix.'_t1', $size);
 
-        // El tamano configurado es el maximo: si el mensaje no cabe en la caja
-        // se reduce hasta que entre entero. Sin esto, un mensaje largo se
-        // recortaba por abajo (overflow: hidden) y el cliente recibia la tarjeta
-        // con la frase a medias.
-        $t1Size = $this->fitFontSize(
-            $message,
-            (int) $config->{$prefix.'_t1_size'},
-            $t1Box,
-            $t1Font
-        );
+        // El tamano configurado es el maximo: si el mensaje no cabe se aprieta
+        // el interlineado y, si aun asi no entra, se reduce la letra.
+        $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $t1Box, $t1Font, $minSize);
 
         $t2Text = (string) ($order['npedidocli'] ?? '');
         $t2Font = $config->{$prefix.'_t2_font'};
         $t2Box = $this->box($config, $prefix.'_t2', $size);
+        $t2Fit = $this->fitText($t2Text, (int) $config->{$prefix.'_t2_size'}, $t2Box, $t2Font, $minSize);
+
+        $this->collectWarning($type, $order, $message, $t1Fit, $minSize, (int) $config->{$prefix.'_t1_size'});
 
         return [
             't1' => [
-                'html' => $this->messageToHtml($message, $t1Size),
+                'html' => $this->messageToHtml($message, $t1Fit['size']),
                 'font_family' => $this->fontStack($t1Font),
-                'font_size' => $t1Size,
+                'font_size' => $t1Fit['size'],
+                'line_height' => $t1Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t1_color'}),
                 'opacity' => $this->opacity((int) $config->{$prefix.'_t1_opacity'}),
             ] + $t1Box,
@@ -175,7 +253,8 @@ class GiftMessagePdfService
                 // numero corto), no por el idpedidocli que guarda PrestaShop.
                 'text' => $t2Text,
                 'font_family' => $this->fontStack($t2Font),
-                'font_size' => $this->fitFontSize($t2Text, (int) $config->{$prefix.'_t2_size'}, $t2Box, $t2Font),
+                'font_size' => $t2Fit['size'],
+                'line_height' => $t2Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t2_color'}),
                 'opacity' => $this->opacity((int) $config->{$prefix.'_t2_opacity'}),
             ] + $t2Box,
@@ -183,67 +262,205 @@ class GiftMessagePdfService
     }
 
     /**
-     * Busca el mayor tamano (<= el configurado) con el que el texto entero cabe
-     * dentro de la caja. Se mide con las metricas reales de la fuente, no por
-     * numero de caracteres: una linea de "iiii" y otra de "WWWW" ocupan muy
-     * distinto y el corte se notaba justo en los mensajes largos.
+     * Que va en el texto grande de la pieza. El sobre suele llevar el nombre de
+     * quien recibe el regalo —es lo que se lee al repartir— y la tarjeta el
+     * mensaje, pero cada pieza se configura por separado.
+     *
+     * @param  array<string, mixed>  $order
+     */
+    private function t1Text(string $type, array $order, GiftMessageConfig $config): string
+    {
+        $prefix = $type === 'card' ? 'card' : 'env';
+
+        if (($config->{$prefix.'_t1_content'} ?? 'message') !== self::CONTENT_RECIPIENT) {
+            return (string) ($order['gift_message'] ?? '');
+        }
+
+        $name = trim(((string) ($order['firstname'] ?? '')).' '.((string) ($order['lastname'] ?? '')));
+
+        // Sin nombre no se imprime una pieza en blanco: se cae al mensaje.
+        return $name !== '' ? $name : (string) ($order['gift_message'] ?? '');
+    }
+
+    /**
+     * Anota los mensajes que no salen como deberian, para que quien imprime se
+     * entere: hasta ahora la caja recortaba lo que sobraba en silencio y el
+     * cliente recibia la tarjeta con la frase a medias.
+     *
+     * @param  array<string, mixed>  $order
+     * @param  array{size: int, line_height: float, fits: bool}  $fit
+     */
+    private function collectWarning(string $type, array $order, string $message, array $fit, int $minSize, int $configuredSize): void
+    {
+        if ($message === '' || ($fit['fits'] && $fit['size'] >= $configuredSize)) {
+            return;
+        }
+
+        $orderNumber = (string) (($order['npedidocli'] ?? null) ?: ($order['id_gestion'] ?? null) ?: ($order['id_order'] ?? ''));
+
+        $this->warnings[] = [
+            'order_number' => $orderNumber,
+            'type' => $type,
+            'font_size' => $fit['size'],
+            'configured_size' => $configuredSize,
+            'min_font_size' => $minSize,
+            'truncated' => ! $fit['fits'],
+            'length' => mb_strlen($message),
+        ];
+    }
+
+    /**
+     * Avisos de la ultima llamada a generate(): mensajes que se han impreso mas
+     * pequenos de lo configurado o que no caben ni al minimo.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function lastWarnings(): array
+    {
+        return $this->warnings;
+    }
+
+    private function minFontSize(GiftMessageConfig $config): int
+    {
+        return max(self::HARD_MIN_FONT_SIZE, (int) ($config->min_font_size ?: self::HARD_MIN_FONT_SIZE));
+    }
+
+    /**
+     * Mayor tamano (<= el configurado) con el que el texto entero cabe en la
+     * caja, junto al interlineado necesario y a si de verdad ha cabido.
+     *
+     * Se mide con las metricas reales de la fuente, no por numero de
+     * caracteres: una linea de "iiii" y otra de "WWWW" ocupan muy distinto.
+     * La busqueda es por biseccion —"cabe" es monotono: si entra a N puntos,
+     * entra a N-1— asi que un mensaje largo se resuelve en 4 pasadas en vez de
+     * las 9 que costaba bajando de punto en punto.
      *
      * @param  array{left: float, top: float, width: float, height: float}  $box  En milimetros.
+     * @return array{size: int, line_height: float, fits: bool}
      */
-    private function fitFontSize(string $text, int $maxSize, array $box, string $font): int
+    private function fitText(string $text, int $maxSize, array $box, string $font, int $minSize): array
     {
-        $text = trim($text);
-        $maxSize = max(self::MIN_FONT_SIZE, $maxSize);
+        $text = $this->normalizeMessage($text);
+        $minSize = max(self::HARD_MIN_FONT_SIZE, $minSize);
+        $maxSize = max($minSize, $maxSize);
 
         if ($text === '' || $box['width'] <= 0 || $box['height'] <= 0) {
-            return $maxSize;
+            return ['size' => $maxSize, 'line_height' => self::LINE_HEIGHT, 'fits' => true];
         }
 
         $widthPt = $box['width'] * self::MM_PER_POINT;
         $heightPt = $box['height'] * self::MM_PER_POINT;
 
-        for ($size = $maxSize; $size > self::MIN_FONT_SIZE; $size--) {
-            $lines = $this->countWrappedLines($text, $size, $widthPt, $font);
+        // Caso normal: cabe al tamano configurado y no hay nada que buscar.
+        $lineHeight = $this->lineHeightThatFits($text, $maxSize, $widthPt, $heightPt, $font);
 
-            if ($lines * $this->lineHeightPt($size, $font) <= $heightPt) {
-                return $size;
-            }
+        if ($lineHeight !== null) {
+            return ['size' => $maxSize, 'line_height' => $lineHeight, 'fits' => true];
         }
 
-        return self::MIN_FONT_SIZE;
+        $low = $minSize;
+        $high = $maxSize;
+        $best = null;
+
+        while ($low <= $high) {
+            $middle = intdiv($low + $high, 2);
+            $lineHeight = $this->lineHeightThatFits($text, $middle, $widthPt, $heightPt, $font);
+
+            if ($lineHeight !== null) {
+                $best = ['size' => $middle, 'line_height' => $lineHeight, 'fits' => true];
+                $low = $middle + 1;
+
+                continue;
+            }
+
+            $high = $middle - 1;
+        }
+
+        // Ni al minimo cabe: se imprime al minimo y se avisa, porque la caja
+        // recorta lo que sobra (overflow: hidden) y el cliente recibiria el
+        // mensaje a medias sin que nadie se entere.
+        return $best ?? [
+            'size' => $minSize,
+            'line_height' => self::LINE_HEIGHTS[count(self::LINE_HEIGHTS) - 1],
+            'fits' => false,
+        ];
     }
 
     /**
-     * Alto real de una linea en puntos. DomPDF no usa line-height x tamano sino
-     * line-height x altura de la fuente, y ahi cada familia manda: DejaVu Sans
-     * (la que se fuerza cuando el mensaje trae emojis) mide 1.28 em frente al
-     * 1.02 de Helvetica, o sea un 25% mas por linea. Calcularlo con el tamano a
-     * secas hacia que un mensaje largo con emojis se diera por bueno y luego
-     * saliera cortado.
+     * Interlineado mas holgado con el que el texto cabe a ese tamano, o null si
+     * no cabe ni con el mas apretado.
      */
-    private function lineHeightPt(int $size, string $font): float
+    private function lineHeightThatFits(string $text, int $size, float $widthPt, float $heightPt, string $font): ?float
     {
-        $metrics = $this->fontMetrics();
+        $lines = $this->countWrappedLines($text, $size, $widthPt, $font);
+        $fontHeight = $this->fontHeightPt($size, $font);
 
-        if ($metrics !== null) {
-            $fontFile = $metrics->getFont($this->fontMetricsFamily($font)) ?: $metrics->getFont('helvetica');
-
-            if ($fontFile !== null) {
-                return self::LINE_HEIGHT * (float) $metrics->getFontHeight($fontFile, $size);
+        foreach (self::LINE_HEIGHTS as $lineHeight) {
+            if ($lines * $lineHeight * $fontHeight <= $heightPt) {
+                return $lineHeight;
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Limpia lo que solo gasta espacio: los mensajes pegados desde el movil
+     * llegan con lineas en blanco de sobra y espacios repetidos que se comen
+     * varias lineas de la caja sin aportar nada.
+     */
+    private function normalizeMessage(string $text): string
+    {
+        $text = preg_replace('/\R/u', "\n", $text) ?? $text;
+        $text = preg_replace('/[ \t]+/u', ' ', $text) ?? $text;
+        $text = preg_replace('/ *\n */u', "\n", $text) ?? $text;
+        // Como mucho una linea en blanco seguida.
+        $text = preg_replace('/\n{3,}/u', "\n\n", $text) ?? $text;
+
+        return trim($text);
+    }
+
+    /**
+     * Alto de una linea sin contar el interlineado. DomPDF no usa el tamano de
+     * letra sino la altura real de la fuente, y ahi cada familia manda: DejaVu
+     * Sans (la que se fuerza cuando el mensaje trae emojis) mide 1.28 em frente
+     * al 1.02 de Helvetica, o sea un 25% mas por linea.
+     */
+    private function fontHeightPt(int $size, string $font): float
+    {
+        $metrics = $this->fontMetrics();
+        $fontFile = $this->fontFileFor($font);
+
+        if ($metrics !== null && $fontFile !== null) {
+            return (float) $metrics->getFontHeight($fontFile, $size);
+        }
+
         // Sin metricas, se asume una fuente alta para no pasarse de optimista.
-        return self::LINE_HEIGHT * 1.3 * $size;
+        return 1.3 * $size;
+    }
+
+    /**
+     * Interlineado como multiplo del tamano de letra, que es lo que entienden
+     * tanto el CSS de la plantilla del PDF como el del navegador.
+     */
+    private function lineHeightRatio(string $font, float $lineHeight): float
+    {
+        return round($lineHeight * $this->fontHeightPt(100, $font) / 100, 3);
     }
 
     /**
      * Cuenta las lineas que ocupa el texto al ajustarlo al ancho de la caja,
      * respetando los saltos de linea que traiga el mensaje.
+     *
+     * El ancho se lleva acumulado palabra a palabra en vez de medir la linea
+     * entera en cada paso: medir el candidato completo hacia el coste
+     * cuadratico y un mensaje de 4.000 caracteres costaba 350 ms, que en un
+     * lote de 100 pedidos son mas de 30 segundos bloqueando la peticion.
      */
     private function countWrappedLines(string $text, int $size, float $maxWidthPt, string $font): int
     {
         $lines = 0;
+        $spaceWidth = $this->measureWidth(' ', $size, $font);
 
         foreach (preg_split('/\R/u', $text) ?: [] as $paragraph) {
             $words = preg_split('/\s+/u', trim($paragraph), -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -254,14 +471,15 @@ class GiftMessagePdfService
                 continue;
             }
 
-            $current = '';
+            $current = 0.0;
 
             foreach ($words as $word) {
-                $candidate = $current === '' ? $word : $current.' '.$word;
+                $wordWidth = $this->measureWidth($word, $size, $font);
+                $candidate = $current > 0.0 ? $current + $spaceWidth + $wordWidth : $wordWidth;
 
-                if ($current !== '' && $this->measureWidth($candidate, $size, $font) > $maxWidthPt) {
+                if ($current > 0.0 && $candidate > $maxWidthPt) {
                     $lines++;
-                    $current = $word;
+                    $current = $wordWidth;
 
                     continue;
                 }
@@ -270,7 +488,7 @@ class GiftMessagePdfService
             }
 
             // Una palabra sola mas ancha que la caja se parte en varias lineas.
-            $lines += max(1, (int) ceil($this->measureWidth($current, $size, $font) / $maxWidthPt));
+            $lines += max(1, (int) ceil($current / $maxWidthPt));
         }
 
         return max(1, $lines);
@@ -280,6 +498,9 @@ class GiftMessagePdfService
      * Ancho del texto en puntos. Los emojis no estan en la fuente: se imprimen
      * como <img> cuadrada de 0.8 * tamano (ver messageToHtml), asi que se miden
      * aparte y el resto de caracteres se mide con la fuente real.
+     *
+     * Se cachea por palabra: en un mensaje largo el mismo "de" o "la" se mide
+     * cientos de veces, y una vez por tamano y fuente basta.
      */
     private function measureWidth(string $text, int $size, string $font): float
     {
@@ -287,10 +508,16 @@ class GiftMessagePdfService
             return 0.0;
         }
 
+        $key = $font.'|'.$size.'|'.$text;
+
+        if (isset($this->widthCache[$key])) {
+            return $this->widthCache[$key];
+        }
+
         $emojis = preg_match_all(self::EMOJI_REGEX, $text);
         $plain = preg_replace(self::JOINER_REGEX, '', (string) preg_replace(self::EMOJI_REGEX, '', $text)) ?? '';
 
-        return $this->measurePlainWidth($plain, $size, $font) + ($emojis * $size * 0.8);
+        return $this->widthCache[$key] = $this->measurePlainWidth($plain, $size, $font) + ($emojis * $size * 0.8);
     }
 
     private function measurePlainWidth(string $text, int $size, string $font): float
@@ -300,19 +527,32 @@ class GiftMessagePdfService
         }
 
         $metrics = $this->fontMetrics();
+        $fontFile = $this->fontFileFor($font);
 
-        if ($metrics !== null) {
-            $family = $this->fontMetricsFamily($font);
-            $fontFile = $metrics->getFont($family) ?: $metrics->getFont('helvetica');
-
-            if ($fontFile !== null) {
-                return (float) $metrics->getTextWidth($text, $fontFile, $size);
-            }
+        if ($metrics !== null && $fontFile !== null) {
+            return (float) $metrics->getTextWidth($text, $fontFile, $size);
         }
 
         // Sin metricas (DomPDF sin inicializar): media conservadora de ~0.5 em
         // por caracter, que para Helvetica se queda algo por encima de lo real.
         return mb_strlen($text) * $size * 0.5;
+    }
+
+    private function fontFileFor(string $font): ?string
+    {
+        if (array_key_exists($font, $this->fontFileCache)) {
+            return $this->fontFileCache[$font];
+        }
+
+        $metrics = $this->fontMetrics();
+
+        if ($metrics === null) {
+            return $this->fontFileCache[$font] = null;
+        }
+
+        $file = $metrics->getFont($this->fontMetricsFamily($font)) ?: $metrics->getFont('helvetica');
+
+        return $this->fontFileCache[$font] = ($file ?: null);
     }
 
     /**
@@ -358,13 +598,16 @@ class GiftMessagePdfService
      * @param  array{w: float, h: float}  $size
      * @return array{left: float, top: float, width: float, height: float}
      */
-    private function box(GiftMessageConfig $config, string $slot, array $size): array
+    private function box(GiftMessageConfig $config, string $slot, array $size, array $override = []): array
     {
+        $widthPercent = isset($override['w']) ? (float) $override['w'] : (float) $config->{$slot.'_w'};
+        $heightPercent = isset($override['h']) ? (float) $override['h'] : (float) $config->{$slot.'_h'};
+
         return [
             'left' => $this->toMm((float) $config->{$slot.'_x'}, $size['w']),
             'top' => $this->toMm((float) $config->{$slot.'_y'}, $size['h']),
-            'width' => $this->toMm((float) $config->{$slot.'_w'}, $size['w']),
-            'height' => $this->toMm((float) $config->{$slot.'_h'}, $size['h']),
+            'width' => $this->toMm($widthPercent, $size['w']),
+            'height' => $this->toMm($heightPercent, $size['h']),
         ];
     }
 

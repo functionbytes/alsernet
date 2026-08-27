@@ -183,6 +183,18 @@
                                             @endif
                                         </td>
                                         <td>
+                                            @if(! empty($generation->warnings))
+                                                @php
+                                                    $recortados = collect($generation->warnings)->where('truncated', true);
+                                                @endphp
+                                                <small class="d-block gm-history-warning" title="{{ collect($generation->warnings)->pluck('order_number')->implode(', ') }}">
+                                                    @if($recortados->isNotEmpty())
+                                                        {{ $recortados->count() }} mensaje(s) recortado(s) al imprimir
+                                                    @else
+                                                        {{ count($generation->warnings) }} mensaje(s) con la letra reducida
+                                                    @endif
+                                                </small>
+                                            @endif
                                             <div class="small">{{ $generation->created_at->format('d/m/Y H:i') }}</div>
                                             <small class="text-muted">{{ $generation->created_at->diffForHumans() }}</small>
                                         </td>
@@ -379,6 +391,16 @@
     @include('core::components.delete')
 
 @endsection
+
+@push('css')
+<style>
+    /* Sin rojos: el aviso se marca con el verde oscuro de la paleta. */
+    .gm-history-warning {
+        color: #4f6b0a;
+        font-weight: 600;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

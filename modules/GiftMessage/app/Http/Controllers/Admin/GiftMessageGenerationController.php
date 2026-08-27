@@ -29,8 +29,9 @@ class GiftMessageGenerationController extends Controller
         $data = $request->validated();
 
         $pdfContent = $this->pdfService->generate($data['type'], $data['rows'])->output();
+        $warnings = $this->pdfService->lastWarnings();
 
-        $generation = $this->generationService->store($data['type'], $data['rows'], $pdfContent);
+        $generation = $this->generationService->store($data['type'], $data['rows'], $pdfContent, $warnings);
 
         // El panel dispara la generacion via AJAX (modal de accion masiva) y
         // abre el PDF ya guardado en una pestana nueva a traves de la ruta de
@@ -40,6 +41,8 @@ class GiftMessageGenerationController extends Controller
             return response()->json([
                 'success' => true,
                 'view_url' => route('giftmessage.history.view', $generation),
+                'download_url' => route('giftmessage.history.download', $generation),
+                'warnings' => $warnings,
             ]);
         }
 
@@ -87,12 +90,14 @@ class GiftMessageGenerationController extends Controller
         }
 
         $pdfContent = $this->pdfService->generate($generation->type, [$row])->output();
-        $new = $this->generationService->store($generation->type, [$row], $pdfContent);
+        $warnings = $this->pdfService->lastWarnings();
+        $new = $this->generationService->store($generation->type, [$row], $pdfContent, $warnings);
 
         return response()->json([
             'success' => true,
             'view_url' => route('giftmessage.history.view', $new),
             'order_number' => $orderNumber,
+            'warnings' => $warnings,
         ]);
     }
 

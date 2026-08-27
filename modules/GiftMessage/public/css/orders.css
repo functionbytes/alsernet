@@ -8,3 +8,14 @@
 #bulk-replace-warning {
     color: #7d9f10;
 }
+
+/* ── Aviso del tamano previsto en el listado de pedidos ──────────────────── */
+.gm-print-note {
+    color: #777777;
+}
+
+/* Sin rojos: se marca con el verde oscuro de la paleta. */
+.gm-print-note-alert {
+    color: #4f6b0a;
+    font-weight: 600;
+}

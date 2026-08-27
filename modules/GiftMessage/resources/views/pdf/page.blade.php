@@ -30,7 +30,12 @@
         padding: 0;
         text-align: center;
         vertical-align: middle;
+        /* El interlineado lo fija cada campo: cuando el mensaje no cabe se
+           aprieta antes de encoger la letra. */
         line-height: 1.2;
+        /* Una URL o una palabra kilometrica se parte en vez de salirse por el
+           lateral de la caja. */
+        word-wrap: break-word;
     }
     .field img {
         vertical-align: middle;
@@ -51,6 +56,7 @@
             height: {{ $page['t1']['height'] }}mm;
             font-family: {{ $page['t1']['font_family'] }};
             font-size: {{ $page['t1']['font_size'] }}pt;
+            line-height: {{ $page['t1']['line_height'] }};
             color: {{ $page['t1']['color'] }};
             opacity: {{ $page['t1']['opacity'] }};
         ">
@@ -66,6 +72,7 @@
             height: {{ $page['t2']['height'] }}mm;
             font-family: {{ $page['t2']['font_family'] }};
             font-size: {{ $page['t2']['font_size'] }}pt;
+            line-height: {{ $page['t2']['line_height'] }};
             color: {{ $page['t2']['color'] }};
             opacity: {{ $page['t2']['opacity'] }};
         ">

@@ -15,6 +15,7 @@ use Modules\GiftMessage\Models\GiftMessageConfig;
 use Modules\GiftMessage\Models\GiftMessageGeneration;
 use Modules\GiftMessage\Services\GiftMessageGenerationService;
 use Modules\GiftMessage\Services\GiftMessageOrderService;
+use Modules\GiftMessage\Services\GiftMessagePdfService;
 use Tests\TestCase;
 
 class GiftMessageGenerationTest extends TestCase
@@ -78,6 +79,10 @@ class GiftMessageGenerationTest extends TestCase
 
     public function test_envelope_pdf_prints_the_gift_message_and_not_the_recipient_name(): void
     {
+        // Este caso es el del sobre configurado para imprimir el mensaje; el
+        // que imprime el nombre tiene su propio test.
+        GiftMessageConfig::current()->update(['env_t1_content' => 'message']);
+
         Storage::fake('public');
 
         $captured = null;
@@ -593,6 +598,182 @@ class GiftMessageGenerationTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('giftmessage.history.regenerate', $generation), ['order_number' => '29394'])
             ->assertForbidden();
+    }
+
+    public function test_line_height_is_tightened_before_shrinking_the_letter(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['card_t1_font' => 'helvetica', 'card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'min_font_size' => 7]);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        // Un mensaje que se pasa por poco: debe caber apretando el interlineado,
+        // sin bajar tanto la letra como antes.
+        $mensaje = str_repeat('Muchas felicidades de parte de toda la familia y un abrazo enorme. ', 12);
+        $page = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], $config->fresh());
+
+        $this->assertLessThanOrEqual(1.2, $page['t1']['line_height']);
+        $this->assertGreaterThanOrEqual(8, $page['t1']['font_size']);
+    }
+
+    public function test_generation_reports_messages_that_do_not_fit(): void
+    {
+        Storage::fake('public');
+        GiftMessageConfig::current()->update(['card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'min_font_size' => 7]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'card',
+                'rows' => [
+                    ['id_order' => 1, 'gift_message' => 'Corto', 'npedidocli' => '11111'],
+                    ['id_order' => 2, 'gift_message' => str_repeat('Muchas felicidades de toda la familia. ', 120), 'npedidocli' => '22222'],
+                ],
+            ])
+            ->assertOk();
+
+        // El que no cabe ni al minimo sale marcado; el corto no genera aviso.
+        $warnings = collect($response->json('warnings'));
+
+        $this->assertCount(1, $warnings);
+        $this->assertSame('22222', $warnings->first()['order_number']);
+        $this->assertTrue($warnings->first()['truncated']);
+
+        // Y queda registrado en el historial, no solo en la respuesta.
+        $generation = GiftMessageGeneration::query()->latest('id')->first();
+        $this->assertSame('22222', $generation->warnings[0]['order_number']);
+    }
+
+    public function test_the_minimum_font_size_is_configurable(): void
+    {
+        $mensaje = str_repeat('Muchas felicidades de parte de toda la familia. ', 40);
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        GiftMessageConfig::current()->update(['card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'min_font_size' => 10]);
+        $conSueloAlto = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], GiftMessageConfig::current()->fresh());
+
+        GiftMessageConfig::current()->update(['min_font_size' => 6]);
+        $conSueloBajo = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], GiftMessageConfig::current()->fresh());
+
+        $this->assertSame(10, $conSueloAlto['t1']['font_size']);
+        $this->assertLessThan(10, $conSueloBajo['t1']['font_size']);
+    }
+
+    public function test_blank_lines_and_repeated_spaces_do_not_eat_the_box(): void
+    {
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'normalizeMessage');
+        $method->setAccessible(true);
+
+        $sucio = "Hola   mundo\n\n\n\n\nFeliz    cumpleanos   \n\n\n  ";
+
+        $this->assertSame("Hola mundo\n\nFeliz cumpleanos", $method->invoke($service, $sucio));
+    }
+
+    public function test_generation_rejects_absurdly_long_messages_and_huge_batches(): void
+    {
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'card',
+                'rows' => [['id_order' => 1, 'gift_message' => str_repeat('a', 5001), 'npedidocli' => '1']],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('rows.0.gift_message');
+    }
+
+    public function test_envelope_prints_the_recipient_name_and_the_card_the_message(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['env_t1_content' => 'recipient', 'card_t1_content' => 'message']);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        $order = [
+            'gift_message' => 'Feliz comunion Jaime',
+            'firstname' => 'Jorge',
+            'lastname' => 'Da Silva Orallo',
+            'npedidocli' => '29394',
+        ];
+
+        $sobre = $method->invoke($service, 'envelope', $order, $config->fresh());
+        $tarjeta = $method->invoke($service, 'card', $order, $config->fresh());
+
+        $this->assertStringContainsString('Jorge Da Silva Orallo', strip_tags($sobre['t1']['html']));
+        $this->assertStringNotContainsString('Feliz comunion', strip_tags($sobre['t1']['html']));
+        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($tarjeta['t1']['html']));
+    }
+
+    public function test_the_recipient_falls_back_to_the_message_when_there_is_no_name(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['env_t1_content' => 'recipient']);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        // Sin nombre no se imprime un sobre en blanco.
+        $sobre = $method->invoke($service, 'envelope', [
+            'gift_message' => 'Feliz comunion Jaime',
+            'firstname' => '',
+            'lastname' => '',
+            'npedidocli' => '29394',
+        ], $config->fresh());
+
+        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($sobre['t1']['html']));
+    }
+
+    public function test_the_file_name_says_the_order_and_the_piece(): void
+    {
+        Storage::fake('public');
+
+        $service = app(GiftMessageGenerationService::class);
+
+        $uno = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf');
+        $varios = $service->store('card', [
+            ['id_order' => 1, 'npedidocli' => '11111', 'gift_message' => 'Uno'],
+            ['id_order' => 2, 'npedidocli' => '22222', 'gift_message' => 'Dos'],
+        ], 'pdf');
+
+        // Con un pedido, el nombre lo identifica de un vistazo en la carpeta de
+        // descargas; con varios manda la cuenta y la fecha.
+        $this->assertSame('29394-sobre.pdf', $uno->file_name);
+        $this->assertStringStartsWith('tarjetas-2pedidos-', $varios->file_name);
+        $this->assertStringEndsWith('.pdf', $varios->file_name);
+    }
+
+    public function test_regenerating_does_not_delete_the_file_it_just_wrote(): void
+    {
+        Storage::fake('public');
+
+        $service = app(GiftMessageGenerationService::class);
+
+        $primera = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf viejo');
+        $segunda = $service->store('envelope', [['id_order' => 1, 'npedidocli' => '29394', 'gift_message' => 'Hola']], 'pdf nuevo');
+
+        // Mismo nombre de fichero para el mismo pedido y pieza: si se borrara la
+        // anterior DESPUES de escribir, el PDF recien creado desapareceria.
+        $this->assertDatabaseMissing('gift_message_generations', ['id' => $primera->id]);
+        Storage::disk('public')->assertExists($segunda->file_path);
+        $this->assertSame('pdf nuevo', Storage::disk('public')->get($segunda->file_path));
+    }
+
+    public function test_generate_returns_a_download_url(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs($this->admin)
+            ->postJson(route('giftmessage.generate'), [
+                'type' => 'card',
+                'rows' => [['id_order' => 1, 'gift_message' => 'Hola', 'npedidocli' => '1']],
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['success', 'view_url', 'download_url']);
     }
 
     public function test_user_without_permission_cannot_view_history(): void

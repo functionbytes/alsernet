@@ -32,7 +32,10 @@ Route::middleware(['web', 'auth'])
         Route::get('/', [GiftMessageConfigController::class, 'index'])->name('index');
         Route::post('/images', [GiftMessageConfigController::class, 'uploadImages'])->name('images.store');
         Route::post('/typography', [GiftMessageConfigController::class, 'saveFonts'])->name('typography.update');
+        Route::post('/limits', [GiftMessageConfigController::class, 'saveLimits'])->name('limits.update');
+        Route::post('/content', [GiftMessageConfigController::class, 'saveContent'])->name('content.update');
         Route::post('/positions', [GiftMessageConfigController::class, 'savePositions'])->name('positions.save');
+        Route::post('/preview-metrics', [GiftMessageConfigController::class, 'previewMetrics'])->name('preview.metrics');
 
         Route::post('/fonts', [GiftMessageFontController::class, 'store'])->name('fonts.store');
         Route::delete('/fonts/{font}', [GiftMessageFontController::class, 'destroy'])->name('fonts.destroy');

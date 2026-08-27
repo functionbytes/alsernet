@@ -12,9 +12,9 @@ class GiftMessageGenerationService
 
     private const FOLDER = 'giftmessage/generated';
 
-    private const FILE_PREFIXES = [
-        'envelope' => 'sobres',
-        'card' => 'tarjetas',
+    private const FILE_LABELS = [
+        'envelope' => 'sobre',
+        'card' => 'tarjeta',
     ];
 
     /**
@@ -23,21 +23,26 @@ class GiftMessageGenerationService
      *                                                  cada una para poder identificar el contenido despues,
      *                                                  sin tener que abrir el PDF.
      */
-    public function store(string $type, array $rows, string $pdfContent): GiftMessageGeneration
+    public function store(string $type, array $rows, string $pdfContent, array $warnings = []): GiftMessageGeneration
     {
-        $fileName = self::FILE_PREFIXES[$type].'_'.now()->format('Ymd_His').'.pdf';
+        $orderNumbers = $this->extractOrderNumbers($rows);
+
+        // Antes de escribir: si el fichero nuevo se llama igual que el que va a
+        // sustituir (mismo pedido y mismo tipo), borrar despues se llevaria por
+        // delante el recien creado.
+        $this->deleteSupersededBy($type, $orderNumbers);
+
+        $fileName = $this->fileNameFor($type, $orderNumbers);
         $path = self::FOLDER.'/'.$fileName;
 
         Storage::disk(self::DISK)->put($path, $pdfContent);
-
-        $orderNumbers = $this->extractOrderNumbers($rows);
-        $this->deleteSupersededBy($type, $orderNumbers);
 
         return GiftMessageGeneration::query()->create([
             'type' => $type,
             'rows_count' => count($rows),
             'order_numbers' => $orderNumbers,
             'rows' => $this->printableRows($rows),
+            'warnings' => $warnings ?: null,
             'file_path' => $path,
             'file_name' => $fileName,
             'generated_by' => auth()->id(),
@@ -76,6 +81,39 @@ class GiftMessageGenerationService
 
                 $this->delete($previous);
             });
+    }
+
+    /**
+     * Nombre con el que se descarga el PDF. Se busca que en la carpeta de
+     * descargas se distinga de un vistazo de que pedido y de que pieza es:
+     * "29394-sobre.pdf" en vez de "sobres_20260826_143000.pdf". Con varios
+     * pedidos manda la cuenta y la fecha, que es lo unico que los distingue.
+     *
+     * @param  array<int, string>  $orderNumbers
+     */
+    private function fileNameFor(string $type, array $orderNumbers): string
+    {
+        $piece = self::FILE_LABELS[$type];
+
+        $base = count($orderNumbers) === 1
+            ? $this->slug($orderNumbers[0]).'-'.$piece
+            : $piece.'s-'.count($orderNumbers).'pedidos-'.now()->format('Ymd-His');
+
+        $name = $base.'.pdf';
+        $suffix = 2;
+
+        // Dos generaciones del mismo pedido que no se sustituyen (por ejemplo,
+        // una suelta y otra dentro de un lote) no pueden pisarse el fichero.
+        while (Storage::disk(self::DISK)->exists(self::FOLDER.'/'.$name)) {
+            $name = $base.'-'.$suffix++.'.pdf';
+        }
+
+        return $name;
+    }
+
+    private function slug(string $value): string
+    {
+        return preg_replace('/[^A-Za-z0-9_-]/', '', $value) ?: 'pedido';
     }
 
     /**
