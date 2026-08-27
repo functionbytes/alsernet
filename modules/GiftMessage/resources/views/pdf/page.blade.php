@@ -37,8 +37,16 @@
            lateral de la caja. */
         word-wrap: break-word;
     }
-    .field img {
-        vertical-align: middle;
+    /* Emojis: no estan en la fuente, se pintan como <img> (ver
+       GiftMessagePdfService::messageToHtml). El tamano va en em para que siga
+       al de la letra —los atributos width/height del <img> los interpreta
+       DomPDF en px, asi que el emoji salia a 0.6em en vez de 0.8em— y el
+       vertical-align negativo lo baja al centro optico de la linea: con
+       'middle' DomPDF lo dejaba flotando por encima del texto. */
+    .field img.emoji {
+        width: 0.8em;
+        height: 0.8em;
+        vertical-align: -0.1em;
     }
 </style>
 </head>

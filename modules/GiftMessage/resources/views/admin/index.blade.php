@@ -127,6 +127,10 @@
                 {{-- Pantalla 2: PDF generados --}}
                 <div class="modal-body d-none" id="bulk-step-result">
                     <p class="text-muted mb-0" id="bulk-result-text">PDF generado correctamente. Abrelo desde el boton de abajo; se abre en una pestana nueva.</p>
+                    {{-- Aviso de caracteres que ninguna fuente instalada sabe
+                         pintar: se deja fijo en el modal, no solo en un toast,
+                         para que se vea antes de abrir el PDF e imprimirlo. --}}
+                    <div class="alert alert-warning mt-3 mb-0 d-none" id="bulk-result-unprintable"></div>
                 </div>
 
                 <div class="modal-footer" id="bulk-step-form-footer">

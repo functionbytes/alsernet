@@ -99,6 +99,12 @@ class GiftMessagePdfService
             'fontFaceCss' => $this->fontService->fontFaceCss(forPdf: true),
         ]);
 
+        // Sin esto DomPDF embebe la fuente entera: una fuente china son 10 MB en
+        // CADA PDF de una tarjeta de dos lineas. Con el subconjunto solo viajan
+        // los glifos usados y el mismo PDF baja de 19 MB a 6 KB. Se activa aqui
+        // y no en la config global para no cambiar el resto de PDF de la app.
+        $pdf->setOption('enable_font_subsetting', true);
+
         // No pasar 'landscape' aqui: DomPDF invierte ancho/alto del array custom
         // cuando la orientacion es 'landscape', aunque el array ya sea apaisado
         // (ancho > alto), dejando la pagina en vertical. El array ya viene con el
@@ -130,8 +136,8 @@ class GiftMessagePdfService
             'gift_message' => $message,
             'firstname' => $recipient,
         ], $config));
-        $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
-        $t2Font = $config->{$prefix.'_t2_font'};
+        $t1Font = $this->resolveFont($message, $config->{$prefix.'_t1_font'})['font'];
+        $t2Font = $this->resolveFont($orderNumber, $config->{$prefix.'_t2_font'})['font'];
 
         $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $this->box($config, $prefix.'_t1', $size, $boxes['t1'] ?? []), $t1Font, $minSize);
         $t2Fit = $this->fitText($orderNumber, (int) $config->{$prefix.'_t2_size'}, $this->box($config, $prefix.'_t2', $size, $boxes['t2'] ?? []), $t2Font, $minSize);
@@ -225,7 +231,8 @@ class GiftMessagePdfService
         $minSize = $this->minFontSize($config);
 
         $message = $this->normalizeMessage($this->t1Text($type, $order, $config));
-        $t1Font = $this->containsEmoji($message) ? 'dejavusans' : $config->{$prefix.'_t1_font'};
+        $t1Choice = $this->resolveFont($message, $config->{$prefix.'_t1_font'});
+        $t1Font = $t1Choice['font'];
         $t1Box = $this->box($config, $prefix.'_t1', $size);
 
         // El tamano configurado es el maximo: si el mensaje no cabe se aprieta
@@ -233,15 +240,15 @@ class GiftMessagePdfService
         $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $t1Box, $t1Font, $minSize);
 
         $t2Text = (string) ($order['npedidocli'] ?? '');
-        $t2Font = $config->{$prefix.'_t2_font'};
+        $t2Font = $this->resolveFont($t2Text, $config->{$prefix.'_t2_font'})['font'];
         $t2Box = $this->box($config, $prefix.'_t2', $size);
         $t2Fit = $this->fitText($t2Text, (int) $config->{$prefix.'_t2_size'}, $t2Box, $t2Font, $minSize);
 
-        $this->collectWarning($type, $order, $message, $t1Fit, $minSize, (int) $config->{$prefix.'_t1_size'});
+        $this->collectWarning($type, $order, $message, $t1Fit, $minSize, (int) $config->{$prefix.'_t1_size'}, $t1Choice['missing']);
 
         return [
             't1' => [
-                'html' => $this->messageToHtml($message, $t1Fit['size']),
+                'html' => $this->messageToHtml($message),
                 'font_family' => $this->fontStack($t1Font),
                 'font_size' => $t1Fit['size'],
                 'line_height' => $t1Fit['line_height'],
@@ -285,14 +292,19 @@ class GiftMessagePdfService
     /**
      * Anota los mensajes que no salen como deberian, para que quien imprime se
      * entere: hasta ahora la caja recortaba lo que sobraba en silencio y el
-     * cliente recibia la tarjeta con la frase a medias.
+     * cliente recibia la tarjeta con la frase a medias. Lo mismo vale para los
+     * caracteres que ninguna fuente instalada sabe pintar (los chinos, sin ir
+     * mas lejos), que salen como cuadros vacios.
      *
      * @param  array<string, mixed>  $order
      * @param  array{size: int, line_height: float, fits: bool}  $fit
+     * @param  array<int, string>  $missing  Caracteres que no se van a imprimir.
      */
-    private function collectWarning(string $type, array $order, string $message, array $fit, int $minSize, int $configuredSize): void
+    private function collectWarning(string $type, array $order, string $message, array $fit, int $minSize, int $configuredSize, array $missing = []): void
     {
-        if ($message === '' || ($fit['fits'] && $fit['size'] >= $configuredSize)) {
+        $tooSmall = $message !== '' && ! ($fit['fits'] && $fit['size'] >= $configuredSize);
+
+        if (! $tooSmall && $missing === []) {
             return;
         }
 
@@ -304,9 +316,79 @@ class GiftMessagePdfService
             'font_size' => $fit['size'],
             'configured_size' => $configuredSize,
             'min_font_size' => $minSize,
-            'truncated' => ! $fit['fits'],
+            'truncated' => $tooSmall && ! $fit['fits'],
+            'reduced' => $tooSmall && $fit['fits'],
+            'unprintable' => implode('', $missing),
             'length' => mb_strlen($message),
         ];
+    }
+
+    /**
+     * Fuente con la que se imprime un texto y los caracteres que se van a perder.
+     *
+     * DomPDF no avisa de un glifo que le falta: lo dibuja como cuadro vacio, que
+     * es lo que pasaba con los mensajes en chino. Asi que si la fuente elegida no
+     * cubre el texto se busca entre las subidas una que si, y si ninguna puede se
+     * devuelven los caracteres afectados para avisar a quien imprime.
+     *
+     * @return array{font: string, missing: array<int, string>}
+     */
+    private function resolveFont(string $text, string $configured): array
+    {
+        // Con emojis se sigue prefiriendo DejaVu Sans: los mensajes que los traen
+        // suelen venir con simbolos y comillas raras que las Base-14 no tienen.
+        $font = $this->containsEmoji($text) ? 'dejavusans' : $configured;
+        $missing = $this->unprintableCharacters($text, $font);
+
+        if ($missing === []) {
+            return ['font' => $font, 'missing' => []];
+        }
+
+        $codepoints = array_map(fn (string $char) => mb_ord($char, 'UTF-8'), $this->printableCharacters($text));
+        $alternative = $this->fontService->familiesSupporting(array_values(array_filter($codepoints, fn ($cp) => $cp !== false)))[0] ?? null;
+
+        if ($alternative !== null) {
+            return ['font' => $alternative, 'missing' => []];
+        }
+
+        return ['font' => $font, 'missing' => $missing];
+    }
+
+    /**
+     * Caracteres del texto que la fuente no sabe pintar. Los emojis no cuentan:
+     * se imprimen como imagen (ver messageToHtml), igual que los espacios y los
+     * saltos de linea, que no llevan glifo visible.
+     *
+     * @return array<int, string>
+     */
+    private function unprintableCharacters(string $text, string $font): array
+    {
+        $missing = [];
+
+        foreach ($this->printableCharacters($text) as $char) {
+            $codepoint = mb_ord($char, 'UTF-8');
+
+            if ($codepoint === false || $this->fontService->supportsCodepoint($font, $codepoint)) {
+                continue;
+            }
+
+            $missing[$char] = $char;
+        }
+
+        return array_values($missing);
+    }
+
+    /**
+     * Caracteres del texto que necesitan glifo de la fuente.
+     *
+     * @return array<int, string>
+     */
+    private function printableCharacters(string $text): array
+    {
+        $plain = preg_replace(self::JOINER_REGEX, '', (string) preg_replace(self::EMOJI_REGEX, '', $text)) ?? '';
+        $plain = preg_replace('/\s+/u', '', $plain) ?? '';
+
+        return preg_split('//u', $plain, -1, PREG_SPLIT_NO_EMPTY) ?: [];
     }
 
     /**
@@ -637,9 +719,14 @@ class GiftMessagePdfService
         return $stacks[$font] ?? GiftMessageFontService::BUILTIN_STACKS['helvetica'];
     }
 
-    private function messageToHtml(string $message, int $fontSize): string
+    /**
+     * El tamano y la alineacion del emoji los fija la clase .emoji de la
+     * plantilla en em, para que sigan al tamano de letra de cada pieza sin
+     * calcularlos aqui (los atributos width/height del <img> los interpreta
+     * DomPDF en px y el emoji salia mas pequeno de lo medido).
+     */
+    private function messageToHtml(string $message): string
     {
-        $emojiSize = max(8, (int) round($fontSize * 0.8));
         $html = '';
 
         foreach ($this->splitGraphemes($message) as $grapheme) {
@@ -650,7 +737,7 @@ class GiftMessagePdfService
             $base64 = $this->containsEmoji($grapheme) ? $this->emojiImageBase64($grapheme) : null;
 
             $html .= $base64
-                ? '<img src="data:image/png;base64,'.$base64.'" width="'.$emojiSize.'" height="'.$emojiSize.'">'
+                ? '<img class="emoji" src="data:image/png;base64,'.$base64.'">'
                 : e($grapheme);
         }
 
