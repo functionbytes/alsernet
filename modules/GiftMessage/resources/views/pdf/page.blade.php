@@ -27,9 +27,13 @@
         border-collapse: collapse;
     }
     .field td {
+        /* La alineacion, el aire interior y el interlineado los fija cada campo. */
         padding: 0;
         text-align: center;
         vertical-align: middle;
+        /* Una URL o una palabra kilometrica se parte en vez de salirse por el
+           lateral de la caja. */
+        word-wrap: break-word;
         /* El interlineado lo fija cada campo: cuando el mensaje no cabe se
            aprieta antes de encoger la letra. */
         line-height: 1.2;
@@ -76,7 +80,12 @@
             opacity: {{ $page['t1']['opacity'] }};
         ">
             <table>
-                <tr><td style="height: {{ $page['t1']['height'] }}mm;">{!! $page['t1']['html'] !!}</td></tr>
+                <tr><td style="
+                    height: {{ $page['t1']['height'] }}mm;
+                    text-align: {{ $page['t1']['align'] ?? 'center' }};
+                    vertical-align: {{ $page['t1']['valign'] ?? 'middle' }};
+                    padding: {{ $page['t1']['padding'] ?? 0 }}pt;
+                ">{!! $page['t1']['html'] !!}</td></tr>
             </table>
         </div>
 
@@ -92,7 +101,12 @@
             opacity: {{ $page['t2']['opacity'] }};
         ">
             <table>
-                <tr><td style="height: {{ $page['t2']['height'] }}mm;">{{ $page['t2']['text'] }}</td></tr>
+                <tr><td style="
+                    height: {{ $page['t2']['height'] }}mm;
+                    text-align: {{ $page['t2']['align'] ?? 'center' }};
+                    vertical-align: {{ $page['t2']['valign'] ?? 'middle' }};
+                    padding: {{ $page['t2']['padding'] ?? 0 }}pt;
+                ">{{ $page['t2']['text'] }}</td></tr>
             </table>
         </div>
     </div>

@@ -70,17 +70,37 @@ class GiftMessageConfigController extends Controller
     {
         $this->authorize('update', GiftMessageConfig::class);
 
-        $validated = $request->validate([
+        $aligns = implode(',', array_keys(GiftMessagePdfService::ALIGNMENTS));
+        $valigns = implode(',', array_keys(GiftMessagePdfService::VERTICAL_ALIGNMENTS));
+
+        $rules = [
             'scope' => ['required', 'string', 'in:envelope,card'],
             'env_t1_content' => ['nullable', 'string', 'in:message,recipient'],
             'card_t1_content' => ['nullable', 'string', 'in:message,recipient'],
-        ]);
+        ];
 
-        $column = ($validated['scope'] === 'card' ? 'card' : 'env').'_t1_content';
+        foreach (['env', 'card'] as $piece) {
+            foreach (['t1', 't2'] as $slot) {
+                $rules["{$piece}_{$slot}_align"] = ['nullable', 'string', 'in:'.$aligns];
+                $rules["{$piece}_{$slot}_valign"] = ['nullable', 'string', 'in:'.$valigns];
+            }
+        }
 
-        $this->configService->current()->update([
-            $column => $validated[$column] ?? GiftMessagePdfService::CONTENT_MESSAGE,
-        ]);
+        $validated = $request->validate($rules);
+
+        $piece = $validated['scope'] === 'card' ? 'card' : 'env';
+        $update = [
+            $piece.'_t1_content' => $validated[$piece.'_t1_content'] ?? GiftMessagePdfService::CONTENT_MESSAGE,
+        ];
+
+        // Solo se tocan las columnas de la pieza que envia el formulario: cada
+        // una tiene el suyo y no debe pisar a la otra.
+        foreach (['t1', 't2'] as $slot) {
+            $update["{$piece}_{$slot}_align"] = $validated["{$piece}_{$slot}_align"] ?? 'center';
+            $update["{$piece}_{$slot}_valign"] = $validated["{$piece}_{$slot}_valign"] ?? 'middle';
+        }
+
+        $this->configService->current()->update($update);
 
         return redirect()
             ->route('settings.giftmessage.index')
@@ -94,9 +114,11 @@ class GiftMessageConfigController extends Controller
         $validated = $request->validate([
             'min_font_size' => ['required', 'integer', 'min:5', 'max:72'],
             'max_message_length' => ['required', 'integer', 'min:50', 'max:5000'],
+            'paragraph_spacing' => ['required', 'numeric', 'min:0', 'max:2'],
         ], [
             'min_font_size.min' => 'Por debajo de 5 pt no se lee nada impreso.',
             'max_message_length.max' => 'El tope son 5.000 caracteres.',
+            'paragraph_spacing.max' => 'Como mucho el doble del tamano de letra.',
         ]);
 
         $this->configService->current()->update($validated);
@@ -130,6 +152,7 @@ class GiftMessageConfigController extends Controller
             'order' => ['nullable', 'string', 'max:50'],
             'recipient' => ['nullable', 'string', 'max:120'],
             'boxes' => ['nullable', 'array'],
+            'aligns' => ['nullable', 'array'],
             'boxes.*.*.w' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'boxes.*.*.h' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
@@ -140,9 +163,11 @@ class GiftMessageConfigController extends Controller
 
         $recipient = (string) ($validated['recipient'] ?? '');
 
+        $aligns = $validated['aligns'] ?? [];
+
         return response()->json([
-            'envelope' => $pdfService->previewMetrics('envelope', $message, $order, $boxes['envelope'] ?? [], $recipient),
-            'card' => $pdfService->previewMetrics('card', $message, $order, $boxes['card'] ?? [], $recipient),
+            'envelope' => $pdfService->previewMetrics('envelope', $message, $order, $boxes['envelope'] ?? [], $recipient, $aligns['envelope'] ?? []),
+            'card' => $pdfService->previewMetrics('card', $message, $order, $boxes['card'] ?? [], $recipient, $aligns['card'] ?? []),
         ]);
     }
 

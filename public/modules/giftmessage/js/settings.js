@@ -173,6 +173,23 @@
         return boxes;
     }
 
+    // Alineaciones tal como estan en los selectores, para que la vista previa
+    // reaccione sin necesidad de guardar.
+    function currentAligns() {
+        var aligns = { envelope: {}, card: {} };
+
+        $('.giftmessage-align-select').each(function () {
+            var $select = $(this);
+            var scope = $select.data('scope');
+            var slot = $select.data('slot');
+
+            aligns[scope][slot] = aligns[scope][slot] || {};
+            aligns[scope][slot][$select.data('axis') === 'v' ? 'valign' : 'align'] = $select.val();
+        });
+
+        return aligns;
+    }
+
     function refreshPreviewMetrics() {
         var config = window.GIFTMESSAGE_SETTINGS;
 
@@ -190,6 +207,7 @@
                     order: $('#preview-order').val(),
                     recipient: $('#preview-recipient').val(),
                     boxes: currentBoxes(),
+                    aligns: currentAligns(),
                 }),
                 contentType: 'application/json',
                 dataType: 'json',
@@ -199,10 +217,19 @@
                         Object.keys(response[scope]).forEach(function (slot) {
                             var metrics = response[scope][slot];
 
+                            // La caja del editor es flex: la alineacion horizontal
+                            // va por justify-content y la vertical por align-items,
+                            // que es como se pinta el equivalente del PDF.
+                            var JUSTIFY = { left: 'flex-start', center: 'center', right: 'flex-end' };
+                            var ALIGN = { top: 'flex-start', middle: 'center', bottom: 'flex-end' };
+
                             $('#canvas-' + scope + ' [data-slot="' + slot + '"]').css({
                                 fontFamily: metrics.font_family,
                                 fontSize: ptToCanvasPx(metrics.font_size, scope) + 'px',
                                 lineHeight: metrics.line_height || 1.2,
+                                textAlign: metrics.align || 'center',
+                                justifyContent: JUSTIFY[metrics.align] || 'center',
+                                alignItems: ALIGN[metrics.valign] || 'center',
                             });
                         });
 
@@ -623,6 +650,7 @@
 
         $('#preview-message, #preview-order, #preview-recipient').on('input', applySampleText);
         $('.giftmessage-content-select').on('change', applySampleText);
+        $('.giftmessage-align-select').on('change', refreshPreviewMetrics);
 
         $('#save-positions-envelope').on('click', function () {
             savePositions('envelope', $(this));

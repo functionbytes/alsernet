@@ -104,8 +104,8 @@
                     <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
                         @csrf
                         <input type="hidden" name="scope" value="envelope">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-xl-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-4">
                                 <label class="form-label fw-bold" for="env_t1_content">Que se imprime en T1</label>
                                 <select class="form-select giftmessage-content-select" id="env_t1_content"
                                         name="env_t1_content" data-scope="envelope">
@@ -114,8 +114,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-xl-6">
-                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            @foreach(['t1' => 'T1 (texto principal)', 't2' => 'T2 (numero)'] as $slot => $slotLabel)
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="env_{{ $slot }}_align">{{ $slotLabel }}: horizontal</label>
+                                    <select class="form-select giftmessage-align-select" id="env_{{ $slot }}_align"
+                                            name="env_{{ $slot }}_align" data-scope="envelope" data-slot="{{ $slot }}" data-axis="h">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'env_'.$slot.'_align'} ?? 'center') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="env_{{ $slot }}_valign">{{ $slotLabel }}: vertical</label>
+                                    <select class="form-select giftmessage-align-select" id="env_{{ $slot }}_valign"
+                                            name="env_{{ $slot }}_valign" data-scope="envelope" data-slot="{{ $slot }}" data-axis="v">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::VERTICAL_ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'env_'.$slot.'_valign'} ?? 'middle') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido y alineacion</button>
                             </div>
                         </div>
                     </form>
@@ -264,8 +284,8 @@
                     <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
                         @csrf
                         <input type="hidden" name="scope" value="card">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-xl-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-4">
                                 <label class="form-label fw-bold" for="card_t1_content">Que se imprime en T1</label>
                                 <select class="form-select giftmessage-content-select" id="card_t1_content"
                                         name="card_t1_content" data-scope="card">
@@ -274,8 +294,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-xl-6">
-                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            @foreach(['t1' => 'T1 (texto principal)', 't2' => 'T2 (numero)'] as $slot => $slotLabel)
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="card_{{ $slot }}_align">{{ $slotLabel }}: horizontal</label>
+                                    <select class="form-select giftmessage-align-select" id="card_{{ $slot }}_align"
+                                            name="card_{{ $slot }}_align" data-scope="card" data-slot="{{ $slot }}" data-axis="h">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'card_'.$slot.'_align'} ?? 'center') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="card_{{ $slot }}_valign">{{ $slotLabel }}: vertical</label>
+                                    <select class="form-select giftmessage-align-select" id="card_{{ $slot }}_valign"
+                                            name="card_{{ $slot }}_valign" data-scope="card" data-slot="{{ $slot }}" data-axis="v">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::VERTICAL_ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'card_'.$slot.'_valign'} ?? 'middle') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido y alineacion</button>
                             </div>
                         </div>
                     </form>
@@ -381,7 +421,7 @@
                 <form action="{{ route('settings.giftmessage.limits.update') }}" method="POST">
                     @csrf
                     <div class="row g-3 mb-3">
-                        <div class="col-12 col-xl-6">
+                        <div class="col-12 col-xl-4">
                             <label class="form-label fw-bold" for="min_font_size">Tamano minimo de letra (pt)</label>
                             <input type="number" class="form-control" id="min_font_size" name="min_font_size"
                                    min="5" max="72" value="{{ old('min_font_size', $config->min_font_size) }}">
@@ -393,7 +433,19 @@
                                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="col-12 col-xl-6">
+                        <div class="col-12 col-xl-4">
+                            <label class="form-label fw-bold" for="paragraph_spacing">Aire entre parrafos</label>
+                            <input type="number" step="0.05" min="0" max="2" class="form-control"
+                                   id="paragraph_spacing" name="paragraph_spacing"
+                                   value="{{ old('paragraph_spacing', $config->paragraph_spacing) }}">
+                            <small class="form-text text-muted">
+                                En fracciones del tamano de letra. 0,35 deja un aire discreto; 0 pega los parrafos.
+                            </small>
+                            @error('paragraph_spacing')
+                                <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="col-12 col-xl-4">
                             <label class="form-label fw-bold" for="max_message_length">Longitud a partir de la que avisar (caracteres)</label>
                             <input type="number" class="form-control" id="max_message_length" name="max_message_length"
                                    min="50" max="5000" value="{{ old('max_message_length', $config->max_message_length) }}">

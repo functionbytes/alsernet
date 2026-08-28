@@ -45,6 +45,15 @@ class GiftMessageGenerationTest extends TestCase
         GiftMessageConfig::query()->firstOrCreate(['id' => 1]);
     }
 
+    /**
+     * Texto plano de lo que se imprime: sin etiquetas y con los espacios duros
+     * (los que evitan la palabra suelta al final) como espacios normales.
+     */
+    private function plainText(string $html): string
+    {
+        return str_replace("\u{00A0}", ' ', strip_tags($html));
+    }
+
     public function test_generating_envelope_pdf_records_it_in_history(): void
     {
         Storage::fake('public');
@@ -105,9 +114,10 @@ class GiftMessageGenerationTest extends TestCase
             ->assertOk();
 
         $this->assertNotNull($captured, 'La vista del PDF no llego a renderizarse.');
-        // El mensaje va envuelto en un bloque por parrafo, asi que se busca el
-        // texto dentro del HTML en vez de compararlo entero.
-        $this->assertStringContainsString('Feliz comunion Jaime', $captured['pages'][0]['t1']['html']);
+        // El mensaje va envuelto en un bloque por parrafo y las dos ultimas
+        // palabras van unidas por un espacio duro (para que no quede una sola
+        // palabra en el ultimo renglon), asi que se normaliza antes de comparar.
+        $this->assertStringContainsString('Feliz comunion Jaime', $this->plainText($captured['pages'][0]['t1']['html']));
         $this->assertStringNotContainsString('Jorge', $captured['pages'][0]['t1']['html']);
         $this->assertSame('29394', $captured['pages'][0]['t2']['text']);
     }
@@ -142,7 +152,8 @@ class GiftMessageGenerationTest extends TestCase
 
         // 10% de los 110mm de alto del sobre.
         $this->assertSame(11.0, $captured['pages'][0]['t1']['top']);
-        $this->assertSame(30, $captured['pages'][0]['t1']['font_size']);
+        // El tamano puede llevar medio punto desde que el ajuste va en pasos de 0,5.
+        $this->assertSame(30.0, $captured['pages'][0]['t1']['font_size']);
         $this->assertStringContainsString('Times', $captured['pages'][0]['t1']['font_family']);
     }
 
@@ -660,7 +671,7 @@ class GiftMessageGenerationTest extends TestCase
         GiftMessageConfig::current()->update(['min_font_size' => 6]);
         $conSueloBajo = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], GiftMessageConfig::current()->fresh());
 
-        $this->assertSame(10, $conSueloAlto['t1']['font_size']);
+        $this->assertSame(10.0, $conSueloAlto['t1']['font_size']);
         $this->assertLessThan(10, $conSueloBajo['t1']['font_size']);
     }
 
@@ -705,9 +716,9 @@ class GiftMessageGenerationTest extends TestCase
         $sobre = $method->invoke($service, 'envelope', $order, $config->fresh());
         $tarjeta = $method->invoke($service, 'card', $order, $config->fresh());
 
-        $this->assertStringContainsString('Jorge Da Silva Orallo', strip_tags($sobre['t1']['html']));
-        $this->assertStringNotContainsString('Feliz comunion', strip_tags($sobre['t1']['html']));
-        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($tarjeta['t1']['html']));
+        $this->assertStringContainsString('Jorge Da Silva Orallo', $this->plainText($sobre['t1']['html']));
+        $this->assertStringNotContainsString('Feliz comunion', $this->plainText($sobre['t1']['html']));
+        $this->assertStringContainsString('Feliz comunion Jaime', $this->plainText($tarjeta['t1']['html']));
     }
 
     public function test_the_recipient_falls_back_to_the_message_when_there_is_no_name(): void
@@ -727,7 +738,7 @@ class GiftMessageGenerationTest extends TestCase
             'npedidocli' => '29394',
         ], $config->fresh());
 
-        $this->assertStringContainsString('Feliz comunion Jaime', strip_tags($sobre['t1']['html']));
+        $this->assertStringContainsString('Feliz comunion Jaime', $this->plainText($sobre['t1']['html']));
     }
 
     public function test_the_file_name_says_the_order_and_the_piece(): void
@@ -776,6 +787,77 @@ class GiftMessageGenerationTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonStructure(['success', 'view_url', 'download_url']);
+    }
+
+    public function test_the_text_alignment_reaches_the_pdf(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['card_t1_align' => 'left', 'card_t1_valign' => 'top']);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        $page = $method->invoke($service, 'card', ['gift_message' => 'Hola', 'npedidocli' => '1'], $config->fresh());
+
+        $this->assertSame('left', $page['t1']['align']);
+        $this->assertSame('top', $page['t1']['valign']);
+        $this->assertGreaterThan(0, $page['t1']['padding']);
+    }
+
+    public function test_the_size_can_use_half_points(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['card_t1_font' => 'helvetica', 'card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'min_font_size' => 7]);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'fitText');
+        $method->setAccessible(true);
+
+        // Se prueban varias longitudes: con pasos de medio punto, alguna tiene
+        // que caer en un tamano no entero, que antes se desaprovechaba.
+        $sizes = [];
+
+        for ($words = 40; $words <= 90; $words += 2) {
+            $texto = str_repeat('felicidades ', $words);
+            $fit = $method->invoke($service, $texto, 14, ['left' => 0, 'top' => 0, 'width' => 143.28, 'height' => 50.14], 'helvetica', 7);
+            $sizes[] = $fit['size'];
+        }
+
+        $this->assertNotEmpty(array_filter($sizes, fn ($size) => fmod($size, 1.0) !== 0.0), 'Ningun tamano uso medio punto.');
+    }
+
+    public function test_the_last_word_does_not_stay_alone_on_its_line(): void
+    {
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'avoidWidow');
+        $method->setAccessible(true);
+
+        // Las dos ultimas palabras van unidas por un espacio duro para que bajen
+        // juntas en vez de dejar una sola palabra en el ultimo renglon.
+        $this->assertSame("Feliz cumpleanos de toda la\u{00A0}familia", $method->invoke($service, 'Feliz cumpleanos de toda la familia'));
+
+        // Con dos palabras no hay nada que evitar.
+        $this->assertSame('Feliz cumpleanos', $method->invoke($service, 'Feliz cumpleanos'));
+    }
+
+    public function test_the_paragraph_spacing_is_configurable(): void
+    {
+        $config = GiftMessageConfig::current();
+        $config->update(['card_t1_font' => 'helvetica', 'card_t1_size' => 14, 'card_t1_w' => 71.64, 'card_t1_h' => 55.71, 'paragraph_spacing' => 0.35]);
+
+        $service = app(GiftMessagePdfService::class);
+        $method = new \ReflectionMethod($service, 'buildPage');
+        $method->setAccessible(true);
+
+        $mensaje = "Primer parrafo del mensaje.\n\nSegundo parrafo del mensaje.";
+        $conAire = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], $config->fresh());
+
+        $config->update(['paragraph_spacing' => 0]);
+        $sinAire = $method->invoke($service, 'card', ['gift_message' => $mensaje, 'npedidocli' => '1'], $config->fresh());
+
+        $this->assertStringContainsString('0.35em', $conAire['t1']['html']);
+        $this->assertStringNotContainsString('0.35em', $sinAire['t1']['html']);
     }
 
     public function test_user_without_permission_cannot_view_history(): void
