@@ -6,8 +6,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Modules\GiftMessage\Database\Seeders\GiftMessagePermissionsSeeder;
 use Modules\GiftMessage\Models\GiftMessageConfig;
+use Modules\GiftMessage\Models\GiftMessageGeneration;
 use Modules\GiftMessage\Services\GiftMessageOrderService;
 use Tests\TestCase;
 
@@ -187,6 +189,54 @@ class GiftMessageConfigTest extends TestCase
 
         $this->assertSame(14, $response->json('envelope.t1.font_size'));
         $this->assertLessThan(14, $response->json('card.t1.font_size'));
+    }
+
+    public function test_the_test_pdf_uses_the_screen_state_and_leaves_no_trace(): void
+    {
+        GiftMessageConfig::current()->update([
+            'card_t1_align' => 'center',
+            'card_t1_valign' => 'middle',
+            'card_t1_size' => 14,
+        ]);
+
+        $antes = GiftMessageGeneration::query()->count();
+
+        $captured = null;
+        View::composer('giftmessage::pdf.page', function ($view) use (&$captured) {
+            $captured = $view->getData();
+        });
+
+        $response = $this->actingAs($this->admin)
+            ->postJson(route('settings.giftmessage.preview.pdf'), [
+                'scope' => 'card',
+                'message' => 'Feliz cumpleanos',
+                'order' => '29394',
+                // Lo que el usuario tiene en pantalla y todavia no ha guardado.
+                'styles' => ['t1' => ['align' => 'left', 'valign' => 'top', 'size' => 20]],
+                'boxes' => ['t1' => ['x' => 5, 'y' => 5, 'w' => 80, 'h' => 40]],
+            ]);
+
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+
+        // Manda la pantalla, no lo guardado.
+        $this->assertSame('left', $captured['pages'][0]['t1']['align']);
+        $this->assertSame('top', $captured['pages'][0]['t1']['valign']);
+        $this->assertSame(20.0, $captured['pages'][0]['t1']['font_size']);
+
+        // Y no deja rastro: ni en el historial ni en la configuracion guardada.
+        $this->assertSame($antes, GiftMessageGeneration::query()->count());
+        $this->assertSame('center', GiftMessageConfig::current()->fresh()->card_t1_align);
+    }
+
+    public function test_the_test_pdf_needs_the_update_permission(): void
+    {
+        $user = User::factory()->create();
+        $user->givePermissionTo('giftmessage.view');
+
+        $this->actingAs($user)
+            ->postJson(route('settings.giftmessage.preview.pdf'), ['scope' => 'card', 'message' => 'Hola'])
+            ->assertForbidden();
     }
 
     public function test_user_without_permission_cannot_view_index(): void

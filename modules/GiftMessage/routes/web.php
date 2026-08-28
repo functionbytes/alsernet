@@ -36,6 +36,7 @@ Route::middleware(['web', 'auth'])
         Route::post('/content', [GiftMessageConfigController::class, 'saveContent'])->name('content.update');
         Route::post('/positions', [GiftMessageConfigController::class, 'savePositions'])->name('positions.save');
         Route::post('/preview-metrics', [GiftMessageConfigController::class, 'previewMetrics'])->name('preview.metrics');
+        Route::post('/preview-pdf', [GiftMessageConfigController::class, 'previewPdf'])->name('preview.pdf');
 
         Route::post('/fonts', [GiftMessageFontController::class, 'store'])->name('fonts.store');
         Route::delete('/fonts/{font}', [GiftMessageFontController::class, 'destroy'])->name('fonts.destroy');

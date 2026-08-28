@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Modules\GiftMessage\Http\Requests\SaveGiftMessageFontsRequest;
 use Modules\GiftMessage\Http\Requests\SaveGiftMessagePositionsRequest;
@@ -168,6 +169,79 @@ class GiftMessageConfigController extends Controller
         return response()->json([
             'envelope' => $pdfService->previewMetrics('envelope', $message, $order, $boxes['envelope'] ?? [], $recipient, $aligns['envelope'] ?? []),
             'card' => $pdfService->previewMetrics('card', $message, $order, $boxes['card'] ?? [], $recipient, $aligns['card'] ?? []),
+        ]);
+    }
+
+    /**
+     * PDF de prueba de una pieza con lo que el usuario tiene en pantalla, aunque
+     * no lo haya guardado. No pasa por el historial: es solo para mirar como
+     * queda antes de mandar nada a imprimir.
+     */
+    public function previewPdf(Request $request, GiftMessagePdfService $pdfService): Response
+    {
+        $this->authorize('update', GiftMessageConfig::class);
+
+        $aligns = implode(',', array_keys(GiftMessagePdfService::ALIGNMENTS));
+        $valigns = implode(',', array_keys(GiftMessagePdfService::VERTICAL_ALIGNMENTS));
+
+        $validated = $request->validate([
+            'scope' => ['required', 'string', 'in:envelope,card'],
+            'message' => ['nullable', 'string', 'max:5000'],
+            'recipient' => ['nullable', 'string', 'max:120'],
+            'order' => ['nullable', 'string', 'max:50'],
+            'content' => ['nullable', 'string', 'in:message,recipient'],
+            'boxes' => ['nullable', 'array'],
+            'boxes.*.x' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'boxes.*.y' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'boxes.*.w' => ['nullable', 'numeric', 'min:0.1', 'max:100'],
+            'boxes.*.h' => ['nullable', 'numeric', 'min:0.1', 'max:100'],
+            'styles' => ['nullable', 'array'],
+            'styles.*.font' => ['nullable', 'string'],
+            'styles.*.size' => ['nullable', 'integer', 'min:5', 'max:72'],
+            'styles.*.color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'styles.*.opacity' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'styles.*.align' => ['nullable', 'string', 'in:'.$aligns],
+            'styles.*.valign' => ['nullable', 'string', 'in:'.$valigns],
+        ]);
+
+        $type = $validated['scope'];
+        $prefix = $type === 'card' ? 'card' : 'env';
+
+        // Copia en memoria de la configuracion: se le aplican los cambios de la
+        // pantalla y se genera con ella, sin tocar nada de lo guardado.
+        $config = $this->configService->current()->replicate();
+        $config->{$prefix.'_t1_content'} = $validated['content'] ?? $config->{$prefix.'_t1_content'};
+
+        foreach (['t1', 't2'] as $slot) {
+            foreach (['x', 'y', 'w', 'h'] as $axis) {
+                $value = $validated['boxes'][$slot][$axis] ?? null;
+
+                if ($value !== null) {
+                    $config->{$prefix.'_'.$slot.'_'.$axis} = $value;
+                }
+            }
+
+            foreach (['font', 'size', 'color', 'opacity', 'align', 'valign'] as $property) {
+                $value = $validated['styles'][$slot][$property] ?? null;
+
+                if ($value !== null && $value !== '') {
+                    $config->{$prefix.'_'.$slot.'_'.$property} = $value;
+                }
+            }
+        }
+
+        $row = [
+            'gift_message' => (string) ($validated['message'] ?? ''),
+            'npedidocli' => (string) ($validated['order'] ?? ''),
+            'firstname' => (string) ($validated['recipient'] ?? ''),
+            'lastname' => '',
+        ];
+
+        $pdf = $pdfService->generateWith($config, $type, [$row]);
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="previsualizacion.pdf"',
         ]);
     }
 

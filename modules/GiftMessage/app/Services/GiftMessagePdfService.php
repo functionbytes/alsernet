@@ -108,10 +108,21 @@ class GiftMessagePdfService
      */
     public function generate(string $type, array $rows): PdfDocument
     {
+        return $this->generateWith($this->configService->current(), $type, $rows);
+    }
+
+    /**
+     * Igual que generate(), pero con una configuracion concreta en vez de la
+     * guardada: asi el editor puede pedir un PDF de prueba con los cambios que
+     * hay en pantalla sin tener que guardarlos antes.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    public function generateWith(GiftMessageConfig $config, string $type, array $rows): PdfDocument
+    {
         $this->ensureFontDirectoryExists();
 
         $this->warnings = [];
-        $config = $this->configService->current();
         $size = self::SIZES[$type];
 
         // El PDF sale SIN la imagen de fondo, a proposito: se imprime sobre sobres

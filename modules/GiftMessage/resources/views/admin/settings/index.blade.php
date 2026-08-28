@@ -162,6 +162,11 @@
                         <button type="button" id="save-positions-envelope" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
                         </button>
+                        {{-- PDF de prueba con lo que hay en pantalla, sin guardar
+                             y sin pasar por el historial. --}}
+                        <button type="button" class="btn btn-secondary w-100 mt-2 giftmessage-preview-pdf" data-scope="envelope">
+                            Ver PDF de prueba del sobre
+                        </button>
                     @endif
                 </div>
 
@@ -341,6 +346,11 @@
                         @include('giftmessage::admin.settings.partials.fine-tune', ['canvas' => 'card', 'prefix' => 'card', 'config' => $config])
                         <button type="button" id="save-positions-card" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
+                        </button>
+                        {{-- PDF de prueba con lo que hay en pantalla, sin guardar
+                             y sin pasar por el historial. --}}
+                        <button type="button" class="btn btn-secondary w-100 mt-2 giftmessage-preview-pdf" data-scope="card">
+                            Ver PDF de prueba de la tarjeta
                         </button>
                     @endif
                 </div>
@@ -585,6 +595,30 @@
 
     @include('core::components.delete')
 
+    {{-- Previsualizacion del PDF de una pieza --}}
+    <div id="preview-pdf-modal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="preview-pdf-title">PDF de prueba</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Generado con lo que tienes ahora en pantalla, aunque no lo hayas guardado.
+                        No se guarda en el historial.
+                    </p>
+                    <p class="small mb-2" id="preview-pdf-status"></p>
+                    <iframe id="preview-pdf-frame" class="giftmessage-preview-frame" title="PDF de prueba"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <a id="preview-pdf-open" class="btn btn-primary w-100 mb-2" target="_blank" rel="noopener">Abrir en una pestana nueva</a>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.GIFTMESSAGE_SETTINGS = {
             urls: {
@@ -592,6 +626,7 @@
                 saveFonts: "{{ route('settings.giftmessage.typography.update') }}",
                 uploadImage: "{{ route('settings.giftmessage.images.store') }}",
                 previewMetrics: "{{ route('settings.giftmessage.preview.metrics') }}",
+                previewPdf: "{{ route('settings.giftmessage.preview.pdf') }}",
             },
             stacks: @json($fontStacks),
             fonts: {
