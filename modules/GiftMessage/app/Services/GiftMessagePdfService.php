@@ -64,6 +64,9 @@ class GiftMessagePdfService
     /** @var array<string, string|null> */
     private array $fontFileCache = [];
 
+    /** @var array<string, array{font: string, missing: bool}> Cache de resolveGraphemeFont() por "fuente_configurada|codepoint". */
+    private array $glyphFontCache = [];
+
     /** @var array<int, array<string, mixed>> Avisos de la ultima generacion. */
     private array $warnings = [];
 
@@ -136,8 +139,13 @@ class GiftMessagePdfService
             'gift_message' => $message,
             'firstname' => $recipient,
         ], $config));
-        $t1Font = $this->resolveFont($message, $config->{$prefix.'_t1_font'})['font'];
-        $t2Font = $this->resolveFont($orderNumber, $config->{$prefix.'_t2_font'})['font'];
+        // La caja del editor no simula la mezcla por caracter (ver
+        // messageToHtml): usa siempre la fuente configurada, igual que hace
+        // ahora el PDF real para el grueso del texto. Un mensaje con caracteres
+        // que la fuente configurada no cubre se vera distinto de como sale
+        // impreso solo en esos caracteres puntuales, no en el resto de la frase.
+        $t1Font = (string) $config->{$prefix.'_t1_font'};
+        $t2Font = (string) $config->{$prefix.'_t2_font'};
 
         $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $this->box($config, $prefix.'_t1', $size, $boxes['t1'] ?? []), $t1Font, $minSize);
         $t2Fit = $this->fitText($orderNumber, (int) $config->{$prefix.'_t2_size'}, $this->box($config, $prefix.'_t2', $size, $boxes['t2'] ?? []), $t2Font, $minSize);
@@ -146,7 +154,7 @@ class GiftMessagePdfService
             't1' => [
                 'font' => $t1Font,
                 'font_family' => $this->fontStack($t1Font),
-                'line_height' => $this->lineHeightRatio($t1Font, $t1Fit['line_height']),
+                'line_height' => $this->lineHeightRatio($message, $t1Font, $t1Fit['line_height']),
                 'font_size' => $t1Fit['size'],
                 'configured_size' => (int) $config->{$prefix.'_t1_size'},
                 'min_font_size' => $minSize,
@@ -155,7 +163,7 @@ class GiftMessagePdfService
             't2' => [
                 'font' => $t2Font,
                 'font_family' => $this->fontStack($t2Font),
-                'line_height' => $this->lineHeightRatio($t2Font, $t2Fit['line_height']),
+                'line_height' => $this->lineHeightRatio($orderNumber, $t2Font, $t2Fit['line_height']),
                 'font_size' => $t2Fit['size'],
                 'configured_size' => (int) $config->{$prefix.'_t2_size'},
                 'min_font_size' => $minSize,
@@ -231,25 +239,25 @@ class GiftMessagePdfService
         $minSize = $this->minFontSize($config);
 
         $message = $this->normalizeMessage($this->t1Text($type, $order, $config));
-        $t1Choice = $this->resolveFont($message, $config->{$prefix.'_t1_font'});
-        $t1Font = $t1Choice['font'];
+        $t1Configured = (string) $config->{$prefix.'_t1_font'};
         $t1Box = $this->box($config, $prefix.'_t1', $size);
 
         // El tamano configurado es el maximo: si el mensaje no cabe se aprieta
         // el interlineado y, si aun asi no entra, se reduce la letra.
-        $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $t1Box, $t1Font, $minSize);
+        $t1Fit = $this->fitText($message, (int) $config->{$prefix.'_t1_size'}, $t1Box, $t1Configured, $minSize);
+        $t1Missing = $this->unprintableCharacters($message, $t1Configured);
 
         $t2Text = (string) ($order['npedidocli'] ?? '');
-        $t2Font = $this->resolveFont($t2Text, $config->{$prefix.'_t2_font'})['font'];
+        $t2Configured = (string) $config->{$prefix.'_t2_font'};
         $t2Box = $this->box($config, $prefix.'_t2', $size);
-        $t2Fit = $this->fitText($t2Text, (int) $config->{$prefix.'_t2_size'}, $t2Box, $t2Font, $minSize);
+        $t2Fit = $this->fitText($t2Text, (int) $config->{$prefix.'_t2_size'}, $t2Box, $t2Configured, $minSize);
 
-        $this->collectWarning($type, $order, $message, $t1Fit, $minSize, (int) $config->{$prefix.'_t1_size'}, $t1Choice['missing']);
+        $this->collectWarning($type, $order, $message, $t1Fit, $minSize, (int) $config->{$prefix.'_t1_size'}, $t1Missing);
 
         return [
             't1' => [
-                'html' => $this->messageToHtml($message),
-                'font_family' => $this->fontStack($t1Font),
+                'html' => $this->messageToHtml($message, $t1Configured),
+                'font_family' => $this->fontStack($t1Configured),
                 'font_size' => $t1Fit['size'],
                 'line_height' => $t1Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t1_color'}),
@@ -259,7 +267,7 @@ class GiftMessagePdfService
                 // El personal identifica el pedido por el npedidocli del ERP (el
                 // numero corto), no por el idpedidocli que guarda PrestaShop.
                 'text' => $t2Text,
-                'font_family' => $this->fontStack($t2Font),
+                'font_family' => $this->fontStack($t2Configured),
                 'font_size' => $t2Fit['size'],
                 'line_height' => $t2Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t2_color'}),
@@ -324,58 +332,98 @@ class GiftMessagePdfService
     }
 
     /**
-     * Fuente con la que se imprime un texto y los caracteres que se van a perder.
+     * Fuente con la que se pinta UN caracter: la configurada si la cubre; si no,
+     * la primera fuente subida que la cubra — asi un mensaje que mezcla espanol
+     * y chino imprime el espanol en la fuente de marca y solo el chino cambia a
+     * la fuente china, en vez de que TODO el bloque salte a una fuente distinta
+     * (que era lo que pasaba antes: un solo caracter sin cubrir tiraba de toda
+     * la frase a la fuente alternativa). Si ninguna subida la cubre se prueba
+     * DejaVu Sans (cubre casi todos los simbolos y comillas raras que las
+     * Base-14 no tienen). Si tampoco, se devuelve la fuente configurada igual
+     * —el caracter va a salir como cuadro vacio— y se marca `missing`.
      *
-     * DomPDF no avisa de un glifo que le falta: lo dibuja como cuadro vacio, que
-     * es lo que pasaba con los mensajes en chino. Asi que si la fuente elegida no
-     * cubre el texto se busca entre las subidas una que si, y si ninguna puede se
-     * devuelven los caracteres afectados para avisar a quien imprime.
+     * Los espacios/saltos de linea no llevan glifo visible: se dan siempre por
+     * cubiertos por la fuente configurada para no forzar un cambio de fuente
+     * innecesario justo en un espacio dentro de una frase en chino.
      *
-     * @return array{font: string, missing: array<int, string>}
+     * @return array{font: string, missing: bool}
      */
-    private function resolveFont(string $text, string $configured): array
+    private function resolveGraphemeFont(string $grapheme, string $configured): array
     {
-        // Con emojis se sigue prefiriendo DejaVu Sans: los mensajes que los traen
-        // suelen venir con simbolos y comillas raras que las Base-14 no tienen.
-        $font = $this->containsEmoji($text) ? 'dejavusans' : $configured;
-        $missing = $this->unprintableCharacters($text, $font);
-
-        if ($missing === []) {
-            return ['font' => $font, 'missing' => []];
+        if (trim($grapheme) === '') {
+            return ['font' => $configured, 'missing' => false];
         }
 
-        $codepoints = array_map(fn (string $char) => mb_ord($char, 'UTF-8'), $this->printableCharacters($text));
-        $alternative = $this->fontService->familiesSupporting(array_values(array_filter($codepoints, fn ($cp) => $cp !== false)))[0] ?? null;
+        $codepoint = mb_ord($grapheme, 'UTF-8');
+
+        if ($codepoint === false) {
+            return ['font' => $configured, 'missing' => false];
+        }
+
+        $key = $configured.'|'.$codepoint;
+
+        if (isset($this->glyphFontCache[$key])) {
+            return $this->glyphFontCache[$key];
+        }
+
+        if ($this->fontService->supportsCodepoint($configured, $codepoint)) {
+            return $this->glyphFontCache[$key] = ['font' => $configured, 'missing' => false];
+        }
+
+        $alternative = $this->fontService->familiesSupporting([$codepoint])[0] ?? null;
 
         if ($alternative !== null) {
-            return ['font' => $alternative, 'missing' => []];
+            return $this->glyphFontCache[$key] = ['font' => $alternative, 'missing' => false];
         }
 
-        return ['font' => $font, 'missing' => $missing];
+        if ($configured !== 'dejavusans' && $this->fontService->supportsCodepoint('dejavusans', $codepoint)) {
+            return $this->glyphFontCache[$key] = ['font' => 'dejavusans', 'missing' => false];
+        }
+
+        return $this->glyphFontCache[$key] = ['font' => $configured, 'missing' => true];
     }
 
     /**
-     * Caracteres del texto que la fuente no sabe pintar. Los emojis no cuentan:
-     * se imprimen como imagen (ver messageToHtml), igual que los espacios y los
+     * Caracteres del texto que ninguna fuente disponible sabe pintar (ni la
+     * configurada, ni las subidas, ni el fallback DejaVu Sans) — saldrian como
+     * cuadro vacio, ver resolveGraphemeFont(). Los emojis no cuentan: se
+     * imprimen como imagen (ver messageToHtml), igual que los espacios y los
      * saltos de linea, que no llevan glifo visible.
      *
      * @return array<int, string>
      */
-    private function unprintableCharacters(string $text, string $font): array
+    private function unprintableCharacters(string $text, string $configured): array
     {
         $missing = [];
 
         foreach ($this->printableCharacters($text) as $char) {
-            $codepoint = mb_ord($char, 'UTF-8');
-
-            if ($codepoint === false || $this->fontService->supportsCodepoint($font, $codepoint)) {
-                continue;
+            if ($this->resolveGraphemeFont($char, $configured)['missing']) {
+                $missing[$char] = $char;
             }
-
-            $missing[$char] = $char;
         }
 
         return array_values($missing);
+    }
+
+    /**
+     * Conjunto de fuentes que de verdad se usan al imprimir el texto: la
+     * configurada mas cualquier alternativa que resolveGraphemeFont() haya
+     * necesitado para algun caracter. Sirve para calcular el alto de linea por
+     * el peor caso (la fuente mas alta de las que aparecen), no solo por la
+     * configurada — una linea con un tramo en una fuente mas alta que la de
+     * marca ocupa mas de lo que se mediria mirando solo la fuente configurada.
+     *
+     * @return array<int, string>
+     */
+    private function textFonts(string $text, string $configured): array
+    {
+        $fonts = [$configured];
+
+        foreach ($this->printableCharacters($text) as $char) {
+            $fonts[] = $this->resolveGraphemeFont($char, $configured)['font'];
+        }
+
+        return array_values(array_unique($fonts));
     }
 
     /**
@@ -420,7 +468,7 @@ class GiftMessagePdfService
      * @param  array{left: float, top: float, width: float, height: float}  $box  En milimetros.
      * @return array{size: int, line_height: float, fits: bool}
      */
-    private function fitText(string $text, int $maxSize, array $box, string $font, int $minSize): array
+    private function fitText(string $text, int $maxSize, array $box, string $configured, int $minSize): array
     {
         $text = $this->normalizeMessage($text);
         $minSize = max(self::HARD_MIN_FONT_SIZE, $minSize);
@@ -433,8 +481,13 @@ class GiftMessagePdfService
         $widthPt = $box['width'] * self::MM_PER_POINT;
         $heightPt = $box['height'] * self::MM_PER_POINT;
 
+        // Se calcula una sola vez: no depende del tamano de letra que se este
+        // probando, solo del texto y de la fuente configurada, asi que
+        // recalcularlo en cada paso de la biseccion de abajo seria trabajo de mas.
+        $fontsUsed = $this->textFonts($text, $configured);
+
         // Caso normal: cabe al tamano configurado y no hay nada que buscar.
-        $lineHeight = $this->lineHeightThatFits($text, $maxSize, $widthPt, $heightPt, $font);
+        $lineHeight = $this->lineHeightThatFits($text, $maxSize, $widthPt, $heightPt, $configured, $fontsUsed);
 
         if ($lineHeight !== null) {
             return ['size' => $maxSize, 'line_height' => $lineHeight, 'fits' => true];
@@ -446,7 +499,7 @@ class GiftMessagePdfService
 
         while ($low <= $high) {
             $middle = intdiv($low + $high, 2);
-            $lineHeight = $this->lineHeightThatFits($text, $middle, $widthPt, $heightPt, $font);
+            $lineHeight = $this->lineHeightThatFits($text, $middle, $widthPt, $heightPt, $configured, $fontsUsed);
 
             if ($lineHeight !== null) {
                 $best = ['size' => $middle, 'line_height' => $lineHeight, 'fits' => true];
@@ -471,11 +524,15 @@ class GiftMessagePdfService
     /**
      * Interlineado mas holgado con el que el texto cabe a ese tamano, o null si
      * no cabe ni con el mas apretado.
+     *
+     * @param  array<int, string>  $fontsUsed  Ver textFonts() — se calcula una
+     *                                         sola vez en fitText() y se reusa
+     *                                         en cada paso de la biseccion.
      */
-    private function lineHeightThatFits(string $text, int $size, float $widthPt, float $heightPt, string $font): ?float
+    private function lineHeightThatFits(string $text, int $size, float $widthPt, float $heightPt, string $configured, array $fontsUsed): ?float
     {
-        $lines = $this->countWrappedLines($text, $size, $widthPt, $font);
-        $fontHeight = $this->fontHeightPt($size, $font);
+        $lines = $this->countWrappedLines($text, $size, $widthPt, $configured);
+        $fontHeight = $this->fontHeightPt($size, $fontsUsed);
 
         foreach (self::LINE_HEIGHTS as $lineHeight) {
             if ($lines * $lineHeight * $fontHeight <= $heightPt) {
@@ -503,31 +560,42 @@ class GiftMessagePdfService
     }
 
     /**
-     * Alto de una linea sin contar el interlineado. DomPDF no usa el tamano de
-     * letra sino la altura real de la fuente, y ahi cada familia manda: DejaVu
-     * Sans (la que se fuerza cuando el mensaje trae emojis) mide 1.28 em frente
-     * al 1.02 de Helvetica, o sea un 25% mas por linea.
+     * Alto de una linea sin contar el interlineado, por el peor caso entre
+     * todas las fuentes que de verdad aparecen en el texto (ver textFonts()):
+     * un mensaje puede mezclar la fuente de marca con una alternativa solo
+     * para los caracteres que esta no cubre, y esa alternativa puede medir mas
+     * alto por linea — usar solo la fuente configurada subestimaria el alto
+     * necesario y la caja recortaria texto sin que el aviso se disparase.
+     *
+     * DomPDF no usa el tamano de letra sino la altura real de la fuente, y ahi
+     * cada familia manda: DejaVu Sans mide 1.28 em frente al 1.02 de Helvetica,
+     * o sea un 25% mas por linea.
+     *
+     * @param  array<int, string>  $fontsUsed
      */
-    private function fontHeightPt(int $size, string $font): float
+    private function fontHeightPt(int $size, array $fontsUsed): float
     {
         $metrics = $this->fontMetrics();
-        $fontFile = $this->fontFileFor($font);
 
-        if ($metrics !== null && $fontFile !== null) {
-            return (float) $metrics->getFontHeight($fontFile, $size);
-        }
+        $heights = array_map(function (string $font) use ($size, $metrics) {
+            $fontFile = $this->fontFileFor($font);
 
-        // Sin metricas, se asume una fuente alta para no pasarse de optimista.
-        return 1.3 * $size;
+            return ($metrics !== null && $fontFile !== null)
+                ? (float) $metrics->getFontHeight($fontFile, $size)
+                // Sin metricas, se asume una fuente alta para no pasarse de optimista.
+                : 1.3 * $size;
+        }, $fontsUsed ?: ['helvetica']);
+
+        return max($heights);
     }
 
     /**
      * Interlineado como multiplo del tamano de letra, que es lo que entienden
      * tanto el CSS de la plantilla del PDF como el del navegador.
      */
-    private function lineHeightRatio(string $font, float $lineHeight): float
+    private function lineHeightRatio(string $text, string $configured, float $lineHeight): float
     {
-        return round($lineHeight * $this->fontHeightPt(100, $font) / 100, 3);
+        return round($lineHeight * $this->fontHeightPt(100, $this->textFonts($text, $configured)) / 100, 3);
     }
 
     /**
@@ -579,18 +647,21 @@ class GiftMessagePdfService
     /**
      * Ancho del texto en puntos. Los emojis no estan en la fuente: se imprimen
      * como <img> cuadrada de 0.8 * tamano (ver messageToHtml), asi que se miden
-     * aparte y el resto de caracteres se mide con la fuente real.
+     * aparte y el resto de caracteres se mide con la fuente real de cada uno
+     * (ver measurePlainWidthMixed) — una palabra puede mezclar la fuente
+     * configurada con una alternativa para los caracteres que esta no cubre.
      *
      * Se cachea por palabra: en un mensaje largo el mismo "de" o "la" se mide
-     * cientos de veces, y una vez por tamano y fuente basta.
+     * cientos de veces, y una vez por tamano y fuente configurada basta (la
+     * resolucion por caracter es deterministica, no depende de la posicion).
      */
-    private function measureWidth(string $text, int $size, string $font): float
+    private function measureWidth(string $text, int $size, string $configured): float
     {
         if ($text === '') {
             return 0.0;
         }
 
-        $key = $font.'|'.$size.'|'.$text;
+        $key = $configured.'|'.$size.'|'.$text;
 
         if (isset($this->widthCache[$key])) {
             return $this->widthCache[$key];
@@ -599,7 +670,42 @@ class GiftMessagePdfService
         $emojis = preg_match_all(self::EMOJI_REGEX, $text);
         $plain = preg_replace(self::JOINER_REGEX, '', (string) preg_replace(self::EMOJI_REGEX, '', $text)) ?? '';
 
-        return $this->widthCache[$key] = $this->measurePlainWidth($plain, $size, $font) + ($emojis * $size * 0.8);
+        return $this->widthCache[$key] = $this->measurePlainWidthMixed($plain, $size, $configured) + ($emojis * $size * 0.8);
+    }
+
+    /**
+     * Ancho de texto plano (sin emojis) sumando el ancho de cada tramo segun la
+     * fuente que le corresponda a sus caracteres (ver resolveGraphemeFont) — en
+     * el caso comun, sin caracteres fuera de la fuente configurada, es un solo
+     * tramo y el coste es el mismo que medir con una sola fuente de siempre.
+     */
+    private function measurePlainWidthMixed(string $text, int $size, string $configured): float
+    {
+        if ($text === '') {
+            return 0.0;
+        }
+
+        $width = 0.0;
+        $runText = '';
+        $runFont = null;
+
+        foreach ($this->splitGraphemes($text) as $grapheme) {
+            $font = $this->resolveGraphemeFont($grapheme, $configured)['font'];
+
+            if ($runFont !== null && $font !== $runFont) {
+                $width += $this->measurePlainWidth($runText, $size, $runFont);
+                $runText = '';
+            }
+
+            $runFont = $font;
+            $runText .= $grapheme;
+        }
+
+        if ($runText !== '') {
+            $width += $this->measurePlainWidth($runText, $size, $runFont);
+        }
+
+        return $width;
     }
 
     private function measurePlainWidth(string $text, int $size, string $font): float
@@ -725,9 +831,18 @@ class GiftMessagePdfService
      * calcularlos aqui (los atributos width/height del <img> los interpreta
      * DomPDF en px y el emoji salia mas pequeno de lo medido).
      */
-    private function messageToHtml(string $message): string
+    /**
+     * Los caracteres que la fuente configurada no cubre (ver
+     * resolveGraphemeFont) se envuelven en un <span> con su propia fuente, en
+     * vez de cambiar la fuente de todo el bloque — asi un mensaje que mezcla
+     * espanol y chino imprime el espanol en la fuente de marca y solo el
+     * tramo en chino cambia de fuente. Los tramos consecutivos que comparten
+     * la misma fuente alternativa se agrupan en un solo <span>.
+     */
+    private function messageToHtml(string $message, string $configured): string
     {
         $html = '';
+        $spanFont = null;
 
         foreach ($this->splitGraphemes($message) as $grapheme) {
             if ($this->isJoinerOrVariant($grapheme)) {
@@ -736,9 +851,44 @@ class GiftMessagePdfService
 
             $base64 = $this->containsEmoji($grapheme) ? $this->emojiImageBase64($grapheme) : null;
 
-            $html .= $base64
-                ? '<img class="emoji" src="data:image/png;base64,'.$base64.'">'
-                : e($grapheme);
+            if ($base64) {
+                if ($spanFont !== null) {
+                    $html .= '</span>';
+                    $spanFont = null;
+                }
+
+                $html .= '<img class="emoji" src="data:image/png;base64,'.$base64.'">';
+
+                continue;
+            }
+
+            $font = $this->resolveGraphemeFont($grapheme, $configured)['font'];
+
+            if ($font === $configured) {
+                if ($spanFont !== null) {
+                    $html .= '</span>';
+                    $spanFont = null;
+                }
+
+                $html .= e($grapheme);
+
+                continue;
+            }
+
+            if ($spanFont !== $font) {
+                if ($spanFont !== null) {
+                    $html .= '</span>';
+                }
+
+                $html .= '<span style="font-family: '.$this->fontStack($font).'">';
+                $spanFont = $font;
+            }
+
+            $html .= e($grapheme);
+        }
+
+        if ($spanFont !== null) {
+            $html .= '</span>';
         }
 
         return nl2br($html);
