@@ -63,6 +63,7 @@
             fontSize: ptToPx(size) + 'px',
             fontWeight: style.bold ? 'bold' : 'normal',
             fontStyle: style.italic ? 'italic' : 'normal',
+            textAlign: style.align || 'center',
             width: (style.box_w || 150) + 'px',
             height: (style.box_h || 30) + 'px',
         });
@@ -234,6 +235,40 @@
             $('#' + outerId).css({ width: (dim.w * zoom) + 'px', height: (dim.h * zoom) + 'px' });
             $('#' + canvasId).css({ transform: 'scale(' + zoom + ')', transformOrigin: 'top left' });
         });
+    }
+
+    // Toma la posicion actual del slot 1 de cada campo y la replica en el
+    // resto de slots de la cuadricula, recalculando el offset segun la
+    // columna/fila de cada slot (misma logica que defaultPositions() en
+    // PriceLabelTemplateService, pero partiendo del ajuste manual del slot 1).
+    function applyGridFromFirstSlot(canvasId, mode, rows, columns) {
+        var dim = CANVAS_DIM[mode];
+        var cellW = dim.w / columns;
+        var cellH = dim.h / rows;
+        var slots = rows * columns;
+
+        FIELDS.forEach(function (key) {
+            var $base = $('#' + canvasId + ' [data-key="' + key + '"][data-slot="1"]');
+            if (!$base.length) {
+                return;
+            }
+
+            var baseX = parseFloat($base.css('left')) || 0;
+            var baseY = parseFloat($base.css('top')) || 0;
+
+            for (var slot = 2; slot <= slots; slot++) {
+                var row = Math.floor((slot - 1) / columns);
+                var col = (slot - 1) % columns;
+
+                $('#' + canvasId + ' [data-key="' + key + '"][data-slot="' + slot + '"]').css({
+                    left: (baseX + col * cellW) + 'px',
+                    top: (baseY + row * cellH) + 'px',
+                });
+            }
+        });
+
+        markDirty(canvasId === 'canvas-h' ? 'h' : 'v');
+        toastr.success('Posiciones recalculadas desde la etiqueta #1 en toda la cuadricula. Revisa el resultado y pulsa "Guardar posiciones".');
     }
 
     function copyPositions(toHorizontal, fromSlots, toSlots) {
@@ -411,7 +446,7 @@
     }
 
     function collectFields() {
-        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'box-w', 'box-h'];
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align', 'box-w', 'box-h'];
         var checkboxProps = ['bold', 'italic'];
         var fields = {};
 
@@ -635,7 +670,7 @@
             return;
         }
 
-        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h'];
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align'];
         var checkboxProps = ['bold', 'italic'];
 
         $button.on('click', function () {
@@ -693,6 +728,9 @@
             $('#field-' + key + '-italic').on('change', function () {
                 $('[data-key="' + key + '"]').css('font-style', $(this).is(':checked') ? 'italic' : 'normal');
             });
+            $('#field-' + key + '-align').on('change', function () {
+                $('[data-key="' + key + '"]').css('text-align', $(this).val());
+            });
             $('#field-' + key + '-box-w').on('input', function () {
                 $('[data-key="' + key + '"]').css('width', $(this).val() + 'px');
             });
@@ -720,8 +758,12 @@
         SAMPLE_ROW = config.sampleRow || null;
 
         var grid = config.grid || {};
-        var slotsV = ((grid.vertical && grid.vertical.rows) || 2) * ((grid.vertical && grid.vertical.columns) || 2);
-        var slotsH = ((grid.horizontal && grid.horizontal.rows) || 2) * ((grid.horizontal && grid.horizontal.columns) || 4);
+        var rowsV = (grid.vertical && grid.vertical.rows) || 2;
+        var columnsV = (grid.vertical && grid.vertical.columns) || 2;
+        var rowsH = (grid.horizontal && grid.horizontal.rows) || 2;
+        var columnsH = (grid.horizontal && grid.horizontal.columns) || 4;
+        var slotsV = rowsV * columnsV;
+        var slotsH = rowsH * columnsH;
 
         initPreview({
             mode: 'v',
@@ -776,6 +818,14 @@
 
         $('#copy-positions-to-v').on('click', function () {
             copyPositions(false, slotsH, slotsV);
+        });
+
+        $('#apply-grid-v').on('click', function () {
+            applyGridFromFirstSlot('canvas-v', 'v', rowsV, columnsV);
+        });
+
+        $('#apply-grid-h').on('click', function () {
+            applyGridFromFirstSlot('canvas-h', 'h', rowsH, columnsH);
         });
 
         bindPreviewPdf(slotsV, slotsH);

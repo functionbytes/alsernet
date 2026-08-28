@@ -311,6 +311,9 @@ class PriceLabelTemplateService
                 'italic' => false,
                 'font_family_h' => 'helvetica',
                 'font_size_h' => 12,
+                // Centrado como hasta ahora: era fijo en la plantilla del PDF y
+                // pasa a ser una opcion mas de cada campo.
+                'align' => 'center',
             ], $boxes[$key] ?? ['box_w' => 150, 'box_h' => 30]);
         }
 

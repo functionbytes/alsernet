@@ -29,6 +29,7 @@ class SavePriceLabelPositionsRequest extends FormRequest
             'fields.*.italic' => ['boolean'],
             'fields.*.font_family_h' => ['nullable', 'string', Rule::in(app(PriceLabelFontService::class)->allowedFamilies())],
             'fields.*.font_size_h' => ['nullable', 'integer', 'min:6', 'max:72'],
+            'fields.*.align' => ['nullable', 'string', 'in:left,center,right'],
             'fields.*.box_w' => ['nullable', 'integer', 'min:10', 'max:2000'],
             'fields.*.box_h' => ['nullable', 'integer', 'min:10', 'max:2000'],
         ];

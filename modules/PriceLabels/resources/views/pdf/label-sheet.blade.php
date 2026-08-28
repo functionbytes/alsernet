@@ -22,6 +22,7 @@
     }
     .field {
         position: absolute;
+        /* La alineacion la fija cada campo (era fija en centro para todos). */
         text-align: center;
         word-wrap: break-word;
     }
@@ -53,6 +54,7 @@
                         font-size: {{ $el['font_size'] }}pt;
                         font-weight: {{ $el['bold'] ? 'bold' : 'normal' }};
                         font-style: {{ $el['italic'] ? 'italic' : 'normal' }};
+                        text-align: {{ $el['align'] ?? 'center' }};
                     ">{{ $el['text'] }}</div>
                 @endif
             @endforeach

@@ -63,6 +63,7 @@
             fontSize: ptToPx(size) + 'px',
             fontWeight: style.bold ? 'bold' : 'normal',
             fontStyle: style.italic ? 'italic' : 'normal',
+            textAlign: style.align || 'center',
             width: (style.box_w || 150) + 'px',
             height: (style.box_h || 30) + 'px',
         });
@@ -411,7 +412,7 @@
     }
 
     function collectFields() {
-        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'box-w', 'box-h'];
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align', 'box-w', 'box-h'];
         var checkboxProps = ['bold', 'italic'];
         var fields = {};
 
@@ -635,7 +636,7 @@
             return;
         }
 
-        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h'];
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align'];
         var checkboxProps = ['bold', 'italic'];
 
         $button.on('click', function () {
@@ -692,6 +693,9 @@
             });
             $('#field-' + key + '-italic').on('change', function () {
                 $('[data-key="' + key + '"]').css('font-style', $(this).is(':checked') ? 'italic' : 'normal');
+            });
+            $('#field-' + key + '-align').on('change', function () {
+                $('[data-key="' + key + '"]').css('text-align', $(this).val());
             });
             $('#field-' + key + '-box-w').on('input', function () {
                 $('[data-key="' + key + '"]').css('width', $(this).val() + 'px');

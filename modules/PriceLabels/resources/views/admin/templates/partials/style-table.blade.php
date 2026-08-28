@@ -33,6 +33,7 @@
                 @endif
                 <th>Negrita</th>
                 <th>Cursiva</th>
+                <th>Alineacion</th>
                 @if($showHorizontal)
                     <th>Fuente (horizontal)</th>
                     <th>Tam.</th>
@@ -78,6 +79,16 @@
                         <input type="hidden" name="fields[{{ $key }}][italic]" value="0">
                         <input type="checkbox" class="form-check-input" id="field-{{ $key }}-italic" name="fields[{{ $key }}][italic]" value="1"
                                {{ $fields[$key]['italic'] ? 'checked' : '' }}>
+                    </td>
+                    <td>
+                        {{-- Alineacion del texto dentro de su caja: hasta ahora
+                             todo iba centrado a la fuerza desde la plantilla. --}}
+                        <select class="form-select form-select-sm pricelabels-input-medium"
+                                id="field-{{ $key }}-align" name="fields[{{ $key }}][align]">
+                            @foreach(['left' => 'Izquierda', 'center' => 'Centro', 'right' => 'Derecha'] as $value => $text)
+                                <option value="{{ $value }}" {{ ($fields[$key]['align'] ?? 'center') === $value ? 'selected' : '' }}>{{ $text }}</option>
+                            @endforeach
+                        </select>
                     </td>
                     @if($showHorizontal)
                         <td>

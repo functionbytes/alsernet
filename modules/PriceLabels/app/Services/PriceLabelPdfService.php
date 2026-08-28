@@ -117,6 +117,9 @@ class PriceLabelPdfService
                 'font_size' => $isHorizontal ? ($style['font_size_h'] ?? 12) : ($style['font_size'] ?? 12),
                 'bold' => (bool) ($style['bold'] ?? false),
                 'italic' => (bool) ($style['italic'] ?? false),
+                'align' => in_array($style['align'] ?? null, ['left', 'center', 'right'], true)
+                    ? $style['align']
+                    : 'center',
             ];
         }
 
