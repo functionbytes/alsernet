@@ -105,7 +105,9 @@ class GiftMessageGenerationTest extends TestCase
             ->assertOk();
 
         $this->assertNotNull($captured, 'La vista del PDF no llego a renderizarse.');
-        $this->assertSame('Feliz comunion Jaime', $captured['pages'][0]['t1']['html']);
+        // El mensaje va envuelto en un bloque por parrafo, asi que se busca el
+        // texto dentro del HTML en vez de compararlo entero.
+        $this->assertStringContainsString('Feliz comunion Jaime', $captured['pages'][0]['t1']['html']);
         $this->assertStringNotContainsString('Jorge', $captured['pages'][0]['t1']['html']);
         $this->assertSame('29394', $captured['pages'][0]['t2']['text']);
     }

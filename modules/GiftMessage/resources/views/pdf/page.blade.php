@@ -43,6 +43,13 @@
        DomPDF en px, asi que el emoji salia a 0.6em en vez de 0.8em— y el
        vertical-align negativo lo baja al centro optico de la linea: con
        'middle' DomPDF lo dejaba flotando por encima del texto. */
+    /* Cada parrafo va en su propio bloque: sin esto DomPDF no le hereda el
+       interlineado de la celda y usa el "normal" de la fuente, que con DejaVu
+       Sans es bastante mayor y desbordaba la caja por abajo. */
+    .field td div {
+        line-height: inherit;
+    }
+
     .field img.emoji {
         width: 0.8em;
         height: 0.8em;

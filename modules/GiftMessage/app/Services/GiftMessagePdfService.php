@@ -41,6 +41,14 @@ class GiftMessagePdfService
     /** Suelo absoluto: por debajo de esto no se imprime nada legible. */
     private const HARD_MIN_FONT_SIZE = 5;
 
+    /**
+     * Aire entre parrafos, en fracciones del tamano de letra. Antes cada salto
+     * doble metia una linea vacia entera (con DejaVu Sans, mas de un 150% del
+     * tamano), que dejaba el mensaje partido en bloques sueltos y ademas se
+     * comia varias lineas de la caja, obligando a encoger la letra sin falta.
+     */
+    private const PARAGRAPH_SPACING_EM = 0.35;
+
     /** Contenido del texto grande de cada pieza. */
     public const CONTENT_MESSAGE = 'message';
 
@@ -248,7 +256,7 @@ class GiftMessagePdfService
 
         return [
             't1' => [
-                'html' => $this->messageToHtml($message),
+                'html' => $this->messageToHtml($message, $t1Fit['line_height']),
                 'font_family' => $this->fontStack($t1Font),
                 'font_size' => $t1Fit['size'],
                 'line_height' => $t1Fit['line_height'],
@@ -431,7 +439,9 @@ class GiftMessagePdfService
         }
 
         $widthPt = $box['width'] * self::MM_PER_POINT;
-        $heightPt = $box['height'] * self::MM_PER_POINT;
+        // Un 3% de holgura: la estimacion y el motor no cuadran al milimetro
+        // (kerning, redondeos), y pasarse significa texto cortado.
+        $heightPt = $box['height'] * self::MM_PER_POINT * 0.97;
 
         // Caso normal: cabe al tamano configurado y no hay nada que buscar.
         $lineHeight = $this->lineHeightThatFits($text, $maxSize, $widthPt, $heightPt, $font);
@@ -476,14 +486,30 @@ class GiftMessagePdfService
     {
         $lines = $this->countWrappedLines($text, $size, $widthPt, $font);
         $fontHeight = $this->fontHeightPt($size, $font);
+        $spacing = max(0, count($this->splitParagraphs($text)) - 1) * self::PARAGRAPH_SPACING_EM * $size;
 
         foreach (self::LINE_HEIGHTS as $lineHeight) {
-            if ($lines * $lineHeight * $fontHeight <= $heightPt) {
+            if (($lines * $lineHeight * $fontHeight) + $spacing <= $heightPt) {
                 return $lineHeight;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Parrafos del mensaje: bloques separados por una o mas lineas en blanco.
+     *
+     * @return array<int, string>
+     */
+    private function splitParagraphs(string $text): array
+    {
+        $paragraphs = preg_split('/\n{2,}/u', $text) ?: [$text];
+
+        return array_values(array_filter(
+            array_map('trim', $paragraphs),
+            fn (string $paragraph) => $paragraph !== ''
+        ));
     }
 
     /**
@@ -547,9 +573,9 @@ class GiftMessagePdfService
         foreach (preg_split('/\R/u', $text) ?: [] as $paragraph) {
             $words = preg_split('/\s+/u', trim($paragraph), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
+            // Las lineas en blanco entre parrafos no cuentan como linea: su aire
+            // se suma aparte (PARAGRAPH_SPACING_EM), que ocupa mucho menos.
             if ($words === []) {
-                $lines++;
-
                 continue;
             }
 
@@ -725,11 +751,43 @@ class GiftMessagePdfService
      * calcularlos aqui (los atributos width/height del <img> los interpreta
      * DomPDF en px y el emoji salia mas pequeno de lo medido).
      */
-    private function messageToHtml(string $message): string
+    /**
+     * Cada parrafo va en su propio bloque con un margen pequeno, en lugar de
+     * separarse con una linea vacia entera: asi el mensaje se lee como un texto
+     * seguido y no como fragmentos sueltos, y sobra sitio para letra mas grande.
+     */
+    private function messageToHtml(string $message, float $lineHeight = self::LINE_HEIGHT): string
+    {
+        $paragraphs = $this->splitParagraphs($message);
+
+        if ($paragraphs === []) {
+            return '';
+        }
+
+        $spacing = self::PARAGRAPH_SPACING_EM;
+        $last = count($paragraphs) - 1;
+        $html = '';
+
+        foreach ($paragraphs as $index => $paragraph) {
+            $margin = $index === $last ? '0' : $spacing.'em';
+
+            // El interlineado se repite en cada parrafo a proposito: DomPDF no
+            // lo hereda de la celda hacia los bloques hijos (ni con
+            // line-height: inherit) y usaba el "normal" de la fuente, bastante
+            // mayor, con lo que la ultima linea acababa cortada.
+            $html .= '<div style="margin: 0 0 '.$margin.' 0; line-height: '.$lineHeight.';">'
+                .nl2br($this->paragraphToHtml($paragraph))
+                .'</div>';
+        }
+
+        return $html;
+    }
+
+    private function paragraphToHtml(string $paragraph): string
     {
         $html = '';
 
-        foreach ($this->splitGraphemes($message) as $grapheme) {
+        foreach ($this->splitGraphemes($paragraph) as $grapheme) {
             if ($this->isJoinerOrVariant($grapheme)) {
                 continue;
             }
@@ -741,7 +799,7 @@ class GiftMessagePdfService
                 : e($grapheme);
         }
 
-        return nl2br($html);
+        return $html;
     }
 
     /**
