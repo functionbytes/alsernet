@@ -24,6 +24,21 @@
     })();
     </script>
 
+    {{-- ─── FOUC: menú lateral de pestañas (.app-menubar-tabs) ──
+         El estado contraído se elige con `.app-toggler` y se guarda en
+         `mc-app-sidebar`. Se aplica antes del primer pintado para que al
+         navegar no se vea el menú abrirse y cerrarse. El breakpoint es el
+         mismo que usan nav.css y main.js. --}}
+    <script>
+    (function(){
+        try {
+            if (!window.matchMedia('(max-width: 1480px)').matches
+                && localStorage.getItem('mc-app-sidebar') === 'mini')
+                document.documentElement.setAttribute('data-app-sidebar', 'mini');
+        } catch (e) {}
+    })();
+    </script>
+
     <meta charset="utf-8"/>
     <title>@hasSection('title')@yield('title') · {{ getSiteName() }}@else{{ getSiteTitle() }}@endif</title>
     <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
