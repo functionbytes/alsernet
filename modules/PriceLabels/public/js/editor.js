@@ -2,6 +2,10 @@
     var FIELDS = [];
     var FIELD_LABELS = {};
     var CANVAS_DIM = { v: { w: 700, h: 990 }, h: { w: 1133, h: 720 } };
+    // Tamano fisico de cada hoja (mm), igual que CANVAS_DIM en
+    // PriceLabelPdfService::CANVAS_DIM: sirve para el indicador de
+    // posicion/tamano en vivo al arrastrar/redimensionar.
+    var PAGE_MM = { v: { w: 210, h: 297 }, h: { w: 340, h: 216 } };
     var SAMPLE_TEXT = {
         referencia: '312553',
         descripcion: 'Tripode Primos Trigger Stick',
@@ -29,6 +33,45 @@
 
     var zoomState = { v: 1, h: 1 };
     var positionsDirty = { v: false, h: false };
+    var $floatTb = null;
+    var $selected = null;
+    // Filas/columnas de cada rejilla, rellenadas en $(document).ready(); las
+    // necesita canvasContextFor() para recalcular la cuadricula por campo.
+    var gridDims = { v: { rows: 2, columns: 2 }, h: { rows: 2, columns: 4 } };
+
+    function canvasContextFor($el) {
+        var mode = canvasKeyFor($el);
+
+        return {
+            canvasId: mode === 'h' ? 'canvas-h' : 'canvas-v',
+            mode: mode,
+            rows: gridDims[mode].rows,
+            columns: gridDims[mode].columns,
+        };
+    }
+
+    // Rectangulo (en px del lienzo) de la celda de cuadricula a la que
+    // pertenece el slot de $el; misma division en filas/columnas que
+    // PriceLabelTemplateService::defaultPositions().
+    function slotCellFor($el) {
+        var ctx = canvasContextFor($el);
+        var dim = CANVAS_DIM[ctx.mode];
+        var slot = parseInt($el.data('slot'), 10) || 1;
+        var col = (slot - 1) % ctx.columns;
+        var row = Math.floor((slot - 1) / ctx.columns);
+        var cellW = dim.w / ctx.columns;
+        var cellH = dim.h / ctx.rows;
+
+        return { x0: col * cellW, y0: row * cellH, w: cellW, h: cellH };
+    }
+
+    function toMm(px, mode, axis) {
+        var dim = CANVAS_DIM[mode];
+        var page = PAGE_MM[mode];
+        var factor = axis === 'x' ? (page.w / dim.w) : (page.h / dim.h);
+
+        return (px * factor).toFixed(1);
+    }
 
     function markDirty(canvasKey) {
         positionsDirty[canvasKey] = true;
@@ -44,8 +87,17 @@
         return FONT_STACKS[family] || FONT_STACKS.helvetica;
     }
 
-    function ptToPx(pt) {
-        return (parseFloat(pt) || 0) * (96 / 72);
+    // Un punto tipografico en px DEL LIENZO. Ojo: no es la conversion de
+    // pantalla 96/72, porque el lienzo no esta a 96 DPI: son 700px para
+    // representar 210mm (vertical) o 1133px para 340mm (horizontal), es
+    // decir ~84.7 DPI. Con 96/72 el editor pintaba el texto un 13.4% mas
+    // ancho que el PDF, y por eso lo que se veia pegado en el lienzo salia
+    // separado al imprimir (y al reves).
+    function ptToPx(pt, mode) {
+        var dim = CANVAS_DIM[mode] || CANVAS_DIM.v;
+        var page = PAGE_MM[mode] || PAGE_MM.v;
+
+        return (parseFloat(pt) || 0) * (dim.w / page.w) * (25.4 / 72);
     }
 
     function fieldStyle(fieldsConfig, key) {
@@ -60,12 +112,14 @@
         $el.css({
             color: style.color || '#000000',
             fontFamily: fontStack(family),
-            fontSize: ptToPx(size) + 'px',
+            fontSize: ptToPx(size, isHorizontal ? 'h' : 'v') + 'px',
             fontWeight: style.bold ? 'bold' : 'normal',
             fontStyle: style.italic ? 'italic' : 'normal',
             textAlign: style.align || 'center',
-            width: (style.box_w || 150) + 'px',
-            height: (style.box_h || 30) + 'px',
+            // La caja es por orientacion (box_w_h/box_h_h en horizontal); las
+            // plantillas antiguas solo tienen box_w/box_h y caen en ellos.
+            width: (isHorizontal ? (style.box_w_h || style.box_w || 150) : (style.box_w || 150)) + 'px',
+            height: (isHorizontal ? (style.box_h_h || style.box_h || 30) : (style.box_h || 30)) + 'px',
         });
     }
 
@@ -75,24 +129,64 @@
         return zoomState[canvasId === 'canvas-h' ? 'h' : 'v'] || 1;
     }
 
-    function drawGuides(canvasId, x, y) {
+    function drawGuides(canvasId, x, y, centeredX, centeredY) {
         var $canvas = $('#' + canvasId);
-        $canvas.find('.snap-guide').remove();
+        $canvas.find('.snap-guide, .snap-center-badge').remove();
 
         if (x !== null) {
-            $('<div class="snap-guide snap-guide-v"></div>').css({ left: x + 'px' }).appendTo($canvas);
+            $('<div class="snap-guide snap-guide-v' + (centeredX ? ' is-center' : '') + '"></div>')
+                .css({ left: x + 'px' }).appendTo($canvas);
         }
         if (y !== null) {
-            $('<div class="snap-guide snap-guide-h"></div>').css({ top: y + 'px' }).appendTo($canvas);
+            $('<div class="snap-guide snap-guide-h' + (centeredY ? ' is-center' : '') + '"></div>')
+                .css({ top: y + 'px' }).appendTo($canvas);
+        }
+
+        // Aviso tipo Photoshop: cuando el centro del campo coincide con el
+        // centro de su celda de la cuadricula, no solo se ve la guia verde,
+        // tambien se avisa con texto por si la guia queda tapada por el campo.
+        if (centeredX || centeredY) {
+            var label = (centeredX && centeredY) ? 'Centrado' : (centeredX ? 'Centrado horizontal' : 'Centrado vertical');
+
+            $('<span class="snap-center-badge"></span>').text(label)
+                .css({ left: (x !== null ? x : 10) + 6 + 'px', top: (y !== null ? y : 10) - 20 + 'px' })
+                .appendTo($canvas);
         }
     }
 
     function applySnap($el, canvasId, x, y) {
+        var width = parseFloat($el.css('width')) || 0;
+        var height = parseFloat($el.css('height')) || 0;
+        var centerX = x + width / 2;
+        var centerY = y + height / 2;
+
         var snappedX = x;
         var snappedY = y;
         var guideX = null;
         var guideY = null;
+        var centeredX = false;
+        var centeredY = false;
 
+        // 1) Guia de centrado (estilo Photoshop): centro del campo vs.
+        // centro de la celda de cuadricula a la que pertenece su slot. Tiene
+        // prioridad sobre el resto porque es la referencia mas util al
+        // colocar etiquetas repetidas.
+        var cell = slotCellFor($el);
+        var cellCenterX = cell.x0 + cell.w / 2;
+        var cellCenterY = cell.y0 + cell.h / 2;
+
+        if (Math.abs(centerX - cellCenterX) <= SNAP_RANGE) {
+            snappedX = cellCenterX - width / 2;
+            guideX = cellCenterX;
+            centeredX = true;
+        }
+        if (Math.abs(centerY - cellCenterY) <= SNAP_RANGE) {
+            snappedY = cellCenterY - height / 2;
+            guideY = cellCenterY;
+            centeredY = true;
+        }
+
+        // 2) Alineacion de bordes con otros campos (comportamiento previo).
         $('#' + canvasId + ' .pricelabels-drag').not($el).each(function () {
             var $other = $(this);
             var ox = parseFloat($other.css('left')) || 0;
@@ -108,31 +202,184 @@
             }
         });
 
-        drawGuides(canvasId, guideX, guideY);
+        drawGuides(canvasId, guideX, guideY, centeredX, centeredY);
 
         return { x: snappedX, y: snappedY };
+    }
+
+    // Etiqueta flotante tipo Photoshop con la posicion/tamano en vivo (px y
+    // mm reales de la hoja impresa) mientras se arrastra o redimensiona.
+    function showInfoBadge(canvasId, $el, text) {
+        var $canvas = $('#' + canvasId);
+        var $badge = $canvas.find('.pricelabels-info-badge');
+
+        if (!$badge.length) {
+            $badge = $('<div class="pricelabels-info-badge"></div>').appendTo($canvas);
+        }
+
+        var left = parseFloat($el.css('left')) || 0;
+        var top = parseFloat($el.css('top')) || 0;
+
+        $badge.text(text).css({ left: left + 'px', top: (top - 22) + 'px' }).addClass('is-visible');
+    }
+
+    function hideInfoBadge(canvasId) {
+        $('#' + canvasId + ' .pricelabels-info-badge').removeClass('is-visible');
+    }
+
+    // Limita value al rango [min, max]; si el campo es mas ancho/alto que la
+    // propia celda (min > max), lo ancla al borde inicial en vez de crashear.
+    function clampRange(value, min, max) {
+        if (max < min) {
+            return min;
+        }
+
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function rectsOverlap(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function rectFor($el) {
+        return {
+            x: parseFloat($el.css('left')) || 0,
+            y: parseFloat($el.css('top')) || 0,
+            w: parseFloat($el.css('width')) || 0,
+            h: parseFloat($el.css('height')) || 0,
+        };
+    }
+
+    // Otros campos del MISMO slot (misma etiqueta repetida), que es donde
+    // tiene sentido comprobar solapes: campos de slots distintos son
+    // fisicamente otra etiqueta impresa, nunca se pisan entre si.
+    function siblingsInSameSlot($el, canvasId) {
+        var slot = $el.data('slot');
+
+        return $('#' + canvasId + ' .pricelabels-drag[data-slot="' + slot + '"]').not($el);
+    }
+
+    // Al empezar a arrastrar/redimensionar, recuerda con que campos ya
+    // solapaba: a esos se les deja seguir tocandose durante todo el gesto
+    // (para poder separar solapes ya existentes en plantillas guardadas
+    // antes de esta funcion), pero no se puede invadir a ningun campo nuevo.
+    function rememberOverlapIgnoreList($el) {
+        var canvasId = $el.closest('.pricelabels-canvas').attr('id');
+        var rect = rectFor($el);
+        var ignored = [];
+
+        siblingsInSameSlot($el, canvasId).each(function () {
+            if (rectsOverlap(rect, rectFor($(this)))) {
+                ignored.push(this);
+            }
+        });
+
+        $el.data('pl-overlap-ignore', ignored);
+    }
+
+    function collidesWithSiblings($el, canvasId, candidateRect) {
+        var ignored = $el.data('pl-overlap-ignore') || [];
+        var collides = false;
+
+        siblingsInSameSlot($el, canvasId).each(function () {
+            if (ignored.indexOf(this) !== -1) {
+                return;
+            }
+            if (rectsOverlap(candidateRect, rectFor($(this)))) {
+                collides = true;
+                return false;
+            }
+        });
+
+        return collides;
+    }
+
+    function dragStartListener(event) {
+        rememberOverlapIgnoreList($(event.target));
     }
 
     function dragMoveListener(event) {
         var $el = $(event.target);
         var canvasId = $el.closest('.pricelabels-canvas').attr('id');
+        var mode = canvasId === 'canvas-h' ? 'h' : 'v';
         var zoom = currentZoomFor($el);
 
-        var left = (parseFloat($el.css('left')) || 0) + event.dx / zoom;
-        var top = (parseFloat($el.css('top')) || 0) + event.dy / zoom;
+        var prevLeft = parseFloat($el.css('left')) || 0;
+        var prevTop = parseFloat($el.css('top')) || 0;
+        var left = prevLeft + event.dx / zoom;
+        var top = prevTop + event.dy / zoom;
 
         var snapped = applySnap($el, canvasId, left, top);
-        $el.css({ left: snapped.x + 'px', top: snapped.y + 'px' });
-        markDirty(canvasId === 'canvas-h' ? 'h' : 'v');
+
+        // No se puede cruzar al slot vecino: el campo queda anclado dentro
+        // de los limites de SU propia celda de la cuadricula, para que con
+        // varias etiquetas repetidas no se termine invadiendo la imagen de
+        // al lado.
+        var width = parseFloat($el.css('width')) || 0;
+        var height = parseFloat($el.css('height')) || 0;
+        var cell = slotCellFor($el);
+        var clampedX = clampRange(snapped.x, cell.x0, cell.x0 + cell.w - width);
+        var clampedY = clampRange(snapped.y, cell.y0, cell.y0 + cell.h - height);
+
+        // Tampoco se puede pisar a otro campo del mismo slot: se resuelve
+        // eje por eje (como deslizar contra una pared) para poder seguir
+        // moviendose en la direccion libre aunque la otra quede bloqueada.
+        // Los campos con los que ya se solapaba al empezar el arrastre se
+        // ignoran, para no dejar "congelado" un solape que ya traia la
+        // plantilla de antes de esta funcion.
+        var finalX = collidesWithSiblings($el, canvasId, { x: clampedX, y: prevTop, w: width, h: height })
+            ? prevLeft
+            : clampedX;
+        var finalY = collidesWithSiblings($el, canvasId, { x: finalX, y: clampedY, w: width, h: height })
+            ? prevTop
+            : clampedY;
+
+        $el.css({ left: finalX + 'px', top: finalY + 'px' });
+        markDirty(mode);
+
+        showInfoBadge(canvasId, $el,
+            'X: ' + Math.round(finalX) + 'px (' + toMm(finalX, mode, 'x') + 'mm)  ·  ' +
+            'Y: ' + Math.round(finalY) + 'px (' + toMm(finalY, mode, 'y') + 'mm)');
+
+        if ($selected && $selected.is($el)) {
+            positionFloatToolbar($el);
+        }
     }
 
     function dragEndListener(event) {
-        $(event.target).closest('.pricelabels-canvas').find('.snap-guide').remove();
+        var canvasId = $(event.target).closest('.pricelabels-canvas').attr('id');
+        $('#' + canvasId + ' .snap-guide, #' + canvasId + ' .snap-center-badge').remove();
+        hideInfoBadge(canvasId);
+    }
+
+    function resizeStartListener(event) {
+        rememberOverlapIgnoreList($(event.target));
+    }
+
+    // Igual que en el drag: retrocede 1px cada vez hasta dejar de solapar a
+    // un campo del mismo slot con el que no se solapaba ya al empezar (esos
+    // se ignoran, ver rememberOverlapIgnoreList). Los pasos de redimensionar
+    // son pequenos entre eventos, asi que el bucle es corto en la practica.
+    function resizeGrowLimit($el, canvasId, left, top, width, height) {
+        function collides(w, h) {
+            return collidesWithSiblings($el, canvasId, { x: left, y: top, w: w, h: h });
+        }
+
+        while (width > 20 && collides(width, height)) {
+            width -= 1;
+        }
+        while (height > 12 && collides(width, height)) {
+            height -= 1;
+        }
+
+        return { width: width, height: height };
     }
 
     function resizeMoveListener(event) {
         var $el = $(event.target);
         var key = $el.data('key');
+        var canvasId = $el.closest('.pricelabels-canvas').attr('id');
+        var mode = canvasId === 'canvas-h' ? 'h' : 'v';
         var zoom = currentZoomFor($el);
 
         var width = (parseFloat($el.css('width')) || 0) + event.deltaRect.width / zoom;
@@ -140,13 +387,40 @@
         var left = (parseFloat($el.css('left')) || 0) + event.deltaRect.left / zoom;
         var top = (parseFloat($el.css('top')) || 0) + event.deltaRect.top / zoom;
 
-        // box_w/box_h son por campo (no por slot) y se comparten entre ambos lienzos.
-        $('[data-key="' + key + '"]').css({ width: width + 'px', height: height + 'px' });
+        // El redimensionado solo crece hacia la derecha/abajo (edges limitados
+        // arriba en initInteractions): tampoco puede pasar del borde de su
+        // propia celda de la cuadricula, ni montarse encima de otro campo
+        // nuevo del mismo slot.
+        var cell = slotCellFor($el);
+        width = Math.min(width, cell.x0 + cell.w - left);
+        height = Math.min(height, cell.y0 + cell.h - top);
+
+        var limited = resizeGrowLimit($el, canvasId, left, top, width, height);
+        width = limited.width;
+        height = limited.height;
+
+        // La caja es por campo Y por orientacion: se replica en los slots del
+        // MISMO lienzo, nunca en el de la otra orientacion (la hoja vertical y
+        // la horizontal tienen proporciones distintas y se ajustan aparte).
+        $('#' + canvasId + ' [data-key="' + key + '"]').css({ width: width + 'px', height: height + 'px' });
         $el.css({ left: left + 'px', top: top + 'px' });
 
-        $('#field-' + key + '-box-w').val(Math.round(width));
-        $('#field-' + key + '-box-h').val(Math.round(height));
-        markDirty(canvasKeyFor($el));
+        $(boxInputId(key, mode, 'w')).val(Math.round(width));
+        $(boxInputId(key, mode, 'h')).val(Math.round(height));
+        markDirty(mode);
+
+        showInfoBadge(canvasId, $el,
+            'W: ' + Math.round(width) + 'px (' + toMm(width, mode, 'x') + 'mm)  ·  ' +
+            'H: ' + Math.round(height) + 'px (' + toMm(height, mode, 'y') + 'mm)');
+
+        if ($selected && $selected.is($el)) {
+            positionFloatToolbar($el);
+        }
+    }
+
+    function resizeEndListener(event) {
+        var canvasId = $(event.target).closest('.pricelabels-canvas').attr('id');
+        hideInfoBadge(canvasId);
     }
 
     function initInteractions() {
@@ -159,16 +433,57 @@
                 modifiers: [
                     interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }),
                 ],
-                listeners: { move: dragMoveListener, end: dragEndListener },
+                listeners: { start: dragStartListener, move: dragMoveListener, end: dragEndListener },
             })
             .resizable({
-                edges: { left: true, right: true, bottom: true, top: true },
+                // Solo la esquina inferior-derecha (coincide con el tirador
+                // visual ::after). Con los 4 bordes activos y el margen de
+                // deteccion por defecto de interact.js (20px), CUALQUIER
+                // arrastre en un campo mas bajo/estrecho que ~40px (p.ej.
+                // "Precio recomendado", 23px de alto) se interpretaba
+                // siempre como redimensionar y nunca como mover.
+                edges: { right: true, bottom: true },
+                margin: 8,
                 modifiers: [
                     interact.modifiers.restrictSize({ min: { width: 20, height: 12 } }),
                     interact.modifiers.restrictEdges({ outer: 'parent' }),
                 ],
-                listeners: { move: resizeMoveListener },
+                listeners: { start: resizeStartListener, move: resizeMoveListener, end: resizeEndListener },
+            })
+            // tap/doubletap de interact.js solo disparan si el puntero NO se
+            // movio (pointerWasMoved === false), asi que nunca compiten con
+            // arrastrar/redimensionar: mover el campo sigue funcionando igual.
+            .on('tap', function (event) {
+                selectField($(event.target));
+            })
+            .on('doubletap', function (event) {
+                var $el = $(event.target);
+                selectField($el);
+                focusFieldSettings($el.data('key'), canvasKeyFor($el));
             });
+    }
+
+    // Lineas divisorias entre las celdas de la cuadricula (una por cada
+    // borde interno de fila/columna), para que con varias etiquetas
+    // repetidas sea evidente donde termina una y empieza la siguiente.
+    function drawGridOverlay(canvasId, mode) {
+        var $canvas = $('#' + canvasId);
+        $canvas.find('.pricelabels-grid-line').remove();
+
+        var dim = CANVAS_DIM[mode];
+        var rows = gridDims[mode].rows;
+        var columns = gridDims[mode].columns;
+        var cellW = dim.w / columns;
+        var cellH = dim.h / rows;
+
+        for (var c = 1; c < columns; c++) {
+            $('<div class="pricelabels-grid-line pricelabels-grid-line-v"></div>')
+                .css({ left: (c * cellW) + 'px' }).appendTo($canvas);
+        }
+        for (var r = 1; r < rows; r++) {
+            $('<div class="pricelabels-grid-line pricelabels-grid-line-h"></div>')
+                .css({ top: (r * cellH) + 'px' }).appendTo($canvas);
+        }
     }
 
     function initPreview(opts) {
@@ -209,13 +524,18 @@
                         $('<img alt="">').attr('src', BARCODE_PREVIEWS[key])
                     );
                 } else {
-                    $el.text(text + ' #' + slot);
+                    // El "#slot" ya no hace falta para distinguir una
+                    // etiqueta repetida de otra: las lineas de la cuadricula
+                    // (drawGridOverlay) marcan el limite de cada celda.
+                    $el.text(text);
                 }
 
                 applyStyle($el, key, isHorizontal, opts.fields);
                 $canvas.append($el);
             });
         }
+
+        drawGridOverlay(opts.canvasId, opts.mode);
     }
 
     function initZoom(sliderId, valueId, outerId, canvasId, mode, key) {
@@ -237,17 +557,19 @@
         });
     }
 
-    // Toma la posicion actual del slot 1 de cada campo y la replica en el
-    // resto de slots de la cuadricula, recalculando el offset segun la
-    // columna/fila de cada slot (misma logica que defaultPositions() en
-    // PriceLabelTemplateService, pero partiendo del ajuste manual del slot 1).
-    function applyGridFromFirstSlot(canvasId, mode, rows, columns) {
+    // Toma la posicion actual del slot 1 de cada campo (o de un unico campo,
+    // via onlyKey) y la replica en el resto de slots de la cuadricula,
+    // recalculando el offset segun la columna/fila de cada slot (misma
+    // logica que defaultPositions() en PriceLabelTemplateService, pero
+    // partiendo del ajuste manual del slot 1).
+    function applyGridFromFirstSlot(canvasId, mode, rows, columns, onlyKey) {
         var dim = CANVAS_DIM[mode];
         var cellW = dim.w / columns;
         var cellH = dim.h / rows;
         var slots = rows * columns;
+        var keys = onlyKey ? [onlyKey] : FIELDS;
 
-        FIELDS.forEach(function (key) {
+        keys.forEach(function (key) {
             var $base = $('#' + canvasId + ' [data-key="' + key + '"][data-slot="1"]');
             if (!$base.length) {
                 return;
@@ -268,7 +590,244 @@
         });
 
         markDirty(canvasId === 'canvas-h' ? 'h' : 'v');
-        toastr.success('Posiciones recalculadas desde la etiqueta #1 en toda la cuadricula. Revisa el resultado y pulsa "Guardar posiciones".');
+
+        var scopeMsg = onlyKey ? ('del campo "' + (FIELD_LABELS[onlyKey] || onlyKey) + '"') : 'de todos los campos';
+        toastr.success('Posiciones ' + scopeMsg + ' recalculadas desde la etiqueta #1 en toda la cuadricula. Revisa el resultado y pulsa "Guardar posiciones".');
+    }
+
+    // ── Seleccion de campo + toolbar flotante ──────────────────────────
+    // Al pulsar (tap, sin arrastrar) un campo del lienzo se muestra una
+    // pequena barra de acciones rapidas justo encima, que reusa los mismos
+    // inputs de la tabla de estilo lateral (una sola fuente de verdad: lo
+    // que envia collectFields()/collectPositions() al guardar).
+
+    function repositionSelectedToolbar() {
+        if ($selected && $selected.length) {
+            positionFloatToolbar($selected);
+        }
+    }
+
+    function positionFloatToolbar($el) {
+        if (!$floatTb || !$floatTb.length) {
+            return;
+        }
+
+        var rect = $el[0].getBoundingClientRect();
+        var tbHeight = $floatTb.outerHeight() || 36;
+        var tbWidth = $floatTb.outerWidth() || 260;
+        var top = rect.top - tbHeight - 8;
+
+        if (top < 4) {
+            top = rect.bottom + 8;
+        }
+
+        // El campo puede quedar pegado al borde del viewport (p.ej. tras usar
+        // el boton de ajustes, que hace scroll a la tabla lateral): sujeta el
+        // toolbar dentro del area visible en vez de dejarlo cortado.
+        top = Math.max(4, Math.min(top, window.innerHeight - tbHeight - 4));
+        var left = Math.max(4, Math.min(rect.left, window.innerWidth - tbWidth - 4));
+
+        $floatTb.css({ top: top + 'px', left: left + 'px' });
+    }
+
+    // La fuente y el tamano son por orientacion (sufijo "-h" en horizontal),
+    // el resto de props del campo (color, negrita, cursiva, align) se
+    // comparten entre ambos lienzos.
+    function fontFamilyInputId(key, canvasKey) {
+        return '#field-' + key + '-font-family' + (canvasKey === 'h' ? '-h' : '');
+    }
+
+    function fontSizeInputId(key, canvasKey) {
+        return '#field-' + key + '-font-size' + (canvasKey === 'h' ? '-h' : '');
+    }
+
+    // dim: 'w' (ancho) o 'h' (alto). En horizontal el input lleva el sufijo
+    // "-h" extra: field-<key>-box-w-h / field-<key>-box-h-h.
+    function boxInputId(key, canvasKey, dim) {
+        return '#field-' + key + '-box-' + dim + (canvasKey === 'h' ? '-h' : '');
+    }
+
+    function refreshFloatToolbarState($el) {
+        if (!$floatTb || !$floatTb.length) {
+            return;
+        }
+
+        var key = $el.data('key');
+        var canvasKey = canvasKeyFor($el);
+        var isBold = $('#field-' + key + '-bold').is(':checked');
+        var isItalic = $('#field-' + key + '-italic').is(':checked');
+        var align = $('#field-' + key + '-align').val() || 'center';
+        var color = $('#field-' + key + '-color').val() || '#000000';
+        var $srcFamily = $(fontFamilyInputId(key, canvasKey));
+        var $tbFamily = $floatTb.find('[data-action="font-family"]');
+
+        // El select de fuente clona las mismas opciones que el de la tabla
+        // lateral (incluye las fuentes personalizadas subidas en ajustes):
+        // una unica fuente de verdad para la lista de fuentes disponibles.
+        if ($srcFamily.length) {
+            $tbFamily.html($srcFamily.html()).val($srcFamily.val());
+        }
+        $floatTb.find('[data-action="font-size"]').val($(fontSizeInputId(key, canvasKey)).val());
+
+        $floatTb.find('[data-action="bold"]').toggleClass('is-on', isBold);
+        $floatTb.find('[data-action="italic"]').toggleClass('is-on', isItalic);
+        $floatTb.find('[data-action="front"]').toggleClass('is-on', $el.hasClass('is-pinned'));
+        $floatTb.find('[data-align]').toggleClass('is-on', false)
+            .filter('[data-align="' + align + '"]').toggleClass('is-on', true);
+        $floatTb.find('.pricelabels-ftb-color-swatch').css('background', color);
+    }
+
+    // Centra el campo (en X, en Y, o en ambos ejes) dentro de la celda de su
+    // slot: equivalente de un clic a lo que las guias de arrastre ya avisan.
+    function centerFieldInCell($el, axis) {
+        var cell = slotCellFor($el);
+        var width = parseFloat($el.css('width')) || 0;
+        var height = parseFloat($el.css('height')) || 0;
+
+        if (axis === 'x') {
+            $el.css('left', (cell.x0 + cell.w / 2 - width / 2) + 'px');
+        } else {
+            $el.css('top', (cell.y0 + cell.h / 2 - height / 2) + 'px');
+        }
+
+        markDirty(canvasKeyFor($el));
+
+        if ($selected && $selected.is($el)) {
+            positionFloatToolbar($el);
+        }
+    }
+
+    function selectField($el) {
+        $('.pricelabels-drag').removeClass('is-selected');
+        $el.addClass('is-selected');
+        $selected = $el;
+        refreshFloatToolbarState($el);
+        positionFloatToolbar($el);
+        if ($floatTb) {
+            $floatTb.addClass('is-visible');
+        }
+    }
+
+    function deselectField() {
+        if ($selected && $selected.length) {
+            $selected.removeClass('is-selected');
+        }
+        $selected = null;
+        if ($floatTb) {
+            $floatTb.removeClass('is-visible');
+        }
+    }
+
+    // Hace scroll hasta la fila de la tabla lateral de ese campo y enfoca el
+    // ancho de caja: lo unico que la toolbar rapida no cubre (fuente, tamano,
+    // negrita, cursiva, alinear y color ya se editan directo en el lienzo).
+    function focusFieldSettings(key, canvasKey) {
+        var $row = $('tr[data-field-key="' + key + '"]');
+        if (!$row.length) {
+            return;
+        }
+
+        $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $row.addClass('pricelabels-row-highlight');
+        setTimeout(function () { $row.removeClass('pricelabels-row-highlight'); }, 2000);
+
+        // El ancho de la orientacion desde la que se abrio, no siempre el vertical.
+        $(boxInputId(key, canvasKey || 'v', 'w')).trigger('focus');
+    }
+
+    function bindFloatToolbar() {
+        $floatTb = $('#pricelabels-float-tb');
+        if (!$floatTb.length) {
+            return;
+        }
+
+        $floatTb.on('click', '.pricelabels-ftb-btn', function (e) {
+            e.stopPropagation();
+
+            if (!$selected || !$selected.length) {
+                return;
+            }
+
+            var action = $(this).data('action');
+            var key = $selected.data('key');
+
+            var align = $(this).data('align');
+
+            if (action === 'bold') {
+                var $bold = $('#field-' + key + '-bold');
+                $bold.prop('checked', !$bold.is(':checked')).trigger('change');
+            } else if (action === 'italic') {
+                var $italic = $('#field-' + key + '-italic');
+                $italic.prop('checked', !$italic.is(':checked')).trigger('change');
+            } else if (action === 'align') {
+                $('#field-' + key + '-align').val(align).trigger('change');
+            } else if (action === 'color') {
+                // El id de la tabla lo lleva el hex; quien abre la paleta del
+                // sistema es la muestra del componente de color.
+                $('#field-' + key + '-color-picker').trigger('click');
+            } else if (action === 'front') {
+                $('tr[data-field-key="' + key + '"]').trigger('click');
+            } else if (action === 'center-x') {
+                centerFieldInCell($selected, 'x');
+            } else if (action === 'center-y') {
+                centerFieldInCell($selected, 'y');
+            } else if (action === 'grid') {
+                var ctx = canvasContextFor($selected);
+                applyGridFromFirstSlot(ctx.canvasId, ctx.mode, ctx.rows, ctx.columns, key);
+            } else if (action === 'settings') {
+                focusFieldSettings(key, canvasKeyFor($selected));
+            } else if (action === 'close') {
+                deselectField();
+                return;
+            }
+
+            refreshFloatToolbarState($selected);
+        });
+
+        $floatTb.on('change', '[data-action="font-family"]', function () {
+            if (!$selected || !$selected.length) {
+                return;
+            }
+
+            var key = $selected.data('key');
+            var canvasKey = canvasKeyFor($selected);
+            $(fontFamilyInputId(key, canvasKey)).val($(this).val()).trigger('change');
+        });
+
+        $floatTb.on('input', '[data-action="font-size"]', function () {
+            if (!$selected || !$selected.length) {
+                return;
+            }
+
+            var key = $selected.data('key');
+            var canvasKey = canvasKeyFor($selected);
+            $(fontSizeInputId(key, canvasKey)).val($(this).val()).trigger('input');
+        });
+
+        // Clic en el fondo del lienzo (fuera de cualquier campo) deselecciona.
+        $('.pricelabels-canvas').on('click', function (e) {
+            if (e.target === this) {
+                deselectField();
+            }
+        });
+
+        // Clic en cualquier otra parte de la pagina (fuera del campo
+        // seleccionado y fuera de la propia toolbar) tambien deselecciona,
+        // no solo el fondo del lienzo.
+        $(document).on('click', function (e) {
+            if ($selected && !$(e.target).closest('.pricelabels-drag, #pricelabels-float-tb').length) {
+                deselectField();
+            }
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape' && $selected) {
+                deselectField();
+            }
+        });
+
+        $(window).on('scroll resize', repositionSelectedToolbar);
+        $('.pricelabels-canvas-outer').on('scroll', repositionSelectedToolbar);
     }
 
     function copyPositions(toHorizontal, fromSlots, toSlots) {
@@ -446,7 +1005,7 @@
     }
 
     function collectFields() {
-        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align', 'box-w', 'box-h'];
+        var props = ['color', 'font-family', 'font-size', 'font-family-h', 'font-size-h', 'align', 'box-w', 'box-h', 'box-w-h', 'box-h-h'];
         var checkboxProps = ['bold', 'italic'];
         var fields = {};
 
@@ -717,10 +1276,10 @@
                 $('#canvas-h [data-key="' + key + '"]').css('font-family', fontStack($(this).val()));
             });
             $('#field-' + key + '-font-size').on('input', function () {
-                $('#canvas-v [data-key="' + key + '"]').css('font-size', ptToPx($(this).val()) + 'px');
+                $('#canvas-v [data-key="' + key + '"]').css('font-size', ptToPx($(this).val(), 'v') + 'px');
             });
             $('#field-' + key + '-font-size-h').on('input', function () {
-                $('#canvas-h [data-key="' + key + '"]').css('font-size', ptToPx($(this).val()) + 'px');
+                $('#canvas-h [data-key="' + key + '"]').css('font-size', ptToPx($(this).val(), 'h') + 'px');
             });
             $('#field-' + key + '-bold').on('change', function () {
                 $('[data-key="' + key + '"]').css('font-weight', $(this).is(':checked') ? 'bold' : 'normal');
@@ -731,11 +1290,19 @@
             $('#field-' + key + '-align').on('change', function () {
                 $('[data-key="' + key + '"]').css('text-align', $(this).val());
             });
+            // Cada input de caja afecta solo a SU lienzo (la caja es por
+            // orientacion, como la fuente y el tamano).
             $('#field-' + key + '-box-w').on('input', function () {
-                $('[data-key="' + key + '"]').css('width', $(this).val() + 'px');
+                $('#canvas-v [data-key="' + key + '"]').css('width', $(this).val() + 'px');
             });
             $('#field-' + key + '-box-h').on('input', function () {
-                $('[data-key="' + key + '"]').css('height', $(this).val() + 'px');
+                $('#canvas-v [data-key="' + key + '"]').css('height', $(this).val() + 'px');
+            });
+            $('#field-' + key + '-box-w-h').on('input', function () {
+                $('#canvas-h [data-key="' + key + '"]').css('width', $(this).val() + 'px');
+            });
+            $('#field-' + key + '-box-h-h').on('input', function () {
+                $('#canvas-h [data-key="' + key + '"]').css('height', $(this).val() + 'px');
             });
         });
     }
@@ -764,6 +1331,8 @@
         var columnsH = (grid.horizontal && grid.horizontal.columns) || 4;
         var slotsV = rowsV * columnsV;
         var slotsH = rowsH * columnsH;
+        gridDims.v = { rows: rowsV, columns: columnsV };
+        gridDims.h = { rows: rowsH, columns: columnsH };
 
         initPreview({
             mode: 'v',
@@ -790,12 +1359,20 @@
         bindRowCanvasHighlight();
         bindKeyboardNudge();
         bindApplyStyleToAll();
+        bindFloatToolbar();
         highlightNewField(config.newFieldKey);
 
         initZoom('zoom-v', 'zoom-v-value', 'canvas-outer-v', 'canvas-v', 'v', 'v');
         initZoom('zoom-h', 'zoom-h-value', 'canvas-outer-h', 'canvas-h', 'h', 'h');
         initZoomReset('zoom-v-reset', 'zoom-v');
         initZoomReset('zoom-h-reset', 'zoom-h');
+
+        $('#grid-overlay-v').on('change', function () {
+            $('#canvas-v').toggleClass('is-grid-hidden', !$(this).is(':checked'));
+        });
+        $('#grid-overlay-h').on('change', function () {
+            $('#canvas-h').toggleClass('is-grid-hidden', !$(this).is(':checked'));
+        });
 
         window.addEventListener('beforeunload', function (e) {
             if (positionsDirty.v || positionsDirty.h) {

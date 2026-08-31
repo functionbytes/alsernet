@@ -12,7 +12,11 @@
     position: absolute;
     cursor: move;
     touch-action: none;
-    padding: 2px 4px;
+    /* El PDF real (label-sheet.blade.php) no tiene padding en ".field": sin
+       este, el texto llegaba mas cerca de otro campo vecino en el PDF que
+       en el lienzo del editor, dando la falsa sensacion de que quedaban
+       separados cuando en realidad estaban pegados (o al reves). */
+    padding: 0;
     font-size: 10px;
     line-height: 1.1;
     border: 1px dashed #90bb13;
@@ -20,9 +24,12 @@
     border-radius: 4px;
     user-select: none;
     text-align: center;
-    overflow: hidden;
+    /* El PDF real (label-sheet.blade.php) nunca trunca con "...": si el
+       texto no cabe, se ve tal cual (desborda) o se ajusta con
+       word-wrap:break-word. Recortar aqui con ellipsis mostraba en el
+       editor un truncado que el resultado final nunca tiene. */
+    overflow: visible;
     white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 .pricelabels-drag[data-key="descripcion"] {
@@ -79,6 +86,80 @@
     left: 0;
     right: 0;
     height: 1px;
+}
+
+/* Guia de centrado (estilo Photoshop): mismo verde de la paleta, pero mas
+   gruesa y punteada para distinguirla de la alineacion simple con otro campo. */
+.snap-guide.is-center {
+    background: transparent;
+    border-color: #4f6b0a;
+}
+
+.snap-guide-v.is-center {
+    width: 0;
+    border-left: 2px dashed #4f6b0a;
+}
+
+.snap-guide-h.is-center {
+    height: 0;
+    border-top: 2px dashed #4f6b0a;
+}
+
+.snap-center-badge {
+    position: absolute;
+    z-index: 51;
+    background: #4f6b0a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Etiqueta con la posicion/tamano en vivo (px y mm) al arrastrar/redimensionar. */
+.pricelabels-info-badge {
+    position: absolute;
+    z-index: 52;
+    background: #222;
+    color: #fff;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    padding: 3px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    display: none;
+}
+
+.pricelabels-info-badge.is-visible {
+    display: block;
+}
+
+/* Divisiones de la cuadricula: limites de cada celda/slot, siempre visibles
+   por defecto para diferenciar una etiqueta repetida de la de al lado. */
+.pricelabels-grid-line {
+    position: absolute;
+    z-index: 4;
+    background: rgba(51, 51, 51, 0.35);
+    pointer-events: none;
+}
+
+.pricelabels-grid-line-v {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+}
+
+.pricelabels-grid-line-h {
+    left: 0;
+    right: 0;
+    height: 1px;
+}
+
+.pricelabels-canvas.is-grid-hidden .pricelabels-grid-line {
+    display: none;
 }
 
 .pricelabels-zoom {
@@ -169,6 +250,110 @@ tr[data-field-key].is-pinned {
 @keyframes pricelabels-pulse {
     0%, 100% { box-shadow: 0 0 0 2px rgba(144, 187, 19, 0.9); }
     50% { box-shadow: 0 0 0 6px rgba(144, 187, 19, 0.3); }
+}
+
+.pricelabels-drag.is-selected {
+    z-index: 35;
+    border-color: #333;
+    box-shadow: 0 0 0 2px #90bb13;
+}
+
+/* Toolbar flotante de acciones rapidas por campo (ver bindFloatToolbar en
+   editor.js): pastilla oscura posicionada con position:fixed justo encima
+   del campo seleccionado. */
+#pricelabels-float-tb {
+    position: fixed;
+    top: 0;
+    left: 0;
+    /* El div es hijo directo del .row de Bootstrap del formulario; sin este
+       width explicito, la regla ".row > *{width:100%}" del tema gana porque
+       aqui no habia ninguna declaracion de width que competir con ella. */
+    width: max-content;
+    max-width: none;
+    z-index: 1060;
+    display: none;
+    align-items: center;
+    gap: 2px;
+    background: #222;
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+#pricelabels-float-tb.is-visible {
+    display: inline-flex;
+}
+
+.pricelabels-ftb-btn {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: #ddd;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background .1s, color .1s;
+}
+
+.pricelabels-ftb-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.pricelabels-ftb-btn.is-on {
+    background: #90bb13;
+    color: #fff;
+}
+
+.pricelabels-ftb-sep {
+    width: 1px;
+    align-self: stretch;
+    margin: 3px 2px;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.pricelabels-ftb-color-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    display: block;
+    background: #000;
+}
+
+.pricelabels-ftb-select,
+.pricelabels-ftb-size {
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 5px;
+    background: transparent;
+    color: #ddd;
+    font-size: 11px;
+    padding: 0 6px;
+}
+
+.pricelabels-ftb-select {
+    width: 96px;
+}
+
+.pricelabels-ftb-select option {
+    background: #222;
+    color: #fff;
+}
+
+.pricelabels-ftb-size {
+    width: 48px;
+}
+
+.pricelabels-ftb-select:hover,
+.pricelabels-ftb-size:hover,
+.pricelabels-ftb-select:focus,
+.pricelabels-ftb-size:focus {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
 }
 
 .pricelabels-index-thumb {

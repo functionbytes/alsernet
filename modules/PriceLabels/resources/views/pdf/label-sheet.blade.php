@@ -25,6 +25,13 @@
         /* La alineacion la fija cada campo (era fija en centro para todos). */
         text-align: center;
         word-wrap: break-word;
+        /* Mismo interlineado que .pricelabels-drag en el editor. Sin fijarlo,
+           DomPDF usa el "normal" de la fuente (en las Noto CJK deja la linea
+           base a ~1.53em del borde, vs ~1.02em en el editor). Como ese
+           desfase escala con el tamano de letra, dos campos con tamanos
+           distintos que en el editor quedaban alineados salian descuadrados
+           en el PDF: el mas grande caia mucho mas abajo. */
+        line-height: 1.1;
     }
 </style>
 </head>

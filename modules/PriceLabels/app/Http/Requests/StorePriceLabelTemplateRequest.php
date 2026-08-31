@@ -37,6 +37,8 @@ class StorePriceLabelTemplateRequest extends FormRequest
             'fields.*.align' => ['nullable', 'string', 'in:left,center,right'],
             'fields.*.box_w' => ['nullable', 'integer', 'min:10', 'max:2000'],
             'fields.*.box_h' => ['nullable', 'integer', 'min:10', 'max:2000'],
+            'fields.*.box_w_h' => ['nullable', 'integer', 'min:10', 'max:2000'],
+            'fields.*.box_h_h' => ['nullable', 'integer', 'min:10', 'max:2000'],
         ];
     }
 

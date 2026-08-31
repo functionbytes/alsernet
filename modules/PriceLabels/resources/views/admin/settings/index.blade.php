@@ -4,6 +4,12 @@
 
 @section('content')
 
+    {{-- Fuentes personalizadas subidas: para que la columna "Muestra" de la
+         tabla de abajo se vea con la tipografia real (no solo el nombre). --}}
+    @if($fontFaceCss !== '')
+        <style>{!! $fontFaceCss !!}</style>
+    @endif
+
     @include('core::components.card', ['title' => $pageTitle])
 
     <div class="row g-3">
@@ -32,7 +38,7 @@
                                         <th>Nombre</th>
                                         <th>Familia</th>
                                         <th>Variante</th>
-                                        <th>Archivo</th>
+                                        <th>Muestra</th>
                                         <th>Subida</th>
                                         <th></th>
                                     </tr>
@@ -43,7 +49,10 @@
                                             <td class="fw-semibold">{{ $font->name }}</td>
                                             <td><code>{{ $font->family }}</code></td>
                                             <td>{{ $font->variantLabel() }}</td>
-                                            <td class="text-muted">{{ basename($font->file_path) }}</td>
+                                            <td class="pricelabels-font-sample" data-family="{{ $font->family }}"
+                                                data-weight="{{ $font->weight }}" data-style="{{ $font->style }}">
+                                                312553 Tripode Primos Trigger Stick 149,99€
+                                            </td>
                                             <td class="text-muted">{{ $font->created_at?->format('d/m/Y H:i') }}</td>
                                             <td class="text-end">
                                                 <div class="dropdown">
@@ -135,6 +144,14 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('.pricelabels-font-sample').each(function () {
+        $(this).css({
+            fontFamily: "'" + $(this).data('family') + "', sans-serif",
+            fontWeight: $(this).data('weight'),
+            fontStyle: $(this).data('style'),
+        });
+    });
+
     $('.delete-font-btn').on('click', function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
