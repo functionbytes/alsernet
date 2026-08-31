@@ -173,6 +173,23 @@
         return boxes;
     }
 
+    // Alineaciones tal como estan en los selectores, para que la vista previa
+    // reaccione sin necesidad de guardar.
+    function currentAligns() {
+        var aligns = { envelope: {}, card: {} };
+
+        $('.giftmessage-align-select').each(function () {
+            var $select = $(this);
+            var scope = $select.data('scope');
+            var slot = $select.data('slot');
+
+            aligns[scope][slot] = aligns[scope][slot] || {};
+            aligns[scope][slot][$select.data('axis') === 'v' ? 'valign' : 'align'] = $select.val();
+        });
+
+        return aligns;
+    }
+
     function refreshPreviewMetrics() {
         var config = window.GIFTMESSAGE_SETTINGS;
 
@@ -190,6 +207,7 @@
                     order: $('#preview-order').val(),
                     recipient: $('#preview-recipient').val(),
                     boxes: currentBoxes(),
+                    aligns: currentAligns(),
                 }),
                 contentType: 'application/json',
                 dataType: 'json',
@@ -199,10 +217,19 @@
                         Object.keys(response[scope]).forEach(function (slot) {
                             var metrics = response[scope][slot];
 
+                            // La caja del editor es flex: la alineacion horizontal
+                            // va por justify-content y la vertical por align-items,
+                            // que es como se pinta el equivalente del PDF.
+                            var JUSTIFY = { left: 'flex-start', center: 'center', right: 'flex-end' };
+                            var ALIGN = { top: 'flex-start', middle: 'center', bottom: 'flex-end' };
+
                             $('#canvas-' + scope + ' [data-slot="' + slot + '"]').css({
                                 fontFamily: metrics.font_family,
                                 fontSize: ptToCanvasPx(metrics.font_size, scope) + 'px',
                                 lineHeight: metrics.line_height || 1.2,
+                                textAlign: metrics.align || 'center',
+                                justifyContent: JUSTIFY[metrics.align] || 'center',
+                                alignItems: ALIGN[metrics.valign] || 'center',
                             });
                         });
 
@@ -369,27 +396,6 @@
         $('.giftmessage-drag').each(function () { shrinkToFit($(this)); });
         refreshPreviewMetrics();
     }
-
-    // ─── Color + hex sincronizados ──────────────────────────────────────────
-    function bindColorHexPairs() {
-        $('.giftmessage-color-hex').each(function () {
-            var $hex = $(this);
-            var $color = $('#' + $hex.data('colorTarget'));
-
-            $hex.on('input', function () {
-                var value = $hex.val().trim();
-
-                if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                    $color.val(value).trigger('input');
-                }
-            });
-
-            $color.on('input', function () {
-                $hex.val($color.val());
-            });
-        });
-    }
-
     // ─── Imagen de fondo: zona de arrastrar y soltar ────────────────────────
     // La zona es a la vez vista previa y destino: la imagen guardada se pinta
     // como fondo suyo. Sube en cuanto se suelta el archivo y repinta el fondo,
@@ -498,6 +504,119 @@
         });
     }
 
+    // ─── PDF de prueba de una pieza ─────────────────────────────────────────
+    // Se manda el estado que hay en pantalla (cajas, tipografia, alineacion y
+    // textos de muestra) para poder ver como queda antes de guardar y sin dejar
+    // rastro en el historial.
+    function currentPreviewPayload(scope) {
+        var prefix = scope === 'card' ? 'card' : 'env';
+        var $canvas = $('#canvas-' + scope);
+        var boxes = {};
+        var styles = {};
+
+        ['t1', 't2'].forEach(function (slot) {
+            var $box = $canvas.find('[data-slot="' + slot + '"]');
+
+            if ($box.length) {
+                boxes[slot] = {
+                    x: percentOf(parseFloat($box.css('left')) || 0, $canvas.width()),
+                    y: percentOf(parseFloat($box.css('top')) || 0, $canvas.height()),
+                    w: percentOf($box.outerWidth(), $canvas.width()),
+                    h: percentOf($box.outerHeight(), $canvas.height()),
+                };
+            }
+
+            styles[slot] = {
+                font: $('[name="' + prefix + '_' + slot + '_font"]').val(),
+                size: $('[name="' + prefix + '_' + slot + '_size"]').val(),
+                color: $('[name="' + prefix + '_' + slot + '_color"]').val(),
+                opacity: $('[name="' + prefix + '_' + slot + '_opacity"]').val(),
+                align: $('#' + prefix + '_' + slot + '_align').val(),
+                valign: $('#' + prefix + '_' + slot + '_valign').val(),
+            };
+        });
+
+        return {
+            scope: scope,
+            message: $('#preview-message').val(),
+            recipient: $('#preview-recipient').val(),
+            order: $('#preview-order').val(),
+            content: $('#' + prefix + '_t1_content').val(),
+            boxes: boxes,
+            styles: styles,
+        };
+    }
+
+    function bindPreviewPdf() {
+        var config = window.GIFTMESSAGE_SETTINGS;
+
+        if (!config || !config.urls.previewPdf) {
+            return;
+        }
+
+        var objectUrl = null;
+
+        $('.giftmessage-preview-pdf').on('click', function () {
+            var $btn = $(this);
+            var scope = $btn.data('scope');
+            var etiqueta = scope === 'card' ? 'la tarjeta' : 'el sobre';
+            var original = $btn.text();
+
+            $btn.prop('disabled', true).text('Generando...');
+            $('#preview-pdf-title').text('PDF de prueba — ' + (scope === 'card' ? 'Tarjeta' : 'Sobre'));
+            $('#preview-pdf-status').text('Generando ' + etiqueta + '...');
+            $('#preview-pdf-frame').attr('src', '');
+            $('#preview-pdf-modal').modal('show');
+
+            $.ajax({
+                url: config.urls.previewPdf,
+                method: 'POST',
+                data: JSON.stringify(currentPreviewPayload(scope)),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                xhrFields: { responseType: 'blob' },
+                success: function (blob) {
+                    if (objectUrl) {
+                        URL.revokeObjectURL(objectUrl);
+                    }
+
+                    objectUrl = URL.createObjectURL(blob);
+                    $('#preview-pdf-frame').attr('src', objectUrl);
+                    $('#preview-pdf-open').attr('href', objectUrl);
+                    $('#preview-pdf-status').empty();
+                },
+                error: function (xhr) {
+                    // Con responseType blob, el error tambien llega como blob.
+                    var mostrar = function (mensaje) {
+                        $('#preview-pdf-status').text(mensaje);
+                        toastr.error(mensaje);
+                    };
+
+                    if (xhr.response instanceof Blob) {
+                        xhr.response.text().then(function (texto) {
+                            var mensaje = 'No se pudo generar el PDF de prueba.';
+
+                            try {
+                                mensaje = JSON.parse(texto).message || mensaje;
+                            } catch (e) {
+                                // Respuesta no JSON: se queda el mensaje generico.
+                            }
+
+                            mostrar(mensaje);
+                        });
+
+                        return;
+                    }
+
+                    mostrar('No se pudo generar el PDF de prueba.');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).text(original);
+                },
+            });
+        });
+    }
+
     // ─── Copiar posicion + tipografia del sobre a la tarjeta ────────────────
     // No guarda nada por si solo: rellena los campos de la tarjeta con los
     // valores actuales en pantalla del sobre para que el usuario revise y
@@ -512,12 +631,10 @@
 
                 if (field === 'font') {
                     $target.trigger('change'); // refresca el select2
+                } else if (field === 'color') {
+                    $target.trigger('input'); // repinta la muestra y la vista previa
                 }
             });
-
-            $('.giftmessage-color-hex[data-color-target="card_' + slot + '_color"]')
-                .val($('#card_' + slot + '_color').val());
-
             var $envBox = $('#canvas-envelope [data-slot="' + slot + '"]');
             var $cardBox = $('#canvas-card [data-slot="' + slot + '"]');
 
@@ -617,12 +734,13 @@
         bindFineTuneInputs();
         initFontPreview(config.fonts || {});
         bindFontInputs();
-        bindColorHexPairs();
         initImageDropzones();
+        bindPreviewPdf();
         applySampleText();
 
         $('#preview-message, #preview-order, #preview-recipient').on('input', applySampleText);
         $('.giftmessage-content-select').on('change', applySampleText);
+        $('.giftmessage-align-select').on('change', refreshPreviewMetrics);
 
         $('#save-positions-envelope').on('click', function () {
             savePositions('envelope', $(this));

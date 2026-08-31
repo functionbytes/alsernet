@@ -41,6 +41,31 @@ class GiftMessagePdfService
     /** Suelo absoluto: por debajo de esto no se imprime nada legible. */
     private const HARD_MIN_FONT_SIZE = 5;
 
+    /**
+     * Aire entre parrafos, en fracciones del tamano de letra. Antes cada salto
+     * doble metia una linea vacia entera (con DejaVu Sans, mas de un 150% del
+     * tamano), que dejaba el mensaje partido en bloques sueltos y ademas se
+     * comia varias lineas de la caja, obligando a encoger la letra sin falta.
+     */
+    private const PARAGRAPH_SPACING_EM = 0.35;
+
+    /**
+     * El ajuste baja de medio en medio punto: entre 10 y 11 pt hay un 10% de
+     * caja, y con pasos enteros se desaprovechaba en cuanto el texto se pasaba
+     * por poco.
+     */
+    private const FONT_SIZE_STEP = 0.5;
+
+    /**
+     * Aire interior de la caja, en fracciones del tamano de letra, para que el
+     * texto no vaya rozando el borde del recuadro impreso.
+     */
+    private const BOX_PADDING_EM = 0.15;
+
+    public const ALIGNMENTS = ['left' => 'Izquierda', 'center' => 'Centro', 'right' => 'Derecha'];
+
+    public const VERTICAL_ALIGNMENTS = ['top' => 'Arriba', 'middle' => 'Centro', 'bottom' => 'Abajo'];
+
     /** Contenido del texto grande de cada pieza. */
     public const CONTENT_MESSAGE = 'message';
 
@@ -70,6 +95,9 @@ class GiftMessagePdfService
     /** @var array<int, array<string, mixed>> Avisos de la ultima generacion. */
     private array $warnings = [];
 
+    /** Aire entre parrafos en curso, para que medir y pintar usen el mismo. */
+    private float $spacingEm = self::PARAGRAPH_SPACING_EM;
+
     public function __construct(
         private readonly GiftMessageConfigService $configService,
         private readonly GiftMessageFontService $fontService
@@ -83,10 +111,21 @@ class GiftMessagePdfService
      */
     public function generate(string $type, array $rows): PdfDocument
     {
+        return $this->generateWith($this->configService->current(), $type, $rows);
+    }
+
+    /**
+     * Igual que generate(), pero con una configuracion concreta en vez de la
+     * guardada: asi el editor puede pedir un PDF de prueba con los cambios que
+     * hay en pantalla sin tener que guardarlos antes.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    public function generateWith(GiftMessageConfig $config, string $type, array $rows): PdfDocument
+    {
         $this->ensureFontDirectoryExists();
 
         $this->warnings = [];
-        $config = $this->configService->current();
         $size = self::SIZES[$type];
 
         // El PDF sale SIN la imagen de fondo, a proposito: se imprime sobre sobres
@@ -128,7 +167,7 @@ class GiftMessagePdfService
      *                                                                           guardado todavia. Sin esto, mover una caja no cambiaba la vista previa.
      * @return array<string, array{font: string, font_family: string, font_size: int}>
      */
-    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = [], string $recipient = ''): array
+    public function previewMetrics(string $type, string $message, string $orderNumber, array $boxes = [], string $recipient = '', array $aligns = []): array
     {
         $config = $this->configService->current();
         $size = self::SIZES[$type];
@@ -159,6 +198,10 @@ class GiftMessagePdfService
                 'configured_size' => (int) $config->{$prefix.'_t1_size'},
                 'min_font_size' => $minSize,
                 'fits' => $t1Fit['fits'],
+                // La alineacion que manda es la que el usuario tiene en pantalla,
+                // aunque todavia no la haya guardado.
+                'align' => $this->alignment($aligns['t1']['align'] ?? $config->{$prefix.'_t1_align'} ?? null, self::ALIGNMENTS, 'center'),
+                'valign' => $this->alignment($aligns['t1']['valign'] ?? $config->{$prefix.'_t1_valign'} ?? null, self::VERTICAL_ALIGNMENTS, 'middle'),
             ],
             't2' => [
                 'font' => $t2Font,
@@ -168,6 +211,10 @@ class GiftMessagePdfService
                 'configured_size' => (int) $config->{$prefix.'_t2_size'},
                 'min_font_size' => $minSize,
                 'fits' => $t2Fit['fits'],
+                // La alineacion que manda es la que el usuario tiene en pantalla,
+                // aunque todavia no la haya guardado.
+                'align' => $this->alignment($aligns['t2']['align'] ?? $config->{$prefix.'_t2_align'} ?? null, self::ALIGNMENTS, 'center'),
+                'valign' => $this->alignment($aligns['t2']['valign'] ?? $config->{$prefix.'_t2_valign'} ?? null, self::VERTICAL_ALIGNMENTS, 'middle'),
             ],
         ];
     }
@@ -238,6 +285,7 @@ class GiftMessagePdfService
         $prefix = $type === 'card' ? 'card' : 'env';
         $minSize = $this->minFontSize($config);
 
+        $this->spacingEm = $this->paragraphSpacing($config);
         $message = $this->normalizeMessage($this->t1Text($type, $order, $config));
         $t1Configured = (string) $config->{$prefix.'_t1_font'};
         $t1Box = $this->box($config, $prefix.'_t1', $size);
@@ -256,12 +304,15 @@ class GiftMessagePdfService
 
         return [
             't1' => [
-                'html' => $this->messageToHtml($message, $t1Configured),
+                'html' => $this->messageToHtml($message, $t1Configured, $t1Fit['line_height'], $this->paragraphSpacing($config)),
                 'font_family' => $this->fontStack($t1Configured),
                 'font_size' => $t1Fit['size'],
                 'line_height' => $t1Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t1_color'}),
                 'opacity' => $this->opacity((int) $config->{$prefix.'_t1_opacity'}),
+                'align' => $this->alignment($config->{$prefix.'_t1_align'} ?? null, self::ALIGNMENTS, 'center'),
+                'valign' => $this->alignment($config->{$prefix.'_t1_valign'} ?? null, self::VERTICAL_ALIGNMENTS, 'middle'),
+                'padding' => round(self::BOX_PADDING_EM * $t1Fit['size'], 2),
             ] + $t1Box,
             't2' => [
                 // El personal identifica el pedido por el npedidocli del ERP (el
@@ -272,6 +323,9 @@ class GiftMessagePdfService
                 'line_height' => $t2Fit['line_height'],
                 'color' => $this->color($config->{$prefix.'_t2_color'}),
                 'opacity' => $this->opacity((int) $config->{$prefix.'_t2_opacity'}),
+                'align' => $this->alignment($config->{$prefix.'_t2_align'} ?? null, self::ALIGNMENTS, 'center'),
+                'valign' => $this->alignment($config->{$prefix.'_t2_valign'} ?? null, self::VERTICAL_ALIGNMENTS, 'middle'),
+                'padding' => round(self::BOX_PADDING_EM * $t2Fit['size'], 2),
             ] + $t2Box,
         ];
     }
@@ -450,6 +504,21 @@ class GiftMessagePdfService
         return $this->warnings;
     }
 
+    /**
+     * @param  array<string, string>  $allowed
+     */
+    private function alignment(?string $value, array $allowed, string $fallback): string
+    {
+        return array_key_exists((string) $value, $allowed) ? (string) $value : $fallback;
+    }
+
+    private function paragraphSpacing(GiftMessageConfig $config): float
+    {
+        $spacing = (float) ($config->paragraph_spacing ?? self::PARAGRAPH_SPACING_EM);
+
+        return max(0.0, min(2.0, $spacing));
+    }
+
     private function minFontSize(GiftMessageConfig $config): int
     {
         return max(self::HARD_MIN_FONT_SIZE, (int) ($config->min_font_size ?: self::HARD_MIN_FONT_SIZE));
@@ -475,47 +544,66 @@ class GiftMessagePdfService
         $maxSize = max($minSize, $maxSize);
 
         if ($text === '' || $box['width'] <= 0 || $box['height'] <= 0) {
-            return ['size' => $maxSize, 'line_height' => self::LINE_HEIGHT, 'fits' => true];
+            return ['size' => (float) $maxSize, 'line_height' => self::LINE_HEIGHT, 'fits' => true];
         }
 
-        $widthPt = $box['width'] * self::MM_PER_POINT;
-        $heightPt = $box['height'] * self::MM_PER_POINT;
+        // La busqueda va en pasos de medio punto: se trabaja con el doble del
+        // tamano para poder biseccionar con enteros y luego se divide.
+        $lowSteps = (int) round($minSize / self::FONT_SIZE_STEP);
+        $highSteps = (int) round($maxSize / self::FONT_SIZE_STEP);
 
         // Se calcula una sola vez: no depende del tamano de letra que se este
         // probando, solo del texto y de la fuente configurada, asi que
         // recalcularlo en cada paso de la biseccion de abajo seria trabajo de mas.
         $fontsUsed = $this->textFonts($text, $configured);
 
-        // Caso normal: cabe al tamano configurado y no hay nada que buscar.
-        $lineHeight = $this->lineHeightThatFits($text, $maxSize, $widthPt, $heightPt, $configured, $fontsUsed);
+        $attempt = function (int $steps) use ($text, $box, $configured, $fontsUsed): ?array {
+            $size = $steps * self::FONT_SIZE_STEP;
+            // El aire interior come ancho y alto disponibles, asi que se
+            // descuenta antes de medir; si no, el texto acabaria rozando el borde.
+            $padding = self::BOX_PADDING_EM * $size;
+            $widthPt = ($box['width'] * self::MM_PER_POINT) - (2 * $padding);
+            // Un 3% de holgura: la estimacion y el motor no cuadran al milimetro
+            // (kerning, redondeos), y pasarse significa texto cortado.
+            $heightPt = (($box['height'] * self::MM_PER_POINT) - (2 * $padding)) * 0.97;
 
-        if ($lineHeight !== null) {
-            return ['size' => $maxSize, 'line_height' => $lineHeight, 'fits' => true];
+            if ($widthPt <= 0 || $heightPt <= 0) {
+                return null;
+            }
+
+            $lineHeight = $this->lineHeightThatFits($text, $size, $widthPt, $heightPt, $configured, $fontsUsed);
+
+            return $lineHeight === null ? null : ['size' => $size, 'line_height' => $lineHeight, 'fits' => true];
+        };
+
+        // Caso normal: cabe al tamano configurado y no hay nada que buscar.
+        $fit = $attempt($highSteps);
+
+        if ($fit !== null) {
+            return $fit;
         }
 
-        $low = $minSize;
-        $high = $maxSize;
         $best = null;
 
-        while ($low <= $high) {
-            $middle = intdiv($low + $high, 2);
-            $lineHeight = $this->lineHeightThatFits($text, $middle, $widthPt, $heightPt, $configured, $fontsUsed);
+        while ($lowSteps <= $highSteps) {
+            $middle = intdiv($lowSteps + $highSteps, 2);
+            $fit = $attempt($middle);
 
-            if ($lineHeight !== null) {
-                $best = ['size' => $middle, 'line_height' => $lineHeight, 'fits' => true];
-                $low = $middle + 1;
+            if ($fit !== null) {
+                $best = $fit;
+                $lowSteps = $middle + 1;
 
                 continue;
             }
 
-            $high = $middle - 1;
+            $highSteps = $middle - 1;
         }
 
         // Ni al minimo cabe: se imprime al minimo y se avisa, porque la caja
         // recorta lo que sobra (overflow: hidden) y el cliente recibiria el
         // mensaje a medias sin que nadie se entere.
         return $best ?? [
-            'size' => $minSize,
+            'size' => (float) $minSize,
             'line_height' => self::LINE_HEIGHTS[count(self::LINE_HEIGHTS) - 1],
             'fits' => false,
         ];
@@ -529,18 +617,54 @@ class GiftMessagePdfService
      *                                         sola vez en fitText() y se reusa
      *                                         en cada paso de la biseccion.
      */
-    private function lineHeightThatFits(string $text, int $size, float $widthPt, float $heightPt, string $configured, array $fontsUsed): ?float
+    private function lineHeightThatFits(string $text, float $size, float $widthPt, float $heightPt, string $configured, array $fontsUsed): ?float
     {
         $lines = $this->countWrappedLines($text, $size, $widthPt, $configured);
         $fontHeight = $this->fontHeightPt($size, $fontsUsed);
+        $spacing = max(0, count($this->splitParagraphs($text)) - 1) * $this->spacingEm * $size;
 
         foreach (self::LINE_HEIGHTS as $lineHeight) {
-            if ($lines * $lineHeight * $fontHeight <= $heightPt) {
+            if (($lines * $lineHeight * $fontHeight) + $spacing <= $heightPt) {
                 return $lineHeight;
             }
         }
 
         return null;
+    }
+
+    /**
+     * Une las dos ultimas palabras con un espacio duro para que bajen juntas: un
+     * ultimo renglon con una sola palabra suelta queda feo, sobre todo en una
+     * tarjeta con el texto centrado.
+     */
+    private function avoidWidow(string $paragraph): string
+    {
+        $words = preg_split('/\s+/u', trim($paragraph), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (count($words) < 3) {
+            return $paragraph;
+        }
+
+        $last = array_pop($words);
+        $previous = array_pop($words);
+        $words[] = $previous."\u{00A0}".$last;
+
+        return implode(' ', $words);
+    }
+
+    /**
+     * Parrafos del mensaje: bloques separados por una o mas lineas en blanco.
+     *
+     * @return array<int, string>
+     */
+    private function splitParagraphs(string $text): array
+    {
+        $paragraphs = preg_split('/\n{2,}/u', $text) ?: [$text];
+
+        return array_values(array_filter(
+            array_map('trim', $paragraphs),
+            fn (string $paragraph) => $paragraph !== ''
+        ));
     }
 
     /**
@@ -573,7 +697,7 @@ class GiftMessagePdfService
      *
      * @param  array<int, string>  $fontsUsed
      */
-    private function fontHeightPt(int $size, array $fontsUsed): float
+    private function fontHeightPt(float $size, array $fontsUsed): float
     {
         $metrics = $this->fontMetrics();
 
@@ -607,24 +731,24 @@ class GiftMessagePdfService
      * cuadratico y un mensaje de 4.000 caracteres costaba 350 ms, que en un
      * lote de 100 pedidos son mas de 30 segundos bloqueando la peticion.
      */
-    private function countWrappedLines(string $text, int $size, float $maxWidthPt, string $font): int
+    private function countWrappedLines(string $text, float $size, float $maxWidthPt, string $configured): int
     {
         $lines = 0;
-        $spaceWidth = $this->measureWidth(' ', $size, $font);
+        $spaceWidth = $this->measureWidth(' ', $size, $configured);
 
         foreach (preg_split('/\R/u', $text) ?: [] as $paragraph) {
             $words = preg_split('/\s+/u', trim($paragraph), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
+            // Las lineas en blanco entre parrafos no cuentan como linea: su aire
+            // se suma aparte (PARAGRAPH_SPACING_EM), que ocupa mucho menos.
             if ($words === []) {
-                $lines++;
-
                 continue;
             }
 
             $current = 0.0;
 
             foreach ($words as $word) {
-                $wordWidth = $this->measureWidth($word, $size, $font);
+                $wordWidth = $this->measureWidth($word, $size, $configured);
                 $candidate = $current > 0.0 ? $current + $spaceWidth + $wordWidth : $wordWidth;
 
                 if ($current > 0.0 && $candidate > $maxWidthPt) {
@@ -655,7 +779,7 @@ class GiftMessagePdfService
      * cientos de veces, y una vez por tamano y fuente configurada basta (la
      * resolucion por caracter es deterministica, no depende de la posicion).
      */
-    private function measureWidth(string $text, int $size, string $configured): float
+    private function measureWidth(string $text, float $size, string $configured): float
     {
         if ($text === '') {
             return 0.0;
@@ -679,7 +803,7 @@ class GiftMessagePdfService
      * el caso comun, sin caracteres fuera de la fuente configurada, es un solo
      * tramo y el coste es el mismo que medir con una sola fuente de siempre.
      */
-    private function measurePlainWidthMixed(string $text, int $size, string $configured): float
+    private function measurePlainWidthMixed(string $text, float $size, string $configured): float
     {
         if ($text === '') {
             return 0.0;
@@ -708,7 +832,7 @@ class GiftMessagePdfService
         return $width;
     }
 
-    private function measurePlainWidth(string $text, int $size, string $font): float
+    private function measurePlainWidth(string $text, float $size, string $font): float
     {
         if ($text === '') {
             return 0.0;
@@ -826,25 +950,56 @@ class GiftMessagePdfService
     }
 
     /**
+     * Cada parrafo va en su propio bloque con un margen pequeno, en lugar de
+     * separarse con una linea vacia entera: asi el mensaje se lee como un texto
+     * seguido y no como fragmentos sueltos, y sobra sitio para letra mas grande.
+     */
+    private function messageToHtml(string $message, string $configured, float $lineHeight = self::LINE_HEIGHT, ?float $spacingEm = null): string
+    {
+        $paragraphs = $this->splitParagraphs($message);
+
+        if ($paragraphs === []) {
+            return '';
+        }
+
+        $spacing = $spacingEm ?? self::PARAGRAPH_SPACING_EM;
+        $last = count($paragraphs) - 1;
+        $html = '';
+
+        foreach ($paragraphs as $index => $paragraph) {
+            $margin = $index === $last ? '0' : $spacing.'em';
+
+            // El interlineado se repite en cada parrafo a proposito: DomPDF no
+            // lo hereda de la celda hacia los bloques hijos (ni con
+            // line-height: inherit) y usaba el "normal" de la fuente, bastante
+            // mayor, con lo que la ultima linea acababa cortada.
+            $html .= '<div style="margin: 0 0 '.$margin.' 0; line-height: '.$lineHeight.';">'
+                .nl2br($this->paragraphToHtml($paragraph, $configured))
+                .'</div>';
+        }
+
+        return $html;
+    }
+
+    /**
      * El tamano y la alineacion del emoji los fija la clase .emoji de la
      * plantilla en em, para que sigan al tamano de letra de cada pieza sin
      * calcularlos aqui (los atributos width/height del <img> los interpreta
      * DomPDF en px y el emoji salia mas pequeno de lo medido).
-     */
-    /**
+     *
      * Los caracteres que la fuente configurada no cubre (ver
      * resolveGraphemeFont) se envuelven en un <span> con su propia fuente, en
-     * vez de cambiar la fuente de todo el bloque — asi un mensaje que mezcla
+     * vez de cambiar la fuente de todo el parrafo — asi un mensaje que mezcla
      * espanol y chino imprime el espanol en la fuente de marca y solo el
      * tramo en chino cambia de fuente. Los tramos consecutivos que comparten
      * la misma fuente alternativa se agrupan en un solo <span>.
      */
-    private function messageToHtml(string $message, string $configured): string
+    private function paragraphToHtml(string $paragraph, string $configured): string
     {
         $html = '';
         $spanFont = null;
 
-        foreach ($this->splitGraphemes($message) as $grapheme) {
+        foreach ($this->splitGraphemes($this->avoidWidow($paragraph)) as $grapheme) {
             if ($this->isJoinerOrVariant($grapheme)) {
                 continue;
             }
@@ -891,7 +1046,7 @@ class GiftMessagePdfService
             $html .= '</span>';
         }
 
-        return nl2br($html);
+        return $html;
     }
 
     /**

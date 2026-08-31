@@ -104,8 +104,8 @@
                     <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
                         @csrf
                         <input type="hidden" name="scope" value="envelope">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-xl-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-4">
                                 <label class="form-label fw-bold" for="env_t1_content">Que se imprime en T1</label>
                                 <select class="form-select giftmessage-content-select" id="env_t1_content"
                                         name="env_t1_content" data-scope="envelope">
@@ -114,8 +114,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-xl-6">
-                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            @foreach(['t1' => 'T1 (texto principal)', 't2' => 'T2 (numero)'] as $slot => $slotLabel)
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="env_{{ $slot }}_align">{{ $slotLabel }}: horizontal</label>
+                                    <select class="form-select giftmessage-align-select" id="env_{{ $slot }}_align"
+                                            name="env_{{ $slot }}_align" data-scope="envelope" data-slot="{{ $slot }}" data-axis="h">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'env_'.$slot.'_align'} ?? 'center') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="env_{{ $slot }}_valign">{{ $slotLabel }}: vertical</label>
+                                    <select class="form-select giftmessage-align-select" id="env_{{ $slot }}_valign"
+                                            name="env_{{ $slot }}_valign" data-scope="envelope" data-slot="{{ $slot }}" data-axis="v">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::VERTICAL_ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'env_'.$slot.'_valign'} ?? 'middle') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido y alineacion</button>
                             </div>
                         </div>
                     </form>
@@ -142,6 +162,11 @@
                         <button type="button" id="save-positions-envelope" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
                         </button>
+                        {{-- PDF de prueba con lo que hay en pantalla, sin guardar
+                             y sin pasar por el historial. --}}
+                        <button type="button" class="btn btn-secondary w-100 mt-2 giftmessage-preview-pdf" data-scope="envelope">
+                            Ver PDF de prueba del sobre
+                        </button>
                     @endif
                 </div>
 
@@ -166,12 +191,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="env_t1_color" name="env_t1_color" value="{{ $config->env_t1_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="env_t1_color" value="{{ $config->env_t1_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'env_t1_color',
+                                'value' => $config->env_t1_color,
+                                'id' => 'env_t1_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -193,12 +218,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="env_t2_color" name="env_t2_color" value="{{ $config->env_t2_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="env_t2_color" value="{{ $config->env_t2_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'env_t2_color',
+                                'value' => $config->env_t2_color,
+                                'id' => 'env_t2_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -264,8 +289,8 @@
                     <form action="{{ route('settings.giftmessage.content.update') }}" method="POST" class="mb-3">
                         @csrf
                         <input type="hidden" name="scope" value="card">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-12 col-xl-6">
+                        <div class="row g-3">
+                            <div class="col-12 col-xl-4">
                                 <label class="form-label fw-bold" for="card_t1_content">Que se imprime en T1</label>
                                 <select class="form-select giftmessage-content-select" id="card_t1_content"
                                         name="card_t1_content" data-scope="card">
@@ -274,8 +299,28 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12 col-xl-6">
-                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido</button>
+                            @foreach(['t1' => 'T1 (texto principal)', 't2' => 'T2 (numero)'] as $slot => $slotLabel)
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="card_{{ $slot }}_align">{{ $slotLabel }}: horizontal</label>
+                                    <select class="form-select giftmessage-align-select" id="card_{{ $slot }}_align"
+                                            name="card_{{ $slot }}_align" data-scope="card" data-slot="{{ $slot }}" data-axis="h">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'card_'.$slot.'_align'} ?? 'center') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-6 col-xl-2">
+                                    <label class="form-label fw-bold" for="card_{{ $slot }}_valign">{{ $slotLabel }}: vertical</label>
+                                    <select class="form-select giftmessage-align-select" id="card_{{ $slot }}_valign"
+                                            name="card_{{ $slot }}_valign" data-scope="card" data-slot="{{ $slot }}" data-axis="v">
+                                        @foreach(\Modules\GiftMessage\Services\GiftMessagePdfService::VERTICAL_ALIGNMENTS as $value => $label)
+                                            <option value="{{ $value }}" @selected(($config->{'card_'.$slot.'_valign'} ?? 'middle') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endforeach
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">Guardar contenido y alineacion</button>
                             </div>
                         </div>
                     </form>
@@ -302,6 +347,11 @@
                         <button type="button" id="save-positions-card" class="btn btn-primary w-100 mt-3">
                             Guardar posiciones
                         </button>
+                        {{-- PDF de prueba con lo que hay en pantalla, sin guardar
+                             y sin pasar por el historial. --}}
+                        <button type="button" class="btn btn-secondary w-100 mt-2 giftmessage-preview-pdf" data-scope="card">
+                            Ver PDF de prueba de la tarjeta
+                        </button>
                     @endif
                 </div>
 
@@ -326,12 +376,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="card_t1_color" name="card_t1_color" value="{{ $config->card_t1_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="card_t1_color" value="{{ $config->card_t1_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'card_t1_color',
+                                'value' => $config->card_t1_color,
+                                'id' => 'card_t1_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -353,12 +403,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="card_t2_color" name="card_t2_color" value="{{ $config->card_t2_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="card_t2_color" value="{{ $config->card_t2_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'card_t2_color',
+                                'value' => $config->card_t2_color,
+                                'id' => 'card_t2_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -381,7 +431,7 @@
                 <form action="{{ route('settings.giftmessage.limits.update') }}" method="POST">
                     @csrf
                     <div class="row g-3 mb-3">
-                        <div class="col-12 col-xl-6">
+                        <div class="col-12 col-xl-4">
                             <label class="form-label fw-bold" for="min_font_size">Tamano minimo de letra (pt)</label>
                             <input type="number" class="form-control" id="min_font_size" name="min_font_size"
                                    min="5" max="72" value="{{ old('min_font_size', $config->min_font_size) }}">
@@ -393,7 +443,19 @@
                                 <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="col-12 col-xl-6">
+                        <div class="col-12 col-xl-4">
+                            <label class="form-label fw-bold" for="paragraph_spacing">Aire entre parrafos</label>
+                            <input type="number" step="0.05" min="0" max="2" class="form-control"
+                                   id="paragraph_spacing" name="paragraph_spacing"
+                                   value="{{ old('paragraph_spacing', $config->paragraph_spacing) }}">
+                            <small class="form-text text-muted">
+                                En fracciones del tamano de letra. 0,35 deja un aire discreto; 0 pega los parrafos.
+                            </small>
+                            @error('paragraph_spacing')
+                                <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="col-12 col-xl-4">
                             <label class="form-label fw-bold" for="max_message_length">Longitud a partir de la que avisar (caracteres)</label>
                             <input type="number" class="form-control" id="max_message_length" name="max_message_length"
                                    min="50" max="5000" value="{{ old('max_message_length', $config->max_message_length) }}">
@@ -533,6 +595,30 @@
 
     @include('core::components.delete')
 
+    {{-- Previsualizacion del PDF de una pieza --}}
+    <div id="preview-pdf-modal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="preview-pdf-title">PDF de prueba</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Generado con lo que tienes ahora en pantalla, aunque no lo hayas guardado.
+                        No se guarda en el historial.
+                    </p>
+                    <p class="small mb-2" id="preview-pdf-status"></p>
+                    <iframe id="preview-pdf-frame" class="giftmessage-preview-frame" title="PDF de prueba"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <a id="preview-pdf-open" class="btn btn-primary w-100 mb-2" target="_blank" rel="noopener">Abrir en una pestana nueva</a>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.GIFTMESSAGE_SETTINGS = {
             urls: {
@@ -540,6 +626,7 @@
                 saveFonts: "{{ route('settings.giftmessage.typography.update') }}",
                 uploadImage: "{{ route('settings.giftmessage.images.store') }}",
                 previewMetrics: "{{ route('settings.giftmessage.preview.metrics') }}",
+                previewPdf: "{{ route('settings.giftmessage.preview.pdf') }}",
             },
             stacks: @json($fontStacks),
             fonts: {

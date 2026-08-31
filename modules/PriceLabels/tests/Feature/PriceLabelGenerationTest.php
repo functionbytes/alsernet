@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Modules\PriceLabels\Database\Seeders\PriceLabelsPermissionsSeeder;
 use Modules\PriceLabels\Models\PriceLabelGeneration;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
+use Modules\PriceLabels\Services\PriceLabelGenerationService;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
@@ -60,7 +61,7 @@ class PriceLabelGenerationTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $generation = PriceLabelGeneration::query()->first();
+        $generation = PriceLabelGeneration::query()->latest('id')->first();
         Storage::disk('public')->assertExists($generation->file_path);
         Storage::disk('public')->assertExists($generation->source_excel_path);
         $this->assertSame('REF-1', $generation->sample_row['referencia']);
@@ -192,7 +193,11 @@ class PriceLabelGenerationTest extends TestCase
             ->post(route('pricelabels.history.regenerate', $generation))
             ->assertRedirect(route('pricelabels.history.index'));
 
-        $this->assertSame(2, PriceLabelGeneration::query()->count());
+        // Contar el total no vale: la BD de desarrollo ya trae generaciones. Se
+        // comprueba que la regeneracion creo una fila nueva y completada.
+        $this->assertSame(2, PriceLabelGeneration::query()
+            ->where('price_label_template_id', $template->id)
+            ->count());
         $this->assertDatabaseHas('price_label_generations', [
             'price_label_template_id' => $template->id,
             'type' => 'vertical',
@@ -234,7 +239,9 @@ class PriceLabelGenerationTest extends TestCase
             ->assertOk()
             ->assertJson(['success' => true]);
 
-        $this->assertDatabaseCount('price_label_generations', 0);
+        foreach ($generations as $generation) {
+            $this->assertDatabaseMissing('price_label_generations', ['id' => $generation->id]);
+        }
     }
 
     public function test_user_without_permission_cannot_view_history(): void
@@ -268,14 +275,20 @@ class PriceLabelGenerationTest extends TestCase
 
     public function test_history_index_shows_stats(): void
     {
+        $before = app(PriceLabelGenerationService::class)->stats();
+
         PriceLabelGeneration::factory()->count(2)->create(['type' => 'vertical']);
         PriceLabelGeneration::factory()->create(['type' => 'horizontal']);
 
         $response = $this->actingAs($this->admin)->get(route('pricelabels.history.index'));
 
         $response->assertOk();
-        $response->assertViewHas('stats', function ($stats) {
-            return $stats['total'] === 3 && $stats['vertical'] === 2 && $stats['horizontal'] === 1;
+        // Contadores relativos: la BD de desarrollo ya trae generaciones reales,
+        // asi que se comprueba el incremento y no el total absoluto.
+        $response->assertViewHas('stats', function ($stats) use ($before) {
+            return $stats['total'] - $before['total'] === 3
+                && $stats['vertical'] - $before['vertical'] === 2
+                && $stats['horizontal'] - $before['horizontal'] === 1;
         });
     }
 

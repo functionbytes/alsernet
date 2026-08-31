@@ -107,7 +107,9 @@ class GiftMessageFontTest extends TestCase
             ])
             ->assertSessionHasErrors('font_file');
 
-        $this->assertDatabaseCount('gift_message_fonts', 0);
+        // Nada de contar filas en absoluto: la BD de desarrollo ya trae fuentes
+        // subidas de verdad. Lo que importa es que esta no se guardo.
+        $this->assertDatabaseMissing('gift_message_fonts', ['name' => 'Falsa']);
     }
 
     public function test_the_same_variant_cannot_be_uploaded_twice(): void
@@ -126,7 +128,7 @@ class GiftMessageFontTest extends TestCase
             ->post(route('settings.giftmessage.fonts.store'), $payload())
             ->assertSessionHasErrors('font_file');
 
-        $this->assertDatabaseCount('gift_message_fonts', 1);
+        $this->assertSame(1, GiftMessageFont::query()->where('name', 'Montserrat')->count());
     }
 
     public function test_a_builtin_family_name_is_reserved(): void

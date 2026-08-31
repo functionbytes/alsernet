@@ -8,6 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\PriceLabels\Database\Seeders\PriceLabelsPermissionsSeeder;
 use Modules\PriceLabels\Models\PriceLabelTemplate;
+use Modules\PriceLabels\Services\PriceLabelTemplateService;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
@@ -99,6 +100,52 @@ class PriceLabelTemplateTest extends TestCase
         $this->assertSame('#ff0000', $template->fields['referencia']['color']);
         $this->assertSame(20, $template->fields['referencia']['font_size']);
         $this->assertTrue($template->fields['referencia']['bold']);
+    }
+
+    public function test_admin_can_set_the_text_alignment_per_field(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        $this->actingAs($this->admin)->put(route('pricelabels.update', $template), [
+            'name' => $template->name,
+            'is_active' => '1',
+            'orientation' => $template->orientation,
+            'label_text' => $template->label_text,
+            'fields' => [
+                'referencia' => ['align' => 'left'],
+                'pvp' => ['align' => 'right'],
+            ],
+        ])->assertRedirect(route('pricelabels.edit', $template));
+
+        $template->refresh();
+
+        $this->assertSame('left', $template->fields['referencia']['align']);
+        $this->assertSame('right', $template->fields['pvp']['align']);
+    }
+
+    public function test_the_alignment_only_accepts_the_three_valid_values(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        $this->actingAs($this->admin)->put(route('pricelabels.update', $template), [
+            'name' => $template->name,
+            'is_active' => '1',
+            'orientation' => $template->orientation,
+            'label_text' => $template->label_text,
+            'fields' => ['referencia' => ['align' => 'justify']],
+        ])->assertSessionHasErrors('fields.referencia.align');
+    }
+
+    public function test_fields_default_to_centered_as_they_printed_before(): void
+    {
+        $template = PriceLabelTemplate::factory()->create();
+
+        // La alineacion no existia y la plantilla del PDF centraba a la fuerza:
+        // una plantilla sin el dato debe seguir imprimiendose centrada.
+        $fields = app(PriceLabelTemplateService::class)
+            ->fieldsWithDefaults($template);
+
+        $this->assertSame('center', $fields['referencia']['align']);
     }
 
     public function test_admin_can_save_positions(): void
