@@ -396,27 +396,6 @@
         $('.giftmessage-drag').each(function () { shrinkToFit($(this)); });
         refreshPreviewMetrics();
     }
-
-    // ─── Color + hex sincronizados ──────────────────────────────────────────
-    function bindColorHexPairs() {
-        $('.giftmessage-color-hex').each(function () {
-            var $hex = $(this);
-            var $color = $('#' + $hex.data('colorTarget'));
-
-            $hex.on('input', function () {
-                var value = $hex.val().trim();
-
-                if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                    $color.val(value).trigger('input');
-                }
-            });
-
-            $color.on('input', function () {
-                $hex.val($color.val());
-            });
-        });
-    }
-
     // ─── Imagen de fondo: zona de arrastrar y soltar ────────────────────────
     // La zona es a la vez vista previa y destino: la imagen guardada se pinta
     // como fondo suyo. Sube en cuanto se suelta el archivo y repinta el fondo,
@@ -652,12 +631,10 @@
 
                 if (field === 'font') {
                     $target.trigger('change'); // refresca el select2
+                } else if (field === 'color') {
+                    $target.trigger('input'); // repinta la muestra y la vista previa
                 }
             });
-
-            $('.giftmessage-color-hex[data-color-target="card_' + slot + '_color"]')
-                .val($('#card_' + slot + '_color').val());
-
             var $envBox = $('#canvas-envelope [data-slot="' + slot + '"]');
             var $cardBox = $('#canvas-card [data-slot="' + slot + '"]');
 
@@ -757,7 +734,6 @@
         bindFineTuneInputs();
         initFontPreview(config.fonts || {});
         bindFontInputs();
-        bindColorHexPairs();
         initImageDropzones();
         bindPreviewPdf();
         applySampleText();

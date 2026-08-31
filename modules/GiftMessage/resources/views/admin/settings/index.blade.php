@@ -191,12 +191,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="env_t1_color" name="env_t1_color" value="{{ $config->env_t1_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="env_t1_color" value="{{ $config->env_t1_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'env_t1_color',
+                                'value' => $config->env_t1_color,
+                                'id' => 'env_t1_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -218,12 +218,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="env_t2_color" name="env_t2_color" value="{{ $config->env_t2_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="env_t2_color" value="{{ $config->env_t2_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'env_t2_color',
+                                'value' => $config->env_t2_color,
+                                'id' => 'env_t2_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -376,12 +376,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="card_t1_color" name="card_t1_color" value="{{ $config->card_t1_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="card_t1_color" value="{{ $config->card_t1_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'card_t1_color',
+                                'value' => $config->card_t1_color,
+                                'id' => 'card_t1_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
@@ -403,12 +403,12 @@
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Color</label>
-                            <div class="d-flex gap-1">
-                                <input type="color" class="form-control form-control-color giftmessage-color-swatch"
-                                       id="card_t2_color" name="card_t2_color" value="{{ $config->card_t2_color }}">
-                                <input type="text" class="form-control form-control-sm giftmessage-color-hex"
-                                       data-color-target="card_t2_color" value="{{ $config->card_t2_color }}" maxlength="7" placeholder="#000000">
-                            </div>
+                            @include('core::components.color-field', [
+                                'name' => 'card_t2_color',
+                                'value' => $config->card_t2_color,
+                                'id' => 'card_t2_color',
+                                'compact' => true,
+                            ])
                         </div>
                         <div class="col-4 col-xl-2">
                             <label class="form-label fw-bold">Opacidad %</label>
