@@ -2,7 +2,7 @@
 
     {{-- Seccion: Disponibilidad --}}
     <div class="col-12">
-        <h6 class="fw-bold mb-3 border-bottom pb-2">Disponibilidad</h6>
+        <h6 class="fw-bold mb-3">Disponibilidad</h6>
     </div>
 
     {{-- Disponible --}}
@@ -43,7 +43,7 @@
     </div>
 
     {{-- Auto asignacion --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Asignacion automatica</label>
         <select name="auto_assign" class="form-select @error('auto_assign') is-invalid @enderror">
             <option value="1" @selected(old('auto_assign', $agentSettings->auto_assign ?? true) == '1')>
@@ -61,11 +61,11 @@
 
     {{-- Seccion: Limites --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-3 border-bottom pb-2">Limites</h6>
+        <h6 class="fw-bold mb-3">Limites</h6>
     </div>
 
     {{-- Maximo de conversaciones --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Maximo de conversaciones abiertas</label>
         <input type="number" name="max_concurrent_conversations"
             class="form-control @error('max_concurrent_conversations') is-invalid @enderror"
@@ -80,7 +80,7 @@
 
     {{-- Seccion: Vacaciones --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-3 border-bottom pb-2">Vacaciones</h6>
+        <h6 class="fw-bold mb-3">Vacaciones</h6>
     </div>
 
     {{-- Vacaciones hasta --}}
@@ -111,7 +111,7 @@
     {{-- Seccion: Habilidades --}}
     @if($skills->count() > 0)
         <div class="col-12 mt-2">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Habilidades asignadas</h6>
+            <h6 class="fw-bold mb-3">Habilidades asignadas</h6>
         </div>
 
         <div class="col-12">

@@ -10,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\HelpdeskTickets\Database\Factories\TicketMessageFactory;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketMessage extends Model
 {
-    use HasFactory, HasUid, SoftDeletes;
+    use BelongsToHelpdeskUser, HasFactory, HasUid, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -53,7 +54,7 @@ class TicketMessage extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**

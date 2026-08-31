@@ -37,19 +37,31 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las marcas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las marcas</h6>
                     <p class="card-text text-muted small">
                         Las marcas permiten segmentar el helpdesk por empresa o producto, cada una con su propia identidad visual y configuracion de correo.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Widget token</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Widget token</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Al crear la marca se genera automaticamente un token unico para integrar el widget de chat en cualquier sitio web.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Dominio</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Dominio</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Si configuras un dominio, el sistema puede detectar automaticamente la marca segun desde donde lleguen las solicitudes.
                     </p>
@@ -62,17 +74,6 @@
 
 @push('scripts')
 <script>
-$(document).ready(function () {
-    $('#primary_color').on('input', function () {
-        $('#primary_color_text').val($(this).val());
-    });
-
-    $('#primary_color_text').on('input', function () {
-        const val = $(this).val();
-        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-            $('#primary_color').val(val);
-        }
-    });
-});
+$(document).ready(function () {});
 </script>
 @endpush

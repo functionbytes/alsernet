@@ -50,7 +50,7 @@
                                                    value="{{ $email }}" placeholder="correo@ejemplo.com">
                                             <button type="button" class="btn btn-info remove-email"><i class="fas fa-times"></i></button>
                                             @if($loop->last)
-                                                <button type="button" class="btn btn-outline-secondary add-email"><i class="fas fa-plus"></i></button>
+                                                <button type="button" class="btn btn-secondary add-email"><i class="fas fa-plus"></i></button>
                                             @endif
                                         </div>
                                         @error('success_emails.'.$i)
@@ -62,7 +62,7 @@
                                         <div class="input-group">
                                             <input type="email" class="form-control" name="success_emails[]" placeholder="correo@ejemplo.com">
                                             <button type="button" class="btn btn-info remove-email"><i class="fas fa-times"></i></button>
-                                            <button type="button" class="btn btn-outline-secondary add-email"><i class="fas fa-plus"></i></button>
+                                            <button type="button" class="btn btn-secondary add-email"><i class="fas fa-plus"></i></button>
                                         </div>
                                     </div>
                                 @endforelse
@@ -112,7 +112,7 @@
                                         <div class="input-group">
                                             <input type="email" class="form-control" name="failed_emails[]" placeholder="correo@ejemplo.com">
                                             <button type="button" class="btn btn-info remove-email"><i class="fas fa-times"></i></button>
-                                            <button type="button" class="btn btn-outline-secondary add-email"><i class="fas fa-plus"></i></button>
+                                            <button type="button" class="btn btn-secondary add-email"><i class="fas fa-plus"></i></button>
                                         </div>
                                     </div>
                                 @endforelse

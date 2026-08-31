@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Dashboard')
 
 @section('page_header')
@@ -184,7 +188,7 @@
                                                     {{ $ticket->ticket_number }}
                                                 </a>
                                             </td>
-                                            <td class="text-truncate" style="max-width:200px;">
+                                            <td class="text-truncate hdt-truncate-200">
                                                 <a href="{{ route('agent.helpdesk.tickets.show', $ticket) }}"
                                                    class="text-decoration-none text-dark">
                                                     {{ $ticket->subject }}
@@ -233,12 +237,11 @@
                             @endphp
                             <div class="d-flex align-items-center justify-content-between {{ $isLast ? '' : 'mb-4' }}">
                                 <div class="d-flex align-items-center">
-                                    <div class="p-2 bg-danger-subtle rounded-2 d-flex align-items-center justify-content-center me-3"
-                                         style="width:36px;height:36px;">
+                                    <div class="p-2 bg-danger-subtle rounded-2 d-flex align-items-center justify-content-center me-3 hdt-avatar-36">
                                         <i class="fas fa-exclamation-circle text-danger"></i>
                                     </div>
                                     <div>
-                                        <h6 class="mb-0 fw-semibold text-truncate" style="max-width:140px;">
+                                        <h6 class="mb-0 fw-semibold text-truncate hdt-truncate-140">
                                             {{ $ticket->subject }}
                                         </h6>
                                         <p class="fs-3 mb-0 text-muted">{{ $ticket->ticket_number }}</p>

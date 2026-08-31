@@ -79,7 +79,7 @@
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <input id="tkt-search" placeholder="Buscar por nº de ticket, cliente o asunto…" value="{{ request('search') }}">
             </div>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px">
+            <div class="tkt-toolbar-right">
                 <div class="tkt-seg" id="tkt-mode-switch">
                     <button type="button" class="on" data-mode="list"><i class="fa-solid fa-list"></i> Lista</button>
                     <button type="button" data-mode="kanban"><i class="fa-solid fa-table-columns"></i> Kanban</button>
@@ -101,7 +101,7 @@
             <button type="button" class="tkt-state-tab" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
             <button type="button" class="tkt-state-tab" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
             <button type="button" class="tkt-state-tab" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
-            <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-state-tab" style="text-decoration:none">Plantillas</a>
+            <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-state-tab tkt-link-plain">Plantillas</a>
             <span class="tkt-queue-hint">SLA en riesgo: {{ $tabCounts['sla_risk'] }}</span>
         </div>
 
@@ -145,7 +145,7 @@
             </select>
             <button type="button" class="tkt-btn" id="tkt-filters-modal-open"><i class="fa-solid fa-sliders"></i> Más filtros</button>
             <a href="{{ route('manager.helpdesk.tickets.index') }}" class="tkt-clear-link">limpiar</a>
-            <span id="tkt-count" class="mono" style="margin-left:auto;color:var(--tkt-text-faint);font-size:10.5px">{{ $tickets->total() }} tickets</span>
+            <span id="tkt-count" class="mono tkt-count">{{ $tickets->total() }} tickets</span>
         </form>
 
         @php
@@ -179,9 +179,9 @@
                 ->map(fn ($label, $key) => ['key' => $key, 'label' => $label, 'value' => $filterValueLabel($key, (string) request($key))]);
         @endphp
         @if($activeFilters->isNotEmpty())
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 14px 9px">
+            <div class="tkt-chip-row">
                 @foreach($activeFilters as $f)
-                    <a href="{{ route('manager.helpdesk.tickets.index', request()->except([$f['key'], 'page'])) }}" class="tkt-filter-chip" style="text-decoration:none">
+                    <a href="{{ route('manager.helpdesk.tickets.index', request()->except([$f['key'], 'page'])) }}" class="tkt-filter-chip tkt-link-plain">
                         {{ $f['label'] }}: {{ Str::limit($f['value'], 24) }} <i class="fa-solid fa-xmark"></i>
                     </a>
                 @endforeach
@@ -204,7 +204,7 @@
             <button type="button" class="tkt-view-pill add" id="tkt-save-view">+ guardar vista</button>
             <button type="button" class="tkt-view-pill" id="tkt-pill-queue" title="Estado de las colas de trabajo"><i class="fa-solid fa-layer-group"></i> Cola</button>
             <button type="button" class="tkt-view-pill" id="tkt-pill-workload" title="Carga de trabajo por agente"><i class="fa-solid fa-scale-balanced"></i> Carga</button>
-            <a href="{{ route('settings.helpdesk.views.index') }}" class="tkt-view-pill" title="Gestionar todas las vistas" style="margin-left:auto">Gestionar vistas</a>
+            <a href="{{ route('settings.helpdesk.views.index') }}" class="tkt-view-pill" title="Gestionar todas las vistas" class="ms-auto">Gestionar vistas</a>
         </div>
 
         <div class="tkt-split-wrap" id="tkt-split-wrap">
@@ -214,16 +214,16 @@
             <div class="tkt-split-list">
                 <div class="tkt-list-head">
                     <input type="checkbox" id="tkt-select-all">
-                    <span style="font-size:11px;color:var(--tkt-text-mute)">Seleccionar todo</span>
+                    <span class="tkt-meta">Seleccionar todo</span>
                     <a href="{{ route('manager.helpdesk.tickets.index', array_merge(request()->except('page'), ['sort' => request('sort') === 'sla' ? null : 'sla'])) }}"
-                       class="tkt-clear-link" style="margin-left:auto;text-decoration:none">
+                       class="tkt-clear-link tkt-link-right">
                         <i class="fa-solid fa-arrow-down-{{ request('sort') === 'sla' ? 'short-wide' : 'wide-short' }}"></i>
                         {{ request('sort') === 'sla' ? 'Ordenado por SLA' : 'Ordenar por SLA' }}
                     </a>
                 </div>
                 <div class="tkt-bulk-bar" id="tkt-bulk-bar">
-                    <span id="tkt-bulk-count" style="font-size:11.5px;font-weight:700">0 seleccionados</span>
-                    <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+                    <span id="tkt-bulk-count" class="tkt-title-sm">0 seleccionados</span>
+                    <span class="tkt-actions">
                         @can('helpdesk.tickets.update')
                             <button type="button" class="tkt-btn" data-bulk-action="assign">Asignar</button>
                             <button type="button" class="tkt-btn" data-bulk-action="add_tag">Etiquetar</button>
@@ -249,7 +249,7 @@
                 <div class="tkt-list-foot">
                     <span>{{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} de {{ $tickets->total() }}</span>
                     @if($tickets->hasPages())
-                        <span style="margin-left:auto">{{ $tickets->onEachSide(1)->links() }}</span>
+                        <span class="ms-auto">{{ $tickets->onEachSide(1)->links() }}</span>
                     @endif
                 </div>
             </div>
@@ -260,7 +260,7 @@
                     <div class="tkt-empty-icon"><i class="fa-regular fa-rectangle-list"></i></div>
                     <div class="tkt-empty-title">Ningún ticket seleccionado</div>
                     <div class="tkt-empty-text">Elige un ticket de la lista para ver el hilo, la trazabilidad, la actividad y gestionarlo desde el panel de la derecha.</div>
-                    <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;justify-content:center">
+                    <div class="tkt-badge-row">
                         <span class="tkt-hint-key">J / K navegar</span>
                         <span class="tkt-hint-key">C nuevo ticket</span>
                     </div>

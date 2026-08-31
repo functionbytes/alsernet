@@ -69,8 +69,26 @@
         renderList();
         renderBulkBar();
         loadSavedViews();
+        initSelect2();
         $('#eml-tab-scheduled-count').text(EML.state.stats.scheduled || '');
         $('#eml-tab-internal-count').text(EML.state.stats.internal || '');
+    }
+
+    // Todo <select> de la pantalla usa select2 (mismo criterio que
+    // tickets-app.js::initSelect2). dropdownParent: por defecto select2
+    // cuelga su panel de <body> con z-index:1051 — por debajo del
+    // z-index:1080 de .bv-modal, así que dentro del modal "Redactar" el
+    // desplegable se abría pero quedaba tapado detrás del propio modal.
+    function initSelect2() {
+        $('select').each(function () {
+            var $s = $(this);
+            if ($s.data('select2')) { return; } // evita doble-init
+            var $modal = $s.closest('.bv-modal');
+            $s.select2({
+                width: 'style',
+                dropdownParent: $modal.length ? $modal : $(document.body),
+            });
+        });
     }
 
     // ═══════════ Vistas guardadas (chips de la barra de KPIs) ═══════════
@@ -105,11 +123,16 @@
         EML.state.from = filters.from || '';
         EML.state.to = filters.to || '';
 
+        // change.select2 (no "change" a secas): sólo refresca el texto que
+        // pinta select2, sin re-disparar los .on('change', '#eml-filter-...')
+        // de más abajo (esos ya harían su propio refetch() — aquí abajo se
+        // llama uno explícito, así que un "change" normal duplicaría la
+        // petición).
         $('#eml-search').val(EML.state.search);
-        $('#eml-filter-category').val(EML.state.category);
-        $('#eml-filter-agent').val(EML.state.agent);
-        $('#eml-filter-origin').val(EML.state.origin);
-        $('#eml-filter-tag').val(EML.state.tag);
+        $('#eml-filter-category').val(EML.state.category).trigger('change.select2');
+        $('#eml-filter-agent').val(EML.state.agent).trigger('change.select2');
+        $('#eml-filter-origin').val(EML.state.origin).trigger('change.select2');
+        $('#eml-filter-tag').val(EML.state.tag).trigger('change.select2');
         $('#eml-filter-from').val(EML.state.from);
         $('#eml-filter-to').val(EML.state.to);
 
@@ -143,7 +166,10 @@
         Array.from(tags).sort().forEach(function (t) {
             $sel.append($('<option>').val(t).text(t));
         });
-        $sel.val(current);
+        // change.select2: esto se llama tras cada refetch() — un "change" normal
+        // volvería a disparar el handler de '#eml-filter-tag' y reencadenaría
+        // refetch() sin fin.
+        $sel.val(current).trigger('change.select2');
     }
 
     function populateComposeCategories() {
@@ -933,7 +959,7 @@
             EML.state.from = '';
             EML.state.to = '';
             EML.state.search = '';
-            $('#eml-filter-category, #eml-filter-agent, #eml-filter-origin, #eml-filter-tag').val('');
+            $('#eml-filter-category, #eml-filter-agent, #eml-filter-origin, #eml-filter-tag').val('').trigger('change.select2');
             $('#eml-filter-from, #eml-filter-to, #eml-search').val('');
             refetch();
         });

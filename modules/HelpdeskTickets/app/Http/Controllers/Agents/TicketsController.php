@@ -14,6 +14,8 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Models\TicketTemplate;
+use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 
 class TicketsController extends Controller
 {
@@ -52,8 +54,12 @@ class TicketsController extends Controller
 
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
         $customers = Customer::orderBy('name')->get(['id', 'name', 'email']);
+        $templates = TicketTemplate::active()
+            ->visibleTo(auth()->id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'subject', 'body', 'category_id', 'priority']);
 
-        return view('helpdesktickets::agents.tickets.create', compact('categories', 'customers'));
+        return view('helpdesktickets::agents.tickets.create', compact('categories', 'customers', 'templates'));
     }
 
     public function store(StoreTicketRequest $request): RedirectResponse
@@ -66,6 +72,17 @@ class TicketsController extends Controller
             'assignee_id' => auth()->id(),
             'source' => 'agent',
         ]));
+
+        // Sustitucion de variables tipo {{ticket_number}}, {{customer_name}},
+        // {{erp_saldo_pendiente}}... — mismo TicketVariableInterpolator que
+        // Macros/canned replies (ver TicketsCrudController::store() para el
+        // mismo tratamiento del lado manager).
+        $interpolator = app(TicketVariableInterpolator::class);
+        $resolvedSubject = $interpolator->interpolate($ticket->subject, $ticket);
+        $resolvedDescription = $interpolator->interpolate($ticket->description, $ticket);
+        if ($resolvedSubject !== $ticket->subject || $resolvedDescription !== $ticket->description) {
+            $ticket->update(['subject' => $resolvedSubject, 'description' => $resolvedDescription]);
+        }
 
         return redirect()->route('agent.helpdesk.tickets.show', $ticket)
             ->with('success', __('helpdesk::helpdesk.messages.ticket_created'));

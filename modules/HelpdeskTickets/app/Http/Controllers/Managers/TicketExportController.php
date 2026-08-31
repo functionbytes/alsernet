@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Helpdesk\Filters\TicketFilter;
+use Modules\Helpdesk\Services\Exports\CsvStreamExporter;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -44,12 +45,15 @@ class TicketExportController extends Controller
     {
         $filename = 'tickets-'.now()->format('Y-m-d').'.csv';
 
-        return response()->streamDownload(function () use ($tickets) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, ['Numero', 'Titulo', 'Estado', 'Prioridad', 'Cliente', 'Agente', 'Creado', 'Resuelto']);
+        $headers = ['Numero', 'Titulo', 'Estado', 'Prioridad', 'Cliente', 'Agente', 'Creado', 'Resuelto'];
 
+        // Título/cliente/agente vienen de fuentes no confiables (formulario
+        // público, email entrante), por eso pasa por CsvStreamExporter en vez
+        // de fputcsv() directo: neutraliza CSV/formula injection igual que el
+        // export de conversaciones del core Helpdesk.
+        $rows = (function () use ($tickets) {
             foreach ($tickets as $t) {
-                fputcsv($out, [
+                yield [
                     $t->ticket_number,
                     $t->title,
                     $t->status?->name ?? '',
@@ -58,11 +62,11 @@ class TicketExportController extends Controller
                     $t->assignee?->name ?? '',
                     $t->created_at?->toDateTimeString(),
                     $t->resolved_at?->toDateTimeString() ?? '',
-                ]);
+                ];
             }
+        })();
 
-            fclose($out);
-        }, $filename, ['Content-Type' => 'text/csv']);
+        return app(CsvStreamExporter::class)->stream($filename, $headers, $rows);
     }
 
     private function exportPdf(iterable $tickets): Response

@@ -387,4 +387,73 @@ class AutomationEngineTest extends TestCase
 
         return $ticket;
     }
+
+    // ─── contains / not_contains ignoran mayusculas ───────────────────────────
+
+    public function test_contains_ignores_letter_case(): void
+    {
+        // Una regla escrita con "factura" tiene que disparar con el asunto
+        // "Problema con mi Factura": es como la gente escribe al empezar frase.
+        // Con str_contains a secas no lo hacia, lo que dejaba practicamente
+        // inservibles las reglas por palabra clave.
+        $this->createAutomationForKeyword('factura', 'facturacion');
+
+        foreach (['Mi factura', 'Mi Factura', 'MI FACTURA'] as $subject) {
+            $ticket = $this->createTicket(['subject' => $subject]);
+
+            $this->engine->handle('ticket.created', $ticket);
+
+            $this->assertContains(
+                'facturacion',
+                $ticket->fresh()->tags ?? [],
+                'El asunto "'.$subject.'" deberia coincidir con la palabra clave.',
+            );
+        }
+    }
+
+    public function test_contains_still_does_not_match_a_different_word(): void
+    {
+        $this->createAutomationForKeyword('factura', 'facturacion');
+
+        $ticket = $this->createTicket(['subject' => 'Consulta sobre el envio']);
+
+        $this->engine->handle('ticket.created', $ticket);
+
+        $this->assertNotContains('facturacion', $ticket->fresh()->tags ?? []);
+    }
+
+    public function test_not_contains_also_ignores_letter_case(): void
+    {
+        $automation = Automation::create([
+            'name' => 'not-contains-case-'.uniqid(),
+            'trigger_event' => 'ticket.created',
+            'is_active' => true,
+            'conditions' => [['field' => 'subject', 'op' => 'not_contains', 'value' => 'spam']],
+            'actions' => [['type' => 'add_tag', 'value' => 'legitimo']],
+            'order' => 0,
+        ]);
+        $this->automationIds[] = $automation->id;
+
+        $ticket = $this->createTicket(['subject' => 'Esto es SPAM puro']);
+
+        $this->engine->handle('ticket.created', $ticket);
+
+        $this->assertNotContains('legitimo', $ticket->fresh()->tags ?? []);
+    }
+
+    private function createAutomationForKeyword(string $keyword, string $tag): Automation
+    {
+        $automation = Automation::create([
+            'name' => 'keyword-'.$keyword.'-'.uniqid(),
+            'trigger_event' => 'ticket.created',
+            'is_active' => true,
+            'conditions' => [['field' => 'subject', 'op' => 'contains', 'value' => $keyword]],
+            'actions' => [['type' => 'add_tag', 'value' => $tag]],
+            'order' => 0,
+        ]);
+
+        $this->automationIds[] = $automation->id;
+
+        return $automation;
+    }
 }

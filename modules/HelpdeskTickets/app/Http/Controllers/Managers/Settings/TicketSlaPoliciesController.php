@@ -3,7 +3,9 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketSlaPolicyRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreSlaPolicyRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateSlaPolicyRequest;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -90,7 +92,7 @@ class TicketSlaPoliciesController extends Controller
         TicketSlaPolicy::create($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-sla-policies.index')
-            ->with('success', 'Política SLA creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.sla.created'));
     }
 
     /**
@@ -115,7 +117,7 @@ class TicketSlaPoliciesController extends Controller
         $policy->update($validated);
 
         return redirect()->route('manager.helpdesk.settings.ticket-sla-policies.index')
-            ->with('success', 'Política SLA actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.sla.updated'));
     }
 
     /**
@@ -125,7 +127,7 @@ class TicketSlaPoliciesController extends Controller
     {
         $policy->update(['active' => ! $policy->active]);
 
-        return back()->with('success', 'Estado de la política SLA actualizado exitosamente.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.sla.toggled'));
     }
 
     /**
@@ -138,12 +140,56 @@ class TicketSlaPoliciesController extends Controller
         $ticketsCount = Ticket::where('sla_policy_id', $policy->id)->count();
 
         if ($categoriesCount > 0 || $ticketsCount > 0) {
-            return back()->with('error', 'No se puede eliminar una política SLA que está siendo utilizada.');
+            return back()->with('error', __('helpdesktickets::helpdesktickets.settings.sla.cannot_delete_in_use'));
         }
 
         $policy->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-sla-policies.index')
-            ->with('success', 'Política SLA eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.sla.deleted'));
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several SLA policies.
+     */
+    public function bulkAction(BulkActionTicketSlaPolicyRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $policies = TicketSlaPolicy::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($policies as $policy) {
+                $inUse = $policy->is_default
+                    || TicketCategory::where('default_sla_policy_id', $policy->id)->exists()
+                    || Ticket::where('sla_policy_id', $policy->id)->exists();
+
+                if ($inUse) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $policy->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($policies as $policy) {
+                $policy->update(['active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'activada(s)', 'deactivate' => 'desactivada(s)'];
+        $message = "{$count} política(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitida(s) por estar en uso o ser la política por defecto.";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

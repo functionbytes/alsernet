@@ -2,7 +2,7 @@
 
     {{-- Seccion: Informacion basica --}}
     <div class="col-12">
-        <h6 class="fw-bold mb-0 border-bottom pb-2">Informacion basica</h6>
+        <h6 class="fw-bold mb-0">Informacion basica</h6>
     </div>
 
     {{-- Nombre --}}
@@ -70,11 +70,11 @@
 
     {{-- Seccion: Datos adicionales --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-0 border-bottom pb-2">Datos adicionales</h6>
+        <h6 class="fw-bold mb-0">Datos adicionales</h6>
     </div>
 
     {{-- Health score --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Health score</label>
         <input type="number" name="health_score" class="form-control @error('health_score') is-invalid @enderror"
             value="{{ old('health_score', $company->health_score ?? '') }}"

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Modules\Helpdesk\Concerns\HasMessageThread;
 use Modules\Helpdesk\Models\Conversation;
 use Modules\Helpdesk\Models\Group;
@@ -19,6 +20,7 @@ use Modules\HelpdeskSla\Services\BusinessHoursCalculator;
 use Modules\HelpdeskTickets\Database\Factories\TicketFactory;
 use Modules\HelpdeskTickets\Http\Controllers\SharedTicketController;
 use Modules\HelpdeskTickets\Models\Concerns\HasCustomAttributes;
+use Modules\HelpdeskTickets\Services\SlaService;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -86,6 +88,7 @@ class Ticket extends Model
         'ai_suggested_category_id',
         'ai_suggested_priority',
         'customer_sentiment_avg',
+        'detected_language',
     ];
 
     protected function casts(): array
@@ -166,29 +169,62 @@ class Ticket extends Model
         $year = now()->year;
         $prefix = "TCK-{$year}-";
 
-        // Get the last ticket number for this year. withTrashed() es
-        // obligatorio: el índice UNIQUE de ticket_number es a nivel de BD y
-        // no distingue soft-deleted — un ticket fusionado/archivado-y-
-        // eliminado (Ticket::merge()/destroy()) sigue ocupando su número.
-        // Sin esto, generateTicketNumber() podía "retroceder" tras el
-        // primer soft-delete y chocar con UniqueConstraintViolationException
-        // (bug real encontrado probando la ingesta de emails).
-        $lastTicket = static::withTrashed()
-            ->where('ticket_number', 'like', "{$prefix}%")
-            ->orderBy('ticket_number', 'desc')
-            ->lockForUpdate()
-            ->first();
+        // El lockForUpdate() de abajo SOLO surte efecto dentro de una
+        // transacción: en autocommit, MySQL adquiere y suelta el lock en el
+        // acto y dos creaciones simultáneas leen el mismo último número.
+        // Siete de los once caminos de creación del módulo envolvían la
+        // llamada en DB::transaction(); cuatro no (alta desde el panel de
+        // agentes, ProcessRecurringTicketsJob, y las dos vías de
+        // HelpdeskTicketBridgeService), y ahí el bloqueo era decorativo:
+        // colisión contra el índice UNIQUE de ticket_number.
+        //
+        // Abrir aquí la transacción cubre los once de una vez y hace que
+        // cualquier punto de creación futuro herede la protección sin tener
+        // que acordarse.
+        $connection = DB::connection(static::make()->getConnectionName());
 
-        if ($lastTicket) {
-            // Extract the numeric part and increment
-            $lastNumber = (int) substr($lastTicket->ticket_number, strlen($prefix));
-            $newNumber = $lastNumber + 1;
-        } else {
-            // First ticket of the year
-            $newNumber = 1;
-        }
+        $generate = function () use ($prefix) {
+            // withTrashed() es obligatorio: el índice UNIQUE de ticket_number
+            // es a nivel de BD y no distingue soft-deleted — un ticket
+            // fusionado/archivado-y-eliminado (Ticket::merge()/destroy())
+            // sigue ocupando su número. Sin esto, generateTicketNumber() podía
+            // "retroceder" tras el primer soft-delete y chocar con
+            // UniqueConstraintViolationException (bug real encontrado probando
+            // la ingesta de emails).
+            //
+            // El orden va por la parte NUMÉRICA, no por la cadena: ordenar el
+            // string dejaba 'TCK-2026-100000' por debajo de 'TCK-2026-99999'
+            // en cuanto se pasara de cinco cifras, y el contador retrocedía.
+            $lastTicket = static::withTrashed()
+                ->where('ticket_number', 'like', "{$prefix}%")
+                ->orderByRaw('CAST(SUBSTRING(ticket_number, ?) AS UNSIGNED) DESC', [strlen($prefix) + 1])
+                ->lockForUpdate()
+                ->first();
 
-        return $prefix.str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+            if ($lastTicket) {
+                // Extract the numeric part and increment
+                $lastNumber = (int) substr($lastTicket->ticket_number, strlen($prefix));
+                $newNumber = $lastNumber + 1;
+            } else {
+                // First ticket of the year
+                $newNumber = 1;
+            }
+
+            return $prefix.str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        };
+
+        // Si el PDO ya está dentro de una transacción, el SELECT … FOR UPDATE
+        // de arriba ya es efectivo y no hay que abrir otra. Se mira el PDO y no
+        // transactionLevel() porque varias conexiones lógicas pueden compartir
+        // el mismo PDO: los tests del módulo lo hacen a propósito
+        // (Tests\Concerns\SharesHelpdeskPdo apunta "helpdesk" al PDO de
+        // "mariadb" para que los FK entre ambas no se bloqueen entre sí), y ahí
+        // Laravel cree que "helpdesk" está a nivel 0 mientras el PDO ya tiene
+        // una transacción abierta — pedirle otra revienta con
+        // "There is already an active transaction".
+        return $connection->getPdo()->inTransaction()
+            ? $generate()
+            : $connection->transaction($generate);
     }
 
     /**
@@ -592,7 +628,7 @@ class Ticket extends Model
     /**
      * Calculate SLA due dates based on policy
      */
-    public function calculateSlaDueDates(): self
+    public function calculateSlaDueDates(bool $persist = true): self
     {
         if (! $this->slaPolicy) {
             return $this;
@@ -631,7 +667,14 @@ class Ticket extends Model
             $this->sla_resolution_due_at = $this->calculateBusinessTime($now, $minutes, $policy);
         }
 
-        $this->saveQuietly();
+        // $persist = false para poder calcular desde TicketObserver::creating()
+        // y que las fechas entren en el INSERT. Antes esto se llamaba siempre
+        // desde created(), así que cada alta de ticket costaba dos escrituras
+        // (INSERT + UPDATE) en el camino más caliente del módulo: la ingesta de
+        // correo crea un ticket por mensaje entrante.
+        if ($persist && $this->exists) {
+            $this->saveQuietly();
+        }
 
         return $this;
     }
@@ -710,43 +753,27 @@ class Ticket extends Model
 
     /**
      * Pause SLA timer (when status stops SLA)
+     *
+     * Fachada sobre SlaService, que es el dueño de la aritmética de SLA. Se
+     * mantiene el método porque lo llaman TicketUpdateService y las vistas; la
+     * condición del estado (stops_sla_timer) es específica de esta vía y por
+     * eso se queda aquí.
      */
     public function pauseSla(): self
     {
         if (! $this->isSlaPaused() && $this->status?->stops_sla_timer) {
-            $this->update(['sla_paused_at' => now()]);
+            app(SlaService::class)->pauseSla($this);
         }
 
         return $this;
     }
 
     /**
-     * Resume SLA timer
+     * Resume SLA timer. Ver pauseSla(): la implementación vive en SlaService.
      */
     public function resumeSla(): self
     {
-        if ($this->isSlaPaused()) {
-            $pausedMinutes = $this->sla_paused_at->diffInMinutes(now());
-            $totalPausedMinutes = $this->sla_paused_duration_minutes + $pausedMinutes;
-
-            // Extend all SLA due dates by the paused duration
-            $updates = [
-                'sla_paused_at' => null,
-                'sla_paused_duration_minutes' => $totalPausedMinutes,
-            ];
-
-            if ($this->sla_first_response_due_at) {
-                $updates['sla_first_response_due_at'] = $this->sla_first_response_due_at->addMinutes($pausedMinutes);
-            }
-            if ($this->sla_next_response_due_at) {
-                $updates['sla_next_response_due_at'] = $this->sla_next_response_due_at->addMinutes($pausedMinutes);
-            }
-            if ($this->sla_resolution_due_at) {
-                $updates['sla_resolution_due_at'] = $this->sla_resolution_due_at->addMinutes($pausedMinutes);
-            }
-
-            $this->update($updates);
-        }
+        app(SlaService::class)->resumeSla($this);
 
         return $this;
     }
@@ -990,17 +1017,7 @@ class Ticket extends Model
      */
     public function slaEffectiveDueDate(): ?Carbon
     {
-        if ($this->sla_resolution_due_at === null) {
-            return null;
-        }
-
-        if ($this->sla_paused_at !== null) {
-            $pausedMinutes = $this->sla_paused_at->diffInMinutes(Carbon::now());
-
-            return $this->sla_resolution_due_at->copy()->addMinutes($pausedMinutes);
-        }
-
-        return $this->sla_resolution_due_at;
+        return app(SlaService::class)->getEffectiveDueDate($this);
     }
 
     /**
@@ -1040,7 +1057,18 @@ class Ticket extends Model
      */
     public function statusSlug(): string
     {
-        $status = $this->status;
+        return static::canonicalStatusSlug($this->status);
+    }
+
+    /**
+     * Misma normalización que statusSlug() pero sobre un TicketStatus suelto,
+     * para poder agrupar el CATÁLOGO (una tabla de decenas de filas) en vez de
+     * recorrer los tickets uno a uno. Es lo que permite a
+     * TicketsCrudController::tabCounts() contar con una sola agregación SQL en
+     * lugar de hidratar la tabla entera.
+     */
+    public static function canonicalStatusSlug(?TicketStatus $status): string
+    {
         if (! $status) {
             return 'open';
         }

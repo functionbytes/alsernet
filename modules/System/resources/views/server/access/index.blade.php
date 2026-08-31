@@ -79,54 +79,68 @@
 
             {{-- Filters --}}
             <div class="card-body border-bottom">
-                <form method="GET" action="{{ route('settings.system.access.index') }}" id="filterForm">
-                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                        <div class="flex-fill">
-                            <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-1">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control border-start-0 ps-0"
-                                       placeholder="Buscar en mensaje..."
-                                       value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0" style="min-width: 180px;">
-                            <select name="source" class="form-select select2 h-100">
-                                <option value="database" {{ $source === 'database' ? 'selected' : '' }}>Base de datos</option>
-                                <option value="file" {{ $source === 'file' ? 'selected' : '' }}>Archivos</option>
-                            </select>
-                        </div>
-                        @if($source === 'database')
-                            <div class="flex-shrink-0" style="min-width: 150px;">
-                                <select name="level" class="form-select select2 h-100">
-                                    <option value="">Todos los niveles</option>
-                                    <option value="ERROR" {{ $level === 'ERROR' ? 'selected' : '' }}>ERROR</option>
-                                    <option value="WARNING" {{ $level === 'WARNING' ? 'selected' : '' }}>WARNING</option>
-                                    <option value="INFO" {{ $level === 'INFO' ? 'selected' : '' }}>INFO</option>
-                                    <option value="DEBUG" {{ $level === 'DEBUG' ? 'selected' : '' }}>DEBUG</option>
-                                </select>
-                            </div>
-                        @endif
-                        <div class="flex-shrink-0" style="min-width: 130px;">
-                            <select name="limit" class="form-select select2 h-100">
-                                <option value="50" {{ $limit == 50 ? 'selected' : '' }}>50 registros</option>
-                                <option value="100" {{ $limit == 100 ? 'selected' : '' }}>100 registros</option>
-                                <option value="250" {{ $limit == 250 ? 'selected' : '' }}>250 registros</option>
-                                <option value="500" {{ $limit == 500 ? 'selected' : '' }}>500 registros</option>
-                            </select>
-                        </div>
-                        <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search me-1"></i>
+                @php
+                    $activeFilterCount = collect([
+                        $source !== 'database',
+                        ! empty($level),
+                        (int) $limit !== 100,
+                    ])->filter()->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || $search;
+                @endphp
+                <form id="access-filter-form" method="GET" action="{{ route('settings.system.access.index') }}">
+                    <input type="hidden" name="source" id="filter-source" value="{{ $source }}">
+                    <input type="hidden" name="level" id="filter-level" value="{{ $level }}">
+                    <input type="hidden" name="limit" id="filter-limit" value="{{ $limit }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar en mensaje..."
+                               value="{{ $search }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#access-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                                      style="font-size:0.6rem;">{{ $activeFilterCount }}</span>
+                            @endif
+                        </button>
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
                             </button>
-                            @if(request('search') || request('level') || request('limit'))
-                                <a href="{{ route('settings.system.access.index', ['source' => $source]) }}" class="btn btn-outline-secondary" title="Limpiar filtros">
-                                    <i class="fas fa-times"></i>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('settings.system.access.index') }}"
+                                   class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4">
+                            <div>
+                                <h6 class="mb-1">Filtrados:</h6>
+                            </div>
+                            @if($source !== 'database')
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Origen: Archivos
+                                </span>
+                            @endif
+                            @if(! empty($level))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Nivel: {{ $level }}
+                                </span>
+                            @endif
+                            @if((int) $limit !== 100)
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Registros: {{ $limit }}
+                                </span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -201,6 +215,54 @@
                         </div>
                     </div>
                 @endif
+            </div>
+        </div>
+    </div>
+
+    {{-- Filter modal --}}
+    <div class="modal fade" id="access-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Origen</label>
+                        <select id="modal-source" class="form-control select2-filter-modal">
+                            <option value="database" {{ $source === 'database' ? 'selected' : '' }}>Base de datos</option>
+                            <option value="file" {{ $source === 'file' ? 'selected' : '' }}>Archivos</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="modal-level-wrapper">
+                        <label class="form-label fw-semibold">Nivel</label>
+                        <select id="modal-level" class="form-control select2-filter-modal">
+                            <option value="">Todos los niveles</option>
+                            <option value="ERROR" {{ $level === 'ERROR' ? 'selected' : '' }}>ERROR</option>
+                            <option value="WARNING" {{ $level === 'WARNING' ? 'selected' : '' }}>WARNING</option>
+                            <option value="INFO" {{ $level === 'INFO' ? 'selected' : '' }}>INFO</option>
+                            <option value="DEBUG" {{ $level === 'DEBUG' ? 'selected' : '' }}>DEBUG</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Registros a mostrar</label>
+                        <select id="modal-limit" class="form-control select2-filter-modal">
+                            <option value="50" {{ (int) $limit === 50 ? 'selected' : '' }}>50 registros</option>
+                            <option value="100" {{ (int) $limit === 100 ? 'selected' : '' }}>100 registros</option>
+                            <option value="250" {{ (int) $limit === 250 ? 'selected' : '' }}>250 registros</option>
+                            <option value="500" {{ (int) $limit === 500 ? 'selected' : '' }}>500 registros</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="access-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="access-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -374,6 +436,34 @@ $(document).ready(function () {
     window.clearLogs = function () {
         new bootstrap.Modal(document.getElementById('clearLogsModal')).show();
     };
+
+    // ── Filter modal ──────────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#access-filter-modal'), width: '100%' });
+
+    function toggleModalLevelField() {
+        if ($('#modal-source').val() === 'database') {
+            $('#modal-level-wrapper').show();
+        } else {
+            $('#modal-level-wrapper').hide();
+            $('#modal-level').val('').trigger('change');
+        }
+    }
+    toggleModalLevelField();
+    $('#modal-source').on('change', toggleModalLevelField);
+
+    $('#access-filter-apply-btn').on('click', function () {
+        $('#filter-source').val($('#modal-source').val());
+        $('#filter-level').val($('#modal-source').val() === 'database' ? $('#modal-level').val() : '');
+        $('#filter-limit').val($('#modal-limit').val());
+        $('#access-filter-modal').modal('hide');
+        $('#access-filter-form').submit();
+    });
+
+    $('#access-filter-clear-btn').on('click', function () {
+        $('#modal-source').val('database').trigger('change');
+        $('#modal-level').val('').trigger('change');
+        $('#modal-limit').val('100').trigger('change');
+    });
 
     $('#confirmClearBtn').on('click', function () {
         var modal = bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'));

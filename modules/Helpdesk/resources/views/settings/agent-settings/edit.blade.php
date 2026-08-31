@@ -40,8 +40,10 @@
 
         <div class="col-lg-4">
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del agente</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion del agente</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Nombre</span>
                         <span class="small fw-semibold">{{ $agent->name }}</span>

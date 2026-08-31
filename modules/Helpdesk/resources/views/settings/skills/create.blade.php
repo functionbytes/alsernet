@@ -37,19 +37,31 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los skills</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los skills</h6>
                     <p class="card-text text-muted small">
                         Los skills representan habilidades o especialidades que pueden asignarse a los agentes del helpdesk.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Enrutamiento automatico</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Enrutamiento automatico</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Las conversaciones pueden enrutarse automaticamente a agentes segun los skills requeridos para resolver el caso.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Slug</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Slug</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         El slug se genera automaticamente desde el nombre y se usa como identificador interno.
                     </p>

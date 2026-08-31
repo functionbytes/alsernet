@@ -104,10 +104,13 @@
                                     <label class="control-label col-form-label">
                                         Slug <span class="text-danger">*</span>
                                     </label>
-                                    <input type="text" class="form-control @error('slug') is-invalid @enderror"
-                                           name="slug" value="{{ old('slug') }}"
-                                           placeholder="ej: dni, pasaporte, licencia-armas"
-                                           pattern="[a-z0-9_\-]+" required>
+                                    @include('core::components.slug-field', [
+                                        'value' => old('slug', ''),
+                                        'from' => 'input[name=label]',
+                                        'pattern' => '[a-z0-9_\-]+',
+                                        'required' => true,
+                                        'placeholder' => 'dni, pasaporte, licencia-armas',
+                                    ])
                                     <small class="form-text text-muted">Identificador único, solo minúsculas, números y guiones</small>
                                     @error('slug')
                                     <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
@@ -128,7 +131,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Icono (Font Awesome)</label>
                                     <input type="text" class="form-control @error('icon') is-invalid @enderror"
@@ -141,12 +144,15 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="control-label col-form-label">Color</label>
-                                    <input type="color" class="form-control form-control-color @error('color') is-invalid @enderror"
-                                           name="color" value="{{ old('color', '#6c757d') }}"
-                                           style="height: 38px; width: 100%;">
+                                    @include('core::components.color-field', [
+                                        'name' => 'color',
+                                        'value' => old('color', '#6c757d'),
+                                        'preview' => old('label', 'Tipo'),
+                                        'previewFrom' => 'input[name=label]',
+                                    ])
                                     @error('color')
                                         <span class="field-validation-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</span>
                                     @enderror

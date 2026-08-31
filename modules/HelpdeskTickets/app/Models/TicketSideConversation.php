@@ -2,14 +2,16 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketSideConversation extends Model
 {
+    use BelongsToHelpdeskUser;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_ticket_side_conversations';
@@ -36,12 +38,12 @@ class TicketSideConversation extends Model
 
     public function participantUser(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'participant_user_id');
+        return $this->belongsToHelpdeskUser('participant_user_id', 'participantUser');
     }
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsToHelpdeskUser('created_by', 'creator');
     }
 
     public function isOpen(): bool

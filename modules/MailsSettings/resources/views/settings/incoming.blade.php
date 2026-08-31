@@ -60,39 +60,26 @@
                 </div>
                 <div class="collapse show" id="imapCollapse">
                     <div class="card-body">
-                        <button class="btn btn-primary btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#addImapConnectionModal">
-                            <i class="fas fa-plus me-1"></i> Agregar conexión
-                        </button>
+                        {{-- Las conexiones IMAP (canales que generan tickets) se gestionan
+                             desde HelpdeskTickets — misma clave de Setting ('incoming_email'),
+                             pantalla dedicada con edición, prueba de conexión y estado de
+                             sincronización por canal. Se retira el alta/baja duplicados de
+                             aquí para que solo haya un lugar que las administre. --}}
+                        <div class="alert alert-info border-0 mb-3">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fas fa-circle-info fs-5 mt-1"></i>
+                                <p class="mb-0 small">Las conexiones IMAP ahora se administran desde Helpdesk → Tickets → Configuración → Canales de correo (alta, edición, prueba de conexión y estado de sincronización por canal).</p>
+                            </div>
+                        </div>
 
                         @if(isset($settings['imap']['connections']) && count($settings['imap']['connections']) > 0)
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Nombre</th>
-                                            <th>Servidor</th>
-                                            <th>Usuario</th>
-                                            <th class="text-center">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($settings['imap']['connections'] as $connection)
-                                            <tr>
-                                                <td>{{ $connection['name'] }}</td>
-                                                <td>{{ $connection['host'] }}:{{ $connection['port'] }}</td>
-                                                <td>{{ $connection['username'] }}</td>
-                                                <td class="text-center">
-                                                    <button class="btn btn-sm btn-outline-secondary" onclick="deleteImapConnection('{{ $connection['id'] }}')">
-                                                        Eliminar
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="text-muted mb-0">No hay conexiones IMAP configuradas.</p>
+                            <p class="text-muted small mb-3">{{ count($settings['imap']['connections']) }} conexión(es) configurada(s) actualmente.</p>
+                        @endif
+
+                        @if(Nwidart\Modules\Facades\Module::isEnabled('HelpdeskTickets'))
+                            <a href="{{ route('manager.helpdesk.settings.email-channels.index') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-envelope me-1"></i> Ir a Canales de correo
+                            </a>
                         @endif
                     </div>
                 </div>
@@ -512,72 +499,6 @@
 
     </div>
 
-    {{-- Modal Agregar Conexión IMAP --}}
-    <div class="modal fade" id="addImapConnectionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-bottom">
-                    <h5 class="modal-title fw-bold">Agregar conexión IMAP</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST" action="{{ route('settings.incoming-email.imap.store') }}">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label for="imapName" class="form-label fw-semibold">Nombre de la conexión <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="imapName" name="name" required placeholder="Ej: Soporte principal">
-                            </div>
-                            <div class="col-md-8">
-                                <label for="imapHost" class="form-label fw-semibold">Servidor IMAP <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="imapHost" name="host" required placeholder="imap.gmail.com">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="imapPort" class="form-label fw-semibold">Puerto <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="imapPort" name="port" required value="993">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="imapUsername" class="form-label fw-semibold">Usuario <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="imapUsername" name="username" required placeholder="soporte@ejemplo.com">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="imapPassword" class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>
-                                <input type="password" class="form-control" id="imapPassword" name="password" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="imapFolder" class="form-label fw-semibold">Carpeta</label>
-                                <input type="text" class="form-control" id="imapFolder" name="folder" value="INBOX">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="imapEncryption" class="form-label fw-semibold">Encriptación</label>
-                                <select class="form-select" id="imapEncryption" name="encryption">
-                                    <option value="tls" selected>TLS</option>
-                                    <option value="ssl">SSL</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="createTickets" name="create_tickets" value="1" checked>
-                                    <label class="form-check-label" for="createTickets">Crear tickets desde correos nuevos</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="createReplies" name="create_replies" value="1" checked>
-                                    <label class="form-check-label" for="createReplies">Crear respuestas desde correos de seguimiento</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary w-100 mb-1">
-                            Guardar conexión
-                        </button>
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
 @endsection
 
 @push('scripts')
@@ -588,16 +509,6 @@ function copyToClipboard(elementId) {
     navigator.clipboard.writeText(el.value || el.textContent).then(() => {
         toastr.success('Copiado al portapapeles');
     });
-}
-
-function deleteImapConnection(connectionId) {
-    if (!confirm('¿Eliminar esta conexión IMAP?')) return;
-    fetch(`{{ url('manager/backups/email/incoming/imap') }}/${connectionId}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Content-Type': 'application/json' }
-    }).then(r => r.json()).then(data => {
-        if (data.success || data.message) { toastr.success('Conexión IMAP eliminada'); setTimeout(() => location.reload(), 1200); }
-    }).catch(() => toastr.error('Error al eliminar la conexión'));
 }
 
 function deleteGmailConnection(connectionId) {

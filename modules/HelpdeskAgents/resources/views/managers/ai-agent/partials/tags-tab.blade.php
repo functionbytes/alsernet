@@ -151,7 +151,7 @@ $(function () {
     $(document).on('click', '#btn-new-tag, #btn-new-tag-empty', function () {
         $('#tag_id').val('');
         $('#tagForm')[0].reset();
-        $('#tag_color').val('#90bb13');
+        $('#tag_color').val('#90bb13').trigger('input');
         $('#tagModalLabel').text('Nuevo tag');
         $('#tagModal').modal('show');
     });
@@ -163,7 +163,7 @@ $(function () {
         $('#tag_id').val(d.id);
         $('#tag_name').val(d.name);
         $('#tag_description').val(d.description);
-        $('#tag_color').val(d.color);
+        $('#tag_color').val(d.color).trigger('input');
         $('#tag_icon').val(d.icon);
         $('#tag_priority').val(d.priority);
         $('#tag_system_prompt_addition').val(d.systemPrompt);

@@ -105,6 +105,7 @@
                         <table class="table table-hover align-middle text-nowrap" id="categories-table">
                             <thead class="table-light">
                                 <tr>
+                                    <th width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th>Nombre</th>
                                     <th>Slug</th>
                                     <th>Descripcion</th>
@@ -115,20 +116,9 @@
                             <tbody id="categories-sortable">
                                 @foreach($categories as $category)
                                     <tr data-id="{{ $category->id }}">
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $category->id }}"></td>
                                         <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                @php
-                                                    $icon = $category->icon;
-                                                    if ($icon && str_starts_with($icon, 'ti ')) {
-                                                        $icon = 'fas fa-folder';
-                                                    }
-                                                    $icon = $icon ?: 'fas fa-folder';
-                                                @endphp
-                                                <span class="rounded-circle d-inline-block flex-shrink-0"
-                                                      style="width:12px;height:12px;background-color:{{ $category->color ?? '#90bb13' }};"></span>
-                                                <i class="{{ $icon }}" style="color:{{ $category->color ?? '#90bb13' }};"></i>
-                                                <span class="fw-semibold">{{ $category->name }}</span>
-                                            </div>
+                                            <span class="fw-semibold">{{ $category->name }}</span>
                                         </td>
                                         <td>
                                             <code class="bg-light px-2 py-1 rounded small">{{ $category->slug }}</code>
@@ -230,9 +220,45 @@
 
     @include('core::components.delete')
 
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none" style="z-index:1050;">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar accion
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Accion masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicara la accion sobre <strong><span data-bulk-count>0</span> categoria(s)</strong>.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Accion</label>
+                        <select id="bulk-action-select" class="form-select select2">
+                            <option value="">Seleccionar accion...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function () {
     @if(session('success'))
@@ -275,6 +301,42 @@ $(document).ready(function () {
             },
         });
     }
+
+    // Bulk actions
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        const action = $('#bulk-action-select').val();
+        const ids = bulk.getIds();
+        if (!action) { toastr.warning('Selecciona una accion.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos una categoria.'); return; }
+        if (action === 'delete' && !confirm('¿Eliminar las ' + ids.length + ' categoria(s) seleccionadas?')) { return; }
+
+        $('#bulk-apply-btn').prop('disabled', true).text('Procesando...');
+        $.ajax({
+            url: '{{ route("manager.helpdesk.settings.ticket-categories.bulk-action") }}',
+            method: 'POST',
+            data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+            contentType: 'application/json',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function (res) {
+                $('#bulk-modal').modal('hide');
+                toastr.success(res.message);
+                setTimeout(() => location.reload(), 800);
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message ?? 'Error al procesar.');
+                $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            },
+        });
+    });
 });
 </script>
 @endpush

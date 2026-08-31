@@ -7,7 +7,7 @@
 @endpush
 
 @php
-    $statusIcons = ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock'];
+    $statusIcons = ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag'];
     $statusIcon = $statusIcons[$log->status?->value] ?? 'fa-circle';
     $canManage = auth()->user()?->can('helpdeskemaillog.manage') ?? false;
 @endphp

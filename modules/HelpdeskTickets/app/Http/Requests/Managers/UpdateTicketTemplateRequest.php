@@ -8,7 +8,7 @@ class UpdateTicketTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('helpdesk.tickets.update') ?? false;
+        return $this->user()?->can('update', $this->route('ticket_template')) ?? false;
     }
 
     public function rules(): array
@@ -19,8 +19,9 @@ class UpdateTicketTemplateRequest extends FormRequest
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string'],
             'category_id' => ['nullable', 'exists:helpdesk.helpdesk_ticket_categories,id'],
-            'priority_id' => ['nullable', 'exists:helpdesk.helpdesk_priorities,id'],
+            'priority' => ['nullable', 'in:low,normal,high,urgent'],
             'is_active' => ['nullable', 'boolean'],
+            'is_general' => ['nullable', 'boolean'],
         ];
     }
 
@@ -34,7 +35,7 @@ class UpdateTicketTemplateRequest extends FormRequest
             'subject.max' => 'El asunto no puede superar los 255 caracteres.',
             'body.required' => 'El contenido es obligatorio.',
             'category_id.exists' => 'La categoria seleccionada no existe.',
-            'priority_id.exists' => 'La prioridad seleccionada no existe.',
+            'priority.in' => 'La prioridad seleccionada no es valida.',
         ];
     }
 
@@ -46,8 +47,9 @@ class UpdateTicketTemplateRequest extends FormRequest
             'subject' => 'asunto',
             'body' => 'contenido',
             'category_id' => 'categoria',
-            'priority_id' => 'prioridad',
+            'priority' => 'prioridad',
             'is_active' => 'activo',
+            'is_general' => 'alcance',
         ];
     }
 }

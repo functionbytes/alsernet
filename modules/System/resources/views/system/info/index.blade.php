@@ -15,7 +15,7 @@
                 <p class="small mb-0 text-muted">Panel completo que muestra la configuración técnica de tu servidor, incluyendo versión de PHP, extensiones instaladas, paquetes Composer, drivers de base de datos y caché, permisos de directorios y estado general del sistema.</p>
             </div>
 
-            <ul class="nav nav-tabs border-0 user-profile-tab" id="system-info-tab" role="tablist">
+            <ul class="nav nav-pills user-profile-tab" id="system-info-tab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 active"
                             id="environment-tab" data-bs-toggle="pill" data-bs-target="#environment"

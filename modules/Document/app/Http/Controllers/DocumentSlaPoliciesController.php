@@ -3,7 +3,9 @@
 namespace Modules\Document\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Modules\Document\Entities\Document;
 use Modules\Document\Entities\DocumentSlaPolicy;
 
@@ -158,6 +160,53 @@ class DocumentSlaPoliciesController extends Controller
         $policy->update(['active' => ! $policy->active]);
 
         return back()->with('success', 'Estado de la política SLA actualizado exitosamente.');
+    }
+
+    /**
+     * Perform a bulk action on selected SLA policies.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', Rule::in(['activate', 'deactivate', 'delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $policies = DocumentSlaPolicy::whereIn('id', $validated['ids'])->get();
+
+        $count = 0;
+        $skipped = 0;
+
+        foreach ($policies as $policy) {
+            if ($validated['action'] === 'delete') {
+                if (Document::where('sla_policy_id', $policy->id)->exists()) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $policy->delete();
+                $count++;
+
+                continue;
+            }
+
+            $policy->update(['active' => $validated['action'] === 'activate']);
+            $count++;
+        }
+
+        $message = match ($validated['action']) {
+            'activate' => "{$count} política(s) activada(s).",
+            'deactivate' => "{$count} política(s) desactivada(s).",
+            'delete' => "{$count} política(s) eliminada(s).",
+        };
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} política(s) en uso no se pudieron eliminar.";
+        }
+
+        return response()->json(['success' => true, 'message' => $message, 'count' => $count]);
     }
 
     /**

@@ -3,9 +3,11 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionAutomationRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreAutomationRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateAutomationRequest;
 use Modules\HelpdeskTickets\Models\Automation;
@@ -61,7 +63,7 @@ class AutomationsController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.automations.index')
-            ->with('success', 'Automatizacion creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.automation.created'));
     }
 
     public function edit(Automation $automation): View
@@ -84,7 +86,7 @@ class AutomationsController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.automations.index')
-            ->with('success', 'Automatizacion actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.automation.updated'));
     }
 
     public function destroy(Automation $automation): RedirectResponse
@@ -93,6 +95,38 @@ class AutomationsController extends Controller
 
         return redirect()
             ->route('manager.helpdesk.settings.automations.index')
-            ->with('success', 'Automatizacion eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.automation.deleted'));
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several automations.
+     */
+    public function bulkAction(BulkActionAutomationRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+
+        $automations = Automation::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($automations as $automation) {
+                $automation->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($automations as $automation) {
+                $automation->update(['is_active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'activada(s)', 'deactivate' => 'desactivada(s)'];
+
+        return response()->json([
+            'message' => "{$count} automatizacion(es) {$labels[$action]}.",
+            'count' => $count,
+        ]);
     }
 }

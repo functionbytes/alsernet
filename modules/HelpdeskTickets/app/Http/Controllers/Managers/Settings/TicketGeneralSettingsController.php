@@ -89,14 +89,18 @@ class TicketGeneralSettingsController extends Controller
     {
         $validated = $request->validated();
 
+        // boolean(), no has(): la vista usa <select> Activado/Desactivado
+        // (convención del proyecto, no checkboxes) — el campo SIEMPRE viene
+        // presente en el POST, así que has() daría true sin importar la
+        // opción elegida. boolean() interpreta correctamente "1"/"0".
         foreach (self::BOOL_KEYS as $key) {
-            $validated[$key] = $request->has($key);
+            $validated[$key] = $request->boolean($key);
         }
 
         foreach ($validated as $key => $value) {
             Setting::set(self::GROUP.'.'.$key, $value, self::GROUP);
         }
 
-        return back()->with('success', 'Configuración de tickets actualizada correctamente.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.general.updated'));
     }
 }

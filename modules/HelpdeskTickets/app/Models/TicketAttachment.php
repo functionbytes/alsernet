@@ -6,7 +6,6 @@ use App\Traits\HasUid;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 class TicketAttachment extends Model
 {
@@ -42,12 +41,25 @@ class TicketAttachment extends Model
     }
 
     /**
-     * Get the URL to the attachment
+     * URL de descarga del adjunto.
+     *
+     * Storage::url() no sirve aquí: el disco de adjuntos es privado
+     * (storage/app, fuera de public/), así que devolvía una URL que siempre
+     * daba 404. La descarga real pasa por una ruta autorizada — la del panel si
+     * hay agente en sesión, la del portal si es el cliente.
      */
     protected function url(): Attribute
     {
         return Attribute::make(
-            get: fn () => Storage::url($this->path),
+            get: function () {
+                $ticketId = $this->message?->ticket_id;
+
+                if (! $ticketId) {
+                    return null;
+                }
+
+                return route('manager.helpdesk.tickets.message-attachments.download', [$ticketId, $this->id]);
+            },
         );
     }
 

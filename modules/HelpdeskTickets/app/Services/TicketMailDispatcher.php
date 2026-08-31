@@ -16,6 +16,8 @@ use Modules\HelpdeskTickets\Models\TicketMail;
  */
 class TicketMailDispatcher
 {
+    public function __construct(private readonly TicketChannelMailerService $channelMailer) {}
+
     /**
      * @param  array<int, string>  $cc
      * @param  array<int, string>  $bcc
@@ -28,11 +30,26 @@ class TicketMailDispatcher
         // sin Message-ID propio y el tab "Trazabilidad" (que cruza contra
         // EmailLog por este valor) no podía enlazar nada.
         if (! $mail->message_id) {
-            $mail->message_id = '<'.Str::uuid().'@'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost').'>';
+            // Sin '<' '>' al guardar — ver TicketMail::createOutbound().
+            $mail->message_id = Str::uuid().'@'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
             $mail->save();
         }
 
-        Mail::to($mail->to)
+        // Responder desde el buzón del canal (si tiene SMTP configurado) e
+        // hilar contra el último correo entrante — mismo criterio que
+        // SendCustomerReplyNotification/TicketCommentsController. createResendCopy()
+        // ya puede haber fijado in_reply_to (reenvío); si no, se resuelve aquí.
+        $channel = $this->channelMailer->resolveChannelForTicket($ticket);
+        $mailerName = $channel ? $this->channelMailer->mailerNameFor($channel) : null;
+        $fromAddress = $channel['username'] ?? null;
+        $inReplyTo = $mail->in_reply_to ?: $this->channelMailer->lastInboundMessageId($ticket);
+
+        if (! $mail->in_reply_to && $inReplyTo) {
+            $mail->in_reply_to = $inReplyTo;
+        }
+
+        ($mailerName ? Mail::mailer($mailerName) : Mail::mailer())
+            ->to($mail->to)
             ->cc($cc)
             ->bcc($bcc)
             ->queue(new TicketComposedMail(
@@ -43,7 +60,13 @@ class TicketMailDispatcher
                 $bcc,
                 $attachmentFiles,
                 $mail->message_id,
+                $fromAddress,
+                $inReplyTo,
             ));
+
+        if ($fromAddress) {
+            $mail->from = $fromAddress;
+        }
 
         $mail->markAsSent();
     }

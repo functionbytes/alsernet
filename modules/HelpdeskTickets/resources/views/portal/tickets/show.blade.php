@@ -44,11 +44,16 @@
 
     @if ($attachments->isNotEmpty())
         <div class="card mb-3">
-            <div class="card-header"><h6 class="mb-0"><i class="fas fa-paperclip me-2"></i>Attachments</h6></div>
+            <div class="card-header"><h6 class="mb-0"><i class="fas fa-paperclip me-2"></i>Archivos adjuntos</h6></div>
             <ul class="list-group list-group-flush">
                 @foreach ($attachments as $attachment)
+                    {{-- Antes esto era texto plano: el cliente veía el nombre de
+                         su fichero pero no podía volver a descargarlo, porque no
+                         existía ninguna ruta que sirviera TicketAttachment. --}}
                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-file me-2"></i>{{ $attachment->original_filename ?? $attachment->filename }}</span>
+                        <a href="{{ route('portal.tickets.attachments.download', [$ticket->ticket_number, $attachment->id]) }}">
+                            <i class="fas fa-file me-2"></i>{{ $attachment->original_filename ?? $attachment->filename }}
+                        </a>
                         <small class="text-muted">{{ number_format($attachment->size / 1024, 1) }} KB</small>
                     </li>
                 @endforeach

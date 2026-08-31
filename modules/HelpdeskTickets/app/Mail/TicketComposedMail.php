@@ -64,6 +64,11 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
         // "Trazabilidad" cruza EmailLog por este valor exacto, así que tienen
         // que coincidir sí o sí.
         public readonly ?string $existingMessageId = null,
+        // Buzón del canal (p. ej. info@functionbytes.com) en vez del mailer
+        // global, e In-Reply-To hacia el último correo entrante del ticket —
+        // mismo criterio que TicketReplyMail, ver TicketChannelMailerService.
+        public readonly ?string $fromAddress = null,
+        public readonly ?string $inReplyTo = null,
     ) {
         $this->onQueue('emails');
     }
@@ -92,6 +97,7 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
     {
         return new Envelope(
             subject: $this->emailSubject,
+            from: $this->fromAddress ? new Address($this->fromAddress) : null,
             cc: array_map(fn (string $email) => new Address($email), $this->ccAddresses),
             bcc: array_map(fn (string $email) => new Address($email), $this->bccAddresses),
         );
@@ -106,6 +112,12 @@ class TicketComposedMail extends Mailable implements ShouldQueue, TracksEmailLog
     {
         $headers = $this->emailLogHeaders();
         $headers->messageId = $this->existingMessageId ? trim($this->existingMessageId, '<>') : null;
+
+        if ($this->inReplyTo) {
+            $id = trim($this->inReplyTo, '<>');
+            $headers->references([$id]);
+            $headers->text(['In-Reply-To' => "<{$id}>"]);
+        }
 
         return $headers;
     }

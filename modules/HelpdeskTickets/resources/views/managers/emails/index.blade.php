@@ -3,7 +3,9 @@
 @section('title', 'Emails enviados')
 
 @push('css')
-    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets.css') }}">
+    {{-- ?v=filemtime como el resto de assets del módulo: sin él, los cambios en
+         tickets.css se quedaban cacheados en el navegador hasta un refresco forzado. --}}
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/tickets.css')) }}">
     {{-- ?v=filemtime evita servir una versión en caché tras cada cambio --}}
     <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/emails.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/emails.css')) }}">
 @endpush
@@ -49,20 +51,20 @@
         {{-- Barra superior --}}
         <div class="eml-app-bar">
             <div class="eml-breadcrumb">
-                <i class="fa-solid fa-headset"></i><span>Helpdesk</span><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span>Tickets</span><i class="fa-solid fa-chevron-right" style="font-size:8px"></i><span class="on">Emails</span>
+                <i class="fa-solid fa-headset"></i><span>Helpdesk</span><i class="fa-solid fa-chevron-right eml-fs-8"></i><span>Tickets</span><i class="fa-solid fa-chevron-right eml-fs-8"></i><span class="on">Emails</span>
             </div>
-            <div class="eml-search-field" style="flex:1 1 200px;min-width:0;max-width:320px;margin-left:14px">
-                <i class="fa-solid fa-magnifying-glass" style="font-size:11px;color:var(--eml-text-muted)"></i>
+            <div class="eml-search-field eml-search-slot">
+                <i class="fa-solid fa-magnifying-glass eml-meta"></i>
                 <input id="eml-search" placeholder="Buscar por asunto, destinatario, ticket…">
             </div>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;row-gap:8px">
+            <div class="eml-toolbar-right">
                 <div class="eml-mode-switch" id="eml-mode-switch">
-                    <button type="button" class="eml-mode-btn on" data-eml-mode="list"><i class="fa-solid fa-list" style="font-size:10px"></i> Lista</button>
-                    <button type="button" class="eml-mode-btn" data-eml-mode="thread"><i class="fa-solid fa-comments" style="font-size:10px"></i> Hilos</button>
-                    <button type="button" class="eml-mode-btn" data-eml-mode="compact"><i class="fa-solid fa-bars" style="font-size:10px"></i> Compacta</button>
-                    <button type="button" class="eml-mode-btn" data-eml-mode="kanban"><i class="fa-solid fa-table-columns" style="font-size:10px"></i> Kanban</button>
+                    <button type="button" class="eml-mode-btn on" data-eml-mode="list"><i class="fa-solid fa-list eml-fs-10"></i> Lista</button>
+                    <button type="button" class="eml-mode-btn" data-eml-mode="thread"><i class="fa-solid fa-comments eml-fs-10"></i> Hilos</button>
+                    <button type="button" class="eml-mode-btn" data-eml-mode="compact"><i class="fa-solid fa-bars eml-fs-10"></i> Compacta</button>
+                    <button type="button" class="eml-mode-btn" data-eml-mode="kanban"><i class="fa-solid fa-table-columns eml-fs-10"></i> Kanban</button>
                 </div>
-                <button type="button" class="eml-btn eml-btn-primary" style="width:auto" data-eml-open="compose">
+                <button type="button" class="eml-btn eml-btn-primary w-auto" data-eml-open="compose">
                     <i class="fas fa-pen"></i> Redactar
                 </button>
             </div>
@@ -82,7 +84,7 @@
 
         {{-- Filtros --}}
         <div class="eml-filter-bar">
-            <select id="eml-filter-origin" class="eml-fselect" style="width:auto">
+            <select id="eml-filter-origin" class="eml-fselect select2 w-auto">
                 <option value="">Origen: todos</option>
                 <option value="presta">PrestaShop</option>
                 <option value="widget">Widget</option>
@@ -90,26 +92,26 @@
                 <option value="whatsapp">WhatsApp</option>
                 <option value="web">Web</option>
             </select>
-            <select id="eml-filter-tag" class="eml-fselect" style="width:auto">
+            <select id="eml-filter-tag" class="eml-fselect select2 w-auto">
                 <option value="">Etiquetas: todas</option>
             </select>
-            <select id="eml-filter-category" class="eml-fselect" style="width:auto">
+            <select id="eml-filter-category" class="eml-fselect select2 w-auto">
                 <option value="">Categoría: todas</option>
                 @foreach($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                 @endforeach
             </select>
-            <select id="eml-filter-agent" class="eml-fselect" style="width:auto">
+            <select id="eml-filter-agent" class="eml-fselect select2 w-auto">
                 <option value="">Agente: todos</option>
                 @foreach($agents as $agent)
                     <option value="{{ $agent->id }}">{{ trim($agent->firstname.' '.$agent->lastname) }}</option>
                 @endforeach
             </select>
-            <input type="date" id="eml-filter-from" class="eml-finput" style="width:auto">
-            <span style="color:var(--eml-text-muted)">–</span>
-            <input type="date" id="eml-filter-to" class="eml-finput" style="width:auto">
+            <input type="date" id="eml-filter-from" class="eml-finput w-auto">
+            <span class="eml-muted">–</span>
+            <input type="date" id="eml-filter-to" class="eml-finput w-auto">
             <button type="button" class="eml-clear-link" id="eml-filter-clear">limpiar</button>
-            <span id="eml-count" class="eml-mono" style="margin-left:auto;color:var(--eml-text-muted);font-size:10.5px"></span>
+            <span id="eml-count" class="eml-mono eml-count"></span>
         </div>
 
         {{-- KPIs --}}
@@ -123,7 +125,7 @@
             <span class="eml-kpi-sep"></span>
             <div class="eml-saved-views" id="eml-saved-views">
                 <span class="eml-chip-filter on" data-eml-saved="__all">Todos</span>
-                <button type="button" class="eml-chip-filter" id="eml-saved-add" style="border-style:dashed">+ guardar vista</button>
+                <button type="button" class="eml-chip-filter" id="eml-saved-add" class="eml-border-dashed">+ guardar vista</button>
             </div>
         </div>
 
@@ -134,11 +136,11 @@
             <div class="eml-list-col">
                 <div class="eml-list-head">
                     <input type="checkbox" id="eml-select-all">
-                    <span style="font-size:11px;color:var(--eml-text-muted)">Seleccionar todo</span>
+                    <span class="eml-meta">Seleccionar todo</span>
                 </div>
                 <div class="eml-bulk-bar" id="eml-bulk-bar">
-                    <span id="eml-bulk-count" style="font-size:11.5px;font-weight:700">0 seleccionados</span>
-                    <span style="margin-left:auto;display:flex;gap:8px">
+                    <span id="eml-bulk-count" class="eml-title-sm">0 seleccionados</span>
+                    <span class="eml-actions">
                         <button type="button" class="eml-btn" id="eml-bulk-resend">Reenviar</button>
                         <button type="button" class="eml-btn" id="eml-bulk-export">Exportar</button>
                         <button type="button" class="eml-btn" id="eml-bulk-cancel">Cancelar programados</button>
@@ -149,7 +151,7 @@
                 <div class="eml-list-foot">
                     <span id="eml-pagination-summary">{{ $mails->firstItem() ?? 0 }}–{{ $mails->lastItem() ?? 0 }} de {{ $mails->total() }}</span>
                     @if($mails->hasPages())
-                        <span style="margin-left:auto">{{ $mails->onEachSide(1)->links() }}</span>
+                        <span class="ms-auto">{{ $mails->onEachSide(1)->links() }}</span>
                     @endif
                 </div>
             </div>
@@ -157,9 +159,9 @@
             {{-- Columna: detalle --}}
             <div class="eml-detail-col" id="eml-detail-col">
                 <div class="eml-empty-state" id="eml-detail-empty">
-                    <div style="width:52px;height:52px;border-radius:14px;background:#fff;border:1px solid var(--eml-border);display:grid;place-items:center;color:var(--eml-text-muted);font-size:19px"><i class="fa-regular fa-envelope-open"></i></div>
-                    <div style="font-size:14px;font-weight:700">Ningún email seleccionado</div>
-                    <div style="font-size:12px;color:var(--eml-text-soft);max-width:300px;line-height:1.6">Elige un correo de la lista para ver su contenido y el hilo del ticket asociado.</div>
+                    <div class="eml-empty-icon"><i class="fa-regular fa-envelope-open"></i></div>
+                    <div class="eml-empty-title">Ningún email seleccionado</div>
+                    <div class="eml-empty-text">Elige un correo de la lista para ver su contenido y el hilo del ticket asociado.</div>
                 </div>
                 <div id="eml-detail" style="display:none"></div>
             </div>

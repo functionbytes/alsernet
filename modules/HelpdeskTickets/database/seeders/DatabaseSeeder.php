@@ -13,10 +13,12 @@ class DatabaseSeeder extends Seeder
             HelpdeskTicketCategorySeeder::class,
             HelpdeskTicketStatusSeeder::class,
             HelpdeskTicketSlaPolicySeeder::class,
+            HelpdeskTicketCannedReplySeeder::class,
             PrioritiesSeeder::class,
             StatusesSeeder::class,
             CategoriesSeeder::class,
             TicketViewSeeder::class,
+            HelpdeskTicketsMailerLayoutSeeder::class,
             HelpdeskTicketsEmailTemplatesSeeder::class,
         ]);
     }

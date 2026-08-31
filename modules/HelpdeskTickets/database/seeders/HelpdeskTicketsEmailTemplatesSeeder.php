@@ -5,6 +5,7 @@ namespace Modules\HelpdeskTickets\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Modules\Core\Models\Lang;
+use Modules\Mailer\Models\MailerLayout;
 use Modules\Mailer\Models\MailerTemplate;
 use Modules\Mailer\Models\MailerTemplateLang;
 
@@ -13,6 +14,14 @@ use Modules\Mailer\Models\MailerTemplateLang;
  * Mailer (editables desde el admin), reemplazando los antiguos blades de
  * resources/views/emails. Los Mailables ahora transportan el HTML ya renderizado
  * por TicketMailRenderer desde estas plantillas.
+ *
+ * Todas usan HelpdeskTicketsMailerLayoutSeeder::ALIAS (correr ese seeder antes)
+ * — el contenido de cada plantilla es solo el FRAGMENTO interior (sin
+ * <!DOCTYPE html>/<html>/<body>: eso lo aporta el layout), en español, y con
+ * la paleta de marca (solo verdes/grises, nunca rojo — la app no usa rojo en
+ * ningún estado): un único verde de marca (#90bb13) en todas, igual que
+ * "Correo detectado → ticket creado"; "atención"/"crítico" se marca con un
+ * emoji en el título, no con un color de alerta distinto.
  */
 class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
 {
@@ -26,6 +35,8 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
             return;
         }
 
+        $layoutId = MailerLayout::where('alias', HelpdeskTicketsMailerLayoutSeeder::ALIAS)->value('id');
+
         foreach ($this->templates() as $tpl) {
             $template = MailerTemplate::updateOrCreate(
                 ['key' => $tpl['key']],
@@ -34,6 +45,7 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
                     'name' => $tpl['name'],
                     'description' => $tpl['description'],
                     'module' => 'helpdesktickets',
+                    'layout_id' => $layoutId,
                     'is_enabled' => true,
                     'is_protected' => true,
                     'variables' => $tpl['variables'],
@@ -58,38 +70,166 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
     {
         return [
             [
-                'key' => 'helpdesk_tickets.ticket_escalated',
-                'name' => 'Ticket escalado',
-                'description' => 'Aviso al agente cuando un ticket se escala automáticamente por inactividad.',
-                'subject' => 'Ticket escalated: #{TICKET_NUMBER}',
-                'variables' => [
-                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
-                    ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
-                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
-                    ['name' => 'OLD_PRIORITY', 'required' => true, 'description' => 'Prioridad anterior'],
-                    ['name' => 'NEW_PRIORITY', 'required' => true, 'description' => 'Prioridad nueva'],
-                    ['name' => 'ESCALATED_AT', 'required' => true, 'description' => 'Fecha/hora de escalado'],
-                    ['name' => 'TICKET_URL', 'required' => true, 'description' => 'Enlace al ticket'],
-                ],
-                'content' => $this->ticketEscalatedContent(),
-            ],
-            [
                 'key' => 'helpdesk_tickets.ticket_created',
                 'name' => 'Ticket recibido',
                 'description' => 'Confirmación al cliente de que su ticket ha sido recibido.',
-                'subject' => 'Your ticket has been received — #{TICKET_NUMBER}',
+                'subject' => 'Hemos recibido tu solicitud — #{TICKET_NUMBER}',
                 'variables' => [
                     ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
                     ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
                     ['name' => 'SUBMITTED_AT', 'required' => true, 'description' => 'Fecha/hora de creación'],
+                    ['name' => 'MESSAGE_PREVIEW', 'required' => false, 'description' => 'Extracto del mensaje original del cliente'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa (para el pie del correo)'],
                 ],
-                'content' => $this->ticketCreatedContent(),
+                'content' => $this->headerCard('#90bb13', 'Hemos recibido tu solicitud').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Gracias por contactarnos. Hemos recibido tu solicitud de soporte y nuestro equipo te responderá lo antes posible.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Número de ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Recibido</td>
+            <td style="padding: 8px 0;">{SUBMITTED_AT}</td>
+        </tr>
+    </table>
+    <div style="background: #f7f9f2; border-left: 3px solid #90bb13; padding: 12px 16px; margin: 0 0 16px; color: #555; font-size: 14px;">
+        {MESSAGE_PREVIEW}
+    </div>
+    <p style="color: #666; font-size: 13px; margin: 0;">Conserva este correo como referencia. Puedes mencionar el ticket #{TICKET_NUMBER} en cualquier comunicación futura sobre este caso, o responder directamente a este correo.</p>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'helpdesk.ticket_reply',
+                'name' => 'Respuesta del agente',
+                'description' => 'Notifica al cliente cuando un agente responde su ticket (mensaje o comentario externo). Incluye el texto de la respuesta.',
+                'subject' => 'Re: {SUBJECT} — #{TICKET_NUMBER}',
+                'variables' => [
+                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
+                    ['name' => 'SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
+                    ['name' => 'AGENT_NAME', 'required' => false, 'description' => 'Nombre del agente que respondió'],
+                    ['name' => 'MESSAGE_BODY', 'required' => true, 'description' => 'Texto de la respuesta (HTML, con saltos de línea), ya traducido al idioma del cliente si aplica'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
+                ],
+                'content' => $this->headerCard('#90bb13', 'Tenés una respuesta nueva').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {CUSTOMER_NAME}, {AGENT_NAME} respondió tu ticket #{TICKET_NUMBER}:</p>
+    <div style="background: #f6f7f1; border-left: 3px solid #90bb13; padding: 12px 16px; margin: 0 0 16px; border-radius: 0 6px 6px 0;">
+        {MESSAGE_BODY}
+    </div>
+    <p style="color: #666; font-size: 13px; margin: 0;">Podés responder directamente a este correo para continuar la conversación.</p>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'helpdesk.ticket_status_changed',
+                'name' => 'Cambio de estado del ticket',
+                'description' => 'Aviso al cliente cuando el estado de su ticket cambia (en proceso, cerrado, etc.).',
+                'subject' => 'Tu ticket #{TICKET_NUMBER} cambió a: {NEW_STATUS}',
+                'variables' => [
+                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
+                    ['name' => 'SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
+                    ['name' => 'OLD_STATUS', 'required' => true, 'description' => 'Estado anterior'],
+                    ['name' => 'NEW_STATUS', 'required' => true, 'description' => 'Estado nuevo'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
+                ],
+                'content' => $this->headerCard('#90bb13', 'Tu ticket cambió de estado').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {CUSTOMER_NAME}, el estado de tu ticket se actualizó.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER} — {SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Estado</td>
+            <td style="padding: 8px 0;">
+                <span style="color: #999;">{OLD_STATUS}</span>
+                &rarr;
+                <strong style="color: #90bb13;">{NEW_STATUS}</strong>
+            </td>
+        </tr>
+    </table>
+    <p style="color: #666; font-size: 13px; margin: 0;">Si necesitás agregar información, respondé directamente a este correo.</p>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'helpdesk.ticket_reopened',
+                'name' => 'Ticket reabierto',
+                'description' => 'Aviso al cliente cuando su ticket cerrado se reabre.',
+                'subject' => 'Tu ticket #{TICKET_NUMBER} fue reabierto',
+                'variables' => [
+                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
+                    ['name' => 'SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
+                ],
+                'content' => $this->headerCard('#90bb13', 'Retomamos tu caso').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {CUSTOMER_NAME}, tu ticket fue reabierto y nuestro equipo lo está retomando.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0;">{SUBJECT}</td>
+        </tr>
+    </table>
+    <p style="color: #666; font-size: 13px; margin: 0;">Te responderemos a la brevedad. Podés responder este correo para agregar cualquier detalle nuevo.</p>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'helpdesk.ticket_merged',
+                'name' => 'Ticket fusionado',
+                'description' => 'Aviso al cliente cuando su ticket se fusiona con otro ya existente.',
+                'subject' => 'Tu ticket #{TICKET_NUMBER} se unió a otro caso',
+                'variables' => [
+                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket original'],
+                    ['name' => 'SUBJECT', 'required' => true, 'description' => 'Asunto del ticket original'],
+                    ['name' => 'TARGET_TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket destino'],
+                    ['name' => 'TICKET_URL', 'required' => true, 'description' => 'Enlace al ticket destino en el portal'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
+                ],
+                'content' => $this->headerCard('#90bb13', 'Unimos tu caso a uno existente').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {CUSTOMER_NAME}, notamos que tu consulta está relacionada con otro caso que ya tenías abierto, así que las unimos para darte una respuesta más completa.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket original</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER} — {SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Continúa en</td>
+            <td style="padding: 8px 0;">#{TARGET_TICKET_NUMBER}</td>
+        </tr>
+    </table>
+    <p style="margin: 0 0 16px;">
+        <a href="{TICKET_URL}" style="background: #90bb13; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Ver caso #{TARGET_TICKET_NUMBER}
+        </a>
+    </p>
+    <p style="color: #666; font-size: 13px; margin: 0;">A partir de ahora, respondé sobre el caso #{TARGET_TICKET_NUMBER} para que sigamos el hilo correcto.</p>
+</div>
+HTML,
             ],
             [
                 'key' => 'helpdesk_tickets.ticket_assigned',
                 'name' => 'Ticket asignado',
                 'description' => 'Aviso al agente de que se le ha asignado un ticket.',
-                'subject' => 'Ticket assigned to you — #{TICKET_NUMBER}',
+                'subject' => 'Se te asignó un ticket — #{TICKET_NUMBER}',
                 'variables' => [
                     ['name' => 'AGENT_NAME', 'required' => true, 'description' => 'Nombre del agente'],
                     ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
@@ -98,35 +238,168 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
                     ['name' => 'CATEGORY', 'required' => false, 'description' => 'Categoría del ticket'],
                     ['name' => 'PRIORITY', 'required' => true, 'description' => 'Prioridad del ticket'],
                     ['name' => 'TICKET_URL', 'required' => true, 'description' => 'Enlace al ticket'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
                 ],
-                'content' => $this->ticketAssignedContent(),
+                'content' => $this->headerCard('#90bb13', 'Se te asignó un ticket').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {AGENT_NAME}, se te asignó el siguiente ticket:</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 20px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cliente</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Categoría</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{CATEGORY}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Prioridad</td>
+            <td style="padding: 8px 0;">{PRIORITY}</td>
+        </tr>
+    </table>
+    <p style="margin: 0;">
+        <a href="{TICKET_URL}" style="background: #90bb13; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;">
+            Ver ticket
+        </a>
+    </p>
+</div>
+HTML,
+            ],
+            [
+                'key' => 'helpdesk_tickets.ticket_escalated',
+                'name' => 'Ticket escalado',
+                'description' => 'Aviso al agente cuando un ticket se escala automáticamente por inactividad.',
+                'subject' => '⚠️ Ticket escalado: #{TICKET_NUMBER}',
+                'variables' => [
+                    ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
+                    ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
+                    ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
+                    ['name' => 'OLD_PRIORITY', 'required' => true, 'description' => 'Prioridad anterior'],
+                    ['name' => 'NEW_PRIORITY', 'required' => true, 'description' => 'Prioridad nueva'],
+                    ['name' => 'ESCALATED_AT', 'required' => true, 'description' => 'Fecha/hora de escalado'],
+                    ['name' => 'TICKET_URL', 'required' => true, 'description' => 'Enlace al ticket'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
+                ],
+                'content' => $this->headerCard('#90bb13', '⚠️ Ticket escalado por inactividad').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Un ticket asignado a vos se escaló automáticamente por inactividad. Revisalo cuanto antes.</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 20px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cliente</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cambio de prioridad</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                <span style="color: #999;">{OLD_PRIORITY}</span>
+                &rarr;
+                <strong style="color: #90bb13;">{NEW_PRIORITY}</strong>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Escalado el</td>
+            <td style="padding: 8px 0;">{ESCALATED_AT}</td>
+        </tr>
+    </table>
+    <p style="margin: 0 0 12px;">
+        <a href="{TICKET_URL}" style="background: #90bb13; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold; display: inline-block;">
+            Revisar ticket ahora
+        </a>
+    </p>
+    <p style="color: #666; font-size: 13px; margin: 0;">Resolvé o actualizá este ticket lo antes posible para mantener la calidad del servicio.</p>
+</div>
+HTML,
             ],
             [
                 'key' => 'helpdesk_tickets.sla_warning',
                 'name' => 'Aviso de SLA',
                 'description' => 'Aviso al agente cuando un ticket se acerca al límite de resolución SLA.',
-                'subject' => 'SLA Warning — Ticket #{TICKET_NUMBER} ({PERCENT_USED}% used)',
+                'subject' => 'Aviso de SLA — Ticket #{TICKET_NUMBER} ({PERCENT_USED}% consumido)',
                 'variables' => [
                     ['name' => 'PERCENT_USED', 'required' => true, 'description' => '% del tiempo SLA consumido'],
                     ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
                     ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
                     ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
                     ['name' => 'DUE_AT', 'required' => true, 'description' => 'Fecha límite de resolución'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
                 ],
-                'content' => $this->slaWarningContent(),
+                'content' => $this->headerCard('#90bb13', 'Aviso de SLA — {PERCENT_USED}% del tiempo usado').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">El siguiente ticket se está acercando a su límite de resolución SLA:</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cliente</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Vence</td>
+            <td style="padding: 8px 0; color: #90bb13; font-weight: bold;">{DUE_AT}</td>
+        </tr>
+    </table>
+    <p style="color: #666; font-size: 13px; margin: 0;">Resolvé este ticket pronto para evitar un incumplimiento de SLA.</p>
+</div>
+HTML,
             ],
             [
                 'key' => 'helpdesk_tickets.sla_breach',
                 'name' => 'Incumplimiento de SLA',
                 'description' => 'Alerta al agente cuando un ticket incumple su tiempo de resolución SLA.',
-                'subject' => 'SLA Breach Alert — Ticket #{TICKET_NUMBER}',
+                'subject' => '⚠️ Incumplimiento de SLA — Ticket #{TICKET_NUMBER}',
                 'variables' => [
                     ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
                     ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
                     ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
                     ['name' => 'DUE_AT', 'required' => true, 'description' => 'Fecha límite de resolución'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
                 ],
-                'content' => $this->slaBreachContent(),
+                'content' => $this->headerCard('#90bb13', '⚠️ Incumplimiento de SLA').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">El siguiente ticket incumplió su tiempo de resolución SLA:</p>
+    <table style="width: 100%; border-collapse: collapse; margin: 0 0 16px;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Asunto</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cliente</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; font-weight: bold;">Vencía</td>
+            <td style="padding: 8px 0; color: #90bb13; font-weight: bold;">{DUE_AT}</td>
+        </tr>
+    </table>
+    <p style="color: #666; font-size: 13px; margin: 0;">Resolvé este ticket de inmediato para mantener la calidad del servicio.</p>
+</div>
+HTML,
             ],
             [
                 'key' => 'helpdesk_tickets.satisfaction_survey',
@@ -138,276 +411,55 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
                     ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
                     ['name' => 'CLOSED_AT', 'required' => false, 'description' => 'Fecha/hora de cierre'],
                     ['name' => 'RATING_BUTTONS', 'required' => true, 'description' => 'Botones de puntuación 1-5 (HTML pre-renderizado con enlaces firmados)'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
                 ],
-                'content' => $this->satisfactionSurveyContent(),
+                'content' => $this->headerCard('#90bb13', '¿Cómo fue tu experiencia?').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 8px;">Tu ticket <strong>#{TICKET_NUMBER}</strong> fue cerrado.</p>
+    <p style="margin: 0 0 16px;">Nos gustaría saber cómo fue tu experiencia con nuestro soporte. Por favor seleccioná una puntuación:</p>
+    <div style="text-align: center; margin: 24px 0;">{RATING_BUTTONS}</div>
+    <p style="text-align: center; font-size: 13px; color: #888; margin: 0 0 16px;">1 = Muy insatisfecho &nbsp;&nbsp; 5 = Muy satisfecho</p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+    <p style="color: #666; font-size: 13px; margin: 0;">Ticket: #{TICKET_NUMBER} &mdash; {TICKET_SUBJECT}<br>Cerrado: {CLOSED_AT}</p>
+</div>
+HTML,
             ],
             [
                 'key' => 'helpdesk_tickets.portal_magic_link',
                 'name' => 'Enlace de acceso al portal',
                 'description' => 'Enlace mágico de un solo uso para que el cliente acceda al portal de soporte.',
-                'subject' => 'Your portal login link',
+                'subject' => 'Tu enlace de acceso al portal',
                 'variables' => [
                     ['name' => 'CUSTOMER_NAME', 'required' => false, 'description' => 'Nombre del cliente'],
                     ['name' => 'PORTAL_URL', 'required' => true, 'description' => 'Enlace de acceso al portal (un solo uso)'],
+                    ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa'],
                 ],
-                'content' => $this->portalMagicLinkContent(),
+                'content' => $this->headerCard('#90bb13', 'Acceso al portal de soporte').<<<'HTML'
+<div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
+    <p style="margin: 0 0 16px;">Hola {CUSTOMER_NAME}, hacé clic en el botón para acceder al portal de soporte. Este enlace es válido por 24 horas y solo puede usarse una vez.</p>
+    <p style="text-align: center; margin: 0 0 16px;">
+        <a href="{PORTAL_URL}" style="display: inline-block; background-color: #90bb13; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px;">Ingresar al portal</a>
+    </p>
+    <p style="color: #6c757d; font-size: 13px; margin: 0 0 4px;">O copiá y pegá este enlace en tu navegador:</p>
+    <p style="word-break: break-all; font-size: 12px; color: #adb5bd; margin: 0 0 16px;">{PORTAL_URL}</p>
+    <p style="color: #adb5bd; font-size: 12px; margin: 0;">Si no solicitaste este acceso, podés ignorar este correo.</p>
+</div>
+HTML,
             ],
         ];
     }
 
-    private function ticketEscalatedContent(): string
+    /**
+     * Barra de título con el verde de marca (#90bb13), el mismo en las 9
+     * plantillas — nunca rojo/naranja: [[feedback_palette_no_reds_only_greens]].
+     * "Atención" se marca con un emoji en el título, no con un color distinto.
+     */
+    private function headerCard(string $color, string $title): string
     {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Ticket priority escalated</title>
-</head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #FA896B; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">Ticket priority escalated</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>A ticket assigned to you has been automatically escalated due to inactivity. Please review it immediately.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; width: 35%;">Ticket</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Subject</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Customer</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Priority change</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">
-                    <span style="color: #888;">{OLD_PRIORITY}</span>
-                    &rarr;
-                    <strong style="color: #FA896B;">{NEW_PRIORITY}</strong>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; font-weight: bold;">Escalated at</td>
-                <td style="padding: 8px;">{ESCALATED_AT}</td>
-            </tr>
-        </table>
-        <p style="text-align: center; margin: 20px 0;">
-            <a href="{TICKET_URL}" style="background: #FA896B; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
-                Review ticket now
-            </a>
-        </p>
-        <p style="color: #666; font-size: 13px;">Please resolve or update this ticket as soon as possible to maintain service quality.</p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function ticketCreatedContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Ticket Received</title></head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #90bb13; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">We received your support request</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>Thank you for contacting us. We have received your support request and our team will respond as soon as possible.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket number</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Subject</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; font-weight: bold;">Submitted</td>
-                <td style="padding: 8px;">{SUBMITTED_AT}</td>
-            </tr>
-        </table>
-        <p style="color: #666; font-size: 14px;">Please keep this email for your records. You can reference ticket #{TICKET_NUMBER} in any future correspondence.</p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function ticketAssignedContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Ticket Assigned</title></head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #13C672; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">A ticket has been assigned to you</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>Hi {AGENT_NAME}, the following ticket has been assigned to you:</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Subject</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Customer</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Category</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{CATEGORY}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; font-weight: bold;">Priority</td>
-                <td style="padding: 8px;">{PRIORITY}</td>
-            </tr>
-        </table>
-        <p style="margin-top: 20px;">
-            <a href="{TICKET_URL}" style="background: #13C672; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                View Ticket
-            </a>
-        </p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function slaWarningContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>SLA Warning</title></head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #FEC90F; color: #333; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">SLA Warning — {PERCENT_USED}% of time used</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>The following ticket is approaching its SLA resolution deadline:</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Subject</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Customer</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; font-weight: bold;">Due At</td>
-                <td style="padding: 8px; color: #d68910;">{DUE_AT}</td>
-            </tr>
-        </table>
-        <p style="color: #666; font-size: 14px;">Please resolve this ticket soon to avoid an SLA breach.</p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function slaBreachContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>SLA Breach Alert</title></head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #FA896B; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">SLA Breach Alert</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>The following ticket has breached its SLA resolution time:</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; width: 30%;">Ticket</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">#{TICKET_NUMBER}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Subject</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{TICKET_SUBJECT}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Customer</td>
-                <td style="padding: 8px; border-bottom: 1px solid #eee;">{CUSTOMER_NAME}</td>
-            </tr>
-            <tr>
-                <td style="padding: 8px; font-weight: bold;">Due At</td>
-                <td style="padding: 8px; color: #FA896B;">{DUE_AT}</td>
-            </tr>
-        </table>
-        <p style="color: #666; font-size: 14px;">Please resolve this ticket immediately to maintain service quality.</p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function satisfactionSurveyContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><title>Encuesta de satisfaccion</title></head>
-<body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #90bb13; color: white; padding: 15px 20px; border-radius: 4px 4px 0 0;">
-        <h2 style="margin: 0;">Como fue tu experiencia?</h2>
-    </div>
-    <div style="border: 1px solid #ddd; border-top: none; padding: 20px; border-radius: 0 0 4px 4px;">
-        <p>Tu ticket <strong>#{TICKET_NUMBER}</strong> ha sido cerrado.</p>
-        <p>Nos gustaria saber como fue tu experiencia con nuestro soporte. Por favor selecciona una puntuacion:</p>
-        <div style="text-align: center; margin: 24px 0;">{RATING_BUTTONS}</div>
-        <p style="text-align: center; font-size: 13px; color: #888;">1 = Muy insatisfecho &nbsp;&nbsp; 5 = Muy satisfecho</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #666; font-size: 13px;">Ticket: #{TICKET_NUMBER} &mdash; {TICKET_SUBJECT}<br>Cerrado: {CLOSED_AT}</p>
-    </div>
-</body>
-</html>
-HTML;
-    }
-
-    private function portalMagicLinkContent(): string
-    {
-        return <<<'HTML'
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Your portal login link</title></head>
-<body style="font-family: Arial, sans-serif; background-color: #f5f6f8; padding: 40px 0;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; margin: 0 auto;">
-        <tr>
-            <td style="background-color: #ffffff; border-radius: 8px; padding: 40px; border: 1px solid #dee2e6;">
-                <h2 style="margin: 0 0 8px; color: #212529; font-size: 20px;">Log in to Support Portal</h2>
-                <p style="margin: 0 0 24px; color: #6c757d; font-size: 14px;">Hi {CUSTOMER_NAME},</p>
-                <p style="color: #495057; margin: 0 0 24px;">Click the button below to log in to the Support Portal. This link is valid for 24 hours and can only be used once.</p>
-                <p style="text-align: center; margin: 0 0 24px;">
-                    <a href="{PORTAL_URL}" style="display: inline-block; background-color: #90bb13; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 6px; font-weight: 600; font-size: 15px;">Log in to portal</a>
-                </p>
-                <p style="color: #6c757d; font-size: 13px; margin: 0 0 8px;">Or copy and paste this link into your browser:</p>
-                <p style="word-break: break-all; font-size: 12px; color: #adb5bd; margin: 0 0 24px;">{PORTAL_URL}</p>
-                <hr style="border: none; border-top: 1px solid #dee2e6; margin: 24px 0;">
-                <p style="color: #adb5bd; font-size: 12px; margin: 0;">This link expires in 24 hours. If you did not request this link, you can safely ignore this email.</p>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>
+        return <<<HTML
+<div style="background: {$color}; color: #ffffff; padding: 20px 24px;">
+    <h2 style="margin: 0; font-size: 18px;">{$title}</h2>
+</div>
 HTML;
     }
 }

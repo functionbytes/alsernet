@@ -5,9 +5,12 @@ namespace Modules\HelpdeskTickets\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketWatcher extends Model
 {
+    use BelongsToHelpdeskUser;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_ticket_watchers';
@@ -40,16 +43,8 @@ class TicketWatcher extends Model
     public function user()
     {
         // Create instance with explicit mysql connection for cross-database relationship
-        $user = new User;
-        $user->setConnection('mysql');
 
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        );
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**

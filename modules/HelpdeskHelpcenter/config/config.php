@@ -1,6 +1,21 @@
 <?php
 
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Busqueda semantica de articulos
+    |--------------------------------------------------------------------------
+    | HelpcenterWidgetService busca primero por significado (EmbeddingsService,
+    | que ya existia pero no lo usaba nadie) y cae a fulltext/LIKE si eso no
+    | devuelve nada — sin clave de embeddings, o con el corpus sin indexar, el
+    | literal es lo unico que hay.
+    |
+    | Afecta al buscador publico, a los articulos sugeridos al agente y a la
+    | deflexion del portal de cliente, que comparten este mismo servicio.
+    */
+    'semantic_search' => env('HELPDESKHELPCENTER_SEMANTIC_SEARCH', true),
+    'semantic_min_similarity' => (float) env('HELPDESKHELPCENTER_SEMANTIC_MIN', 0.75),
     'name' => 'HelpdeskHelpcenter',
 
     /*

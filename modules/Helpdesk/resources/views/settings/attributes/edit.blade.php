@@ -116,7 +116,7 @@
                         </div>
                     </div>
 
-                    <div class="col-12 col-md-6">
+                    <div class="col-12">
                         <div class="mb-3">
                             <label class="control-label col-form-label">
                                 Permiso

@@ -132,7 +132,17 @@
                                         <i class="fa-duotone fa-solid fa-ellipsis"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
-                                        @if($document->status->label = "pending")
+                                        {{-- Comparacion, no asignacion: esto era
+                                             `$document->status->label = "pending"`, con un solo =.
+                                             Intentaba ASIGNAR sobre una propiedad de un objeto
+                                             devuelto por la relacion, y PHP lo cortaba con
+                                             "Indirect modification of overloaded property" — el
+                                             listado entero de documentos daba error 500.
+
+                                             Y se comparaba contra el campo equivocado: `label` es
+                                             el texto que se muestra ("Solicitado"), nunca vale
+                                             "pending". El identificador estable es `key`. --}}
+                                        @if($document->status?->key === 'pending')
                                             <li>
                                                 <a class="dropdown-item d-flex align-items-center gap-3 cursor-pointer"
                                                    data-document-id="{{ $document->id }}"

@@ -2312,3 +2312,25 @@
     margin-bottom: 6px;
 }
 .bv-modal-check input { cursor: pointer; }
+
+/* select2 dentro de un .bv-modal (p.ej. "Emails · Redactar"): el <select>
+   ya es block-level dentro de .eml-field/.field, así que el select2-container
+   debe llenar la fila igual que el resto de inputs — 'width: style' cae en
+   auto-ancho por contenido si el <select> no traía un style inline. El
+   dropdown se ancla al propio .bv-modal (dropdownParent) porque ese es el
+   único nivel del componente sin overflow:hidden/auto (a diferencia de
+   .bv-modal-dialog y .bv-modal-body, que lo recortarían). */
+.bv-modal .select2-container { width: 100% !important; }
+
+
+/* ── Detalle completo del ticket (managers/tickets/show) ───────────────
+   Estaba embebido en un <style> dentro de la propia vista. */
+.ticket-slim-scroll { height: calc(100vh - 140px); overflow-y: auto; }
+    .ticket-slim-subject { font-size: 11px; }
+    .ticket-main-col { width: 40%; }
+    .ticket-messages-scroll { height: calc(100vh - 340px); overflow-y: auto; }
+    .ticket-message-bubble { max-width: 70%; }
+    .ticket-info-col { width: 20%; overflow-y: auto; height: calc(100vh - 70px); }
+    .time-entries-scroll { max-height: 200px; overflow-y: auto; }
+    .avatar-md { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
+    .avatar-xs { width: 24px; height: 24px; font-size: 11px; flex-shrink: 0; }

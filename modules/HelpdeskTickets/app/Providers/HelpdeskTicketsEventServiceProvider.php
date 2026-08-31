@@ -36,8 +36,10 @@ use Modules\HelpdeskTickets\Listeners\SendSlaBreachBroadcastNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaBreachNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaWarningBroadcastNotification;
 use Modules\HelpdeskTickets\Listeners\SendSlaWarningNotification;
+use Modules\HelpdeskTickets\Listeners\TranslateIncomingTicketMessage;
 use Modules\HelpdeskTickets\Listeners\UpdateTicketLastActivity;
 use Modules\HelpdeskTickets\Listeners\UpdateTicketOnClose;
+use Modules\HelpdeskTranslate\Services\CachedTranslator;
 
 class HelpdeskTicketsEventServiceProvider extends ServiceProvider
 {
@@ -115,6 +117,20 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
      */
     public function listens(): array
     {
-        return helpdesk_tickets_enabled() ? $this->listen : [];
+        if (! helpdesk_tickets_enabled()) {
+            return [];
+        }
+
+        $listen = $this->listen;
+
+        // Traducción de mensajes entrantes: solo si HelpdeskTranslate está
+        // instalado y habilitado — sin esto, MessageAdded::class fatiga en
+        // CADA mensaje de ticket intentando resolver CachedTranslator si el
+        // módulo no está instalado.
+        if (helpdesk_translate_enabled() && class_exists(CachedTranslator::class)) {
+            $listen[MessageAdded::class][] = TranslateIncomingTicketMessage::class;
+        }
+
+        return $listen;
     }
 }

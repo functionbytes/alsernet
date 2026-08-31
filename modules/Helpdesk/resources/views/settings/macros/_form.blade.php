@@ -50,7 +50,7 @@
     {{-- Idioma: filtra/ordena el macro en el picker del inbox segun el idioma
          del contacto (helpdesk_customers.language). "Todos los idiomas" = macro
          generico (acciones, no texto redactado) que siempre aparece arriba. --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Idioma</label>
         <select name="language" class="form-select @error('language') is-invalid @enderror">
             <option value="" @selected(old('language', $macro->language ?? '') === '')>Todos los idiomas</option>

@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Mis reportes')
 
 @section('page_header')
@@ -43,8 +47,7 @@
         <div class="col-sm-6 col-lg">
             <div class="card shadow-sm h-100">
                 <div class="card-body d-flex align-items-center gap-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-{{ $stat['color'] }} bg-opacity-10"
-                        style="width:48px;height:48px;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-{{ $stat['color'] }} bg-opacity-10 hdt-avatar-48">
                         <i class="fas fa-{{ $stat['icon'] }} text-{{ $stat['color'] }}"></i>
                     </div>
                     <div>

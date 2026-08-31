@@ -10,6 +10,7 @@ use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Tests\Concerns\SharesHelpdeskPdo;
 use Tests\Concerns\SeedsHelpdeskRoles;
@@ -246,6 +247,41 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertOk();
     }
 
+    // ─── block sender quick action ───────────────────────────────────────────
+    //
+    // No hay caso "sin permiso" que probar aquí: esta página solo la abren
+    // usuarios con rol super-admin|super-settings (gate del grupo de rutas en
+    // HelpdeskTicketsServiceProvider), y HelpdeskTicketsPermissionsSeeder ya
+    // otorga helpdesk.tickets.settings a esos dos roles completos — quien ve
+    // el ticket siempre puede bloquear remitentes, por diseño.
+
+    public function test_block_sender_button_shown_when_customer_not_blacklisted(): void
+    {
+        $ticket = $this->createTicket();
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.tickets.show-full', $ticket));
+
+        $response->assertOk();
+        $response->assertViewHas('blacklistMatch', null);
+        $response->assertSee('Bloquear remitente');
+    }
+
+    public function test_block_sender_alert_shown_when_customer_already_blacklisted(): void
+    {
+        TicketEmailBlacklist::create([
+            'type' => 'email',
+            'value' => $this->customer->email,
+        ]);
+        $ticket = $this->createTicket();
+
+        $response = $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.tickets.show-full', $ticket));
+
+        $response->assertOk();
+        $response->assertSee('Remitente en lista negra');
+    }
+
     public function test_index_shows_correct_unread_count_per_ticket(): void
     {
         $ticket = $this->createTicket();
@@ -269,7 +305,13 @@ class ManagersTicketsCrudTest extends TestCase
 
         $response->assertOk();
 
-        preg_match('/data-tickets="(.*?)"\s+data-statuses/s', $response->getContent(), $matches);
+        // El regex anterior era /data-tickets="(.*?)"\s+data-statuses/, que
+        // daba por hecho que los dos atributos iban pegados. Al añadirse otros
+        // data-* entre medias dejó de casar y $matches quedaba vacío: el test
+        // moría con "Trying to access array offset on null" en vez de decir qué
+        // fallaba. Basta con anclar en el atributo que se quiere leer.
+        preg_match('/data-tickets="([^"]*)"/', $response->getContent(), $matches);
+        $this->assertNotEmpty($matches, 'La vista debe exponer data-tickets con el payload del listado.');
         $tickets = json_decode(html_entity_decode($matches[1]), true);
         $payload = collect($tickets)->firstWhere('id', $ticket->id);
 

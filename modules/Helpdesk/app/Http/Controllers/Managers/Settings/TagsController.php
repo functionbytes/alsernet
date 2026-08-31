@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Http\Requests\StoreConversationTagRequest;
 use Modules\Helpdesk\Http\Requests\UpdateConversationTagRequest;
@@ -15,7 +16,7 @@ class TagsController extends Controller
         $this->middleware('can:helpdesk.tags.view')->only(['index', 'create', 'edit']);
         $this->middleware('can:helpdesk.tags.create')->only(['store']);
         $this->middleware('can:helpdesk.tags.update')->only(['update']);
-        $this->middleware('can:helpdesk.tags.delete')->only(['destroy']);
+        $this->middleware('can:helpdesk.tags.delete')->only(['destroy', 'bulkAction']);
     }
 
     /**
@@ -137,5 +138,59 @@ class TagsController extends Controller
 
         return redirect()->route('settings.helpdesk.tags.index')
             ->with('success', 'Tag eliminado exitosamente.');
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate, delete) to the selected tags.
+     * Delete respects the same in-use protection as destroy(): tags linked to
+     * conversations are skipped rather than deleted.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $tags = ConversationTag::whereIn('id', $validated['ids'])->get();
+        $count = 0;
+        $skipped = 0;
+
+        if ($validated['action'] === 'delete') {
+            foreach ($tags as $tag) {
+                if ($tag->conversations()->count() > 0) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $tag->delete();
+                $count++;
+            }
+        } else {
+            foreach ($tags as $tag) {
+                $tag->update(['is_active' => $validated['action'] === 'activate']);
+                $count++;
+            }
+        }
+
+        $labels = [
+            'delete' => 'eliminado(s)',
+            'activate' => 'activado(s)',
+            'deactivate' => 'desactivado(s)',
+        ];
+
+        $message = "{$count} etiqueta(s) {$labels[$validated['action']]}.";
+
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitida(s) por estar en uso.";
+        }
+
+        return response()->json([
+            'message' => $message,
+            'count' => $count,
+            'skipped' => $skipped,
+        ]);
     }
 }

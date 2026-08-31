@@ -15,6 +15,8 @@ class TemplateResource extends JsonResource
             'description' => $this->description,
             'subject' => $this->subject,
             'body' => $this->body,
+            'priority' => $this->priority,
+            'is_general' => $this->created_by === null,
             'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,

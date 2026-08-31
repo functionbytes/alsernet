@@ -3,8 +3,11 @@
 namespace Modules\Activity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 use Modules\Activity\Http\Resources\ActivityResource;
@@ -29,9 +32,15 @@ class ActivityController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('description', 'like', "%{$search}%")
-                ->orWhereJsonContains('properties->old', $search)
-                ->orWhereJsonContains('properties->attributes', $search);
+
+            // Agrupado: sin el closure, el OR se mezclaria con los filtros de
+            // abajo y, por la precedencia de AND sobre OR, devolveria filas
+            // que no cumplen el resto de condiciones.
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhereJsonContains('properties->old', $search)
+                    ->orWhereJsonContains('properties->attributes', $search);
+            });
         }
 
         if ($request->filled('user_id')) {
@@ -42,10 +51,32 @@ class ActivityController extends Controller
             $query->where('subject_type', $request->input('subject_type'));
         }
 
-        $activities = $query->paginate(paginationNumber());
+        if ($request->filled('event')) {
+            $query->where('event', $request->input('event'));
+        }
+
+        // La vista ya mandaba `from`/`to` desde el principio, pero aqui no se
+        // leian: los filtros de fecha no hacian nada.
+        if ($request->filled('from')) {
+            $query->whereDate('created_at', '>=', $request->date('from'));
+        }
+
+        if ($request->filled('to')) {
+            $query->whereDate('created_at', '<=', $request->date('to'));
+        }
+
+        $activities = $query->paginate(paginationNumber())->withQueryString();
         $stats = $this->eventStats();
 
-        return view('activity::settings.logs.index', compact('pageTitle', 'breadcrumb', 'activities', 'stats'));
+        return view('activity::settings.logs.index', [
+            'pageTitle' => $pageTitle,
+            'breadcrumb' => $breadcrumb,
+            'activities' => $activities,
+            'stats' => $stats,
+            'events' => $this->availableEvents(),
+            'subjectTypes' => $this->availableSubjectTypes(),
+            'causers' => $this->availableCausers(),
+        ]);
     }
 
     /**
@@ -113,6 +144,59 @@ class ActivityController extends Controller
 
             fclose($out);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
+     * Opciones del filtro de evento, en cache como eventStats: son 4 valores
+     * que apenas cambian y la tabla ronda las 15.000 filas.
+     *
+     * @return array<int, string>
+     */
+    private function availableEvents(): array
+    {
+        return Cache::remember('activity:events', now()->addMinutes(5), fn () => Activity::query()
+            ->distinct()
+            ->whereNotNull('event')
+            ->orderBy('event')
+            ->pluck('event')
+            ->all());
+    }
+
+    /**
+     * Tipos de entidad presentes en el registro, con su nombre corto para el
+     * desplegable (la FQCN completa no cabe y no dice nada al usuario).
+     *
+     * @return array<string, string> FQCN => etiqueta
+     */
+    private function availableSubjectTypes(): array
+    {
+        return Cache::remember('activity:subject_types', now()->addMinutes(5), fn () => Activity::query()
+            ->distinct()
+            ->whereNotNull('subject_type')
+            ->orderBy('subject_type')
+            ->pluck('subject_type')
+            ->mapWithKeys(fn (string $type) => [$type => class_basename($type)])
+            ->all());
+    }
+
+    /**
+     * Usuarios que han generado alguna entrada. Solo los que aparecen en el
+     * registro, no todo el listado de usuarios.
+     *
+     * @return Collection<int, Model>
+     */
+    private function availableCausers()
+    {
+        return Cache::remember('activity:causers', now()->addMinutes(5), function () {
+            $ids = Activity::query()
+                ->whereNotNull('causer_id')
+                ->distinct()
+                ->pluck('causer_id');
+
+            return User::whereIn('id', $ids)
+                ->orderBy('firstname')
+                ->get(['id', 'firstname', 'lastname', 'email']);
+        });
     }
 
     /** @return array{total: int, created: int, updated: int, deleted: int} */

@@ -19,7 +19,13 @@ class SendCustomerReopenNotificationTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' es obligatorio: MailerTemplate/MailerTemplateLang usan esa
+    // conexión (default de la app). Sin ella, createEnabledTemplate()/
+    // tearDown() (create()+delete() sobre 'helpdesk.ticket_reopened') no se
+    // revierte al terminar el test y borra la plantilla REAL de producción —
+    // pasó de verdad (29-ago-2026). Ver
+    // reference_helpdesktickets_settings_mysql_connection_missing.
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     private function createTicketWithCustomer(string $email, ?string $name = 'Cliente Test'): Ticket
     {
@@ -99,20 +105,23 @@ class SendCustomerReopenNotificationTest extends TestCase
     {
         $langId = $this->ensureTestLang();
 
-        $template = MailerTemplate::create([
-            'key' => 'helpdesk.ticket_reopened',
-            'name' => 'Ticket Reopened',
-            'is_enabled' => true,
-            'is_protected' => false,
-            'module' => 'helpdesk',
-        ]);
+        // updateOrCreate, no create(): con 'mysql' ahora sí en
+        // connectionsToTransact, la plantilla REAL sembrada (misma key) es
+        // visible dentro de la transacción del test — un create() a ciegas
+        // choca con su unique key en vez de fallar en silencio como antes
+        // (cuando el create()+delete() sin rollback tocaba la fila real).
+        $template = MailerTemplate::updateOrCreate(
+            ['key' => 'helpdesk.ticket_reopened'],
+            ['name' => 'Ticket Reopened', 'is_enabled' => true, 'is_protected' => false, 'module' => 'helpdesk']
+        );
 
-        MailerTemplateLang::create([
-            'mailer_template_id' => $template->id,
-            'lang_id' => $langId,
-            'subject' => 'Tu ticket ha sido reabierto',
-            'content' => '<p>Hola {CUSTOMER_NAME}, tu ticket {TICKET_NUMBER} ha sido reabierto.</p>',
-        ]);
+        MailerTemplateLang::updateOrCreate(
+            ['mailer_template_id' => $template->id, 'lang_id' => $langId],
+            [
+                'subject' => 'Tu ticket ha sido reabierto',
+                'content' => '<p>Hola {CUSTOMER_NAME}, tu ticket {TICKET_NUMBER} ha sido reabierto.</p>',
+            ]
+        );
 
         return $template;
     }
@@ -129,19 +138,19 @@ class SendCustomerReopenNotificationTest extends TestCase
 
     public function test_listener_implements_should_queue(): void
     {
-        $this->assertInstanceOf(ShouldQueue::class, new SendCustomerReopenNotification);
+        $this->assertInstanceOf(ShouldQueue::class, app(SendCustomerReopenNotification::class));
     }
 
     public function test_listener_is_on_notifications_queue(): void
     {
-        $listener = new SendCustomerReopenNotification;
+        $listener = app(SendCustomerReopenNotification::class);
 
         $this->assertEquals('notifications', $listener->queue);
     }
 
     public function test_listener_retries_three_times(): void
     {
-        $this->assertEquals(3, (new SendCustomerReopenNotification)->tries);
+        $this->assertEquals(3, (app(SendCustomerReopenNotification::class))->tries);
     }
 
     // ─── handle ───────────────────────────────────────────────────────────────
@@ -152,7 +161,7 @@ class SendCustomerReopenNotificationTest extends TestCase
         $this->createEnabledTemplate();
         $ticket = $this->createTicketWithCustomer('customer@reopen-test.com');
 
-        $listener = new SendCustomerReopenNotification;
+        $listener = app(SendCustomerReopenNotification::class);
 
         // Mail::html() bypasses MailFake (raw send, not a Mailable instance).
         // We verify the listener runs through to completion without early return.
@@ -166,17 +175,14 @@ class SendCustomerReopenNotificationTest extends TestCase
 
         Mail::fake();
 
-        MailerTemplate::create([
-            'key' => 'helpdesk.ticket_reopened',
-            'name' => 'Ticket Reopened',
-            'is_enabled' => false,
-            'is_protected' => false,
-            'module' => 'helpdesk',
-        ]);
+        MailerTemplate::updateOrCreate(
+            ['key' => 'helpdesk.ticket_reopened'],
+            ['name' => 'Ticket Reopened', 'is_enabled' => false, 'is_protected' => false, 'module' => 'helpdesk']
+        );
 
         $ticket = $this->createTicketWithCustomer('disabled@reopen-test.com');
 
-        $listener = new SendCustomerReopenNotification;
+        $listener = app(SendCustomerReopenNotification::class);
         $listener->handle(new TicketReopened($ticket));
 
         Mail::assertNothingSent();
@@ -189,7 +195,7 @@ class SendCustomerReopenNotificationTest extends TestCase
 
         $ticket = $this->createTicketWithCustomer('notemplate@reopen-test.com');
 
-        $listener = new SendCustomerReopenNotification;
+        $listener = app(SendCustomerReopenNotification::class);
         $listener->handle(new TicketReopened($ticket));
 
         Mail::assertNothingSent();
@@ -203,7 +209,7 @@ class SendCustomerReopenNotificationTest extends TestCase
 
         $ticket = $this->createTicketWithoutEmail();
 
-        $listener = new SendCustomerReopenNotification;
+        $listener = app(SendCustomerReopenNotification::class);
         $listener->handle(new TicketReopened($ticket));
 
         Mail::assertNothingSent();

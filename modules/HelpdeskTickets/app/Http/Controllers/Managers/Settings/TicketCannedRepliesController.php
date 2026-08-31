@@ -3,7 +3,9 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketCannedReplyRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketCannedReplyRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\UpdateTicketCannedReplyRequest;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
@@ -100,7 +102,7 @@ class TicketCannedRepliesController extends Controller
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-canned-replies.index')
-            ->with('success', 'Respuesta enlatada creada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.canned_reply.created'));
     }
 
     /**
@@ -151,7 +153,7 @@ class TicketCannedRepliesController extends Controller
         }
 
         return redirect()->route('manager.helpdesk.settings.ticket-canned-replies.index')
-            ->with('success', 'Respuesta enlatada actualizada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.canned_reply.updated'));
     }
 
     /**
@@ -167,6 +169,52 @@ class TicketCannedRepliesController extends Controller
         $reply->delete();
 
         return redirect()->route('manager.helpdesk.settings.ticket-canned-replies.index')
-            ->with('success', 'Respuesta enlatada eliminada exitosamente.');
+            ->with('success', __('helpdesktickets::helpdesktickets.settings.canned_reply.deleted'));
+    }
+
+    /**
+     * Apply a bulk action (activate, deactivate or delete) to several canned replies.
+     */
+    public function bulkAction(BulkActionTicketCannedReplyRequest $request): JsonResponse
+    {
+        $action = $request->validated('action');
+        $ids = $request->validated('ids');
+        $count = 0;
+        $skipped = 0;
+
+        $replies = TicketCannedReply::whereIn('id', $ids)->get();
+
+        if ($action === 'delete') {
+            foreach ($replies as $reply) {
+                if (! $reply->canBeEditedBy(auth()->id())) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $reply->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+            foreach ($replies as $reply) {
+                if (! $reply->canBeEditedBy(auth()->id())) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $reply->update(['is_active' => $value]);
+                $count++;
+            }
+        }
+
+        $labels = ['delete' => 'eliminada(s)', 'activate' => 'activada(s)', 'deactivate' => 'desactivada(s)'];
+        $message = "{$count} respuesta(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitida(s) por no tener permiso para editarlas.";
+        }
+
+        return response()->json(['message' => $message, 'count' => $count, 'skipped' => $skipped]);
     }
 }

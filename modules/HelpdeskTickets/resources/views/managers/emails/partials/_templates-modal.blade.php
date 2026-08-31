@@ -11,7 +11,7 @@
             <button type="button" class="bv-modal-close" data-htk-close><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="bv-modal-body">
-            <div id="eml-templates-list" style="display:flex;flex-direction:column;gap:4px"></div>
+            <div id="eml-templates-list" class="d-flex flex-column gap-1"></div>
         </div>
         <div class="bv-modal-foot">
             <button type="button" class="btn-secondary" data-htk-close>Cerrar</button>

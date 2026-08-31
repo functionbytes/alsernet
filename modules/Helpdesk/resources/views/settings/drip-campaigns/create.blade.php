@@ -37,22 +37,34 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las drip campaigns</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las drip campaigns</h6>
                     <p class="card-text text-muted small">
                         Las drip campaigns envian mensajes automaticos a los clientes en momentos especificos basados en disparadores.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Disparadores disponibles</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Disparadores disponibles</h6>
+                </div>
+                <div class="card-body">
                     <ul class="list-unstyled text-muted small">
                         <li class="mb-1"><strong>Etiqueta agregada</strong> — se activa al añadir una etiqueta especifica</li>
                         <li class="mb-1"><strong>Conversacion cerrada</strong> — se activa al cerrar una conversacion</li>
                         <li class="mb-1"><strong>CSAT bajo</strong> — se activa cuando la calificacion CSAT es ≤ 2</li>
                         <li class="mb-1"><strong>Inicio manual</strong> — se activa manualmente por un agente</li>
                     </ul>
-                    <hr>
-                    <h6 class="mb-2">Pasos</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Pasos</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Cada paso define un mensaje con su tiempo de espera y canal de envio. Los pasos se ejecutan en orden secuencial.
                     </p>

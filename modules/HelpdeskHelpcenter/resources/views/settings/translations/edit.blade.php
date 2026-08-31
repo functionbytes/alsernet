@@ -40,13 +40,11 @@
 
                             <div class="col-md-8">
                                 <label class="form-label" for="slug">Slug</label>
-                                <input type="text"
-                                       id="slug"
-                                       name="slug"
-                                       class="form-control @error('slug') is-invalid @enderror"
-                                       value="{{ old('slug', $translation->slug) }}"
-                                       required
-                                       maxlength="255">
+                                @include('core::components.slug-field', [
+                                    'value' => old('slug', $translation->slug),
+                                    'from' => '#title',
+                                    'required' => true,
+                                ])
                                 @error('slug')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -136,23 +134,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-<script>
-$(function () {
-    // Auto-generate slug from title if slug is empty
-    $('#title').on('blur', function () {
-        if ($('#slug').val() === '') {
-            const slug = $(this).val()
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[̀-ͯ]/g, '')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .trim()
-                .replace(/\s+/g, '-');
-            $('#slug').val(slug);
-        }
-    });
-});
-</script>
-@endpush

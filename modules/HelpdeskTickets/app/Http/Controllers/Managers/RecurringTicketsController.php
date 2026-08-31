@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Http\Requests\Managers\StoreRecurringTicketRequest;
@@ -11,6 +10,7 @@ use Modules\HelpdeskTickets\Http\Requests\Managers\UpdateRecurringTicketRequest;
 use Modules\HelpdeskTickets\Models\Priority;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
 
 class RecurringTicketsController extends Controller
 {
@@ -44,7 +44,7 @@ class RecurringTicketsController extends Controller
             'recurringTicket' => null,
             'categories' => TicketCategory::active()->ordered()->get(),
             'priorities' => Priority::where('is_active', true)->orderBy('level')->get(),
-            'agents' => User::select(['id', 'firstname', 'lastname'])->where('available', true)->where('verified', true)->orderBy('firstname')->get(),
+            'agents' => CatalogCacheService::agents(),
         ]);
     }
 
@@ -68,7 +68,7 @@ class RecurringTicketsController extends Controller
             'recurringTicket' => $recurringTicket,
             'categories' => TicketCategory::active()->ordered()->get(),
             'priorities' => Priority::where('is_active', true)->orderBy('level')->get(),
-            'agents' => User::select(['id', 'firstname', 'lastname'])->where('available', true)->where('verified', true)->orderBy('firstname')->get(),
+            'agents' => CatalogCacheService::agents(),
         ]);
     }
 

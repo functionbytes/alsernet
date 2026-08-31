@@ -40,8 +40,10 @@
 
         <div class="col-lg-4">
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Estadisticas de uso</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Estadisticas de uso</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Veces usada</span>
                         <span class="fw-semibold">{{ number_format($cannedReply->usage_count) }}</span>

@@ -1,5 +1,9 @@
 @extends('layouts.theme')
 
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/document/css/endpoints.css') }}?v={{ @filemtime(public_path('modules/document/css/endpoints.css')) }}">
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Endpoints / Integraciones'])
 @endsection
@@ -50,36 +54,38 @@
                     <h6 class="mb-1 fw-bold text-dark">Documentación OK</h6>
                     <p class="text-muted small mb-3">
                         Se llama cuando un documento completa <strong>todas las etapas de validación</strong> y queda en estado
-                        <span class="badge bg-success">Aprobado</span>.
+                        <span class="badge bg-primary">Aprobado</span>.
                         Envía <code>identificadororigen=&lt;order_id&gt;</code> como form data (<code>application/x-www-form-urlencoded</code>).
                     </p>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold" for="erp_documentacion_ok_url">URL del endpoint</label>
-                        <div class="input-group">
-                            <input type="url"
-                                   class="form-control @error('erp_documentacion_ok_url') is-invalid @enderror"
-                                   id="erp_documentacion_ok_url"
-                                   name="erp_documentacion_ok_url"
-                                   placeholder="http://servidor:8080/api/ruta/"
-                                   value="{{ old('erp_documentacion_ok_url', $endpoints['erp_documentacion_ok_url']) }}">
-                            <button type="button"
-                                    class="btn btn-secondary"
-                                    title="Probar conexión"
-                                    onclick="testEndpoint('erp_documentacion_ok_url', 'test-order-id-documentacion-ok', 'test-result-documentacion-ok')">
-                                <i class="fas fa-plug"></i>
-                            </button>
-                            @error('erp_documentacion_ok_url')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <input type="url"
+                               class="form-control @error('erp_documentacion_ok_url') is-invalid @enderror"
+                               id="erp_documentacion_ok_url"
+                               name="erp_documentacion_ok_url"
+                               placeholder="http://servidor:8080/api/ruta/"
+                               value="{{ old('erp_documentacion_ok_url', $endpoints['erp_documentacion_ok_url']) }}">
+                        @error('erp_documentacion_ok_url')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                         <small class="text-muted d-block mt-1">
                             Ejemplo: <code>http://interges:8080/api-gestion/pedido-cliente-documentacion-ok/</code>
                         </small>
                     </div>
 
-                    <div class="row">
-                        <div class="col-12 mb-3">
+                    {{-- Zona de prueba. Va en un bloque aparte porque NADA de lo que
+                         hay aquí se guarda: son valores de usar y tirar para lanzar una
+                         llamada de prueba contra la URL de arriba. Antes iban sueltos
+                         debajo del campo y no había forma de distinguir lo que se
+                         persiste de lo que no. --}}
+                    <div class="endpoint-test">
+                        <div class="endpoint-test__head">
+                            <span class="fw-semibold">Probar este endpoint</span>
+                            <small class="text-muted">Estos valores no se guardan</small>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label" for="test-order-id-documentacion-ok">
                                 ID de pedido de prueba <span class="text-muted">(opcional)</span>
                             </label>
@@ -91,9 +97,15 @@
                                 Al probar se enviará <code>identificadororigen=&lt;valor&gt;</code> como form data (por defecto <code>"0"</code>).
                             </small>
                         </div>
-                    </div>
 
-                    <div id="test-result-documentacion-ok"></div>
+                        <button type="button"
+                                class="btn btn-secondary"
+                                onclick="testEndpoint('erp_documentacion_ok_url', 'test-order-id-documentacion-ok', 'test-result-documentacion-ok')">
+                            Probar conexión
+                        </button>
+
+                        <div id="test-result-documentacion-ok" class="mt-3"></div>
+                    </div>
                 </div>
 
                 <hr class="my-4">
@@ -109,30 +121,27 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold" for="erp_modelo_url">URL del endpoint</label>
-                        <div class="input-group">
-                            <input type="url"
-                                   class="form-control @error('erp_modelo_url') is-invalid @enderror"
-                                   id="erp_modelo_url"
-                                   name="erp_modelo_url"
-                                   placeholder="http://servidor:8080/api/ruta/"
-                                   value="{{ old('erp_modelo_url', $endpoints['erp_modelo_url']) }}">
-                            <button type="button"
-                                    class="btn btn-secondary"
-                                    title="Probar conexión"
-                                    onclick="testModeloEndpoint()">
-                                <i class="fas fa-plug"></i>
-                            </button>
-                            @error('erp_modelo_url')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        <input type="url"
+                               class="form-control @error('erp_modelo_url') is-invalid @enderror"
+                               id="erp_modelo_url"
+                               name="erp_modelo_url"
+                               placeholder="http://servidor:8080/api/ruta/"
+                               value="{{ old('erp_modelo_url', $endpoints['erp_modelo_url']) }}">
+                        @error('erp_modelo_url')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                         <small class="text-muted d-block mt-1">
                             Ejemplo: <code>http://interges:8080/api-gestion/modelo/</code>
                         </small>
                     </div>
 
-                    <div class="row">
-                        <div class="col-12 mb-3">
+                    <div class="endpoint-test">
+                        <div class="endpoint-test__head">
+                            <span class="fw-semibold">Probar este endpoint</span>
+                            <small class="text-muted">Estos valores no se guardan</small>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label" for="test-idmodelo">
                                 ID de modelo de prueba <span class="text-muted">(opcional)</span>
                             </label>
@@ -141,9 +150,13 @@
                                 Al probar se enviará <code>idmodelo=&lt;valor&gt;&amp;nombre=&amp;descripcion=&amp;publicar=0</code> (por defecto <code>"0"</code>, sin tocar nombre/descripción).
                             </small>
                         </div>
-                    </div>
 
-                    <div id="test-result-modelo"></div>
+                        <button type="button" class="btn btn-secondary" onclick="testModeloEndpoint()">
+                            Probar conexión
+                        </button>
+
+                        <div id="test-result-modelo" class="mt-3"></div>
+                    </div>
                 </div>
 
                 <hr class="my-4">
@@ -174,50 +187,63 @@
                         </small>
                     </div>
 
-                    <div class="mb-2">
-                        <label class="form-label" for="test-id-caracteristica">
-                            ID de característica de prueba <span class="text-muted">(opcional)</span>
-                        </label>
-                        <input type="text" class="form-control" id="test-id-caracteristica" placeholder="0">
-                    </div>
+                    {{-- Este endpoint tiene DOS casos (modelo y variante) con campos
+                         distintos, así que los botones se agrupan por caso en vez de
+                         quedar sueltos al final: cada uno queda junto a los campos que
+                         usa, y se ve cuál rellenar para cada prueba. --}}
+                    <div class="endpoint-test">
+                        <div class="endpoint-test__head">
+                            <span class="fw-semibold">Probar este endpoint</span>
+                            <small class="text-muted">Estos valores no se guardan</small>
+                        </div>
 
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label" for="test-idmodelo-caracteristica">
-                                ID de modelo de prueba <span class="text-muted">(opcional, caso Modelo)</span>
+                        <div class="mb-3">
+                            <label class="form-label" for="test-id-caracteristica">
+                                ID de característica de prueba <span class="text-muted">(opcional)</span>
                             </label>
-                            <input type="text" class="form-control" id="test-idmodelo-caracteristica" placeholder="0">
+                            <input type="text" class="form-control" id="test-id-caracteristica" placeholder="0">
+                            <small class="text-muted d-block mt-1">Común a los dos casos.</small>
                         </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label" for="test-idarticulo-caracteristica">
-                                ID de artículo de prueba <span class="text-muted">(opcional, caso Variante)</span>
-                            </label>
-                            <input type="text" class="form-control" id="test-idarticulo-caracteristica" placeholder="0">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label" for="test-idvalor-caracteristica">
-                                ID de valor de prueba <span class="text-muted">(opcional, caso Variante)</span>
-                            </label>
-                            <input type="text" class="form-control" id="test-idvalor-caracteristica" placeholder="0">
-                        </div>
-                        <div class="col-12">
-                            <small class="text-muted d-block mt-1">
-                                Se envían siempre las 4 claves (vacía la que no aplica en cada caso) — el servidor real
-                                necesita las 4 presentes, aunque estén en blanco, o no persiste el dato.
-                            </small>
-                        </div>
-                    </div>
 
-                    <div class="d-flex gap-2 mb-2">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="testCaracteristicaEndpoint('modelo')">
-                            Probar caso Modelo
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="testCaracteristicaEndpoint('articulo')">
-                            Probar caso Variante
-                        </button>
-                    </div>
+                        <div class="row g-3">
+                            <div class="col-12 col-lg-6">
+                                <div class="endpoint-test__case h-100">
+                                    <span class="endpoint-test__case-title">Caso Modelo</span>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="test-idmodelo-caracteristica">ID de modelo</label>
+                                        <input type="text" class="form-control" id="test-idmodelo-caracteristica" placeholder="0">
+                                    </div>
+                                    <button type="button" class="btn btn-secondary w-100" onclick="testCaracteristicaEndpoint('modelo')">
+                                        Probar caso Modelo
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div id="test-result-caracteristica"></div>
+                            <div class="col-12 col-lg-6">
+                                <div class="endpoint-test__case h-100">
+                                    <span class="endpoint-test__case-title">Caso Variante</span>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="test-idarticulo-caracteristica">ID de artículo</label>
+                                        <input type="text" class="form-control" id="test-idarticulo-caracteristica" placeholder="0">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="test-idvalor-caracteristica">ID de valor</label>
+                                        <input type="text" class="form-control" id="test-idvalor-caracteristica" placeholder="0">
+                                    </div>
+                                    <button type="button" class="btn btn-secondary w-100" onclick="testCaracteristicaEndpoint('articulo')">
+                                        Probar caso Variante
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted d-block mt-3">
+                            Se envían siempre las 4 claves (vacía la que no aplica en cada caso) — el servidor real
+                            necesita las 4 presentes, aunque estén en blanco, o no persiste el dato.
+                        </small>
+
+                        <div id="test-result-caracteristica" class="mt-3"></div>
+                    </div>
                 </div>
 
             </div>

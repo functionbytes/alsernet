@@ -9,11 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Route;
-use Modules\Helpdesk\Models\Company;
-use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
-use Modules\HelpdeskContacts\Services\ContactAggregatorService;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskTickets\Http\Requests\Managers\BulkTicketMailRequest;
 use Modules\HelpdeskTickets\Http\Requests\Managers\ComposeTicketMailRequest;
@@ -21,12 +17,10 @@ use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
-use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
 use Modules\HelpdeskTickets\Services\TicketMailAiSummaryService;
 use Modules\HelpdeskTickets\Services\TicketMailDispatcher;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
-use Nwidart\Modules\Facades\Module;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -72,35 +66,6 @@ class TicketMailsController extends Controller
             'agents' => CatalogCacheService::agents(),
             'stats' => $this->stats(),
             'filters' => $request->only(['view', 'search', 'origin', 'category', 'agent', 'from', 'to']),
-        ]);
-    }
-
-    public function data(TicketMail $mail): JsonResponse
-    {
-        $this->authorize('view', $mail);
-
-        $mail->load(['ticket.customer', 'ticket.status', 'ticket.category', 'ticket.assignee', 'user', 'category']);
-
-        $thread = TicketMail::where('ticket_id', $mail->ticket_id)->oldest()->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => array_merge($mail->toListRow(), [
-                'from' => $mail->from,
-                'cc' => $mail->cc,
-                'bcc' => $mail->bcc,
-                'message_id' => $mail->message_id,
-                'in_reply_to' => $mail->in_reply_to,
-                'body_html' => $mail->safeBodyHtml(),
-                'body_text' => $mail->body_text,
-                'attachments' => $mail->attachments ?? [],
-                'delivery_error' => $mail->delivery_error,
-                'thread' => $thread->map(fn (TicketMail $m) => $m->toListRow())->values(),
-                'ticket' => $this->mapTicket($mail->ticket),
-                'trace' => $this->traceFor($mail),
-                'activity' => $this->activityFor($mail),
-                'related' => $this->relatedTickets($mail),
-            ]),
         ]);
     }
 
@@ -503,258 +468,6 @@ class TicketMailsController extends Controller
             // pantalla completa.
             return 0;
         }
-    }
-
-    /**
-     * Reconstruye la línea de tiempo de entrega para el tab "Trazabilidad"
-     * cruzando EmailLog (encolado/aceptado/rebotado) + email_log_opens
-     * (aperturas) por message_id. Solo se muestra lo que de verdad
-     * capturamos — nada de datos de relay/DKIM que no tenemos.
-     *
-     * @return array<int, array{type: string, label: string, detail: ?string, at: ?string}>
-     */
-    private function traceFor(TicketMail $mail): array
-    {
-        if (! $mail->message_id) {
-            return [];
-        }
-
-        $log = EmailLog::with('opens')->where('message_id', trim($mail->message_id, '<>'))->first();
-
-        if (! $log) {
-            return [];
-        }
-
-        $events = [
-            [
-                'type' => 'queued',
-                'label' => 'Encolado en emails',
-                'detail' => 'job SendQueuedMailable',
-                'at' => $log->created_at?->toIso8601String(),
-            ],
-        ];
-
-        if ($log->sent_at) {
-            $events[] = [
-                'type' => 'sent',
-                'label' => 'Aceptado por el servidor de correo',
-                'detail' => $log->created_at ? round($log->created_at->diffInSeconds($log->sent_at), 1).' s de latencia' : null,
-                'at' => $log->sent_at->toIso8601String(),
-            ];
-        }
-
-        if ($log->bounced_at) {
-            $events[] = [
-                'type' => 'bounced',
-                'label' => 'Rebotado',
-                'detail' => $log->error_message,
-                'at' => $log->bounced_at->toIso8601String(),
-            ];
-        }
-
-        if ($log->failed_at) {
-            $events[] = [
-                'type' => 'failed',
-                'label' => 'Falló el envío',
-                'detail' => $log->error_message,
-                'at' => $log->failed_at->toIso8601String(),
-            ];
-        }
-
-        $opens = $log->opens;
-        if ($opens->isNotEmpty()) {
-            $last = $opens->max('opened_at');
-            $events[] = [
-                'type' => 'opened',
-                'label' => 'Abierto por el destinatario · '.$opens->count().' '.($opens->count() === 1 ? 'vez' : 'veces'),
-                'detail' => 'última '.$last->format('H:i'),
-                'at' => $opens->min('opened_at')?->toIso8601String(),
-            ];
-        }
-
-        return $events;
-    }
-
-    /**
-     * Tab "Actividad" — reusa el activity log que Ticket ya escribe (Spatie
-     * Activitylog, ver Ticket::getActivitylogOptions()) en vez de duplicarlo
-     * en TicketMail. No se inventa nada que el ticket no haya registrado ya.
-     *
-     * @return array<int, array{label: string, causer: ?string, at: ?string}>
-     */
-    private function activityFor(TicketMail $mail): array
-    {
-        if (! $mail->ticket) {
-            return [];
-        }
-
-        return $mail->ticket->activities()
-            ->latest()
-            ->limit(15)
-            ->get()
-            ->map(fn ($activity) => [
-                'label' => $activity->description,
-                'causer' => $activity->causer?->firstname
-                    ? trim("{$activity->causer->firstname} {$activity->causer->lastname}")
-                    : null,
-                'at' => $activity->created_at?->toIso8601String(),
-                'at_human' => $activity->created_at?->diffForHumans(),
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
-     * Tab "Relacionados" — otros tickets del mismo cliente, reusando
-     * HelpdeskTicketBridgeService::getCustomerTickets() (ya usado hoy por
-     * Contactos 360) en vez de reinventar la consulta.
-     *
-     * @return array<int, array{id: int, ticket_number: ?string, subject: string, status: ?string}>
-     */
-    private function relatedTickets(TicketMail $mail): array
-    {
-        $ticket = $mail->ticket;
-
-        if (! $ticket || ! $ticket->customer) {
-            return [];
-        }
-
-        return app(HelpdeskTicketBridgeService::class)
-            ->getCustomerTickets($ticket->customer, 10)
-            ->reject(fn (Ticket $t) => $t->id === $ticket->id)
-            ->map(fn (Ticket $t) => [
-                'id' => $t->id,
-                'ticket_number' => $t->ticket_number,
-                'subject' => $t->subject,
-                'status' => $t->status?->name,
-                'url_full' => route('manager.helpdesk.tickets.show-full', $t),
-            ])
-            ->values()
-            ->all();
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function mapTicket(?Ticket $ticket): ?array
-    {
-        if (! $ticket) {
-            return null;
-        }
-
-        return [
-            'id' => $ticket->id,
-            'ticket_number' => $ticket->ticket_number,
-            'subject' => $ticket->subject,
-            'status' => $ticket->status?->name,
-            'customer' => $this->mapCustomer($ticket->customer),
-            'assignee' => $ticket->assignee ? trim("{$ticket->assignee->firstname} {$ticket->assignee->lastname}") : null,
-            'category' => $ticket->category?->name,
-            'created_at' => $ticket->created_at?->toIso8601String(),
-            'created_at_human' => $ticket->created_at?->format('Y-m-d H:i'),
-            'updated_at_human' => $ticket->updated_at?->diffForHumans(),
-            'tags' => $ticket->tags ?? [],
-            'source' => $ticket->source,
-            'sla' => $this->mapSla($ticket),
-            'url_full' => route('manager.helpdesk.tickets.show-full', $ticket),
-        ];
-    }
-
-    /**
-     * Bloque "Cliente" del panel lateral. Lo básico (nombre/email/teléfono)
-     * siempre disponible; empresa/idioma/ID externo/tickets·CSAT solo se
-     * rellenan cuando el dato real existe — nunca se inventa un "Cliente ID"
-     * o un CSAT que no tenemos (bug de honestidad de datos encontrado en QA:
-     * el panel lateral llevaba estas columnas desde la Fase A sin
-     * completarlas nunca).
-     *
-     * @return array<string, mixed>|null
-     */
-    private function mapCustomer(?Customer $customer): ?array
-    {
-        if (! $customer) {
-            return null;
-        }
-
-        $company = $customer->company_id
-            ? Company::find($customer->company_id)
-            : null;
-
-        $stats = $this->contactStats($customer);
-
-        return [
-            'id' => $customer->id,
-            'name' => $customer->name,
-            'email' => $customer->email,
-            'phone' => $customer->phone,
-            'company' => $company?->name,
-            'customer_since_year' => $customer->created_at?->format('Y'),
-            'language' => $customer->language,
-            'external_id' => $customer->externalIdFor('prestashop') ?? $customer->externalIdFor('erp'),
-            'is_banned' => $customer->banned_at !== null,
-            'tickets_count' => $stats['tickets_count'] ?? null,
-            'avg_csat' => $stats['avg_csat'] ?? null,
-            'integrations' => $stats['integrations'] ?? [],
-            'url_c360' => Route::has('contacts.show')
-                ? route('contacts.show', $customer->id)
-                : null,
-        ];
-    }
-
-    /**
-     * Reusa Contactos 360 (HelpdeskContacts) si está instalado y activo —
-     * dependencia opcional en runtime, nunca declarada en module.json (mismo
-     * sentido inverso que ya usa ese módulo para depender de HelpdeskTickets,
-     * ver HelpdeskContacts\Services\ContactAggregatorService). Sin ese
-     * módulo, estos datos simplemente no se muestran — no se calculan aquí
-     * de forma aproximada.
-     *
-     * @return array{tickets_count?: int, avg_csat?: float, integrations?: array<int, array<string, mixed>>}
-     */
-    private function contactStats(Customer $customer): array
-    {
-        if (! Module::find('HelpdeskContacts')?->isEnabled()
-            || ! class_exists(ContactAggregatorService::class)) {
-            return [];
-        }
-
-        try {
-            $resumen = app(ContactAggregatorService::class)->resumen($customer);
-        } catch (\Throwable) {
-            return [];
-        }
-
-        return [
-            'tickets_count' => $resumen['stats']['ticketsCount'] ?? null,
-            'avg_csat' => $resumen['stats']['avgCsat'] ?? null,
-            'integrations' => collect($resumen['integrations'] ?? [])
-                ->filter(fn (array $i) => $i['connected'])
-                ->values()
-                ->all(),
-        ];
-    }
-
-    /**
-     * SLA legible para el bloque "Detalles" — reusa Ticket::slaEffectiveDueDate()/
-     * getSlaStatusAttribute() ya existentes, no recalcula nada por su cuenta.
-     *
-     * @return array{label: string, color: string}|null
-     */
-    private function mapSla(Ticket $ticket): ?array
-    {
-        $status = $ticket->sla_status;
-
-        if ($status === 'none') {
-            return null;
-        }
-
-        $due = $ticket->slaEffectiveDueDate();
-
-        return match ($status) {
-            'breached' => ['label' => 'Vencido', 'color' => 'danger'],
-            'warning' => ['label' => $due ? $due->diffForHumans() : 'Por vencer', 'color' => 'warning'],
-            default => ['label' => $due ? $due->diffForHumans() : 'En plazo', 'color' => 'ok'],
-        };
     }
 
     /**

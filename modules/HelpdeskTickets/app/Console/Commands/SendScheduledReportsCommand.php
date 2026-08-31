@@ -12,6 +12,7 @@ use League\Csv\Writer;
 use Modules\HelpdeskTickets\Mail\ScheduledReportMail;
 use Modules\HelpdeskTickets\Services\Exports\TicketsExporter;
 use Modules\HelpdeskTickets\Services\OpsHealthService;
+use Modules\HelpdeskTickets\Services\TicketInsightsService;
 use Modules\HelpdeskTickets\Services\TicketReportsService;
 
 /**
@@ -62,7 +63,17 @@ class SendScheduledReportsCommand extends Command
             $to->format('d/m/Y')
         );
 
-        $html = $this->buildHtml($summary, $opsSnapshot, $from, $to, $periodLabel, $sections);
+        // Lectura en lenguaje natural de las MISMAS cifras — no añade queries
+        // ni consulta nada nuevo, solo redacta lo que ya está calculado.
+        // Fail-silent: sin agente IA configurado, el informe sale como
+        // siempre, solo con los números.
+        $insights = ($sections['insights'] ?? true) ? app(TicketInsightsService::class) : null;
+        $narrative = $insights?->narrative($summary, $from, $to);
+        $csatThemes = ($insights && ($sections['csat'] ?? true))
+            ? $insights->csatThemes($from, $to)
+            : null;
+
+        $html = $this->buildHtml($summary, $opsSnapshot, $from, $to, $periodLabel, $sections, $narrative, $csatThemes);
 
         [$csv, $csvFilename] = $this->buildCsvAttachment($from, $to);
 
@@ -177,10 +188,17 @@ class SendScheduledReportsCommand extends Command
      * @param  array<string, mixed>|null  $opsSnapshot
      * @param  array<string, mixed>  $sections
      */
-    private function buildHtml(array $summary, ?array $opsSnapshot, Carbon $from, Carbon $to, string $periodLabel, array $sections): string
+    private function buildHtml(array $summary, ?array $opsSnapshot, Carbon $from, Carbon $to, string $periodLabel, array $sections, ?string $narrative = null, ?array $csatThemes = null): string
     {
         $html = '<h2>Informe '.e($periodLabel).' del helpdesk</h2>'
             .'<p>Periodo: '.e($from->format('d/m/Y H:i')).' — '.e($to->format('d/m/Y H:i')).'</p>';
+
+        // Va lo primero: quien abre el informe en el móvil suele leer esto y
+        // nada más, así que el comentario tiene que estar antes que las tablas.
+        if ($narrative !== null) {
+            $html .= '<h3>En resumen</h3><p>'.nl2br(e($narrative)).'</p>'
+                .'<p><small>Redactado por IA a partir de las cifras de abajo.</small></p>';
+        }
 
         if ($sections['tickets'] ?? true) {
             $html .= '<h3>Resumen de tickets</h3>'
@@ -221,6 +239,26 @@ class SendScheduledReportsCommand extends Command
                     'Valoracion media de tickets' => $summary['avgRating'],
                     'Tickets valorados' => $summary['ratedCount'],
                 ]);
+
+            // Los comentarios de CSAT existen desde siempre, pero se leían de
+            // uno en uno según llegaban. Agrupados por tema es la parte del
+            // informe que dice QUÉ arreglar, no solo cuánto puntuamos.
+            if ($csatThemes !== null) {
+                $html .= '<h4>Qué dicen los clientes</h4><ul>';
+
+                foreach ($csatThemes['themes'] as $theme) {
+                    $html .= '<li><strong>'.e($theme['tema']).'</strong> ('.(int) $theme['menciones'].')';
+
+                    if ($theme['ejemplo'] !== '') {
+                        $html .= '<br><em>«'.e($theme['ejemplo']).'»</em>';
+                    }
+
+                    $html .= '</li>';
+                }
+
+                $html .= '</ul><p><small>Agrupado por IA sobre '
+                    .(int) $csatThemes['analysed'].' comentarios del periodo.</small></p>';
+            }
         }
 
         if ($opsSnapshot !== null) {

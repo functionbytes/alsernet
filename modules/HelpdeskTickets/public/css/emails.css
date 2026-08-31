@@ -77,6 +77,32 @@ textarea.eml-finput { min-height: 120px; line-height: 1.5; resize: vertical; }
 .eml-search-field input { flex: 1; border: none; background: transparent; }
 .eml-check { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--eml-text-soft); }
 
+/* ── select2 (barra de filtros: Origen/Etiquetas/Categoría/Agente) ──────
+   select2 oculta el <select> original y monta un elemento NUEVO al lado
+   (.select2-container) que no hereda las reglas de .eml-fselect (esas
+   apuntan al tag <select> directamente) — mismo criterio ya usado en
+   tickets-app.css/.tkt para este mismo problema. ─────────────────────── */
+.eml .select2-container--default .select2-selection--single {
+  height: auto; padding: 7px 10px; border: 1px solid var(--eml-border); border-radius: 6px;
+  background: #fff; display: flex; align-items: center;
+}
+.eml .select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding: 0; padding-right: 18px; color: var(--eml-text); font-size: 12px; line-height: 1.3;
+}
+.eml .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 100%; right: 6px;
+}
+.eml .select2-dropdown {
+  border-color: var(--eml-border); border-radius: 8px; overflow: hidden;
+  box-shadow: var(--eml-shadow-md); font-size: 12px;
+}
+.eml .select2-search--dropdown .select2-search__field {
+  border: 1px solid var(--eml-border); border-radius: 4px; font-size: 12px; padding: 5px 8px;
+}
+/* La barra de filtros es un flex row: width:'100%' apilaría cada select2
+   en su propia línea (mismo bug ya documentado en tkt-filter-bar). */
+.eml-filter-bar .select2-container { width: 150px !important; }
+
 /* ── Píldoras, chips y estados ────────────────────────── */
 .eml-pill { padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
 .eml-pill-ok { background: var(--eml-success-bg); color: var(--eml-success-fg); }
@@ -222,3 +248,43 @@ textarea.eml-finput { min-height: 120px; line-height: 1.5; resize: vertical; }
 @media (max-width: 1300px) {
   .eml-split-scroll { overflow-x: auto; }
 }
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Utilidades de la bandeja de correo.
+
+   Sustituyen a los style="" que estaban repartidos por
+   managers/emails/index.blade.php. Se quedan inline, a propósito, solo dos
+   casos que NO son presentación: el display:none inicial de #eml-detail (lo
+   alterna jQuery.show()/.hide(), que escribe estilo inline y no vería una
+   clase) y los background-color que salen de un color guardado en la base.
+   ──────────────────────────────────────────────────────────────────────── */
+.eml-fs-8    { font-size: 8px; }
+.eml-fs-10   { font-size: 10px; }
+.eml-fs-11   { font-size: 11px; }
+.eml-fs-14   { font-size: 14px; }
+.eml-fs-19   { font-size: 19px; }
+
+.eml-muted        { color: var(--eml-text-muted); }
+.eml-meta         { font-size: 11px; color: var(--eml-text-muted); }
+.eml-title-sm     { font-size: 11.5px; font-weight: 700; }
+.eml-count        { margin-left: auto; color: var(--eml-text-muted); font-size: 10.5px; }
+.eml-border-dashed{ border-style: dashed; }
+
+.eml-search-slot  { flex: 1 1 200px; min-width: 0; max-width: 320px; margin-left: 14px; }
+.eml-toolbar-right{ margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
+.eml-actions      { margin-left: auto; display: flex; gap: 8px; }
+
+.eml-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--eml-border);
+  display: grid;
+  place-items: center;
+  color: var(--eml-text-muted);
+  font-size: 19px;
+}
+.eml-empty-title { font-size: 14px; font-weight: 700; }
+.eml-empty-text  { font-size: 12px; color: var(--eml-text-soft); max-width: 300px; line-height: 1.6; }

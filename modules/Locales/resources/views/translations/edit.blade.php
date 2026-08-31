@@ -174,7 +174,7 @@
             </div>
 
             {{-- Tabs --}}
-            <ul class="nav nav-tabs border-0 user-profile-tab" role="tablist">
+            <ul class="nav nav-pills user-profile-tab" role="tablist">
                 @foreach (['all' => 'Todas', 'translated' => 'Traducidas', 'untranslated' => 'Sin traducir'] as $tabKey => $tabLabel)
                     <li class="nav-item" role="presentation">
                         <a href="{{ request()->url() }}?tab={{ $tabKey }}{{ $search ? '&search='.urlencode($search) : '' }}"

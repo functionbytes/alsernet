@@ -26,7 +26,7 @@
                         @include('core::components.alerts')
 
                         {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Titulo y atajo para usar esta respuesta rapidamente</p>
                         <div class="row g-3 mb-4">
 
@@ -59,7 +59,7 @@
                         </div>
 
                         {{-- Contenido --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Contenido</h6>
+                        <h6 class="fw-semibold mb-1">Contenido</h6>
                         <p class="text-muted small mb-3">Texto que se insertara al usar la respuesta. Puedes usar variables como {agent_name} o {ticket_number}</p>
                         <div class="row g-3 mb-4">
 
@@ -88,7 +88,7 @@
                         </div>
 
                         {{-- Clasificacion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Clasificacion</h6>
+                        <h6 class="fw-semibold mb-1">Clasificacion</h6>
                         <p class="text-muted small mb-3">Categoria, etiquetas y categorias de ticket donde aplica</p>
                         <div class="row g-3 mb-4">
 
@@ -119,7 +119,7 @@
                             <div class="col-12">
                                 @php $selectedCategoryIds = old('ticket_categories', $reply->ticketCategories->pluck('id')->toArray()); @endphp
                                 <label class="form-label">Categorias de ticket <small class="text-muted fw-normal">(opcional)</small></label>
-                                <select name="ticket_categories[]" class="form-select @error('ticket_categories') is-invalid @enderror" multiple>
+                                <select name="ticket_categories[]" class="form-select select2 @error('ticket_categories') is-invalid @enderror" multiple>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat->id }}"
                                             {{ in_array($cat->id, $selectedCategoryIds) ? 'selected' : '' }}>
@@ -135,13 +135,13 @@
                         </div>
 
                         {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuracion</h6>
                         <p class="text-muted small mb-3">Visibilidad y disponibilidad de la respuesta</p>
                         <div class="row g-3">
 
                             <div class="col-12 col-md-6">
                                 <label for="is_global" class="form-label">Visibilidad</label>
-                                <select class="form-select @error('is_global') is-invalid @enderror" id="is_global" name="is_global">
+                                <select class="form-select select2 @error('is_global') is-invalid @enderror" id="is_global" name="is_global">
                                     <option value="0" {{ old('is_global', $reply->is_global ? 1 : 0) == 0 ? 'selected' : '' }}>Personal — solo visible para mi</option>
                                     <option value="1" {{ old('is_global', $reply->is_global ? 1 : 0) == 1 ? 'selected' : '' }}>Global — visible para todo el equipo</option>
                                 </select>
@@ -152,7 +152,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label for="is_active" class="form-label">Estado</label>
-                                <select class="form-select @error('is_active') is-invalid @enderror" id="is_active" name="is_active">
+                                <select class="form-select select2 @error('is_active') is-invalid @enderror" id="is_active" name="is_active">
                                     <option value="1" {{ old('is_active', $reply->is_active ? 1 : 0) == 1 ? 'selected' : '' }}>Activa — disponible para usar</option>
                                     <option value="0" {{ old('is_active', $reply->is_active ? 1 : 0) == 0 ? 'selected' : '' }}>Inactiva — oculta</option>
                                 </select>
@@ -174,34 +174,42 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las respuestas rapidas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las respuestas rapidas</h6>
                     <p class="card-text text-muted">
                         Las respuestas predefinidas permiten a los agentes insertar texto reutilizable en los tickets, ahorrando tiempo en respuestas frecuentes.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas practicas</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa titulos descriptivos para encontrar la respuesta rapidamente</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Define atajos cortos y memorables como /greet o /close</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Agrupa respuestas similares con la misma categoria</li>
-                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa variables como {agent_name} para personalizar el texto</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa titulos descriptivos para encontrar la respuesta rapidamente</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Define atajos cortos y memorables como /greet o /close</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Agrupa respuestas similares con la misma categoria</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Usa variables como {agent_name} para personalizar el texto</li>
                     </ul>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion del registro</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">
                             <span class="fw-semibold">Usada:</span> {{ number_format($reply->usage_count ?? 0) }} veces
                         </li>
-                        <li class="mb-2 text-muted small">
+                        <li class="mb-2">
                             <span class="fw-semibold">Creada:</span> {{ $reply->created_at->format('d/m/Y H:i') }}
                         </li>
-                        <li class="text-muted small">
+                        <li class="mb-0">
                             <span class="fw-semibold">Actualizada:</span> {{ $reply->updated_at->format('d/m/Y H:i') }}
                         </li>
                     </ul>
@@ -216,6 +224,8 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+
     $('#replyForm').on('submit', function () {
         $('#tags_hidden_container').empty();
         const raw = $('#tags_input').val().split(',').map(function (s) { return s.trim(); }).filter(Boolean);

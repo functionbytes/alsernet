@@ -6,38 +6,26 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Modules\Helpdesk\Filters\TicketFilter;
-use Modules\Helpdesk\Models\Company;
 use Modules\Helpdesk\Models\Customer;
-use Modules\HelpdeskAgents\Services\AgentLlmService;
-use Modules\HelpdeskContacts\Services\ContactAggregatorService;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskTickets\Events\TicketCreated;
-use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Http\Requests\StoreTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\UpdateTicketRequest;
-use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
-use Modules\HelpdeskTickets\Models\TicketMail;
-use Modules\HelpdeskTickets\Models\TicketNote;
+use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketRead;
+use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
+use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Models\TicketTemplate;
 use Modules\HelpdeskTickets\Models\TicketView;
-use Modules\HelpdeskTickets\Services\AssignmentService;
 use Modules\HelpdeskTickets\Services\CatalogCacheService;
-use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
-use Modules\HelpdeskTickets\Services\OpsHealthService;
-use Modules\HelpdeskTickets\Services\TicketMailAiSummaryService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
-use Modules\HelpdeskTickets\Support\TicketMailRenderer;
-use Nwidart\Modules\Facades\Module;
+use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 
 class TicketsCrudController extends Controller
 {
@@ -67,7 +55,7 @@ class TicketsCrudController extends Controller
         $filter = new TicketFilter($request);
 
         $query = Ticket::query()
-            ->with(['customer', 'status', 'category', 'assignee'])
+            ->with(['customer', 'status', 'category', 'group', 'assignee'])
             ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
                 'reads',
                 fn ($q2) => $q2->where('user_id', $userId)
@@ -116,8 +104,12 @@ class TicketsCrudController extends Controller
         $categories = CatalogCacheService::categories();
         $groups = CatalogCacheService::groups();
         $agents = CatalogCacheService::agents();
-        $availableTags = Ticket::query()->whereNotNull('tags')->pluck('tags')
-            ->flatten()->filter()->unique()->sort()->values();
+        // Cacheado: esto era un pluck('tags') sobre TODA la tabla en cada carga
+        // del listado, solo para rellenar el desplegable de etiquetas. Las
+        // etiquetas cambian poco y la lista es la misma para todos los agentes,
+        // así que no hay motivo para recalcularla por request. La invalida
+        // updateTags() al guardar (CatalogCacheService::invalidateTags()).
+        $availableTags = CatalogCacheService::ticketTags();
         // Para insertar plantilla en la caja de respuesta del Hilo — mismo
         // criterio que showFull() (globales o del propio usuario, activas).
         $cannedReplies = TicketCannedReply::where('is_active', true)
@@ -200,45 +192,79 @@ class TicketsCrudController extends Controller
      */
     private function tabCounts(?int $userId): array
     {
-        $rows = Ticket::query()
+        // Una sola agregación en vez de traerse la tabla entera. Antes esto era
+        // ->get() sobre TODOS los tickets no pospuestos, hidratando un modelo
+        // Eloquent por fila (más su relación status) para después contar con un
+        // foreach en PHP: con cien mil tickets, cien mil objetos por cada carga
+        // del listado. Los números que devuelve son exactamente los mismos.
+        //
+        // La agrupación de estados sale del CATÁLOGO (decenas de filas,
+        // cacheado), no de recorrer los tickets: Ticket::canonicalStatusSlug()
+        // aplica la misma normalización de slugs que statusSlug() y de ahí
+        // salen las listas de status_id por bucket.
+        $statusIds = $this->statusIdsByCanonicalSlug();
+
+        $inOrFalse = fn (string $slug) => empty($statusIds[$slug])
+            ? '0'
+            : 'status_id IN ('.implode(',', $statusIds[$slug]).')';
+
+        $openIds = array_merge($statusIds['open'] ?? [], $statusIds['progress'] ?? []);
+        $openExpr = $openIds === [] ? '0' : 'status_id IN ('.implode(',', $openIds).')';
+
+        // slaRowKind() es 'breach' si hay flag de incumplimiento o si el
+        // vencimiento ya pasó, y 'warn' si vence en menos de 60 minutos; la
+        // unión de ambos es "hay vencimiento y está a menos de 60 minutos, o
+        // ya hay flag".
+        $slaRiskExpr = '(sla_resolution_breached = 1 OR sla_first_response_breached = 1'
+            .' OR (sla_resolution_due_at IS NOT NULL AND sla_resolution_due_at < ?))';
+
+        $row = Ticket::query()
             ->notSnoozed()
-            ->with('status:id,slug,name,is_open')
-            ->select(['id', 'assignee_id', 'priority', 'status_id', 'sla_resolution_breached', 'sla_first_response_breached', 'sla_resolution_due_at'])
-            ->get();
+            ->selectRaw(implode(', ', [
+                'COUNT(*) AS c_all',
+                "SUM(CASE WHEN {$openExpr} THEN 1 ELSE 0 END) AS c_open",
+                "SUM(CASE WHEN {$inOrFalse('pending')} THEN 1 ELSE 0 END) AS c_pending",
+                "SUM(CASE WHEN {$inOrFalse('resolved')} THEN 1 ELSE 0 END) AS c_resolved",
+                "SUM(CASE WHEN {$inOrFalse('closed')} THEN 1 ELSE 0 END) AS c_closed",
+                "SUM(CASE WHEN priority = 'urgent' OR sla_resolution_breached = 1 OR sla_first_response_breached = 1 THEN 1 ELSE 0 END) AS c_urgent",
+                'SUM(CASE WHEN assignee_id IS NULL THEN 1 ELSE 0 END) AS c_unassigned',
+                'SUM(CASE WHEN assignee_id = ? THEN 1 ELSE 0 END) AS c_mine',
+                "SUM(CASE WHEN {$slaRiskExpr} THEN 1 ELSE 0 END) AS c_sla_risk",
+            ]), [$userId ?? 0, now()->addMinutes(60)])
+            ->first();
 
-        $counts = ['open' => 0, 'urgent' => 0, 'mine' => 0, 'unassigned' => 0, 'pending' => 0, 'resolved' => 0, 'closed' => 0, 'sla_risk' => 0, 'all' => $rows->count()];
+        return [
+            'open' => (int) ($row->c_open ?? 0),
+            'urgent' => (int) ($row->c_urgent ?? 0),
+            'mine' => (int) ($row->c_mine ?? 0),
+            'unassigned' => (int) ($row->c_unassigned ?? 0),
+            'pending' => (int) ($row->c_pending ?? 0),
+            'resolved' => (int) ($row->c_resolved ?? 0),
+            'closed' => (int) ($row->c_closed ?? 0),
+            'sla_risk' => (int) ($row->c_sla_risk ?? 0),
+            'all' => (int) ($row->c_all ?? 0),
+        ];
+    }
 
-        foreach ($rows as $t) {
-            $slug = $t->statusSlug();
-            if ($slug === 'open' || $slug === 'progress') {
-                $counts['open']++;
-            }
-            if ($t->priority === 'urgent' || $t->sla_resolution_breached || $t->sla_first_response_breached) {
-                $counts['urgent']++;
-            }
-            if ($userId && $t->assignee_id === $userId) {
-                $counts['mine']++;
-            }
-            if (! $t->assignee_id) {
-                $counts['unassigned']++;
-            }
-            if ($slug === 'pending') {
-                $counts['pending']++;
-            }
-            if ($slug === 'resolved') {
-                $counts['resolved']++;
-            }
-            if ($slug === 'closed') {
-                $counts['closed']++;
-            }
-            // Distinto de "urgent": solo SLA en riesgo/vencido, sin importar
-            // prioridad — el mockup lo trae como chip de vista aparte.
-            if (in_array($t->slaRowKind(), ['warn', 'breach'], true)) {
-                $counts['sla_risk']++;
-            }
-        }
-
-        return $counts;
+    /**
+     * Catálogo de estados agrupado por slug canónico: ['open' => [1,4], ...].
+     *
+     * Cacheado una hora como el resto de catálogos, e invalidado por
+     * CatalogCacheService::invalidate(). Incluye los estados inactivos a
+     * propósito: un ticket con un estado desactivado sigue existiendo y tiene
+     * que seguir contando en su bucket.
+     *
+     * @return array<string, array<int>>
+     */
+    private function statusIdsByCanonicalSlug(): array
+    {
+        return Cache::remember('helpdesk:catalogs:status-ids-by-slug', 3600, function () {
+            return TicketStatus::query()
+                ->get(['id', 'slug', 'name', 'is_open'])
+                ->groupBy(fn (TicketStatus $s) => Ticket::canonicalStatusSlug($s))
+                ->map(fn ($group) => $group->pluck('id')->all())
+                ->all();
+        });
     }
 
     public function create(Request $request)
@@ -258,6 +284,11 @@ class TicketsCrudController extends Controller
         $groups = CatalogCacheService::groups();
         $agents = CatalogCacheService::agents();
 
+        $templates = TicketTemplate::active()
+            ->visibleTo($request->user()->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'subject', 'body', 'category_id', 'priority']);
+
         return view('helpdesktickets::managers.tickets.create', [
             'customer' => $customer,
             'customers' => $customers,
@@ -267,6 +298,7 @@ class TicketsCrudController extends Controller
             'slaPolicies' => $slaPolicies,
             'groups' => $groups,
             'agents' => $agents,
+            'templates' => $templates,
         ]);
     }
 
@@ -289,6 +321,22 @@ class TicketsCrudController extends Controller
 
             $ticket = Ticket::create($data);
 
+            // Sustitucion de variables tipo {{ticket_number}}, {{customer_name}},
+            // {{erp_saldo_pendiente}}... Se hace SIEMPRE aqui (no solo cuando
+            // viene de una plantilla) porque {{ticket_number}} no existe hasta
+            // despues de Ticket::create(). Mismo TicketVariableInterpolator que
+            // usan Macros/canned replies (fuente unica de variables, 30-ago-2026
+            // — antes habia un TicketTemplateVariableResolver aparte con
+            // sintaxis {llave_simple} distinta, ya no existe). Best-effort: si
+            // el ERP no responde, las variables erp_* quedan vacias, nunca
+            // bloquea la creacion del ticket.
+            $interpolator = app(TicketVariableInterpolator::class);
+            $resolvedSubject = $interpolator->interpolate($ticket->subject, $ticket);
+            $resolvedDescription = $interpolator->interpolate($ticket->description, $ticket);
+            if ($resolvedSubject !== $ticket->subject || $resolvedDescription !== $ticket->description) {
+                $ticket->update(['subject' => $resolvedSubject, 'description' => $resolvedDescription]);
+            }
+
             if ($request->hasFile('attachments')) {
                 $attachmentPaths = [];
                 foreach ($request->file('attachments') as $file) {
@@ -298,20 +346,20 @@ class TicketsCrudController extends Controller
                     );
                 }
 
-                if (! empty($data['description'])) {
+                if (! empty($resolvedDescription)) {
                     $ticket->items()->create([
                         'type' => 'message',
                         'user_id' => auth()->id(),
-                        'body' => $data['description'],
+                        'body' => $resolvedDescription,
                         'attachment_urls' => $attachmentPaths,
                         'is_internal' => false,
                     ]);
                 }
-            } elseif (! empty($data['description'])) {
+            } elseif (! empty($resolvedDescription)) {
                 $ticket->items()->create([
                     'type' => 'message',
                     'user_id' => auth()->id(),
-                    'body' => $data['description'],
+                    'body' => $resolvedDescription,
                     'is_internal' => false,
                 ]);
             }
@@ -341,469 +389,6 @@ class TicketsCrudController extends Controller
     }
 
     /**
-     * Resumen IA del ticket (mismo servicio y mismo criterio de "sin API
-     * key configurada → summary null, nunca inventado" que ya usa
-     * TicketMailsController::summary() por correo individual — aquí es a
-     * nivel de ticket completo, para el banner del detalle nuevo).
-     */
-    public function summary(Ticket $ticket): JsonResponse
-    {
-        $this->authorize('view', $ticket);
-
-        if (! class_exists(AgentLlmService::class)) {
-            return response()->json(['success' => true, 'summary' => null]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'summary' => app(TicketMailAiSummaryService::class)->summarize($ticket),
-        ]);
-    }
-
-    /**
-     * Snapshot de salud operativa (pill "Cola") — reusa OpsHealthService tal
-     * cual (ya alimenta el dashboard de reports y el comando programado
-     * helpdesk:ops-metrics); aquí solo se expone de forma ligera para el
-     * modal del listado, sin duplicar ninguna de las sondas.
-     */
-    public function ops(): JsonResponse
-    {
-        $this->authorize('viewAny', Ticket::class);
-
-        return response()->json(['success' => true, 'snapshot' => app(OpsHealthService::class)->cached()]);
-    }
-
-    /**
-     * Carga real por agente (pill "Carga") — AssignmentService::
-     * getAvailableAgents()/getAgentWorkload() ya existían pero sin ningún
-     * punto de entrada HTTP. Sin "capacidad" ni "% ocupación" por agente:
-     * no hay ninguna columna de capacidad máxima configurada, así que
-     * mostrarla sería inventar un dato.
-     */
-    public function workload(): JsonResponse
-    {
-        $this->authorize('viewAny', Ticket::class);
-
-        $service = app(AssignmentService::class);
-        $agents = $service->getAvailableAgents();
-
-        return response()->json([
-            'success' => true,
-            'agents' => $agents->map(fn ($agent) => [
-                'id' => $agent->id,
-                'name' => trim($agent->firstname.' '.$agent->lastname),
-                'open_tickets' => $service->getAgentWorkload($agent->id),
-            ])->sortByDesc('open_tickets')->values()->all(),
-            'unassigned_count' => Ticket::query()->whereNull('assignee_id')->notSnoozed()->count(),
-        ]);
-    }
-
-    /**
-     * "Repartir sin asignar" — aplica AssignmentService::autoAssignByWorkload()
-     * (ya usado por la asignación automática existente) a cada ticket sin
-     * asignar visible en cola; un fallo puntual en un ticket no aborta el
-     * resto. Requiere permiso de gestión (no solo lectura, como ops()/workload()).
-     */
-    public function distributeUnassigned(): JsonResponse
-    {
-        abort_unless(auth()->user()?->can('helpdesk.tickets.update'), 403);
-
-        $service = app(AssignmentService::class);
-        $assigned = 0;
-
-        Ticket::query()->whereNull('assignee_id')->notSnoozed()->limit(50)->get()->each(function (Ticket $ticket) use ($service, &$assigned) {
-            if ($service->autoAssignByWorkload($ticket)) {
-                $assigned++;
-            }
-        });
-
-        return response()->json(['success' => true, 'message' => "{$assigned} ticket(s) repartido(s).", 'assigned' => $assigned]);
-    }
-
-    /**
-     * Reenvía la encuesta CSAT — misma plantilla/Mailable/enlace firmado que
-     * UpdateTicketOnClose ya usa automáticamente al cerrar (helpdesk_tickets.
-     * satisfaction_survey), extraído aquí como acción manual del agente para
-     * el caso "el cliente no la vio" o "se cerró sin cliente con email en
-     * ese momento". Mismas condiciones: ticket cerrado, cliente con email,
-     * sin valorar todavía.
-     */
-    public function sendCsatSurvey(Ticket $ticket): JsonResponse
-    {
-        $this->authorize('update', $ticket);
-
-        abort_unless($ticket->closed_at, 422, 'El ticket debe estar cerrado para enviar la encuesta.');
-        abort_if($ticket->rated_at, 422, 'Este ticket ya tiene una valoración.');
-
-        $customer = $ticket->customer;
-        abort_unless($customer?->email, 422, 'El cliente no tiene email registrado.');
-
-        $ratingButtons = '';
-        for ($i = 1; $i <= 5; $i++) {
-            $rateUrl = URL::signedRoute('portal.tickets.rate.email', [
-                'ticketNumber' => $ticket->ticket_number,
-                'rating' => $i,
-            ]);
-            $ratingButtons .= '<a href="'.e($rateUrl).'" style="display: inline-block; margin: 0 6px; padding: 12px 20px; background: #f9f9f9; border: 2px solid #ddd; border-radius: 50%; font-size: 22px; text-decoration: none; color: #333; font-weight: bold;">'.$i.'</a>';
-        }
-
-        [$subject, $content] = TicketMailRenderer::render(
-            'helpdesk_tickets.satisfaction_survey',
-            [
-                'TICKET_NUMBER' => $ticket->ticket_number,
-                'TICKET_SUBJECT' => e($ticket->subject),
-                'CLOSED_AT' => $ticket->closed_at?->format('d/m/Y H:i') ?? '',
-                'RATING_BUTTONS' => $ratingButtons,
-                'FEEDBACK_URL' => FeedbackController::signedShowUrl($ticket),
-            ],
-            'Cuéntanos tu experiencia — Ticket #'.$ticket->ticket_number,
-        );
-
-        Mail::to($customer->email)->queue(new TicketSatisfactionSurveyMail($ticket, $subject, $content));
-
-        return response()->json(['success' => true, 'message' => 'Encuesta de satisfacción enviada.']);
-    }
-
-    public function data(Ticket $ticket): JsonResponse
-    {
-        $this->authorize('view', $ticket);
-
-        $ticket->load(['items' => fn ($q) => $q->orderBy('created_at'), 'items.user', 'items.author', 'followups', 'aiSuggestedCategory', 'watchers.user']);
-
-        $thread = $ticket->items->map(fn ($item) => [
-            'id' => $item->id,
-            'type' => $item->type,
-            'is_internal' => (bool) $item->is_internal,
-            'sender_name' => $item->sender_name,
-            'from_agent' => $item->isFromAgent(),
-            'body' => $item->content,
-            'attachment_count' => $item->attachment_count,
-            'created_at' => $item->created_at?->toIso8601String(),
-            'created_at_human' => $item->created_at?->diffForHumans(),
-        ])->values();
-
-        // OJO: este proyecto tiene una copia vendored antigua de
-        // spatie/laravel-activitylog dentro de modules/Activity/vendor/...
-        // que el autoload PSR-4 resuelve ANTES que vendor/spatie/... (mismo
-        // classmap-split ya documentado en el proyecto). Esa copia antigua
-        // define activities() directamente (no activitiesAsSubject(), que
-        // es de la copia nueva en vendor/ raíz y aquí nunca se carga) —
-        // confirmado en runtime: activitiesAsSubject() lanzaba
-        // BadMethodCallException real.
-        $activity = $ticket->activities()
-            ->latest()
-            ->limit(20)
-            ->get()
-            ->map(fn ($a) => [
-                'id' => $a->id,
-                'description' => $a->description,
-                'causer' => $a->causer?->name,
-                'created_at_human' => $a->created_at?->diffForHumans(),
-            ])->values();
-
-        $attachmentsDisk = config('helpdesk.attachments.disk', 'local');
-        $files = $ticket->items
-            ->filter(fn ($item) => $item->hasAttachments())
-            ->flatMap(fn ($item) => collect($item->attachment_urls)->values()->map(fn ($path, $index) => [
-                'name' => basename((string) $path),
-                'item_id' => $item->id,
-                'created_at_human' => $item->created_at?->diffForHumans(),
-                // Descarga real (TicketAttachmentDownloadController) — el
-                // índice es la posición dentro de attachment_urls del item,
-                // que es como la ruta lo resuelve.
-                'url_download' => route('manager.helpdesk.tickets.attachments.download', [$ticket, $item->id, $index]),
-                'size' => Storage::disk($attachmentsDisk)->exists((string) $path)
-                    ? Storage::disk($attachmentsDisk)->size((string) $path)
-                    : null,
-            ]))
-            ->values();
-
-        $allMails = $ticket->mails()->latest()->limit(50)->get();
-        $lastMail = $allMails->first();
-
-        $notes = TicketNote::where('ticket_id', $ticket->id)
-            ->with('user')
-            ->orderByDesc('is_pinned')
-            ->latest()
-            ->limit(20)
-            ->get()
-            ->map(fn (TicketNote $n) => [
-                'id' => $n->id,
-                'title' => $n->title,
-                'body' => $n->body,
-                'color' => $n->color,
-                'is_pinned' => (bool) $n->is_pinned,
-                'author_name' => $n->user ? trim($n->user->firstname.' '.$n->user->lastname) : 'Agente',
-                'created_at_human' => $n->created_at?->diffForHumans(),
-            ])->values();
-
-        return response()->json([
-            'thread' => $thread,
-            'activity' => $activity,
-            'files' => $files,
-            'mail' => $lastMail ? [
-                'subject' => $lastMail->subject,
-                'to' => $lastMail->to,
-                'status' => $lastMail->status,
-                'body_html' => $lastMail->safeBodyHtml(),
-                'created_at_human' => $lastMail->created_at?->diffForHumans(),
-                // Reusa el mismo endpoint que ya existe en la bandeja de
-                // emails (TicketMailsController::resend()) — sin duplicar
-                // lógica de reenvío.
-                'url_resend' => route('manager.helpdesk.tickets.emails.resend', $lastMail),
-                // Aperturas reales (EmailLogOpen, mismo cruce por message_id
-                // que traceFor()) — "reintentos" del mockup se omite: no hay
-                // columna de intentos en EmailLog, no se inventa.
-                ...$this->mailOpensSummary($lastMail),
-            ] : null,
-            'trace' => $lastMail ? $this->traceFor($lastMail) : [],
-            // Lista completa (modal "Correos del ticket") — antes solo se
-            // veía el último; el resto obligaba a salir a la bandeja global.
-            'mails' => $allMails->map(fn ($m) => [
-                'id' => $m->id,
-                'subject' => $m->subject,
-                'to' => $m->to,
-                'direction' => $m->direction,
-                'status' => $m->status,
-                'created_at_human' => $m->created_at?->diffForHumans(),
-            ])->values()->all(),
-            'customer' => $this->mapCustomerDetail($ticket->customer),
-            'form' => $this->formDataFor($ticket),
-            'notes' => $notes,
-            'related' => $this->relatedTicketsFor($ticket),
-            'side_conversations' => $this->sideConversationsFor($ticket),
-            // Seguimientos/recordatorios reales (TicketFollowupsController,
-            // ya con backend+comando programado helpdesk:send-due-ticket-followups
-            // — solo faltaba exponerlos en esta pantalla; la ficha antigua
-            // show.blade.php ya los muestra).
-            'followups' => $ticket->followups->map(fn ($f) => [
-                'id' => $f->id,
-                'scheduled_at' => $f->scheduled_at?->toIso8601String(),
-                'scheduled_at_human' => $f->scheduled_at?->format('d/m/Y H:i'),
-                'note' => $f->note,
-            ])->values()->all(),
-            // Sugerencias de IA ya calculadas (TicketAiService) pero sin
-            // punto de aplicación en esta pantalla hasta ahora — mismo
-            // criterio que show.blade.php: si no hay sugerencia real, se
-            // omite el bloque entero (nunca se muestra un % de confianza,
-            // el backend no lo guarda).
-            'ai_suggestion' => ($ticket->aiSuggestedCategory || $ticket->ai_suggested_priority) ? [
-                'category' => $ticket->aiSuggestedCategory ? [
-                    'id' => $ticket->aiSuggestedCategory->id,
-                    'name' => $ticket->aiSuggestedCategory->name,
-                ] : null,
-                'priority' => $ticket->ai_suggested_priority,
-            ] : null,
-            // Seguidores reales (TicketWatcher) — antes solo se podía
-            // auto-seguirse, sin lista visible en esta pantalla.
-            'watchers' => $ticket->watchers->map(fn ($w) => [
-                'user_id' => $w->user_id,
-                'name' => $w->user ? trim($w->user->firstname.' '.$w->user->lastname) : ('Usuario #'.$w->user_id),
-                'is_me' => $w->user_id === auth()->id(),
-            ])->values()->all(),
-            // CSAT — mismo campo que ya rellena FeedbackController::submit()
-            // al valorar. can_resend exige lo mismo que sendCsatSurvey():
-            // cerrado, cliente con email, sin valorar todavía.
-            'csat' => [
-                'rating' => $ticket->rating,
-                'comment' => $ticket->rating_comment,
-                'reason' => $ticket->rating_reason,
-                'rated_at_human' => $ticket->rated_at?->diffForHumans(),
-                'can_resend' => (bool) ($ticket->closed_at && ! $ticket->rated_at && $ticket->customer?->email),
-            ],
-        ]);
-    }
-
-    /**
-     * "Conversación paralela" — mismo contrato que
-     * TicketSideConversationsController::index(), resumido para el panel
-     * lateral (Correo). No se duplica el endpoint completo: crear/añadir
-     * mensaje siguen pasando por sus rutas propias.
-     */
-    private function sideConversationsFor(Ticket $ticket): array
-    {
-        return $ticket->sideConversations()
-            ->with(['messages', 'participantUser:id,firstname,lastname'])
-            ->get()
-            ->map(fn ($side) => [
-                'id' => $side->id,
-                'subject' => $side->subject,
-                'participant_type' => $side->participant_type,
-                'participant_email' => $side->participant_email,
-                'participant' => $side->participantUser?->full_name,
-                'status' => $side->status,
-                'message_count' => $side->messages->count(),
-            ])->values()->all();
-    }
-
-    /**
-     * Cliente + integraciones — mismo patrón que
-     * TicketMailsController::mapCustomer()/contactStats(): reusa Contactos
-     * 360 (HelpdeskContacts) si está instalado y activo, dependencia
-     * opcional en runtime nunca declarada en module.json. Sin ese módulo,
-     * estos datos simplemente no se muestran.
-     */
-    private function mapCustomerDetail(?Customer $customer): ?array
-    {
-        if (! $customer) {
-            return null;
-        }
-
-        $company = $customer->company_id ? Company::find($customer->company_id) : null;
-        $stats = $this->contactStats($customer);
-
-        return [
-            'id' => $customer->id,
-            'name' => $customer->name,
-            'email' => $customer->email,
-            'phone' => $customer->phone,
-            'company' => $company?->name,
-            'customer_since_year' => $customer->created_at?->format('Y'),
-            'language' => $customer->language,
-            'tickets_count' => $stats['tickets_count'] ?? null,
-            'avg_csat' => $stats['avg_csat'] ?? null,
-            'integrations' => $stats['integrations'] ?? [],
-            'url_c360' => Route::has('contacts.show') ? route('contacts.show', $customer->id) : null,
-        ];
-    }
-
-    /**
-     * @return array{tickets_count?: int, avg_csat?: float, integrations?: array<int, array<string, mixed>>}
-     */
-    private function contactStats(Customer $customer): array
-    {
-        if (! Module::find('HelpdeskContacts')?->isEnabled() || ! class_exists(ContactAggregatorService::class)) {
-            return [];
-        }
-
-        try {
-            $resumen = app(ContactAggregatorService::class)->resumen($customer);
-        } catch (\Throwable) {
-            return [];
-        }
-
-        return [
-            'tickets_count' => $resumen['stats']['ticketsCount'] ?? null,
-            'avg_csat' => $resumen['stats']['avgCsat'] ?? null,
-            'integrations' => collect($resumen['integrations'] ?? [])->filter(fn (array $i) => $i['connected'])->values()->all(),
-        ];
-    }
-
-    /**
-     * Datos del formulario de origen — solo si el ticket viene de un canal
-     * de formulario y tiene custom_fields capturados; si no, null (el JS
-     * muestra el estado vacío honesto en vez de inventar datos).
-     */
-    private function formDataFor(Ticket $ticket): ?array
-    {
-        if (empty($ticket->custom_fields) || ! in_array($ticket->sourceSlug(), ['formulario', 'web_form'], true)) {
-            return null;
-        }
-
-        return [
-            'fields' => $ticket->custom_fields,
-        ];
-    }
-
-    /**
-     * Otros tickets del mismo cliente — reusa
-     * HelpdeskTicketBridgeService::getCustomerTickets() (ya usado por
-     * Contactos 360 y por la bandeja de emails), excluyendo el actual.
-     */
-    private function relatedTicketsFor(Ticket $ticket): array
-    {
-        // Dos fuentes distintas, fusionadas: los enlaces EXPLÍCITOS
-        // (TicketLink, creados vía "Vincular ticket" en ambas direcciones —
-        // se conserva su id/link_type propios para poder desvincular, cosa
-        // que un ticket "relacionado" solo por ser del mismo cliente no
-        // tiene) y los tickets del MISMO cliente (sugerencia automática).
-        // unlinkTicket() solo borra filas donde ticket_id = $ticket->id, así
-        // que solo el lado "propietario" del enlace (links(), no
-        // linkedBy()) puede desvincularse desde aquí — desvincular desde el
-        // otro extremo requeriría abrir el ticket contrario.
-        $ownLinks = $ticket->links()->with('linkedTicket.status')->get()
-            ->map(fn ($l) => ['link_id' => $l->id, 'link_type' => $l->link_type, 'ticket' => $l->linkedTicket, 'unlinkable' => true]);
-        $reverseLinks = $ticket->linkedBy()->with('ticket.status')->get()
-            ->map(fn ($l) => ['link_id' => $l->id, 'link_type' => $l->link_type, 'ticket' => $l->ticket, 'unlinkable' => false]);
-
-        $explicitLinks = $ownLinks->concat($reverseLinks)->filter(fn ($row) => $row['ticket'] !== null);
-
-        $customerRelated = $ticket->customer
-            ? app(HelpdeskTicketBridgeService::class)->getCustomerTickets($ticket->customer, 6)
-                ->map(fn (Ticket $t) => ['link_id' => null, 'link_type' => null, 'ticket' => $t, 'unlinkable' => false])
-            : collect();
-
-        return $explicitLinks->concat($customerRelated)
-            ->unique(fn ($row) => $row['ticket']->id)
-            ->reject(fn ($row) => $row['ticket']->id === $ticket->id)
-            ->take(8)
-            ->map(fn ($row) => [
-                'id' => $row['ticket']->id,
-                'ticket_number' => $row['ticket']->ticket_number,
-                'subject' => $row['ticket']->subject,
-                'status_name' => $row['ticket']->status?->name,
-                'status_slug' => $row['ticket']->statusSlug(),
-                'link_type' => $row['link_type'],
-                'url_unlink' => $row['unlinkable'] ? route('manager.helpdesk.tickets.unlink', [$ticket, $row['link_id']]) : null,
-            ])->values()->all();
-    }
-
-    /**
-     * Trazabilidad de entrega del último correo del ticket — mismo cruce
-     * EmailLog/EmailLogOpen por message_id (trim de '<>') ya construido para
-     * la bandeja de emails, ver TicketMailsController::traceFor().
-     */
-    /**
-     * @return array{opens_count: int, last_opened_human: ?string}
-     */
-    private function mailOpensSummary(TicketMail $mail): array
-    {
-        if (! $mail->message_id) {
-            return ['opens_count' => 0, 'last_opened_human' => null];
-        }
-
-        $log = EmailLog::with('opens')->where('message_id', trim($mail->message_id, '<>'))->first();
-        $lastOpen = $log?->opens->sortByDesc('opened_at')->first();
-
-        return [
-            'opens_count' => $log?->opens->count() ?? 0,
-            'last_opened_human' => $lastOpen?->opened_at?->diffForHumans(),
-        ];
-    }
-
-    private function traceFor(TicketMail $mail): array
-    {
-        if (! $mail->message_id) {
-            return [];
-        }
-
-        $log = EmailLog::with('opens')->where('message_id', trim($mail->message_id, '<>'))->first();
-
-        if (! $log) {
-            return [];
-        }
-
-        $events = [
-            ['type' => 'queued', 'label' => 'Encolado en emails', 'at' => $log->created_at?->toIso8601String()],
-        ];
-
-        if ($log->sent_at) {
-            $events[] = ['type' => 'sent', 'label' => 'Aceptado por el servidor de correo', 'at' => $log->sent_at->toIso8601String()];
-        }
-        if ($log->bounced_at) {
-            $events[] = ['type' => 'bounced', 'label' => 'Rebotado', 'at' => $log->bounced_at->toIso8601String()];
-        }
-        if ($log->failed_at) {
-            $events[] = ['type' => 'failed', 'label' => 'Fallido', 'at' => $log->failed_at->toIso8601String()];
-        }
-        foreach ($log->opens as $open) {
-            $events[] = ['type' => 'opened', 'label' => 'Abierto por el destinatario', 'at' => $open->opened_at?->toIso8601String()];
-        }
-
-        return $events;
-    }
-
-    /**
      * PATCH de etiquetas del ticket — mismo patrón que
      * TicketMailsController::updateTags().
      */
@@ -826,6 +411,10 @@ class TicketsCrudController extends Controller
         }
 
         $ticket->update(['tags' => $tags->all()]);
+
+        // El desplegable de etiquetas del listado sale de una lista cacheada:
+        // sin esto, una etiqueta nueva tardaría hasta el TTL en aparecer.
+        CatalogCacheService::invalidateTags();
 
         return response()->json(['success' => true, 'tags' => $tags->all()]);
     }
@@ -894,7 +483,22 @@ class TicketsCrudController extends Controller
             ->orderBy('title')
             ->get(['id', 'title', 'content', 'html_body', 'short_code']);
 
+        // Para el botón "Bloquear remitente" del panel de acciones: si el email
+        // del cliente ya está cubierto por una regla (exacta o por dominio), la
+        // vista muestra el aviso en vez del botón.
+        $blacklistMatch = $ticket->customer?->email
+            ? TicketEmailBlacklist::matches($ticket->customer->email)
+            : null;
+
+        // Revisión de calidad, si el muestreo alcanzó a este ticket. Se
+        // resuelve aquí y no en la vista para no dejar una consulta en el
+        // Blade; con la función apagada ni siquiera se pregunta.
+        $qualityReview = config('helpdesktickets.quality_review.enabled', false)
+            ? TicketReview::query()->where('ticket_id', $ticket->id)->first()
+            : null;
+
         return view('helpdesktickets::managers.tickets.show', [
+            'qualityReview' => $qualityReview,
             'ticket' => $ticket,
             'tickets' => $tickets,
             'statuses' => $statuses,
@@ -907,6 +511,7 @@ class TicketsCrudController extends Controller
             'history' => $history,
             'ticketMails' => $ticketMails,
             'cannedReplies' => $cannedReplies,
+            'blacklistMatch' => $blacklistMatch,
         ]);
     }
 
@@ -932,6 +537,13 @@ class TicketsCrudController extends Controller
 
     public function update(UpdateTicketRequest $request, Ticket $ticket): JsonResponse|RedirectResponse
     {
+        // Defensa en profundidad: el resto del CRUD (show/edit/destroy/
+        // restore) llama authorize() explícitamente contra la instancia; este
+        // método dependía solo de UpdateTicketRequest::authorize() (permiso
+        // estático), sin backstop si algún día se llama applyChanges() desde
+        // otra ruta que no pase por ese FormRequest concreto.
+        $this->authorize('update', $ticket);
+
         $this->ticketUpdateService->applyChanges($ticket, $request->getModifiableFields(), auth()->user());
 
         if ($request->wantsJson()) {

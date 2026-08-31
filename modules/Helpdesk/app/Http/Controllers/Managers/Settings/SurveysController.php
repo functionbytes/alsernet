@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -23,6 +24,7 @@ class SurveysController extends Controller
         $surveys = Survey::query()
             ->withCount('responses')
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
+            ->when($request->filled('status'), fn ($q) => $q->where('is_active', $request->get('status') === '1'))
             ->latest()
             ->paginate(20);
 
@@ -80,6 +82,44 @@ class SurveysController extends Controller
 
         return redirect()->route('settings.helpdesk.surveys.index')
             ->with('success', 'Encuesta eliminada exitosamente.');
+    }
+
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $surveys = Survey::whereIn('id', $request->ids)->get();
+        $count = 0;
+
+        if ($request->action === 'delete') {
+            foreach ($surveys as $survey) {
+                $survey->delete();
+                $count++;
+            }
+        } else {
+            $value = $request->action === 'activate';
+            foreach ($surveys as $survey) {
+                $survey->is_active = $value;
+                if ($survey->save()) {
+                    $count++;
+                }
+            }
+        }
+
+        $labels = [
+            'activate' => 'activada(s)',
+            'deactivate' => 'desactivada(s)',
+            'delete' => 'eliminada(s)',
+        ];
+
+        return response()->json([
+            'count' => $count,
+            'message' => "{$count} encuesta(s) {$labels[$request->action]}.",
+        ]);
     }
 
     public function responses(Survey $survey, Request $request): View

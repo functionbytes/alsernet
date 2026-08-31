@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 /**
  * Vista guardada de la bandeja "Emails enviados" — clon deliberado del
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class TicketMailView extends Model
 {
+    use BelongsToHelpdeskUser;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_ticket_mail_views';
@@ -53,7 +56,7 @@ class TicketMailView extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder

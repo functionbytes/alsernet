@@ -37,9 +37,11 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Como obtener la URL del webhook</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Como obtener la URL del webhook</h6>
                     <ol class="small text-muted ps-3 mb-0">
                         <li class="mb-2">Ve a <strong>api.slack.com/apps</strong> y selecciona tu app (o crea una nueva)</li>
                         <li class="mb-2">En el menu lateral, busca <strong>Incoming Webhooks</strong></li>
@@ -47,8 +49,13 @@
                         <li class="mb-2">Selecciona el canal destino y autoriza</li>
                         <li>Copia la URL generada y pegala aqui</li>
                     </ol>
-                    <hr>
-                    <h6 class="mb-2">Seguridad</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Seguridad</h6>
+                </div>
+                <div class="card-body">
                     <p class="small text-muted mb-0">
                         La URL del webhook se guarda cifrada en la base de datos. Nunca se mostrara en texto plano despues de guardada.
                     </p>

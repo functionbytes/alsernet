@@ -194,10 +194,15 @@ class TicketMailsControllerTest extends TestCase
             ->getJson(route('manager.helpdesk.tickets.emails.index'))
             ->assertOk();
 
-        $ids = collect($response->json('data'))->pluck('id');
+        // Se cuentan solo los correos de ESTE ticket. Antes se contaban todos
+        // los del listado y se esperaba 1, lo que hacía depender el test de que
+        // la tabla estuviese vacía: cualquier correo residual de otra ejecución
+        // en la base compartida lo tumbaba. Lo que se quiere comprobar es el
+        // filtro por dirección, no cuántas filas hay en total.
+        $mine = collect($response->json('data'))->where('ticket_id', $ticket->id);
 
-        $this->assertTrue($ids->contains($outbound->id));
-        $this->assertSame(1, $ids->count());
+        $this->assertTrue($mine->pluck('id')->contains($outbound->id));
+        $this->assertSame(1, $mine->count(), 'La vista por defecto solo lista los salientes ya enviados.');
     }
 
     public function test_index_view_scheduled_filters_by_status(): void

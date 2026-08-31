@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Helpdesk\Database\Factories\TicketHistoryFactory;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketHistory extends Model
 {
-    use HasFactory;
+    use BelongsToHelpdeskUser, HasFactory;
 
     protected $connection = 'helpdesk';
 
@@ -60,16 +61,7 @@ class TicketHistory extends Model
             return null;
         }
 
-        $user = new User;
-        $user->setConnection('mysql');
-
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        )->first();
+        return $this->belongsToHelpdeskUser('user_id', 'user')->first();
     }
 
     // ────────────────────────────────────────────────────────────────

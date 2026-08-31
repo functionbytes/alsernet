@@ -313,7 +313,7 @@ class EmailLogController extends Controller
     }
 
     /**
-     * @return array{total: int, sent: int, failed: int, queued: int, today: int}
+     * @return array{total: int, sent: int, failed: int, queued: int, today: int, bounced: int, complained: int}
      */
     private function computeStats(): array
     {
@@ -322,6 +322,8 @@ class EmailLogController extends Controller
             ->selectRaw("SUM(status = 'sent') AS sent")
             ->selectRaw("SUM(status = 'failed') AS failed")
             ->selectRaw("SUM(status = 'queued') AS queued")
+            ->selectRaw("SUM(status = 'bounced') AS bounced")
+            ->selectRaw("SUM(status = 'complained') AS complained")
             ->selectRaw('SUM(created_at >= ?) AS today', [today()->toDateTimeString()])
             ->first();
 
@@ -330,6 +332,8 @@ class EmailLogController extends Controller
             'sent' => (int) ($aggregate->sent ?? 0),
             'failed' => (int) ($aggregate->failed ?? 0),
             'queued' => (int) ($aggregate->queued ?? 0),
+            'bounced' => (int) ($aggregate->bounced ?? 0),
+            'complained' => (int) ($aggregate->complained ?? 0),
             'today' => (int) ($aggregate->today ?? 0),
         ];
     }
@@ -337,7 +341,7 @@ class EmailLogController extends Controller
     /**
      * Daily counts per status for the last N days (for the trend chart).
      *
-     * @return array{labels: list<string>, sent: list<int>, failed: list<int>, queued: list<int>}
+     * @return array{labels: list<string>, sent: list<int>, failed: list<int>, queued: list<int>, bounced: list<int>, complained: list<int>}
      */
     private function computeTrend(int $days = 14): array
     {
@@ -349,11 +353,13 @@ class EmailLogController extends Controller
             ->selectRaw("SUM(status = 'sent') AS sent")
             ->selectRaw("SUM(status = 'failed') AS failed")
             ->selectRaw("SUM(status = 'queued') AS queued")
+            ->selectRaw("SUM(status = 'bounced') AS bounced")
+            ->selectRaw("SUM(status = 'complained') AS complained")
             ->groupByRaw('DATE(created_at)')
             ->get()
             ->keyBy('d');
 
-        $labels = $sent = $failed = $queued = [];
+        $labels = $sent = $failed = $queued = $bounced = $complained = [];
 
         for ($i = 0; $i < $days; $i++) {
             $date = $since->copy()->addDays($i);
@@ -362,9 +368,11 @@ class EmailLogController extends Controller
             $sent[] = (int) ($row->sent ?? 0);
             $failed[] = (int) ($row->failed ?? 0);
             $queued[] = (int) ($row->queued ?? 0);
+            $bounced[] = (int) ($row->bounced ?? 0);
+            $complained[] = (int) ($row->complained ?? 0);
         }
 
-        return compact('labels', 'sent', 'failed', 'queued');
+        return compact('labels', 'sent', 'failed', 'queued', 'bounced', 'complained');
     }
 
     private function applyFilters(Builder $query, Request $request): Builder

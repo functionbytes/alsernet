@@ -6,14 +6,19 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
+use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Jobs\Helpdesks\FetchTicketEmailsJob;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketStatus;
-use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Tests\TestCase;
+use Webklex\PHPIMAP\Attribute as ImapAttribute;
 
 // ---------------------------------------------------------------------------
 // Helper subclass to expose protected methods and stub out processConnection
@@ -51,6 +56,29 @@ class TestableFetchTicketEmailsJob extends FetchTicketEmailsJob
         $this->processIncomingEmail($message, $connection);
     }
 
+    public function callStringAttribute(?ImapAttribute $attribute): ?string
+    {
+        return $this->stringAttribute($attribute);
+    }
+
+    public function callFormatAddressAttribute(?ImapAttribute $attribute): ?string
+    {
+        return $this->formatAddressAttribute($attribute);
+    }
+
+    public function callDecodeMimeHeader(string $value): string
+    {
+        return $this->decodeMimeHeader($value);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function callSplitReferences(?string $references): array
+    {
+        return $this->splitReferences($references);
+    }
+
     protected function processConnection(array $connection): void
     {
         // no-op — prevents real IMAP connections in tests
@@ -65,7 +93,13 @@ class FetchTicketEmailsJobTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' es la conexión real de Setting/settings (confirmado en runtime,
+    // no un alias de 'mariadb') — sin ella aquí, seedIncomingEmailSetting()
+    // escribe DE VERDAD y sin rollback: en este entorno compartido llegó a
+    // borrar un canal de correo real ya configurado por otra vía. No es solo
+    // caché (ver reference_setting_cache_escapes_db_transaction.md): es la
+    // fila en BD, fuera de cualquier transacción, nunca revertida.
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected function setUp(): void
     {
@@ -93,9 +127,7 @@ class FetchTicketEmailsJobTest extends TestCase
 
     private function makeTicketService(): TicketService
     {
-        $slaService = new SlaService;
-
-        return new TicketService($slaService);
+        return new TicketService;
     }
 
     private function makeJob(): TestableFetchTicketEmailsJob
@@ -246,7 +278,13 @@ class FetchTicketEmailsJobTest extends TestCase
     public function test_find_or_create_ticket_threads_via_in_reply_to(): void
     {
 
-        $customer = Customer::factory()->create();
+        // El email del cliente tiene que ser el mismo desde el que llega la
+        // respuesta: findOrCreateTicket() ya solo hila cuando el remitente es
+        // el cliente del ticket, también por Message-ID. Con la factory sin
+        // argumentos salía un email aleatorio y la fixture describía en
+        // realidad a un tercero respondiendo a un hilo reenviado — el caso
+        // que ahora se rechaza a propósito (ver el test de más abajo).
+        $customer = Customer::factory()->create(['email' => 'customer@example.com']);
 
         $status = TicketStatus::where('slug', 'new')->first();
 
@@ -288,6 +326,224 @@ class FetchTicketEmailsJobTest extends TestCase
         $this->assertSame($ticket->id, $result->id);
     }
 
+    /**
+     * Regresión: message_id de nuestras propias respuestas (TicketMailDispatcher,
+     * SendCustomerReplyNotification, TicketCommentsController, TicketMail::
+     * createOutbound()) se guardaba con '<' '>', pero webklex/php-imap normaliza
+     * el In-Reply-To entrante SIN corchetes — la comparación exacta de string
+     * nunca enganchaba y la respuesta del cliente abría un ticket nuevo en vez
+     * de continuar el mismo. Ahora ambos se guardan sin corchetes.
+     */
+    public function test_find_or_create_ticket_threads_when_replying_to_our_own_outbound_message(): void
+    {
+        // El email del cliente tiene que ser el mismo desde el que llega la
+        // respuesta: findOrCreateTicket() ya solo hila cuando el remitente es
+        // el cliente del ticket, también por Message-ID. Con la factory sin
+        // argumentos salía un email aleatorio y la fixture describía en
+        // realidad a un tercero respondiendo a un hilo reenviado — el caso
+        // que ahora se rechaza a propósito (ver el test de más abajo).
+        $customer = Customer::factory()->create(['email' => 'customer@example.com']);
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        $ticket = Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+        ]);
+
+        // Mismo formato (sin corchetes) que TicketMailDispatcher::send()/
+        // SendCustomerReplyNotification tras el fix.
+        $ourOutboundMessageId = Str::uuid().'@webadmin.test';
+
+        TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'outbound',
+            'message_id' => $ourOutboundMessageId,
+            'from' => 'support@example.com',
+            'to' => 'customer@example.com',
+            'subject' => 'Re: Help needed',
+            'body_text' => 'Aquí tienes la respuesta.',
+            'status' => 'sent',
+        ]);
+
+        $parsed = [
+            'message_id' => '<reply-msg-id-'.uniqid().'@example.com>',
+            // Tal como llega normalizado por webklex/php-imap: sin corchetes.
+            'in_reply_to' => $ourOutboundMessageId,
+            'references' => null,
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Re: Re: Help needed',
+            'body_text' => 'Gracias por la respuesta.',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => false]));
+
+        $this->assertNotNull($result);
+        $this->assertSame($ticket->id, $result->id);
+    }
+
+    public function test_find_or_create_ticket_threads_via_references_chain(): void
+    {
+        // El email del cliente tiene que ser el mismo desde el que llega la
+        // respuesta: findOrCreateTicket() ya solo hila cuando el remitente es
+        // el cliente del ticket, también por Message-ID. Con la factory sin
+        // argumentos salía un email aleatorio y la fixture describía en
+        // realidad a un tercero respondiendo a un hilo reenviado — el caso
+        // que ahora se rechaza a propósito (ver el test de más abajo).
+        $customer = Customer::factory()->create(['email' => 'customer@example.com']);
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        $ticket = Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+        ]);
+
+        $mail = TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'message_id' => 'original-msg-id-'.uniqid().'@example.com',
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'subject' => 'Help needed',
+            'body_text' => 'Please help',
+            'status' => 'received',
+        ]);
+
+        $parsed = [
+            'message_id' => 'reply-msg-id-'.uniqid().'@example.com',
+            // Sin In-Reply-To directo (algunos clientes solo llenan References,
+            // o se responde a un mensaje intermedio del hilo) — el match debe
+            // resolverse por la cadena de References, no solo por el padre
+            // inmediato.
+            'in_reply_to' => null,
+            'references' => 'algun-otro-id@example.com, '.$mail->message_id,
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Re: Help needed',
+            'body_text' => 'More info',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => false]));
+
+        $this->assertNotNull($result);
+        $this->assertSame($ticket->id, $result->id);
+    }
+
+    /**
+     * El hilado por asunto (#TCK-…) ya verificaba que el remitente fuese el
+     * cliente del ticket, con el motivo escrito en el propio código: "otherwise
+     * a third party could inject messages into someone else's ticket". La rama
+     * de Message-ID, que va antes, no lo hacía.
+     *
+     * Los Message-ID salientes no son adivinables, pero sí circulan: basta con
+     * que el cliente reenvíe el correo del helpdesk a un tercero para que ese
+     * tercero tenga la cabecera en su copia y, respondiendo, escriba dentro de
+     * un ticket que no es suyo.
+     */
+    public function test_find_or_create_ticket_does_not_thread_when_message_id_sender_is_a_third_party(): void
+    {
+        $customer = Customer::factory()->create(['email' => 'customer@example.com']);
+
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        $ticket = Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+        ]);
+
+        $mail = TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'message_id' => 'original-msg-id-'.uniqid().'@example.com',
+            'from' => 'customer@example.com',
+            'to' => 'support@example.com',
+            'subject' => 'Help needed',
+            'body_text' => 'Please help',
+            'status' => 'received',
+        ]);
+
+        $parsed = [
+            'message_id' => 'reply-msg-id-'.uniqid().'@example.com',
+            'in_reply_to' => $mail->message_id,
+            'references' => null,
+            // Alguien a quien el cliente reenvió el hilo, no el cliente.
+            'from' => 'un-tercero@otra-empresa.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Re: Help needed',
+            'body_text' => 'Me han reenviado esto',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        // create_tickets = false para aislar la comprobación: si no se hila,
+        // esta conexión no abre ticket nuevo y el resultado es null.
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => false]));
+
+        $this->assertNull($result, 'Un tercero no debe poder escribir en el ticket de otro por Message-ID.');
+    }
+
+    /**
+     * La lista negra se evaluaba DESPUÉS del hilado por Message-ID, así que un
+     * remitente bloqueado que respondiera a un hilo existente se colaba entero.
+     */
+    public function test_blacklisted_sender_is_discarded_even_when_replying_to_an_existing_thread(): void
+    {
+        $customer = Customer::factory()->create(['email' => 'spammer@example.com']);
+
+        $status = TicketStatus::where('slug', 'new')->first();
+
+        $ticket = Ticket::factory()->create([
+            'customer_id' => $customer->id,
+            'status_id' => $status->id,
+        ]);
+
+        $mail = TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'message_id' => 'original-msg-id-'.uniqid().'@example.com',
+            'from' => 'spammer@example.com',
+            'to' => 'support@example.com',
+            'subject' => 'Help needed',
+            'body_text' => 'Please help',
+            'status' => 'received',
+        ]);
+
+        TicketEmailBlacklist::create([
+            'type' => 'email',
+            'value' => 'spammer@example.com',
+            'reason' => 'Prueba',
+            'is_active' => true,
+        ]);
+
+        $parsed = [
+            'message_id' => 'reply-msg-id-'.uniqid().'@example.com',
+            'in_reply_to' => $mail->message_id,
+            'references' => null,
+            'from' => 'spammer@example.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Re: Help needed',
+            'body_text' => 'Mas spam',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => false]));
+
+        $this->assertNull($result, 'La lista negra debe aplicarse antes de cualquier hilado.');
+    }
+
     public function test_find_or_create_ticket_creates_new_ticket_when_no_thread(): void
     {
 
@@ -310,12 +566,54 @@ class FetchTicketEmailsJobTest extends TestCase
         $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
 
         $this->assertInstanceOf(Ticket::class, $result);
-        if ($result) {
-            if ($result->customer_id) {
-            }
-        }
         $this->assertDatabaseHas('helpdesk_tickets', ['subject' => 'Brand new issue'], 'helpdesk');
         $this->assertDatabaseHas('helpdesk_customers', ['email' => 'newcustomer@example.com'], 'helpdesk');
+
+        // Regresión: un ticket nacido de un correo real nunca disparaba
+        // TicketCreated (a diferencia de TicketService::createTicket(), usado
+        // por widget/formulario público) — SendCustomerConfirmation,
+        // NotifyAgentsOnNewTicket, etc. nunca corrían para el único canal de
+        // entrada real de tickets. Ver FetchTicketEmailsJob::findOrCreateTicket().
+        Event::assertDispatched(TicketCreated::class, fn ($event) => $event->ticket->is($result));
+    }
+
+    /**
+     * Mismo mecanismo que ConversationCreated -> DispatchErpLinkJob en el
+     * núcleo Helpdesk: al crear el Customer se despacha el vínculo con el
+     * ERP en segundo plano (best-effort, nunca bloquea la creación del
+     * ticket). Solo se comprueba el dispatch aquí; linkCustomer() en sí ya
+     * está cubierto en los tests del módulo HelpdeskErp.
+     */
+    public function test_find_or_create_ticket_dispatches_erp_link_job_for_new_customer(): void
+    {
+        if (! helpdesk_erp_enabled()) {
+            $this->markTestSkipped('Módulo HelpdeskErp no activo en este entorno.');
+        }
+
+        Queue::fake();
+
+        $parsed = [
+            'message_id' => '<erp-link-msg@example.com>',
+            'in_reply_to' => null,
+            'references' => null,
+            'from' => 'erp.newcustomer@example.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Necesito ayuda con mi pedido',
+            'body_text' => 'Hola.',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
+
+        $customer = Customer::where('email', 'erp.newcustomer@example.com')->first();
+        $this->assertNotNull($customer);
+
+        Queue::assertPushed(LinkCustomerToErpJob::class, function (LinkCustomerToErpJob $job) use ($customer) {
+            return $job->uniqueId() === (string) $customer->id;
+        });
     }
 
     public function test_find_or_create_ticket_returns_null_when_create_tickets_disabled(): void
@@ -339,5 +637,194 @@ class FetchTicketEmailsJobTest extends TestCase
 
         $this->assertNull($result);
         $this->assertDatabaseMissing('helpdesk_tickets', ['subject' => 'Random email'], 'helpdesk');
+    }
+
+    // -------------------------------------------------------------------------
+    // findOrCreateTicket — sender blacklist
+    // -------------------------------------------------------------------------
+
+    public function test_find_or_create_ticket_discards_email_when_sender_blacklisted(): void
+    {
+        $rule = TicketEmailBlacklist::create(['type' => 'email', 'value' => 'blocked@spam.com']);
+
+        $parsed = [
+            'message_id' => '<blacklisted-msg@example.com>',
+            'in_reply_to' => null,
+            'references' => null,
+            'from' => 'blocked@spam.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Buy now',
+            'body_text' => 'Spam.',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
+
+        $this->assertNull($result);
+        $this->assertDatabaseMissing('helpdesk_tickets', ['subject' => 'Buy now'], 'helpdesk');
+        $this->assertDatabaseMissing('helpdesk_customers', ['email' => 'blocked@spam.com'], 'helpdesk');
+
+        $rule->refresh();
+        $this->assertSame(1, $rule->matched_count);
+        $this->assertNotNull($rule->last_matched_at);
+    }
+
+    public function test_find_or_create_ticket_discards_email_when_sender_domain_blacklisted(): void
+    {
+        TicketEmailBlacklist::create(['type' => 'domain', 'value' => 'spam.com']);
+
+        $parsed = [
+            'message_id' => '<blacklisted-domain-msg@example.com>',
+            'in_reply_to' => null,
+            'references' => null,
+            'from' => 'someone@mail.spam.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Subdomain spam',
+            'body_text' => 'Spam.',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
+
+        $this->assertNull($result);
+        $this->assertDatabaseMissing('helpdesk_customers', ['email' => 'someone@mail.spam.com'], 'helpdesk');
+    }
+
+    public function test_find_or_create_ticket_ignores_inactive_blacklist_rule(): void
+    {
+        Event::fake();
+
+        TicketEmailBlacklist::create([
+            'type' => 'email',
+            'value' => 'notblocked@spam.com',
+            'is_active' => false,
+        ]);
+
+        $parsed = [
+            'message_id' => '<inactive-rule-msg@example.com>',
+            'in_reply_to' => null,
+            'references' => null,
+            'from' => 'notblocked@spam.com',
+            'to' => 'support@example.com',
+            'cc' => null,
+            'bcc' => null,
+            'subject' => 'Still gets through',
+            'body_text' => 'Not blocked, rule is inactive.',
+            'body_html' => null,
+            'attachments' => [],
+        ];
+
+        $result = $this->makeJob()->callFindOrCreateTicket($parsed, $this->baseConnection(['create_tickets' => true]));
+
+        $this->assertInstanceOf(Ticket::class, $result);
+        $this->assertDatabaseHas('helpdesk_tickets', ['subject' => 'Still gets through'], 'helpdesk');
+    }
+
+    // -------------------------------------------------------------------------
+    // webklex/php-imap adapter helpers — migración desde PhpImap\Mailbox
+    // (barbushin/php-imap), que nunca estuvo instalado (composer.json solo
+    // trae webklex/php-imap): cualquier canal real con create_tickets/
+    // create_replies activo hacía fallar el job entero con "Class not found"
+    // en cuanto intentaba conectar de verdad.
+    // -------------------------------------------------------------------------
+
+    public function test_decode_mime_header_decodes_encoded_word(): void
+    {
+        $result = $this->makeJob()->callDecodeMimeHeader('=?utf-8?b?V2hhdOKAmXM=?= new for developers at Oracle');
+
+        $this->assertSame("What\u{2019}s new for developers at Oracle", $result);
+    }
+
+    public function test_decode_mime_header_leaves_plain_text_untouched(): void
+    {
+        $result = $this->makeJob()->callDecodeMimeHeader('Plain subject, no encoding');
+
+        $this->assertSame('Plain subject, no encoding', $result);
+    }
+
+    public function test_string_attribute_returns_null_for_null_attribute(): void
+    {
+        $this->assertNull($this->makeJob()->callStringAttribute(null));
+    }
+
+    public function test_string_attribute_returns_plain_value(): void
+    {
+        $attribute = new ImapAttribute('message_id', 'abc123@example.com');
+
+        $this->assertSame('abc123@example.com', $this->makeJob()->callStringAttribute($attribute));
+    }
+
+    public function test_format_address_attribute_returns_null_for_null_attribute(): void
+    {
+        $this->assertNull($this->makeJob()->callFormatAddressAttribute(null));
+    }
+
+    public function test_format_address_attribute_formats_name_and_email(): void
+    {
+        $attribute = new ImapAttribute('from', (object) [
+            'personal' => 'John Doe',
+            'mailbox' => 'john',
+            'host' => 'example.com',
+        ]);
+
+        $result = $this->makeJob()->callFormatAddressAttribute($attribute);
+
+        $this->assertSame('John Doe <john@example.com>', $result);
+    }
+
+    public function test_format_address_attribute_omits_brackets_without_a_display_name(): void
+    {
+        $attribute = new ImapAttribute('from', (object) [
+            'personal' => '',
+            'mailbox' => 'john',
+            'host' => 'example.com',
+        ]);
+
+        $result = $this->makeJob()->callFormatAddressAttribute($attribute);
+
+        $this->assertSame('john@example.com', $result);
+    }
+
+    public function test_format_address_attribute_joins_multiple_recipients(): void
+    {
+        $attribute = new ImapAttribute('to', [
+            (object) ['personal' => '', 'mailbox' => 'a', 'host' => 'example.com'],
+            (object) ['personal' => 'B Person', 'mailbox' => 'b', 'host' => 'example.com'],
+        ]);
+
+        $result = $this->makeJob()->callFormatAddressAttribute($attribute);
+
+        $this->assertSame('a@example.com, B Person <b@example.com>', $result);
+    }
+
+    public function test_split_references_returns_empty_array_for_null(): void
+    {
+        $this->assertSame([], $this->makeJob()->callSplitReferences(null));
+    }
+
+    public function test_split_references_trims_brackets_and_whitespace(): void
+    {
+        $result = $this->makeJob()->callSplitReferences('<a@example.com>, b@example.com , <c@example.com>');
+
+        $this->assertSame(['a@example.com', 'b@example.com', 'c@example.com'], $result);
+    }
+
+    public function test_format_address_attribute_decodes_mime_encoded_display_name(): void
+    {
+        $attribute = new ImapAttribute('from', (object) [
+            'personal' => '=?utf-8?b?V2hhdOKAmXM=?=',
+            'mailbox' => 'john',
+            'host' => 'example.com',
+        ]);
+
+        $result = $this->makeJob()->callFormatAddressAttribute($attribute);
+
+        $this->assertSame("What\u{2019}s <john@example.com>", $result);
     }
 }

@@ -37,19 +37,31 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre las empresas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre las empresas</h6>
                     <p class="card-text text-muted small">
                         Las empresas te permiten agrupar clientes bajo una misma organizacion y hacer seguimiento del estado de la relacion comercial.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Dominio automatico</h6>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Dominio automatico</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         Si configuras un dominio de correo (ej: <code>acme.com</code>), los nuevos clientes con ese dominio se asociaran automaticamente a esta empresa.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Health score</h6>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Health score</h6>
+                </div>
+                <div class="card-body">
                     <p class="card-text text-muted small">
                         El health score (0-100) indica la salud de la relacion. <strong>80+</strong> es saludable, <strong>50-79</strong> es regular y <strong>menos de 50</strong> esta en riesgo.
                     </p>

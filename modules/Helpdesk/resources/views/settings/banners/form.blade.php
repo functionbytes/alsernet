@@ -28,7 +28,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Titulo, contenido y tipo del banner</p>
                         <div class="row g-3 mb-4">
 
@@ -77,7 +77,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Boton de accion (opcional)</h6>
+                        <h6 class="fw-semibold mb-1">Boton de accion (opcional)</h6>
                         <p class="text-muted small mb-3">Enlace que se mostrara como boton en el banner</p>
                         <div class="row g-3 mb-4">
 
@@ -109,7 +109,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Vigencia y comportamiento</h6>
+                        <h6 class="fw-semibold mb-1">Vigencia y comportamiento</h6>
                         <p class="text-muted small mb-3">Fechas de inicio y fin, y si el cliente puede cerrar el banner</p>
                         <div class="row g-3">
 
@@ -147,7 +147,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-md-4">
+                            <div class="col-12">
                                 <div class="mb-3">
                                     <label class="form-label">Estado</label>
                                     <select name="is_active" class="form-select @error('is_active') is-invalid @enderror">
@@ -175,37 +175,43 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los banners</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los banners</h6>
                     <p class="card-text text-muted">
                         Los banners se muestran en la parte superior del widget de chat para comunicar mensajes importantes a los clientes.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Tipos disponibles</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Tipos disponibles</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><span class="badge bg-primary-subtle text-primary me-2">Info</span> Mensajes informativos generales</li>
-                        <li class="mb-2 text-muted small"><span class="badge bg-success-subtle text-success me-2">Exito</span> Novedades o mejoras</li>
-                        <li class="mb-2 text-muted small"><span class="badge bg-warning-subtle text-warning me-2">Advertencia</span> Mantenimientos programados</li>
-                        <li class="text-muted small"><span class="badge bg-danger-subtle text-danger me-2">Peligro</span> Incidentes o interrupciones</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><span class="badge bg-primary-subtle text-primary me-2">Info</span> Mensajes informativos generales</li>
+                        <li class="mb-2"><span class="badge bg-success-subtle text-success me-2">Exito</span> Novedades o mejoras</li>
+                        <li class="mb-2"><span class="badge bg-warning-subtle text-warning me-2">Advertencia</span> Mantenimientos programados</li>
+                        <li class="mb-0"><span class="badge bg-danger-subtle text-danger me-2">Peligro</span> Incidentes o interrupciones</li>
                     </ul>
                 </div>
-                @if(isset($banner))
-                    <hr class="my-0">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">Informacion del registro</h6>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2 text-muted small">
-                                <span class="fw-semibold">Creado:</span> {{ $banner->created_at->format('d/m/Y H:i') }}
-                            </li>
-                            <li class="text-muted small">
-                                <span class="fw-semibold">Actualizado:</span> {{ $banner->updated_at->format('d/m/Y H:i') }}
-                            </li>
-                        </ul>
-                    </div>
-                @endif
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">
+                            <span class="fw-semibold">Creado:</span> {{ $banner->created_at->format('d/m/Y H:i') }}
+                        </li>
+                        <li class="mb-0">
+                            <span class="fw-semibold">Actualizado:</span> {{ $banner->updated_at->format('d/m/Y H:i') }}
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 

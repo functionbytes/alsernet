@@ -12,7 +12,6 @@ use Modules\HelpdeskTickets\Events\TicketReopened;
 use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
-use Modules\HelpdeskTickets\Services\SlaService;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Tests\TestCase;
 
@@ -35,7 +34,7 @@ class TicketServiceTest extends TestCase
 
     private function makeService(): TicketService
     {
-        return new TicketService($this->createMock(SlaService::class));
+        return new TicketService;
     }
 
     private function ticketData(array $overrides = []): array
@@ -81,7 +80,13 @@ class TicketServiceTest extends TestCase
             'source' => 'email',
         ]));
 
-        $this->assertStringStartsWith('TKT-'.now()->year.'-', $ticket->ticket_number);
+        // El prefijo es TCK-, no TKT-. TicketService tenía su propio generador
+        // de números con un prefijo distinto al del resto del módulo, y este
+        // test fijaba ese comportamiento: los tickets del widget y del
+        // formulario público salían con TKT- y el hilado del correo entrante,
+        // que busca /#(TCK-\d{4}-\d{5})/, nunca los reconocía. Ahora delega en
+        // Ticket::generateTicketNumber(), que es la única implementación.
+        $this->assertStringStartsWith('TCK-'.now()->year.'-', $ticket->ticket_number);
         $this->assertEquals($status->id, $ticket->status_id);
     }
 

@@ -299,7 +299,7 @@ class TicketLifecycleController extends Controller
             ]
         );
 
-        return back()->with('success', 'Ticket enlazado correctamente.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.link.created'));
     }
 
     public function unlinkTicket(Ticket $ticket, int $linkId): RedirectResponse
@@ -310,6 +310,6 @@ class TicketLifecycleController extends Controller
             ->where('id', $linkId)
             ->delete();
 
-        return back()->with('success', 'Enlace eliminado.');
+        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.link.deleted'));
     }
 }

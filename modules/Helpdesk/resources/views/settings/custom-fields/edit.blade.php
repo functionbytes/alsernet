@@ -38,9 +38,11 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del campo</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion del campo</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Clave</span>
                         <code>{{ $field->key }}</code>
@@ -54,7 +56,10 @@
                         <span class="small">{{ $field->created_at->format('d/m/Y') }}</span>
                     </div>
                     @if($field->values()->count() > 0)
-                        <hr>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
                         <p class="small text-warning mb-0">
                             <i class="fas fa-triangle-exclamation"></i>
                             Cambiar el tipo puede afectar los valores ya guardados.

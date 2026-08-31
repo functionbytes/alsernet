@@ -149,25 +149,19 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label" for="wt_primary_color">Color primario</label>
-                        <div class="input-group">
-                            <input type="color" id="wt_primary_color" name="widget[widget_color]"
-                                   class="form-control form-control-color wt-color-picker"
-                                   value="{{ $w('widget_color', '#90bb13') }}"
-                                   data-hex-target="#wt_primary_color_hex">
-                            <input type="text" id="wt_primary_color_hex" class="form-control"
-                                   value="{{ $w('widget_color', '#90bb13') }}" readonly>
-                        </div>
+                        @include('core::components.color-field', [
+                            'name' => 'widget[widget_color]',
+                            'value' => $w('widget_color', '#90bb13'),
+                            'id' => 'wt_primary_color',
+                        ])
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="wt_secondary_color">Color secundario</label>
-                        <div class="input-group">
-                            <input type="color" id="wt_secondary_color" name="widget[secondary_color]"
-                                   class="form-control form-control-color wt-color-picker"
-                                   value="{{ $w('secondary_color', '#ffffff') }}"
-                                   data-hex-target="#wt_secondary_color_hex">
-                            <input type="text" id="wt_secondary_color_hex" class="form-control"
-                                   value="{{ $w('secondary_color', '#ffffff') }}" readonly>
-                        </div>
+                        @include('core::components.color-field', [
+                            'name' => 'widget[secondary_color]',
+                            'value' => $w('secondary_color', '#ffffff'),
+                            'id' => 'wt_secondary_color',
+                        ])
                     </div>
                 </div>
                 <div class="row g-3 mb-3">
@@ -255,7 +249,7 @@
             </div>
             <div class="card-body p-4">
                 {{-- Pre-chat form --}}
-                <h6 class="fw-bold border-bottom pb-2 mb-3">Formulario pre-chat</h6>
+                <h6 class="fw-bold mb-3">Formulario pre-chat</h6>
                 <div class="form-check form-switch mb-2">
                     <input type="hidden" name="widget[pre_chat_form_enabled]" value="0">
                     <input class="form-check-input" type="checkbox" id="wt_pre_chat_form_enabled"
@@ -273,7 +267,7 @@
                 </div>
 
                 {{-- Post-chat form --}}
-                <h6 class="fw-bold border-bottom pb-2 mb-3">Formulario post-chat</h6>
+                <h6 class="fw-bold mb-3">Formulario post-chat</h6>
                 <div class="form-check form-switch mb-2">
                     <input type="hidden" name="widget[post_chat_form_enabled]" value="0">
                     <input class="form-check-input" type="checkbox" id="wt_post_chat_form_enabled"
@@ -291,7 +285,7 @@
                 </div>
 
                 {{-- Chat page --}}
-                <h6 class="fw-bold border-bottom pb-2 mb-3">Página de chat</h6>
+                <h6 class="fw-bold mb-3">Página de chat</h6>
                 <div class="mb-3">
                     <label class="form-label" for="wt_chat_page_title">Título de la página</label>
                     <input type="text" id="wt_chat_page_title" name="widget[chat_page_title]" class="form-control"
@@ -605,17 +599,7 @@
                 target.style.display = cb.checked ? '' : 'none';
             }
         });
-    });
-
-    // Sync color picker hex display
-    document.querySelectorAll('.wt-color-picker').forEach(function (picker) {
-        picker.addEventListener('input', function () {
-            var hexInput = document.querySelector(picker.dataset.hexTarget);
-            if (hexInput) {
-                hexInput.value = picker.value;
-            }
-        });
-    });
+    });    });
 
     // CMS type selector → toggle which install snippet is visible
     var cmsSelect = document.getElementById('wt_cms_type');

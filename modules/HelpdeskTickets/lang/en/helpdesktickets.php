@@ -128,4 +128,102 @@ return [
         'at_risk' => 'SLA at risk',
         'on_track' => 'SLA on track',
     ],
+    /*
+     * Customer portal. Read by the end customer, not by an agent.
+     */
+    'portal' => [
+        'login_link_sent' => 'If this email is registered, we have sent you a sign-in link.',
+        'login_throttled' => 'Too many attempts. Please try again in :seconds seconds.',
+        'auth_throttled' => 'Too many sign-in attempts. Please wait a few minutes and try again.',
+        'link_expired' => 'The sign-in link has expired or is not valid.',
+        'account_suspended' => 'Your account is suspended. Please get in touch with us.',
+        'ticket_created' => 'We have received your request.',
+        'reply_sent' => 'Your reply has been sent.',
+        'account_updated' => 'Your details have been saved.',
+        'feedback_thanks' => 'Thank you for your feedback.',
+        'rating_invalid' => 'That rating is not valid.',
+        'rating_thanks' => 'Thank you for your rating! Your feedback helps us improve.',
+    ],
+    /*
+     * Result messages for the Settings screens and the ticket lifecycle.
+     */
+    'settings' => [
+        'feedback' => [
+            'thanks' => 'Thank you for your feedback.',
+        ],
+        'link' => [
+            'created' => 'Ticket linked.',
+            'deleted' => 'Link removed.',
+        ],
+        'view' => [
+            'created' => 'View created.',
+            'updated' => 'View updated.',
+            'deleted' => 'View deleted.',
+            'cannot_delete_system' => 'System views cannot be deleted.',
+        ],
+        'macro' => [
+            'created' => 'Macro created.',
+            'updated' => 'Macro updated.',
+            'deleted' => 'Macro deleted.',
+        ],
+        'blacklist' => [
+            'sender_added' => 'Sender added to the blocklist.',
+            'rule_added' => 'Rule added to the blocklist.',
+            'toggled' => 'Rule status updated.',
+            'deleted' => 'Rule removed from the blocklist.',
+        ],
+        'group' => [
+            'created' => 'Group created.',
+            'updated' => 'Group updated.',
+            'toggled' => 'Group status updated.',
+            'deleted' => 'Group deleted.',
+            'cannot_delete_default' => 'The default group cannot be deleted.',
+            'cannot_delete_with_tickets' => 'A group with assigned tickets cannot be deleted.',
+        ],
+        'channel' => [
+            'created' => 'Mail channel added.',
+            'updated' => 'Mail channel updated.',
+            'deleted' => 'Mail channel deleted.',
+        ],
+        'canned_reply' => [
+            'created' => 'Canned reply created.',
+            'updated' => 'Canned reply updated.',
+            'deleted' => 'Canned reply deleted.',
+        ],
+        'automation' => [
+            'created' => 'Automation created.',
+            'updated' => 'Automation updated.',
+            'deleted' => 'Automation deleted.',
+        ],
+        'status' => [
+            'created' => 'Status created.',
+            'updated' => 'Status updated.',
+            'deleted' => 'Status deleted.',
+            'cannot_delete_default' => 'The default status cannot be deleted.',
+            'cannot_delete_with_tickets' => 'A status with tickets cannot be deleted.',
+        ],
+        'sla' => [
+            'created' => 'SLA policy created.',
+            'updated' => 'SLA policy updated.',
+            'deleted' => 'SLA policy deleted.',
+            'toggled' => 'SLA policy status updated.',
+            'cannot_delete_in_use' => 'An SLA policy in use cannot be deleted.',
+        ],
+        'priority' => [
+            'created' => 'Priority created.',
+            'updated' => 'Priority updated.',
+            'deleted' => 'Priority deleted.',
+            'at_least_one' => 'At least one priority must remain.',
+        ],
+        'category' => [
+            'created' => 'Category created.',
+            'updated' => 'Category updated.',
+            'deleted' => 'Category deleted.',
+            'toggled' => 'Category status updated.',
+            'cannot_delete_with_tickets' => 'A category with tickets cannot be deleted.',
+        ],
+        'general' => [
+            'updated' => 'Ticket settings updated.',
+        ],
+    ],
 ];

@@ -26,76 +26,289 @@
         </div>
 
         {{-- Date Range Filter --}}
+        @php
+            $rangePills = [
+                'today' => 'Hoy',
+                '7d' => '7 días',
+                '30d' => '30 días',
+                'month' => 'Este mes',
+                'last_month' => 'Mes anterior',
+                'year' => 'Este año',
+            ];
+        @endphp
         <div class="card mb-4">
             <div class="card-body py-3">
-                <form method="GET" action="{{ route('manager.helpdesk.reports.index') }}" class="row g-2 align-items-end">
-                    <div class="col-auto">
-                        <label class="form-label small mb-1">Desde</label>
-                        <input type="date" name="from" class="form-control form-control-sm"
-                               value="{{ $from->toDateString() }}">
-                    </div>
-                    <div class="col-auto">
-                        <label class="form-label small mb-1">Hasta</label>
-                        <input type="date" name="to" class="form-control form-control-sm"
-                               value="{{ $to->toDateString() }}">
-                    </div>
-                    <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-filter me-1"></i> Filtrar
-                        </button>
-                    </div>
-                    <div class="col-auto">
-                        <a href="{{ route('manager.helpdesk.reports.index') }}" class="btn btn-light btn-sm">
-                            <i class="fas fa-undo me-1"></i> Últimos 30 días
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    @foreach($rangePills as $key => $label)
+                        <a href="{{ route('manager.helpdesk.reports.index', ['range' => $key]) }}"
+                           class="btn btn-sm {{ $activeRange === $key ? 'btn-primary' : 'btn-light' }}">
+                            {{ $label }}
                         </a>
-                    </div>
-                </form>
+                    @endforeach
+                    <button type="button" class="btn btn-sm {{ $activeRange === 'custom' ? 'btn-primary' : 'btn-light' }}"
+                            data-bs-toggle="collapse" data-bs-target="#custom-range-form">
+                        <i class="fas fa-calendar me-1"></i> Rango personalizado
+                    </button>
+                </div>
+
+                <div class="collapse {{ $activeRange === 'custom' ? 'show' : '' }} mt-3" id="custom-range-form">
+                    <form method="GET" action="{{ route('manager.helpdesk.reports.index') }}" class="row g-2 align-items-end">
+                        <div class="col-auto">
+                            <label class="form-label small mb-1">Desde</label>
+                            <input type="date" name="from" class="form-control form-control-sm"
+                                   value="{{ $from->toDateString() }}">
+                        </div>
+                        <div class="col-auto">
+                            <label class="form-label small mb-1">Hasta</label>
+                            <input type="date" name="to" class="form-control form-control-sm"
+                                   value="{{ $to->toDateString() }}">
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-filter me-1"></i> Filtrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
         {{-- Summary Stats --}}
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-3">
+        @php
+            // Traduce un % de variación a { class, icon } de badge. 'neutral'
+            // no juzga la dirección (más tickets creados no es bueno ni
+            // malo); 'good_up' pinta subir en verde (cerrados, SLA
+            // cumplido); 'good_down' pintaría bajar en verde (sin uso hoy,
+            // queda listo por si se agrega una card de tiempos).
+            $renderDelta = function (float $delta, string $mode = 'good_up') {
+                if ($delta === 0.0) {
+                    return ['class' => 'secondary', 'icon' => 'fa-minus'];
+                }
+                $isUp = $delta > 0;
+                $icon = $isUp ? 'fa-arrow-up' : 'fa-arrow-down';
+                if ($mode === 'neutral') {
+                    return ['class' => 'info', 'icon' => $icon];
+                }
+                $isGood = $mode === 'good_up' ? $isUp : ! $isUp;
+
+                return ['class' => $isGood ? 'success' : 'danger', 'icon' => $icon];
+            };
+        @endphp
+        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
+            <div class="col">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center">
                         <div class="rounded-circle bg-primary-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
                             <i class="fas fa-ticket-alt text-primary"></i>
                         </div>
                         <h3 class="fw-bold mb-0">{{ number_format($totalCreated) }}</h3>
-                        <small class="text-muted">Tickets creados</small>
+                        <small class="text-muted d-block">Tickets creados</small>
+                        @php $d = $renderDelta($changePercent['totalCreated'], 'neutral'); @endphp
+                        <span class="badge bg-{{ $d['class'] }}-subtle text-{{ $d['class'] }} small mt-2">
+                            <i class="fas {{ $d['icon'] }} me-1"></i>{{ number_format(abs($changePercent['totalCreated']), 1) }}% vs anterior
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center">
                         <div class="rounded-circle bg-success-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
                             <i class="fas fa-check-circle text-success"></i>
                         </div>
                         <h3 class="fw-bold mb-0">{{ number_format($totalClosed) }}</h3>
-                        <small class="text-muted">Tickets cerrados</small>
+                        <small class="text-muted d-block">Tickets cerrados</small>
+                        @php $d = $renderDelta($changePercent['totalClosed'], 'good_up'); @endphp
+                        <span class="badge bg-{{ $d['class'] }}-subtle text-{{ $d['class'] }} small mt-2">
+                            <i class="fas {{ $d['icon'] }} me-1"></i>{{ number_format(abs($changePercent['totalClosed']), 1) }}% vs anterior
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="rounded-circle bg-success-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
+                            <i class="fas fa-gauge-high text-success"></i>
+                        </div>
+                        <h3 class="fw-bold mb-0">{{ $slaComplianceRate }}<small class="fs-6 text-muted">%</small></h3>
+                        <small class="text-muted d-block">Cumplimiento SLA</small>
+                        @php $d = $renderDelta($changePercent['slaComplianceRate'], 'good_up'); @endphp
+                        <span class="badge bg-{{ $d['class'] }}-subtle text-{{ $d['class'] }} small mt-2">
+                            <i class="fas {{ $d['icon'] }} me-1"></i>{{ number_format(abs($changePercent['slaComplianceRate']), 1) }}% vs anterior
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center">
                         <div class="rounded-circle bg-danger-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
                             <i class="fas fa-exclamation-triangle text-danger"></i>
                         </div>
                         <h3 class="fw-bold mb-0">{{ number_format($slaBreached) }}</h3>
-                        <small class="text-muted">SLA incumplidos</small>
+                        <small class="text-muted d-block">SLA incumplidos</small>
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-body text-center">
                         <div class="rounded-circle bg-warning-subtle d-inline-flex align-items-center justify-content-center mb-2 bv-icon-circle-48">
                             <i class="far fa-clock text-warning"></i>
                         </div>
                         <h3 class="fw-bold mb-0">{{ $avgResponseTime }}<small class="fs-6 text-muted"> min</small></h3>
-                        <small class="text-muted">Tiempo respuesta promedio</small>
+                        <small class="text-muted d-block">Tiempo respuesta promedio</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Trend chart --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <h6 class="fw-semibold mb-0">
+                    <i class="fas fa-chart-line me-1 text-primary"></i>
+                    Tendencia de tickets creados
+                </h6>
+                <small class="text-muted">Evolución en el período seleccionado</small>
+            </div>
+            <div class="card-body pt-3">
+                <canvas id="chart-trend" height="90"></canvas>
+            </div>
+        </div>
+
+        {{-- By Status (doughnut) & By Channel --}}
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h6 class="fw-semibold mb-0">
+                            <i class="fas fa-tags me-1 text-primary"></i>
+                            Distribución por estado
+                        </h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        @if($byStatus->isEmpty())
+                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
+                        @else
+                            <div class="row align-items-center g-3">
+                                <div class="col-5">
+                                    <canvas id="chart-status"></canvas>
+                                </div>
+                                <div class="col-7">
+                                    @foreach($byStatus as $row)
+                                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                            <div class="d-flex align-items-center gap-2">
+                                                @if($row->status)
+                                                    <span class="badge rounded-pill bv-status-badge--dynamic"
+                                                           style="--bv-status-color:{{ $row->status->color }}">
+                                                        {{ $row->status->name }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-secondary rounded-pill">Sin estado</span>
+                                                @endif
+                                            </div>
+                                            <span class="fw-semibold">{{ number_format($row->count) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h6 class="fw-semibold mb-0">
+                            <i class="fas fa-tower-broadcast me-1 text-primary"></i>
+                            Tickets por canal
+                        </h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        @php
+                            $channelLabels = ['email' => 'Email', 'widget' => 'Widget', 'wa' => 'WhatsApp', 'fb' => 'Facebook', 'ig' => 'Instagram', 'formulario' => 'Formulario'];
+                        @endphp
+                        @forelse($byChannel as $row)
+                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                <span>{{ $channelLabels[$row->source] ?? ucfirst($row->source ?? 'Sin canal') }}</span>
+                                <span class="fw-semibold">{{ number_format($row->count) }}</span>
+                            </div>
+                        @empty
+                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Top categorías & By Priority --}}
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h6 class="fw-semibold mb-0">
+                            <i class="fas fa-folder me-1 text-primary"></i>
+                            Top categorías
+                        </h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        @forelse($byCategory as $row)
+                            @php $pct = $totalCreated > 0 ? round(($row->count / $totalCreated) * 100, 1) : 0; @endphp
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($row->category)
+                                            <i class="{{ $row->category->icon ?? 'fas fa-tag' }} bv-cat-icon--dynamic"
+                                                style="--bv-cat-color:{{ $row->category->color ?? '#90bb13' }}"></i>
+                                            <span>{{ $row->category->name }}</span>
+                                        @else
+                                            <span class="text-muted">Sin categoría</span>
+                                        @endif
+                                    </div>
+                                    <span class="fw-semibold">{{ number_format($row->count) }} <small class="text-muted">({{ $pct }}%)</small></span>
+                                </div>
+                                <div class="progress bv-h-10">
+                                    <div class="progress-bar bg-primary bv-progress-fill--dynamic" style="--bv-progress-pct:{{ $pct }}%"></div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-0 pb-0">
+                        <h6 class="fw-semibold mb-0">
+                            <i class="fas fa-flag me-1 text-primary"></i>
+                            Tickets por prioridad
+                        </h6>
+                    </div>
+                    <div class="card-body pt-3">
+                        @php
+                            $priorityLabels = [
+                                'urgent' => ['label' => 'Urgente', 'class' => 'danger'],
+                                'high' => ['label' => 'Alta', 'class' => 'warning'],
+                                'normal' => ['label' => 'Normal', 'class' => 'info'],
+                                'low' => ['label' => 'Baja', 'class' => 'secondary'],
+                            ];
+                        @endphp
+                        @forelse($byPriority as $row)
+                            @php $meta = $priorityLabels[$row->priority] ?? ['label' => ucfirst($row->priority), 'class' => 'secondary']; @endphp
+                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                <span class="badge bg-{{ $meta['class'] }}-subtle text-{{ $meta['class'] }} px-3">
+                                    {{ $meta['label'] }}
+                                </span>
+                                <span class="fw-semibold">{{ number_format($row->count) }}</span>
+                            </div>
+                        @empty
+                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -161,104 +374,10 @@
             </div>
         @endisset
 
-        {{-- By Status & By Category --}}
+        {{-- Resumen adicional --}}
         <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pb-0">
-                        <h6 class="fw-semibold mb-0">
-                            <i class="fas fa-tags me-1 text-primary"></i>
-                            Tickets por estado
-                        </h6>
-                    </div>
-                    <div class="card-body pt-3">
-                        @forelse($byStatus as $row)
-                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                                <div class="d-flex align-items-center gap-2">
-                                    @if($row->status)
-                                        <span class="badge rounded-pill bv-status-badge--dynamic"
-                                               style="--bv-status-color:{{ $row->status->color }}">
-                                            {{ $row->status->name }}
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary rounded-pill">Sin estado</span>
-                                    @endif
-                                </div>
-                                <span class="fw-semibold">{{ number_format($row->count) }}</span>
-                            </div>
-                        @empty
-                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pb-0">
-                        <h6 class="fw-semibold mb-0">
-                            <i class="fas fa-folder me-1 text-primary"></i>
-                            Tickets por categoría
-                        </h6>
-                    </div>
-                    <div class="card-body pt-3">
-                        @forelse($byCategory as $row)
-                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                                <div class="d-flex align-items-center gap-2">
-                                    @if($row->category)
-                                        <i class="{{ $row->category->icon ?? 'fas fa-tag' }} bv-cat-icon--dynamic"
-                                            style="--bv-cat-color:{{ $row->category->color ?? '#90bb13' }}"></i>
-                                        <span>{{ $row->category->name }}</span>
-                                    @else
-                                        <span class="text-muted">Sin categoría</span>
-                                    @endif
-                                </div>
-                                <span class="fw-semibold">{{ number_format($row->count) }}</span>
-                            </div>
-                        @empty
-                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- By Priority --}}
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-transparent border-0 pb-0">
-                        <h6 class="fw-semibold mb-0">
-                            <i class="fas fa-flag me-1 text-primary"></i>
-                            Tickets por prioridad
-                        </h6>
-                    </div>
-                    <div class="card-body pt-3">
-                        @php
-                            $priorityLabels = [
-                                'urgent' => ['label' => 'Urgente', 'class' => 'danger'],
-                                'high' => ['label' => 'Alta', 'class' => 'warning'],
-                                'normal' => ['label' => 'Normal', 'class' => 'info'],
-                                'low' => ['label' => 'Baja', 'class' => 'secondary'],
-                            ];
-                        @endphp
-                        @forelse($byPriority as $row)
-                            @php $meta = $priorityLabels[$row->priority] ?? ['label' => ucfirst($row->priority), 'class' => 'secondary']; @endphp
-                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                                <span class="badge bg-{{ $meta['class'] }}-subtle text-{{ $meta['class'] }} px-3">
-                                    {{ $meta['label'] }}
-                                </span>
-                                <span class="fw-semibold">{{ number_format($row->count) }}</span>
-                            </div>
-                        @empty
-                            <p class="text-muted mb-0">Sin datos para el periodo seleccionado.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
                     <div class="card-header bg-transparent border-0 pb-0">
                         <h6 class="fw-semibold mb-0">
                             <i class="fas fa-info-circle me-1 text-primary"></i>
@@ -266,25 +385,27 @@
                         </h6>
                     </div>
                     <div class="card-body pt-3">
-                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                            <span class="text-muted">Tickets resueltos</span>
-                            <span class="fw-semibold">{{ number_format($totalResolved) }}</span>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                            <span class="text-muted">Tiempo resolución promedio</span>
-                            <span class="fw-semibold">{{ $avgResolutionTime }} min</span>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-                            <span class="text-muted">Tasa de SLA incumplido</span>
-                            <span class="fw-semibold text-{{ $totalCreated > 0 && ($slaBreached / $totalCreated) > 0.1 ? 'danger' : 'success' }}">
-                                {{ $totalCreated > 0 ? round(($slaBreached / $totalCreated) * 100, 1) : 0 }}%
-                            </span>
-                        </div>
-                        <div class="d-flex align-items-center justify-content-between py-2">
-                            <span class="text-muted">Tasa de cierre</span>
-                            <span class="fw-semibold text-{{ $totalCreated > 0 && ($totalClosed / $totalCreated) > 0.7 ? 'success' : 'warning' }}">
-                                {{ $totalCreated > 0 ? round(($totalClosed / $totalCreated) * 100, 1) : 0 }}%
-                            </span>
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Tickets resueltos</span>
+                                <span class="fw-semibold">{{ number_format($totalResolved) }}</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Resolución promedio</span>
+                                <span class="fw-semibold">{{ $avgResolutionTime }} min</span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Tasa de SLA incumplido</span>
+                                <span class="fw-semibold text-{{ $totalCreated > 0 && ($slaBreached / $totalCreated) > 0.1 ? 'danger' : 'success' }}">
+                                    {{ $totalCreated > 0 ? round(($slaBreached / $totalCreated) * 100, 1) : 0 }}%
+                                </span>
+                            </div>
+                            <div class="col-6 col-md-3 d-flex align-items-center justify-content-between border-bottom pb-2">
+                                <span class="text-muted">Tasa de cierre</span>
+                                <span class="fw-semibold text-{{ $totalCreated > 0 && ($totalClosed / $totalCreated) > 0.7 ? 'success' : 'warning' }}">
+                                    {{ $totalCreated > 0 ? round(($totalClosed / $totalCreated) * 100, 1) : 0 }}%
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -426,8 +547,69 @@
 
 @endsection
 
+@php
+    // Precalculado aquí (en vez de un ->map(fn () => [...]) inline dentro de
+    // @json en el <script>) porque Blade no compila bien un @json() cuyo
+    // argumento mezcla una arrow function con un cast entre paréntesis
+    // — trunca la expresión y rompe el PHP generado.
+    $statusChartData = $byStatus->map(function ($row) {
+        return [
+            'label' => $row->status->name ?? 'Sin estado',
+            'color' => $row->status->color ?? '#6c757d',
+            'count' => (int) $row->count,
+        ];
+    })->values();
+@endphp
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+    (function () {
+        const trendData = @json($trend);
+
+        new Chart(document.getElementById('chart-trend'), {
+            type: 'line',
+            data: {
+                labels: trendData.labels,
+                datasets: [{
+                    label: 'Tickets creados',
+                    data: trendData.series,
+                    borderColor: '#90bb13',
+                    backgroundColor: 'rgba(144,187,19,0.12)',
+                    tension: 0.3,
+                    fill: true,
+                }],
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            },
+        });
+
+        const statusChartEl = document.getElementById('chart-status');
+        if (statusChartEl) {
+            const statusData = @json($statusChartData);
+
+            new Chart(statusChartEl, {
+                type: 'doughnut',
+                data: {
+                    labels: statusData.map(d => d.label),
+                    datasets: [{
+                        data: statusData.map(d => d.count),
+                        backgroundColor: statusData.map(d => d.color),
+                        borderWidth: 0,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    cutout: '65%',
+                    plugins: { legend: { display: false } },
+                },
+            });
+        }
+    })();
+
     $(document).ready(function () {
         @if(session('success'))
             toastr.success('{{ session('success') }}', 'Exito');

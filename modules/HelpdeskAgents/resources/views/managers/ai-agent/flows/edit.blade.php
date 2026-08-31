@@ -52,7 +52,7 @@
                             <div class="card-body">
                                 @include('core::components.alerts')
 
-                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                                <h6 class="fw-semibold mb-1">Informacion basica</h6>
                                 <p class="text-muted small mb-3">Nombre y descripcion del flujo de IA</p>
                                 <div class="row g-3 mb-4">
 
@@ -79,7 +79,7 @@
 
                                 </div>
 
-                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Trigger</h6>
+                                <h6 class="fw-semibold mb-1">Trigger</h6>
                                 <p class="text-muted small mb-3">Evento que activa la ejecucion de este flujo</p>
                                 <div class="row g-3 mb-4">
 
@@ -106,11 +106,11 @@
 
                                 </div>
 
-                                <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                                <h6 class="fw-semibold mb-1">Configuracion</h6>
                                 <p class="text-muted small mb-3">Publicacion y estado del flujo</p>
                                 <div class="row g-3">
 
-                                    <div class="col-12 col-md-6">
+                                    <div class="col-12">
                                         <label class="form-label">Estado actual</label>
                                         <div class="form-control bg-light d-flex align-items-center gap-2">
                                             <span class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }}">

@@ -58,7 +58,11 @@ class Group extends Model
         $relation = $this->belongsToMany(
             User::class,
             'helpdesk_group_user',
-            'helpdesk_group_id',
+            // La columna del pivot es 'group_id': la tabla la crea la migracion
+            // de HelpdeskTickets (2025_12_29_020927), que corre antes y deja sin
+            // efecto a la de este modulo por su guard hasTable(). Ambos modelos
+            // comparten helpdesk_groups y este mismo pivot.
+            'group_id',
             'user_id'
         )
             ->withPivot('conversation_priority')

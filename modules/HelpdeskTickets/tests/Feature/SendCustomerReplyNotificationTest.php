@@ -29,7 +29,7 @@ class SendCustomerReplyNotificationTest extends TestCase
     {
         $this->assertInstanceOf(
             ShouldQueue::class,
-            new SendCustomerReplyNotification
+            app(SendCustomerReplyNotification::class)
         );
     }
 
@@ -52,7 +52,7 @@ class SendCustomerReplyNotificationTest extends TestCase
         $item->is_internal = true;
         $item->user_id = 1;
 
-        $listener = new SendCustomerReplyNotification;
+        $listener = app(SendCustomerReplyNotification::class);
         $listener->handle(new MessageAdded($item));
 
         Mail::assertNothingSent();
@@ -66,7 +66,7 @@ class SendCustomerReplyNotificationTest extends TestCase
         $item->is_internal = false;
         $item->user_id = null;
 
-        $listener = new SendCustomerReplyNotification;
+        $listener = app(SendCustomerReplyNotification::class);
         $listener->handle(new MessageAdded($item));
 
         Mail::assertNothingSent();
@@ -136,7 +136,7 @@ class SendCustomerReplyNotificationTest extends TestCase
             'is_internal' => false,
         ]);
 
-        (new SendCustomerReplyNotification)->handle(new MessageAdded($item));
+        (app(SendCustomerReplyNotification::class))->handle(new MessageAdded($item));
 
         $this->assertDatabaseHas('helpdesk_ticket_mails', [
             'ticket_id' => $ticket->id,

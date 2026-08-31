@@ -2,7 +2,7 @@
 
     {{-- Seccion 1: Informacion basica --}}
     <div class="col-12">
-        <h6 class="fw-bold border-bottom pb-2 mb-3">Informacion basica</h6>
+        <h6 class="fw-bold mb-3">Informacion basica</h6>
         <div class="row g-3">
 
             {{-- Nombre --}}
@@ -79,7 +79,7 @@
 
     {{-- Seccion 2: Pasos de la campaña --}}
     <div class="col-12">
-        <h6 class="fw-bold border-bottom pb-2 mb-3">Pasos de la campaña</h6>
+        <h6 class="fw-bold mb-3">Pasos de la campaña</h6>
 
         <div id="steps-container">
             @if(isset($dripCampaign) && $dripCampaign->steps->count() > 0)

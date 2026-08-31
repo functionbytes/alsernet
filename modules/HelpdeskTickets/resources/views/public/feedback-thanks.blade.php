@@ -1,12 +1,19 @@
-@extends('layouts.theme')
+{{-- Página pública sin login: layouts.theme asume Auth::user() (rompía con
+     un 500 "Attempt to read property firstname on null" para cualquier
+     cliente real, confirmado 30-ago-2026). layouts.auth no depende de sesión. --}}
+@extends('layouts.auth')
 
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Gracias - Ticket '.$ticket->ticket_number)
 
 @section('content')
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-7 col-lg-6 text-center">
-            <i class="fas fa-check-circle text-success" style="font-size: 5rem"></i>
+            <i class="fas fa-check-circle text-success hdt-icon-xxl"></i>
             <h2 class="fw-bold mt-4">¡Gracias por tu feedback!</h2>
             <p class="text-muted">Tu opinion ayuda a mejorar nuestro servicio.</p>
 

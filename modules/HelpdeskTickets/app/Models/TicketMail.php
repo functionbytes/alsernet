@@ -2,7 +2,6 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
-use App\Models\User;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketMail extends Model
 {
-    use SoftDeletes;
+    use BelongsToHelpdeskUser, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -90,7 +90,7 @@ class TicketMail extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**
@@ -688,7 +688,14 @@ class TicketMail extends Model
         return static::create([
             'ticket_id' => $ticket->id,
             'direction' => 'outbound',
-            'message_id' => '<'.Str::uuid().'@'.config('app.name').'>',
+            // Sin '<' '>' — los correos entrantes se guardan sin corchetes
+            // (así los normaliza webklex/php-imap al parsear Message-ID/
+            // In-Reply-To/References); si esto se guardara con corchetes, la
+            // respuesta del cliente a este correo nunca engancharía por
+            // comparación exacta de string contra este message_id (ver
+            // findOrCreateTicket()). Los corchetes solo hacen falta en el
+            // header real del correo, que Symfony/addIdHeader() ya agrega.
+            'message_id' => Str::uuid().'@'.config('app.name'),
             'from' => $from,
             'to' => $to,
             'cc' => $cc ? implode(',', $cc) : null,

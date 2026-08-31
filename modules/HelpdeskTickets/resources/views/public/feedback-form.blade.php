@@ -1,5 +1,12 @@
-@extends('layouts.theme')
+{{-- Página pública sin login: layouts.theme asume Auth::user() (rompía con
+     un 500 "Attempt to read property firstname on null" para cualquier
+     cliente real, confirmado 30-ago-2026). layouts.auth no depende de sesión. --}}
+@extends('layouts.auth')
 
+
+@push('css')
+    <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/helpdesktickets-ui.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/helpdesktickets-ui.css')) }}">
+@endpush
 @section('title', 'Tu opinion - Ticket '.$ticket->ticket_number)
 
 @section('content')
@@ -10,7 +17,7 @@
         <div class="col-md-7 col-lg-6">
             <div class="card shadow-sm">
                 <div class="card-body p-5 text-center">
-                    <i class="fas fa-comment-dots text-primary mb-3" style="font-size: 3rem"></i>
+                    <i class="fas fa-comment-dots text-primary mb-3 hdt-icon-xl"></i>
                     <h4 class="fw-bold mb-1">¿Cómo calificarias nuestra atencion?</h4>
                     <p class="text-muted small mb-4">Ticket #{{ $ticket->ticket_number }}</p>
 
@@ -32,7 +39,7 @@
                         @if($csatReasons)
                             <div class="mb-4 d-none text-start" id="reason-block">
                                 <label class="form-label small text-muted">¿Qué podríamos mejorar?</label>
-                                <select name="reason" class="form-select">
+                                <select name="reason" class="form-select select2">
                                     <option value="">Selecciona un motivo...</option>
                                     @foreach($csatReasons as $key => $label)
                                         <option value="{{ $key }}">{{ $label }}</option>
@@ -62,6 +69,10 @@
 
 @push('scripts')
 <script>
+$(function () {
+    $('.select2').select2({ width: '100%' });
+});
+
 (function() {
     const stars = document.querySelectorAll('.rating-star');
     const form = document.querySelector('form[data-reason-threshold]');

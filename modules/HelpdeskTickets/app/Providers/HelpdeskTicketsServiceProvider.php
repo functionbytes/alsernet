@@ -2,22 +2,32 @@
 
 namespace Modules\HelpdeskTickets\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Contracts\GdprExportContributor;
+use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\HelpdeskTickets\Console\Commands\AutoCloseTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\AutoResponseTicketCommand;
 use Modules\HelpdeskTickets\Console\Commands\CleanupTrashedTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\CollectOpsMetricsCommand;
+use Modules\HelpdeskTickets\Console\Commands\DetectTicketIncidentsCommand;
 use Modules\HelpdeskTickets\Console\Commands\FetchEmailTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\MarkOverdueTicketsCommand;
+use Modules\HelpdeskTickets\Console\Commands\PruneBlacklistHitsCommand;
+use Modules\HelpdeskTickets\Console\Commands\PublishHelpdeskTicketsAssetsCommand;
+use Modules\HelpdeskTickets\Console\Commands\ReviewTicketQualityCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendDueTicketFollowupsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledRepliesCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledReportsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendScheduledTicketMailsCommand;
 use Modules\HelpdeskTickets\Console\Commands\SendSlaWarnings as SendSlaWarningsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SimulateIncomingTicketEmailsCommand;
+use Modules\HelpdeskTickets\Console\Commands\SuggestHelpArticlesCommand;
 use Modules\HelpdeskTickets\Http\Controllers\Dev\EmailTestController;
 use Modules\HelpdeskTickets\Jobs\AutoAssignUnassignedTickets;
 use Modules\HelpdeskTickets\Jobs\CheckSlaBreaches;
@@ -25,6 +35,7 @@ use Modules\HelpdeskTickets\Jobs\CleanupOldTickets;
 use Modules\HelpdeskTickets\Jobs\EscalateTicketsJob;
 use Modules\HelpdeskTickets\Jobs\ProcessRecurringTicketsJob;
 use Modules\HelpdeskTickets\Jobs\SendSlaWarnings;
+use Modules\HelpdeskTickets\Listeners\AddSpamSenderToBlacklist;
 use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
@@ -87,6 +98,8 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerMenus();
+        $this->registerEventListeners();
+        $this->registerRateLimiters();
 
         // Seccion 'tickets' del export GDPR (derecho de acceso). Igual que la
         // cascada de borrado, NO se ata al toggle de integracion: es una
@@ -94,6 +107,25 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->app->tag([TicketGdprExportContributor::class], GdprExportContributor::TAG);
 
         Ticket::observe(TicketObserver::class);
+    }
+
+    protected function registerEventListeners(): void
+    {
+        Event::listen(ConversationMarkedAsSpam::class, AddSpamSenderToBlacklist::class);
+    }
+
+    /**
+     * routes/public.php referencia 'throttle:helpdesk-feedback' desde que se
+     * creó la ruta pública de feedback, pero nunca se registró el limiter:
+     * cualquier visita a /helpdesk/feedback/{ticketNumber} tiraba
+     * MissingRateLimiterException (500), firmada o no (confirmado
+     * 30-ago-2026 al investigar FeedbackSignedUrlTest — los 9 tests del
+     * archivo daban 500/403 mal, no solo el bug de vista ya documentado).
+     */
+    protected function registerRateLimiters(): void
+    {
+        RateLimiter::for('helpdesk-feedback', fn ($request) => Limit::perMinute(30)
+            ->by($request->ip()));
     }
 
     protected function registerMenus(): void
@@ -185,13 +217,19 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             class_exists(MarkOverdueTicketsCommand::class) ? MarkOverdueTicketsCommand::class : null,
             class_exists(AutoResponseTicketCommand::class) ? AutoResponseTicketCommand::class : null,
             class_exists(CleanupTrashedTicketsCommand::class) ? CleanupTrashedTicketsCommand::class : null,
+            class_exists(PruneBlacklistHitsCommand::class) ? PruneBlacklistHitsCommand::class : null,
             class_exists(FetchEmailTicketsCommand::class) ? FetchEmailTicketsCommand::class : null,
             class_exists(SendSlaWarningsCommand::class) ? SendSlaWarningsCommand::class : null,
             class_exists(CollectOpsMetricsCommand::class) ? CollectOpsMetricsCommand::class : null,
+            class_exists(DetectTicketIncidentsCommand::class) ? DetectTicketIncidentsCommand::class : null,
+            class_exists(SuggestHelpArticlesCommand::class) ? SuggestHelpArticlesCommand::class : null,
+            class_exists(ReviewTicketQualityCommand::class) ? ReviewTicketQualityCommand::class : null,
             class_exists(SendDueTicketFollowupsCommand::class) ? SendDueTicketFollowupsCommand::class : null,
             class_exists(SendScheduledRepliesCommand::class) ? SendScheduledRepliesCommand::class : null,
             class_exists(SendScheduledReportsCommand::class) ? SendScheduledReportsCommand::class : null,
             class_exists(SendScheduledTicketMailsCommand::class) ? SendScheduledTicketMailsCommand::class : null,
+            class_exists(SimulateIncomingTicketEmailsCommand::class) ? SimulateIncomingTicketEmailsCommand::class : null,
+            class_exists(PublishHelpdeskTicketsAssetsCommand::class) ? PublishHelpdeskTicketsAssetsCommand::class : null,
         ]));
 
         if ($commands) {
@@ -213,6 +251,36 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $schedule->command('ticket:send-followups')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('ticket:send-scheduled-replies')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
             $schedule->command('helpdesk:send-scheduled-emails')->everyMinute()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+
+            // Picos de tickets sobre un mismo problema. Cada 10 min y no cada
+            // minuto: una incidencia masiva no se forma en 60 segundos, y cada
+            // pasada recorre vectores en PHP. El comando re-verifica su propio
+            // toggle (helpdeskagents.ticket_similarity.enabled, OFF por defecto).
+            $schedule->command('helpdesk:detect-incidents')
+                ->everyTenMinutes()
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->when(fn () => $enabled() && (bool) config('helpdeskagents.ticket_similarity.enabled', false));
+
+            // Borradores de artículo a partir de tickets resueltos repetidos.
+            // Semanal: es un barrido de un mes de tickets, no algo que cambie
+            // de un día para otro.
+            $schedule->command('helpdesk:suggest-articles')
+                ->weeklyOn(1, '06:00')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->when(fn () => $enabled() && (bool) config('helpdesktickets.article_drafts.enabled', false));
+
+            // Revisión de calidad por muestreo. Diaria y con muestra pequeña:
+            // busca una medida estable, no revisarlo todo.
+            $schedule->command('helpdesk:review-quality')
+                ->dailyAt('05:30')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->when(fn () => $enabled() && (bool) config('helpdesktickets.quality_review.enabled', false));
 
             // Observabilidad operativa: snapshot de colas/webhooks/SLA en cache
             // + evaluación de alertas (mail a managers, OFF por defecto).
@@ -243,6 +311,12 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             $schedule->job(new CheckSlaBreaches)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
             $schedule->job(new SendSlaWarnings)->everyThirtyMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
             $schedule->job(new CleanupOldTickets)->daily()->at('02:00')->onOneServer()->when($enabled);
+            // Historial de auditoria de la lista negra (helpdesk_ticket_email_blacklist_hits):
+            // crece sin limite, un hit por cada correo bloqueado — purga diaria.
+            $schedule->command('helpdesk:prune-blacklist-hits')
+                ->daily()->at('02:30')
+                ->withoutOverlapping()->onOneServer()->runInBackground()
+                ->when($enabled);
             $schedule->job(new EscalateTicketsJob)->everyFifteenMinutes()->withoutOverlapping()->onOneServer()->when($enabled);
             // Barrido de tickets sin asignar (#78): el propio job es inerte si el
             // toggle global de auto-asignación está apagado (default off).
@@ -299,6 +373,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         $this->loadManagerRoutes();
+        $this->loadTicketTemplatesRoutes();
         $this->loadApiRoutes();
         $this->loadAgentRoutes();
         $this->loadPortalRoutes();
@@ -342,6 +417,23 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         }
 
         Route::middleware(['web', 'auth', 'role:super-admin|super-settings'])
+            ->prefix('panel/helpdesk')
+            ->group($path);
+    }
+
+    protected function loadTicketTemplatesRoutes(): void
+    {
+        $path = module_path($this->moduleName, 'routes/ticket-templates.php');
+
+        if (! file_exists($path)) {
+            return;
+        }
+
+        // Mismo prefijo de URL que managers.php (panel/helpdesk/ticket-templates
+        // se mantiene igual), pero con un gate de rol mas amplio: tambien
+        // agentes/managers de helpdesk pueden gestionar sus plantillas
+        // personales, no solo super-admin/super-settings.
+        Route::middleware(['web', 'auth', 'role:helpdesk-agent|helpdesk-manager|manager|super-admin|super-settings'])
             ->prefix('panel/helpdesk')
             ->group($path);
     }

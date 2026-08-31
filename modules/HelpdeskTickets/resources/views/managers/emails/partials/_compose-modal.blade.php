@@ -37,7 +37,7 @@
             <div class="eml-frow">
                 <div class="eml-field">
                     <label class="eml-flabel">Categoría</label>
-                    <select name="category_id" id="eml-compose-category" class="eml-fselect">
+                    <select name="category_id" id="eml-compose-category" class="eml-fselect select2">
                         <option value="">Sin categoría</option>
                     </select>
                 </div>

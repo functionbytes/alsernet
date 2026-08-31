@@ -25,7 +25,7 @@
                         @include('core::components.alerts')
 
                         {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre y descripcion visible de la campana</p>
                         <div class="row g-3 mb-4">
 
@@ -54,7 +54,7 @@
                         </div>
 
                         {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuracion</h6>
                         <p class="text-muted small mb-3">Tipo de visualizacion y estado inicial de la campana</p>
                         <div class="row g-3">
 

@@ -3,14 +3,36 @@
 namespace Modules\HelpdeskTickets\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Grupos de tickets (pantalla Ajustes → Grupos).
+ *
+ * Apunta a `helpdesk_groups`, NO a `helpdesk_ticket_groups`. Durante mucho
+ * tiempo escribió en su propia tabla, pero la FK de la columna que de verdad
+ * importa —`helpdesk_tickets.group_id`— referencia `helpdesk_groups`, igual que
+ * Ticket::group() y el selector de grupo del CRUD. El resultado era que un grupo
+ * creado desde Ajustes no se podía asignar a ningún ticket, y una automatización
+ * con la acción `assign_group` moría con violación de clave foránea
+ * (SQLSTATE 23000, 1452). Se unificó hacia `helpdesk_groups`, que es la tabla
+ * que el resto del sistema ya daba por buena.
+ *
+ * Esa tabla nombra dos columnas distinto que esta pantalla: `default` en vez de
+ * `is_default` y `position` en vez de `order`. Se traducen aquí con un
+ * accessor/mutator para no arrastrar el renombrado por controlador, requests y
+ * vistas; las CONSULTAS sí usan el nombre real de la columna, porque un
+ * where() no pasa por el accessor.
+ */
 class TicketGroup extends Model
 {
+    use SoftDeletes;
+
     protected $connection = 'helpdesk';
 
-    protected $table = 'helpdesk_ticket_groups';
+    protected $table = 'helpdesk_groups';
 
     protected $fillable = [
         'name',
@@ -18,16 +40,40 @@ class TicketGroup extends Model
         'assignment_mode',
         'is_default',
         'is_active',
-        'order',
+        'position',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_default' => 'boolean',
+            'default' => 'boolean',
             'is_active' => 'boolean',
-            'order' => 'integer',
+            'position' => 'integer',
         ];
+    }
+
+    /**
+     * is_default ↔ columna `default`. La pantalla y sus FormRequest hablan de
+     * is_default; la tabla la llama default (palabra reservada, de ahí que no
+     * se pueda usar tal cual en según qué sitios).
+     */
+    protected function isDefault(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => (bool) $this->attributes['default'] ?? false,
+            set: fn ($value) => ['default' => (bool) $value],
+        );
+    }
+
+    /**
+     * order ↔ columna `position`, por el mismo motivo.
+     */
+    protected function order(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => (int) ($this->attributes['position'] ?? 0),
+            set: fn ($value) => ['position' => (int) $value],
+        );
     }
 
     /**
@@ -37,10 +83,24 @@ class TicketGroup extends Model
     {
         // Auto-increment order for new groups
         static::creating(function ($group) {
-            if (is_null($group->order)) {
-                $maxOrder = static::max('order') ?? 0;
-                $group->order = $maxOrder + 1;
+            if (is_null($group->attributes['position'] ?? null)) {
+                $group->position = (static::max('position') ?? 0) + 1;
             }
+        });
+
+        // "Grupo por defecto" es exclusivo: al marcar uno, se desmarca el que
+        // lo estuviera. No lo era, pero mientras la pantalla escribia en su
+        // propia tabla (vacia) el fallo no se alcanzaba; contra helpdesk_groups,
+        // que ya trae uno marcado, marcar un segundo dejaba dos y findDefault()
+        // devolvia el de id mas bajo, no el que se acababa de elegir.
+        static::saved(function (self $group) {
+            if (! $group->is_default) {
+                return;
+            }
+
+            static::where('id', '!=', $group->id)
+                ->where('default', true)
+                ->update(['default' => false]);
         });
     }
 
@@ -53,13 +113,16 @@ class TicketGroup extends Model
         $defaultConnection = config('database.default');
         $defaultDatabase = config("database.connections.{$defaultConnection}.database");
 
+        // Pivot de helpdesk_groups. La columna de prioridad se llama
+        // conversation_priority (la comparte con el reparto de conversaciones),
+        // no `priority` como en la tabla que se retiró.
         $relation = $this->belongsToMany(
             User::class,
-            'helpdesk_ticket_group_user',
-            'ticket_group_id',
+            'helpdesk_group_user',
+            'group_id',
             'user_id'
         )
-            ->withPivot('priority')
+            ->withPivot('conversation_priority')
             ->withTimestamps();
 
         // Override the query to use the correct database for users table
@@ -73,7 +136,7 @@ class TicketGroup extends Model
      */
     public function primaryAgents()
     {
-        return $this->users()->wherePivot('priority', 'primary');
+        return $this->users()->wherePivot('conversation_priority', 'primary');
     }
 
     /**
@@ -81,7 +144,7 @@ class TicketGroup extends Model
      */
     public function backupAgents()
     {
-        return $this->users()->wherePivot('priority', 'backup');
+        return $this->users()->wherePivot('conversation_priority', 'backup');
     }
 
     /**
@@ -103,7 +166,7 @@ class TicketGroup extends Model
      */
     public static function findDefault(): ?self
     {
-        return static::where('is_default', true)
+        return static::where('default', true)
             ->where('is_active', true)
             ->first();
     }
@@ -184,7 +247,7 @@ class TicketGroup extends Model
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('order');
+        return $query->orderBy('position');
     }
 
     /**
@@ -193,7 +256,7 @@ class TicketGroup extends Model
     public static function reorder(array $ids): void
     {
         foreach ($ids as $order => $id) {
-            static::where('id', $id)->update(['order' => $order + 1]);
+            static::where('id', $id)->update(['position' => $order + 1]);
         }
     }
 }

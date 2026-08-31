@@ -4,7 +4,7 @@
     @method('PUT')
 
     {{-- Informacion basica --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+    <h6 class="fw-semibold mb-1">Informacion basica</h6>
     <p class="text-muted small mb-3">Nombre y descripcion visible de la campana</p>
     <div class="row g-3 mb-4">
 
@@ -33,7 +33,7 @@
     </div>
 
     {{-- Configuracion --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+    <h6 class="fw-semibold mb-1">Configuracion</h6>
     <p class="text-muted small mb-3">Tipo de visualizacion y estado de la campana</p>
     <div class="row g-3">
 
@@ -68,7 +68,7 @@
     </div>
 
     {{-- Programación --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2 mt-4">Programación</h6>
+    <h6 class="fw-semibold mb-1 mt-4">Programación</h6>
     <p class="text-muted small mb-3">Cuándo se activa y finaliza la campaña</p>
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
@@ -88,7 +88,7 @@
     </div>
 
     {{-- Frequency capping --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2 mt-4">Frecuencia por visitante</h6>
+    <h6 class="fw-semibold mb-1 mt-4">Frecuencia por visitante</h6>
     <p class="text-muted small mb-3">Limita cuántas veces ve la campaña el mismo visitante</p>
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
@@ -108,7 +108,7 @@
     </div>
 
     {{-- Goal --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2 mt-4">Objetivo (opcional)</h6>
+    <h6 class="fw-semibold mb-1 mt-4">Objetivo (opcional)</h6>
     <p class="text-muted small mb-3">La campaña se cierra automáticamente al alcanzar este objetivo</p>
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
@@ -129,7 +129,7 @@
     </div>
 
     {{-- Approval workflow --}}
-    <h6 class="fw-semibold mb-1 border-bottom pb-2 mt-4">Flujo de aprobación</h6>
+    <h6 class="fw-semibold mb-1 mt-4">Flujo de aprobación</h6>
     <p class="text-muted small mb-3">Si está activado, alguien con permiso debe aprobar antes de publicar</p>
     <div class="form-check form-switch mb-4">
         <input class="form-check-input" type="checkbox" name="approval_required" value="1" id="approval_required"

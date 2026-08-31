@@ -26,8 +26,15 @@ class MentionService
                 continue;
             }
 
-            $user = User::where('available', true)
-                ->where('verified', true)
+            // Mismo criterio de "quien es agente" que CatalogCacheService::agents():
+            // rol helpdesk-agent + available. Antes exigia verified=1, que
+            // ningun agente real tiene (es la verificacion de email de Auth),
+            // asi que las menciones no encontraban a nadie del equipo.
+            // Se mantiene la consulta en vez de filtrar la coleccion cacheada
+            // porque el LIKE de MySQL resuelve mayusculas y acentos por
+            // collation, cosa que un match en PHP no replica igual.
+            $user = User::whereHas('roles', fn ($q) => $q->where('name', 'helpdesk-agent'))
+                ->where('available', true)
                 ->whereRaw("TRIM(CONCAT(firstname, ' ', lastname)) LIKE ?", [$name.'%'])
                 ->first();
 

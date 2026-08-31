@@ -53,11 +53,18 @@ class FormsServiceProvider extends ServiceProvider
         // sembrar unos nuevos solo para estas pantallas: 'view' para
         // ver el reporte/listado, 'settings' (más restrictivo, dentro de las
         // rutas del propio managers.php) para crear/editar/activar.
+        //
+        // Prefijo bajo panel/helpdesk/settings/tickets/: un formulario mapea
+        // 1:1 a una categoría de ticket (ver Form::category()), así que esta
+        // pantalla vive junto a Categorías/Automatizaciones/Respuestas
+        // predefinidas en vez de como sección propia "Formularios" -- los
+        // nombres de ruta (forms.manage.*, forms.report.*) no cambian, solo
+        // la URI, para no tener que tocar ninguna vista que ya usa route().
         $managers = module_path($this->moduleName, 'routes/managers.php');
 
         if (file_exists($managers)) {
             Route::middleware(['web', 'auth', 'can:helpdesk.tickets.view'])
-                ->prefix('panel/forms')
+                ->prefix('panel/helpdesk/settings/tickets')
                 ->group($managers);
         }
     }
@@ -72,11 +79,17 @@ class FormsServiceProvider extends ServiceProvider
             return;
         }
 
+        // Se fusiona en la sección 'Helpdesk — Tickets' que registra
+        // HelpdeskServiceProvider (mismo título -> NavService::registerSidebar
+        // las une, sin importar qué proveedor arranque primero): un formulario
+        // mapea 1:1 a una categoría de ticket, así que vive junto a
+        // Categorías/Automatizaciones/Respuestas predefinidas en vez de como
+        // icono propio "Formularios" en el rail.
         NavService::registerSidebar('settings', [
-            'title' => 'Formularios',
+            'title' => 'Helpdesk — Tickets',
             'items' => [
+                ['label' => 'Formularios', 'route' => 'forms.manage.index', 'permission' => 'helpdesk.tickets.settings'],
                 ['label' => 'Reporte de formularios', 'route' => 'forms.report.index', 'permission' => 'helpdesk.tickets.view'],
-                ['label' => 'Gestionar formularios', 'route' => 'forms.manage.index', 'permission' => 'helpdesk.tickets.settings'],
             ],
         ]);
     }

@@ -50,7 +50,7 @@
     </div>
 
     {{-- Umbral de advertencia --}}
-    <div class="col-12 col-md-6">
+    <div class="col-12">
         <label class="form-label">Umbral de advertencia (%)</label>
         <input type="number" name="warning_threshold_percent" min="1" max="100"
             class="form-control @error('warning_threshold_percent') is-invalid @enderror"

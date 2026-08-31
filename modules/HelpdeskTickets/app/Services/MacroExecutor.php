@@ -31,17 +31,20 @@ class MacroExecutor
         $body = $action['body'] ?? null;
 
         match ($type) {
+            // Quien escribe es el agente, asi que va en user_id y author_id
+            // queda a null: author_id es la FK a helpdesk_customers (el cliente
+            // que escribio) y el modelo distingue por ahi si el mensaje es del
+            // cliente o del equipo. Rellenar los dos con el id del agente hacia
+            // fallar la FK y dejaba reply/internal_note inservibles.
             'reply' => $ticket->items()->create([
                 'type' => 'message',
                 'user_id' => auth()->id(),
-                'author_id' => auth()->id(),
                 'body' => $this->interpolator->interpolate($body, $ticket),
                 'is_internal' => false,
             ]),
             'internal_note' => $ticket->items()->create([
                 'type' => 'message',
                 'user_id' => auth()->id(),
-                'author_id' => auth()->id(),
                 'body' => $this->interpolator->interpolate($body, $ticket),
                 'is_internal' => true,
             ]),

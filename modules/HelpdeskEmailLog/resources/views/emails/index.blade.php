@@ -82,6 +82,18 @@
                 <span class="evx-stat-value">{{ number_format($stats['failed']) }}</span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.failed_hint') }}</span>
             </a>
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'bounced']) }}"
+               class="evx-stat accent-danger {{ $activeStatus === 'bounced' ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.bounced') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['bounced']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.bounced_hint') }}</span>
+            </a>
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'complained']) }}"
+               class="evx-stat accent-danger {{ $activeStatus === 'complained' ? 'is-active' : '' }}">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.complained') }}</span>
+                <span class="evx-stat-value">{{ number_format($stats['complained']) }}</span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.complained_hint') }}</span>
+            </a>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}"
                class="evx-stat accent-warning {{ $activeStatus === 'queued' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.queued') }}</span>
@@ -114,9 +126,11 @@
                     $trendSent = array_sum($trend['sent']);
                     $trendFailed = array_sum($trend['failed']);
                     $trendQueued = array_sum($trend['queued']);
+                    $trendBounced = array_sum($trend['bounced']);
+                    $trendComplained = array_sum($trend['complained']);
                 @endphp
                 <canvas id="emaillog-trend" height="80" role="img"
-                        aria-label="{{ __('helpdeskemaillog::emaillog.trend.title') }}: {{ $trendSent }} {{ __('helpdeskemaillog::emaillog.trend.sent') }}, {{ $trendFailed }} {{ __('helpdeskemaillog::emaillog.trend.failed') }}, {{ $trendQueued }} {{ __('helpdeskemaillog::emaillog.trend.queued') }}."></canvas>
+                        aria-label="{{ __('helpdeskemaillog::emaillog.trend.title') }}: {{ $trendSent }} {{ __('helpdeskemaillog::emaillog.trend.sent') }}, {{ $trendFailed }} {{ __('helpdeskemaillog::emaillog.trend.failed') }}, {{ $trendBounced }} {{ __('helpdeskemaillog::emaillog.trend.bounced') }}, {{ $trendComplained }} {{ __('helpdeskemaillog::emaillog.trend.complained') }}, {{ $trendQueued }} {{ __('helpdeskemaillog::emaillog.trend.queued') }}."></canvas>
             </div>
         </div>
 
@@ -268,7 +282,7 @@
                                 <td>
                                     <span class="evx-status {{ $statusVal }}"
                                           @if($log->error_message) title="{{ Str::limit($log->error_message, 120) }}" @endif>
-                                        <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $log->status_label }}
+                                        <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $log->status_label }}
                                     </span>
                                 </td>
                                 <td class="evx-date" title="{{ $log->display_date->diffForHumans() }}">
@@ -407,6 +421,8 @@ $(function () {
                 datasets: [
                     { label: @json(__('helpdeskemaillog::emaillog.trend.sent')), data: trend.sent, backgroundColor: '#90bb13', stack: 's', borderRadius: 3 },
                     { label: @json(__('helpdeskemaillog::emaillog.trend.failed')), data: trend.failed, backgroundColor: '#dc2626', stack: 's', borderRadius: 3 },
+                    { label: @json(__('helpdeskemaillog::emaillog.trend.bounced')), data: trend.bounced, backgroundColor: '#b91c1c', stack: 's', borderRadius: 3 },
+                    { label: @json(__('helpdeskemaillog::emaillog.trend.complained')), data: trend.complained, backgroundColor: '#7f1d1d', stack: 's', borderRadius: 3 },
                     { label: @json(__('helpdeskemaillog::emaillog.trend.queued')), data: trend.queued, backgroundColor: '#d97706', stack: 's', borderRadius: 3 },
                 ],
             },

@@ -7,6 +7,7 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Modules\Core\Services\VectorMath;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticleEmbedding;
 
@@ -174,23 +175,7 @@ class EmbeddingsService
      */
     public function cosineSimilarity(array $a, array $b): float
     {
-        if (count($a) !== count($b) || empty($a)) {
-            return 0.0;
-        }
-
-        $dot = 0.0;
-        $normA = 0.0;
-        $normB = 0.0;
-
-        foreach ($a as $i => $val) {
-            $dot += $val * $b[$i];
-            $normA += $val * $val;
-            $normB += $b[$i] * $b[$i];
-        }
-
-        $denom = sqrt($normA) * sqrt($normB);
-
-        return $denom > 0.0 ? $dot / $denom : 0.0;
+        return VectorMath::cosine($a, $b);
     }
 
     /**

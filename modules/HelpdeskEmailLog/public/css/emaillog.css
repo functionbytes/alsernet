@@ -357,6 +357,16 @@
     color: #92400e;
 }
 
+.evx-status.bounced {
+    background: #fff1f2;
+    color: #9f1239;
+}
+
+.evx-status.complained {
+    background: #fdf2f8;
+    color: #831843;
+}
+
 /* Tag neutro (módulo, mailable) */
 .evx-tag {
     display: inline-flex;

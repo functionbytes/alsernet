@@ -1139,12 +1139,22 @@
             // "abría" (el <select> quedaba en estado open) pero se
             // renderizaba TAPADO detrás del propio modal, invisible. Anclarlo
             // al backdrop más cercano lo mete en su mismo stacking context.
+            //
+            // Bug real de QA (ago-2026): fuera de un modal caía a
+            // document.body — TODO el CSS de arriba (.tkt .select2-dropdown,
+            // .select2-results__option, etc.) está scopeado bajo .tkt como
+            // ancestro, así que un panel colgado directo de <body> (fuera de
+            // ese .tkt) no matcheaba NINGUNA de esas reglas: se veía como una
+            // caja en blanco sin borde/texto (filtro "Origen" del listado,
+            // entre otros). Anclarlo al .tkt más cercano lo mantiene dentro
+            // del mismo scope de CSS.
             var $backdrop = $s.closest('.tkt-modal-backdrop');
+            var $tktRoot = $s.closest('.tkt');
             $s.select2({
                 width: 'style',
                 minimumResultsForSearch: 6,
                 dropdownAutoWidth: true,
-                dropdownParent: $backdrop.length ? $backdrop : $(document.body),
+                dropdownParent: $backdrop.length ? $backdrop : ($tktRoot.length ? $tktRoot : $(document.body)),
             });
         });
     }

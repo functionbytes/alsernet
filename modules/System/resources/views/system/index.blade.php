@@ -18,7 +18,7 @@
             </div>
 
             {{-- Navigation Tabs --}}
-            <ul class="nav nav-tabs border-0 user-profile-tab" id="system-settings-tab" role="tablist">
+            <ul class="nav nav-pills user-profile-tab" id="system-settings-tab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link position-relative rounded-0 d-flex align-items-center justify-content-center bg-transparent fs-3 py-3 {{ $activeTab === 'queue' ? 'active' : '' }}"
                             id="queue-tab" data-bs-toggle="pill" data-bs-target="#queue"
@@ -55,7 +55,7 @@
                             @csrf
                             @method('PUT')
 
-                            <div class="card">
+                            <div>
                                 <div class="card-body">
                                     <h6 class="fw-bold text-dark mb-1">Conexión de cola</h6>
                                     <p class="text-muted mb-3">Selecciona el driver que procesará los trabajos en segundo plano.</p>
@@ -134,7 +134,7 @@
                             @csrf
                             @method('PUT')
 
-                            <div class="card">
+                            <div>
                                 <div class="card-body">
                                     <h6 class="fw-bold text-dark mb-1">Driver de broadcasting</h6>
                                     <p class="text-muted mb-3">Selecciona el servicio para transmitir eventos en tiempo real.</p>
@@ -234,7 +234,7 @@
                                                 <input type="number" class="form-control" id="redisDatabase" name="redis_database"
                                                        value="{{ $websocketsSettings['redis_database'] }}" placeholder="0" min="0" max="15">
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-12">
                                                 <label for="redisPassword" class="form-label fw-semibold">Contraseña</label>
                                                 <input type="password" class="form-control" id="redisPassword" name="redis_password"
                                                        value="{{ $websocketsSettings['redis_password'] }}" placeholder="••••••••" autocomplete="off">
@@ -261,28 +261,26 @@
                 <div class="row g-4 align-items-start">
 
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div>
-                                        <h6 class="fw-bold text-dark mb-1">Espacio en disco</h6>
-                                        <p class="text-muted mb-0">Estado actual del almacenamiento del servidor.</p>
-                                    </div>
-                                    <button type="button" class="btn btn-info btn-sm" id="refreshDiskStatsBtn">
-                                        <i class="fas fa-rotate-right me-1"></i>
-                                    </button>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-1">Espacio en disco</h6>
+                                    <p class="text-muted mb-0">Estado actual del almacenamiento del servidor.</p>
                                 </div>
-                                <div id="disk-stats-content">
-                                    <div class="text-center py-3 text-muted">
-                                        <i class="fas fa-spinner fa-spin me-1"></i> Cargando...
-                                    </div>
+                                <button type="button" class="btn btn-info btn-sm" id="refreshDiskStatsBtn">
+                                    <i class="fas fa-rotate-right me-1"></i>
+                                </button>
+                            </div>
+                            <div id="disk-stats-content">
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-spinner fa-spin me-1"></i> Cargando...
                                 </div>
-                                <div class="alert alert-info border-0 mt-3 mb-0">
-                                    <small>
-                                        El espacio en disco se consulta en tiempo real. Si supera el 90% de uso, considera limpiar logs o backups antiguos.
-                                        El archivo <code>laravel.log</code> puede crecer significativamente en producción.
-                                    </small>
-                                </div>
+                            </div>
+                            <div class="alert alert-info border-0 mt-3 mb-0">
+                                <small>
+                                    El espacio en disco se consulta en tiempo real. Si supera el 90% de uso, considera limpiar logs o backups antiguos.
+                                    El archivo <code>laravel.log</code> puede crecer significativamente en producción.
+                                </small>
                             </div>
                         </div>
                     </div>

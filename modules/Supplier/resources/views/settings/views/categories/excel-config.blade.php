@@ -141,7 +141,7 @@
                                 <input type="text" class="form-control" id="col_grupo_name" name="col_grupo_name"
                                        value="{{ $config['col_grupo_name'] }}" placeholder="DESC_GRUPO_CL">
                             </div>
-                            <div class="col-12 col-md-6 mb-3">
+                            <div class="col-12 mb-3">
                                 <label class="control-label col-form-label" for="col_desc_completa">Columna descripción completa <span class="text-muted">(opcional)</span></label>
                                 <input type="text" class="form-control" id="col_desc_completa" name="col_desc_completa"
                                        value="{{ $config['col_desc_completa'] }}" placeholder="DESC_COMPLETA">

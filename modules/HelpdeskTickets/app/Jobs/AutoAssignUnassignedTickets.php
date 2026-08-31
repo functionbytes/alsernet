@@ -69,8 +69,15 @@ class AutoAssignUnassignedTickets implements ShouldQueue
                 ->cursor();
 
             $assignedCount = 0;
+            // Contador propio: $unassignedTickets es una LazyCollection de
+            // cursor(), así que ->count() al final relanzaba la consulta
+            // entera... y devolvía 0, porque el bucle acababa de asignar esos
+            // mismos tickets. El log informaba total_unassigned: 0 en todas
+            // las ejecuciones, pagando un barrido completo de la tabla.
+            $scannedCount = 0;
 
             foreach ($unassignedTickets as $ticket) {
+                $scannedCount++;
                 try {
                     $assignedAgent = null;
 
@@ -113,7 +120,7 @@ class AutoAssignUnassignedTickets implements ShouldQueue
 
             Log::info('AutoAssignUnassignedTickets job completed at '.now()." - Total tickets assigned: {$assignedCount}", [
                 'assigned_count' => $assignedCount,
-                'total_unassigned' => $unassignedTickets->count(),
+                'total_unassigned' => $scannedCount,
                 'strategy' => $strategy,
             ]);
         } catch (\Exception $e) {

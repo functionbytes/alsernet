@@ -93,7 +93,7 @@
                     </div>
 
                     {{-- Ingest Keep --}}
-                    <div class="col-md-6">
+                    <div class="col-12">
                         <label class="form-label fw-semibold">Retención de ingesta</label>
                         <input type="text" class="form-control" name="ingest_keep" value="{{ $settings['ingest_keep'] }}" required>
                         <small class="text-muted">Cuánto tiempo mantener datos en tránsito</small>

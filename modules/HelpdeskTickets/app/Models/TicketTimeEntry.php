@@ -7,9 +7,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketTimeEntry extends Model
 {
+    use BelongsToHelpdeskUser;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_ticket_time_entries';
@@ -43,7 +46,7 @@ class TicketTimeEntry extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     /**

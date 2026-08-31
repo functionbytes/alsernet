@@ -109,6 +109,8 @@ class TicketMessagingController extends Controller
 
     public function typing(Request $request, Ticket $ticket): JsonResponse
     {
+        $this->authorize('view', $ticket);
+
         $user = $request->user();
 
         broadcast(new TicketTyping(

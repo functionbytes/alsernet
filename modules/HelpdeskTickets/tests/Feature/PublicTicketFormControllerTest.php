@@ -26,16 +26,19 @@ class PublicTicketFormControllerTest extends TestCase
     {
         parent::setUp();
 
-        DB::connection('helpdesk')->statement('SET FOREIGN_KEY_CHECKS=0');
-        DB::connection('helpdesk')->table('helpdesk_ticket_attachments')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_ticket_messages')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_tickets')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_customers')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_ticket_category_fields')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_ticket_categories')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_ticket_statuses')->truncate();
-        DB::connection('helpdesk')->table('helpdesk_channel_webs')->truncate();
-        DB::connection('helpdesk')->statement('SET FOREIGN_KEY_CHECKS=1');
+        // delete(), NUNCA truncate(): truncate() es DDL con commit implícito,
+        // no lo revierte el rollback de DatabaseTransactions — un truncate()
+        // aquí borra de verdad estas tablas en la BD real compartida (pasó
+        // en producción/dev el 29-ago-2026, restaurado desde backup). Orden
+        // hijos -> padres para respetar las FK sin tocar FOREIGN_KEY_CHECKS.
+        DB::connection('helpdesk')->table('helpdesk_ticket_attachments')->delete();
+        DB::connection('helpdesk')->table('helpdesk_ticket_messages')->delete();
+        DB::connection('helpdesk')->table('helpdesk_tickets')->delete();
+        DB::connection('helpdesk')->table('helpdesk_customers')->delete();
+        DB::connection('helpdesk')->table('helpdesk_ticket_category_fields')->delete();
+        DB::connection('helpdesk')->table('helpdesk_ticket_categories')->delete();
+        DB::connection('helpdesk')->table('helpdesk_ticket_statuses')->delete();
+        DB::connection('helpdesk')->table('helpdesk_channel_webs')->delete();
 
         // Ensure a default TicketStatus exists so TicketService can assign it
         TicketStatus::firstOrCreate(

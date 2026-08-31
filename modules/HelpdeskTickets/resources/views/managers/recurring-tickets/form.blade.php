@@ -31,7 +31,7 @@
                         @include('core::components.alerts')
 
                         {{-- Información básica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Información básica</h6>
+                        <h6 class="fw-semibold mb-1">Información básica</h6>
                         <p class="text-muted small mb-3">Nombre interno, asunto y descripción del ticket que se generará</p>
                         <div class="row g-3 mb-4">
 
@@ -72,13 +72,13 @@
                         </div>
 
                         {{-- Clasificación --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Clasificación</h6>
+                        <h6 class="fw-semibold mb-1">Clasificación</h6>
                         <p class="text-muted small mb-3">Categoría, prioridad y agente responsable del ticket generado</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Categoría</label>
-                                <select name="category_id" class="form-select @error('category_id') is-invalid @enderror">
+                                <select name="category_id" class="form-select select2 @error('category_id') is-invalid @enderror">
                                     <option value="">Sin categoría</option>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat->id }}"
@@ -94,7 +94,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Prioridad</label>
-                                <select name="priority_id" class="form-select @error('priority_id') is-invalid @enderror">
+                                <select name="priority_id" class="form-select select2 @error('priority_id') is-invalid @enderror">
                                     <option value="">Sin prioridad</option>
                                     @foreach($priorities as $prio)
                                         <option value="{{ $prio->id }}"
@@ -110,7 +110,7 @@
 
                             <div class="col-12">
                                 <label class="form-label">Agente asignado</label>
-                                <select name="assignee_id" class="form-select @error('assignee_id') is-invalid @enderror">
+                                <select name="assignee_id" class="form-select select2 @error('assignee_id') is-invalid @enderror">
                                     <option value="">Sin asignar</option>
                                     @foreach($agents as $agent)
                                         <option value="{{ $agent->id }}"
@@ -127,13 +127,13 @@
                         </div>
 
                         {{-- Programación --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Programación</h6>
+                        <h6 class="fw-semibold mb-1">Programación</h6>
                         <p class="text-muted small mb-3">Frecuencia con la que se generará automáticamente este ticket</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Frecuencia <span class="text-danger">*</span></label>
-                                <select name="frequency" id="frequency" class="form-select @error('frequency') is-invalid @enderror" required>
+                                <select name="frequency" id="frequency" class="form-select select2 @error('frequency') is-invalid @enderror" required>
                                     <option value="">Seleccionar frecuencia...</option>
                                     <option value="daily"   {{ old('frequency', $recurringTicket->frequency ?? '') === 'daily'   ? 'selected' : '' }}>Diario — cada día</option>
                                     <option value="weekly"  {{ old('frequency', $recurringTicket->frequency ?? '') === 'weekly'  ? 'selected' : '' }}>Semanal — cada 7 días</option>
@@ -172,13 +172,13 @@
                         </div>
 
                         {{-- Configuración --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuración</h6>
+                        <h6 class="fw-semibold mb-1">Configuración</h6>
                         <p class="text-muted small mb-3">Activación del ciclo de ticket recurrente</p>
                         <div class="row g-3">
 
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <label class="form-label">Estado</label>
-                                <select name="is_active" class="form-select @error('is_active') is-invalid @enderror">
+                                <select name="is_active" class="form-select select2 @error('is_active') is-invalid @enderror">
                                     <option value="1" {{ old('is_active', $recurringTicket->is_active ?? 1) == 1 ? 'selected' : '' }}>
                                         Activa — se ejecutará según la programación
                                     </option>
@@ -207,21 +207,26 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los tickets recurrentes</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los tickets recurrentes</h6>
                     <p class="card-text text-muted">
                         Los tickets recurrentes se generan automáticamente según la frecuencia configurada, eliminando la necesidad de crear tickets manualmente de forma periódica.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas prácticas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas prácticas</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que identifiquen claramente el propósito del ticket</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna categoría y prioridad para que los tickets se clasifiquen automáticamente</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa expresión cron solo si necesitas una frecuencia personalizada</li>
-                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Desactiva el schedule en lugar de eliminarlo si es temporal</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa nombres descriptivos que identifiquen claramente el propósito del ticket</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Asigna categoría y prioridad para que los tickets se clasifiquen automáticamente</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa expresión cron solo si necesitas una frecuencia personalizada</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Desactiva el schedule en lugar de eliminarlo si es temporal</li>
                     </ul>
                 </div>
             </div>
@@ -234,6 +239,8 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+
     $('#frequency').on('change', function () {
         $('#cron-expression-group').toggle(this.value === 'custom');
     });

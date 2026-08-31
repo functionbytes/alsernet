@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class HelpdeskTicketsPermissionsSeeder extends Seeder
@@ -37,5 +38,18 @@ class HelpdeskTicketsPermissionsSeeder extends Seeder
 
             $this->command->info("Permiso creado: {$permission['name']}");
         }
+
+        // Sin esto el modulo queda invisible incluso para el super-admin: aqui
+        // los permisos no se conceden por un Gate::before, hay que asignarlos
+        // al rol. Mismo criterio que el seeder de PriceLabels/GiftMessage.
+        $permissionNames = array_column($permissions, 'name');
+
+        $adminRoles = Role::whereIn('name', ['super-admin', 'super-settings'])->get();
+
+        foreach ($adminRoles as $role) {
+            $role->givePermissionTo($permissionNames);
+        }
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
     }
 }

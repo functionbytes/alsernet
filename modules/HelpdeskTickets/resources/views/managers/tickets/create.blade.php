@@ -24,6 +24,21 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
+                        @if($templates->isNotEmpty())
+                            <div class="row g-3 mb-1">
+                                <div class="col-12">
+                                    <label class="form-label">Usar plantilla <span class="text-muted fw-normal">(opcional)</span></label>
+                                    <select id="templateSelect" class="form-select select2">
+                                        <option value="">Sin plantilla — empezar en blanco</option>
+                                        @foreach($templates as $template)
+                                            <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Autorrellena asunto, descripcion, categoria y prioridad. Puedes editar todo despues. Variables como @{{ticket_number}} o @{{customer_name}} se rellenan solas al crear el ticket.</small>
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label">Asunto <span class="text-danger">*</span></label>
@@ -73,7 +88,7 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Categoría <span class="text-danger">*</span></label>
                                 <select name="category_id"
-                                        class="form-select @error('category_id') is-invalid @enderror"
+                                        class="form-select select2 @error('category_id') is-invalid @enderror"
                                         required
                                         id="categorySelect">
                                     <option value="">Seleccione una categoría...</option>
@@ -93,7 +108,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Prioridad <span class="text-danger">*</span></label>
-                                <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
+                                <select name="priority" class="form-select select2 @error('priority') is-invalid @enderror" required>
                                     <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Baja</option>
                                     {{-- value="normal": StoreTicketRequest valida in:low,normal,high,urgent —
                                          bug real encontrado en QA (ago-2026), esta opción usaba "medium" y
@@ -110,7 +125,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Estado inicial</label>
-                                <select name="status_id" class="form-select">
+                                <select name="status_id" class="form-select select2">
                                     <option value="">Por defecto ({{ $defaultStatus->name ?? 'New' }})</option>
                                     @foreach($statuses as $status)
                                         <option value="{{ $status->id }}" {{ old('status_id') == $status->id ? 'selected' : '' }}>
@@ -122,7 +137,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Política SLA</label>
-                                <select name="sla_policy_id" class="form-select">
+                                <select name="sla_policy_id" class="form-select select2">
                                     <option value="">Por defecto (de la categoría)</option>
                                     @foreach($slaPolicies as $policy)
                                         <option value="{{ $policy->id }}" {{ old('sla_policy_id') == $policy->id ? 'selected' : '' }}>
@@ -177,7 +192,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Grupo</label>
-                                <select name="group_id" class="form-select">
+                                <select name="group_id" class="form-select select2">
                                     <option value="">Sin grupo</option>
                                     @foreach($groups as $group)
                                         <option value="{{ $group->id }}" {{ old('group_id') == $group->id ? 'selected' : '' }}>
@@ -220,21 +235,26 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los tickets</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los tickets</h6>
                     <p class="card-text text-muted">
                         Los tickets permiten registrar y gestionar solicitudes de soporte de clientes, con seguimiento de estado, prioridad y SLA.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas prácticas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas prácticas</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa un asunto claro y descriptivo</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Selecciona la categoría correcta para aplicar el SLA adecuado</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Asigna al agente responsable desde el inicio</li>
-                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Adjunta capturas o documentos relevantes</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa un asunto claro y descriptivo</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Selecciona la categoría correcta para aplicar el SLA adecuado</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Asigna al agente responsable desde el inicio</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> Adjunta capturas o documentos relevantes</li>
                     </ul>
                 </div>
             </div>
@@ -247,6 +267,32 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // customerSelect/assigneeSelect ya tienen su propio select2 con placeholder
+    // más abajo — el resto de selects planos usa la config genérica.
+    $('.select2').not('#customerSelect, #assigneeSelect').select2({ width: '100%' });
+
+    // Usar plantilla: autorrellena el formulario, no lo bloquea — el agente
+    // puede seguir editando cualquier campo despues de aplicarla.
+    const TEMPLATES = @json($templates->keyBy('id'));
+
+    $('#templateSelect').on('change', function () {
+        const id = $(this).val();
+        if (!id || !TEMPLATES[id]) return;
+
+        const tpl = TEMPLATES[id];
+
+        $('input[name="subject"]').val(tpl.subject);
+        $('textarea[name="description"]').val(tpl.body);
+
+        if (tpl.category_id) {
+            $('#categorySelect').val(String(tpl.category_id)).trigger('change');
+        }
+
+        if (tpl.priority) {
+            $('select[name="priority"]').val(tpl.priority).trigger('change');
+        }
+    });
+
     // Dynamic custom fields based on category selection
     const $categorySelect = $('#categorySelect');
     const $customFieldsContainer = $('#customFieldsContainer');
@@ -261,7 +307,7 @@ $(document).ready(function () {
         if (fields.length === 0) return;
 
         $customFieldsContainer.append(
-            '<div class="col-12"><h6 class="fw-semibold mb-1 border-bottom pb-2">Campos personalizados</h6></div>'
+            '<div class="col-12"><h6 class="fw-semibold mb-1">Campos personalizados</h6></div>'
         );
 
         fields.forEach(function (field) {
@@ -275,7 +321,7 @@ $(document).ready(function () {
             } else if (field.type === 'textarea') {
                 $input = $('<textarea class="form-control" rows="3">').attr('name', fieldName);
             } else if (field.type === 'select') {
-                $input = $('<select class="form-select">').attr('name', fieldName);
+                $input = $('<select class="form-select select2">').attr('name', fieldName);
                 $input.append($('<option value="">').text('Seleccione...'));
                 (field.options || []).forEach(function (opt) {
                     $input.append($('<option>').val(opt).text(opt));
@@ -302,6 +348,12 @@ $(document).ready(function () {
             }
 
             $customFieldsContainer.append($col);
+
+            // El <select> del campo personalizado se crea después del init
+            // genérico de arriba: necesita su propia llamada a select2().
+            if ($input.is('select')) {
+                $input.select2({ width: '100%' });
+            }
         });
     });
 

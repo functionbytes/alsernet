@@ -2,6 +2,12 @@
 
 @section('title', 'Skills')
 
+@push('styles')
+<style>
+.hd-skills-bulk-toolbar { z-index: 1050; }
+</style>
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Skills'])
 @endsection
@@ -51,24 +57,24 @@
             </div>
         </div>
 
-        {{-- Search --}}
+        {{-- Búsqueda --}}
         <div class="card-body border-bottom">
             <form method="GET" action="{{ route('settings.helpdesk.skills.index') }}">
-                <div class="row align-items-center g-2">
-                    <div class="col-md-10">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="search" name="search" class="form-control"
-                                placeholder="Buscar por nombre o slug..."
-                                value="{{ request('search') }}">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100" aria-label="Filtrar">
-                            <i class="fas fa-filter"></i>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="search" name="search" class="form-control flex-grow-1"
+                        placeholder="Buscar por nombre o slug..."
+                        value="{{ request('search') }}">
+
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button type="submit" class="btn btn-primary" title="Buscar">
+                            <i class="fas fa-magnifying-glass"></i>
                         </button>
+                        @if(request('search'))
+                            <a href="{{ route('settings.helpdesk.skills.index') }}"
+                               class="btn btn-secondary" title="Limpiar filtros">
+                                <i class="fas fa-xmark"></i>
+                            </a>
+                        @endif
                     </div>
                 </div>
             </form>
@@ -81,6 +87,9 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
+                                @can('helpdesk.skills.manage')
+                                    <th scope="col" width="3%"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                                @endcan
                                 <th scope="col">Nombre</th>
                                 <th scope="col">Descripcion</th>
                                 <th scope="col" class="text-center">Agentes</th>
@@ -90,6 +99,9 @@
                         <tbody>
                             @foreach($skills as $skill)
                                 <tr>
+                                    @can('helpdesk.skills.manage')
+                                        <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $skill->id }}"></td>
+                                    @endcan
                                     <td>
                                         <strong>{{ $skill->name }}</strong>
                                         <div>
@@ -181,9 +193,45 @@
 
     @include('core::components.delete')
 
+    @can('helpdesk.skills.manage')
+        {{-- Bulk toolbar flotante --}}
+        <div id="bulk-toolbar" class="hd-skills-bulk-toolbar position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
+            <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+                <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+            </button>
+        </div>
+
+        {{-- Bulk modal --}}
+        <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Acción masiva</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> skill(s)</strong>. Los skills con agentes asignados serán omitidos.</p>
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold">Acción</label>
+                            <select id="bulk-action-select" class="form-select">
+                                <option value="">Seleccionar acción...</option>
+                                <option value="delete">Eliminar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
+
 @endsection
 
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function () {
     $(document).on('click', '.delete-btn', function () {
@@ -198,6 +246,53 @@ $(document).ready(function () {
     @if(session('error'))
         toastr.error('{{ session('error') }}', 'Error');
     @endif
+
+    // ── Bulk actions ──────────────────────────────────────────────────
+    if ($('#bulk-toolbar').length) {
+        const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+        $('#bulk-modal').on('hide.bs.modal', function () {
+            $('#bulk-action-select').val('');
+            $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+            bulk.reset();
+        });
+
+        $('#bulk-apply-btn').on('click', function () {
+            const action = $('#bulk-action-select').val();
+            const ids = bulk.getIds();
+
+            if (!action) { toastr.warning('Selecciona una acción.'); return; }
+            if (!ids.length) { toastr.warning('Selecciona al menos un skill.'); return; }
+
+            const applyBulkAction = function () {
+                const $btn = $('#bulk-apply-btn');
+                $btn.prop('disabled', true).text('Procesando...');
+
+                $.ajax({
+                    url: '{{ route('settings.helpdesk.skills.bulk-action') }}',
+                    method: 'POST',
+                    data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+                    contentType: 'application/json',
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function (res) {
+                        $('#bulk-modal').modal('hide');
+                        toastr.success(res.message);
+                        setTimeout(function () { location.reload(); }, 800);
+                    },
+                    error: function (xhr) {
+                        toastr.error(xhr.responseJSON?.message ?? 'Error al procesar la acción.');
+                        $btn.prop('disabled', false).text('Aplicar');
+                    },
+                });
+            };
+
+            if (action === 'delete') {
+                window.__confirm('¿Eliminar ' + ids.length + ' skill(s)? Esta acción no se puede deshacer.', applyBulkAction);
+            } else {
+                applyBulkAction();
+            }
+        });
+    }
 });
 </script>
 @endpush

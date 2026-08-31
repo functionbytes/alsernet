@@ -25,7 +25,7 @@
         <div class="col-lg-8">
             <div class="card h-100">
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3 border-bottom pb-2">Sobre el proceso GDPR</h6>
+                    <h6 class="fw-bold mb-3">Sobre el proceso GDPR</h6>
                     <p class="text-muted mb-3">
                         El RGPD (Reglamento General de Protección de Datos) otorga a los ciudadanos europeos
                         el derecho a acceder a sus datos personales, corregirlos y solicitar su eliminación.
@@ -67,7 +67,7 @@
                         </div>
                     </div>
 
-                    <h6 class="fw-bold mb-3 border-bottom pb-2">Cómo atender una solicitud</h6>
+                    <h6 class="fw-bold mb-3">Cómo atender una solicitud</h6>
                     <ol class="text-muted ps-3 mb-0">
                         <li class="mb-2">
                             Ve a la lista de clientes y localiza al cliente que realizó la solicitud.
@@ -95,8 +95,10 @@
         {{-- Acciones rápidas --}}
         <div class="col-lg-4">
             <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Acciones rápidas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3">Acciones rápidas</h6>
                     <a href="{{ route('manager.helpdesk.customers.index') }}"
                        class="btn btn-primary w-100 mb-2">
                         <i class="fas fa-users me-1"></i> Ver clientes
@@ -109,9 +111,11 @@
             </div>
 
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Plazos de respuesta</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="fw-bold mb-2">Plazos de respuesta</h6>
-                    <ul class="list-unstyled text-muted small mb-0">
+                    <ul class="text-muted mb-0">
                         <li class="mb-2">
                             <i class="fas fa-clock text-primary me-1"></i>
                             <strong>Solicitudes de acceso:</strong> máximo 30 días naturales.

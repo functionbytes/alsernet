@@ -19,7 +19,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="mb-1 fw-bold">Plantillas de ticket</h5>
-                        <p class="small mb-0 text-muted">Plantillas reutilizables para crear tickets rapidamente</p>
+                        <p class="small mb-0 text-muted">Plantillas reutilizables para crear tickets rapidamente — generales (compartidas) y personales</p>
                     </div>
                     <div class="ms-auto">
                         <a href="{{ route('manager.helpdesk.ticket-templates.create') }}" class="btn btn-primary">
@@ -44,135 +44,66 @@
                     <div class="col-6 col-md-3">
                         <div class="card bg-light-secondary h-100">
                             <div class="card-body">
+                                <h6 class="card-title mb-2">Generales</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['general']) }}</h4>
+                                <small class="text-muted">Compartidas con todos</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-2">Mis plantillas</h6>
+                                <h4 class="mb-1 fw-bold">{{ number_format($stats['mine']) }}</h4>
+                                <small class="text-muted">Solo visibles para ti</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="card bg-light-secondary h-100">
+                            <div class="card-body">
                                 <h6 class="card-title mb-2">Activas</h6>
                                 <h4 class="mb-1 fw-bold">{{ number_format($stats['active']) }}</h4>
                                 <small class="text-muted">Disponibles para uso</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="card bg-light-secondary h-100">
-                            <div class="card-body">
-                                <h6 class="card-title mb-2">Inactivas</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['inactive']) }}</h4>
-                                <small class="text-muted">Ocultas del sistema</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="card bg-light-secondary h-100">
-                            <div class="card-body">
-                                <h6 class="card-title mb-2">Con categoría</h6>
-                                <h4 class="mb-1 fw-bold">{{ number_format($stats['with_category']) }}</h4>
-                                <small class="text-muted">Clasificadas</small>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {{-- Table --}}
+            {{-- Tabs --}}
             <div class="card-body">
-                @if($templates->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Asunto</th>
-                                    <th>Categoría</th>
-                                    <th>Prioridad</th>
-                                    <th class="text-center">Estado</th>
-                                    <th class="text-center">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($templates as $template)
-                                    <tr>
-                                        <td>
-                                            <div class="fw-semibold">{{ $template->name }}</div>
-                                            @if($template->description)
-                                                <small class="text-muted">{{ $template->description }}</small>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <small>{{ $template->subject }}</small>
-                                        </td>
-                                        <td>
-                                            @if($template->category)
-                                                <span class="badge bg-light text-dark border">{{ $template->category->name }}</span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($template->priority)
-                                                <span class="badge bg-light text-dark border">{{ $template->priority->name }}</span>
-                                            @else
-                                                <span class="text-muted">—</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            @if($template->is_active)
-                                                <span class="badge bg-success-subtle text-success">Activa</span>
-                                            @else
-                                                <span class="badge bg-secondary-subtle text-secondary">Inactiva</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-vertical"></i>
-                                                </a>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <a class="dropdown-item" href="{{ route('manager.helpdesk.ticket-templates.edit', $template->id) }}">
-                                                            Editar
-                                                        </a>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <a class="dropdown-item delete-btn" href="#"
-                                                           data-bs-toggle="modal"
-                                                           data-bs-target="#delete-modal"
-                                                           data-url="{{ route('manager.helpdesk.ticket-templates.destroy', $template->id) }}"
-                                                           data-title="Eliminar plantilla: {{ $template->name }}">
-                                                            Eliminar
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="text-center py-5">
-                        <i class="fas fa-file-alt fa-3x mb-3 text-muted opacity-50"></i>
-                        <h5 class="fw-bold mb-2">No hay plantillas creadas</h5>
-                        <p class="text-muted mb-4">Crea tu primera plantilla para agilizar la creacion de tickets</p>
-                        <a href="{{ route('manager.helpdesk.ticket-templates.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i> Nueva plantilla
-                        </a>
-                    </div>
-                @endif
-            </div>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tpl-general" type="button">
+                            Generales
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tpl-mine" type="button">
+                            Mis plantillas
+                        </button>
+                    </li>
+                </ul>
 
-            {{-- Pagination --}}
-            @if($templates->hasPages())
-                <div class="card-footer bg-white border-top">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="text-muted small">
-                            Mostrando {{ $templates->firstItem() }} - {{ $templates->lastItem() }} de {{ $templates->total() }}
-                        </div>
-                        <div>
-                            {{ $templates->appends(request()->input())->links() }}
-                        </div>
+                <div class="tab-content">
+
+                    {{-- Generales --}}
+                    <div class="tab-pane fade show active" id="tpl-general">
+                        @if(! $canManageGeneral)
+                            <p class="small text-muted mb-3">Las plantillas generales las gestiona un administrador. Aqui puedes verlas y usarlas al crear un ticket.</p>
+                        @endif
+                        @include('helpdesktickets::managers.ticket-templates._table', ['templates' => $general, 'canManage' => $canManageGeneral])
                     </div>
+
+                    {{-- Mias --}}
+                    <div class="tab-pane fade" id="tpl-mine">
+                        <p class="small text-muted mb-3">Solo tu puedes ver, editar o eliminar estas plantillas.</p>
+                        @include('helpdesktickets::managers.ticket-templates._table', ['templates' => $mine, 'canManage' => true])
+                    </div>
+
                 </div>
-            @endif
+            </div>
 
         </div>
     </div>

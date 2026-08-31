@@ -12,7 +12,13 @@ use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
- * Job to archive old closed tickets
+ * Retira de la cola los tickets cerrados hace más de
+ * helpdesk.cleanup.closed_tickets_after_days días.
+ *
+ * Es un soft delete (SoftDeletes), no un borrado físico: los tickets siguen en
+ * la tabla con deleted_at y son recuperables desde la papelera. El docblock
+ * decía "archive", que apunta a la columna is_archived — otra cosa distinta y
+ * que este job no toca.
  */
 class CleanupOldTickets implements ShouldQueue
 {
@@ -54,13 +60,20 @@ class CleanupOldTickets implements ShouldQueue
             $daysThreshold = config('helpdesk.cleanup.closed_tickets_after_days', 365);
             $cutoffDate = now()->subDays($daysThreshold);
 
+            // Bug real: este filtro era where('status', 'closed'). La tabla
+            // helpdesk_tickets no tiene columna `status` — el estado es una FK
+            // (status_id) al catálogo helpdesk_ticket_statuses. La consulta
+            // lanzaba "Unknown column 'status'" en cada ejecución, así que el
+            // job (programado a diario a las 02:00) nunca llegó a archivar
+            // nada. whereNotNull('closed_at') es el criterio equivalente y
+            // además está indexado. whereNull('deleted_at') era redundante:
+            // SoftDeletes ya lo aplica.
             $oldTickets = Ticket::query()
-                ->where('status', 'closed')
+                ->whereNotNull('closed_at')
                 ->where('closed_at', '<', $cutoffDate)
-                ->whereNull('deleted_at')
                 ->cursor();
 
-            $archivedCount = 0;
+            $removedCount = 0;
 
             foreach ($oldTickets as $ticket) {
                 try {
@@ -70,24 +83,24 @@ class CleanupOldTickets implements ShouldQueue
 
                     $ticket->delete();
 
-                    Log::info("Archived ticket #{$ticketId} - Subject: {$ticketSubject}", [
+                    Log::info("Soft-deleted old ticket #{$ticketId} - Subject: {$ticketSubject}", [
                         'ticket_id' => $ticketId,
                         'subject' => $ticketSubject,
                         'closed_at' => $closedAt,
-                        'archived_at' => now(),
+                        'deleted_at' => now(),
                     ]);
 
-                    $archivedCount++;
+                    $removedCount++;
                 } catch (\Exception $e) {
-                    Log::error("Failed to archive ticket #{$ticket->id}: {$e->getMessage()}", [
+                    Log::error("Failed to soft-delete ticket #{$ticket->id}: {$e->getMessage()}", [
                         'ticket_id' => $ticket->id,
                         'exception' => $e,
                     ]);
                 }
             }
 
-            Log::info('CleanupOldTickets job completed at '.now()." - Total tickets archived: {$archivedCount}", [
-                'archived_count' => $archivedCount,
+            Log::info('CleanupOldTickets job completed at '.now()." - Total tickets removed: {$removedCount}", [
+                'removed_count' => $removedCount,
                 'cutoff_date' => $cutoffDate,
                 'days_threshold' => $daysThreshold,
             ]);

@@ -103,10 +103,18 @@ class SlaServiceTest extends TestCase
             $this->markTestSkipped('Helpdesk database connection is not available.');
         }
 
-        // SlaService::checkBreaches() queries by sla_resolution_due_at < now() AND closed_at IS NULL
-        // Paused tickets still have sla_paused_at set — the breach check does NOT exclude them.
-        // The effective due date is extended via getEffectiveDueDate(). We test that a paused
-        // ticket's effective due date is pushed forward when paused.
+        // Este test se llamaba "skips paused tickets" pero comprobaba otra
+        // cosa: su propio comentario reconocía que el barrido NO excluía los
+        // pausados, y se limitaba a verificar el vencimiento efectivo. El
+        // barrido ya sí los excluye, pero eso no puede afirmarse desde aquí:
+        // makeTicket() devuelve un mock en memoria, no una fila, así que
+        // checkBreaches() —que es una consulta SQL— nunca lo vería y la
+        // aserción pasaría por vacuidad.
+        //
+        // La exclusión real está cubierta contra la base de datos en
+        // Feature\Jobs\CheckSlaBreachesTest::test_does_not_mark_paused_ticket_as_breached.
+        // Aquí se queda lo que este test sí puede probar sin BD: que la pausa
+        // desplaza el vencimiento efectivo, que es de dónde sale el criterio.
         $ticket = $this->makeTicket([
             'sla_resolution_due_at' => now()->subMinutes(10),
             'sla_paused_at' => now()->subMinutes(15),
@@ -115,7 +123,7 @@ class SlaServiceTest extends TestCase
         $service = $this->makeService();
         $effectiveDue = $service->getEffectiveDueDate($ticket);
 
-        // Effective due = original due + paused minutes (≥ 15 min) → should be in the future
+        // Vencimiento efectivo = nominal + minutos pausados (≥ 15) → futuro.
         $this->assertTrue($effectiveDue->isFuture() || $effectiveDue->isCurrentMinute());
     }
 

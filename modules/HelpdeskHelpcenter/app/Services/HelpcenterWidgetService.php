@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskHelpcenter\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Modules\HelpdeskHelpcenter\Concerns\BuildsFulltextSearch;
 use Modules\HelpdeskHelpcenter\Models\HelpCenterArticle;
@@ -96,7 +97,82 @@ class HelpcenterWidgetService
     /**
      * @return array{id: string, title: string, slug: string, excerpt: string, url: string}[]
      */
+    /**
+     * Busca artículos: primero por significado, y si eso no da nada, por texto.
+     *
+     * El módulo tenía búsqueda semántica construida (EmbeddingsService::search,
+     * con troceado y coseno) y este widget —que alimenta el buscador público,
+     * los artículos sugeridos al agente y la deflexión del portal— no la usaba:
+     * iba por fulltext de MySQL y LIKE. Es decir, quien preguntaba «no me deja
+     * pagar» no encontraba el artículo titulado «Errores al finalizar la
+     * compra», porque no comparten ni una palabra.
+     *
+     * El literal se conserva como respaldo, no por nostalgia: sin clave de
+     * embeddings configurada, o cuando el corpus todavía no está indexado, es
+     * lo único que hay. Y para una búsqueda por título exacto sigue siendo
+     * mejor.
+     */
     public function searchArticles(string $query, string $locale = ''): array
+    {
+        $semantic = $this->searchArticlesSemantically($query, $locale);
+
+        if ($semantic !== []) {
+            return $semantic;
+        }
+
+        return $this->searchArticlesLiterally($query, $locale);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function searchArticlesSemantically(string $query, string $locale): array
+    {
+        if (! config('helpdeskhelpcenter.semantic_search', true) || ! class_exists(EmbeddingsService::class)) {
+            return [];
+        }
+
+        try {
+            $hits = app(EmbeddingsService::class)->search($query, 10, $locale ?: null);
+        } catch (\Throwable $e) {
+            Log::warning('HelpcenterWidgetService: búsqueda semántica no disponible', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
+        }
+
+        $minSimilarity = (float) config('helpdeskhelpcenter.semantic_min_similarity', 0.75);
+
+        // Un artículo puede aparecer en varios trozos: se queda el mejor.
+        $ranked = collect($hits)
+            ->filter(fn (array $h) => ($h['similarity'] ?? 0) >= $minSimilarity)
+            ->groupBy('article_id')
+            ->map(fn ($group) => $group->max('similarity'))
+            ->sortDesc();
+
+        if ($ranked->isEmpty()) {
+            return [];
+        }
+
+        $articles = HelpCenterArticle::query()
+            ->whereIn('id', $ranked->keys())
+            ->where('is_published', true)
+            ->where('active', true)
+            ->get()
+            ->keyBy('id');
+
+        return $ranked->keys()
+            ->filter(fn ($id) => $articles->has($id))
+            ->map(fn ($id) => $this->mapArticle($articles->get($id)))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function searchArticlesLiterally(string $query, string $locale = ''): array
     {
         $booleanTerm = $this->buildBooleanTerm($query);
 
@@ -122,13 +198,7 @@ class HelpcenterWidgetService
             ->get();
 
         return $builder
-            ->map(fn (HelpCenterArticle $a) => [
-                'id' => (string) $a->id,
-                'title' => $a->title,
-                'slug' => $a->slug,
-                'excerpt' => $a->excerpt ?? Str::limit(strip_tags($a->content ?? $a->body ?? ''), 100),
-                'url' => route('public.helpcenter.show', $a->slug),
-            ])
+            ->map(fn (HelpCenterArticle $a) => $this->mapArticle($a))
             ->values()
             ->all();
     }
@@ -215,6 +285,25 @@ class HelpcenterWidgetService
         ]);
 
         return true;
+    }
+
+    /**
+     * Forma del resultado, compartida por la vía semántica y la literal: si
+     * cada una devolviera claves distintas, quien las consume (widget público,
+     * artículos sugeridos al agente, deflexión del portal) rompería según cuál
+     * de las dos hubiera acertado.
+     *
+     * @return array{id: string, title: string, slug: string, excerpt: string, url: string}
+     */
+    private function mapArticle(HelpCenterArticle $a): array
+    {
+        return [
+            'id' => (string) $a->id,
+            'title' => $a->title,
+            'slug' => $a->slug,
+            'excerpt' => $a->excerpt ?? Str::limit(strip_tags($a->content ?? $a->body ?? ''), 100),
+            'url' => route('public.helpcenter.show', $a->slug),
+        ];
     }
 
     private function articleToArray(HelpCenterArticle $a): array

@@ -190,13 +190,42 @@ class TicketAiClassificationTest extends TestCase
             'priority' => 'high',
         ]);
 
+        // El modelo propone otra categoría y otra prioridad; da igual, lo
+        // puesto a mano manda.
+        Http::fake([
+            'https://api.anthropic.com/*' => Http::response([
+                'content' => [['type' => 'text', 'text' => '{"category_id": null, "priority": "low", "sentiment": "neutral", "sentiment_score": 0, "confidence": 0.99}']],
+            ]),
+        ]);
+
+        $this->runJob($ticket);
+
+        $this->assertSame($category->id, $ticket->fresh()->category_id);
+        $this->assertSame('high', $ticket->fresh()->priority);
+    }
+
+    public function test_an_already_enriched_ticket_costs_nothing(): void
+    {
+        config()->set('helpdeskagents.ticket_ai.auto_classification', true);
+
+        $category = $this->createCategory();
+        $ticket = $this->createTicket([
+            'category_id' => $category->id,
+            'priority' => 'high',
+        ]);
+
+        // Categoría, prioridad Y sentimiento: no queda nada que pedir.
+        //
+        // El sentimiento entra en esa condición a propósito: sin él, un ticket
+        // creado con categoría desde el panel se quedaba sin analizar para
+        // siempre, porque el job salía antes de mirarlo.
+        $ticket->forceFill(['customer_sentiment_avg' => -0.4])->saveQuietly();
+
         Http::fake();
 
         $this->runJob($ticket);
 
         Http::assertNothingSent();
-        $this->assertSame($category->id, $ticket->fresh()->category_id);
-        $this->assertSame('high', $ticket->fresh()->priority);
     }
 
     public function test_invalid_llm_output_is_silent(): void

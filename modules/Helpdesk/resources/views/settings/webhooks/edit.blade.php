@@ -38,9 +38,11 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Estadisticas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Estadisticas</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Envios exitosos</span>
                         <span class="fw-semibold text-success">{{ number_format($webhook->success_count) }}</span>
@@ -54,9 +56,14 @@
                         <span class="small">{{ $webhook->last_triggered_at?->diffForHumans() ?? 'Nunca' }}</span>
                     </div>
                     @if($webhook->last_error)
-                        <hr>
-                        <h6 class="mb-2 text-danger">Ultimo error</h6>
-                        <p class="small text-danger mb-0">{{ $webhook->last_error }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Ultimo error</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-danger mb-0">{{ $webhook->last_error }}</p>
                     @endif
                 </div>
             </div>

@@ -39,8 +39,10 @@
 
         <div class="col-lg-4">
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Estadisticas del workflow</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Estadisticas del workflow</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Estado</span>
                         <span>

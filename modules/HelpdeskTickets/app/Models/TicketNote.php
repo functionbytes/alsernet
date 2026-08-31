@@ -2,14 +2,14 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketNote extends Model
 {
-    use SoftDeletes;
+    use BelongsToHelpdeskUser, SoftDeletes;
 
     protected $connection = 'helpdesk';
 
@@ -51,16 +51,7 @@ class TicketNote extends Model
      */
     public function user(): BelongsTo
     {
-        $user = new User;
-        $user->setConnection('mysql');
-
-        return $this->newBelongsTo(
-            $user->newQuery(),
-            $this,
-            'user_id',
-            'id',
-            'user'
-        );
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 
     // ────────────────────────────────────────────────────────────────

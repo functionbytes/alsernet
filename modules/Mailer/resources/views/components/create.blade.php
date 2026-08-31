@@ -118,7 +118,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <label for="type" class="form-label fw-semibold">
                                     Tipo
                                 </label>
@@ -140,7 +140,7 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-12 col-md-6">
+                            <div class="col-12">
                                 <label for="lang_id" class="form-label fw-semibold">
                                     Idioma Base
                                 </label>

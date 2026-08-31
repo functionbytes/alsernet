@@ -37,24 +37,36 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre los workflows</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre los workflows</h6>
                     <p class="card-text text-muted small">
                         Los workflows automatizan acciones en respuesta a eventos del sistema, como la creacion de una conversacion o la recepcion de un mensaje.
                     </p>
-                    <hr>
-                    <h6 class="mb-2">Triggers disponibles</h6>
-                    <ul class="list-unstyled mb-0">
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Triggers disponibles</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
                         @foreach(\Modules\Helpdesk\Models\Workflow::TRIGGER_TYPES as $key => $label)
                             <li class="mb-1">
                                 <small class="text-muted"><code>{{ $key }}</code> — {{ $label }}</small>
                             </li>
                         @endforeach
                     </ul>
-                    <hr>
-                    <h6 class="mb-2">Acciones disponibles</h6>
-                    <ul class="list-unstyled mb-0">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Acciones disponibles</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="text-muted mb-0">
                         @foreach(\Modules\Helpdesk\Models\Workflow::ACTION_TYPES as $key => $label)
                             <li class="mb-1">
                                 <small class="text-muted"><code>{{ $key }}</code> — {{ $label }}</small>

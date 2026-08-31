@@ -31,7 +31,7 @@
                                 <a class="dropdown-item" href="{{ route('activity.export', request()->query()) }}">Exportar CSV</a>
                                 <div class="dropdown-divider"></div>
                                 <button id="refresh-stats-btn" type="button" class="dropdown-item">
-                                    <i class="fas fa-arrows-rotate me-1"></i> Refrescar stats
+                                    Refrescar
                                 </button>
                             </div>
                         </div>
@@ -81,37 +81,76 @@
                 </div>
             </div>
 
-            {{-- Search & Filters --}}
+            {{-- Busqueda y filtros --}}
             <div class="card-body border-bottom">
+                @php
+                    $advancedKeys = ['user_id', 'subject_type', 'event', 'from', 'to'];
+                    $activeFilterCount = collect($advancedKeys)->filter(fn ($k) => request()->filled($k))->count();
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                @endphp
+
                 <form method="GET" action="{{ route('activity.logs') }}" id="logs-filter-form">
-                    <div class="d-flex flex-column flex-lg-row gap-3 align-items-stretch">
-                        <div class="flex-fill">
-                            <div class="input-group h-100">
-                                <span class="input-group-text bg-white border-end-1">
-                                    <i class="fas fa-search text-muted"></i>
-                                </span>
-                                <input type="search" name="search" class="form-control border-start-0 ps-0"
-                                       placeholder="Buscar en descripción..."
-                                       value="{{ request('search') }}">
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0" style="min-width: 150px;">
-                            <input type="date" name="from" class="form-control h-100" value="{{ request('from') }}">
-                        </div>
-                        <div class="flex-shrink-0" style="min-width: 150px;">
-                            <input type="date" name="to" class="form-control h-100" value="{{ request('to') }}">
-                        </div>
-                        <div class="d-flex gap-2 flex-shrink-0">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i>
+                    {{-- Los avanzados viajan ocultos: el modal solo escribe en
+                         ellos al aplicar, para que cerrar el modal sin aplicar
+                         no cambie la busqueda. --}}
+                    <input type="hidden" name="user_id"      id="filter-user"    value="{{ request('user_id') }}">
+                    <input type="hidden" name="subject_type" id="filter-subject" value="{{ request('subject_type') }}">
+                    <input type="hidden" name="event"        id="filter-event"   value="{{ request('event') }}">
+                    <input type="hidden" name="from"         id="filter-from"    value="{{ request('from') }}">
+                    <input type="hidden" name="to"           id="filter-to"      value="{{ request('to') }}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="search" name="search" class="form-control flex-grow-1"
+                               placeholder="Buscar en descripción o en los datos del cambio..."
+                               value="{{ request('search') }}">
+
+                        <button type="button" class="btn btn-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#logs-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary act-filter-badge">{{ $activeFilterCount }}</span>
+                            @endif
+                        </button>
+
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="submit" class="btn btn-primary" title="Buscar">
+                                <i class="fas fa-magnifying-glass"></i>
                             </button>
-                            @if(request()->hasAny(['search', 'from', 'to']))
-                                <a href="{{ route('activity.logs') }}" class="btn btn-outline-secondary" title="Limpiar filtros">
-                                    <i class="fas fa-times"></i>
+                            @if($hasAnyFilter)
+                                <a href="{{ route('activity.logs') }}" class="btn btn-secondary" title="Limpiar filtros">
+                                    <i class="fas fa-xmark"></i>
                                 </a>
                             @endif
                         </div>
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap mt-4 align-items-center">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            @if(request('user_id'))
+                                @php $causer = $causers->firstWhere('id', request('user_id')); @endphp
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Usuario: {{ $causer ? trim($causer->firstname.' '.$causer->lastname) ?: $causer->email : request('user_id') }}
+                                </span>
+                            @endif
+                            @if(request('subject_type'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Entidad: {{ $subjectTypes[request('subject_type')] ?? class_basename(request('subject_type')) }}
+                                </span>
+                            @endif
+                            @if(request('event'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                    Evento: {{ ucfirst(request('event')) }}
+                                </span>
+                            @endif
+                            @if(request('from'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Desde: {{ request('from') }}</span>
+                            @endif
+                            @if(request('to'))
+                                <span class="badge bg-primary-subtle text-primary py-1 px-2">Hasta: {{ request('to') }}</span>
+                            @endif
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -240,11 +279,91 @@
         </div>
     </div>
 
+    {{-- Filtros avanzados --}}
+    <div class="modal fade" id="logs-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Usuario</label>
+                        <select id="modal-user" class="form-control select2-filter-modal">
+                            <option value="">Todos los usuarios</option>
+                            @foreach($causers as $causer)
+                                <option value="{{ $causer->id }}" @selected(request('user_id') == $causer->id)>
+                                    {{ trim($causer->firstname.' '.$causer->lastname) ?: $causer->email }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Entidad</label>
+                        <select id="modal-subject" class="form-control select2-filter-modal">
+                            <option value="">Todas las entidades</option>
+                            @foreach($subjectTypes as $type => $label)
+                                <option value="{{ $type }}" @selected(request('subject_type') === $type)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Evento</label>
+                        <select id="modal-event" class="form-control select2-filter-modal">
+                            <option value="">Todos los eventos</option>
+                            @foreach($events as $event)
+                                <option value="{{ $event }}" @selected(request('event') === $event)>{{ ucfirst($event) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row g-2 mb-0">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Desde</label>
+                            <input type="date" id="modal-from" class="form-control" value="{{ request('from') }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Hasta</label>
+                            <input type="date" id="modal-to" class="form-control" value="{{ request('to') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="logs-filter-apply-btn" class="btn btn-primary w-100 mb-1">Aplicar filtros</button>
+                    <button type="button" id="logs-filter-clear-btn" class="btn btn-secondary w-100">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
+
+@push('styles')
+<style>
+    .act-filter-badge { font-size: .6rem; }
+</style>
+@endpush
 
 @push('scripts')
 <script>
 $(document).ready(function () {
+    // ── Filtros avanzados ────────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#logs-filter-modal'), width: '100%' });
+
+    $('#logs-filter-apply-btn').on('click', function () {
+        $('#filter-user').val($('#modal-user').val());
+        $('#filter-subject').val($('#modal-subject').val());
+        $('#filter-event').val($('#modal-event').val());
+        $('#filter-from').val($('#modal-from').val());
+        $('#filter-to').val($('#modal-to').val());
+        $('#logs-filter-modal').modal('hide');
+        $('#logs-filter-form').submit();
+    });
+
+    $('#logs-filter-clear-btn').on('click', function () {
+        window.location = '{{ route('activity.logs') }}';
+    });
+
     @if(session('success'))
         toastr.success('{{ session('success') }}', 'Éxito');
     @endif

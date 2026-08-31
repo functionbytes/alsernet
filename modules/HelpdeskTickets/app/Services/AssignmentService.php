@@ -222,24 +222,24 @@ class AssignmentService
                 return null;
             }
 
-            $openTickets = Ticket::whereIn('assignee_id', $agents->pluck('id'))
-                ->whereNull('closed_at')
-                ->get()
-                ->groupBy('assignee_id');
-
             // `priority` es un slug (urgent/high/normal/low), no una relación:
             // pondera la carga abierta según el peso de cada prioridad.
-            $weights = ['urgent' => 4, 'high' => 3, 'normal' => 2, 'low' => 1];
+            //
+            // La suma se hace en SQL, como ya hacían autoAssignByRoundRobin() y
+            // autoAssignBySkills(). Antes se traía con ->get() TODOS los tickets
+            // abiertos de todos los agentes candidatos solo para sumar un
+            // entero por fila, y encima una vez por cada ticket del bucle de
+            // AutoAssignUnassignedTickets.
+            $workloads = Ticket::whereIn('assignee_id', $agents->pluck('id'))
+                ->whereNull('closed_at')
+                ->selectRaw("assignee_id, SUM(CASE priority WHEN 'urgent' THEN 4 WHEN 'high' THEN 3 WHEN 'low' THEN 1 ELSE 2 END) as workload")
+                ->groupBy('assignee_id')
+                ->pluck('workload', 'assignee_id');
 
-            $agentWorkloads = $agents->map(function ($agent) use ($openTickets, $weights) {
-                $tickets = $openTickets[$agent->id] ?? collect();
-                $totalWorkload = $tickets->sum(fn ($ticket) => $weights[$ticket->priority] ?? 2);
-
-                return [
-                    'agent_id' => $agent->id,
-                    'workload' => $totalWorkload,
-                ];
-            })->sortBy('workload');
+            $agentWorkloads = $agents->map(fn ($agent) => [
+                'agent_id' => $agent->id,
+                'workload' => (int) ($workloads[$agent->id] ?? 0),
+            ])->sortBy('workload');
 
             $selectedAgentId = $agentWorkloads->first()['agent_id'];
 

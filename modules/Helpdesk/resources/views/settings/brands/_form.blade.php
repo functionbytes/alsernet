@@ -2,7 +2,7 @@
 
     {{-- Seccion informacion basica --}}
     <div class="col-12">
-        <h6 class="fw-bold mb-0 border-bottom pb-2">Informacion basica</h6>
+        <h6 class="fw-bold mb-0">Informacion basica</h6>
     </div>
 
     {{-- Nombre --}}
@@ -32,20 +32,16 @@
 
     {{-- Seccion branding --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-0 border-bottom pb-2">Branding</h6>
+        <h6 class="fw-bold mb-0">Branding</h6>
     </div>
 
     {{-- Color primario --}}
-    <div class="col-12 col-md-4">
+    <div class="col-12">
         <label class="form-label">Color primario</label>
-        <div class="input-group">
-            <input type="color" name="primary_color" id="primary_color"
-                class="form-control form-control-color @error('primary_color') is-invalid @enderror"
-                value="{{ old('primary_color', $brand->primary_color ?? '#90bb13') }}">
-            <input type="text" id="primary_color_text" class="form-control"
-                value="{{ old('primary_color', $brand->primary_color ?? '#90bb13') }}"
-                placeholder="#90bb13" maxlength="7">
-        </div>
+        @include('core::components.color-field', [
+            'name' => 'primary_color',
+            'value' => old('primary_color', $brand->primary_color ?? '#90bb13'),
+        ])
         <div class="form-text">Color usado en el widget y elementos de la marca</div>
         @error('primary_color')
             <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -53,7 +49,7 @@
     </div>
 
     {{-- Logo URL --}}
-    <div class="col-12 col-md-8">
+    <div class="col-12">
         <label class="form-label">URL del logo</label>
         <input type="url" name="logo_url" class="form-control @error('logo_url') is-invalid @enderror"
             value="{{ old('logo_url', $brand->logo_url ?? '') }}"
@@ -66,7 +62,7 @@
 
     {{-- Seccion email --}}
     <div class="col-12 mt-2">
-        <h6 class="fw-bold mb-0 border-bottom pb-2">Email</h6>
+        <h6 class="fw-bold mb-0">Email</h6>
     </div>
 
     {{-- Email from name --}}
@@ -96,7 +92,7 @@
     {{-- Widget token (solo en edicion) --}}
     @if(isset($brand) && $brand->exists && $brand->widget_token)
         <div class="col-12 mt-2">
-            <h6 class="fw-bold mb-0 border-bottom pb-2">Token del widget</h6>
+            <h6 class="fw-bold mb-0">Token del widget</h6>
         </div>
         <div class="col-12">
             <label class="form-label">Widget token</label>

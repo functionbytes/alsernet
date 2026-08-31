@@ -600,8 +600,12 @@
                 <div class="card-body p-4">
                     <div class="mb-3">
                         <label class="form-label">Color</label>
-                        <input type="color" name="color" class="form-control form-control-color"
-                               value="{{ old('color', $inbox->color ?? '#90bb13') }}">
+                        @include('core::components.color-field', [
+                            'name' => 'color',
+                            'value' => old('color', $inbox->color ?? '#90bb13'),
+                            'preview' => old('name', $inbox->name ?? 'Bandeja'),
+                            'previewFrom' => 'input[name=name]',
+                        ])
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Icono (Font Awesome)</label>

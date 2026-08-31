@@ -470,14 +470,25 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
    <select> directamente) — sin esto, el widget se veía sin borde/fondo,
    casi como texto plano. ────────────────────────────────────────── */
 .tkt .select2-container--default .select2-selection--single {
-  height: auto; padding: 4px 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r);
+  /* height: auto (antes) dejaba la caja mucho más baja (~23px) que el
+     estándar del tema (line-height: 40px en extra.css, global, sin scope
+     .tkt) — DevTools la mostraba tachada/sobreescrita por esta regla más
+     específica. Altura fija en vez de auto, consistente con el resto del
+     sitio; el resto de la caja (padding/flex) ya centra el contenido solo. */
+  height: 40px; padding: 0 10px; border: 1px solid var(--tkt-border); border-radius: var(--tkt-r);
   background: var(--tkt-panel); display: flex; align-items: center;
 }
 .tkt .select2-container--default .select2-selection--single .select2-selection__rendered {
-  padding: 0; padding-right: 18px; color: var(--tkt-text); font-size: var(--tkt-t-md); font-weight: 600; line-height: 1.3;
+  /* font-weight: 600 (antes) se veía mucho más negrita que el resto de
+     selects del sitio — bug real de QA: .tkt-fselect (el <select> nativo,
+     antes de que select2 lo reemplace) nunca definía font-weight, así que
+     heredaba el normal del body; el 600 era exclusivo de este override y no
+     tenía intención de diseño detrás. */
+  padding: 0; padding-right: 18px; color: var(--tkt-text); font-size: var(--tkt-t-md); font-weight: 400; line-height: 1.3;
 }
 .tkt .select2-container--default .select2-selection--single .select2-selection__arrow {
-  height: 100%; right: 6px;
+  height: 100%;
+  right: 20px;
 }
 .tkt .select2-container--default.select2-container--open .select2-selection--single {
   border-color: var(--tkt-border-strong);
@@ -507,3 +518,27 @@ textarea.tkt-input { min-height: 60px; line-height: 1.55; resize: vertical; }
 .tkt-kv-select .select2-selection--single { background: var(--tkt-panel) !important; }
 .tkt-field .select2-container, .tkt-modal-body .select2-container { width: 100% !important; }
 }
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Utilidades del listado de tickets.
+
+   Sustituyen a los style="" de managers/tickets/index.blade.php. Igual que en
+   emails.css, se dejan inline solo el display:none inicial de #tkt-detail
+   (jQuery lo alterna con .css('display','flex')) y los colores que vienen de
+   la base de datos.
+   ──────────────────────────────────────────────────────────────────────── */
+.tkt-fs-11        { font-size: 11px; }
+.tkt-meta         { font-size: 11px; color: var(--tkt-text-mute); }
+.tkt-title-sm     { font-size: 11.5px; font-weight: 700; }
+.tkt-count        { margin-left: auto; color: var(--tkt-text-faint); font-size: 10.5px; }
+
+.tkt-toolbar-right{ margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 8px; }
+.tkt-actions      { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.tkt-link-plain   { text-decoration: none; }
+.tkt-link-right   { margin-left: auto; text-decoration: none; }
+.tkt-chip-row     { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 14px 9px; }
+.tkt-badge-row    { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+
+/* Columna elástica del modal de filtros (partial _filters-modal). */
+.hdt-flex-fill-min { flex: 1; min-width: 0; }

@@ -24,7 +24,7 @@
                     <div class="card-body">
                         @include('core::components.alerts')
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre y descripcion del flujo de IA</p>
                         <div class="row g-3 mb-4">
 
@@ -52,7 +52,7 @@
 
                         </div>
 
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Trigger</h6>
+                        <h6 class="fw-semibold mb-1">Trigger</h6>
                         <p class="text-muted small mb-3">Evento que activa la ejecucion de este flujo</p>
                         <div class="row g-3 mb-4">
 

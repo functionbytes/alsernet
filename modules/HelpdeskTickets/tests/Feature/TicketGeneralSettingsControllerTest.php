@@ -128,6 +128,47 @@ class TicketGeneralSettingsControllerTest extends TestCase
         ], 'helpdesk');
     }
 
+    public function test_update_treats_explicit_zero_from_select_as_false(): void
+    {
+        // La vista usa <select> Activado/Desactivado (no checkbox): el campo
+        // SIEMPRE llega en el POST, con valor "0" para "Desactivado". Antes
+        // del fix, $request->has() daba true solo por estar presente, sin
+        // mirar el valor — este es exactamente el caso que reproduce ese bug.
+        Setting::updateOrCreate(
+            ['key' => 'tickets.guest_ticket'],
+            ['value' => '1', 'group' => 'tickets']
+        );
+
+        $this->actingAs($this->manager)
+            ->put(route('manager.helpdesk.settings.tickets.general.update'), [
+                'customer_ticketid' => 'SPT',
+                'ticket_character' => 100,
+                'guest_ticket' => '0',
+            ]);
+
+        $this->assertDatabaseHas('helpdesk_settings', [
+            'key' => 'tickets.guest_ticket',
+            'value' => false,
+            'group' => 'tickets',
+        ], 'helpdesk');
+    }
+
+    public function test_update_treats_explicit_one_from_select_as_true(): void
+    {
+        $this->actingAs($this->manager)
+            ->put(route('manager.helpdesk.settings.tickets.general.update'), [
+                'customer_ticketid' => 'SPT',
+                'ticket_character' => 100,
+                'guest_ticket' => '1',
+            ]);
+
+        $this->assertDatabaseHas('helpdesk_settings', [
+            'key' => 'tickets.guest_ticket',
+            'value' => true,
+            'group' => 'tickets',
+        ], 'helpdesk');
+    }
+
     public function test_update_requires_customer_ticketid(): void
     {
         $this->actingAs($this->manager)

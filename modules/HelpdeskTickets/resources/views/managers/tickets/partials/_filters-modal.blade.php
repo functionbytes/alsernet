@@ -9,7 +9,7 @@
         <form method="get" id="htk-filters-form" action="{{ route('manager.helpdesk.tickets.index') }}">
             <div class="tkt-modal-head">
                 <div class="tkt-modal-icon"><i class="fa-solid fa-sliders"></i></div>
-                <div style="flex:1;min-width:0">
+                <div class="hdt-flex-fill-min">
                     <div class="tkt-modal-title">Filtros avanzados</div>
                 </div>
                 <button type="button" class="tkt-modal-close" id="tkt-filters-modal-close"><i class="fa-solid fa-xmark"></i></button>

@@ -2955,6 +2955,11 @@ class DocumentsController extends Controller
      */
     public function emailHistory($uid)
     {
+        // Mismo gate que index()/pending(): sin esto, cualquier autenticado
+        // podía ver el historial de emails de cualquier documento (DNI,
+        // licencias de armas) adivinando el uid — sin chequeo de rol alguno.
+        Gate::authorize('view-documents-panel');
+
         $document = Document::findByUid($uid);
 
         if (! $document) {
@@ -2976,6 +2981,9 @@ class DocumentsController extends Controller
      */
     public function emailPreview($mailUid)
     {
+        // Mismo motivo que emailHistory() — ver comentario ahí.
+        Gate::authorize('view-documents-panel');
+
         $mail = DocumentMail::where('uid', $mailUid)->firstOrFail();
         $document = $mail->document;
 

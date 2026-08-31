@@ -3,28 +3,40 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketStatus;
+use Modules\HelpdeskTickets\Services\CatalogCacheService;
+use Modules\HelpdeskTickets\Services\TicketSemanticSearchService;
 
 class TicketSearchController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, TicketSemanticSearchService $semantic): View
     {
         $this->authorize('helpdesk.tickets.view');
 
         $query = Ticket::query()->with(['customer', 'category', 'status', 'assignee']);
 
+        $semanticIds = [];
+
         if ($request->filled('q')) {
             $q = $request->q;
+
+            // La búsqueda por significado AMPLÍA la literal, no la sustituye:
+            // quien busca un número de ticket o un apellido quiere una
+            // coincidencia exacta, y ahí un vector solo añade ruido. El
+            // servicio devuelve una lista vacía cuando la consulta pide
+            // literal, así que en ese caso esto se comporta como siempre.
+            $semanticIds = $semantic->search($q);
+
             $query->where(fn ($b) => $b
                 ->where('title', 'like', "%{$q}%")
                 ->orWhere('subject', 'like', "%{$q}%")
                 ->orWhere('description', 'like', "%{$q}%")
                 ->orWhere('ticket_number', 'like', "%{$q}%")
+                ->when($semanticIds !== [], fn ($sub) => $sub->orWhereIn('id', $semanticIds))
             );
         }
 
@@ -48,11 +60,7 @@ class TicketSearchController extends Controller
 
         $results = $query->latest()->paginate(25)->appends($request->query());
 
-        $agents = User::select(['id', 'firstname', 'lastname'])
-            ->where('available', true)
-            ->where('verified', true)
-            ->orderBy('firstname')
-            ->get();
+        $agents = CatalogCacheService::agents();
 
         return view('helpdesktickets::managers.search.index', [
             'results' => $results,
@@ -60,6 +68,9 @@ class TicketSearchController extends Controller
             'categories' => TicketCategory::active()->ordered()->get(),
             'agents' => $agents,
             'filters' => $request->only(['q', 'status_id', 'category_id', 'priority', 'assignee_id', 'from', 'to', 'tag']),
+            // Para poder marcar en el listado qué resultados no habrían
+            // aparecido con la búsqueda literal.
+            'semanticIds' => $semanticIds,
         ]);
     }
 }

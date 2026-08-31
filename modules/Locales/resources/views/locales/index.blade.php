@@ -43,7 +43,7 @@
                             <div class="col-md-5">
                                 <form action="{{ route('locales.store') }}" method="POST">
                                     @csrf
-                                    <h6 class="fw-bold mb-3 border-bottom pb-2">Agregar idioma</h6>
+                                    <h6 class="fw-bold mb-3">Agregar idioma</h6>
 
                                     {{-- Preset picker --}}
                                     <div class="mb-3">
@@ -169,7 +169,7 @@
 
                             {{-- RIGHT: Existing locales table --}}
                             <div class="col-md-7">
-                                <h6 class="fw-bold mb-3 border-bottom pb-2">Idiomas registrados</h6>
+                                <h6 class="fw-bold mb-3">Idiomas registrados</h6>
 
                                 @if ($locales->isEmpty())
                                     <p class="text-muted">No hay idiomas registrados</p>
@@ -249,7 +249,7 @@
                             @csrf
                             @method('PATCH')
 
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Opciones de idioma</h6>
+                            <h6 class="fw-bold mb-3">Opciones de idioma</h6>
 
                             {{-- Hide default from URL --}}
                             <div class="mb-4">

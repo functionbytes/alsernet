@@ -39,6 +39,13 @@ class EscalationService
      *
      * @return array<string, int>
      */
+    /**
+     * Motivo distinto del de antigüedad simple: el ticket no lleva más tiempo
+     * del normal, lleva más del que TOLERA por su riesgo. Separarlo permite
+     * medir después si el escalado anticipado sirvió de algo.
+     */
+    public const REASON_AT_RISK = 'at_risk';
+
     private function thresholds(): array
     {
         return [
@@ -81,6 +88,17 @@ class EscalationService
         $businessHours = $this->businessHoursCalculator();
 
         // Pass 1: age-based (too long without escalation for its priority).
+        //
+        // El umbral por prioridad es el techo, no la regla fija: si el riesgo
+        // del ticket lo justifica, TicketRiskScoreService lo acorta. La
+        // consulta SQL sigue usando el umbral SIN acortar y el refinamiento se
+        // hace por ticket en PHP — igual que ya se hacía con las horas
+        // hábiles. Es al revés de lo que parece: para poder escalar ANTES hay
+        // que traer más candidatos, así que el filtro se relaja al plazo más
+        // corto posible y luego se descarta lo que no toca.
+        $riskEnabled = config('helpdesktickets.risk.enabled', false);
+        $riskFloor = $riskEnabled ? (float) config('helpdesktickets.risk.max_reduction', 0.25) : 1.0;
+
         foreach ($this->thresholds() as $prioritySlug => $hours) {
             // El filtro SQL sigue siendo en horas naturales: N horas hábiles
             // transcurridas implican al menos N horas naturales, así que este
@@ -88,15 +106,33 @@ class EscalationService
             // business-hours; el refinamiento se hace por ticket en PHP.
             $tickets = $this->eligibleQuery()
                 ->where('priority', $prioritySlug)
-                ->where('created_at', '<=', now()->subHours($hours))
+                ->where('created_at', '<=', now()->subHours((int) ceil($hours * $riskFloor)))
                 ->cursor();
 
             foreach ($tickets as $ticket) {
-                if ($businessHours !== null && ! $this->ageThresholdReachedInBusinessHours($businessHours, $ticket, $hours)) {
+                $effectiveHours = $hours;
+                $reason = self::REASON_NO_RESPONSE;
+
+                if ($riskEnabled) {
+                    $multiplier = app(TicketRiskScoreService::class)->urgencyMultiplier($ticket);
+                    $effectiveHours = (int) ceil($hours * $multiplier);
+
+                    if ($multiplier < 1.0) {
+                        $reason = self::REASON_AT_RISK;
+                    }
+                }
+
+                // Con el filtro SQL relajado, hay que comprobar aquí que el
+                // ticket ha alcanzado SU plazo — el general o el acortado.
+                if ($ticket->created_at->gt(now()->subHours($effectiveHours))) {
                     continue;
                 }
 
-                $notification = $this->tryEscalate($ticket, self::REASON_NO_RESPONSE);
+                if ($businessHours !== null && ! $this->ageThresholdReachedInBusinessHours($businessHours, $ticket, $effectiveHours)) {
+                    continue;
+                }
+
+                $notification = $this->tryEscalate($ticket, $reason);
 
                 if ($notification) {
                     $notifications[] = $notification;

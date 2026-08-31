@@ -3,6 +3,7 @@
 namespace Modules\Helpdesk\Http\Controllers\Managers\Settings;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Helpdesk\Http\Requests\Managers\Settings\ReorderStatusRequest;
 use Modules\Helpdesk\Http\Requests\StoreConversationStatusRequest;
@@ -16,7 +17,7 @@ class StatusesController extends Controller
         $this->middleware('can:helpdesk.statuses.view')->only(['index']);
         $this->middleware('can:helpdesk.statuses.create')->only(['create', 'store']);
         $this->middleware('can:helpdesk.statuses.update')->only(['edit', 'update', 'toggle', 'reorder']);
-        $this->middleware('can:helpdesk.statuses.delete')->only(['destroy']);
+        $this->middleware('can:helpdesk.statuses.delete')->only(['destroy', 'bulkAction']);
     }
 
     /**
@@ -33,6 +34,11 @@ class StatusesController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%");
             });
+        }
+
+        // Status filter (active/inactive)
+        if ($request->filled('status')) {
+            $query->where('active', $request->status === '1');
         }
 
         $statuses = $query->ordered()->paginate(20);
@@ -132,6 +138,67 @@ class StatusesController extends Controller
 
         return redirect()->route('settings.helpdesk.statuses.index')
             ->with('success', 'Estado eliminado exitosamente.');
+    }
+
+    /**
+     * Bulk action on multiple statuses.
+     *
+     * Respects the same protections as destroy(): a system status
+     * (canDelete() === false) or the default status is never deleted, it is
+     * just skipped and reported back in the response.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => ['required', 'in:activate,deactivate,delete'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        $action = $request->string('action')->toString();
+        $statuses = ConversationStatus::whereIn('id', $request->input('ids'))->get();
+
+        $count = 0;
+        $skipped = 0;
+
+        if ($action === 'delete') {
+            foreach ($statuses as $status) {
+                if (! $status->canDelete() || $status->is_default) {
+                    $skipped++;
+
+                    continue;
+                }
+
+                $status->delete();
+                $count++;
+            }
+        } else {
+            $value = $action === 'activate';
+
+            foreach ($statuses as $status) {
+                $status->active = $value;
+                if ($status->save()) {
+                    $count++;
+                }
+            }
+        }
+
+        $labels = [
+            'activate' => 'activado(s)',
+            'deactivate' => 'desactivado(s)',
+            'delete' => 'eliminado(s)',
+        ];
+
+        $message = "{$count} estado(s) {$labels[$action]}.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} omitido(s) por ser del sistema o predeterminado.";
+        }
+
+        return response()->json([
+            'count' => $count,
+            'skipped' => $skipped,
+            'message' => $message,
+        ]);
     }
 
     /**

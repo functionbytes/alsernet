@@ -12,6 +12,7 @@ use Modules\HelpdeskAgents\Listeners\QueueTicketAiOnTicketCreated;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnAssigned;
 use Modules\HelpdeskAgents\Listeners\QueueTicketSummaryOnEscalation;
 use Modules\HelpdeskAgents\Listeners\StartAiAgentSessionOnIncomingMessage;
+use Modules\HelpdeskAgents\Mcp\McpToolContext;
 use Modules\HelpdeskAgents\Models\AgentShift;
 use Modules\HelpdeskAgents\Models\AgentVacation;
 use Modules\HelpdeskAgents\Models\AiAgent;
@@ -30,6 +31,7 @@ use Modules\HelpdeskAgents\Services\AiUsageRecorder;
 use Modules\HelpdeskAgents\Services\EmbeddingService;
 use Modules\HelpdeskAgents\Services\KnowledgeRetrievalService;
 use Modules\HelpdeskAgents\Services\LlmConnectionTesterService;
+use Modules\HelpdeskAgents\Services\McpToolBridge;
 use Modules\HelpdeskAgents\Services\PromptSanitizer;
 use Modules\HelpdeskAgents\Services\ToolExecutionService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
@@ -70,6 +72,14 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
         $this->app->singleton(EmbeddingService::class);
         $this->app->singleton(KnowledgeRetrievalService::class);
         $this->app->singleton(ToolExecutionService::class);
+        $this->app->singleton(McpToolBridge::class);
+
+        // scoped, no singleton: el ambito de las tools MCP se BLOQUEA a un
+        // ticket concreto (McpToolContext::scopeToTicket) y un worker de cola
+        // reutiliza el contenedor entre jobs — como singleton, el ticket de un
+        // job se filtraria al siguiente y las tools responderian con los datos
+        // del cliente equivocado. `scoped` lo descarta en cada job/peticion.
+        $this->app->scoped(McpToolContext::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -88,6 +98,8 @@ class HelpdeskAgentsServiceProvider extends ServiceProvider
             EmbeddingService::class,
             KnowledgeRetrievalService::class,
             ToolExecutionService::class,
+            McpToolBridge::class,
+            McpToolContext::class,
         ];
     }
 

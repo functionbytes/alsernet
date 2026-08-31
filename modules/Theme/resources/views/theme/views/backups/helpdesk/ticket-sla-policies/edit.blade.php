@@ -26,7 +26,7 @@
                         @include('core::components.alerts')
 
                         {{-- Informacion basica --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Informacion basica</h6>
+                        <h6 class="fw-semibold mb-1">Informacion basica</h6>
                         <p class="text-muted small mb-3">Nombre, descripcion y zona horaria aplicable a la politica</p>
                         <div class="row g-3 mb-4">
 
@@ -53,7 +53,7 @@
 
                             <div class="col-12">
                                 <label class="form-label">Zona horaria <span class="text-danger">*</span></label>
-                                <select name="timezone" class="form-select @error('timezone') is-invalid @enderror" required>
+                                <select name="timezone" class="form-select select2 @error('timezone') is-invalid @enderror" required>
                                     @php
                                         $timezones = [
                                             'UTC'                => 'UTC',
@@ -77,7 +77,7 @@
                         </div>
 
                         {{-- Tiempos de respuesta --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Tiempos de respuesta</h6>
+                        <h6 class="fw-semibold mb-1">Tiempos de respuesta</h6>
                         <p class="text-muted small mb-3">Limites en minutos para primera respuesta, respuestas siguientes y resolucion del ticket</p>
                         <div class="row g-3 mb-4">
 
@@ -117,13 +117,13 @@
                         </div>
 
                         {{-- Horario --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Horario</h6>
+                        <h6 class="fw-semibold mb-1">Horario</h6>
                         <p class="text-muted small mb-3">Si aplica todo el dia o solo en horario laboral</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
                                 <label for="business_hours_only" class="form-label">Modo de horario</label>
-                                <select class="form-select @error('business_hours_only') is-invalid @enderror"
+                                <select class="form-select select2 @error('business_hours_only') is-invalid @enderror"
                                         name="business_hours_only" id="business_hours_only">
                                     <option value="0" {{ old('business_hours_only', $policy->business_hours_only ? '1' : '0') == '0' ? 'selected' : '' }}>24/7 — la politica aplica todo el tiempo</option>
                                     <option value="1" {{ old('business_hours_only', $policy->business_hours_only ? '1' : '0') == '1' ? 'selected' : '' }}>Solo horario laboral — aplica segun horario configurado</option>
@@ -179,7 +179,7 @@
                         </div>
 
                         {{-- Multiplicadores por prioridad --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Multiplicadores por prioridad</h6>
+                        <h6 class="fw-semibold mb-1">Multiplicadores por prioridad</h6>
                         <p class="text-muted small mb-3">Factor aplicado al tiempo segun la prioridad del ticket</p>
                         <div class="row g-3 mb-4">
 
@@ -200,13 +200,13 @@
                         </div>
 
                         {{-- Escalamiento --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Escalamiento</h6>
+                        <h6 class="fw-semibold mb-1">Escalamiento</h6>
                         <p class="text-muted small mb-3">Notificar cuando el ticket se acerca al vencimiento del SLA</p>
                         <div class="row g-3 mb-4">
 
                             <div class="col-12">
                                 <label for="enable_escalation" class="form-label">Escalamiento</label>
-                                <select class="form-select @error('enable_escalation') is-invalid @enderror"
+                                <select class="form-select select2 @error('enable_escalation') is-invalid @enderror"
                                         name="enable_escalation" id="enable_escalation">
                                     <option value="0" {{ old('enable_escalation', $policy->enable_escalation ? '1' : '0') == '0' ? 'selected' : '' }}>Desactivado — no se envian alertas de escalamiento</option>
                                     <option value="1" {{ old('enable_escalation', $policy->enable_escalation ? '1' : '0') == '1' ? 'selected' : '' }}>Activo — enviar alertas al alcanzar el umbral</option>
@@ -216,7 +216,7 @@
                                 @enderror
                             </div>
 
-                            <div class="col-12 col-md-6" id="escalation-threshold-wrap" style="{{ old('enable_escalation', $policy->enable_escalation ? '1' : '0') == '1' ? '' : 'display:none;' }}">
+                            <div class="col-12" id="escalation-threshold-wrap" style="{{ old('enable_escalation', $policy->enable_escalation ? '1' : '0') == '1' ? '' : 'display:none;' }}">
                                 <label class="form-label">Umbral de escalamiento (%)</label>
                                 <input type="number" name="escalation_threshold_percent"
                                        class="form-control @error('escalation_threshold_percent') is-invalid @enderror"
@@ -231,13 +231,13 @@
                         </div>
 
                         {{-- Configuracion --}}
-                        <h6 class="fw-semibold mb-1 border-bottom pb-2">Configuracion</h6>
+                        <h6 class="fw-semibold mb-1">Configuracion</h6>
                         <p class="text-muted small mb-3">Disponibilidad de esta politica</p>
                         <div class="row g-3">
 
                             <div class="col-12">
                                 <label for="active" class="form-label">Estado</label>
-                                <select class="form-select @error('active') is-invalid @enderror" name="active" id="active">
+                                <select class="form-select select2 @error('active') is-invalid @enderror" name="active" id="active">
                                     <option value="1" {{ old('active', $policy->active ? '1' : '0') == '1' ? 'selected' : '' }}>Activa — disponible para aplicar a tickets</option>
                                     <option value="0" {{ old('active', $policy->active ? '1' : '0') == '0' ? 'selected' : '' }}>Inactiva — no se aplica a nuevos tickets</option>
                                 </select>
@@ -259,29 +259,37 @@
 
         {{-- Help panel --}}
         <div class="col-lg-4">
-            <div class="card">
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Sobre el SLA</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Sobre el SLA</h6>
                     <p class="card-text text-muted">
                         Las politicas SLA definen los compromisos de tiempo de respuesta y resolucion que el equipo de soporte debe cumplir con cada ticket.
                     </p>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card mb-3">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Buenas practicas</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Buenas practicas</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Define tiempos realistas segun la capacidad del equipo</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Usa multiplicadores para diferenciar prioridades</li>
-                        <li class="mb-2 text-muted small"><i class="fas fa-check-circle text-success me-2"></i> Activa el escalamiento para recibir alertas antes del vencimiento</li>
-                        <li class="text-muted small"><i class="fas fa-check-circle text-success me-2"></i> El horario laboral excluye fines de semana y horas no configuradas</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Define tiempos realistas segun la capacidad del equipo</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Usa multiplicadores para diferenciar prioridades</li>
+                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Activa el escalamiento para recibir alertas antes del vencimiento</li>
+                        <li class="mb-0"><i class="fas fa-check-circle text-success me-2"></i> El horario laboral excluye fines de semana y horas no configuradas</li>
                     </ul>
                 </div>
-                <hr class="my-0">
+            </div>
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion del registro</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion del registro</h6>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 text-muted small">Creado: {{ $policy->created_at?->format('d/m/Y H:i') ?? '—' }}</li>
-                        <li class="text-muted small">Actualizado: {{ $policy->updated_at?->format('d/m/Y H:i') ?? '—' }}</li>
+                    <ul class="text-muted mb-0">
+                        <li class="mb-2">Creado: {{ $policy->created_at?->format('d/m/Y H:i') ?? '—' }}</li>
+                        <li class="mb-0">Actualizado: {{ $policy->updated_at?->format('d/m/Y H:i') ?? '—' }}</li>
                     </ul>
                 </div>
             </div>
@@ -294,6 +302,8 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
+    $('.select2').select2({ width: '100%' });
+
     $('#enable_escalation').on('change', function () {
         $('#escalation-threshold-wrap').toggle($(this).val() === '1');
     });

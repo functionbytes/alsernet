@@ -230,7 +230,7 @@
                                 {{-- forms_unread --}}
                                 <div class="conditions-panel" data-type="forms_unread" style="display:none;">
                                     <div class="row g-2">
-                                        <div class="col-md-6">
+                                        <div class="col-12">
                                             <label class="form-label small">Formularios sin leer (mínimo)</label>
                                             <input type="number" name="conditions[min_count]" class="form-control" min="1" value="20">
                                         </div>
@@ -240,7 +240,7 @@
                                 {{-- attention_pending --}}
                                 <div class="conditions-panel" data-type="attention_pending" style="display:none;">
                                     <div class="row g-2">
-                                        <div class="col-md-6">
+                                        <div class="col-12">
                                             <label class="form-label small">PQRSF pendientes (mínimo)</label>
                                             <input type="number" name="conditions[min_count]" class="form-control" min="1" value="10">
                                         </div>

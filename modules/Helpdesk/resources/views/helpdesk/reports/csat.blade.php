@@ -79,9 +79,11 @@
 {{-- Charts row --}}
 <div class="row g-3 mb-4">
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card">
+            <div class="card-header border-bottom">
+                <h6 class="mb-0 fw-bold">Distribución de ratings</h6>
+            </div>
             <div class="card-body">
-                <h6 class="text-uppercase small text-muted mb-3">Distribución de ratings</h6>
                 <canvas id="chart-distribution" height="220"></canvas>
             </div>
         </div>

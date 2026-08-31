@@ -42,11 +42,29 @@ class HelpdeskReportsController extends Controller
         return view('helpdesk::helpdesk.reports.index', array_merge($viewData, [
             'from' => $from,
             'to' => $to,
+            // Pill activa en el filtro de rango: 'custom' si vino from/to
+            // explícito (o un preset no reconocido cayó al default), el
+            // nombre del preset si no.
+            'activeRange' => $this->resolveActiveRange($request),
             // Salud operativa "ahora" (colas, dead-letters, webhooks, SLA, IA):
             // fuera del cache por rango de fechas — la refresca el comando
             // programado helpdesk:ops-metrics y aquí solo se lee.
             'opsHealth' => app(OpsHealthService::class)->cached(),
         ]));
+    }
+
+    /**
+     * Which range pill should render as active, mirroring the same
+     * precedence rule as resolveDateRange(): an explicit from/to always
+     * means "custom", even if a range preset was also sent.
+     */
+    private function resolveActiveRange(Request $request): string
+    {
+        if ($request->filled('from') || $request->filled('to')) {
+            return 'custom';
+        }
+
+        return $request->filled('range') ? $request->string('range')->toString() : '30d';
     }
 
     /**
@@ -73,10 +91,22 @@ class HelpdeskReportsController extends Controller
      * Malformed or inverted input falls back to the default range instead of
      * bubbling a Carbon parse exception (500).
      *
+     * A `range` preset (pills in the UI: today/7d/30d/month/last_month/year)
+     * takes priority over explicit from/to, but only when neither was sent —
+     * an explicit range (e.g. the export link, or a custom date picker
+     * submission) always wins so it keeps working exactly as before. A bare
+     * visit with no query params at all is treated as `range=30d` too, so
+     * the default landing page and clicking the "30 días" pill compute the
+     * exact same dates (no off-by-one between the two).
+     *
      * @return array{0: Carbon, 1: Carbon}
      */
     private function resolveDateRange(Request $request): array
     {
+        if (! $request->filled('from') && ! $request->filled('to')) {
+            return $this->resolvePresetRange($request->string('range', '30d')->toString());
+        }
+
         $from = $this->parseDateInput($request->input('from')) ?? now()->subDays(30);
         $to = $this->parseDateInput($request->input('to')) ?? now();
 
@@ -86,6 +116,24 @@ class HelpdeskReportsController extends Controller
         }
 
         return [$from->startOfDay(), $to->endOfDay()];
+    }
+
+    /**
+     * Resolve a named quick-range preset into concrete from/to dates.
+     * Unknown presets fall back to the same 30-day default as no filter.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function resolvePresetRange(string $preset): array
+    {
+        return match ($preset) {
+            'today' => [now()->startOfDay(), now()->endOfDay()],
+            '7d' => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
+            'month' => [now()->startOfMonth(), now()->endOfMonth()],
+            'last_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()],
+            'year' => [now()->startOfYear(), now()->endOfYear()],
+            default => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
+        };
     }
 
     /**

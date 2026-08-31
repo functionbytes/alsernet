@@ -2,12 +2,14 @@
 
 namespace Modules\HelpdeskTickets\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
 class TicketFollowup extends Model
 {
+    use BelongsToHelpdeskUser;
+
     protected $connection = 'helpdesk';
 
     protected $table = 'helpdesk_ticket_followups';
@@ -37,6 +39,6 @@ class TicketFollowup extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsToHelpdeskUser('user_id', 'user');
     }
 }

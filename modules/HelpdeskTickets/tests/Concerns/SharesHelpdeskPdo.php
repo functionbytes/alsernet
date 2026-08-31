@@ -25,8 +25,18 @@ trait SharesHelpdeskPdo
     /**
      * Solo la conexión dueña del PDO compartido abre transacción: abrir otra en
      * "helpdesk" (mismo PDO) haría un commit implícito de la primera.
+     *
+     * 'mysql' se agrega aparte (PDO propio, no compartido con 'mariadb'): es
+     * la conexión real de Modules\Core\Models\Setting/tabla `settings`
+     * (confirmado en runtime, no un alias de 'mariadb'). Sin ella, cualquier
+     * test que toque Setting::set()/setEncrypted() o DB::table('settings')
+     * escribe DE VERDAD sin rollback — pasó en la práctica: un test de
+     * canales de correo (incoming_email) borró un canal real ya configurado
+     * en el entorno compartido. `settings` no tiene FKs hacia tablas de
+     * helpdesk, así que darle su propia transacción aparte no reproduce el
+     * problema de lock cruzado que este trait resuelve para 'helpdesk'.
      */
-    protected array $connectionsToTransact = ['mariadb'];
+    protected array $connectionsToTransact = ['mariadb', 'mysql'];
 
     protected function beginDatabaseTransaction()
     {

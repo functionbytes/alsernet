@@ -9,9 +9,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Modules\HelpdeskTickets\Events\SlaBreachBroadcast;
-use Modules\HelpdeskTickets\Events\SlaBreached;
-use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Services\SlaService;
 
 /**
@@ -53,35 +50,11 @@ class CheckSlaBreaches implements ShouldQueue
         try {
             Log::info('CheckSlaBreaches job started at '.now());
 
-            $breachedTickets = Ticket::query()
-                ->where('sla_resolution_breached', false)
-                ->where('sla_resolution_due_at', '<', now())
-                ->whereNull('closed_at')
-                ->cursor();
-
-            $breachCount = 0;
-
-            foreach ($breachedTickets as $ticket) {
-                try {
-                    $ticket->update(['sla_resolution_breached' => true]);
-
-                    event(new SlaBreached($ticket));
-                    SlaBreachBroadcast::dispatch($ticket);
-
-                    Log::warning("SLA breached for ticket #{$ticket->id} - Subject: {$ticket->subject}", [
-                        'ticket_id' => $ticket->id,
-                        'due_at' => $ticket->sla_resolution_due_at,
-                        'breached_at' => now(),
-                    ]);
-
-                    $breachCount++;
-                } catch (\Exception $e) {
-                    Log::error("Failed to process SLA breach for ticket #{$ticket->id}: {$e->getMessage()}", [
-                        'ticket_id' => $ticket->id,
-                        'exception' => $e,
-                    ]);
-                }
-            }
+            // El job recibía SlaService por inyección y no lo usaba: repetía
+            // aquí, con diferencias, el mismo barrido que SlaService::
+            // checkBreaches(). Ahora delega de verdad, y con ello el filtro de
+            // tickets pausados y el logging viven en un solo sitio.
+            $breachCount = $slaService->checkBreaches()->count();
 
             Log::info('CheckSlaBreaches job completed at '.now()." - Total breaches: {$breachCount}");
         } catch (\Exception $e) {

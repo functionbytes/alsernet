@@ -39,9 +39,11 @@
 
         <div class="col-lg-4">
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion de la empresa</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion de la empresa</h6>
-                    <ul class="list-unstyled text-muted small mb-0">
+                    <ul class="text-muted mb-0">
                         <li class="mb-2">
                             <strong>Clientes:</strong> {{ $company->customers()->count() }}
                         </li>

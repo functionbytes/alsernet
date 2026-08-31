@@ -39,8 +39,10 @@
 
         <div class="col-lg-4">
             <div class="card">
+                <div class="card-header border-bottom">
+                    <h6 class="mb-0 fw-bold">Informacion de la marca</h6>
+                </div>
                 <div class="card-body">
-                    <h6 class="card-title mb-3">Informacion de la marca</h6>
                     <div class="mb-2 d-flex justify-content-between">
                         <span class="text-muted small">Slug</span>
                         <code class="small">{{ $brand->slug }}</code>
@@ -81,17 +83,6 @@
 @push('scripts')
 <script>
 $(document).ready(function () {
-    $('#primary_color').on('input', function () {
-        $('#primary_color_text').val($(this).val());
-    });
-
-    $('#primary_color_text').on('input', function () {
-        const val = $(this).val();
-        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-            $('#primary_color').val(val);
-        }
-    });
-
     $('.btn-copy-token').on('click', function () {
         const token = $(this).closest('.input-group').find('input').val();
         navigator.clipboard.writeText(token).then(function () {

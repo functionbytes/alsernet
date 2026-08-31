@@ -187,7 +187,7 @@ class PortalTicketFlowTest extends TestCase
                 'message' => 'This is my follow-up message.',
             ])
             ->assertRedirect()
-            ->assertSessionHas('status', 'Your reply has been sent.');
+            ->assertSessionHas('status', __('helpdesktickets::helpdesktickets.portal.reply_sent'));
 
         $this->assertDatabaseHas('helpdesk_ticket_items', [
             'ticket_id' => $ticket->id,
@@ -269,7 +269,7 @@ class PortalTicketFlowTest extends TestCase
                 'priority' => 'normal',
             ])
             ->assertRedirect()
-            ->assertSessionHas('status', 'Your ticket has been created.');
+            ->assertSessionHas('status', __('helpdesktickets::helpdesktickets.portal.ticket_created'));
 
         $this->assertDatabaseHas('helpdesk_tickets', [
             'subject' => 'Need help with my order',

@@ -100,7 +100,7 @@
 
                         {{-- Step 1: Configure app --}}
                         <div id="step-1">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Paso 1: Instala una aplicación autenticadora</h6>
+                            <h6 class="fw-bold mb-3">Paso 1: Instala una aplicación autenticadora</h6>
                             <p class="text-muted mb-3">
                                 Necesitas una aplicación autenticadora en tu teléfono para generar
                                 los códigos de verificación de 6 dígitos.
@@ -129,7 +129,7 @@
 
                         {{-- Step 2: Scan QR --}}
                         <div id="step-2" class="d-none">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Paso 2: Escanea el código QR</h6>
+                            <h6 class="fw-bold mb-3">Paso 2: Escanea el código QR</h6>
                             <p class="text-muted mb-3">
                                 Abre tu aplicación autenticadora y escanea el siguiente código QR.
                                 Luego ingresa el código de 6 dígitos que aparece en la app.
@@ -175,7 +175,7 @@
 
                         {{-- Step 3: Recovery codes --}}
                         <div id="step-3" class="d-none">
-                            <h6 class="fw-bold mb-3 border-bottom pb-2">Paso 3: Guarda tus códigos de recuperación</h6>
+                            <h6 class="fw-bold mb-3">Paso 3: Guarda tus códigos de recuperación</h6>
 
                             <div class="alert alert-warning d-flex gap-2" role="alert">
                                 <i class="fas fa-exclamation-triangle flex-shrink-0 mt-1"></i>

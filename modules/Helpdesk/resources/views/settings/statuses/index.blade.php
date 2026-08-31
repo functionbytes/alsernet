@@ -2,6 +2,12 @@
 
 @section('title', 'Estados de tickets')
 
+@push('styles')
+<style>
+.hd-bulk-toolbar { z-index: 1050; }
+</style>
+@endpush
+
 @section('page_header')
     @include('core::components.card', ['title' => 'Estados de tickets'])
 @endsection
@@ -71,9 +77,15 @@
                 </div>
             </div>
 
-            {{-- Search --}}
+            {{-- Filtros --}}
             <div class="card-body border-bottom">
+                @php
+                    $activeFilterCount = request()->filled('status') ? 1 : 0;
+                    $hasAnyFilter = $activeFilterCount > 0 || request()->filled('search');
+                @endphp
                 <form method="GET" action="{{ route('settings.helpdesk.statuses.index') }}" id="filterForm">
+                    <input type="hidden" name="status" id="filter-status" value="{{ request('status') }}">
+
                     <div class="d-flex gap-2 align-items-center">
                         <div class="flex-fill">
                             <div class="input-group">
@@ -85,16 +97,39 @@
                                        value="{{ request('search') }}">
                             </div>
                         </div>
+
+                        <button type="button" class="btn btn-outline-secondary position-relative flex-shrink-0"
+                                data-bs-toggle="modal" data-bs-target="#statuses-filter-modal" title="Filtros avanzados">
+                            <i class="fas fa-filter"></i>
+                            @if($activeFilterCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                    {{ $activeFilterCount }}
+                                </span>
+                            @endif
+                        </button>
+
                         <button type="submit" class="btn btn-primary flex-shrink-0" aria-label="Buscar">
                             <i class="fas fa-search"></i>
                         </button>
-                        @if(request('search'))
+                        @if($hasAnyFilter)
                             <a href="{{ route('settings.helpdesk.statuses.index') }}"
                                class="btn btn-outline-secondary flex-shrink-0" title="Limpiar">
                                 <i class="fas fa-times"></i>
                             </a>
                         @endif
                     </div>
+
+                    @if($activeFilterCount > 0)
+                        <div class="d-flex gap-2 flex-wrap align-items-center mt-3">
+                            <h6 class="mb-0">Filtrados:</h6>
+                            <span class="badge bg-primary-subtle text-primary py-1 px-2">
+                                Estado: {{ request('status') === '1' ? 'Activos' : 'Inactivos' }}
+                            </span>
+                            <a href="{{ route('settings.helpdesk.statuses.index') }}" class="btn btn-secondary btn-sm ms-auto">
+                                Limpiar filtros
+                            </a>
+                        </div>
+                    @endif
                 </form>
             </div>
 
@@ -105,6 +140,7 @@
                         <table class="table table-hover align-middle text-nowrap" id="statuses-table">
                             <thead class="table-light">
                                 <tr>
+                                    <th scope="col" width="36"><input type="checkbox" id="select-all" class="form-check-input"></th>
                                     <th scope="col">Nombre</th>
                                     <th scope="col">Slug</th>
                                     <th scope="col">Descripcion</th>
@@ -116,6 +152,9 @@
                                 @foreach($statuses as $status)
                                     <tr data-id="{{ $status->id }}">
                                         <td>
+                                            <input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $status->id }}">
+                                        </td>
+                                        <td>
                                             <span class="fw-semibold">{{ $status->name }}</span>
                                             <div class="d-flex gap-1 mt-1">
                                                 @if($status->is_default)
@@ -125,6 +164,9 @@
                                                     <span class="badge bg-success-subtle text-success">Abierto</span>
                                                 @else
                                                     <span class="badge bg-secondary-subtle text-secondary">Cerrado</span>
+                                                @endif
+                                                @if(! $status->active)
+                                                    <span class="badge bg-light text-dark">Inactivo</span>
                                                 @endif
                                             </div>
                                         </td>
@@ -178,20 +220,20 @@
                     <div class="text-center py-5">
                         <i class="fas fa-circle-check fa-3x mb-3 text-muted opacity-50"></i>
                         <h5 class="fw-bold mb-2">
-                            @if(request('search'))
+                            @if(request()->hasAny(['search', 'status']))
                                 No se encontraron resultados
                             @else
                                 No hay estados configurados
                             @endif
                         </h5>
                         <p class="text-muted mb-4">
-                            @if(request('search'))
-                                No hay resultados para "{{ request('search') }}"
+                            @if(request()->hasAny(['search', 'status']))
+                                No hay resultados para los filtros aplicados
                             @else
                                 Aun no hay estados creados
                             @endif
                         </p>
-                        @if(request('search'))
+                        @if(request()->hasAny(['search', 'status']))
                             <a href="{{ route('settings.helpdesk.statuses.index') }}" class="btn btn-secondary">Limpiar filtros</a>
                         @else
                             <a href="{{ route('settings.helpdesk.statuses.create') }}" class="btn btn-primary">
@@ -221,9 +263,75 @@
 
     @include('core::components.delete')
 
+    {{-- Filter modal --}}
+    <div class="modal fade" id="statuses-filter-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filtros avanzados</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select id="modal-status" class="form-control select2-filter-modal">
+                            <option value="">Todos</option>
+                            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Activos</option>
+                            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Inactivos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="statuses-filter-apply-btn" class="btn btn-primary w-100 mb-1">
+                        Aplicar filtros
+                    </button>
+                    <button type="button" id="statuses-filter-clear-btn" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Bulk toolbar flotante --}}
+    <div id="bulk-toolbar" class="hd-bulk-toolbar position-fixed bottom-0 start-50 translate-middle-x mb-4 d-none">
+        <button type="button" class="btn btn-primary shadow-lg px-4" data-bs-toggle="modal" data-bs-target="#bulk-modal">
+            <span data-bulk-count>0</span> seleccionado(s) &mdash; Aplicar acción
+        </button>
+    </div>
+
+    {{-- Bulk modal --}}
+    <div class="modal fade" id="bulk-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Acción masiva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">Se aplicará la acción sobre <strong><span data-bulk-count>0</span> estado(s)</strong>. Al eliminar, los estados del sistema o predeterminado se omiten.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Acción</label>
+                        <select id="bulk-action-select" class="form-select">
+                            <option value="">Seleccionar acción...</option>
+                            <option value="activate">Activar</option>
+                            <option value="deactivate">Desactivar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="bulk-apply-btn" type="button" class="btn btn-primary w-100 mb-1">Aplicar</button>
+                    <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
+<script src="{{ asset('core/js/bulk.js?v=2') }}"></script>
 <script>
 $(document).ready(function () {
     @if(session('success'))
@@ -237,6 +345,66 @@ $(document).ready(function () {
     $(document).on('click', '.delete-btn', function () {
         $('#delete-modal .modal-title').text($(this).data('title'));
         $('#delete-form').attr('action', $(this).data('url'));
+    });
+
+    // ── Filter modal ─────────────────────────────────────────────────
+    $('.select2-filter-modal').select2({ dropdownParent: $('#statuses-filter-modal'), width: '100%' });
+
+    $('#statuses-filter-apply-btn').on('click', function () {
+        $('#filter-status').val($('#modal-status').val());
+        $('#statuses-filter-modal').modal('hide');
+        $('#filterForm').submit();
+    });
+
+    $('#statuses-filter-clear-btn').on('click', function () {
+        $('#modal-status').val(null).trigger('change');
+    });
+
+    // ── Bulk actions ──────────────────────────────────────────────────
+    const bulk = window.BulkActions.init({ checkbox: '.bulk-checkbox' });
+
+    $('#bulk-action-select').select2({ dropdownParent: $('#bulk-modal'), width: '100%' });
+
+    $('#bulk-modal').on('hide.bs.modal', function () {
+        $('#bulk-action-select').val('').trigger('change');
+        $('#bulk-apply-btn').prop('disabled', false).text('Aplicar');
+        bulk.reset();
+    });
+
+    $('#bulk-apply-btn').on('click', function () {
+        var action = $('#bulk-action-select').val();
+        var ids    = bulk.getIds();
+
+        if (!action) { toastr.warning('Selecciona una acción.'); return; }
+        if (!ids.length) { toastr.warning('Selecciona al menos un estado.'); return; }
+
+        var applyBulkAction = function () {
+            var $btn = $('#bulk-apply-btn');
+            $btn.prop('disabled', true).text('Procesando...');
+
+            $.ajax({
+                url: '{{ route('settings.helpdesk.statuses.bulk-action') }}',
+                method: 'POST',
+                data: JSON.stringify({ action: action, ids: ids, _token: $('meta[name="csrf-token"]').attr('content') }),
+                contentType: 'application/json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    $('#bulk-modal').modal('hide');
+                    toastr.success(res.message);
+                    setTimeout(function () { location.reload(); }, 800);
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message ?? 'Error al procesar la acción.');
+                    $btn.prop('disabled', false).text('Aplicar');
+                },
+            });
+        };
+
+        if (action === 'delete') {
+            window.__confirm('¿Eliminar ' + ids.length + ' estado(s)? Esta acción no se puede deshacer.', applyBulkAction);
+        } else {
+            applyBulkAction();
+        }
     });
 });
 </script>
