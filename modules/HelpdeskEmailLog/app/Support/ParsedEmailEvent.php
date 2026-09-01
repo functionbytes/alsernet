@@ -18,9 +18,24 @@ namespace Modules\HelpdeskEmailLog\Support;
  * $ip/$userAgent solo se rellenan para $type === 'open' (dato que el
  * proveedor adjunta al evento de apertura; ver cada adapter) — siempre null
  * para el resto de tipos.
+ *
+ * $rawPayload es la porción del payload original que corresponde
+ * ÚNICAMENTE a este evento (nunca el request completo) — para Mailgun/
+ * Postmark/SES-SNS coincide con el propio request porque ya traen un solo
+ * evento por petición; para Mailrelay, que sí puede traer varios eventos en
+ * un mismo array, es el objeto individual dentro del batch. Ese matiz
+ * importa: EmailProviderWebhookController lo guarda en
+ * email_provider_events.payload para depuración, y
+ * WebhookEventsController::reprocess() reconstruye un ParsedEmailEvent
+ * desde ahí — si aquí hubiera quedado el batch entero, reprocesar una fila
+ * de un batch de Mailrelay habría sido ambiguo (¿cuál de los varios eventos
+ * del array corresponde a esta fila?).
  */
 final class ParsedEmailEvent
 {
+    /**
+     * @param  array<string, mixed>  $rawPayload
+     */
     public function __construct(
         public readonly string $type, // 'bounce' | 'complaint' | 'delivered' | 'open'
         public readonly ?string $messageId,
@@ -30,6 +45,7 @@ final class ParsedEmailEvent
         public readonly ?string $providerEventId = null,
         public readonly ?string $ip = null,
         public readonly ?string $userAgent = null,
+        public readonly array $rawPayload = [],
     ) {}
 
     public function isBounce(): bool

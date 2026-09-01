@@ -78,6 +78,10 @@ return [
         'engagement_not_opened' => 'Sin abrir (con seguimiento)',
         'engagement_clicked' => 'Con clic',
         'engagement_not_clicked' => 'Sin clic (con seguimiento)',
+        'all_agents' => 'Cualquier agente',
+        'all_from_addresses' => 'Cualquier buzón remitente',
+        'attachments_only' => 'Cualquiera',
+        'attachments_only_yes' => 'Solo con adjuntos',
         'results_count' => '{0} Sin resultados|{1} :count resultado|[2,*] :count resultados',
     ],
 
@@ -129,6 +133,8 @@ return [
     'actions' => [
         'view' => 'Ver contenido',
         'resend' => 'Reenviar',
+        'resend_recipient' => 'Reenviar al destinatario',
+        'move_to_trash' => 'Enviar a la papelera',
         'delete' => 'Eliminar',
         'export' => 'Exportar CSV',
         'bulk_delete' => 'Eliminar seleccionados',
@@ -159,6 +165,7 @@ return [
     ],
 
     'purge' => [
+        'hint' => 'conserva los metadatos',
         'confirm_title' => 'Purgar contenido del email',
         'confirm' => 'Se eliminará el cuerpo (HTML/texto) de este email de forma permanente. Los metadatos (asunto, destinatarios, estado) se conservan. ¿Continuar?',
         'done' => 'Contenido del email purgado.',
@@ -185,7 +192,16 @@ return [
         'refreshed' => 'Reputación de :domain actualizada.',
     ],
 
+    'webhook_events' => [
+        'already_correlated' => 'Este evento ya está correlacionado con un email, no hace falta reprocesarlo.',
+        'cannot_reprocess' => 'Este evento no tiene datos suficientes para reprocesarlo (es anterior a la auditoría de payloads).',
+        'type_disabled' => 'El tipo de evento sigue desactivado en la configuración del proveedor — actívalo antes de reprocesar.',
+        'reprocessed_matched' => 'Evento reprocesado: correlacionado con un email.',
+        'reprocessed_unmatched' => 'Evento reprocesado, pero sigue sin poder correlacionarse con ningún email.',
+    ],
+
     'pagination' => [
+        'page' => 'pág. :page de :last',
         'showing' => 'Mostrando :first–:last de :total registros',
     ],
 
@@ -215,6 +231,7 @@ return [
     ],
 
     'trash' => [
+        'recoverable_hint' => 'recuperable :days días',
         'title' => 'Papelera de registros',
         'subtitle' => 'Registros de email eliminados desde el listado — recuperables durante :days días antes de borrarse para siempre.',
         'back_to_list' => 'Volver al listado',
@@ -259,6 +276,9 @@ return [
     ],
 
     'preview' => [
+        'related_see_all' => 'Ver los :count del hilo',
+        'related_see_filtered' => 'Ver todos en el listado',
+        'by' => 'por :name',
         'title' => 'Detalle del email',
         'heading' => 'Contenido del email',
         // Etiquetas cortas de las pestañas (el mockup usa una sola palabra);
@@ -269,6 +289,7 @@ return [
             'trace' => 'Traza',
             'opens' => 'Aperturas',
             'raw' => 'Original',
+            'activity' => 'Bitácora',
         ],
         'position' => ':position de :total',
         'prev' => 'Anterior (K)',
@@ -279,6 +300,7 @@ return [
             'last_open' => 'última apertura',
             'delivery_rate' => 'entregabilidad',
             'filter' => 'Ver sus emails',
+            'sent_by' => 'Enviado por :name',
         ],
         'desktop' => 'Escritorio',
         'mobile' => 'Móvil',
@@ -302,7 +324,7 @@ return [
             'entity' => 'Entidad',
             'message_id' => 'Message-ID',
             'attachments' => 'Adjuntos',
-            'sent_at' => 'Fecha de envío',
+            'sent_at' => 'Enviado',
             'created_at' => 'Registrado',
             'causer' => 'Originado por',
             'error' => 'Error',
@@ -319,6 +341,8 @@ return [
         'related_entity_id_label' => 'ID',
         'related_entity_open' => 'Abrir',
         'related_entity_filter' => 'Filtrar',
+        'related_entity_none' => 'Este email no está vinculado a ningún registro.',
+        'related_entity_link_cta' => 'Vincular a un ticket',
         'related_emails' => 'Emails relacionados',
         'related_emails_hint' => 'Mismo destinatario o entidad',
         'entity_panel_title' => 'Hilo relacionado',
@@ -385,7 +409,65 @@ return [
         'likely_bot_badge' => 'posible bot',
     ],
 
+    // Pestaña "Bitácora" del detalle — lista las acciones que
+    // EmailLogController::logActivity() ya registraba sobre este email (y
+    // que hasta ahora nadie podía ver desde el propio módulo). Las claves de
+    // 'events' son los mismos nombres de evento que logActivity() usa tal
+    // cual (ver su docblock); un evento sin traducción cae a la descripción
+    // cruda de la fila (ver activity.blade del detalle).
+    'activity_log' => [
+        'title' => 'Bitácora de este email',
+        'hint' => 'Quién hizo qué y cuándo, sobre este registro',
+        'empty' => 'Sin acciones registradas todavía para este email.',
+        'system' => 'Sistema',
+        'view_full_audit' => 'Ver auditoría completa',
+        'events' => [
+            'viewed' => 'Email consultado',
+            'resent' => 'Reenviado',
+            'body_purged' => 'Contenido purgado',
+            'downloaded' => 'Contenido descargado',
+            'downloaded_raw' => '.eml descargado',
+            'deleted' => 'Movido a la papelera',
+            'restored' => 'Restaurado desde la papelera',
+            'force_deleted' => 'Eliminado definitivamente',
+            'bounce_resolved' => 'Rebote resuelto (reenviado + supresión)',
+            'entity_linked' => 'Vinculado a una entidad',
+        ],
+    ],
+
+    'bounce_triage' => [
+        'cta' => 'Corregir y reenviar',
+        'title' => 'Resolver rebote',
+        'hint' => 'Corrige la dirección, reenvía y opcionalmente bloquea la antigua.',
+        'bounced_address_label' => 'Dirección que rebotó',
+        'error_label' => 'Motivo del rebote',
+        'corrected_label' => 'Dirección corregida',
+        'corrected_placeholder' => 'nombre@ejemplo.com',
+        'suppress_label' => 'Añadir la dirección antigua a la lista de supresión',
+        'suppress_hint_hard' => 'Marcada por defecto: este fue un rebote permanente.',
+        'suppress_hint_soft' => 'Este rebote fue temporal — puedes activarlo igualmente si prefieres bloquear la dirección.',
+        'send' => 'Corregir y reenviar',
+        'same_address' => 'La dirección corregida debe ser distinta de la que rebotó.',
+        'not_bounced' => 'Este email no está en estado rebotado.',
+        'success' => 'Rebote resuelto: reenviado a :email.',
+    ],
+
+    'link_entity' => [
+        'title' => 'Vincular a un ticket',
+        'hint' => 'Busca por número de ticket, asunto o cliente.',
+        'search_placeholder' => 'Buscar ticket...',
+        'search_min_chars' => 'Escribe al menos 2 caracteres.',
+        'no_results' => 'Sin tickets encontrados.',
+        'selected_label' => 'Ticket seleccionado',
+        'send' => 'Vincular',
+        'success' => 'Email vinculado al ticket correctamente.',
+        'already_linked' => 'Este email ya está vinculado a una entidad.',
+        'not_found' => 'El ticket seleccionado ya no existe.',
+        'module_disabled' => 'El módulo de tickets no está activo.',
+    ],
+
     'resend' => [
+        'recipient_hint' => 'al mismo correo original',
         'success' => 'Email reenviado correctamente.',
         'queued' => 'Reenvío encolado. El email se enviará en segundo plano.',
         'queued_to' => 'Reenvío a :email encolado.',

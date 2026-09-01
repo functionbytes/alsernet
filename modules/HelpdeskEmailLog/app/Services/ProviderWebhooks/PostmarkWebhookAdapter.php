@@ -75,6 +75,7 @@ class PostmarkWebhookAdapter implements EmailProviderWebhookAdapter
             providerEventId: isset($payload['ID']) ? (string) $payload['ID'] : null,
             ip: $type === 'open' ? ($payload['Geo']['IP'] ?? null) : null,
             userAgent: $type === 'open' ? ($payload['UserAgent'] ?? null) : null,
+            rawPayload: $payload,
         )];
     }
 }

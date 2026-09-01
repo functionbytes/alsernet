@@ -1247,3 +1247,33 @@
         display: none !important;
     }
 }
+
+/* Bloque de JSON crudo dentro de <details> (Settings → Eventos de webhook,
+   "Ver payload") — .mono/.evx-mono ya pone la tipografía; esto solo acota
+   el alto y evita que una línea larga rompa el layout de la fila. */
+.evx-payload {
+    max-height: 320px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--evx-bg-soft);
+    border: 1px solid var(--evx-border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.evx-payload-toggle {
+    margin-top: 6px;
+}
+
+.evx-payload-toggle summary {
+    cursor: pointer;
+    color: var(--evx-text-soft);
+    font-size: 13px;
+}
+
+.evx-payload-toggle summary:hover {
+    color: var(--evx-primary-dark);
+}

@@ -109,6 +109,18 @@ class EmailLog extends Model
 
     private const CACHE_KEY_MODULES = 'helpdeskemaillog:modules';
 
+    /**
+     * Mismo criterio de caché que CACHE_KEY_MODULES (TTL de 10 min +
+     * invalidación proactiva en creación/borrado, ver booting()) — opciones
+     * de los filtros "Agente" y "Buzón remitente" del listado (ver
+     * EmailLogController::buildListData()), un DISTINCT sobre
+     * causer_id/from_address que tampoco vale la pena recalcular en cada
+     * cambio de estado de un envío ya existente.
+     */
+    private const CACHE_KEY_CAUSERS = 'helpdeskemaillog:causers';
+
+    private const CACHE_KEY_FROM_ADDRESSES = 'helpdeskemaillog:from-addresses';
+
     protected $fillable = [
         'uid',
         'mailable_class',
@@ -193,6 +205,15 @@ class EmailLog extends Model
             if ($model->wasChanged('module') || $model->wasRecentlyCreated || ! $model->exists) {
                 Cache::forget(self::CACHE_KEY_MODULES);
             }
+
+            // causer_id/from_address se fijan al crear el registro y nunca
+            // cambian después (ver LogEmailQueued/LogEmailSent) — solo hace
+            // falta invalidar en alta/baja, nunca en un simple cambio de
+            // status.
+            if ($model->wasRecentlyCreated || ! $model->exists) {
+                Cache::forget(self::CACHE_KEY_CAUSERS);
+                Cache::forget(self::CACHE_KEY_FROM_ADDRESSES);
+            }
         };
 
         static::created($invalidateCaches);
@@ -215,6 +236,8 @@ class EmailLog extends Model
         Cache::forget(self::CACHE_KEY_TREND);
         Cache::forget(self::CACHE_KEY_STALE);
         Cache::forget(self::CACHE_KEY_MODULES);
+        Cache::forget(self::CACHE_KEY_CAUSERS);
+        Cache::forget(self::CACHE_KEY_FROM_ADDRESSES);
     }
 
     public function getRouteKeyName(): string
@@ -466,6 +489,17 @@ class EmailLog extends Model
             'bounce_rate' => $attempted > 0 ? round(($bounced / $attempted) * 100, 2) : 0.0,
             'complaint_rate' => $attempted > 0 ? round(($complained / $attempted) * 100, 2) : 0.0,
         ];
+    }
+
+    /**
+     * Mismo criterio que el accessor hasAttachments() (`! empty($this->attachments)`)
+     * pero evaluado en SQL, para el filtro "Solo con adjuntos" del listado —
+     * nunca carga la columna a PHP solo para contarla. JSON_LENGTH() existe
+     * tanto en MySQL como en MariaDB (>= 10.2, motor de este entorno).
+     */
+    public function scopeHasAttachments(Builder $query): Builder
+    {
+        return $query->whereNotNull('attachments')->whereRaw('JSON_LENGTH(attachments) > 0');
     }
 
     public function scopeForModule(Builder $query, string $module): Builder

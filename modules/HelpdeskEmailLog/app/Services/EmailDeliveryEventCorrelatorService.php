@@ -37,54 +37,80 @@ class EmailDeliveryEventCorrelatorService
 {
     public function correlateDeliveredByMessageId(string $messageId): bool
     {
-        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
-
-        if (! $emailLog) {
-            return false;
-        }
-
-        $this->markDelivered($emailLog);
-
-        return true;
+        return $this->resolveDeliveredByMessageId($messageId) !== null;
     }
 
     public function correlateDeliveredByRecipient(string $recipient): bool
     {
-        $emailLog = $this->findSingleCandidateByRecipient($recipient);
-
-        if (! $emailLog) {
-            return false;
-        }
-
-        $this->markDelivered($emailLog);
-
-        return true;
+        return $this->resolveDeliveredByRecipient($recipient) !== null;
     }
 
     public function correlateOpenByMessageId(string $messageId, ?string $ip, ?string $userAgent): bool
     {
-        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
-
-        if (! $emailLog) {
-            return false;
-        }
-
-        $this->recordOpen($emailLog, $ip, $userAgent);
-
-        return true;
+        return $this->resolveOpenByMessageId($messageId, $ip, $userAgent) !== null;
     }
 
     public function correlateOpenByRecipient(string $recipient, ?string $ip, ?string $userAgent): bool
     {
+        return $this->resolveOpenByRecipient($recipient, $ip, $userAgent) !== null;
+    }
+
+    /**
+     * Igual que correlateDeliveredByMessageId() pero además devuelve el
+     * EmailLog correlacionado (o null) — lo usa ProviderWebhookEventProcessor
+     * para persistir email_log_id en el registro de auditoría del webhook
+     * (ver email_provider_events).
+     */
+    public function resolveDeliveredByMessageId(string $messageId): ?EmailLog
+    {
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
+
+        if (! $emailLog) {
+            return null;
+        }
+
+        $this->markDelivered($emailLog);
+
+        return $emailLog;
+    }
+
+    public function resolveDeliveredByRecipient(string $recipient): ?EmailLog
+    {
         $emailLog = $this->findSingleCandidateByRecipient($recipient);
 
         if (! $emailLog) {
-            return false;
+            return null;
+        }
+
+        $this->markDelivered($emailLog);
+
+        return $emailLog;
+    }
+
+    public function resolveOpenByMessageId(string $messageId, ?string $ip, ?string $userAgent): ?EmailLog
+    {
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
+
+        if (! $emailLog) {
+            return null;
         }
 
         $this->recordOpen($emailLog, $ip, $userAgent);
 
-        return true;
+        return $emailLog;
+    }
+
+    public function resolveOpenByRecipient(string $recipient, ?string $ip, ?string $userAgent): ?EmailLog
+    {
+        $emailLog = $this->findSingleCandidateByRecipient($recipient);
+
+        if (! $emailLog) {
+            return null;
+        }
+
+        $this->recordOpen($emailLog, $ip, $userAgent);
+
+        return $emailLog;
     }
 
     /**

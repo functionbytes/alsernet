@@ -11,7 +11,7 @@
 @endsection
 
 @php
-    $hasFilters = request()->hasAny(['search', 'module', 'status', 'date_from', 'date_to', 'entity_type', 'entity_id', 'engagement']);
+    $hasFilters = request()->hasAny(['search', 'module', 'status', 'date_from', 'date_to', 'entity_type', 'entity_id', 'engagement', 'causer_id', 'from_address', 'has_attachments']);
 
     // Filtro por entidad relacionada (p.ej. "ver todos los emails de este
     // ticket" desde la ficha del ticket) — llega por query string, se
@@ -352,6 +352,46 @@
                 <option value="not_clicked" @selected($activeEngagement === 'not_clicked')>{{ __('helpdeskemaillog::emaillog.filters.engagement_not_clicked') }}</option>
             </select>
 
+            {{-- Agente (quién lo envió) — solo usuarios que REALMENTE aparecen
+                 como causer en el log (ver EmailLogController::computeAgentOptions()),
+                 no todos los usuarios del sistema. --}}
+            @if($agents->isNotEmpty())
+                <span class="evx-select-icon">
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    <select name="causer_id" class="evx-select">
+                        <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_agents') }}</option>
+                        @foreach($agents as $agent)
+                            <option value="{{ $agent->id }}" @selected((string) request('causer_id') === (string) $agent->id)>{{ $agent->name ?? $agent->email }}</option>
+                        @endforeach
+                    </select>
+                </span>
+            @endif
+
+            {{-- Buzón remitente — remitentes distintos ya existentes en el log
+                 (ver 'fromAddresses' en EmailLogController::buildListData()).
+                 Array plano (mismo ->pluck(...)->all() que 'modules'), no
+                 Collection — de ahí count() en vez de isNotEmpty(). --}}
+            @if(count($fromAddresses))
+                <span class="evx-select-icon">
+                    <i class="fas fa-at" aria-hidden="true"></i>
+                    <select name="from_address" class="evx-select">
+                        <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_from_addresses') }}</option>
+                        @foreach($fromAddresses as $address)
+                            <option value="{{ $address }}" @selected(request('from_address') === $address)>{{ $address }}</option>
+                        @endforeach
+                    </select>
+                </span>
+            @endif
+
+            {{-- Solo con adjuntos — ver EmailLog::scopeHasAttachments(). Select
+                 binario (mismo lenguaje visual que 'engagement' de arriba) en
+                 vez de checkbox suelto, para no romper la consistencia del resto
+                 de la barra de filtros. --}}
+            <select name="has_attachments" class="evx-select">
+                <option value="" @selected(! request()->boolean('has_attachments'))>{{ __('helpdeskemaillog::emaillog.filters.attachments_only') }}</option>
+                <option value="1" @selected(request()->boolean('has_attachments'))>{{ __('helpdeskemaillog::emaillog.filters.attachments_only_yes') }}</option>
+            </select>
+
             <span class="evx-select-icon">
                 <i class="fas fa-calendar" aria-hidden="true"></i>
                 <input type="text" class="evx-input daterange" autocomplete="off"
@@ -605,14 +645,29 @@
             </p>
             <div id="evx-kanban-view" class="evx-mode-hidden"></div>
 
-            @if($logs->hasPages())
-                <div class="evx-pagination">
-                    <span class="evx-muted">
-                        {{ __('helpdeskemaillog::emaillog.pagination.showing', ['first' => $logs->firstItem(), 'last' => $logs->lastItem(), 'total' => $logs->total()]) }}
-                    </span>
-                    {{ $logs->links() }}
-                </div>
-            @endif
+            {{-- Pie compacto del mockup: contador a la izquierda y "‹ pág. N ›"
+                 a la derecha, en mono. El paginador numérico de Laravel ocupaba
+                 varias líneas dentro de una columna de 390px y rompía el ritmo
+                 de la lista. Se muestra siempre (no solo con varias páginas)
+                 para que el contador de registros no desaparezca. --}}
+            <div class="evx-list-foot">
+                <span>{{ __('helpdeskemaillog::emaillog.pagination.showing', ['first' => $logs->firstItem() ?? 0, 'last' => $logs->lastItem() ?? 0, 'total' => number_format($logs->total())]) }}</span>
+                <span class="evx-list-foot-nav">
+                    @if($logs->onFirstPage())
+                        <span class="evx-page-btn is-disabled" aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
+                    @else
+                        <a href="{{ $logs->previousPageUrl() }}" class="evx-page-btn"
+                           aria-label="{{ __('pagination.previous') }}"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></a>
+                    @endif
+                    <span>{{ __('helpdeskemaillog::emaillog.pagination.page', ['page' => $logs->currentPage(), 'last' => $logs->lastPage()]) }}</span>
+                    @if($logs->hasMorePages())
+                        <a href="{{ $logs->nextPageUrl() }}" class="evx-page-btn"
+                           aria-label="{{ __('pagination.next') }}"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></a>
+                    @else
+                        <span class="evx-page-btn is-disabled" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
+                    @endif
+                </span>
+            </div>
             </div>
 
             {{-- Columnas 2+3: cargadas por el servidor en la primera visita
@@ -706,6 +761,96 @@
                     <div class="modal-footer flex-column">
                         <button type="button" class="btn btn-primary w-100 mb-2" id="resendto-send">
                             {{ __('helpdeskemaillog::emaillog.resend.to_send') }}
+                        </button>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                            {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal: triaje de rebotes en un solo paso (mockup) — markup FIJO
+             fuera de #evx-detail-cols, mismo motivo que #emaillog-resendto-modal
+             de arriba. #btnBounceTriage (dentro del fragmento reemplazable)
+             copia aquí la dirección/error/tipo de rebote del email actual antes
+             de abrir el modal, ver @push('scripts'). --}}
+        <div class="modal fade" id="emaillog-bounce-triage-modal" tabindex="-1"
+             aria-labelledby="emaillog-bounce-triage-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="emaillog-bounce-triage-title">{{ __('helpdeskemaillog::emaillog.bounce_triage.title') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">{{ __('helpdeskemaillog::emaillog.bounce_triage.hint') }}</p>
+
+                        <div class="mb-3">
+                            <span class="form-label fw-semibold small d-block">{{ __('helpdeskemaillog::emaillog.bounce_triage.bounced_address_label') }}</span>
+                            <span class="fw-semibold" id="bounce-old-address">—</span>
+                        </div>
+
+                        <div class="mb-3" id="bounce-error-wrap">
+                            <span class="form-label fw-semibold small d-block">{{ __('helpdeskemaillog::emaillog.bounce_triage.error_label') }}</span>
+                            <span class="small text-muted" id="bounce-error-message">—</span>
+                        </div>
+
+                        <label for="bounce-corrected-email" class="form-label fw-semibold small">
+                            {{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_label') }}
+                        </label>
+                        <input type="email" class="form-control" id="bounce-corrected-email"
+                               placeholder="{{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_placeholder') }}">
+
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="bounce-suppress-old">
+                            <label class="form-check-label small" for="bounce-suppress-old">
+                                {{ __('helpdeskemaillog::emaillog.bounce_triage.suppress_label') }}
+                            </label>
+                            <div class="form-text" id="bounce-suppress-hint"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer flex-column">
+                        <button type="button" class="btn btn-primary w-100 mb-2" id="bounce-triage-send">
+                            {{ __('helpdeskemaillog::emaillog.bounce_triage.send') }}
+                        </button>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                            {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal: vincular a un ticket (mockup) — markup FIJO fuera de
+             #evx-detail-cols, mismo motivo que los modales de arriba.
+             #btnLinkEntity copia aquí la URL de vinculación/búsqueda del email
+             actual, ver @push('scripts'). Solo tickets por ahora — ver
+             LinkEmailLogEntityRequest::ALLOWED_ENTITY_TYPES. --}}
+        <div class="modal fade" id="emaillog-link-entity-modal" tabindex="-1"
+             aria-labelledby="emaillog-link-entity-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="emaillog-link-entity-title">{{ __('helpdeskemaillog::emaillog.link_entity.title') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">{{ __('helpdeskemaillog::emaillog.link_entity.hint') }}</p>
+
+                        <input type="search" class="form-control mb-2" id="link-entity-search" autocomplete="off"
+                               placeholder="{{ __('helpdeskemaillog::emaillog.link_entity.search_placeholder') }}">
+
+                        <div id="link-entity-results" class="list-group"></div>
+
+                        <div class="alert alert-light border d-none mt-2 mb-0" id="link-entity-selected">
+                            <span class="small text-muted">{{ __('helpdeskemaillog::emaillog.link_entity.selected_label') }}:</span>
+                            <strong id="link-entity-selected-label"></strong>
+                        </div>
+                    </div>
+                    <div class="modal-footer flex-column">
+                        <button type="button" class="btn btn-primary w-100 mb-2" id="link-entity-send" disabled>
+                            {{ __('helpdeskemaillog::emaillog.link_entity.send') }}
                         </button>
                         <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
                             {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
@@ -1322,6 +1467,139 @@ $(function () {
                 const msg = xhr.responseJSON?.errors?.to?.[0] || xhr.responseJSON?.message || 'Error';
                 toastr.error(msg);
             });
+    });
+
+    // Triaje de rebotes en un solo paso — #btnBounceTriage vive DENTRO del
+    // fragmento reemplazable (delegado en document); el modal y su botón de
+    // envío viven fuera de #evx-detail-cols (mismo patrón que resendto-*),
+    // así que la instancia de bootstrap.Modal se crea una única vez aquí.
+    const $bounceModal = $('#emaillog-bounce-triage-modal');
+    const bounceModal = new bootstrap.Modal($bounceModal[0]);
+    const bounceSuppressHardHint = @json(__('helpdeskemaillog::emaillog.bounce_triage.suppress_hint_hard'));
+    const bounceSuppressSoftHint = @json(__('helpdeskemaillog::emaillog.bounce_triage.suppress_hint_soft'));
+
+    $(document).on('click', '#btnBounceTriage', function () {
+        const $btn = $(this);
+        // jQuery .data() convierte "1"/"0" a número: se acepta cualquiera de
+        // las dos formas para no depender de ese detalle de parseo.
+        const isHard = $btn.data('hard') === 1 || $btn.data('hard') === '1';
+        const error = $btn.data('error') || '';
+
+        $('#bounce-old-address').text($btn.data('old-address') || '—');
+        $('#bounce-error-message').text(error || '—');
+        $('#bounce-error-wrap').toggle(!!error);
+        // Nunca se precarga con la dirección vieja: el campo debe quedar
+        // vacío para forzar a escribir la dirección YA corregida.
+        $('#bounce-corrected-email').val('').removeClass('is-invalid').data('url', $btn.data('url'));
+        // Marcada por defecto solo si el rebote fue permanente (ver
+        // EmailLog::bounceType()) — un rebote temporal no debe sugerir
+        // bloquear una dirección que podría volver a funcionar sola.
+        $('#bounce-suppress-old').prop('checked', isHard);
+        $('#bounce-suppress-hint').text(isHard ? bounceSuppressHardHint : bounceSuppressSoftHint);
+
+        bounceModal.show();
+    });
+
+    $('#bounce-triage-send').on('click', function () {
+        const $input = $('#bounce-corrected-email');
+        const to = ($input.val() || '').trim();
+        const url = $input.data('url');
+        const suppressOld = $('#bounce-suppress-old').is(':checked');
+
+        if (!to) { $input.addClass('is-invalid'); return; }
+        $input.removeClass('is-invalid');
+
+        $.ajax({
+            url,
+            method: 'POST',
+            data: { to, suppress_old: suppressOld ? 1 : 0 },
+            headers: { 'X-CSRF-TOKEN': csrf },
+        })
+            .done(() => location.reload())
+            .fail(xhr => {
+                const msg = xhr.responseJSON?.errors?.to?.[0] || xhr.responseJSON?.message || 'Error';
+                toastr.error(msg);
+            });
+    });
+
+    // Vincular a un ticket — #btnLinkEntity vive dentro del fragmento
+    // reemplazable (delegado en document); busca con debounce sobre
+    // EmailLogController::searchTickets() y guarda el ticket elegido en
+    // data() del botón de envío hasta el submit.
+    const $linkEntityModal = $('#emaillog-link-entity-modal');
+    const linkEntityModal = new bootstrap.Modal($linkEntityModal[0]);
+    const ENTITY_TYPE_TICKET = 'Modules\\HelpdeskTickets\\Models\\Ticket';
+    let linkEntitySearchTimer = null;
+
+    function renderTicketResults(tickets) {
+        const $results = $('#link-entity-results').empty();
+
+        if (!tickets.length) {
+            $('<div class="list-group-item text-muted small"></div>')
+                .text(@json(__('helpdeskemaillog::emaillog.link_entity.no_results')))
+                .appendTo($results);
+            return;
+        }
+
+        tickets.forEach(function (ticket) {
+            const label = '#' + ticket.ticket_number + ' — ' + (ticket.subject || '')
+                + (ticket.customer_name ? ' (' + ticket.customer_name + ')' : '');
+
+            $('<button type="button" class="list-group-item list-group-item-action"></button>')
+                .text(label)
+                .data({ id: ticket.id, label: label })
+                .appendTo($results);
+        });
+    }
+
+    $(document).on('click', '#btnLinkEntity', function () {
+        $('#link-entity-search').val('').data('search-url', $(this).data('search-url'));
+        $('#link-entity-results').empty();
+        $('#link-entity-selected').addClass('d-none');
+        $('#link-entity-selected-label').text('');
+        $('#link-entity-send').prop('disabled', true).data('url', $(this).data('url')).removeData('entity-id');
+
+        linkEntityModal.show();
+    });
+
+    $('#link-entity-search').on('input', function () {
+        const $input = $(this);
+        const q = ($input.val() || '').trim();
+        window.clearTimeout(linkEntitySearchTimer);
+
+        if (q.length < 2) {
+            $('#link-entity-results').empty();
+            return;
+        }
+
+        linkEntitySearchTimer = window.setTimeout(function () {
+            $.getJSON($input.data('search-url'), { q }).done(function (res) {
+                renderTicketResults(res.tickets || []);
+            });
+        }, 300);
+    });
+
+    $(document).on('click', '#link-entity-results button', function () {
+        $('#link-entity-results button').removeClass('active');
+        $(this).addClass('active');
+        $('#link-entity-selected').removeClass('d-none');
+        $('#link-entity-selected-label').text($(this).data('label'));
+        $('#link-entity-send').prop('disabled', false).data('entity-id', $(this).data('id'));
+    });
+
+    $('#link-entity-send').on('click', function () {
+        const url = $(this).data('url');
+        const entityId = $(this).data('entity-id');
+        if (!entityId) return;
+
+        $.ajax({
+            url,
+            method: 'POST',
+            data: { entity_type: ENTITY_TYPE_TICKET, entity_id: entityId },
+            headers: { 'X-CSRF-TOKEN': csrf },
+        })
+            .done(() => location.reload())
+            .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
     });
     @endcan
 

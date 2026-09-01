@@ -3,28 +3,37 @@
 namespace Modules\HelpdeskEmailLog\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
+use Modules\HelpdeskEmailLog\Enums\SuppressionReason;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkDeleteEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkResendEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkRestoreEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\ExportSelectedEmailLogsRequest;
+use Modules\HelpdeskEmailLog\Http\Requests\LinkEmailLogEntityRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\ResendEmailLogRequest;
+use Modules\HelpdeskEmailLog\Http\Requests\ResolveBounceEmailLogRequest;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskEmailLog\Models\EmailLogClick;
 use Modules\HelpdeskEmailLog\Models\EmailLogOpen;
+use Modules\HelpdeskEmailLog\Services\EmailSuppressionService;
 use Modules\HelpdeskEmailLog\Services\EntityPanelRegistry;
 use Modules\HelpdeskEmailLog\Support\EngagementBotHeuristics;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -191,6 +200,24 @@ class EmailLogController extends Controller
             fn () => EmailLog::query()->whereNotNull('module')->distinct()->orderBy('module')->pluck('module')->all(),
         );
 
+        // Opciones del filtro "Agente" (quién lo envió) — solo los usuarios
+        // que REALMENTE aparecen como causer en el log, no todos los usuarios
+        // del sistema (ver computeAgentOptions()). Mismo TTL/patrón de caché
+        // que 'modules'.
+        $agents = Cache::remember(
+            'helpdeskemaillog:causers',
+            now()->addMinutes(10),
+            fn () => $this->computeAgentOptions(),
+        );
+
+        // Opciones del filtro "Buzón remitente" — remitentes distintos que ya
+        // existen en el log, mismo patrón que 'modules'.
+        $fromAddresses = Cache::remember(
+            'helpdeskemaillog:from-addresses',
+            now()->addMinutes(10),
+            fn () => EmailLog::query()->whereNotNull('from_address')->distinct()->orderBy('from_address')->pluck('from_address')->all(),
+        );
+
         $trend = Cache::remember(
             'helpdeskemaillog:trend',
             now()->addSeconds(300),
@@ -210,12 +237,39 @@ class EmailLogController extends Controller
             'staleCount' => $staleCount,
             'staleHours' => $staleHours,
             'modules' => $modules,
+            'agents' => $agents,
+            'fromAddresses' => $fromAddresses,
             'statuses' => EmailStatus::options(),
             'perPage' => $perPage,
             'perPageOptions' => config('helpdeskemaillog.per_page_options', [25]),
             'sortBy' => $request->input('sort_by', 'date'),
             'sortDir' => $sortDir,
         ];
+    }
+
+    /**
+     * Usuarios que realmente aparecen como causer del log (no todos los
+     * usuarios del sistema) — mismo patrón que
+     * Modules\Activity\Http\Controllers\ActivityController::availableCausers().
+     * causer_type siempre es App\Models\User en la práctica (ver
+     * InspectsMailMessage::causerAttributes(), que guarda Auth::user()::class),
+     * así que no hace falta resolver otros tipos de causer aquí.
+     *
+     * @return Collection<int, User>
+     */
+    private function computeAgentOptions(): Collection
+    {
+        $ids = EmailLog::query()
+            ->whereNotNull('causer_id')
+            ->where('causer_type', User::class)
+            ->distinct()
+            ->pluck('causer_id');
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return User::query()->whereIn('id', $ids)->orderBy('firstname')->get(['id', 'firstname', 'lastname', 'email']);
     }
 
     /**
@@ -241,7 +295,7 @@ class EmailLogController extends Controller
      * (mismos filtros, ver buildListData()) — se reutiliza como
      * selectedTotal en vez de repetir ese count() aquí.
      *
-     * @return array{log: EmailLog, opensSummary: ?array, clicksSummary: ?array, related: Collection<int, EmailLog>, entityPanel: ?string, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: string, recipientStats: ?array, transport: array, domainAuth: array, traceElapsedLabel: ?string, emlSizeLabel: ?string, selectedPosition: int, selectedTotal: int, prevUid: ?string, nextUid: ?string}
+     * @return array{log: EmailLog, opensSummary: ?array, clicksSummary: ?array, related: Collection<int, EmailLog>, entityPanel: ?string, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: string, recipientStats: ?array, transport: array, domainAuth: array, traceElapsedLabel: ?string, emlSizeLabel: ?string, activityLog: Collection<int, Activity>, ticketsModuleEnabled: bool, selectedPosition: int, selectedTotal: int, prevUid: ?string, nextUid: ?string}
      */
     protected function resolveDetailData(EmailLog $emailLog, Request $request, int $listTotal): array
     {
@@ -270,6 +324,11 @@ class EmailLogController extends Controller
             'domainAuth' => $this->domainAuthStatus($emailLog),
             'traceElapsedLabel' => $this->traceElapsedLabel($emailLog),
             'emlSizeLabel' => $this->emlSizeLabel($emailLog),
+            'activityLog' => $this->activityLogFor($emailLog),
+            'ticketsModuleEnabled' => function_exists('helpdesk_tickets_enabled') && helpdesk_tickets_enabled(),
+            // Para que el sidebar diga los días reales de recuperación en la
+            // acción "Enviar a la papelera", no un 30 hardcodeado.
+            'trashRetentionDays' => $this->resolveTrashRetentionDays(),
         ] + $this->resolveNavigation($emailLog, $request, $listTotal);
     }
 
@@ -277,7 +336,7 @@ class EmailLogController extends Controller
      * Mismas claves que resolveDetailData(), en null/vacío — para cuando el
      * listado no tiene ninguna fila que autoseleccionar (ver renderWorkspace()).
      *
-     * @return array{log: null, opensSummary: null, clicksSummary: null, related: Collection<int, EmailLog>, entityPanel: null, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: null, recipientStats: null, transport: null, domainAuth: null, traceElapsedLabel: null, emlSizeLabel: null, selectedPosition: null, selectedTotal: int, prevUid: null, nextUid: null}
+     * @return array{log: null, opensSummary: null, clicksSummary: null, related: Collection<int, EmailLog>, entityPanel: null, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: null, recipientStats: null, transport: null, domainAuth: null, traceElapsedLabel: null, emlSizeLabel: null, activityLog: Collection<int, Activity>, ticketsModuleEnabled: bool, selectedPosition: null, selectedTotal: int, prevUid: null, nextUid: null}
      */
     private function emptyDetailData(Request $request): array
     {
@@ -296,6 +355,11 @@ class EmailLogController extends Controller
             'domainAuth' => null,
             'traceElapsedLabel' => null,
             'emlSizeLabel' => null,
+            'activityLog' => collect(),
+            'ticketsModuleEnabled' => function_exists('helpdesk_tickets_enabled') && helpdesk_tickets_enabled(),
+            // Para que el sidebar diga los días reales de recuperación en la
+            // acción "Enviar a la papelera", no un 30 hardcodeado.
+            'trashRetentionDays' => $this->resolveTrashRetentionDays(),
             'selectedPosition' => null,
             'selectedTotal' => 0,
             'prevUid' => null,
@@ -751,6 +815,27 @@ class EmailLogController extends Controller
             ->get();
     }
 
+    /**
+     * Bitácora de acciones registradas sobre ESTE email (pestaña "Bitácora"
+     * del detalle) — todo lo que logActivity() ya escribe en activity('email-log')
+     * con performedOn($emailLog), pero que hasta ahora nadie podía ver desde
+     * el propio módulo. Solo las últimas 30: es un historial de auditoría de
+     * apoyo puntual, no un listado paginado propio (para eso ya existe la
+     * auditoría completa de Modules\Activity, enlazada desde la vista).
+     *
+     * @return Collection<int, Activity>
+     */
+    private function activityLogFor(EmailLog $emailLog): Collection
+    {
+        return Activity::query()
+            ->where('subject_type', EmailLog::class)
+            ->where('subject_id', $emailLog->id)
+            ->with('causer')
+            ->latest('created_at')
+            ->limit(30)
+            ->get();
+    }
+
     public function purgeBody(EmailLog $emailLog): RedirectResponse
     {
         $this->authorize('delete', $emailLog);
@@ -768,6 +853,77 @@ class EmailLogController extends Controller
         $this->logActivity('body_purged', $emailLog);
 
         return back()->with('success', __('helpdeskemaillog::emaillog.purge.done'));
+    }
+
+    /**
+     * Vincula un email SIN entidad relacionada a un registro de otro módulo
+     * (hoy, un Ticket de HelpdeskTickets — ver LinkEmailLogEntityRequest para
+     * la lista de FQCN admitidos). No sobrescribe una entidad ya vinculada:
+     * si el email ya tiene entity_type, esto no es "editar el vínculo", es un
+     * caso aparte fuera de alcance (evita perder por accidente el vínculo
+     * original con el que el resto del panel ya cuenta, p. ej. entityPanel).
+     */
+    public function linkEntity(LinkEmailLogEntityRequest $request, EmailLog $emailLog): RedirectResponse
+    {
+        if ($emailLog->entity_type !== null) {
+            return back()->with('error', __('helpdeskemaillog::emaillog.link_entity.already_linked'));
+        }
+
+        $validated = $request->validated();
+        $entityType = $validated['entity_type'];
+        $entityId = (int) $validated['entity_id'];
+
+        // Ventana de carrera pequeña pero real entre el buscador (searchTickets())
+        // y este submit: el ticket pudo borrarse mientras el modal seguía abierto.
+        if (! class_exists($entityType) || ! $entityType::query()->whereKey($entityId)->exists()) {
+            return back()->with('error', __('helpdeskemaillog::emaillog.link_entity.not_found'));
+        }
+
+        $emailLog->update(['entity_type' => $entityType, 'entity_id' => $entityId]);
+
+        $this->logActivity('entity_linked', $emailLog, ['entity_type' => $entityType, 'entity_id' => $entityId]);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.link_entity.success'));
+    }
+
+    /**
+     * Buscador de tickets para el modal "Vincular a un ticket" del sidebar —
+     * reutiliza Ticket::scopeSearch() (número/asunto/cliente), el mismo scope
+     * que ya usa Modules\Helpdesk\Http\Controllers\Managers\GlobalSearchController
+     * para buscar tickets desde OTRO módulo satélite sin acoplarse a su
+     * esquema interno: solo se conoce el FQCN del modelo y su scope público,
+     * nunca una columna cruda de la tabla de tickets. Mismo guard
+     * (helpdesk_tickets_enabled() + class_exists + try/catch) que ese
+     * controlador: un fallo aquí nunca debe romper el detalle del email.
+     */
+    public function searchTickets(Request $request): JsonResponse
+    {
+        $this->authorize('manage', EmailLog::class);
+
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 2 || ! function_exists('helpdesk_tickets_enabled') || ! helpdesk_tickets_enabled() || ! class_exists(Ticket::class)) {
+            return response()->json(['tickets' => []]);
+        }
+
+        try {
+            $tickets = Ticket::query()
+                ->search($q)
+                ->with('customer:id,name')
+                ->latest()
+                ->limit(8)
+                ->get(['id', 'ticket_number', 'subject', 'customer_id'])
+                ->map(fn (Ticket $ticket): array => [
+                    'id' => $ticket->id,
+                    'ticket_number' => $ticket->ticket_number,
+                    'subject' => $ticket->subject,
+                    'customer_name' => $ticket->customer?->name,
+                ]);
+        } catch (Throwable) {
+            $tickets = collect();
+        }
+
+        return response()->json(['tickets' => $tickets]);
     }
 
     public function resend(ResendEmailLogRequest $request, EmailLog $emailLog): RedirectResponse
@@ -792,6 +948,72 @@ class EmailLogController extends Controller
         return back()->with('success', $override
             ? __('helpdeskemaillog::emaillog.resend.queued_to', ['email' => $override])
             : __('helpdeskemaillog::emaillog.resend.queued'));
+    }
+
+    /**
+     * Triaje de rebotes en un solo paso (mockup): corrige el destinatario,
+     * reenvía a la dirección corregida y, si se marcó, añade la dirección
+     * vieja a la lista de supresión — todo en UNA acción de controlador
+     * (nunca 2 peticiones encadenadas desde JS) para que nunca quede a medias
+     * si el usuario cierra el modal o pierde conexión entre el reenvío y la
+     * supresión.
+     *
+     * ResendEmailLogJob::dispatch() y EmailSuppressionService::suppress() se
+     * envuelven en la misma transacción: con la cola 'database' (config por
+     * defecto de la app) el job encolado solo se hace visible al worker tras
+     * el COMMIT, así que un fallo posterior en la escritura de supresión
+     * también revierte el encolado del reenvío — con una cola dirigida a
+     * Redis el encolado ya no es transaccional (Redis no participa de la
+     * transacción de MySQL), pero la escritura de supresión en sí sigue
+     * siendo atómica frente a cualquier otra escritura de esta misma request.
+     *
+     * El motivo de supresión distingue el rebote real: 'hard_bounce' (mismo
+     * motivo que ya usa el auto-supresor de EmailLogObserver para rebotes
+     * duros — casi siempre esta dirección YA está suprimida cuando se llega
+     * aquí, y suppress() es idempotente) o 'manual' para un rebote blando que
+     * el agente decide suprimir de todas formas (EmailLogObserver nunca
+     * auto-suprime un soft bounce, así que aquí es una decisión humana
+     * explícita, no una reclasificación automática).
+     */
+    public function resolveBounce(ResolveBounceEmailLogRequest $request, EmailLog $emailLog): RedirectResponse
+    {
+        if ($emailLog->status !== EmailStatus::Bounced) {
+            return back()->with('error', __('helpdeskemaillog::emaillog.bounce_triage.not_bounced'));
+        }
+
+        // Mismo guard que resend(): un reenvío reproduce el cuerpo almacenado
+        // tal cual.
+        if (! $emailLog->isResendable()) {
+            return back()->with('error', __('helpdeskemaillog::emaillog.resend.blocked'));
+        }
+
+        $validated = $request->validated();
+        $newAddress = $validated['to'];
+        $suppressOld = (bool) ($validated['suppress_old'] ?? false);
+        $oldAddress = $emailLog->to_addresses[0] ?? null;
+
+        DB::transaction(function () use ($emailLog, $newAddress, $suppressOld, $oldAddress): void {
+            ResendEmailLogJob::dispatch($emailLog->id, $newAddress);
+
+            if ($suppressOld && $oldAddress) {
+                $reason = $emailLog->bounceType() === 'hard' ? SuppressionReason::HardBounce : SuppressionReason::Manual;
+
+                app(EmailSuppressionService::class)->suppress(
+                    email: $oldAddress,
+                    reason: $reason,
+                    module: null,
+                    emailLog: $emailLog,
+                );
+            }
+        });
+
+        $this->logActivity('bounce_resolved', $emailLog, [
+            'old_to' => $oldAddress,
+            'new_to' => $newAddress,
+            'suppressed_old' => $suppressOld && $oldAddress !== null,
+        ]);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.bounce_triage.success', ['email' => $newAddress]));
     }
 
     public function bulkResend(BulkResendEmailLogsRequest $request): RedirectResponse
@@ -1415,6 +1637,26 @@ class EmailLogController extends Controller
 
         if ($request->filled('status')) {
             $query->status((string) $request->input('status'));
+        }
+
+        // Agente (quién lo envió) — causer_type siempre App\Models\User en la
+        // práctica (ver computeAgentOptions()); se acota igualmente por tipo
+        // para no confundir un id de usuario con el de otro causer morph.
+        if ($request->filled('causer_id')) {
+            $query->where('causer_id', (int) $request->input('causer_id'))->where('causer_type', User::class);
+        }
+
+        // Buzón remitente — coincidencia exacta (el select solo ofrece
+        // valores que ya existen en la columna, ver 'fromAddresses' en
+        // buildListData()).
+        if ($request->filled('from_address')) {
+            $query->where('from_address', (string) $request->input('from_address'));
+        }
+
+        // "Solo con adjuntos" — ver EmailLog::scopeHasAttachments() (mismo
+        // criterio que el accessor has_attachments, evaluado en SQL).
+        if ($request->boolean('has_attachments')) {
+            $query->hasAttachments();
         }
 
         // Filtro por entidad relacionada (p.ej. un ticket concreto) — el

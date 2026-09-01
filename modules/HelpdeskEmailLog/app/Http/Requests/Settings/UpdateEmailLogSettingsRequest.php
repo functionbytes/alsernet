@@ -19,7 +19,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
             'max_body_bytes' => ['required', 'integer', 'min:1', 'max:10240'],
             'retention_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'stale_queued_hours' => ['required', 'integer', 'min:0', 'max:8760'],
-            'per_page' => ['required', 'integer', 'in:10,25,50,100'],
+            'per_page' => ['required', 'integer', 'in:15,25,50,100'],
             'reputation_domains' => ['nullable', 'string', 'max:5000'],
             'reputation_window_days' => ['required', 'integer', 'min:1', 'max:365'],
             'bounce_rate_warning_pct' => ['required', 'numeric', 'min:0', 'max:100', 'lte:bounce_rate_critical_pct'],
@@ -51,7 +51,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
             'stale_queued_hours.min' => 'El valor mínimo es 0 (desactivado).',
             'stale_queued_hours.max' => 'El valor máximo es 8.760 horas (1 año).',
             'per_page.required' => 'El paginado por defecto es obligatorio.',
-            'per_page.in' => 'El paginado debe ser 10, 25, 50 o 100.',
+            'per_page.in' => 'El paginado debe ser 15, 25, 50 o 100.',
             'bounce_rate_warning_pct.lte' => 'El umbral de aviso no puede ser mayor que el crítico.',
             'complaint_rate_warning_pct.lte' => 'El umbral de aviso no puede ser mayor que el crítico.',
         ];

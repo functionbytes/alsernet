@@ -86,6 +86,7 @@ class MailgunWebhookAdapter implements EmailProviderWebhookAdapter
             providerEventId: $eventData['id'] ?? null,
             ip: $type === 'open' ? ($eventData['ip'] ?? null) : null,
             userAgent: $type === 'open' ? ($eventData['client-info']['user-agent'] ?? null) : null,
+            rawPayload: $eventData,
         )];
     }
 }

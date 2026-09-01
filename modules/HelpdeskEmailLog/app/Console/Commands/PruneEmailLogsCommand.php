@@ -6,13 +6,15 @@ use Illuminate\Console\Command;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Models\ProviderWebhookEvent;
 
 class PruneEmailLogsCommand extends Command
 {
     protected $signature = 'email-logs:prune
         {--days= : Override the configured retention period in days}
         {--stale-hours= : Override the configured "stale queued" threshold in hours}
-        {--trash-days= : Override the configured trash retention period in days}';
+        {--trash-days= : Override the configured trash retention period in days}
+        {--webhook-events-days= : Override the configured provider webhook event retention period in days}';
 
     protected $description = 'Delete old email log entries and mark stale queued entries as failed';
 
@@ -21,6 +23,7 @@ class PruneEmailLogsCommand extends Command
         $this->markStaleQueuedAsFailed();
         $this->deleteOldEntries();
         $this->pruneTrash();
+        $this->pruneProviderWebhookEvents();
 
         return self::SUCCESS;
     }
@@ -135,5 +138,37 @@ class PruneEmailLogsCommand extends Command
         }
 
         $this->components->info("Purged {$total} email log entr".($total === 1 ? 'y' : 'ies')." from the trash (older than {$days} days).");
+    }
+
+    /**
+     * Purga de email_provider_events (auditoría de webhooks de proveedor,
+     * ver ProviderWebhookEvent::class) — independiente de retention_days/
+     * trash_retention_days: estos eventos no son el email en sí, son el
+     * registro de que un webhook llegó. Borrado directo (delete, no hay
+     * papelera para esta tabla ni caché de dashboard que invalidar).
+     */
+    private function pruneProviderWebhookEvents(): void
+    {
+        $days = (int) ($this->option('webhook-events-days') ?? Setting::get('helpdeskemaillog.webhook_events_retention_days', config('helpdeskemaillog.webhook_events_retention_days', 30)));
+
+        if ($days <= 0) {
+            $this->components->info('Provider webhook event retention is disabled (webhook_events_retention_days <= 0); nothing pruned.');
+
+            return;
+        }
+
+        $cutoff = now()->subDays($days);
+        $total = 0;
+
+        do {
+            $deleted = ProviderWebhookEvent::query()
+                ->where('created_at', '<', $cutoff)
+                ->limit(1000)
+                ->delete();
+
+            $total += $deleted;
+        } while ($deleted > 0);
+
+        $this->components->info("Pruned {$total} provider webhook event".($total === 1 ? '' : 's')." older than {$days} days.");
     }
 }

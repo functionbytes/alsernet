@@ -120,6 +120,22 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
         $eventType = (string) ($message['eventType'] ?? $message['notificationType'] ?? '');
         $messageId = $message['mail']['commonHeaders']['messageId'] ?? null;
 
+        // Payload crudo guardado para depuración: el mensaje SES decodificado
+        // tal cual, más el sobre SNS mínimo necesario para contexto —
+        // deliberadamente SIN 'Signature'/'SigningCertURL' (material
+        // criptográfico ya verificado en verify(), sin valor de depuración
+        // aquí; ver WebhookPayloadRedactor, que igualmente los quitaría si
+        // hubieran quedado).
+        $rawPayload = [
+            'sns' => [
+                'Type' => $payload['Type'] ?? null,
+                'MessageId' => $payload['MessageId'] ?? null,
+                'TopicArn' => $payload['TopicArn'] ?? null,
+                'Timestamp' => $payload['Timestamp'] ?? null,
+            ],
+            'message' => $message,
+        ];
+
         if ($eventType === 'Bounce') {
             $bounce = $message['bounce'] ?? [];
             $recipient = $bounce['bouncedRecipients'][0]['emailAddress'] ?? null;
@@ -131,6 +147,7 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
                 isHard: ($bounce['bounceType'] ?? null) === 'Permanent',
                 reason: (string) ($bounce['bouncedRecipients'][0]['diagnosticCode'] ?? $bounce['bounceSubType'] ?? 'SES bounce'),
                 providerEventId: $message['mail']['messageId'] ?? null,
+                rawPayload: $rawPayload,
             )];
         }
 
@@ -145,6 +162,7 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
                 isHard: false,
                 reason: (string) ($complaint['complaintFeedbackType'] ?? 'SES complaint'),
                 providerEventId: $message['mail']['messageId'] ?? null,
+                rawPayload: $rawPayload,
             )];
         }
 
@@ -161,6 +179,7 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
                 isHard: false,
                 reason: (string) ($delivery['smtpResponse'] ?? 'SES delivery'),
                 providerEventId: $message['mail']['messageId'] ?? null,
+                rawPayload: $rawPayload,
             )];
         }
 

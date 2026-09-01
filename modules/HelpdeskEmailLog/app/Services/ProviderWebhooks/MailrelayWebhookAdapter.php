@@ -72,6 +72,7 @@ class MailrelayWebhookAdapter implements EmailProviderWebhookAdapter
                 isHard: str_contains($type, 'hard'),
                 reason: (string) ($event['reason'] ?? Str::headline($type)),
                 providerEventId: $event['id'] ?? null,
+                rawPayload: $event,
             );
         }
 

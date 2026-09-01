@@ -9,11 +9,15 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\HelpdeskEmailLog\Database\Seeders\HelpdeskEmailLogPermissionsSeeder;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
+use Modules\HelpdeskEmailLog\Enums\SuppressionReason;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskEmailLog\Models\EmailLogClick;
 use Modules\HelpdeskEmailLog\Models\EmailLogLink;
 use Modules\HelpdeskEmailLog\Models\EmailLogOpen;
+use Modules\HelpdeskEmailLog\Models\EmailSuppression;
+use Modules\HelpdeskTickets\Models\Ticket;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class EmailLogControllerTest extends TestCase
@@ -1335,5 +1339,324 @@ class EmailLogControllerTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseHas('email_logs', ['id' => $log->id]);
+    }
+
+    // ── Triaje de rebotes (EmailLogController::resolveBounce()) ──
+
+    private function bouncedLog(bool $hard = true, ?string $recipient = 'bad@example.test'): EmailLog
+    {
+        return EmailLog::factory()->create([
+            'to_addresses' => [$recipient],
+            'status' => EmailStatus::Bounced,
+            'bounced_at' => now(),
+            'error_message' => 'Mailbox does not exist',
+            'metadata' => ['bounce_type' => $hard ? 'hard' : 'soft'],
+        ]);
+    }
+
+    public function test_resolve_bounce_dispatches_resend_to_corrected_address(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog();
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), ['to' => 'fixed@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        Queue::assertPushed(
+            ResendEmailLogJob::class,
+            fn (ResendEmailLogJob $job) => $job->emailLogId === $log->id && $job->overrideTo === 'fixed@example.test',
+        );
+    }
+
+    public function test_resolve_bounce_suppresses_old_address_when_requested(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog(hard: true, recipient: 'olddress@example.test');
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), [
+                'to' => 'fixed@example.test',
+                'suppress_old' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertTrue(EmailSuppression::isSuppressed('olddress@example.test'));
+
+        $suppression = EmailSuppression::query()->where('email', 'olddress@example.test')->first();
+        $this->assertSame(SuppressionReason::HardBounce, $suppression->reason);
+    }
+
+    /**
+     * Un rebote blando nunca queda sugerido como "reclasificación automática"
+     * de EmailLogObserver — si el agente decide suprimir de todas formas, el
+     * motivo guardado es 'manual', no 'hard_bounce'.
+     */
+    public function test_resolve_bounce_uses_manual_reason_for_soft_bounce_suppression(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog(hard: false, recipient: 'softbounce@example.test');
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), [
+                'to' => 'fixed@example.test',
+                'suppress_old' => 1,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $suppression = EmailSuppression::query()->where('email', 'softbounce@example.test')->first();
+        $this->assertSame(SuppressionReason::Manual, $suppression->reason);
+    }
+
+    public function test_resolve_bounce_does_not_suppress_when_not_requested(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog(recipient: 'untouched@example.test');
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), ['to' => 'fixed@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertFalse(EmailSuppression::isSuppressed('untouched@example.test'));
+    }
+
+    public function test_resolve_bounce_requires_manage_permission(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog();
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), ['to' => 'fixed@example.test'])
+            ->assertForbidden();
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_resolve_bounce_rejects_a_non_bounced_email(): void
+    {
+        Queue::fake();
+
+        $log = EmailLog::factory()->create(['status' => EmailStatus::Sent, 'to_addresses' => ['ok@example.test']]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), ['to' => 'fixed@example.test'])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_resolve_bounce_rejects_the_same_address_as_a_fix(): void
+    {
+        Queue::fake();
+
+        $log = $this->bouncedLog(recipient: 'bad@example.test');
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.resolve-bounce', $log->uid), ['to' => 'bad@example.test'])
+            ->assertSessionHasErrors('to');
+
+        Queue::assertNothingPushed();
+    }
+
+    // ── Bitácora visible (EmailLogController::activityLogFor()) ──
+
+    /**
+     * La fila de auditoría se crea aquí directamente sobre el modelo Activity
+     * (en vez de disparar download() y dejar que EmailLogController::logActivity()
+     * la escriba) porque el helper activity()->log() de este entorno está roto:
+     * spatie/laravel-activitylog se resolvió en 5.0.0 (composer.lock) pero la
+     * tabla activity_log la crea una migración pensada para el esquema de la
+     * v4 (modules/Auth/database/migrations/..._create_activity_log_table.php),
+     * sin la columna `attribute_changes` que el logger de la v5 añade siempre
+     * al insertar. logActivity() envuelve la escritura en rescue(report: false),
+     * así que hoy CUALQUIER llamada a activity()->log() de todo el proyecto
+     * falla en silencio sin que ningún test existente lo note (nada volvía a
+     * leer esa tabla hasta esta pestaña). Bug preexistente, fuera del alcance
+     * de este módulo — ver informe. Este test verifica la lectura/render de
+     * EmailLogController::activityLogFor(), que si es correcta en cuanto
+     * alguien corrija esa migración.
+     */
+    public function test_show_displays_the_activity_log_for_this_email(): void
+    {
+        $log = EmailLog::factory()->create(['to_addresses' => ['client@example.test'], 'body_html' => '<p>hola</p>']);
+
+        $activity = new Activity;
+        $activity->log_name = 'email-log';
+        $activity->event = 'downloaded';
+        $activity->description = 'email-log.downloaded';
+        $activity->subject_type = EmailLog::class;
+        $activity->subject_id = $log->id;
+        $activity->properties = ['ip' => '127.0.0.1'];
+        $activity->save();
+
+        $this->actingAs($this->manager())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertSee(__('helpdeskemaillog::emaillog.activity_log.events.downloaded'));
+    }
+
+    public function test_activity_log_is_empty_for_an_email_with_no_recorded_actions(): void
+    {
+        $log = EmailLog::factory()->create();
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertSee(__('helpdeskemaillog::emaillog.activity_log.empty'));
+    }
+
+    // ── Filtros: agente / buzón remitente / solo con adjuntos ──
+
+    public function test_index_filters_by_causer_agent(): void
+    {
+        $agent = User::factory()->create();
+
+        EmailLog::factory()->create([
+            'subject' => 'Sent by the agent',
+            'causer_id' => $agent->id,
+            'causer_type' => User::class,
+        ]);
+        EmailLog::factory()->create(['subject' => 'Sent by nobody in particular']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['causer_id' => $agent->id]))
+            ->assertOk()
+            ->assertSee('Sent by the agent')
+            ->assertDontSee('Sent by nobody in particular');
+    }
+
+    public function test_index_filters_by_from_address(): void
+    {
+        EmailLog::factory()->create(['subject' => 'From marketing', 'from_address' => 'marketing@example.test']);
+        EmailLog::factory()->create(['subject' => 'From support', 'from_address' => 'support@example.test']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['from_address' => 'marketing@example.test']))
+            ->assertOk()
+            ->assertSee('From marketing')
+            ->assertDontSee('From support');
+    }
+
+    public function test_index_filters_by_has_attachments(): void
+    {
+        EmailLog::factory()->create([
+            'subject' => 'With an attachment',
+            'attachments' => [['name' => 'invoice.pdf', 'size' => 1024, 'mime' => 'application/pdf']],
+        ]);
+        EmailLog::factory()->create(['subject' => 'Without any attachment', 'attachments' => null]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['has_attachments' => 1]))
+            ->assertOk()
+            ->assertSee('With an attachment')
+            ->assertDontSee('Without any attachment');
+    }
+
+    // ── Vincular a un ticket (EmailLogController::linkEntity()/searchTickets()) ──
+
+    public function test_link_entity_links_the_email_to_a_ticket_and_logs_it(): void
+    {
+        $ticket = Ticket::factory()->create();
+        $log = EmailLog::factory()->create(['entity_type' => null, 'entity_id' => null]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.link-entity', $log->uid), [
+                'entity_type' => Ticket::class,
+                'entity_id' => $ticket->id,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $log->refresh();
+        $this->assertSame(Ticket::class, $log->entity_type);
+        $this->assertSame($ticket->id, $log->entity_id);
+    }
+
+    public function test_link_entity_requires_manage_permission(): void
+    {
+        $ticket = Ticket::factory()->create();
+        $log = EmailLog::factory()->create(['entity_type' => null, 'entity_id' => null]);
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.link-entity', $log->uid), [
+                'entity_type' => Ticket::class,
+                'entity_id' => $ticket->id,
+            ])
+            ->assertForbidden();
+
+        $this->assertNull($log->refresh()->entity_type);
+    }
+
+    public function test_link_entity_rejects_an_email_that_already_has_an_entity(): void
+    {
+        $ticket = Ticket::factory()->create();
+        $log = EmailLog::factory()->create(['entity_type' => Ticket::class, 'entity_id' => 999999]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.link-entity', $log->uid), [
+                'entity_type' => Ticket::class,
+                'entity_id' => $ticket->id,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertSame(999999, $log->refresh()->entity_id);
+    }
+
+    public function test_link_entity_rejects_a_ticket_that_does_not_exist(): void
+    {
+        $log = EmailLog::factory()->create(['entity_type' => null, 'entity_id' => null]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.link-entity', $log->uid), [
+                'entity_type' => Ticket::class,
+                'entity_id' => 999999999,
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
+
+        $this->assertNull($log->refresh()->entity_type);
+    }
+
+    public function test_link_entity_rejects_an_entity_type_outside_the_allow_list(): void
+    {
+        $log = EmailLog::factory()->create(['entity_type' => null, 'entity_id' => null]);
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.link-entity', $log->uid), [
+                'entity_type' => 'App\\Models\\User',
+                'entity_id' => 1,
+            ])
+            ->assertSessionHasErrors('entity_type');
+    }
+
+    public function test_search_tickets_returns_matching_tickets(): void
+    {
+        $ticket = Ticket::factory()->create(['subject' => 'Needle in a haystack issue']);
+        Ticket::factory()->create(['subject' => 'Completely unrelated']);
+
+        $response = $this->actingAs($this->manager())
+            ->getJson(route('helpdeskemaillog.tickets.search', ['q' => 'Needle in a haystack']))
+            ->assertOk();
+
+        $response->assertJsonFragment(['id' => $ticket->id, 'ticket_number' => $ticket->ticket_number]);
+        $this->assertCount(1, $response->json('tickets'));
+    }
+
+    public function test_search_tickets_requires_manage_permission(): void
+    {
+        $this->actingAs($this->viewer())
+            ->getJson(route('helpdeskemaillog.tickets.search', ['q' => 'anything']))
+            ->assertForbidden();
     }
 }

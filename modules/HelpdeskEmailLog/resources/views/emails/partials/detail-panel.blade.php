@@ -80,24 +80,46 @@
                 </span>
             </div>
 
+            {{-- Como el mockup: el asunto manda solo en su línea y los chips
+                 (estado, uid, módulo, adjuntos) van debajo. Antes iban todos en
+                 la misma fila y el asunto competía con ellos. --}}
             <div class="evx-ph-subject-row">
                 <div class="evx-ph-subject-wrap">
                     <span class="evx-subject-lg">{{ $log->subject ?: '—' }}</span>
-                    <span class="evx-status {{ $log->status?->value }}">
-                        <i class="fa-solid {{ $statusIcon }}" aria-hidden="true"></i>{{ $log->status_label }}
-                    </span>
-                    <span class="evx-chip">#{{ Str::upper(Str::substr($log->uid, 0, 8)) }}</span>
-                    @if($log->module)
-                        <span class="evx-tag mono">{{ $log->module }}</span>
-                    @endif
-                    @if($log->attachments)
-                        <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.field.attachments') }}">
-                            <i class="fa-solid fa-paperclip" aria-hidden="true"></i>{{ count($log->attachments) }}
+                    <span class="evx-ph-chips">
+                        <span class="evx-status {{ $log->status?->value }}">
+                            <i class="fa-solid {{ $statusIcon }}" aria-hidden="true"></i>{{ $log->status_label }}
                         </span>
-                    @endif
+                        <span class="evx-chip">{{ Str::substr($log->uid, 0, 8) }}</span>
+                        @if($log->module)
+                            <span class="evx-tag mono">{{ $log->module }}</span>
+                        @endif
+                        @if($log->attachments)
+                            <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.field.attachments') }}">
+                                <i class="fa-solid fa-paperclip" aria-hidden="true"></i>{{ count($log->attachments) }}
+                            </span>
+                        @endif
+                    </span>
                 </div>
 
                 <div class="evx-ph-actions">
+                    {{-- Triaje de rebotes (mockup, el hueco de más valor): acceso
+                         claro y de un solo paso — corregir destinatario + reenviar
+                         + supresión opcional, ver EmailLogController::resolveBounce().
+                         Solo para rebotes (nunca para "failed"/otros estados): un
+                         fallo genérico de transporte no tiene una "dirección mala"
+                         que corregir. Primero en la fila: es la acción más urgente
+                         cuando la hay. --}}
+                    @if($canManage && $log->status?->value === 'bounced')
+                        <button type="button" class="evx-btn evx-btn-danger evx-btn-inline" id="btnBounceTriage"
+                                data-url="{{ route('helpdeskemaillog.resolve-bounce', $log->uid) }}"
+                                data-old-address="{{ $log->to_addresses[0] ?? '' }}"
+                                data-error="{{ $log->error_message }}"
+                                data-hard="{{ $log->bounceType() === 'hard' ? '1' : '0' }}">
+                            <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                            {{ __('helpdeskemaillog::emaillog.bounce_triage.cta') }}
+                        </button>
+                    @endif
                     @if($canManage)
                         <button type="button" class="evx-btn evx-btn-primary evx-btn-inline js-resend"
                                 data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}">
@@ -130,8 +152,11 @@
                 </div>
             </div>
 
+            {{-- Línea de contexto del mockup: destinatario · cuándo se registró ·
+                 quién lo envió. El "por X" solo aparece si hubo un usuario detrás
+                 (los envíos automáticos no tienen causer y no se inventa uno). --}}
             <div class="evx-ph-meta">
-                <span class="evx-ph-meta-label">{{ __('helpdeskemaillog::emaillog.preview.field.to') }}</span>
+                <i class="fa-regular fa-user evx-ph-meta-icon" aria-hidden="true"></i>
                 <span class="evx-mono">
                     @forelse($log->to_addresses ?? [] as $addr)
                         {{ $addr }}@if(!$loop->last),@endif
@@ -139,6 +164,12 @@
                         —
                     @endforelse
                 </span>
+                <span class="evx-muted">·</span>
+                <span>{{ __('helpdeskemaillog::emaillog.preview.field.created_at') }} {{ $log->created_at?->format('d/m/Y H:i') }}</span>
+                @if($log->causer)
+                    <span class="evx-muted">·</span>
+                    <span>{{ __('helpdeskemaillog::emaillog.preview.by', ['name' => $log->causer->name ?? ($log->causer->email ?? '#'.$log->causer_id)]) }}</span>
+                @endif
                 <span class="evx-muted">· {{ $log->display_date->diffForHumans() }}</span>
             </div>
 
@@ -165,6 +196,17 @@
                 <button type="button" class="evx-tab" data-evx-tab="raw">
                     <i class="fa-solid fa-code" aria-hidden="true"></i>
                     {{ __('helpdeskemaillog::emaillog.preview.tabs.raw') }}
+                </button>
+                {{-- Bitácora de ESTE email (EmailLogController::logActivity()) —
+                     siempre visible, incluso vacía: un email sin ninguna acción
+                     registrada todavía es un dato real (nunca reenviado/descargado/
+                     borrado), no algo que ocultar. --}}
+                <button type="button" class="evx-tab" data-evx-tab="activity">
+                    <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+                    {{ __('helpdeskemaillog::emaillog.preview.tabs.activity') }}
+                    @if($activityLog->isNotEmpty())
+                        <span class="evx-tab-count">{{ $activityLog->count() }}</span>
+                    @endif
                 </button>
             </div>
         </div>
@@ -733,6 +775,62 @@
                     </div>
                 </div>
 
+                {{-- Pestaña: Bitácora de este email — todo lo que
+                     EmailLogController::logActivity() ya registraba sobre este
+                     registro (activity('email-log') con performedOn($log)),
+                     ahora visible desde el propio módulo. --}}
+                <div class="evx-tabpanel" data-evx-panel="activity" hidden>
+                    <div class="evx-block">
+                        <div class="evx-block-head">
+                            <div>
+                                <span class="t">{{ __('helpdeskemaillog::emaillog.activity_log.title') }}</span>
+                                <span class="s">{{ __('helpdeskemaillog::emaillog.activity_log.hint') }}</span>
+                            </div>
+                            {{-- Si el módulo Activity tiene su propia UI de bitácora
+                                 completa (filtrable por log_name/evento/fecha), se
+                                 enlaza en vez de duplicarla aquí — ver
+                                 Modules\Activity\Http\Controllers\ActivityController::audit(). --}}
+                            @can('Activity.audit.index')
+                                <a href="{{ route('activity.audit', ['log_name' => 'email-log', 'search' => $log->uid]) }}"
+                                   class="evx-btn evx-btn-outline evx-btn-inline" target="_blank" rel="noopener">
+                                    {{ __('helpdeskemaillog::emaillog.activity_log.view_full_audit') }}
+                                </a>
+                            @endcan
+                        </div>
+                        <div class="evx-block-body">
+                            @forelse($activityLog as $entry)
+                                @php
+                                    $eventKey = 'helpdeskemaillog::emaillog.activity_log.events.'.$entry->event;
+                                    $eventLabel = __($eventKey);
+                                    $eventLabel = $eventLabel === $eventKey ? ($entry->description ?: $entry->event) : $eventLabel;
+                                    $causerName = $entry->causer?->name ?? $entry->causer?->email;
+                                    $extraProps = ($entry->properties ?? collect())
+                                        ->except(['ip'])
+                                        ->filter(fn ($value) => $value !== null && $value !== '');
+                                @endphp
+                                <div class="evx-field">
+                                    <span class="v">
+                                        <div class="mono">
+                                            {{ $entry->created_at->format('d/m/Y H:i:s') }} ·
+                                            <strong>{{ $eventLabel }}</strong> ·
+                                            <span class="muted">{{ $causerName ?? __('helpdeskemaillog::emaillog.activity_log.system') }}</span>
+                                        </div>
+                                        @if($extraProps->isNotEmpty())
+                                            <div class="muted small">
+                                                {{ $extraProps->map(fn ($value, $key) => $key.': '.(is_scalar($value) ? $value : json_encode($value)))->implode(' · ') }}
+                                            </div>
+                                        @endif
+                                    </span>
+                                </div>
+                            @empty
+                                <div class="evx-field">
+                                    <span class="v"><span class="muted">{{ __('helpdeskemaillog::emaillog.activity_log.empty') }}</span></span>
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             {{-- Sidebar: acciones + contexto --}}
@@ -745,6 +843,9 @@
                             <span class="t">{{ __('helpdeskemaillog::emaillog.preview.quick_actions') }}</span>
                             <span class="s">{{ __('helpdeskemaillog::emaillog.preview.quick_actions_hint') }}</span>
                         </div>
+                        {{-- uid a la derecha de la cabecera, como el mockup: identifica
+                             de un vistazo sobre qué registro actúan estas acciones. --}}
+                        <span class="evx-block-head-tag mono">{{ Str::substr($log->uid, 0, 8) }}</span>
                     </div>
                     <div class="evx-list">
 
@@ -755,7 +856,8 @@
                                     data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}">
                                 <span class="evx-option-icon"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></span>
                                 <span class="evx-list-main">
-                                    <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend') }}</span>
+                                    <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend_recipient') }}</span>
+                                    <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.recipient_hint') }}</span>
                                 </span>
                             </button>
 
@@ -828,23 +930,31 @@
                         @if($canManage)
                             <div class="evx-list-group-title">{{ __('helpdeskemaillog::emaillog.preview.groups.lifecycle') }}</div>
 
-                            <button type="button" class="evx-list-row evx-list-row-btn js-delete"
-                                    data-url="{{ route('helpdeskemaillog.destroy', $log->uid) }}">
-                                <span class="evx-option-icon is-danger"><i class="fa-solid fa-trash" aria-hidden="true"></i></span>
-                                <span class="evx-list-main">
-                                    <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.delete') }}</span>
-                                </span>
-                            </button>
-
+                            {{-- Purgar antes que papelera, como el mockup: purgar es
+                                 la acción menos destructiva de las dos (conserva los
+                                 metadatos y el registro sigue en el listado). --}}
                             @if($log->body_html || $log->body_text)
                                 <button type="button" class="evx-list-row evx-list-row-btn js-purge"
                                         data-url="{{ route('helpdeskemaillog.purge-body', $log->uid) }}">
                                     <span class="evx-option-icon is-danger"><i class="fa-solid fa-eraser" aria-hidden="true"></i></span>
                                     <span class="evx-list-main">
                                         <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.purge') }}</span>
+                                        <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.purge.hint') }}</span>
                                     </span>
                                 </button>
                             @endif
+
+                            {{-- Ya no es un borrado definitivo: desde que existe la
+                                 papelera el registro es recuperable, y el texto debe
+                                 decirlo para que nadie dude en usarlo. --}}
+                            <button type="button" class="evx-list-row evx-list-row-btn js-delete"
+                                    data-url="{{ route('helpdeskemaillog.destroy', $log->uid) }}">
+                                <span class="evx-option-icon is-danger"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></span>
+                                <span class="evx-list-main">
+                                    <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.move_to_trash') }}</span>
+                                    <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.trash.recoverable_hint', ['days' => $trashRetentionDays ?? 30]) }}</span>
+                                </span>
+                            </button>
                         @endif
 
                     </div>
@@ -883,6 +993,30 @@
                             </div>
                         </div>
                     </div>
+                @elseif($canManage && $ticketsModuleEnabled)
+                    {{-- Sin entidad vinculada: ofrece "Vincular" en vez de dejar el
+                         hueco vacío (mockup) — ver EmailLogController::linkEntity()/
+                         searchTickets(). Solo se ofrece cuando HelpdeskTickets está
+                         activo: hoy es el único buscador de entidades implementado
+                         (ver LinkEmailLogEntityRequest::ALLOWED_ENTITY_TYPES). --}}
+                    <div class="evx-block">
+                        <div class="evx-block-head">
+                            <div>
+                                <span class="t">{{ __('helpdeskemaillog::emaillog.preview.related_entity') }}</span>
+                                <span class="s">{{ __('helpdeskemaillog::emaillog.preview.related_entity_hint') }}</span>
+                            </div>
+                        </div>
+                        <div class="evx-block-body">
+                            <div class="evx-field">
+                                <span class="v"><span class="muted">{{ __('helpdeskemaillog::emaillog.preview.related_entity_none') }}</span></span>
+                            </div>
+                            <button type="button" class="evx-btn evx-btn-outline evx-btn-inline w-100" id="btnLinkEntity"
+                                    data-url="{{ route('helpdeskemaillog.link-entity', $log->uid) }}"
+                                    data-search-url="{{ route('helpdeskemaillog.tickets.search') }}">
+                                {{ __('helpdeskemaillog::emaillog.preview.related_entity_link_cta') }}
+                            </button>
+                        </div>
+                    </div>
                 @endif
 
                 {{-- Panel de entidad inyectado por el módulo dueño (p. ej. HelpdeskTickets
@@ -912,8 +1046,11 @@
                         <div class="evx-block-head">
                             <div>
                                 <span class="t">{{ __('helpdeskemaillog::emaillog.preview.recipient.title') }}</span>
-                                <span class="s">{{ Str::after($recipientStats['email'], '@') }}</span>
                             </div>
+                            {{-- Dominio del destinatario a la derecha, como el mockup:
+                                 dice de un vistazo si es un buzón corporativo o de
+                                 consumo, que es lo que condiciona la entregabilidad. --}}
+                            <span class="evx-block-head-tag mono">&#64;{{ Str::after($recipientStats['email'], '@') }}</span>
                         </div>
                         <div class="evx-block-body">
                             <div class="evx-recipient-card">
@@ -932,34 +1069,79 @@
                                class="evx-btn evx-btn-outline evx-btn-inline w-100">
                                 {{ __('helpdeskemaillog::emaillog.preview.recipient.filter') }}
                             </a>
+
+                            {{-- "Enviado por" — el causer real del envío. El mockup
+                                 lo pone al pie de esta ficha; se omite entero si el
+                                 envío fue automático y no hay usuario detrás. --}}
+                            @if($log->causer)
+                                @php
+                                    $causerName = $log->causer->name ?? ($log->causer->email ?? ('#'.$log->causer_id));
+                                @endphp
+                                <div class="evx-recipient-causer">
+                                    <span class="evx-avatar sm">{{ Str::upper(Str::substr($causerName, 0, 2)) }}</span>
+                                    <span class="evx-list-main">
+                                        <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.preview.recipient.sent_by', ['name' => $causerName]) }}</span>
+                                        @if($log->causer->email ?? null)
+                                            <span class="evx-list-sub mono">{{ $log->causer->email }}</span>
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endif
 
-                {{-- Emails relacionados --}}
+                {{-- Emails relacionados. Se muestran solo los primeros y el resto
+                     va tras un enlace al listado filtrado, como el "hilo del
+                     cliente" del mockup: con la lista completa el sidebar
+                     acababa midiendo más que el propio detalle. --}}
+                @php
+                    $relatedShown = $related->take(4);
+                    $relatedRest = max(0, $related->count() - $relatedShown->count());
+                    $relatedFilterUrl = $log->entity_type && $log->entity_id
+                        ? route('helpdeskemaillog.index', ['entity_type' => $log->entity_type, 'entity_id' => $log->entity_id])
+                        : route('helpdeskemaillog.index', ['search' => $log->to_addresses[0] ?? '']);
+                @endphp
                 <div class="evx-block">
                     <div class="evx-block-head">
                         <div>
                             <span class="t">{{ __('helpdeskemaillog::emaillog.preview.related_emails') }}</span>
                             <span class="s">{{ __('helpdeskemaillog::emaillog.preview.related_emails_hint') }}</span>
                         </div>
+                        @if($related->isNotEmpty())
+                            <span class="evx-block-head-tag mono">{{ $related->count() }}</span>
+                        @endif
                     </div>
                     <div class="evx-block-body">
-                        @forelse($related as $rel)
+                        @forelse($relatedShown as $rel)
                             @php $rv = $rel->status?->value; @endphp
+                            {{-- Fila del hilo como en el mockup: punto de estado,
+                                 asunto y "estado · fecha" en una línea apagada, con
+                                 chevron. Antes cada una era una tarjeta con borde y
+                                 el sidebar acababa siendo más alto que el detalle. --}}
                             <a href="{{ route('helpdeskemaillog.show', $rel->uid) }}" class="evx-related">
-                                <span class="evx-related-subject">{{ Str::limit($rel->subject, 42) ?: '—' }}</span>
-                                <span class="evx-related-meta">
-                                    <span class="evx-status {{ $rv }}">
-                                        <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock'][$rv] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $rel->status_label }}
+                                <span class="evx-row-dot {{ $rv }}" aria-hidden="true"></span>
+                                <span class="evx-list-main">
+                                    <span class="evx-related-subject">{{ Str::limit($rel->subject, 42) ?: '—' }}</span>
+                                    <span class="evx-related-meta">
+                                        {{ $rel->status_label }} · {{ $rel->display_date->format('d/m/Y H:i') }}
                                     </span>
-                                    <span class="evx-related-date">{{ $rel->display_date->format('d/m/Y H:i') }}</span>
                                 </span>
+                                <i class="fa-solid fa-chevron-right evx-related-chevron" aria-hidden="true"></i>
                             </a>
                         @empty
                             <div class="evx-field"><span class="v"><span class="muted">{{ __('helpdeskemaillog::emaillog.preview.no_related') }}</span></span></div>
                         @endforelse
                     </div>
+                    @if($related->isNotEmpty())
+                        <div class="evx-block-foot">
+                            <a href="{{ $relatedFilterUrl }}">
+                                {{ $relatedRest > 0
+                                    ? __('helpdeskemaillog::emaillog.preview.related_see_all', ['count' => $related->count()])
+                                    : __('helpdeskemaillog::emaillog.preview.related_see_filtered') }} →
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
             </aside>

@@ -8,6 +8,7 @@
         'reputation' => ['route' => 'helpdeskemaillog.reputation.index', 'label' => 'Reputación', 'icon' => 'fa-shield-halved'],
         'suppressions' => ['route' => 'settings.helpdeskemaillog.suppressions.index', 'label' => 'Lista de supresión', 'icon' => 'fa-ban'],
         'bounce-mailboxes' => ['route' => 'settings.helpdeskemaillog.bounce-mailboxes.index', 'label' => 'Buzones de rebote', 'icon' => 'fa-inbox'],
+        'webhook-events' => ['route' => 'settings.helpdeskemaillog.webhook-events.index', 'label' => 'Eventos de webhook', 'icon' => 'fa-plug-circle-bolt'],
     ];
 @endphp
 <div class="evx-toolbar">
@@ -27,7 +28,15 @@
             <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Volver al listado
         </a>
         <span class="evx-filter-divider" aria-hidden="true"></span>
+        {{-- Route::has(): 'webhook-events' se añadió aquí antes de que su
+             ruta quedara registrada en routes/web.php (a propósito, ver
+             informe del cambio) — sin este guard, CUALQUIER pantalla de
+             settings que incluye este subnav rompía con un
+             RouteNotFoundException en cuanto se referenciaba una ruta
+             todavía no registrada. Se queda el guard aunque la ruta ya
+             exista: es gratis y evita que vuelva a pasar. --}}
         @foreach($emaillogSubnavLinks as $key => $link)
+            @continue(! \Illuminate\Support\Facades\Route::has($link['route']))
             <a href="{{ route($link['route']) }}" class="evx-header-btn {{ $key === $current ? 'is-active' : '' }}">
                 <i class="fa-solid {{ $link['icon'] }}" aria-hidden="true"></i>
                 {{ $link['label'] }}

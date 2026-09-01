@@ -39,15 +39,7 @@ class EmailBounceCorrelatorService
      */
     public function correlateByMessageId(string $messageId, string $reason, bool $isHard, bool $isComplaint = false): bool
     {
-        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
-
-        if (! $emailLog) {
-            return false;
-        }
-
-        $this->mark($emailLog, $reason, $isHard, $isComplaint);
-
-        return true;
+        return $this->resolveByMessageId($messageId, $reason, $isHard, $isComplaint) !== null;
     }
 
     /**
@@ -64,6 +56,36 @@ class EmailBounceCorrelatorService
      */
     public function correlateByRecipient(string $recipient, string $subject, ?array $moduleScope, bool $isHard, bool $isComplaint = false): bool
     {
+        return $this->resolveByRecipient($recipient, $subject, $moduleScope, $isHard, $isComplaint) !== null;
+    }
+
+    /**
+     * Igual que correlateByMessageId() pero además devuelve el EmailLog
+     * correlacionado (o null) — lo usa ProviderWebhookEventProcessor para
+     * persistir email_log_id en el registro de auditoría del webhook (ver
+     * email_provider_events).
+     */
+    public function resolveByMessageId(string $messageId, string $reason, bool $isHard, bool $isComplaint = false): ?EmailLog
+    {
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
+
+        if (! $emailLog) {
+            return null;
+        }
+
+        $this->mark($emailLog, $reason, $isHard, $isComplaint);
+
+        return $emailLog;
+    }
+
+    /**
+     * Igual que correlateByRecipient() pero además devuelve el EmailLog
+     * correlacionado (o null).
+     *
+     * @param  list<string>|null  $moduleScope
+     */
+    public function resolveByRecipient(string $recipient, string $subject, ?array $moduleScope, bool $isHard, bool $isComplaint = false): ?EmailLog
+    {
         $candidates = EmailLog::withTrashed()
             ->when($moduleScope, fn ($q) => $q->whereIn('module', $moduleScope))
             ->sent()
@@ -72,17 +94,19 @@ class EmailBounceCorrelatorService
             ->get();
 
         if ($candidates->count() !== 1) {
-            return false;
+            return null;
         }
 
+        $emailLog = $candidates->first();
+
         $this->mark(
-            $candidates->first(),
+            $emailLog,
             '[correlación por destinatario, sin Message-ID en el origen] '.$subject,
             $isHard,
             $isComplaint,
         );
 
-        return true;
+        return $emailLog;
     }
 
     private function mark(EmailLog $emailLog, string $reason, bool $isHard, bool $isComplaint): void

@@ -74,6 +74,10 @@ return [
         'engagement_not_opened' => 'Not opened (tracked)',
         'engagement_clicked' => 'Clicked',
         'engagement_not_clicked' => 'Not clicked (tracked)',
+        'all_agents' => 'Any agent',
+        'all_from_addresses' => 'Any sender mailbox',
+        'attachments_only' => 'Any',
+        'attachments_only_yes' => 'With attachments only',
         'results_count' => '{0} No results|{1} :count result|[2,*] :count results',
     ],
 
@@ -125,6 +129,8 @@ return [
     'actions' => [
         'view' => 'View content',
         'resend' => 'Resend',
+        'resend_recipient' => 'Resend to recipient',
+        'move_to_trash' => 'Move to trash',
         'delete' => 'Delete',
         'export' => 'Export CSV',
         'bulk_delete' => 'Delete selected',
@@ -154,6 +160,7 @@ return [
     ],
 
     'purge' => [
+        'hint' => 'keeps the metadata',
         'confirm_title' => 'Purge email content',
         'confirm' => 'The email body (HTML/text) will be permanently removed. Metadata (subject, recipients, status) is kept. Continue?',
         'done' => 'Email content purged.',
@@ -180,7 +187,16 @@ return [
         'refreshed' => 'Reputation for :domain refreshed.',
     ],
 
+    'webhook_events' => [
+        'already_correlated' => 'This event is already correlated with an email, no need to reprocess it.',
+        'cannot_reprocess' => 'This event does not have enough data to reprocess (it predates payload auditing).',
+        'type_disabled' => 'This event type is still disabled in the provider settings — enable it before reprocessing.',
+        'reprocessed_matched' => 'Event reprocessed: correlated with an email.',
+        'reprocessed_unmatched' => 'Event reprocessed, but it still could not be correlated with any email.',
+    ],
+
     'pagination' => [
+        'page' => 'page :page of :last',
         'showing' => 'Showing :first–:last of :total entries',
     ],
 
@@ -210,6 +226,7 @@ return [
     ],
 
     'trash' => [
+        'recoverable_hint' => 'recoverable for :days days',
         'title' => 'Log trash',
         'subtitle' => 'Email log entries deleted from the list — recoverable for :days days before being permanently removed.',
         'back_to_list' => 'Back to list',
@@ -254,6 +271,9 @@ return [
     ],
 
     'preview' => [
+        'related_see_all' => 'View all :count in the thread',
+        'related_see_filtered' => 'View all in the list',
+        'by' => 'by :name',
         'title' => 'Email detail',
         'heading' => 'Email content',
         // Short tab labels (the mockup uses a single word); the long titles
@@ -264,6 +284,7 @@ return [
             'trace' => 'Trace',
             'opens' => 'Opens',
             'raw' => 'Original',
+            'activity' => 'Activity log',
         ],
         'position' => ':position of :total',
         'prev' => 'Previous (K)',
@@ -274,6 +295,7 @@ return [
             'last_open' => 'last open',
             'delivery_rate' => 'deliverability',
             'filter' => 'View their emails',
+            'sent_by' => 'Sent by :name',
         ],
         'desktop' => 'Desktop',
         'mobile' => 'Mobile',
@@ -314,6 +336,8 @@ return [
         'related_entity_id_label' => 'ID',
         'related_entity_open' => 'Open',
         'related_entity_filter' => 'Filter',
+        'related_entity_none' => 'This email is not linked to any record.',
+        'related_entity_link_cta' => 'Link to a ticket',
         'related_emails' => 'Related emails',
         'related_emails_hint' => 'Same recipient or entity',
         'entity_panel_title' => 'Related thread',
@@ -380,7 +404,59 @@ return [
         'likely_bot_badge' => 'likely bot',
     ],
 
+    'activity_log' => [
+        'title' => 'Activity log for this email',
+        'hint' => 'Who did what, and when, on this record',
+        'empty' => 'No actions recorded yet for this email.',
+        'system' => 'System',
+        'view_full_audit' => 'View full audit log',
+        'events' => [
+            'viewed' => 'Email viewed',
+            'resent' => 'Resent',
+            'body_purged' => 'Content purged',
+            'downloaded' => 'Content downloaded',
+            'downloaded_raw' => '.eml downloaded',
+            'deleted' => 'Moved to trash',
+            'restored' => 'Restored from trash',
+            'force_deleted' => 'Permanently deleted',
+            'bounce_resolved' => 'Bounce resolved (resent + suppression)',
+            'entity_linked' => 'Linked to an entity',
+        ],
+    ],
+
+    'bounce_triage' => [
+        'cta' => 'Fix and resend',
+        'title' => 'Resolve bounce',
+        'hint' => 'Fix the address, resend, and optionally block the old one.',
+        'bounced_address_label' => 'Address that bounced',
+        'error_label' => 'Bounce reason',
+        'corrected_label' => 'Corrected address',
+        'corrected_placeholder' => 'name@example.com',
+        'suppress_label' => 'Add the old address to the suppression list',
+        'suppress_hint_hard' => 'Checked by default: this was a permanent bounce.',
+        'suppress_hint_soft' => 'This bounce was temporary — you can still enable this if you prefer to block the address.',
+        'send' => 'Fix and resend',
+        'same_address' => 'The corrected address must be different from the one that bounced.',
+        'not_bounced' => 'This email is not in a bounced state.',
+        'success' => 'Bounce resolved: resent to :email.',
+    ],
+
+    'link_entity' => [
+        'title' => 'Link to a ticket',
+        'hint' => 'Search by ticket number, subject or customer.',
+        'search_placeholder' => 'Search ticket...',
+        'search_min_chars' => 'Type at least 2 characters.',
+        'no_results' => 'No tickets found.',
+        'selected_label' => 'Selected ticket',
+        'send' => 'Link',
+        'success' => 'Email linked to the ticket successfully.',
+        'already_linked' => 'This email is already linked to an entity.',
+        'not_found' => 'The selected ticket no longer exists.',
+        'module_disabled' => 'The tickets module is not enabled.',
+    ],
+
     'resend' => [
+        'recipient_hint' => 'to the original address',
         'success' => 'Email resent successfully.',
         'queued' => 'Resend queued. The email will be sent in the background.',
         'queued_to' => 'Resend to :email queued.',

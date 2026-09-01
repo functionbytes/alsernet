@@ -57,8 +57,12 @@ return [
     | Registros por página en el listado (valor por defecto) y opciones que
     | ofrece el selector de la UI.
     */
-    'per_page' => env('EMAIL_LOG_PER_PAGE', 25),
-    'per_page_options' => [10, 25, 50, 100],
+    // 15 por defecto: la columna de la lista del workspace es estrecha y con
+    // 25 filas obligaba a bajar bastante para llegar al pie de paginación.
+    // Sigue siendo configurable por Settings ('helpdeskemaillog.per_page'),
+    // que tiene prioridad sobre este valor.
+    'per_page' => env('EMAIL_LOG_PER_PAGE', 15),
+    'per_page_options' => [15, 25, 50, 100],
 
     /*
     | Mapa entity_type => nombre de ruta para enlazar la entidad relacionada
@@ -130,6 +134,47 @@ return [
     'redact_body_for_modules' => [
         // 'Auth',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payload de webhooks de proveedor (auditoría/depuración)
+    |--------------------------------------------------------------------------
+    | EmailProviderWebhookController guarda el payload crudo de cada evento
+    | verificado (bounce/complaint/delivered/open) en
+    | email_provider_events.payload, para poder depurar por qué un evento no
+    | correlacionó y para poder reprocesarlo (ver Settings → Eventos de
+    | webhook). Antes de guardarse se aplican dos límites, mismo criterio que
+    | store_body/max_body_bytes con el cuerpo de los emails:
+    |
+    |  1. Tamaño máximo en bytes (webhook_payload_max_bytes). Si el JSON
+    |     serializado lo supera, se sustituye por un marcador
+    |     {"_truncated": true, "original_size": N} en vez de cortar el JSON a
+    |     medias (partir un documento JSON por bytes lo dejaría inválido, a
+    |     diferencia de un body de texto).
+    |  2. Claves eliminadas recursivamente (webhook_payload_redact_keys). NO
+    |     se toca el destinatario/message-id/IP/user-agent: son justo lo que
+    |     hay que comparar cuando algo no correlaciona, así que se conservan
+    |     tal cual. Lo que sí se quita es material sin valor de depuración
+    |     que puede traer PII de negocio ajena a este evento: firmas
+    |     criptográficas ya verificadas antes de llegar aquí
+    |     (Signature/SigningCertURL de SNS) o bolsas de variables arbitrarias
+    |     que la aplicación que originó el envío pudo haber adjuntado
+    |     (user-variables de Mailgun, Metadata/Tag de Postmark).
+    */
+    'webhook_payload_max_bytes' => env('EMAIL_LOG_WEBHOOK_PAYLOAD_MAX_BYTES', 64 * 1024),
+
+    'webhook_payload_redact_keys' => [
+        'signature', 'Signature', 'SigningCertURL',
+        'user-variables', 'Metadata', 'Tag', 'tags',
+    ],
+
+    /*
+    | Días que se conservan los eventos de webhook de proveedor
+    | (email_provider_events) antes de que `email-logs:prune` los borre.
+    | Independiente de retention_days/trash_retention_days: estos eventos no
+    | son el email en sí, son el registro de auditoría del webhook.
+    */
+    'webhook_events_retention_days' => env('EMAIL_LOG_WEBHOOK_EVENTS_RETENTION_DAYS', 30),
 
     /*
     |--------------------------------------------------------------------------

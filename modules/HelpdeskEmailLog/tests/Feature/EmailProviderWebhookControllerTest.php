@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Modules\HelpdeskEmailLog\Enums\EmailOpenSource;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Models\ProviderWebhookEvent;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhookSettingsRepository;
 use Tests\TestCase;
 
@@ -556,5 +557,178 @@ class EmailProviderWebhookControllerTest extends TestCase
             ->assertJson(['processed' => 0, 'skipped' => 1]);
 
         $this->assertSame(EmailStatus::Sent, $log->fresh()->status);
+    }
+
+    // --- Auditoría: payload/correlación/reproceso (email_provider_events) ---
+
+    public function test_a_correlated_event_stores_its_payload_and_links_the_email_log(): void
+    {
+        $this->configureProvider('mailrelay', 'shared-secret');
+        $log = EmailLog::factory()->create(['message_id' => 'mailrelay-payload-1@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), [
+            'type' => 'hard_bounce',
+            'message_id' => 'mailrelay-payload-1@webadmin.test',
+            'email' => 'x@example.test',
+            'reason' => '550 mailbox unavailable',
+            'id' => 'mailrelay-evt-payload-1',
+        ], ['X-Mailrelay-Token' => 'shared-secret'])->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->where('provider_event_id', 'mailrelay-evt-payload-1')->sole();
+
+        $this->assertSame('bounce', $event->event_type);
+        $this->assertSame($log->id, $event->email_log_id);
+        $this->assertNotNull($event->processed_at);
+        $this->assertSame('x@example.test', $event->payload['raw']['email'] ?? null);
+        $this->assertSame('mailrelay-payload-1@webadmin.test', $event->payload['parsed']['message_id'] ?? null);
+    }
+
+    public function test_an_uncorrelated_event_keeps_email_log_id_null_but_still_marks_processed_at(): void
+    {
+        $this->configureProvider('mailrelay', 'shared-secret');
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), [
+            'type' => 'hard_bounce',
+            'message_id' => 'no-such-message-id@webadmin.test',
+            'email' => 'nadie@example.test',
+            'id' => 'mailrelay-evt-payload-2',
+        ], ['X-Mailrelay-Token' => 'shared-secret'])
+            ->assertOk()
+            ->assertJson(['processed' => 0, 'skipped' => 1]);
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->where('provider_event_id', 'mailrelay-evt-payload-2')->sole();
+
+        $this->assertNull($event->email_log_id);
+        $this->assertNotNull($event->processed_at);
+    }
+
+    public function test_a_disabled_event_type_is_stored_but_never_marks_processed_at(): void
+    {
+        $this->configureProvider('mailrelay', 'shared-secret', ['process_complaints' => false]);
+        EmailLog::factory()->create(['message_id' => 'mailrelay-payload-3@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), [
+            'type' => 'complaint',
+            'message_id' => 'mailrelay-payload-3@webadmin.test',
+            'email' => 'x@example.test',
+            'id' => 'mailrelay-evt-payload-3',
+        ], ['X-Mailrelay-Token' => 'shared-secret'])->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->where('provider_event_id', 'mailrelay-evt-payload-3')->sole();
+
+        // El tipo nunca llegó a intentar correlacionar (toggle desactivado):
+        // se guarda el evento (para el panel de salud/reproceso posterior),
+        // pero processed_at se queda null — email_log_id, null también.
+        $this->assertNull($event->email_log_id);
+        $this->assertNull($event->processed_at);
+    }
+
+    public function test_mailgun_payload_strips_user_variables_but_keeps_recipient_and_message_id(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key');
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-payload-1'),
+            'event-data' => [
+                'event' => 'failed',
+                'severity' => 'permanent',
+                'recipient' => 'x@example.test',
+                'message' => ['headers' => ['message-id' => 'mailgun-payload-1@webadmin.test']],
+                // Bolsa de variables arbitrarias que el remitente original
+                // pudo haber adjuntado (PII de negocio ajena a este evento,
+                // p.ej. datos de cliente) — no debe sobrevivir en el payload
+                // guardado (ver WebhookPayloadRedactor).
+                'user-variables' => ['customer_id' => 4821, 'plan' => 'premium'],
+                'id' => 'mailgun-evt-payload-1',
+            ],
+        ])->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailgun')->where('provider_event_id', 'mailgun-evt-payload-1')->sole();
+
+        $this->assertArrayNotHasKey('user-variables', $event->payload['raw']);
+        $this->assertSame('x@example.test', $event->payload['parsed']['recipient']);
+        $this->assertSame('mailgun-payload-1@webadmin.test', $event->payload['parsed']['message_id']);
+    }
+
+    public function test_postmark_payload_strips_metadata_but_keeps_recipient(): void
+    {
+        $this->configureProvider('postmark', 'pm-secret');
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'postmark']), [
+            'RecordType' => 'Bounce',
+            'Type' => 'HardBounce',
+            'MessageID' => 'postmark-payload-1',
+            'Email' => 'x@example.test',
+            // Metadata custom que la app pudo adjuntar al enviar (Postmark lo
+            // soporta) — puede traer cualquier PII de negocio, sin valor de
+            // depuración para este conector.
+            'Metadata' => ['order_id' => '99', 'customer_name' => 'Jane Doe'],
+            'ID' => 'postmark-evt-payload-1',
+        ], ['X-Postmark-Webhook-Token' => 'pm-secret'])->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'postmark')->where('provider_event_id', 'postmark-evt-payload-1')->sole();
+
+        $this->assertArrayNotHasKey('Metadata', $event->payload['raw']);
+        $this->assertSame('x@example.test', $event->payload['parsed']['recipient']);
+    }
+
+    public function test_an_oversized_payload_is_replaced_with_a_truncation_marker(): void
+    {
+        config(['helpdeskemaillog.webhook_payload_max_bytes' => 100]);
+        $this->configureProvider('mailrelay', 'shared-secret');
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), [
+            'type' => 'hard_bounce',
+            'email' => 'x@example.test',
+            'reason' => str_repeat('a', 500),
+            'id' => 'mailrelay-evt-huge',
+        ], ['X-Mailrelay-Token' => 'shared-secret'])->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->where('provider_event_id', 'mailrelay-evt-huge')->sole();
+
+        $this->assertTrue($event->payload['_truncated'] ?? false);
+        $this->assertGreaterThan(100, $event->payload['original_size']);
+    }
+
+    public function test_a_retried_delivery_increments_duplicate_count_without_reprocessing(): void
+    {
+        $this->configureProvider('mailrelay', 'shared-secret');
+        $log = EmailLog::factory()->create(['message_id' => 'mailrelay-dup-1@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $payload = [
+            'type' => 'hard_bounce',
+            'message_id' => 'mailrelay-dup-1@webadmin.test',
+            'email' => 'x@example.test',
+            'id' => 'mailrelay-evt-dup-1',
+        ];
+        $headers = ['X-Mailrelay-Token' => 'shared-secret'];
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), $payload, $headers)->assertOk();
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), $payload, $headers)->assertOk();
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), $payload, $headers)->assertOk();
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->where('provider_event_id', 'mailrelay-evt-dup-1')->sole();
+
+        $this->assertSame(2, $event->duplicate_count);
+        $this->assertSame($log->id, $event->email_log_id);
+    }
+
+    public function test_an_event_without_a_provider_id_is_still_recorded_for_audit(): void
+    {
+        $this->configureProvider('mailrelay', 'shared-secret');
+
+        $countBefore = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->count();
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailrelay']), [
+            'type' => 'hard_bounce',
+            'message_id' => 'mailrelay-noid-1@webadmin.test',
+            'email' => 'x@example.test',
+            // Sin 'id': Mailrelay no siempre lo manda.
+        ], ['X-Mailrelay-Token' => 'shared-secret'])->assertOk();
+
+        $this->assertSame($countBefore + 1, ProviderWebhookEvent::query()->where('provider', 'mailrelay')->count());
+
+        $event = ProviderWebhookEvent::query()->where('provider', 'mailrelay')->latest('id')->first();
+        $this->assertStringStartsWith('no-id:', $event->provider_event_id);
     }
 }

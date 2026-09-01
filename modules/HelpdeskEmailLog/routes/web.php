@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\HelpdeskEmailLog\Http\Controllers\EmailClickTrackingController;
+use Modules\HelpdeskEmailLog\Http\Controllers\EmailLogAnalyticsController;
 use Modules\HelpdeskEmailLog\Http\Controllers\EmailLogController;
 use Modules\HelpdeskEmailLog\Http\Controllers\EmailLogViewsController;
 use Modules\HelpdeskEmailLog\Http\Controllers\EmailOpenTrackingController;
@@ -10,6 +11,7 @@ use Modules\HelpdeskEmailLog\Http\Controllers\EmailReputationController;
 use Modules\HelpdeskEmailLog\Http\Controllers\Settings\BounceMailboxesController;
 use Modules\HelpdeskEmailLog\Http\Controllers\Settings\EmailLogSettingsController;
 use Modules\HelpdeskEmailLog\Http\Controllers\Settings\EmailSuppressionController;
+use Modules\HelpdeskEmailLog\Http\Controllers\Settings\WebhookEventsController;
 
 // Pixel de apertura — SIN auth a propósito: lo carga el cliente de correo del
 // destinatario, no un usuario logueado del panel. Fuera del prefix
@@ -63,10 +65,22 @@ Route::middleware('auth')
             ->post('/export-selected', [EmailLogController::class, 'exportSelected'])
             ->name('export-selected');
 
+        // Buscador de tickets para el modal "Vincular a un ticket" del sidebar
+        // (ver EmailLogController::searchTickets()/linkEntity()) — literal
+        // 'tickets/search' antes del wildcard {emailLog} de abajo, mismo
+        // criterio que 'export'/'reputation'/'trash'.
+        Route::get('/tickets/search', [EmailLogController::class, 'searchTickets'])->name('tickets.search');
+
         Route::prefix('reputation')->name('reputation.')->group(function () {
             Route::get('/', [EmailReputationController::class, 'index'])->name('index');
             Route::post('/refresh', [EmailReputationController::class, 'refresh'])->name('refresh');
         });
+
+        // Analítica (rendimiento por mailable, latencia de entrega,
+        // entregabilidad por dominio destinatario). Solo lectura: sin throttle
+        // propio, mismo criterio que 'reputation'/'trash'. Va antes del
+        // wildcard {emailLog} de abajo por el mismo motivo que las anteriores.
+        Route::get('/analytics', [EmailLogAnalyticsController::class, 'index'])->name('analytics.index');
 
         Route::prefix('views')->name('views.')->group(function () {
             Route::get('/', [EmailLogViewsController::class, 'index'])->name('index');
@@ -117,6 +131,19 @@ Route::middleware('auth')
             ->name('resend')
             ->whereUuid('emailLog');
 
+        // Triaje de rebotes en un solo paso: corrige el destinatario, reenvía
+        // y opcionalmente suprime la dirección vieja (ver
+        // EmailLogController::resolveBounce()). Mismo throttle que resend():
+        // ES un reenvío, solo que orquestado junto a la supresión.
+        Route::middleware('throttle:12,1')
+            ->post('/{emailLog}/resolve-bounce', [EmailLogController::class, 'resolveBounce'])
+            ->name('resolve-bounce')
+            ->whereUuid('emailLog');
+
+        Route::post('/{emailLog}/link-entity', [EmailLogController::class, 'linkEntity'])
+            ->name('link-entity')
+            ->whereUuid('emailLog');
+
         Route::middleware('throttle:6,1')
             ->post('/bulk-resend', [EmailLogController::class, 'bulkResend'])
             ->name('bulk-resend');
@@ -147,5 +174,14 @@ Route::middleware('auth')
             Route::get('/', [EmailSuppressionController::class, 'index'])->name('index');
             Route::post('/', [EmailSuppressionController::class, 'store'])->name('store');
             Route::delete('/{suppression}', [EmailSuppressionController::class, 'destroy'])->name('destroy');
+        });
+
+        // Eventos de webhook recibidos (payload, correlación con el email y
+        // reproceso de los que no correlacionaron) + salud por proveedor.
+        // Los permisos los aplica el propio controlador en su constructor
+        // (settings.view / settings.update), como el resto de este grupo.
+        Route::prefix('webhook-events')->name('webhook-events.')->group(function () {
+            Route::get('/', [WebhookEventsController::class, 'index'])->name('index');
+            Route::post('/{event}/reprocess', [WebhookEventsController::class, 'reprocess'])->name('reprocess');
         });
     });

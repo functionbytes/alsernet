@@ -9,24 +9,29 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskEmailLog\Contracts\EmailProviderWebhookAdapter;
 use Modules\HelpdeskEmailLog\Models\ProviderWebhookEvent;
-use Modules\HelpdeskEmailLog\Services\EmailBounceCorrelatorService;
-use Modules\HelpdeskEmailLog\Services\EmailDeliveryEventCorrelatorService;
+use Modules\HelpdeskEmailLog\Services\ProviderWebhookEventProcessor;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\MailgunWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\MailrelayWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\PostmarkWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\SesSnsWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhookSettingsRepository;
 use Modules\HelpdeskEmailLog\Support\ParsedEmailEvent;
+use Modules\HelpdeskEmailLog\Support\WebhookPayloadRedactor;
 
 /**
  * Único punto de entrada para CUALQUIER proveedor — no conoce el formato de
- * ningún payload, solo resuelve el adapter correcto, verifica y delega según
- * el tipo de evento: EmailBounceCorrelatorService para bounce/complaint (la
- * misma pieza que ya usa el poller IMAP de la Fase 2), o
- * EmailDeliveryEventCorrelatorService para delivered/open. Solo el proveedor
- * SELECCIONADO en Settings responde aquí; una URL para cualquier otro
- * devuelve 404, para no exponer lógica de verificación de proveedores no
- * usados.
+ * ningún payload, solo resuelve el adapter correcto, verifica y delega en
+ * ProviderWebhookEventProcessor (qué correlador usar según el tipo de
+ * evento). Solo el proveedor SELECCIONADO en Settings responde aquí; una URL
+ * para cualquier otro devuelve 404, para no exponer lógica de verificación
+ * de proveedores no usados.
+ *
+ * Cada evento verificado se persiste en email_provider_events ANTES de
+ * intentar correlacionar (ver ProviderWebhookEvent::recordIfNew()): payload
+ * crudo (redactado/acotado, ver WebhookPayloadRedactor) + a qué EmailLog
+ * correlacionó (o null). Es lo que permite depurar por qué un evento no se
+ * reflejó bien y reprocesarlo después de corregir el problema (ver
+ * Settings\WebhookEventsController::reprocess()).
  *
  * AVISO IMPORTANTE (ver settings/index.blade.php): elegir un proveedor aquí
  * solo determina cómo se INTERPRETAN los webhooks entrantes — nunca cambia
@@ -53,8 +58,7 @@ class EmailProviderWebhookController extends Controller
         string $provider,
         Request $request,
         ProviderWebhookSettingsRepository $settingsRepo,
-        EmailBounceCorrelatorService $bounceCorrelator,
-        EmailDeliveryEventCorrelatorService $deliveryCorrelator,
+        ProviderWebhookEventProcessor $processor,
     ): Response|JsonResponse {
         $adapters = $this->adapters();
 
@@ -90,25 +94,31 @@ class EmailProviderWebhookController extends Controller
         $skipped = 0;
 
         foreach ($events as $event) {
-            // Los proveedores reintentan la entrega del webhook si no reciben
-            // 2xx a tiempo (o simplemente por su propia política de "al
-            // menos una vez") — sin este guard, un mismo bounce/complaint se
-            // volvía a correlacionar y podía suprimir/marcar el mismo envío
-            // más de una vez.
-            if ($event->providerEventId !== null && $event->providerEventId !== ''
-                && ! ProviderWebhookEvent::markSeenIfNew($provider, $event->providerEventId)) {
+            // Registra el evento ANTES de intentar correlacionar: si ya se
+            // había visto (el proveedor reintentó la entrega porque no
+            // recibió 2xx a tiempo), no vuelve a insertar ni a correlacionar
+            // — solo cuenta el reintento (duplicate_count) y se salta. Si es
+            // la primera vez, queda un registro con el payload que se
+            // completa más abajo con email_log_id/processed_at.
+            $eventRow = ProviderWebhookEvent::recordIfNew($provider, $event->providerEventId, $event->type, $this->buildStoredPayload($event));
+
+            if ($eventRow === null) {
                 $skipped++;
 
                 continue;
             }
 
-            if (! $this->shouldProcess($event, $config)) {
+            if (! $processor->shouldProcess($event, $config)) {
                 $skipped++;
 
                 continue;
             }
 
-            if ($this->correlate($event, $bounceCorrelator, $deliveryCorrelator)) {
+            $matchedLog = $processor->correlate($event);
+
+            $eventRow->update(['email_log_id' => $matchedLog?->id, 'processed_at' => now()]);
+
+            if ($matchedLog !== null) {
                 $processed++;
             } else {
                 $skipped++;
@@ -119,94 +129,30 @@ class EmailProviderWebhookController extends Controller
     }
 
     /**
-     * @param  array<string, mixed>  $config
+     * Payload guardado en email_provider_events.payload — el crudo tal como
+     * llegó (ver ParsedEmailEvent::$rawPayload, ya acotado a este evento
+     * concreto, nunca al request completo) junto a lo que el adapter ya
+     * extrajo. La mitad "parsed" es lo que permite reprocesar el evento sin
+     * volver a pedírselo al proveedor (ver
+     * Settings\WebhookEventsController::reprocess()); la mitad "raw" es lo
+     * que permite ver qué mandó el proveedor de verdad cuando el bug está en
+     * el propio parse(). Redactado/acotado en tamaño antes de devolverse
+     * (ver WebhookPayloadRedactor).
+     *
+     * @return array<string, mixed>
      */
-    /**
-     * @param  array<string, mixed>  $config
-     */
-    private function shouldProcess(ParsedEmailEvent $event, array $config): bool
+    private function buildStoredPayload(ParsedEmailEvent $event): array
     {
-        return match (true) {
-            $event->isBounce() => (bool) $config['process_bounces'],
-            $event->isComplaint() => (bool) $config['process_complaints'],
-            $event->isDelivered() => (bool) $config['process_deliveries'],
-            $event->isOpen() => (bool) $config['process_opens'],
-            default => false,
-        };
-    }
-
-    /**
-     * Despacha al correlador correcto según el tipo de evento — bounce y
-     * complaint comparten interfaz (mutan el status a un terminal negativo),
-     * delivered y open no (ver EmailDeliveryEventCorrelatorService).
-     */
-    private function correlate(
-        ParsedEmailEvent $event,
-        EmailBounceCorrelatorService $bounceCorrelator,
-        EmailDeliveryEventCorrelatorService $deliveryCorrelator,
-    ): bool {
-        if ($event->isDelivered()) {
-            return $this->correlateDelivered($event, $deliveryCorrelator);
-        }
-
-        if ($event->isOpen()) {
-            return $this->correlateOpen($event, $deliveryCorrelator);
-        }
-
-        return $this->correlateBounceOrComplaint($event, $bounceCorrelator);
-    }
-
-    /**
-     * Correlación por Message-ID primero (alta confianza); si no vino o no
-     * hubo match, cae a correlación por destinatario sin acotar por módulo
-     * (el webhook de un proveedor cubre TODO lo que ese proveedor envía,
-     * cruce de módulos — no tiene el concepto de "buzón por módulo" que sí
-     * tienen los BounceMailboxes IMAP).
-     */
-    private function correlateBounceOrComplaint(ParsedEmailEvent $event, EmailBounceCorrelatorService $correlator): bool
-    {
-        $isComplaint = $event->isComplaint();
-
-        if ($event->messageId !== null && $event->messageId !== '') {
-            if ($correlator->correlateByMessageId($event->messageId, $event->reason, $event->isHard, $isComplaint)) {
-                return true;
-            }
-        }
-
-        if ($event->recipient !== null && $event->recipient !== '') {
-            return $correlator->correlateByRecipient($event->recipient, $event->reason, null, $event->isHard, $isComplaint);
-        }
-
-        return false;
-    }
-
-    private function correlateDelivered(ParsedEmailEvent $event, EmailDeliveryEventCorrelatorService $correlator): bool
-    {
-        if ($event->messageId !== null && $event->messageId !== '') {
-            if ($correlator->correlateDeliveredByMessageId($event->messageId)) {
-                return true;
-            }
-        }
-
-        if ($event->recipient !== null && $event->recipient !== '') {
-            return $correlator->correlateDeliveredByRecipient($event->recipient);
-        }
-
-        return false;
-    }
-
-    private function correlateOpen(ParsedEmailEvent $event, EmailDeliveryEventCorrelatorService $correlator): bool
-    {
-        if ($event->messageId !== null && $event->messageId !== '') {
-            if ($correlator->correlateOpenByMessageId($event->messageId, $event->ip, $event->userAgent)) {
-                return true;
-            }
-        }
-
-        if ($event->recipient !== null && $event->recipient !== '') {
-            return $correlator->correlateOpenByRecipient($event->recipient, $event->ip, $event->userAgent);
-        }
-
-        return false;
+        return WebhookPayloadRedactor::redact([
+            'raw' => $event->rawPayload,
+            'parsed' => [
+                'message_id' => $event->messageId,
+                'recipient' => $event->recipient,
+                'is_hard' => $event->isHard,
+                'reason' => $event->reason,
+                'ip' => $event->ip,
+                'user_agent' => $event->userAgent,
+            ],
+        ]);
     }
 }

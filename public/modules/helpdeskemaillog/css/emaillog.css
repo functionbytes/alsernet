@@ -2515,3 +2515,273 @@
 .evx-domain-more[open] summary {
     margin-bottom: 8px;
 }
+
+/* ============================================================
+   Pie de la lista: contador + navegación compacta de página
+   (mockup: mono 10.5px sobre fondo gris, pegado abajo). Sustituye
+   al paginador numérico de Laravel, que ocupaba varias líneas
+   dentro de la columna de 390px.
+   ============================================================ */
+.evx-list-foot {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+    font-family: var(--evx-mono);
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+}
+
+.evx-list-foot-nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.evx-page-btn {
+    display: inline-grid;
+    place-items: center;
+    color: var(--evx-text-soft);
+    text-decoration: none;
+    font-size: 10px;
+    transition: color .12s ease;
+}
+
+.evx-page-btn:hover {
+    color: var(--evx-text);
+}
+
+.evx-page-btn.is-disabled {
+    color: var(--evx-border-strong);
+    cursor: default;
+}
+
+/* La columna de la lista se estira para que el pie quede abajo del todo,
+   como en el mockup, en vez de flotando justo tras la última fila. */
+.evx-workspace-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.evx-workspace-list > #evx-list-view {
+    flex: 1;
+}
+
+/* Etiqueta a la derecha de la cabecera de un bloque del sidebar (uid del
+   registro, dominio del destinatario…) — mockup: mono 9.5px apagado. */
+.evx-block-head-tag {
+    margin-left: auto;
+    font-size: 9.5px;
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* "Enviado por X" al pie de la ficha del destinatario */
+.evx-recipient-causer {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--evx-subtle);
+    min-width: 0;
+}
+
+.evx-avatar.sm {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-size: 9px;
+    background: var(--evx-subtle);
+    color: var(--evx-text-soft);
+}
+
+/* ============================================================
+   Sidebar del detalle — densidad del mockup
+   .evx-list-title/.evx-list-sub son spans sin display propio en
+   emaillog-extras.css, así que salían EN LA MISMA LÍNEA y hacían
+   wrap: el título y su explicación se leían como una frase larga
+   y cada fila crecía al doble de alto. Aquí se apilan.
+   ============================================================ */
+.evx-list-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.evx-list-sub {
+    font-size: 10px;
+    line-height: 1.45;
+    color: var(--evx-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Filas de acción compactas (mockup: padding 7px 8px, icono 22px).
+   Acotado al sidebar: las listas de supresiones/buzones usan el mismo
+   componente y ahí sí queremos la fila grande. */
+.evx-sidebar .evx-list-row {
+    padding: 7px 8px;
+    gap: 9px;
+    border-bottom: none;
+    border-radius: 8px;
+}
+
+.evx-sidebar .evx-list {
+    padding: 4px 6px 8px;
+}
+
+.evx-sidebar .evx-option-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    font-size: 10px;
+}
+
+/* Cabecera de bloque del sidebar: eyebrow en mayúsculas, sin subtítulo
+   (el mockup no los tiene y aquí solo repetían lo que ya dice el título:
+   "Opciones disponibles", "Mismo destinatario o entidad"…). */
+.evx-sidebar .evx-block-head {
+    padding: 10px 13px;
+    background: var(--evx-bg-soft);
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-sidebar .evx-block-head .t {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.evx-sidebar .evx-block-head .s {
+    display: none;
+}
+
+.evx-sidebar .evx-block-body {
+    padding: 12px 13px;
+}
+
+/* Emails relacionados: filas planas con punto de estado y chevron, como
+   el "hilo del cliente" del mockup — no tarjetas con borde apiladas. */
+.evx-sidebar .evx-related {
+    display: flex;
+    /* flex-direction explícito: la regla base .evx-related es column (se usa
+       así en otros contextos) y sin resetearlo aquí el punto, el texto y el
+       chevron se apilaban, dejando filas de 89px en vez de ~50px. */
+    flex-direction: row;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 13px;
+    border: none;
+    border-bottom: 1px solid var(--evx-subtle);
+    border-radius: 0;
+    background: none;
+    text-decoration: none;
+    color: inherit;
+}
+
+.evx-sidebar .evx-related:hover {
+    background: var(--evx-bg-soft);
+}
+
+.evx-sidebar .evx-related:last-child {
+    border-bottom: none;
+}
+
+.evx-sidebar .evx-related-subject {
+    font-size: 11.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-sidebar .evx-related-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--evx-text-muted);
+}
+
+.evx-sidebar .evx-related .evx-row-dot {
+    margin-top: 0;
+}
+
+.evx-related-chevron {
+    font-size: 9px;
+    color: var(--evx-border-strong);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   Cabecera del detalle — ajustes de fidelidad al mockup
+   ============================================================ */
+
+/* El asunto ocupa su propia línea y los chips van debajo. */
+.evx-ph-subject-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.evx-ph-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.evx-ph-meta-icon {
+    font-size: 9px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+/* Etiquetas del grid de detalle en caja normal, como el mockup ("De",
+   "Para", "Message-ID"), no en mayúsculas: con 9 filas seguidas el
+   versalitado convertía la ficha en un bloque gritado. */
+.evx-kv-grid .evx-field .k {
+    font-size: 11.5px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--evx-text-muted);
+}
+
+.evx-kv-grid .evx-field .v {
+    font-size: 11.5px;
+}
+
+/* Navegación anterior/siguiente pegada al extremo derecho de la fila. */
+.evx-ph-top {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+/* Pie de un bloque del sidebar (enlace "ver todos del hilo →"). */
+.evx-sidebar .evx-block-foot {
+    padding: 9px 13px;
+    border-top: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+}
+
+.evx-sidebar .evx-block-foot a {
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    text-decoration: none;
+}
+
+.evx-sidebar .evx-block-foot a:hover {
+    color: var(--evx-text);
+}
