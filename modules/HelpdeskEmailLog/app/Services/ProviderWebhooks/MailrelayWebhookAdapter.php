@@ -16,6 +16,14 @@ use Modules\HelpdeskEmailLog\Support\ParsedEmailEvent;
  * muerto. Formato de payload documentado por Mailrelay: uno o varios
  * eventos por request, cada uno con 'type' ('hard_bounce'|'soft_bounce'|
  * 'complaint'|...), 'email' y opcionalmente 'message_id'.
+ *
+ * A propósito NO se añaden aquí 'delivered'/'open': a diferencia de Mailgun/
+ * Postmark/SES-SNS, el código existente nunca asumió (ni documentó) qué
+ * valor exacto toma 'type' para esos dos eventos en Mailrelay — inventar un
+ * literal ('delivered'/'opened'/'open'/...) sin poder confirmarlo contra la
+ * API real arriesgaría silenciosamente NO matchear nunca (peor que no
+ * implementarlo: parecería soportado sin estarlo). Este adapter se queda
+ * solo con bounce/complaint hasta confirmar el esquema real de Mailrelay.
  */
 class MailrelayWebhookAdapter implements EmailProviderWebhookAdapter
 {

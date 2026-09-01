@@ -48,11 +48,15 @@ class LogEmailQueued
             // Solo "Emails enviados" (HelpdeskTickets) pidió trazabilidad de
             // apertura — no se activa para el resto de módulos que ya usan
             // este mismo listener (notificaciones, resets de contraseña,
-            // campañas...) sin que nadie lo haya pedido para ellos. Se
-            // persiste en metadata para que la vista de detalle sepa si
-            // "0 aperturas" significa de verdad cero, o simplemente que este
-            // envío nunca tuvo píxel.
-            $openTrackingEnabled = ($context['module'] ?? null) === 'HelpdeskTickets';
+            // campañas...) sin que nadie lo haya pedido para ellos.
+            $moduleWantsTracking = ($context['module'] ?? null) === 'HelpdeskTickets';
+
+            // Interruptor global del panel de configuración (ver
+            // EmailLogSettingsController) que además debe estar activo para
+            // que el píxel llegue a insertarse. Se persiste en metadata para
+            // que la vista de detalle sepa si "0 aperturas" significa de
+            // verdad cero, o simplemente que este envío nunca tuvo píxel.
+            $injectPixel = $moduleWantsTracking && $this->pixelTrackingEnabled();
 
             $emailLog = EmailLog::create([
                 ...$context,
@@ -71,18 +75,21 @@ class LogEmailQueued
                 'attachments' => $this->attachmentsOf($message) ?: null,
                 'metadata' => [
                     ...$this->metaOf($message, $context),
-                    'open_tracking_enabled' => $openTrackingEnabled,
-                    // Misma condición que el píxel de apertura por ahora — se
-                    // guarda como flag propio (no reutilizando
+                    'open_tracking_enabled' => $injectPixel,
+                    // El click tracking no depende del interruptor del píxel —
+                    // se guarda como flag propio (no reutilizando
                     // open_tracking_enabled) para poder divergir el alcance de
                     // cada uno el día que haga falta sin tocar filas ya escritas.
-                    'click_tracking_enabled' => $openTrackingEnabled,
+                    'click_tracking_enabled' => $moduleWantsTracking,
                 ],
                 'status' => EmailStatus::Queued,
             ]);
 
-            if ($openTrackingEnabled) {
+            if ($injectPixel) {
                 $this->injectOpenTrackingPixel($message, $emailLog);
+            }
+
+            if ($moduleWantsTracking) {
                 $this->injectClickTracking($message, $emailLog);
             }
         } catch (Throwable $e) {

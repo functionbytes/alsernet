@@ -1,6 +1,67 @@
 /* HelpdeskEmailLog — styles for index + preview views */
 
 /* ============================================================
+   Cabecera de página (mockup Alvarez)
+   Vive en @section('page_header') de emails/index.blade.php, que se
+   renderiza ANTES de .emaillog-index (ver layouts/theme.blade.php) — por
+   eso usa colores literales en vez de las variables --evx-*, que solo
+   cascan dentro de ese contenedor.
+   ============================================================ */
+.evx-header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.evx-header-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #18181b;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.evx-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border: 1px solid #e8e8e8;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #fff;
+    color: #18181b;
+    text-decoration: none;
+    transition: .12s;
+}
+
+.evx-header-btn:hover {
+    border-color: #d4d4d8;
+    color: #18181b;
+}
+
+.evx-header-btn i {
+    font-size: 11px;
+}
+
+.evx-header-module-tag {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    color: #a1a1aa;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #e8e8e8;
+    white-space: nowrap;
+}
+
+/* ============================================================
    Índice / filtros
    ============================================================ */
 .email-log-filter-search {
@@ -33,65 +94,34 @@
 
 /* ============================================================
    Email viewer (estilo plantilla Alvarez · modal #12)
-   Vista de detalle de un email registrado. Paleta neutra de
-   la plantilla + primario del sistema (#90bb13).
+   Panel de detalle de un email registrado (columnas 2+3 del
+   workspace, ver emails/partials/detail-panel.blade.php). Vive
+   dentro de .emaillog-index, que ya aporta las variables
+   --evx-* (ver más abajo) — sin wrapper propio ni max-width: en
+   el workspace de 3 columnas debe ocupar todo el ancho de su
+   columna, no un ancho fijo centrado como en la antigua página
+   de vista previa a pantalla completa.
    ============================================================ */
-.emaillog-viewer {
-    --evx-panel: #fff;
-    --evx-subtle: #f4f4f5;
-    --evx-bg-soft: #fafafa;
-    --evx-border: #e8e8e8;
-    --evx-border-strong: #d4d4d8;
-    --evx-text: #18181b;
-    --evx-text-soft: #52525b;
-    --evx-text-muted: #a1a1aa;
-    --evx-primary: #90bb13;
-    --evx-primary-dark: #7ba110;
-    --evx-danger: #3730a3;
-
-    max-width: 1120px;
-    margin: 0 auto;
-    font-size: 13px;
-    color: var(--evx-text);
-}
-
-.evx-card {
-    background: var(--evx-panel);
-    border: 1px solid var(--evx-border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(24, 24, 27, .05), 0 12px 32px -14px rgba(24, 24, 27, .18);
+/* Columna 2 del workspace (detalle): sin tarjeta/borde/sombra propios — es
+   una sección más del contenedor único .evx-shell (ver emaillog.css más
+   abajo), no una tarjeta suelta. */
+.evx-detail-panel {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
-/* ── Cabecera ── */
-.evx-head {
+/* ── Cabecera con pestañas (asunto + tabs) — única parte de la columna 2 con
+     fondo blanco; el resto de la columna es gris (ver .evx-main). ── */
+.evx-preview-header {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 16px;
+    flex-direction: column;
+    background: #fff;
     border-bottom: 1px solid var(--evx-border);
 }
 
-.evx-icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 7px;
-    background: var(--evx-subtle);
-    display: grid;
-    place-items: center;
-    color: var(--evx-text);
-    font-size: 12px;
-    flex-shrink: 0;
-}
-
-.evx-title-wrap {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.evx-ph-top {
+    padding: 10px 16px 0;
 }
 
 .evx-label {
@@ -102,20 +132,28 @@
     letter-spacing: .08em;
 }
 
-.evx-title {
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -.01em;
+.evx-ph-subject-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 4px 16px 8px;
+}
+
+.evx-ph-subject-wrap {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     min-width: 0;
 }
 
-.evx-title .evx-subject {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.evx-subject-lg {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--evx-text);
 }
 
 .evx-chip {
@@ -130,49 +168,167 @@
     flex-shrink: 0;
 }
 
-.evx-close {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    display: grid;
-    place-items: center;
-    color: var(--evx-text-muted);
+.evx-ph-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.evx-icon-btn {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--evx-border-strong);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--evx-text-soft);
     text-decoration: none;
+    cursor: pointer;
     transition: .12s;
     flex-shrink: 0;
 }
 
-.evx-close:hover {
-    background: var(--evx-subtle);
+.evx-icon-btn:hover {
+    border-color: var(--evx-text);
     color: var(--evx-text);
 }
 
-/* ── Cuerpo (2 columnas) ── */
-.evx-body {
+.evx-icon-btn.is-danger:hover {
+    border-color: var(--evx-danger);
+    color: var(--evx-danger);
+}
+
+.evx-ph-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 16px 12px;
+    font-size: 11.5px;
+    color: var(--evx-text-soft);
+}
+
+.evx-ph-meta-label {
+    font-size: 9.5px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.evx-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+}
+
+/* Pestañas de la cabecera (Detalle / Traza / Aperturas / Original) */
+.evx-tabs {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 16px;
+}
+
+.evx-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    cursor: pointer;
+    transition: .12s;
+}
+
+.evx-tab:hover {
+    color: var(--evx-text);
+}
+
+.evx-tab.on {
+    color: var(--evx-text);
+    font-weight: 700;
+    border-bottom-color: var(--evx-primary);
+}
+
+.evx-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--evx-subtle);
+    color: var(--evx-text-muted);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.evx-tab.on .evx-tab-count {
+    background: var(--evx-primary);
+    color: #fff;
+}
+
+/* ── Cuerpo: pestañas + sidebar ── */
+.evx-body-cols {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: minmax(430px, 1fr) minmax(290px, 316px);
     min-height: 0;
 }
 
-/* Panel izquierdo: vista previa */
-.evx-preview {
-    background: var(--evx-subtle);
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid var(--evx-border);
+.evx-main {
+    padding: 16px;
+    background: #f5f6f8;
+    overflow-y: auto;
     min-width: 0;
 }
 
-.evx-preview-head {
+.evx-tabpanel {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.evx-tabpanel[hidden] {
+    display: none;
+}
+
+/* Grid clave-valor compacto (pestaña Detalle) */
+.evx-kv-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 16px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+
+.evx-kv-grid .evx-field {
+    display: contents;
+}
+
+.evx-kv-grid .evx-field .k {
+    padding-top: 2px;
+    white-space: nowrap;
+}
+
+/* Tarjeta del contenido del email (dentro de la pestaña Detalle) */
+.evx-content-card {
+    min-width: 0;
+}
+
+.evx-content-head-label {
     font-size: 11px;
     font-weight: 600;
     color: var(--evx-text-soft);
-    border-bottom: 1px solid var(--evx-border);
-    background: var(--evx-panel);
 }
 
 .evx-device-toggle {
@@ -255,38 +411,80 @@
     display: block;
 }
 
-/* Panel derecho: detalle */
-.evx-detail {
-    padding: 14px;
+/* Sidebar derecha: acciones + contexto — mismo gris que .evx-main (columna 2),
+   con tarjetas blancas de radio 11px flotando encima (ver .evx-sidebar .evx-block). */
+.evx-sidebar {
+    background: #f5f6f8;
+    border-left: 1px solid var(--evx-border);
+    padding: 16px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    background: var(--evx-panel);
 }
 
-.evx-section {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
+.evx-sidebar .evx-block {
+    border-radius: 11px;
 }
 
-.evx-hdr {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-    border-bottom: 1px solid var(--evx-border);
-    padding-bottom: 7px;
+/* Fila de acción de la lista de "Acciones rápidas" — mismo layout que
+   .evx-list-row (emaillog-extras.css), reseteada para actuar como
+   botón/enlace clicable de ancho completo. */
+.evx-list-row-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    text-decoration: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
 }
 
-.evx-hdr .t {
-    font-size: 12.5px;
+.evx-list-row-btn:hover {
+    background: var(--evx-bg-soft);
+}
+
+.evx-list-group-title {
+    padding: 10px 15px 2px;
+    font-size: 9.5px;
     font-weight: 700;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
 }
 
-.evx-hdr .s {
+.evx-list-group-title:first-child {
+    padding-top: 0;
+}
+
+.evx-option-icon.is-danger {
+    background: #eef2ff;
+    color: var(--evx-danger);
+}
+
+/* Traza de envío — timeline (usa .evx-trace-step/.evx-trace-icon de
+   emaillog-extras.css; estas reglas solo añaden el layout de 3 columnas
+   icono + texto + hora que ese componente no define). */
+.evx-trace-step {
+    align-items: center;
+}
+
+.evx-trace-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.evx-trace-time {
+    flex-shrink: 0;
+    margin-left: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 10.5px;
     color: var(--evx-text-muted);
+    white-space: nowrap;
+}
+
+.evx-trace-error {
+    margin: 0 14px 12px;
 }
 
 .evx-field {
@@ -390,35 +588,8 @@
     color: var(--evx-text-soft);
 }
 
-/* Badges de interacción (aperturas/clics) — columna "Interacción" de la
-   tabla y su equivalente en línea en Hilos/Kanban. Gris cuando el conteo es
-   0 (dato real, no ausencia de tracking), verde en cuanto hay al menos 1. */
-.evx-td-engagement {
-    white-space: nowrap;
-}
-
-.evx-engagement-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: var(--evx-subtle);
-    color: var(--evx-text-muted);
-    margin-right: 4px;
-}
-
-.evx-engagement-badge i {
-    font-size: 9px;
-}
-
-.evx-engagement-badge.is-active {
-    background: #f0fdf4;
-    color: #166534;
-}
-
+/* Badges de interacción (aperturas/clics) — evx-row-meta de la Lista y su
+   equivalente en Hilos/Kanban (mismo formato compacto en línea, sin pill). */
 .evx-engagement-inline {
     font-size: 10.5px;
     color: var(--evx-text-muted);
@@ -583,13 +754,13 @@
 
 /* ── Responsive ── */
 @media (max-width: 991px) {
-    .evx-body {
+    .evx-body-cols {
         grid-template-columns: 1fr;
     }
 
-    .evx-preview {
-        border-right: 0;
-        border-bottom: 1px solid var(--evx-border);
+    .evx-sidebar {
+        border-left: 0;
+        border-top: 1px solid var(--evx-border);
     }
 
     .evx-frame {
@@ -597,32 +768,55 @@
     }
 }
 
-/* ── Impresión: solo el contenido del email ── */
+/* ── Impresión: solo el contenido del email, sin importar la pestaña
+     activa (fuerza la pestaña Detalle y oculta el resto) ── */
 @media print {
 
-    .evx-head .evx-close,
+    .evx-ph-actions,
+    .evx-tabs,
     .evx-device-toggle,
-    .evx-detail,
+    .evx-sidebar,
+    .evx-kv-grid,
     .evx-bottom-note {
         display: none !important;
     }
 
-    .emaillog-viewer {
-        max-width: none;
+    .evx-tabpanel {
+        display: none !important;
     }
 
-    .evx-card {
+    .evx-tabpanel[data-evx-panel="detail"] {
+        display: block !important;
+    }
+
+    /* Solo se imprime el contenido del email: ni la columna de lista ni el
+       resto del workspace/dashboard de emails/index.blade.php. */
+    .evx-stale-banner,
+    .evx-stats,
+    .evx-trend,
+    .evx-filterbar,
+    .evx-block:not(.evx-content-card),
+    .evx-workspace-list,
+    #bulk-toolbar {
+        display: none !important;
+    }
+
+    .evx-workspace {
+        display: block;
+    }
+
+    .evx-shell {
         border: 0;
         box-shadow: none;
     }
 
-    .evx-body {
+    .evx-body-cols {
         grid-template-columns: 1fr;
     }
 
-    .evx-preview {
-        background: #fff;
+    .evx-content-card {
         border: 0;
+        box-shadow: none;
     }
 
     .evx-preview-body {
@@ -652,21 +846,84 @@
     --evx-primary: #90bb13;
     --evx-primary-dark: #7ba110;
     --evx-danger: #3730a3;
+    /* Tipografía de la plantilla Alvarez. El tema base de webadmin usa
+       Manrope; este módulo se sirve en Inter + JetBrains Mono (cargadas en
+       @push('css') de la vista) para coincidir con el diseño original —
+       acotado a estos contenedores, no global. */
+    --evx-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --evx-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
-.emaillog-index {
+.emaillog-index,
+.emaillog-settings {
+    font-family: var(--evx-font);
     font-size: 13px;
     color: var(--evx-text);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    letter-spacing: -.005em;
 }
 
-/* Aviso de emails atascados en cola */
+.emaillog-index .mono,
+.emaillog-index .evx-mono {
+    font-family: var(--evx-mono);
+}
+
+/* Contenedor único (mockup Alvarez): KPIs + gráfica + aviso de cola + barra de
+   filtros + workspace viven todos aquí dentro, cada uno separado del
+   siguiente solo por border-bottom — nunca tarjetas .evx-block sueltas con
+   huecos entre ellas. Las secciones internas ya no ponen su propio
+   border/radius/box-shadow: los aporta únicamente este contenedor. */
+.evx-shell {
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
+}
+
+/* Workspace de 3 columnas (lista · detalle · sidebar): la columna 1 es un
+   track real de este grid; las columnas 2+3 (main + sidebar del detalle)
+   las aporta el propio .evx-body-cols anidado dentro de #evx-detail-cols
+   (ver detail-panel.blade.php), que ya reserva minmax(430px,1fr) y
+   minmax(290px,316px) — evita declarar el split main/sidebar dos veces.
+   align-items:stretch (no "start"): ambas columnas deben llenar la misma
+   altura de fila para que sus fondos (blanco vs. gris, ver .evx-workspace-list/
+   .evx-detail-panel) terminen exactamente a la misma altura. */
+.evx-workspace {
+    display: grid;
+    grid-template-columns: minmax(330px, 390px) 1fr;
+    align-items: stretch;
+}
+
+.evx-workspace-list {
+    background: #fff;
+    border-right: 1px solid var(--evx-border);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.evx-workspace-detail {
+    min-width: 0;
+}
+
+@media (max-width: 1199px) {
+    .evx-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .evx-workspace-list {
+        border-right: 0;
+        border-bottom: 1px solid var(--evx-border);
+    }
+}
+
+/* Aviso de emails atascados en cola — vive DENTRO del contenedor único
+   (.evx-shell), con su propio margen en vez de ir a borde a borde. */
 .evx-stale-banner {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin: 12px 16px 0;
     padding: 11px 16px;
     border-radius: 12px;
     background: #fffbeb;
@@ -694,11 +951,17 @@
     white-space: nowrap;
 }
 
-/* Tarjetas de estadísticas */
+/* Tarjetas de estadísticas — primera sección del contenedor único: sin
+   tarjeta/borde propios, solo padding + separador inferior hacia la gráfica. */
+/* auto-fit/minmax(150px) como el mockup: las tarjetas se reparten solas según
+   el ancho disponible en vez de forzar 6 columnas fijas. */
 .evx-stats {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 14px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--evx-border);
 }
 
 .evx-stat {
@@ -707,8 +970,8 @@
     gap: 3px;
     background: var(--evx-panel);
     border: 1px solid var(--evx-border);
-    border-radius: 12px;
-    padding: 14px 16px;
+    border-radius: 10px;
+    padding: 11px 13px;
     text-decoration: none;
     color: var(--evx-text);
     transition: .14s;
@@ -730,22 +993,67 @@
 }
 
 .evx-stat-label {
-    font-size: 10.5px;
-    font-weight: 600;
+    font-size: 9.5px;
+    font-weight: 700;
     color: var(--evx-text-muted);
     text-transform: uppercase;
-    letter-spacing: .05em;
+    letter-spacing: .06em;
 }
 
+.evx-stat-value-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Valor en JetBrains Mono 19px/800, igual que el mockup — el mono es lo que
+   le da el aire "de panel técnico" a las tarjetas. */
 .evx-stat-value {
-    font-size: 26px;
-    font-weight: 700;
+    font-family: var(--evx-mono);
+    font-size: 19px;
+    font-weight: 800;
     line-height: 1.1;
-    letter-spacing: -.02em;
+    letter-spacing: -.01em;
 }
 
 .evx-stat-hint {
-    font-size: 10.5px;
+    font-size: 10px;
+    color: var(--evx-text-muted);
+    line-height: 1.35;
+}
+
+/* Delta vs. periodo anterior (ver EmailLogController::computeStatsDelta()).
+   Paleta sin rojo: "mejora" en verde vivo, "empeora" en oliva oscuro (mismo
+   tono que .accent-danger de esta misma hoja), sin dato o sin polaridad en
+   gris neutro — igual criterio que el resto del módulo. */
+.evx-stat-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    line-height: 1.6;
+}
+
+.evx-stat-delta i {
+    font-size: 9px;
+}
+
+.evx-stat-delta.is-good {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.evx-stat-delta.is-bad {
+    background: #f7fee7;
+    color: #4f6b0a;
+}
+
+.evx-stat-delta.is-neutral {
+    background: var(--evx-subtle);
     color: var(--evx-text-muted);
 }
 
@@ -799,21 +1107,135 @@
     padding: 14px 16px;
 }
 
-/* Filtros */
-.evx-filters {
+/* Gráfica de tendencia — segunda sección del contenedor único: un único div
+   con padding (sin el split .evx-block-head/.evx-block-body de las tarjetas
+   sueltas), solo separador inferior hacia la barra de filtros. */
+.evx-trend {
+    padding: 14px 16px 10px;
+    background: #fff;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-trend-head {
+    margin-bottom: 10px;
+}
+
+.evx-trend-head .t {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.evx-trend-head .s {
+    display: block;
+    font-size: 11px;
+    color: var(--evx-text-muted);
+}
+
+/* Barra de filtros única: selects + rango de fechas + vistas guardadas
+   inline + modo de vista + exportar + contador de resultados, todo en una
+   sola fila (mockup Alvarez) — tercera sección del contenedor único, ya sin
+   título "Filtros de búsqueda" ni tarjeta propia. */
+.evx-filterbar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 11px 14px;
+    background: #f5f6f8;
+    border-bottom: 1px solid var(--evx-border);
     flex-wrap: wrap;
+}
+
+.evx-filter-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--evx-border);
+    flex-shrink: 0;
+}
+
+.evx-select-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.evx-select-icon > i {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+.evx-filter-views-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+}
+
+.evx-saved-views-inline {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.evx-save-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px dashed var(--evx-border-strong);
+    border-radius: 20px;
+    background: transparent;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: .12s;
+}
+
+.evx-save-view-btn:hover {
+    border-color: var(--evx-text);
+    color: var(--evx-text);
+}
+
+.evx-save-view-btn i {
+    font-size: 10px;
+}
+
+/* Contador de resultados + "limpiar filtros", siempre al final de la barra
+   (margin-left:auto empuja este grupo al extremo derecho). */
+.evx-filterbar-end {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11.5px;
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+}
+
+.evx-filter-clear {
+    color: var(--evx-text-soft);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.evx-filter-clear:hover {
+    color: var(--evx-text);
+    text-decoration: underline;
 }
 
 .evx-search {
     display: flex;
     align-items: center;
     gap: 7px;
-    flex: 1;
-    min-width: 220px;
-    background: var(--evx-subtle);
+    flex: 0 1 200px;
+    min-width: 160px;
+    background: #fff;
     border: 1px solid transparent;
     border-radius: 7px;
     padding: 8px 11px;
@@ -859,6 +1281,30 @@
     box-shadow: 0 0 0 3px rgba(0, 0, 0, .05);
 }
 
+/* Controles de la barra de filtros: compactos como el mockup (alto ~26px,
+   11.5px, padding 4px 10px) en vez del control de formulario estándar de
+   37px. Acotado a .evx-filterbar para no encoger los mismos controles en la
+   pantalla de configuración, que sí usa el tamaño normal. */
+.evx-filterbar .evx-select,
+.evx-filterbar .evx-input,
+.evx-filterbar .evx-search {
+    padding: 4px 10px;
+    font-size: 11.5px;
+    min-width: 0;
+}
+
+.evx-filterbar .evx-search input {
+    font-size: 11.5px;
+}
+
+.evx-filterbar .evx-select {
+    min-width: 130px;
+}
+
+.evx-filterbar .evx-input.daterange {
+    min-width: 150px;
+}
+
 .evx-input {
     cursor: text;
     min-width: 180px;
@@ -873,74 +1319,185 @@
     width: auto;
 }
 
-/* Tabla */
-.evx-table-wrap {
-    overflow-x: auto;
-}
-
-.evx-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12.5px;
-}
-
-.evx-table thead th {
-    text-align: left;
+/* Cabecera de la lista (seleccionar todo + orden único) */
+.evx-list-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 11px 14px;
     background: var(--evx-bg-soft);
     border-bottom: 1px solid var(--evx-border);
-    font-size: 10.5px;
-    font-weight: 600;
+}
+
+.evx-list-check {
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.evx-list-head-label {
+    font-size: 11px;
     color: var(--evx-text-muted);
-    text-transform: uppercase;
-    letter-spacing: .04em;
     white-space: nowrap;
 }
 
-.evx-table tbody td {
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--evx-border);
-    vertical-align: middle;
+/* Select de orden más compacto que el resto de .evx-select del módulo
+   (valores literales del mockup) — acotado a esta cabecera para no encoger
+   el mismo <select> reutilizado en otras pantallas. */
+.evx-list-head #evx-sort-select {
+    padding: 2px 5px;
+    font-size: 10.5px;
+    color: var(--evx-text-soft);
+    border-radius: 5px;
+    min-width: 0;
 }
 
-.evx-table tbody tr:hover {
-    background: var(--evx-bg-soft);
-}
-
-.evx-table tbody tr:last-child td {
-    border-bottom: 0;
-}
-
-.evx-th-check,
-.evx-th-actions {
-    width: 1%;
-}
-
-.evx-th-actions,
-.evx-td-actions {
-    text-align: center;
-}
-
-.evx-sort {
-    color: var(--evx-text-muted);
-    text-decoration: none;
-    display: inline-flex;
+/* Accesos directos de selección masiva (mockup): reenviar/exportar/eliminar
+   seleccionados, empujados al extremo derecho de la cabecera de la lista.
+   Reutilizan la misma selección/lógica que #bulk-toolbar (ver
+   @push('scripts') en index.blade.php), esto es solo un acceso adicional. */
+.evx-list-head-icons {
+    display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
+    margin-left: auto;
+    color: var(--evx-text-muted);
+    font-size: 11px;
 }
 
-.evx-sort:hover {
+.evx-list-head-icons button {
+    display: inline-flex;
+    border: none;
+    background: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+}
+
+.evx-list-head-icons button:hover {
     color: var(--evx-text);
 }
 
-.evx-sort-idle {
-    opacity: .4;
-    font-size: 10px;
+/* Fila-tarjeta (índice de emails) — valores literales del mockup: gap 10px,
+   padding 12px 14px, borde #f5f6f8, punto de estado 8px, asunto 12.5px/600,
+   "Para:" 11.5px/#52525b (evx-text-soft), fecha mono 10px/#a1a1aa
+   (evx-text-muted). No se aproxima a los valores de .evx-status/.evx-tag ya
+   existentes (que sí se reutilizan tal cual para el badge/chip). */
+.evx-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #f5f6f8;
+    cursor: pointer;
+    transition: .12s;
 }
 
-.evx-sort-active {
-    color: var(--evx-primary);
-    font-size: 11px;
+.evx-row:hover {
+    background: var(--evx-bg-soft);
+}
+
+.evx-row:last-child {
+    border-bottom: 0;
+}
+
+/* Fila con el email actualmente cargado en las columnas 2+3 (autoselección
+   inicial o clic de fila, ver loadDetail() en index.blade.php) — franja
+   izquierda de color + fondo suave, sin desplazar el contenido (box-shadow
+   inset en vez de border-left, que restaría 3px al padding). */
+.evx-row.is-active {
+    background: var(--evx-bg-soft);
+    box-shadow: inset 3px 0 0 var(--evx-primary);
+}
+
+.evx-row-check {
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.evx-row-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 6px;
+}
+
+/* Paleta verificada sin rojos — mismos hex que KANBAN_COLORS (ver
+   @push('scripts') en index.blade.php), para que el punto de la Lista y las
+   columnas del Kanban coincidan exactamente. */
+.evx-row-dot.queued { background: #d4d4d8; }
+.evx-row-dot.sent { background: #90bb13; }
+.evx-row-dot.bounced { background: #4f6b0a; }
+.evx-row-dot.complained { background: #3f3f46; }
+.evx-row-dot.failed { background: #52525b; }
+.evx-row-dot.suppressed { background: #71717a; }
+
+.evx-row-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.evx-row-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.evx-row-top .evx-clip {
+    margin-left: 0;
+}
+
+.evx-row-subject {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.evx-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    flex-wrap: wrap;
+}
+
+.evx-row-date {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Override exacto del mockup para el badge/chip DENTRO de la fila de lista:
+   más compacto que el .evx-status/.evx-tag compartido (usado en el detalle
+   con otro tamaño) — mismos valores literales que las filas del mockup
+   original (padding 1px 7px/radio 4px para el badge, chip mono con borde). */
+.evx-row-meta .evx-status {
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.evx-row-meta .evx-tag {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 9.5px;
+    font-weight: 400;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    color: var(--evx-text-soft);
 }
 
 .evx-subject-link {
@@ -956,7 +1513,6 @@
 .evx-subject-sub {
     font-size: 10.5px;
     color: var(--evx-text-muted);
-    margin-top: 2px;
 }
 
 .evx-clip {
@@ -968,6 +1524,9 @@
 .evx-recipient {
     font-size: 11.5px;
     color: var(--evx-text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .evx-muted {
@@ -977,17 +1536,6 @@
 .evx-date {
     white-space: nowrap;
     color: var(--evx-text-soft);
-}
-
-.evx-actions-toggle {
-    color: var(--evx-text-muted);
-    font-size: 14px;
-    padding: 4px 8px;
-    display: inline-block;
-}
-
-.evx-actions-toggle:hover {
-    color: var(--evx-text);
 }
 
 .evx-empty-row {
@@ -1000,6 +1548,18 @@
     font-size: 30px;
     display: block;
     margin-bottom: 12px;
+}
+
+/* Columnas 2+3 sin ningún email autoseleccionado (listado vacío/sin
+   resultados, ver EmailLogController::emptyDetailData()) — misma
+   .evx-empty-row del listado, centrada en toda la altura disponible en vez
+   de solo su propio padding. */
+.evx-empty-detail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    background: #f5f6f8;
 }
 
 .evx-empty-row p {
@@ -1161,44 +1721,48 @@
     }
 }
 
-/* Vistas guardadas */
-.evx-saved-views-body {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.evx-saved-views-label {
-    white-space: nowrap;
-}
-
+/* Vistas guardadas — chips píldora inline dentro de la barra de filtros
+   única (ver .evx-saved-views-inline en .evx-filterbar más arriba). */
 .evx-saved-views-list {
     display: flex;
     align-items: center;
     gap: 7px;
     flex-wrap: wrap;
-    flex: 1;
 }
 
 .evx-view-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 6px 4px 12px;
-    border-radius: 999px;
-    background: var(--evx-subtle);
-    font-size: 12px;
+    gap: 5px;
+    padding: 3px 5px 3px 10px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .evx-view-chip a {
-    color: var(--evx-text);
+    color: var(--evx-text-soft);
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .evx-view-chip a:hover {
-    color: var(--evx-primary);
+    color: var(--evx-primary-dark);
+}
+
+/* Vista predefinida activa (Todos/Fallidos/Rebotes/En cola, mockup Alvarez) —
+   mismo oscuro que .evx-chip/.evx-header-icon, sin botón de borrar (a
+   diferencia de las vistas guardadas por el usuario). */
+.evx-view-chip.is-active {
+    background: var(--evx-text);
+    border-color: var(--evx-text);
+}
+
+.evx-view-chip.is-active a,
+.evx-view-chip.is-active a:hover {
+    color: #fff;
 }
 
 .evx-view-chip button {
@@ -1234,7 +1798,8 @@
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    background: var(--evx-subtle);
+    background: #fff;
+    border: 1px solid var(--evx-border);
     border-radius: 8px;
     padding: 3px;
 }
@@ -1356,8 +1921,8 @@
     gap: 12px;
     padding: 14px 16px;
     overflow-x: auto;
-    /* mismo patrón que .evx-table-wrap: scroll horizontal propio,
-       la página nunca scrollea horizontal completa */
+    /* scroll horizontal propio de esta vista: la página nunca scrollea
+       horizontal completa */
 }
 
 .evx-kcol {
@@ -1414,7 +1979,7 @@
     border: 1px solid var(--evx-border);
     border-radius: 10px;
     padding: 10px 11px;
-    /* mismo nivel de elevación que .evx-card */
+    /* misma sombra que las tarjetas blancas de la sidebar/detalle (.evx-block) */
     box-shadow: 0 1px 3px rgba(24, 24, 27, .05), 0 12px 32px -14px rgba(24, 24, 27, .18);
     cursor: pointer;
     transition: .12s;
@@ -1455,11 +2020,111 @@
 /* ============================================================
    Densidad compacta (aplica sobre #evx-list-view)
    ============================================================ */
-#evx-list-view.evx-compact .evx-table tbody td {
-    padding-top: 5.5px;
-    padding-bottom: 5.5px;
+#evx-list-view.evx-compact .evx-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
 #evx-list-view.evx-compact .evx-subject-sub {
     display: none;
+}
+
+/* ============================================================
+   Cabecera del detalle: posición "X de N" + navegación ▲▼
+   (valores del mockup: contador mono 9.5px, botones 24x24 con
+   borde fino) y ficha del destinatario del sidebar.
+   ============================================================ */
+.evx-ph-position {
+    font-family: var(--evx-mono);
+    font-size: 9.5px;
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+}
+
+.evx-ph-nav {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.evx-nav-btn {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--evx-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--evx-text-soft);
+    font-size: 9px;
+    cursor: pointer;
+    transition: .12s;
+}
+
+.evx-nav-btn:hover:not(:disabled) {
+    border-color: var(--evx-text);
+    color: var(--evx-text);
+}
+
+.evx-nav-btn:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+/* Extracto del cuerpo en la fila de la lista — mismo tono apagado que el
+   destinatario, para que el asunto siga mandando visualmente. */
+.evx-row-snippet {
+    color: var(--evx-text-muted);
+}
+
+/* Ficha del destinatario (sidebar) */
+.evx-recipient-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    min-width: 0;
+}
+
+.evx-recipient-card .evx-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: var(--evx-text);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.evx-recipient-mail {
+    font-size: 11px;
+    color: var(--evx-text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.evx-kv-mini {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    padding: 9px 11px;
+    margin-bottom: 10px;
+    background: var(--evx-subtle);
+    border-radius: 8px;
+    font-size: 10.5px;
+}
+
+.evx-kv-mini .k {
+    color: var(--evx-text-muted);
+}
+
+.evx-kv-mini .v {
+    font-size: 10px;
+    text-align: right;
 }

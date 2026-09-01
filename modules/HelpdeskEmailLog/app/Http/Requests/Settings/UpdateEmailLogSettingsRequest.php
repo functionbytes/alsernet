@@ -15,6 +15,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
     {
         return [
             'store_body' => ['required', 'in:0,1'],
+            'pixel_tracking_enabled' => ['required', 'in:0,1'],
             'max_body_bytes' => ['required', 'integer', 'min:1', 'max:10240'],
             'retention_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'stale_queued_hours' => ['required', 'integer', 'min:0', 'max:8760'],
@@ -60,6 +61,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
     {
         return [
             'store_body' => 'almacenar cuerpo',
+            'pixel_tracking_enabled' => 'píxel de apertura',
             'max_body_bytes' => 'tamaño máximo del cuerpo',
             'retention_days' => 'días de retención',
             'stale_queued_hours' => 'horas de cola obsoleta',

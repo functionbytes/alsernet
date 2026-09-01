@@ -4,6 +4,7 @@ namespace Modules\HelpdeskEmailLog\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\HelpdeskEmailLog\Enums\EmailOpenSource;
 
 class EmailLogOpen extends Model
 {
@@ -11,6 +12,7 @@ class EmailLogOpen extends Model
 
     protected $fillable = [
         'email_log_id',
+        'source',
         'ip',
         'user_agent',
         'opened_at',
@@ -19,6 +21,7 @@ class EmailLogOpen extends Model
     protected function casts(): array
     {
         return [
+            'source' => EmailOpenSource::class,
             'opened_at' => 'datetime',
         ];
     }

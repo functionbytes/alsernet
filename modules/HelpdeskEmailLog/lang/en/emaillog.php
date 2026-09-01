@@ -2,13 +2,17 @@
 
 return [
     'title' => 'Email log',
-    'subtitle' => 'Centralized record of the emails sent by the system',
+    'subtitle' => 'Centralized record of the emails sent by the system · delivery, bounces, resending, suppressions and traces',
 
     'stats' => [
         'total' => 'Total recorded',
         'total_hint' => 'All entries',
         'sent' => 'Delivered to server',
         'sent_hint' => 'Accepted by the transport',
+        'delivered' => 'Delivery confirmed',
+        'delivered_hint' => 'Confirmed by the provider (same window as the trend chart)',
+        'delta_vs_previous' => 'vs previous period',
+        'delta_points_suffix' => 'pts',
         'failed' => 'Failed',
         'failed_hint' => 'With a sending error',
         'bounced' => 'Bounced',
@@ -63,6 +67,7 @@ return [
         'engagement_not_opened' => 'Not opened (tracked)',
         'engagement_clicked' => 'Clicked',
         'engagement_not_clicked' => 'Not clicked (tracked)',
+        'results_count' => '{0} No results|{1} :count result|[2,*] :count results',
     ],
 
     'view_modes' => [
@@ -84,6 +89,14 @@ return [
         'deleted' => 'View deleted.',
         'make_public_confirm' => 'Make this view public for the whole team?',
         'public_indicator' => 'Public view',
+    ],
+
+    'sort' => [
+        'label' => 'Sort by',
+        'date_desc' => 'Date ↓',
+        'date_asc' => 'Date ↑',
+        'subject_asc' => 'Subject A-Z',
+        'status' => 'Status',
     ],
 
     'table' => [
@@ -108,6 +121,7 @@ return [
         'delete' => 'Delete',
         'export' => 'Export CSV',
         'bulk_delete' => 'Delete selected',
+        'bulk_export' => 'Export selected',
         'back_to_list' => 'Back to list',
         'print' => 'Print',
         'bulk_resend' => 'Resend selected',
@@ -116,6 +130,19 @@ return [
         'copy_id' => 'Copy Message-ID',
         'resend_to' => 'Resend to another address',
         'purge' => 'Purge content',
+        'settings' => 'Settings',
+        'refresh' => 'Refresh',
+        'reputation' => 'Reputation',
+    ],
+
+    // Fixed chips in the list header (before the user's saved views) — they
+    // filter for real, they are not saved views. "Queued" replaces the
+    // mockup's "Newsletter": that module does not exist here as a fixed filter.
+    'quick_views' => [
+        'all' => 'All',
+        'failed' => 'Failed',
+        'bounced' => 'Bounced',
+        'queued' => 'Queued',
     ],
 
     'purge' => [
@@ -183,13 +210,43 @@ return [
         'suppressed' => 'Blocked (suppression)',
     ],
 
+    'opens' => [
+        'source' => [
+            'pixel' => 'Tracking pixel',
+            'provider' => 'Provider (webhook)',
+        ],
+    ],
+
     'preview' => [
-        'title' => 'Email preview',
+        'title' => 'Email detail',
         'heading' => 'Email content',
+        // Short tab labels (the mockup uses a single word); the long titles
+        // stay in trace.title/opens.title/raw.title for the headings inside
+        // each panel.
+        'tabs' => [
+            'detail' => 'Detail',
+            'trace' => 'Trace',
+            'opens' => 'Opens',
+            'raw' => 'Original',
+        ],
+        'position' => ':position of :total',
+        'prev' => 'Previous (K)',
+        'next' => 'Next (J)',
+        'recipient' => [
+            'title' => 'Recipient',
+            'received' => 'emails received',
+            'last_open' => 'last open',
+            'delivery_rate' => 'deliverability',
+            'filter' => 'View their emails',
+        ],
         'desktop' => 'Desktop',
         'mobile' => 'Mobile',
         'footer_note' => 'This is the exact content of the email recorded by the system.',
         'no_content' => 'The email content is not available.',
+        'empty_selection' => [
+            'title' => 'No emails found',
+            'hint' => 'Adjust the search filters to see results here.',
+        ],
         'detail' => 'Email details',
         'detail_hint' => 'Information about the recorded email',
         'field' => [
@@ -211,6 +268,11 @@ return [
         ],
         'quick_actions' => 'Quick actions',
         'quick_actions_hint' => 'Available options',
+        'groups' => [
+            'resend' => 'Send again',
+            'retrieve' => 'Get the message',
+            'lifecycle' => 'Lifecycle',
+        ],
         'related_entity' => 'Related entity',
         'related_entity_hint' => 'Record linked to this email',
         'related_emails' => 'Related emails',

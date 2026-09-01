@@ -5,7 +5,9 @@ namespace Modules\HelpdeskEmailLog\Tests\Feature;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Listeners\LogEmailSent;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
@@ -39,6 +41,20 @@ class EmailTrackingTest extends TestCase
         // EmailStatus::Sent corre antes de que nada lo haya procesado —
         // confirmado viendo el job encolado en la conexión por defecto.
         config(['queue.default' => 'sync']);
+    }
+
+    /**
+     * Setting::get() cachea 10 min en el store de caché real (fuera de la
+     * transacción de BD de este test) — sin este forget(), un pixel_tracking_
+     * enabled='0' de prueba quedaría cacheado tras el rollback de la fila,
+     * afectando lecturas posteriores. Mismo gotcha ya documentado en
+     * BodyRedactionAndTruncationTest.
+     */
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        Cache::forget('setting_helpdeskemaillog.pixel_tracking_enabled');
     }
 
     public function test_sent_listener_is_queued_off_the_request(): void
@@ -121,5 +137,33 @@ class EmailTrackingTest extends TestCase
 
         $this->assertNull($log->body_html);
         $this->assertNull($log->body_text);
+    }
+
+    public function test_open_tracking_pixel_is_injected_by_default_for_helpdesktickets_module(): void
+    {
+        Mail::to('person@example.test')->send(new TrackedTestMail);
+
+        $log = EmailLog::query()->latest('id')->first();
+        $html = Mail::getSymfonyTransport()->messages()->first()->getOriginalMessage()->getHtmlBody();
+
+        $this->assertStringContainsString(route('helpdeskemaillog.pixel', $log), $html);
+        $this->assertTrue($log->hasOpenTracking());
+    }
+
+    public function test_open_tracking_pixel_is_not_injected_when_setting_disabled(): void
+    {
+        // Setting::set() escribe vía la conexión default (mysql en este
+        // entorno, ya declarada en $connectionsToTransact), así que el rollback
+        // de la transacción del test limpia la fila; tearDown() se encarga de
+        // limpiar la caché aparte (ver comentario en tearDown()).
+        Setting::set('helpdeskemaillog.pixel_tracking_enabled', '0');
+
+        Mail::to('person@example.test')->send(new TrackedTestMail);
+
+        $log = EmailLog::query()->latest('id')->first();
+        $html = Mail::getSymfonyTransport()->messages()->first()->getOriginalMessage()->getHtmlBody();
+
+        $this->assertStringNotContainsString(route('helpdeskemaillog.pixel', $log), $html);
+        $this->assertFalse($log->hasOpenTracking());
     }
 }

@@ -4,6 +4,7 @@ namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Modules\HelpdeskEmailLog\Database\Seeders\HelpdeskEmailLogPermissionsSeeder;
@@ -94,14 +95,20 @@ class EmailLogControllerTest extends TestCase
             ->assertDontSee('Weekly digest');
     }
 
-    public function test_show_displays_the_email_preview(): void
+    /**
+     * show() ya no pinta una página propia ("preview") — pinta el mismo
+     * workspace combinado que index() (lista + detalle + sidebar), con este
+     * email como seleccionado (ver EmailLogController::renderWorkspace()).
+     */
+    public function test_show_displays_the_workspace_with_the_email_selected(): void
     {
         $log = EmailLog::factory()->create(['subject' => 'Order confirmation']);
 
         $this->actingAs($this->viewer())
             ->get(route('helpdeskemaillog.show', $log->uid))
             ->assertOk()
-            ->assertViewIs('helpdeskemaillog::emails.preview')
+            ->assertViewIs('helpdeskemaillog::emails.index')
+            ->assertViewHas('log', fn ($selected) => $selected->is($log))
             ->assertSee('Order confirmation');
     }
 
@@ -110,6 +117,50 @@ class EmailLogControllerTest extends TestCase
         $this->actingAs($this->viewer())
             ->get(route('helpdeskemaillog.show', Str::orderedUuid()))
             ->assertNotFound();
+    }
+
+    /**
+     * Clic AJAX sobre una fila del listado: show() debe devolver SOLO el
+     * fragmento de detalle+sidebar (emails/partials/detail-panel.blade.php),
+     * nunca la página completa con el menú lateral de webadmin — el frontend
+     * lo inserta dentro de la columna central ya presente en la pantalla, sin
+     * recargar. Detección AJAX = $request->ajax() || $request->wantsJson(),
+     * mismo criterio que ConversationsController::update() (módulo Helpdesk,
+     * el único otro punto del código que decide entre fragmento parcial y
+     * navegación completa) — axios (el cliente HTTP del frontend en todo el
+     * proyecto) ya manda X-Requested-With por defecto, ver
+     * resources/js/bootstrap.js.
+     */
+    public function test_show_returns_only_the_detail_fragment_for_ajax_requests(): void
+    {
+        $log = EmailLog::factory()->create(['subject' => 'Fragment only please']);
+
+        $response = $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid), ['X-Requested-With' => 'XMLHttpRequest']);
+
+        $response->assertOk()->assertViewIs('helpdeskemaillog::emails.partials.detail-panel');
+
+        $content = $response->getContent();
+        $this->assertStringContainsString('Fragment only please', $content);
+
+        // Marcador exclusivo de layouts.theme (modules/Theme/resources/views/
+        // layouts/theme.blade.php) — si apareciera aquí, se estaría
+        // devolviendo la página completa en vez del fragmento.
+        $this->assertStringNotContainsString('id="mc-app"', $content);
+    }
+
+    /**
+     * Sin cabecera AJAX, la misma ruta show() sigue funcionando como acceso
+     * directo/deep-link: página completa combinada, con el email seleccionado.
+     */
+    public function test_show_returns_the_full_page_without_ajax_header(): void
+    {
+        $log = EmailLog::factory()->create(['subject' => 'Full page please']);
+
+        $response = $this->actingAs($this->viewer())->get(route('helpdeskemaillog.show', $log->uid));
+
+        $response->assertOk()->assertViewIs('helpdeskemaillog::emails.index');
+        $this->assertStringContainsString('id="mc-app"', $response->getContent());
     }
 
     /**
@@ -143,13 +194,18 @@ class EmailLogControllerTest extends TestCase
             'clicked_at' => now()->subMinutes(8),
         ]);
 
+        // El HTML del detalle (URL del clic incluida) todavía no lo pinta
+        // emails/index.blade.php — pendiente del agente de frontend (ver
+        // emails/partials/detail-panel.blade.php) — así que aquí se verifica
+        // el dato ya resuelto en la vista, no su renderizado en el DOM.
         $this->actingAs($this->viewer())
             ->get(route('helpdeskemaillog.show', $log->uid))
             ->assertOk()
-            ->assertViewIs('helpdeskemaillog::emails.preview')
+            ->assertViewIs('helpdeskemaillog::emails.index')
             ->assertViewHas('opensSummary', fn ($summary) => $summary['count'] === 1)
-            ->assertViewHas('clicksSummary', fn ($summary) => $summary['count'] === 1 && $summary['unique_links'] === 1)
-            ->assertSee('https://example.com/ticket/123');
+            ->assertViewHas('clicksSummary', fn ($summary) => $summary['count'] === 1
+                && $summary['unique_links'] === 1
+                && $summary['recent']->first()->link_url === 'https://example.com/ticket/123');
     }
 
     /**
@@ -200,12 +256,14 @@ class EmailLogControllerTest extends TestCase
             'clicked_at' => now()->subMinutes(8),
         ]);
 
+        // El badge "likely_bot" todavía no lo pinta emails/index.blade.php
+        // (pendiente del agente de frontend) — se verifica el dato, no el
+        // texto renderizado (mismo motivo que el test de arriba).
         $this->actingAs($this->viewer())
             ->get(route('helpdeskemaillog.show', $log->uid))
             ->assertOk()
             ->assertViewHas('opensSummary', fn ($summary) => $summary['likely_bot_count'] === 1 && $summary['recent']->first()->likely_bot === true)
-            ->assertViewHas('clicksSummary', fn ($summary) => $summary['likely_bot_count'] === 1 && $summary['recent']->first()->likely_bot === true)
-            ->assertSee(__('helpdeskemaillog::emaillog.preview.likely_bot_badge'));
+            ->assertViewHas('clicksSummary', fn ($summary) => $summary['likely_bot_count'] === 1 && $summary['recent']->first()->likely_bot === true);
     }
 
     /**
@@ -768,5 +826,366 @@ class EmailLogControllerTest extends TestCase
                     && ! $subjects->contains('Substring trap')
                     && ! $subjects->contains('Primary');
             });
+    }
+
+    /**
+     * Ventana por defecto (sin date_from/date_to): 14 días actuales vs los 14
+     * anteriores (misma que usa el gráfico de tendencia). Se ancla a un año
+     * lejano (2024) para no chocar con filas residuales reales de la BD
+     * compartida, cuyo created_at cae siempre cerca del "ahora" real de cada
+     * corrida — con el reloj congelado aquí, el baseline es de verdad 0.
+     */
+    public function test_index_computes_stats_delta_for_default_two_week_window(): void
+    {
+        $this->travelTo(Carbon::create(2024, 6, 15, 0, 0, 0));
+
+        // Ventana actual: 2024-06-02 00:00:00 .. 2024-06-15 00:00:00 (ahora).
+        EmailLog::factory()->count(2)->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2024, 6, 10, 12),
+        ]);
+        EmailLog::factory()->failed()->create(['created_at' => Carbon::create(2024, 6, 11, 12)]);
+
+        // Ventana anterior: 2024-05-19 23:59:59 .. 2024-06-01 23:59:59.
+        EmailLog::factory()->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2024, 5, 25, 12),
+        ]);
+
+        // Fuera de ambas ventanas: no debe contarse en ningún lado.
+        EmailLog::factory()->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2024, 5, 1, 12),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index'))
+            ->assertOk()
+            ->assertViewHas('statsDelta', function ($delta) {
+                $total = $delta['total'];
+                $sent = $delta['sent'];
+                $failed = $delta['failed'];
+
+                return $total === ['current' => 3, 'previous' => 1, 'diff' => 2, 'diff_percent' => 200.0, 'direction' => 'up', 'positive' => null]
+                    && $sent === ['current' => 2, 'previous' => 1, 'diff' => 1, 'diff_percent' => 100.0, 'direction' => 'up', 'positive' => true]
+                    && $failed === ['current' => 1, 'previous' => 0, 'diff' => 1, 'diff_percent' => null, 'direction' => 'up', 'positive' => false];
+            });
+    }
+
+    /**
+     * delivery_rate combina sent/total de cada periodo — se comprueba aparte
+     * de los conteos crudos porque su polaridad (higherIsBetter) se evalúa
+     * sobre un valor derivado, no sobre un COUNT directo.
+     */
+    public function test_index_computes_delivery_rate_delta(): void
+    {
+        $this->travelTo(Carbon::create(2024, 6, 15, 0, 0, 0));
+
+        // Actual: 2 sent + 1 failed => delivery_rate = 2/3*100 = 66.7.
+        EmailLog::factory()->count(2)->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2024, 6, 10, 12),
+        ]);
+        EmailLog::factory()->failed()->create(['created_at' => Carbon::create(2024, 6, 11, 12)]);
+
+        // Anterior: 1 sent, 0 failed => delivery_rate = 100.0.
+        EmailLog::factory()->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2024, 5, 25, 12),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index'))
+            ->assertOk()
+            ->assertViewHas('statsDelta', function ($delta) {
+                $rate = $delta['delivery_rate'];
+
+                return $rate['current'] === 66.7
+                    && $rate['previous'] === 100.0
+                    && $rate['diff'] === -33.3
+                    && $rate['direction'] === 'down'
+                    // Tasa de entrega cayendo: aunque "down" en abstracto no
+                    // dice nada, aquí sí es una mala noticia (higherIsBetter).
+                    && $rate['positive'] === false;
+            });
+    }
+
+    /**
+     * Con date_from/date_to activos, el periodo anterior es la ventana
+     * inmediatamente antes de igual duración — se usa un rango en 2020 (lejos
+     * del "ahora" real) para que el resultado sea 100% determinista sin
+     * necesidad de congelar el reloj.
+     */
+    public function test_index_computes_stats_delta_for_active_date_filter(): void
+    {
+        // Actual: 2020-01-10 00:00:00 .. 2020-01-16 23:59:59 (7 días).
+        EmailLog::factory()->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2020, 1, 12, 12),
+        ]);
+
+        // Anterior (misma duración, justo antes): 2020-01-03 00:00:00 .. 2020-01-09 23:59:59.
+        EmailLog::factory()->count(3)->create([
+            'status' => EmailStatus::Sent,
+            'created_at' => Carbon::create(2020, 1, 6, 12),
+        ]);
+
+        // Fuera de ambas ventanas.
+        EmailLog::factory()->create(['created_at' => Carbon::create(2020, 1, 20, 12)]);
+        EmailLog::factory()->create(['created_at' => Carbon::create(2020, 1, 1, 12)]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['date_from' => '2020-01-10', 'date_to' => '2020-01-16']))
+            ->assertOk()
+            ->assertViewHas('statsDelta', function ($delta) {
+                $total = $delta['total'];
+
+                return $total['current'] === 1
+                    && $total['previous'] === 3
+                    && $total['diff'] === -2
+                    && $total['direction'] === 'down';
+            });
+    }
+
+    /**
+     * Sin envíos con seguimiento en el periodo anterior: la tasa no tiene
+     * denominador (rateFrom() devuelve null), así que el delta no puede
+     * calcularse — se preserva el valor actual pero sin diff/dirección real,
+     * en vez de fingir un "0%" que insinuaría un dato que no existe.
+     */
+    public function test_index_open_rate_delta_has_no_data_for_previous_period_without_tracking(): void
+    {
+        $tracked = EmailLog::factory()->tracked()->create(['created_at' => Carbon::create(2020, 3, 12, 12)]);
+        EmailLogOpen::create([
+            'email_log_id' => $tracked->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'test',
+            'opened_at' => Carbon::create(2020, 3, 12, 12),
+        ]);
+
+        // Periodo anterior sin ningún envío con seguimiento activado.
+        EmailLog::factory()->create(['created_at' => Carbon::create(2020, 3, 4, 12)]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['date_from' => '2020-03-10', 'date_to' => '2020-03-16']))
+            ->assertOk()
+            ->assertViewHas('statsDelta', function ($delta) {
+                $rate = $delta['open_rate'];
+
+                return $rate['current'] === 100.0
+                    && $rate['previous'] === null
+                    && $rate['diff'] === null
+                    && $rate['direction'] === 'flat'
+                    && $rate['positive'] === null;
+            });
+    }
+
+    public function test_export_selected_returns_csv_for_chosen_uids_only(): void
+    {
+        $selected = EmailLog::factory()->create(['subject' => 'Selected export subject']);
+        $notSelected = EmailLog::factory()->create(['subject' => 'Not selected export subject']);
+
+        $response = $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.export-selected'), ['uids' => [$selected->uid]]);
+
+        $response->assertOk();
+        $this->assertStringContainsString('text/csv', $response->headers->get('content-type'));
+
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('Selected export subject', $content);
+        $this->assertStringNotContainsString('Not selected export subject', $content);
+    }
+
+    public function test_export_selected_requires_view_permission(): void
+    {
+        $log = EmailLog::factory()->create();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('helpdeskemaillog.export-selected'), ['uids' => [$log->uid]])
+            ->assertForbidden();
+    }
+
+    public function test_export_selected_validates_empty_selection(): void
+    {
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.export-selected'), ['uids' => []])
+            ->assertSessionHasErrors('uids');
+    }
+
+    public function test_export_selected_rejects_non_uuid_values(): void
+    {
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.export-selected'), ['uids' => ['not-a-uuid']])
+            ->assertSessionHasErrors('uids.0');
+    }
+
+    /**
+     * La posición/prev/next se calculan sobre el listado FILTRADO completo
+     * (12 filas), no sobre la página actual (per_page=10 deja al objetivo en
+     * la página 2) — aislado por módulo único para no arrastrar filas
+     * residuales de la BD compartida.
+     */
+    public function test_show_exposes_position_and_prev_next_navigation_independent_of_pagination(): void
+    {
+        $module = 'NavPage-'.Str::random(8);
+
+        $logs = collect(range(0, 11))->map(fn (int $i) => EmailLog::factory()->forModule($module)->create([
+            'subject' => sprintf('Nav subject %02d', $i),
+        ]));
+
+        // Orden ascendente por subject: 'Nav subject 00' es el primero, 'Nav
+        // subject 11' el último. El objetivo (índice 10) es la posición 11/12.
+        $target = $logs[10];
+
+        $response = $this->actingAs($this->viewer())->get(route('helpdeskemaillog.show', [
+            'emailLog' => $target->uid,
+            'module' => $module,
+            'sort_by' => 'subject',
+            'sort_dir' => 'asc',
+            'per_page' => 10,
+        ]));
+
+        $response->assertOk()
+            ->assertViewHas('selectedPosition', 11)
+            ->assertViewHas('selectedTotal', 12)
+            ->assertViewHas('prevUid', $logs[9]->uid)
+            ->assertViewHas('nextUid', $logs[11]->uid);
+    }
+
+    public function test_show_prev_and_next_are_null_when_it_is_the_only_matching_log(): void
+    {
+        $module = 'SoloModule-'.Str::random(8);
+        $log = EmailLog::factory()->forModule($module)->create(['subject' => 'Solo subject']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', ['emailLog' => $log->uid, 'module' => $module]))
+            ->assertOk()
+            ->assertViewHas('selectedPosition', 1)
+            ->assertViewHas('selectedTotal', 1)
+            ->assertViewHas('prevUid', fn ($uid) => $uid === null)
+            ->assertViewHas('nextUid', fn ($uid) => $uid === null);
+    }
+
+    /**
+     * Sin ninguna fila que autoseleccionar (filtro sin resultados): todos los
+     * valores de navegación deben quedar en null/0, nunca romper el render.
+     */
+    public function test_index_navigation_is_null_without_any_matching_log(): void
+    {
+        $module = 'EmptyModule-'.Str::random(8);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['module' => $module]))
+            ->assertOk()
+            ->assertViewHas('log', fn ($log) => $log === null)
+            ->assertViewHas('selectedPosition', fn ($position) => $position === null)
+            ->assertViewHas('selectedTotal', 0)
+            ->assertViewHas('prevUid', fn ($uid) => $uid === null)
+            ->assertViewHas('nextUid', fn ($uid) => $uid === null);
+    }
+
+    /**
+     * El extracto se limpia a una sola línea (sin saltos ni espacios
+     * repetidos) y se corta corto — nunca se carga el cuerpo completo para
+     * esto (ver EmailLog::LIST_COLUMNS/bodySnippet()).
+     */
+    public function test_index_exposes_a_plain_text_body_snippet_per_row(): void
+    {
+        $log = EmailLog::factory()->create([
+            'subject' => 'Snippet source subject',
+            'body_text' => "Hola  Gabriel,\n\nHemos   actualizado tu pedido con éxito y ya está en camino hacia tu domicilio sin más incidencias que reportar hoy.",
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['search' => 'Snippet source subject']))
+            ->assertOk()
+            ->assertViewHas('logs', function ($logs) use ($log) {
+                $row = $logs->firstWhere('uid', $log->uid);
+
+                return $row !== null
+                    && $row->body_snippet !== null
+                    && ! str_contains($row->body_snippet, "\n")
+                    && str_starts_with($row->body_snippet, 'Hola Gabriel, Hemos actualizado tu pedido');
+            });
+    }
+
+    /**
+     * Un envío redactado/purgado siempre tiene body_text en null (ver
+     * bodyOf()/purgeBody()) — "sin extracto" y "sin cuerpo" son la misma
+     * condición aquí, sin caso especial adicional.
+     */
+    public function test_index_body_snippet_is_empty_when_the_body_was_redacted(): void
+    {
+        $log = EmailLog::factory()->create([
+            'subject' => 'Redacted snippet subject',
+            'body_html' => null,
+            'body_text' => null,
+            'metadata' => ['redacted' => true],
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['search' => 'Redacted snippet subject']))
+            ->assertOk()
+            ->assertViewHas('logs', fn ($logs) => $logs->firstWhere('uid', $log->uid)?->body_snippet === null);
+    }
+
+    public function test_show_computes_recipient_aggregates_for_the_sidebar_card(): void
+    {
+        $this->travelTo(Carbon::create(2024, 7, 1, 12, 0, 0));
+
+        $recipient = Str::uuid()->toString().'@example.test';
+
+        $opened = EmailLog::factory()->create([
+            'to_addresses' => [$recipient],
+            'status' => EmailStatus::Sent,
+            'subject' => 'Recipient stats one',
+        ]);
+        $target = EmailLog::factory()->create([
+            'to_addresses' => [$recipient],
+            'status' => EmailStatus::Sent,
+            'subject' => 'Recipient stats two',
+        ]);
+        EmailLog::factory()->failed()->create([
+            'to_addresses' => [$recipient],
+            'subject' => 'Recipient stats three',
+        ]);
+
+        EmailLogOpen::create([
+            'email_log_id' => $opened->id,
+            'ip' => '203.0.113.20',
+            'user_agent' => 'test',
+            'opened_at' => Carbon::create(2024, 6, 30, 9, 0, 0),
+        ]);
+        $lastOpen = Carbon::create(2024, 6, 30, 18, 30, 0);
+        EmailLogOpen::create([
+            'email_log_id' => $target->id,
+            'ip' => '203.0.113.21',
+            'user_agent' => 'test',
+            'opened_at' => $lastOpen,
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $target->uid))
+            ->assertOk()
+            // 2 sent + 1 failed de 3 recibidos => delivery_rate = 2/3*100 = 66.7
+            // (mismo criterio que el KPI global 'delivery_rate', ver rateFrom()).
+            ->assertViewHas('recipientStats', function ($stats) use ($recipient, $lastOpen) {
+                return $stats['email'] === $recipient
+                    && $stats['name'] === null
+                    && $stats['company'] === null
+                    && $stats['total_received'] === 3
+                    && $stats['delivery_rate'] === 66.7
+                    && $stats['last_opened_at']->equalTo($lastOpen);
+            });
+    }
+
+    public function test_show_recipient_stats_is_null_without_any_recipient(): void
+    {
+        $log = EmailLog::factory()->create(['to_addresses' => []]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertViewHas('recipientStats', fn ($stats) => $stats === null);
     }
 }

@@ -12,10 +12,14 @@ use Modules\HelpdeskEmailLog\Support\ParsedEmailEvent;
  * su propia documentación recomienda Basic Auth en la URL o un token propio;
  * aquí se exige el mismo token compartido en cabecera que Mailrelay, por
  * consistencia con el resto del conector. Payload real de Postmark: un
- * único evento JSON por request, con 'RecordType' ('Bounce'|'SpamComplaint'),
- * 'MessageID' (el ID que Postmark asignó al enviar — solo correlaciona si
- * EmailLog::message_id se pobló con ESE id, es decir, si el envío real
- * saliera algún día por Postmark) y 'Email'.
+ * único evento JSON por request, con 'RecordType'
+ * ('Bounce'|'SpamComplaint'|'Delivery'|'Open'), 'MessageID' (el ID que
+ * Postmark asignó al enviar — solo correlaciona si EmailLog::message_id se
+ * pobló con ESE id, es decir, si el envío real saliera algún día por
+ * Postmark). El campo con el destinatario cambia de nombre según el tipo:
+ * 'Email' en Bounce/SpamComplaint, 'Recipient' en Delivery/Open — se intentan
+ * ambos. En 'Open', Postmark adjunta 'Geo.IP' y 'UserAgent' en el propio
+ * evento, se toman de ahí para EmailLogOpen.
  */
 class PostmarkWebhookAdapter implements EmailProviderWebhookAdapter
 {
@@ -48,20 +52,29 @@ class PostmarkWebhookAdapter implements EmailProviderWebhookAdapter
         $payload = $request->json()->all();
         $recordType = (string) ($payload['RecordType'] ?? '');
 
-        if (! in_array($recordType, ['Bounce', 'SpamComplaint'], true)) {
+        $type = match ($recordType) {
+            'Bounce' => 'bounce',
+            'SpamComplaint' => 'complaint',
+            'Delivery' => 'delivered',
+            'Open' => 'open',
+            default => null,
+        };
+
+        if ($type === null) {
             return [];
         }
 
-        $isComplaint = $recordType === 'SpamComplaint';
-        $type = (string) ($payload['Type'] ?? '');
+        $bounceType = (string) ($payload['Type'] ?? '');
 
         return [new ParsedEmailEvent(
-            type: $isComplaint ? 'complaint' : 'bounce',
+            type: $type,
             messageId: $payload['MessageID'] ?? null,
-            recipient: $payload['Email'] ?? null,
-            isHard: ! $isComplaint && in_array($type, ['HardBounce', 'SMTPApiError'], true),
-            reason: (string) ($payload['Description'] ?? $type ?: $recordType),
+            recipient: $payload['Email'] ?? $payload['Recipient'] ?? null,
+            isHard: $type === 'bounce' && in_array($bounceType, ['HardBounce', 'SMTPApiError'], true),
+            reason: (string) ($payload['Description'] ?? $bounceType ?: $recordType),
             providerEventId: isset($payload['ID']) ? (string) $payload['ID'] : null,
+            ip: $type === 'open' ? ($payload['Geo']['IP'] ?? null) : null,
+            userAgent: $type === 'open' ? ($payload['UserAgent'] ?? null) : null,
         )];
     }
 }

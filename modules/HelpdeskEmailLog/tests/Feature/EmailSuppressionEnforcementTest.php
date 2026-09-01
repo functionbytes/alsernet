@@ -27,6 +27,26 @@ class EmailSuppressionEnforcementTest extends TestCase
 
     protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // phpunit.xml fuerza MAIL_MAILER=array (force="true"), pero dentro de
+        // Docker getenv()/env() ignoran ese force y siguen devolviendo 'smtp'
+        // real, así que config('mail.default') caía en 'smtp' y Mail::to()->send()
+        // usaba el transporte SMTP real en vez del fake 'array' durante el test.
+        config(['mail.default' => 'array']);
+
+        // Mismo problema, mismo mecanismo, otra variable: phpunit.xml también
+        // fuerza QUEUE_CONNECTION=sync, pero getenv('QUEUE_CONNECTION') sigue
+        // devolviendo 'redis' real en Docker. LogEmailSent implementa
+        // ShouldQueue (queue 'emails'), así que sin esto el listener se apila
+        // en el Redis real en vez de ejecutarse en línea, y la aserción sobre
+        // EmailStatus::Sent corre antes de que nada lo haya procesado —
+        // confirmado viendo el job encolado en la conexión por defecto.
+        config(['queue.default' => 'sync']);
+    }
+
     public function test_sending_to_a_globally_suppressed_address_is_blocked(): void
     {
         EmailSuppression::create(['email' => 'blocked@example.test', 'module' => '', 'reason' => SuppressionReason::HardBounce]);

@@ -3,7 +3,11 @@
 @section('title', __('helpdeskemaillog::emaillog.title'))
 
 @section('page_header')
-    @include('core::components.card', ['title' => __('helpdeskemaillog::emaillog.title')])
+    @include('core::components.card', [
+        'title' => __('helpdeskemaillog::emaillog.title'),
+        'subtitle' => __('helpdeskemaillog::emaillog.subtitle'),
+        'actions' => view('helpdeskemaillog::emails.partials.header-actions')->render(),
+    ])
 @endsection
 
 @php
@@ -19,7 +23,6 @@
         ? (config('helpdeskemaillog.entity_labels')[$entityType] ?? \Illuminate\Support\Str::headline(class_basename($entityType))).' #'.$entityId
         : null;
     $canManage = auth()->user()?->can('helpdeskemaillog.manage') ?? false;
-    $columnCount = ($canManage ? 7 : 6) + 1; // +1 por la columna Interacción
 
     $deliveryRate = $stats['total'] > 0 ? round($stats['sent'] / $stats['total'] * 100) : 0;
     // null cuando nunca hubo un envío con seguimiento — "0%" insinuaría un
@@ -28,26 +31,18 @@
     $clickRate = $stats['click_tracked'] > 0 ? round($stats['clicked'] / $stats['click_tracked'] * 100) : null;
     $today = now()->toDateString();
 
-    // Helper to generate a sort URL for a column key, toggling direction if already active.
-    $sortUrl = function (string $key) use ($sortBy, $sortDir): string {
-        $nextDir = ($sortBy === $key && $sortDir === 'desc') ? 'asc' : 'desc';
-        return request()->fullUrlWithQuery(['sort_by' => $key, 'sort_dir' => $nextDir, 'page' => 1]);
+    // Selector de orden único (evx-sort-select) — cada opción es una
+    // combinación fija clave+dirección (no alterna con clics repetidos como
+    // el antiguo esquema de <th> ordenables).
+    $sortOptionUrl = function (string $key, string $dir) : string {
+        return request()->fullUrlWithQuery(['sort_by' => $key, 'sort_dir' => $dir, 'page' => 1]);
     };
 
-    // Icon class for a sortable header: active column gets an up/down arrow, others get a neutral icon.
-    $sortIcon = function (string $key) use ($sortBy, $sortDir): string {
-        if ($sortBy !== $key) {
-            return 'fas fa-sort evx-sort-idle';
-        }
-        return ($sortDir === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down').' evx-sort-active';
-    };
-
-    // aria-sort value for a sortable column header (accessibility).
-    $ariaSort = function (string $key) use ($sortBy, $sortDir): string {
-        if ($sortBy !== $key) {
-            return 'none';
-        }
-        return $sortDir === 'asc' ? 'ascending' : 'descending';
+    $currentSortOption = match (true) {
+        $sortBy === 'subject' => 'subject_asc',
+        $sortBy === 'status' => 'status',
+        $sortBy === 'date' && $sortDir === 'asc' => 'date_asc',
+        default => 'date_desc',
     };
 
     // Active status filter (to highlight the matching stat card).
@@ -61,69 +56,123 @@
     $isToday = $dateFrom === $today && $dateTo === $today;
 @endphp
 
+{{-- ?v=filemtime: sin esto el navegador sirve la hoja cacheada tras cada
+     cambio de CSS (mismo patrón que conversations.css/tickets-app.css). El
+     fallback a time() evita romper la vista si el asset publicado aún no
+     existe en este entorno. --}}
+@php
+    $emaillogCss = public_path('modules/helpdeskemaillog/css/emaillog.css');
+    $emaillogExtrasCss = public_path('modules/helpdeskemaillog/css/emaillog-extras.css');
+    $emaillogCssV = is_file($emaillogCss) ? filemtime($emaillogCss) : time();
+    $emaillogExtrasCssV = is_file($emaillogExtrasCss) ? filemtime($emaillogExtrasCss) : time();
+@endphp
+
 @push('css')
-    <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog.css') }}">
+    {{-- Tipografía de la plantilla Alvarez: el tema base sirve Manrope, pero
+         este módulo se diseñó en Inter + JetBrains Mono (los valores mono de
+         las tarjetas, IDs y fechas dependen de la segunda). Se aplica solo
+         dentro de .emaillog-index/.emaillog-settings, no globalmente. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog.css') }}?v={{ $emaillogCssV }}">
+    <link rel="stylesheet" href="{{ asset('modules/helpdeskemaillog/css/emaillog-extras.css') }}?v={{ $emaillogExtrasCssV }}">
 @endpush
 
 @section('content')
 
     <div class="emaillog-index">
-
-        @if($staleCount > 0)
-            <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}" class="evx-stale-banner" role="alert">
-                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
-                <span>{{ __('helpdeskemaillog::emaillog.stale.warning', ['count' => $staleCount, 'hours' => $staleHours]) }}</span>
-                <span class="evx-stale-cta">{{ __('helpdeskemaillog::emaillog.stale.view') }}</span>
-            </a>
-        @endif
+        {{-- Contenedor único (mockup Alvarez): KPIs + gráfica + aviso de cola +
+             barra de filtros (con vistas guardadas inline) + workspace de 3
+             columnas viven todos dentro de la MISMA tarjeta continua, separados
+             solo por border-bottom — nunca tarjetas .evx-card/.evx-block sueltas
+             con huecos entre ellas. --}}
+        <div class="evx-shell">
 
         {{-- Tarjetas de estadísticas (clicables → filtran) --}}
         <div class="evx-stats">
             <a href="{{ route('helpdeskemaillog.index') }}"
                class="evx-stat {{ ! $hasFilters ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.total') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['total']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['total']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['total'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.total_hint') }}</span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'sent']) }}"
                class="evx-stat accent-success {{ $activeStatus === 'sent' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.sent') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['sent']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['sent']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['sent'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.sent_hint') }}</span>
             </a>
+            {{-- "Entrega confirmada" (delivered_at, ver ProviderWebhookAdapter) es un
+                 dato de ventana (misma que la gráfica de tendencia / el delta de
+                 arriba), no un acumulado histórico como el resto de tarjetas de esta
+                 fila — computeStats() todavía no expone un total histórico propio,
+                 así que aquí se usa directamente el "current" del delta. --}}
+            <div class="evx-stat is-static">
+                <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.delivered') }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($statsDelta['delivered']['current'] ?? 0) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['delivered'] ?? null])
+                </span>
+                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.delivered_hint') }}</span>
+            </div>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'failed']) }}"
                class="evx-stat accent-danger {{ $activeStatus === 'failed' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.failed') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['failed']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['failed']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['failed'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.failed_hint') }}</span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'bounced']) }}"
                class="evx-stat accent-danger {{ $activeStatus === 'bounced' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.bounced') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['bounced']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['bounced']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['bounced'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.bounced_hint') }}</span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'complained']) }}"
                class="evx-stat accent-danger {{ $activeStatus === 'complained' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.complained') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['complained']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['complained']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['complained'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.complained_hint') }}</span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}"
                class="evx-stat accent-warning {{ $activeStatus === 'queued' ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.queued') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['queued']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['queued']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['queued'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.queued_hint') }}</span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['date_from' => $today, 'date_to' => $today]) }}"
                class="evx-stat {{ $isToday ? 'is-active' : '' }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.today') }}</span>
-                <span class="evx-stat-value">{{ number_format($stats['today']) }}</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ number_format($stats['today']) }}</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['today'] ?? null])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.today_hint') }}</span>
             </a>
             <div class="evx-stat is-static">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.delivery_rate') }}</span>
-                <span class="evx-stat-value">{{ $deliveryRate }}%</span>
+                <span class="evx-stat-value-row">
+                    <span class="evx-stat-value">{{ $deliveryRate }}%</span>
+                    @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['delivery_rate'] ?? null, 'isRate' => true])
+                </span>
                 <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.delivery_rate_hint') }}</span>
             </div>
             {{-- Tasa de apertura/clic — clicables solo cuando hay algo que
@@ -134,7 +183,10 @@
                 <a href="{{ route('helpdeskemaillog.index', ['engagement' => 'opened']) }}"
                    class="evx-stat {{ $activeEngagement === 'opened' ? 'is-active' : '' }}">
                     <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.open_rate') }}</span>
-                    <span class="evx-stat-value">{{ $openRate }}%</span>
+                    <span class="evx-stat-value-row">
+                        <span class="evx-stat-value">{{ $openRate }}%</span>
+                        @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['open_rate'] ?? null, 'isRate' => true])
+                    </span>
                     <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.open_rate_hint', ['count' => $stats['open_tracked']]) }}</span>
                 </a>
             @else
@@ -148,7 +200,10 @@
                 <a href="{{ route('helpdeskemaillog.index', ['engagement' => 'clicked']) }}"
                    class="evx-stat {{ $activeEngagement === 'clicked' ? 'is-active' : '' }}">
                     <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.click_rate') }}</span>
-                    <span class="evx-stat-value">{{ $clickRate }}%</span>
+                    <span class="evx-stat-value-row">
+                        <span class="evx-stat-value">{{ $clickRate }}%</span>
+                        @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['click_rate'] ?? null, 'isRate' => true])
+                    </span>
                     <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.click_rate_hint', ['count' => $stats['click_tracked']]) }}</span>
                 </a>
             @else
@@ -160,8 +215,8 @@
             @endif
         </div>
 
-        {{-- Gráfico de tendencia --}}
-        <div class="evx-card evx-block">
+        {{-- Gráfica de tendencia --}}
+        <div class="evx-trend">
             <div class="evx-block-head">
                 <div>
                     <span class="t">{{ __('helpdeskemaillog::emaillog.trend.title') }}</span>
@@ -181,132 +236,166 @@
             </div>
         </div>
 
-        {{-- Vistas guardadas --}}
-        <div class="evx-card evx-block" id="evx-saved-views"
-             data-index-url="{{ route('helpdeskemaillog.index') }}"
-             data-views-url="{{ route('helpdeskemaillog.views.index') }}"
-             data-views-store-url="{{ route('helpdeskemaillog.views.store') }}"
-             data-can-manage="{{ $canManage ? '1' : '0' }}">
-            <div class="evx-block-body evx-saved-views-body">
-                <span class="s evx-saved-views-label">{{ __('helpdeskemaillog::emaillog.views.heading') }}</span>
+        @if($staleCount > 0)
+            <a href="{{ route('helpdeskemaillog.index', ['status' => 'queued']) }}" class="evx-stale-banner" role="alert">
+                <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>{{ __('helpdeskemaillog::emaillog.stale.warning', ['count' => $staleCount, 'hours' => $staleHours]) }}</span>
+                <span class="evx-stale-cta">{{ __('helpdeskemaillog::emaillog.stale.view') }}</span>
+            </a>
+        @endif
+
+        {{-- Barra de filtros única: selects + rango de fechas + vistas
+             guardadas inline + modo de vista + exportar + contador de
+             resultados, todo en una sola fila (mockup Alvarez). Las vistas
+             guardadas conservan el mismo #evx-saved-views/data-*/IDs que
+             consume el JS de @push('scripts'); solo cambian de posición en
+             el DOM, nunca de lógica. --}}
+        <form action="{{ route('helpdeskemaillog.index') }}" method="GET" class="evx-filterbar">
+            @if($entityType && $entityId)
+                <input type="hidden" name="entity_type" value="{{ $entityType }}">
+                <input type="hidden" name="entity_id" value="{{ $entityId }}">
+            @endif
+            @if(request('sort_by'))
+                <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                <input type="hidden" name="sort_dir" value="{{ request('sort_dir', 'desc') }}">
+            @endif
+            <input type="hidden" name="date_from" id="date_from" value="{{ $dateFrom }}">
+            <input type="hidden" name="date_to" id="date_to" value="{{ $dateTo }}">
+
+            @if($entityFilterLabel)
+                <span class="evx-tag">
+                    {{ __('helpdeskemaillog::emaillog.filters.entity_active', ['entity' => $entityFilterLabel]) }}
+                    <a href="{{ route('helpdeskemaillog.index', request()->except(['entity_type', 'entity_id', 'page'])) }}"
+                       aria-label="{{ __('helpdeskemaillog::emaillog.filters.clear') }}">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                    </a>
+                </span>
+            @endif
+
+            <div class="evx-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="search" value="{{ request('search') }}"
+                       aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
+                       placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
+            </div>
+
+            <span class="evx-select-icon">
+                <i class="fas fa-cube" aria-hidden="true"></i>
+                <select name="module" class="evx-select">
+                    <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_modules') }}</option>
+                    @foreach($modules as $mod)
+                        <option value="{{ $mod }}" @selected(request('module') === $mod)>{{ $mod }}</option>
+                    @endforeach
+                </select>
+            </span>
+
+            <span class="evx-select-icon">
+                <i class="fas fa-circle-half-stroke" aria-hidden="true"></i>
+                <select name="status" class="evx-select">
+                    <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_statuses') }}</option>
+                    @foreach($statuses as $value => $label)
+                        <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </span>
+
+            {{-- "Sin abrir"/"Sin clic" solo tiene sentido sobre envíos CON
+                 seguimiento — ver EmailLogController::applyFilters(). --}}
+            <select name="engagement" class="evx-select">
+                <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_engagement') }}</option>
+                <option value="opened" @selected($activeEngagement === 'opened')>{{ __('helpdeskemaillog::emaillog.filters.engagement_opened') }}</option>
+                <option value="not_opened" @selected($activeEngagement === 'not_opened')>{{ __('helpdeskemaillog::emaillog.filters.engagement_not_opened') }}</option>
+                <option value="clicked" @selected($activeEngagement === 'clicked')>{{ __('helpdeskemaillog::emaillog.filters.engagement_clicked') }}</option>
+                <option value="not_clicked" @selected($activeEngagement === 'not_clicked')>{{ __('helpdeskemaillog::emaillog.filters.engagement_not_clicked') }}</option>
+            </select>
+
+            <span class="evx-select-icon">
+                <i class="fas fa-calendar" aria-hidden="true"></i>
+                <input type="text" class="evx-input daterange" autocomplete="off"
+                       placeholder="{{ __('helpdeskemaillog::emaillog.filters.date_range') }}"
+                       value="{{ ($dateFrom && $dateTo) ? $dateFrom . ' - ' . $dateTo : '' }}">
+            </span>
+
+            <select name="per_page" id="per-page" class="evx-select evx-select-sm"
+                    title="{{ __('helpdeskemaillog::emaillog.filters.per_page') }}">
+                @foreach($perPageOptions as $opt)
+                    <option value="{{ $opt }}" @selected((int) $perPage === (int) $opt)>{{ __('helpdeskemaillog::emaillog.filters.per_page_option', ['n' => $opt]) }}</option>
+                @endforeach
+            </select>
+
+            <button type="submit" class="evx-btn evx-btn-primary evx-btn-inline"
+                    aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
+                    title="{{ __('helpdeskemaillog::emaillog.filters.search') }}">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            </button>
+
+            <span class="evx-filter-divider" aria-hidden="true"></span>
+
+            {{-- Vistas guardadas — mismo #evx-saved-views + data-*/JS de antes. --}}
+            <div class="evx-saved-views-inline" id="evx-saved-views"
+                 data-index-url="{{ route('helpdeskemaillog.index') }}"
+                 data-views-url="{{ route('helpdeskemaillog.views.index') }}"
+                 data-views-store-url="{{ route('helpdeskemaillog.views.store') }}"
+                 data-can-manage="{{ $canManage ? '1' : '0' }}">
+                <span class="evx-filter-views-label">{{ __('helpdeskemaillog::emaillog.views.heading') }}</span>
                 <div class="evx-saved-views-list" id="evx-saved-views-list">
+                    {{-- Vistas predefinidas del mockup (Todos/Fallidos/Rebotes) — filtran
+                         de verdad vía query string, no son vistas guardadas en BD. "En cola"
+                         sustituye a "Newsletter": ese módulo no existe aquí como filtro fijo. --}}
+                    @php
+                        $quickViews = [
+                            ['label' => __('helpdeskemaillog::emaillog.quick_views.all'), 'params' => [], 'active' => ! $hasFilters],
+                            ['label' => __('helpdeskemaillog::emaillog.quick_views.failed'), 'params' => ['status' => 'failed'], 'active' => $activeStatus === 'failed'],
+                            ['label' => __('helpdeskemaillog::emaillog.quick_views.bounced'), 'params' => ['status' => 'bounced'], 'active' => $activeStatus === 'bounced'],
+                            ['label' => __('helpdeskemaillog::emaillog.quick_views.queued'), 'params' => ['status' => 'queued'], 'active' => $activeStatus === 'queued'],
+                        ];
+                    @endphp
+                    @foreach($quickViews as $quickView)
+                        <span class="evx-view-chip {{ $quickView['active'] ? 'is-active' : '' }}">
+                            <a href="{{ route('helpdeskemaillog.index', $quickView['params']) }}">{{ $quickView['label'] }}</a>
+                        </span>
+                    @endforeach
                     <span class="text-muted small" id="evx-saved-views-empty">{{ __('helpdeskemaillog::emaillog.views.no_views') }}</span>
                 </div>
-                <button type="button" class="evx-btn evx-btn-outline evx-btn-inline" id="evx-save-view-btn">
+                <button type="button" class="evx-save-view-btn" id="evx-save-view-btn">
                     <i class="fas fa-bookmark" aria-hidden="true"></i>
                     {{ __('helpdeskemaillog::emaillog.views.save_current') }}
                 </button>
             </div>
-        </div>
 
-        {{-- Filtros --}}
-        <div class="evx-card evx-block">
-            <div class="evx-block-head">
-                <div>
-                    <span class="t">{{ __('helpdeskemaillog::emaillog.filters.heading') }}</span>
-                    <span class="s">{{ __('helpdeskemaillog::emaillog.filters.description') }}</span>
-                    @if($entityFilterLabel)
-                        <span class="evx-tag">
-                            {{ __('helpdeskemaillog::emaillog.filters.entity_active', ['entity' => $entityFilterLabel]) }}
-                            <a href="{{ route('helpdeskemaillog.index', request()->except(['entity_type', 'entity_id', 'page'])) }}"
-                               aria-label="{{ __('helpdeskemaillog::emaillog.filters.clear') }}">
-                                <i class="fas fa-xmark" aria-hidden="true"></i>
-                            </a>
-                        </span>
-                    @endif
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="evx-mode-switch" id="evx-mode-switch" role="group"
-                         aria-label="{{ __('helpdeskemaillog::emaillog.view_modes.heading') }}">
-                        <button type="button" class="evx-mode-btn on" data-evx-mode="list">
-                            <i class="fa-solid fa-list" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.list') }}
-                        </button>
-                        <button type="button" class="evx-mode-btn" data-evx-mode="thread">
-                            <i class="fa-solid fa-comments" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.thread') }}
-                        </button>
-                        <button type="button" class="evx-mode-btn" data-evx-mode="compact">
-                            <i class="fa-solid fa-bars" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.compact') }}
-                        </button>
-                        <button type="button" class="evx-mode-btn" data-evx-mode="kanban">
-                            <i class="fa-solid fa-table-columns" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.kanban') }}
-                        </button>
-                    </div>
-                    <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="evx-btn evx-btn-outline evx-btn-inline">
-                        {{ __('helpdeskemaillog::emaillog.actions.export') }}
+            {{-- Modo de vista y exportar: funcionalidad real que el mockup no
+                 cubre — se conservan en esta misma barra en vez de eliminarse. --}}
+            <div class="evx-mode-switch" id="evx-mode-switch" role="group"
+                 aria-label="{{ __('helpdeskemaillog::emaillog.view_modes.heading') }}">
+                <button type="button" class="evx-mode-btn on" data-evx-mode="list">
+                    <i class="fa-solid fa-list" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.list') }}
+                </button>
+                <button type="button" class="evx-mode-btn" data-evx-mode="thread">
+                    <i class="fa-solid fa-comments" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.thread') }}
+                </button>
+                <button type="button" class="evx-mode-btn" data-evx-mode="compact">
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.compact') }}
+                </button>
+                <button type="button" class="evx-mode-btn" data-evx-mode="kanban">
+                    <i class="fa-solid fa-table-columns" aria-hidden="true"></i> {{ __('helpdeskemaillog::emaillog.view_modes.kanban') }}
+                </button>
+            </div>
+
+            <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="evx-btn evx-btn-outline evx-btn-inline">
+                {{ __('helpdeskemaillog::emaillog.actions.export') }}
+            </a>
+
+            <div class="evx-filterbar-end">
+                <span class="evx-filter-count">
+                    {{ trans_choice('helpdeskemaillog::emaillog.filters.results_count', $logs->total(), ['count' => number_format($logs->total())]) }}
+                </span>
+                @if($hasFilters)
+                    <a href="{{ route('helpdeskemaillog.index') }}" class="evx-filter-clear">
+                        {{ __('helpdeskemaillog::emaillog.filters.clear') }}
                     </a>
-                </div>
+                @endif
             </div>
-            <div class="evx-block-body">
-                <form action="{{ route('helpdeskemaillog.index') }}" method="GET">
-                    <div class="evx-filters">
-                        @if($entityType && $entityId)
-                            <input type="hidden" name="entity_type" value="{{ $entityType }}">
-                            <input type="hidden" name="entity_id" value="{{ $entityId }}">
-                        @endif
-                        <div class="evx-search">
-                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                            <input type="search" name="search" value="{{ request('search') }}"
-                                   aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
-                                   placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
-                        </div>
-
-                        <select name="module" class="evx-select">
-                            <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_modules') }}</option>
-                            @foreach($modules as $mod)
-                                <option value="{{ $mod }}" @selected(request('module') === $mod)>{{ $mod }}</option>
-                            @endforeach
-                        </select>
-
-                        <select name="status" class="evx-select">
-                            <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_statuses') }}</option>
-                            @foreach($statuses as $value => $label)
-                                <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
-                            @endforeach
-                        </select>
-
-                        {{-- "Sin abrir"/"Sin clic" solo tiene sentido sobre envíos
-                             CON seguimiento — ver EmailLogController::applyFilters(). --}}
-                        <select name="engagement" class="evx-select">
-                            <option value="">{{ __('helpdeskemaillog::emaillog.filters.all_engagement') }}</option>
-                            <option value="opened" @selected($activeEngagement === 'opened')>{{ __('helpdeskemaillog::emaillog.filters.engagement_opened') }}</option>
-                            <option value="not_opened" @selected($activeEngagement === 'not_opened')>{{ __('helpdeskemaillog::emaillog.filters.engagement_not_opened') }}</option>
-                            <option value="clicked" @selected($activeEngagement === 'clicked')>{{ __('helpdeskemaillog::emaillog.filters.engagement_clicked') }}</option>
-                            <option value="not_clicked" @selected($activeEngagement === 'not_clicked')>{{ __('helpdeskemaillog::emaillog.filters.engagement_not_clicked') }}</option>
-                        </select>
-
-                        <input type="text" class="evx-input daterange" autocomplete="off"
-                               placeholder="{{ __('helpdeskemaillog::emaillog.filters.date_range') }}"
-                               value="{{ ($dateFrom && $dateTo) ? $dateFrom . ' - ' . $dateTo : '' }}">
-                        <input type="hidden" name="date_from" id="date_from" value="{{ $dateFrom }}">
-                        <input type="hidden" name="date_to" id="date_to" value="{{ $dateTo }}">
-                        @if(request('sort_by'))
-                            <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
-                            <input type="hidden" name="sort_dir" value="{{ request('sort_dir', 'desc') }}">
-                        @endif
-
-                        <select name="per_page" id="per-page" class="evx-select evx-select-sm"
-                                title="{{ __('helpdeskemaillog::emaillog.filters.per_page') }}">
-                            @foreach($perPageOptions as $opt)
-                                <option value="{{ $opt }}" @selected((int) $perPage === (int) $opt)>{{ __('helpdeskemaillog::emaillog.filters.per_page_option', ['n' => $opt]) }}</option>
-                            @endforeach
-                        </select>
-
-                        <button type="submit" class="evx-btn evx-btn-primary evx-btn-inline"
-                                aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
-                                title="{{ __('helpdeskemaillog::emaillog.filters.search') }}">
-                            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                        </button>
-                        @if($hasFilters)
-                            <a href="{{ route('helpdeskemaillog.index') }}" class="evx-btn evx-btn-outline evx-btn-inline"
-                               aria-label="{{ __('helpdeskemaillog::emaillog.filters.clear') }}"
-                               title="{{ __('helpdeskemaillog::emaillog.filters.clear') }}">
-                                <i class="fas fa-xmark" aria-hidden="true"></i>
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
-        </div>
+        </form>
 
         {{-- Tabla --}}
         @php
@@ -315,180 +404,154 @@
             // re-pedir nada por AJAX al cambiar de modo. Mismos campos que
             // consume modules/HelpdeskEmailLog/resources/js (ver @push('scripts')
             // más abajo).
-            $emailRowsForViewModes = $logs->map(function ($log) {
+            $emailRowsForViewModes = $logs->map(function ($row) {
                 return [
-                    'uid' => $log->uid,
-                    'subject' => $log->subject,
-                    'to_addresses' => $log->to_addresses ?? [],
-                    'module' => $log->module,
-                    'status' => $log->status?->value,
-                    'status_label' => $log->status_label,
-                    'entity_type' => $log->entity_type,
-                    'entity_id' => $log->entity_id,
-                    'entity_label' => $log->entity_label,
-                    'created_at' => optional($log->created_at)->toIso8601String(),
-                    'date_human' => $log->display_date->format('d/m/Y H:i'),
-                    'url_show' => route('helpdeskemaillog.show', $log->uid),
-                    'has_attachments' => $log->has_attachments,
-                    'has_open_tracking' => $log->hasOpenTracking(),
-                    'has_click_tracking' => $log->hasClickTracking(),
-                    'opens_count' => (int) ($log->opens_count ?? 0),
-                    'clicks_count' => (int) ($log->clicks_count ?? 0),
+                    'uid' => $row->uid,
+                    'subject' => $row->subject,
+                    'to_addresses' => $row->to_addresses ?? [],
+                    'module' => $row->module,
+                    'status' => $row->status?->value,
+                    'status_label' => $row->status_label,
+                    'entity_type' => $row->entity_type,
+                    'entity_id' => $row->entity_id,
+                    'entity_label' => $row->entity_label,
+                    'created_at' => optional($row->created_at)->toIso8601String(),
+                    'date_human' => $row->display_date->format('d/m/Y H:i'),
+                    'url_show' => route('helpdeskemaillog.show', $row->uid),
+                    'has_attachments' => $row->has_attachments,
+                    'has_open_tracking' => $row->hasOpenTracking(),
+                    'has_click_tracking' => $row->hasClickTracking(),
+                    'opens_count' => (int) ($row->opens_count ?? 0),
+                    'clicks_count' => (int) ($row->clicks_count ?? 0),
                 ];
             })->values();
         @endphp
-        <div class="evx-card evx-block">
-            <div class="evx-table-wrap" id="evx-list-view">
-                <table class="evx-table">
-                    <thead>
-                        <tr>
-                            @if($canManage)
-                                <th class="evx-th-check">
-                                    <input type="checkbox" id="select-all"
-                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.select_all') }}"
-                                           title="{{ __('helpdeskemaillog::emaillog.table.select_all') }}">
-                                </th>
-                            @endif
-                            <th aria-sort="{{ $ariaSort('subject') }}">
-                                <a href="{{ $sortUrl('subject') }}" class="evx-sort">
-                                    {{ __('helpdeskemaillog::emaillog.table.subject') }}
-                                    <i class="{{ $sortIcon('subject') }}" aria-hidden="true"></i>
+        {{-- Workspace de 3 columnas: lista angosta + detalle (main + sidebar,
+             ver .evx-body-cols dentro del partial incluido más abajo) — la
+             columna de lista y el detalle son 2 tracks reales del grid
+             .evx-workspace; el 3er "track" visual (main/sidebar del detalle)
+             lo aporta el propio .evx-body-cols anidado dentro de
+             #evx-detail-cols, sin duplicar esa definición aquí. --}}
+        <div class="evx-workspace">
+            <div class="evx-workspace-list">
+            <div id="evx-list-view">
+                <div class="evx-list-head">
+                    @if($canManage)
+                        <input type="checkbox" id="select-all" class="evx-list-check"
+                               aria-label="{{ __('helpdeskemaillog::emaillog.table.select_all') }}">
+                        <label for="select-all" class="evx-list-head-label">{{ __('helpdeskemaillog::emaillog.table.select_all') }}</label>
+                    @endif
+                    <label for="evx-sort-select" class="visually-hidden">{{ __('helpdeskemaillog::emaillog.sort.label') }}</label>
+                    <select id="evx-sort-select" class="evx-select evx-select-sm evx-list-sort">
+                        <option value="{{ $sortOptionUrl('date', 'desc') }}" @selected($currentSortOption === 'date_desc')>{{ __('helpdeskemaillog::emaillog.sort.date_desc') }}</option>
+                        <option value="{{ $sortOptionUrl('date', 'asc') }}" @selected($currentSortOption === 'date_asc')>{{ __('helpdeskemaillog::emaillog.sort.date_asc') }}</option>
+                        <option value="{{ $sortOptionUrl('subject', 'asc') }}" @selected($currentSortOption === 'subject_asc')>{{ __('helpdeskemaillog::emaillog.sort.subject_asc') }}</option>
+                        <option value="{{ $sortOptionUrl('status', 'desc') }}" @selected($currentSortOption === 'status')>{{ __('helpdeskemaillog::emaillog.sort.status') }}</option>
+                    </select>
+
+                    {{-- Accesos directos a la selección masiva (mismo checkbox
+                         .bulk-checkbox que la toolbar flotante #bulk-toolbar,
+                         ver @push('scripts')) — no duplican lógica: cada icono
+                         solo re-dispara el clic del botón real de la toolbar. --}}
+                    @if($canManage)
+                        <div class="evx-list-head-icons">
+                            <button type="button" id="list-head-bulk-resend"
+                                    title="{{ __('helpdeskemaillog::emaillog.actions.bulk_resend') }}"
+                                    aria-label="{{ __('helpdeskemaillog::emaillog.actions.bulk_resend') }}">
+                                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" id="list-head-bulk-export"
+                                    title="{{ __('helpdeskemaillog::emaillog.actions.bulk_export') }}"
+                                    aria-label="{{ __('helpdeskemaillog::emaillog.actions.bulk_export') }}">
+                                <i class="fa-solid fa-download" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" id="list-head-bulk-delete"
+                                    title="{{ __('helpdeskemaillog::emaillog.actions.bulk_delete') }}"
+                                    aria-label="{{ __('helpdeskemaillog::emaillog.actions.bulk_delete') }}">
+                                <i class="fa-regular fa-trash-can" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    @endif
+                </div>
+
+                @forelse($logs as $row)
+                    @php
+                        $statusVal = $row->status?->value;
+                        $toAddresses = $row->to_addresses ?? [];
+                        $recipientLine = $toAddresses[0] ?? '—';
+                        if (count($toAddresses) > 1) {
+                            $recipientLine .= ' +'.(count($toAddresses) - 1);
+                        }
+                        $rowUrl = route('helpdeskemaillog.show', $row->uid);
+                    @endphp
+                    <div class="evx-row {{ $log && $log->uid === $row->uid ? 'is-active' : '' }}" data-href="{{ $rowUrl }}">
+                        @if($canManage)
+                            <input type="checkbox" class="bulk-checkbox evx-row-check" value="{{ $row->uid }}"
+                                   aria-label="{{ $row->subject ?: __('helpdeskemaillog::emaillog.table.subject') }}">
+                        @endif
+                        <span class="evx-row-dot {{ $statusVal }}" aria-hidden="true"></span>
+                        <div class="evx-row-body">
+                            <div class="evx-row-top">
+                                <a href="{{ $rowUrl }}" class="evx-subject-link evx-row-subject">
+                                    {{ Str::limit($row->subject, 60) ?: '—' }}
                                 </a>
-                            </th>
-                            <th>{{ __('helpdeskemaillog::emaillog.table.recipient') }}</th>
-                            <th aria-sort="{{ $ariaSort('module') }}">
-                                <a href="{{ $sortUrl('module') }}" class="evx-sort">
-                                    {{ __('helpdeskemaillog::emaillog.table.module') }}
-                                    <i class="{{ $sortIcon('module') }}" aria-hidden="true"></i>
-                                </a>
-                            </th>
-                            <th aria-sort="{{ $ariaSort('status') }}">
-                                <a href="{{ $sortUrl('status') }}" class="evx-sort">
-                                    {{ __('helpdeskemaillog::emaillog.table.status') }}
-                                    <i class="{{ $sortIcon('status') }}" aria-hidden="true"></i>
-                                </a>
-                            </th>
-                            <th aria-sort="{{ $ariaSort('date') }}">
-                                <a href="{{ $sortUrl('date') }}" class="evx-sort">
-                                    {{ __('helpdeskemaillog::emaillog.table.date') }}
-                                    <i class="{{ $sortIcon('date') }}" aria-hidden="true"></i>
-                                </a>
-                            </th>
-                            {{-- No es ordenable: es un agregado (subquery de opens/clicks
-                                 vía withCount), no una columna propia de email_logs. --}}
-                            <th>{{ __('helpdeskemaillog::emaillog.table.engagement') }}</th>
-                            <th class="evx-th-actions">{{ __('helpdeskemaillog::emaillog.table.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($logs as $log)
-                            @php $statusVal = $log->status?->value; @endphp
-                            <tr>
-                                @if($canManage)
-                                    <td>
-                                        <input type="checkbox" class="bulk-checkbox" value="{{ $log->uid }}"
-                                               aria-label="{{ $log->subject ?: __('helpdeskemaillog::emaillog.table.subject') }}">
-                                    </td>
+                                @if($row->has_attachments)
+                                    <i class="fas fa-paperclip evx-clip" role="img"
+                                       aria-label="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"
+                                       title="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"></i>
                                 @endif
-                                <td>
-                                    <a href="{{ route('helpdeskemaillog.show', $log->uid) }}" class="evx-subject-link">
-                                        {{ Str::limit($log->subject, 60) ?: '—' }}
-                                    </a>
-                                    @if($log->has_attachments)
-                                        <i class="fas fa-paperclip evx-clip" role="img"
-                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"
-                                           title="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"></i>
-                                    @endif
-                                    @if($log->mailable_class)
-                                        <div class="evx-subject-sub">{{ class_basename($log->mailable_class) }}</div>
-                                    @endif
-                                </td>
-                                <td>
-                                    @foreach($log->to_addresses ?? [] as $addr)
-                                        <div class="evx-recipient">{{ $addr }}</div>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    @if($log->module)
-                                        <span class="evx-tag">{{ $log->module }}</span>
-                                    @else
-                                        <span class="evx-muted">—</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="evx-status {{ $statusVal }}"
-                                          @if($log->error_message) title="{{ Str::limit($log->error_message, 120) }}" @endif>
-                                        <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag', 'suppressed' => 'fa-ban'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $log->status_label }}
+                            </div>
+                            @if($row->mailable_class)
+                                <div class="evx-subject-sub">{{ class_basename($row->mailable_class) }}</div>
+                            @endif
+                            {{-- "Para: destinatario · extracto del cuerpo", como el
+                                 mockup. El extracto (accessor body_snippet, ver
+                                 EmailLog::BODY_SNIPPET_LENGTH) llega recortado desde
+                                 SQL y queda vacío si el cuerpo fue purgado o nunca se
+                                 guardó — en ese caso solo se muestra el destinatario. --}}
+                            <div class="evx-recipient">
+                                {{ __('helpdeskemaillog::emaillog.preview.field.to') }}: {{ $recipientLine }}@if($row->body_snippet)<span class="evx-row-snippet"> · {{ $row->body_snippet }}</span>@endif
+                            </div>
+                            <div class="evx-row-meta">
+                                <span class="evx-status {{ $statusVal }}"
+                                      @if($row->error_message) title="{{ Str::limit($row->error_message, 120) }}" @endif>
+                                    <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag', 'suppressed' => 'fa-ban'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $row->status_label }}
+                                </span>
+                                @if($row->module)
+                                    <span class="evx-tag mono">{{ $row->module }}</span>
+                                @else
+                                    <span class="evx-muted">—</span>
+                                @endif
+                                {{-- "0" solo es un dato real cuando el flag de tracking es
+                                     true (ver EmailLog::hasOpenTracking()/hasClickTracking());
+                                     para el resto de correos nunca hubo píxel ni enlaces
+                                     reescritos, así que se omite en vez de fingir un "0". --}}
+                                @if($row->hasOpenTracking() || $row->hasClickTracking())
+                                    <span class="evx-engagement-inline">
+                                        @if($row->hasOpenTracking())
+                                            <span title="{{ trans_choice('helpdeskemaillog::emaillog.table.opens_count', $row->opens_count, ['count' => $row->opens_count]) }}">
+                                                <i class="fa-solid fa-eye" aria-hidden="true"></i>{{ $row->opens_count }}
+                                            </span>
+                                        @endif
+                                        @if($row->hasClickTracking())
+                                            <span title="{{ trans_choice('helpdeskemaillog::emaillog.table.clicks_count', $row->clicks_count, ['count' => $row->clicks_count]) }}">
+                                                <i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i>{{ $row->clicks_count }}
+                                            </span>
+                                        @endif
                                     </span>
-                                </td>
-                                <td class="evx-date" title="{{ $log->display_date->diffForHumans() }}">
-                                    {{ $log->display_date->format('d/m/Y H:i') }}
-                                </td>
-                                <td class="evx-td-engagement">
-                                    {{-- "0" solo es un dato real cuando el flag de tracking es
-                                         true (ver EmailLog::hasOpenTracking()/hasClickTracking());
-                                         para el resto de correos nunca hubo píxel ni enlaces
-                                         reescritos, así que se muestra un guion neutro en vez de
-                                         un "0" que insinuaría un dato que no existe. --}}
-                                    @if(!$log->hasOpenTracking() && !$log->hasClickTracking())
-                                        <span class="evx-muted" title="{{ __('helpdeskemaillog::emaillog.table.not_tracked') }}">—</span>
-                                    @else
-                                        @if($log->hasOpenTracking())
-                                            <span class="evx-engagement-badge {{ $log->opens_count > 0 ? 'is-active' : '' }}"
-                                                  title="{{ trans_choice('helpdeskemaillog::emaillog.table.opens_count', $log->opens_count, ['count' => $log->opens_count]) }}">
-                                                <i class="fa-solid fa-eye" aria-hidden="true"></i>{{ $log->opens_count }}
-                                            </span>
-                                        @endif
-                                        @if($log->hasClickTracking())
-                                            <span class="evx-engagement-badge {{ $log->clicks_count > 0 ? 'is-active' : '' }}"
-                                                  title="{{ trans_choice('helpdeskemaillog::emaillog.table.clicks_count', $log->clicks_count, ['count' => $log->clicks_count]) }}">
-                                                <i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i>{{ $log->clicks_count }}
-                                            </span>
-                                        @endif
-                                    @endif
-                                </td>
-                                <td class="evx-td-actions">
-                                    <div class="dropdown">
-                                        <a href="#" class="evx-actions-toggle" data-bs-toggle="dropdown"
-                                           role="button" aria-expanded="false"
-                                           aria-label="{{ __('helpdeskemaillog::emaillog.table.actions') }}">
-                                            <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
-                                        </a>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <a class="dropdown-item" href="{{ route('helpdeskemaillog.show', $log->uid) }}">
-                                                    {{ __('helpdeskemaillog::emaillog.actions.view') }}
-                                                </a>
-                                            </li>
-                                            @can('helpdeskemaillog.manage')
-                                                <li>
-                                                    <button type="button" class="dropdown-item js-resend" data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}">
-                                                        {{ __('helpdeskemaillog::emaillog.actions.resend') }}
-                                                    </button>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <button type="button" class="dropdown-item js-delete"
-                                                            data-url="{{ route('helpdeskemaillog.destroy', $log->uid) }}">
-                                                        {{ __('helpdeskemaillog::emaillog.actions.delete') }}
-                                                    </button>
-                                                </li>
-                                            @endcan
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                {{-- $columnCount ya incluye la columna Interacción — ver @php arriba. --}}
-                                <td colspan="{{ $columnCount }}" class="evx-empty-row">
-                                    <i class="fas fa-inbox" aria-hidden="true"></i>
-                                    <p>{{ __('helpdeskemaillog::emaillog.table.empty') }}</p>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                @endif
+                                <span class="evx-row-date" title="{{ $row->display_date->diffForHumans() }}">
+                                    {{ $row->display_date->format('d/m/Y H:i') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="evx-empty-row">
+                        <i class="fas fa-inbox" aria-hidden="true"></i>
+                        <p>{{ __('helpdeskemaillog::emaillog.table.empty') }}</p>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Vistas alternas (Hilos/Kanban) — las rellena el JS a partir de
@@ -512,6 +575,26 @@
                     {{ $logs->links() }}
                 </div>
             @endif
+            </div>
+
+            {{-- Columnas 2+3: cargadas por el servidor en la primera visita
+                 (autoselección de la primera fila, ver renderWorkspace()) y
+                 reemplazadas por AJAX en cada clic de fila (ver loadDetail()
+                 en @push('scripts')) sin recargar el resto de la página. --}}
+            <div id="evx-detail-cols" class="evx-workspace-detail">
+                @include('helpdeskemaillog::emails.partials.detail-panel', [
+                    'log' => $log,
+                    'opensSummary' => $opensSummary,
+                    'clicksSummary' => $clicksSummary,
+                    'related' => $related,
+                    'entityPanel' => $entityPanel,
+                    'canManage' => $canManage,
+                    'staleHours' => $staleHours,
+                    'isStaleQueued' => $isStaleQueued,
+                    'statusIcon' => $statusIcon,
+                ])
+            </div>
+        </div>
         </div>
     </div>
 
@@ -522,6 +605,10 @@
             <button type="button" class="evx-btn evx-btn-primary evx-btn-inline" id="bulk-resend"
                     data-url="{{ route('helpdeskemaillog.bulk-resend') }}">
                 {{ __('helpdeskemaillog::emaillog.actions.bulk_resend') }}
+            </button>
+            <button type="button" class="evx-btn evx-btn-outline evx-btn-inline" id="bulk-export"
+                    data-url="{{ route('helpdeskemaillog.export-selected') }}">
+                {{ __('helpdeskemaillog::emaillog.actions.bulk_export') }}
             </button>
             <button type="button" class="evx-btn evx-btn-danger evx-btn-inline" id="bulk-delete"
                     data-url="{{ route('helpdeskemaillog.bulk-destroy') }}">
@@ -554,6 +641,43 @@
         </div>
     </div>
 
+    @can('helpdeskemaillog.manage')
+        {{-- Modal: reenviar a otra dirección — markup FIJO fuera de
+             #evx-detail-cols (igual que #emaillog-confirm-modal arriba): la
+             instancia bootstrap.Modal se crea una sola vez y sobrevive a
+             cualquier reemplazo AJAX del detalle. Los botones que la abren
+             (dentro del fragmento reemplazable) solo escriben la URL del
+             email actual en #resendto-email antes de mostrarla, ver
+             @push('scripts'). --}}
+        <div class="modal fade" id="emaillog-resendto-modal" tabindex="-1"
+             aria-labelledby="emaillog-resendto-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="emaillog-resendto-title">{{ __('helpdeskemaillog::emaillog.resend.to_title') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <label for="resendto-email" class="form-label fw-semibold small">
+                            {{ __('helpdeskemaillog::emaillog.resend.to_label') }}
+                        </label>
+                        <input type="email" class="form-control" id="resendto-email"
+                               placeholder="{{ __('helpdeskemaillog::emaillog.resend.to_placeholder') }}">
+                        <div class="form-text">{{ __('helpdeskemaillog::emaillog.resend.to_hint') }}</div>
+                    </div>
+                    <div class="modal-footer flex-column">
+                        <button type="button" class="btn btn-primary w-100 mb-2" id="resendto-send">
+                            {{ __('helpdeskemaillog::emaillog.resend.to_send') }}
+                        </button>
+                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                            {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
+
 @endsection
 
 @push('scripts')
@@ -563,6 +687,21 @@
 $(function () {
     @if(session('success')) toastr.success(@json(session('success'))); @endif
     @if(session('error')) toastr.error(@json(session('error'))); @endif
+
+    // Icono cuadrado a la izquierda del título (mockup Alvarez) — el título lo
+    // pinta core::components.card, un componente compartido con el resto de la
+    // app (fuera del scope de este módulo), así que se inserta por JS en vez
+    // de tocarlo. Envuelve el título+subtítulo existentes para no duplicarlos.
+    (function () {
+        const $titleBlock = $('.mc-content-header-inner > :first-child');
+        if (!$titleBlock.length || $titleBlock.hasClass('evx-header-title-row')) return;
+
+        const $titleText = $('<div>').append($titleBlock.children());
+        $titleBlock.addClass('evx-header-title-row').empty().append(
+            '<span class="evx-header-icon" aria-hidden="true"><i class="fa-regular fa-envelope"></i></span>',
+            $titleText
+        );
+    })();
 
     const csrf = $('meta[name="csrf-token"]').attr('content');
     const $confirmModal = $('#emaillog-confirm-modal');
@@ -601,7 +740,11 @@ $(function () {
         const $empty = $('#evx-saved-views-empty');
 
         function render(views) {
-            $list.find('.evx-view-chip').remove();
+            // Solo borra los chips DINÁMICOS (los de esta función, con su botón
+            // de borrar data-view-id) — nunca los chips fijos del mockup
+            // (Todos/Fallidos/Rebotes/En cola, ver index.blade.php), que no
+            // llevan ese botón y comparten la misma clase .evx-view-chip.
+            $list.find('.evx-view-chip').has('button[data-view-id]').remove();
             $empty.toggle(views.length === 0);
 
             views.forEach(function (v) {
@@ -705,10 +848,10 @@ $(function () {
             return 'no-entity-' + row.uid;
         }
 
-        // Mismo badge de Apertura/Clic que la columna "Interacción" de la
-        // tabla (evx-td-engagement) pero en línea, para Hilos/Kanban — reusa
-        // los flags/conteos ya calculados en $emailRowsForViewModes arriba,
-        // sin ninguna petición nueva.
+        // Mismo badge de Apertura/Clic que .evx-engagement-inline en la Lista
+        // (ver evx-row-meta arriba en este mismo Blade) pero en línea, para
+        // Hilos/Kanban — reusa los flags/conteos ya calculados en
+        // $emailRowsForViewModes, sin ninguna petición nueva.
         function renderEngagement(row) {
             if (!row.has_open_tracking && !row.has_click_tracking) return '';
 
@@ -882,10 +1025,20 @@ $(function () {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                {{-- Barras anchas pegadas entre sí (solo ~6px de aire), como las
+                     del mockup: por defecto Chart.js deja casi la mitad del
+                     hueco vacío y las barras salen finas. --}}
+                barPercentage: 0.94,
+                categoryPercentage: 0.94,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 10, boxHeight: 10, font: { size: 10.5, family: 'Inter' }, color: '#52525b', padding: 16 },
+                    },
+                },
                 scales: {
-                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 } } },
-                    y: { stacked: true, beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } },
+                    x: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { font: { size: 9.5, family: 'JetBrains Mono' }, color: '#a1a1aa' } },
+                    y: { stacked: true, beginAtZero: true, grid: { display: false }, border: { display: false }, ticks: { precision: 0, maxTicksLimit: 2, font: { size: 9, family: 'JetBrains Mono' }, color: '#a1a1aa' } },
                 },
             },
         });
@@ -921,7 +1074,131 @@ $(function () {
         $(this).val(''); $('#date_from').val(''); $('#date_to').val('');
     });
 
-    // Reenviar individual
+    // Orden único (evx-sort-select) → cada opción ya lleva la URL completa
+    // calculada por $sortOptionUrl() en el Blade.
+    $('#evx-sort-select').on('change', function () {
+        window.location.href = this.value;
+    });
+
+    // Fila-tarjeta completa clicable hacia el detalle — el enlace real del
+    // asunto (accesible por teclado/lector de pantalla) sigue ahí; esto es
+    // solo una mejora para el clic con ratón en cualquier punto de la fila.
+    // Cualquier control interactivo propio (checkbox, enlaces) hace su propia
+    // acción y no debe además disparar la navegación de la fila.
+    //
+    // Ambos casos cargan el detalle por AJAX (ver loadDetail() más abajo) en
+    // vez de navegar de página: solo se reemplazan las columnas 2+3
+    // (#evx-detail-cols), la lista de la columna 1 sigue montada tal cual.
+    const $detailCols = $('#evx-detail-cols');
+
+    function markActiveRow(url) {
+        $('#evx-list-view .evx-row').each(function () {
+            $(this).toggleClass('is-active', $(this).data('href') === url);
+        });
+    }
+
+    function loadDetail(url, pushState = true) {
+        $.get(url)
+            .done(function (html) {
+                $detailCols.html(html);
+                markActiveRow(url);
+                if (pushState) history.pushState({ evxDetailUrl: url }, '', url);
+            })
+            .fail(function () {
+                // El fragmento AJAX falló (p. ej. 419/500) — se cae a una
+                // navegación normal en vez de dejar la columna de detalle rota.
+                window.location.href = url;
+            });
+    }
+
+    $(document).on('click', '#evx-list-view .evx-subject-link', function (e) {
+        // Clic modificado (nueva pestaña/ventana) → se deja la navegación
+        // nativa del enlace real, sin interceptarla.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.which === 2) return;
+        e.preventDefault();
+        loadDetail($(this).attr('href'));
+    });
+
+    $(document).on('click', '#evx-list-view .evx-row', function (e) {
+        if ($(e.target).closest('a, input, button').length) return;
+        loadDetail($(this).data('href'));
+    });
+
+    // Navegación anterior/siguiente del detalle: botones ▲▼ de la cabecera y
+    // atajos J/K (mismos que anuncia el title de cada botón). prevUid/nextUid
+    // los resuelve el backend respetando filtro y orden activos, así que basta
+    // con seguir el data-href que trae el fragmento ya renderizado.
+    $(document).on('click', '.js-detail-prev, .js-detail-next', function () {
+        const url = $(this).data('href');
+        if (url) loadDetail(url);
+    });
+
+    $(document).on('keydown', function (e) {
+        // Nunca robar la tecla mientras se escribe en un campo o en un modal.
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        if ($(e.target).is('input, textarea, select') || $(e.target).closest('.modal.show').length) return;
+        const key = e.key.toLowerCase();
+        if (key !== 'j' && key !== 'k') return;
+        const $btn = $(key === 'j' ? '.js-detail-next' : '.js-detail-prev');
+        const url = $btn.data('href');
+        if (url && !$btn.prop('disabled')) {
+            e.preventDefault();
+            loadDetail(url);
+        }
+    });
+
+    // Botón atrás/adelante del navegador — vuelve a pedir el fragmento de la
+    // URL destino sin volver a empujar el mismo estado al historial.
+    window.addEventListener('popstate', function (e) {
+        const url = (e.state && e.state.evxDetailUrl) || window.location.href;
+        loadDetail(url, false);
+    });
+
+    // ── Handlers del panel de detalle (columnas 2+3) ──
+    // Delegados en document (nunca en #evx-detail-cols directamente): ese
+    // contenedor se reemplaza por completo en cada loadDetail(), así que
+    // cualquier listener atado al elemento concreto se perdería tras el
+    // primer clic de fila. Delegar en document los hace sobrevivir a
+    // cualquier número de reemplazos sin necesidad de "re-bindear" nada.
+
+    // Cambiar de pestaña (Detalle / Traza / Aperturas / Original)
+    $(document).on('click', '.evx-tab', function () {
+        const target = $(this).data('evx-tab');
+        $('.evx-tab').removeClass('on');
+        $(this).addClass('on');
+        $('.evx-tabpanel').attr('hidden', true);
+        $('.evx-tabpanel[data-evx-panel="' + target + '"]').removeAttr('hidden');
+    });
+
+    // Alternar vista escritorio / móvil del contenido del email
+    $(document).on('click', '#btnDesktopView', function () {
+        $('#previewFrame').removeClass('is-mobile');
+        $('.evx-device-toggle button').removeClass('on').attr('aria-pressed', 'false');
+        $(this).addClass('on').attr('aria-pressed', 'true');
+    });
+    $(document).on('click', '#btnMobileView', function () {
+        $('#previewFrame').addClass('is-mobile');
+        $('.evx-device-toggle button').removeClass('on').attr('aria-pressed', 'false');
+        $(this).addClass('on').attr('aria-pressed', 'true');
+    });
+    $(document).on('click', '#btnPrint', () => window.print());
+
+    // Copiar Message-ID
+    $(document).on('click', '.evx-copy-btn', function () {
+        const text = $(this).data('copy');
+        const done = () => toastr.success(@json(__('helpdeskemaillog::emaillog.copy.message_id_copied')));
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(done);
+        } else {
+            const $t = $('<textarea>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+            $t[0].select();
+            document.execCommand('copy');
+            $t.remove();
+            done();
+        }
+    });
+
+    // Reenviar
     $(document).on('click', '.js-resend', function () {
         const url = $(this).data('url');
         askConfirm({
@@ -935,7 +1212,7 @@ $(function () {
         });
     });
 
-    // Eliminar individual
+    // Eliminar
     $(document).on('click', '.js-delete', function () {
         const url = $(this).data('url');
         askConfirm({
@@ -943,6 +1220,20 @@ $(function () {
             message: @json(__('helpdeskemaillog::emaillog.confirm.delete_one')),
             onAccept: () => {
                 $.ajax({ url, method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } })
+                    .done(() => window.location = @json(route('helpdeskemaillog.index')))
+                    .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+            },
+        });
+    });
+
+    // Purgar contenido (GDPR)
+    $(document).on('click', '.js-purge', function () {
+        const url = $(this).data('url');
+        askConfirm({
+            title: @json(__('helpdeskemaillog::emaillog.purge.confirm_title')),
+            message: @json(__('helpdeskemaillog::emaillog.purge.confirm')),
+            onAccept: () => {
+                $.ajax({ url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
                     .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
             },
@@ -950,8 +1241,46 @@ $(function () {
     });
 
     @can('helpdeskemaillog.manage')
+    // Reenviar a otra dirección — el modal vive fuera de #evx-detail-cols
+    // (markup fijo en este mismo Blade), así que la instancia de
+    // bootstrap.Modal se crea una única vez aquí y sobrevive a cualquier
+    // reemplazo AJAX del detalle. #btnResendTo sí vive dentro del fragmento
+    // reemplazable: cada clic vuelve a leer su data-url (la del email
+    // actualmente cargado) y la copia al input antes de abrir el modal.
+    const $resendToModal = $('#emaillog-resendto-modal');
+    const resendToModal = new bootstrap.Modal($resendToModal[0]);
+
+    $(document).on('click', '#btnResendTo', function () {
+        $('#resendto-email').val('').removeClass('is-invalid').data('url', $(this).data('url'));
+        resendToModal.show();
+    });
+
+    $('#resendto-send').on('click', function () {
+        const $input = $('#resendto-email');
+        const to = ($input.val() || '').trim();
+        const url = $input.data('url');
+        if (!to) { $input.addClass('is-invalid'); return; }
+        $input.removeClass('is-invalid');
+        $.ajax({ url, method: 'POST', data: { to }, headers: { 'X-CSRF-TOKEN': csrf } })
+            .done(() => location.reload())
+            .fail(xhr => {
+                const msg = xhr.responseJSON?.errors?.to?.[0] || xhr.responseJSON?.message || 'Error';
+                toastr.error(msg);
+            });
+    });
+    @endcan
+
+    @can('helpdeskemaillog.manage')
     // Acciones masivas
     window.BulkActions.init({ checkbox: '.bulk-checkbox', selectAll: '#select-all', toolbar: '#bulk-toolbar' });
+
+    // Iconos de la cabecera de la lista (#list-head-bulk-*, mockup Alvarez):
+    // acceso directo a la MISMA selección/lógica de la toolbar flotante, sin
+    // duplicarla — solo re-disparan el clic del botón real (#bulk-*, ver más
+    // abajo), que ya valida la selección, pide confirmación y llama al AJAX.
+    $('#list-head-bulk-resend').on('click', () => $('#bulk-resend').trigger('click'));
+    $('#list-head-bulk-export').on('click', () => $('#bulk-export').trigger('click'));
+    $('#list-head-bulk-delete').on('click', () => $('#bulk-delete').trigger('click'));
 
     function selectedUids() {
         return $('.bulk-checkbox:checked').map(function () { return this.value; }).get();
@@ -970,6 +1299,19 @@ $(function () {
                     .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
             },
         });
+    });
+
+    // Exportar seleccionados — descarga de archivo real (no JSON), así que se
+    // envía como un form POST normal en vez de $.ajax (igual que cualquier
+    // descarga de Laravel con streamDownload/Content-Disposition: attachment).
+    $('#bulk-export').on('click', function () {
+        const uids = selectedUids();
+        if (!uids.length) { toastr.warning(@json(__('helpdeskemaillog::emaillog.bulk.none_selected'))); return; }
+
+        const $form = $('<form>', { method: 'POST', action: $(this).data('url') });
+        $form.append($('<input>', { type: 'hidden', name: '_token', value: csrf }));
+        uids.forEach(uid => $form.append($('<input>', { type: 'hidden', name: 'uids[]', value: uid })));
+        $form.appendTo('body').trigger('submit').remove();
     });
 
     $('#bulk-delete').on('click', function () {

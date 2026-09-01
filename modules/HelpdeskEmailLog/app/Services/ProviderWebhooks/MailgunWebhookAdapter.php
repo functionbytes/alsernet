@@ -12,6 +12,12 @@ use Modules\HelpdeskEmailLog\Support\ParsedEmailEvent;
  * sobre timestamp+token con la "webhook signing key" de la cuenta — mecanismo
  * documentado oficialmente, se implementa tal cual (no un token plano
  * inventado como los otros dos adapters).
+ *
+ * event-data.event nativo de Mailgun cubre, entre otros, 'delivered' y
+ * 'opened' además de 'failed'/'complained' — los cuatro se procesan aquí. En
+ * 'opened', Mailgun adjunta 'ip' y 'client-info.user-agent' en el propio
+ * evento (mismo payload que usa para 'clicked'), se toman de ahí para
+ * EmailLogOpen.
  */
 class MailgunWebhookAdapter implements EmailProviderWebhookAdapter
 {
@@ -56,21 +62,30 @@ class MailgunWebhookAdapter implements EmailProviderWebhookAdapter
         $eventData = $request->input('event-data') ?? [];
         $event = (string) ($eventData['event'] ?? '');
 
-        if (! in_array($event, ['failed', 'complained'], true)) {
+        $type = match ($event) {
+            'failed' => 'bounce',
+            'complained' => 'complaint',
+            'delivered' => 'delivered',
+            'opened' => 'open',
+            default => null,
+        };
+
+        if ($type === null) {
             return [];
         }
 
-        $isComplaint = $event === 'complained';
         $severity = (string) ($eventData['severity'] ?? '');
         $messageId = $eventData['message']['headers']['message-id'] ?? null;
 
         return [new ParsedEmailEvent(
-            type: $isComplaint ? 'complaint' : 'bounce',
+            type: $type,
             messageId: is_string($messageId) ? trim($messageId, '<>') : null,
             recipient: $eventData['recipient'] ?? null,
-            isHard: ! $isComplaint && $severity === 'permanent',
+            isHard: $type === 'bounce' && $severity === 'permanent',
             reason: (string) ($eventData['delivery-status']['message'] ?? $eventData['reason'] ?? $event),
             providerEventId: $eventData['id'] ?? null,
+            ip: $type === 'open' ? ($eventData['ip'] ?? null) : null,
+            userAgent: $type === 'open' ? ($eventData['client-info']['user-agent'] ?? null) : null,
         )];
     }
 }

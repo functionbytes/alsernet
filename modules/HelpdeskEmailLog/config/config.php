@@ -84,6 +84,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Píxel de apertura
+    |--------------------------------------------------------------------------
+    | Si es false, LogEmailQueued deja de insertar el <img> de seguimiento de
+    | apertura en el HTML de los envíos que lo soportan (hoy, "Emails
+    | enviados" de HelpdeskTickets). No afecta al histórico ya registrado en
+    | email_log_opens ni a la redirección de clics (click tracking), que se
+    | gobierna aparte.
+    */
+    'pixel_tracking_enabled' => env('EMAIL_LOG_PIXEL_TRACKING_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Redacción del cuerpo para Mailables sensibles
     |--------------------------------------------------------------------------
     | Para correos que contengan secretos efímeros (password resets, magic

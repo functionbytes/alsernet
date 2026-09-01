@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\HelpdeskEmailLog\Contracts\EmailProviderWebhookAdapter;
 use Modules\HelpdeskEmailLog\Models\ProviderWebhookEvent;
 use Modules\HelpdeskEmailLog\Services\EmailBounceCorrelatorService;
+use Modules\HelpdeskEmailLog\Services\EmailDeliveryEventCorrelatorService;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\MailgunWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\MailrelayWebhookAdapter;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhooks\PostmarkWebhookAdapter;
@@ -19,11 +20,13 @@ use Modules\HelpdeskEmailLog\Support\ParsedEmailEvent;
 
 /**
  * Único punto de entrada para CUALQUIER proveedor — no conoce el formato de
- * ningún payload, solo resuelve el adapter correcto, verifica y delega en
- * EmailBounceCorrelatorService (la misma pieza que ya usa el poller IMAP de
- * la Fase 2). Solo el proveedor SELECCIONADO en Settings responde aquí; una
- * URL para cualquier otro devuelve 404, para no exponer lógica de
- * verificación de proveedores no usados.
+ * ningún payload, solo resuelve el adapter correcto, verifica y delega según
+ * el tipo de evento: EmailBounceCorrelatorService para bounce/complaint (la
+ * misma pieza que ya usa el poller IMAP de la Fase 2), o
+ * EmailDeliveryEventCorrelatorService para delivered/open. Solo el proveedor
+ * SELECCIONADO en Settings responde aquí; una URL para cualquier otro
+ * devuelve 404, para no exponer lógica de verificación de proveedores no
+ * usados.
  *
  * AVISO IMPORTANTE (ver settings/index.blade.php): elegir un proveedor aquí
  * solo determina cómo se INTERPRETAN los webhooks entrantes — nunca cambia
@@ -46,8 +49,13 @@ class EmailProviderWebhookController extends Controller
         ];
     }
 
-    public function receive(string $provider, Request $request, ProviderWebhookSettingsRepository $settingsRepo, EmailBounceCorrelatorService $correlator): Response|JsonResponse
-    {
+    public function receive(
+        string $provider,
+        Request $request,
+        ProviderWebhookSettingsRepository $settingsRepo,
+        EmailBounceCorrelatorService $bounceCorrelator,
+        EmailDeliveryEventCorrelatorService $deliveryCorrelator,
+    ): Response|JsonResponse {
         $adapters = $this->adapters();
 
         if (! isset($adapters[$provider])) {
@@ -100,7 +108,7 @@ class EmailProviderWebhookController extends Controller
                 continue;
             }
 
-            if ($this->correlate($event, $correlator)) {
+            if ($this->correlate($event, $bounceCorrelator, $deliveryCorrelator)) {
                 $processed++;
             } else {
                 $skipped++;
@@ -113,17 +121,39 @@ class EmailProviderWebhookController extends Controller
     /**
      * @param  array<string, mixed>  $config
      */
+    /**
+     * @param  array<string, mixed>  $config
+     */
     private function shouldProcess(ParsedEmailEvent $event, array $config): bool
     {
-        if ($event->isBounce()) {
-            return (bool) $config['process_bounces'];
+        return match (true) {
+            $event->isBounce() => (bool) $config['process_bounces'],
+            $event->isComplaint() => (bool) $config['process_complaints'],
+            $event->isDelivered() => (bool) $config['process_deliveries'],
+            $event->isOpen() => (bool) $config['process_opens'],
+            default => false,
+        };
+    }
+
+    /**
+     * Despacha al correlador correcto según el tipo de evento — bounce y
+     * complaint comparten interfaz (mutan el status a un terminal negativo),
+     * delivered y open no (ver EmailDeliveryEventCorrelatorService).
+     */
+    private function correlate(
+        ParsedEmailEvent $event,
+        EmailBounceCorrelatorService $bounceCorrelator,
+        EmailDeliveryEventCorrelatorService $deliveryCorrelator,
+    ): bool {
+        if ($event->isDelivered()) {
+            return $this->correlateDelivered($event, $deliveryCorrelator);
         }
 
-        if ($event->isComplaint()) {
-            return (bool) $config['process_complaints'];
+        if ($event->isOpen()) {
+            return $this->correlateOpen($event, $deliveryCorrelator);
         }
 
-        return false;
+        return $this->correlateBounceOrComplaint($event, $bounceCorrelator);
     }
 
     /**
@@ -133,7 +163,7 @@ class EmailProviderWebhookController extends Controller
      * cruce de módulos — no tiene el concepto de "buzón por módulo" que sí
      * tienen los BounceMailboxes IMAP).
      */
-    private function correlate(ParsedEmailEvent $event, EmailBounceCorrelatorService $correlator): bool
+    private function correlateBounceOrComplaint(ParsedEmailEvent $event, EmailBounceCorrelatorService $correlator): bool
     {
         $isComplaint = $event->isComplaint();
 
@@ -145,6 +175,36 @@ class EmailProviderWebhookController extends Controller
 
         if ($event->recipient !== null && $event->recipient !== '') {
             return $correlator->correlateByRecipient($event->recipient, $event->reason, null, $event->isHard, $isComplaint);
+        }
+
+        return false;
+    }
+
+    private function correlateDelivered(ParsedEmailEvent $event, EmailDeliveryEventCorrelatorService $correlator): bool
+    {
+        if ($event->messageId !== null && $event->messageId !== '') {
+            if ($correlator->correlateDeliveredByMessageId($event->messageId)) {
+                return true;
+            }
+        }
+
+        if ($event->recipient !== null && $event->recipient !== '') {
+            return $correlator->correlateDeliveredByRecipient($event->recipient);
+        }
+
+        return false;
+    }
+
+    private function correlateOpen(ParsedEmailEvent $event, EmailDeliveryEventCorrelatorService $correlator): bool
+    {
+        if ($event->messageId !== null && $event->messageId !== '') {
+            if ($correlator->correlateOpenByMessageId($event->messageId, $event->ip, $event->userAgent)) {
+                return true;
+            }
+        }
+
+        if ($event->recipient !== null && $event->recipient !== '') {
+            return $correlator->correlateOpenByRecipient($event->recipient, $event->ip, $event->userAgent);
         }
 
         return false;

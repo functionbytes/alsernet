@@ -59,6 +59,17 @@ trait InspectsMailMessage
     }
 
     /**
+     * Ajuste global del panel de configuración (ver EmailLogSettingsController)
+     * que activa/desactiva la inserción del <img> de seguimiento de apertura
+     * en LogEmailQueued. No afecta a la reescritura de enlaces (click
+     * tracking), que se gobierna aparte.
+     */
+    protected function pixelTrackingEnabled(): bool
+    {
+        return (bool) Setting::get('helpdeskemaillog.pixel_tracking_enabled', config('helpdeskemaillog.pixel_tracking_enabled', true));
+    }
+
+    /**
      * Cabeceras MIME completas del mensaje tal como llegan al destinatario.
      * Debe llamarse DESPUÉS de que el caller haya limpiado las cabeceras
      * internas (X-Email-Module, X-Entity-Type, X-Entity-Id, X-Mailable-Class

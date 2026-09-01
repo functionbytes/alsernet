@@ -2,13 +2,17 @@
 
 return [
     'title' => 'Log de emails',
-    'subtitle' => 'Registro centralizado de los emails enviados por el sistema',
+    'subtitle' => 'Registro centralizado de los emails enviados por el sistema · entrega, rebotes, reenvío, supresiones y trazas',
 
     'stats' => [
         'total' => 'Total registrados',
         'total_hint' => 'Todos los registros',
         'sent' => 'Entregados al servidor',
         'sent_hint' => 'Aceptados por el transporte',
+        'delivered' => 'Entrega confirmada',
+        'delivered_hint' => 'Confirmados por el proveedor (misma ventana que la gráfica de tendencia)',
+        'delta_vs_previous' => 'vs. periodo anterior',
+        'delta_points_suffix' => 'pts',
         'failed' => 'Fallidos',
         'failed_hint' => 'Con error de envío',
         'bounced' => 'Rebotados',
@@ -63,6 +67,7 @@ return [
         'engagement_not_opened' => 'Sin abrir (con seguimiento)',
         'engagement_clicked' => 'Con clic',
         'engagement_not_clicked' => 'Sin clic (con seguimiento)',
+        'results_count' => '{0} Sin resultados|{1} :count resultado|[2,*] :count resultados',
     ],
 
     'view_modes' => [
@@ -84,6 +89,14 @@ return [
         'deleted' => 'Vista eliminada.',
         'make_public_confirm' => '¿Hacer esta vista pública para todo el equipo?',
         'public_indicator' => 'Vista pública',
+    ],
+
+    'sort' => [
+        'label' => 'Ordenar por',
+        'date_desc' => 'Fecha ↓',
+        'date_asc' => 'Fecha ↑',
+        'subject_asc' => 'Asunto A-Z',
+        'status' => 'Estado',
     ],
 
     'table' => [
@@ -108,6 +121,7 @@ return [
         'delete' => 'Eliminar',
         'export' => 'Exportar CSV',
         'bulk_delete' => 'Eliminar seleccionados',
+        'bulk_export' => 'Exportar seleccionados',
         'back_to_list' => 'Volver al listado',
         'print' => 'Imprimir',
         'bulk_resend' => 'Reenviar seleccionados',
@@ -116,6 +130,20 @@ return [
         'copy_id' => 'Copiar Message-ID',
         'resend_to' => 'Reenviar a otra dirección',
         'purge' => 'Purgar contenido',
+        'settings' => 'Configuración',
+        'refresh' => 'Actualizar',
+        'reputation' => 'Reputación',
+    ],
+
+    // Chips fijos de la cabecera de la lista (delante de las vistas
+    // guardadas del usuario) — filtran de verdad, no son vistas guardadas.
+    // "En cola" sustituye a "Newsletter" del mockup: ese módulo no existe
+    // aquí como filtro fijo.
+    'quick_views' => [
+        'all' => 'Todos',
+        'failed' => 'Fallidos',
+        'bounced' => 'Rebotes',
+        'queued' => 'En cola',
     ],
 
     'purge' => [
@@ -183,13 +211,43 @@ return [
         'suppressed' => 'Bloqueado (supresión)',
     ],
 
+    'opens' => [
+        'source' => [
+            'pixel' => 'Píxel de seguimiento',
+            'provider' => 'Proveedor (webhook)',
+        ],
+    ],
+
     'preview' => [
-        'title' => 'Vista previa del email',
+        'title' => 'Detalle del email',
         'heading' => 'Contenido del email',
+        // Etiquetas cortas de las pestañas (el mockup usa una sola palabra);
+        // los títulos largos siguen en trace.title/opens.title/raw.title para
+        // los encabezados dentro de cada panel.
+        'tabs' => [
+            'detail' => 'Detalle',
+            'trace' => 'Traza',
+            'opens' => 'Aperturas',
+            'raw' => 'Original',
+        ],
+        'position' => ':position de :total',
+        'prev' => 'Anterior (K)',
+        'next' => 'Siguiente (J)',
+        'recipient' => [
+            'title' => 'Destinatario',
+            'received' => 'emails recibidos',
+            'last_open' => 'última apertura',
+            'delivery_rate' => 'entregabilidad',
+            'filter' => 'Ver sus emails',
+        ],
         'desktop' => 'Escritorio',
         'mobile' => 'Móvil',
         'footer_note' => 'Este es el contenido exacto del email registrado por el sistema.',
         'no_content' => 'El contenido del email no está disponible.',
+        'empty_selection' => [
+            'title' => 'No se encontraron emails',
+            'hint' => 'Ajusta los filtros de búsqueda para ver resultados aquí.',
+        ],
         'detail' => 'Detalle del email',
         'detail_hint' => 'Información del correo registrado',
         'field' => [
@@ -211,6 +269,11 @@ return [
         ],
         'quick_actions' => 'Acciones rápidas',
         'quick_actions_hint' => 'Opciones disponibles',
+        'groups' => [
+            'resend' => 'Enviar de nuevo',
+            'retrieve' => 'Obtener el mensaje',
+            'lifecycle' => 'Ciclo de vida',
+        ],
         'related_entity' => 'Entidad relacionada',
         'related_entity_hint' => 'Registro vinculado a este email',
         'related_emails' => 'Emails relacionados',

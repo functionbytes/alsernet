@@ -57,6 +57,28 @@
 
                         <hr class="my-4">
 
+                        {{-- Píxel de apertura --}}
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-1">Píxel de apertura</h6>
+                            <p class="text-muted mb-3">Controla si los envíos con seguimiento (hoy, "Emails enviados" de HelpdeskTickets) incluyen el píxel que registra la apertura.</p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="pixel_tracking_enabled" class="form-label fw-semibold">Insertar píxel de seguimiento</label>
+                                    <select class="form-select @error('pixel_tracking_enabled') is-invalid @enderror" id="pixel_tracking_enabled" name="pixel_tracking_enabled">
+                                        <option value="1" {{ (string) old('pixel_tracking_enabled', $pixelTrackingEnabled ? '1' : '0') === '1' ? 'selected' : '' }}>Sí, insertar píxel</option>
+                                        <option value="0" {{ (string) old('pixel_tracking_enabled', $pixelTrackingEnabled ? '1' : '0') === '0' ? 'selected' : '' }}>No, no insertar píxel</option>
+                                    </select>
+                                    @error('pixel_tracking_enabled')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    <small class="text-muted">Desactivarlo detiene la inserción del píxel en nuevos envíos. No borra las aperturas ya registradas ni afecta a la redirección de clics.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
                         {{-- Retención y purga --}}
                         <div class="mb-4">
                             <h6 class="fw-bold mb-1">Retención y purga automática</h6>
@@ -312,6 +334,11 @@
                 <div class="card-body">
                     <h6 class="fw-semibold mb-1">Almacenamiento del contenido</h6>
                     <p class="text-muted mb-3">Si desactivas el guardado del cuerpo, solo se registran metadatos (asunto, destinatarios, estado). Reduce el uso de disco y el riesgo de exponer datos sensibles.</p>
+
+                    <hr class="my-3">
+
+                    <h6 class="fw-semibold mb-1">Píxel de apertura</h6>
+                    <p class="text-muted mb-3">Desactívalo si no quieres que los envíos con seguimiento incluyan el píxel de apertura, por ejemplo por preferencia del cliente o auditoría de privacidad.</p>
 
                     <hr class="my-3">
 

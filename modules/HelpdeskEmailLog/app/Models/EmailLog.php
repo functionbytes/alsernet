@@ -39,6 +39,7 @@ use Modules\HelpdeskEmailLog\Enums\EmailStatus;
  * @property EmailStatus $status
  * @property ?string $error_message
  * @property ?Carbon $sent_at
+ * @property ?Carbon $delivered_at
  * @property ?Carbon $failed_at
  * @property ?Carbon $bounced_at
  * @property ?Carbon $complained_at
@@ -70,6 +71,18 @@ class EmailLog extends Model
         'from_address', 'from_name', 'to_addresses', 'subject', 'status',
         'error_message', 'attachments', 'sent_at', 'failed_at', 'created_at', 'metadata',
     ];
+
+    /**
+     * Caracteres crudos de body_text que EmailLogController::buildListData()
+     * trae con `LEFT(body_text, N)` para el extracto de fila (ver
+     * bodySnippet()) — de sobra para que, tras colapsar espacios/saltos de
+     * línea, quede margen para cortar a un tamaño final legible sin haber
+     * cargado el cuerpo completo.
+     */
+    public const BODY_SNIPPET_RAW_LENGTH = 200;
+
+    /** Longitud final (tras limpiar) del extracto expuesto por bodySnippet(). */
+    public const BODY_SNIPPET_LENGTH = 110;
 
     /**
      * Cache keys backing the emails.index dashboard (stats card, trend chart,
@@ -107,6 +120,7 @@ class EmailLog extends Model
         'status',
         'error_message',
         'sent_at',
+        'delivered_at',
         'failed_at',
         'bounced_at',
         'complained_at',
@@ -126,6 +140,7 @@ class EmailLog extends Model
             'metadata' => 'array',
             'status' => EmailStatus::class,
             'sent_at' => 'datetime',
+            'delivered_at' => 'datetime',
             'failed_at' => 'datetime',
             'bounced_at' => 'datetime',
             'complained_at' => 'datetime',
@@ -488,6 +503,38 @@ class EmailLog extends Model
             $labels = config('helpdeskemaillog.entity_labels', []);
 
             return $labels[$this->entity_type] ?? Str::headline(class_basename($this->entity_type));
+        });
+    }
+
+    /**
+     * Extracto corto de texto plano (una línea) para las filas del listado —
+     * leído desde el pseudo-columna `body_snippet_raw` que
+     * EmailLogController::buildListData() añade con
+     * `LEFT(body_text, self::BODY_SNIPPET_RAW_LENGTH)`, nunca desde el cuerpo
+     * completo (ver LIST_COLUMNS, que a propósito no carga body_text/body_html).
+     *
+     * Vacío (null) cuando el envío no tiene body_text — lo que incluye, sin
+     * ningún caso especial para ello, a los envíos redactados o purgados:
+     * tanto bodyOf() (redacción en origen) como purgeBody() dejan body_text
+     * en null, así que "sin extracto" y "sin cuerpo" son aquí exactamente la
+     * misma condición — no hace falta mirar metadata['redacted'] aparte.
+     *
+     * Si solo hay body_html (sin body_text), tampoco hay extracto: limpiar
+     * HTML en SQL para ese caso queda fuera de alcance a propósito (el coste
+     * de un extracto no debe acercarse al de cargar/parsear el cuerpo).
+     */
+    protected function bodySnippet(): Attribute
+    {
+        return Attribute::make(get: function (): ?string {
+            $raw = $this->attributes['body_snippet_raw'] ?? null;
+
+            if (! $raw) {
+                return null;
+            }
+
+            $clean = trim(preg_replace('/\s+/u', ' ', $raw));
+
+            return $clean === '' ? null : Str::limit($clean, self::BODY_SNIPPET_LENGTH);
         });
     }
 

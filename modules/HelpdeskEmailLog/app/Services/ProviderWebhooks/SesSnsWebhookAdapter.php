@@ -148,6 +148,28 @@ class SesSnsWebhookAdapter implements EmailProviderWebhookAdapter
             )];
         }
 
+        if ($eventType === 'Delivery') {
+            $delivery = $message['delivery'] ?? [];
+            // 'delivery.recipients' es una lista de strings (no de objetos,
+            // a diferencia de bounce/complaint) — así lo documenta AWS.
+            $recipient = $delivery['recipients'][0] ?? null;
+
+            return [new ParsedEmailEvent(
+                type: 'delivered',
+                messageId: is_string($messageId) ? $messageId : null,
+                recipient: is_string($recipient) ? $recipient : null,
+                isHard: false,
+                reason: (string) ($delivery['smtpResponse'] ?? 'SES delivery'),
+                providerEventId: $message['mail']['messageId'] ?? null,
+            )];
+        }
+
+        // SES no notifica 'Open' de forma nativa vía Event Publishing salvo
+        // que se habilite "engagement tracking" (dominio de tracking propio,
+        // reescritura de contenido) en el configuration set — un opt-in
+        // adicional que este conector no asume configurado. No se añade
+        // ningún caso aquí a propósito: el pixel propio del módulo sigue
+        // siendo el único origen de aperturas para SES.
         return [];
     }
 

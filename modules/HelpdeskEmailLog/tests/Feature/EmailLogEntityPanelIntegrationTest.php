@@ -17,8 +17,13 @@ use Tests\TestCase;
  * módulo y TicketEmailLogPanelRendererTest en HelpdeskTickets), sino que el
  * registro real, poblado por HelpdeskTicketsServiceProvider::boot() durante
  * el arranque normal de la app de test, efectivamente conecta con
- * EmailLogController::show() y con la vista preview.blade.php vía una
- * petición HTTP real — la pieza que ningún test unitario por separado prueba.
+ * EmailLogController::show() y con el HTML real vía una petición HTTP real
+ * — la pieza que ningún test unitario por separado prueba.
+ *
+ * Se pide con cabecera AJAX a propósito: el HTML del panel de entidad
+ * todavía solo lo pinta emails/partials/detail-panel.blade.php (el fragmento
+ * AJAX) — emails/index.blade.php (página completa) está pendiente de que el
+ * agente de frontend lo cablee. Ver EmailLogController::renderWorkspace().
  */
 class EmailLogEntityPanelIntegrationTest extends TestCase
 {
@@ -70,7 +75,7 @@ class EmailLogEntityPanelIntegrationTest extends TestCase
         ]);
 
         $this->actingAs($this->viewer())
-            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->get(route('helpdeskemaillog.show', $log->uid), ['X-Requested-With' => 'XMLHttpRequest'])
             ->assertOk()
             ->assertSee('Tickets relacionados de este mismo cliente')
             ->assertSee($otherTicket->ticket_number)
@@ -88,7 +93,7 @@ class EmailLogEntityPanelIntegrationTest extends TestCase
         ]);
 
         $this->actingAs($this->viewer())
-            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->get(route('helpdeskemaillog.show', $log->uid), ['X-Requested-With' => 'XMLHttpRequest'])
             ->assertOk()
             ->assertDontSee('Tickets relacionados de este mismo cliente');
     }

@@ -56,7 +56,7 @@ class EmailLogSettingsControllerTest extends TestCase
             ->get(route('settings.helpdeskemaillog.index'))
             ->assertOk()
             ->assertViewIs('helpdeskemaillog::settings.index')
-            ->assertViewHasAll(['storeBody', 'maxBodyKb', 'retentionDays', 'staleQueuedHours', 'perPage', 'perPageOptions']);
+            ->assertViewHasAll(['storeBody', 'pixelTrackingEnabled', 'maxBodyKb', 'retentionDays', 'staleQueuedHours', 'perPage', 'perPageOptions']);
     }
 
     public function test_update_requires_settings_update_permission(): void
@@ -71,6 +71,7 @@ class EmailLogSettingsControllerTest extends TestCase
         $this->actingAs($this->editor())
             ->patch(route('settings.helpdeskemaillog.update'), $this->validPayload([
                 'store_body' => '1',
+                'pixel_tracking_enabled' => '1',
                 'max_body_bytes' => 256,
                 'retention_days' => 60,
                 'stale_queued_hours' => 12,
@@ -80,6 +81,7 @@ class EmailLogSettingsControllerTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame('1', Setting::get('helpdeskemaillog.store_body'));
+        $this->assertSame('1', Setting::get('helpdeskemaillog.pixel_tracking_enabled'));
         $this->assertSame(256 * 1024, (int) Setting::get('helpdeskemaillog.max_body_bytes'));
         $this->assertSame('60', Setting::get('helpdeskemaillog.retention_days'));
         $this->assertSame('12', Setting::get('helpdeskemaillog.stale_queued_hours'));
@@ -95,6 +97,15 @@ class EmailLogSettingsControllerTest extends TestCase
         $this->assertSame('0', Setting::get('helpdeskemaillog.store_body'));
     }
 
+    public function test_update_pixel_tracking_off_when_select_is_zero(): void
+    {
+        $this->actingAs($this->editor())
+            ->patch(route('settings.helpdeskemaillog.update'), $this->validPayload(['pixel_tracking_enabled' => '0']))
+            ->assertRedirect();
+
+        $this->assertSame('0', Setting::get('helpdeskemaillog.pixel_tracking_enabled'));
+    }
+
     public function test_update_requires_store_body(): void
     {
         $payload = $this->validPayload();
@@ -105,11 +116,21 @@ class EmailLogSettingsControllerTest extends TestCase
             ->assertSessionHasErrors('store_body');
     }
 
+    public function test_update_requires_pixel_tracking_enabled(): void
+    {
+        $payload = $this->validPayload();
+        unset($payload['pixel_tracking_enabled']);
+
+        $this->actingAs($this->editor())
+            ->patch(route('settings.helpdeskemaillog.update'), $payload)
+            ->assertSessionHasErrors('pixel_tracking_enabled');
+    }
+
     public function test_update_validates_required_fields(): void
     {
         $this->actingAs($this->editor())
             ->patch(route('settings.helpdeskemaillog.update'), [])
-            ->assertSessionHasErrors(['max_body_bytes', 'retention_days', 'stale_queued_hours', 'per_page']);
+            ->assertSessionHasErrors(['max_body_bytes', 'retention_days', 'stale_queued_hours', 'per_page', 'pixel_tracking_enabled']);
     }
 
     public function test_update_validates_per_page_must_be_allowed_value(): void
@@ -127,6 +148,7 @@ class EmailLogSettingsControllerTest extends TestCase
     {
         return array_merge([
             'store_body' => '1',
+            'pixel_tracking_enabled' => '1',
             'max_body_bytes' => 512,
             'retention_days' => 90,
             'stale_queued_hours' => 24,

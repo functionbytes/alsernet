@@ -4,6 +4,7 @@ namespace Modules\HelpdeskEmailLog\Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
+use Modules\HelpdeskEmailLog\Enums\EmailOpenSource;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskEmailLog\Services\ProviderWebhookSettingsRepository;
@@ -133,6 +134,43 @@ class EmailProviderWebhookControllerTest extends TestCase
         $this->assertSame(EmailStatus::Complained, $log->fresh()->status);
     }
 
+    public function test_postmark_marks_delivered_at_when_delivery_events_are_enabled(): void
+    {
+        $this->configureProvider('postmark', 'pm-secret', ['process_deliveries' => true]);
+        $log = EmailLog::factory()->create(['message_id' => 'postmark-msg-2', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'postmark']), [
+            'RecordType' => 'Delivery',
+            'MessageID' => 'postmark-msg-2',
+            'Recipient' => 'x@example.test',
+        ], ['X-Postmark-Webhook-Token' => 'pm-secret'])
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'skipped' => 0]);
+
+        $this->assertNotNull($log->fresh()->delivered_at);
+    }
+
+    public function test_postmark_records_a_provider_open_with_geo_ip_and_user_agent(): void
+    {
+        $this->configureProvider('postmark', 'pm-secret', ['process_opens' => true]);
+        $log = EmailLog::factory()->create(['message_id' => 'postmark-msg-3', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'postmark']), [
+            'RecordType' => 'Open',
+            'MessageID' => 'postmark-msg-3',
+            'Recipient' => 'x@example.test',
+            'Geo' => ['IP' => '198.51.100.7'],
+            'UserAgent' => 'Mozilla/5.0 postmark-agent',
+        ], ['X-Postmark-Webhook-Token' => 'pm-secret'])
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'skipped' => 0]);
+
+        $open = $log->fresh()->opens()->sole();
+        $this->assertSame(EmailOpenSource::Provider, $open->source);
+        $this->assertSame('198.51.100.7', $open->ip);
+        $this->assertSame('Mozilla/5.0 postmark-agent', $open->user_agent);
+    }
+
     // --- Mailgun: HMAC-SHA256 sobre timestamp+token ---
 
     private function mailgunSignature(string $secret, int $timestamp, string $token): array
@@ -202,6 +240,101 @@ class EmailProviderWebhookControllerTest extends TestCase
             'signature' => $this->mailgunSignature('mg-signing-key', time() - 3600, 'tok-3'),
             'event-data' => ['event' => 'failed', 'severity' => 'permanent', 'recipient' => 'x@example.test'],
         ])->assertStatus(401);
+    }
+
+    public function test_mailgun_marks_delivered_at_when_delivery_events_are_enabled(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key', ['process_deliveries' => true]);
+        $log = EmailLog::factory()->create(['message_id' => 'mailgun-msg-3@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-4'),
+            'event-data' => [
+                'event' => 'delivered',
+                'recipient' => 'x@example.test',
+                'message' => ['headers' => ['message-id' => 'mailgun-msg-3@webadmin.test']],
+            ],
+        ])->assertOk()->assertJson(['processed' => 1, 'skipped' => 0]);
+
+        $this->assertNotNull($log->fresh()->delivered_at);
+    }
+
+    public function test_mailgun_delivered_event_is_skipped_when_the_toggle_is_disabled(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key', ['process_deliveries' => false]);
+        $log = EmailLog::factory()->create(['message_id' => 'mailgun-msg-4@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-5'),
+            'event-data' => [
+                'event' => 'delivered',
+                'recipient' => 'x@example.test',
+                'message' => ['headers' => ['message-id' => 'mailgun-msg-4@webadmin.test']],
+            ],
+        ])->assertOk()->assertJson(['processed' => 0, 'skipped' => 1]);
+
+        $this->assertNull($log->fresh()->delivered_at);
+    }
+
+    public function test_delivered_at_is_not_overwritten_once_already_set(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key', ['process_deliveries' => true]);
+        $existing = now()->subDay();
+        $log = EmailLog::factory()->create([
+            'message_id' => 'mailgun-msg-6@webadmin.test',
+            'status' => EmailStatus::Sent,
+            'delivered_at' => $existing,
+        ]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-7'),
+            'event-data' => [
+                'event' => 'delivered',
+                'recipient' => 'x@example.test',
+                'message' => ['headers' => ['message-id' => 'mailgun-msg-6@webadmin.test']],
+            ],
+        ])->assertOk();
+
+        $this->assertEquals($existing->timestamp, $log->fresh()->delivered_at->timestamp);
+    }
+
+    public function test_mailgun_records_a_provider_open_with_ip_and_user_agent(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key', ['process_opens' => true]);
+        $log = EmailLog::factory()->create(['message_id' => 'mailgun-msg-5@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-6'),
+            'event-data' => [
+                'event' => 'opened',
+                'recipient' => 'x@example.test',
+                'ip' => '203.0.113.5',
+                'client-info' => ['user-agent' => 'Mozilla/5.0 test-agent'],
+                'message' => ['headers' => ['message-id' => 'mailgun-msg-5@webadmin.test']],
+            ],
+        ])->assertOk()->assertJson(['processed' => 1, 'skipped' => 0]);
+
+        $open = $log->fresh()->opens()->sole();
+        $this->assertSame(EmailOpenSource::Provider, $open->source);
+        $this->assertSame('203.0.113.5', $open->ip);
+        $this->assertSame('Mozilla/5.0 test-agent', $open->user_agent);
+    }
+
+    public function test_mailgun_open_event_is_skipped_when_the_toggle_is_disabled(): void
+    {
+        $this->configureProvider('mailgun', 'mg-signing-key', ['process_opens' => false]);
+        $log = EmailLog::factory()->create(['message_id' => 'mailgun-msg-7@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'mailgun']), [
+            'signature' => $this->mailgunSignature('mg-signing-key', time(), 'tok-8'),
+            'event-data' => [
+                'event' => 'opened',
+                'recipient' => 'x@example.test',
+                'message' => ['headers' => ['message-id' => 'mailgun-msg-7@webadmin.test']],
+            ],
+        ])->assertOk()->assertJson(['processed' => 0, 'skipped' => 1]);
+
+        $this->assertSame(0, $log->fresh()->opens()->count());
     }
 
     // --- SES/SNS: firma RSA verificada contra un certificado descargado ---
@@ -319,6 +452,69 @@ class EmailProviderWebhookControllerTest extends TestCase
         $log->refresh();
         $this->assertSame(EmailStatus::Bounced, $log->status);
         $this->assertSame('hard', $log->bounceType());
+    }
+
+    public function test_ses_marks_delivered_at_from_a_verified_delivery_notification(): void
+    {
+        $this->configureProvider('ses', '', ['process_deliveries' => true]);
+        [$privateKey, $certPem] = $this->generateSigningKeyPair();
+        $log = EmailLog::factory()->create(['message_id' => 'ses-msg-2@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $message = json_encode([
+            'eventType' => 'Delivery',
+            'mail' => ['messageId' => 'ses-internal-id-2', 'commonHeaders' => ['messageId' => 'ses-msg-2@webadmin.test']],
+            'delivery' => ['recipients' => ['x@example.test'], 'smtpResponse' => '250 2.6.0 Message received'],
+        ]);
+
+        $payload = $this->signSnsPayload([
+            'Type' => 'Notification',
+            'MessageId' => 'sns-msg-5',
+            'TopicArn' => 'arn:aws:sns:us-east-1:123:topic',
+            'Timestamp' => now()->toIso8601String(),
+            'SigningCertURL' => 'https://sns.us-east-1.amazonaws.com/cert.pem',
+            'Message' => $message,
+        ], $privateKey);
+
+        Http::fake(['sns.us-east-1.amazonaws.com/cert.pem' => Http::response($certPem, 200)]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'ses']), $payload)
+            ->assertOk()
+            ->assertJson(['processed' => 1, 'skipped' => 0]);
+
+        $this->assertNotNull($log->fresh()->delivered_at);
+    }
+
+    /**
+     * SES no notifica 'Open' de forma nativa salvo "engagement tracking"
+     * (opt-in adicional con dominio de tracking propio) — un eventType
+     * 'Open' que este conector no asume configurado debe quedar sin
+     * procesar, igual que cualquier eventType desconocido.
+     */
+    public function test_ses_ignores_an_open_event_type_because_it_is_not_natively_supported(): void
+    {
+        $this->configureProvider('ses', '', ['process_opens' => true]);
+        [$privateKey, $certPem] = $this->generateSigningKeyPair();
+        EmailLog::factory()->create(['message_id' => 'ses-msg-3@webadmin.test', 'status' => EmailStatus::Sent]);
+
+        $message = json_encode([
+            'eventType' => 'Open',
+            'mail' => ['messageId' => 'ses-internal-id-3', 'commonHeaders' => ['messageId' => 'ses-msg-3@webadmin.test']],
+        ]);
+
+        $payload = $this->signSnsPayload([
+            'Type' => 'Notification',
+            'MessageId' => 'sns-msg-6',
+            'TopicArn' => 'arn:aws:sns:us-east-1:123:topic',
+            'Timestamp' => now()->toIso8601String(),
+            'SigningCertURL' => 'https://sns.us-east-1.amazonaws.com/cert.pem',
+            'Message' => $message,
+        ], $privateKey);
+
+        Http::fake(['sns.us-east-1.amazonaws.com/cert.pem' => Http::response($certPem, 200)]);
+
+        $this->postJson(route('helpdeskemaillog.webhooks.receive', ['provider' => 'ses']), $payload)
+            ->assertOk()
+            ->assertJson(['processed' => 0, 'skipped' => 0]);
     }
 
     public function test_ses_rejects_a_tampered_signature(): void

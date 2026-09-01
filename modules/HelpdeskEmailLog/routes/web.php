@@ -56,6 +56,13 @@ Route::middleware('auth')
             ->get('/export', [EmailLogController::class, 'export'])
             ->name('export');
 
+        // Mismo throttle que /export: exporta SOLO los uids marcados en el
+        // listado (checkbox), vía POST porque una selección larga no cabe
+        // bien en query string GET (mismo motivo que bulk-resend/bulk-destroy).
+        Route::middleware('throttle:6,1')
+            ->post('/export-selected', [EmailLogController::class, 'exportSelected'])
+            ->name('export-selected');
+
         Route::prefix('reputation')->name('reputation.')->group(function () {
             Route::get('/', [EmailReputationController::class, 'index'])->name('index');
             Route::post('/refresh', [EmailReputationController::class, 'refresh'])->name('refresh');

@@ -28,6 +28,7 @@ class EmailLogSettingsController extends Controller
 
         return view('helpdeskemaillog::settings.index', [
             'storeBody' => (bool) $s('store_body', true),
+            'pixelTrackingEnabled' => (bool) $s('pixel_tracking_enabled', true),
             'maxBodyKb' => (int) round((int) $s('max_body_bytes', 524288) / 1024),
             'retentionDays' => (int) $s('retention_days', 90),
             'staleQueuedHours' => (int) $s('stale_queued_hours', 24),
@@ -57,6 +58,7 @@ class EmailLogSettingsController extends Controller
             $validated = $request->validated();
 
             Setting::set(self::PREFIX.'store_body', $validated['store_body']);
+            Setting::set(self::PREFIX.'pixel_tracking_enabled', $validated['pixel_tracking_enabled']);
             Setting::set(self::PREFIX.'max_body_bytes', (int) $validated['max_body_bytes'] * 1024);
             Setting::set(self::PREFIX.'retention_days', $validated['retention_days']);
             Setting::set(self::PREFIX.'stale_queued_hours', $validated['stale_queued_hours']);
