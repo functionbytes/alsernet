@@ -21,6 +21,14 @@ return [
         'today_hint' => 'Registrados hoy',
         'delivery_rate' => 'Tasa de entrega',
         'delivery_rate_hint' => 'Enviados sobre el total',
+        'open_rate' => 'Tasa de apertura',
+        'open_rate_hint' => 'Aperturas sobre :count envíos con seguimiento',
+        'open_rate_no_data' => 'Sin datos',
+        'open_rate_no_data_hint' => 'Ningún envío con seguimiento de apertura todavía',
+        'click_rate' => 'Tasa de clic',
+        'click_rate_hint' => 'Clics sobre :count envíos con seguimiento',
+        'click_rate_no_data' => 'Sin datos',
+        'click_rate_no_data_hint' => 'Ningún envío con seguimiento de clic todavía',
     ],
 
     'trend' => [
@@ -49,6 +57,33 @@ return [
         'per_page_option' => ':n / pág.',
         'search' => 'Buscar',
         'clear' => 'Limpiar filtros',
+        'entity_active' => 'Filtrando por: :entity',
+        'all_engagement' => 'Cualquier interacción',
+        'engagement_opened' => 'Abiertos',
+        'engagement_not_opened' => 'Sin abrir (con seguimiento)',
+        'engagement_clicked' => 'Con clic',
+        'engagement_not_clicked' => 'Sin clic (con seguimiento)',
+    ],
+
+    'view_modes' => [
+        'heading' => 'Modo de vista',
+        'list' => 'Lista',
+        'thread' => 'Hilos',
+        'compact' => 'Compacta',
+        'kanban' => 'Kanban',
+        'thread_count' => ':count en el hilo',
+        'kanban_scope' => 'Mostrando la página actual (:count de :total registros)',
+    ],
+
+    'views' => [
+        'heading' => 'Vistas guardadas',
+        'save_current' => 'Guardar vista actual',
+        'name_placeholder' => 'Nombre de la vista',
+        'no_views' => 'Sin vistas guardadas',
+        'cannot_delete' => 'No puedes eliminar esta vista.',
+        'deleted' => 'Vista eliminada.',
+        'make_public_confirm' => '¿Hacer esta vista pública para todo el equipo?',
+        'public_indicator' => 'Vista pública',
     ],
 
     'table' => [
@@ -57,10 +92,14 @@ return [
         'module' => 'Módulo',
         'status' => 'Estado',
         'date' => 'Fecha',
+        'engagement' => 'Interacción',
         'actions' => 'Acciones',
         'empty' => 'No se encontraron emails registrados',
         'select_all' => 'Seleccionar todo',
         'has_attachments' => 'Con adjuntos',
+        'not_tracked' => 'Este envío no tiene seguimiento de apertura ni de clics',
+        'opens_count' => ':count apertura|:count aperturas',
+        'clicks_count' => ':count clic|:count clics',
     ],
 
     'actions' => [
@@ -73,6 +112,7 @@ return [
         'print' => 'Imprimir',
         'bulk_resend' => 'Reenviar seleccionados',
         'download' => 'Descargar',
+        'download_eml' => 'Descargar .eml',
         'copy_id' => 'Copiar Message-ID',
         'resend_to' => 'Reenviar a otra dirección',
         'purge' => 'Purgar contenido',
@@ -82,6 +122,27 @@ return [
         'confirm_title' => 'Purgar contenido del email',
         'confirm' => 'Se eliminará el cuerpo (HTML/texto) de este email de forma permanente. Los metadatos (asunto, destinatarios, estado) se conservan. ¿Continuar?',
         'done' => 'Contenido del email purgado.',
+    ],
+
+    'bounce_mailboxes' => [
+        'created' => 'Buzón de rebote añadido.',
+        'updated' => 'Buzón de rebote actualizado.',
+        'deleted' => 'Buzón de rebote eliminado.',
+    ],
+
+    'suppressions' => [
+        'created' => 'Dirección añadida a la lista de supresión.',
+        'deleted' => 'Dirección quitada de la lista de supresión.',
+        'reason' => [
+            'hard_bounce' => 'Rebote permanente',
+            'complaint' => 'Queja de spam',
+            'unsubscribed' => 'Baja voluntaria',
+            'manual' => 'Manual',
+        ],
+    ],
+
+    'reputation' => [
+        'refreshed' => 'Reputación de :domain actualizada.',
     ],
 
     'pagination' => [
@@ -119,6 +180,7 @@ return [
         'failed' => 'Fallido',
         'bounced' => 'Rebotado',
         'complained' => 'Marcado como spam',
+        'suppressed' => 'Bloqueado (supresión)',
     ],
 
     'preview' => [
@@ -153,8 +215,55 @@ return [
         'related_entity_hint' => 'Registro vinculado a este email',
         'related_emails' => 'Emails relacionados',
         'related_emails_hint' => 'Mismo destinatario o entidad',
+        'entity_panel_title' => 'Hilo relacionado',
         'no_related' => 'Sin emails relacionados.',
         'purged_note' => 'El contenido de este email fue purgado; solo se conservan los metadatos.',
+        'trace' => [
+            'title' => 'Traza de envío',
+            'hint' => 'Qué se sabe realmente de este envío, paso a paso',
+            'queued' => 'Encolado',
+            'done' => 'Completado',
+            'smtp' => 'Aceptado por el servidor SMTP',
+            'failed' => 'Fallido',
+            'pending' => 'Esperando confirmación',
+            'stale' => 'lleva más de :hours h sin confirmarse',
+            'delivery' => 'Confirmación de entrega',
+            'no_delivery_data' => 'Sin datos: no hay proveedor de correo con webhooks de entrega configurado.',
+            'opened' => 'Apertura',
+            'opened_count' => ':count apertura|:count aperturas',
+            'not_opened_yet' => 'Aún sin aperturas registradas',
+            'clicked' => 'Clic',
+            'clicked_count' => ':count clic|:count clics',
+            'not_clicked_yet' => 'Aún sin clics registrados',
+        ],
+        'raw' => [
+            'title' => 'Mensaje original',
+            'hint' => 'Cabeceras MIME tal como llegaron al destinatario',
+            'not_captured' => 'Las cabeceras completas no se capturaron para este envío (registro anterior a esta función, o contenido purgado/redactado).',
+        ],
+        'opens' => [
+            'title' => 'Aperturas',
+            'hint' => 'Registradas por el píxel de seguimiento',
+            'count' => 'Total de aperturas',
+            'first_last' => 'Primera — última',
+            'detail' => 'Detalle',
+            'honesty_note' => 'Apple Mail Privacy Protection y el proxy de imágenes de Gmail precargan el píxel automáticamente aunque nadie abra el correo — estas aperturas no garantizan una lectura humana real.',
+            'likely_bot_count' => ':count posible bot|:count posibles bots',
+            'likely_bot_hint' => 'User-Agent de un escáner/proxy conocido, o la apertura llegó demasiado rápido tras el envío para que un humano la haya leído.',
+        ],
+        'clicks' => [
+            'title' => 'Clics',
+            'hint' => 'Registrados por los enlaces reescritos del correo',
+            'count' => 'Total de clics',
+            'unique_links' => 'Enlaces distintos',
+            'first_last' => 'Primero — último',
+            'detail' => 'Detalle',
+            'honesty_note' => 'Algunos clientes de correo y filtros de seguridad corporativos (Microsoft Safe Links, escáneres antivirus) siguen los enlaces automáticamente antes de que el destinatario los abra — estos clics no garantizan una interacción humana real.',
+            'likely_bot_count' => ':count posible bot|:count posibles bots',
+            'likely_bot_hint' => 'User-Agent de un escáner/proxy conocido, o el clic llegó demasiado rápido tras el envío para que un humano lo haya hecho.',
+        ],
+        // Compartida entre el badge de aperturas y el de clics (misma etiqueta).
+        'likely_bot_badge' => 'posible bot',
     ],
 
     'resend' => [
@@ -192,6 +301,8 @@ return [
         'module' => 'Módulo',
         'entity' => 'Entidad',
         'mailable' => 'Mailable',
+        'opens' => 'Aperturas',
+        'clicks' => 'Clics',
         'error' => 'Error',
     ],
 ];

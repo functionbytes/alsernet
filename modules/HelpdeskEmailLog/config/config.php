@@ -19,6 +19,14 @@ return [
     'max_body_bytes' => env('EMAIL_LOG_MAX_BODY_BYTES', 512 * 1024),
 
     /*
+    | Tamaño máximo (en bytes) del bloque de cabeceras MIME que se almacena
+    | (raw_headers). Mucho menor que max_body_bytes: un bloque de cabeceras
+    | nunca debería acercarse a ese tamaño salvo un caso patológico de listas
+    | de Cc/Bcc enormes.
+    */
+    'max_header_bytes' => env('EMAIL_LOG_MAX_HEADER_BYTES', 64 * 1024),
+
+    /*
     | Días de retención. Los registros más antiguos se eliminan con
     | `php artisan email-logs:prune`. 0 o null desactiva la purga.
     */
@@ -47,7 +55,7 @@ return [
     |   'Order'  => 'ecommerce.orders.show',
     */
     'entity_routes' => [
-        // 'EntityType' => 'route.name',
+        'Modules\\HelpdeskTickets\\Models\\Ticket' => 'manager.helpdesk.tickets.show',
     ],
 
     /*
@@ -96,4 +104,38 @@ return [
     'redact_body_for_modules' => [
         // 'Auth',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reputación de dominio (SPF/DKIM/DMARC) y tasas de rebote/queja
+    |--------------------------------------------------------------------------
+    | SPF/DMARC se consultan por DNS TXT (dns_get_record, PHP puro, sin
+    | dependencia nueva) — cacheados este número de horas para no repetir la
+    | consulta en cada carga del panel.
+    */
+    'reputation_dns_cache_hours' => env('EMAIL_LOG_REPUTATION_DNS_CACHE_HOURS', 24),
+
+    /*
+    | DKIM no es autodescubrible sin conocer el selector — se prueban estos
+    | selectores comunes además de los configurados por dominio, pero un
+    | selector no encontrado se reporta como "no verificable", nunca como
+    | "DKIM ausente" (evita un falso negativo).
+    */
+    'reputation_common_dkim_selectors' => ['default', 'selector1', 'selector2', 'google', 'k1', 'mandrill', 'smtp'],
+
+    /*
+    | Ventana de días sobre la que se calculan las tasas de rebote/queja
+    | (EmailLog::reputationStats()).
+    */
+    'reputation_window_days' => env('EMAIL_LOG_REPUTATION_WINDOW_DAYS', 30),
+
+    /*
+    | Umbrales de alerta (%). "warning" solo colorea el dashboard; "critical"
+    | además dispara ReputationThresholdBreached (con debounce, ver
+    | CheckEmailReputationCommand) al comando diario email-logs:check-reputation.
+    */
+    'bounce_rate_warning_pct' => env('EMAIL_LOG_BOUNCE_RATE_WARNING_PCT', 2.0),
+    'bounce_rate_critical_pct' => env('EMAIL_LOG_BOUNCE_RATE_CRITICAL_PCT', 5.0),
+    'complaint_rate_warning_pct' => env('EMAIL_LOG_COMPLAINT_RATE_WARNING_PCT', 0.05),
+    'complaint_rate_critical_pct' => env('EMAIL_LOG_COMPLAINT_RATE_CRITICAL_PCT', 0.1),
 ];

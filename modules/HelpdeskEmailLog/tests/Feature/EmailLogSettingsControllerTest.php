@@ -12,7 +12,11 @@ class EmailLogSettingsControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' imprescindible: EmailLogSettingsController escribe vía
+    // Modules\Core\Models\Setting (conexión default = mysql en este entorno)
+    // — sin declararla, cada Setting::set() escribe una fila REAL sin
+    // rollback (mismo gotcha documentado en BounceMailboxesControllerTest).
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected function setUp(): void
     {
@@ -65,13 +69,13 @@ class EmailLogSettingsControllerTest extends TestCase
     public function test_update_saves_settings(): void
     {
         $this->actingAs($this->editor())
-            ->patch(route('settings.helpdeskemaillog.update'), [
+            ->patch(route('settings.helpdeskemaillog.update'), $this->validPayload([
                 'store_body' => '1',
                 'max_body_bytes' => 256,
                 'retention_days' => 60,
                 'stale_queued_hours' => 12,
                 'per_page' => 50,
-            ])
+            ]))
             ->assertRedirect()
             ->assertSessionHas('success');
 
@@ -127,6 +131,18 @@ class EmailLogSettingsControllerTest extends TestCase
             'retention_days' => 90,
             'stale_queued_hours' => 24,
             'per_page' => 25,
+            'reputation_domains' => '',
+            'reputation_window_days' => 30,
+            'bounce_rate_warning_pct' => 2,
+            'bounce_rate_critical_pct' => 5,
+            'complaint_rate_warning_pct' => 0.1,
+            'complaint_rate_critical_pct' => 0.5,
+            'provider_webhook_provider' => '',
+            'provider_webhook_secret' => '',
+            'provider_webhook_process_bounces' => '1',
+            'provider_webhook_process_complaints' => '1',
+            'provider_webhook_process_deliveries' => '0',
+            'provider_webhook_process_opens' => '0',
         ], $overrides);
     }
 }

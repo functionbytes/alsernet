@@ -9,6 +9,7 @@ enum EmailStatus: string
     case Failed = 'failed';
     case Bounced = 'bounced';
     case Complained = 'complained';
+    case Suppressed = 'suppressed';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum EmailStatus: string
             self::Failed => __('helpdeskemaillog::emaillog.status.failed'),
             self::Bounced => __('helpdeskemaillog::emaillog.status.bounced'),
             self::Complained => __('helpdeskemaillog::emaillog.status.complained'),
+            self::Suppressed => __('helpdeskemaillog::emaillog.status.suppressed'),
         };
     }
 
@@ -29,6 +31,7 @@ enum EmailStatus: string
             self::Failed => 'danger',
             self::Bounced => 'danger',
             self::Complained => 'danger',
+            self::Suppressed => 'secondary',
         };
     }
 

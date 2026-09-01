@@ -66,6 +66,19 @@ class EmailLogFactory extends Factory
         return $this->state(fn () => ['module' => $module]);
     }
 
+    /**
+     * Envío con seguimiento de apertura/clic activado (ver
+     * EmailLog::hasOpenTracking()/hasClickTracking()) — no crea por sí sola
+     * ninguna fila en email_log_opens/email_log_links/email_log_clicks, solo
+     * marca los flags que hacen que EmailLogController los consulte.
+     */
+    public function tracked(): static
+    {
+        return $this->state(fn () => [
+            'metadata' => ['open_tracking_enabled' => true, 'click_tracking_enabled' => true],
+        ]);
+    }
+
     public function withoutModule(): static
     {
         return $this->state(fn () => [

@@ -47,7 +47,7 @@
     --evx-text-muted: #a1a1aa;
     --evx-primary: #90bb13;
     --evx-primary-dark: #7ba110;
-    --evx-danger: #dc2626;
+    --evx-danger: #3730a3;
 
     max-width: 1120px;
     margin: 0 auto;
@@ -348,8 +348,8 @@
 }
 
 .evx-status.failed {
-    background: #fef2f2;
-    color: #991b1b;
+    background: #f4f4f5;
+    color: #52525b;
 }
 
 .evx-status.queued {
@@ -358,13 +358,18 @@
 }
 
 .evx-status.bounced {
-    background: #fff1f2;
-    color: #9f1239;
+    background: #f7fee7;
+    color: #4f6b0a;
 }
 
 .evx-status.complained {
-    background: #fdf2f8;
-    color: #831843;
+    background: #e4e4e7;
+    color: #3f3f46;
+}
+
+.evx-status.suppressed {
+    background: #f3f4f6;
+    color: #4b5563;
 }
 
 /* Tag neutro (módulo, mailable) */
@@ -383,6 +388,48 @@
     font-family: 'JetBrains Mono', ui-monospace, monospace;
     font-size: 10px;
     color: var(--evx-text-soft);
+}
+
+/* Badges de interacción (aperturas/clics) — columna "Interacción" de la
+   tabla y su equivalente en línea en Hilos/Kanban. Gris cuando el conteo es
+   0 (dato real, no ausencia de tracking), verde en cuanto hay al menos 1. */
+.evx-td-engagement {
+    white-space: nowrap;
+}
+
+.evx-engagement-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--evx-subtle);
+    color: var(--evx-text-muted);
+    margin-right: 4px;
+}
+
+.evx-engagement-badge i {
+    font-size: 9px;
+}
+
+.evx-engagement-badge.is-active {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.evx-engagement-inline {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.evx-engagement-inline i {
+    font-size: 9px;
+    margin-right: 2px;
 }
 
 /* Acciones */
@@ -441,7 +488,7 @@
 }
 
 .evx-btn-danger:hover {
-    background: #fef2f2;
+    background: #eef2ff;
     border-color: var(--evx-danger);
 }
 
@@ -450,9 +497,9 @@
     font-size: 11.5px;
     padding: 9px 11px;
     border-radius: 7px;
-    background: #fef2f2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
     word-break: break-word;
     line-height: 1.5;
 }
@@ -604,7 +651,7 @@
     --evx-text-muted: #a1a1aa;
     --evx-primary: #90bb13;
     --evx-primary-dark: #7ba110;
-    --evx-danger: #dc2626;
+    --evx-danger: #3730a3;
 }
 
 .emaillog-index {
@@ -706,8 +753,12 @@
     color: #16a34a;
 }
 
+/* Oliva oscuro, no rojo — mismo tono que .evx-kcol-dot de bounced/failed en
+   el Kanban (ver KANBAN_COLORS en emails/index.blade.php), por consistencia
+   dentro de la misma página. No se toca --evx-danger (variable compartida
+   con .evx-btn-danger, fuera del alcance de este fix puntual). */
 .evx-stat.accent-danger .evx-stat-value {
-    color: var(--evx-danger);
+    color: #4f6b0a;
 }
 
 .evx-stat.accent-warning .evx-stat-value {
@@ -1108,4 +1159,307 @@
     .emaillog-settings .evx-field-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Vistas guardadas */
+.evx-saved-views-body {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.evx-saved-views-label {
+    white-space: nowrap;
+}
+
+.evx-saved-views-list {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.evx-view-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px 4px 12px;
+    border-radius: 999px;
+    background: var(--evx-subtle);
+    font-size: 12px;
+}
+
+.evx-view-chip a {
+    color: var(--evx-text);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.evx-view-chip a:hover {
+    color: var(--evx-primary);
+}
+
+.evx-view-chip button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--evx-text-muted);
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.evx-view-chip button:hover {
+    background: var(--evx-border);
+    color: var(--evx-text);
+}
+
+/* Indicador icon-only de vista pública (sin texto, ver evx-view-chip render()
+   en index.blade.php) — misma paleta muted que evx-clip. */
+.evx-chip-public {
+    color: var(--evx-text-muted);
+    font-size: 10px;
+}
+
+/* ============================================================
+   Selector de modo de vista (Lista / Hilos / Compacta / Kanban)
+   ============================================================ */
+#evx-mode-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--evx-subtle);
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.evx-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    color: var(--evx-text-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: .12s;
+}
+
+.evx-mode-btn i {
+    font-size: 11px;
+}
+
+.evx-mode-btn:hover {
+    color: var(--evx-text);
+}
+
+.evx-mode-btn.on {
+    background: var(--evx-primary);
+    color: #fff;
+}
+
+/* Utilidad genérica: oculta el contenedor de un modo de vista
+   no activo. El JS la añade/quita en #evx-list-view,
+   #evx-thread-view y #evx-kanban-view al cambiar de modo. */
+.evx-mode-hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   Modo Hilos
+   ============================================================ */
+#evx-thread-view {
+    padding: 14px 16px;
+    /* mismo padding que .evx-block-body */
+    display: flex;
+    flex-direction: column;
+}
+
+.evx-thread-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 2px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+#evx-thread-view .evx-thread-row:last-child {
+    border-bottom: 0;
+}
+
+.evx-thread-row:hover {
+    background: var(--evx-bg-soft);
+}
+
+.evx-thread-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-thread-subject {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--evx-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-thread-recipient {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-thread-date {
+    font-size: 11px;
+    color: var(--evx-text-soft);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.evx-thread-count {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--evx-subtle);
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Modo Kanban
+   ============================================================ */
+#evx-kanban-view {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    /* mismo patrón que .evx-table-wrap: scroll horizontal propio,
+       la página nunca scrollea horizontal completa */
+}
+
+.evx-kcol {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--evx-subtle);
+    border-radius: 10px;
+}
+
+.evx-kcol-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--evx-border);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--evx-text);
+}
+
+.evx-kcol-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    /* el color lo pone JS inline (style="background:...") */
+}
+
+.evx-kcol-count {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+}
+
+.evx-kcol-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    max-height: 62vh;
+    overflow-y: auto;
+}
+
+.evx-kcard {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 10px;
+    padding: 10px 11px;
+    /* mismo nivel de elevación que .evx-card */
+    box-shadow: 0 1px 3px rgba(24, 24, 27, .05), 0 12px 32px -14px rgba(24, 24, 27, .18);
+    cursor: pointer;
+    transition: .12s;
+}
+
+.evx-kcard:hover {
+    border-color: var(--evx-border-strong);
+}
+
+.evx-kcard-subject {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--evx-text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.evx-kcard-recipient {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-kcard-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--evx-text-muted);
+}
+
+/* ============================================================
+   Densidad compacta (aplica sobre #evx-list-view)
+   ============================================================ */
+#evx-list-view.evx-compact .evx-table tbody td {
+    padding-top: 5.5px;
+    padding-bottom: 5.5px;
+}
+
+#evx-list-view.evx-compact .evx-subject-sub {
+    display: none;
 }

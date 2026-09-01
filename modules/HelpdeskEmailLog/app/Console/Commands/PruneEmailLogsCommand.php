@@ -3,7 +3,6 @@
 namespace Modules\HelpdeskEmailLog\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
@@ -41,7 +40,7 @@ class PruneEmailLogsCommand extends Command
             ]);
 
         if ($marked > 0) {
-            Cache::forget('helpdeskemaillog:stats');
+            EmailLog::forgetDashboardCaches();
             $this->components->info("Marked {$marked} stale queued entr".($marked === 1 ? 'y' : 'ies').' as failed.');
         }
     }
@@ -69,8 +68,7 @@ class PruneEmailLogsCommand extends Command
         } while ($deleted > 0);
 
         if ($total > 0) {
-            Cache::forget('helpdeskemaillog:stats');
-            Cache::forget('helpdeskemaillog:modules');
+            EmailLog::forgetDashboardCaches();
         }
 
         $this->components->info("Pruned {$total} email log entr".($total === 1 ? 'y' : 'ies')." older than {$days} days.");

@@ -9,11 +9,16 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\HelpdeskEmailLog\Console\Commands\CheckEmailReputationCommand;
+use Modules\HelpdeskEmailLog\Console\Commands\ProcessEmailBouncesCommand;
 use Modules\HelpdeskEmailLog\Console\Commands\PruneEmailLogsCommand;
+use Modules\HelpdeskEmailLog\Listeners\EnforceEmailSuppression;
 use Modules\HelpdeskEmailLog\Listeners\LogEmailQueued;
 use Modules\HelpdeskEmailLog\Listeners\LogEmailSent;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Observers\EmailLogObserver;
 use Modules\HelpdeskEmailLog\Policies\EmailLogPolicy;
+use Modules\HelpdeskEmailLog\Services\EntityPanelRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 
@@ -36,10 +41,16 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->moduleName, 'database/migrations'));
         $this->registerRoutes();
         $this->registerListeners();
+        $this->registerObservers();
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerPolicies();
         $this->registerMenus();
+    }
+
+    protected function registerObservers(): void
+    {
+        EmailLog::observe(EmailLogObserver::class);
     }
 
     protected function registerPolicies(): void
@@ -47,7 +58,17 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
         Gate::policy(EmailLog::class, EmailLogPolicy::class);
     }
 
-    public function register(): void {}
+    public function register(): void
+    {
+        // Singleton en register() (no boot()) a propósito: módulos satélite
+        // (HelpdeskTickets, etc.) llaman a app(EntityPanelRegistry::class)
+        // ->register(...) desde SU PROPIO boot() para registrar el panel de
+        // su entidad — como todos los register() de todos los providers
+        // corren antes que cualquier boot(), el singleton ya existe sin
+        // importar el orden de carga de módulos. Ver el docblock de la
+        // clase para el detalle completo.
+        $this->app->singleton(EntityPanelRegistry::class);
+    }
 
     protected function registerConfig(): void
     {
@@ -97,24 +118,47 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
 
     protected function registerListeners(): void
     {
+        // Orden importa: LogEmailQueued primero (crea la fila 'queued' y
+        // SIEMPRE deja pasar el evento, es void). EnforceEmailSuppression
+        // corre después y puede cancelar el envío devolviendo false — ver
+        // el docblock de esa clase para el porqué del orden.
         Event::listen(MessageSending::class, LogEmailQueued::class);
+        Event::listen(MessageSending::class, EnforceEmailSuppression::class);
         Event::listen(MessageSent::class, LogEmailSent::class);
     }
 
     protected function registerCommands(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([PruneEmailLogsCommand::class]);
+            $this->commands([PruneEmailLogsCommand::class, ProcessEmailBouncesCommand::class, CheckEmailReputationCommand::class]);
         }
     }
 
     protected function registerCommandSchedules(): void
     {
         $this->app->booted(function () {
-            $this->app->make(Schedule::class)
-                ->command('email-logs:prune')
+            $schedule = $this->app->make(Schedule::class);
+
+            $schedule->command('email-logs:prune')
                 ->daily()
                 ->at('03:30')
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground();
+
+            // Mismo cron que documents:process-bounces antes (cada 10 min) —
+            // el comando ya no-opea en silencio sin buzones habilitados, así
+            // que no hace falta gatear el schedule con un Setting.
+            $schedule->command('email-logs:process-bounces')
+                ->everyTenMinutes()
+                ->withoutOverlapping()
+                ->onOneServer()
+                ->runInBackground()
+                ->appendOutputTo(storage_path('logs/email-log-bounces.log'));
+
+            $schedule->command('email-logs:check-reputation')
+                ->daily()
+                ->at('06:00')
                 ->withoutOverlapping()
                 ->onOneServer()
                 ->runInBackground();
@@ -131,23 +175,42 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
             return;
         }
 
-        NavService::registerSidebar('helpdesk', [
-            'title' => 'Email',
+        // "Log de emails" y "Reputación" se movieron por completo a Ajustes >
+        // Helpdesk · Registro de correo: son auditoría/config del envío, no
+        // una bandeja de trabajo del día a día — ya no tienen sección propia
+        // en el menú operativo de Helpdesk.
+        NavService::registerSidebar('settings', [
+            'title' => 'Helpdesk · Registro de correo',
+            'order' => 240,
             'items' => [
                 [
                     'label' => 'Log de emails',
+                    'route' => 'settings.helpdeskemaillog.index',
+                    'permission' => 'helpdeskemaillog.settings.view',
+                ],
+                [
+                    // Distinto del anterior: aquel es la configuración
+                    // (retención, etc.), este es el visor/historial real de
+                    // los emails enviados con filtros y vistas guardadas.
+                    'label' => 'Historial de envíos',
                     'route' => 'helpdeskemaillog.index',
-                    'icon' => 'fas fa-envelope-open-text',
                     'permission' => 'helpdeskemaillog.view',
                 ],
-            ],
-        ]);
-
-        NavService::addItemsToSection('settings', 'Helpdesk — Canales', [
-            [
-                'label' => 'Log de emails',
-                'route' => 'settings.helpdeskemaillog.index',
-                'permission' => 'helpdeskemaillog.settings.view',
+                [
+                    'label' => 'Reputación',
+                    'route' => 'helpdeskemaillog.reputation.index',
+                    'permission' => 'helpdeskemaillog.view',
+                ],
+                [
+                    'label' => 'Buzones de rebote',
+                    'route' => 'settings.helpdeskemaillog.bounce-mailboxes.index',
+                    'permission' => 'helpdeskemaillog.settings.view',
+                ],
+                [
+                    'label' => 'Lista de supresión',
+                    'route' => 'settings.helpdeskemaillog.suppressions.index',
+                    'permission' => 'helpdeskemaillog.settings.view',
+                ],
             ],
         ]);
     }

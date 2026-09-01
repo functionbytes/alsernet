@@ -17,6 +17,10 @@ use Modules\HelpdeskEmailLog\Http\Requests\BulkResendEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\ResendEmailLogRequest;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Models\EmailLogClick;
+use Modules\HelpdeskEmailLog\Models\EmailLogOpen;
+use Modules\HelpdeskEmailLog\Services\EntityPanelRegistry;
+use Modules\HelpdeskEmailLog\Support\EngagementBotHeuristics;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -42,7 +46,11 @@ class EmailLogController extends Controller
         $perPage = $this->resolvePerPage($request);
         [$sortCol, $sortDir] = $this->resolveSort($request);
 
+        // withCount en vez de N+1 por fila: genera una única subquery
+        // correlacionada por columna (Laravel la resuelve también para
+        // hasManyThrough), sin más peso que una columna extra en el SELECT.
         $logs = $this->applyFilters(EmailLog::query()->select(EmailLog::LIST_COLUMNS), $request)
+            ->withCount(['opens', 'clicks'])
             ->orderBy($sortCol, $sortDir)
             ->orderBy('id', $sortDir)
             ->paginate($perPage)
@@ -97,7 +105,111 @@ class EmailLogController extends Controller
         return view('helpdeskemaillog::emails.preview', [
             'log' => $emailLog,
             'related' => $this->relatedEmails($emailLog),
+            'opensSummary' => $this->opensSummary($emailLog),
+            'clicksSummary' => $this->clicksSummary($emailLog),
+            // Panel HTML inyectado por el módulo dueño de la entidad (p. ej.
+            // HelpdeskTickets pintando el hilo de la conversación) — null si
+            // no hay entidad vinculada o ningún módulo satélite se registró
+            // para ese entity_type. Ver EntityPanelRegistry.
+            'entityPanel' => app(EntityPanelRegistry::class)->renderFor($emailLog),
         ]);
+    }
+
+    /**
+     * Resumen de aperturas para el detalle — null si este envío nunca tuvo
+     * píxel de seguimiento (no confundir con "0 aperturas", que sí es un
+     * dato real). Ver EmailLog::hasOpenTracking().
+     *
+     * @return array{count: int, likely_bot_count: int, first: ?Carbon, last: ?Carbon, recent: Collection<int, EmailLogOpen>}|null
+     */
+    private function opensSummary(EmailLog $emailLog): ?array
+    {
+        if (! $emailLog->hasOpenTracking()) {
+            return null;
+        }
+
+        $agg = EmailLogOpen::query()
+            ->where('email_log_id', $emailLog->id)
+            ->selectRaw('COUNT(*) as total, MIN(opened_at) as first_opened_at, MAX(opened_at) as last_opened_at')
+            ->first();
+
+        $recent = $emailLog->opens()->latest('opened_at')->limit(50)->get();
+
+        return [
+            'count' => (int) ($agg->total ?? 0),
+            // Sobre las cargadas (hasta 50) por rendimiento — ver
+            // annotateLikelyBot(). Casi siempre coincide con el total real:
+            // pocos envíos superan 50 aperturas.
+            'likely_bot_count' => $this->annotateLikelyBot($recent, 'opened_at', $emailLog->sent_at),
+            'first' => $agg->first_opened_at ? Carbon::parse($agg->first_opened_at) : null,
+            'last' => $agg->last_opened_at ? Carbon::parse($agg->last_opened_at) : null,
+            'recent' => $recent,
+        ];
+    }
+
+    /**
+     * Resumen de clics para el detalle — null si este envío nunca tuvo sus
+     * enlaces reescritos para seguimiento (no confundir con "0 clics", que sí
+     * es un dato real). Ver EmailLog::hasClickTracking().
+     *
+     * @return array{count: int, unique_links: int, likely_bot_count: int, first: ?Carbon, last: ?Carbon, recent: Collection<int, EmailLogClick>}|null
+     */
+    private function clicksSummary(EmailLog $emailLog): ?array
+    {
+        if (! $emailLog->hasClickTracking()) {
+            return null;
+        }
+
+        $agg = EmailLogClick::query()
+            ->join('email_log_links', 'email_log_links.id', '=', 'email_log_clicks.email_log_link_id')
+            ->where('email_log_links.email_log_id', $emailLog->id)
+            ->selectRaw('COUNT(*) as total, COUNT(DISTINCT email_log_clicks.email_log_link_id) as unique_links, MIN(clicked_at) as first_clicked_at, MAX(clicked_at) as last_clicked_at')
+            ->first();
+
+        // select() explícito sobre la relación hasManyThrough para traer
+        // también la URL del enlace (columna de la tabla intermedia,
+        // "link_url" en vez de "url" para no chocar con ninguna otra
+        // columna propia de email_log_clicks).
+        $recent = $emailLog->clicks()
+            ->select('email_log_clicks.*', 'email_log_links.url as link_url')
+            ->latest('clicked_at')
+            ->limit(50)
+            ->get();
+
+        return [
+            'count' => (int) ($agg->total ?? 0),
+            'unique_links' => (int) ($agg->unique_links ?? 0),
+            'likely_bot_count' => $this->annotateLikelyBot($recent, 'clicked_at', $emailLog->sent_at),
+            'first' => $agg->first_clicked_at ? Carbon::parse($agg->first_clicked_at) : null,
+            'last' => $agg->last_clicked_at ? Carbon::parse($agg->last_clicked_at) : null,
+            'recent' => $recent,
+        ];
+    }
+
+    /**
+     * Marca (atributo transitorio `likely_bot`, nunca persistido) cada
+     * evento que EngagementBotHeuristics considera un probable bot/proxy —
+     * nunca se descarta el dato, solo se etiqueta, mismo criterio de
+     * honestidad que el resto del módulo (ver notas de Apple MPP/proxy de
+     * Gmail ya existentes en la vista).
+     *
+     * @param  Collection<int, EmailLogOpen|EmailLogClick>  $events
+     * @return int cuántos de $events se marcaron como probable bot
+     */
+    private function annotateLikelyBot(Collection $events, string $dateField, ?Carbon $sentAt): int
+    {
+        $botCount = 0;
+
+        foreach ($events as $event) {
+            $isBot = EngagementBotHeuristics::isLikelyBot($event->user_agent, $sentAt, $event->{$dateField});
+            $event->setAttribute('likely_bot', $isBot);
+
+            if ($isBot) {
+                $botCount++;
+            }
+        }
+
+        return $botCount;
     }
 
     /**
@@ -235,6 +347,63 @@ class EmailLogController extends Controller
         ]);
     }
 
+    /**
+     * Descarga un .eml reconstruido desde raw_headers + body_html/body_text
+     * — no se guarda un raw_source completo aparte (duplicaría el cuerpo,
+     * que ya vive en su propia columna sujeta a truncado/redacción). Filas
+     * sin raw_headers (creadas antes de esta columna, o con el cuerpo
+     * purgado) reciben cabeceras mínimas sintetizadas desde las columnas
+     * estructuradas, marcadas explícitamente como reconstrucción.
+     */
+    public function downloadRaw(EmailLog $emailLog): Response
+    {
+        $this->authorize('view', $emailLog);
+
+        $hasContent = $emailLog->raw_headers !== null || $emailLog->body_html || $emailLog->body_text;
+
+        abort_if(! $hasContent, 404);
+
+        $this->logActivity('downloaded_raw', $emailLog);
+
+        $filename = 'email-'.substr($emailLog->uid, 0, 8).'.eml';
+
+        return response($this->buildEmlContent($emailLog), 200, [
+            'Content-Type' => 'message/rfc822',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
+    }
+
+    private function buildEmlContent(EmailLog $emailLog): string
+    {
+        $headers = $emailLog->raw_headers;
+
+        if ($headers === null) {
+            $lines = [
+                'X-HelpdeskEmailLog-Note: Cabeceras reconstruidas — no es una captura verbatim del envío original.',
+                'From: '.($emailLog->from_name ? "{$emailLog->from_name} <{$emailLog->from_address}>" : $emailLog->from_address),
+                'To: '.implode(', ', $emailLog->to_addresses ?? []),
+            ];
+
+            if ($emailLog->message_id) {
+                $lines[] = "Message-ID: <{$emailLog->message_id}>";
+            }
+
+            $lines[] = 'Subject: '.$emailLog->subject;
+            $lines[] = 'Date: '.($emailLog->created_at?->toRfc2822String() ?? '');
+            $headers = implode("\r\n", $lines);
+        }
+
+        $body = $emailLog->body_html ?: ($emailLog->body_text ?? '');
+
+        if (! empty($emailLog->attachments)) {
+            // Los adjuntos solo guardan metadatos (nombre/tamaño/tipo), nunca
+            // el binario — un .eml reconstruido no puede incluirlos de verdad.
+            $body .= "\r\n\r\n[Nota: este .eml no incluye los adjuntos originales — solo se conservaron sus metadatos.]";
+        }
+
+        return $headers."\r\n\r\n".$body;
+    }
+
     public function destroy(EmailLog $emailLog): RedirectResponse
     {
         $this->authorize('delete', $emailLog);
@@ -256,8 +425,7 @@ class EmailLogController extends Controller
         $deleted = EmailLog::query()->whereIn('uid', $request->validated('uids'))->delete();
 
         if ($deleted > 0) {
-            Cache::forget('helpdeskemaillog:stats');
-            Cache::forget('helpdeskemaillog:modules');
+            EmailLog::forgetDashboardCaches();
         }
 
         $this->logActivity('bulk_deleted', null, ['count' => $deleted]);
@@ -272,10 +440,11 @@ class EmailLogController extends Controller
         $columns = [
             'id', 'uid', 'created_at', 'sent_at', 'status', 'subject', 'from_address',
             'to_addresses', 'cc_addresses', 'module', 'entity_type', 'entity_id',
-            'mailable_class', 'error_message',
+            'mailable_class', 'error_message', 'metadata',
         ];
 
         $rows = $this->applyFilters(EmailLog::query()->select($columns), $request)
+            ->withCount(['opens', 'clicks'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->limit(self::EXPORT_HARD_LIMIT)
@@ -288,7 +457,7 @@ class EmailLogController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, array_map(
                 fn (string $key): string => __("helpdeskemaillog::emaillog.csv.{$key}"),
-                ['uid', 'date', 'sent_at', 'status', 'subject', 'from', 'to', 'cc', 'module', 'entity', 'mailable', 'error']
+                ['uid', 'date', 'sent_at', 'status', 'subject', 'from', 'to', 'cc', 'module', 'entity', 'mailable', 'opens', 'clicks', 'error']
             ));
 
             foreach ($rows as $log) {
@@ -304,6 +473,11 @@ class EmailLogController extends Controller
                     $log->module,
                     $log->entity_type ? $log->entity_type.' #'.$log->entity_id : null,
                     $log->mailable_class ? class_basename($log->mailable_class) : null,
+                    // "" (sin seguimiento) distinto de "0" (con seguimiento,
+                    // cero interacciones) — mismo criterio de honestidad que
+                    // la columna "Interacción" del listado.
+                    $log->hasOpenTracking() ? (string) $log->opens_count : '',
+                    $log->hasClickTracking() ? (string) $log->clicks_count : '',
                     $log->error_message,
                 ]);
             }
@@ -313,7 +487,7 @@ class EmailLogController extends Controller
     }
 
     /**
-     * @return array{total: int, sent: int, failed: int, queued: int, today: int, bounced: int, complained: int}
+     * @return array{total: int, sent: int, failed: int, queued: int, today: int, bounced: int, complained: int, open_tracked: int, opened: int, click_tracked: int, clicked: int}
      */
     private function computeStats(): array
     {
@@ -327,6 +501,17 @@ class EmailLogController extends Controller
             ->selectRaw('SUM(created_at >= ?) AS today', [today()->toDateTimeString()])
             ->first();
 
+        // Denominador = envíos que SÍ tuvieron seguimiento, no el total —
+        // una tasa sobre el total mezclaría "nadie lo abrió" con "nunca se
+        // pudo saber" (mismo criterio de honestidad que hasOpenTracking()).
+        $openTracked = EmailLog::query()->where('metadata->open_tracking_enabled', true);
+        $openTrackedTotal = (clone $openTracked)->count();
+        $openedTotal = (clone $openTracked)->whereHas('opens')->count();
+
+        $clickTracked = EmailLog::query()->where('metadata->click_tracking_enabled', true);
+        $clickTrackedTotal = (clone $clickTracked)->count();
+        $clickedTotal = (clone $clickTracked)->whereHas('clicks')->count();
+
         return [
             'total' => (int) ($aggregate->total ?? 0),
             'sent' => (int) ($aggregate->sent ?? 0),
@@ -335,6 +520,10 @@ class EmailLogController extends Controller
             'bounced' => (int) ($aggregate->bounced ?? 0),
             'complained' => (int) ($aggregate->complained ?? 0),
             'today' => (int) ($aggregate->today ?? 0),
+            'open_tracked' => $openTrackedTotal,
+            'opened' => $openedTotal,
+            'click_tracked' => $clickTrackedTotal,
+            'clicked' => $clickedTotal,
         ];
     }
 
@@ -385,6 +574,15 @@ class EmailLogController extends Controller
             $query->status((string) $request->input('status'));
         }
 
+        // Filtro por entidad relacionada (p.ej. un ticket concreto) — el
+        // enlace "ver todos los emails de este ticket" lo arma el módulo
+        // dueño de la entidad (HelpdeskTickets), nunca al revés: este
+        // controlador no conoce ningún FQCN de módulo concreto, solo el par
+        // genérico entity_type/entity_id que ya usa EmailLog::scopeForEntity().
+        if ($request->filled('entity_type') && $request->filled('entity_id')) {
+            $query->forEntity((string) $request->input('entity_type'), (string) $request->input('entity_id'));
+        }
+
         if ($request->filled('search')) {
             $search = trim((string) $request->input('search'));
             $like = '%'.addcslashes($search, '%_\\').'%';
@@ -418,6 +616,20 @@ class EmailLogController extends Controller
 
         if ($to = $this->parseDateFilter($request->input('date_to'))) {
             $query->where('created_at', '<=', $to->endOfDay());
+        }
+
+        // "sin abrir"/"sin clic" solo tienen sentido sobre envíos que SÍ
+        // tuvieron seguimiento (metadata->*_tracking_enabled) — de lo
+        // contrario "sin abrir" incluiría también todo lo que nunca tuvo
+        // píxel, mezclando "no lo vio" con "no se pudo saber".
+        if ($request->filled('engagement')) {
+            match ($request->input('engagement')) {
+                'opened' => $query->whereHas('opens'),
+                'not_opened' => $query->where('metadata->open_tracking_enabled', true)->doesntHave('opens'),
+                'clicked' => $query->whereHas('clicks'),
+                'not_clicked' => $query->where('metadata->click_tracking_enabled', true)->doesntHave('clicks'),
+                default => null,
+            };
         }
 
         return $query;

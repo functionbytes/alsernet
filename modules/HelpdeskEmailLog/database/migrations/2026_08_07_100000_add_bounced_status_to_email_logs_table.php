@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Añade los estados 'bounced'/'complained' al enum de email_logs.status, para que
- * el procesador de rebotes DSN (Document\Console\Commands\ProcessEmailBouncesCommand)
+ * el procesador de rebotes DSN (en su momento
+ * Document\Console\Commands\ProcessEmailBouncesCommand, generalizado desde la
+ * fase 2 a HelpdeskEmailLog\Console\Commands\ProcessEmailBouncesCommand)
  * pueda registrar el resultado real de un envío más allá de queued/sent/failed.
  *
  * MySQL no permite ALTER de un ENUM vía Blueprint (no hay helper nativo), así que se

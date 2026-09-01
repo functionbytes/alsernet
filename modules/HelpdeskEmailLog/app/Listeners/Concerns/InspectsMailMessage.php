@@ -50,21 +50,57 @@ trait InspectsMailMessage
             return null;
         }
 
-        $max = $this->maxBodyBytes();
-
-        if ($max && strlen($body) > $max) {
-            // mb_strcut respeta el límite en BYTES sin partir un carácter
-            // multibyte por la mitad (substr puede dejar una secuencia UTF-8
-            // inválida al final, corrompiendo el HTML almacenado).
-            return mb_strcut($body, 0, $max, 'UTF-8').EmailLog::TRUNCATION_MARKER;
-        }
-
-        return $body;
+        return $this->truncate($body, $this->maxBodyBytes());
     }
 
     protected function maxBodyBytes(): int
     {
         return (int) Setting::get('helpdeskemaillog.max_body_bytes', config('helpdeskemaillog.max_body_bytes'));
+    }
+
+    /**
+     * Cabeceras MIME completas del mensaje tal como llegan al destinatario.
+     * Debe llamarse DESPUÉS de que el caller haya limpiado las cabeceras
+     * internas (X-Email-Module, X-Entity-Type, X-Entity-Id, X-Mailable-Class
+     * — ver LogEmailQueued::stripInternalHeaders(), que corre antes de
+     * construir el array de EmailLog::create()) — de lo contrario quedarían
+     * capturadas cabeceras que nunca debieron guardarse. Misma política de
+     * store_body/redacción/truncado que bodyOf(), con un límite propio y
+     * mucho menor (max_header_bytes): un bloque de cabeceras nunca debería
+     * acercarse al tamaño de un cuerpo salvo un caso patológico de listas de
+     * Cc/Bcc enormes.
+     *
+     * @param  array{mailable_class?: ?string, module?: ?string}  $context
+     */
+    protected function headersOf(Email $message, array $context = []): ?string
+    {
+        $storeBody = (bool) Setting::get('helpdeskemaillog.store_body', config('helpdeskemaillog.store_body', true));
+
+        if (! $storeBody || $this->shouldRedactBody($context)) {
+            return null;
+        }
+
+        return $this->truncate($message->getHeaders()->toString(), $this->maxHeaderBytes());
+    }
+
+    protected function maxHeaderBytes(): int
+    {
+        return (int) Setting::get('helpdeskemaillog.max_header_bytes', config('helpdeskemaillog.max_header_bytes'));
+    }
+
+    /**
+     * Corta $value a $max bytes sin partir un carácter multibyte por la
+     * mitad (substr puede dejar una secuencia UTF-8 inválida al final,
+     * corrompiendo el contenido almacenado), añadiendo el marcador de
+     * truncado compartido entre body y cabeceras.
+     */
+    private function truncate(string $value, int $max): string
+    {
+        if ($max && strlen($value) > $max) {
+            return mb_strcut($value, 0, $max, 'UTF-8').EmailLog::TRUNCATION_MARKER;
+        }
+
+        return $value;
     }
 
     /**

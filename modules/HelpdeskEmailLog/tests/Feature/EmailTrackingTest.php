@@ -16,7 +16,30 @@ class EmailTrackingTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' imprescindible: EmailLog vive en la conexión default de la app
+    // (mysql en este entorno, no mariadb/helpdesk) — mismo gotcha ya
+    // documentado y corregido en EmailLogControllerTest/EmailOpenTrackingTest.
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // phpunit.xml fuerza MAIL_MAILER=array (force="true"), pero dentro de
+        // Docker getenv()/env() ignoran ese force y siguen devolviendo 'smtp'
+        // real, así que config('mail.default') caía en 'smtp' y Mail::to()->send()
+        // usaba el transporte SMTP real en vez del fake 'array' durante el test.
+        config(['mail.default' => 'array']);
+
+        // Mismo problema, mismo mecanismo, otra variable: phpunit.xml también
+        // fuerza QUEUE_CONNECTION=sync, pero getenv('QUEUE_CONNECTION') sigue
+        // devolviendo 'redis' real en Docker. LogEmailSent implementa
+        // ShouldQueue (queue 'emails'), así que sin esto el listener se apila
+        // en el Redis real en vez de ejecutarse en línea, y la aserción sobre
+        // EmailStatus::Sent corre antes de que nada lo haya procesado —
+        // confirmado viendo el job encolado en la conexión por defecto.
+        config(['queue.default' => 'sync']);
+    }
 
     public function test_sent_listener_is_queued_off_the_request(): void
     {

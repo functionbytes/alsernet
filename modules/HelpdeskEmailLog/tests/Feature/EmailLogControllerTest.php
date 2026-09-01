@@ -10,13 +10,25 @@ use Modules\HelpdeskEmailLog\Database\Seeders\HelpdeskEmailLogPermissionsSeeder;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Models\EmailLogClick;
+use Modules\HelpdeskEmailLog\Models\EmailLogLink;
+use Modules\HelpdeskEmailLog\Models\EmailLogOpen;
 use Tests\TestCase;
 
 class EmailLogControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' imprescindible: EmailLog vive en la conexión default de la app
+    // (mysql en este entorno, no mariadb/helpdesk) — sin declararla, cada
+    // EmailLog::factory()->create() de este archivo escribe una fila REAL
+    // sin rollback (mismo gotcha ya documentado en varios tests del módulo,
+    // p. ej. BounceMailboxesControllerTest). Confirmado en vivo: sin este
+    // fix, 45 filas fixture de este mismo archivo (subjects 'Other message'/
+    // 'Related one'/'Unrelated') habían quedado filtradas en la BD real de
+    // ejecuciones pasadas, causando 2 falsos negativos deterministas
+    // (index/show con datos ajenos filtrando por búsqueda/destinatario).
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     protected function setUp(): void
     {
@@ -100,6 +112,199 @@ class EmailLogControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    /**
+     * Ejercita show()->clicksSummary()/opensSummary() de punta a punta
+     * (query + render del Blade), no solo su presencia en el array de la
+     * vista — un fallo aquí (p. ej. una clase que no resuelve) sí se
+     * refleja como 500, a diferencia de solo comprobar assertViewHas().
+     */
+    public function test_show_displays_opens_and_clicks_summary_when_tracked(): void
+    {
+        $log = EmailLog::factory()->tracked()->create(['subject' => 'Tracked order confirmation']);
+
+        EmailLogOpen::create([
+            'email_log_id' => $log->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'Mozilla/5.0 test',
+            'opened_at' => now()->subMinutes(10),
+        ]);
+
+        $link = EmailLogLink::create([
+            'email_log_id' => $log->id,
+            'token' => Str::random(40),
+            'url' => 'https://example.com/ticket/123',
+            'created_at' => now()->subMinutes(9),
+        ]);
+
+        EmailLogClick::create([
+            'email_log_link_id' => $link->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'Mozilla/5.0 test',
+            'clicked_at' => now()->subMinutes(8),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertViewIs('helpdeskemaillog::emails.preview')
+            ->assertViewHas('opensSummary', fn ($summary) => $summary['count'] === 1)
+            ->assertViewHas('clicksSummary', fn ($summary) => $summary['count'] === 1 && $summary['unique_links'] === 1)
+            ->assertSee('https://example.com/ticket/123');
+    }
+
+    /**
+     * Un envío con tracking activado pero sin ningún hit real (nadie abrió
+     * ni hizo clic todavía) — hasOpenTracking()/hasClickTracking() igual
+     * disparan la query de resumen, así que este camino se ejercita aunque
+     * el conteo real sea cero.
+     */
+    public function test_show_displays_zero_state_when_tracked_but_no_hits_yet(): void
+    {
+        $log = EmailLog::factory()->tracked()->create(['subject' => 'Tracked, not opened yet']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertViewHas('opensSummary', fn ($summary) => $summary['count'] === 0)
+            ->assertViewHas('clicksSummary', fn ($summary) => $summary['count'] === 0);
+    }
+
+    /**
+     * EngagementBotHeuristics se ejercita en profundidad en su propio test
+     * unitario — aquí solo se confirma que EmailLogController de verdad la
+     * invoca y expone likely_bot_count/likely_bot en la vista (el tipo de
+     * cableado que un test unitario aislado nunca detecta).
+     */
+    public function test_show_flags_likely_bot_opens_and_clicks(): void
+    {
+        $log = EmailLog::factory()->tracked()->create(['sent_at' => now()->subMinutes(10)]);
+
+        EmailLogOpen::create([
+            'email_log_id' => $log->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'Mozilla/5.0 GoogleImageProxy',
+            'opened_at' => now()->subMinutes(9),
+        ]);
+
+        $link = EmailLogLink::create([
+            'email_log_id' => $log->id,
+            'token' => Str::random(40),
+            'url' => 'https://example.com/x',
+            'created_at' => now()->subMinutes(9),
+        ]);
+
+        EmailLogClick::create([
+            'email_log_link_id' => $link->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'Mimecast-SEG',
+            'clicked_at' => now()->subMinutes(8),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.show', $log->uid))
+            ->assertOk()
+            ->assertViewHas('opensSummary', fn ($summary) => $summary['likely_bot_count'] === 1 && $summary['recent']->first()->likely_bot === true)
+            ->assertViewHas('clicksSummary', fn ($summary) => $summary['likely_bot_count'] === 1 && $summary['recent']->first()->likely_bot === true)
+            ->assertSee(__('helpdeskemaillog::emaillog.preview.likely_bot_badge'));
+    }
+
+    /**
+     * El listado también consulta opens/clicks (withCount en index()) —
+     * mismo tipo de gap que show(): un fallo en la relación/consulta se
+     * refleja como 500 al renderizar, no solo como un dato ausente.
+     */
+    public function test_index_shows_engagement_counts_for_tracked_logs(): void
+    {
+        $log = EmailLog::factory()->tracked()->create(['subject' => 'Tracked in list']);
+
+        EmailLogOpen::create([
+            'email_log_id' => $log->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'Mozilla/5.0 test',
+            'opened_at' => now(),
+        ]);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['search' => 'Tracked in list']))
+            ->assertOk()
+            ->assertViewHas('logs', fn ($logs) => $logs->first()?->opens_count === 1 && $logs->first()?->clicks_count === 0);
+    }
+
+    public function test_index_filters_by_engagement(): void
+    {
+        $opened = EmailLog::factory()->tracked()->create(['subject' => 'Opened one']);
+        EmailLogOpen::create([
+            'email_log_id' => $opened->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'test',
+            'opened_at' => now(),
+        ]);
+
+        $notOpened = EmailLog::factory()->tracked()->create(['subject' => 'Not opened one']);
+
+        $link = EmailLogLink::create([
+            'email_log_id' => $opened->id,
+            'token' => Str::random(40),
+            'url' => 'https://example.com/x',
+            'created_at' => now(),
+        ]);
+        EmailLogClick::create([
+            'email_log_link_id' => $link->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'test',
+            'clicked_at' => now(),
+        ]);
+
+        // Sin seguimiento en absoluto: no debe aparecer ni en "abiertos" ni
+        // en "sin abrir" (que exige metadata->open_tracking_enabled).
+        $untracked = EmailLog::factory()->create(['subject' => 'Untracked one']);
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['engagement' => 'opened', 'search' => 'one']))
+            ->assertSee('Opened one')
+            ->assertDontSee('Not opened one')
+            ->assertDontSee('Untracked one');
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['engagement' => 'not_opened', 'search' => 'one']))
+            ->assertSee('Not opened one')
+            ->assertDontSee('Opened one')
+            ->assertDontSee('Untracked one');
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['engagement' => 'clicked', 'search' => 'one']))
+            ->assertSee('Opened one')
+            ->assertDontSee('Not opened one');
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index', ['engagement' => 'not_clicked', 'search' => 'one']))
+            ->assertSee('Not opened one')
+            ->assertDontSee('Opened one');
+    }
+
+    public function test_index_computes_open_and_click_rates(): void
+    {
+        $baseOpenTracked = EmailLog::query()->where('metadata->open_tracking_enabled', true)->count();
+        $baseOpened = EmailLog::query()->where('metadata->open_tracking_enabled', true)->whereHas('opens')->count();
+
+        $opened = EmailLog::factory()->tracked()->create();
+        EmailLogOpen::create([
+            'email_log_id' => $opened->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'test',
+            'opened_at' => now(),
+        ]);
+        EmailLog::factory()->tracked()->create(); // tracked pero sin apertura
+
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.index'))
+            ->assertOk()
+            ->assertViewHas('stats', function ($stats) use ($baseOpenTracked, $baseOpened) {
+                return $stats['open_tracked'] === $baseOpenTracked + 2
+                    && $stats['opened'] === $baseOpened + 1;
+            });
+    }
+
     public function test_destroy_requires_manage_permission(): void
     {
         $log = EmailLog::factory()->create();
@@ -157,6 +362,43 @@ class EmailLogControllerTest extends TestCase
         $response->assertOk();
         $this->assertStringContainsString('text/csv', $response->headers->get('content-type'));
         $this->assertStringContainsString('Exported subject', $response->streamedContent());
+    }
+
+    public function test_export_includes_opens_and_clicks_columns(): void
+    {
+        $tracked = EmailLog::factory()->tracked()->create(['subject' => 'Exported tracked']);
+        EmailLogOpen::create([
+            'email_log_id' => $tracked->id,
+            'ip' => '203.0.113.10',
+            'user_agent' => 'test',
+            'opened_at' => now(),
+        ]);
+
+        EmailLog::factory()->create(['subject' => 'Exported untracked']);
+
+        $response = $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.export', ['search' => 'Exported']));
+
+        $rows = array_map('str_getcsv', array_filter(explode("\n", trim($response->streamedContent()))));
+        $header = array_shift($rows);
+
+        $opensCol = array_search(__('helpdeskemaillog::emaillog.csv.opens'), $header, true);
+        $clicksCol = array_search(__('helpdeskemaillog::emaillog.csv.clicks'), $header, true);
+        $subjectCol = array_search(__('helpdeskemaillog::emaillog.csv.subject'), $header, true);
+
+        $this->assertNotFalse($opensCol);
+        $this->assertNotFalse($clicksCol);
+
+        $trackedRow = collect($rows)->first(fn ($row) => $row[$subjectCol] === 'Exported tracked');
+        $untrackedRow = collect($rows)->first(fn ($row) => $row[$subjectCol] === 'Exported untracked');
+
+        // Con seguimiento: cuenta real (1 apertura, 0 clics, como string
+        // "1"/"0"). Sin seguimiento: celda vacía, no "0" — mismo criterio de
+        // honestidad que la columna "Interacción" del listado.
+        $this->assertSame('1', $trackedRow[$opensCol]);
+        $this->assertSame('0', $trackedRow[$clicksCol]);
+        $this->assertSame('', $untrackedRow[$opensCol]);
+        $this->assertSame('', $untrackedRow[$clicksCol]);
     }
 
     public function test_resend_dispatches_job_for_manager(): void
@@ -499,11 +741,21 @@ class EmailLogControllerTest extends TestCase
 
     public function test_show_includes_related_emails_by_recipient(): void
     {
-        $log = EmailLog::factory()->create(['to_addresses' => ['same@example.test'], 'subject' => 'Primary']);
-        EmailLog::factory()->create(['to_addresses' => ['same@example.test'], 'subject' => 'Related one']);
-        EmailLog::factory()->create(['to_addresses' => ['other@example.test'], 'subject' => 'Unrelated']);
-        // Contiene 'same@example.test' como substring: NO debe considerarse relacionado.
-        EmailLog::factory()->create(['to_addresses' => ['notsame@example.test'], 'subject' => 'Substring trap']);
+        // Direcciones únicas por corrida (no literales 'same@example.test' /
+        // 'other@example.test') — este entorno comparte la BD de test entre
+        // varias sesiones en paralelo (worktrees distintos, misma BD física);
+        // con un literal fijo, la relación query (limit 8, sin desempate)
+        // puede pisar 'Related one' con filas de OTRA corrida que compartan
+        // exactamente el mismo destinatario. Confirmado en vivo: 15 filas
+        // reales con to_addresses=['same@example.test'] y subject='Primary'
+        // de corridas pasadas, suficientes para sacar 'Related one' del top-8.
+        $recipient = Str::uuid()->toString().'@example.test';
+
+        $log = EmailLog::factory()->create(['to_addresses' => [$recipient], 'subject' => 'Primary']);
+        EmailLog::factory()->create(['to_addresses' => [$recipient], 'subject' => 'Related one']);
+        EmailLog::factory()->create(['to_addresses' => ['other-'.$recipient], 'subject' => 'Unrelated']);
+        // Contiene $recipient como substring: NO debe considerarse relacionado.
+        EmailLog::factory()->create(['to_addresses' => ['not'.$recipient], 'subject' => 'Substring trap']);
 
         $this->actingAs($this->viewer())
             ->get(route('helpdeskemaillog.show', $log->uid))

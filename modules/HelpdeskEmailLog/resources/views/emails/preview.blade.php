@@ -7,9 +7,16 @@
 @endpush
 
 @php
-    $statusIcons = ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag'];
+    $statusIcons = ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag', 'suppressed' => 'fa-ban'];
     $statusIcon = $statusIcons[$log->status?->value] ?? 'fa-circle';
     $canManage = auth()->user()?->can('helpdeskemaillog.manage') ?? false;
+
+    // Traza de envío: solo columnas que ya existen, ninguna casilla se marca
+    // "entregado"/"aceptado" salvo que el dato real lo respalde — sin
+    // proveedor con webhooks de entrega, ese paso queda honestamente "sin
+    // datos" en vez de un check verde inventado.
+    $staleHours = (int) \Modules\Core\Models\Setting::get('helpdeskemaillog.stale_queued_hours', config('helpdeskemaillog.stale_queued_hours', 24));
+    $isStaleQueued = $log->status?->value === 'queued' && $log->created_at && $log->created_at->lt(now()->subHours($staleHours));
 @endphp
 
 @section('content')
@@ -80,6 +87,88 @@
 
                 {{-- Detalle --}}
                 <div class="evx-detail">
+
+                    {{-- Traza de envío --}}
+                    <div class="evx-section">
+                        <div class="evx-hdr">
+                            <span class="t">{{ __('helpdeskemaillog::emaillog.preview.trace.title') }}</span>
+                            <span class="s">{{ __('helpdeskemaillog::emaillog.preview.trace.hint') }}</span>
+                        </div>
+
+                        {{-- Paso 1: Encolado --}}
+                        <div class="evx-field">
+                            <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.queued') }}</span>
+                            <span class="v">
+                                <span class="evx-status sent"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.preview.trace.done') }}</span>
+                                <span class="muted mono">{{ $log->created_at?->format('d/m/Y H:i:s') }}</span>
+                            </span>
+                        </div>
+
+                        {{-- Paso 2: Aceptado por SMTP --}}
+                        <div class="evx-field">
+                            <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.smtp') }}</span>
+                            <span class="v">
+                                @if($log->sent_at)
+                                    <span class="evx-status sent"><i class="fa-solid fa-check" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.preview.trace.done') }}</span>
+                                    <span class="muted mono">{{ $log->sent_at->format('d/m/Y H:i:s') }}</span>
+                                @elseif($log->status?->value === 'failed')
+                                    <span class="evx-status failed"><i class="fa-solid fa-xmark" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.preview.trace.failed') }}</span>
+                                    <span class="muted mono">{{ $log->failed_at?->format('d/m/Y H:i:s') }}</span>
+                                @else
+                                    <span class="evx-status queued"><i class="fa-solid fa-clock" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.preview.trace.pending') }}</span>
+                                    @if($isStaleQueued)
+                                        <span class="muted">· {{ __('helpdeskemaillog::emaillog.preview.trace.stale', ['hours' => $staleHours]) }}</span>
+                                    @endif
+                                @endif
+                            </span>
+                        </div>
+
+                        {{-- Paso 3: Confirmación de entrega --}}
+                        <div class="evx-field">
+                            <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.delivery') }}</span>
+                            <span class="v">
+                                @if($log->bounced_at)
+                                    <span class="evx-status bounced"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.status.bounced') }}</span>
+                                    <span class="muted mono">{{ $log->bounced_at->format('d/m/Y H:i:s') }}</span>
+                                @elseif($log->complained_at)
+                                    <span class="evx-status complained"><i class="fa-solid fa-flag" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.status.complained') }}</span>
+                                    <span class="muted mono">{{ $log->complained_at->format('d/m/Y H:i:s') }}</span>
+                                @else
+                                    <span class="muted">{{ __('helpdeskemaillog::emaillog.preview.trace.no_delivery_data') }}</span>
+                                @endif
+                            </span>
+                        </div>
+
+                        {{-- Paso 4: Apertura (solo si este envío tuvo píxel) --}}
+                        @if($opensSummary !== null)
+                            <div class="evx-field">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.opened') }}</span>
+                                <span class="v">
+                                    @if($opensSummary['count'] > 0)
+                                        <span class="evx-status sent"><i class="fa-solid fa-eye" aria-hidden="true"></i>{{ trans_choice('helpdeskemaillog::emaillog.preview.trace.opened_count', $opensSummary['count'], ['count' => $opensSummary['count']]) }}</span>
+                                        <span class="muted mono">{{ $opensSummary['first']->format('d/m/Y H:i') }}</span>
+                                    @else
+                                        <span class="muted">{{ __('helpdeskemaillog::emaillog.preview.trace.not_opened_yet') }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
+
+                        {{-- Paso 5: Clic (solo si este envío tuvo sus enlaces reescritos) --}}
+                        @if($clicksSummary !== null)
+                            <div class="evx-field">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.clicked') }}</span>
+                                <span class="v">
+                                    @if($clicksSummary['count'] > 0)
+                                        <span class="evx-status sent"><i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i>{{ trans_choice('helpdeskemaillog::emaillog.preview.trace.clicked_count', $clicksSummary['count'], ['count' => $clicksSummary['count']]) }}</span>
+                                        <span class="muted mono">{{ $clicksSummary['first']->format('d/m/Y H:i') }}</span>
+                                    @else
+                                        <span class="muted">{{ __('helpdeskemaillog::emaillog.preview.trace.not_clicked_yet') }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
+                    </div>
 
                     {{-- Detalle del email --}}
                     <div class="evx-section">
@@ -242,6 +331,11 @@
                                     {{ __('helpdeskemaillog::emaillog.actions.download') }}
                                 </a>
                             @endif
+                            @if($log->raw_headers || $log->body_html || $log->body_text)
+                                <a href="{{ route('helpdeskemaillog.raw', $log->uid) }}" class="evx-btn evx-btn-outline">
+                                    {{ __('helpdeskemaillog::emaillog.actions.download_eml') }}
+                                </a>
+                            @endif
                             <button type="button" class="evx-btn evx-btn-outline" id="btnPrint">
                                 {{ __('helpdeskemaillog::emaillog.actions.print') }}
                             </button>
@@ -263,6 +357,134 @@
                         </div>
                     </div>
 
+                    {{-- Mensaje original (cabeceras) --}}
+                    <div class="evx-section">
+                        <div class="evx-hdr">
+                            <span class="t">{{ __('helpdeskemaillog::emaillog.preview.raw.title') }}</span>
+                            <span class="s">{{ __('helpdeskemaillog::emaillog.preview.raw.hint') }}</span>
+                        </div>
+                        @if($log->raw_headers)
+                            <pre class="evx-preview-text evx-raw-headers">{{ $log->raw_headers }}</pre>
+                        @else
+                            <div class="evx-field">
+                                <span class="v"><span class="muted">{{ __('helpdeskemaillog::emaillog.preview.raw.not_captured') }}</span></span>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Aperturas (solo si este envío tuvo píxel de seguimiento) --}}
+                    @if($opensSummary !== null)
+                        <div class="evx-section">
+                            <div class="evx-hdr">
+                                <span class="t">{{ __('helpdeskemaillog::emaillog.preview.opens.title') }}</span>
+                                <span class="s">{{ __('helpdeskemaillog::emaillog.preview.opens.hint') }}</span>
+                            </div>
+
+                            <div class="evx-field">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.opens.count') }}</span>
+                                <span class="v">
+                                    {{ number_format($opensSummary['count']) }}
+                                    @if($opensSummary['likely_bot_count'] > 0)
+                                        <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.opens.likely_bot_hint') }}">
+                                            {{ trans_choice('helpdeskemaillog::emaillog.preview.opens.likely_bot_count', $opensSummary['likely_bot_count'], ['count' => $opensSummary['likely_bot_count']]) }}
+                                        </span>
+                                    @endif
+                                </span>
+                            </div>
+
+                            @if($opensSummary['count'] > 0)
+                                <div class="evx-field">
+                                    <span class="k">{{ __('helpdeskemaillog::emaillog.preview.opens.first_last') }}</span>
+                                    <span class="v mono">
+                                        {{ $opensSummary['first']->format('d/m/Y H:i') }}
+                                        @if(!$opensSummary['last']->equalTo($opensSummary['first']))
+                                            — {{ $opensSummary['last']->format('d/m/Y H:i') }}
+                                        @endif
+                                    </span>
+                                </div>
+
+                                <div class="evx-field">
+                                    <span class="k">{{ __('helpdeskemaillog::emaillog.preview.opens.detail') }}</span>
+                                    <span class="v">
+                                        @foreach($opensSummary['recent'] as $open)
+                                            <div class="mono">
+                                                {{ $open->opened_at->format('d/m/Y H:i') }} · {{ $open->ip }} · <span class="muted">{{ Str::limit($open->user_agent, 60) }}</span>
+                                                @if($open->likely_bot)
+                                                    <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.opens.likely_bot_hint') }}">{{ __('helpdeskemaillog::emaillog.preview.likely_bot_badge') }}</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </span>
+                                </div>
+                            @endif
+
+                            <div class="evx-bottom-note">
+                                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                                {{ __('helpdeskemaillog::emaillog.preview.opens.honesty_note') }}
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Clics (solo si este envío tuvo sus enlaces reescritos para seguimiento) --}}
+                    @if($clicksSummary !== null)
+                        <div class="evx-section">
+                            <div class="evx-hdr">
+                                <span class="t">{{ __('helpdeskemaillog::emaillog.preview.clicks.title') }}</span>
+                                <span class="s">{{ __('helpdeskemaillog::emaillog.preview.clicks.hint') }}</span>
+                            </div>
+
+                            <div class="evx-field">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.clicks.count') }}</span>
+                                <span class="v">
+                                    {{ number_format($clicksSummary['count']) }}
+                                    @if($clicksSummary['likely_bot_count'] > 0)
+                                        <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.clicks.likely_bot_hint') }}">
+                                            {{ trans_choice('helpdeskemaillog::emaillog.preview.clicks.likely_bot_count', $clicksSummary['likely_bot_count'], ['count' => $clicksSummary['likely_bot_count']]) }}
+                                        </span>
+                                    @endif
+                                </span>
+                            </div>
+
+                            @if($clicksSummary['count'] > 0)
+                                <div class="evx-field">
+                                    <span class="k">{{ __('helpdeskemaillog::emaillog.preview.clicks.unique_links') }}</span>
+                                    <span class="v">{{ number_format($clicksSummary['unique_links']) }}</span>
+                                </div>
+
+                                <div class="evx-field">
+                                    <span class="k">{{ __('helpdeskemaillog::emaillog.preview.clicks.first_last') }}</span>
+                                    <span class="v mono">
+                                        {{ $clicksSummary['first']->format('d/m/Y H:i') }}
+                                        @if(!$clicksSummary['last']->equalTo($clicksSummary['first']))
+                                            — {{ $clicksSummary['last']->format('d/m/Y H:i') }}
+                                        @endif
+                                    </span>
+                                </div>
+
+                                <div class="evx-field">
+                                    <span class="k">{{ __('helpdeskemaillog::emaillog.preview.clicks.detail') }}</span>
+                                    <span class="v">
+                                        @foreach($clicksSummary['recent'] as $click)
+                                            <div class="mono">
+                                                {{ $click->clicked_at->format('d/m/Y H:i') }} · {{ $click->ip }} ·
+                                                <a href="{{ $click->link_url }}" target="_blank" rel="noopener">{{ Str::limit($click->link_url, 50) }}</a>
+                                                · <span class="muted">{{ Str::limit($click->user_agent, 40) }}</span>
+                                                @if($click->likely_bot)
+                                                    <span class="evx-tag" title="{{ __('helpdeskemaillog::emaillog.preview.clicks.likely_bot_hint') }}">{{ __('helpdeskemaillog::emaillog.preview.likely_bot_badge') }}</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </span>
+                                </div>
+                            @endif
+
+                            <div class="evx-bottom-note">
+                                <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                                {{ __('helpdeskemaillog::emaillog.preview.clicks.honesty_note') }}
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Entidad relacionada --}}
                     @if($log->entity_type)
                         <div class="evx-section">
@@ -282,6 +504,22 @@
                                         {{ $log->entity_label }} #{{ $log->entity_id }}
                                     @endif
                                 </span>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Panel de entidad inyectado por el módulo dueño (p. ej. HelpdeskTickets
+                         pintando el hilo del ticket) — ver EntityPanelRegistry. No confundir con
+                         el bloque "Entidad relacionada" de arriba: aquel es el enlace genérico
+                         entity_type/entity_id que ya conoce este módulo; este es HTML propio del
+                         módulo satélite, que HelpdeskEmailLog nunca interpreta ni valida. --}}
+                    @if($entityPanel)
+                        <div class="evx-section">
+                            <div class="evx-hdr">
+                                <span class="t">{{ __('helpdeskemaillog::emaillog.preview.entity_panel_title') }}</span>
+                            </div>
+                            <div class="evx-field">
+                                <span class="v">{!! $entityPanel !!}</span>
                             </div>
                         </div>
                     @endif

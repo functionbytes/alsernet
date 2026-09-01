@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Listeners\Concerns\InspectsMailMessage;
 use Modules\HelpdeskEmailLog\Models\EmailLog;
+use Modules\HelpdeskEmailLog\Models\EmailLogLink;
 use Symfony\Component\Mime\Email;
 use Throwable;
 
@@ -44,6 +45,15 @@ class LogEmailQueued
         }
 
         try {
+            // Solo "Emails enviados" (HelpdeskTickets) pidió trazabilidad de
+            // apertura — no se activa para el resto de módulos que ya usan
+            // este mismo listener (notificaciones, resets de contraseña,
+            // campañas...) sin que nadie lo haya pedido para ellos. Se
+            // persiste en metadata para que la vista de detalle sepa si
+            // "0 aperturas" significa de verdad cero, o simplemente que este
+            // envío nunca tuvo píxel.
+            $openTrackingEnabled = ($context['module'] ?? null) === 'HelpdeskTickets';
+
             $emailLog = EmailLog::create([
                 ...$context,
                 ...$this->currentCauser(),
@@ -57,17 +67,23 @@ class LogEmailQueued
                 'message_id' => $messageId,
                 'body_html' => $this->bodyOf($message->getHtmlBody(), $context),
                 'body_text' => $this->bodyOf($message->getTextBody(), $context),
+                'raw_headers' => $this->headersOf($message, $context),
                 'attachments' => $this->attachmentsOf($message) ?: null,
-                'metadata' => $this->metaOf($message, $context),
+                'metadata' => [
+                    ...$this->metaOf($message, $context),
+                    'open_tracking_enabled' => $openTrackingEnabled,
+                    // Misma condición que el píxel de apertura por ahora — se
+                    // guarda como flag propio (no reutilizando
+                    // open_tracking_enabled) para poder divergir el alcance de
+                    // cada uno el día que haga falta sin tocar filas ya escritas.
+                    'click_tracking_enabled' => $openTrackingEnabled,
+                ],
                 'status' => EmailStatus::Queued,
             ]);
 
-            // Solo "Emails enviados" (HelpdeskTickets) pidió trazabilidad de
-            // apertura — no se activa para el resto de módulos que ya usan
-            // este mismo listener (notificaciones, resets de contraseña,
-            // campañas...) sin que nadie lo haya pedido para ellos.
-            if (($context['module'] ?? null) === 'HelpdeskTickets') {
+            if ($openTrackingEnabled) {
                 $this->injectOpenTrackingPixel($message, $emailLog);
+                $this->injectClickTracking($message, $emailLog);
             }
         } catch (Throwable $e) {
             Log::warning('HelpdeskEmailLog: failed to record queued email', ['exception' => $e]);
@@ -87,6 +103,62 @@ class LogEmailQueued
             $message->html($html.$pixel);
         } catch (Throwable $e) {
             Log::warning('HelpdeskEmailLog: failed to inject open-tracking pixel', ['exception' => $e]);
+        }
+    }
+
+    /**
+     * Reescribe cada enlace http(s) absoluto del cuerpo HTML para que pase
+     * por la redirección propia de EmailClickTrackingController antes de
+     * llegar al destino real — mismo principio que injectOpenTrackingPixel():
+     * solo modifica lo que se ENVÍA, nunca el body_html/body_text ya
+     * persistido (ese debe seguir siendo el contenido original, sin
+     * reescribir, para que descargas/reenvíos repliquen el correo tal cual
+     * se redactó).
+     *
+     * Se ignoran a propósito mailto:/tel:/anclas/rutas relativas (el regex
+     * solo matchea http(s)://) — no tiene sentido "trackear" un clic que ni
+     * siquiera sale del cliente de correo. Un mismo destino repetido varias
+     * veces en el mismo correo reutiliza el mismo token (un solo
+     * EmailLogLink), para no inflar el conteo de "enlaces distintos" con
+     * duplicados del mismo CTA.
+     */
+    private function injectClickTracking(Email $message, EmailLog $emailLog): void
+    {
+        $html = $message->getHtmlBody();
+
+        if (! is_string($html) || $html === '') {
+            return;
+        }
+
+        try {
+            $tokens = [];
+
+            $rewritten = preg_replace_callback(
+                '/(<a\b[^>]*\bhref\s*=\s*)(["\'])(https?:\/\/[^"\']+)\2/i',
+                function (array $m) use ($emailLog, &$tokens) {
+                    $url = html_entity_decode($m[3], ENT_QUOTES);
+
+                    if (! isset($tokens[$url])) {
+                        $tokens[$url] = EmailLogLink::create([
+                            'email_log_id' => $emailLog->id,
+                            'token' => Str::random(40),
+                            'url' => $url,
+                            'created_at' => now(),
+                        ])->token;
+                    }
+
+                    $trackedUrl = route('helpdeskemaillog.click', ['emailLog' => $emailLog, 'token' => $tokens[$url]]);
+
+                    return $m[1].$m[2].$trackedUrl.$m[2];
+                },
+                $html
+            );
+
+            if (is_string($rewritten)) {
+                $message->html($rewritten);
+            }
+        } catch (Throwable $e) {
+            Log::warning('HelpdeskEmailLog: failed to inject click tracking', ['exception' => $e]);
         }
     }
 

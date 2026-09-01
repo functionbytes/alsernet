@@ -76,8 +76,17 @@ class LogEmailSent implements ShouldQueue
                 'subject' => (string) ($message->getSubject() ?? ''),
                 'body_html' => $this->bodyOf($message->getHtmlBody(), $context),
                 'body_text' => $this->bodyOf($message->getTextBody(), $context),
+                // Cabeceras aún incluirían las X-Email-Module/X-Entity-* internas
+                // en esta rama (nunca pasó por LogEmailQueued::stripInternalHeaders())
+                // — no se capturan aquí para no filtrarlas a la vista de detalle.
+                // No se pierde nada real: esta rama solo corre cuando la fila
+                // 'queued' nunca se creó (fallo previo), un caso ya de por sí
+                // degradado.
+                'raw_headers' => null,
                 'attachments' => $this->attachmentsOf($message) ?: null,
-                'metadata' => $this->metaOf($message, $context),
+                // El píxel de apertura solo lo inyecta LogEmailQueued (nunca corre
+                // en esta rama), así que aquí siempre es false — no "sin dato".
+                'metadata' => [...$this->metaOf($message, $context), 'open_tracking_enabled' => false],
                 'status' => EmailStatus::Sent,
                 'sent_at' => now(),
             ]);

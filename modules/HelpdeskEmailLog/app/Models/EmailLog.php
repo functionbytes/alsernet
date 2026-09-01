@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -33,11 +34,15 @@ use Modules\HelpdeskEmailLog\Enums\EmailStatus;
  * @property ?string $message_id
  * @property ?string $body_html
  * @property ?string $body_text
+ * @property ?string $raw_headers
  * @property ?array<int, array{name: string, size: ?int, mime: ?string}> $attachments
  * @property EmailStatus $status
  * @property ?string $error_message
  * @property ?Carbon $sent_at
  * @property ?Carbon $failed_at
+ * @property ?Carbon $bounced_at
+ * @property ?Carbon $complained_at
+ * @property ?Carbon $suppressed_at
  * @property ?array<string, mixed> $metadata
  * @property ?Carbon $created_at
  */
@@ -63,8 +68,20 @@ class EmailLog extends Model
     public const LIST_COLUMNS = [
         'id', 'uid', 'mailable_class', 'module', 'entity_type', 'entity_id', 'external_id',
         'from_address', 'from_name', 'to_addresses', 'subject', 'status',
-        'error_message', 'attachments', 'sent_at', 'failed_at', 'created_at',
+        'error_message', 'attachments', 'sent_at', 'failed_at', 'created_at', 'metadata',
     ];
+
+    /**
+     * Cache keys backing the emails.index dashboard (stats card, trend chart,
+     * stale-queued count, module filter options).
+     */
+    private const CACHE_KEY_STATS = 'helpdeskemaillog:stats';
+
+    private const CACHE_KEY_TREND = 'helpdeskemaillog:trend';
+
+    private const CACHE_KEY_STALE = 'helpdeskemaillog:stale';
+
+    private const CACHE_KEY_MODULES = 'helpdeskemaillog:modules';
 
     protected $fillable = [
         'uid',
@@ -85,6 +102,7 @@ class EmailLog extends Model
         'message_id',
         'body_html',
         'body_text',
+        'raw_headers',
         'attachments',
         'status',
         'error_message',
@@ -92,6 +110,7 @@ class EmailLog extends Model
         'failed_at',
         'bounced_at',
         'complained_at',
+        'suppressed_at',
         'metadata',
     ];
 
@@ -110,6 +129,7 @@ class EmailLog extends Model
             'failed_at' => 'datetime',
             'bounced_at' => 'datetime',
             'complained_at' => 'datetime',
+            'suppressed_at' => 'datetime',
         ];
     }
 
@@ -134,18 +154,39 @@ class EmailLog extends Model
         });
 
         $invalidateCaches = function (self $model): void {
-            Cache::forget('helpdeskemaillog:stats');
-            Cache::forget('helpdeskemaillog:trend');
-            Cache::forget('helpdeskemaillog:stale');
+            Cache::forget(self::CACHE_KEY_STATS);
+            Cache::forget(self::CACHE_KEY_TREND);
+            Cache::forget(self::CACHE_KEY_STALE);
 
+            // El filtro de módulos tiene un TTL largo (10 min) porque
+            // recalcularlo es un DISTINCT sobre toda la tabla: no vale la pena
+            // invalidarlo en cada cambio de estado (sent/failed/bounced/...)
+            // de un correo ya existente si su módulo no cambió.
             if ($model->wasChanged('module') || $model->wasRecentlyCreated || ! $model->exists) {
-                Cache::forget('helpdeskemaillog:modules');
+                Cache::forget(self::CACHE_KEY_MODULES);
             }
         };
 
         static::created($invalidateCaches);
         static::updated($invalidateCaches);
         static::deleted($invalidateCaches);
+    }
+
+    /**
+     * Invalida las 4 claves del dashboard de una sola vez. Las mutaciones en
+     * bloque (bulkDestroy(), PruneEmailLogsCommand) usan query()->update()/
+     * delete() directamente, así que nunca disparan los eventos created/
+     * updated/deleted de arriba — cada llamador tenía su propio subconjunto
+     * de Cache::forget() hardcodeado y desincronizado (bulkDestroy y
+     * deleteOldEntries se olvidaban de trend/stale; markStaleQueuedAsFailed
+     * no invalidaba nada salvo stats).
+     */
+    public static function forgetDashboardCaches(): void
+    {
+        Cache::forget(self::CACHE_KEY_STATS);
+        Cache::forget(self::CACHE_KEY_TREND);
+        Cache::forget(self::CACHE_KEY_STALE);
+        Cache::forget(self::CACHE_KEY_MODULES);
     }
 
     public function getRouteKeyName(): string
@@ -163,6 +204,22 @@ class EmailLog extends Model
         return $this->hasMany(EmailLogOpen::class);
     }
 
+    public function links(): HasMany
+    {
+        return $this->hasMany(EmailLogLink::class);
+    }
+
+    /**
+     * Clics registrados a través de los enlaces reescritos de este envío
+     * (ver LogEmailQueued::injectClickTracking) — hasManyThrough en vez de
+     * un FK directo porque el clic pertenece a UN enlace concreto, no
+     * directamente al email (un mismo envío puede tener varios enlaces).
+     */
+    public function clicks(): HasManyThrough
+    {
+        return $this->hasManyThrough(EmailLogClick::class, EmailLogLink::class);
+    }
+
     public function markAsSent(): void
     {
         $this->update(['status' => EmailStatus::Sent, 'sent_at' => now()]);
@@ -178,17 +235,39 @@ class EmailLog extends Model
     }
 
     /**
-     * Marca el envío como rebotado (DSN recibido en la bandeja de rebotes, ver
-     * Modules\Document\Console\Commands\ProcessEmailBouncesCommand). No pisa un
-     * status ya 'bounced'/'complained' anterior con uno menos específico.
+     * Marca el envío como rebotado (DSN recibido en un buzón de rebotes
+     * vigilado — ver Modules\HelpdeskEmailLog\Services\BounceProcessorService
+     * — o evento de un proveedor con webhooks). No pisa un status ya
+     * 'bounced'/'complained' anterior con uno menos específico.
+     *
+     * $isHard distingue un rebote permanente (buzón inexistente/deshabilitado
+     * — DSN status 5.X.X) de uno temporal (buzón lleno, greylisting — DSN
+     * status 4.X.X): la supresión automática de direcciones (lista de
+     * supresión) solo debe dispararse sobre rebotes duros, nunca sobre
+     * temporales. Se guarda en metadata.bounce_type en vez de una columna
+     * nueva (mismo patrón que los flags redacted/truncated que ya viven ahí).
      */
-    public function markAsBounced(?string $reason = null): void
+    public function markAsBounced(?string $reason = null, bool $isHard = false): void
     {
+        $metadata = $this->metadata ?? [];
+        $metadata['bounce_type'] = $isHard ? 'hard' : 'soft';
+
         $this->update([
             'status' => EmailStatus::Bounced,
             'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
             'bounced_at' => now(),
+            'metadata' => $metadata,
         ]);
+    }
+
+    /**
+     * Tipo de rebote ('hard'/'soft'), o null si nunca se clasificó (filas
+     * anteriores a este campo, o correlacionadas por un origen que no
+     * distingue hard/soft).
+     */
+    public function bounceType(): ?string
+    {
+        return $this->metadata['bounce_type'] ?? null;
     }
 
     public function markAsComplained(?string $reason = null): void
@@ -198,6 +277,61 @@ class EmailLog extends Model
             'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
             'complained_at' => now(),
         ]);
+    }
+
+    /**
+     * Marca el envío como bloqueado por la lista de supresión (ver
+     * EnforceEmailSuppression) — el mensaje real nunca salió
+     * (Mailer::shouldSendMessage() lo canceló), así que nunca transiciona a
+     * 'sent' después de esto.
+     */
+    public function markAsSuppressed(?string $reason = null): void
+    {
+        $this->update([
+            'status' => EmailStatus::Suppressed,
+            'error_message' => $reason ? Str::limit($reason, 2000) : $this->error_message,
+            'suppressed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Registra, sin bloquear el envío, que uno o más destinatarios (Cc/Bcc,
+     * o un To adicional) fueron eliminados del mensaje por estar en la lista
+     * de supresión — el envío en sí siguió su curso hacia el resto de
+     * destinatarios válidos (ver EnforceEmailSuppression::handle()). Mismo
+     * patrón de metadata que bounce_type/redacted/truncated: no hace falta
+     * columna nueva para un dato puramente informativo.
+     */
+    public function addSuppressedRecipientsNote(array $suppressed): void
+    {
+        $metadata = $this->metadata ?? [];
+        $existing = (array) ($metadata['suppressed_recipients'] ?? []);
+
+        $metadata['suppressed_recipients'] = array_values(array_unique([...$existing, ...$suppressed]));
+
+        $this->update(['metadata' => $metadata]);
+    }
+
+    /**
+     * Whether an open-tracking pixel was actually inserted into this email's
+     * body (only true for HelpdeskTickets sends today — see
+     * LogEmailQueued::handle()). "0 aperturas" solo es un dato real cuando
+     * esto es true; para el resto de correos simplemente nunca hubo píxel.
+     */
+    public function hasOpenTracking(): bool
+    {
+        return (bool) ($this->metadata['open_tracking_enabled'] ?? false);
+    }
+
+    /**
+     * Whether outgoing links in this email's body were rewritten for click
+     * tracking (same scope as hasOpenTracking() today — see
+     * LogEmailQueued::handle()). "0 clics" solo es un dato real cuando esto
+     * es true; para el resto de correos simplemente nunca hubo reescritura.
+     */
+    public function hasClickTracking(): bool
+    {
+        return (bool) ($this->metadata['click_tracking_enabled'] ?? false);
     }
 
     /**
@@ -262,6 +396,48 @@ class EmailLog extends Model
     public function scopeBounced(Builder $query): Builder
     {
         return $query->where('status', EmailStatus::Bounced->value);
+    }
+
+    public function scopeSuppressed(Builder $query): Builder
+    {
+        return $query->where('status', EmailStatus::Suppressed->value);
+    }
+
+    /**
+     * Tasas de rebote/queja de los últimos $days días. El denominador es
+     * "intentos con resultado terminal de entrega" (sent+bounced+complained),
+     * NO el total crudo — ese incluiría queued/failed/suppressed, que son
+     * fallos del transporte o bloqueos propios, no una señal de reputación
+     * del dominio ante el proveedor destino.
+     *
+     * @return array{attempted: int, bounced: int, complained: int, bounce_rate: float, complaint_rate: float}
+     */
+    public static function reputationStats(int $days, ?string $fromDomain = null): array
+    {
+        $since = now()->subDays($days);
+
+        $row = static::query()
+            ->whereIn('status', [EmailStatus::Sent->value, EmailStatus::Bounced->value, EmailStatus::Complained->value])
+            ->where('created_at', '>=', $since)
+            ->when($fromDomain, fn ($q) => $q->where('from_address', 'like', '%@'.$fromDomain))
+            ->selectRaw("
+                COUNT(*) as attempted,
+                SUM(CASE WHEN status = 'bounced' THEN 1 ELSE 0 END) as bounced,
+                SUM(CASE WHEN status = 'complained' THEN 1 ELSE 0 END) as complained
+            ")
+            ->first();
+
+        $attempted = (int) ($row->attempted ?? 0);
+        $bounced = (int) ($row->bounced ?? 0);
+        $complained = (int) ($row->complained ?? 0);
+
+        return [
+            'attempted' => $attempted,
+            'bounced' => $bounced,
+            'complained' => $complained,
+            'bounce_rate' => $attempted > 0 ? round(($bounced / $attempted) * 100, 2) : 0.0,
+            'complaint_rate' => $attempted > 0 ? round(($complained / $attempted) * 100, 2) : 0.0,
+        ];
     }
 
     public function scopeForModule(Builder $query, string $module): Builder

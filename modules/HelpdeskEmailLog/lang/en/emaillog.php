@@ -21,6 +21,14 @@ return [
         'today_hint' => 'Recorded today',
         'delivery_rate' => 'Delivery rate',
         'delivery_rate_hint' => 'Delivered over total',
+        'open_rate' => 'Open rate',
+        'open_rate_hint' => 'Opens over :count tracked sends',
+        'open_rate_no_data' => 'No data',
+        'open_rate_no_data_hint' => 'No send with open tracking yet',
+        'click_rate' => 'Click rate',
+        'click_rate_hint' => 'Clicks over :count tracked sends',
+        'click_rate_no_data' => 'No data',
+        'click_rate_no_data_hint' => 'No send with click tracking yet',
     ],
 
     'trend' => [
@@ -49,6 +57,33 @@ return [
         'per_page_option' => ':n / page',
         'search' => 'Search',
         'clear' => 'Clear filters',
+        'entity_active' => 'Filtering by: :entity',
+        'all_engagement' => 'Any engagement',
+        'engagement_opened' => 'Opened',
+        'engagement_not_opened' => 'Not opened (tracked)',
+        'engagement_clicked' => 'Clicked',
+        'engagement_not_clicked' => 'Not clicked (tracked)',
+    ],
+
+    'view_modes' => [
+        'heading' => 'View mode',
+        'list' => 'List',
+        'thread' => 'Threads',
+        'compact' => 'Compact',
+        'kanban' => 'Kanban',
+        'thread_count' => ':count in thread',
+        'kanban_scope' => 'Showing the current page (:count of :total entries)',
+    ],
+
+    'views' => [
+        'heading' => 'Saved views',
+        'save_current' => 'Save current view',
+        'name_placeholder' => 'View name',
+        'no_views' => 'No saved views',
+        'cannot_delete' => 'You cannot delete this view.',
+        'deleted' => 'View deleted.',
+        'make_public_confirm' => 'Make this view public for the whole team?',
+        'public_indicator' => 'Public view',
     ],
 
     'table' => [
@@ -57,10 +92,14 @@ return [
         'module' => 'Module',
         'status' => 'Status',
         'date' => 'Date',
+        'engagement' => 'Engagement',
         'actions' => 'Actions',
         'empty' => 'No emails recorded yet',
         'select_all' => 'Select all',
         'has_attachments' => 'With attachments',
+        'not_tracked' => 'This send has no open or click tracking',
+        'opens_count' => ':count open|:count opens',
+        'clicks_count' => ':count click|:count clicks',
     ],
 
     'actions' => [
@@ -73,6 +112,7 @@ return [
         'print' => 'Print',
         'bulk_resend' => 'Resend selected',
         'download' => 'Download',
+        'download_eml' => 'Download .eml',
         'copy_id' => 'Copy Message-ID',
         'resend_to' => 'Resend to another address',
         'purge' => 'Purge content',
@@ -82,6 +122,27 @@ return [
         'confirm_title' => 'Purge email content',
         'confirm' => 'The email body (HTML/text) will be permanently removed. Metadata (subject, recipients, status) is kept. Continue?',
         'done' => 'Email content purged.',
+    ],
+
+    'bounce_mailboxes' => [
+        'created' => 'Bounce mailbox added.',
+        'updated' => 'Bounce mailbox updated.',
+        'deleted' => 'Bounce mailbox deleted.',
+    ],
+
+    'suppressions' => [
+        'created' => 'Address added to the suppression list.',
+        'deleted' => 'Address removed from the suppression list.',
+        'reason' => [
+            'hard_bounce' => 'Hard bounce',
+            'complaint' => 'Spam complaint',
+            'unsubscribed' => 'Unsubscribed',
+            'manual' => 'Manual',
+        ],
+    ],
+
+    'reputation' => [
+        'refreshed' => 'Reputation for :domain refreshed.',
     ],
 
     'pagination' => [
@@ -119,6 +180,7 @@ return [
         'failed' => 'Failed',
         'bounced' => 'Bounced',
         'complained' => 'Marked as spam',
+        'suppressed' => 'Blocked (suppression)',
     ],
 
     'preview' => [
@@ -153,8 +215,55 @@ return [
         'related_entity_hint' => 'Record linked to this email',
         'related_emails' => 'Related emails',
         'related_emails_hint' => 'Same recipient or entity',
+        'entity_panel_title' => 'Related thread',
         'no_related' => 'No related emails.',
         'purged_note' => 'This email\'s content was purged; only metadata is kept.',
+        'trace' => [
+            'title' => 'Send trace',
+            'hint' => 'What is actually known about this send, step by step',
+            'queued' => 'Queued',
+            'done' => 'Done',
+            'smtp' => 'Accepted by the SMTP server',
+            'failed' => 'Failed',
+            'pending' => 'Awaiting confirmation',
+            'stale' => 'has been unconfirmed for over :hours h',
+            'delivery' => 'Delivery confirmation',
+            'no_delivery_data' => 'No data: no email provider with delivery webhooks is configured.',
+            'opened' => 'Opened',
+            'opened_count' => ':count open|:count opens',
+            'not_opened_yet' => 'No opens recorded yet',
+            'clicked' => 'Clicked',
+            'clicked_count' => ':count click|:count clicks',
+            'not_clicked_yet' => 'No clicks recorded yet',
+        ],
+        'raw' => [
+            'title' => 'Original message',
+            'hint' => 'MIME headers as delivered to the recipient',
+            'not_captured' => 'Full headers were not captured for this send (record predates this feature, or content was purged/redacted).',
+        ],
+        'opens' => [
+            'title' => 'Opens',
+            'hint' => 'Recorded by the tracking pixel',
+            'count' => 'Total opens',
+            'first_last' => 'First — last',
+            'detail' => 'Detail',
+            'honesty_note' => 'Apple Mail Privacy Protection and Gmail\'s image proxy automatically preload the pixel even if nobody opens the email — these opens do not guarantee an actual human read.',
+            'likely_bot_count' => ':count likely bot|:count likely bots',
+            'likely_bot_hint' => 'User-Agent of a known scanner/proxy, or the open arrived too fast after sending for a human to have read it.',
+        ],
+        'clicks' => [
+            'title' => 'Clicks',
+            'hint' => 'Recorded by the email\'s rewritten links',
+            'count' => 'Total clicks',
+            'unique_links' => 'Distinct links',
+            'first_last' => 'First — last',
+            'detail' => 'Detail',
+            'honesty_note' => 'Some email clients and corporate security filters (Microsoft Safe Links, antivirus scanners) follow links automatically before the recipient opens them — these clicks do not guarantee an actual human interaction.',
+            'likely_bot_count' => ':count likely bot|:count likely bots',
+            'likely_bot_hint' => 'User-Agent of a known scanner/proxy, or the click arrived too fast after sending for a human to have made it.',
+        ],
+        // Shared between the opens badge and the clicks badge (same label).
+        'likely_bot_badge' => 'likely bot',
     ],
 
     'resend' => [
@@ -192,6 +301,8 @@ return [
         'module' => 'Module',
         'entity' => 'Entity',
         'mailable' => 'Mailable',
+        'opens' => 'Opens',
+        'clicks' => 'Clicks',
         'error' => 'Error',
     ],
 ];

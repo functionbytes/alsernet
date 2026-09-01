@@ -14,7 +14,13 @@ class EmailOpenTrackingTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' imprescindible: EmailLog vive en la conexión default de la app
+    // (mysql en este entorno, no mariadb/helpdesk) — sin declararla, cada
+    // EmailLog::create() de este archivo escribía una fila REAL sin rollback
+    // (mismo gotcha ya documentado y corregido en EmailLogControllerTest;
+    // confirmado en vivo: decenas de filas "Test"/cliente@example.com
+    // huérfanas en el listado real de /panel/helpdeskemaillog).
+    protected array $connectionsToTransact = ['mariadb', 'helpdesk', 'mysql'];
 
     public function test_pixel_route_records_an_open_and_returns_a_gif(): void
     {
