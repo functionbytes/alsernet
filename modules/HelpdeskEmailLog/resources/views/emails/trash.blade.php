@@ -149,22 +149,29 @@
 
     {{-- Modal de confirmación (mismo patrón que emaillog-confirm-modal de
          emails/index.blade.php: modal-dialog-centered + footer apilado). --}}
-    <div class="modal fade" id="trash-confirm-modal" tabindex="-1"
+    <div class="modal fade evx-dialog" id="trash-confirm-modal" tabindex="-1"
          aria-labelledby="trash-confirm-title" aria-describedby="trash-confirm-message" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="trash-confirm-title">{{ __('helpdeskemaillog::emaillog.confirm.title') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
+                @include('helpdeskemaillog::emails.partials.modal-head', [
+                    'icon' => 'fa-trash-can',
+                    'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.trash'),
+                    'title' => __('helpdeskemaillog::emaillog.confirm.title'),
+                    'titleId' => 'trash-confirm-title',
+                ])
                 <div class="modal-body">
-                    <p class="mb-0" id="trash-confirm-message">—</p>
+                    <p id="trash-confirm-message">—</p>
+
+                    <div class="evx-dialog-keys">
+                        <kbd>&crarr;</kbd> {{ __('helpdeskemaillog::emaillog.modal.kbd_confirm') }}
+                        <kbd>esc</kbd> {{ __('helpdeskemaillog::emaillog.modal.kbd_cancel') }}
+                    </div>
                 </div>
-                <div class="modal-footer flex-column">
-                    <button type="button" class="btn btn-primary w-100 mb-2" id="trash-confirm-accept">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="trash-confirm-accept">
                         {{ __('helpdeskemaillog::emaillog.confirm.accept') }}
                     </button>
-                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
                         {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
                     </button>
                 </div>

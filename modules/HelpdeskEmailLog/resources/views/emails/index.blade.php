@@ -748,23 +748,39 @@
         </div>
     @endcan
 
-    {{-- Modal de confirmación reutilizable --}}
-    <div class="modal fade" id="emaillog-confirm-modal" tabindex="-1"
+    {{-- Modal de confirmación reutilizable. El icono, el título, el texto de
+         confirmación y la etiqueta del botón los fija evxConfirm() según la
+         acción; la tarjeta de contexto se rellena con el email sobre el que
+         se actúa y se oculta cuando la acción es masiva (varios registros). --}}
+    <div class="modal fade evx-dialog" id="emaillog-confirm-modal" tabindex="-1"
          aria-labelledby="emaillog-confirm-title" aria-describedby="emaillog-confirm-message" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="emaillog-confirm-title">{{ __('helpdeskemaillog::emaillog.confirm.title') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
+                @include('helpdeskemaillog::emails.partials.modal-head', [
+                    'icon' => 'fa-circle-question',
+                    'iconId' => 'emaillog-confirm-icon',
+                    'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.confirm'),
+                    'title' => __('helpdeskemaillog::emaillog.confirm.title'),
+                    'titleId' => 'emaillog-confirm-title',
+                ])
                 <div class="modal-body">
-                    <p class="mb-0" id="emaillog-confirm-message">—</p>
+                    <p id="emaillog-confirm-message">—</p>
+
+                    <div class="evx-dialog-context" id="emaillog-confirm-context" hidden>
+                        <span class="evx-dialog-context-title" id="emaillog-confirm-context-title"></span>
+                        <span class="evx-dialog-context-sub" id="emaillog-confirm-context-sub"></span>
+                    </div>
+
+                    <div class="evx-dialog-keys">
+                        <kbd>&crarr;</kbd> {{ __('helpdeskemaillog::emaillog.modal.kbd_confirm') }}
+                        <kbd>esc</kbd> {{ __('helpdeskemaillog::emaillog.modal.kbd_cancel') }}
+                    </div>
                 </div>
-                <div class="modal-footer flex-column">
-                    <button type="button" class="btn btn-primary w-100 mb-2" id="emaillog-confirm-accept">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="emaillog-confirm-accept">
                         {{ __('helpdeskemaillog::emaillog.confirm.accept') }}
                     </button>
-                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
                         {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
                     </button>
                 </div>
@@ -780,27 +796,50 @@
              (dentro del fragmento reemplazable) solo escriben la URL del
              email actual en #resendto-email antes de mostrarla, ver
              @push('scripts'). --}}
-        <div class="modal fade" id="emaillog-resendto-modal" tabindex="-1"
+        <div class="modal fade evx-dialog" id="emaillog-resendto-modal" tabindex="-1"
              aria-labelledby="emaillog-resendto-title" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="emaillog-resendto-title">{{ __('helpdeskemaillog::emaillog.resend.to_title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
+                    @include('helpdeskemaillog::emails.partials.modal-head', [
+                        'icon' => 'fa-share',
+                        'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.resend'),
+                        'title' => __('helpdeskemaillog::emaillog.resend.to_title'),
+                        'titleId' => 'emaillog-resendto-title',
+                    ])
                     <div class="modal-body">
-                        <label for="resendto-email" class="form-label fw-semibold small">
-                            {{ __('helpdeskemaillog::emaillog.resend.to_label') }}
-                        </label>
-                        <input type="email" class="form-control" id="resendto-email"
-                               placeholder="{{ __('helpdeskemaillog::emaillog.resend.to_placeholder') }}">
-                        <div class="form-text">{{ __('helpdeskemaillog::emaillog.resend.to_hint') }}</div>
+                        <div class="evx-dialog-context">
+                            <span class="evx-dialog-context-title" id="resendto-context-title"></span>
+                            <span class="evx-dialog-context-sub" id="resendto-context-sub"></span>
+                        </div>
+
+                        <div>
+                            <label for="resendto-email" class="form-label">
+                                {{ __('helpdeskemaillog::emaillog.resend.to_label') }}
+                            </label>
+                            <input type="email" class="form-control" id="resendto-email"
+                                   placeholder="{{ __('helpdeskemaillog::emaillog.resend.to_placeholder') }}">
+                            <div class="form-text">{{ __('helpdeskemaillog::emaillog.resend.to_hint') }}</div>
+                        </div>
+
+                        {{-- Direcciones ya usadas en reenvíos anteriores desde este
+                             navegador (localStorage, ver @push('scripts')): el
+                             mockup las ofrece como atajo. El bloque queda oculto
+                             mientras no haya ninguna. --}}
+                        <div id="resendto-recent-wrap" hidden>
+                            <span class="evx-dialog-eyebrow">{{ __('helpdeskemaillog::emaillog.resend.to_recent') }}</span>
+                            <div class="evx-dialog-chips" id="resendto-recent"></div>
+                        </div>
+
+                        <div class="evx-dialog-note">
+                            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                            <span>{{ __('helpdeskemaillog::emaillog.resend.to_note') }}</span>
+                        </div>
                     </div>
-                    <div class="modal-footer flex-column">
-                        <button type="button" class="btn btn-primary w-100 mb-2" id="resendto-send">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="resendto-send">
                             {{ __('helpdeskemaillog::emaillog.resend.to_send') }}
                         </button>
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
                             {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
                         </button>
                     </div>
@@ -813,34 +852,35 @@
              de arriba. #btnBounceTriage (dentro del fragmento reemplazable)
              copia aquí la dirección/error/tipo de rebote del email actual antes
              de abrir el modal, ver @push('scripts'). --}}
-        <div class="modal fade" id="emaillog-bounce-triage-modal" tabindex="-1"
+        <div class="modal fade evx-dialog" id="emaillog-bounce-triage-modal" tabindex="-1"
              aria-labelledby="emaillog-bounce-triage-title" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="emaillog-bounce-triage-title">{{ __('helpdeskemaillog::emaillog.bounce_triage.title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
+                    @include('helpdeskemaillog::emails.partials.modal-head', [
+                        'icon' => 'fa-triangle-exclamation',
+                        'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.bounce'),
+                        'title' => __('helpdeskemaillog::emaillog.bounce_triage.title'),
+                        'titleId' => 'emaillog-bounce-triage-title',
+                    ])
                     <div class="modal-body">
-                        <p class="text-muted small mb-3">{{ __('helpdeskemaillog::emaillog.bounce_triage.hint') }}</p>
+                        <p>{{ __('helpdeskemaillog::emaillog.bounce_triage.hint') }}</p>
 
-                        <div class="mb-3">
-                            <span class="form-label fw-semibold small d-block">{{ __('helpdeskemaillog::emaillog.bounce_triage.bounced_address_label') }}</span>
-                            <span class="fw-semibold" id="bounce-old-address">—</span>
+                        {{-- Dirección que rebotó + motivo del proveedor, en la
+                             tarjeta de contexto del mockup. --}}
+                        <div class="evx-dialog-context">
+                            <span class="evx-dialog-context-title" id="bounce-old-address">—</span>
+                            <span class="evx-dialog-context-sub" id="bounce-error-message"></span>
                         </div>
 
-                        <div class="mb-3" id="bounce-error-wrap">
-                            <span class="form-label fw-semibold small d-block">{{ __('helpdeskemaillog::emaillog.bounce_triage.error_label') }}</span>
-                            <span class="small text-muted" id="bounce-error-message">—</span>
+                        <div>
+                            <label for="bounce-corrected-email" class="form-label">
+                                {{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_label') }}
+                            </label>
+                            <input type="email" class="form-control" id="bounce-corrected-email"
+                                   placeholder="{{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_placeholder') }}">
                         </div>
 
-                        <label for="bounce-corrected-email" class="form-label fw-semibold small">
-                            {{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_label') }}
-                        </label>
-                        <input type="email" class="form-control" id="bounce-corrected-email"
-                               placeholder="{{ __('helpdeskemaillog::emaillog.bounce_triage.corrected_placeholder') }}">
-
-                        <div class="form-check mt-3">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="bounce-suppress-old">
                             <label class="form-check-label small" for="bounce-suppress-old">
                                 {{ __('helpdeskemaillog::emaillog.bounce_triage.suppress_label') }}
@@ -848,11 +888,11 @@
                             <div class="form-text" id="bounce-suppress-hint"></div>
                         </div>
                     </div>
-                    <div class="modal-footer flex-column">
-                        <button type="button" class="btn btn-primary w-100 mb-2" id="bounce-triage-send">
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="bounce-triage-send">
                             {{ __('helpdeskemaillog::emaillog.bounce_triage.send') }}
                         </button>
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
                             {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
                         </button>
                     </div>
@@ -865,32 +905,34 @@
              #btnLinkEntity copia aquí la URL de vinculación/búsqueda del email
              actual, ver @push('scripts'). Solo tickets por ahora — ver
              LinkEmailLogEntityRequest::ALLOWED_ENTITY_TYPES. --}}
-        <div class="modal fade" id="emaillog-link-entity-modal" tabindex="-1"
+        <div class="modal fade evx-dialog" id="emaillog-link-entity-modal" tabindex="-1"
              aria-labelledby="emaillog-link-entity-title" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="emaillog-link-entity-title">{{ __('helpdeskemaillog::emaillog.link_entity.title') }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
+                    @include('helpdeskemaillog::emails.partials.modal-head', [
+                        'icon' => 'fa-ticket',
+                        'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.link'),
+                        'title' => __('helpdeskemaillog::emaillog.link_entity.title'),
+                        'titleId' => 'emaillog-link-entity-title',
+                    ])
                     <div class="modal-body">
-                        <p class="text-muted small mb-3">{{ __('helpdeskemaillog::emaillog.link_entity.hint') }}</p>
+                        <p>{{ __('helpdeskemaillog::emaillog.link_entity.hint') }}</p>
 
-                        <input type="search" class="form-control mb-2" id="link-entity-search" autocomplete="off"
+                        <input type="search" class="form-control" id="link-entity-search" autocomplete="off"
                                placeholder="{{ __('helpdeskemaillog::emaillog.link_entity.search_placeholder') }}">
 
                         <div id="link-entity-results" class="list-group"></div>
 
-                        <div class="alert alert-light border d-none mt-2 mb-0" id="link-entity-selected">
-                            <span class="small text-muted">{{ __('helpdeskemaillog::emaillog.link_entity.selected_label') }}:</span>
-                            <strong id="link-entity-selected-label"></strong>
+                        <div class="evx-dialog-context d-none" id="link-entity-selected">
+                            <span class="evx-dialog-eyebrow">{{ __('helpdeskemaillog::emaillog.link_entity.selected_label') }}</span>
+                            <span class="evx-dialog-context-title" id="link-entity-selected-label"></span>
                         </div>
                     </div>
-                    <div class="modal-footer flex-column">
-                        <button type="button" class="btn btn-primary w-100 mb-2" id="link-entity-send" disabled>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="link-entity-send" disabled>
                             {{ __('helpdeskemaillog::emaillog.link_entity.send') }}
                         </button>
-                        <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
                             {{ __('helpdeskemaillog::emaillog.confirm.cancel') }}
                         </button>
                     </div>
@@ -929,18 +971,63 @@ $(function () {
     const confirmModal = new bootstrap.Modal($confirmModal[0]);
     let pendingAccept = null;
 
-    function askConfirm({ title, message, onAccept }) {
+    // Asunto + destinatario del email abierto, para la tarjeta de contexto del
+    // modal (mockup): confirmar una acción destructiva sin ver sobre qué
+    // registro se aplica es justo lo que el mockup evita. Devuelve null si no
+    // hay detalle abierto, y entonces el modal esconde la tarjeta.
+    function currentEmailContext() {
+        const $panel = $('.evx-detail-panel');
+        const subject = $panel.find('.evx-subject-lg').first().text().trim();
+        if (! subject) return null;
+
+        return { title: subject, sub: $panel.find('.evx-ph-meta .evx-mono').first().text().trim() };
+    }
+
+    const confirmAcceptDefault = $('#emaillog-confirm-accept').text().trim();
+
+    // `icon` y `accept` adaptan el modal a la acción concreta (el mockup usa un
+    // icono y una etiqueta propios en cada confirmación, no un "Aceptar"
+    // genérico). `context: null` fuerza a ocultar la tarjeta: en las acciones
+    // masivas no hay un único email al que referirse.
+    function askConfirm({ title, message, onAccept, icon, accept, context }) {
         $('#emaillog-confirm-title').text(title);
         $('#emaillog-confirm-message').text(message);
+        $('#emaillog-confirm-icon').find('i').attr('class', 'fa-solid ' + (icon || 'fa-circle-question'));
+        $('#emaillog-confirm-accept').text(accept || confirmAcceptDefault);
+
+        const ctx = context === undefined ? currentEmailContext() : context;
+        $('#emaillog-confirm-context').prop('hidden', ! ctx);
+        if (ctx) {
+            $('#emaillog-confirm-context-title').text(ctx.title);
+            $('#emaillog-confirm-context-sub').text(ctx.sub || '');
+        }
+
         pendingAccept = onAccept;
         confirmModal.show();
     }
 
-    $('#emaillog-confirm-accept').on('click', function () {
+    function acceptConfirm() {
         const fn = pendingAccept;
         pendingAccept = null;
         confirmModal.hide();
         if (typeof fn === 'function') fn();
+    }
+
+    $('#emaillog-confirm-accept').on('click', acceptConfirm);
+
+    // Enter confirma (Esc lo cierra ya Bootstrap): son los dos atajos que el
+    // modal anuncia en su pie.
+    $confirmModal.on('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            acceptConfirm();
+        }
+    });
+
+    // El botón primario recibe el foco al abrir, para que Enter funcione sin
+    // tener que pulsar antes dentro del modal.
+    $confirmModal.on('shown.bs.modal', function () {
+        $('#emaillog-confirm-accept').trigger('focus');
     });
 
     // Vistas guardadas — mismo alcance mínimo que la bandeja de tickets
@@ -1017,6 +1104,8 @@ $(function () {
             askConfirm({
                 title: @json(__('helpdeskemaillog::emaillog.confirm.delete_title')),
                 message: @json(__('helpdeskemaillog::emaillog.views.deleted')),
+                icon: 'fa-trash-can',
+                context: null,
                 onAccept: () => {
                     $.ajax({
                         url: viewsUrl + '/' + id,
@@ -1434,6 +1523,8 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.resend.confirm_title')),
             message: @json(__('helpdeskemaillog::emaillog.resend.confirm')),
+            icon: 'fa-rotate-right',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_resend')),
             onAccept: () => {
                 $.ajax({ url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
@@ -1451,6 +1542,8 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.resend.test_confirm_title')),
             message: @json(__('helpdeskemaillog::emaillog.resend.test_confirm')).replace(':email', to),
+            icon: 'fa-vial',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_test')),
             onAccept: () => {
                 $.ajax({ url, method: 'POST', data: { to, test: 1 }, headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
@@ -1465,6 +1558,8 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.confirm.delete_title')),
             message: @json(__('helpdeskemaillog::emaillog.confirm.delete_one')),
+            icon: 'fa-trash-can',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_delete')),
             onAccept: () => {
                 $.ajax({ url, method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => window.location = @json(route('helpdeskemaillog.index')))
@@ -1479,6 +1574,8 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.purge.confirm_title')),
             message: @json(__('helpdeskemaillog::emaillog.purge.confirm')),
+            icon: 'fa-eraser',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_purge')),
             onAccept: () => {
                 $.ajax({ url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
@@ -1497,8 +1594,52 @@ $(function () {
     const $resendToModal = $('#emaillog-resendto-modal');
     const resendToModal = new bootstrap.Modal($resendToModal[0]);
 
+    // Direcciones ya usadas en reenvíos anteriores, para ofrecerlas como atajo
+    // (bloque "Recientes" del mockup). Viven en localStorage y no en el
+    // servidor a propósito: es una comodidad del operador en su navegador, no
+    // un dato del registro de emails — y así no se comparten entre usuarios ni
+    // hacen falta permisos ni una tabla nueva.
+    const RESEND_RECENT_KEY = 'helpdeskemaillog.resend_recent';
+    const RESEND_RECENT_MAX = 4;
+
+    function readResendRecent() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(RESEND_RECENT_KEY) || '[]');
+            return Array.isArray(raw) ? raw.filter(v => typeof v === 'string').slice(0, RESEND_RECENT_MAX) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function rememberResendRecent(email) {
+        try {
+            const lista = [email].concat(readResendRecent().filter(v => v !== email)).slice(0, RESEND_RECENT_MAX);
+            localStorage.setItem(RESEND_RECENT_KEY, JSON.stringify(lista));
+        } catch (e) {
+            // Modo privado o almacenamiento lleno: el atajo es prescindible.
+        }
+    }
+
+    function renderResendRecent() {
+        const lista = readResendRecent();
+        $('#resendto-recent-wrap').prop('hidden', ! lista.length);
+        $('#resendto-recent').empty().append(lista.map(email =>
+            $('<button>', { type: 'button', class: 'evx-dialog-chip', text: email })
+        ));
+    }
+
+    $(document).on('click', '#resendto-recent .evx-dialog-chip', function () {
+        $('#resendto-email').val($(this).text()).removeClass('is-invalid').trigger('focus');
+    });
+
     $(document).on('click', '#btnResendTo', function () {
         $('#resendto-email').val('').removeClass('is-invalid').data('url', $(this).data('url'));
+
+        const ctx = currentEmailContext();
+        $('#resendto-context-title').text(ctx ? ctx.title : '');
+        $('#resendto-context-sub').text(ctx ? ctx.sub : '');
+
+        renderResendRecent();
         resendToModal.show();
     });
 
@@ -1509,7 +1650,10 @@ $(function () {
         if (!to) { $input.addClass('is-invalid'); return; }
         $input.removeClass('is-invalid');
         $.ajax({ url, method: 'POST', data: { to }, headers: { 'X-CSRF-TOKEN': csrf } })
-            .done(() => location.reload())
+            .done(() => {
+                rememberResendRecent(to);
+                location.reload();
+            })
             .fail(xhr => {
                 const msg = xhr.responseJSON?.errors?.to?.[0] || xhr.responseJSON?.message || 'Error';
                 toastr.error(msg);
@@ -1532,9 +1676,11 @@ $(function () {
         const isHard = $btn.data('hard') === 1 || $btn.data('hard') === '1';
         const error = $btn.data('error') || '';
 
+        // Dirección y motivo comparten ahora la tarjeta de contexto del modal:
+        // el motivo es la segunda línea y se deja vacía si el proveedor no
+        // devolvió ninguno (antes era un bloque aparte que se ocultaba).
         $('#bounce-old-address').text($btn.data('old-address') || '—');
-        $('#bounce-error-message').text(error || '—');
-        $('#bounce-error-wrap').toggle(!!error);
+        $('#bounce-error-message').text(error);
         // Nunca se precarga con la dirección vieja: el campo debe quedar
         // vacío para forzar a escribir la dirección YA corregida.
         $('#bounce-corrected-email').val('').removeClass('is-invalid').data('url', $btn.data('url'));
@@ -1673,6 +1819,9 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.bulk.resend_title')),
             message: @json(__('helpdeskemaillog::emaillog.bulk.resend_confirm')).replace(':count', uids.length),
+            icon: 'fa-rotate-right',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_resend')),
+            context: null,
             onAccept: () => {
                 $.ajax({ url, method: 'POST', data: { uids }, headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
@@ -1701,6 +1850,9 @@ $(function () {
         askConfirm({
             title: @json(__('helpdeskemaillog::emaillog.confirm.delete_title')),
             message: @json(__('helpdeskemaillog::emaillog.bulk.confirm')).replace(':count', uids.length),
+            icon: 'fa-trash-can',
+            accept: @json(__('helpdeskemaillog::emaillog.confirm.accept_delete')),
+            context: null,
             onAccept: () => {
                 $.ajax({ url, method: 'DELETE', data: { uids }, headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())

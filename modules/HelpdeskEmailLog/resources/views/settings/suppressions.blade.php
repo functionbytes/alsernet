@@ -76,14 +76,16 @@
     </div>
 
     {{-- Modal: añadir --}}
-    <div class="modal fade" id="suppression-add-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade evx-dialog" id="suppression-add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" action="{{ route('settings.helpdeskemaillog.suppressions.store') }}" class="modal-content">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Añadir dirección a la lista de supresión</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
+                @include('helpdeskemaillog::emails.partials.modal-head', [
+                    'icon' => 'fa-ban',
+                    'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.suppression'),
+                    'title' => 'Añadir dirección a la lista de supresión',
+                    'titleId' => 'a-adir-direcci-n-a-la-lista-de-supresi-n-title',
+                ])
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="add-email" class="form-label fw-semibold">Email</label>
@@ -112,9 +114,9 @@
                                   placeholder="Ej. cliente pidió baja por teléfono el 31/08"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer flex-column">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Añadir</button>
-                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Añadir</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>

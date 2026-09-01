@@ -57,6 +57,21 @@ return [
         'view' => 'View queued',
     ],
 
+    'modal' => [
+        'close' => 'Close',
+        'kbd_confirm' => 'confirm',
+        'kbd_cancel' => 'cancel',
+        'eyebrow' => [
+            'bounce_mailbox' => 'Settings · Bounces',
+            'suppression' => 'Mail · Suppression',
+            'confirm' => 'Emails · Confirm action',
+            'resend' => 'Emails · Resend',
+            'bounce' => 'Emails · Bounce',
+            'link' => 'Emails · Linking',
+            'trash' => 'Operations · Trash',
+        ],
+    ],
+
     'filters' => [
         'more' => 'More filters',
         'heading' => 'Search filters',
@@ -138,10 +153,14 @@ return [
         'bulk_export' => 'Export selected',
         'back_to_list' => 'Back to list',
         'print' => 'Print',
+        'print_hint' => 'single-page view',
         'bulk_resend' => 'Resend selected',
         'download' => 'Download',
         'download_eml' => 'Download .eml',
+        'download_eml_hint' => 'full copy',
+        'download_eml_hint_size' => 'full copy · :size',
         'copy_id' => 'Copy Message-ID',
+        'copy_id_hint' => 'to the clipboard',
         'resend_to' => 'Resend to another address',
         'resend_test' => 'Send test copy',
         'purge' => 'Purge content',
@@ -214,6 +233,10 @@ return [
     ],
 
     'confirm' => [
+        'accept_resend' => 'Resend now',
+        'accept_delete' => 'Move to trash',
+        'accept_purge' => 'Purge content',
+        'accept_test' => 'Send test copy',
         'title' => 'Confirm action',
         'delete_title' => 'Confirm deletion',
         'delete_one' => 'Delete this email log entry? This action cannot be undone.',
@@ -457,6 +480,8 @@ return [
     ],
 
     'resend' => [
+        'to_recent' => 'Recent',
+        'to_note' => 'A new Message-ID will be generated, linked to the original thread through In-Reply-To.',
         'recipient_hint' => 'to the original address',
         'success' => 'Email resent successfully.',
         'queued' => 'Resend queued. The email will be sent in the background.',
@@ -472,7 +497,10 @@ return [
         'to_label' => 'Alternative email address',
         'to_placeholder' => 'name@example.com',
         'to_hint' => 'The email will be sent only to this address (no CC).',
-        'to_send' => 'Send',
+        // Short version for the "Quick actions" row, where the subtitle is
+        // truncated to a single line: same meaning as to_hint, but it fits.
+        'to_short_hint' => 'no CC · new Message-ID',
+        'to_send' => 'Resend now',
         'test_hint' => 'to your inbox · [TEST] prefix',
         'test_confirm_title' => 'Confirm test copy',
         'test_confirm' => 'Send a test copy (subject prefixed with [TEST]) to :email?',

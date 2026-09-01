@@ -104,41 +104,45 @@
     </div>
 
     {{-- Modal: añadir --}}
-    <div class="modal fade" id="bounce-mailbox-add-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade evx-dialog" id="bounce-mailbox-add-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" action="{{ route('settings.helpdeskemaillog.bounce-mailboxes.store') }}" class="modal-content">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Añadir buzón de rebote</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
+                @include('helpdeskemaillog::emails.partials.modal-head', [
+                    'icon' => 'fa-inbox',
+                    'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.bounce_mailbox'),
+                    'title' => 'Añadir buzón de rebote',
+                    'titleId' => 'a-adir-buz-n-de-rebote-title',
+                ])
                 <div class="modal-body">
                     @include('helpdeskemaillog::settings.partials.bounce-mailbox-fields', ['prefix' => 'add'])
                 </div>
-                <div class="modal-footer flex-column">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Añadir buzón</button>
-                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Añadir buzón</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
     {{-- Modal: editar (un solo modal, rellenado por JS con los datos de la fila) --}}
-    <div class="modal fade" id="bounce-mailbox-edit-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade evx-dialog" id="bounce-mailbox-edit-modal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <form method="POST" id="bounce-mailbox-edit-form" class="modal-content">
                 @csrf
                 @method('PUT')
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar buzón de rebote</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
+                @include('helpdeskemaillog::emails.partials.modal-head', [
+                    'icon' => 'fa-inbox',
+                    'eyebrow' => __('helpdeskemaillog::emaillog.modal.eyebrow.bounce_mailbox'),
+                    'title' => 'Editar buzón de rebote',
+                    'titleId' => 'editar-buz-n-de-rebote-title',
+                ])
                 <div class="modal-body">
                     @include('helpdeskemaillog::settings.partials.bounce-mailbox-fields', ['prefix' => 'edit'])
                 </div>
-                <div class="modal-footer flex-column">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Guardar cambios</button>
-                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>

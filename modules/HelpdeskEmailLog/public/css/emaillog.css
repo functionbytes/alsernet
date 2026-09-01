@@ -462,6 +462,14 @@
     color: var(--evx-danger);
 }
 
+/* Variante "acción de peso" para el grupo Ciclo de vida (purgar / papelera):
+   el mockup no las tinta de rojo — usa el mismo icono neutro pero un escalón
+   más contrastado, para que destaquen sin leerse como un error. */
+.evx-option-icon.is-strong {
+    background: #e4e4e7;
+    color: var(--evx-text, #18181b);
+}
+
 /* Traza de envío — timeline (usa .evx-trace-step/.evx-trace-icon de
    emaillog-extras.css; estas reglas solo añaden el layout de 3 columnas
    icono + texto + hora que ese componente no define). */
@@ -1021,7 +1029,8 @@
    ============================================================ */
 .emaillog-index,
 .emaillog-settings,
-.evx-bulk-toolbar {
+.evx-bulk-toolbar,
+.evx-dialog {
     --evx-panel: #fff;
     --evx-subtle: #f4f4f5;
     --evx-bg-soft: #fafafa;
@@ -2644,6 +2653,14 @@
     font-size: 10px;
 }
 
+/* .evx-copy-btn es el botoncito inline de copiar (gris apagado, 11px). La fila
+   de "Copiar Message-ID" comparte esa clase solo para enganchar su handler, así
+   que aquí se le devuelve el color y el tamaño del resto de acciones. */
+.evx-sidebar .evx-list-row.evx-copy-btn {
+    color: inherit;
+    font-size: inherit;
+}
+
 /* Cabecera de bloque del sidebar: eyebrow en mayúsculas, sin subtítulo
    (el mockup no los tiene y aquí solo repetían lo que ya dice el título:
    "Opciones disponibles", "Mismo destinatario o entidad"…). */
@@ -2766,6 +2783,74 @@
     display: flex;
     align-items: center;
     gap: 9px;
+}
+
+/* ============================================================
+   Cabecera del detalle — medidas del mockup
+   Todo lo de aquí está acotado a la cabecera (.evx-ph-*): las mismas
+   clases (.evx-label, .evx-tag, .evx-icon-btn) se reutilizan en el
+   listado y en los paneles, donde su tamaño actual sí es el bueno.
+   ============================================================ */
+
+/* Eyebrow "DETALLE DEL EMAIL": un punto más marcado que el resto de
+   eyebrows de la pantalla, porque encabeza la columna entera. */
+.evx-ph-top .evx-label {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: .06em;
+}
+
+/* Chips de módulo/adjuntos: mismo alto y radio que el chip del uid que
+   tienen al lado — sin esto quedaban más gordos y más redondeados que él. */
+.evx-ph-chips .evx-tag {
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+    color: var(--evx-text-soft);
+}
+
+/* Línea de contexto (destinatario · registro · quién): texto secundario,
+   no del mismo peso que el cuerpo del detalle. */
+.evx-ph-meta {
+    font-size: 11px;
+    /* Gris intermedio del mockup: --evx-text-soft (#52525b) compite con el
+       asunto y --evx-text-muted (#a1a1aa) casi no se lee. No hay variable
+       para este escalón. */
+    color: #71717a;
+}
+
+/* Botón Reenviar: compacto y en negrita, como el del mockup. */
+.evx-ph-actions .evx-btn-primary {
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Los tres botones de icono (descargar / copiar / papelera) son idénticos
+   entre sí: 31px, borde suave y icono pequeño. */
+.evx-ph-actions .evx-icon-btn {
+    width: 31px;
+    height: 31px;
+    font-size: 11px;
+    border-color: var(--evx-border);
+}
+
+/* .evx-copy-btn es el botoncito de copiar inline (transparente, sin borde):
+   el de la cabecera comparte esa clase solo para enganchar su handler, así
+   que recupera aquí el aspecto de sus dos vecinos. */
+.evx-ph-actions .evx-icon-btn.evx-copy-btn {
+    padding: 0;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 7px;
+    color: var(--evx-text-soft);
+    font-size: 11px;
+}
+
+.evx-ph-actions .evx-icon-btn.evx-copy-btn:hover {
+    border-color: var(--evx-text);
+    color: var(--evx-text);
 }
 
 /* Pie de un bloque del sidebar (enlace "ver todos del hilo →"). */
@@ -3007,4 +3092,263 @@
         border-left: 0;
         border-top: 1px solid var(--evx-border);
     }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Modales
+   Réplica del patrón del mockup (medidas tomadas del HTML fuente de
+   "Alvarez Emails Enviados.dc.html", bloques mConfirm/mResendTo/…): caja de
+   340px con cabecera de icono + eyebrow + título, cuerpo con tarjeta de
+   contexto opcional y pie de dos botones apilados a ancho completo.
+   Se monta encima de los modales de Bootstrap para no tocar el JS que ya
+   los abre y los cierra.
+   ────────────────────────────────────────────────────────────────────────── */
+.evx-dialog .modal-dialog,
+.modal.evx-dialog .modal-dialog {
+    max-width: 340px;
+}
+
+.evx-dialog .modal-content {
+    border: 0;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgb(0 0 0 / .45);
+}
+
+/* ── Cabecera ── */
+.evx-dialog .evx-dialog-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-dialog-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: #f5f6f8;
+    display: grid;
+    place-items: center;
+    color: var(--evx-text);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.evx-dialog-heading {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-dialog-eyebrow {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.evx-dialog-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--evx-text);
+}
+
+.evx-dialog-close {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    color: var(--evx-text-muted);
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 12px;
+    cursor: pointer;
+    transition: .12s;
+}
+
+.evx-dialog-close:hover {
+    background: #f5f6f8;
+    color: var(--evx-text);
+}
+
+/* ── Cuerpo ── */
+.evx-dialog .modal-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    font-size: 11.5px;
+    color: #3f3f46;
+    line-height: 1.65;
+}
+
+/* Los hijos ya se separan con el gap del flex: los márgenes de Bootstrap
+   (mb-2/mb-3) duplicarían la separación. */
+.evx-dialog .modal-body > * {
+    margin-bottom: 0;
+}
+
+/* Tarjeta de contexto: sobre qué email se está actuando. */
+.evx-dialog-context {
+    padding: 9px 11px;
+    background: #f5f6f8;
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.evx-dialog-context-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--evx-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-dialog-context-sub {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--evx-text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Nota informativa (mismo fondo que la tarjeta, con icono). */
+.evx-dialog-note {
+    display: flex;
+    gap: 8px;
+    padding: 9px 11px;
+    background: #f5f6f8;
+    border-radius: 7px;
+    font-size: 10.5px;
+    color: var(--evx-text-soft);
+    line-height: 1.6;
+}
+
+.evx-dialog-note > i {
+    margin-top: 2px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+/* Atajos de teclado. */
+.evx-dialog-keys {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 10px;
+    color: var(--evx-text-muted);
+}
+
+/* El tema declara `kbd { padding … !important }` en extra.css, así que aquí
+   no basta con la especificidad: es el único sitio del módulo donde hace
+   falta !important, y solo para estas dos teclas del pie del modal. */
+.evx-dialog .evx-dialog-keys kbd {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px !important;
+    border: 1px solid var(--evx-border);
+    border-radius: 3px !important;
+    background: #f5f6f8;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 9px;
+    line-height: 1.5;
+    color: var(--evx-text-soft);
+}
+
+/* Campos: el mockup usa etiqueta pequeña, input de 6px de radio y una
+   línea de ayuda apagada. */
+.evx-dialog .form-label,
+.evx-dialog-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    margin-bottom: 5px;
+}
+
+.evx-dialog .form-control {
+    padding: 7px 10px;
+    border: 1px solid var(--evx-border);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.evx-dialog .form-control:focus {
+    border-color: var(--evx-primary);
+    box-shadow: none;
+}
+
+.evx-dialog .form-text {
+    font-size: 10.5px;
+    color: var(--evx-text-muted);
+    margin-top: 5px;
+}
+
+/* Sugerencias en pastilla (direcciones recientes). */
+.evx-dialog-chips {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.evx-dialog-chip {
+    padding: 3px 8px;
+    border: 1px solid var(--evx-border);
+    border-radius: 20px;
+    background: #fff;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+    cursor: pointer;
+}
+
+.evx-dialog-chip:hover {
+    border-color: var(--evx-border-strong);
+    color: var(--evx-text);
+}
+
+/* ── Pie ── */
+.evx-dialog .modal-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px 14px;
+    border-top: 0;
+}
+
+.evx-dialog .modal-footer > .btn {
+    width: 100%;
+    margin: 0;
+    padding: 10px 13px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.evx-dialog .modal-footer > .btn-primary {
+    font-weight: 700;
+}
+
+/* Cancelar es un botón de contorno sobre blanco, no un relleno gris. */
+.evx-dialog .modal-footer > .btn-light {
+    border: 1px solid var(--evx-border);
+    background: #fff;
+    font-weight: 600;
+    color: var(--evx-text);
+}
+
+.evx-dialog .modal-footer > .btn-light:hover {
+    background: #f5f6f8;
 }

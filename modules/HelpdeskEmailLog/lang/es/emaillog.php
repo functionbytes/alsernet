@@ -61,6 +61,21 @@ return [
         'view' => 'Ver en cola',
     ],
 
+    'modal' => [
+        'close' => 'Cerrar',
+        'kbd_confirm' => 'confirmar',
+        'kbd_cancel' => 'cancelar',
+        'eyebrow' => [
+            'bounce_mailbox' => 'Ajustes · Rebotes',
+            'suppression' => 'Correo · Supresión',
+            'confirm' => 'Emails · Confirmar acción',
+            'resend' => 'Emails · Reenvío',
+            'bounce' => 'Emails · Rebote',
+            'link' => 'Emails · Vinculación',
+            'trash' => 'Operación · Papelera',
+        ],
+    ],
+
     'filters' => [
         'more' => 'Más filtros',
         'heading' => 'Filtros de búsqueda',
@@ -142,10 +157,14 @@ return [
         'bulk_export' => 'Exportar seleccionados',
         'back_to_list' => 'Volver al listado',
         'print' => 'Imprimir',
+        'print_hint' => 'vista de una página',
         'bulk_resend' => 'Reenviar seleccionados',
         'download' => 'Descargar',
         'download_eml' => 'Descargar .eml',
+        'download_eml_hint' => 'copia íntegra',
+        'download_eml_hint_size' => 'copia íntegra · :size',
         'copy_id' => 'Copiar Message-ID',
+        'copy_id_hint' => 'al portapapeles',
         'resend_to' => 'Reenviar a otra dirección',
         'resend_test' => 'Enviar copia de prueba',
         'purge' => 'Purgar contenido',
@@ -219,6 +238,10 @@ return [
     ],
 
     'confirm' => [
+        'accept_resend' => 'Reenviar ahora',
+        'accept_delete' => 'Enviar a la papelera',
+        'accept_purge' => 'Purgar contenido',
+        'accept_test' => 'Enviar copia de prueba',
         'title' => 'Confirmar acción',
         'delete_title' => 'Confirmar eliminación',
         'delete_one' => '¿Eliminar este registro de email? Esta acción no se puede deshacer.',
@@ -468,6 +491,8 @@ return [
     ],
 
     'resend' => [
+        'to_recent' => 'Recientes',
+        'to_note' => 'Se generará un nuevo Message-ID enlazado al hilo original mediante In-Reply-To.',
         'recipient_hint' => 'al mismo correo original',
         'success' => 'Email reenviado correctamente.',
         'queued' => 'Reenvío encolado. El email se enviará en segundo plano.',
@@ -483,7 +508,10 @@ return [
         'to_label' => 'Dirección de correo alternativa',
         'to_placeholder' => 'nombre@ejemplo.com',
         'to_hint' => 'El email se enviará solo a esta dirección (sin CC).',
-        'to_send' => 'Enviar',
+        // Versión corta para la fila de "Acciones rápidas", donde el subtítulo
+        // se trunca a una línea: dice lo mismo que to_hint pero cabe.
+        'to_short_hint' => 'sin CC · nuevo Message-ID',
+        'to_send' => 'Reenviar ahora',
         'test_hint' => 'a tu correo · prefijo [TEST]',
         'test_confirm_title' => 'Confirmar copia de prueba',
         'test_confirm' => '¿Enviar una copia de prueba (asunto con prefijo [TEST]) a :email?',

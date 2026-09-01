@@ -123,7 +123,7 @@
                     @if($canManage)
                         <button type="button" class="evx-btn evx-btn-primary evx-btn-inline js-resend"
                                 data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}">
-                            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                             {{ __('helpdeskemaillog::emaillog.actions.resend') }}
                         </button>
                     @endif
@@ -131,7 +131,7 @@
                         <a href="{{ route('helpdeskemaillog.raw', $log->uid) }}" class="evx-icon-btn"
                            aria-label="{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}"
                            title="{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}">
-                            <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
+                            <i class="fa-solid fa-download" aria-hidden="true"></i>
                         </a>
                     @endif
                     @if($log->message_id)
@@ -142,11 +142,11 @@
                         </button>
                     @endif
                     @if($canManage)
-                        <button type="button" class="evx-icon-btn is-danger js-delete"
+                        <button type="button" class="evx-icon-btn js-delete"
                                 data-url="{{ route('helpdeskemaillog.destroy', $log->uid) }}"
-                                aria-label="{{ __('helpdeskemaillog::emaillog.actions.delete') }}"
-                                title="{{ __('helpdeskemaillog::emaillog.actions.delete') }}">
-                            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                aria-label="{{ __('helpdeskemaillog::emaillog.actions.move_to_trash') }}"
+                                title="{{ __('helpdeskemaillog::emaillog.actions.move_to_trash') }}">
+                            <i class="fa-regular fa-trash-can" aria-hidden="true"></i>
                         </button>
                     @endif
                 </div>
@@ -760,7 +760,7 @@
                             <a href="{{ route('helpdeskemaillog.raw', $log->uid) }}" class="evx-icon-btn"
                                aria-label="{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}"
                                title="{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}">
-                                <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i>
+                                <i class="fa-solid fa-download" aria-hidden="true"></i>
                             </a>
                         @endif
                     </div>
@@ -863,7 +863,7 @@
 
                     <button type="button" class="evx-list-row evx-list-row-btn js-resend"
                             data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}">
-                        <span class="evx-option-icon"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i></span>
+                        <span class="evx-option-icon"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i></span>
                         <span class="evx-list-main">
                             <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend_recipient') }}</span>
                             <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.recipient_hint') }}</span>
@@ -875,7 +875,7 @@
                         <span class="evx-option-icon"><i class="fa-solid fa-share" aria-hidden="true"></i></span>
                         <span class="evx-list-main">
                             <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend_to') }}</span>
-                            <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.to_hint') }}</span>
+                            <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.to_short_hint') }}</span>
                         </span>
                     </button>
 
@@ -886,7 +886,7 @@
                         <button type="button" class="evx-list-row evx-list-row-btn js-resend-test"
                                 data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}"
                                 data-to="{{ auth()->user()->email }}">
-                            <span class="evx-option-icon"><i class="fa-solid fa-flask" aria-hidden="true"></i></span>
+                            <span class="evx-option-icon"><i class="fa-solid fa-vial" aria-hidden="true"></i></span>
                             <span class="evx-list-main">
                                 <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend_test') }}</span>
                                 <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.test_hint') }}</span>
@@ -897,25 +897,21 @@
 
                 <div class="evx-list-group-title">{{ __('helpdeskemaillog::emaillog.preview.groups.retrieve') }}</div>
 
-                @if($log->body_html || $log->body_text)
-                    <a href="{{ route('helpdeskemaillog.download', $log->uid) }}" class="evx-list-row evx-list-row-btn">
-                        <span class="evx-option-icon"><i class="fa-solid fa-download" aria-hidden="true"></i></span>
-                        <span class="evx-list-main">
-                            <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.download') }}</span>
-                        </span>
-                    </a>
-                @endif
-
+                {{-- Una sola descarga, como el mockup: el .eml ya es la copia
+                     íntegra (cabeceras + cuerpo), así que bajar el HTML suelto
+                     por separado no aportaba nada. --}}
                 @if($log->raw_headers || $log->body_html || $log->body_text)
                     <a href="{{ route('helpdeskemaillog.raw', $log->uid) }}" class="evx-list-row evx-list-row-btn">
-                        <span class="evx-option-icon"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i></span>
+                        <span class="evx-option-icon"><i class="fa-solid fa-download" aria-hidden="true"></i></span>
                         <span class="evx-list-main">
                             <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}</span>
                             {{-- Tamaño REAL del .eml (ver EmailLogController::emlSizeLabel()) —
-                                 se omite el subtítulo si no hay cuerpo/cabeceras que pesar. --}}
-                            @if($emlSizeLabel)
-                                <span class="evx-list-sub">{{ $emlSizeLabel }}</span>
-                            @endif
+                                 sin él el subtítulo se queda solo en "copia íntegra". --}}
+                            <span class="evx-list-sub">
+                                {{ $emlSizeLabel
+                                    ? __('helpdeskemaillog::emaillog.actions.download_eml_hint_size', ['size' => $emlSizeLabel])
+                                    : __('helpdeskemaillog::emaillog.actions.download_eml_hint') }}
+                            </span>
                         </span>
                     </a>
                 @endif
@@ -925,6 +921,7 @@
                         <span class="evx-option-icon"><i class="fa-regular fa-copy" aria-hidden="true"></i></span>
                         <span class="evx-list-main">
                             <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.copy_id') }}</span>
+                            <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.actions.copy_id_hint') }}</span>
                         </span>
                     </button>
                 @endif
@@ -933,6 +930,7 @@
                     <span class="evx-option-icon"><i class="fa-solid fa-print" aria-hidden="true"></i></span>
                     <span class="evx-list-main">
                         <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.print') }}</span>
+                        <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.actions.print_hint') }}</span>
                     </span>
                 </button>
 
@@ -945,7 +943,7 @@
                     @if($log->body_html || $log->body_text)
                         <button type="button" class="evx-list-row evx-list-row-btn js-purge"
                                 data-url="{{ route('helpdeskemaillog.purge-body', $log->uid) }}">
-                            <span class="evx-option-icon is-danger"><i class="fa-solid fa-eraser" aria-hidden="true"></i></span>
+                            <span class="evx-option-icon is-strong"><i class="fa-solid fa-eraser" aria-hidden="true"></i></span>
                             <span class="evx-list-main">
                                 <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.purge') }}</span>
                                 <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.purge.hint') }}</span>
@@ -958,7 +956,7 @@
                          decirlo para que nadie dude en usarlo. --}}
                     <button type="button" class="evx-list-row evx-list-row-btn js-delete"
                             data-url="{{ route('helpdeskemaillog.destroy', $log->uid) }}">
-                        <span class="evx-option-icon is-danger"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></span>
+                        <span class="evx-option-icon is-strong"><i class="fa-regular fa-trash-can" aria-hidden="true"></i></span>
                         <span class="evx-list-main">
                             <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.move_to_trash') }}</span>
                             <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.trash.recoverable_hint', ['days' => $trashRetentionDays ?? 30]) }}</span>
