@@ -23,10 +23,15 @@ class ResendEmailLogJob implements ShouldQueue
      * @param  ?string  $overrideTo  Optional alternative recipient; when set, the
      *                               email is sent only to this address instead of
      *                               the original recipients (cc/reply-to omitted).
+     * @param  bool  $isTest  "Send a test copy to myself" from the detail sidebar —
+     *                        prefixes the subject with [TEST] so it's never mistaken
+     *                        for the real send. Never set for the regular "resend to
+     *                        another address" action.
      */
     public function __construct(
         public readonly int $emailLogId,
         public readonly ?string $overrideTo = null,
+        public readonly bool $isTest = false,
     ) {
         $this->onQueue('emails');
     }
@@ -57,7 +62,8 @@ class ResendEmailLogJob implements ShouldQueue
                 : '<p>(sin contenido)</p>');
 
         Mail::html($html, function ($message) use ($emailLog, $recipients) {
-            $message->to($recipients)->subject($emailLog->subject);
+            $subject = $this->isTest ? '[TEST] '.$emailLog->subject : $emailLog->subject;
+            $message->to($recipients)->subject($subject);
 
             if ($emailLog->from_address) {
                 $message->from($emailLog->from_address, $emailLog->from_name);

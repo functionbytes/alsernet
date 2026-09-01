@@ -6,92 +6,72 @@
     @include('core::components.card', ['title' => 'Log de emails — Lista de supresión'])
 @endsection
 
+@include('helpdeskemaillog::settings.partials.css')
+
 @section('content')
     @include('core::components.alerts')
 
-    <div class="row g-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header p-4 border-bottom d-flex align-items-center justify-content-between">
-                    <div>
-                        <h5 class="mb-1 fw-bold">Lista de supresión</h5>
-                        <p class="small mb-0 text-muted">
-                            A estas direcciones nunca se les vuelve a enviar correo automático ni manual. Un rebote
-                            permanente o una queja de spam las añaden aquí automáticamente; también se pueden añadir
-                            a mano (p. ej. una baja voluntaria pedida por teléfono).
-                        </p>
-                    </div>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppression-add-modal">
-                        Añadir dirección
-                    </button>
-                </div>
+    <div class="emaillog-settings">
+        <div class="evx-shell">
+            @include('helpdeskemaillog::settings.partials.subnav', ['current' => 'suppressions'])
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Email</th>
-                                    <th>Alcance</th>
-                                    <th>Motivo</th>
-                                    <th>Origen</th>
-                                    <th>Fecha</th>
-                                    <th class="text-end">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($suppressions as $s)
-                                    <tr>
-                                        <td class="fw-semibold">{{ $s->email }}</td>
-                                        <td>
-                                            @if($s->module === '')
-                                                <span class="badge bg-danger-subtle text-danger">Global</span>
-                                            @else
-                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $s->module }}</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $s->reason->label() }}</td>
-                                        <td class="small text-muted">
-                                            @if($s->causer_id)
-                                                {{ $s->causer?->name ?? ('#'.$s->causer_id) }}
-                                            @else
-                                                Automático
-                                            @endif
-                                        </td>
-                                        <td class="small text-muted">{{ $s->created_at->format('d/m/Y H:i') }}</td>
-                                        <td class="text-end">
-                                            <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
-                                                </a>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <form method="POST" action="{{ route('settings.helpdeskemaillog.suppressions.destroy', $s) }}"
-                                                              onsubmit="return confirm('¿Quitar esta dirección de la lista de supresión? Volverá a recibir correo.');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="dropdown-item">Quitar</button>
-                                                        </form>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            Sin direcciones suprimidas.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    @if($suppressions->hasPages())
-                        <div class="p-3">{{ $suppressions->links() }}</div>
-                    @endif
+            <div class="evx-section-block d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h2 class="evx-section-title">Lista de supresión</h2>
+                    <p class="evx-section-desc mb-0">
+                        A estas direcciones nunca se les vuelve a enviar correo automático ni manual. Un rebote
+                        permanente o una queja de spam las añaden aquí automáticamente; también se pueden añadir
+                        a mano (p. ej. una baja voluntaria pedida por teléfono).
+                    </p>
                 </div>
+                <button type="button" class="evx-btn evx-btn-primary evx-btn-inline" data-bs-toggle="modal" data-bs-target="#suppression-add-modal">
+                    <i class="fas fa-plus" aria-hidden="true"></i> Añadir dirección
+                </button>
             </div>
+
+            <div class="evx-list">
+                @forelse($suppressions as $s)
+                    <div class="evx-list-row">
+                        <div class="evx-list-main">
+                            <div class="evx-list-title d-flex align-items-center gap-2">
+                                <span>{{ $s->email }}</span>
+                                <span class="evx-tag {{ $s->module === '' ? '' : 'mono' }}">{{ $s->module === '' ? 'Global' : $s->module }}</span>
+                            </div>
+                            <div class="evx-list-sub">
+                                {{ $s->reason->label() }} ·
+                                {{ $s->causer_id ? ($s->causer?->name ?? '#'.$s->causer_id) : 'Automático' }}
+                            </div>
+                        </div>
+                        <span class="evx-list-date">{{ $s->created_at->format('d/m/Y H:i') }}</span>
+                        <div class="dropdown">
+                            <button type="button" class="evx-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Acciones">
+                                <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <form method="POST" action="{{ route('settings.helpdeskemaillog.suppressions.destroy', $s) }}"
+                                          onsubmit="return confirm('¿Quitar esta dirección de la lista de supresión? Volverá a recibir correo.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="dropdown-item">Quitar</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                @empty
+                    <div class="evx-empty-row">
+                        <i class="fas fa-shield" aria-hidden="true"></i>
+                        <p>Sin direcciones suprimidas.</p>
+                    </div>
+                @endforelse
+            </div>
+
+            @if($suppressions->hasPages())
+                <div class="evx-pagination">
+                    {{ $suppressions->links() }}
+                </div>
+            @endif
         </div>
     </div>
 

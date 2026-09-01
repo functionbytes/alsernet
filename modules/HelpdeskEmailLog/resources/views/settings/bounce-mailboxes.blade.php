@@ -6,109 +6,99 @@
     @include('core::components.card', ['title' => 'Log de emails — Buzones de rebote'])
 @endsection
 
+@include('helpdeskemaillog::settings.partials.css')
+
 @section('content')
     @include('core::components.alerts')
 
-    <div class="row g-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header p-4 border-bottom d-flex align-items-center justify-content-between">
-                    <div>
-                        <h5 class="mb-1 fw-bold">Buzones de rebote</h5>
-                        <p class="small mb-0 text-muted">
-                            Buzones IMAP que <code>email-logs:process-bounces</code> revisa cada 10 minutos en busca de
-                            rebotes (DSN) y quejas de spam. Sin ningún buzón habilitado, no se detecta ningún rebote.
-                        </p>
-                    </div>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bounce-mailbox-add-modal">
-                        Añadir buzón
-                    </button>
-                </div>
+    <div class="emaillog-settings">
+        <div class="evx-shell">
+            @include('helpdeskemaillog::settings.partials.subnav', ['current' => 'bounce-mailboxes'])
 
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Etiqueta</th>
-                                    <th>Servidor</th>
-                                    <th>Módulos</th>
-                                    <th>Estado</th>
-                                    <th>Última revisión</th>
-                                    <th class="text-end">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($mailboxes as $mailbox)
-                                    <tr>
-                                        <td class="fw-semibold">{{ $mailbox['label'] ?? '—' }}</td>
-                                        <td class="small">
-                                            {{ $mailbox['username'] ?? '' }}@{{ $mailbox['host'] ?? '' }}:{{ $mailbox['port'] ?? 993 }}
-                                            <div class="text-muted">{{ $mailbox['folder'] ?? 'INBOX' }}</div>
-                                        </td>
-                                        <td>
-                                            @forelse(($mailbox['module_scope'] ?? []) as $mod)
-                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $mod }}</span>
-                                            @empty
-                                                <span class="text-muted small">Todos (sin acotar)</span>
-                                            @endforelse
-                                        </td>
-                                        <td>
-                                            @if($mailbox['enabled'] ?? false)
-                                                <span class="badge bg-success-subtle text-success">Activo</span>
-                                            @else
-                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactivo</span>
-                                            @endif
-                                            @if(($mailbox['consecutive_failures'] ?? 0) >= 3)
-                                                <span class="badge bg-danger-subtle text-danger" title="{{ $mailbox['last_error'] ?? '' }}">
-                                                    {{ $mailbox['consecutive_failures'] }} fallos seguidos
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="small text-muted">
-                                            @if(!empty($mailbox['last_checked_at']))
-                                                {{ \Illuminate\Support\Carbon::parse($mailbox['last_checked_at'])->diffForHumans() }}
-                                            @else
-                                                Nunca
-                                            @endif
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="dropdown">
-                                                <a href="#" class="text-muted" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
-                                                </a>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <button type="button" class="dropdown-item js-edit-mailbox"
-                                                                data-mailbox="{{ json_encode($mailbox) }}"
-                                                                data-update-url="{{ route('settings.helpdeskemaillog.bounce-mailboxes.update', $mailbox['id']) }}">
-                                                            Editar
-                                                        </button>
-                                                    </li>
-                                                    <li><hr class="dropdown-divider"></li>
-                                                    <li>
-                                                        <form method="POST" action="{{ route('settings.helpdeskemaillog.bounce-mailboxes.destroy', $mailbox['id']) }}"
-                                                              onsubmit="return confirm('¿Eliminar este buzón de rebote?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="dropdown-item">Eliminar</button>
-                                                        </form>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            Sin buzones de rebote configurados.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="evx-section-block d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h2 class="evx-section-title">Buzones de rebote</h2>
+                    <p class="evx-section-desc mb-0">
+                        Buzones IMAP que <span class="evx-mono">email-logs:process-bounces</span> revisa cada 10 minutos
+                        en busca de rebotes (DSN) y quejas de spam. Sin ningún buzón habilitado, no se detecta ningún rebote.
+                    </p>
                 </div>
+                <button type="button" class="evx-btn evx-btn-primary evx-btn-inline" data-bs-toggle="modal" data-bs-target="#bounce-mailbox-add-modal">
+                    <i class="fas fa-plus" aria-hidden="true"></i> Añadir buzón
+                </button>
+            </div>
+
+            <div class="evx-list">
+                @forelse($mailboxes as $mailbox)
+                    <div class="evx-list-row">
+                        <div class="evx-list-main">
+                            <div class="evx-list-title">{{ $mailbox['label'] ?? '—' }}</div>
+                            {{-- Una sola interpolación: separar "usuario" y "host" en dos
+                                 {{ }} distintos con un "@" literal entre ambos hace que Blade
+                                 confunda esa "@{{" con el escape @{{ }} (para imprimir "{{ }}"
+                                 literal) y deje el host SIN renderizar — bug ya presente antes
+                                 de este rediseño, nunca detectado por falta de datos reales. --}}
+                            <div class="evx-list-sub evx-mono">
+                                {{ ($mailbox['username'] ?? '').'@'.($mailbox['host'] ?? '').':'.($mailbox['port'] ?? 993).' · '.($mailbox['folder'] ?? 'INBOX') }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                            @forelse(($mailbox['module_scope'] ?? []) as $mod)
+                                <span class="evx-tag mono">{{ $mod }}</span>
+                            @empty
+                                <span class="evx-muted small">Todos</span>
+                            @endforelse
+                        </div>
+
+                        <span class="evx-badge {{ ($mailbox['enabled'] ?? false) ? 'ok' : 'neutral' }}">
+                            {{ ($mailbox['enabled'] ?? false) ? 'Activo' : 'Inactivo' }}
+                        </span>
+
+                        @if(($mailbox['consecutive_failures'] ?? 0) >= 3)
+                            <span class="evx-badge warn" title="{{ $mailbox['last_error'] ?? '' }}">
+                                {{ $mailbox['consecutive_failures'] }} fallos
+                            </span>
+                        @endif
+
+                        <span class="evx-list-date">
+                            @if(!empty($mailbox['last_checked_at']))
+                                {{ \Illuminate\Support\Carbon::parse($mailbox['last_checked_at'])->diffForHumans() }}
+                            @else
+                                Nunca revisado
+                            @endif
+                        </span>
+
+                        <div class="dropdown">
+                            <button type="button" class="evx-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Acciones">
+                                <i class="fas fa-ellipsis-vertical" aria-hidden="true"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button type="button" class="dropdown-item js-edit-mailbox"
+                                            data-mailbox="{{ json_encode($mailbox) }}"
+                                            data-update-url="{{ route('settings.helpdeskemaillog.bounce-mailboxes.update', $mailbox['id']) }}">
+                                        Editar
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ route('settings.helpdeskemaillog.bounce-mailboxes.destroy', $mailbox['id']) }}"
+                                          onsubmit="return confirm('¿Eliminar este buzón de rebote?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="dropdown-item">Eliminar</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                @empty
+                    <div class="evx-empty-row">
+                        <i class="fas fa-inbox" aria-hidden="true"></i>
+                        <p>Sin buzones de rebote configurados.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>

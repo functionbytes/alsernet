@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -46,11 +47,23 @@ use Modules\HelpdeskEmailLog\Enums\EmailStatus;
  * @property ?Carbon $suppressed_at
  * @property ?array<string, mixed> $metadata
  * @property ?Carbon $created_at
+ * @property ?Carbon $deleted_at
  */
 class EmailLog extends Model
 {
     /** @use HasFactory<EmailLogFactory> */
     use HasFactory;
+
+    /**
+     * "Papelera de registros" (mockup): destroy()/bulkDestroy() en
+     * EmailLogController ya no destruyen evidencia de auditoría al
+     * instante — el registro queda recuperable (restore()) hasta que
+     * PruneEmailLogsCommand::pruneTrash() lo borre de verdad, transcurridos
+     * `helpdeskemaillog.trash_retention_days` días. El borrado GDPR
+     * (EmailLogComplianceHandler, en modo "hard") sigue siendo definitivo:
+     * usa forceDelete(), nunca delete().
+     */
+    use SoftDeletes;
 
     protected $table = 'email_logs';
 

@@ -78,29 +78,31 @@ class EmailReputationController extends Controller
 
     /**
      * Dominios vistos en from_address en los últimos 30 días que aún no
-     * están en la lista vigilada — solo una sugerencia para el admin al
-     * configurar, nunca se vigilan automáticamente (mezclaría dominios de
-     * prueba/spam con los reales sin que nadie lo haya decidido).
+     * están en la lista vigilada, junto con su volumen de envíos — solo una
+     * sugerencia para el admin al configurar, nunca se vigilan
+     * automáticamente (mezclaría dominios de prueba/spam con los reales sin
+     * que nadie lo haya decidido). Ordenados por volumen desc: con cientos
+     * de dominios detectados, la vista solo destaca los más relevantes
+     * primero (ver emails/reputation.blade.php).
      *
      * @param  list<array{domain: string}>  $configured
-     * @return list<string>
+     * @return array<string, int> dominio => nº de envíos, ordenado desc
      */
     private function suggestedDomains(array $configured): array
     {
         $known = collect($configured)->pluck('domain')->all();
 
-        // La deduplicación de dominios se hace en SQL (SUBSTRING_INDEX + DISTINCT)
-        // en vez de traer from_address de cada fila del rango y deduplicar en PHP.
+        // Agrupación y orden en SQL (SUBSTRING_INDEX + GROUP BY + COUNT) en vez
+        // de traer from_address de cada fila del rango y agregar en PHP.
         return EmailLog::query()
             ->where('created_at', '>=', now()->subDays(30))
             ->whereNotNull('from_address')
             ->where('from_address', 'like', '%@%')
-            ->selectRaw("SUBSTRING_INDEX(from_address, '@', -1) as domain")
-            ->distinct()
-            ->pluck('domain')
-            ->filter()
-            ->reject(fn ($d) => in_array($d, $known, true))
-            ->values()
+            ->selectRaw("SUBSTRING_INDEX(from_address, '@', -1) as domain, COUNT(*) as sends")
+            ->groupBy('domain')
+            ->orderByDesc('sends')
+            ->pluck('sends', 'domain')
+            ->reject(fn ($sends, $domain) => in_array($domain, $known, true))
             ->all();
     }
 }

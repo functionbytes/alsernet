@@ -58,6 +58,19 @@ class DocumentComplianceCascadeTest extends TestCase
             ->count();
     }
 
+    /**
+     * El job ya no crea el ComplianceRequest — lo crea RunComplianceCascade de
+     * forma sincrona y le pasa el id.
+     */
+    private function pendingRequestId(int $customerId, bool $hard): int
+    {
+        return ComplianceRequest::create([
+            'customer_id' => $customerId,
+            'type' => $hard ? ComplianceRequest::TYPE_DELETE_HARD : ComplianceRequest::TYPE_DELETE_SOFT,
+            'status' => 'pending',
+        ])->id;
+    }
+
     // ─── el evento transporta las claves de match capturadas antes del borrado ─
 
     public function test_soft_deletion_event_carries_email_and_phones_captured_before_anonymization(): void
@@ -110,7 +123,7 @@ class DocumentComplianceCascadeTest extends TestCase
         $this->assertSame(1, $this->mediaCountFor($document));
 
         (new ProcessComplianceCascadeJob(
-            $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
+            $this->pendingRequestId($customer->id, true), $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
             'kyc-email@example.test', []
         ))->handle();
 
@@ -130,7 +143,7 @@ class DocumentComplianceCascadeTest extends TestCase
         ]);
 
         (new ProcessComplianceCascadeJob(
-            $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
+            $this->pendingRequestId($customer->id, true), $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
             null, ['34600111222']
         ))->handle();
 
@@ -149,7 +162,7 @@ class DocumentComplianceCascadeTest extends TestCase
         ]);
 
         (new ProcessComplianceCascadeJob(
-            $customer->id, false, [], ['deleted' => 0, 'anonymized' => 1], null,
+            $this->pendingRequestId($customer->id, false), $customer->id, false, [], ['deleted' => 0, 'anonymized' => 1], null,
             'kyc-soft@example.test', []
         ))->handle();
 
@@ -172,7 +185,7 @@ class DocumentComplianceCascadeTest extends TestCase
         $customer = Customer::factory()->create();
 
         (new ProcessComplianceCascadeJob(
-            $customer->id, false, [], ['deleted' => 0, 'anonymized' => 1], null,
+            $this->pendingRequestId($customer->id, false), $customer->id, false, [], ['deleted' => 0, 'anonymized' => 1], null,
             'sin-documentos@example.test', []
         ))->handle();
 
@@ -194,7 +207,7 @@ class DocumentComplianceCascadeTest extends TestCase
         $this->makeDocumentWithMedia(['customer_email' => 'kyc-audit@example.test']);
 
         (new ProcessComplianceCascadeJob(
-            $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
+            $this->pendingRequestId($customer->id, true), $customer->id, true, [], ['deleted' => 1, 'anonymized' => 0], null,
             'kyc-audit@example.test', []
         ))->handle();
 

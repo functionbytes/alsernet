@@ -374,6 +374,13 @@ class EmailLogControllerTest extends TestCase
         $this->assertDatabaseHas('email_logs', ['id' => $log->id]);
     }
 
+    /**
+     * Papelera (30 días de recuperación, ver EmailLog::class/SoftDeletes):
+     * destroy() ya NO es un borrado físico — la fila sigue en la tabla
+     * (assertDatabaseHas), solo queda oculta del listado normal (scope
+     * global de SoftDeletes, ver EmailLog::find() devolviendo null) hasta
+     * que se restaure o la purgue PruneEmailLogsCommand::pruneTrash().
+     */
     public function test_manager_can_delete_a_log(): void
     {
         $log = EmailLog::factory()->create();
@@ -383,7 +390,9 @@ class EmailLogControllerTest extends TestCase
             ->assertRedirect(route('helpdeskemaillog.index'))
             ->assertSessionHas('success');
 
-        $this->assertDatabaseMissing('email_logs', ['id' => $log->id]);
+        $this->assertDatabaseHas('email_logs', ['id' => $log->id]);
+        $this->assertNull(EmailLog::find($log->id));
+        $this->assertNotNull(EmailLog::withTrashed()->find($log->id)->deleted_at);
     }
 
     public function test_manager_can_bulk_delete_logs(): void
@@ -399,9 +408,10 @@ class EmailLogControllerTest extends TestCase
         // Robusto a filas residuales en la BD compartida: se asserta el efecto
         // sobre las filas creadas por ESTE test, no el total global.
         foreach ($logs as $deleted) {
-            $this->assertDatabaseMissing('email_logs', ['id' => $deleted->id]);
+            $this->assertDatabaseHas('email_logs', ['id' => $deleted->id]);
+            $this->assertNull(EmailLog::find($deleted->id));
         }
-        $this->assertDatabaseHas('email_logs', ['id' => $keep->id]);
+        $this->assertNotNull(EmailLog::find($keep->id));
     }
 
     public function test_bulk_delete_validates_input(): void
@@ -1187,5 +1197,143 @@ class EmailLogControllerTest extends TestCase
             ->get(route('helpdeskemaillog.show', $log->uid))
             ->assertOk()
             ->assertViewHas('recipientStats', fn ($stats) => $stats === null);
+    }
+
+    // ---- Papelera de registros (30 días de recuperación) ----------------
+
+    public function test_trash_requires_manage_permission(): void
+    {
+        $this->actingAs($this->viewer())
+            ->get(route('helpdeskemaillog.trash.index'))
+            ->assertForbidden();
+    }
+
+    public function test_trash_lists_only_soft_deleted_logs(): void
+    {
+        $trashed = EmailLog::factory()->create(['subject' => 'In the trash']);
+        $trashed->delete();
+
+        $active = EmailLog::factory()->create(['subject' => 'Still active']);
+
+        $this->actingAs($this->manager())
+            ->get(route('helpdeskemaillog.trash.index'))
+            ->assertOk()
+            ->assertViewIs('helpdeskemaillog::emails.trash')
+            ->assertSee('In the trash')
+            ->assertDontSee('Still active');
+    }
+
+    public function test_manager_can_restore_a_log_from_trash(): void
+    {
+        $log = EmailLog::factory()->create();
+        $log->delete();
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.trash.restore', $log->uid))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertNotNull(EmailLog::find($log->id));
+        $this->assertNull(EmailLog::find($log->id)->deleted_at);
+    }
+
+    public function test_restore_requires_manage_permission(): void
+    {
+        $log = EmailLog::factory()->create();
+        $log->delete();
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.trash.restore', $log->uid))
+            ->assertForbidden();
+
+        $this->assertNotNull(EmailLog::withTrashed()->find($log->id)->deleted_at);
+    }
+
+    /**
+     * La ruta de restore()/forceDestroy() usa ->withTrashed() (imprescindible
+     * para que el binding implícito encuentre lo ya borrado, ver routes/
+     * web.php) — sin el guard abort_unless($emailLog->trashed()) del
+     * controlador, esto restauraría (no-op) un registro que nunca pasó por
+     * la papelera en vez de devolver 404.
+     */
+    public function test_restore_returns_404_for_a_log_that_was_never_trashed(): void
+    {
+        $log = EmailLog::factory()->create();
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.trash.restore', $log->uid))
+            ->assertNotFound();
+    }
+
+    public function test_manager_can_bulk_restore_logs(): void
+    {
+        $logs = EmailLog::factory()->count(3)->create();
+        $logs->each(fn (EmailLog $log) => $log->delete());
+        $keepDeleted = EmailLog::factory()->create();
+        $keepDeleted->delete();
+
+        $this->actingAs($this->manager())
+            ->post(route('helpdeskemaillog.trash.bulk-restore'), ['uids' => $logs->pluck('uid')->all()])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        foreach ($logs as $restored) {
+            $this->assertNotNull(EmailLog::find($restored->id));
+        }
+        // No incluido en la selección: sigue en la papelera.
+        $this->assertNull(EmailLog::find($keepDeleted->id));
+    }
+
+    public function test_bulk_restore_requires_manage_permission(): void
+    {
+        $log = EmailLog::factory()->create();
+        $log->delete();
+
+        $this->actingAs($this->viewer())
+            ->post(route('helpdeskemaillog.trash.bulk-restore'), ['uids' => [$log->uid]])
+            ->assertForbidden();
+
+        $this->assertNull(EmailLog::find($log->id));
+    }
+
+    /**
+     * A diferencia de destroy() (borrado lógico, ver test_manager_can_
+     * delete_a_log), forceDestroy() desde la papelera SÍ es irreversible:
+     * la fila desaparece por completo de la tabla.
+     */
+    public function test_manager_can_force_destroy_a_log_from_trash(): void
+    {
+        $log = EmailLog::factory()->create();
+        $log->delete();
+
+        $this->actingAs($this->manager())
+            ->delete(route('helpdeskemaillog.trash.force-destroy', $log->uid))
+            ->assertRedirect(route('helpdeskemaillog.trash.index'))
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseMissing('email_logs', ['id' => $log->id]);
+    }
+
+    public function test_force_destroy_requires_manage_permission(): void
+    {
+        $log = EmailLog::factory()->create();
+        $log->delete();
+
+        $this->actingAs($this->viewer())
+            ->delete(route('helpdeskemaillog.trash.force-destroy', $log->uid))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('email_logs', ['id' => $log->id]);
+    }
+
+    public function test_force_destroy_returns_404_for_a_log_that_was_never_trashed(): void
+    {
+        $log = EmailLog::factory()->create();
+
+        $this->actingAs($this->manager())
+            ->delete(route('helpdeskemaillog.trash.force-destroy', $log->uid))
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('email_logs', ['id' => $log->id]);
     }
 }

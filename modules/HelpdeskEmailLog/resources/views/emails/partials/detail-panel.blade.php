@@ -356,6 +356,49 @@
 
                 {{-- Pestaña: Traza de envío --}}
                 <div class="evx-tabpanel" data-evx-panel="trace" hidden>
+
+                    @php
+                        // Frase corta de contexto de la tarjeta resumen — se deriva de
+                        // datos que $log ya trae cargados (status/error/tipo de rebote),
+                        // sin ninguna consulta nueva.
+                        $traceContext = match (true) {
+                            $log->status?->value === 'sent' => __('helpdeskemaillog::emaillog.preview.trace.smtp'),
+                            $log->status?->value === 'bounced' => match ($log->bounceType()) {
+                                'hard' => __('helpdeskemaillog::emaillog.preview.trace.bounce_hard'),
+                                'soft' => __('helpdeskemaillog::emaillog.preview.trace.bounce_soft'),
+                                default => __('helpdeskemaillog::emaillog.preview.trace.bounce_unknown'),
+                            },
+                            $log->status?->value === 'complained' => __('helpdeskemaillog::emaillog.preview.trace.complained_context'),
+                            $log->status?->value === 'suppressed' => __('helpdeskemaillog::emaillog.preview.trace.suppressed_context'),
+                            $log->status?->value === 'failed' => Str::limit($log->error_message ?: __('helpdeskemaillog::emaillog.preview.trace.failed'), 90),
+                            $isStaleQueued => __('helpdeskemaillog::emaillog.preview.trace.stale', ['hours' => $staleHours]),
+                            default => __('helpdeskemaillog::emaillog.preview.trace.pending'),
+                        };
+                    @endphp
+
+                    {{-- a) Tarjeta resumen: estado + contexto + tiempo total real
+                         (sent_at - created_at; "—" si el envío aún no se confirmó,
+                         nunca una duración inventada). --}}
+                    <div class="evx-trace-summary">
+                        <div class="evx-trace-summary-main">
+                            <span class="evx-trace-summary-icon {{ $log->status?->value }}">
+                                <i class="fa-solid {{ $statusIcon }}" aria-hidden="true"></i>
+                            </span>
+                            <span class="evx-trace-summary-text">
+                                <span class="evx-trace-summary-title">{{ $log->status_label }}</span>
+                                <span class="evx-trace-summary-context">{{ $traceContext }}</span>
+                            </span>
+                        </div>
+                        <span class="evx-trace-summary-time">
+                            <span class="val">{{ $traceElapsedLabel ?? '—' }}</span>
+                            <span class="lbl">{{ __('helpdeskemaillog::emaillog.preview.trace.total') }}</span>
+                        </span>
+                    </div>
+
+                    {{-- b) "Recorrido del envío": solo un encabezado, la timeline de
+                         abajo ya existía. --}}
+                    <div class="evx-trace-timeline-group">
+                    <span class="evx-trace-section-label">{{ __('helpdeskemaillog::emaillog.preview.trace.journey') }}</span>
                     <div class="evx-block">
                         <div class="evx-block-head">
                             <span class="s">{{ __('helpdeskemaillog::emaillog.preview.trace.hint') }}</span>
@@ -474,6 +517,71 @@
                             <div class="evx-alert evx-trace-error">{{ $log->error_message }}</div>
                         @endif
                     </div>
+                    </div>
+
+                    {{-- c) Transporte + Autenticación, en fila. --}}
+                    <div class="evx-trace-cards">
+
+                        <div class="evx-trace-card">
+                            <span class="evx-trace-card-title">{{ __('helpdeskemaillog::emaillog.preview.trace.transport') }}</span>
+                            <div class="evx-trace-kv">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.transport_server') }}</span>
+                                <span class="v">
+                                    @if($transport['isSmtp'])
+                                        {{ $transport['host'] }}:{{ $transport['port'] }}
+                                    @else
+                                        {{ $transport['mailer'] }}
+                                    @endif
+                                </span>
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.trace.transport_queue') }}</span>
+                                <span class="v">{{ $transport['queue'] }}</span>
+                            </div>
+                        </div>
+
+                        {{-- SPF/DKIM/DMARC del DOMINIO REMITENTE (no de este envío
+                             concreto) — solo se leen de la caché que ya puebla la
+                             pantalla de Reputación (ver
+                             EmailLogController::domainAuthStatus()); nunca se
+                             dispara aquí una resolución DNS en caliente. Sin caché,
+                             las 3 pills quedan en gris "sin datos" con enlace a
+                             Reputación. --}}
+                        <div class="evx-trace-card">
+                            <span class="evx-trace-card-title">{{ __('helpdeskemaillog::emaillog.preview.trace.auth') }}</span>
+                            <div class="evx-trace-auth-pills">
+                                @foreach(['spf' => 'SPF', 'dkim' => 'DKIM', 'dmarc' => 'DMARC'] as $authKey => $authLabel)
+                                    @php $authPass = ($domainAuth[$authKey]['status'] ?? null) === 'pass'; @endphp
+                                    <span class="evx-auth-pill {{ $authPass ? 'is-pass' : 'is-unknown' }}">
+                                        @if($authPass)<i class="fa-solid fa-check" aria-hidden="true"></i>@endif
+                                        {{ $authLabel }}
+                                    </span>
+                                @endforeach
+                            </div>
+                            <p class="evx-trace-auth-note">
+                                {{ __('helpdeskemaillog::emaillog.preview.trace.auth_note', ['domain' => $domainAuth['domain'] ?: '—']) }}
+                                @if(! $domainAuth['spf'] && ! $domainAuth['dkim'] && ! $domainAuth['dmarc'])
+                                    <a href="{{ route('helpdeskemaillog.reputation.index') }}">{{ __('helpdeskemaillog::emaillog.preview.trace.auth_check_link') }}</a>
+                                @endif
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {{-- d) "Evento del proveedor": OMITIDO A PROPÓSITO.
+                         ProviderWebhookEvent (ver migración
+                         create_email_provider_events_table) solo guarda
+                         provider + provider_event_id para deduplicar reintentos
+                         del webhook — nunca el payload crudo ni ningún FK hacia
+                         email_logs. No existe ninguna forma de recuperar "el
+                         evento de proveedor de ESTE email" ni su JSON una vez
+                         procesado, así que no hay nada real que mostrar aquí.
+                         Para poder pintar esta pieza haría falta: (1) añadir una
+                         columna payload (JSON) a email_provider_events, y (2)
+                         que EmailProviderWebhookController::receive() guarde
+                         también el email_log_id que
+                         EmailBounceCorrelatorService/
+                         EmailDeliveryEventCorrelatorService ya resuelven al
+                         correlacionar cada evento. --}}
+
                 </div>
 
                 {{-- Pestaña: Aperturas + Clics (solo si este envío tuvo seguimiento) --}}
@@ -659,6 +767,21 @@
                                     <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.to_hint') }}</span>
                                 </span>
                             </button>
+
+                            {{-- Copia de prueba al correo del propio usuario — reutiliza
+                                 EXACTAMENTE el endpoint de reenvío (ResendEmailLogRequest
+                                 ya acepta 'to' y ahora también 'test'), sin ruta nueva. --}}
+                            @if(auth()->user()?->email)
+                                <button type="button" class="evx-list-row evx-list-row-btn js-resend-test"
+                                        data-url="{{ route('helpdeskemaillog.resend', $log->uid) }}"
+                                        data-to="{{ auth()->user()->email }}">
+                                    <span class="evx-option-icon"><i class="fa-solid fa-flask" aria-hidden="true"></i></span>
+                                    <span class="evx-list-main">
+                                        <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.resend_test') }}</span>
+                                        <span class="evx-list-sub">{{ __('helpdeskemaillog::emaillog.resend.test_hint') }}</span>
+                                    </span>
+                                </button>
+                            @endif
                         @endif
 
                         <div class="evx-list-group-title">{{ __('helpdeskemaillog::emaillog.preview.groups.retrieve') }}</div>
@@ -677,6 +800,11 @@
                                 <span class="evx-option-icon"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i></span>
                                 <span class="evx-list-main">
                                     <span class="evx-list-title">{{ __('helpdeskemaillog::emaillog.actions.download_eml') }}</span>
+                                    {{-- Tamaño REAL del .eml (ver EmailLogController::emlSizeLabel()) —
+                                         se omite el subtítulo si no hay cuerpo/cabeceras que pesar. --}}
+                                    @if($emlSizeLabel)
+                                        <span class="evx-list-sub">{{ $emlSizeLabel }}</span>
+                                    @endif
                                 </span>
                             </a>
                         @endif
@@ -732,18 +860,26 @@
                             </div>
                         </div>
                         <div class="evx-block-body">
-                            <div class="evx-field">
-                                <span class="k">{{ $log->entity_label }}</span>
-                                <span class="v">
-                                    @if($log->entity_url)
-                                        <a href="{{ $log->entity_url }}" target="_blank" rel="noopener">
-                                            {{ $log->entity_label }} #{{ $log->entity_id }}
-                                            <i class="fa-solid fa-arrow-up-right-from-square fa-xs" aria-hidden="true"></i>
-                                        </a>
-                                    @else
-                                        {{ $log->entity_label }} #{{ $log->entity_id }}
-                                    @endif
-                                </span>
+                            {{-- Grid con lo que SÍ se sabe de la entidad (tipo + ID, ver
+                                 EmailLog::entityLabel()) — este módulo no guarda nada más
+                                 propio de la entidad, así que no se inventa nada extra. --}}
+                            <div class="evx-kv-mini">
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.field.entity') }}</span>
+                                <span class="v">{{ $log->entity_label }}</span>
+                                <span class="k">{{ __('helpdeskemaillog::emaillog.preview.related_entity_id_label') }}</span>
+                                <span class="v mono">#{{ $log->entity_id }}</span>
+                            </div>
+                            <div class="evx-entity-actions {{ $log->entity_url ? '' : 'is-single' }}">
+                                @if($log->entity_url)
+                                    <a href="{{ $log->entity_url }}" target="_blank" rel="noopener"
+                                       class="evx-btn evx-btn-outline evx-btn-inline">
+                                        {{ __('helpdeskemaillog::emaillog.preview.related_entity_open') }}
+                                    </a>
+                                @endif
+                                <a href="{{ route('helpdeskemaillog.index', ['entity_type' => $log->entity_type, 'entity_id' => $log->entity_id]) }}"
+                                   class="evx-btn evx-btn-outline evx-btn-inline">
+                                    {{ __('helpdeskemaillog::emaillog.preview.related_entity_filter') }}
+                                </a>
                             </div>
                         </div>
                     </div>

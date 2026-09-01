@@ -24,12 +24,20 @@ use Modules\HelpdeskEmailLog\Models\EmailLogOpen;
  * (alta confianza); si no vino o no hubo match, destinatario dentro de una
  * ventana de 7 días SOLO si hay un único candidato ambiguo-libre entre los
  * envíos ya marcados 'sent'.
+ *
+ * DECISIÓN (papelera): igual que EmailBounceCorrelatorService, todas las
+ * búsquedas usan withTrashed() — un registro en la papelera (recuperable
+ * durante 30 días, ver EmailLog::class) sigue siendo el mismo envío real;
+ * un webhook de entrega/apertura que llega mientras tanto no debe perderse
+ * solo porque un agente lo ocultó de la vista principal. El borrado GDPR es
+ * definitivo (forceDelete, ver EmailLogComplianceHandler) y por tanto nunca
+ * deja una fila viva que este servicio pueda encontrar.
  */
 class EmailDeliveryEventCorrelatorService
 {
     public function correlateDeliveredByMessageId(string $messageId): bool
     {
-        $emailLog = EmailLog::where('message_id', $messageId)->first();
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
 
         if (! $emailLog) {
             return false;
@@ -55,7 +63,7 @@ class EmailDeliveryEventCorrelatorService
 
     public function correlateOpenByMessageId(string $messageId, ?string $ip, ?string $userAgent): bool
     {
-        $emailLog = EmailLog::where('message_id', $messageId)->first();
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
 
         if (! $emailLog) {
             return false;
@@ -117,7 +125,7 @@ class EmailDeliveryEventCorrelatorService
      */
     private function findSingleCandidateByRecipient(string $recipient): ?EmailLog
     {
-        $candidates = EmailLog::query()
+        $candidates = EmailLog::withTrashed()
             ->sent()
             ->whereJsonContains('to_addresses', $recipient)
             ->where('created_at', '>=', now()->subDays(7))

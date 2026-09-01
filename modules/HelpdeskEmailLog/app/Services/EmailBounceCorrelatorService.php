@@ -18,6 +18,18 @@ use Modules\HelpdeskEmailLog\Models\EmailLog;
  * Extraído de lo que antes vivía privado dentro de
  * Modules\Document\Services\DocumentBounceProcessorService, generalizado
  * para no acotar por módulo salvo que el caller lo pida explícitamente.
+ *
+ * DECISIÓN (papelera, ver EmailLog::class/SoftDeletes): ambos métodos
+ * consultan con withTrashed(). Un registro movido a la papelera desde el
+ * panel sigue siendo recuperable durante 30 días (no está "borrado de
+ * verdad" hasta la purga automática) — si en ese margen llega un DSN de
+ * rebote real para ese envío, es evidencia legítima que debe reflejarse en
+ * el registro tal cual, igual que si nunca se hubiera enviado a la
+ * papelera. Ignorarlo solo porque un agente lo ocultó de la vista
+ * principal degradaría la auditoría sin ningún beneficio de privacidad
+ * (el borrado GDPR, que sí debe ser ciego a esto, es definitivo — usa
+ * forceDelete(), ver EmailLogComplianceHandler — así que nunca llega vivo
+ * hasta aquí).
  */
 class EmailBounceCorrelatorService
 {
@@ -27,7 +39,7 @@ class EmailBounceCorrelatorService
      */
     public function correlateByMessageId(string $messageId, string $reason, bool $isHard, bool $isComplaint = false): bool
     {
-        $emailLog = EmailLog::where('message_id', $messageId)->first();
+        $emailLog = EmailLog::withTrashed()->where('message_id', $messageId)->first();
 
         if (! $emailLog) {
             return false;
@@ -52,7 +64,7 @@ class EmailBounceCorrelatorService
      */
     public function correlateByRecipient(string $recipient, string $subject, ?array $moduleScope, bool $isHard, bool $isComplaint = false): bool
     {
-        $candidates = EmailLog::query()
+        $candidates = EmailLog::withTrashed()
             ->when($moduleScope, fn ($q) => $q->whereIn('module', $moduleScope))
             ->sent()
             ->whereJsonContains('to_addresses', $recipient)

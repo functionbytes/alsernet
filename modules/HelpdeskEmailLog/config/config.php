@@ -40,6 +40,20 @@ return [
     'stale_queued_hours' => env('EMAIL_LOG_STALE_QUEUED_HOURS', 24),
 
     /*
+    |--------------------------------------------------------------------------
+    | Papelera de registros
+    |--------------------------------------------------------------------------
+    | Días que un registro borrado desde el listado (EmailLogController::
+    | destroy()/bulkDestroy(), ahora SoftDeletes) permanece recuperable en la
+    | papelera antes de que `php artisan email-logs:prune` lo borre de forma
+    | definitiva (ver PruneEmailLogsCommand::pruneTrash()). Independiente de
+    | `retention_days`: ese es el límite de antigüedad general del histórico
+    | (por created_at) y sigue borrando de forma directa/definitiva, sin pasar
+    | por esta papelera — ver el docblock de pruneTrash() para el porqué.
+    */
+    'trash_retention_days' => env('EMAIL_LOG_TRASH_RETENTION_DAYS', 30),
+
+    /*
     | Registros por página en el listado (valor por defecto) y opciones que
     | ofrece el selector de la UI.
     */

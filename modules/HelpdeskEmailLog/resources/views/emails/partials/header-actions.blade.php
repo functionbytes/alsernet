@@ -6,14 +6,11 @@
     ANTES de .emaillog-index (ver layouts/theme.blade.php), así que esas
     variables no cascan hasta aquí.
 --}}
+{{-- Actualizar/Reputación/Exportar viven en la barra de herramientas dentro
+     de la tarjeta (.evx-toolbar), como en el mockup; aquí arriba queda solo
+     Configuración, que es ajuste del módulo, no acción sobre el listado. --}}
 <a href="{{ route('settings.helpdeskemaillog.index') }}" class="evx-header-btn">
     <i class="fas fa-gear" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.actions.settings') }}
-</a>
-<a href="{{ request()->fullUrl() }}" class="evx-header-btn">
-    <i class="fa-solid fa-rotate" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.actions.refresh') }}
-</a>
-<a href="{{ route('helpdeskemaillog.reputation.index') }}" class="evx-header-btn">
-    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>{{ __('helpdeskemaillog::emaillog.actions.reputation') }}
 </a>
 
 {{-- Tag de módulo (mockup): identificador técnico fijo del módulo/ruta, no

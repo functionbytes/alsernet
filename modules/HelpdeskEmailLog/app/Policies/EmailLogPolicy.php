@@ -35,6 +35,27 @@ class EmailLogPolicy
         return $user->can('helpdeskemaillog.manage');
     }
 
+    /**
+     * Papelera de registros (30 días de recuperación, ver
+     * EmailLogController::trash()/restore()/forceDestroy()) — mismo permiso
+     * que delete()/deleteAny(): quien puede borrar es quien puede ver,
+     * restaurar y purgar la papelera.
+     */
+    public function restore(User $user, EmailLog $emailLog): bool
+    {
+        return $user->can('helpdeskemaillog.manage');
+    }
+
+    public function restoreAny(User $user): bool
+    {
+        return $user->can('helpdeskemaillog.manage');
+    }
+
+    public function forceDelete(User $user, EmailLog $emailLog): bool
+    {
+        return $user->can('helpdeskemaillog.manage');
+    }
+
     public function export(User $user): bool
     {
         return $user->can('helpdeskemaillog.view');

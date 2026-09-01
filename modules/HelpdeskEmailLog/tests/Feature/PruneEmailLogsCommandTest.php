@@ -82,4 +82,65 @@ class PruneEmailLogsCommandTest extends TestCase
 
         $this->assertDatabaseMissing('email_logs', ['id' => $old->id]);
     }
+
+    /**
+     * Papelera (30 días de recuperación, ver EmailLog::class/SoftDeletes):
+     * un registro que un agente borró desde el panel (destroy()) hace más
+     * de trash_retention_days días se purga de verdad (forceDelete); uno
+     * borrado hace poco sigue recuperable.
+     */
+    public function test_trash_entries_are_purged_after_the_trash_retention_window(): void
+    {
+        $recentlyTrashed = EmailLog::factory()->create();
+        $recentlyTrashed->delete();
+
+        $oldTrashed = EmailLog::factory()->create();
+        $oldTrashed->delete();
+        // Simula que el borrado ocurrió hace 45 días — save() en la propia
+        // instancia no pasa por el scope global de SoftDeletes (ver
+        // Model::newModelQuery()), así que puede escribir deleted_at
+        // libremente aunque la fila ya esté "oculta".
+        $oldTrashed->forceFill(['deleted_at' => now()->subDays(45)])->save();
+
+        // --days=0/--stale-hours=0: aísla esta purga de deleteOldEntries()/
+        // markStaleQueuedAsFailed(), que no son lo que se está probando aquí.
+        $this->artisan('email-logs:prune', ['--days' => 0, '--stale-hours' => 0, '--trash-days' => 30])
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('email_logs', ['id' => $oldTrashed->id]);
+        $this->assertDatabaseHas('email_logs', ['id' => $recentlyTrashed->id]);
+    }
+
+    public function test_trash_purge_is_skipped_when_trash_days_is_zero(): void
+    {
+        $oldTrashed = EmailLog::factory()->create();
+        $oldTrashed->delete();
+        $oldTrashed->forceFill(['deleted_at' => now()->subDays(90)])->save();
+
+        $this->artisan('email-logs:prune', ['--days' => 0, '--stale-hours' => 0, '--trash-days' => 0])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('email_logs', ['id' => $oldTrashed->id]);
+    }
+
+    /**
+     * DECISIÓN (ver PruneEmailLogsCommand::deleteOldEntries()):
+     * retention_days es el límite superior de TODO el histórico, papelera
+     * incluida — una fila que un agente ya movió a la papelera pero que por
+     * su created_at ya superó la retención general se purga de verdad aquí,
+     * sin esperar a que además cumpla su propia ventana de 30 días de
+     * papelera.
+     */
+    public function test_general_retention_also_purges_already_trashed_entries_past_retention(): void
+    {
+        $old = EmailLog::factory()->create(['created_at' => now()->subDays(120)]);
+        $old->delete(); // deleted_at = ahora mismo, muy lejos de cumplir 30 días.
+
+        // --trash-days=0: aísla esta purga de pruneTrash(), que no es lo que
+        // se está probando aquí.
+        $this->artisan('email-logs:prune', ['--days' => 90, '--stale-hours' => 0, '--trash-days' => 0])
+            ->assertSuccessful();
+
+        $this->assertDatabaseMissing('email_logs', ['id' => $old->id]);
+    }
 }

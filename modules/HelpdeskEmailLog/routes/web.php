@@ -74,6 +74,34 @@ Route::middleware('auth')
             Route::delete('/{view}', [EmailLogViewsController::class, 'destroy'])->name('destroy');
         });
 
+        // Papelera de registros (30 días de recuperación, ver destroy()/
+        // bulkDestroy() ahora con SoftDeletes) — literal 'trash' antes del
+        // wildcard {emailLog} de abajo, mismo criterio que 'export'/
+        // 'reputation'/'views': ese wildcard exige whereUuid, así que
+        // 'trash' nunca lo matchearía de todas formas, pero se declara
+        // primero por claridad, como el resto de rutas fijas de este grupo.
+        Route::prefix('trash')->name('trash.')->group(function () {
+            Route::get('/', [EmailLogController::class, 'trash'])->name('index');
+
+            Route::middleware('throttle:6,1')
+                ->post('/bulk-restore', [EmailLogController::class, 'bulkRestore'])
+                ->name('bulk-restore');
+
+            // ->withTrashed(): sin esto, el binding implícito de {emailLog}
+            // (scope global SoftDeletes) nunca encontraría un registro que
+            // ya está en la papelera y devolvería 404 en vez de operar sobre
+            // él (ver Illuminate\Routing\Route::withTrashed()).
+            Route::post('/{emailLog}/restore', [EmailLogController::class, 'restore'])
+                ->name('restore')
+                ->whereUuid('emailLog')
+                ->withTrashed();
+
+            Route::delete('/{emailLog}', [EmailLogController::class, 'forceDestroy'])
+                ->name('force-destroy')
+                ->whereUuid('emailLog')
+                ->withTrashed();
+        });
+
         Route::get('/{emailLog}', [EmailLogController::class, 'show'])->name('show')->whereUuid('emailLog');
 
         Route::get('/{emailLog}/download', [EmailLogController::class, 'download'])

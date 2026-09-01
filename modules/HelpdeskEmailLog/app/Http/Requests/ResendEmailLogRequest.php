@@ -15,6 +15,12 @@ class ResendEmailLogRequest extends FormRequest
     {
         return [
             'to' => ['nullable', 'email:rfc', 'max:255'],
+            // Marca el reenvío como "copia de prueba" (sidebar del detalle,
+            // ver EmailLogController::resend()) — antepone [TEST] al asunto
+            // para que nunca se confunda con el envío real. No afecta al
+            // reenvío normal "a otra dirección", que sigue mandando el
+            // asunto tal cual.
+            'test' => ['sometimes', 'boolean'],
         ];
     }
 

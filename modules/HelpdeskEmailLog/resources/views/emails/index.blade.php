@@ -89,6 +89,44 @@
              con huecos entre ellas. --}}
         <div class="evx-shell">
 
+        {{-- Barra de herramientas: primera fila DENTRO de la tarjeta, como el
+             mockup — breadcrumb propio del módulo + buscador + acciones. El
+             buscador vive aquí (no entre los filtros) para que la barra de
+             filtros quepa en una sola línea; envía el mismo formulario GET de
+             filtros de más abajo vía atributo form. --}}
+        <div class="evx-toolbar">
+            <nav class="evx-crumbs" aria-label="breadcrumb">
+                <i class="fa-solid fa-headset" aria-hidden="true"></i>
+                <span>{{ __('helpdeskemaillog::emaillog.crumbs.panel') }}</span>
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                <span>{{ __('helpdeskemaillog::emaillog.crumbs.helpdesk') }}</span>
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                <span class="is-current">{{ __('helpdeskemaillog::emaillog.title') }}</span>
+            </nav>
+
+            <div class="evx-toolbar-search">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" name="search" form="evx-filters-form" value="{{ request('search') }}"
+                       aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
+                       placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
+            </div>
+
+            <div class="evx-toolbar-actions">
+                <a href="{{ request()->fullUrl() }}" class="evx-header-btn">
+                    <i class="fa-solid fa-rotate" aria-hidden="true"></i>
+                    {{ __('helpdeskemaillog::emaillog.actions.refresh') }}
+                </a>
+                <a href="{{ route('helpdeskemaillog.reputation.index') }}" class="evx-header-btn">
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    {{ __('helpdeskemaillog::emaillog.actions.reputation') }}
+                </a>
+                <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="evx-btn evx-btn-primary evx-btn-inline">
+                    <i class="fa-solid fa-download" aria-hidden="true"></i>
+                    {{ __('helpdeskemaillog::emaillog.actions.export') }}
+                </a>
+            </div>
+        </div>
+
         {{-- Tarjetas de estadísticas (clicables → filtran) --}}
         <div class="evx-stats">
             <a href="{{ route('helpdeskemaillog.index') }}"
@@ -114,7 +152,7 @@
                  arriba), no un acumulado histórico como el resto de tarjetas de esta
                  fila — computeStats() todavía no expone un total histórico propio,
                  así que aquí se usa directamente el "current" del delta. --}}
-            <div class="evx-stat is-static">
+            <div class="evx-stat is-static" title="{{ __('helpdeskemaillog::emaillog.stats.delivered_tooltip') }}">
                 <span class="evx-stat-label">{{ __('helpdeskemaillog::emaillog.stats.delivered') }}</span>
                 <span class="evx-stat-value-row">
                     <span class="evx-stat-value">{{ number_format($statsDelta['delivered']['current'] ?? 0) }}</span>
@@ -156,7 +194,16 @@
                     <span class="evx-stat-value">{{ number_format($stats['queued']) }}</span>
                     @include('helpdeskemaillog::emails.partials.stat-delta', ['delta' => $statsDelta['queued'] ?? null])
                 </span>
-                <span class="evx-stat-hint">{{ __('helpdeskemaillog::emaillog.stats.queued_hint') }}</span>
+                {{-- Como el mockup: si hay encolados que llevan demasiado tiempo
+                     sin confirmarse, el hint lo dice en vez del texto genérico. --}}
+                <span class="evx-stat-hint">
+                    @if($staleCount > 0)
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                        {{ __('helpdeskemaillog::emaillog.stats.queued_hint_stale', ['count' => number_format($staleCount), 'hours' => $staleHours]) }}
+                    @else
+                        {{ __('helpdeskemaillog::emaillog.stats.queued_hint') }}
+                    @endif
+                </span>
             </a>
             <a href="{{ route('helpdeskemaillog.index', ['date_from' => $today, 'date_to' => $today]) }}"
                class="evx-stat {{ $isToday ? 'is-active' : '' }}">
@@ -250,7 +297,7 @@
              guardadas conservan el mismo #evx-saved-views/data-*/IDs que
              consume el JS de @push('scripts'); solo cambian de posición en
              el DOM, nunca de lógica. --}}
-        <form action="{{ route('helpdeskemaillog.index') }}" method="GET" class="evx-filterbar">
+        <form action="{{ route('helpdeskemaillog.index') }}" method="GET" class="evx-filterbar" id="evx-filters-form">
             @if($entityType && $entityId)
                 <input type="hidden" name="entity_type" value="{{ $entityType }}">
                 <input type="hidden" name="entity_id" value="{{ $entityId }}">
@@ -272,12 +319,8 @@
                 </span>
             @endif
 
-            <div class="evx-search">
-                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                <input type="search" name="search" value="{{ request('search') }}"
-                       aria-label="{{ __('helpdeskemaillog::emaillog.filters.search') }}"
-                       placeholder="{{ __('helpdeskemaillog::emaillog.filters.search_placeholder') }}">
-            </div>
+            {{-- El buscador vive en la barra de herramientas de arriba (envía
+                 este mismo formulario vía atributo form), como en el mockup. --}}
 
             <span class="evx-select-icon">
                 <i class="fas fa-cube" aria-hidden="true"></i>
@@ -381,9 +424,8 @@
                 </button>
             </div>
 
-            <a href="{{ route('helpdeskemaillog.export', request()->query()) }}" class="evx-btn evx-btn-outline evx-btn-inline">
-                {{ __('helpdeskemaillog::emaillog.actions.export') }}
-            </a>
+            {{-- "Exportar CSV" vive en la barra de herramientas de arriba
+                 (botón primario verde), como en el mockup. --}}
 
             <div class="evx-filterbar-end">
                 <span class="evx-filter-count">
@@ -392,6 +434,16 @@
                 @if($hasFilters)
                     <a href="{{ route('helpdeskemaillog.index') }}" class="evx-filter-clear">
                         {{ __('helpdeskemaillog::emaillog.filters.clear') }}
+                    </a>
+                @endif
+                {{-- Enlace discreto a la papelera (30 días de recuperación, ver
+                     destroy()/bulkDestroy() con SoftDeletes) — mismo permiso
+                     que borrar: quien no puede eliminar tampoco necesita ver
+                     lo ya eliminado. --}}
+                @if($canManage)
+                    <a href="{{ route('helpdeskemaillog.trash.index') }}" class="evx-filter-clear">
+                        <i class="fa-regular fa-trash-can" aria-hidden="true"></i>
+                        {{ __('helpdeskemaillog::emaillog.trash.link') }}
                     </a>
                 @endif
             </div>
@@ -501,9 +553,10 @@
                                        title="{{ __('helpdeskemaillog::emaillog.table.has_attachments') }}"></i>
                                 @endif
                             </div>
-                            @if($row->mailable_class)
-                                <div class="evx-subject-sub">{{ class_basename($row->mailable_class) }}</div>
-                            @endif
+                            {{-- El mailable NO se pinta aquí: el mockup tiene 3
+                                 líneas por fila (asunto / destinatario+extracto /
+                                 badge+módulo+fecha) y una cuarta línea rompe esa
+                                 altura. Sigue visible en la pestaña Detalle. --}}
                             {{-- "Para: destinatario · extracto del cuerpo", como el
                                  mockup. El extracto (accessor body_snippet, ver
                                  EmailLog::BODY_SNIPPET_LENGTH) llega recortado desde
@@ -519,27 +572,12 @@
                                 </span>
                                 @if($row->module)
                                     <span class="evx-tag mono">{{ $row->module }}</span>
-                                @else
-                                    <span class="evx-muted">—</span>
                                 @endif
-                                {{-- "0" solo es un dato real cuando el flag de tracking es
-                                     true (ver EmailLog::hasOpenTracking()/hasClickTracking());
-                                     para el resto de correos nunca hubo píxel ni enlaces
-                                     reescritos, así que se omite en vez de fingir un "0". --}}
-                                @if($row->hasOpenTracking() || $row->hasClickTracking())
-                                    <span class="evx-engagement-inline">
-                                        @if($row->hasOpenTracking())
-                                            <span title="{{ trans_choice('helpdeskemaillog::emaillog.table.opens_count', $row->opens_count, ['count' => $row->opens_count]) }}">
-                                                <i class="fa-solid fa-eye" aria-hidden="true"></i>{{ $row->opens_count }}
-                                            </span>
-                                        @endif
-                                        @if($row->hasClickTracking())
-                                            <span title="{{ trans_choice('helpdeskemaillog::emaillog.table.clicks_count', $row->clicks_count, ['count' => $row->clicks_count]) }}">
-                                                <i class="fa-solid fa-arrow-pointer" aria-hidden="true"></i>{{ $row->clicks_count }}
-                                            </span>
-                                        @endif
-                                    </span>
-                                @endif
+                                {{-- Aperturas/clics NO van en la fila (el mockup solo
+                                     lleva badge + módulo + fecha): el dato sigue en la
+                                     pestaña Aperturas del detalle y en los KPIs de
+                                     arriba. Tampoco se pinta un "—" cuando no hay
+                                     módulo: es ruido que el mockup no tiene. --}}
                                 <span class="evx-row-date" title="{{ $row->display_date->diffForHumans() }}">
                                     {{ $row->display_date->format('d/m/Y H:i') }}
                                 </span>
@@ -1208,6 +1246,23 @@ $(function () {
                 $.ajax({ url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf } })
                     .done(() => location.reload())
                     .fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+            },
+        });
+    });
+
+    // Enviar copia de prueba (sidebar) — mismo endpoint de reenvío, con
+    // 'to' = correo del usuario autenticado y 'test' = 1 (prefijo [TEST]
+    // en el asunto, ver ResendEmailLogJob).
+    $(document).on('click', '.js-resend-test', function () {
+        const url = $(this).data('url');
+        const to = $(this).data('to');
+        askConfirm({
+            title: @json(__('helpdeskemaillog::emaillog.resend.test_confirm_title')),
+            message: @json(__('helpdeskemaillog::emaillog.resend.test_confirm')).replace(':email', to),
+            onAccept: () => {
+                $.ajax({ url, method: 'POST', data: { to, test: 1 }, headers: { 'X-CSRF-TOKEN': csrf } })
+                    .done(() => location.reload())
+                    .fail(xhr => toastr.error(xhr.responseJSON?.errors?.to?.[0] || xhr.responseJSON?.message || 'Error'));
             },
         });
     });

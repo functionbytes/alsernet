@@ -487,6 +487,193 @@
     margin: 0 14px 12px;
 }
 
+/* Tarjeta resumen de la pestaña Traza (estado + contexto + tiempo total
+   real) — vive ANTES del bloque .evx-block que ya contiene la timeline. */
+.evx-trace-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 13px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 10px;
+}
+
+.evx-trace-summary-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.evx-trace-summary-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.evx-trace-summary-icon.sent { background: #f0fdf4; color: #166534; }
+.evx-trace-summary-icon.failed { background: #f4f4f5; color: #52525b; }
+.evx-trace-summary-icon.queued { background: #fffbeb; color: #92400e; }
+.evx-trace-summary-icon.bounced { background: #f7fee7; color: #4f6b0a; }
+.evx-trace-summary-icon.complained { background: #e4e4e7; color: #3f3f46; }
+.evx-trace-summary-icon.suppressed { background: #f3f4f6; color: #4b5563; }
+
+.evx-trace-summary-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.evx-trace-summary-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--evx-text);
+}
+
+.evx-trace-summary-context {
+    font-size: 11px;
+    color: #71717a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-trace-summary-time {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.evx-trace-summary-time .val {
+    display: block;
+    font-family: var(--evx-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--evx-text);
+}
+
+.evx-trace-summary-time .lbl {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--evx-text-muted);
+}
+
+/* Encabezado "Recorrido del envío" sobre la timeline ya existente. */
+.evx-trace-timeline-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.evx-trace-section-label {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--evx-text-muted);
+}
+
+/* Tarjetas "Transporte" / "Autenticación" en fila. */
+.evx-trace-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 640px) {
+    .evx-trace-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+.evx-trace-card {
+    padding: 11px 13px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 10px;
+}
+
+.evx-trace-card-title {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.evx-trace-kv {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 10px;
+    font-family: var(--evx-mono);
+    font-size: 10px;
+}
+
+.evx-trace-kv .k {
+    color: var(--evx-text-muted);
+}
+
+.evx-trace-kv .v {
+    color: var(--evx-text);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.evx-trace-auth-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.evx-auth-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.evx-auth-pill.is-pass {
+    background: #eef5d9;
+    color: #5b7a0d;
+}
+
+.evx-auth-pill.is-unknown {
+    background: var(--evx-subtle);
+    color: var(--evx-text-muted);
+}
+
+.evx-trace-auth-note {
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--evx-text-muted);
+}
+
+.evx-trace-auth-note a {
+    color: var(--evx-primary-dark);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.evx-trace-auth-note a:hover {
+    text-decoration: underline;
+}
+
 .evx-field {
     display: flex;
     flex-direction: column;
@@ -863,7 +1050,9 @@
 }
 
 .emaillog-index .mono,
-.emaillog-index .evx-mono {
+.emaillog-index .evx-mono,
+.emaillog-settings .mono,
+.emaillog-settings .evx-mono {
     font-family: var(--evx-mono);
 }
 
@@ -1634,11 +1823,13 @@
 }
 
 /* ── Settings ── */
-.emaillog-settings {
-    max-width: 860px;
+/* Modificador de .evx-shell para el formulario de configuración: el resto
+   de pantallas secundarias (reputación/supresión/buzones) usan el shell a
+   ancho completo, como el índice — este formulario, en cambio, se lee mejor
+   centrado y con un ancho máximo cómodo para pares de campos de 2 columnas. */
+.evx-shell-narrow {
+    max-width: 900px;
     margin: 0 auto;
-    font-size: 13px;
-    color: var(--evx-text);
 }
 
 .emaillog-settings .evx-section-block {
@@ -2127,4 +2318,200 @@
 .evx-kv-mini .v {
     font-size: 10px;
     text-align: right;
+}
+
+/* Botones "Abrir"/"Filtrar" al pie de la tarjeta "Entidad relacionada"
+   (sidebar) — el mismo .evx-kv-mini de arriba se reutiliza para el grid
+   clave/valor con lo que se sabe de la entidad. */
+.evx-entity-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.evx-entity-actions.is-single {
+    grid-template-columns: 1fr;
+}
+
+.evx-entity-actions .evx-btn {
+    width: 100%;
+}
+
+/* ============================================================
+   Ancho completo solo en este módulo
+   El tema limita el contenido a max-width:1200px de forma global
+   (.mc-content-inner), pero el workspace de 3 columnas
+   (lista 390px + detalle + sidebar 316px) necesita todo el ancho
+   disponible, igual que el mockup. Se libera con :has() acotado a
+   las páginas que contienen .emaillog-index — sin tocar el
+   contenedor global ni afectar al resto de la aplicación.
+   ============================================================ */
+.mc-content-inner:has(> .emaillog-index),
+.mc-content-inner:has(> .emaillog-settings) {
+    max-width: none;
+}
+
+/* ============================================================
+   Barra de herramientas (primera fila dentro de la tarjeta)
+   Breadcrumb + buscador + acciones, con los valores del mockup.
+   ============================================================ */
+.evx-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    row-gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+}
+
+.evx-crumbs {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: var(--evx-text-muted);
+    white-space: nowrap;
+}
+
+.evx-crumbs .fa-chevron-right {
+    font-size: 8px;
+}
+
+.evx-crumbs .is-current {
+    color: var(--evx-text);
+    font-weight: 600;
+}
+
+.evx-toolbar-search {
+    flex: 1 1 200px;
+    min-width: 0;
+    max-width: 360px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #fff;
+    border: 1px solid var(--evx-border);
+    border-radius: 7px;
+}
+
+.evx-toolbar-search i {
+    font-size: 11px;
+    color: var(--evx-text-muted);
+    flex-shrink: 0;
+}
+
+.evx-toolbar-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    font-size: 12px;
+    color: var(--evx-text);
+}
+
+.evx-toolbar-search input:focus {
+    outline: none;
+}
+
+.evx-toolbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ============================================================
+   Pantallas secundarias (Configuración / Reputación / Supresión /
+   Buzones de rebote) — reusa .evx-toolbar/.evx-header-btn/.evx-section-
+   block/.evx-list-row/.evx-badge ya existentes; estas reglas solo cubren
+   lo que faltaba: el estado activo de la subnavegación cruzada entre las
+   4 pantallas, una tabla compacta y la paleta sin rojos para severidad.
+   ============================================================ */
+.evx-header-btn.is-active {
+    background: var(--evx-text);
+    border-color: var(--evx-text);
+    color: #fff;
+}
+
+.evx-header-btn.is-active:hover {
+    color: #fff;
+}
+
+/* Variante "crítico" de .evx-badge (emaillog-extras.css) sin rojo — mismo
+   oliva oscuro que .evx-status.bounced/.evx-stat.accent-danger, para
+   estados realmente graves (p.ej. SPF/DMARC ausente) sin romper la
+   paleta del módulo. */
+.evx-badge.crit {
+    background: #f7fee7;
+    color: #4f6b0a;
+}
+
+/* Valor de tasa (rebote/quejas) dentro de una celda de tabla — mismo
+   criterio de color que .evx-stat.accent-*, sin rojo. */
+.evx-rate {
+    font-family: var(--evx-mono);
+    font-weight: 700;
+}
+
+.evx-rate.is-good { color: #16a34a; }
+.evx-rate.is-warn { color: #d97706; }
+.evx-rate.is-crit { color: #4f6b0a; }
+
+/* Tabla compacta (autenticación por dominio, etc.) — mismos valores de
+   densidad que el resto del módulo, sin el header sombreado ni el borde
+   grueso de Bootstrap por defecto. */
+.evx-table thead th {
+    padding: 8px 10px;
+    font-size: 9.5px;
+    font-weight: 700;
+    color: var(--evx-text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-table tbody td {
+    padding: 10px;
+    font-size: 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--evx-border);
+}
+
+.evx-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.evx-table tbody tr:hover {
+    background: var(--evx-bg-soft);
+}
+
+/* Chips de dominios detectados sin monitorizar (reputación) — envoltorio
+   simple con ajuste de línea; .evx-tag ya aporta el estilo de cada chip. */
+.evx-domain-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.evx-domain-more {
+    margin-top: 10px;
+}
+
+.evx-domain-more summary {
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--evx-text-soft);
+}
+
+.evx-domain-more summary:hover {
+    color: var(--evx-text);
+}
+
+.evx-domain-more[open] summary {
+    margin-bottom: 8px;
 }

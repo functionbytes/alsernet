@@ -11,7 +11,8 @@ class PruneEmailLogsCommand extends Command
 {
     protected $signature = 'email-logs:prune
         {--days= : Override the configured retention period in days}
-        {--stale-hours= : Override the configured "stale queued" threshold in hours}';
+        {--stale-hours= : Override the configured "stale queued" threshold in hours}
+        {--trash-days= : Override the configured trash retention period in days}';
 
     protected $description = 'Delete old email log entries and mark stale queued entries as failed';
 
@@ -19,6 +20,7 @@ class PruneEmailLogsCommand extends Command
     {
         $this->markStaleQueuedAsFailed();
         $this->deleteOldEntries();
+        $this->pruneTrash();
 
         return self::SUCCESS;
     }
@@ -45,6 +47,29 @@ class PruneEmailLogsCommand extends Command
         }
     }
 
+    /**
+     * Retención general (por antigüedad de created_at) — DECISIÓN: se
+     * mantiene exactamente el mismo comportamiento de siempre, un borrado
+     * DIRECTO y definitivo (forceDelete), sin pasar por la papelera. Dos
+     * motivos:
+     *
+     *  1. No cambiar semántica ya probada: antes de la papelera (ver
+     *     EmailLog::class, SoftDeletes), este método ya eliminaba estas filas
+     *     para siempre — los tests existentes (test_old_entries_are_deleted_
+     *     after_retention_window) aseveran justamente eso con
+     *     assertDatabaseMissing().
+     *  2. retention_days (90 días por defecto) es MUCHO más largo que
+     *     trash_retention_days (30 días) — para cuando una fila llega aquí ya
+     *     ha sobrevivido de sobra cualquier ventana de arrepentimiento
+     *     razonable; añadirle encima 30 días más de papelera solo alargaría
+     *     la retención real del sistema sin que nadie lo haya pedido.
+     *
+     * withTrashed() a propósito: una fila que un agente ya movió a la
+     * papelera manualmente (destroy()/bulkDestroy()) pero que ADEMÁS ya
+     * superó la retención general por su created_at no debe sobrevivir solo
+     * porque todavía le quedaran días de papelera — retention_days es el
+     * límite superior de todo el histórico, papelera incluida.
+     */
     private function deleteOldEntries(): void
     {
         $days = (int) ($this->option('days') ?? Setting::get('helpdeskemaillog.retention_days', config('helpdeskemaillog.retention_days', 0)));
@@ -59,10 +84,10 @@ class PruneEmailLogsCommand extends Command
         $total = 0;
 
         do {
-            $deleted = EmailLog::query()
+            $deleted = EmailLog::withTrashed()
                 ->where('created_at', '<', $cutoff)
                 ->limit(1000)
-                ->delete();
+                ->forceDelete();
 
             $total += $deleted;
         } while ($deleted > 0);
@@ -72,5 +97,43 @@ class PruneEmailLogsCommand extends Command
         }
 
         $this->components->info("Pruned {$total} email log entr".($total === 1 ? 'y' : 'ies')." older than {$days} days.");
+    }
+
+    /**
+     * Purga de la papelera propiamente dicha: borra de forma DEFINITIVA
+     * (forceDelete) los registros que un agente ya movió a la papelera
+     * (destroy()/bulkDestroy(), ver EmailLogController) hace más de
+     * `trash_retention_days` días. Nunca toca filas que siguen visibles en
+     * el listado normal (onlyTrashed()) ni compite con deleteOldEntries():
+     * esta sí borra por deleted_at, la otra por created_at (ver su docblock
+     * para la decisión de por qué no comparten ventana).
+     */
+    private function pruneTrash(): void
+    {
+        $days = (int) ($this->option('trash-days') ?? Setting::get('helpdeskemaillog.trash_retention_days', config('helpdeskemaillog.trash_retention_days', 30)));
+
+        if ($days <= 0) {
+            $this->components->info('Trash retention is disabled (trash_retention_days <= 0); nothing purged from trash.');
+
+            return;
+        }
+
+        $cutoff = now()->subDays($days);
+        $total = 0;
+
+        do {
+            $purged = EmailLog::onlyTrashed()
+                ->where('deleted_at', '<', $cutoff)
+                ->limit(1000)
+                ->forceDelete();
+
+            $total += $purged;
+        } while ($purged > 0);
+
+        if ($total > 0) {
+            EmailLog::forgetDashboardCaches();
+        }
+
+        $this->components->info("Purged {$total} email log entr".($total === 1 ? 'y' : 'ies')." from the trash (older than {$days} days).");
     }
 }

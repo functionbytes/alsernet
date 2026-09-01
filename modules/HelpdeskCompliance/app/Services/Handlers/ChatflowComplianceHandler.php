@@ -7,10 +7,11 @@ use Modules\HelpdeskChatFlow\Models\ChatFlowSession;
 
 /**
  * Cascades a GDPR erasure to the chatbot sessions of the customer's conversations.
- * Soft delete sanitizes the session context (which can hold form-collected PII);
- * hard delete removes sessions and their executions. Sessions are located by the
- * conversation ids captured before deletion. Invoked only when HelpdeskChatFlow
- * is enabled (guarded by the listener).
+ * Soft delete sanitizes the session context AND every execution's input/output
+ * (both can hold form-collected PII — e.g. a "email/teléfono" step the customer
+ * typed into the bot); hard delete removes sessions and their executions.
+ * Sessions are located by the conversation ids captured before deletion.
+ * Invoked only when HelpdeskChatFlow is enabled (guarded by the listener).
  */
 class ChatflowComplianceHandler
 {
@@ -40,6 +41,7 @@ class ChatflowComplianceHandler
         }
 
         ChatFlowSession::query()->whereKey($sessionIds->all())->update(['context' => null]);
+        ChatFlowExecution::query()->whereIn('session_id', $sessionIds)->update(['input' => null, 'output' => null]);
 
         return ['module' => 'HelpdeskChatFlow', 'sessions' => $sessionIds->count(), 'mode' => 'sanitized'];
     }

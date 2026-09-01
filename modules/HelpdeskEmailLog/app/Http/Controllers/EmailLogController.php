@@ -10,11 +10,13 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailLog\Enums\EmailStatus;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkDeleteEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\BulkResendEmailLogsRequest;
+use Modules\HelpdeskEmailLog\Http\Requests\BulkRestoreEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\ExportSelectedEmailLogsRequest;
 use Modules\HelpdeskEmailLog\Http\Requests\ResendEmailLogRequest;
 use Modules\HelpdeskEmailLog\Jobs\ResendEmailLogJob;
@@ -239,7 +241,7 @@ class EmailLogController extends Controller
      * (mismos filtros, ver buildListData()) — se reutiliza como
      * selectedTotal en vez de repetir ese count() aquí.
      *
-     * @return array{log: EmailLog, opensSummary: ?array, clicksSummary: ?array, related: Collection<int, EmailLog>, entityPanel: ?string, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: string, recipientStats: ?array, selectedPosition: int, selectedTotal: int, prevUid: ?string, nextUid: ?string}
+     * @return array{log: EmailLog, opensSummary: ?array, clicksSummary: ?array, related: Collection<int, EmailLog>, entityPanel: ?string, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: string, recipientStats: ?array, transport: array, domainAuth: array, traceElapsedLabel: ?string, emlSizeLabel: ?string, selectedPosition: int, selectedTotal: int, prevUid: ?string, nextUid: ?string}
      */
     protected function resolveDetailData(EmailLog $emailLog, Request $request, int $listTotal): array
     {
@@ -264,6 +266,10 @@ class EmailLogController extends Controller
                 && $emailLog->created_at->lt(now()->subHours($staleHours)),
             'statusIcon' => self::STATUS_ICONS[$emailLog->status?->value] ?? 'fa-circle',
             'recipientStats' => $this->recipientStats($emailLog),
+            'transport' => $this->transportInfo(),
+            'domainAuth' => $this->domainAuthStatus($emailLog),
+            'traceElapsedLabel' => $this->traceElapsedLabel($emailLog),
+            'emlSizeLabel' => $this->emlSizeLabel($emailLog),
         ] + $this->resolveNavigation($emailLog, $request, $listTotal);
     }
 
@@ -271,7 +277,7 @@ class EmailLogController extends Controller
      * Mismas claves que resolveDetailData(), en null/vacío — para cuando el
      * listado no tiene ninguna fila que autoseleccionar (ver renderWorkspace()).
      *
-     * @return array{log: null, opensSummary: null, clicksSummary: null, related: Collection<int, EmailLog>, entityPanel: null, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: null, recipientStats: null, selectedPosition: null, selectedTotal: int, prevUid: null, nextUid: null}
+     * @return array{log: null, opensSummary: null, clicksSummary: null, related: Collection<int, EmailLog>, entityPanel: null, canManage: bool, staleHours: int, isStaleQueued: bool, statusIcon: null, recipientStats: null, transport: null, domainAuth: null, traceElapsedLabel: null, emlSizeLabel: null, selectedPosition: null, selectedTotal: int, prevUid: null, nextUid: null}
      */
     private function emptyDetailData(Request $request): array
     {
@@ -286,6 +292,10 @@ class EmailLogController extends Controller
             'isStaleQueued' => false,
             'statusIcon' => null,
             'recipientStats' => null,
+            'transport' => null,
+            'domainAuth' => null,
+            'traceElapsedLabel' => null,
+            'emlSizeLabel' => null,
             'selectedPosition' => null,
             'selectedTotal' => 0,
             'prevUid' => null,
@@ -465,6 +475,128 @@ class EmailLogController extends Controller
         ];
     }
 
+    /**
+     * Transporte REAL del mailer por defecto de la app (pestaña Traza,
+     * tarjeta "Transporte") — no depende del email seleccionado, todo el
+     * sistema comparte la misma config/mail.php, pero solo tiene sentido
+     * mostrarlo dentro del detalle de un envío concreto.
+     *
+     * Si el mailer activo no es 'smtp' (p. ej. 'log'/'sendmail' en un
+     * entorno sin servidor real), se omite host/puerto y la vista muestra
+     * el nombre del mailer en su lugar, en vez de fingir un host que no se
+     * está usando.
+     *
+     * 'queue' es la cola real donde ESTE módulo despacha su propio trabajo
+     * de envío (ver ResendEmailLogJob::__construct() y LogEmailSent::$queue,
+     * ambas 'emails') — un dato de código, no de configuración, por eso no
+     * se lee de config().
+     *
+     * @return array{mailer: string, isSmtp: bool, host: ?string, port: ?int, queue: string}
+     */
+    private function transportInfo(): array
+    {
+        $mailer = (string) config('mail.default');
+        $mailerConfig = (array) config("mail.mailers.{$mailer}", []);
+        $isSmtp = ($mailerConfig['transport'] ?? null) === 'smtp';
+
+        return [
+            'mailer' => $mailer,
+            'isSmtp' => $isSmtp,
+            'host' => $isSmtp ? ($mailerConfig['host'] ?? null) : null,
+            'port' => $isSmtp ? ($mailerConfig['port'] ?? null) : null,
+            'queue' => 'emails',
+        ];
+    }
+
+    /**
+     * Estado SPF/DKIM/DMARC del DOMINIO REMITENTE de este envío — no de este
+     * mensaje concreto (un mensaje individual no tiene su propio SPF/DKIM;
+     * son propiedades que el dominio firmante publica en su DNS). Ver
+     * DomainAuthenticationChecker.
+     *
+     * Nunca dispara aquí una resolución DNS en caliente: solo LEE la caché
+     * que ya puebla la pantalla de Reputación
+     * (EmailReputationController::index(), misma clave
+     * "helpdeskemaillog:domain-auth:{$domain}") — sin esa caché (dominio no
+     * vigilado en Settings, o caché caducada) cada campo queda null y la
+     * vista ofrece un enlace a Reputación en vez de fingir un resultado.
+     *
+     * @return array{domain: string, spf: ?array, dmarc: ?array, dkim: ?array}
+     */
+    private function domainAuthStatus(EmailLog $emailLog): array
+    {
+        $domain = Str::after((string) $emailLog->from_address, '@');
+        $cached = $domain !== '' ? Cache::get("helpdeskemaillog:domain-auth:{$domain}") : null;
+
+        return [
+            'domain' => $domain,
+            'spf' => $cached['spf'] ?? null,
+            'dmarc' => $cached['dmarc'] ?? null,
+            'dkim' => $cached['dkim'] ?? null,
+        ];
+    }
+
+    /**
+     * Tiempo total real entre encolado y confirmación de envío (sent_at -
+     * created_at) para la tarjeta resumen de la pestaña Traza — null cuando
+     * el envío sigue en cola o falló antes de confirmarse (nunca se inventa
+     * una duración sin sent_at real).
+     */
+    private function traceElapsedLabel(EmailLog $emailLog): ?string
+    {
+        if (! $emailLog->sent_at || ! $emailLog->created_at) {
+            return null;
+        }
+
+        return $this->formatDuration($emailLog->created_at->diffInSeconds($emailLog->sent_at));
+    }
+
+    private function formatDuration(int $seconds): string
+    {
+        if ($seconds < 60) {
+            return "{$seconds}s";
+        }
+
+        $minutes = intdiv($seconds, 60);
+
+        if ($minutes < 60) {
+            $remainingSeconds = $seconds % 60;
+
+            return $remainingSeconds > 0 ? "{$minutes}m {$remainingSeconds}s" : "{$minutes}m";
+        }
+
+        $hours = intdiv($minutes, 60);
+        $remainingMinutes = $minutes % 60;
+
+        return $remainingMinutes > 0 ? "{$hours}h {$remainingMinutes}m" : "{$hours}h";
+    }
+
+    /**
+     * Tamaño REAL del .eml que generaría downloadRaw() (mismo contenido
+     * exacto, ver buildEmlContent()) para el subtítulo de "Descargar .eml"
+     * del sidebar — null cuando no hay ni cabeceras ni cuerpo capturados
+     * (mismo guard que ya usa ese enlace en la vista).
+     */
+    private function emlSizeLabel(EmailLog $emailLog): ?string
+    {
+        $hasContent = $emailLog->raw_headers !== null || $emailLog->body_html || $emailLog->body_text;
+
+        return $hasContent ? $this->formatBytes(strlen($this->buildEmlContent($emailLog))) : null;
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes < 1024) {
+            return "{$bytes} B";
+        }
+
+        if ($bytes < 1024 * 1024) {
+            return number_format($bytes / 1024, 1).' KB';
+        }
+
+        return number_format($bytes / (1024 * 1024), 1).' MB';
+    }
+
     private function resolveCanManage(Request $request): bool
     {
         return (bool) $request->user()?->can('helpdeskemaillog.manage');
@@ -473,6 +605,17 @@ class EmailLogController extends Controller
     private function resolveStaleHours(): int
     {
         return (int) Setting::get('helpdeskemaillog.stale_queued_hours', config('helpdeskemaillog.stale_queued_hours', 24));
+    }
+
+    /**
+     * Días de recuperación de la papelera — mismo patrón Setting::get() con
+     * fallback a config() que resolveStaleHours()/resolvePerPage(). Leído
+     * también por PruneEmailLogsCommand::pruneTrash() (única fuente de
+     * verdad de este número, no se duplica el default en ningún otro sitio).
+     */
+    private function resolveTrashRetentionDays(): int
+    {
+        return (int) Setting::get('helpdeskemaillog.trash_retention_days', config('helpdeskemaillog.trash_retention_days', 30));
     }
 
     /**
@@ -630,6 +773,7 @@ class EmailLogController extends Controller
     public function resend(ResendEmailLogRequest $request, EmailLog $emailLog): RedirectResponse
     {
         $override = $request->validated()['to'] ?? null;
+        $isTest = (bool) ($request->validated()['test'] ?? false);
 
         if (empty($override) && empty($emailLog->to_addresses)) {
             return back()->with('error', __('helpdeskemaillog::emaillog.resend.no_recipients'));
@@ -641,7 +785,7 @@ class EmailLogController extends Controller
             return back()->with('error', __('helpdeskemaillog::emaillog.resend.blocked'));
         }
 
-        ResendEmailLogJob::dispatch($emailLog->id, $override);
+        ResendEmailLogJob::dispatch($emailLog->id, $override, $isTest);
 
         $this->logActivity('resent', $emailLog, $override ? ['to' => $override] : []);
 
@@ -764,6 +908,13 @@ class EmailLogController extends Controller
         return $headers."\r\n\r\n".$body;
     }
 
+    /**
+     * "Papelera de registros" (mockup): esto ya NO es un borrado definitivo
+     * — EmailLog::class usa SoftDeletes, así que delete() solo rellena
+     * deleted_at (fila recuperable vía restore(), ver más abajo) hasta que
+     * PruneEmailLogsCommand::pruneTrash() la borre de verdad tras
+     * `helpdeskemaillog.trash_retention_days` días.
+     */
     public function destroy(EmailLog $emailLog): RedirectResponse
     {
         $this->authorize('delete', $emailLog);
@@ -776,6 +927,11 @@ class EmailLogController extends Controller
             ->with('success', __('helpdeskemaillog::emaillog.deleted.one'));
     }
 
+    /**
+     * Mismo borrado lógico que destroy() (ver su docblock) — el ->delete()
+     * de una query masiva sobre un modelo con SoftDeletes ya hace un UPDATE
+     * poniendo deleted_at, nunca un DELETE físico, sin cambio de código aquí.
+     */
     public function bulkDestroy(BulkDeleteEmailLogsRequest $request): RedirectResponse
     {
         // Consistencia con destroy() (que sí llama authorize('delete')): la
@@ -791,6 +947,111 @@ class EmailLogController extends Controller
         $this->logActivity('bulk_deleted', null, ['count' => $deleted]);
 
         return back()->with('success', __('helpdeskemaillog::emaillog.deleted.many', ['count' => $deleted]));
+    }
+
+    /**
+     * Listado de la papelera (registros con soft-delete, ver destroy()) —
+     * mismas columnas ligeras que buildListData() (EmailLog::LIST_COLUMNS)
+     * más deleted_at, que es lo único nuevo que esta pantalla necesita
+     * mostrar (fecha de borrado + cuenta atrás de retención). Solo
+     * 'helpdeskemaillog.manage': quien no puede borrar tampoco necesita ver
+     * lo ya borrado.
+     */
+    public function trash(Request $request): View
+    {
+        $this->authorize('manage', EmailLog::class);
+
+        abort_if(! helpdesk_emaillog_enabled(), 404);
+
+        $perPage = $this->resolvePerPage($request);
+
+        $logs = EmailLog::onlyTrashed()
+            ->select([...EmailLog::LIST_COLUMNS, 'deleted_at'])
+            ->when($request->filled('search'), function (Builder $query) use ($request) {
+                $search = trim((string) $request->input('search'));
+                $like = '%'.addcslashes($search, '%_\\').'%';
+
+                $query->where(fn (Builder $q) => $q->where('subject', 'like', $like)
+                    ->orWhere('from_address', 'like', $like)
+                    ->orWhere('recipients_index', 'like', $like));
+            })
+            ->orderByDesc('deleted_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view('helpdeskemaillog::emails.trash', [
+            'logs' => $logs,
+            'retentionDays' => $this->resolveTrashRetentionDays(),
+            'perPage' => $perPage,
+            'perPageOptions' => config('helpdeskemaillog.per_page_options', [25]),
+        ]);
+    }
+
+    /**
+     * Recupera un registro de la papelera — EmailLog::restore() ya dispara
+     * el evento 'updated' del modelo (ver SoftDeletes::restore(), que llama
+     * a save()), así que EmailLog::booting() invalida la caché del
+     * dashboard sola, sin necesidad de un forgetDashboardCaches() explícito
+     * aquí (a diferencia de bulkRestore(), que opera por query masiva).
+     */
+    public function restore(EmailLog $emailLog): RedirectResponse
+    {
+        $this->authorize('restore', $emailLog);
+
+        // La ruta usa ->withTrashed() (necesario para que el binding
+        // implícito encuentre el registro), así que también resuelve un uid
+        // que NUNCA pasó por la papelera — sin este guard, restaurar algo
+        // que ya está activo sería un no-op silencioso en vez de un 404
+        // honesto.
+        abort_unless($emailLog->trashed(), 404);
+
+        $emailLog->restore();
+
+        $this->logActivity('restored', $emailLog);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.trash.restored.one'));
+    }
+
+    public function bulkRestore(BulkRestoreEmailLogsRequest $request): RedirectResponse
+    {
+        $this->authorize('restoreAny', EmailLog::class);
+
+        $restored = EmailLog::onlyTrashed()
+            ->whereIn('uid', $request->validated('uids'))
+            ->restore();
+
+        if ($restored > 0) {
+            EmailLog::forgetDashboardCaches();
+        }
+
+        $this->logActivity('bulk_restored', null, ['count' => $restored]);
+
+        return back()->with('success', __('helpdeskemaillog::emaillog.trash.restored.many', ['count' => $restored]));
+    }
+
+    /**
+     * Borrado definitivo explícito desde la papelera — a diferencia de
+     * destroy(), este SÍ es irreversible (mismo forceDelete() que usa el
+     * borrado GDPR, ver Modules\HelpdeskCompliance\Services\Handlers\
+     * EmailLogComplianceHandler). Solo alcanzable sobre un registro ya en
+     * la papelera (ruta con ->withTrashed(), ver routes/web.php): no ofrece
+     * un atajo para saltarse el paso por destroy() primero.
+     */
+    public function forceDestroy(EmailLog $emailLog): RedirectResponse
+    {
+        $this->authorize('forceDelete', $emailLog);
+
+        // Mismo motivo que restore(): la ruta usa ->withTrashed(), así que
+        // sin este guard se podría purgar para siempre un registro que
+        // nunca pasó por destroy()/la papelera, saltándose ese primer paso.
+        abort_unless($emailLog->trashed(), 404);
+
+        $this->logActivity('force_deleted', $emailLog);
+        $emailLog->forceDelete();
+
+        return redirect()
+            ->route('helpdeskemaillog.trash.index')
+            ->with('success', __('helpdeskemaillog::emaillog.trash.force_deleted.one'));
     }
 
     public function export(Request $request): StreamedResponse
