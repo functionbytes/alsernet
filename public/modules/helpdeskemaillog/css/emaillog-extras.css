@@ -694,7 +694,10 @@
     flex-wrap: wrap;
     padding: 8px 13px;
     border-bottom: 1px solid var(--evx-border);
-    background: var(--evx-bg-soft);
+    /* Mismo gris que las solapas de las pestañas en el mockup (#f5f6f8),
+       no el --evx-bg-soft general: comparten borde y deben leerse como
+       una sola banda de cabecera. */
+    background: #f5f6f8;
 }
 
 .evx-content-head .evx-attach-chip {

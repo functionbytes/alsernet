@@ -358,16 +358,15 @@
                                     <span>{{ count($log->attachments) }}</span>
                                 </span>
                             @endif
+                            {{-- Etiquetas de texto, no iconos: en el mockup el
+                                 conmutador dice "Escritorio"/"Móvil" y un icono de
+                                 ventana no distingue bien un ancho de otro. --}}
                             <div class="evx-device-toggle" role="group" aria-label="{{ __('helpdeskemaillog::emaillog.preview.heading') }}">
-                                <button type="button" class="on" id="btnDesktopView" aria-pressed="true"
-                                        aria-label="{{ __('helpdeskemaillog::emaillog.preview.desktop') }}"
-                                        title="{{ __('helpdeskemaillog::emaillog.preview.desktop') }}">
-                                    <i class="fa-regular fa-window-maximize" aria-hidden="true"></i>
+                                <button type="button" class="on" id="btnDesktopView" aria-pressed="true">
+                                    {{ __('helpdeskemaillog::emaillog.preview.desktop') }}
                                 </button>
-                                <button type="button" id="btnMobileView" aria-pressed="false"
-                                        aria-label="{{ __('helpdeskemaillog::emaillog.preview.mobile') }}"
-                                        title="{{ __('helpdeskemaillog::emaillog.preview.mobile') }}">
-                                    <i class="fa-solid fa-mobile-screen" aria-hidden="true"></i>
+                                <button type="button" id="btnMobileView" aria-pressed="false">
+                                    {{ __('helpdeskemaillog::emaillog.preview.mobile') }}
                                 </button>
                             </div>
                         </div>
