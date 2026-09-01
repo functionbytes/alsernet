@@ -2908,3 +2908,103 @@
     background: var(--evx-text);
     color: #fff;
 }
+
+/* ── Fila de la lista: colores del mockup ──────────────────────────────────
+   Medidos sobre la columna izquierda de "Alvarez Emails Enviados.dc.html".
+   Los estados problemáticos van en gris/negro, no en rojo (misma línea que
+   el resto del panel). */
+
+/* Dos verdes: aceptado por el SMTP (claro) frente a entrega confirmada por
+   el webhook del proveedor (pleno). */
+.evx-row-dot.sent { background: #c2dd7a; }
+.evx-row-dot.sent.is-delivered { background: #90bb13; }
+.evx-row-dot.bounced { background: #18181b; }
+.evx-row-dot.failed { background: #18181b; }
+.evx-row-dot.complained { background: #3f3f46; }
+.evx-row-dot.suppressed { background: #d4d4d8; }
+
+/* Badges de estado de la fila. El de la cabecera del detalle mantiene su
+   propio tamaño (ver .evx-ph-chips .evx-status). */
+.evx-row-meta .evx-status.bounced,
+.evx-row-meta .evx-status.failed {
+    background: #e4e4e7;
+    color: #18181b;
+}
+
+.evx-row-meta .evx-status.queued {
+    background: #f5f6f8;
+    color: #52525b;
+}
+
+.evx-row-meta .evx-status.complained {
+    background: #e4e4e7;
+    color: #3f3f46;
+}
+
+.evx-row-meta .evx-status.suppressed {
+    background: transparent;
+    color: #52525b;
+}
+
+/* Fila seleccionada: solo el mismo gris que las solapas y la cabecera del
+   contenido (no el #fafafa general) y sin la barra vertical verde — en el
+   mockup la fila activa se marca únicamente con el fondo. */
+.evx-row.is-active {
+    background: #f5f6f8;
+    box-shadow: none;
+}
+
+/* Interlineado del mockup en la fila (1.2): con el 1.5 que hereda del tema
+   las tres líneas sumaban 86px de fila frente a los 79px del mockup. */
+.evx-row-subject,
+.evx-recipient {
+    line-height: 1.2;
+}
+
+/* ── Workspace de 3 columnas ───────────────────────────────────────────────
+   El mockup usa un grid de tres pistas hermanas (390px 908px 316px): lista,
+   detalle y sidebar arrancan todas a la misma altura y la cabecera del
+   detalle (asunto + pestañas) termina donde empieza el sidebar en vez de
+   pasarle por encima.
+
+   El fragmento que intercambia el AJAX sigue siendo #evx-detail-cols entero,
+   pero con display:contents no genera caja propia: sus dos hijos
+   (.evx-detail-panel y .evx-sidebar) caen directamente como pistas 2 y 3 del
+   grid del workspace. Así no hay que tocar el JS de navegación. */
+.evx-workspace {
+    grid-template-columns: minmax(330px, 390px) minmax(430px, 1fr) minmax(290px, 316px);
+}
+
+#evx-detail-cols {
+    display: contents;
+}
+
+/* Sin .evx-body-cols intermedio, la columna 2 es .evx-detail-panel (flex en
+   columna) y .evx-main debe quedarse con el alto sobrante para que su fondo
+   gris llegue hasta abajo. */
+.evx-main {
+    flex: 1;
+}
+
+/* El panel vacío (sin email seleccionado) ocupa las dos pistas restantes:
+   no hay sidebar que pintar y dejar la tercera en blanco cortaría la caja. */
+.evx-empty-detail {
+    grid-column: 2 / -1;
+}
+
+@media (max-width: 1199px) {
+    .evx-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .evx-empty-detail {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 991px) {
+    .evx-sidebar {
+        border-left: 0;
+        border-top: 1px solid var(--evx-border);
+    }
+}

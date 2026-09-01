@@ -605,7 +605,13 @@
                             <input type="checkbox" class="bulk-checkbox evx-row-check" value="{{ $row->uid }}"
                                    aria-label="{{ $row->subject ?: __('helpdeskemaillog::emaillog.table.subject') }}">
                         @endif
-                        <span class="evx-row-dot {{ $statusVal }}" aria-hidden="true"></span>
+                        {{-- El mockup distingue dos verdes en el punto: "Enviado"
+                             (aceptado por el SMTP) en verde claro y "Entregado"
+                             (confirmado por el webhook del proveedor) en verde
+                             pleno. No hay un estado 'delivered' en EmailStatus:
+                             la confirmación es delivered_at, así que se marca
+                             aquí con una clase extra. --}}
+                        <span class="evx-row-dot {{ $statusVal }} {{ $row->delivered_at ? 'is-delivered' : '' }}" aria-hidden="true"></span>
                         <div class="evx-row-body">
                             <div class="evx-row-top">
                                 <a href="{{ $rowUrl }}" class="evx-subject-link evx-row-subject">
@@ -630,10 +636,13 @@
                                 {{ __('helpdeskemaillog::emaillog.preview.field.to') }}: {{ $recipientLine }}@if($row->body_snippet)<span class="evx-row-snippet"> · {{ $row->body_snippet }}</span>@endif
                             </div>
                             <div class="evx-row-meta">
+                                {{-- Sin icono dentro del badge: en el mockup la fila
+                                     solo lleva el texto del estado (el icono queda
+                                     para el badge de la cabecera del detalle). El
+                                     punto de color de la izquierda ya da la lectura
+                                     rápida del estado sin repetir el símbolo. --}}
                                 <span class="evx-status {{ $statusVal }}"
-                                      @if($row->error_message) title="{{ Str::limit($row->error_message, 120) }}" @endif>
-                                    <i class="fa-solid {{ ['sent' => 'fa-check', 'failed' => 'fa-xmark', 'queued' => 'fa-clock', 'bounced' => 'fa-triangle-exclamation', 'complained' => 'fa-flag', 'suppressed' => 'fa-ban'][$statusVal] ?? 'fa-circle' }}" aria-hidden="true"></i>{{ $row->status_label }}
-                                </span>
+                                      @if($row->error_message) title="{{ Str::limit($row->error_message, 120) }}" @endif>{{ $row->status_label }}</span>
                                 @if($row->module)
                                     <span class="evx-tag mono">{{ $row->module }}</span>
                                 @endif
@@ -642,8 +651,13 @@
                                      pestaña Aperturas del detalle y en los KPIs de
                                      arriba. Tampoco se pinta un "—" cuando no hay
                                      módulo: es ruido que el mockup no tiene. --}}
-                                <span class="evx-row-date" title="{{ $row->display_date->diffForHumans() }}">
-                                    {{ $row->display_date->format('d/m/Y H:i') }}
+                                {{-- Formato corto del mockup ("01 sep 11:20"): la
+                                     columna es estrecha y el año sobra con 90 días
+                                     de retención. La fecha completa sigue en el
+                                     title, junto al "hace X" del original. --}}
+                                <span class="evx-row-date"
+                                      title="{{ $row->display_date->format('d/m/Y H:i') }} · {{ $row->display_date->diffForHumans() }}">
+                                    {{ str_replace('.', '', $row->display_date->translatedFormat('d M H:i')) }}
                                 </span>
                             </div>
                         </div>
