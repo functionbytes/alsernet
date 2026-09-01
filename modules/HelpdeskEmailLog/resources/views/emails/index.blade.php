@@ -342,6 +342,28 @@
                 </select>
             </span>
 
+            {{-- Filtros secundarios plegados: el mockup solo lleva módulo,
+                 estado, fechas y por-página en la barra, y con los 4 nuestros
+                 añadidos la fila se partía en dos (92px en vez de 49px). Se
+                 despliegan solos si alguno viene activo, para que nunca haya
+                 un filtro aplicado que no se vea. --}}
+            @php
+                $advancedActive = collect(['engagement', 'causer_id', 'from_address', 'has_attachments'])
+                    ->filter(fn ($f) => filled(request($f)))
+                    ->count();
+            @endphp
+            <button type="button" class="evx-filter-more-toggle" id="evx-filters-more-toggle"
+                    aria-expanded="{{ $advancedActive ? 'true' : 'false' }}"
+                    aria-controls="evx-filters-more">
+                <i class="fas fa-sliders" aria-hidden="true"></i>
+                {{ __('helpdeskemaillog::emaillog.filters.more') }}
+                @if($advancedActive)
+                    <span class="evx-filter-more-count">{{ $advancedActive }}</span>
+                @endif
+            </button>
+
+            <div class="evx-filters-more" id="evx-filters-more" @if(! $advancedActive) hidden @endif>
+
             {{-- "Sin abrir"/"Sin clic" solo tiene sentido sobre envíos CON
                  seguimiento — ver EmailLogController::applyFilters(). --}}
             <select name="engagement" class="evx-select">
@@ -391,6 +413,8 @@
                 <option value="" @selected(! request()->boolean('has_attachments'))>{{ __('helpdeskemaillog::emaillog.filters.attachments_only') }}</option>
                 <option value="1" @selected(request()->boolean('has_attachments'))>{{ __('helpdeskemaillog::emaillog.filters.attachments_only_yes') }}</option>
             </select>
+
+            </div>{{-- /.evx-filters-more --}}
 
             <span class="evx-select-icon">
                 <i class="fas fa-calendar" aria-hidden="true"></i>
@@ -1305,6 +1329,15 @@ $(function () {
     $(document).on('click', '#evx-list-view .evx-row', function (e) {
         if ($(e.target).closest('a, input, button').length) return;
         loadDetail($(this).data('href'));
+    });
+
+    // Despliegue de los filtros secundarios (la barra debe caber en una
+    // línea; ver .evx-filters-more). No recarga nada: solo muestra/oculta.
+    $(document).on('click', '#evx-filters-more-toggle', function () {
+        const $more = $('#evx-filters-more');
+        const visible = !$more.prop('hidden');
+        $more.prop('hidden', visible);
+        $(this).attr('aria-expanded', String(!visible));
     });
 
     // Navegación anterior/siguiente del detalle: botones ▲▼ de la cabecera y

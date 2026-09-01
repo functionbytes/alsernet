@@ -62,6 +62,7 @@ return [
     ],
 
     'filters' => [
+        'more' => 'Más filtros',
         'heading' => 'Filtros de búsqueda',
         'description' => 'Encuentra emails usando múltiples criterios de filtrado',
         'search_placeholder' => 'Buscar por asunto, destinatario o remitente...',

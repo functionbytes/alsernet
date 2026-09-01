@@ -58,6 +58,7 @@ return [
     ],
 
     'filters' => [
+        'more' => 'More filters',
         'heading' => 'Search filters',
         'description' => 'Find emails using multiple filter criteria',
         'search_placeholder' => 'Search by subject, recipient or sender...',

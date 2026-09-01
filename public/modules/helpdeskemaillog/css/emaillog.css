@@ -2785,3 +2785,52 @@
 .evx-sidebar .evx-block-foot a:hover {
     color: var(--evx-text);
 }
+
+/* Filtros secundarios plegables — la barra del mockup mide una sola línea
+   (49px); con nuestros 4 filtros extra visibles pasaba a 92px. */
+.evx-filter-more-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--evx-border);
+    border-radius: 7px;
+    background: #fff;
+    font-size: 11.5px;
+    color: var(--evx-text-soft);
+    cursor: pointer;
+}
+
+.evx-filter-more-toggle:hover {
+    border-color: var(--evx-border-strong);
+    color: var(--evx-text);
+}
+
+.evx-filter-more-count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--evx-primary);
+    color: #fff;
+    font-size: 9.5px;
+    font-weight: 700;
+}
+
+/* Segunda fila, solo cuando se despliega */
+.evx-filters-more {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 8px;
+    margin-top: 2px;
+    border-top: 1px solid var(--evx-border);
+}
+
+.evx-filters-more[hidden] {
+    display: none;
+}
