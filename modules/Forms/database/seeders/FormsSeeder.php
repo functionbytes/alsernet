@@ -34,8 +34,7 @@ class FormsSeeder extends Seeder
             ['form_key' => 'paymentandfinancing', 'name' => 'Métodos de pago y financiación', 'category_slug' => 'metodos-pago-financiacion'],
             [
                 'form_key' => 'workwithus', 'name' => 'Trabaja con nosotros', 'category_slug' => 'trabaja-con-nosotros',
-                'active' => false,
-                'description' => 'La plantilla workwithus.tpl no existe en disco del lado PrestaShop; el formulario no es alcanzable hasta recrearla.',
+                'description' => 'Sustituye id 15 de ets_contactform7 (bolsa de trabajo, con adjunto de CV/documentación).',
             ],
             // Categoría C: sin equivalente previo en ets_contactform7, creados
             // de cero en alsernetforms (ver secondhand.tpl, customerdefender.tpl,
@@ -44,6 +43,7 @@ class FormsSeeder extends Seeder
             ['form_key' => 'customerdefender', 'name' => 'Defensor del cliente', 'category_slug' => 'defensor-del-cliente'],
             ['form_key' => 'prestigechairs', 'name' => 'Condiciones Sillas Prestige', 'category_slug' => 'condiciones-sillas-prestige'],
             ['form_key' => 'productpriceinquiry', 'name' => 'Consulta de precio en ficha de producto', 'category_slug' => 'consulta-precio-producto'],
+            ['form_key' => 'expertconsultation', 'name' => 'Consulta a un experto', 'category_slug' => 'consulta-experto'],
         ];
 
         foreach ($forms as $form) {

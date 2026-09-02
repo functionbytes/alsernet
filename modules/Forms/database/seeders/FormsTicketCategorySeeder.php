@@ -130,7 +130,7 @@ class FormsTicketCategorySeeder extends Seeder
             [
                 'name' => 'Trabaja con nosotros',
                 'slug' => 'trabaja-con-nosotros',
-                'description' => 'Candidaturas espontáneas (formulario pendiente de recrear en PrestaShop)',
+                'description' => 'Candidaturas espontáneas',
                 'color' => '#6c757d',
                 'icon' => 'fa-duotone fa-briefcase',
                 'active' => true,
@@ -173,6 +173,15 @@ class FormsTicketCategorySeeder extends Seeder
                 'icon' => 'fa-duotone fa-tag',
                 'active' => true,
                 'order' => 25,
+            ],
+            [
+                'name' => 'Consulta a un experto',
+                'slug' => 'consulta-experto',
+                'description' => 'Duda técnica o asesoramiento, desde la página general o el botón "Ask the expert" de la ficha de producto',
+                'color' => '#0dcaf0',
+                'icon' => 'fa-duotone fa-comments-question-check',
+                'active' => true,
+                'order' => 26,
             ],
         ];
 
