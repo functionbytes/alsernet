@@ -44,6 +44,7 @@ class FormsSeeder extends Seeder
             ['form_key' => 'prestigechairs', 'name' => 'Condiciones Sillas Prestige', 'category_slug' => 'condiciones-sillas-prestige'],
             ['form_key' => 'productpriceinquiry', 'name' => 'Consulta de precio en ficha de producto', 'category_slug' => 'consulta-precio-producto'],
             ['form_key' => 'expertconsultation', 'name' => 'Consulta a un experto', 'category_slug' => 'consulta-experto'],
+            ['form_key' => 'interestfreefinancing', 'name' => 'Financiación sin intereses', 'category_slug' => 'financiacion-sin-intereses'],
         ];
 
         foreach ($forms as $form) {

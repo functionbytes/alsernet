@@ -183,6 +183,15 @@ class FormsTicketCategorySeeder extends Seeder
                 'active' => true,
                 'order' => 26,
             ],
+            [
+                'name' => 'Financiación sin intereses',
+                'slug' => 'financiacion-sin-intereses',
+                'description' => 'Solicitud de financiación sin intereses',
+                'color' => '#198754',
+                'icon' => 'fa-duotone fa-piggy-bank',
+                'active' => true,
+                'order' => 27,
+            ],
         ];
 
         foreach ($categories as $category) {
