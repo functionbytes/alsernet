@@ -631,12 +631,22 @@
                 @endcan
 
                 @if($ticket->custom_fields)
+                    @php
+                        // '_field_labels' es una clave reservada que manda
+                        // FormSubmissionReceiverController (form_key => etiqueta
+                        // real del <label> del .tpl en PrestaShop, ver
+                        // AlsernetFormFieldLabels) -- no es un campo del
+                        // formulario, se usa para traducir el display de abajo
+                        // y se excluye de la lista.
+                        $fieldLabels = $ticket->custom_fields['_field_labels'] ?? [];
+                    @endphp
                     <div class="mb-3">
                         <small class="text-muted d-block mb-2 fw-bold">Campos personalizados</small>
                         @foreach($ticket->custom_fields as $key => $value)
+                            @continue($key === '_field_labels')
                             <div class="mb-2">
-                                <small class="text-muted d-block">{{ ucfirst(str_replace('_', ' ', $key)) }}</small>
-                                <span class="small">{{ $value }}</span>
+                                <small class="text-muted d-block">{{ $fieldLabels[$key] ?? ucfirst(str_replace('_', ' ', $key)) }}</small>
+                                <span class="small">{{ is_array($value) ? implode(', ', $value) : $value }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -810,30 +820,35 @@
             </div>
 
             {{-- Email history --}}
-            @if($ticketMails->isNotEmpty())
-                <div class="p-3 border-top">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-envelope me-1"></i> Emails enviados</h6>
-                    @foreach($ticketMails as $mail)
-                        <div class="mb-3 border rounded p-2 bg-white">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <span class="badge bg-{{ $mail->status_color }}-subtle text-{{ $mail->status_color }} border border-{{ $mail->status_color }}-subtle small">
-                                    {{ $mail->status_label }}
-                                </span>
-                                <small class="text-muted">{{ $mail->created_at->format('d/m/Y H:i') }}</small>
-                            </div>
-                            <div class="small fw-semibold text-truncate">{{ $mail->subject }}</div>
-                            <div class="small text-muted">
-                                <span class="me-2"><i class="fas fa-arrow-right me-1 text-success"></i>{{ $mail->to }}</span>
-                            </div>
-                            @if($mail->body_text)
-                                <div class="small text-muted mt-1 text-truncate htk-email-preview">
-                                    {{ Str::limit($mail->body_text, 120) }}
-                                </div>
-                            @endif
-                        </div>
-                    @endforeach
+            <div class="p-3 border-top">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold mb-0"><i class="fas fa-envelope me-1"></i> Emails enviados</h6>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#tkt-compose-mail-modal">
+                        <i class="fas fa-pen"></i>
+                    </button>
                 </div>
-            @endif
+                @forelse($ticketMails as $mail)
+                    <div class="mb-3 border rounded p-2 bg-white">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge bg-{{ $mail->status_color }}-subtle text-{{ $mail->status_color }} border border-{{ $mail->status_color }}-subtle small">
+                                {{ $mail->status_label }}
+                            </span>
+                            <small class="text-muted">{{ $mail->created_at->format('d/m/Y H:i') }}</small>
+                        </div>
+                        <div class="small fw-semibold text-truncate">{{ $mail->subject }}</div>
+                        <div class="small text-muted">
+                            <span class="me-2"><i class="fas fa-arrow-right me-1 text-success"></i>{{ $mail->to }}</span>
+                        </div>
+                        @if($mail->body_text)
+                            <div class="small text-muted mt-1 text-truncate htk-email-preview">
+                                {{ Str::limit($mail->body_text, 120) }}
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <p class="text-muted small mb-0">Sin emails enviados todavía.</p>
+                @endforelse
+            </div>
         </div>
     </div>
 
@@ -1054,6 +1069,98 @@
     </div>
 @endcan
 
+{{-- Redactar/programar un correo suelto ligado a este ticket — usa el mismo
+     endpoint que la antigua bandeja global (manager.helpdesk.tickets.emails.store,
+     TicketMailDispatcher::send()), sin selector de ticket porque ya estamos
+     dentro de uno. La respuesta normal a un comentario del hilo sigue su
+     propio camino (TicketCommentsController → TicketReplyMail) y no pasa por
+     aquí. --}}
+<div class="modal fade" id="tkt-compose-mail-modal" tabindex="-1" aria-labelledby="tktComposeMailLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tktComposeMailLabel">Redactar email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="tkt-compose-mail-form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="ticket_id" value="{{ $ticket->id }}">
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Para</label>
+                        <input type="email" name="to" class="form-control form-control-sm" required
+                               value="{{ $ticket->customer?->email }}">
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">CC</label>
+                            <input type="text" id="tkt-compose-cc" class="form-control form-control-sm" placeholder="separados por coma">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">CCO</label>
+                            <input type="text" id="tkt-compose-bcc" class="form-control form-control-sm" placeholder="separados por coma">
+                        </div>
+                    </div>
+
+                    {{-- Plantilla reutilizable (macros con acción "reply"), rellenada por
+                         JS vía TicketMailsController::templates() con el ticket_id ya
+                         fijado, así las variables ({{cliente}}, etc.) llegan interpoladas
+                         desde el servidor y no hay que reimplementar eso aquí. --}}
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Plantilla</label>
+                        <select id="tkt-compose-template" class="form-select form-select-sm">
+                            <option value="">Sin plantilla</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Asunto</label>
+                        <input type="text" name="subject" class="form-control form-control-sm" required maxlength="255">
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Categoría</label>
+                            <select name="category_id" class="form-select form-select-sm">
+                                <option value="">Sin categoría</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold">Programar envío</label>
+                            <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm">
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Mensaje</label>
+                        <textarea name="body" class="form-control form-control-sm" rows="5" required></textarea>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Adjuntos</label>
+                        <input type="file" name="attachments[]" class="form-control form-control-sm" multiple>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" name="is_internal" value="1" class="form-check-input" id="tkt-compose-internal">
+                        <label class="form-check-label small" for="tkt-compose-internal">Aviso interno (no llega al cliente)</label>
+                    </div>
+
+                    <p id="tkt-compose-error" class="text-danger small mb-0 mt-2" style="display:none"></p>
+                </div>
+                <div class="modal-footer flex-column">
+                    <button type="submit" class="btn btn-primary w-100 mb-2" id="tkt-compose-submit">Enviar</button>
+                    <button type="button" class="btn btn-light w-100" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -1072,6 +1179,8 @@
         macrosListUrl: @json(route('manager.helpdesk.macros.list')),
         macroApplyUrlBase: @json(url('panel/helpdesk/tickets/'.$ticket->id.'/macros')),
         typingUrl: @json(route('manager.helpdesk.tickets.typing', $ticket->id)),
+        emailComposeStoreUrl: @json(route('manager.helpdesk.tickets.emails.store')),
+        emailTemplatesUrl: @json(route('manager.helpdesk.tickets.emails.templates', ['ticket_id' => $ticket->id])),
     };
 </script>
 <script src="{{ asset('modules/helpdesktickets/js/ticket-detail.js') }}?v={{ @filemtime(public_path('modules/helpdesktickets/js/ticket-detail.js')) }}"></script>

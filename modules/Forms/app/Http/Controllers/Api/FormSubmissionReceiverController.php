@@ -79,9 +79,15 @@ class FormSubmissionReceiverController extends Controller
         $formKey = (string) $request->input('type', '');
         $categorySlug = (string) $request->input('category', '');
         $data = (array) $request->input('data', []);
+        // Etiqueta legible por campo (ej. 'firstname' => 'Nombre'), tal cual
+        // el <label> real del .tpl del lado PrestaShop -- ver
+        // AlsernetFormFieldLabels. Ausente en payloads antiguos (antes de
+        // este campo) o de formularios sin mapeo todavía: buildDescription()
+        // cae al humanize genérico para esos.
+        $fieldLabels = (array) $request->input('field_labels', []);
 
         try {
-            $ticket = $this->createTicketFromSubmission($formKey, $categorySlug, $data);
+            $ticket = $this->createTicketFromSubmission($formKey, $categorySlug, $data, $fieldLabels);
         } catch (Throwable $e) {
             Log::error('Forms: error processing form submission', [
                 'form_key' => $formKey,
@@ -110,7 +116,7 @@ class FormSubmissionReceiverController extends Controller
         ]);
     }
 
-    private function createTicketFromSubmission(string $formKey, string $categorySlug, array $data): Ticket
+    private function createTicketFromSubmission(string $formKey, string $categorySlug, array $data, array $fieldLabels = []): Ticket
     {
         // Form (tabla helpdesk_forms, gestionable desde panel/forms/manage) es
         // la fuente de verdad de qué categoría corresponde a cada form_key --
@@ -156,11 +162,15 @@ class FormSubmissionReceiverController extends Controller
 
         return $this->ticketService->createTicket([
             'subject' => $category->name,
-            'description' => $this->buildDescription($data),
+            'description' => $this->buildDescription($data, $fieldLabels),
             'customer_id' => $customer->id,
             'category_id' => $category->id,
             'source' => 'formulario',
-            'custom_fields' => array_merge($data, ['form_key' => $formKey]),
+            // '_field_labels' es una clave reservada, no un campo del
+            // formulario: managers/tickets/show.blade.php la usa para
+            // traducir el display de las demás y la excluye de la lista
+            // al iterar. Ver AlsernetFormFieldLabels (lado PrestaShop).
+            'custom_fields' => array_merge($data, ['form_key' => $formKey, '_field_labels' => $fieldLabels]),
         ]);
     }
 
@@ -169,8 +179,14 @@ class FormSubmissionReceiverController extends Controller
      * formulario -- los campos individuales quedan también en custom_fields
      * (tipados por categoría si el módulo Alvarez llega a declarar
      * TicketCategoryField para alguna, ver plan de Fase 3).
+     *
+     * @param  array<string, string>  $fieldLabels  Etiqueta real del <label> del
+     *                                              .tpl por campo (ver
+     *                                              AlsernetFormFieldLabels, lado
+     *                                              PrestaShop); un campo ausente
+     *                                              aquí cae al humanize genérico.
      */
-    private function buildDescription(array $data): string
+    private function buildDescription(array $data, array $fieldLabels = []): string
     {
         $lines = [];
 
@@ -179,7 +195,8 @@ class FormSubmissionReceiverController extends Controller
                 $value = json_encode($value, JSON_UNESCAPED_UNICODE);
             }
 
-            $lines[] = ucfirst(str_replace('_', ' ', (string) $key)).': '.$value;
+            $label = $fieldLabels[$key] ?? ucfirst(str_replace('_', ' ', (string) $key));
+            $lines[] = $label.': '.$value;
         }
 
         return $lines !== [] ? implode("\n", $lines) : 'Sin detalle adicional.';
