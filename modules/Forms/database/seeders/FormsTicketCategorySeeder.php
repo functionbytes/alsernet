@@ -136,6 +136,44 @@ class FormsTicketCategorySeeder extends Seeder
                 'active' => true,
                 'order' => 21,
             ],
+            // Categoría C del plan de migración ets_contactform7 -> alsernetforms
+            // (formularios sin equivalente previo, ver secondhand.tpl et al.).
+            [
+                'name' => 'Segunda mano',
+                'slug' => 'segunda-mano',
+                'description' => 'Venta de armas usadas de segunda mano',
+                'color' => '#8b5a2b',
+                'icon' => 'fa-duotone fa-gun',
+                'active' => true,
+                'order' => 22,
+            ],
+            [
+                'name' => 'Defensor del cliente',
+                'slug' => 'defensor-del-cliente',
+                'description' => 'Reclamaciones e incidencias escaladas al defensor del cliente',
+                'color' => '#dc3545',
+                'icon' => 'fa-duotone fa-scale-balanced',
+                'active' => true,
+                'order' => 23,
+            ],
+            [
+                'name' => 'Condiciones Sillas Prestige',
+                'slug' => 'condiciones-sillas-prestige',
+                'description' => 'Solicitud de medición/reserva de sillas de montar Prestige a medida',
+                'color' => '#6f4e37',
+                'icon' => 'fa-duotone fa-horse',
+                'active' => true,
+                'order' => 24,
+            ],
+            [
+                'name' => 'Consulta de precio',
+                'slug' => 'consulta-precio-producto',
+                'description' => 'Consulta de precio realizada desde la ficha de producto',
+                'color' => '#0d6efd',
+                'icon' => 'fa-duotone fa-tag',
+                'active' => true,
+                'order' => 25,
+            ],
         ];
 
         foreach ($categories as $category) {

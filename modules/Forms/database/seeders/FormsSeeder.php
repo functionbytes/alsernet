@@ -37,6 +37,13 @@ class FormsSeeder extends Seeder
                 'active' => false,
                 'description' => 'La plantilla workwithus.tpl no existe en disco del lado PrestaShop; el formulario no es alcanzable hasta recrearla.',
             ],
+            // Categoría C: sin equivalente previo en ets_contactform7, creados
+            // de cero en alsernetforms (ver secondhand.tpl, customerdefender.tpl,
+            // prestigechairs.tpl, productpriceinquiry.tpl).
+            ['form_key' => 'secondhand', 'name' => 'Segunda mano (venta de armas usadas)', 'category_slug' => 'segunda-mano'],
+            ['form_key' => 'customerdefender', 'name' => 'Defensor del cliente', 'category_slug' => 'defensor-del-cliente'],
+            ['form_key' => 'prestigechairs', 'name' => 'Condiciones Sillas Prestige', 'category_slug' => 'condiciones-sillas-prestige'],
+            ['form_key' => 'productpriceinquiry', 'name' => 'Consulta de precio en ficha de producto', 'category_slug' => 'consulta-precio-producto'],
         ];
 
         foreach ($forms as $form) {
