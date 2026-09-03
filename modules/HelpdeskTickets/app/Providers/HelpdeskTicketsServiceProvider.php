@@ -73,6 +73,8 @@ use Modules\HelpdeskTickets\Services\AutomationEngine;
 use Modules\HelpdeskTickets\Services\Compliance\TicketGdprExportContributor;
 use Modules\HelpdeskTickets\Services\EscalationService;
 use Modules\HelpdeskTickets\Services\SlaService;
+use Modules\HelpdeskTickets\Services\TicketChannelMailerService;
+use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketEmailLogPanelRenderer;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
@@ -103,6 +105,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->registerEventListeners();
         $this->registerRateLimiters();
         $this->registerEmailLogPanel();
+        $this->registerChannelMailers();
 
         // Seccion 'tickets' del export GDPR (derecho de acceso). Igual que la
         // cascada de borrado, NO se ata al toggle de integracion: es una
@@ -163,6 +166,49 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
      * 30-ago-2026 al investigar FeedbackSignedUrlTest — los 9 tests del
      * archivo daban 500/403 mal, no solo el bug de vista ya documentado).
      */
+    /**
+     * TicketChannelMailerService::mailerNameFor() registraba el mailer
+     * dinámico de un canal (Config::set("mail.mailers.{$name}", ...)) SOLO en
+     * el proceso que atendía el listener (SendCustomerConfirmation/
+     * SendCustomerReplyNotification/etc.), justo antes de encolar el
+     * Mailable con ->mailer($name). Pero el envío real ocurre luego, cuando
+     * un worker de cola distinto procesa ese job encolado -- y ese otro
+     * proceso nunca llamó a mailerNameFor(), así que su config no tenía
+     * "mail.mailers.{$name}" en absoluto.
+     *
+     * Bug real confirmado en vivo (3-sep-2026, canal a-alvarez): 4 correos
+     * de respuesta quedaron en failed_jobs con "Mailer [ticket_channel_...]
+     * is not defined" -- el listener SÍ corrió y encoló bien, pero el envío
+     * real fallaba siempre en cuanto el job lo procesaba un worker distinto
+     * (el caso normal con QUEUE_CONNECTION=redis).
+     *
+     * Fix: registrar aquí, en el boot() de CADA proceso (request web o
+     * worker de cola), el mailer de todos los canales con SMTP configurado.
+     * Así el nombre "ticket_channel_{md5}" que calcula mailerNameFor() está
+     * disponible en cualquier proceso, sea o no el que originó el envío.
+     * Limitación conocida: un canal creado/editado DESPUÉS de que un worker
+     * ya esté arrancado no lo verá hasta el próximo `queue:restart` (mismo
+     * caso que cualquier cambio de código en un worker persistente).
+     */
+    protected function registerChannelMailers(): void
+    {
+        if (! helpdesk_tickets_enabled()) {
+            return;
+        }
+
+        try {
+            $mailer = $this->app->make(TicketChannelMailerService::class);
+
+            foreach ($this->app->make(TicketEmailChannelsRepository::class)->all() as $channel) {
+                $mailer->mailerNameFor($channel);
+            }
+        } catch (\Throwable $e) {
+            // No debe impedir que la app arranque (p. ej. settings aún sin
+            // migrar/sembrar en un entorno nuevo).
+            report($e);
+        }
+    }
+
     protected function registerRateLimiters(): void
     {
         RateLimiter::for('helpdesk-feedback', fn ($request) => Limit::perMinute(30)
