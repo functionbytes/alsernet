@@ -151,8 +151,18 @@ class TicketEmailChannelsController extends Controller
         $validated['encryption'] = $validated['encryption'] ?: 'ssl';
         $validated['smtp_port'] = $validated['smtp_port'] ?: 465;
         $validated['smtp_encryption'] = $validated['smtp_encryption'] ?: 'ssl';
+        $isDefault = $request->boolean('is_default');
+        $validated['is_default'] = $isDefault;
 
-        $this->channels->create($validated);
+        $created = $this->channels->create($validated);
+
+        // setDefault() aparte de create(): es quien se encarga de desmarcar
+        // cualquier otro canal que ya fuera el por defecto (create() solo
+        // sabe insertar la fila nueva, no puede saber si hay que tocar las
+        // demás).
+        if ($isDefault) {
+            $this->channels->setDefault($created['id']);
+        }
 
         return redirect()
             ->route('manager.helpdesk.settings.email-channels.index')
@@ -168,10 +178,16 @@ class TicketEmailChannelsController extends Controller
         $validated['encryption'] = $validated['encryption'] ?: 'ssl';
         $validated['smtp_port'] = $validated['smtp_port'] ?: 465;
         $validated['smtp_encryption'] = $validated['smtp_encryption'] ?: 'ssl';
+        $isDefault = $request->boolean('is_default');
+        $validated['is_default'] = $isDefault;
 
         $updated = $this->channels->update($channel, $validated);
 
         abort_if($updated === null, 404);
+
+        if ($isDefault) {
+            $this->channels->setDefault($channel);
+        }
 
         return redirect()
             ->route('manager.helpdesk.settings.email-channels.index')

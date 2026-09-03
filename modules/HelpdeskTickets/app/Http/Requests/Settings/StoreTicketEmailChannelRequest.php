@@ -28,6 +28,7 @@ class StoreTicketEmailChannelRequest extends FormRequest
             'encryption' => ['nullable', 'string', 'in:tls,ssl'],
             'create_tickets' => ['nullable', 'boolean'],
             'create_replies' => ['nullable', 'boolean'],
+            'is_default' => ['nullable', 'boolean'],
             // SMTP saliente: mismo usuario/contraseña que IMAP (un solo buzón),
             // solo cambia servidor/puerto/encriptación — así las respuestas del
             // agente salen desde esta misma cuenta en vez del mailer global.

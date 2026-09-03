@@ -213,6 +213,19 @@
         </div>
     </div>
 
+    <div class="col-12 col-md-6">
+        <div class="mb-3">
+            <label for="channelIsDefault" class="form-label">Canal por defecto para tickets sin correo entrante</label>
+            <select name="is_default" id="channelIsDefault" class="form-select select2">
+                <option value="1" {{ (int) $field('is_default', 0) === 1 ? 'selected' : '' }}>Si</option>
+                <option value="0" {{ (int) $field('is_default', 0) === 0 ? 'selected' : '' }}>No</option>
+            </select>
+            <small class="form-text text-muted">
+                Se usa para responder tickets que no nacieron de un correo (formularios, widget, alta manual) — solo puede haber un canal por defecto
+            </small>
+        </div>
+    </div>
+
 </div>
 
 @push('scripts')

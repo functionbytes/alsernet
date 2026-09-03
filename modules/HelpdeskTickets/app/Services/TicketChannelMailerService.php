@@ -34,21 +34,26 @@ class TicketChannelMailerService
             ->latest()
             ->first();
 
-        if (! $lastInbound || empty($lastInbound->to)) {
-            return null;
-        }
+        if ($lastInbound && ! empty($lastInbound->to)) {
+            $to = strtolower($lastInbound->to);
 
-        $to = strtolower($lastInbound->to);
+            foreach ($this->channels->all() as $channel) {
+                $username = strtolower((string) ($channel['username'] ?? ''));
 
-        foreach ($this->channels->all() as $channel) {
-            $username = strtolower((string) ($channel['username'] ?? ''));
-
-            if ($username !== '' && str_contains($to, $username)) {
-                return $channel;
+                if ($username !== '' && str_contains($to, $username)) {
+                    return $channel;
+                }
             }
         }
 
-        return null;
+        // Sin correo entrante que correlacionar (ticket nacido de un
+        // formulario web, el widget, o creado a mano desde el panel): cae al
+        // canal marcado como "canal por defecto", si hay uno configurado.
+        // Antes esto devolvía siempre null, y la confirmación "hemos
+        // recibido tu solicitud" salía del mailer genérico de la app en vez
+        // del buzón real de soporte (detectado 3-sep-2026 probando un ticket
+        // real nacido del formulario de contacto de alsernetforms).
+        return $this->channels->default();
     }
 
     /**

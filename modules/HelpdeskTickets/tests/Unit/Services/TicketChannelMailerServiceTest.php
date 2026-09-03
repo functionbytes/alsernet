@@ -184,4 +184,65 @@ class TicketChannelMailerServiceTest extends TestCase
         $this->assertSame('smtp.hostinger.com', config("mail.mailers.{$mailerName}.host"));
         $this->assertSame('info@functionbytes.com', config("mail.mailers.{$mailerName}.username"));
     }
+
+    /**
+     * Ticket nacido de un formulario web (alsernetforms) o del widget: nunca
+     * tiene un TicketMail entrante con el que correlacionar un canal. Antes
+     * resolveChannelForTicket() devolvía null en este caso siempre, y la
+     * confirmación salía del mailer genérico en vez del buzón real de
+     * soporte (bug real, ticket TCK-2026-00093, 3-sep-2026).
+     */
+    public function test_resolve_channel_for_ticket_falls_back_to_the_default_channel_without_inbound_mail(): void
+    {
+        $ticket = $this->makeTicket();
+
+        $channel = $this->channels->create([
+            'name' => 'Soporte',
+            'host' => 'imap.hostinger.com',
+            'port' => 993,
+            'username' => 'info@functionbytes.com',
+            'password' => 'secret',
+        ]);
+        $this->channels->setDefault($channel['id']);
+
+        $resolved = $this->service->resolveChannelForTicket($ticket);
+
+        $this->assertNotNull($resolved);
+        $this->assertSame('info@functionbytes.com', $resolved['username']);
+    }
+
+    public function test_resolve_channel_for_ticket_prefers_the_inbound_match_over_the_default_channel(): void
+    {
+        $ticket = $this->makeTicket();
+
+        TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'message_id' => '<abc@example.com>',
+            'from' => 'cliente@example.com',
+            'to' => 'soporte-especifico@example.com',
+            'subject' => 'Ayuda',
+            'status' => 'received',
+        ]);
+
+        $specific = $this->channels->create([
+            'name' => 'Específico',
+            'host' => 'imap.example.com',
+            'port' => 993,
+            'username' => 'soporte-especifico@example.com',
+            'password' => 'secret',
+        ]);
+        $default = $this->channels->create([
+            'name' => 'Por defecto',
+            'host' => 'imap.hostinger.com',
+            'port' => 993,
+            'username' => 'info@functionbytes.com',
+            'password' => 'secret',
+        ]);
+        $this->channels->setDefault($default['id']);
+
+        $resolved = $this->service->resolveChannelForTicket($ticket);
+
+        $this->assertSame($specific['id'], $resolved['id']);
+    }
 }

@@ -30,6 +30,7 @@ class UpdateTicketEmailChannelRequest extends FormRequest
             'encryption' => ['nullable', 'string', 'in:tls,ssl'],
             'create_tickets' => ['nullable', 'boolean'],
             'create_replies' => ['nullable', 'boolean'],
+            'is_default' => ['nullable', 'boolean'],
             'smtp_host' => ['nullable', 'string', 'max:255', function ($attribute, $value, $fail) {
                 if ($value && ! TicketEmailChannelUrlGuard::isHostAllowed($value)) {
                     $fail('El servidor SMTP no está permitido (apunta a una IP interna/reservada no válida).');

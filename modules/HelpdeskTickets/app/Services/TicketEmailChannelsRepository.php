@@ -127,6 +127,44 @@ class TicketEmailChannelsRepository
         return $updated;
     }
 
+    /**
+     * Canal marcado como "por defecto" (a lo sumo uno), usado por
+     * TicketChannelMailerService::resolveChannelForTicket() cuando el ticket
+     * no tiene ningún correo entrante con el que correlacionar un canal
+     * (formularios web, widget, alta manual desde el panel).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function default(): ?array
+    {
+        foreach ($this->all() as $connection) {
+            if ($connection['is_default'] ?? false) {
+                return $connection;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Marca $id como canal por defecto y desmarca cualquier otro — solo
+     * puede haber uno, así que no basta con un update() normal del canal
+     * (dejaría el flag antiguo activo en otra fila).
+     */
+    public function setDefault(string $id): void
+    {
+        $blob = $this->readBlob();
+        $connections = $blob['imap']['connections'] ?? [];
+
+        foreach ($connections as &$connection) {
+            $connection['is_default'] = ($connection['id'] ?? null) === $id;
+        }
+        unset($connection);
+
+        $blob['imap']['connections'] = $connections;
+        $this->writeBlob($blob);
+    }
+
     public function delete(string $id): void
     {
         $blob = $this->readBlob();

@@ -234,4 +234,26 @@ class TicketEmailChannelsRepositoryTest extends TestCase
         $again = $this->repository->all();
         $this->assertSame($healed[0]['id'], $again[0]['id']);
     }
+
+    public function test_default_returns_null_when_no_channel_is_marked(): void
+    {
+        $this->repository->create(['name' => 'A', 'host' => 'h', 'port' => 993, 'username' => 'a@example.com', 'password' => 'p']);
+
+        $this->assertNull($this->repository->default());
+    }
+
+    public function test_set_default_marks_one_channel_and_unmarks_the_rest(): void
+    {
+        $a = $this->repository->create(['name' => 'A', 'host' => 'h', 'port' => 993, 'username' => 'a@example.com', 'password' => 'p', 'is_default' => true]);
+        $b = $this->repository->create(['name' => 'B', 'host' => 'h', 'port' => 993, 'username' => 'b@example.com', 'password' => 'p']);
+
+        $this->repository->setDefault($a['id']);
+        $this->assertSame($a['id'], $this->repository->default()['id']);
+
+        // Pasar el por defecto a B debe desmarcar A -- solo puede haber uno.
+        $this->repository->setDefault($b['id']);
+        $default = $this->repository->default();
+        $this->assertSame($b['id'], $default['id']);
+        $this->assertFalse($this->repository->find($a['id'])['is_default']);
+    }
 }

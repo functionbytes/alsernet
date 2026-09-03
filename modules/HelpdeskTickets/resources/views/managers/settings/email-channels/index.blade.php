@@ -115,6 +115,9 @@
                                         <td><input type="checkbox" class="form-check-input bulk-checkbox" value="{{ $c['id'] }}"></td>
                                         <td>
                                             <span class="fw-semibold">{{ $c['name'] }}</span>
+                                            @if($c['is_default'] ?? false)
+                                                <span class="badge bg-primary-subtle text-primary ms-1" title="Se usa para responder tickets sin correo entrante (formularios, widget, alta manual)">Por defecto</span>
+                                            @endif
                                             <div><small class="text-muted">{{ $c['username'] }}</small></div>
                                         </td>
                                         <td>
