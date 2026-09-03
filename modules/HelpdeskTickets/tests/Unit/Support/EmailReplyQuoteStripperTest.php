@@ -51,6 +51,33 @@ class EmailReplyQuoteStripperTest extends TestCase
         $this->assertSame('', EmailReplyQuoteStripper::stripHtml(''));
     }
 
+    /**
+     * Caso real (3-sep-2026, TCK-2026-00093, segunda respuesta): Gmail
+     * envuelve la cabecera de cita a ~76 columnas en texto plano, así que con
+     * un remitente con nombre+email largo "escribió:" cae en la línea
+     * siguiente -- el patrón tiene que poder cruzar ese salto de línea.
+     */
+    public function test_strip_text_cuts_a_spanish_gmail_marker_wrapped_across_two_lines(): void
+    {
+        $text = "Hola example\n\nEl jue, 3 sept 2026 a la(s) 10:55 p.m., Cristian Esparza (\nfunctionbytes@gmail.com) escribió:\n> Hemos recibido tu solicitud";
+
+        $this->assertSame('Hola example', EmailReplyQuoteStripper::stripText($text));
+    }
+
+    /**
+     * Caso real (mismo ticket): el body_text que de verdad llega desde
+     * webklex/php-imap usa \r\n (RFC 5322), no \n sueltos -- confirmado
+     * inspeccionando los bytes guardados (0d 0a 0d 0a tras "escribió:").
+     * Sin esto el "$" del ancla de línea nunca encajaba justo después del
+     * marcador y la cita entera se colaba igual que en el bug anterior.
+     */
+    public function test_strip_text_cuts_the_spanish_gmail_marker_with_crlf_line_endings(): void
+    {
+        $text = "Hola example\r\n\r\nEl jue, 3 sept 2026 a la(s) 10:55 p.m., Cristian Esparza (\r\nfunctionbytes@gmail.com) escribió:\r\n\r\n> eprfecto quiero saber";
+
+        $this->assertSame('Hola example', EmailReplyQuoteStripper::stripText($text));
+    }
+
     public function test_strip_text_cuts_the_spanish_gmail_marker(): void
     {
         $text = "Perfecto, gracias.\n\nEl jue, 3 sept 2026 a la(s) 10:54 p.m., <info@functionbytes.com> escribió:\n> Hemos recibido tu solicitud\n> Número de ticket: #TCK-2026-00093";

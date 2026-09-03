@@ -49,11 +49,29 @@ class EmailReplyQuoteStripper
      */
     private const TEXT_QUOTE_PATTERNS = [
         // Gmail español/inglés: "El <fecha>, <quien> escribió:" / "On <fecha>, <quien> wrote:"
-        '/^El .{0,120}escribió:\s*$/mi',
-        '/^On .{0,120}wrote:\s*$/mi',
+        // Con /s (el "." también matiza saltos de línea): Gmail envuelve esta
+        // cabecera a ~76 columnas en texto plano, así que con un nombre+email
+        // largo (ej. "Cristian Esparza (functionbytes@gmail.com)") el propio
+        // "escribió:" cae en la línea siguiente -- un patrón anclado a una
+        // sola línea (^...$) nunca hacía match y la cita entera se colaba tal
+        // cual (caso real, 3-sep-2026, segunda respuesta de TCK-2026-00093).
+        // El límite de 150 caracteres evita que un mensaje sin este marcador
+        // termine recortándose por casualidad más adelante en el texto.
+        // /u (unicode): sin él, la clase [oó] parte "ó" (2 bytes en UTF-8) en
+        // dos alternativas de UN byte cada una, y deja de casar como
+        // carácter completo -- justo lo que rompió esto la primera vez.
+        //
+        // \r? antes de $: el body_text real de webklex/php-imap trae saltos
+        // de línea \r\n (RFC 5322), no \n sueltos como en los fixtures de los
+        // tests -- sin el \r? opcional, el \r que sobra justo antes del \n
+        // real impedía que $ (con /m) encajara ahí, y la cita completa se
+        // colaba entera (mismo caso real de arriba, confirmado con el body
+        // guardado de verdad: bytes 0d 0a 0d 0a = "\r\n\r\n" tras "escribió:").
+        '/^El .{0,150}escribi[oó]:[ \t]*\r?$/msiu',
+        '/^On .{0,150}wrote:[ \t]*\r?$/msi',
         // Outlook clásico.
-        '/^-{2,}\s*Mensaje original\s*-{2,}\s*$/mi',
-        '/^-{2,}\s*Original Message\s*-{2,}\s*$/mi',
+        '/^-{2,}\s*Mensaje original\s*-{2,}[ \t]*\r?$/mi',
+        '/^-{2,}\s*Original Message\s*-{2,}[ \t]*\r?$/mi',
         // Cabecera de reenvío/respuesta genérica (Outlook/Thunderbird sueltan
         // "De: ... Enviado: ... Para: ... Asunto:" como bloque plano).
         '/^De:\s.+\r?\nEnviado:\s.+\r?\nPara:\s.+\r?\nAsunto:/mi',
