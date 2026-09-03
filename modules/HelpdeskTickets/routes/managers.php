@@ -120,6 +120,8 @@ Route::group(['prefix' => ''], function () {
     // Presencia de agentes en el ticket (agent collision)
     Route::post('/tickets/{ticket}/presence', [TicketPresenceController::class, 'heartbeat'])->name('manager.helpdesk.tickets.presence.heartbeat');
     Route::delete('/tickets/{ticket}/presence', [TicketPresenceController::class, 'leave'])->name('manager.helpdesk.tickets.presence.leave');
+    // Modal 23 "Bandeja compartida": avisar a un agente presente en el ticket.
+    Route::post('/tickets/{ticket}/presence/nudge', [TicketPresenceController::class, 'nudge'])->name('manager.helpdesk.tickets.presence.nudge');
 
     // Respuestas programadas del ticket (send later)
     Route::get('/tickets/{ticket}/scheduled-replies', [ScheduledRepliesController::class, 'index'])->name('manager.helpdesk.tickets.scheduled-replies.index');

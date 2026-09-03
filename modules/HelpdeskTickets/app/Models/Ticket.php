@@ -1449,6 +1449,8 @@ class Ticket extends Model
             'url_translate_text' => route('manager.helpdesk.tickets.translate', ['ticket' => '__TICKET__']),
             // Modal 39: separar mensajes en un ticket nuevo.
             'url_split' => route('manager.helpdesk.tickets.split', ['ticket' => '__TICKET__']),
+            // Modal 23: avisar a un agente presente en el ticket.
+            'url_presence_nudge' => route('manager.helpdesk.tickets.presence.nudge', ['ticket' => '__TICKET__']),
         ];
     }
 
