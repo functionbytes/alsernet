@@ -140,6 +140,8 @@
          data-workload-url="{{ route('manager.helpdesk.tickets.workload') }}"
          {{-- Modal 22: SPF/DKIM/DMARC reales del dominio de envío. --}}
          data-reputation-url="{{ route('manager.helpdesk.tickets.reputation') }}"
+         {{-- Modal 27: "aplicar automáticamente si la confianza supera el 90%". --}}
+         data-ai-auto-apply-url="{{ route('manager.helpdesk.tickets.ai-auto-apply.update') }}"
          data-workload-distribute-url="{{ route('manager.helpdesk.tickets.workload.distribute') }}"
          {{-- description/stops_sla_timer/is_closed alimentan el modal "Cambiar
               estado": describen la consecuencia real de cada estado en ESTE

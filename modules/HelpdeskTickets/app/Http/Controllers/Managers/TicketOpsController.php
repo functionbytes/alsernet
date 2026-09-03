@@ -229,6 +229,26 @@ class TicketOpsController extends Controller
         return response()->json(array_merge(['success' => true], $summary->prestashopOrders($ticket->customer)));
     }
 
+    /**
+     * Modal 27 "Etiquetado automático": guarda el interruptor "aplicar
+     * automáticamente si la confianza supera el 90%" (OFF por defecto).
+     * Afecta a TicketAiService::autoClassify(), que corre al crear cada
+     * ticket nuevo — no reclasifica retroactivamente los ya existentes.
+     */
+    public function updateAiAutoApply(Request $request): JsonResponse
+    {
+        abort_unless(auth()->user()?->can('helpdesk.tickets.update'), 403);
+
+        $enabled = $request->boolean('enabled');
+        Setting::set('tickets.ai_auto_apply_high_confidence', $enabled);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Preferencia guardada.',
+            'data' => ['enabled' => $enabled],
+        ]);
+    }
+
     public function workload(): JsonResponse
     {
         $this->authorize('viewAny', Ticket::class);

@@ -92,7 +92,9 @@ class Ticket extends Model
         'escalated_at',
         'escalation_count',
         'ai_suggested_category_id',
+        'ai_suggested_category_confidence',
         'ai_suggested_priority',
+        'ai_suggested_priority_confidence',
         'customer_sentiment_avg',
         'detected_language',
     ];
@@ -124,6 +126,8 @@ class Ticket extends Model
             'escalation_count' => 'integer',
             'sla_paused_duration_minutes' => 'integer',
             'ai_suggested_category_id' => 'integer',
+            'ai_suggested_category_confidence' => 'decimal:2',
+            'ai_suggested_priority_confidence' => 'decimal:2',
             'customer_sentiment_avg' => 'decimal:2',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',

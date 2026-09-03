@@ -2,12 +2,20 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketItem;
 
 class TicketAiService
 {
+    /**
+     * Modal 27 "Etiquetado automático": umbral del checkbox "aplicar
+     * automáticamente si la confianza supera el 90%" (interruptor
+     * tickets.ai_auto_apply_high_confidence, OFF por defecto).
+     */
+    private const AUTO_APPLY_CONFIDENCE_THRESHOLD = 0.90;
+
     private const NEGATIVE_KEYWORDS = [
         'horrible', 'pesimo', 'terrible', 'molest', 'frustr', 'enojad',
         'decepcion', 'no funciona', 'error', 'problema', 'urgente', 'bug',
@@ -54,8 +62,18 @@ class TicketAiService
 
     /**
      * Suggest the most appropriate category for a ticket based on keyword matching.
+     *
+     * La "confianza" no es la probabilidad de un modelo entrenado (esto
+     * sigue siendo coincidencia de palabras clave) — es la cuota real que se
+     * lleva la categoría ganadora sobre el total de puntos repartidos entre
+     * TODAS las categorías con alguna coincidencia. Una única categoría con
+     * coincidencias = 100%; varias empatadas o cercanas = confianza más
+     * baja. Es una medida real derivada del propio marcador, nunca un
+     * número inventado.
+     *
+     * @return array{id: int, confidence: float}|null
      */
-    public function suggestCategory(Ticket $ticket): ?int
+    public function suggestCategory(Ticket $ticket): ?array
     {
         $text = strtolower(($ticket->subject ?? '').' '.($ticket->description ?? ''));
         $categories = TicketCategory::active()->get();
@@ -76,30 +94,43 @@ class TicketAiService
         }
 
         arsort($scores);
+        $winnerId = array_key_first($scores);
 
-        return array_key_first($scores);
+        return [
+            'id' => $winnerId,
+            'confidence' => round($scores[$winnerId] / array_sum($scores), 2),
+        ];
     }
 
     /**
      * Suggest an appropriate priority based on ticket content.
+     *
+     * Mismo criterio de confianza real que suggestCategory(): cuota de
+     * coincidencias de palabras clave que se lleva el nivel ganador
+     * (urgent/high) sobre el total detectado entre los dos niveles — no una
+     * probabilidad de modelo, una medida real sobre lo que de verdad se
+     * encontró en el texto.
+     *
+     * @return array{priority: string, confidence: float}|null null si no hay ninguna coincidencia (se queda en 'normal')
      */
-    public function suggestPriority(Ticket $ticket): string
+    public function suggestPriority(Ticket $ticket): ?array
     {
         $text = strtolower(($ticket->subject ?? '').' '.($ticket->description ?? ''));
 
-        foreach (self::URGENT_KEYWORDS as $kw) {
-            if (str_contains($text, $kw)) {
-                return 'urgent';
-            }
+        $urgentHits = $this->countKeywords($text, self::URGENT_KEYWORDS);
+        $highHits = $this->countKeywords($text, self::HIGH_KEYWORDS);
+
+        if ($urgentHits === 0 && $highHits === 0) {
+            return null;
         }
 
-        foreach (self::HIGH_KEYWORDS as $kw) {
-            if (str_contains($text, $kw)) {
-                return 'high';
-            }
-        }
+        $winner = $urgentHits >= $highHits ? 'urgent' : 'high';
+        $winnerHits = $urgentHits >= $highHits ? $urgentHits : $highHits;
 
-        return 'normal';
+        return [
+            'priority' => $winner,
+            'confidence' => round($winnerHits / ($urgentHits + $highHits), 2),
+        ];
     }
 
     /**
@@ -135,13 +166,28 @@ class TicketAiService
 
     /**
      * Auto-classify ticket: suggest category and priority when not already set.
+     *
+     * Modal 27 "Etiquetado automático": con el interruptor
+     * tickets.ai_auto_apply_high_confidence activo (OFF por defecto), una
+     * sugerencia con más del 90% de confianza se aplica directamente en vez
+     * de quedar solo como sugerencia a la espera de que el agente la
+     * confirme desde el modal.
      */
     public function autoClassify(Ticket $ticket): void
     {
+        $autoApply = filter_var(Setting::get('tickets.ai_auto_apply_high_confidence', false), FILTER_VALIDATE_BOOLEAN);
+
         if (! $ticket->category_id) {
             $suggested = $this->suggestCategory($ticket);
             if ($suggested) {
-                $ticket->update(['ai_suggested_category_id' => $suggested]);
+                if ($autoApply && $suggested['confidence'] > self::AUTO_APPLY_CONFIDENCE_THRESHOLD) {
+                    $ticket->update(['category_id' => $suggested['id']]);
+                } else {
+                    $ticket->update([
+                        'ai_suggested_category_id' => $suggested['id'],
+                        'ai_suggested_category_confidence' => $suggested['confidence'],
+                    ]);
+                }
             }
         }
 
@@ -149,8 +195,15 @@ class TicketAiService
 
         if ($currentPriority === 'normal') {
             $suggested = $this->suggestPriority($ticket);
-            if ($suggested !== 'normal') {
-                $ticket->update(['ai_suggested_priority' => $suggested]);
+            if ($suggested) {
+                if ($autoApply && $suggested['confidence'] > self::AUTO_APPLY_CONFIDENCE_THRESHOLD) {
+                    $ticket->update(['priority' => $suggested['priority']]);
+                } else {
+                    $ticket->update([
+                        'ai_suggested_priority' => $suggested['priority'],
+                        'ai_suggested_priority_confidence' => $suggested['confidence'],
+                    ]);
+                }
             }
         }
     }

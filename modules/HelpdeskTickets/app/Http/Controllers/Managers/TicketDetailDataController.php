@@ -493,18 +493,23 @@ class TicketDetailDataController extends Controller
                     'state' => $f->cancelled_at ? 'cancelled' : ($f->is_sent ? 'sent' : 'pending'),
                     'cancel_if_customer_replies' => (bool) $f->cancel_if_customer_replies,
                 ])->values()->all(),
-            // Sugerencias de IA ya calculadas (TicketAiService) pero sin
-            // punto de aplicación en esta pantalla hasta ahora — mismo
-            // criterio que show.blade.php: si no hay sugerencia real, se
-            // omite el bloque entero (nunca se muestra un % de confianza,
-            // el backend no lo guarda).
+            // Sugerencias de IA ya calculadas (TicketAiService) — modal 27
+            // "Etiquetado automático": si no hay sugerencia real, se omite
+            // el bloque entero. La confianza es la cuota real de coincidencia
+            // de palabras clave (ver TicketAiService::suggestCategory()), no
+            // la probabilidad de un modelo entrenado.
             'ai_suggestion' => ($ticket->aiSuggestedCategory || $ticket->ai_suggested_priority) ? [
                 'category' => $ticket->aiSuggestedCategory ? [
                     'id' => $ticket->aiSuggestedCategory->id,
                     'name' => $ticket->aiSuggestedCategory->name,
+                    'confidence' => $ticket->ai_suggested_category_confidence !== null ? (float) $ticket->ai_suggested_category_confidence : null,
                 ] : null,
                 'priority' => $ticket->ai_suggested_priority,
+                'priority_confidence' => $ticket->ai_suggested_priority_confidence !== null ? (float) $ticket->ai_suggested_priority_confidence : null,
             ] : null,
+            // Checkbox del modal 27: interruptor global, no por ticket — se
+            // manda aquí porque el modal ya carga este JSON, sin pedirlo aparte.
+            'ai_auto_apply_high_confidence' => filter_var(Setting::get('tickets.ai_auto_apply_high_confidence', false), FILTER_VALIDATE_BOOLEAN),
             // Seguidores reales (TicketWatcher) — antes solo se podía
             // auto-seguirse, sin lista visible en esta pantalla.
             'watchers' => $ticket->watchers->map(fn ($w) => [
