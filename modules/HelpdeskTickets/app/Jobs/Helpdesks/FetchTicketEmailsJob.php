@@ -25,6 +25,7 @@ use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\SpamClassifierService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketService;
+use Modules\HelpdeskTickets\Support\EmailReplyQuoteStripper;
 use Webklex\PHPIMAP\Attachment as ImapAttachment;
 use Webklex\PHPIMAP\Attribute as ImapAttribute;
 use Webklex\PHPIMAP\Client as ImapClient;
@@ -381,7 +382,10 @@ class FetchTicketEmailsJob implements ShouldQueue
             return;
         }
 
-        // Create TicketMail record
+        // Create TicketMail record. Con el body_html/body_text COMPLETOS,
+        // sin recortar -- es el registro de auditoría ("Correo"/"Ver
+        // original" en el panel), tiene que conservar el correo tal cual
+        // llegó.
         $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
 
         // Create a TicketItem for the timeline (customer message). Los
@@ -390,11 +394,18 @@ class FetchTicketEmailsJob implements ShouldQueue
         // "Adjuntos" del ticket (TicketDetailDataController) y la descarga
         // autorizada (TicketAttachmentDownloadController::download()) los
         // sirven sin código nuevo.
+        //
+        // Aquí SÍ se recorta la cita del correo anterior (ver
+        // EmailReplyQuoteStripper): esto es lo que se ve en el hilo del
+        // ticket, y antes enseñaba el HTML completo de la plantilla citada
+        // (tablas, estilos inline, el logo...) como si fuera parte de lo que
+        // escribió el cliente (detectado 3-sep-2026, TCK-2026-00093, cliente
+        // respondiendo desde Gmail).
         $item = $ticket->items()->create([
             'type' => 'message',
             'author_id' => $ticket->customer_id,
-            'body' => $parsed['body_text'],
-            'html_body' => $parsed['body_html'],
+            'body' => EmailReplyQuoteStripper::stripText($parsed['body_text']),
+            'html_body' => EmailReplyQuoteStripper::stripHtml($parsed['body_html']),
             'is_internal' => false,
             'attachment_urls' => array_column($parsed['attachments'], 'path'),
         ]);
