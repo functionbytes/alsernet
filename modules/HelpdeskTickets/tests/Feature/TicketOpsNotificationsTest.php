@@ -4,8 +4,11 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Http\Controllers\Managers\TicketOpsNotificationsController;
+use Modules\HelpdeskTickets\Services\TeamChannelNotifier;
 use Modules\Notification\Models\NotificationPreference;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -287,5 +290,100 @@ class TicketOpsNotificationsTest extends TestCase
 
         $this->assertNotEmpty($catalogo['always_on']);
         $this->assertIsString($catalogo['always_on'][0]);
+    }
+
+    // ─── Modal 31: webhooks de Slack/Teams (canal de equipo) ──────────────────
+
+    protected function setUpTeamChannels(): void
+    {
+        Setting::set('tickets.slack_webhook_url', '');
+        Setting::set('tickets.teams_webhook_url', '');
+    }
+
+    public function test_el_catalogo_dice_si_ya_hay_webhooks_configurados(): void
+    {
+        $this->setUpTeamChannels();
+        Setting::setEncrypted('tickets.slack_webhook_url', 'https://1.1.1.1/hook');
+
+        $catalogo = $this->leerCatalogo();
+
+        $this->assertTrue($catalogo['team_channels']['slack_configured']);
+        $this->assertFalse($catalogo['team_channels']['teams_configured']);
+    }
+
+    public function test_guarda_un_webhook_valido(): void
+    {
+        $this->setUpTeamChannels();
+
+        $this->actingAs($this->agente)
+            ->patchJson(route('manager.helpdesk.tickets.notification-preferences.team-channels'), [
+                'slack_webhook_url' => 'https://1.1.1.1/hook',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.slack_configured', true);
+
+        $this->assertTrue(app(TeamChannelNotifier::class)->slackConfigured());
+    }
+
+    public function test_rechaza_un_webhook_que_apunta_a_una_ip_privada(): void
+    {
+        $this->setUpTeamChannels();
+
+        $this->actingAs($this->agente)
+            ->patchJson(route('manager.helpdesk.tickets.notification-preferences.team-channels'), [
+                'slack_webhook_url' => 'http://127.0.0.1/hook',
+            ])
+            ->assertStatus(422);
+
+        $this->assertFalse(app(TeamChannelNotifier::class)->slackConfigured());
+    }
+
+    public function test_dejar_el_campo_en_blanco_conserva_el_webhook_ya_guardado(): void
+    {
+        $this->setUpTeamChannels();
+        Setting::setEncrypted('tickets.slack_webhook_url', 'https://1.1.1.1/hook');
+
+        $this->actingAs($this->agente)
+            ->patchJson(route('manager.helpdesk.tickets.notification-preferences.team-channels'), [
+                'slack_webhook_url' => null,
+            ])
+            ->assertOk();
+
+        $this->assertTrue(app(TeamChannelNotifier::class)->slackConfigured());
+    }
+
+    public function test_guardar_webhooks_exige_permiso_de_gestion(): void
+    {
+        $this->setUpTeamChannels();
+        $sinPermiso = User::factory()->create();
+
+        $this->actingAs($sinPermiso)
+            ->patchJson(route('manager.helpdesk.tickets.notification-preferences.team-channels'), [
+                'slack_webhook_url' => 'https://1.1.1.1/hook',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_enviar_prueba_falla_con_claridad_sin_ningun_webhook(): void
+    {
+        $this->setUpTeamChannels();
+
+        $this->actingAs($this->agente)
+            ->postJson(route('manager.helpdesk.tickets.notification-preferences.team-channels.test'))
+            ->assertStatus(422);
+    }
+
+    public function test_enviar_prueba_manda_un_mensaje_real(): void
+    {
+        $this->setUpTeamChannels();
+        Http::fake(['*' => Http::response('', 200)]);
+        Setting::setEncrypted('tickets.slack_webhook_url', 'https://1.1.1.1/hook');
+
+        $this->actingAs($this->agente)
+            ->postJson(route('manager.helpdesk.tickets.notification-preferences.team-channels.test'))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://1.1.1.1/hook');
     }
 }

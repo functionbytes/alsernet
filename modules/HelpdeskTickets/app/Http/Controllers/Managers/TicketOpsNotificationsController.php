@@ -5,7 +5,10 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Core\Models\Setting;
+use Modules\Helpdesk\Support\OutboundUrlGuard;
 use Modules\HelpdeskTickets\Http\Requests\Managers\UpdateTicketNotificationPreferencesRequest;
+use Modules\HelpdeskTickets\Services\TeamChannelNotifier;
 use Modules\Notification\Models\NotificationPreference;
 
 /**
@@ -178,6 +181,77 @@ class TicketOpsNotificationsController extends Controller
             'channels' => array_values(self::CHANNELS),
             'events' => $events,
             'always_on' => self::ALWAYS_ON,
+            // Modal 31: Slack/Teams son canales de EQUIPO (un webhook
+            // compartido, no una preferencia por agente) — solo se dice si
+            // ya hay uno configurado, la URL nunca vuelve al navegador.
+            'team_channels' => [
+                'slack_configured' => app(TeamChannelNotifier::class)->slackConfigured(),
+                'teams_configured' => app(TeamChannelNotifier::class)->teamsConfigured(),
+            ],
+        ]);
+    }
+
+    /**
+     * Guarda los webhooks de Slack/Teams (URL en blanco = no tocar el que
+     * ya hay, mismo criterio que un campo de contraseña — ver
+     * ConvertEmptyStringsToNull). Solo gestión: es un ajuste de equipo, no
+     * una preferencia personal como el resto de este controlador.
+     */
+    public function updateTeamChannels(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('helpdesk.tickets.update'), 403);
+
+        $validated = $request->validate([
+            'slack_webhook_url' => ['nullable', 'string', 'url', 'max:500'],
+            'teams_webhook_url' => ['nullable', 'string', 'url', 'max:500'],
+        ]);
+
+        foreach (['slack_webhook_url' => 'tickets.slack_webhook_url', 'teams_webhook_url' => 'tickets.teams_webhook_url'] as $field => $settingKey) {
+            $url = $validated[$field] ?? null;
+
+            if ($url === null) {
+                continue; // en blanco: se conserva el que ya hubiera
+            }
+
+            if (! OutboundUrlGuard::isSafe($url)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La URL del webhook no es válida o no resuelve a una dirección pública.',
+                ], 422);
+            }
+
+            Setting::setEncrypted($settingKey, $url);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Integraciones guardadas.',
+            'data' => [
+                'slack_configured' => app(TeamChannelNotifier::class)->slackConfigured(),
+                'teams_configured' => app(TeamChannelNotifier::class)->teamsConfigured(),
+            ],
+        ]);
+    }
+
+    /**
+     * "Enviar prueba" del modal: un mensaje real a cada webhook configurado,
+     * para que el agente sepa si de verdad va a llegar antes de depender de
+     * ello en un breach de SLA real.
+     */
+    public function testTeamChannels(Request $request, TeamChannelNotifier $teamChannels): JsonResponse
+    {
+        abort_unless($request->user()?->can('helpdesk.tickets.update'), 403);
+
+        if (! $teamChannels->slackConfigured() && ! $teamChannels->teamsConfigured()) {
+            return response()->json(['success' => false, 'message' => 'No hay ningún webhook configurado.'], 422);
+        }
+
+        $result = $teamChannels->notify('✅ Mensaje de prueba desde el panel de tickets.');
+
+        return response()->json([
+            'success' => ($result['slack'] !== false) && ($result['teams'] !== false),
+            'message' => 'Prueba enviada.',
+            'data' => $result,
         ]);
     }
 

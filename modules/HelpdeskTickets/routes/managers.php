@@ -143,6 +143,9 @@ Route::group(['prefix' => ''], function () {
     // 404 (comprobado).
     Route::get('/tickets/ops/notification-preferences', [TicketOpsNotificationsController::class, 'index'])->name('manager.helpdesk.tickets.notification-preferences');
     Route::post('/tickets/ops/notification-preferences', [TicketOpsNotificationsController::class, 'update'])->name('manager.helpdesk.tickets.notification-preferences.update');
+    // Modal 31: webhooks de Slack/Teams (canal de equipo, no preferencia personal).
+    Route::patch('/tickets/ops/notification-preferences/team-channels', [TicketOpsNotificationsController::class, 'updateTeamChannels'])->name('manager.helpdesk.tickets.notification-preferences.team-channels');
+    Route::post('/tickets/ops/notification-preferences/team-channels/test', [TicketOpsNotificationsController::class, 'testTeamChannels'])->name('manager.helpdesk.tickets.notification-preferences.team-channels.test');
 
     // Modal "Tickets recurrentes": alta, edición y pausa sin salir del listado.
     Route::get('/tickets/ops/recurring', [TicketOpsRecurringController::class, 'index'])->name('manager.helpdesk.tickets.recurring.index');

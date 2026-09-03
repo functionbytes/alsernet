@@ -93,6 +93,9 @@
          {{-- Preferencias de aviso del agente para los eventos de ticket. --}}
          data-notif-prefs-url="{{ route('manager.helpdesk.tickets.notification-preferences') }}"
          data-notif-prefs-update-url="{{ route('manager.helpdesk.tickets.notification-preferences.update') }}"
+         {{-- Modal 31: webhooks de Slack/Teams (canal de equipo). --}}
+         data-notif-team-channels-url="{{ route('manager.helpdesk.tickets.notification-preferences.team-channels') }}"
+         data-notif-team-channels-test-url="{{ route('manager.helpdesk.tickets.notification-preferences.team-channels.test') }}"
          {{-- Cuántos tickets saldrían con el alcance elegido en el modal de exportar. --}}
          data-export-estimate-url="{{ route('manager.helpdesk.tickets.export-estimate') }}"
          {{-- Buscador de ticket destino para "Fusionar" y "Vincular ticket". --}}
