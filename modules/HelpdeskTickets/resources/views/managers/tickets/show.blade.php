@@ -123,7 +123,13 @@
                                                 <i class="fas fa-lock me-1"></i> Nota interna
                                             </div>
                                         @endif
-                                        <div>{!! nl2br(e($item->body)) !!}</div>
+                                        {{-- Antes siempre texto plano (nl2br+e($item->body)), aunque
+                                             el correo entrante SÍ trae html_body (FetchTicketEmailsJob
+                                             lo guarda) -- se perdía negrita/enlaces/formato de firma de
+                                             cualquier respuesta real de cliente. Mismo patrón que
+                                             agents/tickets/show.blade.php: purifyHtml() sanitiza el HTML
+                                             de un remitente externo no confiable antes de imprimirlo. --}}
+                                        <div>{!! $item->html_body ? $item->safeHtmlBody() : nl2br(e($item->body)) !!}</div>
 
                                         @if($item->attachment_urls)
                                             {{-- attachment_urls guarda rutas del disco PRIVADO, no

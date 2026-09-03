@@ -79,7 +79,11 @@
                 </strong>
                 <span class="text-muted">{{ $message->created_at->format('d M Y H:i') }}</span>
             </div>
-            <p class="mb-0 htk-pre-line">{{ $message->body }}</p>
+            {{-- Igual que managers/agents/tickets/show.blade.php: si hay html_body
+                 (respuesta del agente con formato, o email del cliente con
+                 negrita/enlaces) se usa purificado; si no, texto plano. Antes
+                 siempre era texto plano aquí aunque el mensaje SÍ tuviera html_body. --}}
+            <p class="mb-0 htk-pre-line">{!! $message->html_body ? $message->safeHtmlBody() : e($message->body) !!}</p>
         </div>
     @empty
         <p class="text-muted">No messages yet.</p>
