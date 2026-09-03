@@ -1322,7 +1322,16 @@
                     // se renderizaba una burbuja totalmente en blanco, sin
                     // ninguna pista de qué evento fue (visto en vivo en un
                     // mensaje de Sistema con body:null).
-                    var bubbleHtml = it.body ? escapeHtml(it.body) : '<em class="tkt-mute">(sin contenido)</em>';
+                    //
+                    // it.is_html: antes esto era SIEMPRE escapeHtml(it.body),
+                    // así que un mensaje con html_body real (cualquier correo
+                    // entrante en HTML) salía con las etiquetas literales en
+                    // pantalla en vez de renderizarse (detectado 3-sep-2026,
+                    // TCK-2026-00093). TicketDetailDataController ya manda
+                    // it.body purificado (mismo saneador que la "ficha
+                    // completa") cuando is_html es true, así que aquí es
+                    // seguro inyectarlo tal cual.
+                    var bubbleHtml = it.body ? (it.is_html ? it.body : escapeHtml(it.body)) : '<em class="tkt-mute">(sin contenido)</em>';
                     // TranslateIncomingTicketMessage ya calcula translated_body/
                     // source_language_name para cada mensaje del cliente en un
                     // idioma distinto al del agente (ver TicketDetailDataController),

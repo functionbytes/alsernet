@@ -145,7 +145,18 @@ class TicketDetailDataController extends Controller
             'is_internal' => (bool) $item->is_internal,
             'sender_name' => $item->sender_name,
             'from_agent' => $item->isFromAgent(),
-            'body' => $item->content,
+            // Antes: $item->content, que devuelve html_body SIN PURIFICAR
+            // cuando existe -- "seguro" solo porque el JS del panel siempre
+            // hacía escapeHtml() de esto, así que un mensaje con html_body
+            // real (cualquier correo entrante en HTML) salía con las
+            // etiquetas literales en pantalla (detectado 3-sep-2026,
+            // TCK-2026-00093, respuesta real de Gmail). Con html_body se
+            // manda ya purificado (mismo saneador que safeHtmlBody(), el que
+            // usa la "ficha completa") + is_html=true para que el JS lo
+            // inyecte tal cual en vez de escaparlo; is_html=false sigue
+            // escapándose como texto plano, exactamente igual que antes.
+            'body' => $item->html_body ? $item->safeHtmlBody() : $item->body,
+            'is_html' => (bool) $item->html_body,
             // TranslateIncomingTicketMessage ya calcula translated_body/
             // source_locale para cada mensaje del cliente en un idioma
             // distinto al del agente, pero este endpoint (el que realmente
