@@ -432,7 +432,12 @@ class TicketDetailDataController extends Controller
             // en las 1057 filas del log y ticket_mails no tiene columnas de
             // transporte): se publican solo los campos con dato real y el JS
             // omite las filas vacías, en vez de rellenarlas de ejemplo.
-            'trace_meta' => $lastMail ? $this->traceMetaFor($ticket, $lastMail, $lastMailEmailLog) : null,
+            // Mismo motivo que 'trace' de arriba: los identificadores tienen
+            // que ser del MISMO correo que la línea de tiempo, si no
+            // contradice lo que se acaba de mostrar (la traza decía "enviado
+            // desde info@..." y el panel de IDs de al lado decía
+            // "dirección: entrante" del correo del cliente).
+            'trace_meta' => $lastOutboundMail ? $this->traceMetaFor($ticket, $lastOutboundMail, $lastOutboundMailEmailLog) : null,
             // Lista completa (modal "Correos del ticket") — antes solo se
             // veía el último; el resto obligaba a salir a la bandeja global.
             'mails' => $allMails->map(fn ($m) => [

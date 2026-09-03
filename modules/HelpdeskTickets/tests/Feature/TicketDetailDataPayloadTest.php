@@ -163,7 +163,7 @@ class TicketDetailDataPayloadTest extends TestCase
     public function test_la_traza_sigue_mostrandose_aunque_el_cliente_responda_despues(): void
     {
         $ticket = $this->makeTicket();
-        TicketMail::create([
+        $outbound = TicketMail::create([
             'ticket_id' => $ticket->id,
             'direction' => 'outbound',
             'from' => 'soporte@example.invalid',
@@ -174,6 +174,11 @@ class TicketDetailDataPayloadTest extends TestCase
             'sent_at' => now()->subMinutes(10),
             'delivered_at' => now()->subMinutes(9),
         ]);
+        // created_at forzado (no basta con crearlo primero): sin esto los dos
+        // registros pueden quedar con el mismo segundo y el orden de
+        // reorder()->latest() en el empate no está garantizado -- el test
+        // pasaría "de casualidad" sin probar de verdad el fix.
+        $outbound->forceFill(['created_at' => now()->subMinutes(10)])->save();
 
         // Más reciente que el saliente de arriba -- sin el fix, este pasa a
         // ser $lastMail y la traza se vacía.
