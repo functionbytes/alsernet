@@ -21,6 +21,7 @@ use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Services\AssignmentService;
+use Modules\HelpdeskTickets\Services\CustomerSummaryService;
 use Modules\HelpdeskTickets\Services\MailReputationService;
 use Modules\HelpdeskTickets\Services\OpsHealthService;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
@@ -213,6 +214,19 @@ class TicketOpsController extends Controller
                 'auto_suppress' => $autoSuppress,
             ],
         ]);
+    }
+
+    /**
+     * Modal 25 "Cliente 360": pedidos reales de PrestaShop del cliente del
+     * ticket. Endpoint aparte (no viaja con TicketDetailDataController)
+     * porque llama al bridge de PrestaShop en vivo — solo se paga esa
+     * latencia si el agente de verdad abre este modal.
+     */
+    public function customerOrders(Ticket $ticket, CustomerSummaryService $summary): JsonResponse
+    {
+        $this->authorize('view', $ticket);
+
+        return response()->json(array_merge(['success' => true], $summary->prestashopOrders($ticket->customer)));
     }
 
     public function workload(): JsonResponse

@@ -8,6 +8,7 @@ use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Services\ContactAggregatorService;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Nwidart\Modules\Facades\Module;
+use Throwable;
 
 /**
  * Bloque "Cliente" del panel lateral — usado por TicketDetailDataController
@@ -45,8 +46,63 @@ class CustomerSummaryService
             'is_banned' => $customer->banned_at !== null,
             'tickets_count' => $stats['tickets_count'] ?? null,
             'avg_csat' => $stats['avg_csat'] ?? null,
+            // Modal 25 "Cliente 360": estadística propia de HelpdeskTickets
+            // (Ticket::first_response_at), no depende de HelpdeskContacts —
+            // se calcula siempre, a diferencia de tickets_count/avg_csat.
+            'avg_first_response_minutes' => $this->avgFirstResponseMinutes($customer),
             'integrations' => $stats['integrations'] ?? [],
             'url_c360' => Route::has('contacts.show') ? route('contacts.show', $customer->id) : null,
+        ];
+    }
+
+    /**
+     * Media de minutos hasta la primera respuesta, sobre los tickets de este
+     * cliente que ya la tienen (mismo cálculo — TIMESTAMPDIFF(MINUTE,
+     * created_at, first_response_at) — que TicketReportsService::stats()
+     * usa para la media global, aquí acotado a un cliente).
+     */
+    private function avgFirstResponseMinutes(Customer $customer): ?float
+    {
+        $avg = $customer->tickets()
+            ->whereNotNull('first_response_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, created_at, first_response_at)) as avg_minutes')
+            ->value('avg_minutes');
+
+        return $avg !== null ? round((float) $avg, 1) : null;
+    }
+
+    /**
+     * Modal 25 "Cliente 360": pedidos reales de PrestaShop del cliente, bajo
+     * demanda -- a diferencia de tickets_count/avg_csat/avg_first_response,
+     * esto llama al bridge de PrestaShop en vivo (HelpdeskPrestashop ->
+     * alsernetbridge). Pagar esa latencia en CADA carga del ticket no tiene
+     * sentido cuando el agente ni siquiera ha abierto el modal, así que no
+     * viaja en summarize() — TicketOpsController::customerOrders() lo pide
+     * aparte solo al abrirlo.
+     *
+     * @return array{available: bool, orders: array<int, array<string, mixed>>}
+     */
+    public function prestashopOrders(?Customer $customer): array
+    {
+        if (! $customer || ! Module::find('HelpdeskContacts')?->isEnabled() || ! class_exists(ContactAggregatorService::class)) {
+            return ['available' => false, 'orders' => []];
+        }
+
+        try {
+            $data = app(ContactAggregatorService::class)->prestashop($customer);
+        } catch (Throwable) {
+            return ['available' => false, 'orders' => []];
+        }
+
+        return [
+            'available' => (bool) ($data['available'] ?? false),
+            'orders' => collect($data['orders'] ?? [])->take(5)->map(fn (array $o) => [
+                'reference' => $o['reference'] ?? null,
+                'placed_at' => $o['placed_at'] ?? null,
+                'total' => $o['totals']['total'] ?? null,
+                'currency_sign' => $o['currency_sign'] ?? '€',
+                'state' => $o['state']['name'] ?? null,
+            ])->all(),
         ];
     }
 
@@ -66,7 +122,7 @@ class CustomerSummaryService
 
         try {
             $resumen = app(ContactAggregatorService::class)->resumen($customer);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return [];
         }
 

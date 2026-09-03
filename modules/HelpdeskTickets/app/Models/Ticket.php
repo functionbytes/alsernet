@@ -1451,6 +1451,8 @@ class Ticket extends Model
             'url_split' => route('manager.helpdesk.tickets.split', ['ticket' => '__TICKET__']),
             // Modal 23: avisar a un agente presente en el ticket.
             'url_presence_nudge' => route('manager.helpdesk.tickets.presence.nudge', ['ticket' => '__TICKET__']),
+            // Modal 25: pedidos PrestaShop del cliente, bajo demanda.
+            'url_customer_orders' => route('manager.helpdesk.tickets.customer-360.orders', ['ticket' => '__TICKET__']),
         ];
     }
 

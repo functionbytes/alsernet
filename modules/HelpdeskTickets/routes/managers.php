@@ -203,6 +203,8 @@ Route::group(['prefix' => ''], function () {
     Route::get('/tickets/reputation', [TicketOpsController::class, 'reputation'])->name('manager.helpdesk.tickets.reputation');
     // Modal 22: guarda "avisar a managers"/"suprimir automáticamente".
     Route::patch('/tickets/reputation', [TicketOpsController::class, 'updateReputation'])->name('manager.helpdesk.tickets.reputation.update');
+    // Modal 25 "Cliente 360": pedidos PrestaShop del cliente, bajo demanda.
+    Route::get('/tickets/{ticket}/customer-360/orders', [TicketOpsController::class, 'customerOrders'])->name('manager.helpdesk.tickets.customer-360.orders');
     // Modal 09: cancela un envío programado (a borrador o eliminándolo).
     Route::post('/tickets/emails/{mail}/cancel-scheduled', [TicketMailsController::class, 'cancelScheduled'])->name('manager.helpdesk.tickets.emails.cancel-scheduled');
     // Modal 10: mueve un correo (y opcionalmente su hilo) a otro ticket.
