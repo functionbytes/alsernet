@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
+use Modules\Core\Models\Setting;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
 use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
@@ -179,6 +180,39 @@ class TicketOpsController extends Controller
     public function reputation(MailReputationService $service): JsonResponse
     {
         return response()->json($service->report());
+    }
+
+    /**
+     * Modal 22: guarda los dos interruptores del footer ("avisar a
+     * managers" / "suprimir automáticamente", ambos OFF por defecto). La
+     * evaluación real de la tasa de rebote corre en ticket:check-reputation
+     * (programado cada hora) — aquí solo se persiste la preferencia.
+     */
+    public function updateReputation(Request $request): JsonResponse
+    {
+        abort_unless(auth()->user()?->can('helpdesk.tickets.update'), 403);
+
+        $notifyManagers = $request->boolean('notify_managers');
+        $autoSuppress = $request->boolean('auto_suppress');
+
+        Setting::set('tickets.reputation_notify_managers', $notifyManagers);
+        Setting::set('tickets.reputation_auto_suppress', $autoSuppress);
+
+        // Apagar la auto-supresión libera el envío de inmediato: no tiene
+        // sentido dejarlo pausado hasta la próxima pasada del comando solo
+        // porque el agente acaba de desactivar el interruptor.
+        if (! $autoSuppress) {
+            Setting::set('tickets.reputation_suppressed', false);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Preferencias de reputación guardadas.',
+            'data' => [
+                'notify_managers' => $notifyManagers,
+                'auto_suppress' => $autoSuppress,
+            ],
+        ]);
     }
 
     public function workload(): JsonResponse

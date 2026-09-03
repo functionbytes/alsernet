@@ -299,4 +299,18 @@ return [
             'cooldown_minutes' => (int) env('HELPDESK_OPS_ALERT_COOLDOWN', 60),
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reputación del ticket mailer (modal "Reputación y autenticación")
+    |--------------------------------------------------------------------------
+    | ticket:check-reputation (cada hora) calcula la tasa de rebote de
+    | helpdesk_ticket_mails de los últimos 30 días (MailReputationService,
+    | mismo cálculo que ve el agente en el modal); si supera este umbral,
+    | avisa a los managers y/o pausa el envío saliente, según lo que se haya
+    | activado en el propio modal (ambos OFF por defecto, "do no harm").
+    */
+    'reputation' => [
+        'bounce_critical_pct' => (float) env('HELPDESK_REPUTATION_BOUNCE_CRITICAL_PCT', 5.0),
+    ],
 ];

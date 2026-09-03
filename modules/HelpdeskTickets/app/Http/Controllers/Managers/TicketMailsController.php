@@ -345,7 +345,15 @@ class TicketMailsController extends Controller
             ], 201);
         }
 
-        $this->dispatcher->send($mail, $ticket, $validated['cc'] ?? [], $validated['bcc'] ?? [], $attachmentFiles);
+        $sent = $this->dispatcher->send($mail, $ticket, $validated['cc'] ?? [], $validated['bcc'] ?? [], $attachmentFiles);
+
+        if (! $sent) {
+            return response()->json([
+                'success' => false,
+                'message' => $mail->fresh()->delivery_error ?? 'No se pudo enviar el email.',
+                'data' => $mail->fresh()->toListRow(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -386,9 +394,17 @@ class TicketMailsController extends Controller
 
         $newMail = $this->createResendCopy($mail, $ticket, $to, $request->boolean('without_attachments'));
 
-        $this->dispatcher->send($newMail, $ticket, [], [], $this->dispatcher->resendableAttachments($mail));
+        $sent = $this->dispatcher->send($newMail, $ticket, [], [], $this->dispatcher->resendableAttachments($mail));
 
         self::forgetStatsCache();
+
+        if (! $sent) {
+            return response()->json([
+                'success' => false,
+                'message' => $newMail->fresh()->delivery_error ?? 'No se pudo reenviar el email.',
+                'data' => $newMail->fresh()->toListRow(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,
@@ -835,8 +851,9 @@ class TicketMailsController extends Controller
             // borrando el historial del fallo (bug real encontrado en QA
             // manual de esta pantalla).
             $newMail = $this->createResendCopy($mail, $ticket, $mail->to);
-            $this->dispatcher->send($newMail, $ticket, [], [], $this->dispatcher->resendableAttachments($mail));
-            $count++;
+            if ($this->dispatcher->send($newMail, $ticket, [], [], $this->dispatcher->resendableAttachments($mail))) {
+                $count++;
+            }
         }
 
         return $count;

@@ -199,6 +199,8 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/split', [TicketOpsController::class, 'split'])->name('manager.helpdesk.tickets.split');
     // Modal 22: reputación y autenticación del dominio de envío.
     Route::get('/tickets/reputation', [TicketOpsController::class, 'reputation'])->name('manager.helpdesk.tickets.reputation');
+    // Modal 22: guarda "avisar a managers"/"suprimir automáticamente".
+    Route::patch('/tickets/reputation', [TicketOpsController::class, 'updateReputation'])->name('manager.helpdesk.tickets.reputation.update');
     // Modal 09: cancela un envío programado (a borrador o eliminándolo).
     Route::post('/tickets/emails/{mail}/cancel-scheduled', [TicketMailsController::class, 'cancelScheduled'])->name('manager.helpdesk.tickets.emails.cancel-scheduled');
     // Modal 10: mueve un correo (y opcionalmente su hilo) a otro ticket.

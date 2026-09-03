@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Modules\Core\Models\Setting;
 use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
 use Modules\HelpdeskTickets\Models\TicketMail;
 
@@ -43,6 +44,24 @@ class MailReputationService
             'from' => $from,
             'auth' => $domain ? $this->authRecords($domain) : null,
             'rates' => $this->rates(),
+            'settings' => $this->settings(),
+        ];
+    }
+
+    /**
+     * Estado de los dos interruptores del footer del modal (mockup: "avisar
+     * a managers" / "suprimir automáticamente"), ambos OFF por defecto — la
+     * evaluación real corre en ticket:check-reputation, programado cada
+     * hora, que es quien de verdad activa 'suppressed' al cruzar el umbral.
+     *
+     * @return array<string, bool>
+     */
+    private function settings(): array
+    {
+        return [
+            'notify_managers' => filter_var(Setting::get('tickets.reputation_notify_managers', false), FILTER_VALIDATE_BOOLEAN),
+            'auto_suppress' => filter_var(Setting::get('tickets.reputation_auto_suppress', false), FILTER_VALIDATE_BOOLEAN),
+            'suppressed' => filter_var(Setting::get('tickets.reputation_suppressed', false), FILTER_VALIDATE_BOOLEAN),
         ];
     }
 

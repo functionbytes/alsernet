@@ -14,6 +14,7 @@ use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
 use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\HelpdeskTickets\Console\Commands\AutoCloseTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\AutoResponseTicketCommand;
+use Modules\HelpdeskTickets\Console\Commands\CheckTicketMailReputationCommand;
 use Modules\HelpdeskTickets\Console\Commands\CleanupTrashedTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\CollectOpsMetricsCommand;
 use Modules\HelpdeskTickets\Console\Commands\DetectTicketIncidentsCommand;
@@ -343,6 +344,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             class_exists(FetchEmailTicketsCommand::class) ? FetchEmailTicketsCommand::class : null,
             class_exists(SendSlaWarningsCommand::class) ? SendSlaWarningsCommand::class : null,
             class_exists(CollectOpsMetricsCommand::class) ? CollectOpsMetricsCommand::class : null,
+            class_exists(CheckTicketMailReputationCommand::class) ? CheckTicketMailReputationCommand::class : null,
             class_exists(DetectTicketIncidentsCommand::class) ? DetectTicketIncidentsCommand::class : null,
             class_exists(SuggestHelpArticlesCommand::class) ? SuggestHelpArticlesCommand::class : null,
             class_exists(ReviewTicketQualityCommand::class) ? ReviewTicketQualityCommand::class : null,
@@ -407,6 +409,12 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             // Observabilidad operativa: snapshot de colas/webhooks/SLA en cache
             // + evaluación de alertas (mail a managers, OFF por defecto).
             $schedule->command('helpdesk:ops-metrics')->everyFiveMinutes()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
+
+            // Modal 22 "Reputación y autenticación": tasa de rebote del ticket
+            // mailer contra el umbral crítico. Cada hora (no cada minuto: una
+            // tasa de rebote no da un vuelco en 60 segundos) y el propio
+            // comando reverifica sus dos interruptores, ambos OFF por defecto.
+            $schedule->command('ticket:check-reputation')->hourly()->withoutOverlapping()->onOneServer()->runInBackground()->when($enabled);
 
             // Informes programados por email (OFF por defecto). La cadencia la
             // decide la frecuencia configurada: semanal (lunes 07:00) o mensual

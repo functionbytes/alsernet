@@ -42,7 +42,11 @@ class SendScheduledTicketMailsCommand extends Command
             Log::info('SendScheduledTicketMails: emails programados procesados', ['sent' => $sent, 'skipped' => $skipped]);
         }
 
-        $this->info("Enviados {$sent} email(s) programado(s)".($skipped > 0 ? ", {$skipped} omitido(s) sin ticket." : '.'));
+        // "omitido" agrupa varios motivos posibles (ticket borrado, cliente
+        // respondió antes, auto-supresión por reputación): el motivo exacto
+        // de cada uno queda en su propio delivery_error, no hace falta
+        // repetirlo aquí.
+        $this->info("Enviados {$sent} email(s) programado(s)".($skipped > 0 ? ", {$skipped} omitido(s)." : '.'));
 
         return self::SUCCESS;
     }
@@ -71,9 +75,7 @@ class SendScheduledTicketMailsCommand extends Command
         $cc = $mail->cc ? array_map('trim', explode(',', $mail->cc)) : [];
         $bcc = $mail->bcc ? array_map('trim', explode(',', $mail->bcc)) : [];
 
-        $dispatcher->send($mail, $mail->ticket, $cc, $bcc, $dispatcher->resendableAttachments($mail));
-
-        return true;
+        return $dispatcher->send($mail, $mail->ticket, $cc, $bcc, $dispatcher->resendableAttachments($mail));
     }
 
     /**
