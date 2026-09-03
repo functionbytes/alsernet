@@ -1282,69 +1282,6 @@
         '</div>';
     }
 
-    /**
-     * Previsualización de un adjunto del hilo (mockup "ve-file-preview",
-     * modal 49 de Alvarez Gestión de Tickets). PDF e imágenes se muestran de
-     * verdad; el resto de tipos solo enseña metadatos + descarga.
-     *
-     * El mockup trae botones propios de zoom/rotar/paginación sobre un
-     * render de PDF hecho a mano. Se usa en su lugar el visor de PDF nativo
-     * del navegador (Chrome/Firefox ya traen el suyo, con su propio zoom y
-     * paginación) en un <iframe> -- reimplementarlo con PDF.js para que esos
-     * botones "funcionen de verdad" es una libreria nueva sin vendorizar en
-     * este proyecto (no hay CDN aquí, todo JS vendorizado bajo
-     * modules/Theme/public/theme/libs/), y unos botones decorativos que no
-     * hacen nada serían peor que no tenerlos.
-     *
-     * El badge "sin amenazas" y el aviso de purga por retención del mockup
-     * se omiten a propósito: hay un escáner ClamAV real en el proyecto
-     * (Modules\Media\Jobs\ScanForVirusJob), pero no está conectado a los
-     * adjuntos de tickets, y no hay ningún job de purga por retención para
-     * ellos -- mostrarlos sería afirmar una protección/comportamiento que no
-     * existe todavía.
-     */
-    function openAttachmentPreviewModal(file, item) {
-        var t = TKA.state.currentTicket;
-        var ext = String(file.name || '').split('.').pop().toLowerCase();
-        var isPdf = ext === 'pdf' || (file.mime === 'application/pdf');
-        var isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].indexOf(ext) !== -1
-            || (file.mime && file.mime.indexOf('image/') === 0);
-
-        var preview;
-        if (isPdf) {
-            preview = '<iframe src="' + escapeHtml(file.url) + '" class="tkt-fp-frame" title="' + escapeHtml(file.name) + '"></iframe>';
-        } else if (isImage) {
-            preview = '<div class="tkt-fp-img-wrap"><img src="' + escapeHtml(file.url) + '" alt="' + escapeHtml(file.name) + '"></div>';
-        } else {
-            preview = '<div class="tkt-fp-nopreview"><i class="fa-regular ' + attachmentIcon(file.name) + '"></i>' +
-                '<div>Vista previa no disponible para este tipo de archivo.</div></div>';
-        }
-
-        var rows = [
-            { label: 'tamaño', value: file.size || '—' },
-            { label: 'tipo', value: file.mime || '—' },
-            { label: 'enviado por', value: item.sender_name || '—' },
-            { label: 'fecha', value: item.created_at_human || item.time || '—' },
-        ];
-        if (t && t.ticket_number) rows.push({ label: 'ticket', value: t.ticket_number });
-
-        var infoTable = '<table class="tkt-info-table">' + rows.map(function (r) {
-            return '<tr><th>' + escapeHtml(r.label) + '</th><td>' + escapeHtml(String(r.value)) + '</td></tr>';
-        }).join('') + '</table>';
-
-        openModal(modalShell({
-            icon: 'fa-regular ' + attachmentIcon(file.name),
-            kicker: 'Adjunto · previsualización',
-            titleChip: t ? t.ticket_number : null,
-            title: file.name,
-            width: 'xl',
-            body: preview + infoTable,
-            foot: '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(file.url) + '" download="' + escapeHtml(file.name) + '"><i class="fa-solid fa-download"></i> Descargar</a>' +
-                '<a class="tkt-btn" href="' + escapeHtml(file.url) + '" target="_blank" rel="noopener">Abrir en pestaña nueva</a>' +
-                '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
-        }));
-    }
-
     /** Icono según extensión, como el mockup (PDF, imagen, hoja de cálculo…). */
     function attachmentIcon(name) {
         var ext = String(name).split('.').pop().toLowerCase();
@@ -1528,15 +1465,26 @@
             selectDetailTab('mail');
         });
 
-        // Previsualizar adjunto (modal 49 del mockup) — se busca el item por
-        // id en el propio "items" de este render en vez de repetir
-        // nombre/url/mime en atributos data-*.
+        // Previsualizar adjunto (modal 49 del mockup) — reusa
+        // openFilePreviewModal(), que ya existe para la pestaña Adjuntos
+        // (renderFilesPane()) y que no tenía ningún punto de entrada desde
+        // aquí, el hilo. Se adapta la forma del objeto (bytes en vez del
+        // tamaño ya formateado que usa el chip del hilo, url_download en vez
+        // de url) en vez de duplicar el modal con su propio CSS/markup.
         $p.on('click', '[data-attachment-preview]', function () {
             var itemId = $(this).data('item-id');
             var idx = $(this).data('att-index');
             var item = items.filter(function (it) { return it.id === itemId; })[0];
-            var file = item && (item.attachments || [])[idx];
-            if (file) openAttachmentPreviewModal(file, item);
+            var f = item && (item.attachments || [])[idx];
+            if (!f) return;
+
+            openFilePreviewModal(TKA.state.currentTicket, {
+                name: f.name,
+                url_download: f.url,
+                size: f.bytes,
+                source: item.from_agent ? 'agent' : 'customer',
+                created_at_human: item.created_at_human || item.time,
+            });
         });
 
         bindComposer($p);

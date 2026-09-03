@@ -257,5 +257,9 @@ class TicketDetailDataPayloadTest extends TestCase
         $this->assertCount(1, $found['attachments']);
         $this->assertSame('checklist.pdf', $found['attachments'][0]['name']);
         $this->assertSame('application/pdf', $found['attachments'][0]['mime']);
+        // 'bytes' (crudo) además de 'size' (ya formateado, "29 B") -- lo usa
+        // openFilePreviewModal() en el JS para formatearlo con su propio
+        // formatFileSize(), el mismo que ya usa la pestaña Adjuntos.
+        $this->assertSame(28, $found['attachments'][0]['bytes']);
     }
 }
