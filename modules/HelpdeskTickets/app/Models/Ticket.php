@@ -1457,6 +1457,8 @@ class Ticket extends Model
             'url_presence_nudge' => route('manager.helpdesk.tickets.presence.nudge', ['ticket' => '__TICKET__']),
             // Modal 25: pedidos PrestaShop del cliente, bajo demanda.
             'url_customer_orders' => route('manager.helpdesk.tickets.customer-360.orders', ['ticket' => '__TICKET__']),
+            // Modal 32: enviar el enlace mágico de acceso al portal.
+            'url_portal_send_access' => route('manager.helpdesk.tickets.portal.send-access', ['ticket' => '__TICKET__']),
         ];
     }
 

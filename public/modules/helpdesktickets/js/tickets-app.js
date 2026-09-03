@@ -47,6 +47,16 @@
         return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
     }
 
+    // Compartido por la tarjeta "Portal de cliente" del panel lateral y el
+    // modal 32 — antes duplicado byte a byte en los dos sitios.
+    function copyToClipboard(text, successMsg) {
+        navigator.clipboard.writeText(text).then(function () {
+            if (window.toastr) toastr.success(successMsg || 'Copiado'); else window.alert(successMsg || 'Copiado');
+        }).catch(function () {
+            window.prompt('Copia el texto:', text);
+        });
+    }
+
     // Claves de origen tal como están en la BD. Conviven varias formas para
     // lo mismo ('form'/'formulario'/'web_form') por datos de distintas épocas:
     // se mapean todas en vez de normalizar la columna, que obligaría a una
@@ -3523,14 +3533,7 @@
         $c.html(html);
 
         $c.find('#tkt-shared-link-copy').on('click', function () {
-            var url = $(this).data('url');
-            var $btn = $(this);
-            navigator.clipboard.writeText(url).then(function () {
-                if (window.toastr) toastr.success('Enlace copiado');
-                else { $btn.text('¡Copiado!'); setTimeout(function () { $btn.html('<i class="fa-solid fa-link"></i> Copiar enlace para el cliente'); }, 1500); }
-            }).catch(function () {
-                window.prompt('Copia el enlace:', url);
-            });
+            copyToClipboard($(this).data('url'), 'Enlace copiado');
         });
 
         $c.find('#tkt-open-c360').on('click', function () { openCustomer360Modal(t, customer); });
@@ -5359,14 +5362,36 @@
             : '<div class="tkt-empty-box">El cliente todavía no vería ningún mensaje en este ticket.</div>';
         var hidden = thread.length - visible.length;
 
-        openModal(modalShell({
+        var $backdrop = openModal(modalShell({
             icon: 'fa-regular fa-window-maximize', kicker: 'Portal · vista cliente',
             title: 'Portal del cliente', titleChip: t.ticket_number, width: 'sm',
             body: '<div class="tkt-portal"><div class="tkt-portal-head">Ticket ' + escapeHtml(t.ticket_number) + ' · ' + escapeHtml(t.subject || '') + '</div>' + bubbles + '</div>' +
                   (hidden > 0 ? '<div class="tkt-note"><i class="fa-solid fa-eye-slash"></i> ' + hidden + (hidden === 1 ? ' nota interna' : ' notas internas') + ' no se muestran al cliente.</div>' : ''),
             foot: (t.url_shared_ticket ? '<a class="tkt-btn tkt-btn-primary" href="' + escapeHtml(t.url_shared_ticket) + '" target="_blank" rel="noopener">Abrir la vista real</a>' : '') +
+                  (t.url_shared_ticket ? '<button type="button" class="tkt-btn" id="tkt-portal-copy" data-url="' + escapeHtml(t.url_shared_ticket) + '">Copiar enlace</button>' : '') +
+                  (t.customer && t.customer.email ? '<button type="button" class="tkt-btn" id="tkt-portal-send-access">Enviar acceso al cliente</button>' : '') +
                   '<button type="button" class="tkt-btn" data-modal-close>Cerrar</button>',
         }));
+
+        $backdrop.on('click', '#tkt-portal-copy', function () {
+            copyToClipboard($(this).data('url'), 'Enlace copiado');
+        });
+
+        // "Enviar acceso al cliente": mismo enlace mágico de un solo uso que
+        // ya manda el login del portal (CustomerPortalController::login()),
+        // no el enlace de solo lectura de "Copiar enlace" — ese es un link
+        // firmado sin sesión, este crea una sesión real del cliente.
+        $backdrop.on('click', '#tkt-portal-send-access', function () {
+            var $btn = $(this).prop('disabled', true).text('Enviando…');
+            $.post(t.url_portal_send_access).done(function (resp) {
+                if (window.toastr) toastr.success((resp && resp.message) || 'Acceso enviado');
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo enviar el acceso.';
+                if (window.toastr) toastr.error(msg); else window.alert(msg);
+            }).always(function () {
+                $btn.prop('disabled', false).text('Enviar acceso al cliente');
+            });
+        });
     }
 
     // Los modales 16/28/29/30 leen la misma foto de configuración: se pide

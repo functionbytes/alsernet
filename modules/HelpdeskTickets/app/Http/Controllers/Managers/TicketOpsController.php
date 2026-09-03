@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\URL;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskAgents\Services\AgentLlmService;
 use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
+use Modules\HelpdeskTickets\Mail\PortalMagicLinkMail;
 use Modules\HelpdeskTickets\Mail\TicketSatisfactionSurveyMail;
 use Modules\HelpdeskTickets\Models\Automation;
 use Modules\HelpdeskTickets\Models\RecurringTicket;
@@ -566,5 +567,33 @@ class TicketOpsController extends Controller
         Mail::to($customer->email)->queue(new TicketSatisfactionSurveyMail($ticket, $subject, $content));
 
         return response()->json(['success' => true, 'message' => 'Encuesta de satisfacción enviada.']);
+    }
+
+    /**
+     * Modal 32 "Portal del cliente": "Enviar acceso al cliente" — reusa el
+     * mismo enlace mágico de un solo uso que ya usa el login del portal
+     * (CustomerPortalController::login()/Customer::generatePortalToken()),
+     * en vez de duplicar la generación del token o la plantilla.
+     */
+    public function sendPortalAccess(Ticket $ticket): JsonResponse
+    {
+        $this->authorize('update', $ticket);
+
+        $customer = $ticket->customer;
+        abort_unless($customer?->email, 422, 'El cliente no tiene email registrado.');
+
+        $token = $customer->generatePortalToken();
+        [$subject, $content] = TicketMailRenderer::render(
+            'helpdesk_tickets.portal_magic_link',
+            [
+                'CUSTOMER_NAME' => e($customer->name),
+                'PORTAL_URL' => url('/portal/auth/'.$token),
+            ],
+            'Tu enlace de acceso al portal',
+        );
+
+        Mail::to($customer->email)->queue(new PortalMagicLinkMail($customer, $subject, $content));
+
+        return response()->json(['success' => true, 'message' => 'Acceso enviado a '.$customer->email.'.']);
     }
 }

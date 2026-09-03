@@ -261,6 +261,8 @@ Route::group(['prefix' => ''], function () {
     Route::post('/tickets/{ticket}/reopen', [TicketLifecycleController::class, 'reopen'])->name('manager.helpdesk.tickets.reopen');
     Route::post('/tickets/{ticket}/archive', [TicketLifecycleController::class, 'archive'])->name('manager.helpdesk.tickets.archive');
     Route::post('/tickets/{ticket}/csat/send', [TicketOpsController::class, 'sendCsatSurvey'])->name('manager.helpdesk.tickets.csat.send');
+    // Modal 32 "Portal del cliente": enviar el enlace mágico de acceso.
+    Route::post('/tickets/{ticket}/portal/send-access', [TicketOpsController::class, 'sendPortalAccess'])->name('manager.helpdesk.tickets.portal.send-access');
     // Modal 40: la valoración recibida y el contexto para leerla.
     Route::get('/tickets/{ticket}/csat', [TicketOpsController::class, 'csat'])->name('manager.helpdesk.tickets.csat.show');
     Route::post('/tickets/{ticket}/unarchive', [TicketLifecycleController::class, 'unarchive'])->name('manager.helpdesk.tickets.unarchive');
