@@ -43,13 +43,14 @@ class TicketDetailDataController extends Controller
     /**
      * Adjuntos de un item del hilo, con nombre y tamaño legibles.
      *
-     * attachment_urls guarda rutas dentro del disco público. El tamaño se
-     * consulta al disco y no se cachea: son pocos ficheros por mensaje y un
-     * tamaño desactualizado sería peor que uno ausente. Si el fichero ya no
-     * está (purgado, movido), se devuelve sin tamaño en vez de romper la
-     * fila entera.
+     * attachment_urls guarda rutas dentro del disco público. El tamaño (y
+     * ahora el mime, para el modal de previsualización — mockup
+     * "ve-file-preview") se consultan al disco y no se cachean: son pocos
+     * ficheros por mensaje y un dato desactualizado sería peor que uno
+     * ausente. Si el fichero ya no está (purgado, movido), se devuelve sin
+     * tamaño/mime en vez de romper la fila entera.
      *
-     * @return list<array{name: string, size: ?string, url: string}>
+     * @return list<array{name: string, size: ?string, mime: ?string, url: string}>
      */
     private function threadAttachments(TicketItem $item): array
     {
@@ -64,19 +65,22 @@ class TicketDetailDataController extends Controller
         return collect($paths)->map(function ($path) use ($disk): array {
             $path = (string) $path;
             $size = null;
+            $mime = null;
 
             try {
                 if ($disk->exists($path)) {
                     $size = $this->humanSize($disk->size($path));
+                    $mime = $disk->mimeType($path) ?: null;
                 }
             } catch (Throwable) {
                 // Disco no disponible o ruta inválida: se informa del fichero
-                // igualmente, solo que sin peso.
+                // igualmente, solo que sin peso/mime.
             }
 
             return [
                 'name' => basename($path),
                 'size' => $size,
+                'mime' => $mime,
                 'url' => $disk->url($path),
             ];
         })->values()->all();

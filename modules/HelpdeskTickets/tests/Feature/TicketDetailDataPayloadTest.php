@@ -4,6 +4,7 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Storage;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
@@ -226,5 +227,35 @@ class TicketDetailDataPayloadTest extends TestCase
 
         $this->assertSame([], $payload['trace']);
         $this->assertNull($payload['trace_meta']);
+    }
+
+    // ─── adjuntos del hilo (modal "ve-file-preview") ───────────────────────
+
+    /**
+     * threadAttachments() manda ahora también el mime, que el modal de
+     * previsualización usa para decidir si mostrar el PDF/imagen de verdad o
+     * el aviso de "sin previsualización disponible".
+     */
+    public function test_los_adjuntos_del_hilo_incluyen_el_mime(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('helpdesk/attachments/checklist.pdf', '%PDF-1.4 contenido de prueba');
+
+        $ticket = $this->makeTicket();
+        $item = $ticket->items()->create([
+            'type' => 'message',
+            'author_id' => $ticket->customer_id,
+            'body' => 'Aquí tienes el checklist.',
+            'is_internal' => false,
+            'attachment_urls' => ['helpdesk/attachments/checklist.pdf'],
+        ]);
+
+        $thread = $this->payload($ticket)['thread'];
+        $found = collect($thread)->firstWhere('id', $item->id);
+
+        $this->assertNotNull($found);
+        $this->assertCount(1, $found['attachments']);
+        $this->assertSame('checklist.pdf', $found['attachments'][0]['name']);
+        $this->assertSame('application/pdf', $found['attachments'][0]['mime']);
     }
 }
