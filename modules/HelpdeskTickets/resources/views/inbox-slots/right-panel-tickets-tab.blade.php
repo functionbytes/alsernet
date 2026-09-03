@@ -81,7 +81,7 @@
                     $tSubject      = $ticket->subject ?? $ticket->title ?? 'Sin título';
                     $tAssignee     = $ticket->assignee ?? null;
                     $tAssigneeName = $tAssignee
-                        ? trim(($tAssignee->firstname ?? '').' '.($tAssignee->lastname ?? ''))
+                        ? $tAssignee->fullName()
                         : null;
                     $tFilterTags   = 'all ' . ($tIsClosed ? 'closed' : 'open') . ($ticket->priority === 'urgent' ? ' urgent' : '');
                     $tFromThisConv = isset($rpConversationId) && $rpConversationId && (int) ($ticket->conversation_id ?? 0) === (int) $rpConversationId;

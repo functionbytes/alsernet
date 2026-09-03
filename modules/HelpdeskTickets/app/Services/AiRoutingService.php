@@ -121,12 +121,11 @@ class AiRoutingService
     private function assign(Ticket $ticket): ?TicketAssignment
     {
         try {
-            // Las tres estrategias filtran ya por hablantes del idioma
+            // Ambas estrategias filtran ya por hablantes del idioma
             // detectado (AssignmentService::preferLanguageSpeakers), asi que
             // el enrutado por idioma sale gratis aqui.
             return match ($this->strategy()) {
                 'round_robin' => $this->assignments->autoAssignByRoundRobin($ticket),
-                'skills' => $this->assignments->autoAssignBySkills($ticket),
                 default => $this->assignments->autoAssignByWorkload($ticket),
             };
         } catch (\Throwable $e) {

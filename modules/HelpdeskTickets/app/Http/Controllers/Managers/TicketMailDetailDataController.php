@@ -4,10 +4,10 @@ namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Modules\HelpdeskEmailLog\Models\EmailLog;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Services\CustomerSummaryService;
+use Modules\HelpdeskTickets\Services\EmailLogLookupService;
 use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
 
 /**
@@ -17,11 +17,23 @@ use Modules\HelpdeskTickets\Services\HelpdeskTicketBridgeService;
  * trazabilidad, actividad, relacionados). Sin cambios de comportamiento,
  * solo movimiento — mapCustomer()/contactStats() ahora viven en
  * CustomerSummaryService (antes duplicados con TicketDetailDataController).
+ *
+ * ADVERTENCIA (1-sep-2026): no se encontró ningún consumidor real de esta
+ * ruta en tickets-app.js — fetchDetailData() usa t.url_data (el endpoint de
+ * TicketDetailDataController, con SU PROPIO 'mail'/'trace' de nivel
+ * superior), y el propio docblock de TicketMailsController enumera "modal
+ * de Entregabilidad" y "refetch de stats" como los DOS únicos usos vivos de
+ * la API JSON de esa pantalla — este endpoint no es ninguno de los dos.
+ * Sigue vivo (ruta + 2 test files verificando el contrato) pero es
+ * candidato fuerte a código muerto; se deja intacto y sincronizado con
+ * TicketDetailDataController por si acaso, no se elimina sin confirmar con
+ * el equipo que de verdad nada lo llama.
  */
 class TicketMailDetailDataController extends Controller
 {
     public function __construct(
         private readonly CustomerSummaryService $customerSummary,
+        private readonly EmailLogLookupService $emailLogLookup,
     ) {}
 
     public function data(TicketMail $mail): JsonResponse
@@ -30,7 +42,15 @@ class TicketMailDetailDataController extends Controller
 
         $mail->load(['ticket.customer', 'ticket.status', 'ticket.category', 'ticket.assignee', 'user', 'category']);
 
-        $thread = TicketMail::where('ticket_id', $mail->ticket_id)->oldest()->get();
+        // toListRow() lee ticket->customer, category y user por cada mensaje
+        // del hilo — sin eager load esto eran 3-4 queries extra por email
+        // (120-180 en un hilo largo). Tope de 100 porque el panel solo
+        // muestra un hilo, no un histórico completo.
+        $thread = TicketMail::where('ticket_id', $mail->ticket_id)
+            ->with(['ticket.customer', 'user:id,firstname,lastname', 'category:id,name'])
+            ->oldest()
+            ->limit(100)
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -67,7 +87,7 @@ class TicketMailDetailDataController extends Controller
             return [];
         }
 
-        $log = EmailLog::with('opens')->where('message_id', trim($mail->message_id, '<>'))->first();
+        $log = $this->emailLogLookup->forMessageId($mail->message_id);
 
         if (! $log) {
             return [];
@@ -117,6 +137,17 @@ class TicketMailDetailDataController extends Controller
                 'label' => 'Abierto por el destinatario · '.$opens->count().' '.($opens->count() === 1 ? 'vez' : 'veces'),
                 'detail' => 'última '.$last->format('H:i'),
                 'at' => $opens->min('opened_at')?->toIso8601String(),
+            ];
+        }
+
+        $clicks = $log->clicks;
+        if ($clicks->isNotEmpty()) {
+            $last = $clicks->max('clicked_at');
+            $events[] = [
+                'type' => 'clicked',
+                'label' => 'Enlace clicado por el destinatario · '.$clicks->count().' '.($clicks->count() === 1 ? 'vez' : 'veces'),
+                'detail' => 'último '.$last->format('H:i'),
+                'at' => $clicks->min('clicked_at')?->toIso8601String(),
             ];
         }
 

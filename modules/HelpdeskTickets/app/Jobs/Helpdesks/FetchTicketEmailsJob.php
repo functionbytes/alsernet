@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskEmailActivity\Services\EmailBounceCorrelatorService;
+use Modules\HelpdeskEmailActivity\Support\DsnMessageParser;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketCreated;
@@ -190,15 +192,42 @@ class FetchTicketEmailsJob implements ShouldQueue
             $messages = $folder->query()->whereUnseen()->get();
 
             foreach ($messages as $message) {
-                try {
-                    $this->processIncomingEmail($message, $connection);
-                    $message->setFlag('Seen');
-                } catch (\Throwable $e) {
-                    Log::error('Error processing email: '.$e->getMessage());
-                }
+                $this->processMessage($message, $connection);
             }
         } finally {
             $client->disconnect();
+        }
+    }
+
+    /**
+     * Procesa un mensaje IMAP y marca 'Seen' en dos pasos separados, no un
+     * único try/catch: si processIncomingEmail() falla, el mensaje debe
+     * quedar sin leer para reintentarse entero en la próxima corrida (mismo
+     * comportamiento que antes). Si processIncomingEmail() tiene éxito pero
+     * setFlag('Seen') falla (visto en producción: error de IMAP silencioso),
+     * el mensaje seguiría apareciendo como no leído y se reprocesaría cada
+     * minuto — el guard de idempotencia al inicio de processIncomingEmail()
+     * (por message_id) es quien evita que eso vuelva a crear un ticket
+     * duplicado o reenvíe la confirmación al cliente; aquí solo se distingue
+     * el log para que ese caso no se confunda con un fallo real de
+     * procesamiento.
+     */
+    protected function processMessage(ImapMessage $message, array $connection): void
+    {
+        try {
+            $this->processIncomingEmail($message, $connection);
+        } catch (\Throwable $e) {
+            Log::error('Error processing email: '.$e->getMessage());
+
+            return;
+        }
+
+        try {
+            $message->setFlag('Seen');
+        } catch (\Throwable $e) {
+            Log::warning('FetchTicketEmailsJob: email processed but failed to mark as Seen, will retry the flag next run', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -236,14 +265,7 @@ class FetchTicketEmailsJob implements ShouldQueue
             }
 
             foreach ($messages as $message) {
-                try {
-                    $this->processIncomingEmail($message);
-                    $message->setFlag('Seen');
-                } catch (\Exception $e) {
-                    Log::error('Error processing email: '.$e->getMessage());
-
-                    continue;
-                }
+                $this->processMessage($message, []);
             }
 
             $client->disconnect();
@@ -300,9 +322,40 @@ class FetchTicketEmailsJob implements ShouldQueue
      */
     protected function processIncomingEmail(ImapMessage $message, array $connection = []): void
     {
+        // Idempotencia por Message-ID: si este correo ya se guardó en un
+        // TicketMail, reprocesarlo (típicamente porque setFlag('Seen') falló
+        // en la corrida anterior y el mensaje sigue apareciendo como no
+        // leído) NO debe crear un segundo ticket ni reenviar la confirmación
+        // al cliente — solo se necesita reintentar el flag, lo que hace el
+        // caller (processMessage()). Se comprueba el Message-ID real del
+        // mensaje (antes de aplicar el fallback generateMessageId() de más
+        // abajo): un correo entrante sin su propio Message-ID recibiría un
+        // valor aleatorio distinto en cada intento y este guard nunca
+        // engancharía, así que ahí no hay protección posible por esta vía.
+        $messageId = $this->stringAttribute($message->message_id);
+
+        if ($messageId && TicketMail::where('message_id', $messageId)->exists()) {
+            Log::info('FetchTicketEmailsJob: email already processed, skipping (message_id already recorded)', [
+                'message_id' => $messageId,
+            ]);
+
+            return;
+        }
+
+        // Un canal de Tickets no tiene un buzón de rebotes dedicado propio
+        // (a diferencia de Document) — un DSN por un envío fallido de este
+        // mismo canal rebota a esta misma bandeja, la única que ya se
+        // sondea. Sin este chequeo, el DSN se convertía en un ticket basura
+        // con el contenido técnico del rebote como si fuera un mensaje real
+        // del cliente. No hay riesgo de falso positivo grave: como mucho un
+        // DSN legítimo no se detecta y sigue el flujo normal de ticket.
+        if ($this->routeIfBounceOrComplaint($message)) {
+            return;
+        }
+
         // Parse email data
         $parsed = [
-            'message_id' => $this->stringAttribute($message->message_id) ?: $this->generateMessageId(),
+            'message_id' => $messageId ?: $this->generateMessageId(),
             'in_reply_to' => $this->stringAttribute($message->in_reply_to),
             'references' => $this->stringAttribute($message->references),
             'from' => $this->formatAddressAttribute($message->from),
@@ -331,13 +384,19 @@ class FetchTicketEmailsJob implements ShouldQueue
         // Create TicketMail record
         $ticketMail = TicketMail::createFromInbound($parsed, $ticket);
 
-        // Create a TicketItem for the timeline (customer message)
+        // Create a TicketItem for the timeline (customer message). Los
+        // adjuntos entran por attachment_urls (rutas de storage), el mismo
+        // campo que ya usan las subidas del panel de agente — así el tab
+        // "Adjuntos" del ticket (TicketDetailDataController) y la descarga
+        // autorizada (TicketAttachmentDownloadController::download()) los
+        // sirven sin código nuevo.
         $item = $ticket->items()->create([
             'type' => 'message',
             'author_id' => $ticket->customer_id,
             'body' => $parsed['body_text'],
             'html_body' => $parsed['body_html'],
             'is_internal' => false,
+            'attachment_urls' => array_column($parsed['attachments'], 'path'),
         ]);
 
         // Sin esto, ningún listener de MessageAdded corría para un correo
@@ -356,6 +415,58 @@ class FetchTicketEmailsJob implements ShouldQueue
         $ticket->update(['last_message_at' => now()]);
 
         Log::info("Email processed for ticket #{$ticket->ticket_number}");
+    }
+
+    /**
+     * Detecta si el mensaje entrante es un DSN (bounce)/queja de spam en vez
+     * de correo real de un cliente, y de ser así lo desvía a
+     * EmailBounceCorrelatorService (marca el EmailLog original como
+     * bounced/complained si se puede correlacionar) — devuelve true en
+     * cualquier caso para que el caller NUNCA cree un ticket con esto,
+     * incluso si no hubo correlación (el remitente de un DSN casi siempre es
+     * un MAILER-DAEMON interno, nunca un cliente real).
+     *
+     * Gateado por helpdesk_emaillog_enabled(): con el módulo/integración
+     * apagados, no intenta nada y el DSN sigue el flujo normal de ticket
+     * (comportamiento idéntico al de antes de este cambio).
+     */
+    protected function routeIfBounceOrComplaint(ImapMessage $message): bool
+    {
+        if (! helpdesk_emaillog_enabled()) {
+            return false;
+        }
+
+        $subject = $this->stringAttribute($message->subject) ?: '';
+        $rawBody = $this->rawSource($message) ?: '';
+
+        if (! DsnMessageParser::looksLikeBounceOrComplaint($subject, $rawBody)) {
+            return false;
+        }
+
+        try {
+            $ownMessageId = $this->stringAttribute($message->message_id) ?: '';
+            $isComplaint = DsnMessageParser::isComplaint($subject, $rawBody);
+            $isHard = DsnMessageParser::isHardBounce($rawBody);
+
+            $correlator = app(EmailBounceCorrelatorService::class);
+            $originalMessageId = DsnMessageParser::findOriginalMessageId($rawBody, $ownMessageId);
+
+            $matched = $originalMessageId
+                && $correlator->correlateByMessageId($originalMessageId, $subject, $isHard, $isComplaint);
+
+            if (! $matched && ($recipient = DsnMessageParser::findFailedRecipient($rawBody))) {
+                $matched = $correlator->correlateByRecipient($recipient, $subject, ['HelpdeskTickets'], $isHard, $isComplaint);
+            }
+
+            Log::info('FetchTicketEmailsJob: mensaje con forma de DSN/queja desviado de la creación de ticket', [
+                'subject' => $subject,
+                'matched' => $matched,
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('FetchTicketEmailsJob: fallo correlacionando un DSN/queja', ['error' => $e->getMessage()]);
+        }
+
+        return true;
     }
 
     /**
@@ -526,33 +637,35 @@ class FetchTicketEmailsJob implements ShouldQueue
 
     /**
      * Parse attachments from email message.
+     *
+     * El disco se lee una sola vez aquí y se pasa a saveAttachment(): antes
+     * este método construía la URL pública asumiendo el disco 'public'
+     * (asset('storage/...')) mientras saveAttachment() escribía siempre en
+     * 'local' — un disco privado sin symlink público, así que la URL
+     * resultante daba 404 siempre. Ahora ambos usan el mismo disco
+     * (config('helpdesk.attachments.disk')) y el adjunto se sirve por la
+     * ruta autorizada existente (ver attachment_urls en processIncomingEmail()).
      */
     protected function parseAttachments(ImapMessage $message): array
     {
         $attachments = [];
+        $disk = config('helpdesk.attachments.disk', 'local');
 
         foreach ($message->getAttachments() as $attachment) {
             try {
                 $filename = $attachment->name ?? 'attachment';
-                $filePath = $this->saveAttachment($attachment);
+                $filePath = $this->saveAttachment($attachment, $disk);
 
-                if ($filePath) {
-                    $absolutePath = storage_path('app/'.$filePath);
-                    $size = null;
-
-                    try {
-                        $size = filesize($absolutePath) ?: null;
-                    } catch (\Throwable) {
-                        // File may not be readable; size remains null
-                    }
-
-                    $attachments[] = [
-                        'filename' => $filename,
-                        'url' => asset('storage/'.$filePath),
-                        'size' => $size,
-                        'mime' => mime_content_type($absolutePath),
-                    ];
+                if (! $filePath) {
+                    continue;
                 }
+
+                $attachments[] = [
+                    'filename' => $filename,
+                    'disk' => $disk,
+                    'path' => $filePath,
+                    ...$this->attachmentMetadata($disk, $filePath),
+                ];
             } catch (\Exception $e) {
                 Log::warning('Error processing attachment: '.$e->getMessage());
             }
@@ -562,9 +675,25 @@ class FetchTicketEmailsJob implements ShouldQueue
     }
 
     /**
+     * @return array{size: ?int, mime: ?string}
+     */
+    protected function attachmentMetadata(string $disk, string $path): array
+    {
+        try {
+            return [
+                'size' => Storage::disk($disk)->size($path),
+                'mime' => Storage::disk($disk)->mimeType($path) ?: null,
+            ];
+        } catch (\Throwable) {
+            // File may not be readable right after writing; metadata stays null.
+            return ['size' => null, 'mime' => null];
+        }
+    }
+
+    /**
      * Save attachment to storage.
      */
-    protected function saveAttachment(ImapAttachment $attachment): ?string
+    protected function saveAttachment(ImapAttachment $attachment, string $disk): ?string
     {
         try {
             $filename = $attachment->name ?? time().'_'.random_int(1000, 9999);
@@ -583,8 +712,7 @@ class FetchTicketEmailsJob implements ShouldQueue
             $basePath = config('helpdesk.attachments.path', 'helpdesk/attachments');
             $path = $basePath.'/'.date('Y/m/d').'/'.$filename;
 
-            // Save to storage
-            Storage::disk('local')->put($path, $attachment->getContent());
+            Storage::disk($disk)->put($path, $attachment->getContent());
 
             return $path;
         } catch (\Exception $e) {
@@ -626,13 +754,30 @@ class FetchTicketEmailsJob implements ShouldQueue
      */
     protected function extractHeaders(ImapMessage $message): array
     {
-        return [
+        $headers = [
             'Message-ID' => $this->stringAttribute($message->message_id),
             'In-Reply-To' => $this->stringAttribute($message->in_reply_to),
             'References' => $this->stringAttribute($message->references),
             'Subject' => $this->stringAttribute($message->subject),
             'Date' => $this->stringAttribute($message->date),
         ];
+
+        // Veredicto antispam que ya calculó el servidor de correo entrante
+        // (SpamAssassin, Rspamd y similares lo escriben en estas cabeceras).
+        // Se archiva tal cual llega: el chip del detalle enseña la puntuación
+        // REAL del filtro, no una inventada por nosotros. Los correos que no
+        // pasen por un filtro simplemente no traerán ninguna de las cuatro.
+        // Header::get() normaliza guiones y mayúsculas internamente.
+        $header = $message->getHeader();
+        foreach (['X-Spam-Score', 'X-Spam-Status', 'X-Spam-Level', 'X-Spam-Flag'] as $name) {
+            $value = $header?->get($name);
+            $value = $value === null ? null : trim((string) $value);
+            if ($value !== null && $value !== '') {
+                $headers[$name] = $value;
+            }
+        }
+
+        return $headers;
     }
 
     /**

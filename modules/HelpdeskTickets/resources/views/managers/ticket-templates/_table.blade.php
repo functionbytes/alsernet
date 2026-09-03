@@ -5,6 +5,9 @@
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
+                    @if($canManage)
+                        <th width="3%"><input type="checkbox" id="select-all-{{ $group }}" class="form-check-input" aria-label="Seleccionar todas las plantillas"></th>
+                    @endif
                     <th>Nombre</th>
                     <th>Asunto</th>
                     <th>Categoría</th>
@@ -18,6 +21,9 @@
             <tbody>
                 @foreach($templates as $template)
                     <tr>
+                        @if($canManage)
+                            <td><input type="checkbox" class="form-check-input bulk-checkbox-{{ $group }}" value="{{ $template->id }}" aria-label="Seleccionar plantilla {{ $template->name }}"></td>
+                        @endif
                         <td>
                             <div class="fw-semibold">{{ $template->name }}</div>
                             @if($template->description)

@@ -20,6 +20,18 @@ class TicketMentionNotification extends Notification implements ShouldBroadcast,
         public readonly User $mentionedBy
     ) {}
 
+    /**
+     * El User de esta app guarda firstname/lastname y no tiene columna
+     * 'name': ->name devolvía null y la notificación llegaba como
+     * " te menciono en el ticket #123", sin decir quién.
+     */
+    private function mentionedByName(): string
+    {
+        $full = trim($this->mentionedBy->firstname.' '.$this->mentionedBy->lastname);
+
+        return $full !== '' ? $full : (string) $this->mentionedBy->email;
+    }
+
     public function via(object $notifiable): array
     {
         $channels = ['database'];
@@ -36,7 +48,7 @@ class TicketMentionNotification extends Notification implements ShouldBroadcast,
         return [
             'type' => 'ticket_mention',
             'title' => 'Te mencionaron en un ticket',
-            'message' => "{$this->mentionedBy->name} te menciono en el ticket #{$this->ticket->ticket_number}",
+            'message' => "{$this->mentionedByName()} te menciono en el ticket #{$this->ticket->ticket_number}",
             'icon' => 'fas fa-at',
             'color' => 'info',
             'action_url' => route('manager.helpdesk.tickets.show', $this->ticket->id),

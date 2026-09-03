@@ -48,9 +48,13 @@ class UpdateTicketOnClose implements ShouldQueue
             'closed_at' => $ticket->closed_at,
         ]);
 
-        // Send satisfaction survey if customer has email
+        // Send satisfaction survey if customer has email.
+        // close_skip_survey lo marca el agente en el modal de cierre: en un
+        // cierre por spam, duplicado o abierto por error, preguntar por la
+        // experiencia sobra (y el correo llega igual, porque este listener no
+        // miraba ninguna condición más que tener email).
         $customer = $ticket->customer;
-        if ($customer && $customer->email && ! $ticket->rated_at) {
+        if ($customer && $customer->email && ! $ticket->rated_at && ! $ticket->close_skip_survey) {
             try {
                 // Botones de puntuación 1-5 con enlaces firmados (ruta portal.tickets.rate.email).
                 // Antes el blade usaba $ratingUrls, que el Mailable nunca pasaba → email roto.

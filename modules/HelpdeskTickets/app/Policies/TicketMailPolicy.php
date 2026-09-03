@@ -42,6 +42,18 @@ class TicketMailPolicy
             || $mail->ticket?->assignee_id === $user->id;
     }
 
+    /**
+     * Enviar/reenviar a un destinatario distinto del cliente del ticket —
+     * por defecto 'to' siempre se fija al email del cliente (ver
+     * TicketMailsController::resolveOutboundRecipient()); esto solo se
+     * consulta cuando se pide explícitamente otro destinatario.
+     */
+    public function sendToAnyRecipient(User $user): bool
+    {
+        return $user->hasPermissionTo('helpdesk.tickets.emails.send_to_any')
+            || $user->hasPermissionTo('helpdesk.tickets.manage');
+    }
+
     public function delete(User $user, TicketMail $mail): bool
     {
         return $user->hasPermissionTo('helpdesk.tickets.emails.delete')

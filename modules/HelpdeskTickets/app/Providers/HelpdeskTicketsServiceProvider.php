@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Helpdesk\Contracts\GdprExportContributor;
 use Modules\Helpdesk\Events\ConversationMarkedAsSpam;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\HelpdeskTickets\Console\Commands\AutoCloseTicketsCommand;
 use Modules\HelpdeskTickets\Console\Commands\AutoResponseTicketCommand;
 use Modules\HelpdeskTickets\Console\Commands\CleanupTrashedTicketsCommand;
@@ -72,6 +73,7 @@ use Modules\HelpdeskTickets\Services\AutomationEngine;
 use Modules\HelpdeskTickets\Services\Compliance\TicketGdprExportContributor;
 use Modules\HelpdeskTickets\Services\EscalationService;
 use Modules\HelpdeskTickets\Services\SlaService;
+use Modules\HelpdeskTickets\Services\TicketEmailLogPanelRenderer;
 use Modules\HelpdeskTickets\Services\TicketService;
 use Modules\HelpdeskTickets\Services\TicketUpdateService;
 use Modules\Theme\Services\NavService;
@@ -100,6 +102,7 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
         $this->registerMenus();
         $this->registerEventListeners();
         $this->registerRateLimiters();
+        $this->registerEmailLogPanel();
 
         // Seccion 'tickets' del export GDPR (derecho de acceso). Igual que la
         // cascada de borrado, NO se ata al toggle de integracion: es una
@@ -112,6 +115,44 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
     protected function registerEventListeners(): void
     {
         Event::listen(ConversationMarkedAsSpam::class, AddSpamSenderToBlacklist::class);
+    }
+
+    /**
+     * Conecta la ficha del ticket con el panel de auditoría de
+     * HelpdeskEmailActivity: registra TicketEmailLogPanelRenderer en el
+     * EntityPanelRegistry de ese módulo para que el detalle de un email
+     * cuyo entity_type sea Ticket::class muestre un mini-resumen de
+     * "tickets relacionados del mismo cliente" sin que HelpdeskEmailActivity
+     * necesite conocer a HelpdeskTickets (la dependencia va siempre en
+     * sentido satélite → HelpdeskEmailActivity, nunca al revés — ver el
+     * docblock de EmailLogEntityPanelRenderer).
+     *
+     * Se hace en boot() (no register()) a propósito: EntityPanelRegistry
+     * se registra como singleton en el register() de
+     * HelpdeskEmailActivityServiceProvider, y en Laravel todos los register()
+     * de todos los providers corren antes que cualquier boot() — así este
+     * boot() puede resolverlo sin preocuparse del orden de carga entre
+     * módulos.
+     *
+     * Doble guarda antes de tocar el registro: helpdesk_emaillog_enabled()
+     * (mismo patrón que el resto del provider con
+     * helpdesk_tickets_enabled()) cubre el toggle de integración en
+     * Settings, y class_exists() cubre que el módulo esté directamente
+     * desinstalado/desactivado — con cualquiera de las dos en falso, el
+     * autoloader ni siquiera necesita resolver la clase.
+     */
+    protected function registerEmailLogPanel(): void
+    {
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
+        if (! class_exists(EntityPanelRegistry::class)) {
+            return;
+        }
+
+        $this->app->make(EntityPanelRegistry::class)
+            ->register(new TicketEmailLogPanelRenderer);
     }
 
     /**
@@ -138,11 +179,37 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
             'title' => 'Tickets',
             'items' => [
                 [
-                    // /tickets "pelada" — a petición explícita, la bandeja de
-                    // emails ocupa la URL corta; el listado se mudó a /list.
+                    // La bandeja global propia (helpdesk_ticket_mails) se
+                    // retiró: este nombre de ruta ahora es un redirect hacia
+                    // /panel/helpdeskemailactivity?module=HelpdeskTickets (mismo
+                    // dato, auditoría cross-módulo unificada) — el
+                    // "responder/redactar" que sí era exclusivo de tickets se
+                    // reubicó dentro de la ficha del ticket (TicketsCrudController::showFull).
+                    //
+                    // 'permission' cambiado de 'helpdesk.tickets.emails.view' a
+                    // 'helpdeskemailactivity.view': la autorización real la impone el
+                    // destino del redirect (EmailLogController::index() ->
+                    // authorize('viewAny', EmailLog::class) -> EmailLogPolicy,
+                    // que exige exactamente ese permiso), no la ruta de origen.
+                    // Con el permiso viejo, quien tuviera SOLO
+                    // 'helpdesk.tickets.emails.view' veía el ítem, hacía clic, y
+                    // se llevaba un 403 al llegar al redirect. La migración
+                    // 2026_09_01_000000_grant_email_log_view_to_ticket_email_permission_holders
+                    // (módulo HelpdeskEmailActivity) hace el backfill de quien ya
+                    // tenía el permiso viejo asignado.
                     'label' => 'Emails enviados',
                     'route' => 'manager.helpdesk.tickets.emails.index',
                     'icon' => 'fas fa-paper-plane',
+                    'permission' => 'helpdeskemailactivity.view',
+                ],
+                [
+                    // Único pedazo de la antigua bandeja global que SÍ sigue
+                    // siendo una pantalla propia de tickets — "programado, aún
+                    // no enviado" es estado de trabajo, no auditoría de un
+                    // envío que ya ocurrió (lo que sí cubre helpdeskemailactivity).
+                    'label' => 'Programados',
+                    'route' => 'manager.helpdesk.tickets.scheduled',
+                    'icon' => 'fas fa-clock',
                     'permission' => 'helpdesk.tickets.emails.view',
                 ],
                 [
@@ -151,17 +218,26 @@ class HelpdeskTicketsServiceProvider extends ServiceProvider
                     'icon' => 'fas fa-ticket',
                     'permission' => 'helpdesk.tickets.view',
                 ],
-                [
-                    'label' => 'Tickets recurrentes',
-                    'route' => 'manager.helpdesk.recurring-tickets.index',
-                    'icon' => 'fas fa-repeat',
-                    'permission' => 'helpdesk.tickets.view',
-                ],
+                // "Tickets recurrentes" se movió a Ajustes > Helpdesk · Tickets
+                // (es una regla de configuración — cada cuánto se generan
+                // tickets — no una bandeja de trabajo del día a día).
                 [
                     'label' => 'Plantillas',
                     'route' => 'manager.helpdesk.ticket-templates.index',
                     'icon' => 'fas fa-file-lines',
                     'permission' => 'helpdesk.tickets.manage',
+                ],
+                [
+                    // Antes vivía en la sección "Reportes" del Helpdesk core,
+                    // mezclado con reportes de conversaciones (CSAT, Clientes
+                    // en riesgo) que nada tienen que ver con tickets. Al
+                    // registrarse aquí, además, el enlace desaparece del menú
+                    // cuando el módulo está desactivado en vez de quedar
+                    // apuntando a una pantalla "no disponible".
+                    'label' => 'Incumplimientos SLA',
+                    'route' => 'manager.helpdesk.reports.sla-breaches',
+                    'icon' => 'fas fa-gauge-high',
+                    'permission' => 'helpdesk.reports.view',
                 ],
             ],
         ]);

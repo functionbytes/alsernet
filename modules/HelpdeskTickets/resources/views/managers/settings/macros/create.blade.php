@@ -17,7 +17,7 @@
                         // Las llaves se concatenan a proposito: escritas de
                         // seguido, Blade las tomaria por una expresion suya.
                         $plantillaAcciones = json_encode(
-                            [['type' => 'reply', 'body' => 'Hola '.'{'.'{customer_name}'.'}'.',']],
+                            [['type' => 'reply', 'subject' => 'Re: '.'{'.'{ticket_subject}'.'}', 'body' => 'Hola '.'{'.'{customer_name}'.'}'.',']],
                             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
                         );
                     @endphp
@@ -115,6 +115,9 @@
                         @else
                             {{ $spec['hint'] ?? '' }}
                         @endif
+                        @foreach($spec['optional'] ?? [] as $optKey => $optHint)
+                            <br><code>{{ $optKey }}</code> (opcional): {{ $optHint }}
+                        @endforeach
                     </div>
                 @endforeach
             </div>
@@ -124,7 +127,7 @@
                 <h6 class="mb-0 fw-bold">Variables disponibles</h6>
             </div>
             <div class="card-body">
-                <p class="small text-muted mb-3">Se sustituyen al aplicar la macro, dentro de <code>body</code>.</p>
+                <p class="small text-muted mb-3">Se sustituyen al aplicar la macro, dentro de <code>body</code> (y de <code>subject</code> en la accion <code>reply</code>).</p>
                 @foreach(\Modules\HelpdeskTickets\Services\TicketVariableInterpolator::availableVariables() as $group => $vars)
                     <div class="mb-3">
                         <div class="small fw-semibold mb-1">{{ $group }}</div>
@@ -145,7 +148,7 @@
             <div class="card-body">
                 <p class="small text-muted mb-2">Responder al cliente, asignar el ticket y cerrarlo.</p>
                                 <pre class="small bg-light p-2 rounded mb-0 overflow-auto">[
-                  {"type": "reply", "body": "Hola @{{customer_name}}, ya esta resuelto."},
+                  {"type": "reply", "subject": "Re: @{{ticket_subject}}", "body": "Hola @{{customer_name}}, ya esta resuelto."},
                   {"type": "assign_user", "value": 5},
                   {"type": "close"}
                 ]</pre>

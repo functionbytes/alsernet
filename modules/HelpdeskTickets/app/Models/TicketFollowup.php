@@ -21,6 +21,9 @@ class TicketFollowup extends Model
         'note',
         'is_sent',
         'sent_at',
+        'step',
+        'cancel_if_customer_replies',
+        'cancelled_at',
     ];
 
     protected function casts(): array
@@ -28,7 +31,10 @@ class TicketFollowup extends Model
         return [
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'is_sent' => 'boolean',
+            'cancel_if_customer_replies' => 'boolean',
+            'step' => 'integer',
         ];
     }
 
@@ -40,5 +46,13 @@ class TicketFollowup extends Model
     public function user(): BelongsTo
     {
         return $this->belongsToHelpdeskUser('user_id', 'user');
+    }
+
+    /**
+     * Pasos que siguen vivos: ni enviados ni cancelados.
+     */
+    public function scopePending($query)
+    {
+        return $query->where('is_sent', false)->whereNull('cancelled_at');
     }
 }

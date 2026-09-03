@@ -7,7 +7,6 @@ use HTMLPurifier_Config;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Modules\HelpdeskTickets\Models\Concerns\BelongsToHelpdeskUser;
 
@@ -45,6 +44,7 @@ class TicketMail extends Model
         'sent_at',
         'delivered_at',
         'scheduled_at',
+        'cancel_if_customer_replies',
         'raw_email',
     ];
 
@@ -60,6 +60,7 @@ class TicketMail extends Model
             'sent_at' => 'datetime',
             'delivered_at' => 'datetime',
             'scheduled_at' => 'datetime',
+            'cancel_if_customer_replies' => 'boolean',
             'deleted_at' => 'datetime',
         ];
     }
@@ -222,96 +223,6 @@ class TicketMail extends Model
     public function isReply(): bool
     {
         return $this->in_reply_to !== null || $this->references !== null;
-    }
-
-    /**
-     * Get the original email this is replying to
-     */
-    public function getOriginalEmail(): ?self
-    {
-        if (! $this->in_reply_to) {
-            return null;
-        }
-
-        return static::where('message_id', $this->in_reply_to)->first();
-    }
-
-    /**
-     * Get all emails in the thread (conversation chain)
-     */
-    public function getThread(): Collection
-    {
-        // Start with all emails for this ticket
-        $allEmails = static::where('ticket_id', $this->ticket_id)
-            ->oldest()
-            ->get();
-
-        // Build thread by tracing references
-        return $this->buildThreadChain($allEmails);
-    }
-
-    /**
-     * Get all replies to this email
-     */
-    public function getReplies(): Collection
-    {
-        return static::where('ticket_id', $this->ticket_id)
-            ->where(function ($query) {
-                $query->where('in_reply_to', $this->message_id)
-                    ->orWhere('references', 'like', '%'.$this->message_id.'%');
-            })
-            ->oldest()
-            ->get();
-    }
-
-    /**
-     * Get the root email in the thread
-     */
-    public function getRootEmail(): self
-    {
-        $current = $this;
-
-        while ($parent = $current->getOriginalEmail()) {
-            $current = $parent;
-        }
-
-        return $current;
-    }
-
-    /**
-     * Build thread chain from all emails
-     */
-    private function buildThreadChain(Collection $allEmails): Collection
-    {
-        $chain = collect();
-        $current = $this;
-
-        // Go to root first
-        while ($parent = $current->getOriginalEmail()) {
-            $current = $parent;
-        }
-
-        // Build chain forward
-        $visited = [];
-
-        while ($current && ! in_array($current->id, $visited)) {
-            $visited[] = $current->id;
-            $chain->push($current);
-
-            // Find next reply
-            $nextEmail = static::where('ticket_id', $this->ticket_id)
-                ->where(function ($query) use ($current) {
-                    $query->where('in_reply_to', $current->message_id)
-                        ->orWhere('references', 'like', '%'.$current->message_id.'%');
-                })
-                ->whereNotIn('id', $visited)
-                ->oldest()
-                ->first();
-
-            $current = $nextEmail;
-        }
-
-        return $chain;
     }
 
     // ────────────────────────────────────────────────────────────────
@@ -557,6 +468,74 @@ class TicketMail extends Model
         return self::purifyHtml($this->body_html);
     }
 
+    /**
+     * Veredicto antispam del correo, leído de las cabeceras que archivó
+     * FetchTicketEmailsJob::extractHeaders() — es la puntuación REAL que puso
+     * el filtro del servidor entrante (SpamAssassin, Rspamd…), no una
+     * calculada aquí. Devuelve null cuando el correo no pasó por ningún
+     * filtro o el filtro no dejó ninguna de las cuatro cabeceras: en ese
+     * caso el detalle no pinta el chip, en vez de enseñar un 0 que
+     * significaría "limpio" sin que nadie lo haya comprobado.
+     *
+     * @return array{score: float, threshold: float, is_spam: bool}|null
+     */
+    public function spamVerdict(): ?array
+    {
+        $headers = $this->headers ?? [];
+        if (! is_array($headers) || $headers === []) {
+            return null;
+        }
+
+        // Las cabeceras se archivan con su nombre original ("X-Spam-Score");
+        // se indexa en minúsculas para no depender de cómo las escribió el
+        // servidor de correo, que varía entre implementaciones.
+        $lower = [];
+        foreach ($headers as $name => $value) {
+            $lower[strtolower((string) $name)] = is_string($value) ? trim($value) : $value;
+        }
+
+        $score = null;
+        $threshold = null;
+
+        // 1) X-Spam-Score: "1.2" o "-0.8" a secas.
+        if (isset($lower['x-spam-score']) && is_numeric($lower['x-spam-score'])) {
+            $score = (float) $lower['x-spam-score'];
+        }
+
+        // 2) X-Spam-Status: "No, score=1.2 required=5.0 tests=..." — el
+        // formato de SpamAssassin, que además trae el umbral configurado.
+        if (isset($lower['x-spam-status']) && is_string($lower['x-spam-status'])) {
+            if ($score === null && preg_match('/score=(-?\d+(?:\.\d+)?)/i', $lower['x-spam-status'], $m)) {
+                $score = (float) $m[1];
+            }
+            if (preg_match('/required=(-?\d+(?:\.\d+)?)/i', $lower['x-spam-status'], $m)) {
+                $threshold = (float) $m[1];
+            }
+        }
+
+        // 3) X-Spam-Level: una fila de asteriscos, uno por punto entero.
+        // Es el último recurso: solo da la parte entera de la puntuación.
+        if ($score === null && isset($lower['x-spam-level']) && is_string($lower['x-spam-level'])) {
+            $stars = substr_count($lower['x-spam-level'], '*');
+            if ($stars > 0) {
+                $score = (float) $stars;
+            }
+        }
+
+        if ($score === null) {
+            return null;
+        }
+
+        $threshold ??= 5.0;
+
+        return [
+            'score' => $score,
+            'threshold' => $threshold,
+            'is_spam' => $score >= $threshold
+                || strtolower((string) ($lower['x-spam-flag'] ?? '')) === 'yes',
+        ];
+    }
+
     public static function purifyHtml(?string $html): string
     {
         if ($html === null || trim($html) === '') {
@@ -602,50 +581,6 @@ class TicketMail extends Model
     // ────────────────────────────────────────────────────────────────
     // Static Factory Methods
     // ────────────────────────────────────────────────────────────────
-
-    /**
-     * Parse incoming email from raw content
-     */
-    public static function parseIncomingEmail(string $rawEmail): array
-    {
-        // Basic parsing - in production, use a library like php-mime-mail-parser
-        $lines = explode("\n", $rawEmail);
-        $headers = [];
-        $body = '';
-        $bodyStarted = false;
-
-        foreach ($lines as $line) {
-            if (! $bodyStarted) {
-                if (trim($line) === '') {
-                    $bodyStarted = true;
-
-                    continue;
-                }
-
-                if (strpos($line, ':') !== false) {
-                    [$key, $value] = explode(':', $line, 2);
-                    $headers[trim($key)] = trim($value);
-                }
-            } else {
-                $body .= $line."\n";
-            }
-        }
-
-        return [
-            'message_id' => $headers['Message-ID'] ?? null,
-            'in_reply_to' => $headers['In-Reply-To'] ?? null,
-            'references' => $headers['References'] ?? null,
-            'from' => $headers['From'] ?? null,
-            'to' => $headers['To'] ?? null,
-            'cc' => $headers['Cc'] ?? null,
-            'bcc' => $headers['Bcc'] ?? null,
-            'subject' => $headers['Subject'] ?? null,
-            'body_text' => trim($body),
-            'body_html' => null,
-            'headers' => $headers,
-            'raw_email' => $rawEmail,
-        ];
-    }
 
     /**
      * Create a mail record from inbound email data

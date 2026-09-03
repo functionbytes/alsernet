@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Helpdesk\Models\Company;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskContacts\Services\ContactAggregatorService;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Nwidart\Modules\Facades\Module;
 
 /**
@@ -74,5 +75,85 @@ class CustomerSummaryService
             'avg_csat' => $resumen['stats']['avgCsat'] ?? null,
             'integrations' => collect($resumen['integrations'] ?? [])->filter(fn (array $i) => $i['connected'])->values()->all(),
         ];
+    }
+
+    /**
+     * Modal 34 "Identidades del cliente".
+     *
+     * Un mismo contacto escribe por email, WhatsApp, redes o el formulario de
+     * PrestaShop, y todo cuelga de una sola ficha. Aquí se reúnen los canales
+     * que la ficha ya guarda (columnas propias + helpdesk_customer_external_ids)
+     * con cuántos tickets llegó por cada uno, para poder ver de un vistazo si
+     * hay una identidad que en realidad es de otra persona.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function identities(?Customer $customer): array
+    {
+        if (! $customer) {
+            return [];
+        }
+
+        $identities = [];
+
+        // Canales con columna propia en helpdesk_customers.
+        foreach ([
+            ['email', 'Email', 'fa-regular fa-envelope', $customer->email, true],
+            ['phone', 'Teléfono', 'fa-solid fa-phone', $customer->phone, false],
+            ['whatsapp', 'WhatsApp', 'fa-brands fa-whatsapp', $customer->whatsapp_phone, false],
+            ['facebook', 'Facebook', 'fa-brands fa-facebook', $customer->facebook_psid, false],
+            ['instagram', 'Instagram', 'fa-brands fa-instagram', $customer->instagram_id, false],
+        ] as [$channel, $label, $icon, $value, $isPrimary]) {
+            if (! $value) {
+                continue;
+            }
+            $identities[] = [
+                'channel' => $channel,
+                'label' => $label,
+                'icon' => $icon,
+                'value' => $value,
+                'is_primary' => $isPrimary,
+                'source' => 'ficha',
+            ];
+        }
+
+        // Identidades en plataformas externas (PrestaShop, ERP…).
+        foreach ($customer->externalIds as $external) {
+            $identities[] = [
+                'channel' => $external->platform,
+                'label' => ucfirst((string) $external->platform),
+                'icon' => 'fa-solid fa-plug',
+                'value' => $external->external_id,
+                'is_primary' => false,
+                'source' => 'integración',
+            ];
+        }
+
+        // Direcciones distintas de la principal que YA han escrito a este
+        // cliente: son las candidatas reales a unificar, y no están en
+        // ninguna columna — salen del histórico de correo entrante.
+        $extraAddresses = TicketMail::query()
+            ->whereIn('ticket_id', $customer->tickets()->select('id'))
+            ->where('direction', 'inbound')
+            ->whereNotNull('from')
+            ->when($customer->email, fn ($q) => $q->where('from', '!=', $customer->email))
+            ->select('from')
+            ->selectRaw('COUNT(*) as hits')
+            ->groupBy('from')
+            ->pluck('hits', 'from');
+
+        foreach ($extraAddresses as $address => $hits) {
+            $identities[] = [
+                'channel' => 'email',
+                'label' => 'Email secundario',
+                'icon' => 'fa-regular fa-envelope',
+                'value' => $address,
+                'is_primary' => false,
+                'source' => 'detectado en el hilo',
+                'hits' => $hits,
+            ];
+        }
+
+        return $identities;
     }
 }

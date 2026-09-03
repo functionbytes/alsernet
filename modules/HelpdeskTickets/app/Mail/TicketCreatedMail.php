@@ -10,8 +10,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**

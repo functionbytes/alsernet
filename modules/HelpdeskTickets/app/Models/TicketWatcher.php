@@ -18,6 +18,8 @@ class TicketWatcher extends Model
     protected $fillable = [
         'ticket_id',
         'user_id',
+        'notify_customer_replies',
+        'notify_internal_notes',
     ];
 
     protected function casts(): array
@@ -25,6 +27,8 @@ class TicketWatcher extends Model
         return [
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
+            'notify_customer_replies' => 'boolean',
+            'notify_internal_notes' => 'boolean',
         ];
     }
 

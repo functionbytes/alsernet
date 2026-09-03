@@ -11,8 +11,8 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -23,7 +23,7 @@ use Modules\HelpdeskTickets\Models\Ticket;
  *
  * getEmailLogEntityType() devuelve el FQCN (Ticket::class), no el string
  * literal 'ticket' de TracksTicketEmailLog — ese trait tiene un mismatch
- * conocido con la config de HelpdeskEmailLog (entity_labels indexa por FQCN)
+ * conocido con la config de HelpdeskEmailActivity (entity_labels indexa por FQCN)
  * que rompe el enlace de vuelta al ticket; se implementa la interfaz
  * directamente aquí para no arrastrar el mismo bug, igual que TicketReplyMail.
  */

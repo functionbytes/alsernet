@@ -24,6 +24,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Causa raíz del cierre
+    |--------------------------------------------------------------------------
+    | Distinta de close_reasons: el motivo dice CÓMO acabó el ticket
+    | ("resuelto", "duplicado") y la causa raíz dice POR QUÉ existió. Es lo
+    | que se agrupa en los informes para ver qué genera trabajo repetido, así
+    | que va aparte y NO se comparte con Conversaciones.
+    */
+    'close_root_causes' => [
+        'documentation' => 'Documentación incompleta',
+        'configuration' => 'Error de configuración',
+        'pricing' => 'Precio o cotización',
+        'integration' => 'Incidencia de integración',
+        'informational' => 'Consulta informativa',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Motivos de cierre
     |--------------------------------------------------------------------------
     | Mismas claves/etiquetas que el modal "Cerrar conversación" del módulo

@@ -53,7 +53,9 @@ class TicketsController extends Controller
         $this->authorize('create', Ticket::class);
 
         $categories = TicketCategory::active()->ordered()->get(['id', 'name']);
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'email']);
+        // Mismo límite que TicketsCrudController::create() (lado manager): sin
+        // esto la query trae todos los clientes para un <select> HTML.
+        $customers = Customer::orderBy('name')->limit(500)->get(['id', 'name', 'email']);
         $templates = TicketTemplate::active()
             ->visibleTo(auth()->id())
             ->orderBy('name')
@@ -94,30 +96,7 @@ class TicketsController extends Controller
 
         $ticket->load(['customer', 'status', 'category', 'assignee', 'items.user', 'items.author']);
 
-        $userId = auth()->id();
-        $itemIds = $ticket->items->pluck('id');
-
-        if ($itemIds->isNotEmpty()) {
-            $alreadyRead = TicketRead::where('user_id', $userId)
-                ->whereIn('ticket_item_id', $itemIds)
-                ->pluck('ticket_item_id')
-                ->all();
-
-            $toInsert = $itemIds->diff($alreadyRead)
-                ->map(fn ($id) => [
-                    'ticket_item_id' => $id,
-                    'user_id' => $userId,
-                    'read_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-                ->values()
-                ->all();
-
-            if (! empty($toInsert)) {
-                TicketRead::insert($toInsert);
-            }
-        }
+        TicketRead::markAllReadFor($ticket, auth()->id());
 
         $statuses = TicketStatus::active()->ordered()->get(['id', 'name', 'slug', 'color']);
 

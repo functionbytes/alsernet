@@ -247,6 +247,24 @@ class ManagersTicketsCrudTest extends TestCase
             ->assertOk();
     }
 
+    /**
+     * El composer de "correo suelto" que antes solo existía en la bandeja
+     * global /tickets/emails (retirada) ahora vive aquí, apuntando al mismo
+     * endpoint (manager.helpdesk.tickets.emails.store) — ver
+     * ticket-detail.js#tkt-compose-mail-form.
+     */
+    public function test_ticket_detail_page_includes_the_email_composer_modal(): void
+    {
+        $ticket = $this->createTicket();
+
+        $this->actingAs($this->manager)
+            ->get(route('manager.helpdesk.tickets.show-full', $ticket))
+            ->assertOk()
+            ->assertSee('tkt-compose-mail-modal', false)
+            ->assertSee('tkt-compose-template', false)
+            ->assertSee(route('manager.helpdesk.tickets.emails.store'), false);
+    }
+
     // ─── block sender quick action ───────────────────────────────────────────
     //
     // No hay caso "sin permiso" que probar aquí: esta página solo la abren

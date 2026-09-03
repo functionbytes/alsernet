@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Services;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Notifications\TicketMentionNotification;
 
@@ -13,12 +14,34 @@ class MentionService
      */
     public function notifyMentions(string $body, Ticket $ticket): void
     {
+        $currentUserId = auth()->id();
+
+        foreach ($this->resolveMentions($body) as $user) {
+            if ($user->id === $currentUserId) {
+                continue;
+            }
+
+            $user->notify(new TicketMentionNotification($ticket, auth()->user()));
+        }
+    }
+
+    /**
+     * Agentes mencionados con @Nombre dentro de un texto, sin repetir.
+     *
+     * Se extrajo de notifyMentions() para que el panel de notas pueda pintar
+     * a quién se mencionó: la mención no se guarda en ninguna columna, se
+     * deduce del propio texto, así que el panel y la notificación tienen que
+     * usar exactamente el mismo criterio o mostrarían cosas distintas.
+     *
+     * @return Collection<int, User>
+     */
+    public function resolveMentions(string $body): Collection
+    {
         if (! preg_match_all('/@([\w][\w\s]*?)(?=[,.\n]|$)/u', $body, $matches)) {
-            return;
+            return collect();
         }
 
-        $currentUserId = auth()->id();
-        $notified = [];
+        $found = collect();
 
         foreach ($matches[1] as $name) {
             $name = trim($name);
@@ -38,10 +61,11 @@ class MentionService
                 ->whereRaw("TRIM(CONCAT(firstname, ' ', lastname)) LIKE ?", [$name.'%'])
                 ->first();
 
-            if ($user && $user->id !== $currentUserId && ! in_array($user->id, $notified)) {
-                $notified[] = $user->id;
-                $user->notify(new TicketMentionNotification($ticket, auth()->user()));
+            if ($user && ! $found->contains('id', $user->id)) {
+                $found->push($user);
             }
         }
+
+        return $found;
     }
 }

@@ -39,10 +39,17 @@ class TicketAiSuggestionController extends Controller
     {
         $this->authorize('update', $ticket);
 
+        // El tono llega del modal "Auto-respuesta IA". Lista cerrada: cualquier
+        // otro valor se ignora y se usa el tono por defecto, en vez de colarse
+        // como texto libre dentro del prompt.
+        $tone = $request->string('tone')->toString();
+        $tone = in_array($tone, ['formal', 'cercano', 'breve'], true) ? $tone : null;
+
         $suggestion = $service->suggest(
             $ticket,
             (int) $request->user()?->id,
             $request->boolean('refresh'),
+            $tone,
         );
 
         if ($suggestion === null) {
@@ -127,14 +134,61 @@ class TicketAiSuggestionController extends Controller
         ]);
     }
 
+    /**
+     * Candidatos a duplicado ANTES de crear el ticket (modal 35).
+     *
+     * duplicates() necesita un Ticket ya guardado; aquí solo hay lo que el
+     * agente lleva escrito en el formulario, así que se compara por texto.
+     */
+    public function duplicatesPreview(Request $request, TicketDuplicateService $duplicates): JsonResponse
+    {
+        $this->authorize('viewAny', Ticket::class);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'customer_id' => ['required', 'integer'],
+        ]);
+
+        $candidates = $duplicates->candidatesByText($validated['subject'], (int) $validated['customer_id']);
+
+        return response()->json([
+            'success' => true,
+            'window_days' => (int) config('helpdeskagents.ticket_similarity.duplicate_window_days', 14),
+            'duplicates' => $candidates->map(fn (array $c): array => [
+                'id' => $c['ticket']->id,
+                'ticket_number' => $c['ticket']->ticket_number,
+                'subject' => $c['ticket']->subject,
+                'status' => $c['ticket']->status?->name,
+                'similarity' => $c['similarity'],
+                'same_customer' => $c['same_customer'],
+                'url' => route('manager.helpdesk.tickets.show-full', $c['ticket']->id),
+            ])->all(),
+        ]);
+    }
+
     public function duplicates(Ticket $ticket, TicketDuplicateService $duplicates): JsonResponse
     {
         $this->authorize('view', $ticket);
 
+        // Los embeddings pueden estar desactivados (lo están por defecto): en
+        // ese caso candidatesFor() devuelve vacío y el aviso no se dispararía
+        // nunca. Se cae al parecido de texto, que no depende de ningún
+        // proveedor externo.
         $candidates = $duplicates->candidatesFor($ticket);
+
+        if ($candidates->isEmpty()) {
+            $candidates = $duplicates->candidatesByText(
+                (string) $ticket->subject,
+                $ticket->customer_id,
+                $ticket->id,
+            );
+        }
 
         return response()->json([
             'success' => true,
+            // La ventana real, para que el modal la diga en vez de decir "la
+            // configurada" y obligar a ir a buscarla.
+            'window_days' => (int) config('helpdeskagents.ticket_similarity.duplicate_window_days', 14),
             'duplicates' => $candidates->map(fn (array $c): array => [
                 'id' => $c['ticket']->id,
                 'ticket_number' => $c['ticket']->ticket_number,

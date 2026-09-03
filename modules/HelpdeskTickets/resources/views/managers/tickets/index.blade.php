@@ -3,6 +3,15 @@
 @section('title', 'Tickets')
 
 @push('css')
+    {{-- Las dos familias del mockup. El tema ya carga Inter, pero solo hasta
+         el peso 700 (el mockup usa 800 en los titulares) y NO carga JetBrains
+         Mono en absoluto: sin esto, todo el texto monoespaciado de la pantalla
+         (nº de ticket, fechas, Message-ID, contadores) caía al monospace del
+         sistema, con métricas distintas a las del mockup — de ahí que la fila
+         del listado midiera 2px más de la cuenta. --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
     {{-- ?v=filemtime evita que el navegador sirva una versión en caché tras
          cada cambio (mismo patrón que modules/Helpdesk/.../inbox/index.blade.php) --}}
     <link rel="stylesheet" href="{{ asset('modules/helpdesktickets/css/tickets-app.css') }}?v={{ @filemtime(public_path('modules/helpdesktickets/css/tickets-app.css')) }}">
@@ -19,6 +28,12 @@
     if ($selectedTicket && ! $ticketsPayload->contains('id', $selectedTicket->id)) {
         $ticketsPayload->prepend($selectedTicket->toListRow());
     }
+
+    // Plantillas de las URLs de acción del listado (PERF-09): una sola
+    // generación de las ~27 rutas por respuesta en vez de una por fila —
+    // toListRow() ya no las incluye, tickets-app.js las expande sustituyendo
+    // '__TICKET__' por el id de cada ticket. Ver el docblock del método.
+    $ticketUrlTemplates = \Modules\HelpdeskTickets\Models\Ticket::listRowUrlTemplates();
 @endphp
 
 {{-- Sin page_header y con content_full_width: mismo criterio que el inbox
@@ -42,7 +57,12 @@
          data-bulk-url="{{ route('manager.helpdesk.tickets.bulk') }}"
          data-index-url="{{ route('manager.helpdesk.tickets.index') }}"
          data-emails-index-url="{{ route('manager.helpdesk.tickets.emails.index') }}"
+         {{-- Acciones por mensaje del hilo (reenviar / ver original): operan
+              sobre el TicketMail asociado al item, de ahí el placeholder. --}}
+         data-mail-resend-url-template="{{ route('manager.helpdesk.tickets.emails.resend', ['mail' => '__MAIL__']) }}"
+         data-mail-data-url-template="{{ route('manager.helpdesk.tickets.emails.data', ['mail' => '__MAIL__']) }}"
          data-notes-store-url-template="{{ route('manager.helpdesk.tickets.notes.store', ['ticket' => '__TICKET__']) }}"
+         data-ticket-url-templates="{{ json_encode($ticketUrlTemplates, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-views-store-url="{{ route('manager.helpdesk.tickets.views.store') }}"
          data-contacts-sync-url-template="{{ Nwidart\Modules\Facades\Module::isEnabled('HelpdeskContacts') ? route('contacts.sync', ['customer' => '__CUSTOMER__']) : '' }}"
          data-macros-list-url="{{ route('manager.helpdesk.macros.list') }}"
@@ -50,20 +70,98 @@
          data-typing-url-template="{{ route('manager.helpdesk.tickets.typing', ['ticket' => '__TICKET__']) }}"
          data-export-url-template="{{ route('manager.helpdesk.tickets.export', ['format' => '__FORMAT__']) }}{{ request()->getQueryString() ? '?'.request()->getQueryString() : '' }}"
          data-automations-index-url="{{ route('manager.helpdesk.settings.automations.index') }}"
+         {{-- Modal de horario y SLA. --}}
+         data-sla-calendar-url="{{ route('manager.helpdesk.tickets.sla-calendar') }}"
+         data-sla-pause-status-url="{{ route('manager.helpdesk.tickets.sla-calendar.pause-status') }}"
+         {{-- Modal de reglas de escalado. --}}
+         data-automations-list-url="{{ route('manager.helpdesk.tickets.automations.index') }}"
+         data-automations-store-url="{{ route('manager.helpdesk.tickets.automations.store') }}"
+         data-automations-preview-url="{{ route('manager.helpdesk.tickets.automations.preview') }}"
+         data-automations-toggle-url-template="{{ route('manager.helpdesk.tickets.automations.toggle', ['automation' => '__AUTOMATION__']) }}"
+         {{-- Modal de carga de agentes: resumen y ajustes de reparto. --}}
+         data-workload-overview-url="{{ route('manager.helpdesk.tickets.workload.overview') }}"
+         data-workload-assignment-url="{{ route('manager.helpdesk.tickets.workload.assignment') }}"
+         {{-- Modal de buzones de entrada: estado, comportamiento y prueba. --}}
+         data-mailboxes-url="{{ route('manager.helpdesk.tickets.mailboxes.index') }}"
+         data-mailbox-behavior-url-template="{{ route('manager.helpdesk.tickets.mailboxes.behavior', ['channel' => '__MBX__']) }}"
+         data-mailbox-test-url-template="{{ route('manager.helpdesk.tickets.mailboxes.test', ['channel' => '__MBX__']) }}"
+         {{-- Modal de tickets recurrentes: alta, edición y pausa. --}}
+         data-recurring-ops-url="{{ route('manager.helpdesk.tickets.recurring.index') }}"
+         data-recurring-store-url="{{ route('manager.helpdesk.tickets.recurring.store') }}"
+         data-recurring-update-url-template="{{ route('manager.helpdesk.tickets.recurring.update', ['recurringTicket' => '__REC__']) }}"
+         data-recurring-toggle-url-template="{{ route('manager.helpdesk.tickets.recurring.toggle', ['recurringTicket' => '__REC__']) }}"
+         {{-- Preferencias de aviso del agente para los eventos de ticket. --}}
+         data-notif-prefs-url="{{ route('manager.helpdesk.tickets.notification-preferences') }}"
+         data-notif-prefs-update-url="{{ route('manager.helpdesk.tickets.notification-preferences.update') }}"
+         {{-- Cuántos tickets saldrían con el alcance elegido en el modal de exportar. --}}
+         data-export-estimate-url="{{ route('manager.helpdesk.tickets.export-estimate') }}"
+         {{-- Buscador de ticket destino para "Fusionar" y "Vincular ticket". --}}
+         data-ticket-search-url="{{ route('manager.helpdesk.tickets.search') }}"
+         {{-- Destino de "Abrir el panel de avisos" del modal de notificaciones. --}}
+         @if (Route::has('notifications.index'))
+         data-notifications-index-url="{{ route('notifications.index') }}"
+         @endif
+         {{-- Enlace "Auditoría" del panel de historial. El módulo Activity es
+              opcional: sin él, el botón simplemente no se pinta. --}}
+         @if (Route::has('activity.audit'))
+         data-activity-audit-url="{{ route('activity.audit') }}"
+         @endif
+         {{-- "Calendario" de la card SLA: el horario laboral vive en la
+              política (columna business_hours), así que el enlace lleva ahí. --}}
+         data-sla-policies-url="{{ route('manager.helpdesk.settings.ticket-sla-policies.index') }}"
+         data-ticket-templates-index-url="{{ route('manager.helpdesk.ticket-templates.index') }}"
+         data-ticket-create-url="{{ route('manager.helpdesk.tickets.create') }}"
+         data-settings-snapshot-url="{{ route('manager.helpdesk.tickets.settings-snapshot') }}"
+         data-email-channels-url="{{ route('manager.helpdesk.settings.email-channels.index') }}"
+         data-recurring-url="{{ route('manager.helpdesk.recurring-tickets.index') }}"
+         {{-- Modal 21: guarda la plantilla editada. PUT real da 405 por AJAX en
+              este entorno Docker, así que la plantilla de URL se usa con POST +
+              _method=PUT (gotcha ya documentado del proyecto). --}}
+         data-canned-update-url-template="{{ route('manager.helpdesk.settings.ticket-canned-replies.update', ['reply' => '__REPLY__']) }}"
+         {{-- Remitentes elegibles del modal "Redactar email". Lista cerrada
+              (ver TicketMailsController::availableSenders()); el backend
+              vuelve a validar contra ella, no se fía de este campo. --}}
+         data-senders="{{ json_encode(\Modules\HelpdeskTickets\Http\Controllers\Managers\TicketMailsController::availableSenders(), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          @if(Nwidart\Modules\Facades\Module::isEnabled('HelpdeskContacts'))
          data-contacts-merge-search-url-template="{{ route('contacts.merge.search', ['customer' => '__CUSTOMER__']) }}"
          data-contacts-merge-preview-url-template="{{ route('contacts.merge.preview', ['customer' => '__CUSTOMER__']) }}"
          data-contacts-merge-execute-url-template="{{ route('contacts.merge.execute', ['customer' => '__CUSTOMER__']) }}"
          @endif
          data-ops-url="{{ route('manager.helpdesk.tickets.ops') }}"
+         data-macros-index-url="{{ route('manager.helpdesk.settings.macros.index') }}"
+         {{-- Modal 35 "Nuevo ticket": crear sin salir del listado. Los
+              clientes van en el payload (son 84, no hace falta un buscador
+              contra el servidor); el aviso de duplicado se pide aparte. --}}
+         data-ticket-store-url="{{ route('manager.helpdesk.tickets.store') }}"
+         data-duplicates-preview-url="{{ route('manager.helpdesk.tickets.duplicates-preview') }}"
+         data-customers="{{ json_encode($customers, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         data-queue-retry-url="{{ route('manager.helpdesk.tickets.queue.retry') }}"
+         data-queue-flush-url="{{ route('manager.helpdesk.tickets.queue.flush') }}"
          data-workload-url="{{ route('manager.helpdesk.tickets.workload') }}"
+         {{-- Modal 22: SPF/DKIM/DMARC reales del dominio de envío. --}}
+         data-reputation-url="{{ route('manager.helpdesk.tickets.reputation') }}"
          data-workload-distribute-url="{{ route('manager.helpdesk.tickets.workload.distribute') }}"
-         data-statuses="{{ json_encode($statuses->map(fn ($s) => ['id' => $s->id, 'name' => $s->name, 'slug' => $s->slug]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- description/stops_sla_timer/is_closed alimentan el modal "Cambiar
+              estado": describen la consecuencia real de cada estado en ESTE
+              catálogo en vez de un texto fijo por slug, que mentiría en
+              cuanto alguien añada o reconfigure un estado. --}}
+         data-statuses="{{ json_encode($statuses->map(fn ($s) => [
+             'id' => $s->id,
+             'name' => $s->name,
+             'slug' => $s->slug,
+             'description' => $s->description,
+             'stops_sla' => (bool) $s->stops_sla_timer,
+             'is_closed' => (bool) $s->is_closed,
+         ]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-categories="{{ json_encode($categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-groups="{{ json_encode($groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-agents-full="{{ json_encode($agents->map(fn ($a) => ['id' => $a->id, 'name' => trim($a->firstname.' '.$a->lastname)]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-canned-replies="{{ json_encode($cannedReplies->map(fn ($r) => ['id' => $r->id, 'title' => $r->title, 'content' => $r->content, 'short_code' => $r->short_code]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- Modal 44: crear un ticket ya relleno desde una plantilla. --}}
+         data-ticket-templates="{{ json_encode($ticketTemplates->map(fn ($tpl) => ['id' => $tpl->id, 'name' => $tpl->name, 'description' => $tpl->description, 'subject' => $tpl->subject, 'body' => $tpl->body, 'category_id' => $tpl->category_id, 'category_name' => $tpl->category?->name, 'priority' => $tpl->priority]), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          data-close-reasons="{{ json_encode(collect(config('helpdesktickets.close_reasons', []))->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+         {{-- Causa raíz del cierre: por qué existió el ticket, para los informes. --}}
+         data-close-root-causes="{{ json_encode(collect(config('helpdesktickets.close_root_causes', []))->map(fn ($label, $key) => ['key' => $key, 'label' => $label])->values(), JSON_HEX_APOS | JSON_HEX_QUOT) }}"
          hidden>
     </div>
 
@@ -73,11 +171,15 @@
         {{-- Barra superior --}}
         <div class="tkt-app-bar">
             <div class="tkt-crumbs">
-                <i class="fa-solid fa-headset"></i><span>Helpdesk</span><i class="fa-solid fa-chevron-right"></i><span class="on">Tickets</span>
+                {{-- 3er nivel dinámico (comparado contra el mockup: "Helpdesk ›
+                     Tickets › {tab activo}") — el texto lo mantiene renderTabs()
+                     en tickets-app.js a partir de la misma etiqueta que ya usa
+                     cada .tkt-state-tab, para no duplicar el mapeo de labels. --}}
+                <i class="fa-solid fa-headset"></i><span>Helpdesk</span><i class="fa-solid fa-chevron-right"></i><span>Tickets</span><i class="fa-solid fa-chevron-right"></i><span class="on" id="tkt-crumb-tab">Todos</span>
             </div>
             <div class="tkt-search">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="tkt-search" placeholder="Buscar por nº de ticket, cliente o asunto…" value="{{ request('search') }}">
+                <input id="tkt-search" aria-label="Buscar tickets" placeholder="Buscar por nº de ticket, cliente o asunto…" value="{{ request('search') }}">
             </div>
             <div class="tkt-toolbar-right">
                 <div class="tkt-seg" id="tkt-mode-switch">
@@ -86,8 +188,8 @@
                 </div>
                 <button type="button" class="tkt-btn" id="tkt-sync" title="Resincronizar con PrestaShop/ERP"><i class="fa-solid fa-rotate"></i> Sincronizar</button>
                 <button type="button" class="tkt-btn" id="tkt-export-open" title="Exportar los tickets del filtro actual"><i class="fa-solid fa-download"></i> Exportar</button>
-                <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-btn"><i class="fa-solid fa-clone"></i> Plantillas</a>
-                <a href="{{ route('manager.helpdesk.tickets.create') }}" class="tkt-btn tkt-btn-primary"><i class="fa-solid fa-plus"></i> Nuevo ticket</a>
+                <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-btn" id="tkt-templates-open"><i class="fa-solid fa-clone"></i> Plantillas</a>
+                <a href="{{ route('manager.helpdesk.tickets.create') }}" class="tkt-btn tkt-btn-primary" id="tkt-new-ticket"><i class="fa-solid fa-plus"></i> Nuevo ticket</a>
             </div>
         </div>
 
@@ -101,51 +203,131 @@
             <button type="button" class="tkt-state-tab" data-filter="pending">Pendientes <span class="c">{{ $tabCounts['pending'] }}</span></button>
             <button type="button" class="tkt-state-tab" data-filter="resolved">Resueltos <span class="c">{{ $tabCounts['resolved'] }}</span></button>
             <button type="button" class="tkt-state-tab" data-filter="closed">Cerrados <span class="c">{{ $tabCounts['closed'] }}</span></button>
-            <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-state-tab tkt-link-plain">Plantillas</a>
-            <span class="tkt-queue-hint">SLA en riesgo: {{ $tabCounts['sla_risk'] }}</span>
+            {{-- "Plantillas" cierra la fila de tabs en el mockup. Una auditoría previa
+                 lo había quitado por ser un <a> que navegaba fuera de la pantalla en
+                 vez de filtrar como sus vecinos, y por duplicar el botón de la barra
+                 superior. Se restaura porque la pantalla clona el mockup al pie de la
+                 letra, pero con la clase .tkt-state-link en lugar de .tkt-state-tab:
+                 mismo sitio y misma tipografía, sin fingir que es un filtro (no lleva
+                 data-filter, así que renderTabs() y el listener de tabs lo ignoran). --}}
+            <a href="{{ route('manager.helpdesk.ticket-templates.index') }}" class="tkt-state-link">Plantillas</a>
+            {{-- "· cola de correo: N" lo rellena tickets-app.js al cargar (fetchOpsQueueHint(),
+                 reusa TKA.urls.ops — misma fuente que ya alimenta el modal "Cola" — sin
+                 duplicar ninguna sonda ni inventar un endpoint nuevo). Vacío hasta entonces. --}}
+            <span class="tkt-queue-hint">SLA en riesgo: {{ $tabCounts['sla_risk'] }}<span id="tkt-mail-queue-hint"></span></span>
         </div>
 
         {{-- Filtros --}}
         <form method="get" id="tkt-filter-form" class="tkt-filter-bar">
-            <select name="source" class="tkt-fselect" onchange="this.form.submit()">
-                <option value="">Origen: todos</option>
-                <option value="email" @selected(request('source') === 'email')>Email</option>
-                <option value="widget" @selected(request('source') === 'widget')>Widget</option>
-                <option value="wa" @selected(request('source') === 'wa')>WhatsApp</option>
-                <option value="fb" @selected(request('source') === 'fb')>Facebook</option>
-                <option value="ig" @selected(request('source') === 'ig')>Instagram</option>
-                <option value="formulario" @selected(request('source') === 'formulario')>Formulario</option>
-            </select>
-            <select name="category" class="tkt-fselect" onchange="this.form.submit()">
-                <option value="">Categoría: todas</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
-                @endforeach
-            </select>
-            <select name="assignee" class="tkt-fselect" onchange="this.form.submit()">
-                <option value="">Agente: todos</option>
-                <option value="me" @selected(request('assignee') === 'me')>Asignados a mí</option>
-                <option value="unassigned" @selected(request('assignee') === 'unassigned')>Sin asignar</option>
-                @foreach($agents as $agent)
-                    <option value="{{ $agent->id }}" @selected(request('assignee') == $agent->id)>{{ trim($agent->firstname.' '.$agent->lastname) }}</option>
-                @endforeach
-            </select>
-            <select name="priority" class="tkt-fselect" onchange="this.form.submit()">
-                <option value="">Prioridad: todas</option>
-                <option value="urgent" @selected(request('priority') === 'urgent')>Urgente</option>
-                <option value="high" @selected(request('priority') === 'high')>Alta</option>
-                <option value="normal" @selected(request('priority') === 'normal')>Normal</option>
-                <option value="low" @selected(request('priority') === 'low')>Baja</option>
-            </select>
-            <select name="tag" class="tkt-fselect" onchange="this.form.submit()">
-                <option value="">Etiquetas: todas</option>
-                @foreach($availableTags as $tagOption)
-                    <option value="{{ $tagOption }}" @selected(request('tag') === $tagOption)>{{ $tagOption }}</option>
-                @endforeach
-            </select>
-            <button type="button" class="tkt-btn" id="tkt-filters-modal-open"><i class="fa-solid fa-sliders"></i> Más filtros</button>
-            <a href="{{ route('manager.helpdesk.tickets.index') }}" class="tkt-clear-link">limpiar</a>
+            {{-- Chips de filtro: mismo orden, iconos y tipografía que el mockup
+                 (Origen · Etiquetas · Categoría · Agente · Prioridad · rango de
+                 fechas · Más filtros). Cada chip lleva el <select> nativo
+                 superpuesto y transparente — ver .tkt-fchip en tickets-app.css. --}}
+            @php
+                $sourceLabels = ['email' => 'Email', 'widget' => 'Widget', 'wa' => 'WhatsApp', 'fb' => 'Facebook', 'ig' => 'Instagram', 'formulario' => 'Formulario'];
+                $priorityLabels = ['urgent' => 'Urgente', 'high' => 'Alta', 'normal' => 'Normal', 'low' => 'Baja'];
+                $assigneeLabel = match (true) {
+                    request('assignee') === 'me' => 'Asignados a mí',
+                    request('assignee') === 'unassigned' => 'Sin asignar',
+                    request()->filled('assignee') => trim((string) $agents->firstWhere('id', (int) request('assignee'))?->firstname.' '.(string) $agents->firstWhere('id', (int) request('assignee'))?->lastname) ?: 'todos',
+                    default => 'todos',
+                };
+            @endphp
+            <label class="tkt-fchip {{ request()->filled('source') ? 'on' : '' }}">
+                <i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Origen
+                <span class="tkt-fchip-value" aria-hidden="true">{{ $sourceLabels[request('source')] ?? 'todos' }}</span>
+                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
+                <select name="source" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por origen">
+                    <option value="">todos</option>
+                    @foreach($sourceLabels as $sourceValue => $sourceLabel)
+                        <option value="{{ $sourceValue }}" @selected(request('source') === $sourceValue)>{{ $sourceLabel }}</option>
+                    @endforeach
+                </select>
+            </label>
+            {{-- "Etiqueta" en singular a propósito (hallazgo LOW #2): este <select>
+                 solo admite UN valor exacto de una lista cerrada, a diferencia del
+                 campo de texto libre "Etiquetas" (separadas por coma) del modal "Más
+                 filtros" — mismo query param `tag`, pero affordance distinta. No se
+                 fusionan los dos controles en esta pasada porque no está verificado si
+                 el backend interpreta múltiples tags separados por coma; el copy queda
+                 así como mínimo diferenciado para no prometer lo mismo en los dos sitios. --}}
+            <label class="tkt-fchip {{ request()->filled('tag') ? 'on' : '' }}">
+                <i class="fa-solid fa-tag" aria-hidden="true"></i> Etiqueta
+                @if(request()->filled('tag'))<span class="tkt-fchip-value" aria-hidden="true">{{ request('tag') }}</span>@endif
+                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
+                <select name="tag" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por etiqueta">
+                    <option value="">todas</option>
+                    @foreach($availableTags as $tagOption)
+                        <option value="{{ $tagOption }}" @selected(request('tag') === $tagOption)>{{ $tagOption }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="tkt-fchip {{ request()->filled('category') ? 'on' : '' }}">
+                <i class="fa-solid fa-folder" aria-hidden="true"></i> Categoría
+                @if(request()->filled('category'))<span class="tkt-fchip-value" aria-hidden="true">{{ $categories->firstWhere('id', (int) request('category'))?->name }}</span>@endif
+                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
+                <select name="category" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por categoría">
+                    <option value="">todas</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" @selected(request('category') == $category->id)>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="tkt-fchip {{ request()->filled('assignee') ? 'on' : '' }}">
+                <i class="fa-solid fa-user" aria-hidden="true"></i> Agente
+                @if(request()->filled('assignee'))<span class="tkt-fchip-value" aria-hidden="true">{{ $assigneeLabel }}</span>@endif
+                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
+                <select name="assignee" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por agente">
+                    <option value="">todos</option>
+                    <option value="me" @selected(request('assignee') === 'me')>Asignados a mí</option>
+                    <option value="unassigned" @selected(request('assignee') === 'unassigned')>Sin asignar</option>
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" @selected(request('assignee') == $agent->id)>{{ trim($agent->firstname.' '.$agent->lastname) }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label class="tkt-fchip {{ request()->filled('priority') ? 'on' : '' }}">
+                <i class="fa-solid fa-flag" aria-hidden="true"></i> Prioridad
+                <span class="tkt-fchip-value" aria-hidden="true">{{ $priorityLabels[request('priority')] ?? 'todas' }}</span>
+                <i class="fa-solid fa-chevron-down tkt-fchip-caret" aria-hidden="true"></i>
+                <select name="priority" data-no-select2 onchange="this.form.requestSubmit()" aria-label="Filtrar por prioridad">
+                    <option value="">todas</option>
+                    @foreach($priorityLabels as $priorityValue => $priorityLabel)
+                        <option value="{{ $priorityValue }}" @selected(request('priority') === $priorityValue)>{{ $priorityLabel }}</option>
+                    @endforeach
+                </select>
+            </label>
+            {{-- Rango de fechas: en el mockup es UN solo chip que resume el periodo
+                 ("19 ago – 01 sep 2026"), no dos <input type=date> sueltos. El chip
+                 muestra el rango y despliega los dos campos reales, que siguen
+                 mandando created_from/created_to igual que el modal "Más filtros"
+                 (Modules\Helpdesk\Filters\TicketFilter los valida y aplica). --}}
+            @php
+                $rangeFrom = request('created_from') ? \Illuminate\Support\Carbon::parse(request('created_from')) : null;
+                $rangeTo = request('created_to') ? \Illuminate\Support\Carbon::parse(request('created_to')) : null;
+                $rangeLabel = match (true) {
+                    $rangeFrom && $rangeTo => $rangeFrom->translatedFormat('d M').' – '.$rangeTo->translatedFormat('d M Y'),
+                    (bool) $rangeFrom => 'desde '.$rangeFrom->translatedFormat('d M Y'),
+                    (bool) $rangeTo => 'hasta '.$rangeTo->translatedFormat('d M Y'),
+                    default => 'Cualquier fecha',
+                };
+            @endphp
+            <div class="tkt-fdate {{ ($rangeFrom || $rangeTo) ? 'on' : '' }}">
+                <button type="button" class="tkt-fchip" id="tkt-daterange-open" aria-expanded="false">
+                    <i class="fa-regular fa-calendar"></i> {{ $rangeLabel }}
+                </button>
+                <div class="tkt-fdate-pop" id="tkt-daterange-pop" hidden>
+                    <label class="tkt-fdate-field">Desde
+                        <input type="date" name="created_from" value="{{ request('created_from') }}" onchange="this.form.requestSubmit()" aria-label="Fecha desde">
+                    </label>
+                    <label class="tkt-fdate-field">Hasta
+                        <input type="date" name="created_to" value="{{ request('created_to') }}" onchange="this.form.requestSubmit()" aria-label="Fecha hasta">
+                    </label>
+                </div>
+            </div>
+            <button type="button" class="tkt-fchip" id="tkt-filters-modal-open"><i class="fa-solid fa-sliders"></i> Más filtros</button>
             <span id="tkt-count" class="mono tkt-count">{{ $tickets->total() }} tickets</span>
+            <a href="{{ route('manager.helpdesk.tickets.index') }}" class="tkt-clear-link">limpiar</a>
         </form>
 
         @php
@@ -155,6 +337,8 @@
                 'source' => 'Origen', 'category' => 'Categoría', 'assignee' => 'Agente',
                 'priority' => 'Prioridad', 'tag' => 'Etiqueta', 'search' => 'Búsqueda',
                 'created_from' => 'Desde', 'created_to' => 'Hasta', 'sla_status' => 'SLA',
+                'mail_status' => 'Último correo', 'mail_type' => 'Tipo de email',
+                'mailbox' => 'Buzón', 'has_attachments' => 'Adjuntos',
             ];
             // Bug real de QA: el chip mostraba el valor CRUDO del query
             // param ("Prioridad: urgent", "Agente: 16") en vez de la
@@ -165,6 +349,9 @@
                     'priority' => ['urgent' => 'Urgente', 'high' => 'Alta', 'normal' => 'Normal', 'low' => 'Baja'][$value] ?? $value,
                     'source' => ['email' => 'Email', 'widget' => 'Widget', 'wa' => 'WhatsApp', 'fb' => 'Facebook', 'ig' => 'Instagram', 'formulario' => 'Formulario'][$value] ?? $value,
                     'sla_status' => ['breach' => 'Vencido', 'warn' => 'En riesgo', 'ok' => 'En plazo'][$value] ?? $value,
+                    'mail_status' => ['delivered' => 'Entregado', 'sent' => 'Enviado', 'pending' => 'Pendiente', 'bounced' => 'Rebotado', 'failed' => 'Fallido'][$value] ?? $value,
+                    'mail_type' => ['reply' => 'Respuesta al cliente', 'internal' => 'Aviso interno', 'inbound' => 'Entrante del cliente'][$value] ?? $value,
+                    'has_attachments' => 'Solo con adjuntos',
                     'category' => $categories->firstWhere('id', (int) $value)?->name ?? $value,
                     'assignee' => match (true) {
                         $value === 'me' => 'Asignados a mí',
@@ -192,19 +379,46 @@
              ticket (Urgentes/Míos) viven aquí como chips client-side, igual
              que en el mockup, además de las vistas guardadas reales
              (TicketView) y el acceso a gestionarlas. --}}
+        {{-- Barra de vistas. En el mockup son seis píldoras sin contador (Todos ·
+             Míos · Sin asignar · SLA en riesgo · Desde PrestaShop · Desde email)
+             más "+ guardar vista" en borde discontinuo, y a la derecha un grupo
+             SEGMENTADO — no píldoras sueltas — con Cola (badge), Entregabilidad,
+             Carga y Avisos, en ese orden. --}}
         <div class="tkt-views-bar">
-            <span class="tkt-cap">Vistas</span>
-            <button type="button" class="tkt-view-pill" data-filter="urgent">Urgentes <span class="mono">{{ $tabCounts['urgent'] }}</span></button>
-            <button type="button" class="tkt-view-pill" data-filter="mine">Míos <span class="mono">{{ $tabCounts['mine'] }}</span></button>
-            <button type="button" class="tkt-view-pill" data-filter="sla_risk">SLA en riesgo <span class="mono">{{ $tabCounts['sla_risk'] }}</span></button>
-            @foreach($views as $view)
-                <a href="{{ route('manager.helpdesk.tickets.index', ['viewId' => $view->id]) }}"
-                   class="tkt-view-pill @if($currentView?->id === $view->id) on @endif">{{ $view->name }}</a>
-            @endforeach
-            <button type="button" class="tkt-view-pill add" id="tkt-save-view">+ guardar vista</button>
-            <button type="button" class="tkt-view-pill" id="tkt-pill-queue" title="Estado de las colas de trabajo"><i class="fa-solid fa-layer-group"></i> Cola</button>
-            <button type="button" class="tkt-view-pill" id="tkt-pill-workload" title="Carga de trabajo por agente"><i class="fa-solid fa-scale-balanced"></i> Carga</button>
-            <a href="{{ route('settings.helpdesk.views.index') }}" class="tkt-view-pill" title="Gestionar todas las vistas" class="ms-auto">Gestionar vistas</a>
+            <div class="tkt-views-group">
+                <span class="tkt-cap">Vistas</span>
+                <button type="button" class="tkt-view-pill on" data-filter="all">Todos</button>
+                <button type="button" class="tkt-view-pill" data-filter="mine">Míos</button>
+                <button type="button" class="tkt-view-pill" data-filter="unassigned">Sin asignar</button>
+                <button type="button" class="tkt-view-pill" data-filter="sla_risk">SLA en riesgo</button>
+                <button type="button" class="tkt-view-pill" data-filter="from_presta">Desde PrestaShop</button>
+                <button type="button" class="tkt-view-pill" data-filter="from_email">Desde email</button>
+                @foreach($views as $view)
+                    <a href="{{ route('manager.helpdesk.tickets.index', ['viewId' => $view->id]) }}"
+                       class="tkt-view-pill @if($currentView?->id === $view->id) on @endif">{{ $view->name }}</a>
+                @endforeach
+                <button type="button" class="tkt-view-pill add" id="tkt-save-view">+ guardar vista</button>
+            </div>
+            <div class="tkt-ops-seg">
+                <button type="button" id="tkt-pill-queue" title="Estado de las colas de trabajo"><i class="fa-solid fa-list-check"></i>Cola<span class="tkt-ops-badge mono" id="tkt-ops-queue-badge" hidden></span></button>
+                {{-- Entregabilidad: reusa las mismas KPI (bounce_rate/opened_rate/avg_latency)
+                     que ya calcula TicketMailsController::stats() para la bandeja de emails —
+                     mismo endpoint (data-emails-index-url) pedido con Accept JSON, sin
+                     duplicar la sonda ni inventar un número nuevo. --}}
+                <button type="button" id="tkt-pill-deliverability" title="Entregabilidad de correo saliente"><i class="fa-solid fa-shield-halved"></i>Entregabilidad</button>
+                <button type="button" id="tkt-pill-workload" title="Carga de trabajo por agente"><i class="fa-solid fa-scale-balanced"></i>Carga</button>
+                {{-- Avisos: abre el MISMO panel global de notificaciones de la cabecera del
+                     tema (#notifications-dropdown) — no es un sistema de avisos propio de
+                     Helpdesk (no existe ninguno en el código), así que en vez de inventar uno
+                     nuevo se da un atajo real al que ya existe y ya funciona. --}}
+                <button type="button" id="tkt-pill-notices" title="Ver notificaciones"><i class="fa-regular fa-bell"></i>Avisos</button>
+                {{-- Modales 16/29/30: buzones, reglas de escalado y recurrencias.
+                     Van como iconos sin texto para no romper el ancho del grupo
+                     de cuatro que define el mockup. --}}
+                <button type="button" id="tkt-pill-mailboxes" title="Buzones de entrada" aria-label="Buzones de entrada"><i class="fa-regular fa-envelope"></i></button>
+                <button type="button" id="tkt-pill-escalation" title="Reglas de escalado" aria-label="Reglas de escalado"><i class="fa-solid fa-arrow-trend-up"></i></button>
+                <button type="button" id="tkt-pill-recurring" title="Tickets recurrentes" aria-label="Tickets recurrentes"><i class="fa-solid fa-repeat"></i></button>
+            </div>
         </div>
 
         <div class="tkt-split-wrap" id="tkt-split-wrap">
@@ -212,14 +426,26 @@
 
             {{-- Columna: lista --}}
             <div class="tkt-split-list">
+                {{-- Cabecera de la lista, como el mockup: checkbox + "Seleccionar
+                     todo" + un <select> de orden (no un enlace que alterna un solo
+                     criterio) y, a la derecha, los tres iconos de actualizar,
+                     exportar y enviar a papelera. --}}
                 <div class="tkt-list-head">
-                    <input type="checkbox" id="tkt-select-all">
+                    <input type="checkbox" id="tkt-select-all" aria-label="Seleccionar todos los tickets">
                     <span class="tkt-meta">Seleccionar todo</span>
-                    <a href="{{ route('manager.helpdesk.tickets.index', array_merge(request()->except('page'), ['sort' => request('sort') === 'sla' ? null : 'sla'])) }}"
-                       class="tkt-clear-link tkt-link-right">
-                        <i class="fa-solid fa-arrow-down-{{ request('sort') === 'sla' ? 'short-wide' : 'wide-short' }}"></i>
-                        {{ request('sort') === 'sla' ? 'Ordenado por SLA' : 'Ordenar por SLA' }}
-                    </a>
+                    <select id="tkt-sort" class="tkt-sort-select" aria-label="Ordenar la lista"
+                            data-no-select2
+                            data-base-url="{{ route('manager.helpdesk.tickets.index', request()->except(['page', 'sort'])) }}">
+                        <option value="sla" @selected(request('sort', 'sla') === 'sla')>SLA más urgente</option>
+                        <option value="date_desc" @selected(request('sort') === 'date_desc')>Fecha ↓</option>
+                        <option value="date_asc" @selected(request('sort') === 'date_asc')>Fecha ↑</option>
+                        <option value="priority" @selected(request('sort') === 'priority')>Prioridad</option>
+                    </select>
+                    <span class="tkt-list-head-icons">
+                        <button type="button" id="tkt-list-refresh" title="Actualizar" aria-label="Actualizar la lista"><i class="fa-solid fa-rotate"></i></button>
+                        <button type="button" id="tkt-list-export" title="Exportar" aria-label="Exportar los tickets del filtro actual"><i class="fa-solid fa-download"></i></button>
+                        <button type="button" id="tkt-list-trash" title="Enviar a papelera" aria-label="Enviar los tickets seleccionados a la papelera"><i class="fa-regular fa-trash-can"></i></button>
+                    </span>
                 </div>
                 <div class="tkt-bulk-bar" id="tkt-bulk-bar">
                     <span id="tkt-bulk-count" class="tkt-title-sm">0 seleccionados</span>
@@ -239,6 +465,10 @@
                         @can('helpdesk.tickets.delete')
                             <button type="button" class="tkt-btn" data-bulk-action="delete">Eliminar</button>
                         @endcan
+                        {{-- "Exportar selección": el modal de exportar ya sabe
+                             acotarse a los ids marcados, aquí solo se ofrece
+                             desde donde se hace la selección. --}}
+                        <button type="button" class="tkt-btn" id="tkt-bulk-export">Exportar</button>
                         <button type="button" class="tkt-btn" id="tkt-bulk-clear">Quitar</button>
                     </span>
                 </div>
@@ -246,11 +476,23 @@
                     <div class="tkt-skeleton"></div><div class="tkt-skeleton"></div><div class="tkt-skeleton"></div>
                 </div>
                 <div class="tkt-list" id="tkt-list"></div>
+                {{-- Pie: "1–6 de 218 tickets" y dos chevrones, como el mockup —
+                     no el paginador numerado del tema, que no cabe en 380px de
+                     columna y desentona con el resto de la pantalla. --}}
                 <div class="tkt-list-foot">
-                    <span>{{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} de {{ $tickets->total() }}</span>
-                    @if($tickets->hasPages())
-                        <span class="ms-auto">{{ $tickets->onEachSide(1)->links() }}</span>
-                    @endif
+                    <span>{{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} de {{ $tickets->total() }} tickets</span>
+                    <span class="tkt-list-foot-nav">
+                        @if($tickets->onFirstPage())
+                            <span class="off" aria-hidden="true"><i class="fa-solid fa-chevron-left"></i></span>
+                        @else
+                            <a href="{{ $tickets->previousPageUrl() }}" rel="prev" aria-label="Página anterior"><i class="fa-solid fa-chevron-left"></i></a>
+                        @endif
+                        @if($tickets->hasMorePages())
+                            <a href="{{ $tickets->nextPageUrl() }}" rel="next" aria-label="Página siguiente"><i class="fa-solid fa-chevron-right"></i></a>
+                        @else
+                            <span class="off" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
+                        @endif
+                    </span>
                 </div>
             </div>
 
@@ -259,11 +501,15 @@
                 <div class="tkt-empty-state" id="tkt-detail-empty">
                     <div class="tkt-empty-icon"><i class="fa-regular fa-rectangle-list"></i></div>
                     <div class="tkt-empty-title">Ningún ticket seleccionado</div>
-                    <div class="tkt-empty-text">Elige un ticket de la lista para ver el hilo, la trazabilidad, la actividad y gestionarlo desde el panel de la derecha.</div>
+                    <div class="tkt-empty-text">Elige un ticket de la lista para ver la conversación, los datos del cliente, el origen y la trazabilidad de los correos enviados.</div>
                     <div class="tkt-badge-row">
                         <span class="tkt-hint-key">J / K navegar</span>
+                        <span class="tkt-hint-key">Enter abrir</span>
                         <span class="tkt-hint-key">C nuevo ticket</span>
                     </div>
+                    @can('helpdesk.tickets.create')
+                        <button type="button" class="tkt-btn tkt-btn-primary" id="tkt-empty-create">Crear un ticket</button>
+                    @endcan
                 </div>
                 <div id="tkt-detail" style="display:none"></div>
             </div>
@@ -272,14 +518,18 @@
                  contenido real (reusan el mismo JSON de data()). --}}
             <div class="tkt-side" id="tkt-side">
                 <div class="tkt-icon-rail top" id="tkt-side-rail">
-                    <button type="button" class="tkt-icon-tab on" data-side="gestion" title="Gestión"><i class="fa-solid fa-sliders"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="cliente" title="Cliente"><i class="fa-regular fa-address-card"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="form" title="Formulario"><i class="fa-regular fa-rectangle-list"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="correo" title="Correo"><i class="fa-regular fa-envelope"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="notas" title="Notas internas"><i class="fa-regular fa-note-sticky"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="tags" title="Etiquetas"><i class="fa-solid fa-tag"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="files" title="Archivos"><i class="fa-solid fa-paperclip"></i></button>
-                    <button type="button" class="tkt-icon-tab" data-side="hist" title="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                    <button type="button" class="tkt-icon-tab on" data-side="gestion" title="Gestión" aria-label="Gestión"><i class="fa-solid fa-sliders"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="cliente" title="Cliente" aria-label="Cliente"><i class="fa-regular fa-address-card"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="form" title="Formulario" aria-label="Formulario"><i class="fa-regular fa-rectangle-list"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="correo" title="Correo" aria-label="Correo"><i class="fa-regular fa-envelope"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="notas" title="Notas internas" aria-label="Notas internas"><i class="fa-regular fa-note-sticky"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="tags" title="Etiquetas" aria-label="Etiquetas"><i class="fa-solid fa-tag" aria-hidden="true"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="files" title="Archivos" aria-label="Archivos"><i class="fa-solid fa-paperclip"></i></button>
+                    {{-- Novena pestaña del mockup: el histórico de tickets del
+                         mismo cliente, para ver si lo que pregunta ya se le
+                         respondió antes sin salir de la pantalla. --}}
+                    <button type="button" class="tkt-icon-tab" data-side="tickets" title="Tickets del cliente" aria-label="Tickets del cliente"><i class="fa-solid fa-ticket"></i></button>
+                    <button type="button" class="tkt-icon-tab" data-side="hist" title="Historial" aria-label="Historial"><i class="fa-solid fa-clock-rotate-left"></i></button>
                 </div>
                 <div id="tkt-side-content" class="tkt-side-pane">
                     <div class="tkt-empty-box">Sin ticket seleccionado. Aquí verás la gestión (estado, prioridad, categoría, equipo, acciones) del ticket que elijas en la lista.</div>

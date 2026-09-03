@@ -228,11 +228,16 @@ class TicketItem extends Model
     public function getSenderNameAttribute(): string
     {
         if ($this->isFromCustomer()) {
-            return $this->author?->name ?? 'Desconocido';
+            // El cliente (Modules\Helpdesk\Models\Customer) sí tiene 'name'.
+            return $this->author?->name ?: ($this->author?->email ?: 'Desconocido');
         }
 
         if ($this->isFromAgent()) {
-            return $this->user?->name ?? 'Agente';
+            // fullName(), no ->name: el modelo User de esta app guarda
+            // firstname/lastname y no tiene columna 'name', así que ->name era
+            // siempre null y TODOS los mensajes de agente del hilo salían
+            // como el literal "Agente" en vez del nombre de quien escribió.
+            return $this->user?->fullName() ?: ($this->user?->email ?: 'Agente');
         }
 
         return 'Sistema';

@@ -18,6 +18,7 @@ use Modules\HelpdeskTickets\Events\TicketUpdated;
 use Modules\HelpdeskTickets\Listeners\AutoAssignNewTicket;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentOfAssignment;
 use Modules\HelpdeskTickets\Listeners\NotifyAgentsOnNewTicket;
+use Modules\HelpdeskTickets\Listeners\NotifyTicketWatchers;
 use Modules\HelpdeskTickets\Listeners\RecalculateSlaPolicy;
 use Modules\HelpdeskTickets\Listeners\RecordTicketHistory;
 use Modules\HelpdeskTickets\Listeners\RunAiAutoClassify;
@@ -85,6 +86,7 @@ class HelpdeskTicketsEventServiceProvider extends ServiceProvider
             SendCustomerReplyNotification::class,
             UpdateTicketLastActivity::class,
             RunAiSentimentAnalysis::class,
+            NotifyTicketWatchers::class,
         ],
         SlaBreached::class => [
             SendSlaBreachNotification::class,

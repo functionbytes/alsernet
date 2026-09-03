@@ -15,6 +15,7 @@ class SnoozeTicketRequest extends FormRequest
     {
         return [
             'snoozed_until' => ['required', 'date', 'after:now'],
+            'pause_sla' => ['nullable', 'boolean'],
         ];
     }
 

@@ -28,6 +28,7 @@ class HelpdeskTicketsPermissionsSeeder extends Seeder
             ['name' => 'helpdesk.tickets.emails.send',   'description' => 'Redactar y enviar emails desde el helpdesk'],
             ['name' => 'helpdesk.tickets.emails.resend', 'description' => 'Reenviar emails del helpdesk'],
             ['name' => 'helpdesk.tickets.emails.delete', 'description' => 'Eliminar emails de la bandeja del helpdesk'],
+            ['name' => 'helpdesk.tickets.emails.send_to_any', 'description' => 'Enviar/reenviar emails del helpdesk a un destinatario distinto del cliente del ticket'],
         ];
 
         foreach ($permissions as $permission) {

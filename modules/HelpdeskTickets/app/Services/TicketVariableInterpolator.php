@@ -57,7 +57,7 @@ class TicketVariableInterpolator
         $subject = $ticket->subject ?? $ticket->title ?? '';
         $assignee = $ticket->assignee;
         $assigneeName = $assignee
-            ? trim(($assignee->firstname ?? '').' '.($assignee->lastname ?? '')) ?: ($assignee->name ?? '')
+            ? ($assignee->fullName() ?: ($assignee->name ?? ''))
             : 'Sin asignar';
 
         $agent = auth()->user();
@@ -65,7 +65,7 @@ class TicketVariableInterpolator
         // que $assigneeName arriba (bug encontrado 29-ago-2026: siempre caia al
         // fallback "Agente" porque ->name nunca existe en el modelo).
         $agentName = $agent
-            ? (trim(($agent->firstname ?? '').' '.($agent->lastname ?? '')) ?: 'Agente')
+            ? ($agent->fullName() ?: 'Agente')
             : 'Agente';
 
         return [

@@ -16,9 +16,8 @@ use Modules\HelpdeskTickets\Services\AssignmentService;
  * (AutoAssignmentService: setting editable en runtime con fallback a
  * config('helpdesk.auto_assignment.*'), default off → inerte).
  *
- * Estrategias soportadas en tickets: round_robin, workload/least_load y skills
- * (por competencias detectadas del asunto+descripción). "manual" deja el ticket
- * sin asignar.
+ * Estrategias soportadas en tickets: round_robin y workload/least_load.
+ * "manual" deja el ticket sin asignar.
  * Idempotente (ignora tickets ya asignados) y nunca re-lanza: un fallo de
  * asignación no puede romper el pipeline de creación de tickets.
  */
@@ -54,7 +53,6 @@ class AutoAssignNewTicket implements ShouldQueue
             $assignment = match ($strategy) {
                 'round_robin' => $this->assignmentService->autoAssignByRoundRobin($ticket),
                 'workload', 'least_load' => $this->assignmentService->autoAssignByWorkload($ticket),
-                'skills' => $this->assignmentService->autoAssignBySkills($ticket),
                 // "manual" no auto-asigna tickets.
                 default => null,
             };

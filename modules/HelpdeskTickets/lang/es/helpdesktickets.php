@@ -240,4 +240,14 @@ return [
             'updated' => 'Configuración de tickets actualizada correctamente.',
         ],
     ],
+    'email_log_panel' => [
+        'customer' => 'cliente',
+        'assignee' => 'responsable',
+    ],
+    // Chips de rol en la pestaña "Hilo" del detalle.
+    'thread' => [
+        'role_customer' => 'Cliente',
+        'role_agent' => 'Agente',
+        'role_system' => 'Sistema',
+    ],
 ];

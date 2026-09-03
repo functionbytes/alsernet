@@ -145,6 +145,61 @@ class SlaService
     }
 
     /**
+     * Cuántos tickets hay abiertos en total, para dar contexto al recuento de
+     * incumplidos ("11 de 21"): un 11 a secas no dice si el equipo va mal o
+     * si es que hay muchísimo volumen.
+     *
+     * Vive aquí y no en el controlador del informe porque Helpdesk no puede
+     * depender de HelpdeskTickets — el informe llega a este servicio por FQCN
+     * en string, tras el guard de Module::find().
+     */
+    public function getOpenTicketCount(): int
+    {
+        return Ticket::query()->whereNull('closed_at')->count();
+    }
+
+    /**
+     * Tickets con SLA de resolución ya incumplido, opcionalmente filtrados
+     * por agente asignado. Mismas reglas que checkBreaches() (abierto, sin
+     * pausar) pero calculado en vivo sobre sla_resolution_due_at en vez de
+     * depender del flag persistido sla_resolution_breached — así el reporte
+     * no queda desactualizado entre corridas del job CheckSlaBreaches (cada
+     * 15 minutos).
+     *
+     * @return Collection<int, Ticket>
+     */
+    public function getBreachedTickets(?int $agentId = null): Collection
+    {
+        return Ticket::query()
+            ->whereNotNull('sla_resolution_due_at')
+            ->where('sla_resolution_due_at', '<', now())
+            ->whereNull('sla_paused_at')
+            ->whereNull('closed_at')
+            ->when($agentId !== null, fn ($q) => $q->where('assignee_id', $agentId))
+            ->orderBy('sla_resolution_due_at')
+            ->get(['id', 'ticket_number', 'subject', 'sla_resolution_due_at', 'assignee_id']);
+    }
+
+    /**
+     * Tickets abiertos cuyo vencimiento de resolución cae dentro de las
+     * próximas $hours horas y que aún no han incumplido. Excluye los
+     * pausados: con el reloj parado no están "por vencer" en un sentido
+     * real (su vencimiento efectivo se corre — ver getEffectiveDueDate()).
+     *
+     * @return Collection<int, Ticket>
+     */
+    public function getUpcomingBreaches(int $hours): Collection
+    {
+        return Ticket::query()
+            ->whereNotNull('sla_resolution_due_at')
+            ->whereBetween('sla_resolution_due_at', [now(), now()->addHours($hours)])
+            ->whereNull('sla_paused_at')
+            ->whereNull('closed_at')
+            ->orderBy('sla_resolution_due_at')
+            ->get(['id', 'ticket_number', 'subject', 'sla_resolution_due_at', 'assignee_id']);
+    }
+
+    /**
      * Vencimiento de resolución efectivo, compensando la pausa en curso.
      */
     public function getEffectiveDueDate(Ticket $ticket): ?Carbon

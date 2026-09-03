@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -19,18 +20,40 @@ class TicketTemplatesController extends Controller
 
         $userId = $request->user()->id;
 
-        $general = TicketTemplate::query()
-            ->general()
+        // Búsqueda + filtros (comparados contra el patrón ya establecido en
+        // _auto-reply-section.blade.php / bulk.js): mismos query params en
+        // ambas tablas (generales/mías) para que un filtro activo no deje
+        // resultados inconsistentes entre pestañas.
+        $search = trim((string) $request->query('search', ''));
+        $categoryId = $request->integer('category') ?: null;
+        $priority = (string) $request->query('priority', '') ?: null;
+        $status = (string) $request->query('status', '') ?: null; // 'active' | 'inactive'
+
+        $applyFilters = function ($query) use ($search, $categoryId, $priority, $status) {
+            return $query
+                ->when($search !== '', fn ($q) => $q->where(fn ($q2) => $q2
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('subject', 'like', "%{$search}%")))
+                ->when($categoryId, fn ($q) => $q->forCategory($categoryId))
+                ->when($priority, fn ($q) => $q->where('priority', $priority))
+                ->when($status === 'active', fn ($q) => $q->where('is_active', true))
+                ->when($status === 'inactive', fn ($q) => $q->where('is_active', false));
+        };
+
+        $general = $applyFilters(TicketTemplate::query()->general())
             ->with('category')
             ->orderBy('name')
-            ->paginate(20, ['*'], 'general_page');
+            ->paginate(20, ['*'], 'general_page')
+            ->appends($request->query());
 
-        $mine = TicketTemplate::query()
-            ->ownedBy($userId)
+        $mine = $applyFilters(TicketTemplate::query()->ownedBy($userId))
             ->with('category')
             ->orderBy('name')
-            ->paginate(20, ['*'], 'mine_page');
+            ->paginate(20, ['*'], 'mine_page')
+            ->appends($request->query());
 
+        // Los totales de las tarjetas de arriba son del conjunto COMPLETO, sin
+        // filtrar — igual que en Bienvenida, no reflejan la búsqueda activa.
         $stats = [
             'total' => TicketTemplate::query()->count(),
             'general' => TicketTemplate::query()->general()->count(),
@@ -42,7 +65,62 @@ class TicketTemplatesController extends Controller
             'general' => $general,
             'mine' => $mine,
             'stats' => $stats,
+            'categories' => TicketCategory::active()->ordered()->get(),
             'canManageGeneral' => $request->user()->can('helpdesk.tickets.manage'),
+        ]);
+    }
+
+    /**
+     * Acción masiva (Activar/Desactivar/Eliminar) — mismo contrato que
+     * settings.helpdesk.conversation-greetings.bulk-action (bulk.js espera
+     * {action, ids} y responde {success, message}). Cada id se autoriza
+     * individualmente con la misma Policy que ya usan update()/destroy(): una
+     * plantilla general requiere helpdesk.tickets.manage, una personal solo
+     * la puede tocar su dueño — así que IDs mezclados de ambas pestañas (si
+     * el usuario cambió de tab sin limpiar la selección) se filtran solos sin
+     * que el front tenga que saberlo.
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $templates = TicketTemplate::query()->whereIn('id', $validated['ids'])->get();
+
+        $count = 0;
+        foreach ($templates as $template) {
+            if ($validated['action'] === 'delete') {
+                if ($request->user()->cannot('delete', $template)) {
+                    continue;
+                }
+                $template->delete();
+                $count++;
+
+                continue;
+            }
+
+            if ($request->user()->cannot('update', $template)) {
+                continue;
+            }
+            $template->is_active = $validated['action'] === 'activate';
+            $template->save();
+            $count++;
+        }
+
+        $verb = match ($validated['action']) {
+            'activate' => 'activada(s)',
+            'deactivate' => 'desactivada(s)',
+            'delete' => 'eliminada(s)',
+        };
+
+        return response()->json([
+            'success' => true,
+            'message' => $count > 0
+                ? "{$count} plantilla(s) {$verb}."
+                : 'No se aplicó ningún cambio (sin permiso sobre las plantillas seleccionadas).',
         ]);
     }
 

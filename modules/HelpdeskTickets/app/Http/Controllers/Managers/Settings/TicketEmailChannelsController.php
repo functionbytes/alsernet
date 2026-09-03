@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\HelpdeskTickets\Http\Requests\Settings\BulkActionTicketEmailChannelRequest;
 use Modules\HelpdeskTickets\Http\Requests\Settings\StoreTicketEmailChannelRequest;
@@ -37,6 +38,21 @@ class TicketEmailChannelsController extends Controller
      * resuelven sobre el array en memoria (son decenas como mucho, no miles).
      */
     private const PER_PAGE = 15;
+
+    /**
+     * test()/testSmtp() solo deben poder tocar puertos de correo — sin esta
+     * lista, el fsockopen que hacen convierte el panel en un escáner de
+     * puertos de la red Docker interna (TicketEmailChannelUrlGuard valida el
+     * host pero no el puerto).
+     */
+    private const ALLOWED_MAIL_PORTS = [25, 143, 465, 587, 993];
+
+    /**
+     * Corto a propósito: es solo un chequeo TCP, no una espera de protocolo
+     * completo, y limita cuánto puede colgar un worker/request contra un
+     * puerto filtrado (drop silencioso) de la red interna.
+     */
+    private const CONNECT_TIMEOUT_SECONDS = 3;
 
     public function index(Request $request): View
     {
@@ -236,7 +252,7 @@ class TicketEmailChannelsController extends Controller
         // bien: solo host y puerto.
         $validated = $request->validate([
             'host' => ['required', 'string'],
-            'port' => ['required', 'integer'],
+            'port' => ['required', 'integer', Rule::in(self::ALLOWED_MAIL_PORTS)],
         ]);
 
         $host = $validated['host'];
@@ -249,14 +265,12 @@ class TicketEmailChannelsController extends Controller
             ], 422);
         }
 
-        $startTime = microtime(true);
-        $connection = @fsockopen($host, $port, $errno, $errstr, 10);
-        $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+        $connection = @fsockopen($host, $port, $errno, $errstr, self::CONNECT_TIMEOUT_SECONDS);
 
         if (! $connection) {
             return response()->json([
                 'success' => false,
-                'message' => "No se pudo conectar al servidor IMAP: {$errstr} (código {$errno}).",
+                'message' => 'No se pudo conectar al servidor IMAP.',
             ], 400);
         }
 
@@ -265,10 +279,13 @@ class TicketEmailChannelsController extends Controller
         // El mensaje dice lo que se ha comprobado de verdad — que el servidor
         // acepta la conexión — y no da a entender que las credenciales sean
         // válidas, que es lo que sugería un "responde correctamente" tras
-        // haber pedido usuario y contraseña.
+        // haber pedido usuario y contraseña. No se devuelve el tiempo de
+        // respuesta ni el motivo exacto del fallo (errno/errstr): esos datos
+        // dejan diferenciar puerto cerrado/filtrado/servicio-no-mail, que es
+        // justo la información que un escaneo de red interna busca.
         return response()->json([
             'success' => true,
-            'message' => "El servidor {$host}:{$port} acepta conexiones ({$responseTime}ms). Las credenciales se comprueban al sincronizar.",
+            'message' => "El servidor {$host}:{$port} acepta conexiones. Las credenciales se comprueban al sincronizar.",
         ]);
     }
 
@@ -280,7 +297,7 @@ class TicketEmailChannelsController extends Controller
     {
         $validated = $request->validate([
             'smtp_host' => ['required', 'string'],
-            'smtp_port' => ['required', 'integer'],
+            'smtp_port' => ['required', 'integer', Rule::in(self::ALLOWED_MAIL_PORTS)],
         ]);
 
         $host = $validated['smtp_host'];
@@ -293,32 +310,36 @@ class TicketEmailChannelsController extends Controller
             ], 422);
         }
 
-        $startTime = microtime(true);
-        $connection = @fsockopen($host, $port, $errno, $errstr, 10);
-        $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+        $connection = @fsockopen($host, $port, $errno, $errstr, self::CONNECT_TIMEOUT_SECONDS);
 
         if (! $connection) {
             return response()->json([
                 'success' => false,
-                'message' => "No se pudo conectar al servidor SMTP: {$errstr} (código {$errno}).",
+                'message' => 'No se pudo conectar al servidor SMTP.',
             ], 400);
         }
 
         fclose($connection);
 
+        // Ver comentario en test(): no se expone el tiempo de respuesta ni el
+        // motivo exacto del fallo para no habilitar fingerprinting de puertos.
         return response()->json([
             'success' => true,
-            'message' => "Servidor {$host}:{$port} responde correctamente ({$responseTime}ms).",
+            'message' => "Servidor {$host}:{$port} acepta conexiones.",
         ]);
     }
 
     /**
-     * Dispara un fetch inmediato acotado a este canal (mismo código que la
-     * corrida agendada de imap:emailticket, vía FetchTicketEmailsJob) — para
-     * validar la configuración justo después de guardarla, sin esperar al
-     * cron. Se ejecuta en la propia request (no se encola): un buzón lento
-     * puede tardar, por eso el timeout del job es de 600s y esto es una
-     * acción explícita del administrador, no algo que corra en cada carga.
+     * Dispara un fetch acotado a este canal (mismo código que la corrida
+     * agendada de imap:emailticket, vía FetchTicketEmailsJob) — para validar
+     * la configuración justo después de guardarla, sin esperar al cron.
+     *
+     * Se ENCOLA (antes se ejecutaba ->handle() en la propia request): un
+     * buzón IMAP colgado bloqueaba el worker PHP-FPM de la request hasta 600s
+     * (el timeout del job no aplica cuando se llama a handle() directamente,
+     * solo cuando lo ejecuta un worker de cola). El resultado ya no es
+     * inmediato — se relee `last_error`/`last_checked_at` en la siguiente
+     * carga del listado, igual que tras la corrida agendada.
      */
     public function sync(string $channel): JsonResponse
     {
@@ -337,31 +358,22 @@ class TicketEmailChannelsController extends Controller
         }
 
         try {
-            (new FetchTicketEmailsJob(onlyConnectionId: $channel))->handle();
+            FetchTicketEmailsJob::dispatch(onlyConnectionId: $channel);
         } catch (\Throwable $e) {
-            Log::error('TicketEmailChannelsController::sync — error al sincronizar canal', [
+            Log::error('TicketEmailChannelsController::sync — error al encolar la sincronización del canal', [
                 'channel' => $channel,
                 'error' => $e->getMessage(),
             ]);
-        }
 
-        // El propio job ya dejó el resultado (éxito/último error) en el
-        // canal vía TicketEmailChannelsRepository::recordHealth() — se relee
-        // en vez de intentar propagar el resultado desde handle() (void).
-        $refreshed = $this->channels->find($channel);
-
-        if ($refreshed && empty($refreshed['last_error'])) {
             return response()->json([
-                'success' => true,
-                'message' => 'Sincronización completada sin errores.',
-                'last_checked_at' => $refreshed['last_checked_at'] ?? null,
-            ]);
+                'success' => false,
+                'message' => 'No se pudo encolar la sincronización del canal.',
+            ], 500);
         }
 
         return response()->json([
-            'success' => false,
-            'message' => $refreshed['last_error'] ?? 'La sincronización falló. Revisa las credenciales del canal.',
-            'last_checked_at' => $refreshed['last_checked_at'] ?? null,
-        ], 422);
+            'success' => true,
+            'message' => 'Sincronización encolada. Los resultados se reflejarán en unos segundos.',
+        ]);
     }
 }

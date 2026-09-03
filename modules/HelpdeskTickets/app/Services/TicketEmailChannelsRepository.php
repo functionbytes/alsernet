@@ -2,6 +2,7 @@
 
 namespace Modules\HelpdeskTickets\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Modules\Core\Models\Setting;
 
 /**
@@ -48,7 +49,10 @@ class TicketEmailChannelsRepository
             $this->writeBlob($blob);
         }
 
-        return $connections;
+        return array_map(
+            fn (array $connection) => array_merge($connection, $this->readHealth($connection)),
+            $connections
+        );
     }
 
     /**
@@ -74,9 +78,6 @@ class TicketEmailChannelsRepository
         $connection = array_merge($data, [
             'id' => uniqid('imapchannel_', true),
             'created_at' => now()->toISOString(),
-            'last_checked_at' => null,
-            'last_success_at' => null,
-            'last_error' => null,
         ]);
 
         $blob = $this->readBlob();
@@ -85,7 +86,7 @@ class TicketEmailChannelsRepository
         $blob['imap']['connections'] = $connections;
         $this->writeBlob($blob);
 
-        return $connection;
+        return array_merge($connection, $this->readHealth($connection));
     }
 
     /**
@@ -138,37 +139,67 @@ class TicketEmailChannelsRepository
 
         $blob['imap']['connections'] = $connections;
         $this->writeBlob($blob);
+
+        Cache::forget($this->healthCacheKey($id));
     }
 
     /**
      * Actualiza el estado de salud de un canal tras una corrida de
-     * FetchTicketEmailsJob (agendada o manual vía "Sincronizar ahora").
-     * No falla si el canal fue borrado entre el fetch y este write.
+     * FetchTicketEmailsJob (agendada o manual vía "Sincronizar ahora"),
+     * hasta una vez por minuto por canal. No falla si el canal fue borrado
+     * entre el fetch y este write.
+     *
+     * Vive en su propia clave de caché, NUNCA en el blob cifrado
+     * `incoming_email` — antes recordHealth() leía el blob completo,
+     * mutaba solo el canal afectado y volvía a escribirlo entero
+     * (read-modify-write clásico). Si un administrador creaba/editaba/
+     * borraba un canal desde el panel entre esa lectura y esa escritura, el
+     * write de recordHealth() pisaba el blob con una copia vieja y esa
+     * edición del panel desaparecía sin error visible. Al no tocar el blob
+     * aquí, este método ya no puede chocar con esas escrituras — no hace
+     * falta Cache::lock.
      */
     public function recordHealth(string $id, bool $success, ?string $error = null): void
     {
-        $blob = $this->readBlob();
-        $connections = $blob['imap']['connections'] ?? [];
-        $found = false;
+        $connection = $this->find($id);
 
-        foreach ($connections as &$connection) {
-            if (($connection['id'] ?? null) === $id) {
-                $connection['last_checked_at'] = now()->toISOString();
-                $connection['last_error'] = $success ? null : $error;
-                if ($success) {
-                    $connection['last_success_at'] = now()->toISOString();
-                }
-                $found = true;
-            }
-        }
-        unset($connection);
-
-        if (! $found) {
+        if ($connection === null) {
             return;
         }
 
-        $blob['imap']['connections'] = $connections;
-        $this->writeBlob($blob);
+        Cache::forever($this->healthCacheKey($id), [
+            'last_checked_at' => now()->toISOString(),
+            'last_success_at' => $success ? now()->toISOString() : ($connection['last_success_at'] ?? null),
+            'last_error' => $success ? null : $error,
+        ]);
+    }
+
+    private function healthCacheKey(string $id): string
+    {
+        return self::SETTING_KEY.':health:'.$id;
+    }
+
+    /**
+     * Salud cacheada de un canal, o los valores heredados del propio blob
+     * (compatibilidad con canales que ya tenían last_checked_at/last_error
+     * escritos ahí antes de este cambio, hasta su próximo recordHealth()).
+     *
+     * @param  array<string, mixed>  $connection
+     * @return array{last_checked_at: ?string, last_success_at: ?string, last_error: ?string}
+     */
+    private function readHealth(array $connection): array
+    {
+        $cached = Cache::get($this->healthCacheKey($connection['id'] ?? ''));
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        return [
+            'last_checked_at' => $connection['last_checked_at'] ?? null,
+            'last_success_at' => $connection['last_success_at'] ?? null,
+            'last_error' => $connection['last_error'] ?? null,
+        ];
     }
 
     /**

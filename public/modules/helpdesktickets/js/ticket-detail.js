@@ -788,6 +788,96 @@
                 $btn.prop('disabled', false);
             });
         });
+
+        // ── Redactar/programar un correo suelto ligado a este ticket ──
+        // Mismo endpoint que usaba la antigua bandeja global de emails
+        // (TicketMailDispatcher::send() vía TicketMailsController::store()),
+        // ahora también alcanzable desde la propia ficha del ticket.
+        $('#tkt-compose-mail-form').on('submit', function (e) {
+            e.preventDefault();
+
+            var $form = $(this);
+            var formData = new FormData(this);
+
+            var cc = ($('#tkt-compose-cc').val() || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            var bcc = ($('#tkt-compose-bcc').val() || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+            cc.forEach(function (email) { formData.append('cc[]', email); });
+            bcc.forEach(function (email) { formData.append('bcc[]', email); });
+
+            var $submit = $('#tkt-compose-submit').prop('disabled', true);
+            $('#tkt-compose-error').hide();
+
+            $.ajax({
+                url: window.TicketDetailConfig.emailComposeStoreUrl,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            }).done(function (resp) {
+                if (window.toastr) { toastr.success(resp.message || 'Email enviado'); }
+                var modalEl = document.getElementById('tkt-compose-mail-modal');
+                var instance = bootstrap.Modal.getInstance(modalEl);
+                if (instance) { instance.hide(); }
+                window.location.reload();
+            }).fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) || 'No se pudo enviar el email';
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    msg = Object.values(xhr.responseJSON.errors).flat().join(' ');
+                }
+                $('#tkt-compose-error').text(msg).show();
+            }).always(function () {
+                $submit.prop('disabled', false);
+            });
+        });
+
+        // ── Selector de plantilla dentro del compose de email ────────────
+        // Reutiliza TicketMailsController::templates() (macros con acción
+        // "reply"), pasando ya el ticket_id por query string desde Blade para
+        // que el body llegue con las variables del ticket interpoladas en
+        // servidor. Se pide una única vez por carga de página (cache en
+        // templatesCache) porque las plantillas no cambian mientras el agente
+        // tiene el ticket abierto.
+        var templatesCache = null;
+
+        function loadEmailTemplates() {
+            if (templatesCache !== null) { return; }
+            templatesCache = []; // marca "ya en curso / cargado" para no repetir la petición
+
+            $.getJSON(CFG.emailTemplatesUrl).done(function (data) {
+                templatesCache = (data && data.templates) || [];
+                var $select = $('#tkt-compose-template');
+                $.each(templatesCache, function (i, tpl) {
+                    $select.append($('<option>', { value: i, text: tpl.name }));
+                });
+            }).fail(function () {
+                // Sin plantillas no bloqueamos el compose; el agente sigue pudiendo escribir a mano.
+                if (window.toastr) { toastr.error('No se pudieron cargar las plantillas'); }
+            });
+        }
+
+        $('#tkt-compose-mail-modal').on('show.bs.modal', loadEmailTemplates);
+
+        $('#tkt-compose-template').on('change', function () {
+            var index = $(this).val();
+            if (index === '' || !templatesCache || !templatesCache[index]) { return; }
+
+            var tpl = templatesCache[index];
+            var $subject = $('#tkt-compose-mail-form [name="subject"]');
+
+            // El asunto no se pisa si el agente ya escribió el suyo; el cuerpo
+            // sí se sustituye siempre, porque elegir una plantilla es una
+            // acción explícita para cargar su contenido en el mensaje.
+            // tpl.subject es el asunto real configurado en la macro (opcional,
+            // ver Macro::actionSpecs()['reply']['optional']); las plantillas
+            // que no lo traen (macros antiguas) siguen cayendo al nombre de
+            // la macro como aproximación, igual que antes de que existiera.
+            if (!$subject.val().trim()) {
+                $subject.val(tpl.subject ? tpl.subject : tpl.name);
+            }
+            $('#tkt-compose-mail-form [name="body"]').val(tpl.body);
+        });
     });
 
     $(function () {

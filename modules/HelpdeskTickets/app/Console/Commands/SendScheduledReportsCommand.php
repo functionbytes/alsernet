@@ -224,7 +224,7 @@ class SendScheduledReportsCommand extends Command
                 $html .= '<h4>Top agentes (tickets cerrados)</h4>'
                     .$this->renderTable(
                         $summary['topAgents']
-                            ->mapWithKeys(fn ($row) => [(string) ($row['agent']->name ?? trim(($row['agent']->firstname ?? '').' '.($row['agent']->lastname ?? ''))) => (int) $row['closed_count']])
+                            ->mapWithKeys(fn ($row) => [(string) $row['agent']->fullName() => (int) $row['closed_count']])
                             ->all()
                     );
             }

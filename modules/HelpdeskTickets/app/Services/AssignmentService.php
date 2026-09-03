@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Modules\Helpdesk\Models\AgentSettings;
 use Modules\Helpdesk\Models\Setting;
-use Modules\Helpdesk\Services\SkillsRoutingService;
+use Modules\Helpdesk\Services\AgentAvailabilityService;
 use Modules\HelpdeskTickets\Events\TicketAssigned;
 use Modules\HelpdeskTickets\Events\TicketUnassigned;
 use Modules\HelpdeskTickets\Models\Ticket;
@@ -225,10 +225,10 @@ class AssignmentService
             // `priority` es un slug (urgent/high/normal/low), no una relación:
             // pondera la carga abierta según el peso de cada prioridad.
             //
-            // La suma se hace en SQL, como ya hacían autoAssignByRoundRobin() y
-            // autoAssignBySkills(). Antes se traía con ->get() TODOS los tickets
-            // abiertos de todos los agentes candidatos solo para sumar un
-            // entero por fila, y encima una vez por cada ticket del bucle de
+            // La suma se hace en SQL, como ya hacía autoAssignByRoundRobin().
+            // Antes se traía con ->get() TODOS los tickets abiertos de todos
+            // los agentes candidatos solo para sumar un entero por fila, y
+            // encima una vez por cada ticket del bucle de
             // AutoAssignUnassignedTickets.
             $workloads = Ticket::whereIn('assignee_id', $agents->pluck('id'))
                 ->whereNull('closed_at')
@@ -246,51 +246,6 @@ class AssignmentService
             return $this->assignTicket($ticket, $selectedAgentId, 'Auto-assigned by workload');
         } catch (\Exception $e) {
             Log::error('Error in workload assignment', [
-                'ticket_id' => $ticket->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-    }
-
-    /**
-     * Auto-assign a ticket to an agent that has ALL the skills detected from its
-     * subject+description (reusing the shared SkillsRoutingService). Among the
-     * matching, available agents it picks the one with the lowest open workload.
-     * Never leaves a ticket unassigned: if no skills are detected or no skilled
-     * agent is available, it degrades to workload-based assignment.
-     */
-    public function autoAssignBySkills(Ticket $ticket): ?TicketAssignment
-    {
-        try {
-            $router = app(SkillsRoutingService::class);
-
-            $skillIds = $router->detectSkillIds(trim($ticket->subject.' '.(string) $ticket->description));
-
-            if ($skillIds === []) {
-                return $this->autoAssignByWorkload($ticket);
-            }
-
-            $skilledAgentIds = $router->agentsWithAllSkills($skillIds);
-
-            if ($skilledAgentIds === []) {
-                return $this->autoAssignByWorkload($ticket);
-            }
-
-            $workloads = Ticket::whereIn('assignee_id', $skilledAgentIds)
-                ->whereNull('closed_at')
-                ->selectRaw('assignee_id, COUNT(*) as workload')
-                ->groupBy('assignee_id')
-                ->pluck('workload', 'assignee_id');
-
-            $selectedAgentId = collect($skilledAgentIds)
-                ->sortBy(fn ($id) => $workloads[$id] ?? 0)
-                ->first();
-
-            return $this->assignTicket($ticket, $selectedAgentId, 'Auto-assigned by skills');
-        } catch (\Exception $e) {
-            Log::error('Error in skills assignment', [
                 'ticket_id' => $ticket->id,
                 'error' => $e->getMessage(),
             ]);
@@ -402,12 +357,12 @@ class AssignmentService
      */
     private function filterByAvailability(Collection $agents): Collection
     {
-        if ($agents->isEmpty() || ! class_exists(SkillsRoutingService::class)) {
+        if ($agents->isEmpty() || ! class_exists(AgentAvailabilityService::class)) {
             return $agents;
         }
 
         try {
-            $availableIds = app(SkillsRoutingService::class)
+            $availableIds = app(AgentAvailabilityService::class)
                 ->filterAvailableAgents($agents->pluck('id')->all());
 
             return $agents->whereIn('id', $availableIds)->values();

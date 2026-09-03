@@ -30,7 +30,13 @@ class AutomationEngine
         }
     }
 
-    private function matchesConditions(array $conditions, Ticket $ticket): bool
+    /**
+     * Pública para que "Probar regla" (modal de escalado) pueda comprobar en
+     * seco unas condiciones contra tickets reales sin ejecutar acciones. Sin
+     * esto habría que duplicar la tabla de operadores en el controlador, que
+     * es justo la forma de que las dos se separen con el tiempo.
+     */
+    public function matchesConditions(array $conditions, Ticket $ticket): bool
     {
         foreach ($conditions as $condition) {
             $field = $condition['field'] ?? null;

@@ -226,4 +226,13 @@ return [
             'updated' => 'Ticket settings updated.',
         ],
     ],
+    'email_log_panel' => [
+        'customer' => 'customer',
+        'assignee' => 'assignee',
+    ],
+    'thread' => [
+        'role_customer' => 'Customer',
+        'role_agent' => 'Agent',
+        'role_system' => 'System',
+    ],
 ];

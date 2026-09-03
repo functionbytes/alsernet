@@ -3,6 +3,7 @@
 namespace Modules\HelpdeskTickets\Http\Controllers\Managers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
+use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketRead;
 use Modules\HelpdeskTickets\Models\TicketReview;
 use Modules\HelpdeskTickets\Models\TicketSlaPolicy;
@@ -54,8 +56,13 @@ class TicketsCrudController extends Controller
 
         $filter = new TicketFilter($request);
 
+        // customer.company y lastMessage alimentan las líneas 2 y 3 de la fila
+        // del listado en el mockup ("Gabriel Morales · Construcinsa S.A. de
+        // C.V." y el resumen del último mensaje). Van en el with() y no
+        // resueltas por fila para no volver a N+1 con 30 tickets por página:
+        // lastMessage usa latestOfMany(), una única subconsulta.
         $query = Ticket::query()
-            ->with(['customer', 'status', 'category', 'group', 'assignee'])
+            ->with(['customer', 'customer.company', 'status', 'category', 'group', 'assignee', 'lastMessage', 'lastOutboundMail'])
             ->withCount(['messages as unread_count' => fn ($q) => $q->whereDoesntHave(
                 'reads',
                 fn ($q2) => $q2->where('user_id', $userId)
@@ -88,16 +95,56 @@ class TicketsCrudController extends Controller
             }
         }
 
+        // Filtros del modal "Filtrar tickets" que miran al ÚLTIMO correo del
+        // ticket, no a cualquiera. Van aquí y no en TicketFilter por el mismo
+        // motivo que 'tag': esa clase es compartida por otros módulos.
+        if ($request->filled('mail_status')) {
+            $status = $request->string('mail_status')->toString();
+            $query->whereIn('id', $this->lastMailTicketIds(fn ($q) => $q->where('m.status', $status)));
+        }
+
+        if ($request->filled('mail_type')) {
+            $type = $request->string('mail_type')->toString();
+            $query->whereIn('id', $this->lastMailTicketIds(fn ($q) => match ($type) {
+                'reply' => $q->where('m.direction', 'outbound')->where('m.is_internal', false),
+                'internal' => $q->where('m.is_internal', true),
+                'inbound' => $q->where('m.direction', 'inbound'),
+                default => $q,
+            }));
+        }
+
+        // Buzón: el remitente con el que sale el correo, es decir el canal al
+        // que el cliente responde. Solo salientes — en los entrantes el
+        // 'from' es la dirección del cliente, que no es un buzón nuestro.
+        if ($request->filled('mailbox')) {
+            $query->whereHas('mails', fn ($q) => $q->outbound()->where('from', $request->string('mailbox')->toString()));
+        }
+
+        // "Solo tickets con adjuntos": la columna es JSON, así que un array
+        // vacío ('[]') cuenta como "sin adjuntos" igual que NULL.
+        if ($request->boolean('has_attachments')) {
+            $query->whereHas('mails', fn ($q) => $q->whereNotNull('attachments')->where('attachments', '!=', '[]'));
+        }
+
         // Los tickets pospuestos (snooze activo) salen de la cola salvo que se
         // pidan explícitamente con ?snoozed=1 (vista "Pospuestos").
         $request->boolean('snoozed') ? $query->snoozed() : $query->notSnoozed();
 
-        // Orden por SLA más urgente (mockup): los que tienen fecha de
-        // vencimiento más próxima primero; los que no tienen SLA (null) van
-        // al final en vez de intercalarse al azar.
-        if ($request->get('sort') === 'sla') {
-            $query->reorder()->orderByRaw('sla_resolution_due_at IS NULL')->orderBy('sla_resolution_due_at');
-        }
+        // Los cuatro órdenes del <select> de la cabecera de la lista en el
+        // mockup. "SLA más urgente" pone delante los de vencimiento más
+        // próximo y manda los que no tienen SLA (null) al final, en vez de
+        // intercalarse al azar. "Prioridad" no puede ordenar por la columna
+        // tal cual: es un enum textual y alfabéticamente daría
+        // alta > baja > normal > urgente, así que se ordena por el peso real.
+        match ($request->get('sort')) {
+            'sla' => $query->reorder()->orderByRaw('sla_resolution_due_at IS NULL')->orderBy('sla_resolution_due_at'),
+            'date_asc' => $query->reorder()->oldest(),
+            'date_desc' => $query->reorder()->latest(),
+            'priority' => $query->reorder()
+                ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+                ->latest(),
+            default => null,
+        };
 
         $tickets = $query->paginate(50)->appends($request->query());
         $statuses = CatalogCacheService::statuses();
@@ -112,10 +159,15 @@ class TicketsCrudController extends Controller
         $availableTags = CatalogCacheService::ticketTags();
         // Para insertar plantilla en la caja de respuesta del Hilo — mismo
         // criterio que showFull() (globales o del propio usuario, activas).
-        $cannedReplies = TicketCannedReply::where('is_active', true)
-            ->where(fn ($q) => $q->where('is_global', true)->orWhere('user_id', $userId))
-            ->orderBy('title')
-            ->get(['id', 'title', 'content', 'short_code']);
+        $cannedReplies = TicketCannedReply::availableFor($userId);
+
+        // Modal 44 "Plantillas de ticket": crear un ticket ya relleno desde
+        // una plantilla, sin salir de la pantalla. Solo las activas.
+        $ticketTemplates = TicketTemplate::query()
+            ->where('is_active', true)
+            ->with('category:id,name')
+            ->orderBy('name')
+            ->get(['id', 'name', 'description', 'subject', 'body', 'category_id', 'priority']);
 
         // Ticket preseleccionado (llega vía ?ticket=, típicamente del redirect
         // de show()): se busca aparte porque puede no estar en la página/filtro
@@ -145,8 +197,32 @@ class TicketsCrudController extends Controller
             'currentView' => $currentView,
             'selectedTicket' => $selectedTicket,
             'availableTags' => $availableTags,
+            'ticketTemplates' => $ticketTemplates,
             'cannedReplies' => $cannedReplies,
-            'filters' => $request->only(['status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status', 'search', 'archived', 'tag']),
+            // Buzones propios con los que se ha enviado de verdad. Solo
+            // salientes: en los entrantes el 'from' es el correo del cliente,
+            // que no es un buzón por el que filtrar. La lista de canales
+            // configurados tampoco vale, incluiría los que nunca se han usado.
+            // Modal 35 "Nuevo ticket": el desplegable de cliente. Se manda la
+            // lista entera porque son pocos; con un catálogo grande esto
+            // tendría que pasar a un buscador contra el servidor.
+            'customers' => Customer::query()
+                ->orderBy('name')
+                ->limit(500)
+                ->get(['id', 'name', 'email'])
+                ->map(fn (Customer $c): array => ['id' => $c->id, 'name' => $c->name, 'email' => $c->email]),
+            'mailboxes' => TicketMail::query()
+                ->outbound()
+                ->whereNotNull('from')
+                ->where('from', '!=', '')
+                ->distinct()
+                ->orderBy('from')
+                ->limit(50)
+                ->pluck('from'),
+            'filters' => $request->only([
+                'status', 'category', 'assignee', 'group', 'priority', 'source', 'sla_status',
+                'search', 'archived', 'tag', 'mail_status', 'mail_type', 'mailbox', 'has_attachments',
+            ]),
             'tabCounts' => $this->tabCounts($userId),
         ]);
     }
@@ -180,17 +256,69 @@ class TicketsCrudController extends Controller
     }
 
     /**
+     * Clave/TTL de la caché de conteos COMPARTIDOS (todo salvo "mine", que es
+     * por usuario — ver tabCounts()). 45s: son KPIs de cabecera del listado,
+     * no datos transaccionales; tabCounts() no tiene un patrón de refetch
+     * inmediato tras acción (a diferencia de TicketMailsController::stats()),
+     * así que no hace falta invalidarla desde ningún otro sitio.
+     */
+    private const TAB_COUNTS_CACHE_KEY = 'helpdesktickets:tab-counts:shared';
+
+    private const TAB_COUNTS_CACHE_TTL_SECONDS = 45;
+
+    /**
      * Conteos reales para los "quick filter" del app bar (Abiertos/Urgentes/
      * Míos/Sin asignar/En espera/Resueltos/Todos) — antes se calculaban en
      * tickets.js contando solo las filas ya cargadas en la página actual
      * (recountFilters()), lo que da números correctos por casualidad
      * mientras el total de tickets quepa en una sola página de 50. Aquí se
-     * cuenta contra toda la tabla (respetando notSnoozed(), igual que el
+     * cuenta contra toda la tabla (respetando notSnoozed() y notArchived(), igual que el
      * listado), una sola pasada ligera sin hidratar modelos completos.
+     *
+     * "mine" queda fuera de la caché compartida (clave GLOBAL) a propósito:
+     * cachearlo por usuario generaría una entrada de caché distinta por cada
+     * agente, y encima quedaría desfasado justo tras asignarse/desasignarse
+     * un ticket a uno mismo — mejor una query aparte, ligera, filtrando
+     * directamente por assignee_id (indexado).
      *
      * @return array<string, int>
      */
+    /**
+     * IDs de ticket cuyo ÚLTIMO correo cumple la condición dada.
+     *
+     * La subconsulta correlacionada (`m.id = MAX(id) del mismo ticket`) es lo
+     * que hace que "último" signifique último: un whereHas normal daría por
+     * bueno cualquier correo del ticket, así que un ticket con un rebote
+     * antiguo ya resuelto seguiría apareciendo al filtrar por "Rebotado".
+     *
+     * @param  \Closure(Builder): mixed  $condition
+     */
+    private function lastMailTicketIds(\Closure $condition): \Closure
+    {
+        return function ($q) use ($condition) {
+            $q->from('helpdesk_ticket_mails as m')
+                ->select('m.ticket_id')
+                ->whereRaw('m.id = (SELECT MAX(m2.id) FROM helpdesk_ticket_mails m2 WHERE m2.ticket_id = m.ticket_id)');
+
+            $condition($q);
+        };
+    }
+
     private function tabCounts(?int $userId): array
+    {
+        $shared = Cache::remember(
+            self::TAB_COUNTS_CACHE_KEY,
+            self::TAB_COUNTS_CACHE_TTL_SECONDS,
+            fn () => $this->sharedTabCounts(),
+        );
+
+        return $shared + ['mine' => $this->mineTabCount($userId)];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function sharedTabCounts(): array
     {
         // Una sola agregación en vez de traerse la tabla entera. Antes esto era
         // ->get() sobre TODOS los tickets no pospuestos, hidratando un modelo
@@ -220,6 +348,15 @@ class TicketsCrudController extends Controller
 
         $row = Ticket::query()
             ->notSnoozed()
+            // Mismo filtro que TicketFilter::applyArchived() SIEMPRE aplica a
+            // la query real del listado (Ticket::scopeNotArchived()) — sin
+            // esto, un ticket archivado seguía sumando en "Todos" y en su
+            // tab/chip de estado aunque nunca pudiera verse en ninguna
+            // pestaña de esta pantalla (no hay tab/toggle de archivados
+            // aquí), desajustando sistemáticamente los badges del header
+            // frente al total real de la lista/paginador (bug real
+            // reproducido en QA: "Todos 12" vs "1–11 de 11").
+            ->notArchived()
             ->selectRaw(implode(', ', [
                 'COUNT(*) AS c_all',
                 "SUM(CASE WHEN {$openExpr} THEN 1 ELSE 0 END) AS c_open",
@@ -228,15 +365,13 @@ class TicketsCrudController extends Controller
                 "SUM(CASE WHEN {$inOrFalse('closed')} THEN 1 ELSE 0 END) AS c_closed",
                 "SUM(CASE WHEN priority = 'urgent' OR sla_resolution_breached = 1 OR sla_first_response_breached = 1 THEN 1 ELSE 0 END) AS c_urgent",
                 'SUM(CASE WHEN assignee_id IS NULL THEN 1 ELSE 0 END) AS c_unassigned',
-                'SUM(CASE WHEN assignee_id = ? THEN 1 ELSE 0 END) AS c_mine',
                 "SUM(CASE WHEN {$slaRiskExpr} THEN 1 ELSE 0 END) AS c_sla_risk",
-            ]), [$userId ?? 0, now()->addMinutes(60)])
+            ]), [now()->addMinutes(60)])
             ->first();
 
         return [
             'open' => (int) ($row->c_open ?? 0),
             'urgent' => (int) ($row->c_urgent ?? 0),
-            'mine' => (int) ($row->c_mine ?? 0),
             'unassigned' => (int) ($row->c_unassigned ?? 0),
             'pending' => (int) ($row->c_pending ?? 0),
             'resolved' => (int) ($row->c_resolved ?? 0),
@@ -244,6 +379,24 @@ class TicketsCrudController extends Controller
             'sla_risk' => (int) ($row->c_sla_risk ?? 0),
             'all' => (int) ($row->c_all ?? 0),
         ];
+    }
+
+    /**
+     * "Míos" del app bar — sin cachear (ver tabCounts()): consulta directa
+     * filtrando por assignee_id, cubierta por el índice compuesto
+     * (assignee_id, status_id) de helpdesk_tickets.
+     */
+    private function mineTabCount(?int $userId): int
+    {
+        if (! $userId) {
+            return 0;
+        }
+
+        return Ticket::query()
+            ->notSnoozed()
+            ->notArchived()
+            ->where('assignee_id', $userId)
+            ->count();
     }
 
     /**
@@ -311,6 +464,17 @@ class TicketsCrudController extends Controller
 
         DB::transaction(function () use ($request, &$ticket) {
             $data = $request->validated();
+
+            // Estado inicial. El formulario ofrece "Por defecto" con valor
+            // vacío y el modal "Nuevo ticket" no manda estado: sin esto el
+            // ticket nace con status_id NULL, que no es ningún estado del
+            // catálogo y deja la fila del listado sin etiqueta ni color
+            // (verificado creando uno). Mismo criterio que create():
+            // el marcado is_default y, si no hay ninguno, el primero.
+            if (empty($data['status_id'])) {
+                $data['status_id'] = CatalogCacheService::statuses()->firstWhere('is_default', true)?->id
+                    ?? CatalogCacheService::statuses()->first()?->id;
+            }
 
             if (! isset($data['sla_policy_id']) && isset($data['category_id'])) {
                 $category = TicketCategory::find($data['category_id']);
@@ -441,30 +605,7 @@ class TicketsCrudController extends Controller
         $groups = CatalogCacheService::groups();
 
         $userId = auth()->id();
-        $itemIds = $ticket->items->pluck('id');
-
-        if ($itemIds->isNotEmpty()) {
-            $alreadyRead = TicketRead::where('user_id', $userId)
-                ->whereIn('ticket_item_id', $itemIds)
-                ->pluck('ticket_item_id')
-                ->all();
-
-            $toInsert = $itemIds
-                ->diff($alreadyRead)
-                ->map(fn ($id) => [
-                    'ticket_item_id' => $id,
-                    'user_id' => $userId,
-                    'read_at' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-                ->values()
-                ->all();
-
-            if (! empty($toInsert)) {
-                TicketRead::insert($toInsert);
-            }
-        }
+        TicketRead::markAllReadFor($ticket, $userId);
 
         $agents = CatalogCacheService::agents();
 
@@ -477,11 +618,14 @@ class TicketsCrudController extends Controller
             ])->values();
 
         $history = $ticket->history()->latest()->limit(50)->get();
-        $ticketMails = $ticket->mails()->latest()->limit(30)->get();
-        $cannedReplies = TicketCannedReply::where('is_active', true)
-            ->where(fn ($q) => $q->where('is_global', true)->orWhere('user_id', $userId))
-            ->orderBy('title')
-            ->get(['id', 'title', 'content', 'html_body', 'short_code']);
+        // reorder(): Ticket::mails() ya trae su propio orderBy('created_at',
+        // 'asc') por defecto — sin limpiarlo antes, latest() encadenado
+        // encima no hace nada (MySQL ignora un 2º ORDER BY sobre la misma
+        // columna) y esta lista salía más-antiguo-primero en vez de
+        // más-reciente-primero. Ver el mismo fix/comentario en
+        // TicketDetailDataController::data().
+        $ticketMails = $ticket->mails()->reorder()->latest()->limit(30)->get();
+        $cannedReplies = TicketCannedReply::availableFor($userId);
 
         // Para el botón "Bloquear remitente" del panel de acciones: si el email
         // del cliente ya está cubierto por una regla (exacta o por dominio), la

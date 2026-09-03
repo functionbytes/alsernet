@@ -19,6 +19,7 @@ use Modules\HelpdeskTickets\Models\TicketComment;
 use Modules\HelpdeskTickets\Models\TicketLink;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Models\TicketWatcher;
+use Modules\HelpdeskTickets\Services\SlaService;
 
 class TicketLifecycleController extends Controller
 {
@@ -54,7 +55,20 @@ class TicketLifecycleController extends Controller
         // reason: key de close_reasons, o el texto libre del campo "Otro
         // motivo" del modal — se recorta a 100 (columna string(100)) para no
         // reventar en modo estricto si alguien pega texto largo.
-        $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null);
+        // La causa raíz se valida contra el catálogo: es un campo de informe,
+        // no texto libre, y una clave inventada lo estropearía en silencio.
+        $rootCause = $request->input('root_cause');
+        if ($rootCause !== null && ! array_key_exists($rootCause, config('helpdesktickets.close_root_causes', []))) {
+            $rootCause = null;
+        }
+
+        $ticket->close(Str::limit((string) $request->input('reason'), 100, '') ?: null, [
+            'root_cause' => $rootCause,
+            'summary' => Str::limit((string) $request->input('summary'), 2000, '') ?: null,
+            // Cerrar disparaba SIEMPRE la encuesta de satisfacción; en un
+            // cierre por spam o duplicado preguntar sobra.
+            'skip_survey' => $request->boolean('skip_survey'),
+        ]);
 
         // Bug real (ago-2026): este endpoint es la vía real del botón "Cerrar
         // ticket" de la UI y nunca disparaba TicketClosed, así que la encuesta
@@ -234,6 +248,20 @@ class TicketLifecycleController extends Controller
 
         TicketWatcher::addWatcher($ticket->id, $userId);
 
+        // Preferencias de aviso del modal "Seguidores": qué quiere ver quien
+        // sigue el ticket. Solo se tocan si vienen en la petición, para que
+        // un "seguir" simple conserve los valores por defecto (todo activo).
+        if ($request->has('notify_customer_replies') || $request->has('notify_internal_notes')) {
+            TicketWatcher::where('ticket_id', $ticket->id)
+                ->where('user_id', $userId)
+                ->update(array_filter([
+                    'notify_customer_replies' => $request->has('notify_customer_replies')
+                        ? $request->boolean('notify_customer_replies') : null,
+                    'notify_internal_notes' => $request->has('notify_internal_notes')
+                        ? $request->boolean('notify_internal_notes') : null,
+                ], fn ($v) => $v !== null));
+        }
+
         return response()->json(['watching' => true, 'message' => __('helpdesktickets::helpdesktickets.messages.ticket_watched')]);
     }
 
@@ -258,10 +286,21 @@ class TicketLifecycleController extends Controller
         $until = $request->validated()['snoozed_until'];
         $ticket->update(['snoozed_until' => $until, 'snoozed_by' => auth()->id()]);
 
+        // "Pausar el SLA mientras está aplazado": sin esto, un ticket
+        // aplazado tres días seguía consumiendo su plazo de resolución y
+        // aparecía vencido al volver, aunque nadie pudiera trabajarlo.
+        // pauseSla() es idempotente, así que aplazar dos veces no acumula.
+        if ($request->boolean('pause_sla')) {
+            app(SlaService::class)->pauseSla($ticket);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Ticket pospuesto.',
-            'data' => ['snoozed_until' => $ticket->snoozed_until?->toIso8601String()],
+            'data' => [
+                'snoozed_until' => $ticket->snoozed_until?->toIso8601String(),
+                'sla_paused' => $ticket->fresh()->sla_paused_at !== null,
+            ],
         ]);
     }
 
@@ -271,17 +310,32 @@ class TicketLifecycleController extends Controller
 
         $ticket->update(['snoozed_until' => null, 'snoozed_by' => null]);
 
+        // Reanudar desplaza los vencimientos por el tiempo pausado, así que
+        // el ticket vuelve con el plazo que le quedaba, no con el consumido.
+        app(SlaService::class)->resumeSla($ticket);
+
         return response()->json(['success' => true, 'message' => 'Ticket reactivado.']);
     }
 
-    public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse
+    /**
+     * Devuelve JSON a quien lo pide (el modal 46 "Posible duplicado" y la
+     * pestaña de tickets del panel) y sigue redirigiendo para el formulario
+     * clásico. Sin esto, la llamada AJAX recibía un 302 hacia el referer, el
+     * navegador lo seguía y se descargaba la página entera: la petición no
+     * terminaba nunca y el modal se quedaba abierto sin decir nada.
+     */
+    public function linkTicket(LinkTicketRequest $request, Ticket $ticket): RedirectResponse|JsonResponse
     {
         $this->authorize('update', $ticket);
 
         $validated = $request->validated();
 
         if ($validated['linked_ticket_id'] == $ticket->id) {
-            return back()->withErrors(['linked_ticket_id' => 'No puedes enlazar un ticket consigo mismo.']);
+            $message = 'No puedes enlazar un ticket consigo mismo.';
+
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $message], 422)
+                : back()->withErrors(['linked_ticket_id' => $message]);
         }
 
         // El usuario también debe poder ver el ticket destino que va a enlazar.
@@ -299,7 +353,11 @@ class TicketLifecycleController extends Controller
             ]
         );
 
-        return back()->with('success', __('helpdesktickets::helpdesktickets.settings.link.created'));
+        $message = __('helpdesktickets::helpdesktickets.settings.link.created');
+
+        return $request->expectsJson()
+            ? response()->json(['success' => true, 'message' => $message])
+            : back()->with('success', $message);
     }
 
     public function unlinkTicket(Ticket $ticket, int $linkId): RedirectResponse
