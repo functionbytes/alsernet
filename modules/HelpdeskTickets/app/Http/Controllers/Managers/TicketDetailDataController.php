@@ -41,6 +41,16 @@ class TicketDetailDataController extends Controller
             'sender_name' => $item->sender_name,
             'from_agent' => $item->isFromAgent(),
             'body' => $item->content,
+            // TranslateIncomingTicketMessage ya calcula translated_body/
+            // source_locale para cada mensaje del cliente en un idioma
+            // distinto al del agente, pero este endpoint (el que realmente
+            // alimenta el panel de /panel/helpdesk/tickets, a diferencia de
+            // la "ficha completa" show-full) nunca los exponía -- el agente
+            // no se enteraba de que había una traducción disponible
+            // (detectado 3-sep-2026 probando el flujo real con un mensaje
+            // en inglés).
+            'translated_body' => $item->translated_body,
+            'source_language_name' => $item->source_language_name,
             'attachment_count' => $item->attachment_count,
             'created_at' => $item->created_at?->toIso8601String(),
             'created_at_human' => $item->created_at?->diffForHumans(),

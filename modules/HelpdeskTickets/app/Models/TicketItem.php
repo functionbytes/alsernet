@@ -331,6 +331,35 @@ class TicketItem extends Model
     }
 
     /**
+     * Nombre legible del idioma detectado en source_locale (ej. 'en' ->
+     * 'inglés'). TranslateIncomingTicketMessage ya calcula y guarda
+     * translated_body/source_locale, pero ninguna vista del panel los
+     * mostraba -- el agente nunca veía la traducción, solo el mensaje
+     * original tal cual llegó (detectado 3-sep-2026 probando el flujo real).
+     * Sin ext-intl en este contenedor (Locale::getDisplayLanguage no
+     * disponible), de ahí el mapeo manual acotado a los idiomas reales que
+     * maneja HelpdeskTranslate/DeepL.
+     */
+    public function getSourceLanguageNameAttribute(): ?string
+    {
+        if (! $this->source_locale) {
+            return null;
+        }
+
+        $names = [
+            'es' => 'español', 'en' => 'inglés', 'fr' => 'francés',
+            'de' => 'alemán', 'it' => 'italiano', 'pt' => 'portugués',
+            'ca' => 'catalán', 'eu' => 'euskera', 'gl' => 'gallego',
+            'nl' => 'neerlandés', 'ru' => 'ruso', 'zh' => 'chino',
+            'ja' => 'japonés', 'ar' => 'árabe', 'pl' => 'polaco',
+        ];
+
+        $code = strtolower(substr($this->source_locale, 0, 2));
+
+        return $names[$code] ?? strtoupper($code);
+    }
+
+    /**
      * Check if message has attachments
      */
     public function hasAttachments(): bool

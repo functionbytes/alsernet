@@ -131,6 +131,23 @@
                                              de un remitente externo no confiable antes de imprimirlo. --}}
                                         <div>{!! $item->html_body ? $item->safeHtmlBody() : nl2br(e($item->body)) !!}</div>
 
+                                        {{-- TranslateIncomingTicketMessage ya calcula translated_body/
+                                             source_locale para cada mensaje del cliente en un idioma
+                                             distinto al del agente, pero ninguna vista lo mostraba --
+                                             el agente nunca se enteraba de que había una traducción
+                                             disponible (detectado 3-sep-2026). Se muestra el original
+                                             (arriba) y la traducción debajo, con la etiqueta del idioma
+                                             detectado, para que el agente sepa que es texto traducido. --}}
+                                        @if($item->translated_body)
+                                            <div class="mt-2 pt-2 border-top">
+                                                <small class="text-muted d-block mb-1">
+                                                    <i class="fas fa-language me-1"></i>
+                                                    Traducido automáticamente del {{ $item->source_language_name }}
+                                                </small>
+                                                <div class="fst-italic">{!! nl2br(e($item->translated_body)) !!}</div>
+                                            </div>
+                                        @endif
+
                                         @if($item->attachment_urls)
                                             {{-- attachment_urls guarda rutas del disco PRIVADO, no
                                                  URLs públicas (cambió al mover los adjuntos fuera de
