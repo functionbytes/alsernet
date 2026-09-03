@@ -12,7 +12,6 @@ use Modules\HelpdeskTickets\Events\TicketCreated;
 use Modules\HelpdeskTickets\Mail\TicketCreatedMail;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Services\TicketChannelMailerService;
-use Modules\HelpdeskTickets\Services\TicketOutboundTranslator;
 use Modules\HelpdeskTickets\Support\TicketMailRenderer;
 
 /**
@@ -26,7 +25,6 @@ class SendCustomerConfirmation implements ShouldQueue
 
     public function __construct(
         private readonly TicketChannelMailerService $channelMailer,
-        private readonly TicketOutboundTranslator $outboundTranslator,
     ) {
         $this->queue = 'notifications';
     }
@@ -56,23 +54,19 @@ class SendCustomerConfirmation implements ShouldQueue
             'customer_email' => $customerEmail,
         ]);
 
-        // Vista previa del mensaje original del cliente (lo que escribió al
-        // abrir el ticket) — antes el correo de confirmación solo repetía
-        // número/asunto/fecha, sin nada de lo que el cliente realmente envió.
-        // Traducido al idioma del cliente si ya se conoce (cliente recurrente
-        // con Customer::language ya detectado en un ticket anterior); en el
-        // primer contacto todavía no hay idioma detectado y se envía tal cual
-        // (mismo criterio que TicketOutboundTranslator::translateForCustomer).
-        $messagePreview = Str::limit((string) $ticket->description, 280);
-        $translatedPreview = $this->outboundTranslator->translateForCustomer($ticket, $messagePreview);
-
+        // Antes se incluía un MESSAGE_PREVIEW con un extracto de
+        // $ticket->description, pero en tickets creados desde un formulario
+        // (alsernetforms) esa "descripción" es el volcado crudo de TODOS los
+        // campos del formulario (Nombre, Apellidos, Email, Teléfono,
+        // Comentario, deportes...), no solo lo que el cliente escribió —
+        // salía como ruido sin sentido en el correo. Quitado a petición del
+        // usuario (3-sep-2026) junto con el bloque en la plantilla.
         [$subject, $content] = TicketMailRenderer::render(
             'helpdesk_tickets.ticket_created',
             [
                 'TICKET_NUMBER' => $ticket->ticket_number,
                 'TICKET_SUBJECT' => $ticket->subject,
                 'SUBMITTED_AT' => $ticket->created_at->format('M d, Y H:i'),
-                'MESSAGE_PREVIEW' => nl2br(e($translatedPreview)),
             ],
             'Your ticket has been received — #'.$ticket->ticket_number,
         );

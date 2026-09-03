@@ -113,7 +113,7 @@ class SendCustomerConfirmationTest extends TestCase
             ['mailer_template_id' => $template->id, 'lang_id' => $langId],
             [
                 'subject' => 'Hemos recibido tu solicitud — #{TICKET_NUMBER}',
-                'content' => '<p>{TICKET_SUBJECT}</p><div>{MESSAGE_PREVIEW}</div>',
+                'content' => '<p>{TICKET_SUBJECT}</p><p>#{TICKET_NUMBER}</p>',
             ]
         );
 
@@ -147,7 +147,7 @@ class SendCustomerConfirmationTest extends TestCase
 
     // ─── handle ───────────────────────────────────────────────────────────────
 
-    public function test_sends_confirmation_with_message_preview_and_records_ticket_mail(): void
+    public function test_sends_confirmation_and_records_ticket_mail(): void
     {
         Mail::fake();
         $this->createEnabledTemplate();
@@ -156,9 +156,15 @@ class SendCustomerConfirmationTest extends TestCase
 
         app(SendCustomerConfirmation::class)->handle(new TicketCreated($ticket));
 
+        // Ya no se pasa MESSAGE_PREVIEW (era el volcado crudo de los campos del
+        // formulario en tickets de alsernetforms, no el mensaje real del
+        // cliente — quitado a petición del usuario, 3-sep-2026). El contenido
+        // se verifica ahora contra TICKET_SUBJECT/TICKET_NUMBER, que sí siguen
+        // pasándose.
         Mail::assertQueued(
             TicketCreatedMail::class,
-            fn ($mail) => str_contains($mail->emailContent, 'Mi pedido no ha llegado todavía')
+            fn ($mail) => str_contains($mail->emailContent, $ticket->subject)
+                && str_contains($mail->emailContent, $ticket->ticket_number)
                 && $mail->hasTo('cliente@confirm-test.com')
         );
 

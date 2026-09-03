@@ -78,9 +78,15 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
                     ['name' => 'TICKET_NUMBER', 'required' => true, 'description' => 'Número del ticket'],
                     ['name' => 'TICKET_SUBJECT', 'required' => true, 'description' => 'Asunto del ticket'],
                     ['name' => 'SUBMITTED_AT', 'required' => true, 'description' => 'Fecha/hora de creación'],
-                    ['name' => 'MESSAGE_PREVIEW', 'required' => false, 'description' => 'Extracto del mensaje original del cliente'],
                     ['name' => 'COMPANY_NAME', 'required' => false, 'description' => 'Nombre de la empresa (para el pie del correo)'],
                 ],
+                // Antes traía un recuadro con {MESSAGE_PREVIEW}: en tickets creados
+                // desde un formulario (alsernetforms) la "descripción" del ticket es
+                // el volcado crudo de TODOS los campos del formulario (Nombre,
+                // Apellidos, Email, Teléfono, Comentario, deportes...), no solo lo
+                // que el cliente escribió -- se veía como ruido sin sentido en el
+                // correo. Quitado a petición del usuario (3-sep-2026) en vez de
+                // intentar limpiar el volcado en origen.
                 'content' => $this->headerCard('#90bb13', 'Hemos recibido tu solicitud').<<<'HTML'
 <div style="padding: 24px; font-family: Arial, Helvetica, sans-serif; color: #333;">
     <p style="margin: 0 0 16px;">Gracias por contactarnos. Hemos recibido tu solicitud de soporte y nuestro equipo te responderá lo antes posible.</p>
@@ -98,9 +104,6 @@ class HelpdeskTicketsEmailTemplatesSeeder extends Seeder
             <td style="padding: 8px 0;">{SUBMITTED_AT}</td>
         </tr>
     </table>
-    <div style="background: #f7f9f2; border-left: 3px solid #90bb13; padding: 12px 16px; margin: 0 0 16px; color: #555; font-size: 14px;">
-        {MESSAGE_PREVIEW}
-    </div>
     <p style="color: #666; font-size: 13px; margin: 0;">Conserva este correo como referencia. Puedes mencionar el ticket #{TICKET_NUMBER} en cualquier comunicación futura sobre este caso, o responder directamente a este correo.</p>
 </div>
 HTML,
