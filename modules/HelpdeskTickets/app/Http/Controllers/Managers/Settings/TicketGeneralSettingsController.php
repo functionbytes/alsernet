@@ -47,6 +47,7 @@ class TicketGeneralSettingsController extends Controller
         'customer_ticket' => false,
         'ticket_rating' => false,
         'cc_email' => false,
+        'notify_agents_new_ticket' => false,
     ];
 
     private const BOOL_KEYS = [
@@ -70,6 +71,7 @@ class TicketGeneralSettingsController extends Controller
         'customer_ticket',
         'ticket_rating',
         'cc_email',
+        'notify_agents_new_ticket',
     ];
 
     public function __construct()

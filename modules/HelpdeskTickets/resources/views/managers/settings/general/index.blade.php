@@ -223,6 +223,25 @@
 
                         </div>
 
+                        {{-- Notificaciones a agentes --}}
+                        <h6 class="fw-semibold mb-1">Notificaciones a agentes</h6>
+                        <p class="text-muted small mb-3">
+                            Aviso interno cuando entra un ticket nuevo. Se envía solo a los usuarios del grupo
+                            asignado al ticket (o, si no tiene grupo propio, al grupo por defecto de su categoría) —
+                            revisa que <a href="{{ route('manager.helpdesk.settings.ticket-categories.index') }}">categorías</a>
+                            y <a href="{{ route('manager.helpdesk.settings.ticket-groups.index') }}">grupos</a> estén bien
+                            configurados antes de activarlo.
+                        </p>
+                        <div class="row g-3 mb-4">
+
+                            @include('helpdesktickets::managers.settings.general._toggle', [
+                                'field' => 'notify_agents_new_ticket',
+                                'label' => 'Notificar por correo a los agentes del grupo al crearse un ticket',
+                                'default' => false,
+                            ])
+
+                        </div>
+
                         {{-- Papelera y notificaciones --}}
                         <h6 class="fw-semibold mb-1">Papelera y notificaciones</h6>
                         <p class="text-muted small mb-3">Limpieza automática de tickets eliminados y notificaciones antiguas</p>
