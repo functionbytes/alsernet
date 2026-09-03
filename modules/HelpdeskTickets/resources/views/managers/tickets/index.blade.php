@@ -455,6 +455,13 @@
                             <button type="button" class="tkt-btn" data-bulk-action="add_tag">Etiquetar</button>
                             <button type="button" class="tkt-btn" data-bulk-action="change_status">Cambiar estado</button>
                             <button type="button" class="tkt-btn" id="tkt-bulk-move-team">Mover a equipo</button>
+                            {{-- "Reintentar envío"/"Vincular a un ticket" del mockup
+                                 (modal 13, ve-mail-bulk) — mismo permiso que el resto
+                                 de esta fila, ya que ambas operan sobre datos del
+                                 propio ticket (no hay un ability "merge" separado
+                                 expuesto aquí, a diferencia de show.blade.php). --}}
+                            <button type="button" class="tkt-btn" data-bulk-action="retry_failed_mail">Reintentar envío</button>
+                            <button type="button" class="tkt-btn" id="tkt-bulk-link-ticket">Vincular a un ticket</button>
                         @endcan
                         @can('helpdesk.tickets.resolve')
                             <button type="button" class="tkt-btn" data-bulk-action="resolve">Resolver</button>

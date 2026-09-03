@@ -9116,6 +9116,51 @@
         });
     }
 
+    /**
+     * "Vincular a un ticket" del mockup (modal 13, ve-mail-bulk): mueve el
+     * hilo COMPLETO de cada ticket seleccionado a uno elegido, igual que
+     * mergeTicketPrompt() pero para varios orígenes a la vez. Reusa
+     * bindTicketSearch(), el mismo buscador con autocompletado.
+     */
+    function openBulkLinkToTicketModal() {
+        var ids = Object.keys(TKA.state.bulk).map(Number);
+        if (!ids.length) return;
+
+        var $modal = openModal(modalShell({
+            icon: 'fa-solid fa-link',
+            kicker: ids.length + (ids.length === 1 ? ' ticket seleccionado' : ' tickets seleccionados'),
+            title: 'Vincular a un ticket',
+            width: 'sm',
+            body: '<div class="tkt-field"><label class="tkt-label">Ticket destino<span class="req">*</span><span class="hint">busca por número o asunto</span></label>' +
+                    '<input type="text" class="tkt-input" id="tkt-bulk-link-target" placeholder="Nº de ticket, asunto o ID…">' +
+                    '<div class="tkt-pick-list sm" id="tkt-bulk-link-results"></div></div>' +
+                '<div class="tkt-note danger">Se moverá el hilo completo (mensajes, correos, adjuntos, notas, comentarios, tiempos, seguidores y enlaces) de cada ticket seleccionado al destino. Los orígenes se cierran y se borran. No se puede deshacer.</div>' +
+                '<label class="tkt-check"><input type="checkbox" id="tkt-bulk-link-ack"> Entiendo que esta acción no se puede deshacer</label>',
+            foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-bulk-link-confirm" disabled>Vincular</button>' +
+                  '<button type="button" class="tkt-btn" data-modal-close>Cancelar</button>',
+        }));
+
+        var targetId = null;
+        bindTicketSearch($modal, {
+            input: '#tkt-bulk-link-target',
+            results: '#tkt-bulk-link-results',
+            onPick: function (id) { targetId = id; },
+        });
+
+        $modal.on('change', '#tkt-bulk-link-ack', function () {
+            $('#tkt-bulk-link-confirm').prop('disabled', !this.checked);
+        });
+
+        $modal.on('click', '#tkt-bulk-link-confirm', function () {
+            if (!targetId) {
+                if (window.toastr) toastr.error('Elige un ticket destino de la lista'); else window.alert('Elige un ticket destino de la lista');
+                return;
+            }
+            closeModal();
+            runBulkAction('link_to_ticket', { merge_into_id: targetId });
+        });
+    }
+
     // Aplica el modo Lista/Kanban al DOM (botón activo, columnas visibles,
     // render del tablero) sin tocar la URL — usado tanto por bindEvents()
     // (clic del usuario, que sí persiste vía history.replaceState) como por
@@ -9275,6 +9320,12 @@
             resolve: { title: 'Marcar como resuelto', message: '¿Marcar como resuelto?', confirmLabel: 'Resolver', danger: false },
             close: { title: 'Cerrar tickets', message: '¿Cerrar los tickets seleccionados?', confirmLabel: 'Cerrar', danger: false },
             delete: { title: 'Eliminar tickets', message: 'Esta acción no se puede deshacer.', confirmLabel: 'Eliminar', danger: true },
+            // "Reintentar envío (solo fallidos)" del mockup: no hace falta
+            // valor adicional (a diferencia de assign/add_tag/change_status),
+            // así que entra por el mismo camino directo que resolver/cerrar,
+            // no por BULK_EXTRA_CONFIG. Los tickets sin correo saliente
+            // fallido simplemente no cuentan (ver BulkTicketsController).
+            retry_failed_mail: { title: 'Reintentar envío', message: 'Solo se reintentan los correos de salida marcados como fallidos.', confirmLabel: 'Reintentar', danger: false },
         };
         $('[data-bulk-action]').on('click', function () {
             var action = $(this).data('bulk-action');
@@ -9293,6 +9344,7 @@
         });
 
         $('#tkt-bulk-move-team').on('click', openBulkMoveTeamModal);
+        $('#tkt-bulk-link-ticket').on('click', openBulkLinkToTicketModal);
 
         $('#tkt-search').on('keydown', function (ev) {
             if (ev.key !== 'Enter') return;
