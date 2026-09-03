@@ -18,10 +18,16 @@ class StoreTicketFollowupRequest extends FormRequest
             // endpoint) o una secuencia entera de pasos.
             'scheduled_at' => ['required_without:steps', 'nullable', 'date', 'after:now'],
             'note' => ['nullable', 'string', 'max:1000'],
+            // Plantilla opcional del paso suelto: si se manda, al vencer se
+            // envía un correo real al cliente con su contenido (ver
+            // SendDueTicketFollowupsCommand), además del recordatorio interno
+            // de siempre.
+            'canned_reply_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_canned_replies,id'],
             'cancel_if_customer_replies' => ['nullable', 'boolean'],
             'steps' => ['nullable', 'array', 'max:6'],
             'steps.*.scheduled_at' => ['required', 'date', 'after:now'],
             'steps.*.note' => ['nullable', 'string', 'max:1000'],
+            'steps.*.canned_reply_id' => ['nullable', 'integer', 'exists:helpdesk.helpdesk_ticket_canned_replies,id'],
         ];
     }
 

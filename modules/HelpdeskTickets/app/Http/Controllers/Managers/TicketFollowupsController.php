@@ -29,6 +29,7 @@ class TicketFollowupsController extends Controller
         $pasos = $datos['steps'] ?? [[
             'scheduled_at' => $datos['scheduled_at'],
             'note' => $datos['note'] ?? null,
+            'canned_reply_id' => $datos['canned_reply_id'] ?? null,
         ]];
 
         $cancelar = $request->boolean('cancel_if_customer_replies', true);
@@ -42,6 +43,7 @@ class TicketFollowupsController extends Controller
             'user_id' => $request->user()->id,
             'scheduled_at' => $paso['scheduled_at'],
             'note' => $paso['note'] ?? null,
+            'canned_reply_id' => $paso['canned_reply_id'] ?? null,
             'step' => $i + 1,
             'cancel_if_customer_replies' => $cancelar,
             'is_sent' => false,

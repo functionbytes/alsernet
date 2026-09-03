@@ -8019,6 +8019,17 @@
                     '<div id="tkt-followup-steps">' + pasosHtml(RITMOS[0]) + '</div></div>' +
                 '<div class="tkt-field"><label class="tkt-label">Nota <span class="hint">opcional, se repite en cada paso</span></label>' +
                     '<input type="text" class="tkt-input" id="tkt-followup-note" maxlength="1000" placeholder="Motivo del recordatorio…"></div>' +
+                // Plantilla del mockup: si se elige una, cada paso manda ese
+                // correo de verdad al cliente (además del recordatorio interno
+                // de siempre) al vencer -- ver SendDueTicketFollowupsCommand.
+                // optionsHtml() no sirve aquí: da por hecho item.name, y
+                // TicketCannedReply usa item.title.
+                '<div class="tkt-field"><label class="tkt-label">Plantilla <span class="hint">opcional — si se elige, se envía al cliente</span></label>' +
+                    '<select class="tkt-select" id="tkt-followup-template" data-no-select2><option value="">Sin plantilla (solo recordatorio interno)</option>' +
+                        (TKA.state.cannedReplies || []).map(function (r) {
+                            return '<option value="' + r.id + '">' + escapeHtml(r.title) + '</option>';
+                        }).join('') +
+                    '</select></div>' +
                 '<label class="tkt-check"><input type="checkbox" id="tkt-followup-stop" checked> ' +
                     'Detener la secuencia si el cliente responde</label>',
             foot: '<button type="button" class="tkt-btn tkt-btn-primary" id="tkt-followup-confirm">Programar</button>' +
@@ -8034,8 +8045,9 @@
         });
 
         $backdrop.on('click', '#tkt-followup-confirm', function () {
+            var plantilla = $('#tkt-followup-template').val() || null;
             var pasos = $backdrop.find('[data-step-at]').map(function () {
-                return { scheduled_at: $(this).data('step-at'), note: $('#tkt-followup-note').val() || null };
+                return { scheduled_at: $(this).data('step-at'), note: $('#tkt-followup-note').val() || null, canned_reply_id: plantilla };
             }).get();
 
             if (!pasos.length) { if (window.toastr) toastr.error('Elige un ritmo'); return; }

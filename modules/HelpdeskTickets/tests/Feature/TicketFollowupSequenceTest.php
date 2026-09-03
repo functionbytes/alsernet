@@ -4,9 +4,12 @@ namespace Modules\HelpdeskTickets\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Modules\Helpdesk\Models\Customer;
+use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\Ticket;
+use Modules\HelpdeskTickets\Models\TicketCannedReply;
 use Modules\HelpdeskTickets\Models\TicketFollowup;
 use Modules\HelpdeskTickets\Models\TicketStatus;
 use Modules\HelpdeskTickets\Notifications\TicketFollowupDueNotification;
@@ -184,6 +187,76 @@ class TicketFollowupSequenceTest extends TestCase
         $this->assertTrue($followup->is_sent);
         $this->assertNull($followup->cancelled_at);
         Notification::assertSentTo($this->manager, TicketFollowupDueNotification::class);
+    }
+
+    // ─── plantilla al cliente (mockup: selector "Plantilla") ──────────────────
+
+    /**
+     * Antes este comando SOLO avisaba al agente que programó el paso, nunca
+     * al cliente -- el mockup muestra la secuencia mandando un correo real.
+     * Se comprueba creando el TicketItem real (from_agent, no interno) y
+     * disparando MessageAdded, el mismo evento que ya sabe mandar el correo
+     * real vía SendCustomerReplyNotification cuando hay plantilla
+     * helpdesk.ticket_reply activa -- no se repite esa parte aquí, ya la
+     * cubre su propio test.
+     */
+    public function test_el_paso_con_plantilla_manda_un_mensaje_real_al_cliente(): void
+    {
+        Notification::fake();
+        Event::fake([MessageAdded::class]);
+
+        $reply = TicketCannedReply::create([
+            'user_id' => $this->manager->id,
+            'title' => 'Seguimos aquí',
+            'content' => 'Hola, seguimos pendientes de tu ticket {{ticket_number}}.',
+            'is_global' => true,
+            'is_active' => true,
+        ]);
+
+        $ticket = $this->makeTicket();
+        $followup = TicketFollowup::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->manager->id,
+            'scheduled_at' => now()->subMinute(),
+            'step' => 1,
+            'canned_reply_id' => $reply->id,
+            'cancel_if_customer_replies' => true,
+            'is_sent' => false,
+        ]);
+
+        $this->artisan('ticket:send-followups')->assertExitCode(0);
+
+        $followup->refresh();
+        $this->assertTrue($followup->is_sent);
+
+        $item = $ticket->items()->latest()->first();
+        $this->assertNotNull($item);
+        $this->assertSame("Hola, seguimos pendientes de tu ticket {$ticket->ticket_number}.", $item->body);
+        $this->assertSame($this->manager->id, $item->user_id);
+        $this->assertFalse($item->is_internal);
+
+        Event::assertDispatched(MessageAdded::class, fn (MessageAdded $event) => $event->item->is($item));
+    }
+
+    public function test_el_paso_sin_plantilla_no_crea_ningun_mensaje_para_el_cliente(): void
+    {
+        Notification::fake();
+
+        $ticket = $this->makeTicket();
+        TicketFollowup::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => $this->manager->id,
+            'scheduled_at' => now()->subMinute(),
+            'step' => 1,
+            'cancel_if_customer_replies' => true,
+            'is_sent' => false,
+        ]);
+
+        $this->artisan('ticket:send-followups')->assertExitCode(0);
+
+        // Comportamiento de siempre, sin plantilla: solo el recordatorio
+        // interno al agente, ningún TicketItem nuevo en el hilo.
+        $this->assertSame(0, $ticket->items()->count());
     }
 
     public function test_sin_la_condicion_activa_el_paso_se_envia_igualmente(): void

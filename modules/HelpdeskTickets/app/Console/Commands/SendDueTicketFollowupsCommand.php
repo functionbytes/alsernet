@@ -4,8 +4,11 @@ namespace Modules\HelpdeskTickets\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Models\TicketFollowup;
 use Modules\HelpdeskTickets\Notifications\TicketFollowupDueNotification;
+use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
+use Throwable;
 
 /**
  * Envía los recordatorios de seguimiento cuya fecha ya venció: notifica al
@@ -28,7 +31,7 @@ class SendDueTicketFollowupsCommand extends Command
             ->pending()
             ->whereNotNull('scheduled_at')
             ->where('scheduled_at', '<=', now())
-            ->with(['ticket', 'user'])
+            ->with(['ticket', 'user', 'cannedReply'])
             ->chunkById(200, function ($followups) use (&$sent, &$cancelados) {
                 foreach ($followups as $followup) {
                     // "Detener la secuencia si el cliente responde": si hubo
@@ -45,6 +48,19 @@ class SendDueTicketFollowupsCommand extends Command
 
                     if ($followup->user) {
                         $followup->user->notify(new TicketFollowupDueNotification($followup));
+                    }
+
+                    // Selector "Plantilla" del mockup: antes este comando
+                    // SOLO avisaba al agente que había programado el paso,
+                    // nunca al cliente -- el mockup muestra el seguimiento
+                    // como un email real que sale del ticket. Se manda como
+                    // un mensaje del agente que programó el paso (o del
+                    // asignado, si ya cambió), reusando el mismo mecanismo
+                    // que un mensaje escrito a mano (MessageAdded ->
+                    // SendCustomerReplyNotification ya envía el correo real
+                    // vía la plantilla helpdesk.ticket_reply).
+                    if ($followup->canned_reply_id && $followup->cannedReply && $followup->ticket) {
+                        $this->sendCustomerFollowup($followup);
                     }
 
                     $followup->update(['is_sent' => true, 'sent_at' => now()]);
@@ -66,6 +82,40 @@ class SendDueTicketFollowupsCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Manda al cliente, por correo real, el contenido de la plantilla
+     * elegida al programar este paso -- interpolando las mismas variables
+     * ({{ticket_number}}, {{customer_name}}...) que ya usan macros y
+     * plantillas de creación de ticket. Un fallo (plantilla borrada,
+     * dispatcher caído) no debe tumbar el resto del barrido: se registra y
+     * el paso igual se marca como enviado, para no reintentarlo cada minuto.
+     */
+    private function sendCustomerFollowup(TicketFollowup $followup): void
+    {
+        try {
+            $body = (new TicketVariableInterpolator)->interpolate(
+                $followup->cannedReply->content,
+                $followup->ticket,
+            );
+
+            $item = $followup->ticket->items()->create([
+                'type' => 'message',
+                'user_id' => $followup->user_id,
+                'body' => $body,
+                'html_body' => $followup->cannedReply->html_body,
+                'is_internal' => false,
+            ]);
+
+            MessageAdded::dispatch($item);
+        } catch (Throwable $e) {
+            Log::error('SendDueTicketFollowups: no se pudo enviar el correo de seguimiento al cliente', [
+                'followup_id' => $followup->id,
+                'ticket_id' => $followup->ticket_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -19,6 +19,7 @@ class TicketFollowup extends Model
         'user_id',
         'scheduled_at',
         'note',
+        'canned_reply_id',
         'is_sent',
         'sent_at',
         'step',
@@ -46,6 +47,16 @@ class TicketFollowup extends Model
     public function user(): BelongsTo
     {
         return $this->belongsToHelpdeskUser('user_id', 'user');
+    }
+
+    /**
+     * Plantilla que se manda al CLIENTE por correo cuando este paso vence
+     * (mockup "Secuencia de seguimiento", selector "Plantilla") -- null si
+     * el paso es solo un recordatorio interno para el agente, como antes.
+     */
+    public function cannedReply(): BelongsTo
+    {
+        return $this->belongsTo(TicketCannedReply::class, 'canned_reply_id');
     }
 
     /**
