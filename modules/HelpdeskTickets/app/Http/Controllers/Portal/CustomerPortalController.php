@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Modules\Helpdesk\Models\Customer;
 use Modules\HelpdeskTickets\Events\MessageAdded;
+use Modules\HelpdeskTickets\Http\Controllers\FeedbackController;
 use Modules\HelpdeskTickets\Http\Requests\Portal\PortalLoginRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\RateTicketRequest;
 use Modules\HelpdeskTickets\Http\Requests\Portal\ReplyTicketRequest;
@@ -432,22 +433,28 @@ class CustomerPortalController extends Controller
     /** GET /portal/tickets/{ticketNumber}/rate/{rating} — rate from email link (no session required) */
     public function rateTicketFromEmail(Request $request, string $ticketNumber, int $rating): RedirectResponse
     {
-        if ($rating < 1 || $rating > 5) {
-            return redirect()->route('portal.login')->withErrors(['error' => __('helpdesktickets::helpdesktickets.portal.rating_invalid')]);
-        }
-
         $ticket = Ticket::where('ticket_number', $ticketNumber)
             ->whereNotNull('closed_at')
-            ->whereNull('rated_at')
             ->firstOrFail();
 
-        $ticket->update([
-            'rating' => $rating,
-            'rated_at' => now(),
-        ]);
+        // Un doble clic en el botón del correo (o el mismo enlace abierto dos
+        // veces) caía antes en whereNull('rated_at')->firstOrFail() -> 404
+        // crudo de Laravel. Ahora simplemente no reescribe una valoración ya
+        // guardada y sigue igual hacia la página de agradecimiento.
+        if (! $ticket->rated_at && $rating >= 1 && $rating <= 5) {
+            $ticket->update([
+                'rating' => $rating,
+                'rated_at' => now(),
+            ]);
+        }
 
-        return redirect()->route('portal.login')
-            ->with('status', __('helpdesktickets::helpdesktickets.portal.rating_thanks'));
+        // Antes redirigía a portal.login con un mensaje flash "gracias" --
+        // confuso: el cliente hacía clic en una puntuación y aterrizaba en un
+        // formulario de inicio de sesión (reportado por el usuario, 3-sep-2026).
+        // FeedbackController::show() ya tiene la pantalla de agradecimiento
+        // correcta (sin login) para cuando rated_at está seteado, así que se
+        // reusa en vez de duplicarla.
+        return redirect()->to(FeedbackController::signedShowUrl($ticket));
     }
 
     /**
