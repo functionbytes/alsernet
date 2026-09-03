@@ -93,7 +93,7 @@ class ProcessComplianceCascadeJob implements ShouldQueue
         // EmailLog vive en la conexión por defecto (no 'helpdesk'), igual que
         // Document: fuera de la transacción de arriba a propósito, ver el
         // docblock de EmailLogComplianceHandler.
-        if ($this->moduleReady('HelpdeskEmailLog', 'Modules\\HelpdeskEmailLog\\Models\\EmailLog')) {
+        if ($this->moduleReady('HelpdeskEmailActivity', 'Modules\\HelpdeskEmailActivity\\Models\\EmailLog')) {
             $summaries[] = app(EmailLogComplianceHandler::class)
                 ->handle($this->customerEmail, $this->hard);
         }

@@ -2,11 +2,11 @@
 
 namespace Modules\HelpdeskCompliance\Services\Handlers;
 
-use Modules\HelpdeskEmailLog\Models\EmailLog;
-use Modules\HelpdeskEmailLog\Models\EmailSuppression;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
+use Modules\HelpdeskEmailActivity\Models\EmailSuppression;
 
 /**
- * Cascades a GDPR erasure to HelpdeskEmailLog. EmailLog/EmailLogOpen/
+ * Cascades a GDPR erasure to HelpdeskEmailActivity. EmailLog/EmailLogOpen/
  * EmailSuppression are not linked by customer_id — they only ever knew the
  * raw recipient address — so this handler matches by the customer's email,
  * captured BEFORE the core deletion anonymized/removed the Customer row
@@ -46,7 +46,7 @@ use Modules\HelpdeskEmailLog\Models\EmailSuppression;
  * email_suppressions.email rompe el lookup por texto plano de
  * EmailSuppression::isSuppressed()/scopeCoversModule() para esa dirección —
  * actualizar ese matching a hash-contra-hash es un cambio más amplio dentro
- * de HelpdeskEmailLog (toca EnforceEmailSuppression y los puntos de escritura
+ * de HelpdeskEmailActivity (toca EnforceEmailSuppression y los puntos de escritura
  * de la lista de supresión), fuera del alcance de este handler.
  */
 class EmailLogComplianceHandler
@@ -59,7 +59,7 @@ class EmailLogComplianceHandler
         $email = trim((string) $customerEmail);
 
         if ($email === '') {
-            return ['module' => 'HelpdeskEmailLog', 'logs' => 0, 'opens' => 0, 'suppressions' => 0, 'mode' => 'skipped'];
+            return ['module' => 'HelpdeskEmailActivity', 'logs' => 0, 'opens' => 0, 'suppressions' => 0, 'mode' => 'skipped'];
         }
 
         $logs = 0;
@@ -103,7 +103,7 @@ class EmailLogComplianceHandler
             ->update(['email' => hash('sha256', mb_strtolower($email)), 'notes' => null]);
 
         return [
-            'module' => 'HelpdeskEmailLog',
+            'module' => 'HelpdeskEmailActivity',
             'logs' => $logs,
             'opens' => $opens,
             'suppressions' => $suppressions,

@@ -28,7 +28,9 @@ use Modules\Document\Entities\DocumentPermission;
 use Modules\Document\Entities\DocumentValidatorGroup;
 use Modules\Document\Http\ViewComposers\NavigationComposer;
 use Modules\Document\Policies\DocumentPolicy;
+use Modules\Document\Services\DocumentEmailLogPanelRenderer;
 use Modules\Document\Policies\SettingsPolicy;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\Document\Services\PermissionService;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -73,6 +75,30 @@ class DocumentsServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
 
         // Register routes directly (Laravel 12 compatible)
+
+        $this->registerEmailLogPanel();
+    }
+
+    /**
+     * Conecta el detalle de un email de HelpdeskEmailActivity con un panel propio
+     * de este módulo: registra DocumentEmailLogPanelRenderer en el
+     * EntityPanelRegistry de ese módulo (mismo patrón que
+     * Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider::registerEmailLogPanel())
+     * para que un email cuyo entity_type sea Document::class muestre un
+     * resumen propio sin que HelpdeskEmailActivity conozca este módulo.
+     */
+    protected function registerEmailLogPanel(): void
+    {
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
+        if (! class_exists(EntityPanelRegistry::class)) {
+            return;
+        }
+
+        $this->app->make(EntityPanelRegistry::class)
+            ->register(new DocumentEmailLogPanelRenderer);
         $this->registerRoutes();
     }
 
@@ -207,10 +233,15 @@ class DocumentsServiceProvider extends ServiceProvider
             // Blockade sync - dynamic schedule based on DB settings
             $this->registerBlockadeSyncSchedule($schedule);
 
-            // Bounce processing - solo si documents.bounce_imap_enabled = yes
-            // (el comando también se auto-protege con el mismo check por si se
-            // invoca manualmente o cambia esta programación).
-            $this->registerBounceProcessingSchedule($schedule);
+            // El procesado de rebotes se centralizó en HelpdeskEmailActivity
+            // (email-logs:process-bounces, ver
+            // Modules\HelpdeskEmailActivity\Providers\HelpdeskEmailActivityServiceProvider)
+            // — cubre el buzón de Document generalizado a una lista de
+            // buzones gestionable, en vez de un único Setting fijo aquí. Si
+            // este entorno tenía documents.bounce_imap_* configurado, hay
+            // que migrarlo a esa pantalla (Settings → Log de emails →
+            // Buzones de rebote) antes de desplegar este cambio — esos
+            // Settings ya no los lee nadie.
         });
     }
 

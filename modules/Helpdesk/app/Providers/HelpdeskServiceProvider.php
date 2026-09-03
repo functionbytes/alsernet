@@ -63,7 +63,9 @@ use Modules\Helpdesk\Services\Automation\Actions\SendWebhookAction;
 use Modules\Helpdesk\Services\Automation\Actions\SnoozeConversationAction;
 use Modules\Helpdesk\Services\Automation\AutomationActionRegistry;
 use Modules\Helpdesk\Services\CannedReplyService;
+use Modules\Helpdesk\Services\ConversationEmailLogPanelRenderer;
 use Modules\Helpdesk\Services\ConversationTagService;
+use Modules\Helpdesk\Services\CustomerEmailLogPanelRenderer;
 use Modules\Helpdesk\Services\CustomerStatsService;
 use Modules\Helpdesk\Services\EmailInboundService;
 use Modules\Helpdesk\Services\FacebookMessengerService;
@@ -73,6 +75,7 @@ use Modules\Helpdesk\Services\OutboundMessageService;
 use Modules\Helpdesk\Services\Public\SimulatorOutboundMessageService;
 use Modules\Helpdesk\Services\Templates\LiquidRenderer;
 use Modules\Helpdesk\Services\WhatsAppBusinessService;
+use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\Theme\Services\NavService;
 use Nwidart\Modules\Facades\Module;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -104,6 +107,32 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->registerAutomationListeners();
         $this->registerSimulatorOutboundGuard();
+        $this->registerEmailLogPanel();
+    }
+
+    /**
+     * Conecta el detalle de un email de HelpdeskEmailActivity con paneles propios
+     * de este módulo: registra CustomerEmailLogPanelRenderer y
+     * ConversationEmailLogPanelRenderer en el EntityPanelRegistry de ese
+     * módulo (mismo patrón que
+     * Modules\HelpdeskTickets\Providers\HelpdeskTicketsServiceProvider::registerEmailLogPanel(),
+     * el primer registrador real de este punto de extensión) para que un
+     * email cuyo entity_type sea Customer::class o Conversation::class
+     * muestre un resumen propio sin que HelpdeskEmailActivity conozca este módulo.
+     */
+    protected function registerEmailLogPanel(): void
+    {
+        if (! helpdesk_emaillog_enabled()) {
+            return;
+        }
+
+        if (! class_exists(EntityPanelRegistry::class)) {
+            return;
+        }
+
+        $registry = $this->app->make(EntityPanelRegistry::class);
+        $registry->register(new CustomerEmailLogPanelRenderer);
+        $registry->register(new ConversationEmailLogPanelRenderer);
     }
 
     /**

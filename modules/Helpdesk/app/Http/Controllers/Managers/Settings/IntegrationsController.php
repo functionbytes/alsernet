@@ -90,7 +90,7 @@ class IntegrationsController extends Controller
             'key' => 'helpcenter',
             'description' => 'Base de articulos de ayuda con busqueda semantica para agentes y bots.',
         ],
-        'HelpdeskEmailLog' => [
+        'HelpdeskEmailActivity' => [
             'key' => 'emaillog',
             'description' => 'Registra encabezados y trazabilidad de los correos entrantes y salientes del helpdesk.',
         ],

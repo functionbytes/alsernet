@@ -77,7 +77,7 @@ class EnsureModuleIsActive
                     'returns' => 'Return',
                     'helpdesk' => 'Helpdesk',
                     'helpdeskintegration' => 'HelpdeskIntegration',
-                    'helpdeskemaillog' => 'HelpdeskEmailLog',
+                    'helpdeskemailactivity' => 'HelpdeskEmailActivity',
                     'giftmessage' => 'GiftMessage',
                     'pricelabels' => 'PriceLabels',
                     'faq' => 'Faq',

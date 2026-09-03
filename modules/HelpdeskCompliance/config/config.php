@@ -25,7 +25,7 @@ return [
         'HelpdeskDocument',
         // EmailLog/EmailLogOpen/EmailSuppression, vinculados por email (viven en
         // la conexión por defecto, fuera de la transacción 'helpdesk').
-        'HelpdeskEmailLog',
+        'HelpdeskEmailActivity',
     ],
 
     /*
