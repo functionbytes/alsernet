@@ -100,7 +100,7 @@ class SendCustomerReplyNotification implements ShouldQueue
         // contra "con corchetes". headers() ya los agrega para el envío real.
         $ownMessageId = Str::uuid().'@'.(parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
 
-        $mailable = new TicketReplyMail($ticket, $subject, $html, $fromAddress, $ownMessageId, $inReplyTo);
+        $mailable = new TicketReplyMail($ticket, $subject, $html, $fromAddress, $ownMessageId, $inReplyTo, $item->attachment_urls ?? []);
 
         ($mailerName ? Mail::mailer($mailerName) : Mail::mailer())
             ->to($ticket->customer->email)

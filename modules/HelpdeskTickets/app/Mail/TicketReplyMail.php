@@ -6,12 +6,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Modules\HelpdeskEmailLog\Contracts\TracksEmailLog;
-use Modules\HelpdeskEmailLog\Mail\AddsEmailLogHeaders;
+use Modules\HelpdeskEmailActivity\Contracts\TracksEmailLog;
+use Modules\HelpdeskEmailActivity\Mail\AddsEmailLogHeaders;
 use Modules\HelpdeskTickets\Models\Ticket;
 
 /**
@@ -45,8 +46,27 @@ class TicketReplyMail extends Mailable implements ShouldQueue, TracksEmailLog
         public readonly ?string $fromAddress = null,
         public readonly ?string $ownMessageId = null,
         public readonly ?string $inReplyTo = null,
+        // Rutas de storage (disco 'helpdesk.attachments.disk', TicketItem::attachment_urls),
+        // no rutas absolutas del disco. Antes el agente adjuntaba un archivo a
+        // su respuesta y el cliente NUNCA lo recibía por correo (ni el archivo
+        // ni un enlace) -- el texto decía "te adjunto..." pero el email salía
+        // sin nada adjunto (detectado 3-sep-2026 probando el flujo en vivo).
+        public readonly array $attachmentPaths = [],
     ) {
         $this->onQueue('emails');
+    }
+
+    /**
+     * @return Attachment[]
+     */
+    public function attachments(): array
+    {
+        $disk = config('helpdesk.attachments.disk', 'local');
+
+        return array_map(
+            fn (string $path) => Attachment::fromStorageDisk($disk, $path),
+            $this->attachmentPaths
+        );
     }
 
     public function getEmailLogModule(): string
