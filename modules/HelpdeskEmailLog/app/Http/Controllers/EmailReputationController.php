@@ -15,7 +15,7 @@ use Modules\HelpdeskEmailLog\Services\DomainAuthenticationChecker;
  * Dashboard de reputación: autenticación de dominio (SPF/DKIM/DMARC, por
  * DNS — sin proveedor conectado) y tasas de rebote/queja calculadas sobre
  * email_logs (ya existente, sin dependencia nueva). Los dominios a vigilar
- * se gestionan en Settings → Log de emails (reputation_domains).
+ * se gestionan en Settings → Actividad de correo (reputation_domains).
  */
 class EmailReputationController extends Controller
 {

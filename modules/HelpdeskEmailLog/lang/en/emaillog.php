@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Email log',
-    'subtitle' => 'Centralized record of the emails sent by the system · delivery, bounces, resending, suppressions and traces',
+    'title' => 'Email activity',
+    'subtitle' => 'Record of the emails sent by the system · delivery, bounces, resending, suppressions and traces',
 
     'crumbs' => [
         'panel' => 'Panel',
@@ -245,14 +245,14 @@ return [
     ],
 
     'deleted' => [
-        'one' => 'Email log entry moved to trash.',
+        'one' => 'Email activity entry moved to trash.',
         'many' => ':count entries moved to trash.',
     ],
 
     'trash' => [
         'recoverable_hint' => 'recoverable for :days days',
-        'title' => 'Log trash',
-        'subtitle' => 'Email log entries deleted from the list — recoverable for :days days before being permanently removed.',
+        'title' => 'Activity trash',
+        'subtitle' => 'Email activity entries deleted from the list — recoverable for :days days before being permanently removed.',
         'back_to_list' => 'Back to list',
         'link' => 'Trash',
         'retention_note' => 'Entries in this trash are permanently deleted :days days after being deleted.',
@@ -507,8 +507,8 @@ return [
     ],
 
     'settings' => [
-        'title' => 'Email log — Settings',
-        'saved' => 'Email log settings updated.',
+        'title' => 'Email activity — Settings',
+        'saved' => 'Email activity settings updated.',
     ],
 
     'csv' => [

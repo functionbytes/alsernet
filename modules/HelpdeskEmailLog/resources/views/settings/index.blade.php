@@ -1,6 +1,6 @@
 @extends('layouts.theme')
 
-@section('title', 'Log de emails — Configuración')
+@section('title', 'Actividad de correo — Configuración')
 
 @section('page_header')
     @include('core::components.card', ['title' => 'Log de emails — Configuración'])

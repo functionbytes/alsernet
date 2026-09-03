@@ -175,16 +175,16 @@ class HelpdeskEmailLogServiceProvider extends ServiceProvider
             return;
         }
 
-        // "Log de emails" y "Reputación" se movieron por completo a Ajustes >
-        // Helpdesk · Registro de correo: son auditoría/config del envío, no
+        // "Configuración" y "Reputación" se movieron por completo a Ajustes >
+        // Helpdesk · Actividad de correo: son auditoría/config del envío, no
         // una bandeja de trabajo del día a día — ya no tienen sección propia
         // en el menú operativo de Helpdesk.
         NavService::registerSidebar('settings', [
-            'title' => 'Helpdesk · Registro de correo',
+            'title' => 'Helpdesk · Actividad de correo',
             'order' => 240,
             'items' => [
                 [
-                    'label' => 'Log de emails',
+                    'label' => 'Configuración',
                     'route' => 'settings.helpdeskemaillog.index',
                     'permission' => 'helpdeskemaillog.settings.view',
                 ],

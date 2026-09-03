@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'title' => 'Log de emails',
-    'subtitle' => 'Registro centralizado de los emails enviados por el sistema · entrega, rebotes, reenvío, supresiones y trazas',
+    'title' => 'Actividad de correo',
+    'subtitle' => 'Registro de los emails enviados por el sistema · entrega, rebotes, reenvío, supresiones y trazas',
 
     'crumbs' => [
         'panel' => 'Panel',
@@ -518,8 +518,8 @@ return [
     ],
 
     'settings' => [
-        'title' => 'Log de emails — Configuración',
-        'saved' => 'Configuración del log de emails actualizada.',
+        'title' => 'Actividad de correo — Configuración',
+        'saved' => 'Configuración de la actividad de correo actualizada.',
     ],
 
     'csv' => [

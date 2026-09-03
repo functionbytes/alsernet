@@ -1,6 +1,6 @@
 {
     "name": "modules/helpdeskemaillog",
-    "description": "Registro centralizado de todos los emails enviados por el sistema",
+    "description": "Actividad de correo del sistema: registro de envios, entregabilidad (rebotes, supresion, reputacion SPF/DKIM/DMARC) e interaccion del cliente (aperturas y clics)",
     "authors": [
         {
             "name": "INOQUALAB",
