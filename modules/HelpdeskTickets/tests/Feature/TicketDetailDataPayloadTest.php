@@ -152,6 +152,48 @@ class TicketDetailDataPayloadTest extends TestCase
         $this->assertContains('delivered', array_column($payload['trace'], 'type'));
     }
 
+    /**
+     * Bug real (3-sep-2026, TCK-2026-00093): en cuanto el cliente respondía,
+     * la pestaña Traza se quedaba vacía. traceFor() se llamaba con $lastMail
+     * (el correo más reciente del ticket SEA CUAL SEA su dirección), y un
+     * correo ENTRANTE nunca tiene sent_at/delivered_at/EmailLog propios --
+     * ese guard de traceFor() devolvía [] aunque el correo saliente anterior
+     * sí tuviera toda su traza real.
+     */
+    public function test_la_traza_sigue_mostrandose_aunque_el_cliente_responda_despues(): void
+    {
+        $ticket = $this->makeTicket();
+        TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'outbound',
+            'from' => 'soporte@example.invalid',
+            'to' => 'cliente@example.invalid',
+            'subject' => 'Respuesta',
+            'status' => 'delivered',
+            'message_id' => 'saliente-'.uniqid().'@example.invalid',
+            'sent_at' => now()->subMinutes(10),
+            'delivered_at' => now()->subMinutes(9),
+        ]);
+
+        // Más reciente que el saliente de arriba -- sin el fix, este pasa a
+        // ser $lastMail y la traza se vacía.
+        TicketMail::create([
+            'ticket_id' => $ticket->id,
+            'direction' => 'inbound',
+            'from' => 'cliente@example.invalid',
+            'to' => 'soporte@example.invalid',
+            'subject' => 'Re: Respuesta',
+            'status' => 'received',
+            'message_id' => 'entrante-'.uniqid().'@example.invalid',
+        ]);
+
+        $payload = $this->payload($ticket);
+
+        $this->assertNotEmpty($payload['trace']);
+        $this->assertContains('delivered', array_column($payload['trace'], 'type'));
+        $this->assertSame('saliente', array_column($payload['trace_meta']['ids'], 'v', 'k')['dirección']);
+    }
+
     public function test_la_traza_publica_identificadores_del_correo(): void
     {
         $ticket = $this->makeTicket();

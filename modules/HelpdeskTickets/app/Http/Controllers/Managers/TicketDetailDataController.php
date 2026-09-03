@@ -319,6 +319,21 @@ class TicketDetailDataController extends Controller
         // de 50 correos entrantes intercalados más recientes.
         $lastOutboundMail = $ticket->mails()->where('direction', 'outbound')->reorder()->latest()->first();
 
+        // Mismo motivo que $lastOutboundMail de arriba, pero para la pestaña
+        // Traza: si el cliente responde, $lastMail pasa a ser ese correo
+        // ENTRANTE, que nunca tiene sent_at/delivered_at/EmailLog propios
+        // (nosotros no lo enviamos) -- traceFor() devolvía [] y la pestaña
+        // se veía vacía justo después de que el cliente contestara (bug real,
+        // confirmado en vivo, TCK-2026-00093: la traza desaparecía tras la
+        // segunda respuesta del cliente). La traza es sobre lo que NOSOTROS
+        // mandamos, así que tiene que seguir al último saliente, no al
+        // último mensaje sea cual sea su dirección.
+        $lastOutboundMailEmailLog = $lastOutboundMail === null
+            ? null
+            : ($lastMail && $lastOutboundMail->is($lastMail)
+                ? $lastMailEmailLog
+                : $this->emailLogLookup->forMessageId($lastOutboundMail->message_id));
+
         $notes = TicketNote::where('ticket_id', $ticket->id)
             ->with('user')
             ->orderByDesc('is_pinned')
@@ -410,7 +425,7 @@ class TicketDetailDataController extends Controller
                 // lógica de reenvío.
                 'url_resend' => route('manager.helpdesk.tickets.emails.resend', $lastOutboundMail),
             ] : null,
-            'trace' => $lastMail ? $this->traceFor($lastMail, $lastMailEmailLog) : [],
+            'trace' => $lastOutboundMail ? $this->traceFor($lastOutboundMail, $lastOutboundMailEmailLog) : [],
             // Bloques "Traza SMTP" e "Identificadores" del pie de la pestaña
             // Traza. El mockup enseña ahí relay/IP/TLS/reintentos, que esta
             // instalación NO guarda en ninguna parte (raw_headers está vacío
