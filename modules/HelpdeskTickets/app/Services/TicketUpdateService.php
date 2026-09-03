@@ -44,12 +44,28 @@ class TicketUpdateService
             ]);
 
             if ($newStatus->stops_sla_timer && ! $oldStatus->stops_sla_timer) {
+                // Bug real: Ticket::pauseSla() re-checks $this->status->stops_sla_timer
+                // as a guard, but $ticket->status was already cached above (as
+                // $oldStatus) before the status_id update, so without refreshing
+                // the relation here that guard silently reads the OLD status and
+                // pauseSla() never actually paused the SLA clock.
+                $ticket->setRelation('status', $newStatus);
                 $ticket->pauseSla();
             } elseif (! $newStatus->stops_sla_timer && $oldStatus->stops_sla_timer) {
                 $ticket->resumeSla();
             }
 
-            broadcast(new TicketStatusChanged($ticket, $oldStatus, $newStatus));
+            // broadcast() SOLO envía por websockets (PrivateChannel) -- NUNCA
+            // pasa por el Dispatcher normal de Laravel, así que los 4 listeners
+            // registrados para TicketStatusChanged en
+            // HelpdeskTicketsEventServiceProvider (SendCustomerStatusNotification,
+            // RecordTicketHistory, RunAutomationsOnTicketStatusChanged,
+            // RecalculateSlaPolicy) nunca corrían para un cambio de estado real
+            // (detectado 3-sep-2026 revisando el ciclo de vida del ticket). El
+            // evento implementa ShouldBroadcast + Dispatchable, así que
+            // ::dispatch() sigue emitiendo por websocket exactamente igual Y
+            // además dispara esos 4 listeners.
+            TicketStatusChanged::dispatch($ticket, $oldStatus, $newStatus);
             $changed[] = 'status_id';
             unset($data['status_id']);
         }
@@ -79,7 +95,12 @@ class TicketUpdateService
             unset($data['category_id']);
         }
 
-        if (isset($data['assignee_id']) && $data['assignee_id'] != $ticket->assignee_id) {
+        // Bug real: array_key_exists (no isset) es obligatorio aquí. Con isset(),
+        // pasar 'assignee_id' => null (desasignar) se trataba como "no viene en
+        // $data" y este bloque entero se saltaba, dejando la rama de
+        // desasignación (más abajo) inalcanzable: nunca se limpiaba
+        // assignee_id/assigned_at ni se disparaba TicketUnassigned.
+        if (array_key_exists('assignee_id', $data) && $data['assignee_id'] != $ticket->assignee_id) {
             if ($data['assignee_id']) {
                 $ticket->assignTo($data['assignee_id']);
 

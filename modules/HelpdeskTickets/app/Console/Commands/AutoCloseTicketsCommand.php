@@ -52,10 +52,13 @@ class AutoCloseTicketsCommand extends Command
                     // Sin esto, el cliente nunca se enteraba de que su ticket
                     // se cerró solo por inactividad: este comando actualizaba
                     // status_id directo en el modelo, sin pasar por
-                    // TicketUpdateService::applyChanges() (el único lugar que
-                    // dispara este evento) — SendCustomerStatusNotification
-                    // nunca corría para un auto-cierre.
-                    broadcast(new TicketStatusChanged($ticket, $oldStatus, $closedStatus));
+                    // TicketUpdateService::applyChanges(). Y aunque se
+                    // disparara, broadcast() (a diferencia de ::dispatch())
+                    // SOLO envía por websocket -- nunca pasaba por el
+                    // Dispatcher normal, así que SendCustomerStatusNotification
+                    // (y los otros 3 listeners de TicketStatusChanged) nunca
+                    // corrían para un auto-cierre (detectado 3-sep-2026).
+                    TicketStatusChanged::dispatch($ticket, $oldStatus, $closedStatus);
 
                     $count++;
                 } catch (\Throwable $e) {
