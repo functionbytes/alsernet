@@ -219,19 +219,29 @@ class BirthdayErpAudienceService
             return false;
         }
 
-        if (($exclusions['has_email'] ?? true) && ($row['email'] ?? '') === '') {
+        if ($this->wants($exclusions, 'has_email') && ($row['email'] ?? '') === '') {
             return false;
         }
 
-        if (($exclusions['lopd_accepted'] ?? true) && ($row['lopd_accepted_at'] ?? '') === '') {
+        if ($this->wants($exclusions, 'lopd_accepted') && ($row['lopd_accepted_at'] ?? '') === '') {
             return false;
         }
 
-        if (($exclusions['commercial_optin'] ?? true) && ($row['no_commercial_info'] ?? false)) {
+        if ($this->wants($exclusions, 'commercial_optin') && ($row['no_commercial_info'] ?? false)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Mismo criterio de defaults que BirthdayAudienceService::flag(): lo decide
+     * la configuración del módulo, no cada fuente. Si no, cambiar de origen
+     * cambiaría el tamaño de la audiencia sin que nadie tocara los ajustes.
+     */
+    private function wants(array $exclusions, string $key): bool
+    {
+        return (bool) ($exclusions[$key] ?? config("helpdeskbirthday.exclusions.{$key}", false));
     }
 
     private function baseUrl(): string

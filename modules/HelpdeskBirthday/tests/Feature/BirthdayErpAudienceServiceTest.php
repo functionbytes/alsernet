@@ -71,14 +71,24 @@ class BirthdayErpAudienceServiceTest extends TestCase
 
     public function test_devuelve_solo_los_clientes_a_los_que_se_puede_escribir(): void
     {
+        // Los defaults del módulo (config helpdeskbirthday.exclusions): exige
+        // correo y consentimiento comercial, pero NO la LOPD.
         $filas = $this->servicio($this->respuestaConClientes())
             ->fetchForDate(CarbonImmutable::parse('2026-09-04'));
 
-        // De los cinco del fixture solo pasa uno: el resto se descarta por no
-        // querer publicidad, no tener correo, estar de baja o no tener LOPD.
-        $this->assertCount(1, $filas);
-        $this->assertSame('ana.garcia@example.com', $filas[0]['email']);
-        $this->assertSame('101578688', $filas[0]['id']);
+        $emails = array_column($filas, 'email');
+
+        // Fuera: quien no quiere publicidad, quien no tiene correo y el dado de
+        // baja. Dentro: los dos que cumplen esas tres condiciones.
+        $this->assertSame(['ana.garcia@example.com', 'sinlopd@example.com'], $emails);
+    }
+
+    public function test_exigir_la_lopd_es_opcional_y_se_puede_activar(): void
+    {
+        $filas = $this->servicio($this->respuestaConClientes())
+            ->fetchForDate(CarbonImmutable::parse('2026-09-04'), ['lopd_accepted' => true]);
+
+        $this->assertSame(['ana.garcia@example.com'], array_column($filas, 'email'));
     }
 
     public function test_no_cuenta_los_resources_anidados_de_cada_cliente(): void

@@ -45,6 +45,15 @@ class CustomerController extends ApiController
      *
      * Filters: id, cif, email, surnames, phone, birth_date,
      * lopd_from, lopd_to, deleted_from, deleted_to
+     *
+     * Filtros de segmentación para envíos (usados por HelpdeskBirthday):
+     *   birthday=MM-DD[,MM-DD]  cumpleaños por día y mes, sin importar el año
+     *   commercial_optin=1      excluye NO_INFORMACION_COMERCIAL_LOPD
+     *   lopd_accepted=1         solo con FACEPTACION_LOPD informada
+     *   has_email=1             solo con email no vacío
+     *
+     * Los dados de baja (FBAJA) quedan siempre fuera.
+     *
      * Pagination: limit (max 100), offset
      */
     public function list(Request $request): JsonResponse
@@ -81,6 +90,41 @@ class CustomerController extends ApiController
             if ($request->filled('birth_date')) {
                 $conditions[] = "TRUNC(t.FNACIMIENTO) = TO_DATE(?, 'YYYY-MM-DD')";
                 $bindings[] = $request->get('birth_date');
+            }
+            // Cumpleaños: día y mes, sin importar el año. Acepta una o varias
+            // fechas 'MM-DD' separadas por coma (el 29-feb se consulta junto al
+            // 28-feb en años no bisiestos).
+            if ($request->filled('birthday')) {
+                $days = array_values(array_filter(
+                    array_map('trim', explode(',', (string) $request->get('birthday'))),
+                    static fn (string $d): bool => preg_match('/^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/', $d) === 1
+                ));
+
+                if ($days === []) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => "El filtro 'birthday' espera una o más fechas con formato MM-DD.",
+                    ], 422);
+                }
+
+                $placeholders = implode(', ', array_fill(0, count($days), '?'));
+                $conditions[] = "TO_CHAR(t.FNACIMIENTO, 'MM-DD') IN ({$placeholders})";
+                $bindings = array_merge($bindings, $days);
+            }
+            // Solo quienes no han marcado "no quiero información comercial".
+            if ($request->boolean('commercial_optin')) {
+                $conditions[] = '(t.NO_INFORMACION_COMERCIAL_LOPD IS NULL OR t.NO_INFORMACION_COMERCIAL_LOPD = 0)';
+            }
+            if ($request->boolean('lopd_accepted')) {
+                $conditions[] = 't.FACEPTACION_LOPD IS NOT NULL';
+            }
+            if ($request->boolean('has_email')) {
+                // Nada de TRIM(t.EMAIL) <> '': en Oracle la cadena vacía ES
+                // NULL, así que esa comparación es siempre UNKNOWN y el filtro
+                // se llevaba por delante a TODOS los clientes (0 resultados con
+                // 666 que sí tienen correo). Basta con NOT NULL, y el INSTR
+                // descarta además lo que no es una dirección.
+                $conditions[] = "t.EMAIL IS NOT NULL AND INSTR(t.EMAIL, '@') > 0";
             }
             if ($request->filled('lopd_from')) {
                 $conditions[] = 't.FACEPTACION_LOPD >= ?';

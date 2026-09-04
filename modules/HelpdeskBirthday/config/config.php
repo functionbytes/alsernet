@@ -116,18 +116,24 @@ return [
     */
     /*
     | De dónde salen los cumpleañeros del día:
-    |   'erp'     → Gestión, GET /api-gestion/cliente/?fnacimiento=AAAA-MM-DD
-    |               (filtra por día y mes; el año del parámetro se ignora).
-    |   'manager' → el manager de HelpdeskErp, con su filtro `birthday`.
-    |
-    | Por defecto 'erp': el filtro del manager no está en todas las versiones
-    | desplegadas y, cuando falta, lo ignora en silencio y devuelve clientes
-    | cualesquiera — que acabarían recibiendo un correo de cumpleaños que no es
-    | el suyo.
+    |   'api'     → GET /api/erp/customer?birthday=MM-DD, la API de clientes del
+    |               módulo Erp: filtra contra Oracle en el WHERE y tarda ~3 s.
+    |   'gestion' → GET /api-gestion/cliente/?fnacimiento=…, la API de Gestión.
+    |               Mismo resultado (727 cumpleañeros el día que se comparó),
+    |               pero ~16 s y 880 KB de XML. Alternativa si la de arriba no
+    |               está disponible.
     */
-    'audience_source' => env('HELPDESK_BIRTHDAY_AUDIENCE_SOURCE', 'erp'),
+    'audience_source' => env('HELPDESK_BIRTHDAY_AUDIENCE_SOURCE', 'api'),
 
-    // La consulta de un día tarda ~16 s contra el ERP real.
+    /*
+    | URL de la API de clientes. Por defecto la de ESTE panel (dentro de Docker
+    | se alcanza por el nombre del contenedor). Ojo: el manager externo
+    | (helpdeskErp.manager_url) expone la MISMA ruta pero es otra aplicación y
+    | no tiene el filtro `birthday`; apuntar ahí devuelve clientes cualesquiera.
+    */
+    'customers_api_url' => env('HELPDESK_BIRTHDAY_CUSTOMERS_API_URL', env('SUPPLIER_ERP_INTERNAL_URL', 'http://nginx')),
+
+    // La consulta de un día contra Gestión tarda ~16 s.
     'erp_timeout' => (int) env('HELPDESK_BIRTHDAY_ERP_TIMEOUT', 90),
 
     'coupon' => [

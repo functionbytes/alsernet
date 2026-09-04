@@ -1,0 +1,105 @@
+/*
+ * HelpdeskBirthday — estilos del panel de campañas.
+ *
+ * Tras editar este archivo hay que copiarlo a public/modules/helpdeskbirthday/
+ * (asset() sirve desde ahí, no desde modules/):
+ *   cp modules/HelpdeskBirthday/public/css/birthday.css public/modules/helpdeskbirthday/css/
+ */
+
+/* Anchos de la barra de progreso en pasos de 10: el repo no admite style="". */
+.bd-progress-0 { width: 0; }
+.bd-progress-10 { width: 10%; }
+.bd-progress-20 { width: 20%; }
+.bd-progress-30 { width: 30%; }
+.bd-progress-40 { width: 40%; }
+.bd-progress-50 { width: 50%; }
+.bd-progress-60 { width: 60%; }
+.bd-progress-70 { width: 70%; }
+.bd-progress-80 { width: 80%; }
+.bd-progress-90 { width: 90%; }
+.bd-progress-100 { width: 100%; }
+
+/* Ficha del cupón en el detalle de la campaña. */
+.bd-coupon-code {
+    font-family: var(--bs-font-monospace);
+    font-size: 1.25rem;
+    letter-spacing: .05em;
+}
+
+.bd-timeline-slot {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Panel de estadísticas --- */
+
+.bd-kpi-label {
+    letter-spacing: .03em;
+    font-size: .7rem;
+}
+
+.bd-kpi-value {
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
+.bd-today-progress {
+    min-width: 12rem;
+}
+
+/* Tendencia por día: barras verticales sin librería de gráficos. La altura
+   reutiliza las clases .bd-progress-* (width) girando la barra con un
+   contenedor de altura fija. */
+.bd-trend {
+    display: flex;
+    align-items: flex-end;
+    gap: .35rem;
+    overflow-x: auto;
+    min-height: 7rem;
+}
+
+.bd-trend__col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .25rem;
+    min-width: 2rem;
+    height: 6.5rem;
+}
+
+/* Verde de la paleta explícito: --bs-primary del tema resuelve a negro y las
+   barras salían de ese color. */
+.bd-trend__bar {
+    width: 100%;
+    border-radius: .25rem;
+    background-color: #90bb13;
+    min-height: 2px;
+}
+
+/* Las .bd-progress-* fijan width; dentro de .bd-trend las reinterpretamos
+   como altura para que la barra crezca hacia arriba. */
+.bd-trend .bd-progress-0 { width: 100%; height: 2px; }
+.bd-trend .bd-progress-10 { width: 100%; height: 10%; }
+.bd-trend .bd-progress-20 { width: 100%; height: 20%; }
+.bd-trend .bd-progress-30 { width: 100%; height: 30%; }
+.bd-trend .bd-progress-40 { width: 100%; height: 40%; }
+.bd-trend .bd-progress-50 { width: 100%; height: 50%; }
+.bd-trend .bd-progress-60 { width: 100%; height: 60%; }
+.bd-trend .bd-progress-70 { width: 100%; height: 70%; }
+.bd-trend .bd-progress-80 { width: 100%; height: 80%; }
+.bd-trend .bd-progress-90 { width: 100%; height: 90%; }
+.bd-trend .bd-progress-100 { width: 100%; height: 100%; }
+
+/* Visor del correo enviado (modal del detalle de campaña). */
+.bd-email-frame {
+    width: 100%;
+    height: 60vh;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--bs-border-radius, .375rem);
+    background-color: #fff;
+}
+
+/* Embudo del panel: anchos fijos para que las barras queden alineadas. */
+.bd-funnel__label { width: 9rem; flex: 0 0 9rem; }
+.bd-funnel__value { width: 4rem; flex: 0 0 4rem; font-variant-numeric: tabular-nums; }
+.bd-funnel__drop  { width: 4rem; flex: 0 0 4rem; font-variant-numeric: tabular-nums; }

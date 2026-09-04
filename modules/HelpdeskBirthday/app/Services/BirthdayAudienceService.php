@@ -39,15 +39,18 @@ class BirthdayAudienceService
     {
         $days = $this->days->daysFor($date);
 
-        // Dos orígenes posibles para la misma pregunta. Gestión es el bueno:
-        // su endpoint de clientes filtra por día y mes de nacimiento (el año del
-        // parámetro se ignora), que es justo lo que hace falta. El manager se
-        // mantiene como alternativa porque es lo que había, pero su filtro
-        // `birthday` no existe en todas las versiones desplegadas — y cuando no
-        // existe lo ignora en silencio y devuelve clientes cualesquiera.
-        $rows = $this->source() === 'erp'
+        // Tres caminos a la misma pregunta, de más corto a más largo:
+        //
+        //   api     → GET /api/erp/customer?birthday=MM-DD, la API de clientes
+        //             del módulo Erp: filtra en el WHERE contra Oracle y tarda
+        //             ~3 s. Es la de este mismo panel, no la del manager
+        //             externo — ver customersApiUrl().
+        //   gestion → GET /api-gestion/cliente/?fnacimiento=…, mismo resultado
+        //             (727 el día que se comparó) pero ~16 s y 880 KB de XML.
+        //             Sirve de alternativa si la API de aquí no está.
+        $rows = $this->source() === 'gestion'
             ? $this->erp->fetchForDate($date, $exclusions)
-            : $this->fetchFromManager($days, $exclusions);
+            : $this->fetchFromCustomersApi($days, $exclusions);
 
         $this->assertFilterWasApplied($rows, $days);
 
@@ -58,10 +61,28 @@ class BirthdayAudienceService
     {
         $configured = (string) Setting::get(
             'helpdeskbirthday.audience_source',
-            config('helpdeskbirthday.audience_source', 'erp'),
+            config('helpdeskbirthday.audience_source', 'api'),
         );
 
-        return $configured === 'manager' ? 'manager' : 'erp';
+        return $configured === 'gestion' ? 'gestion' : 'api';
+    }
+
+    /**
+     * URL de la API de clientes. Por defecto la de ESTE panel (dentro de Docker
+     * se alcanza por el nombre del contenedor, igual que hace Supplier), no la
+     * del manager externo: son dos aplicaciones distintas que exponen la misma
+     * ruta, y el filtro `birthday` solo está en la de aquí. Apuntar a la
+     * equivocada devuelve clientes cualesquiera, que recibirían una
+     * felicitación que no les toca.
+     */
+    private function customersApiUrl(): string
+    {
+        $url = (string) config(
+            'helpdeskbirthday.customers_api_url',
+            config('supplier.erp_internal_url', 'http://nginx'),
+        );
+
+        return rtrim($url !== '' ? $url : (string) config('helpdeskErp.manager_url', ''), '/');
     }
 
     /**
@@ -72,9 +93,9 @@ class BirthdayAudienceService
      * @param  array<int, string>  $days
      * @return array<int, array<string, mixed>>
      */
-    private function fetchFromManager(array $days, array $exclusions): array
+    private function fetchFromCustomersApi(array $days, array $exclusions): array
     {
-        $baseUrl = rtrim((string) config('helpdeskErp.manager_url', ''), '/');
+        $baseUrl = $this->customersApiUrl();
 
         if ($baseUrl === '') {
             throw BirthdayAudienceException::managerNotConfigured();
@@ -93,10 +114,14 @@ class BirthdayAudienceService
         $offset = 0;
 
         for ($page = 0; $page < self::MAX_PAGES; $page++) {
-            $response = $this->http()->get(
-                $baseUrl.'/api/erp/customer',
-                $query + ['offset' => $offset]
-            );
+            // Reintento con espera: la conexión Oracle que hay detrás se cae de
+            // vez en cuando ("Lost connection and no reconnector available") y
+            // una audiencia se pagina en varias llamadas — perder una a mitad
+            // dejaría la campaña con parte de la gente. Comprobado que a la
+            // siguiente responde bien.
+            $response = $this->http()
+                ->retry(3, 1000, throw: false)
+                ->get($baseUrl.'/api/erp/customer', $query + ['offset' => $offset]);
 
             if (! $response->successful()) {
                 throw BirthdayAudienceException::requestFailed($response->status(), $response->body());

@@ -49,13 +49,12 @@ class PrepareBirthdayCampaignTest extends TestCase
         config()->set('helpdeskErp.manager_url', 'http://manager.test');
         config()->set('helpdeskbirthday.max_recipients', 2000);
 
-        // Este archivo prueba el camino del MANAGER, que se sirve con
-        // Http::fake. Sin declararlo, la fuente por defecto ('erp') haría que
-        // cada test consultase Gestión de verdad: Http::fake no intercepta ese
-        // cliente porque BirthdayErpAudienceService usa Guzzle directamente
-        // (ErpService vuelca la respuesta al log y no se puede usar aquí). El
-        // síntoma era claro: 573 destinatarios reales y 20 s por test.
-        config()->set('helpdeskbirthday.audience_source', 'manager');
+        // La URL de la API de clientes se declara aquí y apunta al fake: si se
+        // deja la de verdad (http://nginx), cada test consulta la API real y se
+        // trae cientos de clientes con sus datos. Pasó: 573 destinatarios y 20 s
+        // por test.
+        config()->set('helpdeskbirthday.customers_api_url', 'http://manager.test');
+        config()->set('helpdeskbirthday.audience_source', 'api');
 
         $this->app->instance(BirthdaySettings::class, $this->settings());
         $this->fakeErpCoupon();
