@@ -105,8 +105,25 @@ class BirthdayCouponService
             return ['ok' => false, 'message' => $e->getMessage()];
         }
 
-        if ($response === null) {
-            return ['ok' => false, 'message' => 'Gestión no respondió al marcar el bono.'];
+        // Se mira `success`, no si la respuesta llegó: Gestión rechaza el
+        // consumo con un 400 y el motivo en texto ("No se permite consumir un
+        // bono que no se encuentre activo", "El codigo de verificacion no es
+        // correcto", "El bono no cumple con el importe de venta minimo").
+        // Dando por buena cualquier respuesta, el panel decía "bono marcado"
+        // sobre un canje que el ERP había rechazado.
+        if (($response['success'] ?? false) !== true) {
+            Log::warning('[HelpdeskBirthday] Gestión rechazó el marcado del bono', [
+                'coupon' => $publicCode,
+                'amount' => $saleAmount,
+                'reason' => $response['message'] ?? null,
+            ]);
+
+            return [
+                'ok' => false,
+                // El texto de Gestión es accionable —dice qué pasa con ese
+                // bono— así que se enseña tal cual en vez de un genérico.
+                'message' => (string) ($response['message'] ?? 'Gestión no respondió al marcar el bono.'),
+            ];
         }
 
         Log::info('[HelpdeskBirthday] Bono marcado en gestión', [

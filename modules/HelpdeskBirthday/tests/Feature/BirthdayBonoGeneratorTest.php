@@ -75,7 +75,30 @@ class BirthdayBonoGeneratorTest extends TestCase
         app(BirthdayBonoGenerator::class)->generateFor(new Collection([$this->recipient()]), 'Cumpleaños');
     }
 
-    public function test_manda_una_linea_por_cliente_con_su_idcliente(): void
+    /**
+     * Respuesta calcada de la del ERP real (4-sep-2026): el bono llega anidado
+     * dentro de la línea, no suelto.
+     */
+    private function lineaConBono(string $idcliente = '39094'): array
+    {
+        return [
+            'idcliente' => $idcliente,
+            'idtbono_promocion' => '4',
+            'observacion' => 'Bono cumpleanos',
+            'bono' => [
+                'idbono_promocion' => '103205316',
+                'codigo_verificacion' => '3D388',
+                'importe' => '5.0',
+                'importeminimoventa' => [],
+                'fvalidez_desde' => '2026-09-04',
+                'fvalidez_hasta' => '2026-10-04 14:13:25',
+                'descripcion_estado_extendido' => 'activo',
+                'estado_extendido' => '1',
+            ],
+        ];
+    }
+
+    public function test_manda_una_linea_por_cliente_y_recupera_su_bono(): void
     {
         $this->withBonoType(82);
 
@@ -88,6 +111,12 @@ class BirthdayBonoGeneratorTest extends TestCase
                     && $lineas[0]['idtbono_promocion'] === 82;
             })
             ->andReturn(['success' => true, 'batch_id' => '100267866']);
+        // Segundo paso: la generación solo devuelve el id del lote, así que hay
+        // que preguntar qué bono le tocó a cada uno.
+        $erp->shouldReceive('consultarGeneracionBono')
+            ->once()
+            ->with('100267866')
+            ->andReturn(['success' => true, 'lines' => [$this->lineaConBono()]]);
         $this->app->instance(ErpService::class, $erp);
 
         $recipient = $this->recipient();
@@ -95,7 +124,68 @@ class BirthdayBonoGeneratorTest extends TestCase
 
         $this->assertSame(1, $result['generated']);
         $this->assertSame(['100267866'], $result['batches']);
-        $this->assertNotNull($recipient->fresh()->coupon_generated_at);
+
+        $fresh = $recipient->fresh();
+        $this->assertSame('103205316', $fresh->coupon_code);
+        $this->assertSame('3D388', $fresh->coupon_verification_code);
+        $this->assertSame('5.0000', (string) $fresh->coupon_amount);
+        $this->assertSame('activo', $fresh->coupon_status);
+        $this->assertNotNull($fresh->coupon_generated_at);
+    }
+
+    public function test_cada_bono_va_a_su_cliente_y_no_al_de_al_lado(): void
+    {
+        $this->withBonoType(4);
+
+        $ana = $this->recipient(['erp_customer_id' => '39094', 'email' => 'ana@example.com']);
+        $luis = BirthdayRecipient::create([
+            'campaign_id' => $ana->campaign_id,
+            'erp_customer_id' => '67230',
+            'email' => 'luis@example.com',
+            'name' => 'LUIS',
+            'status' => BirthdayRecipient::STATUS_PENDING,
+        ]);
+
+        $lineaLuis = $this->lineaConBono('67230');
+        $lineaLuis['bono']['idbono_promocion'] = '103205317';
+        $lineaLuis['bono']['codigo_verificacion'] = '49FA8';
+
+        $erp = Mockery::mock(ErpService::class);
+        $erp->shouldReceive('generarBonos')->andReturn(['success' => true, 'batch_id' => '101295884']);
+        // A propósito en orden inverso al enviado: las líneas se casan por
+        // idcliente, no por posición. Equivocarse aquí manda a alguien el bono
+        // de otro.
+        $erp->shouldReceive('consultarGeneracionBono')
+            ->andReturn(['success' => true, 'lines' => [$lineaLuis, $this->lineaConBono('39094')]]);
+        $this->app->instance(ErpService::class, $erp);
+
+        app(BirthdayBonoGenerator::class)->generateFor(new Collection([$ana, $luis]), 'Cumpleaños');
+
+        $this->assertSame('103205316', $ana->fresh()->coupon_code);
+        $this->assertSame('103205317', $luis->fresh()->coupon_code);
+    }
+
+    public function test_si_gestion_no_emite_el_bono_de_alguien_ese_queda_sin_cupon(): void
+    {
+        $this->withBonoType(4);
+
+        $erp = Mockery::mock(ErpService::class);
+        $erp->shouldReceive('generarBonos')->andReturn(['success' => true, 'batch_id' => '101295884']);
+        // Lote aceptado pero sin bono para este cliente (pasa con
+        // generar_bonos=0: la línea existe y el nodo del bono viene vacío).
+        $erp->shouldReceive('consultarGeneracionBono')->andReturn([
+            'success' => true,
+            'lines' => [['idcliente' => '39094', 'idtbono_promocion' => '4', 'observacion' => '', 'bono' => null]],
+        ]);
+        $this->app->instance(ErpService::class, $erp);
+
+        $recipient = $this->recipient();
+        $result = app(BirthdayBonoGenerator::class)->generateFor(new Collection([$recipient]), 'Cumpleaños');
+
+        $this->assertSame(0, $result['generated']);
+        // Sin cupón no se le envía nada: eso lo garantiza SendBirthdayEmailJob.
+        $this->assertNull($recipient->fresh()->coupon_code);
+        $this->assertStringContainsString('no devolvió', (string) $recipient->fresh()->coupon_error);
     }
 
     public function test_quien_no_tiene_id_de_cliente_no_entra_en_la_generacion(): void
@@ -119,6 +209,7 @@ class BirthdayBonoGeneratorTest extends TestCase
 
         $erp = Mockery::mock(ErpService::class);
         $erp->shouldReceive('generarBonos')->andReturn(['success' => false, 'message' => 'Gestión rechazó el lote']);
+        $erp->shouldNotReceive('consultarGeneracionBono');
         $this->app->instance(ErpService::class, $erp);
 
         $recipient = $this->recipient();

@@ -141,13 +141,16 @@ return [
         | Tipo de bono de promoción en Gestión (IDTBONO_PROMOCION). Es lo que
         | dice QUÉ bono se emite: importe, validez y compra mínima salen de él.
         |
+        | El 4 es el bono de cumpleaños: es el que usa el script que Álvarez
+        | tiene en producción, y una generación de prueba contra el ERP real
+        | (4-sep-2026) devolvió lo esperado — 5 € de importe, válido un mes,
+        | estado "activo".
+        |
         | Sin este valor no se puede generar un bono por cliente
         | (POST /api-gestion/generacion-bono/), solo repartir un código único a
-        | todo el mundo con 'code'. El dato lo tiene Gestión: la tabla
-        | TBONO_PROMOCION no es visible para el usuario de solo lectura con el
-        | que se consulta Oracle.
+        | todo el mundo con 'code'.
         */
-        'bono_type_id' => (int) env('HELPDESK_BIRTHDAY_BONO_TYPE_ID', 0),
+        'bono_type_id' => (int) env('HELPDESK_BIRTHDAY_BONO_TYPE_ID', 4),
 
         'code' => env('HELPDESK_BIRTHDAY_COUPON_CODE', ''),
         'verification_code' => env('HELPDESK_BIRTHDAY_COUPON_CV', ''),

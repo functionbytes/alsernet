@@ -34,6 +34,11 @@ return [
         // Consulta de un bono (GET) y consumo/anulación/recarga (PUT): misma
         // ruta, distinto método.
         'bono' => env('ERP_ENDPOINT_BONO', '/api-gestion/bono/{id}/'),
+        // Líneas de una generación: es lo que devuelve el bono que le tocó a
+        // cada cliente (id, código de verificación, importe y validez). No
+        // aparece en la documentación 1.28, pero es lo que usa el script de
+        // cumpleaños que Álvarez tiene en producción.
+        'lineas_generacion_bono' => env('ERP_ENDPOINT_LGENERACION_BONO', '/api-gestion/lgeneracion-bono/{id}/'),
     ],
 
     'url_erp' => env('ERP_URL'),

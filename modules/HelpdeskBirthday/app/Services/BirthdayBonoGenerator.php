@@ -17,18 +17,17 @@ use Throwable;
  * GENERACIÓN, no el de cada bono. Ver "generacion-bono" en la documentación de
  * integración (pág. 34).
  *
- * De ahí la doble fase: primero se manda el lote, y después hay que averiguar
- * qué bono le tocó a cada uno. Mientras no exista esa segunda consulta, la
- * generación queda registrada (id de lote y fecha) pero el destinatario se
- * marca como pendiente de código: es preferible eso a mandarle un correo con un
- * cupón vacío o con el de otra persona.
+ * Dos pasos, porque la generación solo devuelve el id del LOTE:
  *
- * Y ese "el de otra persona" no es teórico. El id que devuelve la generación
- * cae en el mismo rango que los ids de bono, así que consultarlo como bono
- * responde 200 con datos de un bono ajeno. Comprobado contra el ERP real el
- * 4-sep-2026: las respuestas 101295882 y 101295883 resultaron ser bonos de
- * 2018 caducados, de otros clientes. Por eso el id del lote se guarda como lo
- * que es —trazabilidad de la llamada— y NUNCA como coupon_code.
+ *   1. POST /generacion-bono/          → idgeneracion_bono_promo
+ *   2. GET  /lgeneracion-bono/{id}/    → qué bono le tocó a cada cliente
+ *
+ * El segundo es el que trae el idbono_promocion y su código de verificación,
+ * que es lo que de verdad recibe el cliente. Sin él solo tendríamos el id del
+ * lote, que además cae en el mismo rango que los ids de bono: consultarlo como
+ * bono devuelve 200 con datos de OTRA persona (comprobado el 4-sep-2026: dos
+ * lotes resolvieron a bonos de 2018 caducados). Por eso el id del lote nunca se
+ * guarda como coupon_code.
  */
 class BirthdayBonoGenerator
 {
@@ -99,15 +98,7 @@ class BirthdayBonoGenerator
             }
 
             $batches[] = $batchId;
-
-            foreach ($chunk as $recipient) {
-                $recipient->update([
-                    'coupon_generated_at' => now(),
-                    'coupon_error' => null,
-                ]);
-            }
-
-            $generated += $chunk->count();
+            $generated += $this->assignBonos($chunk, $batchId);
         }
 
         Log::info('[HelpdeskBirthday] Bonos pedidos a Gestión', [
@@ -140,6 +131,73 @@ class BirthdayBonoGenerator
         }
 
         return (string) $result['batch_id'];
+    }
+
+    /**
+     * Recupera los bonos del lote y los reparte entre sus destinatarios.
+     *
+     * Se casan por `idcliente`, no por el orden de las líneas: la respuesta no
+     * garantiza que vengan como se enviaron, y equivocarse aquí significa
+     * mandarle a alguien el bono de otro.
+     *
+     * @param  Collection<int, BirthdayRecipient>  $chunk
+     * @return int cuántos quedaron con su bono
+     */
+    private function assignBonos(Collection $chunk, string $batchId): int
+    {
+        $result = $this->erp->consultarGeneracionBono($batchId);
+
+        if (($result['success'] ?? false) !== true) {
+            $motivo = (string) ($result['message'] ?? 'No se pudieron leer las líneas de la generación.');
+
+            foreach ($chunk as $recipient) {
+                $recipient->update(['coupon_error' => mb_substr($motivo, 0, 250)]);
+            }
+
+            return 0;
+        }
+
+        $porCliente = [];
+
+        foreach ($result['lines'] as $line) {
+            if (($line['idcliente'] ?? '') !== '' && is_array($line['bono'] ?? null)) {
+                $porCliente[(string) $line['idcliente']] = $line['bono'];
+            }
+        }
+
+        $asignados = 0;
+
+        foreach ($chunk as $recipient) {
+            $bono = $porCliente[(string) $recipient->erp_customer_id] ?? null;
+
+            if ($bono === null) {
+                // Gestión aceptó el lote pero no emitió el bono de esta
+                // persona: se deja anotado en su fila y sin cupón, que es lo
+                // que impide que se le envíe el correo.
+                $recipient->update([
+                    'coupon_error' => 'Gestión no devolvió ningún bono para este cliente.',
+                ]);
+
+                continue;
+            }
+
+            $recipient->update([
+                'coupon_code' => $this->text($bono['idbono_promocion'] ?? null),
+                'coupon_verification_code' => $this->text($bono['codigo_verificacion'] ?? null),
+                'coupon_amount' => $this->decimal($bono['importe'] ?? null),
+                'coupon_min_purchase' => $this->decimal($bono['importeminimoventa'] ?? null),
+                'coupon_valid_from' => $this->date($bono['fvalidez_desde'] ?? null),
+                'coupon_valid_to' => $this->date($bono['fvalidez_hasta'] ?? null),
+                'coupon_status' => $this->text($bono['descripcion_estado_extendido'] ?? null),
+                'coupon_data' => $bono,
+                'coupon_generated_at' => now(),
+                'coupon_error' => null,
+            ]);
+
+            $asignados++;
+        }
+
+        return $asignados;
     }
 
     /**

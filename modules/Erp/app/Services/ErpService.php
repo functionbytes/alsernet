@@ -582,6 +582,68 @@ class ErpService
     }
 
     /**
+     * Bonos que creó una generación, uno por línea.
+     *
+     * Este es el paso que cierra el ciclo: `generacion-bono` solo devuelve el
+     * id del lote, y es aquí donde se ve QUÉ bono le tocó a cada cliente, con
+     * su código de verificación, importe y validez.
+     *
+     * No está en la documentación 1.28 —se descubrió en el script de
+     * cumpleaños que Álvarez tiene en producción— y sin él la única salida era
+     * leer Oracle.
+     *
+     * Cada línea trae el bono anidado bajo `idbono_promocion`; si la generación
+     * se pidió con `generar_bonos=0`, ese nodo viene vacío porque no se emitió
+     * nada.
+     *
+     * @return array{success: bool, lines: list<array<string, mixed>>, message?: string}
+     */
+    public function consultarGeneracionBono(string $idGeneracion): array
+    {
+        $endpoint = $this->endpoint('lineas_generacion_bono', ['{id}' => $idGeneracion]);
+
+        try {
+            $response = $this->client->get($endpoint, ['headers' => ['Accept' => 'application/xml']]);
+        } catch (\Throwable $e) {
+            Log::error("GET {$endpoint} -> Error inesperado: ".$e->getMessage());
+
+            return ['success' => false, 'lines' => [], 'message' => 'No se pudo contactar con gestión.'];
+        }
+
+        if ($response->getStatusCode() !== 200) {
+            return [
+                'success' => false,
+                'lines' => [],
+                'message' => 'Gestión respondió '.$response->getStatusCode().' al pedir las líneas de la generación.',
+            ];
+        }
+
+        $xml = simplexml_load_string((string) $response->getBody(), 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOERROR);
+
+        if ($xml === false) {
+            return ['success' => false, 'lines' => [], 'message' => 'Respuesta ilegible de gestión.'];
+        }
+
+        $lines = [];
+
+        foreach ($xml->resource as $resource) {
+            $bono = $resource->idbono_promocion;
+
+            $lines[] = [
+                'idcliente' => trim((string) $resource->idcliente),
+                'idtbono_promocion' => trim((string) $resource->idtbono_promocion),
+                'observacion' => trim((string) $resource->observacion),
+                // Vacío cuando la generación fue con generar_bonos=0.
+                'bono' => $bono !== null && $bono->count() > 0
+                    ? json_decode(json_encode($bono), true)
+                    : null,
+            ];
+        }
+
+        return ['success' => true, 'lines' => $lines];
+    }
+
+    /**
      * Ruta de un endpoint de Gestión, con sus marcadores sustituidos.
      *
      * @param  array<string, string>  $replacements
@@ -633,7 +695,41 @@ class ErpService
             'importe_inicial_tarjeta_regalo' => $importeInicialTarjetaRegalo,
         ];
 
-        return $this->put($endpoint, $data);
+        // No se delega en put(): cuando Gestión rechaza la operación responde
+        // 400 con el motivo en texto plano ("No se permite consumir un bono que
+        // no se encuentre activo", "El codigo de verificacion no es correcto",
+        // "El bono no cumple con el importe de venta minimo"), y put() lo
+        // descarta devolviendo null. Ese texto es justo lo que hay que enseñar
+        // a quien intenta consumir el bono.
+        try {
+            $response = $this->client->put($endpoint, [
+                'form_params' => $data,
+                'headers' => ['Accept' => 'application/xml'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("PUT {$endpoint} -> Error inesperado: ".$e->getMessage());
+
+            return ['success' => false, 'message' => 'No se pudo contactar con gestión.'];
+        }
+
+        $status = $response->getStatusCode();
+        $body = trim($response->getBody()->getContents());
+
+        if ($status === 200) {
+            return ['success' => true, 'message' => $body !== '' ? $body : 'OK'];
+        }
+
+        Log::warning("PUT {$endpoint} -> Gestión rechazó la operación", [
+            'status' => $status,
+            'body' => $body,
+        ]);
+
+        return [
+            'success' => false,
+            'status' => $status,
+            // El cuerpo llega en text/plain, no en XML: se devuelve tal cual.
+            'message' => $body !== '' ? $body : 'Gestión rechazó la operación sin indicar el motivo.',
+        ];
     }
 
     /**

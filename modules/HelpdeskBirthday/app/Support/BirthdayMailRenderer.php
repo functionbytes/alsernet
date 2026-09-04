@@ -61,19 +61,49 @@ class BirthdayMailRenderer
         return [
             'CUSTOMER_NAME' => $recipient->displayName(),
             'CUSTOMER_EMAIL' => (string) $recipient->email,
-            // El bono de esta persona manda sobre el de la campaña: cuando
-            // Gestión emite uno por cliente, cada correo lleva el suyo. El de
+            // Todo lo del bono sale del destinatario cuando lo tiene: Gestión
+            // emite uno por cliente, con su propio importe y su validez. Lo de
             // la campaña queda como respaldo para las promociones que reparten
-            // el mismo código a todo el mundo.
-            'COUPON_CODE' => (string) ($recipient->coupon_code ?: $campaign->coupon_code),
+            // un único código a todo el mundo.
+            'COUPON_CODE' => self::couponCode($campaign, $recipient),
             'COUPON_VERIFICATION_CODE' => (string) $recipient->coupon_verification_code,
-            'COUPON_VALID_FROM' => $campaign->coupon_valid_from?->format('d/m/Y') ?? '',
-            'COUPON_VALID_TO' => $campaign->coupon_valid_to?->format('d/m/Y') ?? '',
-            'COUPON_AMOUNT' => $campaign->coupon_amount !== null ? number_format((float) $campaign->coupon_amount, 2, ',', '.') : '',
-            'COUPON_MIN_PURCHASE' => $campaign->coupon_min_purchase !== null ? number_format((float) $campaign->coupon_min_purchase, 2, ',', '.') : '',
+            'COUPON_VALID_FROM' => self::date($recipient->coupon_valid_from ?? $campaign->coupon_valid_from),
+            'COUPON_VALID_TO' => self::date($recipient->coupon_valid_to ?? $campaign->coupon_valid_to),
+            'COUPON_AMOUNT' => self::money($recipient->coupon_amount ?? $campaign->coupon_amount),
+            'COUPON_MIN_PURCHASE' => self::money($recipient->coupon_min_purchase ?? $campaign->coupon_min_purchase),
             'SHOP_URL' => self::shopUrl(),
             'UNSUBSCRIBE_URL' => self::unsubscribeUrl($recipient),
         ];
+    }
+
+    /**
+     * El código tal como lo usa el cliente: "{idbono}-{codigo_verificacion}",
+     * igual que en la tienda. Guardamos las dos partes por separado porque
+     * consultar o consumir el bono en Gestión las necesita sueltas, pero al
+     * cliente hay que darle el código entero — solo con el id no puede canjear
+     * nada.
+     */
+    private static function couponCode(BirthdayCampaign $campaign, BirthdayRecipient $recipient): string
+    {
+        $code = trim((string) $recipient->coupon_code);
+
+        if ($code === '') {
+            return (string) $campaign->coupon_code;
+        }
+
+        $verification = trim((string) $recipient->coupon_verification_code);
+
+        return $verification !== '' ? $code.'-'.$verification : $code;
+    }
+
+    private static function date(mixed $value): string
+    {
+        return $value instanceof \DateTimeInterface ? $value->format('d/m/Y') : '';
+    }
+
+    private static function money(mixed $value): string
+    {
+        return $value !== null && $value !== '' ? number_format((float) $value, 2, ',', '.') : '';
     }
 
     /**
