@@ -4,7 +4,7 @@ namespace Modules\Forms\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class FormChangeLog extends Model
+class AlsernetFormChangeLog extends Model
 {
     public const UPDATED_AT = null;
 

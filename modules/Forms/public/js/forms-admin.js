@@ -1,0 +1,87 @@
+/**
+ * Forms — utilidades JS comunes del admin.
+ *
+ * Incluir en vistas admin:
+ *   <script src="{{ asset('modules/forms/js/forms-admin.js') }}"></script>
+ *
+ * Reemplaza patrones duplicados (CSRF, AJAX wrappers, toastr, modals) que
+ * estaban inline en múltiples blade views.
+ */
+(function (window) {
+    'use strict';
+
+    var FormsAdmin = {
+        csrf: function () {
+            var meta = document.querySelector('meta[name="csrf-token"]');
+            return meta ? meta.getAttribute('content') : '';
+        },
+
+        // AJAX wrapper con CSRF + JSON Accept + error handling estándar
+        ajax: function (opts) {
+            return $.ajax(Object.assign({
+                headers: { 'X-CSRF-TOKEN': FormsAdmin.csrf(), 'Accept': 'application/json' },
+                dataType: 'json',
+            }, opts)).fail(FormsAdmin.handleAjaxError);
+        },
+
+        // Manejo estándar de 422 (validation) + 403/404/500
+        handleAjaxError: function (xhr) {
+            if (!xhr) return;
+            if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                var first = Object.values(xhr.responseJSON.errors)[0];
+                FormsAdmin.toast('error', Array.isArray(first) ? first[0] : first);
+                return;
+            }
+            if (xhr.status === 403) {
+                FormsAdmin.toast('error', 'No tienes permiso para esta acción.');
+                return;
+            }
+            if (xhr.status === 404) {
+                FormsAdmin.toast('error', 'Recurso no encontrado.');
+                return;
+            }
+            var msg = xhr.responseJSON && xhr.responseJSON.message
+                ? xhr.responseJSON.message
+                : 'Error en el servidor. Inténtalo de nuevo.';
+            FormsAdmin.toast('error', msg);
+        },
+
+        toast: function (type, message) {
+            if (typeof toastr !== 'undefined') {
+                toastr[type] ? toastr[type](message) : toastr.info(message);
+            } else {
+                console.log('['+type+']', message);
+            }
+        },
+
+        confirm: function (message, onAccept) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, continuar',
+                    cancelButtonText: 'Cancelar',
+                }).then(function (result) { if (result.isConfirmed) { onAccept(); } });
+            } else if (window.confirm(message)) {
+                onAccept();
+            }
+        },
+
+        // Bulk action helper: recoge checkboxes marcados y envía al endpoint
+        bulkAction: function (checkboxSelector, endpoint, action) {
+            var ids = $(checkboxSelector + ':checked').map(function () { return $(this).val(); }).get();
+            if (!ids.length) {
+                FormsAdmin.toast('warning', 'Selecciona al menos un elemento.');
+                return Promise.reject('no-selection');
+            }
+            return FormsAdmin.ajax({
+                url: endpoint,
+                method: 'POST',
+                data: { action: action, ids: ids },
+            });
+        },
+    };
+
+    window.FormsAdmin = FormsAdmin;
+})(window);

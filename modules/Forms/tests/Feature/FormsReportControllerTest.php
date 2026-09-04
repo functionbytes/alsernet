@@ -5,7 +5,7 @@ namespace Modules\Forms\Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\HelpdeskTickets\Database\Factories\TicketCategoryFactory;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketCategory;
@@ -17,7 +17,13 @@ class FormsReportControllerTest extends TestCase
 {
     use DatabaseTransactions;
 
-    protected array $connectionsToTransact = ['mariadb', 'helpdesk'];
+    // 'mysql' es la conexión POR DEFECTO de la app: sin ella aquí, dos cosas
+    // fallan. Las reglas de validación que cualifican la base a mano
+    // (Rule::unique('helpdesk.helpdesk_forms', …)) consultan por la conexión
+    // por defecto y no ven las filas escritas dentro de la transacción de
+    // 'helpdesk'; y cualquier escritura que el test haga por 'mysql' no se
+    // revierte al terminar, quedándose en la BD real.
+    protected array $connectionsToTransact = ['mysql', 'mariadb', 'helpdesk'];
 
     private TicketStatus $openStatus;
 
@@ -46,7 +52,7 @@ class FormsReportControllerTest extends TestCase
 
     public function test_guest_cannot_view_the_report(): void
     {
-        $this->get('/panel/forms/report')->assertRedirect();
+        $this->get(route('forms.report.index'))->assertRedirect();
     }
 
     public function test_user_without_permission_gets_403(): void
@@ -54,7 +60,7 @@ class FormsReportControllerTest extends TestCase
         $user = $this->makeUser([]);
 
         $this->actingAs($user)
-            ->get('/panel/forms/report')
+            ->get(route('forms.report.index'))
             ->assertForbidden();
     }
 
@@ -63,7 +69,7 @@ class FormsReportControllerTest extends TestCase
         $user = $this->makeUser(['helpdesk.tickets.view']);
         $form = $this->makeForm('contact', 'contacto-general');
 
-        $response = $this->actingAs($user)->get('/panel/forms/report');
+        $response = $this->actingAs($user)->get(route('forms.report.index'));
 
         $response->assertOk();
         $response->assertSee($form->name);
@@ -88,7 +94,7 @@ class FormsReportControllerTest extends TestCase
         // Ticket de formulario pero de otra categoría: no debe mezclarse.
         $this->createFormTicket($otherForm->category, $this->openStatus);
 
-        $response = $this->actingAs($user)->get('/panel/forms/report');
+        $response = $this->actingAs($user)->get(route('forms.report.index'));
 
         $response->assertOk();
         $response->assertViewHas('rows', function ($rows) use ($form) {
@@ -101,9 +107,9 @@ class FormsReportControllerTest extends TestCase
     public function test_report_shows_form_without_category_as_misconfigured(): void
     {
         $user = $this->makeUser(['helpdesk.tickets.view']);
-        Form::create(['form_key' => 'orphan', 'name' => 'Huerfano', 'category_id' => null, 'active' => true]);
+        AlsernetForm::create(['form_key' => 'orphan', 'name' => 'Huerfano', 'category_id' => null, 'active' => true]);
 
-        $response = $this->actingAs($user)->get('/panel/forms/report');
+        $response = $this->actingAs($user)->get(route('forms.report.index'));
 
         $response->assertOk();
         $response->assertSee('Sin categoría');
@@ -125,12 +131,24 @@ class FormsReportControllerTest extends TestCase
         return $user;
     }
 
-    private function makeForm(string $formKey, string $categorySlug): Form
+    /**
+     * El slug y el form_key llevan sufijo único: la BD de test es la misma que
+     * la de desarrollo y varios de los valores que usan estos tests
+     * ('contacto-general', 'contact', 'fitting'…) existen ahí como datos
+     * reales, así que crearlos tal cual reventaba con
+     * UniqueConstraintViolationException antes de comprobar nada.
+     */
+    private function makeForm(string $formKey, string $categorySlug): AlsernetForm
     {
-        $category = TicketCategoryFactory::new()->create(['slug' => $categorySlug, 'active' => true]);
+        $sufijo = '-'.uniqid();
 
-        return Form::create([
-            'form_key' => $formKey,
+        $category = TicketCategoryFactory::new()->create([
+            'slug' => $categorySlug.$sufijo,
+            'active' => true,
+        ]);
+
+        return AlsernetForm::create([
+            'form_key' => $formKey.$sufijo,
             'name' => $categorySlug,
             'category_id' => $category->id,
             'active' => true,

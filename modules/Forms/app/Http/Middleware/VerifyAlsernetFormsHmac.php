@@ -50,25 +50,26 @@ class VerifyAlsernetFormsHmac
     }
 
     /**
-     * Ver el mismo razonamiento en VerifyAlsernetHmac: el hash de la firma es
-     * el nonce real (cubre timestamp+body, no falsificable sin el secreto);
-     * X-Alsernet-Idempotency-Key se deduplica ADEMÁS, nunca en su lugar.
+     * El nonce anti-replay es el hash de la FIRMA, y solo ese: cubre
+     * timestamp+body y no es falsificable sin el secreto, así que una
+     * petición reenviada tal cual se rechaza aquí.
+     *
+     * X-Alsernet-Idempotency-Key NO se deduplica en este middleware, aunque
+     * antes sí lo hacía. Un reintento legítimo del cron de alsernetforms
+     * (timeout de red, por ejemplo) llega con la MISMA idempotency key pero
+     * con firma distinta, y por tanto no es un replay: es la situación para
+     * la que existe la clave. Rechazarlo aquí con 401 dejaba inalcanzable la
+     * deduplicación de FormSubmissionReceiverController, que responde 200 con
+     * `deduplicated: true` y el ticket_number original — y como 401 es un
+     * error, el cron seguía reintentando hasta agotar los intentos en vez de
+     * darse por satisfecho.
      */
     private function isReplay(Request $request, string $signature): bool
     {
-        $ttl = HmacSigner::TIMESTAMP_TOLERANCE_SECONDS;
-
-        if (! Cache::add(self::REPLAY_CACHE_PREFIX.hash('sha256', $signature), 1, $ttl)) {
-            return true;
-        }
-
-        $idempotencyKey = (string) $request->header('X-Alsernet-Idempotency-Key', '');
-
-        if ($idempotencyKey !== ''
-            && ! Cache::add(self::REPLAY_CACHE_PREFIX.'idem:'.hash('sha256', $idempotencyKey), 1, $ttl)) {
-            return true;
-        }
-
-        return false;
+        return ! Cache::add(
+            self::REPLAY_CACHE_PREFIX.hash('sha256', $signature),
+            1,
+            HmacSigner::TIMESTAMP_TOLERANCE_SECONDS
+        );
     }
 }

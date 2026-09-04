@@ -3,11 +3,11 @@
 namespace Modules\Forms\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Modules\Forms\Models\Form;
+use Modules\Forms\Models\AlsernetForm;
 use Modules\HelpdeskTickets\Models\TicketCategory;
 
 /**
- * Siembra los 13 formularios iniciales de alsernetforms como filas Form,
+ * Siembra los 13 formularios iniciales de alsernetforms como filas AlsernetForm,
  * vinculadas a la TicketCategory correspondiente (sembrada por
  * FormsTicketCategorySeeder). `form_key` DEBE coincidir exactamente con la
  * clave del array en FormCategoryRegistry del lado alsernetforms/PrestaShop.
@@ -50,7 +50,7 @@ class FormsSeeder extends Seeder
         foreach ($forms as $form) {
             $category = TicketCategory::where('slug', $form['category_slug'])->first();
 
-            Form::firstOrCreate(
+            AlsernetForm::firstOrCreate(
                 ['form_key' => $form['form_key']],
                 [
                     'name' => $form['name'],
