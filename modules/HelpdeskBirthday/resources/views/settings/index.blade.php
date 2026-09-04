@@ -24,11 +24,28 @@
         <div class="card-body">
             <h6 class="fw-bold mb-1">Cupón del día</h6>
             <p class="text-muted small mb-3">
-                El código lo fijas tú. Si dejas activada la validación, al preparar la campaña se
-                consulta a gestión para traer las fechas y el importe reales del bono.
+                Hay dos formas de repartir el bono: que gestión genere <strong>uno por cliente</strong>
+                —indicando el tipo de bono— o fijar un <strong>código único</strong> para todos. Con el
+                tipo de bono configurado, cada persona recibe el suyo.
             </p>
 
             <div class="row g-3">
+                {{-- El tipo de bono va primero y solo en su fila: es lo que decide
+                     si cada cliente recibe un bono propio o todos comparten uno. --}}
+                <div class="col-12">
+                    <label class="form-label small" for="bd-bono-type">Tipo de bono en gestión (IDTBONO_PROMOCION)</label>
+                    <input type="number" name="bono_type_id" id="bd-bono-type" min="0" step="1"
+                           class="form-control @error('bono_type_id') is-invalid @enderror"
+                           value="{{ old('bono_type_id', $settings['bono_type_id']) }}">
+                    <div class="form-text">
+                        Con un tipo indicado, al preparar la campaña se pide a gestión un bono para cada
+                        cumpleañero y cada correo lleva su propio código. El importe, la validez y la
+                        compra mínima salen del tipo, no de este panel. Déjalo en 0 para repartir en su
+                        lugar el código único de abajo.
+                    </div>
+                    @error('bono_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
                 <div class="col-md-6">
                     <label class="form-label small" for="bd-coupon-code">Código del bono</label>
                     <input type="text" name="coupon_code" id="bd-coupon-code" class="form-control @error('coupon_code') is-invalid @enderror" value="{{ old('coupon_code', $settings['coupon_code']) }}" maxlength="190">

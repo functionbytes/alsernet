@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Modules\Erp\Services\ErpService;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
+use Modules\HelpdeskBirthday\Support\BirthdaySettings;
 use Throwable;
 
 /**
@@ -29,6 +30,7 @@ class BirthdayBonoGenerator
 
     public function __construct(
         private readonly ErpService $erp,
+        private readonly BirthdaySettings $settings,
     ) {}
 
     /**
@@ -41,7 +43,11 @@ class BirthdayBonoGenerator
 
     public function bonoType(): int
     {
-        return (int) config('helpdeskbirthday.coupon.bono_type_id', 0);
+        // Vía BirthdaySettings y no leyendo el Setting a pelo: el prefijo real
+        // de las claves ('helpdesk_birthday.') lo conoce esa clase, y repetirlo
+        // aquí sería un sitio más donde equivocarse. El panel manda sobre la
+        // config, que solo actúa de valor por defecto.
+        return (int) ($this->settings->all()['bono_type_id'] ?? 0);
     }
 
     /**
@@ -54,7 +60,7 @@ class BirthdayBonoGenerator
     {
         if (! $this->isConfigured()) {
             throw new \RuntimeException(
-                'Falta el tipo de bono de cumpleaños (helpdeskbirthday.coupon.bono_type_id): '
+                'Falta el tipo de bono de cumpleaños (Ajustes → Cupón del día): '
                 .'Gestión no puede generar un bono sin saber de qué tipo es.'
             );
         }

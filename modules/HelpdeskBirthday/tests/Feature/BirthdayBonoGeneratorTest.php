@@ -10,6 +10,7 @@ use Modules\Erp\Services\ErpService;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
 use Modules\HelpdeskBirthday\Services\BirthdayBonoGenerator;
+use Modules\HelpdeskBirthday\Support\BirthdaySettings;
 use Tests\TestCase;
 
 /**
@@ -28,6 +29,20 @@ class BirthdayBonoGeneratorTest extends TestCase
         Mockery::close();
 
         parent::tearDown();
+    }
+
+    /**
+     * El tipo de bono se configura en el panel (Ajustes → Cupón del día), así
+     * que se dobla BirthdaySettings: tocar config() ya no cambia nada, y leer
+     * el ajuste real haría que el test dependiera de lo que haya guardado en
+     * este entorno.
+     */
+    private function withBonoType(int $id): void
+    {
+        $settings = Mockery::mock(BirthdaySettings::class);
+        $settings->shouldReceive('all')->andReturn(['bono_type_id' => $id]);
+
+        $this->app->instance(BirthdaySettings::class, $settings);
     }
 
     private function recipient(array $extra = []): BirthdayRecipient
@@ -49,7 +64,7 @@ class BirthdayBonoGeneratorTest extends TestCase
 
     public function test_no_genera_nada_sin_tipo_de_bono_configurado(): void
     {
-        config(['helpdeskbirthday.coupon.bono_type_id' => 0]);
+        $this->withBonoType(0);
 
         $erp = Mockery::mock(ErpService::class);
         $erp->shouldNotReceive('generarBonos');
@@ -62,7 +77,7 @@ class BirthdayBonoGeneratorTest extends TestCase
 
     public function test_manda_una_linea_por_cliente_con_su_idcliente(): void
     {
-        config(['helpdeskbirthday.coupon.bono_type_id' => 82]);
+        $this->withBonoType(82);
 
         $erp = Mockery::mock(ErpService::class);
         $erp->shouldReceive('generarBonos')
@@ -85,7 +100,7 @@ class BirthdayBonoGeneratorTest extends TestCase
 
     public function test_quien_no_tiene_id_de_cliente_no_entra_en_la_generacion(): void
     {
-        config(['helpdeskbirthday.coupon.bono_type_id' => 82]);
+        $this->withBonoType(82);
 
         // El bono se emite contra un idcliente de Gestión, no contra un correo.
         $erp = Mockery::mock(ErpService::class);
@@ -100,7 +115,7 @@ class BirthdayBonoGeneratorTest extends TestCase
 
     public function test_un_fallo_queda_anotado_en_la_fila_de_cada_uno(): void
     {
-        config(['helpdeskbirthday.coupon.bono_type_id' => 82]);
+        $this->withBonoType(82);
 
         $erp = Mockery::mock(ErpService::class);
         $erp->shouldReceive('generarBonos')->andReturn(['success' => false, 'message' => 'Gestión rechazó el lote']);

@@ -34,6 +34,11 @@ class BirthdaySettings
             'leap_day_policy' => $this->string('leap_day_policy', (string) config('helpdeskbirthday.leap_day_policy', 'feb28')),
             'template_key' => $this->string('template_key', (string) config('helpdeskbirthday.template_key', 'birthday-coupon')),
 
+            // Tipo de bono en Gestión (IDTBONO_PROMOCION): dice QUÉ bono se
+            // emite —importe, validez y compra mínima salen de él— y sin este
+            // valor no se puede generar uno por cliente.
+            'bono_type_id' => (int) $this->string('bono_type_id', (string) config('helpdeskbirthday.coupon.bono_type_id', 0)),
+
             'coupon_code' => $this->string('coupon_code', (string) config('helpdeskbirthday.coupon.code', '')),
             'coupon_verification_code' => $this->string('coupon_verification_code', (string) config('helpdeskbirthday.coupon.verification_code', '')),
             'coupon_valid_from' => $this->string('coupon_valid_from', ''),

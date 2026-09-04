@@ -22,6 +22,8 @@ class UpdateBirthdaySettingsRequest extends FormRequest
             'leap_day_policy' => ['required', 'in:'.BirthdayDayResolver::POLICY_FEB_28.','.BirthdayDayResolver::POLICY_MAR_01],
             'template_key' => ['required', 'string', 'max:190'],
 
+            // 0 = sin configurar; el generador se niega a llamar al ERP así.
+            'bono_type_id' => ['nullable', 'integer', 'min:0'],
             'coupon_code' => ['nullable', 'string', 'max:190'],
             'coupon_verification_code' => ['nullable', 'string', 'max:190'],
             'coupon_valid_from' => ['nullable', 'date'],
