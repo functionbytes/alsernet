@@ -8985,6 +8985,19 @@
                     } else {
                         $ind.hide();
                     }
+                })
+                // Antes, un correo entrante real con el ticket ya abierto no
+                // aparecía hasta recargar la página a mano — MessageAdded
+                // ahora transmite en este mismo canal (ver el evento en
+                // HelpdeskTickets\Events\MessageAdded). El canal ya está
+                // scopeado al ticket abierto (se re-suscribe en cada cambio
+                // de ticket, ver leaveTicketPresence()), así que cualquier
+                // aviso aquí es de ESTE ticket — se vuelve a pedir el
+                // detalle completo en vez de reconstruir el hilo a mano con
+                // un payload parcial.
+                .listen('.message.added', function () {
+                    var current = TKA.state.currentTicket;
+                    if (current) fetchDetailData(current);
                 });
         } catch (e) {
             // Sin Echo/Reverb levantado en este entorno: la pantalla sigue
