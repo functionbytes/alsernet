@@ -491,6 +491,14 @@ class ErpService
     /**
      * Consultar bono
      */
+    /**
+     * Consulta los datos de un bono.
+     *
+     * `importe_venta` es OBLIGATORIO aunque la documentación lo liste como un
+     * parámetro más: sin él la API revienta con un error 500 de Django
+     * (MultiValueDictKeyError). Con 0 basta para leer el bono sin simular una
+     * venta.
+     */
     public function consultaBono(string $idBono, string $codigoVerificacion, float $importeVenta, string $origen): array
     {
         $endpoint = $this->endpoint('bono', ['{id}' => $idBono]);
@@ -519,10 +527,20 @@ class ErpService
      * Genera bonos de promoción en Gestión, uno por cada línea.
      *
      * Cada línea lleva el idcliente, el tipo de bono y una observación; una
-     * sola llamada puede crear los bonos de toda una campaña. La respuesta es
-     * el identificador de la GENERACIÓN (idgeneracion_bono_promo), no el de
-     * cada bono: para saber qué bono le tocó a cada cliente hay que consultarlo
-     * después.
+     * sola llamada puede crear los bonos de toda una campaña.
+     *
+     * CUIDADO con la respuesta: es el identificador de la GENERACIÓN
+     * (idgeneracion_bono_promo), NO el del bono de nadie. Y es un número del
+     * mismo rango que los ids de bono, así que consultarlo en
+     * /api-gestion/bono/{id}/ devuelve 200 con los datos de OTRO bono. Probado
+     * contra el ERP real el 4-sep-2026: dos generaciones devolvieron 101295882
+     * y 101295883, y ambos ids resultaron ser bonos ajenos de 2018 ya
+     * caducados. Tomar esa respuesta por el cupón del cliente significaría
+     * enviarle el bono de otra persona, vencido hace años.
+     *
+     * De momento no hay forma de recuperar los bonos de una generación:
+     * /generacion-bono/{id}/ responde 405, y no existe consulta de bonos por
+     * cliente.
      *
      * @param  array<int, array{idcliente: int|string, idtbono_promocion: int, observacion?: string}>  $lineas
      * @return array{success: bool, batch_id?: string, message?: string}

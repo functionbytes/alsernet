@@ -22,6 +22,13 @@ use Throwable;
  * generación queda registrada (id de lote y fecha) pero el destinatario se
  * marca como pendiente de código: es preferible eso a mandarle un correo con un
  * cupón vacío o con el de otra persona.
+ *
+ * Y ese "el de otra persona" no es teórico. El id que devuelve la generación
+ * cae en el mismo rango que los ids de bono, así que consultarlo como bono
+ * responde 200 con datos de un bono ajeno. Comprobado contra el ERP real el
+ * 4-sep-2026: las respuestas 101295882 y 101295883 resultaron ser bonos de
+ * 2018 caducados, de otros clientes. Por eso el id del lote se guarda como lo
+ * que es —trazabilidad de la llamada— y NUNCA como coupon_code.
  */
 class BirthdayBonoGenerator
 {
