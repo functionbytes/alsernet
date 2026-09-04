@@ -19,6 +19,23 @@ return [
         'public_token_throttle' => env('ERP_PUBLIC_TOKEN_THROTTLE', '60,1'),
     ],
 
+    /*
+    | Rutas de los endpoints de Gestión que consumimos, relativas a la URL base
+    | (`erp_api_url` en ajustes: http://192.168.253.8:8080/api-gestion).
+    |
+    | Se declaran aquí y no incrustadas en el código para poder apuntarlas a
+    | otro host o a otra versión de la API sin tocar los servicios.
+    | {id} se sustituye por el identificador del bono.
+    */
+    'endpoints' => [
+        // Generación de bonos de promoción / cumpleaños (POST). Devuelve el
+        // idgeneracion_bono_promo del lote, no el bono de cada cliente.
+        'generacion_bono' => env('ERP_ENDPOINT_GENERACION_BONO', '/api-gestion/generacion-bono/'),
+        // Consulta de un bono (GET) y consumo/anulación/recarga (PUT): misma
+        // ruta, distinto método.
+        'bono' => env('ERP_ENDPOINT_BONO', '/api-gestion/bono/{id}/'),
+    ],
+
     'url_erp' => env('ERP_URL'),
     // Constantes para bonos
     'bono_origen_web' => 'web',

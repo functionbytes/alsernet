@@ -37,6 +37,12 @@ class BirthdayRecipient extends Model
     protected $fillable = [
         'coupon_code',
         'coupon_verification_code',
+        'coupon_amount',
+        'coupon_min_purchase',
+        'coupon_valid_from',
+        'coupon_valid_to',
+        'coupon_status',
+        'coupon_data',
         'coupon_generated_at',
         'coupon_error',
         'campaign_id',
@@ -58,6 +64,9 @@ class BirthdayRecipient extends Model
     {
         return [
             'coupon_generated_at' => 'datetime',
+            'coupon_valid_from' => 'date',
+            'coupon_valid_to' => 'date',
+            'coupon_data' => 'array',
             'birth_date' => 'date',
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',

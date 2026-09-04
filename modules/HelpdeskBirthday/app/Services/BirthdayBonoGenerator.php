@@ -107,35 +107,108 @@ class BirthdayBonoGenerator
     }
 
     /**
+     * Una llamada por lote. El XML y la URL los arma ErpService, que es quien
+     * conoce Gestión (ver ErpService::generarBonos y config erp.endpoints).
+     *
      * @param  Collection<int, BirthdayRecipient>  $chunk
      */
     private function sendBatch(Collection $chunk, string $description): string
     {
-        $lineas = $chunk->map(fn (BirthdayRecipient $r): string => sprintf(
-            '<linea><idcliente>%s</idcliente><idtbono_promocion>%d</idtbono_promocion><observacion>%s</observacion></linea>',
-            (int) $r->erp_customer_id,
-            $this->bonoType(),
-            e($description),
-        ))->implode('');
+        $lineas = $chunk->map(fn (BirthdayRecipient $r): array => [
+            'idcliente' => (int) $r->erp_customer_id,
+            'idtbono_promocion' => $this->bonoType(),
+            'observacion' => $description,
+        ])->values()->all();
 
-        $response = $this->erp->post('/api-gestion/generacion-bono/', [
-            // Con hora: el ejemplo de la documentación usa
-            // '2020-02-20T12:00:00' y el endpoint rechaza la fecha suelta.
-            'fecha' => now()->format('Y-m-d\TH:i:s'),
-            'descripcion' => $description,
-            'generar_bonos' => '1',
-            'xml_lineas' => '<?xml version="1.0" encoding="UTF-8" ?><lineas>'.$lineas.'</lineas>',
-        ]);
+        $result = $this->erp->generarBonos($lineas, $description);
 
-        // La respuesta es el id de la generación: <response>100267866</response>.
-        $batchId = is_array($response)
-            ? (string) ($response['response'] ?? $response[0] ?? '')
-            : (string) $response;
-
-        if (trim($batchId) === '') {
-            throw new \RuntimeException('Gestión no devolvió el identificador de la generación de bonos.');
+        if (($result['success'] ?? false) !== true) {
+            throw new \RuntimeException($result['message'] ?? 'Gestión no aceptó la generación de bonos.');
         }
 
-        return trim($batchId);
+        return (string) $result['batch_id'];
+    }
+
+    /**
+     * Rellena los datos del bono de un destinatario preguntándoselos a Gestión
+     * (GET /api-gestion/bono/{id}/): importe, validez y estado salen de ahí, no
+     * de lo que supongamos por nuestra cuenta.
+     *
+     * Devuelve true si el bono existe y quedó guardado.
+     */
+    public function syncDetails(BirthdayRecipient $recipient): bool
+    {
+        if (! $recipient->coupon_code) {
+            return false;
+        }
+
+        $response = $this->erp->consultaBono(
+            (string) $recipient->coupon_code,
+            (string) $recipient->coupon_verification_code,
+            0.0,
+            (string) config('helpdeskbirthday.coupon.origin', 'web'),
+        );
+
+        if (($response['success'] ?? false) !== true || ! is_array($response['data'] ?? null)) {
+            $recipient->update([
+                'coupon_error' => mb_substr((string) ($response['message'] ?? 'Gestión no reconoce el bono.'), 0, 250),
+            ]);
+
+            return false;
+        }
+
+        $data = $response['data'];
+
+        $recipient->update([
+            // El código de verificación lo confirma Gestión: es el que hará
+            // falta después para consumir el bono.
+            'coupon_verification_code' => (string) ($data['codigo_verificacion'] ?? $recipient->coupon_verification_code),
+            // Importe y validez tal como los concedió Gestión, no como los
+            // pidió la campaña: es lo que hay que contestar cuando el cliente
+            // pregunta cuánto era su bono.
+            'coupon_amount' => $this->decimal($data['importe'] ?? null),
+            'coupon_min_purchase' => $this->decimal($data['importeminimoventa'] ?? null),
+            'coupon_valid_from' => $this->date($data['fvalidez_desde'] ?? null),
+            'coupon_valid_to' => $this->date($data['fvalidez_hasta'] ?? null),
+            'coupon_status' => $this->text($data['descripcion_estado_extendido'] ?? null),
+            // La respuesta entera: trae campos que hoy no se pintan (tipo,
+            // almacén de creación, catálogos de consumo) y que permiten
+            // reconstruir el estado sin volver a preguntar.
+            'coupon_data' => $data,
+            'coupon_error' => null,
+        ]);
+
+        return true;
+    }
+
+    private function decimal(mixed $value): ?float
+    {
+        // El XML devuelve <importe/> vacío cuando no aplica, que llega como
+        // array vacío tras el parseo: eso no es un cero, es "sin dato".
+        if ($value === null || $value === '' || is_array($value)) {
+            return null;
+        }
+
+        return is_numeric($value) ? (float) $value : null;
+    }
+
+    private function date(mixed $value): ?string
+    {
+        $text = $this->text($value);
+
+        return $text !== null && preg_match('/^\d{4}-\d{2}-\d{2}/', $text) === 1
+            ? substr($text, 0, 10)
+            : null;
+    }
+
+    private function text(mixed $value): ?string
+    {
+        if ($value === null || is_array($value)) {
+            return null;
+        }
+
+        $text = trim((string) $value);
+
+        return $text !== '' ? $text : null;
     }
 }

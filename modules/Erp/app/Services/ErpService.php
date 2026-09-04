@@ -493,7 +493,7 @@ class ErpService
      */
     public function consultaBono(string $idBono, string $codigoVerificacion, float $importeVenta, string $origen): array
     {
-        $endpoint = "/api-gestion/bono/{$idBono}/";
+        $endpoint = $this->endpoint('bono', ['{id}' => $idBono]);
         $params = [
             'codigo_verificacion' => $codigoVerificacion,
             'importe_venta' => $importeVenta,
@@ -516,6 +516,81 @@ class ErpService
     }
 
     /**
+     * Genera bonos de promoción en Gestión, uno por cada línea.
+     *
+     * Cada línea lleva el idcliente, el tipo de bono y una observación; una
+     * sola llamada puede crear los bonos de toda una campaña. La respuesta es
+     * el identificador de la GENERACIÓN (idgeneracion_bono_promo), no el de
+     * cada bono: para saber qué bono le tocó a cada cliente hay que consultarlo
+     * después.
+     *
+     * @param  array<int, array{idcliente: int|string, idtbono_promocion: int, observacion?: string}>  $lineas
+     * @return array{success: bool, batch_id?: string, message?: string}
+     */
+    public function generarBonos(array $lineas, string $descripcion, ?string $fecha = null): array
+    {
+        if ($lineas === []) {
+            return ['success' => false, 'message' => 'No hay líneas que generar.'];
+        }
+
+        $xml = '<?xml version="1.0" encoding="UTF-8" ?><lineas>';
+
+        foreach ($lineas as $linea) {
+            $xml .= sprintf(
+                '<linea><idcliente>%s</idcliente><idtbono_promocion>%d</idtbono_promocion><observacion>%s</observacion></linea>',
+                (int) $linea['idcliente'],
+                (int) $linea['idtbono_promocion'],
+                htmlspecialchars((string) ($linea['observacion'] ?? ''), ENT_XML1),
+            );
+        }
+
+        $xml .= '</lineas>';
+
+        $response = $this->post($this->endpoint('generacion_bono'), [
+            // Con hora: el ejemplo de la documentación usa '2020-02-20T12:00:00'.
+            'fecha' => $fecha ?? now()->format('Y-m-d\TH:i:s'),
+            'descripcion' => $descripcion,
+            'generar_bonos' => '1',
+            'xml_lineas' => $xml,
+        ]);
+
+        $batchId = $this->scalarFromResponse($response);
+
+        if ($batchId === '') {
+            return ['success' => false, 'message' => 'Gestión no devolvió el identificador de la generación.'];
+        }
+
+        return ['success' => true, 'batch_id' => $batchId];
+    }
+
+    /**
+     * Ruta de un endpoint de Gestión, con sus marcadores sustituidos.
+     *
+     * @param  array<string, string>  $replacements
+     */
+    private function endpoint(string $key, array $replacements = []): string
+    {
+        $path = (string) config("erp.endpoints.{$key}", '');
+
+        return strtr($path, $replacements);
+    }
+
+    /**
+     * Respuestas como <response>100267866</response>: el XML parseado llega
+     * como array o como cadena según el caso, y aquí solo interesa el valor.
+     */
+    private function scalarFromResponse(mixed $response): string
+    {
+        if (is_array($response)) {
+            $value = $response['response'] ?? $response[0] ?? (count($response) === 1 ? reset($response) : '');
+
+            return is_scalar($value) ? trim((string) $value) : '';
+        }
+
+        return is_scalar($response) ? trim((string) $response) : '';
+    }
+
+    /**
      * Marcar bono como usado
      */
     public function marcarBono(
@@ -526,13 +601,18 @@ class ErpService
         float $importeInicialTarjetaRegalo,
         string $origen
     ): ?array {
-        $endpoint = "/api-gestion/bono/{$idBono}/";
+        // `origen` viaja en la query, no en el cuerpo: la documentación lo
+        // lista como parámetro de URL y su ejemplo es
+        // client.put(.../bono/100003106/?origen=web, data=data). Mandarlo en el
+        // form_params dejaba al ERP sin saber desde dónde se consume.
+        $endpoint = $this->endpoint('bono', ['{id}' => $idBono])
+            .'?origen='.rawurlencode($origen);
+
         $data = [
             'operacion' => $operacion,
             'codigo_verificacion' => $codigoVerificacion,
             'importe_venta' => $importeVenta,
             'importe_inicial_tarjeta_regalo' => $importeInicialTarjetaRegalo,
-            'origen' => $origen,
         ];
 
         return $this->put($endpoint, $data);
