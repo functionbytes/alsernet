@@ -4,6 +4,7 @@ namespace Modules\HelpdeskBirthday\Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Mockery;
@@ -53,7 +54,21 @@ class BirthdayExtrasTest extends TestCase
     {
         Notification::fake();
 
-        // Sin cupón configurado, prepare() aborta.
+        // Sin cupón configurado la campaña queda en pausa (no envía), y de eso
+        // hay que avisar igual: el cliente se queda sin su felicitación y el
+        // día no se repite.
+        config()->set('helpdeskbirthday.customers_api_url', 'http://manager.test');
+
+        // La campaña se prepara de verdad, así que hay que servirle la
+        // audiencia: sin fake, la petición sale a la red del test.
+        Http::fake([
+            'manager.test/*' => Http::response([
+                'success' => true,
+                'data' => [],
+                'pagination' => ['limit' => 100, 'offset' => 0, 'count' => 0, 'hasMore' => false],
+            ]),
+        ]);
+
         $this->app->instance(BirthdaySettings::class, $this->settingsWithoutCoupon());
 
         app(BirthdayCampaignService::class)->prepare(now()->toImmutable());

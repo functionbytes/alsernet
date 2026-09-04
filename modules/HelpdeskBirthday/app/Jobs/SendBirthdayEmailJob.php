@@ -72,6 +72,20 @@ class SendBirthdayEmailJob extends BaseJob
             return;
         }
 
+        // Un correo de cumpleaños sin cupón es peor que no mandarlo: el cliente
+        // recibe una felicitación con un hueco donde debería estar su regalo, y
+        // ese correo ya no se puede repetir. Se devuelve a pendiente para que se
+        // reintente cuando el bono esté generado.
+        if (($recipient->coupon_code ?: $campaign->coupon_code) === null
+            || trim((string) ($recipient->coupon_code ?: $campaign->coupon_code)) === '') {
+            $recipient->update([
+                'status' => BirthdayRecipient::STATUS_PENDING,
+                'error_message' => 'Sin cupón asignado: no se envía hasta que Gestión genere el bono.',
+            ]);
+
+            return;
+        }
+
         [$subject, $html] = BirthdayMailRenderer::render($campaign, $recipient);
 
         Mail::to($recipient->email)->send(

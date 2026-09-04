@@ -137,6 +137,18 @@ return [
     'erp_timeout' => (int) env('HELPDESK_BIRTHDAY_ERP_TIMEOUT', 90),
 
     'coupon' => [
+        /*
+        | Tipo de bono de promoción en Gestión (IDTBONO_PROMOCION). Es lo que
+        | dice QUÉ bono se emite: importe, validez y compra mínima salen de él.
+        |
+        | Sin este valor no se puede generar un bono por cliente
+        | (POST /api-gestion/generacion-bono/), solo repartir un código único a
+        | todo el mundo con 'code'. El dato lo tiene Gestión: la tabla
+        | TBONO_PROMOCION no es visible para el usuario de solo lectura con el
+        | que se consulta Oracle.
+        */
+        'bono_type_id' => (int) env('HELPDESK_BIRTHDAY_BONO_TYPE_ID', 0),
+
         'code' => env('HELPDESK_BIRTHDAY_COUPON_CODE', ''),
         'verification_code' => env('HELPDESK_BIRTHDAY_COUPON_CV', ''),
         'validate_against_erp' => (bool) env('HELPDESK_BIRTHDAY_COUPON_VALIDATE', true),

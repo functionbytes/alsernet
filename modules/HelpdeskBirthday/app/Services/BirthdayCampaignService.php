@@ -25,6 +25,7 @@ class BirthdayCampaignService
 {
     public function __construct(
         private readonly BirthdayAudienceStatsService $audienceStats,
+        private readonly BirthdayBonoGenerator $bonos,
         private readonly BirthdayAudienceService $audience,
         private readonly BirthdayCouponService $coupons,
         private readonly BirthdayScheduleCalculator $calculator,
@@ -63,15 +64,22 @@ class BirthdayCampaignService
         // nada.
         $audienceStats = $this->audienceStats->forDate($date);
 
+        // El cupón de la campaña es OPCIONAL: cuando Gestión genera un bono por
+        // cliente (ver BirthdayBonoGenerator) no hay un código único que valga
+        // para todos, y exigirlo dejaba la campaña sin prepararse siquiera.
+        // Si hay uno configurado se sigue congelando en la campaña, porque hay
+        // promociones que sí reparten el mismo código a todo el mundo.
         $coupon = $this->coupons->resolve($settings);
 
-        if ($coupon === []) {
-            return $this->fail(
-                $campaign,
-                'No hay ningún código de cupón configurado: la campaña no se envía.',
-                $audienceStats,
-            );
-        }
+        // Sin cupón global y sin tipo de bono nadie puede recibir un código,
+        // pero eso NO es motivo para tirar la audiencia: quién cumple años hoy
+        // es un dato que caduca —mañana ya no se puede reconstruir— y con él en
+        // la mano se ve a cuánta gente afecta el ajuste que falta.
+        //
+        // La campaña se prepara igual y queda EN PAUSA: reúne y programa, pero
+        // no envía. Y aunque alguien la reanudara, SendBirthdayEmailJob se
+        // niega a mandar un correo con el cupón vacío.
+        $sinCupones = $coupon === [] && ! $this->bonos->isConfigured();
 
         try {
             $recipients = $this->audience->fetchForDate($date, $this->settings->exclusions());
@@ -100,7 +108,7 @@ class BirthdayCampaignService
 
         $skipped = count($recipients) - count($sendable);
 
-        DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped, $audienceStats): void {
+        DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped, $audienceStats, $sinCupones): void {
             $campaign->fill($coupon + [
                 'template_key' => $settings['template_key'],
                 // Se guarda la hora tal como la configuró el usuario (hora de
@@ -114,12 +122,23 @@ class BirthdayCampaignService
                 'recipients_total' => count($recipients),
                 'skipped_count' => $skipped,
                 'audience_stats' => $audienceStats,
-                'status' => BirthdayCampaign::STATUS_SCHEDULED,
-                'error_message' => null,
+                'status' => $sinCupones
+                    ? BirthdayCampaign::STATUS_PAUSED
+                    : BirthdayCampaign::STATUS_SCHEDULED,
+                'error_message' => $sinCupones
+                    ? 'En pausa: falta el código de cupón o el tipo de bono de Gestión. Los destinatarios están reunidos, pero no se enviará nada hasta que haya cupón.'
+                    : null,
             ])->save();
 
             $this->storeRecipients($campaign, $recipients, $plan);
         });
+
+        // Una campaña que queda en pausa por falta de cupón no envía nada, y
+        // eso hay que decirlo: el efecto para el cliente es el mismo que si
+        // hubiera fallado —no recibe su felicitación— y el día no se repite.
+        if ($sinCupones) {
+            $this->notifyFailure($campaign, (string) $campaign->error_message);
+        }
 
         Log::info('[HelpdeskBirthday] Campaña preparada', [
             'date' => $date->toDateString(),

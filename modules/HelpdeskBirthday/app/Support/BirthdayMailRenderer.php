@@ -61,7 +61,12 @@ class BirthdayMailRenderer
         return [
             'CUSTOMER_NAME' => $recipient->displayName(),
             'CUSTOMER_EMAIL' => (string) $recipient->email,
-            'COUPON_CODE' => (string) $campaign->coupon_code,
+            // El bono de esta persona manda sobre el de la campaña: cuando
+            // Gestión emite uno por cliente, cada correo lleva el suyo. El de
+            // la campaña queda como respaldo para las promociones que reparten
+            // el mismo código a todo el mundo.
+            'COUPON_CODE' => (string) ($recipient->coupon_code ?: $campaign->coupon_code),
+            'COUPON_VERIFICATION_CODE' => (string) $recipient->coupon_verification_code,
             'COUPON_VALID_FROM' => $campaign->coupon_valid_from?->format('d/m/Y') ?? '',
             'COUPON_VALID_TO' => $campaign->coupon_valid_to?->format('d/m/Y') ?? '',
             'COUPON_AMOUNT' => $campaign->coupon_amount !== null ? number_format((float) $campaign->coupon_amount, 2, ',', '.') : '',

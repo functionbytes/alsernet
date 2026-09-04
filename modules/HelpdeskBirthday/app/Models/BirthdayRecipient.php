@@ -35,6 +35,10 @@ class BirthdayRecipient extends Model
     protected $table = 'helpdesk_birthday_recipients';
 
     protected $fillable = [
+        'coupon_code',
+        'coupon_verification_code',
+        'coupon_generated_at',
+        'coupon_error',
         'campaign_id',
         'erp_customer_id',
         'email',
@@ -53,6 +57,7 @@ class BirthdayRecipient extends Model
     protected function casts(): array
     {
         return [
+            'coupon_generated_at' => 'datetime',
             'birth_date' => 'date',
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',

@@ -190,17 +190,12 @@ class PrepareBirthdayCampaignTest extends TestCase
 
         $campaign = app(BirthdayCampaignService::class)->prepare($this->date);
 
-        $this->assertSame(BirthdayCampaign::STATUS_FAILED, $campaign->status);
+        // Sin cupón la campaña SÍ se prepara —quién cumple años hoy es un dato
+        // que caduca— pero queda en pausa: reúne y programa, no envía.
+        $this->assertSame(BirthdayCampaign::STATUS_PAUSED, $campaign->status);
         $this->assertStringContainsString('cupón', $campaign->error_message);
-
-        // Sin cupón no se reúne a nadie: no se pide la lista de clientes ni se
-        // guarda un solo destinatario. Lo único que sí se consulta —a
-        // propósito— es el desglose de la audiencia, para que la campaña
-        // fallida pueda explicar en el panel a cuánta gente habría escrito.
-        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/api/erp/customer?')
-            || str_contains($request->url(), 'birthday=')
-        );
-        $this->assertSame(0, $campaign->recipients()->count());
+        $this->assertFalse($campaign->isActive(), 'Una campaña en pausa no debe enviar.');
+        $this->assertSame(1, $campaign->recipients()->count());
     }
 
     /* ── Helpers ─────────────────────────────────────────────────────────── */
