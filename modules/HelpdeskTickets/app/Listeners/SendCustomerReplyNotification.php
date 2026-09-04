@@ -82,8 +82,13 @@ class SendCustomerReplyNotification implements ShouldQueue
 
         $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-        $translation = $template->translate($langId);
-        $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
+        // El asunto de la plantilla ("Re: {SUBJECT} — #...") se ignora a
+        // propósito: usa ticket.subject, que puede no tener nada que ver con
+        // el asunto real con el que arrancó el hilo (p. ej. la confirmación
+        // usa un asunto fijo de plantilla, no ticket.subject). Anclarlo al
+        // de la primera fila real evita que Gmail abra un hilo nuevo en cada
+        // respuesta — ver TicketChannelMailerService::threadSubject().
+        $subject = $this->channelMailer->threadSubject($ticket);
 
         // Responder desde el mismo buzón al que escribió el cliente (si el
         // ticket vino por un canal con SMTP configurado) y encadenar

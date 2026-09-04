@@ -62,8 +62,11 @@ class SendCustomerReopenNotification implements ShouldQueue
 
         $html = MailerTemplateRendererService::renderEmailTemplate($template, $variables, $langId);
 
-        $translation = $template->translate($langId);
-        $subject = MailerTemplateRendererService::replaceVariables($translation->subject, $variables);
+        // El asunto de la plantilla ("Tu ticket #... fue reabierto") no
+        // menciona el asunto original ni "Re:" — Gmail abría un hilo nuevo en
+        // vez de seguir la conversación. Ver
+        // TicketChannelMailerService::threadSubject().
+        $subject = $this->channelMailer->threadSubject($ticket);
 
         // Mismo canal/hilo que SendCustomerReplyNotification — ver
         // TicketChannelMailerService.

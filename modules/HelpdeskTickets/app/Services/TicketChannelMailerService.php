@@ -70,6 +70,50 @@ class TicketChannelMailerService
     }
 
     /**
+     * Asunto anclado al de la PRIMERA fila real de correo del ticket (casi
+     * siempre la confirmación "Hemos recibido tu solicitud"), no al campo
+     * ticket.subject.
+     *
+     * Bug real encontrado probando el flujo en vivo (4-sep-2026, TCK-2026-00093):
+     * la confirmación usa un asunto fijo de plantilla ("Hemos recibido tu
+     * solicitud — #TCK-..."), pero SendCustomerReplyNotification/
+     * SendCustomerStatusNotification/SendCustomerReopenNotification/
+     * TicketCommentsController construían el suyo desde ticket.subject
+     * ("Contacto general" o cualquier otro valor) — con In-Reply-To/References
+     * correctos pero el asunto completamente distinto, Gmail abría un hilo
+     * NUEVO en cada aviso automático en vez de seguir la conversación (visto
+     * con un correo real: la respuesta del agente llegó como "Re: Contacto
+     * general" en un hilo aparte, mientras el cliente seguía respondiendo al
+     * hilo original "Hemos recibido tu solicitud").
+     */
+    public function threadSubject(Ticket $ticket): string
+    {
+        $stored = TicketMail::where('ticket_id', $ticket->id)->oldest()->value('subject');
+
+        $base = $stored ? $this->stripThreadDecorations($ticket, $stored) : null;
+
+        return 'Re: '.($base ?: ($ticket->subject ?: 'tu ticket')).' — #'.$ticket->ticket_number;
+    }
+
+    /**
+     * Quita un "Re:"/"Fwd:" inicial y el "— #TCK-..." final ya presentes en
+     * un asunto guardado, para no acabar con "Re: Re: asunto — #TCK-1 — #TCK-1".
+     */
+    private function stripThreadDecorations(Ticket $ticket, string $subject): ?string
+    {
+        $subject = trim($subject);
+        $subject = preg_replace('/^(re|fwd?)\s*:\s*/i', '', $subject) ?? $subject;
+        // /u obligatorio: '—' (em dash, U+2014) es multibyte en UTF-8 — sin el
+        // modificador, la clase [—-] la parte en bytes sueltos y el patrón
+        // deja un byte huérfano en vez de consumir el guion entero (mismo
+        // gotcha ya documentado con [oó] en otro módulo).
+        $subject = preg_replace('/\s*[—-]\s*#'.preg_quote((string) $ticket->ticket_number, '/').'\s*$/iu', '', $subject) ?? $subject;
+        $subject = trim($subject);
+
+        return $subject !== '' ? $subject : null;
+    }
+
+    /**
      * Registra (si hace falta) un mailer dinámico para este canal y devuelve
      * su nombre, listo para Mail::mailer($name)->... Devuelve null si el
      * canal no tiene SMTP configurado (buzones dados de alta antes de este

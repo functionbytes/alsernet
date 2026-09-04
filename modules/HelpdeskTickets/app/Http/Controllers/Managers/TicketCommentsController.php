@@ -75,7 +75,7 @@ class TicketCommentsController extends Controller
         if (! $comment->is_internal && $ticket->customer?->email) {
             $messageBody = $this->outboundTranslator->translateForCustomer($ticket, (string) $comment->body);
 
-            [$subject, $content] = TicketMailRenderer::render(
+            [, $content] = TicketMailRenderer::render(
                 'helpdesk.ticket_reply',
                 [
                     'CUSTOMER_NAME' => $ticket->customer->name ?? 'Cliente',
@@ -87,6 +87,13 @@ class TicketCommentsController extends Controller
                 ],
                 'Nueva respuesta en tu ticket #'.$ticket->ticket_number,
             );
+
+            // El asunto de la plantilla ("Re: {SUBJECT} — #...") se ignora a
+            // propósito: usa ticket.subject, que puede no tener nada que ver
+            // con el asunto real con el que arrancó el hilo. Anclarlo al de
+            // la primera fila real evita que Gmail abra un hilo nuevo en cada
+            // comentario externo — ver TicketChannelMailerService::threadSubject().
+            $subject = $this->channelMailer->threadSubject($ticket);
 
             // Mismo canal/hilo que SendCustomerReplyNotification — ver
             // TicketChannelMailerService.
