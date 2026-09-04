@@ -64,6 +64,7 @@ class BirthdayCampaign extends Model
         'sent_count',
         'failed_count',
         'skipped_count',
+        'audience_stats',
         'started_at',
         'finished_at',
         'error_message',
@@ -72,6 +73,7 @@ class BirthdayCampaign extends Model
     protected function casts(): array
     {
         return [
+            'audience_stats' => 'array',
             'campaign_date' => 'date',
             'coupon_valid_from' => 'date',
             'coupon_valid_to' => 'date',

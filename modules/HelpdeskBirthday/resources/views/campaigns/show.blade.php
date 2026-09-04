@@ -120,6 +120,51 @@
         </div>
     </div>
 
+    @php
+        // Desglose de la audiencia del día, tal como lo devolvió Gestión al
+        // preparar la campaña (ver BirthdayAudienceStatsService). Los motivos
+        // NO son excluyentes: alguien puede estar de baja y además no tener
+        // correo, así que no suman el total — cada uno cuenta su condición.
+        $audiencia = $campaign->audience_stats ?? [];
+        $descartes = [
+            'Dados de baja' => $audiencia['unsubscribed'] ?? null,
+            'Sin correo válido' => $audiencia['no_email'] ?? null,
+            'Sin LOPD aceptada' => $audiencia['no_lopd'] ?? null,
+            'No quieren publicidad' => $audiencia['no_commercial_optin'] ?? null,
+        ];
+        $descartes = array_filter($descartes, static fn ($v) => $v !== null);
+    @endphp
+
+    @if($descartes !== [])
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-1">Audiencia del día</h6>
+                    <p class="text-muted small mb-3">
+                        Quién cumplía años y por qué motivo quedó fuera cada uno.
+                    </p>
+
+                    <dl class="row small mb-0">
+                        <dt class="col-7 fw-normal text-muted">Cumplen años</dt>
+                        <dd class="col-5 text-end fw-semibold">{{ number_format($audiencia['total'] ?? 0) }}</dd>
+
+                        @foreach($descartes as $etiqueta => $cuantos)
+                            <dt class="col-7 fw-normal text-muted ps-3">· {{ $etiqueta }}</dt>
+                            <dd class="col-5 text-end">{{ number_format($cuantos) }}</dd>
+                        @endforeach
+
+                        <dt class="col-7 fw-normal border-top pt-2">Se les puede escribir</dt>
+                        <dd class="col-5 text-end fw-semibold border-top pt-2">{{ number_format($audiencia['writable'] ?? 0) }}</dd>
+                    </dl>
+
+                    <p class="text-muted small mb-0 mt-3">
+                        Los motivos no suman el total: una misma persona puede estar en varios.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">

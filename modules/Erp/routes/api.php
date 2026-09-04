@@ -27,6 +27,10 @@ Route::middleware(['api'])->group(function () {
                 Route::patch('/lopd', [CustomerController::class, 'updateLopd']);
                 Route::get('/search', [CustomerController::class, 'search']);
 
+                // Desglose de la audiencia de cumpleaños (?day=MM-DD): cuántos
+                // cumplen y cuántos quedan fuera por cada motivo.
+                Route::get('/birthday-stats', [CustomerController::class, 'birthdayStats']);
+
                 // Lookup por ID web (CODIGO_INTERNET en Oracle)
                 Route::get('/search/web/{idweb}', [CustomerController::class, 'findByIdWeb'])->whereNumber('idweb');
 

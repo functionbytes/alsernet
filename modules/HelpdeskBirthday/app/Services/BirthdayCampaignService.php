@@ -24,6 +24,7 @@ use Throwable;
 class BirthdayCampaignService
 {
     public function __construct(
+        private readonly BirthdayAudienceStatsService $audienceStats,
         private readonly BirthdayAudienceService $audience,
         private readonly BirthdayCouponService $coupons,
         private readonly BirthdayScheduleCalculator $calculator,
@@ -89,7 +90,11 @@ class BirthdayCampaignService
 
         $skipped = count($recipients) - count($sendable);
 
-        DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped): void {
+        // Desglose de por qué la audiencia es la que es. Informativo: si no se
+        // puede consultar, la campaña se prepara igual (devuelve null).
+        $audienceStats = $this->audienceStats->forDate($date);
+
+        DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped, $audienceStats): void {
             $campaign->fill($coupon + [
                 'template_key' => $settings['template_key'],
                 // Se guarda la hora tal como la configuró el usuario (hora de
@@ -102,6 +107,7 @@ class BirthdayCampaignService
                 'interval_seconds' => $plan->intervalSeconds,
                 'recipients_total' => count($recipients),
                 'skipped_count' => $skipped,
+                'audience_stats' => $audienceStats,
                 'status' => BirthdayCampaign::STATUS_SCHEDULED,
                 'error_message' => null,
             ])->save();
