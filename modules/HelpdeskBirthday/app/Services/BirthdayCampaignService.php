@@ -57,16 +57,26 @@ class BirthdayCampaignService
 
         $settings = $this->settings->all();
 
+        // Antes que nada, y aunque la campaña acabe abortando: así una campaña
+        // fallida sigue pudiendo explicar en el panel a cuánta gente habría
+        // escrito y por qué el resto quedaba fuera. Es una lectura, no envía
+        // nada.
+        $audienceStats = $this->audienceStats->forDate($date);
+
         $coupon = $this->coupons->resolve($settings);
 
         if ($coupon === []) {
-            return $this->fail($campaign, 'No hay ningún código de cupón configurado: la campaña no se envía.');
+            return $this->fail(
+                $campaign,
+                'No hay ningún código de cupón configurado: la campaña no se envía.',
+                $audienceStats,
+            );
         }
 
         try {
             $recipients = $this->audience->fetchForDate($date, $this->settings->exclusions());
         } catch (BirthdayAudienceException $e) {
-            return $this->fail($campaign, $e->getMessage());
+            return $this->fail($campaign, $e->getMessage(), $audienceStats);
         }
 
         [$windowStart, $windowEnd] = $this->calculator->windowFor(
@@ -89,10 +99,6 @@ class BirthdayCampaignService
         );
 
         $skipped = count($recipients) - count($sendable);
-
-        // Desglose de por qué la audiencia es la que es. Informativo: si no se
-        // puede consultar, la campaña se prepara igual (devuelve null).
-        $audienceStats = $this->audienceStats->forDate($date);
 
         DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped, $audienceStats): void {
             $campaign->fill($coupon + [
@@ -233,13 +239,17 @@ class BirthdayCampaignService
         return true;
     }
 
-    private function fail(BirthdayCampaign $campaign, string $message): BirthdayCampaign
+    /**
+     * @param  array<string, int>|null  $audienceStats  desglose de la audiencia, si se llegó a leer
+     */
+    private function fail(BirthdayCampaign $campaign, string $message, ?array $audienceStats = null): BirthdayCampaign
     {
-        $campaign->update([
+        $campaign->update(array_filter([
             'status' => BirthdayCampaign::STATUS_FAILED,
             'error_message' => $message,
             'finished_at' => now(),
-        ]);
+            'audience_stats' => $audienceStats,
+        ], static fn ($value): bool => $value !== null));
 
         Log::error('[HelpdeskBirthday] Campaña abortada', [
             'date' => $campaign->campaign_date?->toDateString(),

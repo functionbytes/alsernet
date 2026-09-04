@@ -192,7 +192,15 @@ class PrepareBirthdayCampaignTest extends TestCase
 
         $this->assertSame(BirthdayCampaign::STATUS_FAILED, $campaign->status);
         $this->assertStringContainsString('cupón', $campaign->error_message);
-        Http::assertNothingSent();
+
+        // Sin cupón no se reúne a nadie: no se pide la lista de clientes ni se
+        // guarda un solo destinatario. Lo único que sí se consulta —a
+        // propósito— es el desglose de la audiencia, para que la campaña
+        // fallida pueda explicar en el panel a cuánta gente habría escrito.
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/api/erp/customer?')
+            || str_contains($request->url(), 'birthday=')
+        );
+        $this->assertSame(0, $campaign->recipients()->count());
     }
 
     /* ── Helpers ─────────────────────────────────────────────────────────── */

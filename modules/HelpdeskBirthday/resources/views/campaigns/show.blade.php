@@ -359,7 +359,22 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $redeemers !== [] ? 11 : 10 }}" class="text-center text-muted py-4">No hay destinatarios con ese filtro.</td>
+                            <td colspan="{{ $redeemers !== [] ? 11 : 10 }}" class="text-center text-muted py-4">
+                                @if($campaign->recipients_total === 0 && $campaign->status === \Modules\HelpdeskBirthday\Models\BirthdayCampaign::STATUS_FAILED)
+                                    {{-- Distinguir "el filtro no encuentra nada" de "esta campaña nunca
+                                         llegó a tener destinatarios": la preparación aborta antes de
+                                         consultar la audiencia, así que la tabla está vacía por el fallo,
+                                         no por lo que se haya escrito en el buscador. --}}
+                                    Esta campaña se detuvo antes de reunir a nadie, así que no hay destinatarios que mostrar.
+                                    @if($campaign->error_message)
+                                        <span class="d-block mt-1">Motivo: {{ $campaign->error_message }}</span>
+                                    @endif
+                                @elseif($campaign->recipients_total === 0)
+                                    Todavía no hay destinatarios en esta campaña.
+                                @else
+                                    No hay destinatarios con ese filtro.
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
