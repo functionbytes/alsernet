@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Modules\Helpdesk\Models\Customer;
+use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\NewTicketMessage;
 use Modules\HelpdeskTickets\Events\TicketClosed;
@@ -195,6 +196,51 @@ class PortalTicketFlowTest extends TestCase
             'is_internal' => 0,
             'author_id' => $this->customer->id,
         ], 'helpdesk');
+    }
+
+    /**
+     * Bug real (4-sep-2026, TCK-2026-00093): tickets.user_reopen_issue/
+     * user_reopen_time existían en Settings → General pero sin ningún efecto
+     * real — un cliente respondiendo a un ticket cerrado nunca lo reabría.
+     */
+    public function test_reply_a_un_ticket_cerrado_lo_reabre_dentro_de_la_ventana(): void
+    {
+        HelpdeskGeneralSetting::set('tickets.user_reopen_issue', true, 'tickets');
+        HelpdeskGeneralSetting::set('tickets.user_reopen_time', 7, 'tickets');
+
+        $ticket = $this->createTicket($this->customer, [
+            'status_id' => $this->closedStatus->id,
+            'closed_at' => now()->subDay(),
+        ]);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.reply', $ticket->ticket_number), [
+                'message' => 'Sigo esperando una respuesta.',
+            ])
+            ->assertRedirect();
+
+        $this->assertNull($ticket->fresh()->closed_at);
+        Event::assertDispatched(TicketReopened::class);
+    }
+
+    public function test_reply_a_un_ticket_cerrado_fuera_de_la_ventana_no_lo_reabre(): void
+    {
+        HelpdeskGeneralSetting::set('tickets.user_reopen_issue', true, 'tickets');
+        HelpdeskGeneralSetting::set('tickets.user_reopen_time', 7, 'tickets');
+
+        $ticket = $this->createTicket($this->customer, [
+            'status_id' => $this->closedStatus->id,
+            'closed_at' => now()->subDays(10),
+        ]);
+
+        $this->withSession(['portal_customer_id' => $this->customer->id])
+            ->post(route('portal.tickets.reply', $ticket->ticket_number), [
+                'message' => 'Sigo esperando una respuesta.',
+            ])
+            ->assertRedirect();
+
+        $this->assertNotNull($ticket->fresh()->closed_at);
+        Event::assertNotDispatched(TicketReopened::class);
     }
 
     public function test_reply_requires_message_field(): void

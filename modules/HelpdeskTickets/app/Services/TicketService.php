@@ -5,6 +5,11 @@ namespace Modules\HelpdeskTickets\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+// tickets.user_reopen_issue/user_reopen_time viven en helpdesk_settings
+// (Modules\Helpdesk\Models\Setting) — distinta de Modules\Core\Models\Setting
+// (tabla `settings`, usada por ejemplo para incoming_email). Alias explícito
+// para no confundir las dos clases "Setting".
+use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskTickets\Events\MessageAdded;
 use Modules\HelpdeskTickets\Events\TicketClosed;
 use Modules\HelpdeskTickets\Events\TicketCreated;
@@ -223,6 +228,50 @@ class TicketService
                 'error' => $e->getMessage(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Reabre el ticket si está cerrado y el ajuste "Permitir que el cliente
+     * reabra tickets cerrados" (tickets.user_reopen_issue, default ON) lo
+     * permite, dentro de la ventana en días configurada
+     * (tickets.user_reopen_time, default 7) desde el cierre.
+     *
+     * Estos dos ajustes existían en Settings → General desde antes de esta
+     * sesión, pero sin ningún efecto real en el código (bug real encontrado
+     * 4-sep-2026, TCK-2026-00093): tanto FetchTicketEmailsJob como
+     * CustomerPortalController::replyToTicket() ya enganchaban la respuesta
+     * del cliente al ticket cerrado (por Message-ID/asunto o por
+     * ticket_number), pero el ticket se quedaba cerrado y el mensaje entraba
+     * en un hilo que nadie iba a revisar. Fuera de la ventana permitida el
+     * mensaje se añade al hilo igual, solo no se reabre el ticket.
+     *
+     * Un fallo al reabrir se registra pero no se relanza: no debe perder el
+     * mensaje del cliente, que ya está (o va a quedar) enganchado al hilo.
+     */
+    public function reopenIfCustomerCanReopen(Ticket $ticket): void
+    {
+        if ($ticket->closed_at === null) {
+            return;
+        }
+
+        if (! filter_var(HelpdeskGeneralSetting::get('tickets.user_reopen_issue', true), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        $days = (int) HelpdeskGeneralSetting::get('tickets.user_reopen_time', 7);
+
+        if ($ticket->closed_at->copy()->addDays($days)->isPast()) {
+            return;
+        }
+
+        try {
+            $this->reopenTicket($ticket, 'El cliente respondió a un ticket cerrado.');
+        } catch (\Throwable $e) {
+            Log::warning('TicketService: no se pudo reabrir el ticket tras la respuesta del cliente', [
+                'ticket_id' => $ticket->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 

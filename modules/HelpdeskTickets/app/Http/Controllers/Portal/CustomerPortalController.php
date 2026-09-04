@@ -256,6 +256,8 @@ class CustomerPortalController extends Controller
             ->where('customer_id', $customer->id)
             ->firstOrFail();
 
+        app(TicketService::class)->reopenIfCustomerCanReopen($ticket);
+
         $item = $ticket->items()->create([
             'type' => 'message',
             'author_id' => $customer->id,

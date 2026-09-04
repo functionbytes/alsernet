@@ -382,6 +382,8 @@ class FetchTicketEmailsJob implements ShouldQueue
             return;
         }
 
+        ($this->ticketService ?? app(TicketService::class))->reopenIfCustomerCanReopen($ticket);
+
         // Create TicketMail record. Con el body_html/body_text COMPLETOS,
         // sin recortar -- es el registro de auditoría ("Correo"/"Ver
         // original" en el panel), tiene que conservar el correo tal cual
