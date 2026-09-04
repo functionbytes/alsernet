@@ -13,6 +13,19 @@ class WarmErpCacheCommand extends Command
 
     protected $description = 'Pre-poblar caché ERP para conversaciones y tickets abiertos';
 
+    /**
+     * Emails por job. Debe cumplir CHUNK_SIZE × helpdeskErp.http_timeout <
+     * WarmErpCacheJob::$timeout con margen real (no solo "no reventar por un
+     * pelo"): con el manager ERP caído, cada email cuelga hasta http_timeout
+     * antes de que el circuit breaker intervenga (ver circuit_open_seconds en
+     * config/config.php). Bug real 4-sep-2026: con 5 en vez de 3, un chunk
+     * entero de fallos necesitaba hasta 5×15=75s, por encima del timeout del
+     * propio job (60s) — reventaba por su propio timeout ANTES de que el
+     * breaker llegara a abrirse, monopolizando el único worker que atiende
+     * 'notifications' (ver reference_helpdesk_erp_warmcache_infinite_loop).
+     */
+    private const CHUNK_SIZE = 3;
+
     public function handle(): int
     {
         $limit = (int) $this->option('limit');
@@ -25,7 +38,7 @@ class WarmErpCacheCommand extends Command
             return self::SUCCESS;
         }
 
-        foreach (array_chunk($emails, 25) as $chunk) {
+        foreach (array_chunk($emails, self::CHUNK_SIZE) as $chunk) {
             WarmErpCacheJob::dispatch($chunk);
         }
 
