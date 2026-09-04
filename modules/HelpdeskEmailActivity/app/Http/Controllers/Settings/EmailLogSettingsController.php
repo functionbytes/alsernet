@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Core\Models\Setting;
 use Modules\HelpdeskEmailActivity\Http\Requests\Settings\UpdateEmailLogSettingsRequest;
 use Modules\HelpdeskEmailActivity\Services\ProviderWebhookSettingsRepository;
+use Modules\HelpdeskEmailActivity\Support\TrackingUrl;
 
 class EmailLogSettingsController extends Controller
 {
@@ -29,6 +30,9 @@ class EmailLogSettingsController extends Controller
         return view('helpdeskemailactivity::settings.index', [
             'storeBody' => (bool) $s('store_body', true),
             'pixelTrackingEnabled' => (bool) $s('pixel_tracking_enabled', true),
+            'trackingBaseUrl' => (string) ($s('tracking_base_url') ?? ''),
+            'trackingBaseEffective' => TrackingUrl::base(),
+            'trackingUnreachable' => ! TrackingUrl::isPubliclyReachable(),
             'maxBodyKb' => (int) round((int) $s('max_body_bytes', 524288) / 1024),
             'retentionDays' => (int) $s('retention_days', 90),
             'staleQueuedHours' => (int) $s('stale_queued_hours', 24),
@@ -59,6 +63,7 @@ class EmailLogSettingsController extends Controller
 
             Setting::set(self::PREFIX.'store_body', $validated['store_body']);
             Setting::set(self::PREFIX.'pixel_tracking_enabled', $validated['pixel_tracking_enabled']);
+            Setting::set(self::PREFIX.'tracking_base_url', trim((string) ($validated['tracking_base_url'] ?? '')));
             Setting::set(self::PREFIX.'max_body_bytes', (int) $validated['max_body_bytes'] * 1024);
             Setting::set(self::PREFIX.'retention_days', $validated['retention_days']);
             Setting::set(self::PREFIX.'stale_queued_hours', $validated['stale_queued_hours']);

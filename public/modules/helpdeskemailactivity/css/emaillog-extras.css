@@ -1950,3 +1950,41 @@
     flex: 1;
     justify-content: center;
 }
+
+/* Aviso de seguimiento inalcanzable: primera fila de la tarjeta, antes de la
+   barra de herramientas. Sin rojos (paleta del módulo): el índigo de --evx-danger
+   ya es el color de "algo va mal" en el resto de la pantalla. */
+.emaillog-index .evx-tracking-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--evx-border);
+    background: var(--evx-bg-soft);
+}
+
+.emaillog-index .evx-tracking-warning > i {
+    margin-top: 2px;
+    color: var(--evx-danger);
+    font-size: 14px;
+}
+
+.emaillog-index .evx-tracking-warning strong {
+    display: block;
+    color: var(--evx-text);
+    font-size: 13px;
+}
+
+.emaillog-index .evx-tracking-warning p {
+    margin: 3px 0 0;
+    max-width: 96ch;
+    color: var(--evx-text-soft);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.emaillog-index .evx-tracking-warning .evx-header-btn {
+    flex-shrink: 0;
+    margin-left: auto;
+    align-self: center;
+}

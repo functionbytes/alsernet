@@ -68,6 +68,28 @@
                         @enderror
                         <span class="evx-form-hint">{{ __('helpdeskemailactivity::emaillog.settings.pixel_hint') }}</span>
                     </div>
+
+                    {{-- Dominio con el que se generan el píxel y los enlaces del
+                         correo. Campo solo en su fila (col-12): la advertencia
+                         necesita el ancho para leerse. --}}
+                    <div class="evx-form-field">
+                        <label for="tracking_base_url" class="evx-form-label">{{ __('helpdeskemailactivity::emaillog.settings.tracking_base_url') }}</label>
+                        <input type="url" class="evx-input @error('tracking_base_url') is-invalid @enderror"
+                               id="tracking_base_url" name="tracking_base_url"
+                               value="{{ old('tracking_base_url', $trackingBaseUrl) }}"
+                               placeholder="{{ config('app.url') }}">
+                        @error('tracking_base_url')
+                            <span class="evx-invalid">{{ $message }}</span>
+                        @enderror
+                        <span class="evx-form-hint">
+                            {{ __('helpdeskemailactivity::emaillog.settings.tracking_base_url_hint', ['url' => $trackingBaseEffective]) }}
+                        </span>
+                        @if($trackingUnreachable)
+                            <span class="evx-invalid">
+                                {{ __('helpdeskemailactivity::emaillog.tracking_warning.body', ['url' => $trackingBaseEffective]) }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- Retención y purga --}}

@@ -35,6 +35,7 @@ use Modules\HelpdeskEmailActivity\Services\EmailSuppressionService;
 use Modules\HelpdeskEmailActivity\Services\EntityPanelRegistry;
 use Modules\HelpdeskEmailActivity\Support\EmailMessageAssembler;
 use Modules\HelpdeskEmailActivity\Support\EngagementBotHeuristics;
+use Modules\HelpdeskEmailActivity\Support\TrackingUrl;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\Response;
@@ -278,6 +279,12 @@ class EmailLogController extends Controller
             : 0;
 
         return [
+            // Estado del seguimiento: si la base con la que se generan el píxel
+            // y los enlaces no es alcanzable desde fuera, el panel lo avisa (el
+            // síntoma no se ve desde aquí, lo sufre el destinatario).
+            'trackingBase' => TrackingUrl::base(),
+            'trackingUnreachable' => ! TrackingUrl::isPubliclyReachable(),
+
             'logs' => $logs,
             'stats' => $stats,
             'statsDelta' => $statsDelta,

@@ -246,6 +246,18 @@ return [
     | pasan por OutboundUrlGuard (nada de direcciones internas), exigen
     | content-type text/css y están limitadas en tamaño y tiempo.
     */
+    /*
+    | Dominio con el que se construyen el píxel de apertura y los enlaces de
+    | clic que viajan DENTRO del correo. Vacío = se usa APP_URL.
+    |
+    | Se separa de APP_URL porque no siempre coinciden: el panel puede servirse
+    | en una URL interna mientras el seguimiento tiene que apuntar a un dominio
+    | que el destinatario pueda abrir desde su casa. Si esta base no es
+    | alcanzable desde fuera, el píxel no carga y —lo grave— los enlaces
+    | reescritos del correo llevan a un sitio inexistente (ver TrackingUrl).
+    */
+    'tracking_base_url' => env('EMAIL_LOG_TRACKING_BASE_URL'),
+
     'html_check_remote_css' => env('EMAIL_LOG_HTML_CHECK_REMOTE_CSS', false),
     'html_check_remote_css_max_bytes' => env('EMAIL_LOG_HTML_CHECK_REMOTE_CSS_MAX_BYTES', 1048576),
 ];

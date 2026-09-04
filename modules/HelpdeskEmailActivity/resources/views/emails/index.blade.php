@@ -95,6 +95,26 @@
              con huecos entre ellas. --}}
         <div class="evx-shell">
 
+        {{-- Aviso de base de seguimiento inalcanzable. Va lo primero y a la
+             vista de todos porque el síntoma es invisible desde el panel: aquí
+             los enlaces funcionan, y el que se queda sin poder abrirlos es el
+             destinatario. Solo aparece si el seguimiento está activo, que es
+             cuando el correo sale con enlaces reescritos. --}}
+        @if($trackingUnreachable)
+            <div class="evx-tracking-warning">
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                <div>
+                    <strong>{{ __('helpdeskemailactivity::emaillog.tracking_warning.title') }}</strong>
+                    <p>{{ __('helpdeskemailactivity::emaillog.tracking_warning.body', ['url' => $trackingBase]) }}</p>
+                </div>
+                @can('helpdeskemailactivity.manage')
+                    <a href="{{ route('settings.helpdeskemailactivity.index') }}" class="evx-header-btn">
+                        {{ __('helpdeskemailactivity::emaillog.tracking_warning.cta') }}
+                    </a>
+                @endcan
+            </div>
+        @endif
+
         {{-- Barra de herramientas: primera fila DENTRO de la tarjeta, como el
              mockup — breadcrumb propio del módulo + buscador + acciones. El
              buscador vive aquí (no entre los filtros) para que la barra de

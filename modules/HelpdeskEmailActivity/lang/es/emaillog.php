@@ -408,6 +408,13 @@ return [
         'many' => ':count registros movidos a la papelera.',
     ],
 
+    // Aviso de seguimiento inalcanzable (ver TrackingUrl).
+    'tracking_warning' => [
+        'title' => 'Los enlaces de seguimiento no son alcanzables desde fuera',
+        'body' => 'El píxel de apertura y los enlaces de los correos se generan sobre :url, una dirección que el ordenador del destinatario no puede abrir. No solo no se medirán aperturas ni clics: los enlaces reescritos de los correos que salgan así llevarán a un sitio inexistente.',
+        'cta' => 'Configurar el dominio de seguimiento',
+    ],
+
     'trash' => [
         'detail_notice' => 'Este registro está en la papelera desde el :date. Se muestra en solo lectura: no se puede reenviar ni modificar.',
         'back_to_trash' => 'Volver a la papelera',
@@ -802,6 +809,8 @@ return [
         'max_body_hint' => 'Si el cuerpo supera este límite, se trunca. Máximo 10.240 KB.',
         'store_body_hint' => 'Si se desactiva, solo se almacenan metadatos (asunto, destinatarios, estado). Recomendado desactivar por privacidad o espacio en disco.',
         'pixel_section_hint' => 'Controla si los envíos con seguimiento (hoy, "Emails enviados" de HelpdeskTickets) incluyen el píxel que registra la apertura.',
+        'tracking_base_url' => 'Dominio de seguimiento',
+        'tracking_base_url_hint' => 'Dirección con la que se generan el píxel y los enlaces que viajan dentro del correo; tiene que ser alcanzable desde el ordenador del destinatario. Vacío = se usa la de la aplicación. Ahora mismo se está usando :url.',
         'pixel_hint' => 'Desactivarlo detiene la inserción del píxel en nuevos envíos. No borra las aperturas ya registradas ni afecta a la redirección de clics.',
         'retention_section_hint' => 'Antigüedad máxima de los registros y tratamiento de los envíos que quedan en cola. Los cambios se aplican en la siguiente ejecución de la purga programada.',
         'provider_ses' => 'Amazon SES (vía SNS)',

@@ -16,6 +16,9 @@ class UpdateEmailLogSettingsRequest extends FormRequest
         return [
             'store_body' => ['required', 'in:0,1'],
             'pixel_tracking_enabled' => ['required', 'in:0,1'],
+            // Vacío = usar APP_URL. Se admite http para entornos internos con
+            // proxy propio, pero el panel avisa si no es alcanzable de fuera.
+            'tracking_base_url' => ['nullable', 'string', 'max:255', 'url:http,https'],
             'max_body_bytes' => ['required', 'integer', 'min:1', 'max:10240'],
             'retention_days' => ['required', 'integer', 'min:0', 'max:3650'],
             'stale_queued_hours' => ['required', 'integer', 'min:0', 'max:8760'],
@@ -62,6 +65,7 @@ class UpdateEmailLogSettingsRequest extends FormRequest
         return [
             'store_body' => 'almacenar cuerpo',
             'pixel_tracking_enabled' => 'píxel de apertura',
+            'tracking_base_url' => 'dominio de seguimiento',
             'max_body_bytes' => 'tamaño máximo del cuerpo',
             'retention_days' => 'días de retención',
             'stale_queued_hours' => 'horas de cola obsoleta',

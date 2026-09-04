@@ -9,6 +9,7 @@ use Modules\HelpdeskEmailActivity\Enums\EmailStatus;
 use Modules\HelpdeskEmailActivity\Listeners\Concerns\InspectsMailMessage;
 use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\HelpdeskEmailActivity\Models\EmailLogLink;
+use Modules\HelpdeskEmailActivity\Support\TrackingUrl;
 use Symfony\Component\Mime\Email;
 use Throwable;
 
@@ -110,7 +111,9 @@ class LogEmailQueued
         }
 
         try {
-            $pixel = '<img src="'.route('helpdeskemailactivity.pixel', $emailLog).'" width="1" height="1" alt="" style="display:none" />';
+            // TrackingUrl y no route(): esta URL la abre el cliente de
+            // correo del destinatario, no el panel — ver TrackingUrl.
+            $pixel = '<img src="'.TrackingUrl::route('helpdeskemailactivity.pixel', ['emailLog' => $emailLog]).'" width="1" height="1" alt="" style="display:none" />';
             $message->html($html.$pixel);
         } catch (Throwable $e) {
             Log::warning('HelpdeskEmailActivity: failed to inject open-tracking pixel', ['exception' => $e]);
@@ -158,7 +161,7 @@ class LogEmailQueued
                         ])->token;
                     }
 
-                    $trackedUrl = route('helpdeskemailactivity.click', ['emailLog' => $emailLog, 'token' => $tokens[$url]]);
+                    $trackedUrl = TrackingUrl::route('helpdeskemailactivity.click', ['emailLog' => $emailLog, 'token' => $tokens[$url]]);
 
                     return $m[1].$m[2].$trackedUrl.$m[2];
                 },
