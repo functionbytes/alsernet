@@ -8,11 +8,10 @@
     "require": {
         "php": "^8.4",
         "aerni/cloudflared": "^1.1",
-        "guzzlehttp/psr7": "2.7",
+        "guzzlehttp/psr7": "^2.13",
         "laravel/framework": "^12.0",
         "laravel/mcp": "^0.5.1",
-        "pragmarx/google2fa-laravel": "^3.0",
-        "pragmarx/google2fa-qrcode": "^3.0",
+        "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.8",
         "laravel/ui": "^4.6",
@@ -23,7 +22,7 @@
         "pragmarx/google2fa": "^9.0",
         "ramsey/uuid": "^4.7",
         "spatie/image-optimizer": "^1.8",
-        "spatie/laravel-activitylog": "^4.12",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/simple-excel": "^3.9",
         "symfony/finder": "^7.2",
         "symfony/mime": "^7.2"
