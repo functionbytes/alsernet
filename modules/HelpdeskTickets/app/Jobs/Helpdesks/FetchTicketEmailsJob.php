@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Core\Models\Setting;
 use Modules\Helpdesk\Models\Customer;
+// uploading.allowed_extensions vive en helpdesk_settings (Modules\Helpdesk\Models\Setting),
+// distinta de Modules\Core\Models\Setting (tabla `settings`, usada aquí para
+// incoming_email) — alias explícito para no confundir las dos clases "Setting".
+use Modules\Helpdesk\Models\Setting as HelpdeskGeneralSetting;
 use Modules\HelpdeskEmailActivity\Services\EmailBounceCorrelatorService;
 use Modules\HelpdeskEmailActivity\Support\DsnMessageParser;
 use Modules\HelpdeskErp\Jobs\LinkCustomerToErpJob;
@@ -371,7 +375,8 @@ class FetchTicketEmailsJob implements ShouldQueue
         ];
 
         // Extract attachments
-        $parsed['attachments'] = $this->parseAttachments($message);
+        $skippedAttachments = [];
+        $parsed['attachments'] = $this->parseAttachments($message, $skippedAttachments);
 
         // Find or create ticket
         $ticket = $this->findOrCreateTicket($parsed, $connection);
@@ -420,6 +425,15 @@ class FetchTicketEmailsJob implements ShouldQueue
         // nuevo TranslateIncomingTicketMessage (detección de idioma del
         // cliente + traducción del mensaje entrante).
         MessageAdded::dispatch($item);
+
+        if ($skippedAttachments !== []) {
+            $ticket->items()->create([
+                'type' => 'system',
+                'is_internal' => true,
+                'body' => (count($skippedAttachments) === 1 ? 'No se guardó un adjunto' : 'No se guardaron '.count($skippedAttachments).' adjuntos')
+                    .' de este correo por tener una extensión no permitida: '.implode(', ', $skippedAttachments).'.',
+            ]);
+        }
 
         // Link mail to item
         $ticketMail->update(['ticket_item_id' => $item->id]);
@@ -659,7 +673,7 @@ class FetchTicketEmailsJob implements ShouldQueue
      * (config('helpdesk.attachments.disk')) y el adjunto se sirve por la
      * ruta autorizada existente (ver attachment_urls en processIncomingEmail()).
      */
-    protected function parseAttachments(ImapMessage $message): array
+    protected function parseAttachments(ImapMessage $message, array &$skippedAttachments = []): array
     {
         $attachments = [];
         $disk = config('helpdesk.attachments.disk', 'local');
@@ -667,7 +681,7 @@ class FetchTicketEmailsJob implements ShouldQueue
         foreach ($message->getAttachments() as $attachment) {
             try {
                 $filename = $attachment->name ?? 'attachment';
-                $filePath = $this->saveAttachment($attachment, $disk);
+                $filePath = $this->saveAttachment($attachment, $disk, $skippedAttachments);
 
                 if (! $filePath) {
                     continue;
@@ -706,18 +720,26 @@ class FetchTicketEmailsJob implements ShouldQueue
     /**
      * Save attachment to storage.
      */
-    protected function saveAttachment(ImapAttachment $attachment, string $disk): ?string
+    protected function saveAttachment(ImapAttachment $attachment, string $disk, array &$skippedAttachments = []): ?string
     {
         try {
             $filename = $attachment->name ?? time().'_'.random_int(1000, 9999);
 
-            $allowedExtensions = config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip']);
+            $allowedExtensions = $this->allowedAttachmentExtensions();
             $extension = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
 
             if ($extension === '' || ! in_array($extension, $allowedExtensions, true)) {
                 Log::warning('FetchTicketEmailsJob: skipped attachment with disallowed extension', [
                     'filename' => $filename,
                 ]);
+
+                // Antes esto se perdía en silencio salvo por el log del
+                // servidor — el agente no tenía forma de saber, desde el
+                // panel, que el correo traía un adjunto que no llegó (bug
+                // real encontrado 4-sep-2026, un .mp3 real descartado sin
+                // rastro). processIncomingEmail() deja una nota de sistema
+                // en el hilo con esta lista.
+                $skippedAttachments[] = $filename;
 
                 return null;
             }
@@ -733,6 +755,33 @@ class FetchTicketEmailsJob implements ShouldQueue
 
             return null;
         }
+    }
+
+    /**
+     * Lista blanca de extensiones de adjunto entrante, ahora configurable
+     * desde Ajustes → Subida de archivos (Setting uploading.allowed_extensions).
+     * Esa pantalla ya existía y guardaba el valor, pero ningún consumidor lo
+     * leía — un admin podía "guardar" un cambio ahí sin que tuviera ningún
+     * efecto real (bug real encontrado 4-sep-2026). Sin nada guardado, cae al
+     * mismo default fijo de siempre.
+     *
+     * @return list<string>
+     */
+    private function allowedAttachmentExtensions(): array
+    {
+        $stored = HelpdeskGeneralSetting::get('uploading.allowed_extensions');
+
+        if (is_string($stored) && trim($stored) !== '') {
+            return array_values(array_filter(array_map(
+                fn (string $ext) => strtolower(trim($ext)),
+                explode(',', $stored)
+            )));
+        }
+
+        return array_map(
+            'strtolower',
+            config('helpdesk.attachments.allowed_extensions', ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'txt', 'zip'])
+        );
     }
 
     /**
