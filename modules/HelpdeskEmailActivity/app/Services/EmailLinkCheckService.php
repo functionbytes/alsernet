@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use Modules\Helpdesk\Support\OutboundUrlGuard;
+use Modules\HelpdeskEmailActivity\Exceptions\BlockedRedirectException;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -102,8 +103,31 @@ class EmailLinkCheckService
         $client = new Client([
             'timeout' => self::TIMEOUT_SECONDS,
             'connect_timeout' => 5,
+            // Cada SALTO se vuelve a comprobar, no solo la URL de partida.
+            //
+            // OutboundUrlGuard::isSafe() se evalúa arriba sobre la dirección
+            // que venía en el correo, pero seguir redirecciones sin más
+            // convertía esa comprobación en un trámite: basta un dominio
+            // público que responda «302 Location: http://169.254.169.254/…»
+            // —o cualquier IP de la red interna— para que el servidor haga esa
+            // petición por su cuenta. El guard exige IP pública; el segundo
+            // salto se lo saltaba entero.
+            //
+            // on_redirect se ejecuta ANTES de seguir cada salto, y lanzar desde
+            // ahí lo aborta: el enlace acaba en el 'rejected' del pool y se
+            // pinta como bloqueado, igual que si no hubiera pasado el guard.
             'allow_redirects' => $followRedirects
-                ? ['max' => 3, 'strict' => true, 'referer' => false, 'protocols' => ['http', 'https']]
+                ? [
+                    'max' => 3,
+                    'strict' => true,
+                    'referer' => false,
+                    'protocols' => ['http', 'https'],
+                    'on_redirect' => static function ($request, $response, $uri): void {
+                        if (! OutboundUrlGuard::isSafe((string) $uri)) {
+                            throw new BlockedRedirectException((string) $uri);
+                        }
+                    },
+                ]
                 : false,
             'http_errors' => false,
             'verify' => true,
@@ -139,9 +163,11 @@ class EmailLinkCheckService
                     'URL' => $urls[$index],
                     // -1 y no 0: 0 lo usan los enlaces omitidos (seguimiento
                     // propio), y en la vista se agrupa por código.
-                    'StatusCode' => $reason instanceof RequestException && $reason->hasResponse()
-                        ? $reason->getResponse()->getStatusCode()
-                        : -1,
+                    'StatusCode' => match (true) {
+                        $this->wasBlockedRedirect($reason) => self::BLOCKED_STATUS,
+                        $reason instanceof RequestException && $reason->hasResponse() => $reason->getResponse()->getStatusCode(),
+                        default => -1,
+                    },
                     'Status' => $this->failureReason($reason),
                 ];
             },
@@ -154,8 +180,29 @@ class EmailLinkCheckService
         return array_values($results);
     }
 
+    /**
+     * Guzzle envuelve lo que lance on_redirect dentro de su propia excepción,
+     * así que hay que mirar también la causa encadenada.
+     */
+    private function wasBlockedRedirect(mixed $reason): bool
+    {
+        while ($reason instanceof \Throwable) {
+            if ($reason instanceof BlockedRedirectException) {
+                return true;
+            }
+
+            $reason = $reason->getPrevious();
+        }
+
+        return false;
+    }
+
     private function failureReason(mixed $reason): string
     {
+        if ($this->wasBlockedRedirect($reason)) {
+            return __('helpdeskemailactivity::emaillog.preview.inspector.link_check.status.blocked');
+        }
+
         if ($reason instanceof ConnectException) {
             return __('helpdeskemailactivity::emaillog.preview.inspector.link_check.status.unreachable');
         }
