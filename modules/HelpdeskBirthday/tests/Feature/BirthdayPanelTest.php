@@ -49,10 +49,12 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.index'))
             ->assertOk()
             ->assertSee($campaign->campaign_date->format('d/m/Y'))
-            ->assertSee('CUMPLE10-XYZ');
+            // El listado enseña cuántos bonos se emitieron, no un código único:
+            // cada cliente tiene el suyo.
+            ->assertSee('Bonos');
     }
 
-    public function test_el_detalle_muestra_cupon_ritmo_y_destinatarios(): void
+    public function test_el_detalle_muestra_el_bono_de_cada_uno_el_ritmo_y_los_destinatarios(): void
     {
         $campaign = $this->campaign();
         $this->recipient($campaign, 'ana@ejemplo.test');
@@ -61,7 +63,9 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.show', $campaign))
             ->assertOk()
             ->assertSee('ana@ejemplo.test')
-            ->assertSee('CUMPLE10-XYZ')
+            // El bono es de esa persona, no de la campaña.
+            ->assertSee('910001-AAA')
+            ->assertSee('Bonos emitidos')
             ->assertSee('09:00–14:00');
     }
 
@@ -74,7 +78,7 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.preview', $campaign));
 
         $response->assertOk();
-        $this->assertStringContainsString('CUMPLE10-XYZ', $response->getContent());
+        $this->assertStringContainsString('910001-AAA', $response->getContent());
     }
 
     public function test_pausar_y_reanudar_desde_el_panel(): void
@@ -117,7 +121,7 @@ class BirthdayPanelTest extends TestCase
             ->get(route('helpdeskbirthday.campaigns.recipient-email', [$campaign, $recipient]));
 
         $response->assertOk();
-        $this->assertStringContainsString('CUMPLE10-XYZ', $response->getContent());
+        $this->assertStringContainsString('910001-AAA', $response->getContent());
         $this->assertStringContainsString('Ana', $response->getContent());
     }
 
@@ -230,12 +234,6 @@ class BirthdayPanelTest extends TestCase
         return BirthdayCampaign::create([
             'campaign_date' => now()->toDateString(),
             'status' => BirthdayCampaign::STATUS_SCHEDULED,
-            'coupon_code' => 'CUMPLE10-XYZ',
-            'coupon_valid_from' => now()->toDateString(),
-            'coupon_valid_to' => now()->addMonth()->toDateString(),
-            'coupon_amount' => 10,
-            'coupon_min_purchase' => 50,
-            'coupon_source' => BirthdayCampaign::SOURCE_ERP,
             'template_key' => 'birthday-coupon',
             'window_start' => '09:00:00',
             'window_end' => '14:00:00',
@@ -255,6 +253,13 @@ class BirthdayPanelTest extends TestCase
             'birth_date' => '1990-01-01',
             'scheduled_at' => now()->addMinutes(5),
             'status' => BirthdayRecipient::STATUS_PENDING,
+            // Su bono, emitido por gestión: es el que lleva su correo.
+            'coupon_code' => '910001',
+            'coupon_verification_code' => 'AAA',
+            'coupon_amount' => 5,
+            'coupon_min_purchase' => 30,
+            'coupon_valid_from' => now()->toDateString(),
+            'coupon_valid_to' => now()->addMonth()->toDateString(),
         ]);
     }
 }

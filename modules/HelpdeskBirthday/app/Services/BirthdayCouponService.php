@@ -2,23 +2,21 @@
 
 namespace Modules\HelpdeskBirthday\Services;
 
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 use Modules\Erp\Services\ErpService;
-use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Throwable;
 
 /**
- * Resuelve el cupón del día.
+ * Operaciones sobre un bono concreto de Gestión.
  *
- * El código lo fija un admin; las fechas de validez y el importe se consultan a
- * gestión para que la plantilla diga lo que el bono vale de verdad y no lo que
- * alguien tecleó hace tres meses. Si gestión no responde se cae a los valores
- * manuales y la campaña queda marcada como `manual`, visible en el panel.
+ * No hay cupón del día ni código único: cada cliente recibe el suyo, emitido
+ * por Gestión al preparar la campaña (ver BirthdayBonoGenerator). Lo que queda
+ * aquí es lo que se hace con un bono YA emitido — hoy, marcarlo como consumido
+ * cuando la tienda se lo descontó al cliente pero el ERP no se enteró.
  *
- * Contrato de gestión (GET /api-gestion/bono/{idbono}/), respuesta XML:
- *   fvalidez_desde, fvalidez_hasta, importe, importeminimoventa,
- *   descripcion_tipo, estado_extendido
+ * Contrato de gestión (respuestas XML, no JSON):
+ *   GET /api-gestion/bono/{idbono}/?codigo_verificacion=…&importe_venta=…&origen=…
+ *   PUT /api-gestion/marcar-bono/{idbono}/?origen=…
  */
 class BirthdayCouponService
 {
@@ -28,43 +26,6 @@ class BirthdayCouponService
     public function __construct(
         private readonly ErpService $erp,
     ) {}
-
-    /**
-     * @param  array<string, mixed>  $settings  valores del panel; caen a la config
-     * @return array<string, mixed> campos de cupón listos para la campaña
-     */
-    public function resolve(array $settings = []): array
-    {
-        $code = trim((string) ($settings['coupon_code'] ?? config('helpdeskbirthday.coupon.code', '')));
-        $verification = trim((string) ($settings['coupon_verification_code'] ?? config('helpdeskbirthday.coupon.verification_code', '')));
-
-        if ($code === '') {
-            return [];
-        }
-
-        $manual = [
-            'coupon_code' => $this->publicCode($code, $verification),
-            'coupon_valid_from' => $this->date($settings['coupon_valid_from'] ?? null),
-            'coupon_valid_to' => $this->date($settings['coupon_valid_to'] ?? null),
-            'coupon_amount' => $this->decimal($settings['coupon_amount'] ?? null),
-            'coupon_min_purchase' => $this->decimal($settings['coupon_min_purchase'] ?? null),
-            'coupon_source' => BirthdayCampaign::SOURCE_MANUAL,
-            'coupon_meta' => null,
-        ];
-
-        $shouldValidate = (bool) ($settings['validate_against_erp']
-            ?? config('helpdeskbirthday.coupon.validate_against_erp', true));
-
-        if (! $shouldValidate) {
-            return $manual;
-        }
-
-        $fromErp = $this->queryErp($code, $verification);
-
-        // Sin respuesta utilizable nos quedamos con lo configurado a mano: es
-        // mejor enviar el cupón con las fechas del panel que no felicitar.
-        return $fromErp === null ? $manual : array_merge($manual, $fromErp);
-    }
 
     /**
      * Reintenta marcar el bono como consumido en gestión.
@@ -132,78 +93,5 @@ class BirthdayCouponService
         ]);
 
         return ['ok' => true, 'message' => 'Bono marcado como consumido en gestión.'];
-    }
-
-    /**
-     * @return array<string, mixed>|null null si gestión no da una respuesta usable
-     */
-    private function queryErp(string $code, string $verification): ?array
-    {
-        try {
-            $response = $this->erp->consultaBono($code, $verification, 0.0, (string) config('helpdeskbirthday.coupon.origin', 'gestion'));
-        } catch (Throwable $e) {
-            Log::warning('[HelpdeskBirthday] No se pudo consultar el bono en gestión', [
-                'coupon' => $code,
-                'error' => $e->getMessage(),
-            ]);
-
-            return null;
-        }
-
-        if (! ($response['success'] ?? false) || ! is_array($response['data'] ?? null)) {
-            Log::warning('[HelpdeskBirthday] Gestión no reconoce el bono configurado', [
-                'coupon' => $code,
-                'message' => $response['message'] ?? null,
-            ]);
-
-            return null;
-        }
-
-        $data = $response['data'];
-
-        return [
-            'coupon_valid_from' => $this->date($data['fvalidez_desde'] ?? null),
-            'coupon_valid_to' => $this->date($data['fvalidez_hasta'] ?? null),
-            'coupon_amount' => $this->decimal($data['importe'] ?? null),
-            'coupon_min_purchase' => $this->decimal($data['importeminimoventa'] ?? null),
-            'coupon_source' => BirthdayCampaign::SOURCE_ERP,
-            'coupon_meta' => [
-                'type' => $data['descripcion_tipo'] ?? null,
-                'state' => $data['estado_extendido'] ?? null,
-                'checked_at' => now()->toIso8601String(),
-            ],
-        ];
-    }
-
-    /**
-     * Formato que ve el cliente. PrestaShop crea el cart_rule con el código
-     * "{idbono}-{codigo_verificacion}" (ver CartRule::createCartRuleAlvarez),
-     * así que el correo tiene que decir exactamente eso o no se lo podrán canjear.
-     */
-    private function publicCode(string $code, string $verification): string
-    {
-        return $verification !== '' ? "{$code}-{$verification}" : $code;
-    }
-
-    private function date(mixed $value): ?string
-    {
-        if (! is_string($value) || trim($value) === '') {
-            return null;
-        }
-
-        try {
-            return CarbonImmutable::parse($value)->toDateString();
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    private function decimal(mixed $value): ?float
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return is_numeric($value) ? (float) $value : null;
     }
 }

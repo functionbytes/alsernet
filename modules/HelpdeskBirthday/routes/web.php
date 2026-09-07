@@ -58,10 +58,6 @@ Route::name('helpdeskbirthday.')
         Route::post('settings', [BirthdaySettingsController::class, 'update'])
             ->middleware('can:helpdeskbirthday.settings.update')
             ->name('settings.update');
-        Route::post('settings/validate-coupon', [BirthdaySettingsController::class, 'validateCoupon'])
-            ->middleware('can:helpdeskbirthday.settings.update')
-            ->name('settings.validate-coupon');
-
         // Envío de prueba a direcciones internas. Throttle porque manda correo
         // de verdad: no queremos que se convierta en un relay improvisado.
         Route::post('settings/test-send', [BirthdaySettingsController::class, 'testSend'])

@@ -79,53 +79,32 @@
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                {{-- Gestión emite un bono por cliente, así que aquí no hay un
-                     código único que enseñar: lo que importa es cuántos se
-                     emitieron y cuántos faltan. El código de campaña solo
-                     aparece en las promociones antiguas de código único. --}}
-                @if($campaign->coupon_code)
-                    <h6 class="fw-bold mb-1">Cupón del día</h6>
-                    <p class="text-muted small mb-3">
-                        {{ __('helpdeskbirthday::messages.source.'.$campaign->coupon_source) }}
-                    </p>
+                {{-- No hay cupón del día: Gestión emite un bono para cada
+                     cliente, así que lo que se enseña es cuántos hay, cuántos
+                     faltan y con qué plantilla sale el correo. --}}
+                <h6 class="fw-bold mb-1">Bonos emitidos</h6>
+                <p class="text-muted small mb-3">
+                    Gestión emite un bono por cliente, con su propio código.
+                </p>
 
-                    <p class="bd-coupon-code mb-2">{{ $campaign->coupon_code }}</p>
+                <p class="bd-kpi-value fw-bold mb-2">{{ $coupons['issued'] }}</p>
 
-                    <dl class="row small mb-0">
-                        <dt class="col-6 fw-normal text-muted">Válido desde</dt>
-                        <dd class="col-6 text-end">{{ $campaign->coupon_valid_from?->format('d/m/Y') ?: '—' }}</dd>
+                <dl class="row small mb-0">
+                    <dt class="col-7 fw-normal text-muted">Sin bono</dt>
+                    <dd class="col-5 text-end">{{ $withoutCoupon }}</dd>
 
-                        <dt class="col-6 fw-normal text-muted">Válido hasta</dt>
-                        <dd class="col-6 text-end">{{ $campaign->coupon_valid_to?->format('d/m/Y') ?: '—' }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Importe</dt>
+                    <dd class="col-5 text-end">{{ $coupons['amount'] !== null ? number_format((float) $coupons['amount'], 2, ',', '.').' €' : '—' }}</dd>
 
-                        <dt class="col-6 fw-normal text-muted">Importe</dt>
-                        <dd class="col-6 text-end">{{ $campaign->coupon_amount !== null ? number_format((float) $campaign->coupon_amount, 2, ',', '.').' €' : '—' }}</dd>
+                    <dt class="col-7 fw-normal text-muted">Compra mínima</dt>
+                    <dd class="col-5 text-end">{{ $coupons['min_purchase'] !== null ? number_format((float) $coupons['min_purchase'], 2, ',', '.').' €' : '—' }}</dd>
 
-                        <dt class="col-6 fw-normal text-muted">Compra mínima</dt>
-                        <dd class="col-6 text-end">{{ $campaign->coupon_min_purchase !== null ? number_format((float) $campaign->coupon_min_purchase, 2, ',', '.').' €' : '—' }}</dd>
-                    </dl>
-                @else
-                    <h6 class="fw-bold mb-1">Bonos emitidos</h6>
-                    <p class="text-muted small mb-3">
-                        Gestión emite un bono para cada cliente, con su propio código.
-                    </p>
+                    <dt class="col-7 fw-normal text-muted">Válidos hasta</dt>
+                    <dd class="col-5 text-end">{{ $coupons['valid_to'] ? \Illuminate\Support\Carbon::parse($coupons['valid_to'])->format('d/m/Y') : '—' }}</dd>
 
-                    <p class="bd-kpi-value fw-bold mb-2">{{ $coupons['issued'] }}</p>
-
-                    <dl class="row small mb-0">
-                        <dt class="col-7 fw-normal text-muted">Sin bono</dt>
-                        <dd class="col-5 text-end">{{ $withoutCoupon }}</dd>
-
-                        <dt class="col-7 fw-normal text-muted">Importe</dt>
-                        <dd class="col-5 text-end">{{ $coupons['amount'] !== null ? number_format((float) $coupons['amount'], 2, ',', '.').' €' : '—' }}</dd>
-
-                        <dt class="col-7 fw-normal text-muted">Compra mínima</dt>
-                        <dd class="col-5 text-end">{{ $coupons['min_purchase'] !== null ? number_format((float) $coupons['min_purchase'], 2, ',', '.').' €' : '—' }}</dd>
-
-                        <dt class="col-7 fw-normal text-muted">Válidos hasta</dt>
-                        <dd class="col-5 text-end">{{ $coupons['valid_to'] ? \Illuminate\Support\Carbon::parse($coupons['valid_to'])->format('d/m/Y') : '—' }}</dd>
-                    </dl>
-                @endif
+                    <dt class="col-7 fw-normal text-muted">Plantilla del correo</dt>
+                    <dd class="col-5 text-end"><code class="small">{{ $campaign->template_key ?: '—' }}</code></dd>
+                </dl>
             </div>
         </div>
     </div>
@@ -308,9 +287,6 @@
                                     <small class="text-muted d-block" title="{{ $recipient->coupon_error }}">
                                         {{ \Illuminate\Support\Str::limit($recipient->coupon_error, 40) }}
                                     </small>
-                                @elseif($campaign->coupon_code)
-                                    <code class="small">{{ $campaign->coupon_code }}</code>
-                                    <small class="text-muted d-block">de la campaña</small>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif

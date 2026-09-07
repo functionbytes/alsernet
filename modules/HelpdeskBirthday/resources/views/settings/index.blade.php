@@ -11,7 +11,7 @@
         <i class="fas fa-sliders text-primary me-2"></i>Ajustes de cumpleaños
     </h1>
     <p class="text-muted small mb-0 w-100 order-3 mt-1">
-        Desde aquí se controla el cupón del día, a quién se le envía y a qué ritmo.
+        Desde aquí se controla qué bono se regala, a quién se le envía y a qué ritmo.
     </p>
 </div>
 
@@ -22,103 +22,26 @@
 
     <div class="card border-0 shadow-sm mb-3">
         <div class="card-body">
-            <h6 class="fw-bold mb-1">Cupón del día</h6>
+            <h6 class="fw-bold mb-1">El bono de cumpleaños</h6>
             <p class="text-muted small mb-3">
-                Hay dos formas de repartir el bono: que gestión genere <strong>uno por cliente</strong>
-                —indicando el tipo de bono— o fijar un <strong>código único</strong> para todos. Con el
-                tipo de bono configurado, cada persona recibe el suyo.
+                No hay un cupón del día igual para todos: al preparar la campaña se le pide a
+                gestión un bono <strong>para cada cumpleañero</strong>, y cada correo lleva el
+                código de esa persona. Aquí solo se elige <strong>qué bono</strong> se emite.
             </p>
 
             <div class="row g-3">
-                {{-- El tipo de bono va primero y solo en su fila: es lo que decide
-                     si cada cliente recibe un bono propio o todos comparten uno. --}}
                 <div class="col-12">
                     <label class="form-label small" for="bd-bono-type">Tipo de bono en gestión (IDTBONO_PROMOCION)</label>
                     <input type="number" name="bono_type_id" id="bd-bono-type" min="0" step="1"
                            class="form-control @error('bono_type_id') is-invalid @enderror"
                            value="{{ old('bono_type_id', $settings['bono_type_id']) }}">
                     <div class="form-text">
-                        Con un tipo indicado, al preparar la campaña se pide a gestión un bono para cada
-                        cumpleañero y cada correo lleva su propio código. El importe, la validez y la
-                        compra mínima salen del tipo, no de este panel. Déjalo en 0 para repartir en su
-                        lugar el código único de abajo.
+                        El importe, la validez y la compra mínima los decide gestión a partir de este
+                        tipo, no este panel: son los que devuelve al emitir cada bono y los que se ven
+                        luego en la campaña. Sin un tipo indicado no se puede emitir nada y la campaña
+                        del día queda en pausa.
                     </div>
                     @error('bono_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label small" for="bd-coupon-code">Código del bono</label>
-                    <input type="text" name="coupon_code" id="bd-coupon-code" class="form-control @error('coupon_code') is-invalid @enderror" value="{{ old('coupon_code', $settings['coupon_code']) }}" maxlength="190">
-                    @error('coupon_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small" for="bd-coupon-cv">Código de verificación</label>
-                    <input type="text" name="coupon_verification_code" id="bd-coupon-cv" class="form-control @error('coupon_verification_code') is-invalid @enderror" value="{{ old('coupon_verification_code', $settings['coupon_verification_code']) }}" maxlength="190">
-                    <div class="form-text">El cliente recibe el código como «bono-verificación», igual que en la tienda.</div>
-                    @error('coupon_verification_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label small" for="bd-valid-from">Válido desde (si gestión no responde)</label>
-                    <input type="date" name="coupon_valid_from" id="bd-valid-from" class="form-control @error('coupon_valid_from') is-invalid @enderror" value="{{ old('coupon_valid_from', $settings['coupon_valid_from']) }}">
-                    @error('coupon_valid_from')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small" for="bd-valid-to">Válido hasta (si gestión no responde)</label>
-                    <input type="date" name="coupon_valid_to" id="bd-valid-to" class="form-control @error('coupon_valid_to') is-invalid @enderror" value="{{ old('coupon_valid_to', $settings['coupon_valid_to']) }}">
-                    @error('coupon_valid_to')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label small" for="bd-amount">Importe</label>
-                    <input type="number" step="0.01" min="0" name="coupon_amount" id="bd-amount" class="form-control @error('coupon_amount') is-invalid @enderror" value="{{ old('coupon_amount', $settings['coupon_amount']) }}">
-                    @error('coupon_amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small" for="bd-min">Compra mínima</label>
-                    <input type="number" step="0.01" min="0" name="coupon_min_purchase" id="bd-min" class="form-control @error('coupon_min_purchase') is-invalid @enderror" value="{{ old('coupon_min_purchase', $settings['coupon_min_purchase']) }}">
-                    @error('coupon_min_purchase')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small" for="bd-validate">Validar con gestión</label>
-                    <select name="validate_against_erp" id="bd-validate" class="form-select">
-                        <option value="1" @selected(old('validate_against_erp', $settings['validate_against_erp']))>Sí</option>
-                        <option value="0" @selected(! old('validate_against_erp', $settings['validate_against_erp']))>No</option>
-                    </select>
-                    <div class="form-text">Al preparar la campaña se piden a gestión las fechas y el importe reales.</div>
-                </div>
-
-                <div class="col-12">
-                    {{-- Consulta el bono AHORA, sin esperar a la campaña del día:
-                         es la forma de comprobar que el código existe y qué vale
-                         antes de dejarlo puesto. --}}
-                    <button type="button" class="btn btn-outline-secondary" id="bd-check-coupon"
-                            data-url="{{ route('helpdeskbirthday.settings.validate-coupon') }}">
-                        Comprobar el bono en gestión
-                    </button>
-                    <span class="ms-2 small" id="bd-check-result"></span>
-
-                    <div class="mt-3 d-none" id="bd-check-detail">
-                        <dl class="row small mb-0">
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Origen</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-source">—</dd>
-
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Código</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-code">—</dd>
-
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Válido desde</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-from">—</dd>
-
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Válido hasta</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-to">—</dd>
-
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Importe</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-amount">—</dd>
-
-                            <dt class="col-4 col-md-2 fw-normal text-muted">Compra mínima</dt>
-                            <dd class="col-8 col-md-4" id="bd-check-min">—</dd>
-                        </dl>
-                    </div>
                 </div>
             </div>
         </div>
@@ -280,61 +203,4 @@
     </div>
 @endcan
 
-
 @endsection
-
-@push('scripts')
-<script>
-    document.getElementById('bd-check-coupon')?.addEventListener('click', async function () {
-        const button = this;
-        const result = document.getElementById('bd-check-result');
-        const detail = document.getElementById('bd-check-detail');
-
-        button.disabled = true;
-        result.textContent = 'Consultando a gestión…';
-        result.className = 'ms-2 small text-muted';
-        detail.classList.add('d-none');
-
-        try {
-            // El endpoint lee el cupón GUARDADO, no lo que hay escrito en el
-            // formulario: hay que guardar antes para comprobar un código nuevo.
-            const response = await fetch(button.dataset.url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content ?? '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            const payload = await response.json();
-
-            if (!response.ok || !payload.success) {
-                result.textContent = payload.message ?? 'No se pudo comprobar el bono.';
-                result.className = 'ms-2 small text-muted fw-semibold';
-                return;
-            }
-
-            const data = payload.data;
-            const validado = payload.source === 'erp';
-
-            result.textContent = validado
-                ? 'Gestión reconoce el bono.'
-                : 'Gestión no respondió: se usarán los valores de este formulario.';
-            result.className = 'ms-2 small fw-semibold';
-
-            document.getElementById('bd-check-source').textContent = validado ? 'Validado con gestión' : 'Configurado a mano';
-            document.getElementById('bd-check-code').textContent = data.coupon_code ?? '—';
-            document.getElementById('bd-check-from').textContent = data.coupon_valid_from ?? '—';
-            document.getElementById('bd-check-to').textContent = data.coupon_valid_to ?? '—';
-            document.getElementById('bd-check-amount').textContent = data.coupon_amount != null ? data.coupon_amount + ' €' : '—';
-            document.getElementById('bd-check-min').textContent = data.coupon_min_purchase != null ? data.coupon_min_purchase + ' €' : '—';
-            detail.classList.remove('d-none');
-        } catch (error) {
-            result.textContent = 'No se pudo contactar con el servidor.';
-            result.className = 'ms-2 small text-muted fw-semibold';
-        } finally {
-            button.disabled = false;
-        }
-    });
-</script>
-@endpush

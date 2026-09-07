@@ -8,6 +8,7 @@ use Modules\HelpdeskBirthday\Mail\BirthdayCouponMailable;
 use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
 use Modules\HelpdeskBirthday\Support\BirthdayMailRenderer;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Modules\Queue\Jobs\BaseJob;
 use Throwable;
 
@@ -104,9 +105,45 @@ class SendBirthdayEmailJob extends BaseJob
             'sent_at' => now(),
             'attempts' => $recipient->attempts + 1,
             'error_message' => null,
+            // Enlace a la fila que acaba de escribir HelpdeskEmailActivity.
+            // El listener registra el envío por su cuenta (módulo y entidad
+            // llegan en las cabeceras del Mailable), pero nadie devolvía el id
+            // aquí: la columna existía y se quedaba siempre a null, así que el
+            // panel nunca ofrecía «ver la trazabilidad» y para «ver el correo»
+            // volvía a renderizar la plantilla en vez de enseñar el HTML que de
+            // verdad salió — que es el que vale cuando un cliente reclama.
+            'email_log_id' => $this->emailLogIdFor($recipient),
         ])->save();
 
         $campaign->increment('sent_count');
+    }
+
+    /**
+     * La fila de email_logs de este envío, localizada por la entidad que el
+     * propio Mailable declara (ver BirthdayCouponMailable::getEmailLogEntityId).
+     *
+     * Nunca hace fallar el job: el correo ya salió, y quedarse sin el enlace es
+     * perder una comodidad del panel, no el envío.
+     */
+    private function emailLogIdFor(BirthdayRecipient $recipient): ?int
+    {
+        try {
+            $id = EmailLog::query()
+                ->where('module', 'HelpdeskBirthday')
+                ->where('entity_type', BirthdayRecipient::class)
+                ->where('entity_id', $recipient->id)
+                ->latest('id')
+                ->value('id');
+
+            return $id !== null ? (int) $id : null;
+        } catch (Throwable $e) {
+            Log::warning('[HelpdeskBirthday] No se pudo enlazar el envío con el log de correo', [
+                'recipient_id' => $recipient->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 
     /**

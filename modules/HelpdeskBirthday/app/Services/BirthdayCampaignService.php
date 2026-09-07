@@ -38,7 +38,6 @@ class BirthdayCampaignService
         private readonly BirthdayAudienceStatsService $audienceStats,
         private readonly BirthdayBonoGenerator $bonos,
         private readonly BirthdayAudienceService $audience,
-        private readonly BirthdayCouponService $coupons,
         private readonly BirthdayScheduleCalculator $calculator,
         private readonly BirthdaySettings $settings,
     ) {}
@@ -59,9 +58,21 @@ class BirthdayCampaignService
      */
     public function prepare(CarbonImmutable $date): BirthdayCampaign
     {
+        // La campaña nace ya con su plantilla y su ventana. Creándola solo con
+        // la fecha, cualquier fallo posterior dejaba una fila muda —sin estilo
+        // de correo, sin horario, sin nada— que en el panel no se distinguía de
+        // un error de datos. Pasó con la del 6-sep.
+        $settings = $this->settings->all();
+
         $campaign = BirthdayCampaign::firstOrCreate(
             ['campaign_date' => $date->toDateString()],
-            ['status' => BirthdayCampaign::STATUS_DRAFT]
+            [
+                'status' => BirthdayCampaign::STATUS_DRAFT,
+                'template_key' => $settings['template_key'],
+                'window_start' => $settings['window_start'].':00',
+                'window_end' => $settings['window_end'].':00',
+                'throttle_per_hour' => (int) $settings['throttle_per_hour'],
+            ]
         );
 
         if (! $this->isPreparable($campaign, $date)) {
@@ -120,21 +131,17 @@ class BirthdayCampaignService
         // nada.
         $audienceStats = $this->lastAudienceStats = $this->audienceStats->forDate($date);
 
-        // El bono lo emite Gestión POR CLIENTE (POST /api-gestion/generacion-bono/):
-        // cada persona recibe el suyo, con su propio código de verificación.
-        // El cupón de campaña es el respaldo para las promociones antiguas que
-        // repartían un único código a todo el mundo — si hay uno configurado se
-        // congela aquí, pero no es el camino normal.
-        $coupon = $this->coupons->resolve($settings);
-
-        // Sin tipo de bono y sin código global nadie puede recibir un regalo,
-        // pero eso NO es motivo para tirar la audiencia: quién cumple años hoy
-        // es un dato que caduca —mañana ya no se puede reconstruir— y con él en
-        // la mano se ve a cuánta gente afecta el ajuste que falta.
+        // No hay cupón de campaña. El bono lo emite Gestión POR CLIENTE
+        // (POST /api-gestion/generacion-bono/): cada persona recibe el suyo, con
+        // su código de verificación, su importe y su validez. Lo único que se
+        // configura aquí es el TIPO de bono.
         //
-        // La campaña se prepara igual y queda EN PAUSA: reúne y programa, pero
-        // no envía.
-        $sinCupones = $coupon === [] && ! $this->bonos->isConfigured();
+        // Sin tipo configurado nadie puede recibir un regalo, pero eso NO es
+        // motivo para tirar la audiencia: quién cumple años hoy es un dato que
+        // caduca —mañana ya no se puede reconstruir— y con él en la mano se ve a
+        // cuánta gente afecta el ajuste que falta. La campaña se prepara igual y
+        // queda EN PAUSA: reúne y programa, pero no envía.
+        $sinCupones = ! $this->bonos->isConfigured();
 
         $recipients = $this->audience->fetchForDate($date, $this->settings->exclusions());
 
@@ -159,8 +166,8 @@ class BirthdayCampaignService
 
         $skipped = count($recipients) - count($sendable);
 
-        DB::connection('helpdesk')->transaction(function () use ($campaign, $coupon, $recipients, $plan, $settings, $skipped, $audienceStats, $sinCupones): void {
-            $campaign->fill($coupon + [
+        DB::connection('helpdesk')->transaction(function () use ($campaign, $recipients, $plan, $settings, $skipped, $audienceStats, $sinCupones): void {
+            $campaign->fill([
                 'template_key' => $settings['template_key'],
                 // Se guarda la hora tal como la configuró el usuario (hora de
                 // negocio), no su equivalente UTC: es la que se enseña en el
@@ -177,7 +184,7 @@ class BirthdayCampaignService
                     ? BirthdayCampaign::STATUS_PAUSED
                     : BirthdayCampaign::STATUS_SCHEDULED,
                 'error_message' => $sinCupones
-                    ? 'En pausa: falta el código de cupón o el tipo de bono de Gestión. Los destinatarios están reunidos, pero no se enviará nada hasta que haya cupón.'
+                    ? 'En pausa: falta el tipo de bono en Ajustes, así que Gestión no puede emitir el bono de cada cliente. Los cumpleañeros ya están reunidos y no se enviará nada hasta que lo configures.'
                     : null,
             ])->save();
 
@@ -188,7 +195,7 @@ class BirthdayCampaignService
         // transacción: son varias llamadas HTTP a Gestión (una por cada 100
         // clientes) y tenerlas dentro mantendría abierta una transacción
         // durante minutos, bloqueando la tabla para el resto.
-        $bonos = $this->generateBonos($campaign, $coupon);
+        $bonos = $this->generateBonos($campaign);
 
         // Una campaña que no puede regalar nada no envía, y eso hay que
         // decirlo: el efecto para el cliente es el mismo que si hubiera
@@ -224,14 +231,11 @@ class BirthdayCampaignService
      * Aparcado como omitido se ve en el panel, se explica el motivo y se puede
      * reintentar a mano.
      *
-     * @param  array<string, mixed>  $campaignCoupon  cupón global, si esta promoción usa uno
-     * @return array{generated: int, failed: int}|null null si no se generan bonos por cliente
+     * @return array{generated: int, failed: int}|null null si no hay nada que emitir
      */
-    private function generateBonos(BirthdayCampaign $campaign, array $campaignCoupon): ?array
+    private function generateBonos(BirthdayCampaign $campaign): ?array
     {
-        // Con un código único para todo el mundo (promoción antigua) no hay
-        // nada que emitir: ese código ya está congelado en la campaña.
-        if (! $this->bonos->isConfigured() || $campaignCoupon !== []) {
+        if (! $this->bonos->isConfigured()) {
             return null;
         }
 

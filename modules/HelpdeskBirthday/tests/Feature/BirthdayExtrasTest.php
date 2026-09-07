@@ -54,9 +54,9 @@ class BirthdayExtrasTest extends TestCase
     {
         Notification::fake();
 
-        // Sin cupón configurado la campaña queda en pausa (no envía), y de eso
-        // hay que avisar igual: el cliente se queda sin su felicitación y el
-        // día no se repite.
+        // Sin tipo de bono configurado la campaña queda en pausa (no envía), y
+        // de eso hay que avisar igual: el cliente se queda sin su felicitación
+        // y el día no se repite.
         config()->set('helpdeskbirthday.customers_api_url', 'http://manager.test');
 
         // La campaña se prepara de verdad, así que hay que servirle la
@@ -77,7 +77,7 @@ class BirthdayExtrasTest extends TestCase
             $this->admin,
             BirthdayCampaignFailedNotification::class,
             function (BirthdayCampaignFailedNotification $n): bool {
-                return str_contains($n->reason, 'cupón');
+                return str_contains($n->reason, 'tipo de bono');
             }
         );
     }

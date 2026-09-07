@@ -15,8 +15,8 @@
         <i class="fas fa-gift text-primary me-2"></i>Campañas de cumpleaños
     </h1>
     <p class="text-muted small mb-0 w-100 order-3 mt-1">
-        Cada día se crea una campaña con los clientes que cumplen años y se les envía el cupón,
-        repartido dentro de la ventana horaria configurada para no saturar el servidor de correo.
+        Cada día se crea una campaña con los clientes que cumplen años, gestión emite el bono de
+        cada uno y los correos se reparten dentro de la ventana horaria configurada.
     </p>
     <div class="ms-auto order-2">
         <form method="POST" action="{{ route('helpdeskbirthday.campaigns.prepare') }}" class="d-flex gap-2">
@@ -123,14 +123,14 @@
         // un mal resultado cuando en realidad es "no lo sabemos".
         if ($redemption['available']) {
             $kpis[] = [
-                'label' => 'Cupones usados',
+                'label' => 'Bonos usados',
                 'value' => $redemption['attributed'],
                 'hint' => $redemption['rate'].'% de los enviados',
             ];
             $kpis[] = [
                 'label' => 'Facturado',
                 'value' => number_format($redemption['revenue'], 0, ',', '.').' €',
-                'hint' => $redemption['redemptions'].' pedidos con el cupón',
+                'hint' => $redemption['redemptions'].' pedidos con bono',
             ];
         }
     @endphp
@@ -236,7 +236,7 @@
                     <tr>
                         <th>Día</th>
                         <th>Estado</th>
-                        <th>Cupón</th>
+                        <th class="text-end">Bonos</th>
                         <th class="text-end">Destinatarios</th>
                         <th class="text-end">Enviados</th>
                         <th class="text-end">Fallidos</th>
@@ -254,12 +254,9 @@
                                     {{ __('helpdeskbirthday::messages.status.'.$campaign->status) }}
                                 </span>
                             </td>
-                            <td>
-                                <code>{{ $campaign->coupon_code ?: '—' }}</code>
-                                @if($campaign->coupon_source === 'manual' && $campaign->coupon_code)
-                                    <span class="badge bg-secondary-subtle text-secondary ms-1">sin validar</span>
-                                @endif
-                            </td>
+                            {{-- Bonos emitidos, no un código: cada cliente
+                                 recibe el suyo de gestión. --}}
+                            <td class="text-end">{{ $campaign->coupons_count }}</td>
                             <td class="text-end">{{ $campaign->recipients_total }}</td>
                             <td class="text-end">{{ $campaign->sent_count }}</td>
                             <td class="text-end">{{ $campaign->failed_count }}</td>
@@ -284,7 +281,7 @@
                                         <li>
                                             <a class="dropdown-item" href="{{ route('helpdeskbirthday.campaigns.preview', $campaign) }}" target="_blank" rel="noopener">Previsualizar correo</a>
                                         </li>
-                                        @if($redemption['available'] && $campaign->coupon_code)
+                                        @if($redemption['available'] && $campaign->coupons_count > 0)
                                             <li>
                                                 <a class="dropdown-item" href="{{ route('helpdeskbirthday.campaigns.redemptions', $campaign) }}">Ver los canjes</a>
                                             </li>

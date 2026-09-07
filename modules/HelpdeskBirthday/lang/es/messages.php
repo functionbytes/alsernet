@@ -14,7 +14,7 @@ return [
     'campaign_cancelled' => 'Campaña cancelada. Los envíos pendientes se han descartado.',
     'transition_not_allowed' => 'Esa acción no es posible en el estado actual de la campaña.',
     'settings_saved' => 'Ajustes guardados.',
-    'coupon_missing' => 'No hay ningún código de cupón configurado.',
+    'coupon_missing' => 'Ese pedido no tiene ningún bono que marcar.',
     'recipient_unsubscribed' => 'Se dio de baja a :email de las felicitaciones de cumpleaños.',
     'recipient_requeued' => 'El envío vuelve a la cola.',
     'retry_not_allowed' => 'Solo se pueden reintentar los envíos que fallaron.',

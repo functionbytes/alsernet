@@ -29,6 +29,9 @@ class BirthdayCampaignsController extends Controller
     public function index(Request $request, BirthdayDashboardService $dashboard): View
     {
         $campaigns = BirthdayCampaign::query()
+            // Bonos emitidos por campaña, de una sola consulta: en el listado
+            // sustituyen al código único, que ya no existe.
+            ->withCount(['recipients as coupons_count' => fn ($q) => $q->withCoupon()])
             ->orderByDesc('campaign_date')
             ->paginate(25);
 
@@ -89,7 +92,7 @@ class BirthdayCampaignsController extends Controller
             'delivery' => $delivery,
             // Cuántos se quedaron sin bono: es lo que hay que resolver para que
             // la campaña pueda enviar, así que se cuenta aparte de los fallidos.
-            'withoutCoupon' => $campaign->coupon_code ? 0 : (int) $coupons->without,
+            'withoutCoupon' => (int) $coupons->without,
             // Resumen de los bonos emitidos: con uno por cliente, la tarjeta del
             // cupón único ya no dice nada.
             'coupons' => [

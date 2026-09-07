@@ -14,7 +14,7 @@ return [
     'campaign_cancelled' => 'Campaign cancelled. Pending emails were discarded.',
     'transition_not_allowed' => 'That action is not possible in the campaign current state.',
     'settings_saved' => 'Settings saved.',
-    'coupon_missing' => 'No coupon code is configured.',
+    'coupon_missing' => 'That order has no coupon to mark.',
     'recipient_unsubscribed' => ':email was unsubscribed from birthday emails.',
     'recipient_requeued' => 'The email is back in the queue.',
     'retry_not_allowed' => 'Only failed emails can be retried.',

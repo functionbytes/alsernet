@@ -14,6 +14,7 @@ use Modules\HelpdeskBirthday\Models\BirthdayCampaign;
 use Modules\HelpdeskBirthday\Models\BirthdayRecipient;
 use Modules\HelpdeskBirthday\Services\BirthdayCampaignService;
 use Modules\HelpdeskBirthday\Support\BirthdaySettings;
+use Modules\HelpdeskEmailActivity\Models\EmailLog;
 use Tests\TestCase;
 
 /**
@@ -149,6 +150,35 @@ class BirthdayCouponLifecycleTest extends TestCase
         // lo reservaría de nuevo y el ciclo no terminaría nunca.
         $this->assertSame(BirthdayRecipient::STATUS_SKIPPED, $recipient->status);
         $this->assertSame(BirthdayRecipient::SKIP_NO_COUPON, $recipient->skip_reason);
+    }
+
+    public function test_el_envio_queda_enlazado_con_el_log_de_correo(): void
+    {
+        $campaign = $this->campaignWith([
+            ['email' => 'traza@ejemplo.test', 'coupon_code' => '900001', 'coupon_verification_code' => 'AAA', 'status' => BirthdayRecipient::STATUS_SENDING],
+        ]);
+
+        $recipient = $campaign->recipients()->first();
+
+        (new SendBirthdayEmailJob($recipient->id))->handle();
+
+        $recipient->refresh();
+
+        $this->assertSame(BirthdayRecipient::STATUS_SENT, $recipient->status);
+
+        // HelpdeskEmailActivity registra el envío por su cuenta (el Mailable
+        // declara módulo y entidad), pero el enlace de vuelta es lo que permite
+        // saltar a la trazabilidad desde la fila y enseñar el HTML que salió.
+        $log = EmailLog::query()
+            ->where('module', 'HelpdeskBirthday')
+            ->where('entity_type', BirthdayRecipient::class)
+            ->where('entity_id', $recipient->id)
+            ->latest('id')
+            ->first();
+
+        $this->assertNotNull($log, 'El envío no quedó registrado en el log de correo.');
+        $this->assertSame((int) $log->id, (int) $recipient->email_log_id);
+        $this->assertContains('traza@ejemplo.test', (array) $log->to_addresses);
     }
 
     public function test_una_campana_de_ayer_ya_no_envia_y_se_cierra(): void
