@@ -15,13 +15,13 @@ use Modules\HelpdeskTickets\Http\Requests\Managers\ComposeTicketMailRequest;
 use Modules\HelpdeskTickets\Models\Macro;
 use Modules\HelpdeskTickets\Models\Ticket;
 use Modules\HelpdeskTickets\Models\TicketEmailBlacklist;
-use Modules\HelpdeskTickets\Models\TicketHistory;
 use Modules\HelpdeskTickets\Models\TicketMail;
 use Modules\HelpdeskTickets\Models\TicketNote;
 use Modules\HelpdeskTickets\Services\TicketEmailChannelsRepository;
 use Modules\HelpdeskTickets\Services\TicketMailAiSummaryService;
 use Modules\HelpdeskTickets\Services\TicketMailDispatcher;
 use Modules\HelpdeskTickets\Services\TicketMailInboxService;
+use Modules\HelpdeskTickets\Services\TicketMailRecipientResolver;
 use Modules\HelpdeskTickets\Services\TicketVariableInterpolator;
 use Modules\HelpdeskTranslate\Services\CachedTranslator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -39,6 +39,7 @@ class TicketMailsController extends Controller
     public function __construct(
         private readonly TicketMailDispatcher $dispatcher,
         private readonly TicketMailInboxService $inbox,
+        private readonly TicketMailRecipientResolver $recipients,
     ) {}
 
     /**
@@ -296,15 +297,15 @@ class TicketMailsController extends Controller
         // cualquiera con permiso de redactar podía usar la dirección
         // corporativa para escribirle a un destinatario arbitrario. Por
         // defecto se fija al cliente del ticket; salirse de eso exige
-        // permiso explícito + queda auditado (ver resolveOutboundRecipient).
-        $to = $this->resolveOutboundRecipient($validated['to'] ?? null, $ticket);
+        // permiso explícito + queda auditado (ver TicketMailRecipientResolver).
+        $to = $this->recipients->resolveOutbound($validated['to'] ?? null, $ticket);
 
         // cc/bcc también estaban abiertos a cualquier email válido — se
         // restringen a direcciones que ya participan del ticket (cliente,
         // correspondencia previa del hilo, agentes que lo siguen).
-        $participants = $this->participantEmails($ticket);
-        $this->assertParticipants($validated['cc'] ?? [], $participants);
-        $this->assertParticipants($validated['bcc'] ?? [], $participants);
+        $participants = $this->recipients->participants($ticket);
+        $this->recipients->assertParticipants($validated['cc'] ?? [], $participants);
+        $this->recipients->assertParticipants($validated['bcc'] ?? [], $participants);
 
         $mail = TicketMail::create([
             'ticket_id' => $ticket->id,
@@ -389,7 +390,7 @@ class TicketMailsController extends Controller
 
         // Mismo guard que en store(): reenviar a algo distinto del cliente
         // del ticket exige permiso explícito + queda auditado.
-        $to = $this->resolveOutboundRecipient($requestedTo, $ticket);
+        $to = $this->recipients->resolveOutbound($requestedTo, $ticket);
 
         $newMail = $this->createResendCopy($mail, $ticket, $to, $request->boolean('without_attachments'));
 
@@ -514,102 +515,6 @@ class TicketMailsController extends Controller
     }
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Resuelve el destinatario real de un envío (store()/resend()). Por
-     * defecto (campo vacío, o igual al cliente del ticket) siempre es el
-     * cliente — NUNCA un valor arbitrario sin más. Pedir explícitamente otra
-     * dirección exige el permiso 'helpdesk.tickets.emails.send_to_any' y
-     * queda registrado en el historial del ticket (SEC-07 item 5): la
-     * dirección corporativa no debe poder usarse para escribirle a cualquier
-     * tercero sin dejar rastro.
-     */
-    private function resolveOutboundRecipient(?string $requested, Ticket $ticket): string
-    {
-        $customerEmail = $ticket->customer?->email;
-        $requested = $requested !== null && $requested !== '' ? mb_strtolower(trim($requested)) : null;
-
-        if ($requested === null) {
-            abort_if(! $customerEmail, 422, 'El ticket no tiene un cliente con email al que enviar el correo.');
-
-            return $customerEmail;
-        }
-
-        if ($customerEmail && $requested === mb_strtolower($customerEmail)) {
-            return $customerEmail;
-        }
-
-        $this->authorize('sendToAnyRecipient', TicketMail::class);
-
-        TicketHistory::create([
-            'ticket_id' => $ticket->id,
-            'user_id' => auth()->id(),
-            'action_type' => 'mail_sent_to_arbitrary_recipient',
-            'old_value' => $customerEmail,
-            'new_value' => $requested,
-            'metadata' => ['description' => 'Correo del ticket enviado a un destinatario distinto del cliente'],
-        ]);
-
-        return $requested;
-    }
-
-    /**
-     * Direcciones "de confianza" para ir en Cc/Bcc de un correo de este
-     * ticket: el propio cliente, cualquier dirección que ya haya aparecido
-     * en el hilo (to/cc/bcc de correos previos del ticket) y los agentes que
-     * lo siguen — no cualquier email válido.
-     *
-     * @return list<string>
-     */
-    private function participantEmails(Ticket $ticket): array
-    {
-        $emails = collect();
-
-        if ($ticket->customer?->email) {
-            $emails->push(mb_strtolower($ticket->customer->email));
-        }
-
-        TicketMail::query()
-            ->where('ticket_id', $ticket->id)
-            ->get(['to', 'cc', 'bcc'])
-            ->each(function (TicketMail $mail) use ($emails) {
-                foreach (array_filter([$mail->to, $mail->cc, $mail->bcc]) as $field) {
-                    foreach (explode(',', $field) as $address) {
-                        $address = mb_strtolower(trim($address));
-
-                        if ($address !== '') {
-                            $emails->push($address);
-                        }
-                    }
-                }
-            });
-
-        $ticket->watchers()->with('user:id,email')->get()->each(function ($watcher) use ($emails) {
-            if ($watcher->user?->email) {
-                $emails->push(mb_strtolower($watcher->user->email));
-            }
-        });
-
-        return $emails->unique()->values()->all();
-    }
-
-    /**
-     * @param  list<string>  $addresses
-     * @param  list<string>  $participants
-     */
-    private function assertParticipants(array $addresses, array $participants): void
-    {
-        $invalid = collect($addresses)
-            ->reject(fn (string $address) => in_array(mb_strtolower(trim($address)), $participants, true))
-            ->values();
-
-        if ($invalid->isNotEmpty()) {
-            abort(response()->json([
-                'success' => false,
-                'message' => 'Estos destinatarios en copia no participan en el ticket: '.$invalid->implode(', '),
-            ], 422));
-        }
-    }
 
     /**
      * @return array{0: array<int, array{disk: string, path: string, name: string}>, 1: array<int, array{name: string, path: string, disk: string, size: int}>}

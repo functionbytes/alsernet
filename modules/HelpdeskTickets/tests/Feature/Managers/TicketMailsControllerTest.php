@@ -509,6 +509,62 @@ class TicketMailsControllerTest extends TestCase
         ], 'helpdesk');
     }
 
+    /**
+     * La otra mitad de SEC-07 item 5: el caso positivo ya estaba cubierto
+     * —con el permiso se puede fijar otro destinatario—, pero no el negativo,
+     * que es el que impide que la dirección corporativa sirva para escribirle
+     * a cualquiera. Ahora la regla vive en TicketMailRecipientResolver.
+     */
+    public function test_store_rechaza_un_destinatario_ajeno_sin_el_permiso(): void
+    {
+        Queue::fake();
+
+        // Puede enviar correo del ticket, pero NO a una dirección cualquiera.
+        $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view']);
+        $ticket = $this->createTicket();
+
+        $this->actingAs($manager)
+            ->postJson(route('manager.helpdesk.tickets.emails.store'), [
+                'ticket_id' => $ticket->id,
+                'to' => 'un-tercero@ajeno.test',
+                'subject' => 'No debería salir',
+                'body' => '<p>hola</p>',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('helpdesk_ticket_mails', [
+            'ticket_id' => $ticket->id,
+            'subject' => 'No debería salir',
+        ], 'helpdesk');
+
+        Queue::assertNothingPushed();
+    }
+
+    public function test_store_deja_rastro_al_escribir_a_un_tercero(): void
+    {
+        Queue::fake();
+
+        $manager = $this->makeUser(['helpdesk.tickets.emails.send', 'helpdesk.tickets.view', 'helpdesk.tickets.emails.send_to_any']);
+        $ticket = $this->createTicket();
+
+        $this->actingAs($manager)
+            ->postJson(route('manager.helpdesk.tickets.emails.store'), [
+                'ticket_id' => $ticket->id,
+                'to' => 'un-tercero@ajeno.test',
+                'subject' => 'Con permiso',
+                'body' => '<p>hola</p>',
+            ])
+            ->assertCreated();
+
+        // El permiso autoriza, pero no exime de dejar constancia: si no queda
+        // en el historial, nadie puede auditar a quién se escribió.
+        $this->assertDatabaseHas('helpdesk_ticket_histories', [
+            'ticket_id' => $ticket->id,
+            'action_type' => 'mail_sent_to_arbitrary_recipient',
+            'new_value' => 'un-tercero@ajeno.test',
+        ], 'helpdesk');
+    }
+
     public function test_store_creates_mail_and_queues_it_immediately(): void
     {
         Queue::fake();
